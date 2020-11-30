@@ -1,0 +1,21 @@
+﻿-- =============================================
+-- Author:		<Pedro Acuña>
+-- Create date: <27-09-2019>
+-- Description:	<los proveedores que se encuentren en esta tabla se deshabilitara el check unico centro de costo de la solicitud de pedido>
+-- =============================================
+CREATE PROCEDURE SP_DeshabilitarUnicoCentroCosto @IdProveedor INT
+AS
+BEGIN
+    IF EXISTS
+    (
+        SELECT 1
+        FROM dbo.DEA_Proveedor
+        WHERE IdProveedor = @IdProveedor
+		AND ISNULL(Activo, 0) = 1 
+    )
+        SELECT 1
+    ELSE
+        SELECT 0
+
+END
+

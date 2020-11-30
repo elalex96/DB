@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[EN_TableroContrato] (
+    [IdTableroContrato] INT           IDENTITY (10000, 1) NOT NULL,
+    [IdContrato]        INT           NULL,
+    [Workbook]          VARCHAR (300) NULL,
+    [Sheet]             VARCHAR (300) NULL,
+    [Tabs]              VARCHAR (300) NULL,
+    [Site]              VARCHAR (300) NULL,
+    [DNS]               VARCHAR (300) NULL,
+    [CreadoPor]         INT           NULL,
+    [CreadoEn]          DATETIME      NULL,
+    [ModificadoPor]     INT           NULL,
+    [ModificadoEn]      DATETIME      NULL,
+    [Activo]            BIT           NULL,
+    [IdRol]             INT           NULL,
+    [HeightPX]          INT           NULL,
+    [NombreMostrar]     VARCHAR (300) NULL,
+    [Parametros]        VARCHAR (500) NULL,
+    [UserTableau]       VARCHAR (150) NULL,
+    [MuestraToolbar]    BIT           NULL,
+    CONSTRAINT [PK_TableroContrato] PRIMARY KEY CLUSTERED ([IdTableroContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_Tablero_AP_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_Tablero_AP_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_Tablero_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
+);
+

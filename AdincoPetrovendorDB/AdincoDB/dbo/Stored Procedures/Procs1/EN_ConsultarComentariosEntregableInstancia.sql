@@ -1,0 +1,40 @@
+﻿
+-- =============================================  
+-- Author:   Daniel AC  
+-- Create date: 26/10/2020  
+-- Description:  Consultar las comentarios de un entregable instancia
+-- ============================================= 
+CREATE PROCEDURE [dbo].[EN_ConsultarComentariosEntregableInstancia]
+    @EntregableInstanciaId INT,
+    @UsuarioId INT,
+    @ContratoId INT	
+AS
+BEGIN
+    /*SP PARA CONSULTAR LOS COMENTARIOS DE LOS USUARIOS*/
+	--TABLA 1 DETALLE DEL ENTREGABLE INSTANCIA
+    SELECT NoEntregableInstancia=IE.idInstanciaEntregable,
+           DocumentoEntregable=EN.DocumentoEntregable		  
+    FROM dbo.EN_InstanciasEntregable IE
+        JOIN dbo.EN_ContratoEntregable CE
+            ON IE.IdContratoEntregable = CE.IdContratoEntregable
+        JOIN dbo.EN_Entregable EN
+            ON CE.IdEntregable = EN.IdEntregable
+    WHERE IE.idInstanciaEntregable = @EntregableInstanciaId
+
+	--TABLA 2 DETALLE DE LOS COMENTARIOS AGREGADOS
+	SET LANGUAGE Spanish;
+    SELECT Registro=EI.Id,
+           Usuario=ISNULL(U.Nombre,''),
+           Fecha=CONCAT(ISNULL(FORMAT(EI.CreadoEl, 'dd'),''), ' de ', ISNULL(DATENAME(month, EI.CreadoEl),''),' del ', ISNULL(FORMAT(EI.CreadoEl, 'yyyy'),''),' a las ', ISNULL(FORMAT(EI.CreadoEl, 'HH:mm'),'')),
+           Comentario=ISNULL(EI.Comentario,'')
+    FROM EN_EntregableInstanciaComentario EI
+        JOIN dbo.AP_Usuario U
+            ON EI.UsuarioId=U.UsuarioID 
+    WHERE EI.EntregableInstanciaId = @EntregableInstanciaId
+          AND EI.Activo = 1
+    ORDER BY CreadoEl ASC;
+
+END;
+
+  
+ 

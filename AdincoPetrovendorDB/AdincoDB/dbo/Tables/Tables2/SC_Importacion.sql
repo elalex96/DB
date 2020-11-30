@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[SC_Importacion] (
+    [IdSCDetalle]        INT            NOT NULL,
+    [IdSCCarga]          INT            NOT NULL,
+    [RFCContratista]     VARCHAR (14)   NULL,
+    [RFCProveedor]       VARCHAR (15)   NOT NULL,
+    [FechaPedido]        VARCHAR (50)   NULL,
+    [NumeroPedido]       VARCHAR (50)   NULL,
+    [FechaContratoIni]   DATETIME       NULL,
+    [FechaContratoFin]   DATETIME       NULL,
+    [IdMaterial]         INT            NULL,
+    [Descripcion]        VARCHAR (5000) NULL,
+    [DiasCredito]        SMALLINT       NULL,
+    [Partida]            VARCHAR (20)   NULL,
+    [DescripcionPartida] VARCHAR (5000) NULL,
+    [UnidadMedida]       VARCHAR (50)   NULL,
+    [Cantidad]           FLOAT (53)     NOT NULL,
+    [PrecioUnitario]     FLOAT (53)     NOT NULL,
+    [Moneda]             VARCHAR (20)   NULL,
+    [Importe]            FLOAT (53)     NULL,
+    [CreadoEl]           DATETIME       NULL,
+    [IdSubcontrato]      INT            NULL,
+    [IdTipoPedido]       INT            NULL,
+    CONSTRAINT [PK_SC_Importacion] PRIMARY KEY CLUSTERED ([IdSCDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_SC_Importacion_SC_SubContrato] FOREIGN KEY ([IdSubcontrato]) REFERENCES [dbo].[SC_SubContrato] ([IdSubContrato])
+);
+

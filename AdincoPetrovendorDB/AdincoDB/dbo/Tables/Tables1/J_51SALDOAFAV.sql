@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[J_51SALDOAFAV] (
+    [ID del contratista asignado por el SIPAC (RF_00)]                 NVARCHAR (255) NULL,
+    [ID registro fiduciario del contrato (RI_00)]                      NVARCHAR (255) NULL,
+    [ID del contrato asignado por la CNH (RI_01)]                      NVARCHAR (255) NULL,
+    [Mes de reporte (RM51_01)]                                         FLOAT (53)     NULL,
+    [Año de reporte (RM51_02)]                                         FLOAT (53)     NULL,
+    [Regalía Base: Saldo a favor del contratista de periodos anterior] FLOAT (53)     NULL,
+    [Regalía Base: Saldo a favor del contratista al cierre del 17 nat] FLOAT (53)     NULL,
+    [Regalía Base: Saldo a favor del contratista al cierre del period] FLOAT (53)     NULL,
+    [Regalía Base: Saldo a favor del contratista posterior al cierre ] FLOAT (53)     NULL,
+    [Regalía Base: Nuevo saldo a favor del contratista (RM51_07)]      FLOAT (53)     NULL,
+    [Regalía Adicional: Saldo a favor del contratista de periodos ant] FLOAT (53)     NULL,
+    [Regalía Adicional: Saldo a favor del contratista al cierre del 1] FLOAT (53)     NULL,
+    [Regalía Adicional: Saldo a favor del contratista al cierre del p] FLOAT (53)     NULL,
+    [Regalía Adicional: Saldo a favor del contratista posterior al ci] FLOAT (53)     NULL,
+    [Regalía Adicional: Nuevo saldo a favor del contratista (RM51_12)] FLOAT (53)     NULL,
+    [Cuota Exploratoria: Saldo a favor del contratista de periodos an] FLOAT (53)     NULL,
+    [Cuota Exploratoria: Saldo a favor del contratista al cierre del ] FLOAT (53)     NULL,
+    [Cuota Exploratoria: Saldo a favor del contratista al cierre del1] FLOAT (53)     NULL,
+    [Cuota Exploratoria: Saldo a favor del contratista posterior al c] FLOAT (53)     NULL,
+    [Cuota Exploratoria: Nuevo saldo a favor del contratista (RM51_17] FLOAT (53)     NULL,
+    [Estado (activo)]                                                  NVARCHAR (255) NULL,
+    [Fecha registro (fechaRegistro)]                                   NVARCHAR (255) NULL
+);
+

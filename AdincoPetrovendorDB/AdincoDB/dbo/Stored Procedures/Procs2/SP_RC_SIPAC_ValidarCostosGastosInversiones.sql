@@ -1,0 +1,871 @@
+﻿-- =============================================
+-- Author:		<Marcos Garcia>
+-- Description: <Procedimiento que valida el archivo
+--				Reporte de Costos, Gastos e Inversionesa, 
+--				para evitar errores al subir a SIPAC>
+-- Create INT:	<20-11-2019>
+-- Module:      <Reportes SIPAC Gastos>
+-- =============================================
+-- Alter Author:		<Marcos Garcia>
+-- Alter Description:	<Corrección de Ortografía, 
+--						Agregar Validación de Cuenta Contable>
+-- Alter Date:			<10-01-2020>
+-- =============================================
+-- Alter Author:		<Marcos Garcia>
+-- Alter Description:	<Agragar HASH y UUID se repiten en RC_CONT_26_M, 
+--						Modificar de 60 a 90 dias de atraso>
+-- Alter Date:			<20-01-2020>
+-- =============================================
+-- MNGA 27-01-202 Agregar Alertas Con Respecto a el presupuesto
+-- =============================================
+-- Pedro Acuna
+-- 23-oct-2020
+-- Se agrega alerta cuando el periodo entra a los 6 meses permitidos a su fecha de finalizacion
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]
+--[SP_RC_SIPAC_ValidarCostosGastosInversiones] 3,'2019-11-01',1
+--[SP_RC_SIPAC_ValidarCostosGastosInversiones] 3,'2019-06-01',0
+--[SP_RC_SIPAC_ValidarCostosGastosInversiones] 3,'2019-11-01',0
+-- Add the parameters for the stored procedure here
+@Contrato      INT, 
+@Mes           DATE, 
+@IdPresupuesto INT
+AS
+     BEGIN
+         -- SET NOCOUNT ON added to prevent extra result sets from
+         -- interfering with SELECT statements.
+         SET NOCOUNT ON;
+
+         -- Insert statements for procedure here
+         --________________________________________ Verificacion de Tablas Temporales ________________________________________--
+         IF OBJECT_ID('tempdb..#TEMPORAL_21_M', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_21_M;
+         IF OBJECT_ID('tempdb..#TEMPORAL_22_M', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_22_M;
+         IF OBJECT_ID('tempdb..#TEMPORAL_23_M', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_23_M;
+         IF OBJECT_ID('tempdb..#TEMPORAL_24_M', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_24_M;
+         IF OBJECT_ID('tempdb..#TEMPORAL_25_M', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_25_M;
+         IF OBJECT_ID('tempdb..#TEMPORAL_26_M', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_26_M;
+         IF OBJECT_ID('tempdb..#TEMPORAL_UUI_VariasTransfer', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_UUI_VariasTransfer;
+         IF OBJECT_ID('tempdb..#DatosPresupuestos', 'U') IS NOT NULL
+             DROP TABLE #DatosPresupuestos;
+         IF OBJECT_ID('tempdb..#TEMPORAL_26_MContTemp', 'U') IS NOT NULL
+             DROP TABLE #TEMPORAL_26_MContTemp;
+
+         --________________________________________ Creación de Tablas Temporales ________________________________________--
+         --________________________________________
+         CREATE TABLE #TEMPORAL_21_M
+         (Id_21_M                      INT IDENTITY(11, 1), 
+          IdContratista_RF_00          NVARCHAR(MAX), 
+          IdContrato_RI_00             NVARCHAR(MAX), 
+          NumeroContrato_RF01_01       NVARCHAR(MAX), 
+          NumeroIdentificacion_RC21_00 NVARCHAR(MAX), 
+          MesReporte_RC21_01           INT, 
+          AnioReporte_RC21_02          INT, 
+          NumeroConsecutivo_RC21_03    INT, 
+          TipoDocumento_RC21_04        NVARCHAR(MAX), 
+          UUID_RC21_05                 NVARCHAR(MAX), 
+          IUC_PI_RC21_06               NVARCHAR(MAX), 
+          IUC_PE_RC21_07               NVARCHAR(MAX), 
+          TipoComprobante_RC21_08      NVARCHAR(MAX), 
+          MetodoPago_RC21_09           NVARCHAR(MAX), 
+          Actividad_RC21_10            NVARCHAR(MAX), 
+          SubActividad_RC21_11         NVARCHAR(MAX), 
+          Tarea_RC21_12                NVARCHAR(MAX), 
+          CostAtribAdminGral_RC21_13   BIT, 
+          Campo_RC21_14                NVARCHAR(MAX), 
+          Yacimiento_RC21_15           NVARCHAR(MAX), 
+          Pozo_RC21_16                 NVARCHAR(MAX), 
+          NumCuentContable_RC21_17     NVARCHAR(MAX), 
+          DescCuentaContable_RC21_18   NVARCHAR(MAX), 
+          NumPoliContable_RC21_19      NVARCHAR(MAX), 
+          ConcepOp_RC21_20             NVARCHAR(MAX), 
+          GastoOpInver_RC21_21         INT, 
+          MontoAumentar_RC21_22        FLOAT, 
+          MontoDisminuir_RC21_23       FLOAT, 
+          ClavaMoneda_RC21_24          NVARCHAR(MAX), 
+          TipCamConvetUSD_RC21_25      FLOAT, 
+          TipoOpercion_RC21_26         INT
+         );
+         --________________________________________
+         CREATE TABLE #TEMPORAL_22_M
+         (Id_22_M                 INT IDENTITY(11, 1), 
+          IdContratista_RF_00     NVARCHAR(MAX), 
+          IdContrato_RI_00        NVARCHAR(MAX), 
+          NumeroContrato_RF01_01  NVARCHAR(MAX), 
+          MesReporte_RC21_01      NVARCHAR(MAX), 
+          AnioReporte_RC21_02     NVARCHAR(MAX), 
+          NomArchivo_XML_RC22_02  NVARCHAR(MAX), 
+          TimbreHASH_XML_RC22_03  NVARCHAR(MAX), 
+          UUID_RC22_04            NVARCHAR(MAX), 
+          TipoComprobante_RC22_05 NVARCHAR(MAX), 
+          MetPago_RC22_06         NVARCHAR(MAX), 
+          MontoTotal_RC22_07      MONEY, 
+          Subtotal_RC22_08        MONEY, 
+          MontoLiquida_RC22_09    MONEY, 
+          NumParcialidad_RC22_10  INT, 
+          FormPago_RC22_11        NVARCHAR(MAX), 
+          FechaExpedicion_RC22_12 NVARCHAR(MAX), 
+          RFC_Emisor_RC22_13      NVARCHAR(MAX), 
+          LugarExpedicion_RC22_14 NVARCHAR(MAX), 
+          RFC_Receptor_RC22_15    NVARCHAR(MAX), 
+          ClaveMoneda_RC22_16     NVARCHAR(MAX), 
+          ClasDocSoporte_RC22_17  INT
+         );
+         --________________________________________
+         CREATE TABLE #TEMPORAL_23_M
+         (Id_23_M                 INT IDENTITY(11, 1), 
+          IdContratista_RF_00     NVARCHAR(MAX), 
+          IdContrato_RI_00        NVARCHAR(MAX), 
+          NumeroContrato_RF01_01  NVARCHAR(MAX), 
+          MesReporte_RC23_00      INT, 
+          AnioReporte_RC23_01     INT, 
+          UUID_RC23_02            NVARCHAR(MAX), 
+          UUID_Relacionado_C23_03 NVARCHAR(MAX), 
+          TipoRelacion_RC23_04    NVARCHAR(MAX), 
+          NumParcialidad_RC23_05  INT
+         );
+         --________________________________________
+         CREATE TABLE #TEMPORAL_24_M
+         (Id_24_M                             INT IDENTITY(11, 1), 
+          IdContratista_RF_00                 NVARCHAR(MAX), 
+          IdContrato_RI_00                    NVARCHAR(MAX), 
+          NumeroContrato_RF01_01              NVARCHAR(MAX), 
+          MesReporte_RC24_00                  INT, 
+          AnioReporte_RC24_01                 INT, 
+          NomArchivo_PDF_RC24_02              NVARCHAR(MAX), 
+          TimbreHASH_PDF_RC24_03              NVARCHAR(MAX), 
+          IDPedimentoImportacion_RC24_04      NVARCHAR(MAX), 
+          AcuseElecValidacion_RC24_05         NVARCHAR(MAX), 
+          ValorDolares_RC24_06                MONEY, 
+          PrecioPagado_ValorComercial_RC24_07 MONEY, 
+          ClavePedimento_RC24_08              NVARCHAR(MAX), 
+          FormaPago_RC24_09                   NVARCHAR(MAX), 
+          FechaOriginal_RC24_10               NVARCHAR(MAX), 
+          Regimen_RC24_11                     NVARCHAR(MAX), 
+          RFC_Importador_RC24_12              NVARCHAR(13), 
+          AduanaES_RC24_13                    NVARCHAR(MAX), 
+          IdFiscal_RC24_14                    NVARCHAR(30), 
+          RazonSocialProv_RC24_15             NVARCHAR(MAX), 
+          NumFactura_RC24_16                  NVARCHAR(MAX), 
+          FechaFactura_RC24_17                NVARCHAR(MAX), 
+          ValMontFact_RC24_18                 MONEY, 
+          ValDolares_RC24_19                  MONEY, 
+          ClasDocSoporte_RC24_20              INT
+         );
+         --________________________________________
+         CREATE TABLE #TEMPORAL_25_M
+         (Id_25_M                            INT IDENTITY(11, 1), 
+          IdContratista_RF_00                NVARCHAR(MAX), 
+          IdContrato_RI_00                   NVARCHAR(MAX), 
+          NumeroContrato_RF01_01             NVARCHAR(MAX), 
+          MesReporte_RC25_00                 INT, 
+          AnioReporte_RC25_01                INT, 
+          NomArchivo_PDF_RC25_02             NVARCHAR(MAX), 
+          TimbreHASH_PDF_RC25_03             NVARCHAR(MAX), 
+          IdDocFacturacion_RC25_04           NVARCHAR(MAX), 
+          FolioCompExtranjero_RC25_05        NVARCHAR(MAX), 
+          ImporteTotalAntesImpuestos_RC25_06 MONEY, 
+          FormaPago_RC25_07                  NVARCHAR(MAX), 
+          FechaPago_RC25_08                  NVARCHAR(MAX), 
+          RFC_Importador_RC25_09             NVARCHAR(MAX), 
+          RZImportador_RC25_10               NVARCHAR(MAX), 
+          RZEmisorCompExtranjero_RC25_11     NVARCHAR(MAX), 
+          IdFiscal_RC25_12                   NVARCHAR(MAX), 
+          NumFactura_RC25_13                 NVARCHAR(MAX), 
+          FechaFactura_RC25_14               NVARCHAR(MAX), 
+          ValMontFact_RC25_15                MONEY, 
+          ValDolares_RC25_16                 MONEY, 
+          ClasDocSoporte_RC25_17             INT
+         );
+         --________________________________________
+         CREATE TABLE #TEMPORAL_26_M
+         (Id_26_M                    INT IDENTITY(11, 1), 
+          IdContratista_RF_00        NVARCHAR(MAX), 
+          IdContrato_RI_00           NVARCHAR(MAX), 
+          MesReporte_RC26_00         INT, 
+          AnioReporte_RC26_01        INT, 
+          FormaPago_RC26_02          NVARCHAR(MAX), 
+          IdDocFacturacion_RC26_03   NVARCHAR(MAX), 
+          FechaPago_RC26_04          NVARCHAR(MAX), 
+          NomArchivo_PDF_RC26_05     NVARCHAR(MAX), 
+          TimbreHASH_PDF_RC26_06     NVARCHAR(MAX), 
+          MontoPagado_RC26_07        MONEY, 
+          ClaveMonedaFactura_RC26_08 NVARCHAR(MAX), 
+          MontoEquivDolare_RC26_09   FLOAT, 
+          TipoCambio_RC26_10         FLOAT, 
+          Beneficiario_RC26_11       NVARCHAR(MAX), 
+          ClasDocSoporte_RC26_12     INT
+         );
+         --________________________________________
+         CREATE TABLE #TEMPORAL_UUI_VariasTransfer
+         (Id_UVT        INT IDENTITY(1, 1), 
+          Renglones     NVARCHAR(MAX), 
+          UUID_26_M     NVARCHAR(MAX), 
+          HASH_26_M     NVARCHAR(MAX), 
+          IdFactura     INT, 
+          Transferencia NVARCHAR(MAX)
+         );
+         --________________________________________
+         CREATE TABLE #DatosPresupuestos
+         (IdPresupuesto          INT, 
+          Nombre                 NVARCHAR(MAX), 
+          IdPresupuestoCNH       NVARCHAR(50), 
+          FechaInicioPresupuesto DATE, 
+          FechaFinPresupuesto    DATE
+         );
+         --________________________________________
+         CREATE TABLE #TEMPORAL_26_MContTemp
+         (NombreArchivo NVARCHAR(MAX), 
+          TimbreHASH    NVARCHAR(MAX)
+         );
+         --________________________________________ Insercion en las Tablas Temporales ________________________________________--
+         --________________________________________
+         INSERT INTO #TEMPORAL_21_M
+         (IdContratista_RF_00, 
+          IdContrato_RI_00, 
+          NumeroContrato_RF01_01, 
+          NumeroIdentificacion_RC21_00, 
+          MesReporte_RC21_01, 
+          AnioReporte_RC21_02, 
+          NumeroConsecutivo_RC21_03, 
+          TipoDocumento_RC21_04, 
+          UUID_RC21_05, 
+          IUC_PI_RC21_06, 
+          IUC_PE_RC21_07, 
+          TipoComprobante_RC21_08, 
+          MetodoPago_RC21_09, 
+          Actividad_RC21_10, 
+          SubActividad_RC21_11, 
+          Tarea_RC21_12, 
+          CostAtribAdminGral_RC21_13, 
+          Campo_RC21_14, 
+          Yacimiento_RC21_15, 
+          Pozo_RC21_16, 
+          NumCuentContable_RC21_17, 
+          DescCuentaContable_RC21_18, 
+          NumPoliContable_RC21_19, 
+          ConcepOp_RC21_20, 
+          GastoOpInver_RC21_21, 
+          MontoAumentar_RC21_22, 
+          MontoDisminuir_RC21_23, 
+          ClavaMoneda_RC21_24, 
+          TipCamConvetUSD_RC21_25, 
+          TipoOpercion_RC21_26
+         )
+         EXEC dbo.SIPAC_RC_CONT_21_M 
+              @Contrato, 
+              @Mes, 
+              @IdPresupuesto;
+         --________________________________________
+         INSERT INTO #TEMPORAL_22_M
+         (IdContratista_RF_00, 
+          IdContrato_RI_00, 
+          NumeroContrato_RF01_01, 
+          MesReporte_RC21_01, 
+          AnioReporte_RC21_02, 
+          NomArchivo_XML_RC22_02, 
+          TimbreHASH_XML_RC22_03, 
+          UUID_RC22_04, 
+          TipoComprobante_RC22_05, 
+          MetPago_RC22_06, 
+          MontoTotal_RC22_07, 
+          Subtotal_RC22_08, 
+          MontoLiquida_RC22_09, 
+          NumParcialidad_RC22_10, 
+          FormPago_RC22_11, 
+          FechaExpedicion_RC22_12, 
+          RFC_Emisor_RC22_13, 
+          LugarExpedicion_RC22_14, 
+          RFC_Receptor_RC22_15, 
+          ClaveMoneda_RC22_16, 
+          ClasDocSoporte_RC22_17
+         )
+         EXEC dbo.SIPAC_RC_CONT_22_M 
+              @Contrato, 
+              @Mes, 
+              @IdPresupuesto;
+         --________________________________________
+         INSERT INTO #TEMPORAL_23_M
+         (IdContratista_RF_00, 
+          IdContrato_RI_00, 
+          NumeroContrato_RF01_01, 
+          MesReporte_RC23_00, 
+          AnioReporte_RC23_01, 
+          UUID_RC23_02, 
+          UUID_Relacionado_C23_03, 
+          TipoRelacion_RC23_04, 
+          NumParcialidad_RC23_05
+         )
+         EXEC dbo.SIPAC_RC_CONT_23_M 
+              @Contrato, 
+              @Mes, 
+              @IdPresupuesto;
+         --________________________________________
+         INSERT INTO #TEMPORAL_24_M
+         (IdContratista_RF_00, 
+          IdContrato_RI_00, 
+          NumeroContrato_RF01_01, 
+          MesReporte_RC24_00, 
+          AnioReporte_RC24_01, 
+          NomArchivo_PDF_RC24_02, 
+          TimbreHASH_PDF_RC24_03, 
+          IDPedimentoImportacion_RC24_04, 
+          AcuseElecValidacion_RC24_05, 
+          ValorDolares_RC24_06, 
+          PrecioPagado_ValorComercial_RC24_07, 
+          ClavePedimento_RC24_08, 
+          FormaPago_RC24_09, 
+          FechaOriginal_RC24_10, 
+          Regimen_RC24_11, 
+          RFC_Importador_RC24_12, 
+          AduanaES_RC24_13, 
+          IdFiscal_RC24_14, 
+          RazonSocialProv_RC24_15, 
+          NumFactura_RC24_16, 
+          FechaFactura_RC24_17, 
+          ValMontFact_RC24_18, 
+          ValDolares_RC24_19, 
+          ClasDocSoporte_RC24_20
+         )
+         EXECUTE dbo.SIPAC_RC_CONT_24_M 
+                 @Contrato, 
+                 @Mes, 
+                 @IdPresupuesto;
+         --________________________________________
+         INSERT INTO #TEMPORAL_25_M
+         (IdContratista_RF_00, 
+          IdContrato_RI_00, 
+          NumeroContrato_RF01_01, 
+          MesReporte_RC25_00, 
+          AnioReporte_RC25_01, 
+          NomArchivo_PDF_RC25_02, 
+          TimbreHASH_PDF_RC25_03, 
+          IdDocFacturacion_RC25_04, 
+          FolioCompExtranjero_RC25_05, 
+          ImporteTotalAntesImpuestos_RC25_06, 
+          FormaPago_RC25_07, 
+          FechaPago_RC25_08, 
+          RFC_Importador_RC25_09, 
+          RZImportador_RC25_10, 
+          RZEmisorCompExtranjero_RC25_11, 
+          IdFiscal_RC25_12, 
+          NumFactura_RC25_13, 
+          FechaFactura_RC25_14, 
+          ValMontFact_RC25_15, 
+          ValDolares_RC25_16, 
+          ClasDocSoporte_RC25_17
+         )
+         EXECUTE dbo.SIPAC_RC_CONT_25_M 
+                 @Contrato, 
+                 @Mes, 
+                 @IdPresupuesto;
+         --________________________________________
+         INSERT INTO #TEMPORAL_26_M
+         (IdContratista_RF_00, 
+          IdContrato_RI_00, 
+          MesReporte_RC26_00, 
+          AnioReporte_RC26_01, 
+          FormaPago_RC26_02, 
+          IdDocFacturacion_RC26_03, 
+          FechaPago_RC26_04, 
+          NomArchivo_PDF_RC26_05, 
+          TimbreHASH_PDF_RC26_06, 
+          MontoPagado_RC26_07, 
+          ClaveMonedaFactura_RC26_08, 
+          MontoEquivDolare_RC26_09, 
+          TipoCambio_RC26_10, 
+          Beneficiario_RC26_11, 
+          ClasDocSoporte_RC26_12
+         )
+         EXECUTE dbo.SIPAC_RC_CONT_26_M 
+                 @Contrato, 
+                 @Mes, 
+                 @IdPresupuesto;
+         --________________________________________
+         INSERT INTO #TEMPORAL_UUI_VariasTransfer
+         (Renglones, 
+          UUID_26_M, 
+          HASH_26_M, 
+          IdFactura, 
+          Transferencia
+         )
+                SELECT STUFF(
+                (
+                    SELECT DISTINCT 
+                           ', '+CONVERT(NVARCHAR(MAX), T26A.Id_26_M)
+                    FROM #TEMPORAL_26_M T26A
+                    WHERE T26A.IdDocFacturacion_RC26_03 = T26.IdDocFacturacion_RC26_03 FOR XML PATH('')
+                ), 1, 2, '') AS Renglones, 
+                       T26.IdDocFacturacion_RC26_03, 
+                       T26.TimbreHASH_PDF_RC26_06, 
+                       F.IdFactura, 
+                       STUFF(
+                (
+                    SELECT ' | '+RTRIM(LTRIM(u.IdTransferFactura))
+                    FROM dbo.FI_TransferFactura u
+                    WHERE F.IdFactura = u.IdFactura FOR XML PATH('')
+                ), 1, 2, '') AS Tranferencias
+                FROM #TEMPORAL_26_M T26
+                     JOIN dbo.FI_Factura F ON T26.IdDocFacturacion_RC26_03 = F.UUID
+                WHERE T26.TimbreHASH_PDF_RC26_06 = T26.TimbreHASH_PDF_RC26_06
+                GROUP BY T26.IdDocFacturacion_RC26_03, 
+                         T26.TimbreHASH_PDF_RC26_06, 
+                         F.IdFactura
+                HAVING COUNT(*) > 1;
+         --________________________________________
+
+         INSERT INTO #DatosPresupuestos
+         (IdPresupuesto, 
+          Nombre, 
+          IdPresupuestoCNH, 
+          FechaInicioPresupuesto, 
+          FechaFinPresupuesto
+         )
+                SELECT P.IdPresupuesto, 
+                       P.Nombre, 
+                       P.IdPresupuestoCNH, 
+                       P.InicioPresupuesto, 
+                       P.FinPresupuesto
+                FROM dbo.FI_TransferFactura TF WITH(NOLOCK)
+                     JOIN dbo.CO_Registro R WITH(NOLOCK) ON TF.IdFactura = R.IdFactura
+                     JOIN dbo.FI_Factura F WITH(NOLOCK) ON R.IdFactura = F.IdFactura
+                                                           AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
+                                                           AND R.IdEstado = 10004
+                                                           AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
+                                                           AND R.CvTipoDocFacturacion = 1
+                     JOIN dbo.CO_Contrato C WITH(NOLOCK) ON F.IdContrato = C.IdContrato
+                                                            AND F.IdContrato = @Contrato
+                     JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
+                     JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON LPM.IdPresupuesto = P.IdPresupuesto
+                     JOIN dbo.CO_Servicio S WITH(NOLOCK) ON LPM.IdServicio = S.IdServicio
+                                                            AND S.NombreServicio NOT LIKE '%No elegibles%'
+                                                            AND S.IdContrato = C.IdContrato
+                GROUP BY P.IdPresupuesto, 
+                         P.Nombre, 
+                         P.IdPresupuestoCNH, 
+                         P.InicioPresupuesto, 
+                         P.FinPresupuesto
+                UNION
+                SELECT P.IdPresupuesto, 
+                       P.Nombre, 
+                       P.IdPresupuestoCNH, 
+                       P.InicioPresupuesto, 
+                       P.FinPresupuesto
+                FROM dbo.FI_TransferFactura TF WITH(NOLOCK)
+                     JOIN dbo.FI_ComplementoDePago CP WITH(NOLOCK) ON TF.IdFactura = CP.IdFactura
+                     JOIN dbo.FI_CPDocRelacionado DR WITH(NOLOCK) ON CP.IdComplementoDePago = DR.IdComplementoDePago
+                     JOIN dbo.FI_Factura F WITH(NOLOCK) ON DR.IdDocumento = F.UUID
+                                                           AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
+                     JOIN dbo.CO_Registro R WITH(NOLOCK) ON F.IdFactura = R.IdFactura
+                                                            AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
+                                                            AND R.IdEstado = 10004
+                                                            AND R.CvTipoDocFacturacion = 1
+                     JOIN dbo.CO_Contrato C WITH(NOLOCK) ON F.IdContrato = C.IdContrato
+                                                            AND F.IdContrato = @Contrato
+                     JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
+                     JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON LPM.IdPresupuesto = P.IdPresupuesto
+                     JOIN dbo.CO_Servicio S WITH(NOLOCK) ON LPM.IdServicio = S.IdServicio
+                                                            AND S.NombreServicio NOT LIKE '%No elegibles%'
+                                                            AND S.IdContrato = C.IdContrato
+                GROUP BY P.IdPresupuesto, 
+                         P.Nombre, 
+                         P.IdPresupuestoCNH, 
+                         P.InicioPresupuesto, 
+                         P.FinPresupuesto
+                UNION
+                SELECT Pre.IdPresupuesto, 
+                       Pre.Nombre, 
+                       Pre.IdPresupuestoCNH, 
+                       Pre.InicioPresupuesto, 
+                       Pre.FinPresupuesto
+                FROM dbo.FI_Transfer T WITH(NOLOCK)
+                     JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON T.IdTransferencia = TF.IdTransfer
+                     JOIN dbo.FI_PedimentoComprobante P WITH(NOLOCK) ON TF.IdPedimentoComprobante = P.IdPedimentoComprobante
+                                                                        AND ISNULL(CONVERT(INT, P.ProcesadoSIPAC), 0) = 0
+                     JOIN dbo.CO_Registro R WITH(NOLOCK) ON P.IdPedimentoComprobante = R.IdPedimentoComprobante
+                                                            AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
+                                                            AND R.IdEstado = 10004
+                                                            AND R.CvTipoDocFacturacion IN(2, 3)
+                     JOIN dbo.CO_Contrato C WITH(NOLOCK) ON P.IdContrato = C.IdContrato
+                                                            AND C.IdContrato = @Contrato
+                     JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
+                     JOIN dbo.CO_Presupuesto Pre WITH(NOLOCK) ON LPM.IdPresupuesto = Pre.IdPresupuesto
+                     JOIN dbo.CO_Servicio S WITH(NOLOCK) ON LPM.IdServicio = S.IdServicio
+                                                            AND S.NombreServicio NOT LIKE '%No elegibles%'
+                GROUP BY Pre.IdPresupuesto, 
+                         Pre.Nombre, 
+                         Pre.IdPresupuestoCNH, 
+                         Pre.InicioPresupuesto, 
+                         Pre.FinPresupuesto;
+         --_______________________________________________
+         INSERT INTO #TEMPORAL_26_MContTemp
+         (NombreArchivo, 
+          TimbreHASH
+         )
+                SELECT T26.NomArchivo_PDF_RC26_05, 
+                       T26.TimbreHASH_PDF_RC26_06
+                FROM #TEMPORAL_26_M T26
+                GROUP BY T26.NomArchivo_PDF_RC26_05, 
+                         T26.TimbreHASH_PDF_RC26_06
+                HAVING COUNT(T26.NomArchivo_PDF_RC26_05) <= 1;
+         --_______________________________________________
+         DECLARE @Count INT;
+         SET @Count =
+         (
+             SELECT COUNT(*)
+             FROM #DatosPresupuestos DP
+             WHERE DP.IdPresupuestoCNH IS NULL
+                   OR DP.IdPresupuestoCNH = ''
+                   OR DP.IdPresupuestoCNH = 'FALTA ID'
+         );
+         --_______________________________________________________________________________________________--
+
+         DECLARE @Reporte INT;
+         SET @Reporte =
+         (
+             SELECT COUNT(Id_21_M)
+             FROM #TEMPORAL_21_M
+             WHERE TipoDocumento_RC21_04 IS NULL
+                   AND UUID_RC21_05 IS NULL
+                   AND IUC_PI_RC21_06 IS NULL
+                   AND IUC_PE_RC21_07 IS NULL
+                   AND TipoComprobante_RC21_08 IS NULL
+                   AND MetodoPago_RC21_09 IS NULL
+                   AND Actividad_RC21_10 IS NULL
+                   AND SubActividad_RC21_11 IS NULL
+                   AND Tarea_RC21_12 IS NULL
+                   AND CostAtribAdminGral_RC21_13 IS NULL
+                   AND Campo_RC21_14 IS NULL
+                   AND Yacimiento_RC21_15 IS NULL
+                   AND Pozo_RC21_16 IS NULL
+                   AND NumCuentContable_RC21_17 IS NULL
+                   AND DescCuentaContable_RC21_18 IS NULL
+                   AND NumPoliContable_RC21_19 IS NULL
+                   AND ConcepOp_RC21_20 IS NULL
+                   AND GastoOpInver_RC21_21 IS NULL
+                   AND MontoAumentar_RC21_22 = 0
+                   AND MontoDisminuir_RC21_23 = 0
+                   AND ClavaMoneda_RC21_24 IS NULL
+                   AND TipCamConvetUSD_RC21_25 IS NULL
+                   AND TipoOpercion_RC21_26 IS NULL
+         );
+         IF(@Reporte <> 0)
+             BEGIN
+                 SELECT ' La plantilla se reportará en 0 ya que no se encontró ningún gasto en el mes seleccionado.' AS Validacion, 
+                        @Reporte AS [Contador];
+             END;
+             ELSE
+             BEGIN
+                 --________________________________________ Validaciones ________________________________________--
+                 SELECT [Validaciones]
+                 FROM
+                 (
+                     --0______________________________Verificacion Presupuesto_______________________________--
+                     SELECT CASE
+                                WHEN IdPresupuestoCNH IS NULL
+                                     OR IdPresupuestoCNH = ''
+                                     OR IdPresupuestoCNH = 'FALTA ID'
+                                THEN '¡Alerta! No sé a proporcionado la fecha de inicio o fecha de fin del presupuesto con Nombre: [ '+Nombre+' ].'
+                                ELSE '¡Alerta! No sé a proporcionado la fecha de inicio o fecha de fin del presupuesto: [ '+Nombre+' - '+SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH)-8, 9)+' ].'
+                            END AS Validaciones
+                     FROM #DatosPresupuestos
+                     WHERE FechaInicioPresupuesto IS NULL
+                           OR FechaFinPresupuesto IS NULL
+                     UNION
+                     SELECT CASE
+                                WHEN @Count = 1
+                                THEN '¡Alerta! No sé a proporcionado el identificador CNH del Presupuesto ['+DP.Nombre+'].'
+                                ELSE '¡Alerta! No sé a proporcionado el identificador CNH de los Presupuestos ['+STUFF(
+                     (
+                         SELECT DISTINCT 
+                                ', '+CONVERT(NVARCHAR(MAX), DPA.Nombre)
+                         FROM #DatosPresupuestos DPA
+                         WHERE DPA.IdPresupuestoCNH IS NULL
+                               OR DPA.IdPresupuestoCNH = ''
+                               OR DPA.IdPresupuestoCNH = 'FALTA ID' FOR XML PATH('')
+                     ), 1, 2, '')+'].'
+                            END AS Validaciones
+                     FROM #DatosPresupuestos DP
+                     WHERE DP.IdPresupuestoCNH IS NULL
+                           OR DP.IdPresupuestoCNH = ''
+                           OR DP.IdPresupuestoCNH = 'FALTA ID'
+                     UNION
+                     --	
+                     --       
+                     SELECT CASE
+                                WHEN IdPresupuestoCNH IS NULL
+                                     OR IdPresupuestoCNH = ''
+                                     OR IdPresupuestoCNH = 'FALTA ID'
+                                THEN '¡Alerta! El presupuesto con Nombre: [ '+Nombre+' ] con fecha de finalización '+CONVERT(NVARCHAR(MAX), FechaFinPresupuesto)+' esta fuera del periodo.'
+                                ELSE '¡Alerta! El presupuesto: [ '+Nombre+' - '+SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH)-8, 9)+' ] con fecha de finalización '+CONVERT(NVARCHAR(MAX), FechaFinPresupuesto)+' está fuera del periodo.'
+                            END AS Validaciones
+                     FROM #DatosPresupuestos
+                     WHERE DATEDIFF(MONTH, FechaFinPresupuesto, GETDATE()) >= 0
+                           AND FechaFinPresupuesto IS NOT NULL
+                     --      
+                     UNION
+                     SELECT CASE
+                                WHEN IdPresupuestoCNH IS NULL
+                                     OR IdPresupuestoCNH = ''
+                                     OR IdPresupuestoCNH = 'FALTA ID'
+                                THEN '¡Alerta! El presupuesto con Nombre: [ '+Nombre+' ] con fecha de finalización '+CONVERT(NVARCHAR(MAX), FechaFinPresupuesto)+' la cual está fuera de los últimos 6 meses permitidos.'
+                                ELSE '¡Alerta! El presupuesto: [ '+Nombre+' - '+SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH)-8, 9)+' ] con fecha de finalización '+CONVERT(NVARCHAR(MAX), FechaFinPresupuesto)+' la cual está fuera de los últimos 6 meses permitidos.'
+                            END AS Validaciones
+                     FROM #DatosPresupuestos
+                     WHERE DATEDIFF(MONTH, FechaFinPresupuesto, GETDATE()) >= 7
+                           AND FechaFinPresupuesto IS NOT NULL
+                     UNION
+                     --1______________________________Complemento de Pago sea PPD_______________________________--
+                     SELECT('El complemento de pago se Registró como PUE en vez de PPD, en la Hoja RC_CONT_22_M en la columna RC22_06 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+', referente en la Hoja RC_CONT_23_M en la columna RC23_03 Renglón: '+CONVERT(NVARCHAR(MAX), T23.Id_23_M))+'.' AS [Validaciones]
+                     FROM #TEMPORAL_23_M T23
+                          INNER JOIN #TEMPORAL_22_M T22 ON T23.UUID_Relacionado_C23_03 = T22.UUID_RC22_04
+                     WHERE T22.MetPago_RC22_06 = 'PUE'
+                           AND T22.TipoComprobante_RC22_05 = 'I'
+                     UNION
+                     --2_______________________________Monto Total Mayor o Igual que (Subtotal y Monto Liquida)__--
+                     SELECT CASE
+                                WHEN(T22.Subtotal_RC22_08 > T22.MontoTotal_RC22_07)
+                                    AND (T22.MontoLiquida_RC22_09 > T22.MontoTotal_RC22_07)
+                                THEN 'El Subtotal, así como Monto que se Liquida son mayores que el Monto Total del comprobante de Facturación, Verificar en la Hoja RC_CONT_22_M en las columnas RC22_08, RC22_09 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+'.'
+                                WHEN T22.Subtotal_RC22_08 > T22.MontoTotal_RC22_07
+                                THEN 'El Subtotal es mayor que el Monto Total del comprobante de Facturación, Verificar en la Hoja RC_CONT_22_M en la columna RC22_08 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+'.'
+                                WHEN T22.MontoLiquida_RC22_09 > T22.MontoTotal_RC22_07
+                                THEN 'El Monto que se Liquida es mayor que el Monto Total del comprobante de Facturación, Verificar en la Hoja RC_CONT_22_M en la columna RC22_09 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_22_M AS T22
+                     WHERE T22.Subtotal_RC22_08 > T22.MontoTotal_RC22_07
+                           OR T22.MontoLiquida_RC22_09 > T22.MontoTotal_RC22_07
+                     UNION
+                     --3 _____________________________ Fecha Menor o Igual al ultimo dia Natural(2 meses estra aun para recibir) _______________--
+                     SELECT CASE
+                                WHEN T26.IdDocFacturacion_RC26_03 IS NULL
+                                     OR T26.IdDocFacturacion_RC26_03 = 'NA'
+                                THEN 'Verificar en la Hoja RC_CONT_26_M en la columna RC26_04 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+', ya que el documento tiene '+CONVERT(NVARCHAR, (DATEDIFF(MONTH, T26.FechaPago_RC26_04, @Mes)))+'  meses de atraso de los 90 días (3 meses permitidos).'
+                                ELSE 'Verificar en la Hoja RC_CONT_26_M en la columna RC26_04 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+', ya que el documento tiene '+CONVERT(NVARCHAR, (DATEDIFF(MONTH, T26.FechaPago_RC26_04, @Mes)))+'  meses de atraso de los 90 días (3 meses permitidos) con el ID del Documento: '+T26.IdDocFacturacion_RC26_03+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_26_M T26
+                     WHERE DATEDIFF(MONTH, T26.FechaPago_RC26_04, @Mes) > 3
+                     UNION
+                     ----------------------             
+                     SELECT CASE
+                                WHEN T26.IdDocFacturacion_RC26_03 IS NULL
+                                     OR T26.IdDocFacturacion_RC26_03 = 'NA'
+                                THEN 'La Fecha de Pago debe ser menor o igual al último día natural del periodo que se reporta verificar la Hoja RC_CONT_26_M en la columna RC26_04 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                ELSE 'La Fecha de Pago debe ser menor o igual al último día natural del periodo que se reporta verificar la Hoja RC_CONT_26_M en la columna RC26_04 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+' con el ID del Documento '+T26.IdDocFacturacion_RC26_03+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_26_M T26
+                     WHERE DATEDIFF(MONTH, @Mes, FechaPago_RC26_04) >= 1
+                     UNION
+                     --4 ________________________________________ UUID no null __________________________________--
+                     ----------------------------
+                     SELECT 'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_21_M en la columna RC21_05 Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+'.' AS [Validaciones]
+                     FROM #TEMPORAL_21_M T21
+                     WHERE(T21.UUID_RC21_05 IS NULL
+                           OR T21.UUID_RC21_05 = 'NÚMERO NO REGISTRADO')
+                          AND T21.TipoDocumento_RC21_04 = 'CF'
+                     UNION
+                     ----------------------------
+                     SELECT 'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_22_M en la columna RC22_04 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+'.' AS [Validaciones]
+                     FROM #TEMPORAL_22_M T22
+                     WHERE T22.UUID_RC22_04 IS NULL
+                     UNION
+                     ----------------------------
+                     SELECT CASE
+                                WHEN T23.UUID_RC23_02 IS NULL
+                                     AND T23.UUID_Relacionado_C23_03 IS NULL
+                                THEN 'El UUID del CFDI Principal, así como el UUID del CFDI Relacionado están vacíos, Verificar en la Hoja RC_CONT_23_M en las columnas RC23_02, RC23_03 Renglón: '+CONVERT(NVARCHAR(MAX), T23.Id_23_M)+'.'
+                                WHEN T23.UUID_RC23_02 IS NULL
+                                THEN 'El UUID del CFDI Principal está vacío, Verificar en la Hoja RC_CONT_23_M en la columna RC23_02 Renglón: '+CONVERT(NVARCHAR(MAX), T23.Id_23_M)+'.'
+                                WHEN T23.UUID_Relacionado_C23_03 IS NULL
+                                THEN 'El UUID del CFDI Relacionado está vacío, Verificar en la Hoja RC_CONT_23_M en la columna RC23_03 Renglón: '+CONVERT(NVARCHAR(MAX), T23.Id_23_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_23_M T23
+                     WHERE T23.UUID_RC23_02 IS NULL
+                           OR T23.UUID_Relacionado_C23_03 IS NULL
+                     UNION
+                     --5 _____________________________ PI y PE si son PPD _____________________________--
+
+                     SELECT CASE
+                                WHEN T21.TipoDocumento_RC21_04 = 'PE'
+                                THEN 'El Comprobante de Proveedor en el Extranjero esta Registrado como PPD en vez de PUE, Verificar en la Hoja RC_CONT_21_M en la columna RC21_04 Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+'.'
+                                WHEN T21.TipoDocumento_RC21_04 = 'PI'
+                                THEN 'El Pedimento de Importación esta Registrado como PPD en vez de PUE, Verificar en la Hoja RC_CONT_21_M en la columna RC21_04 Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_21_M T21
+                     WHERE(T21.TipoDocumento_RC21_04 = 'PE'
+                           AND T21.MetodoPago_RC21_09 = 'PPD')
+                          OR (T21.TipoDocumento_RC21_04 = 'PI'
+                              AND T21.MetodoPago_RC21_09 = 'PPD')
+                     UNION
+                     -- 6________________________ Datos Cuentas Contables Completos _____________________--
+
+                     SELECT 'El Número de Cuenta Contable o La Descripción de la Cuenta Contable se encuentra vacío, Verificar en la Hoja RC_CONT_21_M en las columnas RC21_17 o RC21_18 Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+'.' AS Validaciones
+                     FROM #TEMPORAL_21_M T21
+                     WHERE T21.NumCuentContable_RC21_17 IS NULL
+                           OR T21.NumCuentContable_RC21_17 = ''
+                           OR T21.DescCuentaContable_RC21_18 IS NULL
+                           OR T21.DescCuentaContable_RC21_18 = ''
+                     UNION
+                     -- 6________________________ Numero Poliza Contable _____________________--
+
+                     SELECT 'El Número de Póliza Contable se encuentra vacío, Verificar en la Hoja RC_CONT_21_M en la columna RC21_19 Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+'.' AS Validaciones
+                     FROM #TEMPORAL_21_M T21
+                     WHERE T21.NumPoliContable_RC21_19 IS NULL
+                           OR T21.NumPoliContable_RC21_19 = ''
+                     UNION
+                     --7 _____________________________ Verificacion del HASH _____________________________--
+                     ---------------------HASH en la 22_M
+                     SELECT CASE
+                                WHEN T22.UUID_RC22_04 IS NULL
+                                     OR T22.UUID_RC22_04 = ''
+                                THEN 'El Timbre HASH de la Hoja RC_CON_22_M en la columna RC22_03 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+' se encuentra vacío.'
+                                ELSE 'El Timbre HASH de la Hoja RC_CON_22_M en la columna RC22_03 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+' se encuentra vacío con el UUID del CFDI: '+T22.UUID_RC22_04+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_22_M T22
+                     WHERE T22.TimbreHASH_XML_RC22_03 IS NULL
+                     UNION
+                     -------------------HASH en la 24_M     
+                     SELECT 'El Timbre HASH de la Hoja RC_CON_24_M en la columna RC24_03 Renglón: '+CONVERT(NVARCHAR(MAX), T24.Id_24_M)+' se encuentra vacío.' AS [Validaciones]
+                     FROM #TEMPORAL_24_M T24
+                     WHERE T24.TimbreHASH_PDF_RC24_03 IS NULL
+                     UNION
+                     ------------------HASH en la 25_M   
+                     SELECT 'El Timbre HASH de la Hoja RC_CON_25_M en la columna RC25_03 Renglón: '+CONVERT(NVARCHAR(MAX), T25.Id_25_M)+' se encuentra vacío.' AS [Validaciones]
+                     FROM #TEMPORAL_25_M T25
+                          INNER JOIN #TEMPORAL_26_M T26 ON T25.IdContratista_RF_00 = T26.IdContratista_RF_00
+                     WHERE T25.TimbreHASH_PDF_RC25_03 IS NULL
+                     UNION
+                     ------------------HASH en la 26_M
+                     SELECT 'El Timbre HASH de la Hoja RC_CON_26_M en la columna RC26_06 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+' se encuentra vacío.' AS [Validaciones]
+                     FROM #TEMPORAL_26_M T26
+                     WHERE T26.TimbreHASH_PDF_RC26_06 IS NULL
+                     UNION
+                     --8 _________________________ RF01_01 (21 al 25) no Null y RC21_00 no null_______________________--
+                     ------------------------
+                     SELECT 'El Número de Identificación en el Presupuesto Asignado por la CNH están Vacíos, Verificar en la Hoja RC_CONT_21_M en la columna RC21_00 Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+'.' AS [Validaciones]
+                     FROM #TEMPORAL_21_M T21
+                     WHERE T21.NumeroIdentificacion_RC21_00 = ''
+                           OR T21.NumeroIdentificacion_RC21_00 IS NULL
+                     UNION
+                     --9 ____________________  21_22 o 21_23 no mayor a 26_09  __________________--
+                     --------------CF-----------------
+                     SELECT CASE
+                                WHEN T26.IdDocFacturacion_RC26_03 IS NULL
+                                     OR T26.IdDocFacturacion_RC26_03 = ''
+                                THEN 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                WHEN T21.UUID_RC21_05 IS NULL
+                                     OR T21.UUID_RC21_05 = ''
+                                THEN 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                ELSE 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+' del identificador '+T26.IdDocFacturacion_RC26_03+' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_26_M T26
+                          INNER JOIN #TEMPORAL_21_M T21 ON T21.UUID_RC21_05 = T26.IdDocFacturacion_RC26_03
+                     WHERE T21.TipoDocumento_RC21_04 = 'CF'
+                           AND (T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09
+                                OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09)
+                     UNION
+                     ---------------PI--------------
+                     SELECT CASE
+                                WHEN T26.IdDocFacturacion_RC26_03 IS NULL
+                                     OR T26.IdDocFacturacion_RC26_03 = ''
+                                THEN 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                WHEN T21.IUC_PI_RC21_06 IS NULL
+                                     OR T21.IUC_PI_RC21_06 = ''
+                                THEN 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                ELSE 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+' del identificador '+T26.IdDocFacturacion_RC26_03+' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_26_M T26
+                          INNER JOIN #TEMPORAL_21_M T21 ON T21.IUC_PI_RC21_06 = T26.IdDocFacturacion_RC26_03
+                     WHERE T21.TipoDocumento_RC21_04 = 'PI'
+                           AND (T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09
+                                OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09)
+                     UNION
+                     --------------------PE-----------------------
+                     SELECT CASE
+                                WHEN T26.IdDocFacturacion_RC26_03 IS NULL
+                                     OR T26.IdDocFacturacion_RC26_03 = ''
+                                THEN 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                WHEN T21.IUC_PE_RC21_07 IS NULL
+                                     OR T21.IUC_PE_RC21_07 = ''
+                                THEN 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                ELSE 'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '+CONVERT(NVARCHAR(MAX), T21.Id_21_M)+' del identificador '+T26.IdDocFacturacion_RC26_03+' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_26_M T26
+                          INNER JOIN #TEMPORAL_21_M T21 ON T21.IUC_PE_RC21_07 = T26.IdDocFacturacion_RC26_03
+                     WHERE T21.TipoDocumento_RC21_04 = 'PE'
+                           AND (T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09
+                                OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09)
+                     UNION
+
+                     --10_____________________________ Archivos No nulos o NOTA:Falta ingresar archivo PDF o XML ______________________________________--
+                     ------------RC_CONT_22_M-------
+                     SELECT CASE
+                                WHEN T22.UUID_RC22_04 IS NOT NULL
+                                THEN 'No se encuentra archivo XML verificar en la Hoja RC_CONT_22_M en la columna RC22_02 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+' referente a el UUID: '+T22.UUID_RC22_04+'.'
+                                ELSE 'No se encuentra archivo XML verificar en la Hoja RC_CONT_22_M en la columna RC22_02 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_22_M T22
+                     WHERE T22.NomArchivo_XML_RC22_02 IS NULL
+                           OR T22.NomArchivo_XML_RC22_02 = ''
+                     UNION
+                     -------------RC_CONT_24_M------
+                     SELECT CASE
+                                WHEN T24.TimbreHASH_PDF_RC24_03 IS NOT NULL
+                                THEN 'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_24_M en la columna RC24_02 Renglón: '+CONVERT(NVARCHAR(MAX), T24.Id_24_M)+' referente a el Timbre HASH: '+T24.TimbreHASH_PDF_RC24_03+'.'
+                                ELSE 'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_24_M en la columna RC24_02 Renglón: '+CONVERT(NVARCHAR(MAX), T24.Id_24_M)+'.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_24_M T24
+                     WHERE T24.NomArchivo_PDF_RC24_02 IS NULL
+                           OR T24.NomArchivo_PDF_RC24_02 = ''
+                     UNION
+                     -----------RC_CONT_26_M--------
+                     SELECT CASE
+                                WHEN T26.IdDocFacturacion_RC26_03 IS NULL
+                                     OR T26.IdDocFacturacion_RC26_03 = 'NA'
+                                THEN 'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_26_M en la columna RC26_05 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+'.'
+                                ELSE 'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_26_M en la columna RC26_05 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+' referente al ID: '+T26.IdDocFacturacion_RC26_03+' del Documento de Facturación Pagado.'
+                            END AS [Validaciones]
+                     FROM #TEMPORAL_26_M T26
+                     WHERE T26.NomArchivo_PDF_RC26_05 = 'NOTA:Falta ingresar archivo PDF'
+                     UNION
+                     --11 ___________________________________ Folio 22_04, 22_11 sean iguales a 26_03, 26_02___________________________________________--
+                     SELECT 'La Forma de Pago en la Hoja RC_CONT_22_M en la columna RC22_11 Renglón: '+CONVERT(NVARCHAR(MAX), T22.Id_22_M)+' esta como "'+T22.FormPago_RC22_11+'" y en la Hoja RC_CONT_26_M en la columna RC26_02 Renglón: '+CONVERT(NVARCHAR(MAX), T26.Id_26_M)+' esta como "'+T26.FormaPago_RC26_02+'".'
+                     FROM #TEMPORAL_26_M T26
+                          INNER JOIN #TEMPORAL_22_M T22 ON T22.UUID_RC22_04 = T26.IdDocFacturacion_RC26_03
+                     WHERE T22.FormPago_RC22_11 <> T26.FormaPago_RC26_02
+                     UNION
+                     --12 ___________________________________ UUID Repetido___________________________________________--
+                     SELECT 'Verificar la Hoja RC_CONT_22_M en la columna RC22_04 Renglones: '+STUFF(
+                     (
+                         SELECT DISTINCT 
+                                ', '+CONVERT(NVARCHAR(MAX), T22A.Id_22_M)
+                         FROM #TEMPORAL_22_M T22A
+                         WHERE T22A.UUID_RC22_04 = T22.UUID_RC22_04 FOR XML PATH('')
+                     ), 1, 2, '')+' ya que el UUID '+T22.UUID_RC22_04+' se repite.'
+                     FROM #TEMPORAL_22_M T22
+                     GROUP BY T22.UUID_RC22_04
+                     HAVING COUNT(T22.UUID_RC22_04) >= 2
+                     UNION
+                     --14 ___________________________________   _______________________________-- 
+                     SELECT CASE
+                                WHEN COUNT(T26.TimbreHASH_PDF_RC26_06) > 1
+                                THEN('Verificar en Hoja RC_CONT_26_M en la columna RC26_05 en los renglones '+STUFF(
+                     (
+                         SELECT DISTINCT 
+                                ', '+CONVERT(NVARCHAR(MAX), T26A.Id_26_M)
+                         FROM #TEMPORAL_26_M T26A
+                         WHERE T26A.TimbreHASH_PDF_RC26_06 = T26.TimbreHASH_PDF_RC26_06 FOR XML PATH('')
+                     ), 1, 2, '')+' ya que los comprobantes de las formas de pago comparte el mismo HASH: '+T26.TimbreHASH_PDF_RC26_06+' en la columna RC26_06.')
+                            END
+                     FROM #TEMPORAL_26_MContTemp T26C
+                          JOIN #TEMPORAL_26_M T26 ON T26C.TimbreHASH = T26.TimbreHASH_PDF_RC26_06
+                     GROUP BY T26.TimbreHASH_PDF_RC26_06
+                 ) AS Resultado;
+             END;
+     END;

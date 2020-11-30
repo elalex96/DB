@@ -1,0 +1,27 @@
+﻿CREATE TABLE [dbo].[SIPAC_Produccion] (
+    [ProduccionId]                 INT        IDENTITY (1, 1) NOT NULL,
+    [Aceite]                       FLOAT (53) NULL,
+    [API]                          FLOAT (53) NULL,
+    [Azufre]                       FLOAT (53) NULL,
+    [Metano]                       FLOAT (53) NULL,
+    [Etano]                        FLOAT (53) NULL,
+    [Propano]                      FLOAT (53) NULL,
+    [Butano]                       FLOAT (53) NULL,
+    [TipoGas]                      INT        NOT NULL,
+    [Condensados]                  FLOAT (53) NULL,
+    [FPC_Metano]                   FLOAT (53) NULL,
+    [FPC_Etano]                    FLOAT (53) NULL,
+    [FPC_Propano]                  FLOAT (53) NULL,
+    [FPC_Butano]                   FLOAT (53) NULL,
+    [Caso_Fortuito]                BIT        NULL,
+    [Dias_Caso_Fortuito]           INT        NULL,
+    [Ingreso_Prestacion_Servicios] FLOAT (53) NULL,
+    [IdAreaContractual]            INT        NOT NULL,
+    [IdMes]                        INT        NOT NULL,
+    [IdAñoContractual]             INT        NOT NULL,
+    CONSTRAINT [PK_tb_EH_Volumen] PRIMARY KEY CLUSTERED ([ProduccionId] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_SIPAC_Produccion_CO_AreaContractual] FOREIGN KEY ([IdAreaContractual]) REFERENCES [dbo].[CO_AreaContractual] ([IdAreaContractual]),
+    CONSTRAINT [FK_SIPAC_Produccion_Mes] FOREIGN KEY ([IdMes]) REFERENCES [dbo].[AP_Mes] ([idMes]),
+    CONSTRAINT [FK_SIPAC_Produccion_SIPAC_GeneralTipoGas] FOREIGN KEY ([TipoGas]) REFERENCES [dbo].[SIPAC_GeneralTipoGas] ([idTipoGas])
+);
+

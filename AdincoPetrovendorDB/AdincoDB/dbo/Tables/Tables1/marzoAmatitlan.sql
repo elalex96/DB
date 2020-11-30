@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[marzoAmatitlan] (
+    [FACTURA]           FLOAT (53)     NULL,
+    [FECHAFACTURA]      DATETIME       NULL,
+    [PROVEEDOR]         VARCHAR (2000) NULL,
+    [DESCRIPCION]       VARCHAR (2000) NULL,
+    [FACTURA2]          NVARCHAR (255) NULL,
+    [FECHAFACTURA2]     DATETIME       NULL,
+    [PROVEEDOR2]        VARCHAR (2000) NULL,
+    [USD]               FLOAT (53)     NULL,
+    [MXN]               FLOAT (53)     NULL,
+    [TOTALGASTOSmarkup] FLOAT (53)     NULL,
+    [TOTALGASTOSUSD]    FLOAT (53)     NULL,
+    [IVA]               FLOAT (53)     NULL,
+    [TOTAL]             FLOAT (53)     NULL,
+    [TIPOCAMBIO]        FLOAT (53)     NULL,
+    [CUENTA]            NVARCHAR (255) NULL,
+    [CONCEPTOBUDGET]    NVARCHAR (255) NULL,
+    [INSTALACION]       NVARCHAR (255) NULL,
+    [IdSubcontratista]  INT            NULL,
+    [IdSubcontratista2] INT            NULL,
+    [IdFactura]         INT            NULL,
+    [IdFactura2]        INT            NULL,
+    [nuevototal]        FLOAT (53)     NULL
+);
+

@@ -1,0 +1,4 @@
+﻿CREATE function [dbo].[MostrarStrings]
+( @IdPerfil int) 
+returns table
+return (select PM.IdPerfil, M.StringModuloId from PerfilModulo as PM inner join Modulo as M on PM.IdModulo = M.IdModulo where PM.IdPerfil = @IdPerfil and PM.Activo = 1)

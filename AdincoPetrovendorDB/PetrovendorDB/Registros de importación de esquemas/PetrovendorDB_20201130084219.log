@@ -1,0 +1,84 @@
+30/11/2020 02:42:19 a. m.	Este registro contiene información acerca de la operación de importación de esquema en el proyecto 'PetrovendorDB' del equipo 'ADINCO-LENOVOX1' por el usuario 'admin'.
+30/11/2020 02:42:19 a. m.	Se inició la importación del esquema de la base de datos.
+30/11/2020 02:42:35 a. m.	Recopilando credenciales de la base de datos
+30/11/2020 02:42:35 a. m.	Recopilando opciones de base de datos
+30/11/2020 02:42:35 a. m.	Recopilando usuarios
+30/11/2020 02:42:35 a. m.	Recopilando roles
+30/11/2020 02:42:35 a. m.	Recopilando roles de aplicación
+30/11/2020 02:42:35 a. m.	Recopilando pertenencias a roles
+30/11/2020 02:42:35 a. m.	Recopilando grupos de archivos
+30/11/2020 02:42:35 a. m.	Recopilando catálogos de texto completo
+30/11/2020 02:42:35 a. m.	Recopilando ensamblados
+30/11/2020 02:42:35 a. m.	Recopilando certificados
+30/11/2020 02:42:35 a. m.	Recopilando claves asimétricas
+30/11/2020 02:42:35 a. m.	Recopilando claves simétricas
+30/11/2020 02:42:35 a. m.	Recopilando claves simétricas cifradas
+30/11/2020 02:42:35 a. m.	Recopilando esquemas
+30/11/2020 02:42:35 a. m.	Recopilando colecciones de esquemas XML
+30/11/2020 02:42:35 a. m.	Recopilando tipos de datos definidos por el usuario
+30/11/2020 02:42:35 a. m.	Recopilando tipos definidos por el usuario
+30/11/2020 02:42:35 a. m.	Recopilando tipos de tabla
+30/11/2020 02:42:35 a. m.	Recopilando claves únicas para tipos de tabla
+30/11/2020 02:42:35 a. m.	Recopilando claves principales para tipos de tabla
+30/11/2020 02:42:35 a. m.	Recopilando índices para tipos de tablas
+30/11/2020 02:42:35 a. m.	Recopilando restricciones CHECK para tipos de tabla
+30/11/2020 02:42:35 a. m.	Recopilando restricciones DEFAULT para tipos de tabla
+30/11/2020 02:42:35 a. m.	Recopilando funciones de partición
+30/11/2020 02:42:35 a. m.	Recopilando esquemas de partición
+30/11/2020 02:42:35 a. m.	Recopilando funciones
+30/11/2020 02:42:35 a. m.	Recopilando funciones cifradas
+30/11/2020 02:42:36 a. m.	Recopilando agregados
+30/11/2020 02:42:36 a. m.	Recopilando procedimientos
+30/11/2020 02:42:57 a. m.	Recopilando procedimientos cifrados
+30/11/2020 02:42:57 a. m.	Recopilando tablas
+30/11/2020 02:43:00 a. m.	Recopilando claves principales
+30/11/2020 02:43:00 a. m.	Recopilando restricciones UNIQUE
+30/11/2020 02:43:00 a. m.	Recopilando claves externas
+30/11/2020 02:43:00 a. m.	Recopilando restricciones DEFAULT
+30/11/2020 02:43:00 a. m.	Recopilando restricciones CHECK
+30/11/2020 02:43:00 a. m.	Recopilando vistas
+30/11/2020 02:43:01 a. m.	Recopilando vistas cifradas
+30/11/2020 02:43:01 a. m.	Recopilando índices
+30/11/2020 02:43:01 a. m.	Recopilando estadísticas
+30/11/2020 02:43:01 a. m.	Recopilando listas de palabras irrelevantes de índices de texto completo
+30/11/2020 02:43:01 a. m.	Recopilando listas de propiedades de búsqueda
+30/11/2020 02:43:01 a. m.	Recopilando propiedades de búsqueda
+30/11/2020 02:43:01 a. m.	Recopilando índices de texto completo
+30/11/2020 02:43:01 a. m.	Recopilando índices de almacenamiento de columnas
+30/11/2020 02:43:01 a. m.	Recopilando índices espaciales
+30/11/2020 02:43:01 a. m.	Recopilando índices XML
+30/11/2020 02:43:01 a. m.	Recopilando índices XML selectivos
+30/11/2020 02:43:01 a. m.	Recopilando desencadenadores cifrados
+30/11/2020 02:43:01 a. m.	Recopilando desencadenadores
+30/11/2020 02:43:01 a. m.	Recopilando DDL triggers cifrados y de CLR
+30/11/2020 02:43:01 a. m.	Recopilando DDL triggers
+30/11/2020 02:43:01 a. m.	Recopilando sinónimos
+30/11/2020 02:43:01 a. m.	Recopilando valores predeterminados
+30/11/2020 02:43:01 a. m.	Recopilando enlaces UDDT de restricción de datos
+30/11/2020 02:43:01 a. m.	Recopilando reglas
+30/11/2020 02:43:01 a. m.	Recopilando enlaces UDDT de restricción de datos
+30/11/2020 02:43:01 a. m.	Recopilando tipos de mensaje
+30/11/2020 02:43:01 a. m.	Recopilando colas
+30/11/2020 02:43:01 a. m.	Recopilando contratos
+30/11/2020 02:43:01 a. m.	Recopilando servicios
+30/11/2020 02:43:01 a. m.	Recopilando notificaciones de eventos
+30/11/2020 02:43:01 a. m.	Recopilando enlaces de servicio remoto
+30/11/2020 02:43:01 a. m.	Recopilando prioridades de Broker
+30/11/2020 02:43:01 a. m.	Recopilando firmas
+30/11/2020 02:43:01 a. m.	Recopilando opciones de compresión de datos
+30/11/2020 02:43:01 a. m.	Recopilando tipos de secuencia
+30/11/2020 02:43:01 a. m.	Recopilando directivas de seguridad
+30/11/2020 02:43:01 a. m.	Recopilar claves de cifrado de columna
+30/11/2020 02:43:01 a. m.	Recopilando claves maestras de columna
+30/11/2020 02:43:01 a. m.	Recopilando orígenes de datos externos
+30/11/2020 02:43:01 a. m.	Recopilando formatos de archivo externos
+30/11/2020 02:43:01 a. m.	Recopilando tablas externas
+30/11/2020 02:43:01 a. m.	Recopilando propiedades extendidas
+30/11/2020 02:43:05 a. m.	Recopilando credenciales
+30/11/2020 02:43:05 a. m.	Recopilando inicios de sesión
+30/11/2020 02:43:05 a. m.	Recopilando auditorías de servidor
+30/11/2020 02:43:13 a. m.	Buscando elementos duplicados en el proyecto
+30/11/2020 02:43:18 a. m.	Ha finalizado el procesamiento de los elementos duplicados
+30/11/2020 02:43:40 a. m.	Finalizó la importación de la base de datos.
+30/11/2020 02:43:40 a. m.	Se guardó un resumen de la importación en la siguiente ubicación: C:\Users\admin.adinco\source\repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\Registros de importación de esquemas\PetrovendorDB_20201130084219.log
+30/11/2020 02:43:40 a. m.	Haga clic en Finalizar para continuar...

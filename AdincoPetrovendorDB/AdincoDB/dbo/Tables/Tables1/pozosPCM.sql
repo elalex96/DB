@@ -1,0 +1,24 @@
+﻿CREATE TABLE [dbo].[pozosPCM] (
+    [contrato]                     VARCHAR (250) NULL,
+    [regionfiscal]                 VARCHAR (100) NULL,
+    [tipohidrocarburo]             VARCHAR (100) NULL,
+    [zona]                         VARCHAR (50)  NULL,
+    [campo]                        VARCHAR (50)  NULL,
+    [nombrepozo]                   VARCHAR (100) NULL,
+    [anexo9]                       VARCHAR (10)  NULL,
+    [idPozo]                       VARCHAR (30)  NULL,
+    [tipohidrocarburo2]            VARCHAR (300) NULL,
+    [puntoentrega]                 VARCHAR (200) NULL,
+    [ubicacionpuntomedicion]       VARCHAR (50)  NULL,
+    [tagpatinmedicion]             VARCHAR (50)  NULL,
+    [tipomedidor]                  VARCHAR (150) NULL,
+    [tagmedidor]                   VARCHAR (50)  NULL,
+    [clasificacionsistemamedicion] VARCHAR (50)  NULL,
+    [IdInstalacion]                INT           NULL,
+    [IdBloque]                     INT           NULL,
+    [IdCampo]                      INT           NULL,
+    [PuntoEntregaID]               INT           NULL,
+    [IdPozoADINCO]                 INT           NULL,
+    [IdContrato]                   INT           NULL
+);
+

@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[MM_Plantillas_SolicitudPedido] (
+    [IdPlantillaSolicitudPedido] INT            IDENTITY (1000, 1) NOT NULL,
+    [IdTipoSolicitudPedido]      INT            NULL,
+    [IdUsuarioSolicitante]       INT            NULL,
+    [AdjudicableParcialmente]    BIT            NULL,
+    [IdPrioridadSolicitante]     INT            NULL,
+    [MotivoUrgencia]             NVARCHAR (MAX) NULL,
+    [UnaSolaEntregaRequerida]    BIT            NULL,
+    [Activo]                     BIT            NULL,
+    [FechaEntregaRequerida]      DATETIME       NULL,
+    [FechaEntregaFinRequerida]   DATETIME       NULL,
+    [IdProveedor]                INT            NULL,
+    [EntregasParciales]          BIT            NULL,
+    [IdContrato]                 INT            NULL,
+    [IdPeriodo]                  INT            NULL,
+    [IdPresupuesto]              INT            NULL,
+    [FechaModificacion]          DATETIME       NULL,
+    [Enviada]                    BIT            NULL,
+    [CreadoPor]                  INT            NULL,
+    [EnviadoPor]                 INT            NULL,
+    [CreadoEl]                   DATETIME       NULL,
+    [IdMatrizEvaluacion]         INT            NULL,
+    [IdPorcentajeETEC]           INT            NULL,
+    CONSTRAINT [PK_MM_Plantillas_SolicitudPedido] PRIMARY KEY CLUSTERED ([IdPlantillaSolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[TMP_MPY072019] (
+    [Gatos]             FLOAT (53)     NULL,
+    [Transfer]          FLOAT (53)     NULL,
+    [Comentario]        NVARCHAR (255) NULL,
+    [Date]              DATE           NULL,
+    [AccountNumber]     NVARCHAR (255) NULL,
+    [Currency]          NVARCHAR (255) NULL,
+    [Amount]            FLOAT (53)     NULL,
+    [ExRate]            FLOAT (53)     NULL,
+    [CustomerReference] NVARCHAR (255) NULL,
+    [BankReference]     NVARCHAR (255) NULL,
+    [Vendor]            NVARCHAR (255) NULL,
+    [TaxID]             NVARCHAR (255) NULL,
+    [VendorBank]        NVARCHAR (255) NULL,
+    [VendorAccount]     NVARCHAR (255) NULL,
+    [Invoice]           NVARCHAR (50)  NULL,
+    [FolioFiscal]       NVARCHAR (255) NULL,
+    [JournalEntry]      NVARCHAR (255) NULL,
+    [PaymentEntry]      NVARCHAR (255) NULL,
+    [AC]                NVARCHAR (255) NULL,
+    [SA]                NVARCHAR (255) NULL,
+    [TA]                NVARCHAR (255) NULL,
+    [GLAccount]         FLOAT (53)     NULL,
+    [Hidrocarburos]     NVARCHAR (255) NULL,
+    [ClearingDocument]  NVARCHAR (255) NULL,
+    [IdTranfer]         INT            NULL
+);
+

@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[IN_AL_MovimientoDetalle] (
+    [IdMovimientoDetalle] INT             NOT NULL,
+    [IdMovimiento]        INT             NOT NULL,
+    [IdPedidoDetalle]     INT             NULL,
+    [NoItem]              INT             NOT NULL,
+    [Cantidad]            DECIMAL (14, 2) NOT NULL,
+    [Disponible]          DECIMAL (14, 2) NULL,
+    [CreadoPor]           INT             NOT NULL,
+    [CreadoEl]            DATETIME        NOT NULL,
+    [ModificadoPor]       INT             NULL,
+    [ModificadoEl]        DATETIME        NULL,
+    [PrecioTotal]         MONEY           NULL,
+    [IdMaterial]          INT             NULL,
+    [IdSegundaUnidad]     INT             NULL,
+    [CantSegundaUnidad]   DECIMAL (9, 3)  NULL,
+    [Existencia]          DECIMAL (15, 3) NULL,
+    [CostoUltimaCompra]   MONEY           NULL,
+    [CostoPromedio]       MONEY           NULL,
+    CONSTRAINT [PK_IN_AL_MovimientoDetalle] PRIMARY KEY CLUSTERED ([IdMovimientoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_IN_AL_MovimientoDetalle_IN_AL_Movimiento] FOREIGN KEY ([IdMovimiento]) REFERENCES [dbo].[IN_AL_Movimiento] ([IdMovimiento]),
+    CONSTRAINT [FK_IN_AL_MovimientoDetalle_MM_PedidoDetalle] FOREIGN KEY ([IdPedidoDetalle]) REFERENCES [dbo].[MM_PedidoDetalle] ([IdPedidoDetalle]),
+    CONSTRAINT [FK_IN_AL_MovimientoDetalle_S_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
+    CONSTRAINT [FK_IN_AL_MovimientoDetalle_S_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
+);
+

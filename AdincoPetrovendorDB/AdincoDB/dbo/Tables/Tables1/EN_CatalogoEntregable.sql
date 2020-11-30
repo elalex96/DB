@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[EN_CatalogoEntregable] (
+    [IdEntregable]                INT            IDENTITY (1, 1) NOT NULL,
+    [IdTipoContrato]              INT            NULL,
+    [IdClausulaAnexo]             INT            NULL,
+    [IdNumeralSeccion]            INT            NULL,
+    [IdInciso]                    INT            NULL,
+    [NombreEntregable]            NVARCHAR (MAX) NULL,
+    [IdTipoDocumentoEntregable]   INT            NULL,
+    [IdAreaResponsableEntregable] INT            NULL,
+    [IdTipoEntregable]            INT            NULL,
+    [TiempoEntrega]               NVARCHAR (MAX) NULL,
+    [TeimpoRespuesta]             NVARCHAR (MAX) NULL,
+    [Frecuencia]                  NVARCHAR (MAX) NULL,
+    [IdEntidad]                   INT            NULL,
+    [Observacion]                 NVARCHAR (MAX) NULL,
+    [IdCriticidad]                INT            NULL,
+    [CreadoPor]                   INT            NULL,
+    CONSTRAINT [PK_Tb_Entregables_CatalogoEntregables] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_AreaResponsableEntregable] FOREIGN KEY ([IdAreaResponsableEntregable]) REFERENCES [dbo].[EN_AreaResponsableEntregable] ([IdAreaResponsableEntregable]),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_ClausulaAnexo] FOREIGN KEY ([IdClausulaAnexo]) REFERENCES [dbo].[EN_ClausulaAnexo] ([IdClausulaAnexo]),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_Entidades] FOREIGN KEY ([IdEntidad]) REFERENCES [dbo].[EN_Entidad] ([IdEntidad]),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_Inciso] FOREIGN KEY ([IdInciso]) REFERENCES [dbo].[EN_IncisoContrato] ([IdInciso]),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_NumeralSeccion] FOREIGN KEY ([IdNumeralSeccion]) REFERENCES [dbo].[CO_NumeralSeccion] ([IdNumeralSeccion]),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_TipoContrato] FOREIGN KEY ([IdTipoContrato]) REFERENCES [dbo].[CO_TipoContrato] ([IdTipoContrato]),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_TipoDocumentoEntregable] FOREIGN KEY ([IdTipoDocumentoEntregable]) REFERENCES [dbo].[EN_TipoDocumentoEntregable] ([IdTipoDocumentoEntregable]),
+    CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_TipoEntregable] FOREIGN KEY ([IdTipoEntregable]) REFERENCES [dbo].[EN_TipoEntregable] ([IdTipoEntregable])
+);
+

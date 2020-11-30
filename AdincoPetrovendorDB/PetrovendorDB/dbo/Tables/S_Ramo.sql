@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[S_Ramo] (
+    [IdRamo] INT            IDENTITY (1, 1) NOT NULL,
+    [Ramo]   NVARCHAR (MAX) NOT NULL,
+    CONSTRAINT [PK_S_Ramo] PRIMARY KEY CLUSTERED ([IdRamo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

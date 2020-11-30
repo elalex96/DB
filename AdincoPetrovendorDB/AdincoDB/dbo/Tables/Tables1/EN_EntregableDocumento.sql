@@ -1,0 +1,24 @@
+﻿CREATE TABLE [dbo].[EN_EntregableDocumento] (
+    [DocumentoEntregableId]   INT              NOT NULL,
+    [idContratoEntregable]    INT              NULL,
+    [idInstanciaEntregable]   INT              NULL,
+    [Bucket]                  NVARCHAR (MAX)   NULL,
+    [Folder]                  NVARCHAR (MAX)   NULL,
+    [UUIDAmazon]              UNIQUEIDENTIFIER NULL,
+    [NombreArchivo]           NVARCHAR (MAX)   NULL,
+    [Meta]                    NVARCHAR (MAX)   NULL,
+    [CreadoPor]               INT              NULL,
+    [CreadoEl]                DATETIME         NULL,
+    [ModificadoPor]           INT              NULL,
+    [ModificadoEl]            DATETIME         NULL,
+    [Activo]                  BIT              NULL,
+    [TextoDocumentoEntregble] NVARCHAR (MAX)   NULL,
+    [idTipoArchivo]           INT              NULL,
+    [FechaRealEvidencia]      DATETIME         NULL,
+    [Comentario]              VARCHAR (500)    NULL,
+    PRIMARY KEY CLUSTERED ([DocumentoEntregableId] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK__EN_Entreg__idIns__591E763C] FOREIGN KEY ([idInstanciaEntregable]) REFERENCES [dbo].[EN_InstanciasEntregable] ([idInstanciaEntregable]),
+    CONSTRAINT [FK__EN_Entrega__Meta__582A5203] FOREIGN KEY ([idContratoEntregable]) REFERENCES [dbo].[EN_ContratoEntregable] ([IdContratoEntregable]),
+    CONSTRAINT [FK_EN_EntregableDocumento_EN_TipoArchivo] FOREIGN KEY ([idTipoArchivo]) REFERENCES [dbo].[EN_TipoArchivo] ([idTipoArchivo])
+);
+

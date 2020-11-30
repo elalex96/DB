@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[A1Pagos] (
+    [ID]                    FLOAT (53)     NULL,
+    [Company Code]          NVARCHAR (255) NULL,
+    [Document Type]         NVARCHAR (255) NULL,
+    [Document Number]       NVARCHAR (255) NULL,
+    [Document Number1]      FLOAT (53)     NULL,
+    [Document Number2]      NVARCHAR (255) NULL,
+    [Fiscal Year]           NVARCHAR (255) NULL,
+    [Posting period]        NVARCHAR (255) NULL,
+    [Posting Date]          DATETIME       NULL,
+    [Document Date]         DATETIME       NULL,
+    [Joint Venture]         NVARCHAR (255) NULL,
+    [Account Number]        FLOAT (53)     NULL,
+    [AREA]                  NVARCHAR (255) NULL,
+    [Text]                  NVARCHAR (255) NULL,
+    [WBS Element]           NVARCHAR (255) NULL,
+    [Cost Center]           NVARCHAR (255) NULL,
+    [Transaction Currency]  FLOAT (53)     NULL,
+    [Transaction currency1] NVARCHAR (255) NULL,
+    [Joint Oper# Agreem#]   NVARCHAR (255) NULL,
+    [Local currency]        FLOAT (53)     NULL,
+    [Local currency 1]      NVARCHAR (255) NULL,
+    [Vendor]                NVARCHAR (255) NULL
+);
+

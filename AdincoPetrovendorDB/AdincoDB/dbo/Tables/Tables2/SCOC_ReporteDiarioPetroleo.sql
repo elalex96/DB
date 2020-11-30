@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[SCOC_ReporteDiarioPetroleo] (
+    [IdContrato]      INT        NOT NULL,
+    [MesReporte]      DATE       NOT NULL,
+    [FechaReporte]    DATE       NOT NULL,
+    [FechaEntrega]    DATE       NOT NULL,
+    [Dia]             INT        NOT NULL,
+    [M3_20Grados]     FLOAT (53) NULL,
+    [GradosAPI]       FLOAT (53) NULL,
+    [AguaSedimento]   FLOAT (53) NULL,
+    [Sal]             FLOAT (53) NULL,
+    [Azufre]          FLOAT (53) NULL,
+    [PesoEspec]       FLOAT (53) NULL,
+    [CreadoPor]       INT        NULL,
+    [CreadoEn]        DATETIME   NULL,
+    [ModificadoPor]   INT        NULL,
+    [ModificadoEn]    DATETIME   NULL,
+    [IdUnidadMedida]  INT        NULL,
+    [Volumen15Grados] FLOAT (53) NULL,
+    [Temperatura]     FLOAT (53) NULL,
+    [CampoID]         INT        DEFAULT ((1)) NOT NULL,
+    CONSTRAINT [PK_SCOC_ReporteDiarioPetroleo] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [MesReporte] ASC, [Dia] ASC, [CampoID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_SCOC_ReporteDiarioPetroleo_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_SCOC_ReporteDiarioPetroleo_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_SCOC_ReporteDiarioPetroleo_Campo] FOREIGN KEY ([CampoID]) REFERENCES [dbo].[SCOC_Campo] ([CampoID]),
+    CONSTRAINT [FK_SCOC_ReporteDiarioPetroleo_CO_CONTRATO] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
+    CONSTRAINT [fkIdUnidadMedida] FOREIGN KEY ([IdUnidadMedida]) REFERENCES [dbo].[CO_UnidadMedida] ([idUnidadMedida])
+);
+

@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[AP_ListadoASPX] (
+    [IdAsp]   INT            IDENTITY (1, 1) NOT NULL,
+    [Archivo] NVARCHAR (255) NULL,
+    CONSTRAINT [PK_AP_ListadoASPX] PRIMARY KEY CLUSTERED ([IdAsp] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

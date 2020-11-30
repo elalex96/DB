@@ -1,0 +1,27 @@
+﻿CREATE TABLE [dbo].[TMP_HistoricoMurphy_BAAC] (
+    [Date]                   DATETIME       NULL,
+    [Account Number]         NVARCHAR (50)  NULL,
+    [Bank]                   NVARCHAR (250) NULL,
+    [Bank ID]                NVARCHAR (100) NULL,
+    [Currency]               NVARCHAR (5)   NULL,
+    [Amount]                 MONEY          NULL,
+    [Vendor]                 NVARCHAR (250) NULL,
+    [Tax ID]                 NVARCHAR (250) NULL,
+    [Vendor Bank]            NVARCHAR (100) NULL,
+    [Vendor Account Number]  NVARCHAR (50)  NULL,
+    [Invoice (s)]            VARCHAR (50)   NULL,
+    [Amount1]                MONEY          NULL,
+    [Journal Entry]          FLOAT (53)     NULL,
+    [Payment Entry]          FLOAT (53)     NULL,
+    [AC]                     NVARCHAR (10)  NULL,
+    [SA]                     NVARCHAR (10)  NULL,
+    [ID]                     NVARCHAR (10)  NULL,
+    [CuentaSH]               NVARCHAR (50)  NULL,
+    [IdLineaPresupuestoMes]  INT            NULL,
+    [IdCuentaSH]             INT            NULL,
+    [IdFactura]              INT            NULL,
+    [IdRegistro]             INT            NULL,
+    [IdPedimentoComprobante] INT            NULL,
+    [IdTransfer]             INT            NULL
+);
+

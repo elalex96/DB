@@ -1,0 +1,50 @@
+﻿CREATE TABLE [dbo].[CO_CromatografiaValores] (
+    [IdCromatografiaValor]        INT        NOT NULL,
+    [IdCromatografia]             INT        NOT NULL,
+    [IdPuntoEntregaContrato]      INT        NOT NULL,
+    [C1]                          FLOAT (53) NULL,
+    [C2]                          FLOAT (53) NULL,
+    [C3]                          FLOAT (53) NULL,
+    [nC4]                         FLOAT (53) NULL,
+    [lC4]                         FLOAT (53) NULL,
+    [nC5]                         FLOAT (53) NULL,
+    [lC5]                         FLOAT (53) NULL,
+    [C6_plus]                     FLOAT (53) NULL,
+    [MOL_CO2]                     FLOAT (53) NULL,
+    [MOL_N2]                      FLOAT (53) NULL,
+    [MOL_h2S]                     FLOAT (53) NULL,
+    [GradosAPI]                   FLOAT (53) NULL,
+    [AguaSedimento]               FLOAT (53) NULL,
+    [ViscosidadSSU]               FLOAT (53) NULL,
+    [SalLBS_1000BLS]              FLOAT (53) NULL,
+    [Azufre]                      FLOAT (53) NULL,
+    [PresionEntrega]              FLOAT (53) NULL,
+    [PrecioPetroleo]              FLOAT (53) NULL,
+    [PrecioCondensado]            FLOAT (53) NULL,
+    [PrecioGas]                   FLOAT (53) NULL,
+    [CreadoEl]                    DATETIME   NOT NULL,
+    [CreadoPor]                   INT        NOT NULL,
+    [ModificadoPor]               INT        NULL,
+    [ModificadoEl]                DATETIME   NULL,
+    [PrecioUnitarioDLS]           MONEY      NULL,
+    [PoderCalorifico]             FLOAT (53) NULL,
+    [PoderCalorificoGas]          FLOAT (53) NULL,
+    [C7]                          FLOAT (53) NULL,
+    [C8]                          FLOAT (53) NULL,
+    [C9]                          FLOAT (53) NULL,
+    [C10]                         FLOAT (53) NULL,
+    [PrecioUnitarioCondensadoDLS] FLOAT (53) NULL,
+    [H2O]                         FLOAT (53) NULL,
+    [O2]                          FLOAT (53) NULL,
+    CONSTRAINT [PK_CO_CromatografiaValores_1] PRIMARY KEY CLUSTERED ([IdCromatografiaValor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_CO_CromatografiaValores_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_CO_CromatografiaValores_AP_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_CO_CromatografiaValores_CO_Cromatografia] FOREIGN KEY ([IdCromatografia]) REFERENCES [dbo].[CO_Cromatografia] ([IdCromatografia]),
+    CONSTRAINT [FK_CO_CromatografiaValores_CO_PuntosdeEntrega] FOREIGN KEY ([IdPuntoEntregaContrato]) REFERENCES [dbo].[CO_PuntosdeEntregaContrato] ([PuntoEntregaContratoID])
+);
+
+
+GO
+CREATE UNIQUE NONCLUSTERED INDEX [IX_CO_CromatografiaValores]
+    ON [dbo].[CO_CromatografiaValores]([IdCromatografia] ASC, [IdPuntoEntregaContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+

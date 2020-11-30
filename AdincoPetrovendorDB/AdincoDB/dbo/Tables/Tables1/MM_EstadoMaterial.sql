@@ -1,0 +1,5 @@
+﻿CREATE TABLE [dbo].[MM_EstadoMaterial] (
+    [IdEstadoMaterial] INT IDENTITY (10000, 1) NOT NULL,
+    CONSTRAINT [PK_Table_1] PRIMARY KEY CLUSTERED ([IdEstadoMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

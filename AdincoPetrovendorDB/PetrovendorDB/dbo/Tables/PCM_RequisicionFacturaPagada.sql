@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[PCM_RequisicionFacturaPagada] (
+    [Requisicion]           INT            NULL,
+    [NombreRequisitor]      NVARCHAR (MAX) NULL,
+    [FechaRequisicion]      DATETIME       NULL,
+    [MotivoRequisicion]     NVARCHAR (MAX) NULL,
+    [OrdenCompra]           INT            NULL,
+    [FechaOrdenCompra]      DATETIME       NULL,
+    [MontoOrdenCompra]      FLOAT (53)     NULL,
+    [Moneda]                NVARCHAR (100) NULL,
+    [MontoOrdenCompraUSD]   FLOAT (53)     NULL,
+    [IdAceptacionPedido]    INT            NULL,
+    [FechaAceptacion]       DATETIME       NULL,
+    [MontoAceptado]         FLOAT (53)     NULL,
+    [MontoAceptadoUSD]      FLOAT (53)     NULL,
+    [IdFactura]             INT            NULL,
+    [RazonSocial]           NVARCHAR (MAX) NULL,
+    [FechaRecepcion]        DATETIME       NULL,
+    [MontoFacturado]        FLOAT (53)     NULL,
+    [MontoFacturadoUSD]     FLOAT (53)     NULL,
+    [MontoPagado]           FLOAT (53)     NULL,
+    [MonedaPagado]          NVARCHAR (100) NULL,
+    [MontoPagadoUSD]        FLOAT (53)     NULL,
+    [FechaPagado]           DATETIME       NULL,
+    [TipoCambioRequisicion] FLOAT (53)     NULL,
+    [TipoCambioPagado]      FLOAT (53)     NULL,
+    [UUID]                  NVARCHAR (MAX) NULL
+);
+

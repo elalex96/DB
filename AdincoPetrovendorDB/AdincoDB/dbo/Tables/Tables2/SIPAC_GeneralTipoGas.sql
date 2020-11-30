@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[SIPAC_GeneralTipoGas] (
+    [idTipoGas] INT          IDENTITY (1, 1) NOT NULL,
+    [TipoGas]   VARCHAR (50) NOT NULL,
+    CONSTRAINT [PK_Cat_General_TipoGas] PRIMARY KEY CLUSTERED ([idTipoGas] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

@@ -1,0 +1,27 @@
+﻿CREATE TABLE [dbo].[DG_Domicilio] (
+    [IdDomicilio]      INT            IDENTITY (1, 1) NOT NULL,
+    [Pais]             NVARCHAR (300) NULL,
+    [Estado]           NVARCHAR (300) NULL,
+    [Municipio]        NVARCHAR (300) NULL,
+    [Colonia]          NVARCHAR (300) NULL,
+    [TipoViabilidad]   NVARCHAR (500) NULL,
+    [NombreViabilidad] NVARCHAR (500) NULL,
+    [NoExterior]       NVARCHAR (300) NULL,
+    [NoInterior]       NVARCHAR (300) NULL,
+    [CodigoPostal]     NVARCHAR (150) NULL,
+    [IdTipoDomicilio]  INT            NULL,
+    [IdProveedor]      INT            NULL,
+    [IdCreadoPor]      INT            NULL,
+    [FechaAlta]        DATETIME       NULL,
+    [Activo]           BIT            NULL,
+    [IdPais]           INT            NULL,
+    [IdEstado]         INT            NULL,
+    [Calle]            NVARCHAR (300) NULL,
+    [Publico]          BIT            NULL,
+    [IdActualizadoPor] INT            NULL,
+    [FechaCambio]      DATETIME       NULL,
+    [NoSecuencia]      INT            NULL,
+    CONSTRAINT [PK_DG_Domicilios] PRIMARY KEY CLUSTERED ([IdDomicilio] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_DG_Domicilio_DG_TipoDomicilio] FOREIGN KEY ([IdTipoDomicilio]) REFERENCES [dbo].[DG_TipoDomicilio] ([IdTipoDomicilio])
+);
+

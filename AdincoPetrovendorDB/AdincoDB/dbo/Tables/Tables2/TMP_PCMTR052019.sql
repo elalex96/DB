@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[TMP_PCMTR052019] (
+    [RFC]                  NVARCHAR (255) NULL,
+    [Nombre del proveedor] NVARCHAR (255) NULL,
+    [Forma de Pago]        NVARCHAR (255) NULL,
+    [Banco Origen]         NVARCHAR (255) NULL,
+    [Cuenta Origen]        NVARCHAR (255) NULL,
+    [Banco Destino]        NVARCHAR (255) NULL,
+    [Cuenta Destino]       NVARCHAR (255) NULL,
+    [Fecha de Pago]        DATETIME       NULL,
+    [Monto Pagado]         FLOAT (53)     NULL,
+    [Interes]              FLOAT (53)     NULL,
+    [Moneda Pago]          NVARCHAR (255) NULL,
+    [Concepto]             NVARCHAR (255) NULL,
+    [No# de Poliza]        FLOAT (53)     NULL,
+    [Folio Fiscal UUID]    VARCHAR (250)  NULL,
+    [Valor Factura]        FLOAT (53)     NULL,
+    [Moneda Factura]       NVARCHAR (255) NULL,
+    [IdSubcontratista]     INT            NULL,
+    [IdCuentaOrigen]       INT            NULL,
+    [IdcuentaDestino]      INT            NULL,
+    [IdFactura]            INT            NULL,
+    [IdTransfer]           INT            NULL,
+    [ID]                   INT            IDENTITY (100000, 1) NOT NULL,
+    CONSTRAINT [PK_TMP_PCMTR052019] PRIMARY KEY CLUSTERED ([ID] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[MPY042020] (
+    [ID]                    FLOAT (53)     NULL,
+    [Date]                  DATETIME       NULL,
+    [Account Number]        FLOAT (53)     NULL,
+    [Bank ID]               NVARCHAR (255) NULL,
+    [Transaction]           NVARCHAR (255) NULL,
+    [Currency]              NVARCHAR (255) NULL,
+    [Amount]                FLOAT (53)     NULL,
+    [ExRate]                FLOAT (53)     NULL,
+    [Credit/Debit]          NVARCHAR (255) NULL,
+    [Customer Reference]    FLOAT (53)     NULL,
+    [Bank Reference]        NVARCHAR (255) NULL,
+    [Vendor]                NVARCHAR (255) NULL,
+    [TaxID]                 NVARCHAR (255) NULL,
+    [Vendor Bank]           NVARCHAR (255) NULL,
+    [Vendor Account Number] FLOAT (53)     NULL,
+    [Invoice (s)]           VARCHAR (300)  NULL,
+    [Folio Fiscal]          NVARCHAR (255) NULL,
+    [Journal Entry]         NVARCHAR (255) NULL,
+    [Payment Entry]         NVARCHAR (255) NULL,
+    [GL Account]            FLOAT (53)     NULL,
+    [AC]                    NVARCHAR (255) NULL,
+    [SA]                    NVARCHAR (255) NULL,
+    [TA]                    NVARCHAR (255) NULL,
+    [Hidrocarburos]         NVARCHAR (255) NULL,
+    [Balance/Value Date]    NVARCHAR (255) NULL
+);
+

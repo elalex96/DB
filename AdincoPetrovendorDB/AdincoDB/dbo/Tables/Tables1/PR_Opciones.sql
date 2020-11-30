@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[PR_Opciones] (
+    [Id]     INT            IDENTITY (1, 1) NOT NULL,
+    [Opcion] NVARCHAR (MAX) NULL,
+    CONSTRAINT [PK_PR_Opciones] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

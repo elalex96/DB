@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[PV_Unidad] (
+    [idUnidad] INT           IDENTITY (1, 1) NOT NULL,
+    [Unidad]   VARCHAR (MAX) NOT NULL,
+    CONSTRAINT [PK_Unidad] PRIMARY KEY CLUSTERED ([idUnidad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

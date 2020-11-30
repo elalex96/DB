@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[DG_RepresentanteLegal] (
+    [IdRepresentanteLegal]       INT            IDENTITY (1, 1) NOT NULL,
+    [APaterno]                   NVARCHAR (50)  NULL,
+    [AMaterno]                   NVARCHAR (50)  NULL,
+    [Nombre]                     NVARCHAR (50)  NULL,
+    [DatosDocumentoAcreditacion] NVARCHAR (MAX) NULL,
+    [NoEscrituraPublica]         FLOAT (53)     NULL,
+    [Fecha]                      DATE           NULL,
+    [NombreNotario]              NVARCHAR (150) NULL,
+    [NoNotario]                  INT            NULL,
+    [DireccionNotarioPublico]    NVARCHAR (150) NULL,
+    [IdProveedor]                INT            NULL,
+    [IsEliminado]                BIT            NULL,
+    [IsActivo]                   BIT            NULL,
+    [CreadoPor]                  INT            NULL,
+    [CreadoEn]                   DATETIME       NULL,
+    [ModificadoPor]              INT            NULL,
+    [ModificadoEn]               DATETIME       NULL,
+    [CURP]                       NVARCHAR (50)  NULL,
+    [IdDocumento]                INT            NULL,
+    CONSTRAINT [PK_DG_RepresentanteLegal] PRIMARY KEY CLUSTERED ([IdRepresentanteLegal] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    FOREIGN KEY ([IdDocumento]) REFERENCES [dbo].[S_Documento_S3] ([IdDocumento]),
+    FOREIGN KEY ([IdDocumento]) REFERENCES [dbo].[S_Documento_S3] ([IdDocumento]),
+    CONSTRAINT [FK_DG_RepresentanteLegal_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
+    CONSTRAINT [FK_DG_RepresentanteLegal_S_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
+    CONSTRAINT [FK_DG_RepresentanteLegal_S_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
+);
+

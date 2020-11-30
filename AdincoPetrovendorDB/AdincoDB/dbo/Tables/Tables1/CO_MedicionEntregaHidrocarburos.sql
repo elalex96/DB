@@ -1,0 +1,27 @@
+﻿CREATE TABLE [dbo].[CO_MedicionEntregaHidrocarburos] (
+    [IdMedicionEntregaHidrocarburos] INT        IDENTITY (10000, 1) NOT NULL,
+    [IdContrato]                     INT        NULL,
+    [Fecha]                          DATE       NULL,
+    [PuntoEntregaID]                 INT        NULL,
+    [VolumenBruto]                   FLOAT (53) NULL,
+    [DensidadAPI]                    FLOAT (53) NULL,
+    [PorcentajeAguaSedimentos]       FLOAT (53) NULL,
+    [Salinidad]                      FLOAT (53) NULL,
+    [VolumenNetoAceite]              FLOAT (53) NULL,
+    [PVR]                            FLOAT (53) NULL,
+    [VolGasAsociadoMMpc]             FLOAT (53) NULL,
+    [VolGasAsociadobpce]             FLOAT (53) NULL,
+    [VolHidrocarburosNetos]          FLOAT (53) NULL,
+    [DensidadHidrocarburosNetos]     FLOAT (53) NULL,
+    [CreadoPor]                      INT        NULL,
+    [CreadoEl]                       DATETIME   NULL,
+    [ModificadoPor]                  INT        NULL,
+    [ModificadoEl]                   DATETIME   NULL,
+    [Activo]                         BIT        NULL,
+    [Presion]                        FLOAT (53) NULL,
+    [Tempertura]                     FLOAT (53) NULL,
+    [ProduccionCondensadoNeto]       FLOAT (53) NULL,
+    CONSTRAINT [PK_CO_MedicionEntregaHidrocarburos] PRIMARY KEY CLUSTERED ([IdMedicionEntregaHidrocarburos] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_CO_MedicionEntregaHidrocarburos_CO_PuntosdeEntrega] FOREIGN KEY ([PuntoEntregaID]) REFERENCES [dbo].[CO_PuntosdeEntrega] ([PuntoEntregaID])
+);
+

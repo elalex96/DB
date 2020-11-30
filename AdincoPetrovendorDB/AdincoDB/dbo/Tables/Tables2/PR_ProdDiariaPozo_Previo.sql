@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[PR_ProdDiariaPozo_Previo] (
+    [Id]                 INT           IDENTITY (1, 1) NOT NULL,
+    [ProdDiaria]         INT           NOT NULL,
+    [Fecha]              DATETIME      NULL,
+    [Estacion]           INT           NOT NULL,
+    [Pozo]               INT           NOT NULL,
+    [NombreEstacion]     VARCHAR (200) NULL,
+    [Medidor]            SMALLINT      NULL,
+    [Nominal]            VARCHAR (100) NULL,
+    [Fuente]             VARCHAR (100) NULL,
+    [Operando]           BIT           NULL,
+    [Est_64Plg]          FLOAT (53)    NULL,
+    [Cabeza]             FLOAT (53)    NULL,
+    [Linea]              FLOAT (53)    NULL,
+    [Temperatura]        FLOAT (53)    NULL,
+    [GastoGas]           FLOAT (53)    NULL,
+    [ProdCondensadoNeto] FLOAT (53)    NULL,
+    [ProdAceiteNeto]     FLOAT (53)    NULL,
+    [ProdPetroleoBruto]  FLOAT (53)    NULL,
+    [Agua]               FLOAT (53)    NULL,
+    [Comentarios]        VARCHAR (250) NULL,
+    CONSTRAINT [PK_PR_ProdDiariaPozo_Previo] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_PR_ProdDiariaPozo_Previo_Pozo] FOREIGN KEY ([Pozo]) REFERENCES [dbo].[PR_Pozo] ([Id]),
+    CONSTRAINT [FK_PR_ProdDiariaPozo_Previo_ProdDiaria_Previo] FOREIGN KEY ([ProdDiaria]) REFERENCES [dbo].[PR_ProdDiaria_Previo] ([Id])
+);
+

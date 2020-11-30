@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[AP_Pagina] (
+    [IdPaginas] INT          IDENTITY (1, 1) NOT NULL,
+    [NombrePag] VARCHAR (50) NULL,
+    CONSTRAINT [PK_AP_Pagina] PRIMARY KEY CLUSTERED ([IdPaginas] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+
