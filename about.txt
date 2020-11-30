@@ -1,0 +1,1 @@
+Repositorio para proyecto SQL de las bases de datos de ADINCO y Petrovendor
