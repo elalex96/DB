@@ -38,13 +38,14 @@ AS
             N.De,    
             IdNotificacionMA = 0  
      FROM  dbo.S_Notificacion N    (NOLOCK)
-	LEFT JOIN dbo.S_NotificacionError NE  (NOLOCK)
-		ON N.IdNotificacion = NE.IdNotificacion 	
-	 inner join #tmpNotificacionesIds tmp on    
+      inner join #tmpNotificacionesIds tmp on    
 	  (  
 	   tmp.IdNotificacion = n.IdNotificacion OR  
 	   tmp.IdNotificacion = 0  
 	  )  
+	LEFT JOIN dbo.S_NotificacionError NE  (NOLOCK)
+		ON N.IdNotificacion = NE.IdNotificacion 	
+	
      WHERE N.Enviada = 0
 	 and ltrim(rtrim(isnull(n.Para,''))) <> ''
 	 group by N.IdNotificacion,                 
