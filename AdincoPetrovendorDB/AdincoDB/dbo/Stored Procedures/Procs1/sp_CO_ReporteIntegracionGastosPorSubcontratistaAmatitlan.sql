@@ -1,21 +1,20 @@
-﻿CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan] --2018,3,10048
--- Add the parameters for the stored procedure here
+﻿CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan] --2020,04,10159
+
 @Anio          INT = 0, 
 @Mes           INT = 0, 
 @IdPresupuesto INT = 0
 AS
      BEGIN
          -- =============================================
-         -- Author:      Miguel
+         -- Author:		 Miguel
          -- Create date: Domingo 1 Diciembre 2016 19:49 p.m.
          -- Description: Reporte de Integración de Gastos a Nivel Actividad
          -- =============================================
-         --[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan] 2018,04,10048
          SET LANGUAGE spanish;
          SELECT UPPER(CONCAT(DATENAME(MONTH, R.MesPresentacion), ' ', YEAR(R.MesPresentacion))) AS FechaReporte,
                 CASE
                     WHEN R.CvTipoDocFacturacion = 1
-                    THEN CONCAT(F.Serie,' ',F.Folio)
+                    THEN ISNULL(F.Serie,'')+' '+ ISNULL(F.Folio,'')
                     WHEN R.CvTipoDocFacturacion IN(2, 3)
                     THEN PC.FolioComprobante
                     ELSE ''
@@ -60,8 +59,9 @@ AS
                     ELSE 0
                 END AS IdFactura,
                 --FRRF.IdFactura AS IdLum,
-                CONCAT(FRRF.Serie,' ',FRRF.Folio) AS FacturaLum, 
-                PRF.RazonSocial AS RSRefac, 
+                ISNULL(FRRF.Serie,'')+' '+ ISNULL(FRRF.Folio,'') AS FacturaLum,  --**[RO] SE MODIFICA DEBIDO A REQUERIMIENTO DEL ISSUE 1155
+                ISNULL(PRF.RazonSocial,'') AS RSRefac,
+				ISNULL(CONVERT(varchar, FRRF.Fecha,103),'')AS FechaFacLum,--**[RO] SE MODIFICA DEBIDO A REQUERIMIENTO DEL ISSUE 1155
                 I.NombreInstalacion AS Instalacion, --instalacion del gasto
                 R.InicioEjecucion AS FechaI, 
                 R.FinEjecucion AS FechaF, 
@@ -82,8 +82,10 @@ AS
                         WHEN R.CvTipoDocFacturacion = 1
                         THEN F.SubTotal
                         ELSE PCD.PrecioUnitario
-                    END) AS ImporteFA, 
-                R.MontoRegistro AS ImporteFaCMarckup,
+                    END)  AS ImporteFA,  --**[RO] SE COMENTA DEBIDO A REQUERIMIENTO DEL ISSUE 1155
+					--R.MontoRegistro AS ImporteFA, 
+				--R.MontoRegistro AS ImporteFaCMarckup --**[RO] SE COMENTA DEBIDO A REQUERIMIENTO DEL ISSUE 1155
+                 ISNULL((R.MontoRegistro * 1.07),0) AS ImporteFaCMarckup,
                 CASE
                     WHEN F.IdMoneda = 1
                     THEN 'MXN'
@@ -91,22 +93,24 @@ AS
                 END AS Moneda, 
                 SUM(CASE
                         WHEN R.CvTipoDocFacturacion = 1
-                             AND ISNULL(F.SubTotal, 0) <> 0
+             AND ISNULL(F.SubTotal, 0) <> 0
                         THEN ISNULL(F.SubTotal, 0) / TCM.TipoCambio
                         WHEN R.CvTipoDocFacturacion IN(2, 3)
                              AND ISNULL(PCD.PrecioUnitario, 0) <> 0
                         THEN ISNULL(PCD.PrecioUnitario, 0) / TCMPC.TipoCambio
                         ELSE 0
                     END) AS ImprteUSDMxnUsd, 
-                SUM(CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                             AND ISNULL(R.MontoRegistro, 0) <> 0
-                        THEN(ROUND(ISNULL(R.MontoRegistro, 0) / TCM.TipoCambio, 2) * .07)
-                        WHEN R.CvTipoDocFacturacion IN(2, 3)
-                             AND ISNULL(R.MontoRegistro, 0) <> 0
-                        THEN(ROUND(ISNULL(R.MontoRegistro, 0) / TCMPC.TipoCambio, 2) * .07)
-                        ELSE 0
-                    END) AS MarkUp, 
+                --SUM(CASE
+                --        WHEN R.CvTipoDocFacturacion = 1
+                --             AND ISNULL(R.MontoRegistro, 0) <> 0
+                --        THEN(ROUND(ISNULL(R.MontoRegistro, 0) / TCM.TipoCambio, 2) * .07)
+                --        WHEN R.CvTipoDocFacturacion IN(2, 3)
+                --             AND ISNULL(R.MontoRegistro, 0) <> 0
+                --        THEN(ROUND(ISNULL(R.MontoRegistro, 0) / TCMPC.TipoCambio, 2) * .07)
+                --        ELSE 0
+                --    END) AS MarkUp,   --**[RO] SE COMENTA DEBIDO A REQUERIMIENTO DEL ISSUE 1155
+				 ISNULL((R.MontoRegistro * .07),0) AS MarkUp, 
+
                 ROUND(SUM(CASE
                               WHEN R.CvTipoDocFacturacion = 1
                                    AND ISNULL(R.MontoRegistro, 0) <> 0
@@ -130,9 +134,9 @@ AS
                 END AS CAPEXOPEX, 
                 'Facturado relacionada' AS Estatus, 
                 R.IdRegistro
-         --RRF.idFacturaPadre
-         --SELECT R.* ,RRF.*
-         FROM dbo.CO_Registro AS R
+ 
+         FROM 
+			dbo.CO_Registro AS R
               JOIN dbo.CO_LineaPresupuestoMes AS C ON R.IdPrograma = C.IdLineaPresupuestoMes
               JOIN dbo.CO_Presupuesto PRE ON C.IdPresupuesto = PRE.IdPresupuesto
               JOIN dbo.CO_Servicio AS S ON C.IdServicio = S.IdServicio
@@ -142,7 +146,7 @@ AS
               JOIN dbo.CO_ActividadCIEP AS A ON C.IdActividad = A.IdActividad
               LEFT JOIN dbo.FI_Factura F ON R.IdFactura = F.IdFactura
               LEFT JOIN dbo.FI_RelacionRefacturas AS RRF ON R.IdFactura = RRF.idFacturaHijo
-                                                            AND RRF.MesPresentacion = R.MesPresentacion
+                                                          --  AND RRF.MesPresentacion = R.MesPresentacion --**RO se comenta 
               --LEFT JOIN dbo.FI_Factura AS F ON F.IdFactura = RRF.idFacturaHijo
               LEFT JOIN dbo.PV_Subcontratista AS P ON F.IdSubcontratista = P.IdSubcontratista
               LEFT JOIN dbo.FI_Factura FRRF ON RRF.idFacturaPadre = FRRF.IdFactura
@@ -161,6 +165,8 @@ AS
                                                              AND TCMPC.IdMes = MONTH(PC.FechaPago)
                                                              AND TCMPC.Anio = YEAR(PC.FechaPago)
               LEFT JOIN dbo.PV_Subcontratista AS PPC ON PC.IdSubcontratistaExportador = PPC.IdSubcontratista
+
+		
          WHERE(YEAR(R.MesPresentacion) = @Anio
                AND MONTH(R.MesPresentacion) = @Mes)
               AND C.IdPresupuesto = @IdPresupuesto
@@ -169,7 +175,7 @@ AS
          GROUP BY UPPER(CONCAT(DATENAME(MONTH, R.MesPresentacion), ' ', YEAR(R.MesPresentacion))),
                   CASE
                       WHEN R.CvTipoDocFacturacion = 1
-                      THEN CONCAT(F.Serie,' ',F.Folio)
+                      THEN ISNULL(F.Serie,'')+' '+ ISNULL(F.Folio,'')
                       WHEN R.CvTipoDocFacturacion IN(2, 3)
                       THEN PC.FolioComprobante
                       ELSE ''
@@ -190,6 +196,7 @@ AS
                       THEN RTRIM(PPC.RazonSocial)
                       ELSE ''
                   END,
+
 /*SUM(CASE
                WHEN R.CvTipoDocFacturacion = 1
                     AND F.IdMoneda = 2
@@ -208,6 +215,7 @@ AS
                THEN PCD.PrecioUnitario
                ELSE 0
            END) AS MXN, */
+
                   --ISNULL(R.MontoRegistro, 0) AS 'MARK UP', --monto del registro ya incluye el markup
           /*SUM(CASE
                WHEN R.CvTipoDocFacturacion = 1
@@ -225,6 +233,7 @@ AS
            THEN 0
            ELSE 0
        END AS IVA,*/
+
                   --total markup * 0.16
           /*SUM(CASE
                WHEN R.CvTipoDocFacturacion = 1
@@ -233,6 +242,7 @@ AS
                THEN CONVERT(DECIMAL(15, 2), R.MontoRegistro)
                ELSE 0
            END) AS Total,*/
+
                   --markup + iva
                   CASE
                       WHEN R.CvTipoDocFacturacion = 1
@@ -245,6 +255,7 @@ AS
                   S.NombreServicio, 
                   RTRIM(A.NombreActividad), 
                   R.MesPresentacion,
+
 /*SUM(CASE
                WHEN R.CvTipoDocFacturacion = 1
                     AND ISNULL(R.MontoRegistro, 0) <> 0
@@ -254,6 +265,7 @@ AS
                THEN ISNULL(R.MontoRegistro, 0) / TCMPC.TipoCambio
                ELSE 0
            END) AS Importe,*/
+
                   CASE P.Relacionada
                       WHEN 1
                       THEN 'Relacionadas'
@@ -267,10 +279,12 @@ AS
                       ELSE 0
                   END,
                   --FRRF.IdFactura AS IdLum,
-                  CONCAT(FRRF.Serie,' ',FRRF.Folio), 
+                  ISNULL(FRRF.Serie,'')+' '+ ISNULL(FRRF.Folio,''), 
                   --FRRF.Fecha, 
                   --SubCon.RazonSocial,
                   PRF.RazonSocial, 
+				  ISNULL(CONVERT(varchar, FRRF.Fecha,103),'') 
+				 ,
                   I.NombreInstalacion, --instalacion del gasto
                   --CFRRF.Descripcion AS DescripcionPartida,
                   R.InicioEjecucion, 
@@ -297,6 +311,7 @@ AS
                       THEN 'MXN'
                       ELSE 'USD'
                   END,
+
 /*CASE
              WHEN R.CvTipoDocFacturacion = 1
                   AND ISNULL(F.SubTotal, 0) <> 0
@@ -315,6 +330,7 @@ AS
              THEN ISNULL(R.MontoRegistro, 0) / TCMPC.TipoCambio
              ELSE 0
          END, */
+
                   R.MesCertificadoCIEP, 
                   Rub.NombreRubro, 
                   PRE.Nombre,
@@ -328,8 +344,9 @@ AS
                   END, 
                   R.IdRegistro
          --RRF.idFacturaPadre
-         ORDER BY IdFactura, 
+  ORDER BY IdFactura, 
                   TS.NombreTipoServicio, 
                   Actividad, 
                   Proveedor;
      END;
+

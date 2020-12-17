@@ -1,5 +1,7 @@
-﻿CREATE PROCEDURE [dbo].[sp_CO_ReporteGastosNivelActividad]
--- Add the parameters for the stored procedure here
+﻿use Adinco;
+GO
+CREATE PROCEDURE [dbo].[sp_CO_ReporteGastosNivelActividad] --10159,09,2020
+
 @IdPresupuesto INT = 0,
 @MesGE         INT = 0,
 @Anio          INT = 0
@@ -10,8 +12,6 @@ AS
 -- Create date: Domingo 1 Diciembre 2017 12:59 p.m.
 -- Description:    Reporte de Integración de Gastos a Nivel Actividad
 -- =============================================
--- SET NOCOUNT ON added to prevent extra result sets from
--- interfering with SELECT statements.
              SET NOCOUNT ON;
              CREATE TABLE #Reporte
 (Servicio              INT,
@@ -52,6 +52,8 @@ AS
  Gastos    MONEY
 );
 
+DECLARE @MesActual datetime = DATEFROMPARTS(@Anio, @MesGE, 1);
+DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
 /**/
 
              INSERT INTO #Reporte
@@ -153,6 +155,7 @@ AS
 --     LEFT JOIN FI_Factura ON FI_Factura.IdFactura = CO_Registro.IdFactura 
 --     LEFT JOIN CO_TipoCambioMensual ON CO_TipoCambioMensual.IdMoneda = FI_Factura.IdMoneda 
 --     AND CO_TipoCambioMensual.IdMes = MONTH(CO_Registro.MesPresentacion) 
+
 --     AND CO_TipoCambioMensual.Anio = YEAR(CO_Registro.MesPresentacion) 
 -- WHERE 
 --     (
@@ -160,7 +163,7 @@ AS
 --             MONTH(CO_Registro.MesPresentacion) <= @MesGE 
 --             AND (
 --                 YEAR(CO_Registro.MesPresentacion) = @Anio
---             )
+--   )
 --         ) --AND CO_Registro.IdEstado = 10002
 --         AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto
 --     ) 
@@ -191,6 +194,7 @@ AS
 --     LEFT JOIN FI_Factura ON FI_Factura.IdFactura = CO_Registro.IdFactura 
 --     LEFT JOIN CO_TipoCambioMensual ON CO_TipoCambioMensual.IdMoneda = FI_Factura.IdMoneda 
 --     AND CO_TipoCambioMensual.IdMes = MONTH(CO_Registro.MesPresentacion) 
+
 --     AND CO_TipoCambioMensual.Anio = YEAR(CO_Registro.MesPresentacion) 
 -- WHERE 
 --     (
@@ -198,7 +202,7 @@ AS
 --             MONTH(CO_Registro.MesPresentacion) <= @MesGE -1 
 --             AND (
 --                 YEAR(CO_Registro.MesPresentacion) = @Anio
---             )
+--)
 --         ) --AND CO_Registro.IdEstado = 10002
 --         AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto
 --     ) 
@@ -215,6 +219,39 @@ AS
 --     CO_LineaPresupuestoMes.IdActividad; 
 /**/
 
+	--	gasto aculumado mes anterior
+             INSERT INTO #AcumuladoHastaMesAnterior  
+			          SELECT CO_LineaPresupuestoMes.IdTipoServicio,
+                           CO_LineaPresupuestoMes.IdActividad,
+                           SUM(CASE
+                                   WHEN CO_Registro.CvTipoDocFacturacion = 1
+                                        AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0
+                                   THEN ISNULL(CO_Registro.MontoRegistro, 0) / CO_TipoCambioMensual.TipoCambio
+                                   WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)
+                           AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0
+                                   THEN ISNULL(CO_Registro.MontoRegistro, 0) / TCDPC.TipoCambio
+                                   ELSE 0
+                               END) AS Gastos
+                    FROM CO_LineaPresupuestoMes
+                         LEFT JOIN CO_Registro ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+                         LEFT JOIN CO_Servicio ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
+                         LEFT JOIN FI_Factura ON FI_Factura.IdFactura = CO_Registro.IdFactura
+                         LEFT JOIN CO_TipoCambioMensual ON CO_TipoCambioMensual.IdMoneda = FI_Factura.IdMoneda
+                                                           AND CO_TipoCambioMensual.IdMes = MONTH(FI_Factura.Fecha)
+                                                           AND CO_TipoCambioMensual.Anio = YEAR(FI_Factura.Fecha)
+                         LEFT OUTER JOIN dbo.FI_PedimentoComprobante AS PC ON PC.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
+                         LEFT OUTER JOIN dbo.CO_TipoCambioMensual AS TCDPC ON TCDPC.IdMoneda = PC.IdMoneda
+                                                                              AND TCDPC.Anio = YEAR(PC.FechaPago)
+                                                                              AND TCDPC.IdMes = MONTH(PC.FechaPago)
+					WHERE(MONTH(CO_Registro.MesPresentacion) <= MONTH(@MesAnterior)
+                          AND (YEAR(CO_Registro.MesPresentacion) = YEAR(@MesAnterior)
+						  )  
+                          AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto
+						  )  
+                    GROUP BY CO_LineaPresupuestoMes.IdTipoServicio,  
+                             CO_LineaPresupuestoMes.IdActividad;
+
+
              UPDATE #Reporte
                SET
                    Programa = #Programa.Gastos
@@ -228,6 +265,15 @@ AS
              FROM #Gastos
              WHERE #Reporte.Actividad = #Gastos.Actividad
                    AND #Reporte.Servicio = #Gastos.Servicio;
+
+			UPDATE #Reporte  
+            SET  
+                GastoHastaMesAnterior = #AcumuladoHastaMesAnterior.Gastos  
+            FROM #AcumuladoHastaMesAnterior  
+            WHERE 
+				#Reporte.Actividad = #AcumuladoHastaMesAnterior.Actividad  
+                AND	#Reporte.Servicio = #AcumuladoHastaMesAnterior.Servicio  
+
 -- UPDATE 
 --     #Reporte
 -- SET 
@@ -306,10 +352,10 @@ AS
                            DisplayServicio,
                            DisplayActividad,
                            Programa,
-                           GastoHastaMesAnterior,
+                           ISNULL((GastoHastaMesAnterior * 1.07),0),
                            Presupuesto,
-                           Gastos,
-                           Acumulado,
+						   ISNULL((Gastos * 1.07),0),  
+						   ISNULL(((GastoHastaMesAnterior * 1.07) + (Gastos * 1.07)),0)	AS Acumulado,
                            Saldo,
                            DATEFROMPARTS(@anio, @mesge, 1),
                            R.orden
@@ -329,13 +375,16 @@ AS
                     Presupuesto,
                     Gastos,
                     Acumulado,
-                    Saldo,
+                    Programa - Acumulado	AS Saldo, 
                     Fecha,
                     Orden,
-                    RGNA.IdReporteGastosNivelActividad
+                    RGNA.IdReporteGastosNivelActividad,
+					@MesAnterior  AS FechaMesAnterior
              FROM TempReporteGastosNivelActividad RGNA;
                   --JOIN dbo.CO_TipoServicio TS ON RGNA.Servicio = TS.ID_TIPOSER
              --ORDER BY TS.Orden
          END;
 
 	    --[sp_CO_ReporteGastosNivelActividad] 10000,6,2015
+
+
