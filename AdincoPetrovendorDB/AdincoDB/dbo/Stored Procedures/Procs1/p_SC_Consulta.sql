@@ -1,7 +1,5 @@
-﻿-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- p_SC_Consulta 10013,10038,10
-CREATE Proc p_SC_Consulta
+﻿-- p_SC_Consulta 10013,10038,10
+alter Proc p_SC_Consulta
 @pIdContratista int,
 @pIdContrato int,
 @pUsuarioId int
@@ -27,6 +25,8 @@ as
 	ISNULL(SC.isEliminado,0) = 0  and
 	sc.IdContrato = @pIdContrato
 	group by sc.IdSubContrato
+
+	
 	
 
 	
@@ -34,13 +34,14 @@ as
 	select tmp.IdSubcontrato,
 		TotalSC =max(tmp.Total),
 		TotalEst = Sum(est.Total),
-		Avance = (Sum(est.Total) / max(tmp.Total)) * 100
+		Avance = (Sum(est.Total) / max(tmp.Total)) 
 	into #tmpTotales
 	from #tmpSCTotales tmp
 	left join OT_Solicitud ot on ot.IdSubcontrato = tmp.IdSubcontrato
 	left join OT_Estimacion est on est.IdOTSolicitud = ot.IdOTSolicitud	and isnull(est.Cancelada,0) = 0
 	group by tmp.IdSubcontrato
 
+	
 
 
 
@@ -61,6 +62,9 @@ as
 	c.IdContratista = @pIdContratista and
 	sc.IdContrato = @pIdContrato
 	ORDER BY  [IdSubContrato] desc
+
+
+
 
 
 
