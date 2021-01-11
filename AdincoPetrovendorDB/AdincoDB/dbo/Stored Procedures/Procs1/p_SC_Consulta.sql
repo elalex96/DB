@@ -24,10 +24,7 @@ as
 	isnull(SC.isActivo,0) = 1 and 
 	ISNULL(SC.isEliminado,0) = 0  and
 	sc.IdContrato = @pIdContrato
-	group by sc.IdSubContrato
-
-	
-	
+	group by sc.IdSubContrato	
 
 	
 
@@ -41,8 +38,6 @@ as
 	left join OT_Estimacion est on est.IdOTSolicitud = ot.IdOTSolicitud	and isnull(est.Cancelada,0) = 0
 	group by tmp.IdSubcontrato
 
-	
-
 
 
 	SELECT distinct
@@ -50,7 +45,7 @@ as
 	SC.[IsActivo], SC.[IsEliminado], SC.[CreadoPor],FechaRegistro= SC.[CreadoEl], 
 	SC.[ModificadoPor], SC.[ModificadoEl] ,
 	Moneda = isnull(TipoMonedaCorto,'NO DEFINIDA'),
-	AFinanciero = cast(tot.Avance as decimal(5,2)),
+	AFinanciero = cast(tot.Avance as decimal(5,2)), -- 1 = 100%
 	tot.TotalSC
 	FROM [SC_SubContrato] SC
 	INNER JOIN dbo.CO_Contrato  c ON c.IdContratista = sc.IdContratista
