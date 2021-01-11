@@ -31,7 +31,7 @@ as
 	select tmp.IdSubcontrato,
 		TotalSC =max(tmp.Total),
 		TotalEst = Sum(est.Total),
-		Avance = (Sum(est.Total) / max(tmp.Total)) 
+		Avance = (Sum(est.Total) / max(tmp.Total))
 	into #tmpTotales
 	from #tmpSCTotales tmp
 	left join OT_Solicitud ot on ot.IdSubcontrato = tmp.IdSubcontrato
@@ -45,7 +45,7 @@ as
 	SC.[IsActivo], SC.[IsEliminado], SC.[CreadoPor],FechaRegistro= SC.[CreadoEl], 
 	SC.[ModificadoPor], SC.[ModificadoEl] ,
 	Moneda = isnull(TipoMonedaCorto,'NO DEFINIDA'),
-	AFinanciero = cast(tot.Avance as decimal(5,2)), -- 1 = 100%
+	AFinanciero = cast(isnull(tot.Avance,0) as decimal(5,2)), -- 1 = 100%
 	tot.TotalSC
 	FROM [SC_SubContrato] SC
 	INNER JOIN dbo.CO_Contrato  c ON c.IdContratista = sc.IdContratista
