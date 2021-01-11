@@ -1,5 +1,5 @@
 ﻿-- p_SC_Consulta 10013,10038,10
-alter Proc p_SC_Consulta
+create Proc p_SC_Consulta
 @pIdContratista int,
 @pIdContrato int,
 @pUsuarioId int
