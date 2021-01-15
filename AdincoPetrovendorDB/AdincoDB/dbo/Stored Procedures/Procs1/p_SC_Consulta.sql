@@ -1,7 +1,5 @@
-﻿-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- p_SC_Consulta 10013,10038,10
-CREATE Proc p_SC_Consulta
+﻿-- p_SC_Consulta 10013,10038,10
+create Proc p_SC_Consulta
 @pIdContratista int,
 @pIdContrato int,
 @pUsuarioId int
@@ -26,15 +24,14 @@ as
 	isnull(SC.isActivo,0) = 1 and 
 	ISNULL(SC.isEliminado,0) = 0  and
 	sc.IdContrato = @pIdContrato
-	group by sc.IdSubContrato
-	
+	group by sc.IdSubContrato	
 
 	
 
 	select tmp.IdSubcontrato,
 		TotalSC =max(tmp.Total),
 		TotalEst = Sum(est.Total),
-		Avance = (Sum(est.Total) / max(tmp.Total)) * 100
+		Avance = (Sum(est.Total) / max(tmp.Total))
 	into #tmpTotales
 	from #tmpSCTotales tmp
 	left join OT_Solicitud ot on ot.IdSubcontrato = tmp.IdSubcontrato
@@ -43,13 +40,12 @@ as
 
 
 
-
 	SELECT distinct
 	SC.[NumeroSubContrato], SC.[IdSubContratista], SC.[IdSubContrato], SC.[IdContratista], 
 	SC.[IsActivo], SC.[IsEliminado], SC.[CreadoPor],FechaRegistro= SC.[CreadoEl], 
 	SC.[ModificadoPor], SC.[ModificadoEl] ,
 	Moneda = isnull(TipoMonedaCorto,'NO DEFINIDA'),
-	AFinanciero = cast(tot.Avance as decimal(5,2)),
+	AFinanciero = cast(isnull(tot.Avance,0) as decimal(5,2)), -- 1 = 100%
 	tot.TotalSC
 	FROM [SC_SubContrato] SC
 	INNER JOIN dbo.CO_Contrato  c ON c.IdContratista = sc.IdContratista
@@ -61,6 +57,9 @@ as
 	c.IdContratista = @pIdContratista and
 	sc.IdContrato = @pIdContrato
 	ORDER BY  [IdSubContrato] desc
+
+
+
 
 
 

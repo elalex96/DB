@@ -1,6 +1,5 @@
-﻿
--- p_OT_SolicitudAdicional_Grd 8,47,10
-create proc p_OT_SolicitudAdicional_Grd
+﻿-- p_OT_SolicitudAdicional_Grd 8,47,10
+CREATE proc p_OT_SolicitudAdicional_Grd
 @pIdOTSolicitudAdicional int,
 @pIdOTSolicitud int,
 @pUsuarioId int
@@ -24,7 +23,9 @@ as
 		Cantidad = isnull(osm.Cantidad,otm.Cantidad),
 		FechaProgramaInicio = isnull(osm.FechaProgramaInicio,otm.FechaProgramaInicio),
 		FechaProgramaFin = isnull(osm.FechaProgramaFin, otm.FechaProgramaFin),
-		UsuarioId = @pUsuarioId
+		UsuarioId = @pUsuarioId,
+		FechaIniOT = ot.FechaInicio,
+		FechaFinOT = ot.FechaFin
 	from OT_Solicitud ot
 	inner join SC_Materiales m on m.IdSubContrato = OT.IdSubContrato
 	left join dbo.fn_Get_SC_Cantidad(@idSubcontrato,@pIdOTSolicitud) scCant on scCant.idOTSolicitud = ot.IdOTSolicitud and

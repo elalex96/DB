@@ -6,22 +6,30 @@
 as
 begin
 
-	declare @descripcion varchar(150)
+	declare @descripcion varchar(150),
+			 @idCC int,
+			 @CreadorOT bit,
+			 @AprobadorOT bit
+
+	select @idCC = isnull(IdCentroCosto,0)
+	from OT_Solicitud 
+	where IdOTSolicitud = @pIdOTSolicitud	
 	
-	create table #tmp
-	(
-		CreadorOT				int,
-		AprobadorOT				int,
-		ValidadorCantOT			int,
-		GeneradorEstimacion		int,
-		AceptacionServicioOT	int,
-		AdmonContratos				int
-	)
+	--Obtener permisos
+	select  @CreadorOT  = cast( isnull(MAX(case when fe.Orden = 1 then 1 else 0 end),0) as bit),
+			@AprobadorOT =cast(isnull(MAX(case when fe.Orden = 2 then 1 else 0 end),0) as bit)	
+	from [AP_FlujoAprobacionEstatus] fe
+	inner join [AP_FlujoAprobacionEstatusUsuarios] fu on fu.FlujoAprobacionEstatusId = fe.FlujoAprobacionEstatusId
+	inner join [AP_FlujoAprobacionContratos] fc on fc.IdContrato = @pIdContrato
+	inner join [AP_FlujoAprobacion] fa on fa.FlujoAprobacionId = fc.FlujoAprobacionId and
+											fa.TipoFlujoAprobacionId = fe.TipoFlujoAprobacionId
+	inner join [dbo].[AP_UsuarioCentroCosto] ucc on ucc.IdUsuario = fu.usuarioId and
+												isnull(@idCC,0) in (0,ucc.IdCentroCosto )
+	where fe.TipoFlujoAprobacionId = 1 /*Control de Obra*/  and
+	fc.IdContrato = @pIdContrato and
+	fu.usuarioId = @pUsuarioId
 
-	insert into #tmp
-	exec p_OT_FlujoAprobacion_Acceso 1,@pIdContrato,@pUsuarioId,@pIdOTSolicitud
-
-	if exists(select AprobadorOT, CreadorOT from #tmp where AprobadorOT =1 and CreadorOT = 1)
+	if @CreadorOT = 1 OR @AprobadorOT = 1
 	begin
 		select @descripcion = Descripcion
 		from OT_Estatus
@@ -61,3 +69,6 @@ begin
 		select Error = 'No se posible cerrar la OT, no tienes los permisos necesarios'
 	end	
 end
+
+
+
