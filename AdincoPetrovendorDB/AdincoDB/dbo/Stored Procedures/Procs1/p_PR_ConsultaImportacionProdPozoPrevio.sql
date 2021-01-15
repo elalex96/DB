@@ -1,12 +1,22 @@
-﻿
--- p_PR_ConsultaImportacionProdPozo '53,',0,0,3
-CREATE Proc p_PR_ConsultaImportacionProdPozoPrevio
+﻿-- p_PR_ConsultaImportacionProdPozo '53,',0,0,3
+ALTER Proc p_PR_ConsultaImportacionProdPozoPrevio
 @pIdsProdDiaria  varchar(1000),
 @pAnio int=0,
 @pMes int=0,
 @pIdContrato int = 0
 as
 
+	/*Determinar si se calculará la producción o no. Si es pantera, no calcular*/
+
+	declare @calcular bit = 1
+
+	select @calcular = 0
+	from CO_Contrato c
+	inner join CO_Contratista co on co.IdContratista = c.IdContratista
+	where IdContrato = @pidContrato and
+	co.RFC = 'PEP170906DI5' --PANTERA
+
+	
 
 	select ID= splitdata
 	into #tmpIds
@@ -35,10 +45,15 @@ as
 		pozo.ProdPetroleoBruto,
 		pozo.Agua,
 		pozo.Comentarios,
-		Est_64PlgTexto = case when pozo.Est_64Plg is not null then  
-								cast(((pozo.Est_64Plg * 5 ) / 0.078125 ) as varchar) + '/64'
-						 else ''
-						 End
+		Est_64PlgTexto = 
+						case when @calcular = 1 then
+								 case when pozo.Est_64Plg is not null then  
+										cast(((pozo.Est_64Plg * 5 ) / 0.078125 ) as varchar) + '/64'
+								 else ''
+								 End
+							  else
+									cast(pozo.Est_64Plg as varchar)
+							end
 							
 		from PR_ProdDiariaPozo_Previo pozo
 		inner join [PR_ProdDiaria_Previo]  pd on pd.ID = pozo.ProdDiaria
@@ -75,10 +90,14 @@ as
 		pozo.ProdPetroleoBruto,
 		pozo.Agua,
 		pozo.Comentarios,
-		Est_64PlgTexto = case when pozo.Est_64Plg is not null then  
-								cast(((pozo.Est_64Plg * 5 ) / 0.078125 ) as varchar) + '/64'
-						 else ''
-						 End
+		Est_64PlgTexto = case when @calcular = 1 then
+								 case when pozo.Est_64Plg is not null then  
+										cast(((pozo.Est_64Plg * 5 ) / 0.078125 ) as varchar) + '/64'
+								 else ''
+								 End
+							  else
+									cast(pozo.Est_64Plg as varchar)
+							end
 		from PR_ProdDiariaPozo_Previo pozo
 		inner join [PR_ProdDiaria_Previo]  pd on pd.ID = pozo.ProdDiaria
 		inner join PR_Pozo p on p.Id = pozo.Pozo		
@@ -91,6 +110,9 @@ as
 		DATEPART(month,pozo.Fecha) = @pMes 
 
 	eND
+
+
+
 
 
 
