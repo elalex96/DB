@@ -1,6 +1,11 @@
-﻿use Adinco;
+﻿USE [Adinco]
 GO
-CREATE PROCEDURE [dbo].[sp_CO_ReporteGastosNivelActividad] --10159,09,2020
+/****** Object:  StoredProcedure [dbo].[sp_CO_ReporteGastosNivelActividad]    Script Date: 11/01/2021 11:54:03 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_CO_ReporteGastosNivelActividad] --10159,09,2020
 
 @IdPresupuesto INT = 0,
 @MesGE         INT = 0,
@@ -365,6 +370,9 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
 
 /**/
 
+declare @NombrePresupuesto nvarchar(600)
+
+select @NombrePresupuesto = nombre from co_presupuesto where idPresupuesto = @IdPresupuesto
 
              SELECT Servicio,
                     Actividad,
@@ -379,7 +387,9 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
                     Fecha,
                     Orden,
                     RGNA.IdReporteGastosNivelActividad,
-					@MesAnterior  AS FechaMesAnterior
+					@MesAnterior  AS FechaMesAnterior,
+					'PRESUPUESTO ' + UPPER(ISNULL(@NombrePresupuesto, '')) + ' AREA CONTRACTUAL' as NombrePresupuesto,
+					'Reporte de Integración  de Gastos Elegibles ' + ISNULL(@NombrePresupuesto, '') as Etiqueta1
              FROM TempReporteGastosNivelActividad RGNA;
                   --JOIN dbo.CO_TipoServicio TS ON RGNA.Servicio = TS.ID_TIPOSER
              --ORDER BY TS.Orden
