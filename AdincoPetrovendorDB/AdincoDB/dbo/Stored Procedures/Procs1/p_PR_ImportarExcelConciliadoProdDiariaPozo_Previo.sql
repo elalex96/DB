@@ -1,4 +1,5 @@
-﻿CREATE PROc p_PR_ImportarExcelConciliadoProdDiariaPozo_Previo
+﻿
+alter PROc p_PR_ImportarExcelConciliadoProdDiariaPozo_Previo
 @pId int out,
 @pIdProdDiaria int out,
 @pContrato varchar(250),
@@ -23,7 +24,8 @@
 @pCreadoPor int,
 @pError varchar(500) out,
 @pIdContratoSession int,
-@pTemperaturaArchivo float
+@pTemperaturaArchivo float,
+@pCalcularBloque bit=0
 as
 
 	declare @pIdBloque int,
@@ -33,14 +35,28 @@ as
 	set @pError = ''
 
 
+	
 
-	select @pidBloque =Id
-	from PR_Bloque
-	where replace(ltrim(RTRIM(Descripcion)),'','') = RTRIM(@pBloque)
+	
 
 	select @IdContrato = IdContrato
 	from CO_Contrato
 	where replace(ltrim(RTRIM(numerocontrato)),'Á','A') = rtrim(ltrim(@pContrato))
+
+
+	if(@pCalcularBloque = 1)
+	begin
+		select @pidBloque = max(Id)
+		from PR_Bloque
+		where IdContrato = @IdContrato and
+		Estatus = 1
+	end
+	else
+	begin
+		select @pidBloque =Id
+		from PR_Bloque
+		where replace(ltrim(RTRIM(Descripcion)),'','') = RTRIM(@pBloque)
+	end
 
 
 	SELECT @pIdPozo = Id
@@ -83,7 +99,7 @@ as
 		set @pError = 'No fue posible encontrar el bloque para : '+@pBloque
 
 	if(isnull(@pIdPozo,0) = 0)
-		set @pError = 'No fue posible encontrar el pozo para : '+@pPozo
+		set @pError = 'No fue posible encontrar el pozo para : '+@pPozo + ' contrato: ' + @pContrato 
 
 	if @pError <> ''
 		return
@@ -189,4 +205,7 @@ as
 	commit tran
 
 	fin:
+
+
+
 
