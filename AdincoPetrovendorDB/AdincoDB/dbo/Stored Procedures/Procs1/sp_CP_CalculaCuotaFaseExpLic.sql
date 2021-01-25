@@ -10,7 +10,7 @@ AS
 -- Description:	
 -- =============================================
    -- SET NOCOUNT ON added to prevent extra result sets from-- interfering with SELECT statements.
-   SET NOCOUNT ON
+    SET NOCOUNT ON
 
    DECLARE @TienePlanDesarrrollo	INT = 0
 
@@ -50,7 +50,9 @@ AS
 					THEN 1355.82
 				  WHEN 2020
 					THEN 1396.09
-                   ELSE 1396.09
+				  WHEN 2021
+					THEN 1442.58
+                  ELSE 1396.09
                 END AS CuotaKm2,
                 AC.SuperficieKm2,
                 CASE YEAR(@Periodo)
@@ -66,7 +68,9 @@ AS
 					THEN 1355.82 * AC.SuperficieKm2
 				   WHEN 2020
 					THEN 1396.09  * AC.SuperficieKm2
-                   ELSE 1214.20 * AC.SuperficieKm2
+				  WHEN 2021
+					THEN 1442.58  * AC.SuperficieKm2
+                  ELSE 1214.20 * AC.SuperficieKm2
                 END AS Cuota
          FROM CO_AreaContractual AC
               JOIN co_contrato C ON c.IdAreaContractual = AC.IdAreaContractual
