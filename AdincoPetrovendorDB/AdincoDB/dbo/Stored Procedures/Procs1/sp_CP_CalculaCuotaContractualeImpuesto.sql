@@ -43,6 +43,7 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1294.71
 			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1355.82
 			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1396.09
+			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1442.58
 			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
             ELSE 1396.09
         END AS CuotaContractual,
@@ -54,6 +55,7 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1294.71 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1355.82 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1396.09 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
 			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
             ELSE 0
         END AS TotalCuotaContractual,
@@ -78,6 +80,8 @@ GROUP BY
 				THEN 7073.83
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
 				THEN 6850.3
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+				THEN 6850.3
 		END AS Impuesto,	-- Art. 55
 		CASE 
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
@@ -99,6 +103,8 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'
 				THEN ROUND(7073.83 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
 				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
 		END AS TotalImpuesto
     FROM
@@ -130,6 +136,7 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1294.71
 			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1355.82
 			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1396.09
+			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1442.58
 			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
             ELSE 1396.09
         END,
@@ -141,6 +148,7 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1294.71 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1355.82 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1396.09 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
 			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
             ELSE 0
         END,
@@ -165,6 +173,8 @@ GROUP BY
 				THEN 7073.83
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
 				THEN 6850.3
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+				THEN 6850.3
 		END,	-- Art. 55
 		CASE 
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
@@ -187,8 +197,11 @@ GROUP BY
 				THEN ROUND(7073.83 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
 				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
 		END
 	ORDER BY
 		M.Fecha,
 		CO.NumeroContrato
 END
+
