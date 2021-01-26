@@ -1,8 +1,4 @@
-﻿USE adinco
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'sp_AP_ActualizarUsuario')
-    DROP PROCEDURE sp_AP_ActualizarUsuario
-GO
-CREATE PROC [dbo].[sp_AP_ActualizarUsuario]  
+﻿CREATE PROC [dbo].[sp_AP_ActualizarUsuario]  
 --  
 @pUsuarioID     INT,   
 @pUsuario       VARCHAR(100),   
