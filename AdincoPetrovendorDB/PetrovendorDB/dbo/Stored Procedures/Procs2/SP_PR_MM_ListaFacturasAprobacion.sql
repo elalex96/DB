@@ -1,4 +1,14 @@
-﻿-- =============================================  
+﻿use Petrovendor
+
+go
+
+if exists (select * from sys.procedures where name = 'SP_PR_MM_ListaFacturasAprobacion')
+begin
+	drop proc SP_PR_MM_ListaFacturasAprobacion
+end
+
+go
+-- =============================================  
 -- Author:  <Daniel AC>  
 -- Create date: <18/11/2020>  
 -- Description: <Se revisa sp relacioando al issue #835 montos duplicados >  
@@ -13,41 +23,69 @@ AS
 BEGIN
   SET NOCOUNT ON;
 
-  DECLARE @IDCONTRATO2 int = (SELECT TOP 1
-								C.IdContrato
-							  FROM Adinco.dbo.CO_Contrato AS C
-							  LEFT JOIN Adinco.dbo.CO_Contratista AS CON
-								ON C.IdContratista=CON.IdContratista 
-							  LEFT JOIN dbo.S_Proveedor AS PR
-								ON CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS=PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS 
-							  WHERE PR.IdProveedor = @IdProveedor);
+	/*
+	DECLARE @IDCONTRATO2 int = (	SELECT		TOP 1
+											C.IdContrato
+								FROM		Adinco.dbo.CO_Contrato		C
+								LEFT JOIN	Adinco.dbo.CO_Contratista	CON
+								ON			C.IdContratista				=		CON.IdContratista 
+								LEFT JOIN	dbo.S_Proveedor				PR
+								ON			CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS=PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS 
+								WHERE		PR.IdProveedor = @IdProveedor);
+	*/
+	DECLARE @PLANT			nvarchar(10),
+			@PROVEDORRFC	nvarchar(20),
+			@IDCONTRATISTA	nvarchar(50)
 
-	DECLARE @PLANT nvarchar(10) = (SELECT TOP 1
-									P.Planta
-									FROM Adinco.dbo.CO_Contrato AS C
-									LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS P
-									ON C.IdContratista=P.IdContratista 
-									WHERE C.IdContrato = @IDCONTRATO2);
+	create table #FlujoSerial 
+	(
+		IdOperacion int,
+		NoSecuencia int
+	)
 
-	DECLARE @PROVEDORRFC nvarchar(20) = (SELECT
-										RFC
-										FROM dbo.S_Proveedor
-										WHERE IdProveedor = @IdProveedor);
+	create table #OperacionNoAprobadas 
+	(
+		IdOperacion int
+	)
 
-	DECLARE @IDCONTRATISTA nvarchar(50) = (SELECT
-											IdContratista
-											FROM Adinco.dbo.CO_Contratista
-											WHERE RFC = @PROVEDORRFC);
+	CREATE TABLE #AceptacionesPedido 
+	(
+		IdAceptacionPedido	int				NULL,
+		Pedido				nvarchar(max)	NULL,
+		IdPedido			int				NULL,
+		FechaRegistro		datetime		NULL,
+		Proveedor			nvarchar(350)	NULL,
+		Nombre				nvarchar(100)	NULL,
+		TotalPedido			money			NULL,
+		Moneda				nvarchar(100)	NULL,
+		RFC					nvarchar(100)	NULL,
+		IdSolicitudPedido	nvarchar(100)	NULL,
+		span				nvarchar(100)	NULL,
+		PedirCarta			bit,
+		IdOperacion			int,
+		Contrato			varchar(50)
+	)
 
-	DECLARE @FlujoSerial TABLE (
-	IdOperacion int,
-	NoSecuencia int
-	);
 
-	DECLARE @OperacionNoAprobadas TABLE (
-	IdOperacion int);
 
-  INSERT INTO @FlujoSerial 
+	select	@PLANT	=	(	SELECT		TOP 1
+										P.Planta
+							FROM		Adinco.dbo.CO_Contrato				AS C
+							LEFT JOIN	Adinco.dbo.CO_SAPContratista_Planta AS P
+							ON			C.IdContratista=P.IdContratista 
+							WHERE		C.IdContrato = @IdContrato)--@IDCONTRATO2);
+
+	select	@PROVEDORRFC = (	SELECT	RFC
+								FROM	dbo.S_Proveedor
+								WHERE	IdProveedor = @IdProveedor);
+
+	select	@IDCONTRATISTA	= (	SELECT	IdContratista
+								FROM	Adinco.dbo.CO_Contratista
+								WHERE	RFC = @PROVEDORRFC);
+
+
+	
+  INSERT INTO #FlujoSerial 
   (IdOperacion,
   NoSecuencia)
     SELECT
@@ -72,11 +110,11 @@ BEGIN
     AND FT.IdTipoFlujo = 1 ---> SOLO DEBE APLICAR PARA LAS APROBACIONES SERIALES      
     AND PE.IdProveedorCompras = @IdProveedor;
 
-  INSERT INTO @OperacionNoAprobadas (IdOperacion)
+  INSERT INTO #OperacionNoAprobadas (IdOperacion)
     SELECT
       O.IdOperacion
     FROM dbo.TA_Operacion O
-    JOIN @FlujoSerial f
+    JOIN #FlujoSerial f
       ON O.IdOperacion=f.IdOperacion 
     JOIN dbo.TA_Tarea T
       ON O.IdOperacion=T.IdOperacion 
@@ -85,23 +123,7 @@ BEGIN
     AND T.Activo = 1
     AND T.IdEstatus <> 2;
 
-  CREATE TABLE #AceptacionesPedido (
-    IdAceptacionPedido int NULL,
-    Pedido nvarchar(max) NULL,
-    IdPedido int NULL,
-    FechaRegistro datetime NULL,
-    Proveedor nvarchar(350) NULL,
-    Nombre nvarchar(100) NULL,
-    TotalPedido money NULL,
-    Moneda nvarchar(100) NULL,
-    RFC nvarchar(100) NULL,
-    IdSolicitudPedido nvarchar(100) NULL,
-    span nvarchar(100) NULL,
-    PedirCarta bit,
-    IdOperacion int,
-    Contrato varchar(50)
-  );
-
+  
   IF @Estatus
     IN (1, 2, 3) --> EN APROBACIÓN, APROBADO, RECHAZADOS
   BEGIN
@@ -128,7 +150,7 @@ BEGIN
         AND O.IdEstatusOperacion = @Estatus
         AND O.IdOperacion NOT IN (SELECT
 								  IdOperacion
-								  FROM @OperacionNoAprobadas)
+								  FROM #OperacionNoAprobadas)
       JOIN TA_Estatus AS E
         ON O.IdEstatusOperacion=E.IdEstatus 
       JOIN MM_AceptacionPedido AS AP
@@ -289,7 +311,7 @@ BEGIN
         AND O.IdTipoOperacion = 10
         AND O.IdOperacion NOT IN (SELECT
 								  IdOperacion
-								FROM @OperacionNoAprobadas)
+								FROM #OperacionNoAprobadas)
       JOIN TA_Estatus AS E
         ON O.IdEstatusOperacion=E.IdEstatus
       JOIN MM_AceptacionPedido AS AP
@@ -313,9 +335,9 @@ BEGIN
         ON PE.IdMoneda=TM.IdMoneda
       JOIN dbo.FI_Factura AS fi
         ON AF.IdFactura=fi.IdFactura
-      JOIN dbo.RelacionCartaCNPedido RC
+      LEFT JOIN dbo.RelacionCartaCNPedido RC
         ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 
-      INNER JOIN Adinco.dbo.CO_Contrato AS C
+ INNER JOIN Adinco.dbo.CO_Contrato AS C
         ON PE.IdContrato=C.IdContrato  
       WHERE ISNULL(AF.IdEstatusEliminado, 0) <> 1
       GROUP BY AF.IdAceptacionPedido,
@@ -406,7 +428,7 @@ BEGIN
                  AP.IdSubContratista,
                  AF.IdEstatusEliminado,
                  AF.CreadoEl,
-                 SV.VendorName,
+         SV.VendorName,
                  APD.IdMoneda,
                  SV.TaxID,
                  E.IdEstatus,
@@ -512,7 +534,7 @@ BEGIN
           CONCAT('PO Number:', AP.IdPedido COLLATE Modern_Spanish_CI_AS, ' ', '- SES Number: ', SES.SESNumber COLLATE Modern_Spanish_CI_AS, ' - Proforma Number:', CAST(PSES.IdPRESES AS nvarchar(100)) COLLATE Modern_Spanish_CI_AS),
           00,
           AF.CreadoEl,
-          ISNULL(SV.VendorName, AP.IdSubContratista) AS Proveedor,
+   ISNULL(SV.VendorName, AP.IdSubContratista) AS Proveedor,
           E.Nombre,
           CASE
             WHEN F.IdMoneda = 1 THEN dbo.FN_PesosDolaresTipoCambio(F.SubTotal, F.FechaTimbrado)
@@ -628,3 +650,7 @@ BEGIN
            Contrato
   ORDER BY FechaRegistro DESC;
 END;
+
+go
+
+--exec SP_PR_MM_ListaFacturasAprobacion @IdProveedor=516,@IdUsuario=2572,@IdContrato=3,@Estatus=2

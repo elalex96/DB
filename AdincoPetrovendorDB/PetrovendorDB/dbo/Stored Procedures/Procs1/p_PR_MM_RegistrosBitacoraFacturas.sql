@@ -1,4 +1,15 @@
-﻿CREATE PROCEDURE p_PR_MM_RegistrosBitacoraFacturas
+﻿use Petrovendor
+
+go
+
+if exists (select * from sys.procedures where name = 'p_PR_MM_RegistrosBitacoraFacturas')
+begin
+	drop proc p_PR_MM_RegistrosBitacoraFacturas
+end
+
+go
+
+CREATE PROCEDURE p_PR_MM_RegistrosBitacoraFacturas
 	@IdProveedor int,
 	@Estatus int ,	
     @IdContrato    INT = null,
@@ -8,35 +19,66 @@ as
 begin
 	SET NOCOUNT ON;
 
-	DECLARE @IDCONTRATO2 INT = (SELECT TOP 1
+	create table #FlujoSerial
+    (
+        IdOperacion INT,
+        NoSecuencia INT
+    )
+
+	--create table #OperacionNoAprobadas
+	--(
+	--	IdOperacion INT
+	--)
+
+	CREATE TABLE #AceptacionesPedido
+	(
+		IdAceptacionPedido	INT				null,
+		Pedido				NVARCHAR(max)	null,
+		IdPedido			INT				null,
+		FechaRegistro		DATETIME		null,
+		Proveedor			NVARCHAR(100)	null,
+		Nombre				NVARCHAR(100)	null,
+		IdPedidoGeneral		INT				null,
+		TipoPedido			NVARCHAR(MAX)	null,
+		TotalPedido			MONEY			NULL,
+		Moneda				NVARCHAR(100)	null,
+		RFC					NVARCHAR(100)	null,
+		IdSolicitudPedido	NVARCHAR(100)	NULL,
+		span				NVARCHAR(100)	NULL
+	)
+
+	DECLARE @IDCONTRATO2	INT,
+			@PLANT			NVARCHAR(10),
+			@PROVEDORRFC	NVARCHAR(20),
+			@IDCONTRATISTA	NVARCHAR(50)
+
+
+	 select	@IDCONTRATO2	=	(SELECT TOP 1
 								C.IdContrato
 								FROM Adinco.dbo.CO_Contrato AS C
 								LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista  = C.IdContratista
 								LEFT JOIN dbo.S_Proveedor AS PR ON PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
-								WHERE PR.IdProveedor = @IdProveedor);
+								WHERE PR.IdProveedor = @IdProveedor)
 
-	DECLARE @PLANT NVARCHAR(10) = (SELECT TOP 1
+	select @PLANT			= (SELECT TOP 1
 										P.Planta
 										FROM Adinco.dbo.CO_Contrato AS C
 										LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS P ON P.IdContratista = C.IdContratista
 										WHERE C.IdContrato = @IDCONTRATO2)
-
+	--select @IdContrato, @IDCONTRATO2
 	--IF(ISNULL(@IdContrato,0) = 0)
 	--BEGIN
 	--	SET @IdContrato = 10039;
 	--END
 
-	DECLARE @PROVEDORRFC NVARCHAR(20) = (SELECT RFC FROM dbo.S_Proveedor WHERE IdProveedor = @IdProveedor);
+	select	@PROVEDORRFC  = (SELECT RFC FROM dbo.S_Proveedor WHERE IdProveedor = @IdProveedor);
 
-	DECLARE @IDCONTRATISTA NVARCHAR(50) = (SELECT IdContratista FROM Adinco.dbo.CO_Contratista WHERE RFC = @PROVEDORRFC);
-	DECLARE @FlujoSerial TABLE
-    (
-        IdOperacion INT,
-        NoSecuencia INT
-    );
-    DECLARE @OperacionNoAprobadas TABLE (IdOperacion INT);
+	select	@IDCONTRATISTA = (SELECT IdContratista FROM Adinco.dbo.CO_Contratista WHERE RFC = @PROVEDORRFC);
 
-    INSERT INTO @FlujoSerial
+	
+    
+
+    INSERT INTO #FlujoSerial
     (
         IdOperacion,
         NoSecuencia
@@ -55,38 +97,21 @@ begin
           AND t.NoSecuencia > 1
 		  AND PE.IdProveedorCompras = @IdProveedor
 
-    INSERT INTO @OperacionNoAprobadas
-    (
-        IdOperacion
-    )
-    SELECT O.IdOperacion
-    FROM dbo.TA_Operacion O
-        INNER JOIN @FlujoSerial f
-            ON f.IdOperacion = O.IdOperacion
-        INNER JOIN dbo.TA_Tarea T
-            ON T.IdOperacion = O.IdOperacion
-               AND T.NoSecuencia = (f.NoSecuencia - 1)
-    WHERE O.IdTipoOperacion = 10
-          AND T.IdEstatus <> 2;
+    --INSERT INTO #OperacionNoAprobadas
+    --(
+    --    IdOperacion
+    --)
+    --SELECT O.IdOperacion
+    --FROM dbo.TA_Operacion O
+    --    INNER JOIN #FlujoSerial f
+    --        ON f.IdOperacion = O.IdOperacion
+    --    INNER JOIN dbo.TA_Tarea T
+    --        ON T.IdOperacion = O.IdOperacion
+    --           AND T.NoSecuencia = (f.NoSecuencia - 1)
+    --WHERE O.IdTipoOperacion = 10
+    --      AND T.IdEstatus <> 2;
 
-	CREATE TABLE #AceptacionesPedido(
-	IdAceptacionPedido INT null,
-	Pedido NVARCHAR(max) null,
-	IdPedido INT null,
-	FechaRegistro DATETIME null,
-	Proveedor NVARCHAR(100) null,
-	Nombre NVARCHAR(100) null,
-	IdPedidoGeneral INT null,
-	TipoPedido NVARCHAR(MAX) null,
-	TotalPedido MONEY NULL,
-	Moneda NVARCHAR(100) null,
-	RFC NVARCHAR(100) null,
-	IdSolicitudPedido NVARCHAR(100) NULL,
-	span NVARCHAR(100) NULL
-	);
 	
-	
-
 	 IF @Estatus=0  --TODAS
 	 BEGIN
 	
@@ -160,3 +185,7 @@ begin
 		SELECT 0 AS 'RESULT'
 	 END
 end
+
+go
+
+--exec p_PR_MM_RegistrosBitacoraFacturas @IdProveedor=516,@Estatus=0,@IdContrato=3,@IdUsuario=2572
