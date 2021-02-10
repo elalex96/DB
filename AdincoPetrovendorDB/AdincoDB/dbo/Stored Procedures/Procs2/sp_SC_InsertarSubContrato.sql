@@ -1,4 +1,4 @@
-﻿CREATE Proc sp_SC_InsertarSubContrato
+﻿CREATE PROC sp_SC_InsertarSubContrato
 @pIdSubContrato	int out,
 @pIdSubContratista	int,
 @pIdContratista	int,
@@ -18,6 +18,12 @@ AS
 	FROM Petrovendor.dbo.MM_PedidoDetalle ped
 	INNER JOIN Petrovendor.dbo.MM_Material mat ON mat.IdMaterial = ped.IdMaterial
 	WHERE ped.IdPedido = @pIdPedido
+
+	
+
+	BEGIN TRY	
+
+	BEGIN TRAN
 
 	if exists(
 		select 1
@@ -44,10 +50,7 @@ AS
 		set @pError = '[WARNING] Ya no es posible utilizar el Prefijo para la OT'; 
 		return
 	end
-
-	BEGIN TRY
-
-	BEGIN TRAN
+	
 
 	select @pIdSubContrato = isnull(max(IdSubContrato),0)+1 from SC_Subcontrato
 
