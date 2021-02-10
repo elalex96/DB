@@ -1,7 +1,4 @@
-﻿-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-CREATE Proc sp_SC_InsertarSubContrato
+﻿CREATE Proc sp_SC_InsertarSubContrato
 @pIdSubContrato	int out,
 @pIdSubContratista	int,
 @pIdContratista	int,
@@ -10,16 +7,17 @@ CREATE Proc sp_SC_InsertarSubContrato
 @pIdPedido INT,
 @pIdContrato int,
 @pCreadoPor	INT,
-@pPrefijoOT VARCHAR(13)
+@pPrefijoOT VARCHAR(13),
+@pError varchar(250) = '' out
 AS
 
 	DECLARE @IdSCMaterial int,
 		@IdMoneda int
 
-		select @IdMoneda = ped.IdMoneda
-		 FROM Petrovendor.dbo.MM_PedidoDetalle ped
-		INNER JOIN Petrovendor.dbo.MM_Material mat ON mat.IdMaterial = ped.IdMaterial
-		WHERE ped.IdPedido = @pIdPedido
+	Select @IdMoneda = ped.IdMoneda
+	FROM Petrovendor.dbo.MM_PedidoDetalle ped
+	INNER JOIN Petrovendor.dbo.MM_Material mat ON mat.IdMaterial = ped.IdMaterial
+	WHERE ped.IdPedido = @pIdPedido
 
 	if exists(
 		select 1
@@ -30,7 +28,7 @@ AS
 		IdContrato = @pIdContrato
 	)
 	begin 
-		RAISERROR (15600,-1,-1, 'Ya existe un SubContrato con el mismo número de subcontrato'); 
+		set @pError = '[WARNING] Ya existe un SubContrato con el mismo número de subcontrato'; 
 		return
 	END
     
@@ -43,11 +41,13 @@ AS
 		IdContrato = @pIdContrato
 	)
 	begin 
-		RAISERROR (15600,-1,-1, 'Ya no es posible utilizar el Prefijo para la OT'); 
+		set @pError = '[WARNING] Ya no es posible utilizar el Prefijo para la OT'; 
 		return
 	end
 
-	BEGIN tran
+	BEGIN TRY
+
+	BEGIN TRAN
 
 	select @pIdSubContrato = isnull(max(IdSubContrato),0)+1 from SC_Subcontrato
 
@@ -80,11 +80,6 @@ AS
 		@IdMoneda
 	)
 
-	IF @@ERROR <> 0
-	BEGIN
-		ROLLBACK TRAN
-		GOTO fin
-    END
 
 	SELECT @IdSCMaterial = ISNULL(MAX(IdSCMaterial),0) + 1
 	FROM 	SC_Materiales	
@@ -106,15 +101,15 @@ AS
 	    ModificadoPor,
 	    ModificadoEl,
 	    IdServicio
-	)
+	)		
 	SELECT  ROW_NUMBER() OVER(ORDER BY ped.IdMaterial ASC)+@IdSCMaterial AS ID,
 	@pIdSubContrato,
 	ped.IdMaterial,
 	ped.IdMaterial,
 	ISNULL(MAT.IdUnidad,10011) /****SI VIENE NULO PONER UNIDAD SERVICIO PV_MM_MaterialUnidad POR DEFAULT*/,
-	ped.Cantidad,
+	sum(ped.Cantidad),
 	PED.PrecioUnitario,
-	ped.Cantidad * ped.PrecioUnitario,
+	sum(ped.Cantidad)* ped.PrecioUnitario,
 	MAT.DescripcionCorta,
 	mat.DescripcionLarga,
 	@pCreadoPor,
@@ -125,12 +120,9 @@ AS
 	FROM Petrovendor.dbo.MM_PedidoDetalle ped
 	INNER JOIN Petrovendor.dbo.MM_Material mat ON mat.IdMaterial = ped.IdMaterial
 	WHERE ped.IdPedido = @pIdPedido
+	group by ped.IdMaterial,MAT.IdUnidad,PED.PrecioUnitario,MAT.DescripcionCorta,mat.DescripcionLarga
+
 	
-    IF @@ERROR <> 0
-	BEGIN
-		ROLLBACK TRAN
-		GOTO fin
-    END
 
 
 	/**************En base al pedido, insertar el presupuesto para el subcontrato***********/
@@ -166,27 +158,22 @@ AS
 	    @pCreadoPor,        -- CreadoPor - int
 	    GETDATE() -- CreadoEl - datetime
 	    )
-
-
-	IF @@ERROR <> 0
-	BEGIN
-		ROLLBACK TRAN
-		GOTO fin
-    END
+	
 
 	exec p_SC_Materiales_Gen @pIdSubContrato,0
 
 
-	IF @@ERROR <> 0
-	BEGIN
-		ROLLBACK TRAN
-		GOTO fin
-    END
-
-
-	fin:
-
 	COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRAN
+		set @pError = '[ERROR]'+ ERROR_MESSAGE()
+	END CATCH
+
+	
+
+
+
 
 
 
