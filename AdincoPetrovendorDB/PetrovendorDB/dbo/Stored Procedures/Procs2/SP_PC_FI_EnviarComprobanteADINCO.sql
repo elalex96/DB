@@ -1,21 +1,13 @@
-﻿-- =============================================
--- Author:		DANIEL AC
--- Create date: 28-03-18
--- Description:	ENVIAR COMPROBANTE  APROBADO A BASE DE DATOS DE ADINCO 
--- =============================================
--- Author:		JOSE ROMAN
--- Create date: 04-07-2018
--- Description:	Se agrega el guardado del Hash del comprobante generado en Petrovendor a Adinco 
--- Create date: 31-01-2019
--- Description:	Se agrega el guardado del gasto tanto de compra directa como de mercadeo y se envia a Adinco
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 28/10/2019
--- Description:	se omite el has de pase adinco, y se agrega el registro de pase adinco
+﻿
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 06/06/2020
 -- Description:	se agrega la validacion de las unidad entre la db de adinco y petro para evitar errores de fk
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 11-02-21
+-- Description:	VALIDACION DE NO ENVIAR DOBLE PEDIMENTO
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_FI_EnviarComprobanteADINCO]
     -- Add the parameters for the stored procedure here
@@ -26,9 +18,9 @@ CREATE PROCEDURE [dbo].[SP_PC_FI_EnviarComprobanteADINCO]
     @IdUsuario INT
 AS
 BEGIN
-
+        DECLARE @ID_PEDIMENTOCOMPROBANTE_ADINCO INT
         DECLARE @IdUsuarioAdinco INT = 0;
-
+		DECLARE @IdPedimentoComprobanteAdinco INT = 0;
         SELECT @IdUsuarioAdinco = IdUsuarioADINCO
         FROM dbo.S_Usuario
         WHERE IdUsuario = @IdUsuario;
@@ -160,7 +152,7 @@ BEGIN
 		FROM Adinco.dbo.PV_MM_MaterialUnidad AS UNA
 		WHERE UNA.Unidad = @NOMBRE_UNIDAD;
 
-		/*SE VALIDA QUE EXISTA SI NO EXISTE SE INCERTA, SI EXISTES SIMPLEMENTE SE ASIGNA LA VARIABLE LLENADA ANTERIORMENTE*/
+		/*SE VALIDA QUE EXISTA SI NO EXISTE SE INSERTA, SI EXISTE SIMPLEMENTE SE ASIGNA LA VARIABLE LLENADA ANTERIORMENTE*/
 		IF @NID_UNIDADADINCO IS NULL
 		BEGIN
 		    
@@ -191,7 +183,15 @@ BEGIN
 
 		END; 
 						
+		
+		/*VALIDAR SI EL PEDIMENTO COMPROBANTE DE PETROVENDOR YA ESTA EN ADINCO, SI, YA ESTA, NO ENVIAR PEDIMENTO*/	 
 
+		SELECT @ID_PEDIMENTOCOMPROBANTE_ADINCO=IdPedimentoComprobante
+		FROM Adinco.dbo.FI_PedimentoComprobante
+		WHERE IdPedimentoComprobantePetrovendor=@IdPedimentoComprobante
+				
+        IF ISNULL(@ID_PEDIMENTOCOMPROBANTE_ADINCO,0)=0
+		BEGIN
 		/*AGREGAR COMPROBANTE CABECERA*/
         INSERT INTO Adinco.dbo.FI_PedimentoComprobante
         (
@@ -232,9 +232,7 @@ BEGIN
         WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 
-        DECLARE @ID_PEDIMENTOCOMPROBANTE_ADINCO INT = (
-                                                          SELECT SCOPE_IDENTITY()
-                                                      );
+        SET @ID_PEDIMENTOCOMPROBANTE_ADINCO  = (SELECT SCOPE_IDENTITY());
 
 		/*AGREGAR PEDIMENTO DETALLE*/
         INSERT INTO Adinco.dbo.FI_PedimentoComprobanteDetalle
@@ -291,7 +289,9 @@ BEGIN
 
 		-----------------REGISTRO DEL GASTO---------------------
 
-		DECLARE @IdPedidoGral INT = (SELECT ISNULL(IdPedido,0) FROM dbo.FI_AceptacionPedido_PedimentoComprobante WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
+		DECLARE @IdPedidoGral INT = (SELECT ISNULL(IdPedido,0) 
+		FROM dbo.FI_AceptacionPedido_PedimentoComprobante 
+		WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
 
 		IF(@IdPedidoGral > 0)
 		BEGIN
@@ -487,8 +487,13 @@ BEGIN
 		                                         0;           -- bit
 		
 
-		 SELECT 'ENVIADO',
-		 @ID_PEDIMENTOCOMPROBANTE_ADINCO
+
+		END 
+
+		
+
+		SELECT 'ENVIADO',
+		@ID_PEDIMENTOCOMPROBANTE_ADINCO
 
 END;
 
