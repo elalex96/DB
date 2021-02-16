@@ -1,10 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallePeticionOferta_V2]    Script Date: 16/02/2021 01:15:34 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/01/2020>
