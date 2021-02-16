@@ -10,6 +10,11 @@ GO
 -- Create date: <27/01/2020>
 -- Description:	<Consulta de todos los detalles de la solped>
 -- =============================================
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <16/02/2021>
+-- Description:	<eliminado de los campos de prioridad y tipo de gasto>
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidoDetallePeticionOferta_V2]-- 20135 
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
