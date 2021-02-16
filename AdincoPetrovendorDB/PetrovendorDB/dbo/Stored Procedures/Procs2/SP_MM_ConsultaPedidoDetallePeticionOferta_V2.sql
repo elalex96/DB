@@ -1,9 +1,16 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallePeticionOferta_V2]    Script Date: 16/02/2021 01:15:34 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/01/2020>
 -- Description:	<Consulta de todos los detalles de la solped>
 -- =============================================
-create PROCEDURE [dbo].[SP_MM_ConsultaPedidoDetallePeticionOferta_V2]-- 20135 
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidoDetallePeticionOferta_V2]-- 20135 
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdContrato    INT = NULL,
@@ -312,20 +319,20 @@ BEGIN
 			SP.IdSolPed = @IdSolicitudPedido
 				AND Activo = 1;
 
-		CREATE TABLE #Gasto (IdTipoGasto int,TipoGasto nvarchar(300))
+		--CREATE TABLE #Gasto (IdTipoGasto int,TipoGasto nvarchar(300))
 
 		 --INSERT INTO #Gasto (IdTipoGasto,TipoGasto) values(0, '-- Seleccione un opción ---')
 
-		 INSERT INTO #Gasto 
-         SELECT IdTipoGasto,
-                TipoGasto
-		FROM MM_TipoGastos
-		 ORDER BY IdTipoGasto ASC 
+		-- INSERT INTO #Gasto 
+  --       SELECT IdTipoGasto,
+  --              TipoGasto
+		--FROM MM_TipoGastos
+		-- ORDER BY IdTipoGasto ASC 
 
-		 SELECT
-			IdTipoGasto AS id,
-			TipoGasto AS text
-		FROM #Gasto;
+		-- SELECT
+		--	IdTipoGasto AS id,
+		--	TipoGasto AS text
+		--FROM #Gasto;
 
 		SELECT 
 			IdTerminosYCondiciones AS id, 
@@ -333,11 +340,11 @@ BEGIN
 		FROM dbo.TC_TerminosYCondicionesDocV2
 		WHERE IdProveedor = @IDPROVEEDORACTUAL AND IsActivo = 1
 
-		SELECT 
-			IdPrioridad AS id,
-			Nombre AS text
-		FROM dbo.TA_Prioridad 
-		ORDER BY Nombre
+		--SELECT 
+		--	IdPrioridad AS id,
+		--	Nombre AS text
+		--FROM dbo.TA_Prioridad 
+		--ORDER BY Nombre
 
 
 END
