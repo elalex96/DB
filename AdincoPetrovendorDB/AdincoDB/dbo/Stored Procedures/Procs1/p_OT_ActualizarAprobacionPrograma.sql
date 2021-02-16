@@ -41,7 +41,7 @@ AS
 		exec p_OT_CorreoProgramacion_Flujo @pIdOTSolicitud,10,'',104
 
 
-		RAISERROR (15600,-1,-1, 'Falta la captura de PR, ya se notificó al area correspondiente ');  
+		RAISERROR (15600,-1,-1, '[ALERTA]:Falta la captura de PR, la información no se guardó. Ya se notificó al area correspondiente ');  
 		RETURN
     end
 
@@ -54,7 +54,7 @@ AS
 		isactivo = 1
 	)
 	BEGIN
-		RAISERROR (15600,-1,-1, 'La semana está cerrada, no es posible realizar cambios');  
+		RAISERROR (15600,-1,-1, '[ALERTA]:La semana está cerrada, no es posible realizar cambios');  
 		RETURN
     end
 

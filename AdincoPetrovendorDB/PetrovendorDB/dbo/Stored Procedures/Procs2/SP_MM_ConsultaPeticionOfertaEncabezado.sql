@@ -14,7 +14,10 @@
 -- Create date: 18-02-2019
 -- Description: Se elimino de la consulta el regimen capital (ya no se usa)
 -- =============================================
-
+-- Author:		Luis David De La Cruz Bautista
+-- Create date: 03/02/2021
+-- Description:	Se optimiza el sp
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT, @IdProveedor INT, @IdContrato INT = NULL, @IdUsuario INT = NULL, @FechaRegistro DATETIME = NULL
@@ -24,10 +27,10 @@ AS
 		-- interfering with SELECT statements.
 		SET NOCOUNT ON ;
 
-		DECLARE @EXISTE_PEDIDO_BIT BIT = 0
-		DECLARE @EXISTE_FLUJOAPROBACION NVARCHAR(300)
-		DECLARE @PROVEEDOR_ID_SOLPED INT
-		DECLARE @EXISTE_PEDIDO INT =
+		DECLARE @EXISTE_PEDIDO_BIT BIT = 0,
+		@EXISTE_FLUJOAPROBACION NVARCHAR(300),
+		@PROVEEDOR_ID_SOLPED INT,
+		@EXISTE_PEDIDO INT =
 					(	SELECT	COUNT ( IdPedido )
 						FROM	MM_Pedido
 						WHERE	IdSolicitudPedido = @IdSolicitudPedido )
@@ -62,31 +65,29 @@ AS
 					ISNULL ( DFO.IdDocFianza, 0 ) AS IdFianza, ISNULL ( DBO.IdDocBases, 0 ) AS IdBases, 
 					CASE WHEN sp.EntregasParciales = 1 THEN 
 					SP.FechaEntregaFinRequerida ELSE sp.FechaEntregaRequerida end
-		FROM		MM_SolicitudPedido AS SP
-		INNER JOIN	TA_Operacion AS TAO
-			ON TAO.IdDocumento = SP.IdSolicitudPedido
-		INNER JOIN	TA_Estatus AS TE
-			ON TE.IdEstatus = TAO.IdEstatusOperacion
-		INNER JOIN	MM_TipoSolicitudPedido AS TSP
-			ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-		INNER JOIN	TA_Prioridad AS P
-			ON P.IdPrioridad = TAO.IdPrioridad
-		INNER JOIN	TA_Vencimiento AS V
-			ON V.IdVencimiento = TAO.IdVigencia
-		INNER JOIN	S_Proveedor AS PR
-			ON PR.IdProveedor = SP.IdProveedor
-		LEFT JOIN	TA_DocFianzaOperacion AS DFO
-			ON DFO.IdOperacion = TAO.IdOperacion
+		FROM		MM_SolicitudPedido AS SP (NOLOCK)
+		INNER JOIN	TA_Operacion AS TAO (NOLOCK)
+			ON SP.IdSolicitudPedido = TAO.IdDocumento
+		INNER JOIN	TA_Estatus AS TE 
+			ON TAO.IdEstatusOperacion = TE.IdEstatus
+		INNER JOIN	MM_TipoSolicitudPedido AS TSP (NOLOCK)
+			ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+		INNER JOIN	TA_Prioridad AS P 
+			ON TAO.IdPrioridad = P.IdPrioridad
+		INNER JOIN	TA_Vencimiento AS V (NOLOCK)
+			ON TAO.IdVigencia = V.IdVencimiento 
+		INNER JOIN	S_Proveedor AS PR (NOLOCK)
+			ON SP.IdProveedor = PR.IdProveedor 
+		LEFT JOIN	TA_DocFianzaOperacion AS DFO (NOLOCK)
+			ON TAO.IdOperacion = DFO.IdOperacion
 			   AND	DFO.Activo = 1
-		LEFT JOIN	dbo.TA_DocBasesOperacion AS DBO
-			ON DBO.IdOperacion = TAO.IdOperacion
+		LEFT JOIN	dbo.TA_DocBasesOperacion AS DBO (NOLOCK)
+			ON TAO.IdOperacion = DBO.IdOperacion
 			   AND	DBO.Activo = 1
 		WHERE
 					SP.IdSolicitudPedido = @IdSolicitudPedido
 					AND IdTipoOperacion = 6
 					AND TAO.IdProveedor = @IdProveedor
-
 	--- Nota -----
 	--- IdTipoOereacion = 6 --- > PeticionOferta
 	END
-
