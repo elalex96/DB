@@ -9,7 +9,7 @@
 -- Description:	<eliminado del campo de prioridad y tipo gasto>
 -- =============================================
 
-ALTER PROCEDURE [dbo].[SP_MM_EnvioPeticionOferta_AD_V2] 
+CREATE PROCEDURE [dbo].[SP_MM_EnvioPeticionOferta_AD_V2] 
 	-- Add the parameters for the stored procedure here
 	@IdProveedorInvitado INT,
 	@IdSolicitudPedido int,
