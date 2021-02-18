@@ -14,7 +14,6 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
-    -- Insert statements for procedure here
 	SELECT
 		ISNULL(ECP.IdUsuario,US.IdUsuario) AS IdUsuario,
 		ISNULL(ECP.NombreDestinatario,US.Nombre) AS Nombre,
@@ -25,4 +24,5 @@ BEGIN
 		ECP.IdProveedor = @IdProveedor AND
 		ECP.TipoNotificacion = @TipoNotificacion AND
 		ECP.Activo = 1
+
 END
