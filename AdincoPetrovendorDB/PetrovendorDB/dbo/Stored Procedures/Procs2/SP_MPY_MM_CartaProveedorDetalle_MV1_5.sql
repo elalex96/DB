@@ -8,7 +8,7 @@
 -- Create date: 18-02-21
 -- Description:	adecuacion para reporte DEA PROVEEDOR A PROVEEDOR
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MPY_MM_CartaProveedorDetalle_MV1_5] --2682
+CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedorDetalle_MV1_5] --2682
     -- Add the parameters for the stored procedure here
     @IdPedido INT,
 	/*--------------------
