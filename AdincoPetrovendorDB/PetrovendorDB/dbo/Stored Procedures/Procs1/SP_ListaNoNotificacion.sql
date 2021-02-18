@@ -1,28 +1,46 @@
-﻿-- ============================================= 
--- Author:		Pedro Acu�a
+﻿USE [Petrovendor]
+GO
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ListaNoNotificacion'
+)
+    DROP PROCEDURE SP_ListaNoNotificacion;
+GO
+
+/****** Object:  StoredProcedure [dbo].[SP_ListaNoNotificacion]    Script Date: 17/02/2021 07:26:02 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- ============================================= 
+-- Author:		Pedro Acuña
 -- Create date: 11/Jun/2018
 -- Description:	se obtienen los usuarios para que puedan ser seleccioandos para que no sean notificados
 -- =============================================
+-- ============================================= 
+-- Author:	Daniel AC
+-- Create date: 17/02/2021
+-- Description: Se remueve filtro de usuario-rol, ya que solo se necesita el flitro por proveedor
+-- =============================================
 
-CREATE PROCEDURE SP_ListaNoNotificacion @IdProveedor INT
+CREATE PROCEDURE [dbo].[SP_ListaNoNotificacion] @IdProveedor INT
 AS
 	BEGIN
-		SELECT		U.IdUsuario, U.Nombre, U.Correo
-		FROM		S_Usuario AS U
-		LEFT JOIN	S_TipoUsuario AS TU
-			ON TU.IdTipoUsuario = U.IdTipoUsuario
-		LEFT JOIN	S_UsuarioRol AS UR
-			ON UR.IdUsuario = U.IdUsuario
-		LEFT JOIN	S_Rol AS R
-			ON R.IdRol = UR.IdRol
-		LEFT JOIN	S_UsuarioProveedor AS UP
-			ON UP.IdUsuario = U.IdUsuario
-			   AND	UP.IdUsuario = UR.IdUsuario
-		LEFT JOIN	S_Proveedor AS P
-			ON P.IdProveedor = UP.IdProveedor
-		WHERE
-					U.Activo = 1
-					AND UR.Activo = 1
-					AND P.IdProveedor = @IdProveedor
+	
+
+		SELECT U.IdUsuario, U.Nombre, U.Correo
+		FROM S_UsuarioProveedor UP
+		JOIN S_Usuario AS U
+		ON UP.IdUsuario=U.IdUsuario
+		JOIN S_Proveedor P 
+		ON UP.IdProveedor=P.IdProveedor
+		WHERE U.Activo = 1	--> USUARIO ACTIVO				
+		AND P.IdProveedor =@IdProveedor
 		GROUP BY	U.IdUsuario, U.Nombre, U.Correo
-	END
+		ORDER BY U.Nombre ASC
+
+END
