@@ -3,6 +3,10 @@
 -- Create date: <17/04/2020>
 -- Description:	<Consulta de contenido nacional por compra directa>
 -- =============================================
+-- Author:		<DAVID DE LA CRUZ>
+-- Create date: <19/02/2021>
+-- Description:	<SE QUIITA EL CONTRATO EN CONSULTA>
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_OCD_ConsultaContenidoNacional] --19868,11108,420,3
 	-- Add the parameters for the stored procedure here
 	@IdFactura INT,
@@ -16,26 +20,25 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	SELECT
-		CNCD.IdCDCN,
-		ISNULL(CNCD.IdActividadBS,0) AS IdActividadBS,
-		CNCD.DescripcionBienesServicios,
-		CNCD.PCN,
-		CNCD.ValorFactura, 
-		CNCD.ClasificacionSH
-	FROM dbo.CN_CompraDirecta AS CNCD
-		LEFT JOIN dbo.MM_BS_Actividad AS BS 
-			ON BS.IdActividad = CNCD.IdActividadBS
-		LEFT JOIN dbo.CN_ClasificacionContenidoSH AS SH
-			ON SH.IdClasificacionSH = CNCD.IdCDCN
-	WHERE CNCD.IdPedido = @IdPedido
-		AND CNCD.IdFactura = @IdFactura
-		AND CNCD.IdProveedor = @IdProveedor
-		AND CNCD.IdContrato = @IdContrato
-	GROUP BY CNCD.IdCDCN,
-             CNCD.IdActividadBS,
-             CNCD.DescripcionBienesServicios,
-             CNCD.PCN,
-             CNCD.ValorFactura,
-             CNCD.ClasificacionSH;
+	SELECT		CNCD.IdCDCN,
+				IdActividadBS						=		ISNULL(CNCD.IdActividadBS,0),
+				CNCD.DescripcionBienesServicios,
+				CNCD.PCN,
+				CNCD.ValorFactura, 
+				CNCD.ClasificacionSH
+	FROM		dbo.CN_CompraDirecta				CNCD
+	LEFT JOIN	dbo.MM_BS_Actividad					BS 
+	ON			BS.IdActividad						=		CNCD.IdActividadBS
+	LEFT JOIN	dbo.CN_ClasificacionContenidoSH		SH
+	ON			SH.IdClasificacionSH				=		CNCD.IdCDCN
+	WHERE		CNCD.IdPedido						=		@IdPedido
+	AND			CNCD.IdFactura						=		@IdFactura
+	AND			CNCD.IdProveedor					=		@IdProveedor
+	--AND			CNCD.IdContrato						=		@IdContrato
+	GROUP BY	CNCD.IdCDCN,
+				CNCD.IdActividadBS,
+				CNCD.DescripcionBienesServicios,
+				CNCD.PCN,
+				CNCD.ValorFactura,
+				CNCD.ClasificacionSH
 END
