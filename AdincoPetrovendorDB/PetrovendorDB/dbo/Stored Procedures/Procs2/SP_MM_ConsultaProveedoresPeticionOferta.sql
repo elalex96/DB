@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <29/01/2020>
 -- Description:	<Consulta de los proveedores>
@@ -23,26 +23,20 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @RecordsByPage INT = 16;
+	DECLARE @RecordsByPage INT = 12;
 	DECLARE @AllRecords INT = (
 						SELECT COUNT(1) 
-						FROM dbo.S_Proveedor AS P
-						--INNER JOIN dbo.S_UsuarioProveedor AS UP
-						--	ON UP.IdProveedor = P.IdProveedor
-						--		AND UP.IsAdmin = 1
-						--INNER JOIN dbo.S_Usuario AS U
-						--	ON U.IdUsuario = UP.IdUsuario
-						--		AND U.IdTipoUsuario = 3
-						--		AND U.Activo = 1
-						LEFT JOIN dbo.S_ImagenPerfil AS IMP
+						FROM dbo.S_Proveedor AS P WITH (NOLOCK)
+						LEFT JOIN dbo.S_ImagenPerfil AS IMP WITH (NOLOCK)
 							ON IMP.IdProveedor = P.IdProveedor
-						LEFT JOIN Adinco.dbo.ListaNegra AS LN
+						LEFT JOIN Adinco.dbo.ListaNegra AS LN WITH (NOLOCK)
 							ON LN.RFC COLLATE Modern_Spanish_CI_AS = P.RFC COLLATE Modern_Spanish_CI_AS
 						WHERE P.Activo = 1
 							AND P.IdProveedor <> @IdProveedor
 							AND ISNULL(P.IsEliminado,0) = 0
 							AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM Adinco..CO_Contratista WHERE RFC IS NOT NULL)
-							AND P.RazonSocial LIKE '%' + @Buscar + '%'
+							AND (P.RazonSocial LIKE '%' + @Buscar + '%' OR
+								 P.RFC LIKE '%' + @Buscar + '%')
 						);
 
 
@@ -65,7 +59,6 @@ BEGIN
 				AND US.Activo = 1
 			ORDER BY US.FechaRegistro DESC
 			),'') AS CorreoEmpresa,
-			--Correo AS CorreoEmpresa,
 			dbo.ObtenerEstrellasModificado(P.IdProveedor) AS Estrellas,
 			CASE
 				WHEN LN.RFC IS NULL THEN 0
@@ -76,23 +69,17 @@ BEGIN
 			dbo.FN_AntiguedadSubContratista(P.IdProveedor) AS AntiguedadSubContratista,
 			dbo.FN_CantidadClientesSubContratista(P.IdProveedor) AS CantidadClientes,
 			(ROW_NUMBER() OVER(ORDER BY P.RazonSocial DESC) - 1)/ @RecordsByPage _Page
-		FROM dbo.S_Proveedor AS P
-			--INNER JOIN dbo.S_UsuarioProveedor AS UP
-			--	ON UP.IdProveedor = P.IdProveedor
-			--		AND UP.IsAdmin = 1
-			--INNER JOIN dbo.S_Usuario AS U
-			--	ON U.IdUsuario = UP.IdUsuario
-			--		AND U.IdTipoUsuario = 3
-			--		AND U.Activo = 1
-			LEFT JOIN dbo.S_ImagenPerfil AS IMP
+		FROM dbo.S_Proveedor AS P WITH (NOLOCK)
+			LEFT JOIN dbo.S_ImagenPerfil AS IMP WITH (NOLOCK)
 				ON IMP.IdProveedor = P.IdProveedor
-			LEFT JOIN Adinco.dbo.ListaNegra AS LN
+			LEFT JOIN Adinco.dbo.ListaNegra AS LN WITH (NOLOCK)
 				ON LN.RFC COLLATE Modern_Spanish_CI_AS = P.RFC COLLATE Modern_Spanish_CI_AS
 			WHERE P.Activo = 1
 				AND P.IdProveedor <> @IdProveedor
 				AND ISNULL(P.IsEliminado,0) = 0
 				AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM Adinco..CO_Contratista WHERE RFC IS NOT NULL)
-				AND P.RazonSocial LIKE '%' + @Buscar + '%'
+				AND (P.RazonSocial LIKE '%' + @Buscar + '%' OR
+					P.RFC LIKE '%' + @Buscar + '%')
 	)
 	AS R WHERE R.R = 1
 	AND R._Page = (@Page - 1)
