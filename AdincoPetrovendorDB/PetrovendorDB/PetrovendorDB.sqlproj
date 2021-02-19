@@ -10569,5 +10569,7 @@
     <Build Include="dbo\User Defined Types\ConceptosCNCompraDirecta.sql" />
     <Build Include="dbo\User Defined Types\Reclasificacion.sql" />
     <Build Include="dbo\User Defined Types\RelacionTablero.sql" />
+    <Build Include="dbo\Tables\TA_EnvioCorreoPersonalizado.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_TA_EnvioCorreosPorNotificacion.sql" />
   </ItemGroup>
 </Project>
