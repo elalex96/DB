@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <18/04/2020>
 -- Description:	<consulta de las aceptaciones de pedido para reclasificacion>
@@ -92,7 +92,7 @@ BEGIN
          TP.TipoPedido,
          MP.IdSolicitudPedido,
          CASE
-             WHEN ISNULL(RC.PedirCarta, 0) = 1 THEN 'SI'
+             WHEN APC.IdAceptacionCartaPCN IS NOT NULL THEN 'SI'
              ELSE 'No'
          END AS PedirCarta,
 		 ISNULL(SOT.Objeto,SP.MotivoUrgencia) AS Justificacion,
@@ -127,8 +127,8 @@ BEGIN
 			ON SOT.IdOTSolicitud = OTS.IdOTSolicitud
 		LEFT JOIN dbo.MM_SolicitudPedido AS SP
 			ON SP.IdSolicitudPedido = MP.IdSolicitudPedido
-		--LEFT JOIN dbo.MM_AceptacionCartaPCN APC
-		--	ON APC.IdAceptacionPedido = AP.IdAceptacionPedido
+		LEFT JOIN dbo.MM_AceptacionCartaPCN APC
+			ON APC.IdAceptacionPedido = AP.IdAceptacionPedido AND APC.IdEstatus = 2
 		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	SP.IdContrato	=	C.IdContrato 
     WHERE AP.IdProveedor = @IdProveedor	
 		AND (OP.IdEstatusOperacion = 1 OR OP.IdEstatusOperacion IS NULL)
@@ -176,7 +176,8 @@ BEGIN
 			 SOT.Objeto,
 			 SP.MotivoUrgencia,
 			 c.IdContrato,
-			 c.NumeroContrato
+			 c.NumeroContrato,
+			 APC.IdAceptacionCartaPCN
 	--ORDER BY AP.Creado DESC
 	) AS R
 	WHERE
