@@ -1,9 +1,14 @@
-﻿-- =============================================  
+-- =============================================  
 -- Author:  Daniel Cruz  
 -- Create date: 05-02-18  
 -- Description: Consultar encabezado de aceptación de pedido en genración de carta de contenido nacional  
+-- ============================================= 
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_PCN_AceptacionCPNProveedorVentas_Cabecera]   
+-- Author:  Alexander Gomez 
+-- Create date: 19-02-21 
+-- Description: Validacion para verificar la reclasifiacion de aceptacion
+-- =============================================  
+ALTER PROCEDURE [dbo].[SP_PCN_AceptacionCPNProveedorVentas_Cabecera]   
  -- Add the parameters for the stored procedure here  
 @IdProveedor        INT,  
 @IdAceptacionPedido INT  
@@ -15,12 +20,20 @@ AS
          SET NOCOUNT ON;  
    DECLARE @IdEstatusUltimoAprobacionCN INT;  
    DECLARE @Editado BIT;  
+   DECLARE @RECLASIFICADO BIT = 0;
     -- Insert statements for procedure here  
             
     ---Validación de Estatus de documentos  
     SET @IdEstatusUltimoAprobacionCN = (SELECT TOP 1 IdEstatus FROM MM_AceptacionCartaPCN WHERE IdAceptacionPedido = @IdAceptacionPedido ORDER BY CreadoEl DESC)  
     SET @Editado = (SELECT TOP 1 Editado FROM MM_AceptacionCartaPCN WHERE IdAceptacionPedido = @IdAceptacionPedido ORDER BY CreadoEl DESC)  
-       
+
+	--VALIDACION DE RECLASIFICACION
+    IF EXISTS(SELECT 1 FROM dbo.MM_AceptacionPedidoDetalle WHERE IdAceptacionPedido = @IdAceptacionPedido AND IdAnterior IS NOT NULL)
+	BEGIN
+
+		SET @RECLASIFICADO = 1;
+
+	END
       
     SELECT   
     AP.IdAceptacionPedido,   
@@ -84,7 +97,8 @@ AS
     PG.IdPedido AS IdPedidoGeneral,  
     TP.IdTipoPedido,  
     ISNULL(@Editado,0),  
-    PR.IdProveedor AS ProveedorCliente      
+    PR.IdProveedor AS ProveedorCliente      ,
+	@RECLASIFICADO AS AceptacionReclasificada
     FROM MM_AceptacionPedido AS AP  
     INNER JOIN DG_Domicilio AS DG ON DG.IdDomicilio = AP.IdDomicilioEntrega  
     LEFT JOIN PV_PaisRepublica AS PS ON PS.id = DG.IdPais  
@@ -97,4 +111,3 @@ AS
   
          
      END;   
-  
