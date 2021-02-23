@@ -1,4 +1,15 @@
-﻿-- =============================================  
+﻿use adinco
+
+go
+
+if exists (select * from sys.procedures where name = 'SP_EN_ConsultarAvanceEntregableSeguimiento')
+begin
+	drop proc SP_EN_ConsultarAvanceEntregableSeguimiento
+end
+
+go
+
+-- =============================================  
 -- Author:   Daniel AC  
 -- Create date: 15/10/2020  
 -- Description: Consultar avance del porcentaje de un Entregable Instancia 
@@ -10,16 +21,19 @@ CREATE PROCEDURE [dbo].[SP_EN_ConsultarAvanceEntregableSeguimiento]
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @PorcentajeAprobacion FLOAT;
-    DECLARE @PorcentajeElaboracion FLOAT;
-    DECLARE @PorcentajeRevision FLOAT;
-    DECLARE @EnAprobacion INT = 10002; --> EN APROBACIÓN
-    DECLARE @EnRevision INT = 10001; --> EN REVISION
-    DECLARE @EnElaboracion INT = 10000; --> EN ELABORACIÓN
-    DECLARE @AprobadoInternamente INT = 10003; --> APROBADO INTERNAMENTE
-    DECLARE @PorcentajePorEstado FLOAT = CAST(100 AS FLOAT) / CAST(3 AS FLOAT); --> EL 100% DEL AVANCE ENTRE LOS 3 ESTADOS DEL ENTREGABLE
-    DECLARE @PorcentajeSinInicia VARCHAR(MAX);
-    DECLARE @SeguimientoPorUsuario AS TABLE
+    DECLARE @PorcentajeAprobacion	FLOAT,
+    @PorcentajeElaboracion			FLOAT,
+    @PorcentajeRevision				FLOAT,
+    @EnAprobacion					INT = 10002, --> EN APROBACIÓN
+    @EnRevision						INT = 10001, --> EN REVISION
+    @EnElaboracion					INT = 10000, --> EN ELABORACIÓN
+    @AprobadoInternamente			INT = 10003, --> APROBADO INTERNAMENTE
+    @PorcentajePorEstado			FLOAT = CAST(100 AS FLOAT) / CAST(3 AS FLOAT), --> EL 100% DEL AVANCE ENTRE LOS 3 ESTADOS DEL ENTREGABLE
+    @PorcentajeSinInicia			VARCHAR(MAX),
+	@EsAdministrador				bit
+
+   
+    create table #SeguimientoPorUsuario 
     (
         EstadoId INT,
         UsuarioId INT,
@@ -35,7 +49,7 @@ BEGIN
                                                 @ContratoId = @ContratoId            -- int
 
 	/*OBTENER LA INFORMACIÓN DE LOS PORCENTAJES DE LOS USUARIOS DEL FLUJO*/
-    INSERT INTO @SeguimientoPorUsuario
+    INSERT INTO #SeguimientoPorUsuario
     (
         EstadoId,
         UsuarioId,
@@ -62,7 +76,7 @@ BEGIN
                                         ELSE
                                             SUM(Porcentaje)
                                     END
-    FROM @SeguimientoPorUsuario
+    FROM #SeguimientoPorUsuario
     WHERE EstadoId = @EnElaboracion;
 
     SELECT @PorcentajeRevision = CASE
@@ -71,7 +85,7 @@ BEGIN
                                      ELSE
                                          SUM(Porcentaje)
                                  END
-    FROM @SeguimientoPorUsuario
+    FROM #SeguimientoPorUsuario
     WHERE EstadoId = @EnRevision;
 
     SELECT @PorcentajeAprobacion = CASE
@@ -80,7 +94,7 @@ BEGIN
                                        ELSE
                                            SUM(Porcentaje)
                                    END
-    FROM @SeguimientoPorUsuario
+    FROM #SeguimientoPorUsuario
     WHERE EstadoId = @EnAprobacion;
 
     --PRIMER TABLA DETALLE DE PORCENTAJES GENERALES POR ESTADO
@@ -122,37 +136,58 @@ BEGIN
     WHERE S.EntregableInstanciaId = @EntregableInstanciaId
           AND S.Activo = 1;
 
+	if exists(
+	select		* 
+	from		Ap_PerfilUsuario	pu
+	inner join	AP_Perfil			p
+	on			pu.PerfilID			=	p.IdPerfil
+	inner join	AP_Rol				r
+	on			p.IdRol				=	r.IdRol
+	where		rol					like '%admin%'
+	and			pu.UsuarioID		=	@UsuarioId
+	and			p.IdContrato		=	@ContratoId
+	)
+	begin
+		select	@EsAdministrador = 1
+	end
+	else
+	begin
+		select	@EsAdministrador = 1
+	end
+
     --SEGUNDA TABLA PORCENTAJE POR ESTADO Y POR USUARIO	
-    SELECT UsuarioId = SU.UsuarioId,
-           Usuario = U.Nombre,
-           Porcentaje = SU.Porcentaje,
-           EstadoId = SU.EstadoId,
-           Estado = E.NombreEstado,
-           EntregableInstanciaId = @EntregableInstanciaId,
-           ClaveEstado = CASE
-                             WHEN E.EstadoID = @EnElaboracion THEN
-                                 'ELABORACION'
-                             WHEN E.EstadoID = @EnRevision THEN
-                                 'REVISION'
-                             WHEN E.EstadoID = @EnAprobacion THEN
-                                 'APROBACION'
-                             ELSE
-                                 'NO-IDENTIFICADO'
-                         END,
-           PermitirEdicion = CASE
-                                 WHEN SU.UsuarioId = @UsuarioId THEN
-                                     'SI'
-                                 ELSE
-                                     'NO'
-                             END,
+    SELECT UsuarioId				=	SU.UsuarioId,
+           Usuario					=	U.Nombre,
+           Porcentaje				=	SU.Porcentaje,
+           EstadoId					=	SU.EstadoId,
+           Estado					=	E.NombreEstado,
+           EntregableInstanciaId	=	@EntregableInstanciaId,
+			ClaveEstado				=	CASE
+										 WHEN E.EstadoID = @EnElaboracion THEN
+											 'ELABORACION'
+										 WHEN E.EstadoID = @EnRevision THEN
+											 'REVISION'
+										 WHEN E.EstadoID = @EnAprobacion THEN
+											 'APROBACION'
+										 ELSE
+											 'NO-IDENTIFICADO'
+									 END,
+           PermitirEdicion			= CASE
+										 WHEN SU.UsuarioId = @UsuarioId or @EsAdministrador = 1 THEN
+											 'SI'
+										 ELSE
+											 'NO'
+									 END,
            Avance = ISNULL(SU.Avance, 'No iniciado'),
            FechaModificacionUsuario = ISNULL(FORMAT(SU.FechaModificacionUsuario, 'dd/MM/yyyy hh:mm tt'), ''),
            Comentario = ISNULL(SU.ComentarioUsuario, '')
-    FROM @SeguimientoPorUsuario SU
+	--into	#tmp
+    FROM #SeguimientoPorUsuario SU
         JOIN dbo.AP_Usuario U
             ON SU.UsuarioId = U.UsuarioID
         JOIN dbo.EN_Estado E
             ON SU.EstadoId = E.EstadoID;
+	
 
     --TABLA 3 HISTORIAL DEL AVANCE DEL ENTREGABLE 
     SELECT Estado = ISNULL(E.NombreEstado, ''),
@@ -179,3 +214,6 @@ BEGIN
     ORDER BY H.CreadoEl DESC;
 END;
 
+
+go
+--exec SP_EN_ConsultarAvanceEntregableSeguimiento @UsuarioId=10150,@ContratoId=3,@EntregableInstanciaId=301984
