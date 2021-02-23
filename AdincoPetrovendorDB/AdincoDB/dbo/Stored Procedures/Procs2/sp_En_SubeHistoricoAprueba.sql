@@ -3,7 +3,12 @@
 -- Create date: 10/04/2018
 -- Description:solo cambia el estatus para la instancia 
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_En_SubeHistoricoAprueba] --10061,3,46190,16612
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 23/02/2021
+-- Description: Validacion para equinor
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_En_SubeHistoricoAprueba] 
     @idUsuario INT,
     @idContrato INT,
     @idInstanciaEntregable INT,
@@ -20,6 +25,41 @@ BEGIN
             @ContieneURLRepositorio BIT,
             @idUsuarioRevisor INT,
             @idUsuarioAprobador INT;
+	DECLARE @Contratos TABLE (IdContrato INT);
+	DECLARE @IsEquinor BIT = 0;
+
+	--CONTRATOS PARA VALIDACION DE EQUINOR
+	INSERT INTO @Contratos (IdContrato) VALUES (3);--MEXICO PRUEBAS DEV
+	INSERT INTO @Contratos
+	SELECT
+		CON.IdContrato
+	FROM dbo.CO_Contrato AS CON
+	JOIN dbo.CO_Contratista AS CI
+		ON CON.IdContratista = CI.IdContratista
+	WHERE CI.RFC = 'SEM150122M86'--EQUINOR
+
+	IF EXISTS (SELECT * FROM @Contratos WHERE IdContrato = @IdContrato)
+	BEGIN
+
+		IF EXISTS (SELECT
+					PU.UsuarioID
+					FROM dbo.AP_PerfilUsuario AS PU
+						JOIN dbo.AP_Perfil AS P 
+							ON PU.PerfilID = P.IdPerfil
+						JOIN dbo.AP_Rol AS R
+							ON P.IdRol = R.IdRol
+					WHERE PU.UsuarioID = @IdUsuario
+						AND P.IdContrato = @IdContrato
+						AND R.IdRol IN (73,--Administrador de Entregables  (Contrato)
+										78)--Administración general de entregables
+					)
+		BEGIN
+
+			SET @IsEquinor = 1;
+
+		END
+
+	END
 
     SELECT @ActividadIDActual = ActividadID
     FROM dbo.EN_InstanciasEntregable
@@ -87,8 +127,18 @@ BEGIN
                                        @URLRepositorio,
                                        @ContieneURLRepositorio;
 
-
-    EXEC EN_GuardaHistorialLineaTiempo @idVersion, --Revisión
+	IF @IsEquinor = 1
+	BEGIN
+		
+		IF NOT EXISTS (SELECT IdLineaTiempo 
+					FROM dbo.EN_HistorialAprobacionesLineaTiempo AS HA 
+					WHERE HA.IdLineaTiempo = @idVersion
+						AND HA.idInstanciaEntregable = @idInstanciaEntregable
+						AND HA.idContrato = @idContrato
+						AND HA.idTipoOperacion = 3)
+		BEGIN
+			
+			EXEC EN_GuardaHistorialLineaTiempo @idVersion, --Revisión
                                        @idInstanciaEntregable,
                                        @idUsuarioRevisor,
                                        @idContrato,
@@ -96,8 +146,29 @@ BEGIN
                                        0,
                                        3, --Revisor
                                        0,
- 'En este paso no se ingresa URL (Aprobado Directamente)',
+										'En este paso no se ingresa URL (Aprobado Directamente)',
                                        0;
+
+		END
+
+	END
+	ELSE
+	BEGIN
+		
+		EXEC EN_GuardaHistorialLineaTiempo @idVersion, --Revisión
+                                       @idInstanciaEntregable,
+                                       @idUsuarioRevisor,
+                                       @idContrato,
+                                       '',
+                                       0,
+                                       3, --Revisor
+                                       0,
+									  'En este paso no se ingresa URL (Aprobado Directamente)',
+                                       0;
+
+	END
+
+    
 	/*Cuando sea caso 10,002 omitir este paso*/
     EXEC EN_GuardaHistorialLineaTiempo @idVersion, --Aprobación
                                        @idInstanciaEntregable,
