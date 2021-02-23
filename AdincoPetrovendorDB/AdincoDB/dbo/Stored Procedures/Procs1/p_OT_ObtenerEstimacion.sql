@@ -9,6 +9,45 @@ as
 			@fechaIniCorte DateTime
 
 
+	select 
+							om.IdOTSolicitud,
+							scm.IdSCMaterial,
+							scm.COncepto,
+							scm.Descripcion,
+							Unidad = Unidad,
+							Cantidad = sum(spc.Captura),
+							PrecioUnitario = scm.PrecioUnitario,
+							Importe = isnull(sum(spc.Captura),0) * isnull(scm.PrecioUnitario,0),
+							FechaInicioSubcontratista = Min(spc.Fecha),
+							FechaFinSubcontratista = Max(spc.Fecha)	,
+							om.IdOTSolicitudMaterial
+	into #tmpInfoPrograma
+	from [dbo].[OT_SolicitudProgramaCaptura] spc
+	inner join OT_SolicitudMaterial om on om.IdOTSolicitudMaterial = spc.IdOTSolicitudMaterial
+	inner join SC_Materiales scm on scm.IdSCMaterial = om.IdSCMaterial
+	inner join Petrovendor.dbo.[PV_MM_MaterialUnidad] u on u.IdUnidad = scm.IdUnidad
+	where om.IdOTSolicitud = @pIdOTSolicitud and
+	VoBoContratista = 1 and
+	VoBoSubcontratista = 1 and
+			(
+				convert(varchar,spc.Fecha,112) between	convert(varchar,@pFechaInicioEstimacion,112) and 
+													convert(varchar,@pFechaFinEstimacion,112)
+				Or 
+				(
+					@pFechaInicioEstimacion is null 
+					and @pFechaFinEstimacion is null
+				)
+
+			)
+			group by om.IdOTSolicitud,
+					scm.IdSCMaterial,
+					scm.COncepto,
+					scm.Descripcion,
+				 Unidad,
+				  scm.PrecioUnitario,
+				  om.IdOTSolicitudMaterial
+
+
 	if(
 		isnull(@pIdOTEstimacion,0) > 0
 	)
@@ -38,32 +77,7 @@ as
 			where sp.IdOTSolicitud = @pIdOTSolicitud
 
 		end
-		--IdOTSolicitud int null,
-		--IdOTEstimacion int null,
-		--FolioEstimacion varchar(50) null,
-		--Consecutivo smallint null,
-		--FolioOT varchar(30) null,
-		--FolioSC	varchar(30) null,
-		--FechaIniCorte datetime null,
-		--FechaFinCorte datetime null,
-		--Instalacion varchar(250) null,
-		--Actividad varchar(250) null,
-		--Presupuesto varchar(250) null,
-		--Subcontratista varchar(250) null,
-		--AreaContractual varchar(250) null,
-		--AceptaOperador  varchar(250) null,
-		--AceptaSubcontratista varchar(250) null,
-		--IdSCMaterial int null,
-		--COncepto varchar(500) null,
-		--Descripcion varchar(500) null,
-		--Unidad varchar(500) null,
-		--Cantidad decimal(17,3) null,
-		--PrecioUnitario decimal(19,4) null,
-		--Importe decimal(19,4) null,
-		--IdOTSolicitudMaterial int null,
-		--Moneda varchar(20) null,
-		--IdMoneda int null
-
+		
 		select 
 			ot.IdOTSolicitud,
 			IdOTEstimacion = 0,
@@ -102,45 +116,7 @@ as
 			inner join CO_LineaPresupuestoMes lp on lp.[IdLineaPresupuestoMes] = OTlp.IdLineaPresupuestoMes
 			inner join CO_Presupuesto pre on pre.IdPresupuesto = lp.IdPresupuesto	
 			inner join [dbo].[CO_Contratista] cont on cont.IdContratista = sc.IdContratista
-			inner join (			
-					select 
-							om.IdOTSolicitud,
-							scm.IdSCMaterial,
-							scm.COncepto,
-							scm.Descripcion,
-							Unidad = Unidad,
-							Cantidad = sum(spc.Captura),
-							PrecioUnitario = scm.PrecioUnitario,
-							Importe = isnull(sum(spc.Captura),0) * isnull(scm.PrecioUnitario,0),
-							FechaInicioSubcontratista = Min(spc.Fecha),
-							FechaFinSubcontratista = Max(spc.Fecha)	,
-							om.IdOTSolicitudMaterial
-					from [dbo].[OT_SolicitudProgramaCaptura] spc
-					inner join OT_SolicitudMaterial om on om.IdOTSolicitudMaterial = spc.IdOTSolicitudMaterial
-					inner join SC_Materiales scm on scm.IdSCMaterial = om.IdSCMaterial
-					inner join Petrovendor.dbo.[PV_MM_MaterialUnidad] u on u.IdUnidad = scm.IdUnidad
-					where om.IdOTSolicitud = @pIdOTSolicitud and
-					VoBoContratista = 1 and
-					VoBoSubcontratista = 1 and
-					(
-						convert(varchar,spc.Fecha,112) between	convert(varchar,@pFechaInicioEstimacion,112) and 
-															convert(varchar,@pFechaFinEstimacion,112)
-						Or 
-						(
-							@pFechaInicioEstimacion is null 
-							and @pFechaFinEstimacion is null
-						)
-
-					)
-					group by om.IdOTSolicitud,
-							scm.IdSCMaterial,
-							scm.COncepto,
-							scm.Descripcion,
-							 Unidad,
-							  scm.PrecioUnitario,
-							  om.IdOTSolicitudMaterial
-
-					) tmp on tmp.IdOTSolicitud = ot.IdOTSolicitud
+			inner join #tmpInfoPrograma tmp on tmp.IdOTSolicitud = ot.IdOTSolicitud
 			where ot.IdOTSolicitud = @pIdOTSolicitud
 			group by ot.IdOTSolicitud,			
 			 ot.Folio ,			
