@@ -1,14 +1,14 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 10/04/2018
 -- Description:solo cambia el estatus para la instancia 
 -- =============================================
 -- =============================================
--- Author:		Alexander Gomez
--- Create date: 23/02/2021
--- Description: Validacion para equinor
+-- Author:	Alexander Gomez
+-- Create date: 24/02/2021
+-- Description: Modificaciones para usuario equinor
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_En_SubeHistoricoAprueba] 
+ALTER PROCEDURE [dbo].[sp_En_SubeHistoricoAprueba] 
     @idUsuario INT,
     @idContrato INT,
     @idInstanciaEntregable INT,
@@ -31,11 +31,10 @@ BEGIN
 	--CONTRATOS PARA VALIDACION DE EQUINOR
 	INSERT INTO @Contratos (IdContrato) VALUES (3);--MEXICO PRUEBAS DEV
 	INSERT INTO @Contratos
-	SELECT
+	SELECT 
 		CON.IdContrato
 	FROM dbo.CO_Contrato AS CON
-	JOIN dbo.CO_Contratista AS CI
-		ON CON.IdContratista = CI.IdContratista
+	LEFT JOIN dbo.CO_Contratista AS CI ON CON.IdContratista = CON.IdContratista
 	WHERE CI.RFC = 'SEM150122M86'--EQUINOR
 
 	IF EXISTS (SELECT * FROM @Contratos WHERE IdContrato = @IdContrato)
@@ -50,8 +49,8 @@ BEGIN
 							ON P.IdRol = R.IdRol
 					WHERE PU.UsuarioID = @IdUsuario
 						AND P.IdContrato = @IdContrato
-						AND R.IdRol IN (73,--Administrador de Entregables  (Contrato)
-										78)--Administración general de entregables
+						AND R.Rol IN ('Administrador de Entregables  (Contrato)',
+										'Administración general de entregables')
 					)
 		BEGIN
 
@@ -115,8 +114,34 @@ BEGIN
     BEGIN
         SET @ContieneURLRepositorio = 1;
     END;
+
+	---ACTUALIZACION DE LOS DATOS DE LOS ACUSES
+	IF @IsEquinor = 1
+	BEGIN
+
+		UPDATE EN_HistorialAprobacionesLineaTiempo
+		SET IdLineaTiempo = @idVersion
+		WHERE idInstanciaEntregable = @idInstanciaEntregable
+
+		UPDATE dbo.EN_DocumentoVersion
+		SET N_version = @idVersion
+		WHERE idInstanciaEntregable = @idInstanciaEntregable
+
+	END
+
 	/* 10,003*/--Registro de elaboración
-    EXEC EN_GuardaHistorialLineaTiempo @idVersion,
+	IF @IsEquinor = 1
+	BEGIN
+		
+			IF NOT EXISTS (SELECT IdLineaTiempo 
+					FROM dbo.EN_HistorialAprobacionesLineaTiempo AS HA 
+					WHERE HA.IdLineaTiempo = @idVersion
+						AND HA.idInstanciaEntregable = @idInstanciaEntregable
+						AND HA.idContrato = @idContrato
+						AND HA.idTipoOperacion = 2)
+			BEGIN
+				
+				EXEC EN_GuardaHistorialLineaTiempo @idVersion,
                                        @idInstanciaEntregable,
                                        @idUsuario,
                                        @idContrato,
@@ -126,6 +151,27 @@ BEGIN
                                        0,
                                        @URLRepositorio,
                                        @ContieneURLRepositorio;
+
+			END
+
+	END
+	ELSE
+	BEGIN
+		
+		EXEC EN_GuardaHistorialLineaTiempo @idVersion,
+                                       @idInstanciaEntregable,
+                                       @idUsuario,
+                                       @idContrato,
+                                       @ComentarioUsuarioElaborador,
+                                       0,
+                                       2, --Elaborador
+                                       0,
+                                       @URLRepositorio,
+                                       @ContieneURLRepositorio;
+
+	END
+
+    
 
 	IF @IsEquinor = 1
 	BEGIN
@@ -150,6 +196,7 @@ BEGIN
                                        0;
 
 		END
+
 
 	END
 	ELSE
