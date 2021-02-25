@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 12/07/2018
 -- Description: ahora la aprobacion es por cada pedido y no una aprobacion para todos los pedidos generados
@@ -12,6 +12,11 @@
 -- Author: Daniel A Cruz
 -- Create date: 25/10/2019
 -- Description:Configuración de días de crédito por partida
+-- =============================================
+-- =============================================
+-- Author: Alexander Gomez
+-- Create date: 24/02/2021
+-- Description: cambio de tipo de tabla de @tablaFlujos (era un tabla #)
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5_AD]
 
@@ -51,7 +56,7 @@ BEGIN
     DECLARE @VERSION INT;
     DECLARE @IdMonedaDLS INT = 2;
 
-    CREATE TABLE #tablaFlujos
+    DECLARE @tablaFlujos TABLE
     (
         Fila INT,
         IdFlujoTarea INT,
@@ -446,7 +451,7 @@ BEGIN
 
         --Asignar el flujo correspondiente al monto
 
-        INSERT INTO #tablaFlujos
+        INSERT INTO @tablaFlujos
         (
             Fila,
             IdFlujoTarea,
@@ -462,10 +467,10 @@ BEGIN
 
 
         SELECT @IdFlujo = IdFlujoTarea
-        FROM #tablaFlujos
+        FROM @tablaFlujos
         WHERE Fila = 1;
 
-		DROP TABLE #tablaFlujos
+		--DROP TABLE #tablaFlujos
 
         IF ISNULL(@IdFlujo, 0) = 0
         BEGIN
@@ -704,9 +709,3 @@ BEGIN
     ORDER BY row_group_pedido ASC;
 
 END;
-
-
-
-
-
-
