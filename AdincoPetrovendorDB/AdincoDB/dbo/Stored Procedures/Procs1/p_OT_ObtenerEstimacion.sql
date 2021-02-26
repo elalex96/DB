@@ -139,6 +139,7 @@ as
 			mon.TipoMonedaCorto,
 			ot.IdMOneda			
 
+
 	End
 
 	
