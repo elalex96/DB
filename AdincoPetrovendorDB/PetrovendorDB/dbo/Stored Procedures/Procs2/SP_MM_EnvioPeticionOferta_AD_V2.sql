@@ -3,13 +3,8 @@
 -- Create date: <04/02/2020>
 -- Description:	<Envio de la peticion oferta>
 -- =============================================
--- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <16/02/2021>
--- Description:	<eliminado del campo de prioridad y tipo gasto>
--- =============================================
 
-CREATE PROCEDURE [dbo].[SP_MM_EnvioPeticionOferta_AD_V2] 
+CREATE PROCEDURE [dbo].[SP_MM_EnvioPeticionOferta_AD_V2] --44,20022,2205,420,'PRUEBA','2020-02-20 00:00:00.000',2,1,'PRUEBA','',1,0
 	-- Add the parameters for the stored procedure here
 	@IdProveedorInvitado INT,
 	@IdSolicitudPedido int,
@@ -498,8 +493,8 @@ BEGIN
 			IF ISNULL(@IdOperacion,0) = 0
 			BEGIN
 
-				INSERT INTO TA_Operacion(IdDocumento,IdTipoOperacion,IdEstatusOperacion,IdProveedor,IdAsignador,FechaRegistro,Descripcion, IdVigencia, IdPrioridad)
-				VALUES(@IdSolicitudPedido,6,1,@IdProveedorActual,@CreadoPor,GETDATE(), @Descripcion,1,1
+				INSERT INTO TA_Operacion(IdDocumento,IdTipoOperacion,IdEstatusOperacion,IdProveedor,IdAsignador,FechaRegistro,Descripcion,IdVigencia, IdPrioridad)
+				VALUES(@IdSolicitudPedido,6,1,@IdProveedorActual,@CreadoPor,GETDATE(), @Descripcion,1,1--,@IdPrioridad,@IdPrioridad
 				);
 
 				SET @IdOperacion = (SCOPE_IDENTITY())
