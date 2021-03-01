@@ -13029,6 +13029,6 @@
     <Build Include="dbo\User Defined Types\SubTareas.sql" />
     <Build Include="dbo\User Defined Types\ListaNegraTable.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_VerificacionOpcionesEquinor.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\spTienePermisosAdmin_2.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spTienePermisosAdmin_2.sql" />
   </ItemGroup>
 </Project>
