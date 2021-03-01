@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <04/02/2020>
 -- Description:	<Envio de la peticion oferta>
@@ -12,11 +12,11 @@ CREATE PROCEDURE [dbo].[SP_MM_EnvioPeticionOferta_AD_V2] --44,20022,2205,420,'PR
 	@IdProveedorActual INT,
 	@Descripcion NVARCHAR(MAX),
 	@FechaLimiteCotizacion DATETIME,
-	@IdPrioridad INT,
+	--@IdPrioridad INT,
 	@IdTerminosCondiciones INT,
 	@Justificacion NVARCHAR(MAX),
 	@CorreoInvitado NVARCHAR(MAX),
-	@IdTipoGasto INT,
+	--@IdTipoGasto INT,
 	@CotizacionRestringida BIT = NULL
 
 AS
@@ -486,14 +486,16 @@ BEGIN
 							AND IdEstatusOperacion = 1
 							AND IdProveedor = @IdProveedorActual
 							AND IdAsignador = @CreadoPor
-							AND IdVigencia = @IdPrioridad
-							AND IdPrioridad = @IdPrioridad);
+							--AND IdVigencia = @IdPrioridad
+							--AND IdPrioridad = @IdPrioridad
+							);
 
 			IF ISNULL(@IdOperacion,0) = 0
 			BEGIN
 
-				INSERT INTO TA_Operacion(IdDocumento,IdTipoOperacion,IdEstatusOperacion,IdProveedor,IdAsignador,FechaRegistro,Descripcion, IdVigencia, IdPrioridad)
-				VALUES(@IdSolicitudPedido,6,1,@IdProveedorActual,@CreadoPor,GETDATE(), @Descripcion,@IdPrioridad,@IdPrioridad);
+				INSERT INTO TA_Operacion(IdDocumento,IdTipoOperacion,IdEstatusOperacion,IdProveedor,IdAsignador,FechaRegistro,Descripcion,IdVigencia, IdPrioridad)
+				VALUES(@IdSolicitudPedido,6,1,@IdProveedorActual,@CreadoPor,GETDATE(), @Descripcion,1,1--,@IdPrioridad,@IdPrioridad
+				);
 
 				SET @IdOperacion = (SCOPE_IDENTITY())
 
@@ -507,8 +509,8 @@ BEGIN
 	--ACTUALIZAR ENVIO DE LA PETICION
 	UPDATE [dbo].[MM_SolicitudPedido] 
 	SET [PeticionEnviada]= 1,
-		JustificacionSolOferta = @Justificacion,
-		IdTipoGasto = @IdTipoGasto
+		JustificacionSolOferta = @Justificacion
+		--IdTipoGasto = @IdTipoGasto
 	WHERE [IdSolicitudPedido]= @IdSolicitudPedido
 	
 	--GUARDAR LOS TERMINOS Y CONDICIONES

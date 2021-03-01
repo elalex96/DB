@@ -259,7 +259,7 @@ AS
          IF(@IdTransfer <> 0
             AND @Accion <> 0)
              BEGIN
-                 SELECT F.IdFactura, 
+                SELECT F.IdFactura, 
                         F.Serie, 
                         C.NumeroContrato, 
                         F.Folio, 
@@ -312,10 +312,10 @@ AS
                       LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
 						   ON CONVERT(DATE, F.Fecha) = TCD.Fecha
                               AND TCD.IdMoneda = 1
-                 WHERE --S.IdSubcontratista = @IdSubcontratista
-                       --AND C.IdContrato = @IdContrato
-                       --AND F.TipoComprobante <> 'P'
-                       (F.MetodoPago LIKE '%exhibi%'
+                 WHERE S.IdSubcontratista = @IdSubcontratista
+                       AND C.IdContrato = @IdContrato
+                       AND F.TipoComprobante <> 'P'
+                       AND (F.MetodoPago LIKE '%exhibi%'
                             OR F.MetodoPago LIKE '%PUE%'
                             OR F.FormaPago LIKE '%exhibi%'
                             OR F.FormaPago LIKE '%PUE%')

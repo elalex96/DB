@@ -1,12 +1,14 @@
-﻿-- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <15/04/2020>
--- Description:	<Consulta de los datos de cabecera y detalles para la reclasificacion de la aceptacion>
--- =============================================
+
+
 CREATE PROCEDURE [dbo].[SP_APR_ConsultaAceptacionPedidoCabecera] --2243,420
-	-- Add the parameters for the stored procedure here
+(	-- Add the parameters for the stored procedure here
+	
+	--declare 
 	@IdAceptacionPedido INT,
 	@IdProveedor INT
+)
+	--select @IdAceptacionPedido = 12197, @IdProveedor = 907
+	--select @IdAceptacionPedido = 7185, @IdProveedor = 1
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -60,14 +62,12 @@ BEGIN
 
 	SET @TieneCarta = (
 							SELECT 
-							CASE 
-								WHEN APC.IdAceptacionPedido IS NOT NULL THEN 1
-								ELSE 0
-							END AS TieneCarta
-							FROM dbo.MM_AceptacionPedido AP
-							LEFT JOIN dbo.MM_AceptacionCartaPCN APC
-							ON AP.IdAceptacionPedido = APC.IdAceptacionPedido
-							WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
+										TieneCarta	=	CASE WHEN APC.IdAceptacionPedido IS NOT NULL THEN 1 ELSE 0 END
+							FROM		dbo.MM_AceptacionPedido AP
+							LEFT JOIN	dbo.MM_AceptacionCartaPCN APC
+							ON			AP.IdAceptacionPedido = APC.IdAceptacionPedido
+							WHERE		AP.IdAceptacionPedido = @IdAceptacionPedido
+							and			APC.IdEstatus			= 2
 					 )
 
 
@@ -77,8 +77,8 @@ BEGIN
 		CASE
 			WHEN @TieneCarta = 0 THEN CAST(AP.IdAceptacionPedido AS NVARCHAR(300))
 			ELSE
-			CAST(AP.IdAceptacionPedido AS NVARCHAR(300)) + 
-			' (No se puede reclasificar esta aceptación, debido a que ya se realizó una carta de contenido nacional)'
+			CAST(AP.IdAceptacionPedido AS NVARCHAR(300)) 
+			--' (No se puede reclasificar esta aceptación, debido a que ya se realizó una carta de contenido nacional)'
 		END IdAceptacionPedido,
 		PS.IdPedido AS IdPedidoGeneral,
 		PR.RazonSocial AS Proveedor,
@@ -165,8 +165,8 @@ BEGIN
 
 	--DETALLES
 
-	IF(@TieneCarta = 0) --- no tiene carta -> mostrar
-	BEGIN
+	--IF(@TieneCarta = 0) --- no tiene carta -> mostrar
+	--BEGIN
 	    	SELECT
 			ROW_NUMBER() OVER(ORDER BY APD.IdAceptacionPedidoDetalle ASC) AS _key,
 			APD.IdAceptacionPedidoDetalle,
@@ -207,9 +207,9 @@ BEGIN
 			WHERE AP.IdAceptacionPedido = @IdAceptacionPedido;
 
 
-	END
-	ELSE
-    BEGIN
+	--END
+	--ELSE
+    --BEGIN
         	SELECT
 			ROW_NUMBER() OVER(ORDER BY APD.IdAceptacionPedidoDetalle ASC) AS _key,
 			APD.IdAceptacionPedidoDetalle,
@@ -241,9 +241,7 @@ BEGIN
 				LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS LP 
 						ON LP.IdLineaPresupuestoMes = APDI.IdLineaPresupuesto
 			WHERE AP.IdAceptacionPedido = @IdAceptacionPedido;
-    END
+    --END
 
 
-
-
-END
+end

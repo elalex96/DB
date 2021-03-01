@@ -27,14 +27,18 @@
 -- Update date: 02/05/2020
 -- Description: se agrego la cuenta bancaria
 -- =============================================
+-- Author:		Luis Davi De La Cruz
+-- Update date: 19/02/2021
+-- Description: se selecciona la fecha máxima de la bitacora de la operación
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_ConsultaDeInsercionCompraDirecta] -- 0,2,420
-    @idUsuario INT,
-    @aprobadaRechazada INT,
-	@IdProveedor INT,
+    @idUsuario			INT,
+    @aprobadaRechazada	INT,
+	@IdProveedor		INT,
 	/*--------------------parametros contrato  --------------------*/
-    @IdContrato    INT = null,
-    --@IdUsuario     INT = null,
-    @FechaRegistro DATETIME = null
+    @IdContrato			INT = null,
+    --@IdUsuario		INT = null,
+    @FechaRegistro		DATETIME = null
 	/*-------------------------------------------------------------*/
 
 AS
@@ -44,13 +48,24 @@ BEGIN
 
 
 	INSERT INTO @TablaFecha (IdOperacion, Fecha)
-	SELECT tao.IdOperacion, FORMAT(tarea.Fecha,'dd/MM/yy hh:mm:ss tt')  
-	FROM dbo.TA_Operacion tao 
-	INNER JOIN dbo.TA_HistorialFlujoTarea tarea ON tarea.IdOperacion = tao.IdOperacion
-	WHERE tarea.IdEstadoFlujo = 7 AND tao.IdProveedor = @IdProveedor AND tao.IdTipoOperacion = 14
-	GROUP BY tarea.Fecha,
-             tao.IdOperacion
-	 ORDER BY tarea.Fecha DESC	
+	SELECT tao.IdOperacion, FORMAT(tarea.fecha,'dd/MM/yy hh:mm:ss tt') FROM 
+	(
+		SELECT IdOperacion, Max(Fecha) as fecha  
+		FROM TA_HistorialFlujoTarea
+		WHERE IdEstadoFlujo = 7
+		GROUP BY IdOperacion
+	) tarea
+	INNER JOIN TA_Operacion tao
+	ON tarea.IdOperacion = tao.IdOperacion
+	where tao.IdProveedor = @IdProveedor AND tao.IdTipoOperacion = 14
+	ORDER BY tarea.fecha DESC
+	--SELECT tao.IdOperacion, FORMAT(tarea.Fecha,'dd/MM/yy hh:mm:ss tt')  
+	--FROM dbo.TA_Operacion tao 
+	--INNER JOIN dbo.TA_HistorialFlujoTarea tarea ON tarea.IdOperacion = tao.IdOperacion
+	--WHERE tarea.IdEstadoFlujo = 7 AND tao.IdProveedor = @IdProveedor AND tao.IdTipoOperacion = 14
+	--GROUP BY tarea.Fecha,
+ --            tao.IdOperacion
+	--ORDER BY tarea.Fecha DESC	
  
     IF (@aprobadaRechazada IN ( 1, 2))
     BEGIN
@@ -336,7 +351,7 @@ BEGIN
                 ON TE.IdEstatus = TAO.IdEstatusOperacion
             LEFT JOIN dbo.CC_CentroCosto centroCosto
                 ON centroCosto.IdCentroCosto = coRegistro.CentroCostos
-            LEFT JOIN dbo.DG_CuentaContable cuentaContable
+ LEFT JOIN dbo.DG_CuentaContable cuentaContable
                 ON cuentaContable.Id = coRegistro.CuentaContable
             --LEFT JOIN dbo.CO_LineaPresupuestoMes linea
             --    ON linea.IdLineaPresupuestoMes = coRegistro.IdLineaPresupuestoMes
