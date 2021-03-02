@@ -3,8 +3,15 @@
 -- Create date: 04-07-2018
 -- Description:	SP para obtener la justificacion de la peticion oferta x solicitud de pedido
 -- =============================================
-
-CREATE PROCEDURE SP_ObtenerJustificacionMercadeo @IdSolicitudPedido INT
+-- Author:		Luis David De La Cruz
+-- Create date: 20/03/2021
+-- Description:	Se optimiza la consulta para la pantalla detalle_pedido del issue 984
+-- =============================================
+IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_ObtenerJustificacionMercadeo')
+    DROP PROCEDURE SP_ObtenerJustificacionMercadeo
+go
+CREATE PROCEDURE SP_ObtenerJustificacionMercadeo 
+@IdSolicitudPedido INT
 AS
 	BEGIN
 		DECLARE @TipoAdjudicacion INT
@@ -12,7 +19,7 @@ AS
 		SELECT		@TipoAdjudicacion = ISNULL ( sp.IdTipoProceso, 0 )
 		FROM		dbo.MM_SolicitudPedido sp
 		LEFT JOIN	MM_TipoPedido tipo
-			ON tipo.IdTipoPedido = sp.IdTipoProceso
+			ON sp.IdTipoProceso = tipo.IdTipoPedido
 		WHERE		sp.IdSolicitudPedido = @IdSolicitudPedido
 
 		IF ( @TipoAdjudicacion = 2 ) -- Mercadeo
