@@ -1,7 +1,5 @@
-﻿
-
-CREATE PROCEDURE [dbo].[p_SC_ConsultaLineaPresupuestoMes] 
-@presupuesto INT,
+﻿CREATE PROCEDURE [dbo].[p_SC_ConsultaLineaPresupuestoMes] 
+@presupuesto varchar(250),
 @pIdSubcontrato int
 AS
      BEGIN
@@ -10,36 +8,13 @@ AS
          -- =============================================
          SET LANGUAGE spanish;
          -- =============================================
+		 
+		 select IdPresupuesto = cast(splitdata as int)
+		 into #tmpResult
+		 from [dbo].[fnSplitString](@presupuesto,',')		
 
-		 /***********SI TIENE PEDIDO ORIGEN**************/
+		
 
-		select	distinct
-				lp.IdLineaPresupuesto
-		into #tmpResult
-		from Petrovendor.dbo.MM_Pedido p
-		inner join Petrovendor.dbo.MM_SolicitudPedido sp on sp.IdSolicitudPedido = p.IdSolicitudPedido
-		inner join Petrovendor.dbo.MM_SolicitudPedidoDetalle spd on spd.IdSolicitudPedido = sp.IdSolicitudPedido	
-		inner join Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto lp on lp.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
-		inner join SC_Subcontrato sc on @pIdSubContrato in ( sc.idSubcontrato) and
-									sc.IdPedido = p.IdPedido
-		inner join [dbo].[CO_LineaPresupuestoMes] lpm on lpm.IdLineaPresupuestoMes = lp.IdLineaPresupuesto
-		left join CO_Instalacion i on i.IdInstalacion = lpm.IdInstalacion	
-		LEFT JOIN CO_ActividadCIEP ac on ac.IdActividad = lpm.IdActividad
-		left join CO_TareaPetrolera  tp on tp.IdTareaPetrolera = lpm.IdTareaPetrolera
-		group by sp.IdSolicitudPedido,
-				lp.IdLineaPresupuesto,
-				i.NombreInstalacion,
-				ac.NombreActividad,
-				tp.TareaPetrolera
-
-		if not exists (
-			select 1
-			from #tmpResult
-		)
-		begin
-			insert into #tmpResult
-			select 0 --todas las lineas del presupuesto
-		end
 
          SELECT dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
                 CONCAT(RIGHT('00'+CAST(MONTH(dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES) AS VARCHAR(2)), 2), ' ', DATENAME(month, dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES), ' ', YEAR(dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES)) AS Mes_Presupuestado,
@@ -101,7 +76,7 @@ AS
                 CO_TareaPetrolera.id_Tarea,
                 CO_TareaPetrolera.TareaPetrolera
          FROM dbo.CO_LineaPresupuestoMes
-		 inner join #tmpResult tmp on tmp.IdLineaPresupuesto in (0,CO_LineaPresupuestoMes.IdLineaPresupuestoMes)
+		 inner join #tmpResult tmp on tmp.IdPresupuesto = dbo.CO_LineaPresupuestoMes.IdPresupuesto
               LEFT OUTER JOIN CO_ActividadPetroleraCNH ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
               LEFT OUTER JOIN CO_SubactividadPetrolera ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
               LEFT OUTER JOIN CO_TareaPetrolera ON dbo.CO_LineaPresupuestoMes.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
@@ -119,8 +94,7 @@ AS
                                                       AND CO_TipoCambioMensual.Anio = YEAR(CO_Registro.MesPresentacion)
               LEFT OUTER JOIN CO_RubroInterno ON dbo.CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
               LEFT JOIN CO_Presupuesto ON CO_Presupuesto.idpresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
-         WHERE(dbo.CO_LineaPresupuestoMes.IdPresupuesto = @presupuesto) --and MONTH ( CO_LineaPresupuestoMes.AC_FEC_INI ) = @mes 
-         GROUP BY dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
+			GROUP BY dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
                   dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES,
                   CO_Area.NombreArea,
                   CO_TipoServicio.ID_TIPOSER,
@@ -130,7 +104,7 @@ AS
                   CO_SubactividadCIEP.ID_CATSUBACTIV,
                   CO_SubactividadCIEP.NombreSubactividad,
                   dbo.CO_LineaPresupuestoMes.ID_PADRE,
-                  CO_ClasificacionAnexo4.ClasificacionAnexo4,
+           CO_ClasificacionAnexo4.ClasificacionAnexo4,
                   CO_Servicio.NombreServicio,
                   CO_Instalacion.NombreInstalacion,
                   CO_Instalacion.IdInstalacionPemex,
@@ -149,4 +123,7 @@ AS
                   dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES,
                   Area;
      END;
+
+
+
 
