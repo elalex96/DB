@@ -862,12 +862,50 @@ AS
         GROUP BY IdOTSolicitud ;
 
 
+		select ot.IdOTSolicitud , Total = SUM(om.Cantidad * mat.PrecioUnitario)
+		into #tmpAFOTTotales
+		from OT_Solicitud ot
+		inner join #tmpResultado5 res on res.IdOTSolicitud = ot.IdOTSolicitud
+		inner join OT_SolicitudMaterial om on om.IdOTSolicitud = ot.IdOTSolicitud
+		inner join SC_Materiales mat on mat.IdSCMaterial  = om.IdSCMaterial
+		GROUP BY ot.IdOTSolicitud
+		
 
-        insert into OT_BI_Tablero 
-        SELECT t1.*
+		select ot.IdOTSolicitud , Total = SUM(e.Total)
+		into #tmpAFOTEstimado
+		from OT_Solicitud ot
+		inner join #tmpResultado5 res on res.IdOTSolicitud = ot.IdOTSolicitud
+		inner join OT_Estimacion e on e.IdOTSolicitud = ot.IdOTSolicitud AND
+								isnull(e.Cancelada,0) = 0
+		GROUP BY ot.IdOTSolicitud
+
+		
+		select OT.IdOTSolicitud, 
+			AVANCE_FINANCIERO=case when isnull(ot.Total,0) = 0 then 0 else  (ISNULL(E.Total,0) * 100)/isnull(ot.Total,0) end
+		into #tmpAF
+		from #tmpAFOTTotales ot
+		left join #tmpAFOTEstimado e on e.IdOTSolicitud = ot.IdOTSolicitud
+
+
+
+        insert into OT_BI_Tablero(NumeroContrato,IdOTSolicitud,IdSolicitudPedido,Folio,
+					Objeto,CentroCosto,RazonSocialProv,Tarea,
+					SubTarea,Estatus,RegistroDeOT,Requisitor,Responsable1aAprobacion,Fecha1aAprobacion,
+					DiasEspera1aAprobacion,Estatus1aAprobacion,Responsable2aAprobacion,Fecha2aAprobacion,DiasEspera2aAprobacion,Estatus2aAprobacion,
+					FechaCargaPR,NumberPR,DiasPR,ProgramaDel,ProgramaAl,FechaCargaAvance,VolumetriaAvance,
+					DiasCargaAvance,DiasRegistroPR_CargaAvance,FechaVoBoOperadora,ResponsableVoBoOperadora,DiasVoBoOperadora,FechaCierreSemana,
+					Responsable_Cierre_Semana,DiasCierreSemana,DiasAvanceSemanal,FechaDeEstimacion,ResponsableEstimacion,DiasEstimacion,
+					DiasTotales,NumeroPO,FechaRegistroPO,IdPedido,UsuarioRelacionPOSAP,NumeroPOSAP,
+					FechaRelacionPOSAP,DiasRelacionPOSAP,NumeroAceptacionPedido,FechaRecepcionCartaCN,DiasRecepcionCartaCartaCN,DiasRelacionPO_CartaCN,
+					UsuarioApruebaCartaCN,FechaAprobacionCartaCN,DiasAprobacionCartaCN,DiasAprobacionCartaCN2,EstatusCartaCN,FechaRecepcionFactura,
+					DiasRecepcionFactura,FolioFactura,Responsable1aAprobacion_Fac,Fecha1aAprobacion_Fac,DiasEspera1aAprobacionFac,Estatus1aAprobacion_Fac,
+					Responsable2aAprobacion_Fac,Fecha2aAprobacion_Fac,DiasEspera2aAprobacion_Fac,Estatus2aAprobacion_Fac,DiasRelacionPO_AprobacionFactura,AvanceFinanciero)
+        SELECT t1.*,
+				AF.AVANCE_FINANCIERO
         FROM #tmpResultado5            t1
         INNER JOIN #tmpResultaFinalRep t2
             ON t2.IdOTSolicitud=t1.IdOTSolicitud
+		LEFT JOIN #tmpAF AF on AF.IdOTSolicitud = t1.IdOTSolicitud 
         WHERE(t2.Count=1
               OR(t2.Count>1 AND t1.IdSolicitudPedido IS NOT NULL
                  AND t2.IdSolicitudPedido IS NOT NULL

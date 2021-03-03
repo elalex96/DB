@@ -66,6 +66,7 @@
     [Fecha2aAprobacion_Fac]            DATETIME       NULL,
     [DiasEspera2aAprobacion_Fac]       VARCHAR (100)  NULL,
     [Estatus2aAprobacion_Fac]          VARCHAR (100)  NULL,
-    [DiasRelacionPO_AprobacionFactura] VARCHAR (100)  NULL
+    [DiasRelacionPO_AprobacionFactura] VARCHAR (100)  NULL,
+    [AvanceFinanciero]                  FLOAT          NULL
 );
 
