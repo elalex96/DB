@@ -1,4 +1,16 @@
-﻿CREATE VIEW [dbo].[FacturasAprobadasJaguar]
+﻿USE [Petrovendor]
+GO
+
+/****** Object:  View [dbo].[FacturasAprobadasJaguar]    Script Date: 04/03/2021 02:18:47 p. m. ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'FacturasAprobadasJaguar')
+    DROP VIEW FacturasAprobadasJaguar
+GO
+CREATE VIEW [dbo].[FacturasAprobadasJaguar]
 AS
 
 -------------------------------------------------------------------
@@ -31,7 +43,7 @@ FROM  EstatusPedidosJaguar EPJ WITH (NOLOCK)
 JOIN  Adinco.dbo. FI_Factura F WITH (NOLOCK) ON F.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = EPJ.UUID_Adinco --collate Modern_Spanish_CI_AS
 join MM_SolicitudPedido SP (NOLOCK) on EPJ.SolicitudPedido = SP.IdSolicitudPedido
 join S_Usuario U (NOLOCK) on SP.IdUsuarioSolicitante = U.IdUsuario
-WHERE        (IdProveedorCompras IN (606, 690, 1835))   AND FechaAprobacionFactura IS NOT NULL
+WHERE        (IdProveedorCompras IN (606,676, 690, 1835))   AND FechaAprobacionFactura IS NOT NULL
 -------------------------------------------------------------------
 -- UNION PARA INCORPORAR LA COMPRA DIRECTA ------------------------
 -------------------------------------------------------------------
@@ -62,12 +74,12 @@ SELECT distinct stuff ((select ', ' + US.Nombre from S_Usuario US
 	   isnull(FA.TotalImpuestosRetenidos,0) AS TotalImpuestosRetenidos
 FROM VISTA_ComprasDirectas CDF WITH (NOLOCK)
 join TA_Tarea T  (NOLOCK) on CDF.IdOperacion = T.IdOperacion
-	AND CDF.Receptor IN('JEP1709042B1', 'PEP170906DI5', 'JSE1601292U8') 
+	AND CDF.Receptor IN('JEP1709042B1','JEP1502264H1', 'PEP170906DI5', 'JSE1601292U8') 
 join TA_Operacion O (NOLOCK) on T.IdOperacion = O.IdOperacion
 	and O.IdTipoOperacion = 14
 join S_Usuario U (NOLOCK) ON U.IdUsuario = T.IdAprobador 
 join MM_Pedidos PP (NOLOCK) on O.IdDocumento = PP.IdIdentificador
-	 AND PP.IdProveedorCliente in (606, 690, 1835)
+	 AND PP.IdProveedorCliente in (606,676, 690, 1835)
 join S_Usuario US (NOLOCK) on PP.IdCreadoPor = US.IdUsuario
 JOIN dbo.FI_Factura ff (NOLOCK) ON cdf.UUID_Petrovendor = ff.UUID
 join Adinco.dbo.FI_FacturaAdincoPetrovendor AS FAP (NOLOCK)
@@ -76,8 +88,8 @@ join Adinco.dbo.FI_FacturaAdincoPetrovendor AS FAP (NOLOCK)
 join Adinco.dbo.FI_Factura AS FA (NOLOCK)
     ON FAP.IdFacturaAdinco = FA.IdFactura
 WHERE 
-CDF.Receptor IN('JEP1709042B1', 'PEP170906DI5', 'JSE1601292U8') 
-and O.IdTipoOperacion = 14 and PP.IdProveedorCliente in (606, 690, 1835)
+CDF.Receptor IN('JEP1709042B1','JEP1502264H1', 'PEP170906DI5', 'JSE1601292U8') 
+and O.IdTipoOperacion = 14 and PP.IdProveedorCliente in (606, 676, 690, 1835)
 GROUP BY US.Nombre,
 		 U.Nombre,
 		 CDF.IdOperacion,
@@ -107,7 +119,7 @@ SELECT
 			CO.NumeroContrato COLLATE Modern_Spanish_CI_AS,
 			P.RazonSocial,
 			ISNULL(PC.NumeroPedimento COLLATE Modern_Spanish_CI_AS, '') AS Serie,  
-			LTRIM(ISNULL(PC.ClavePedimento, '')) COLLATE Modern_Spanish_CI_AS AS Folio,
+			LTRIM(ISNULL(PC.FolioComprobante, '')) COLLATE Modern_Spanish_CI_AS AS Folio,
 			''	AS UUID,	-- NO EXISTE UUID EN LOS PEDIMENTOS
 			TM.TipoMonedaCorto,
 			PCD.ImporteTotal	As	TotalFactura,
@@ -124,7 +136,7 @@ SELECT
 			ON	APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
 			AND OP.IdTipoOperacion = 19
 			AND OP.IdProveedor = APC.IdProveedor
-			AND APC.IdProveedor in (606, 690, 1835)
+			AND APC.IdProveedor in (606, 676, 690, 1835)
 			AND APC.Activo = 1
 		JOIN dbo.FI_PedimentoComprobante AS PC	(NOLOCK)
 			ON APC.IdPedimentoComprobante	=	PC.IdPedimentoComprobante
@@ -147,5 +159,5 @@ SELECT
 			ON ISNULL(PC.IdFormaPago, 1) = FP.IdFormaPago
 		left join Adinco.dbo.PV_Subcontratista as PS 	(NOLOCK)
 			ON PC.IdSubcontratistaExportador = PS.idSubcontratista
-	WHERE APC.IdProveedor in (606, 690, 1835)
+	WHERE APC.IdProveedor in (606, 676, 690, 1835)
 		AND APC.Activo = 1
