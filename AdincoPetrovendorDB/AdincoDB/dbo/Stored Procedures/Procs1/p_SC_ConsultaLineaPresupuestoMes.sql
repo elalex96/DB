@@ -74,8 +74,10 @@ AS
                 CO_SubactividadPetrolera.[id_Sub-actividad],
                 CO_SubactividadPetrolera.SubactividadPetrolera,
                 CO_TareaPetrolera.id_Tarea,
-                CO_TareaPetrolera.TareaPetrolera
+                CO_TareaPetrolera.TareaPetrolera,
+				PresupuestoNombre = p.Nombre
          FROM dbo.CO_LineaPresupuestoMes
+		 inner join CO_Presupuesto p on p.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
 		 inner join #tmpResult tmp on tmp.IdPresupuesto = dbo.CO_LineaPresupuestoMes.IdPresupuesto
               LEFT OUTER JOIN CO_ActividadPetroleraCNH ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
               LEFT OUTER JOIN CO_SubactividadPetrolera ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
@@ -118,7 +120,8 @@ AS
                   CO_SubactividadPetrolera.SubactividadPetrolera,
                   CO_TareaPetrolera.id_Tarea,
                   CO_TareaPetrolera.TareaPetrolera,
-                  CO_Presupuesto.CIEP
+                  CO_Presupuesto.CIEP,
+				  p.Nombre
          ORDER BY Mes_Presupuestado,
                   dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES,
                   Area;
