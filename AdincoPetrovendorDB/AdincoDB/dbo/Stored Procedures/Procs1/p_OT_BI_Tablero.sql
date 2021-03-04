@@ -299,7 +299,7 @@ AS
             ON cc.IdCentroCosto=ot.IdCentroCosto
         INNER JOIN SC_SubContrato              sc
             ON sc.IdSubContrato=ot.IdSubContrato
-               AND sc.IdContrato IN (10038, 10044, 10045, 10046, 10144) -- Solo contratos DEA 
+               AND sc.IdContratista IN (10013,10060) -- Solo contratos DEA 
 
         INNER JOIN CO_Contrato                 c
             ON c.IdContrato=sc.IdContrato
