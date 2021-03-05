@@ -7,7 +7,7 @@
 -- Create date: <09/11/2020>
 -- Description:	<Se actualiza a una nueva tabla actualizada con los contratos de jaguar>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_J_VerificarProveedorJaguar]
+create PROCEDURE [dbo].[SP_J_VerificarProveedorJaguar]
 @IdProveedor INT
 AS
 BEGIN
@@ -17,13 +17,15 @@ BEGIN
 
 	IF EXISTS
 	(
-		SELECT IdOperadora FROM dbo.CO_CONTRATOSJAGUAR WHERE IdOperadora = @IdProveedor AND Activo = 1
+		--SELECT IdProveedor FROM dbo.Jaguar_Proveedor WHERE IdProveedor = @IdProveedor AND Activo = 1
+		select * from S_Proveedor where RazonSocial like '%Jaguar%' and IdProveedor = @IdProveedor
 	)
 	BEGIN
 		SELECT 'JAGUAR'
 	END
 	ELSE
+	begin
 		SELECT 'DEFAULT'
-
+	end
 
 END
