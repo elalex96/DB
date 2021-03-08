@@ -673,7 +673,7 @@ BEGIN
     END;
 
     ---- VALIDA SI EL PROVEEDOR ES DEA
-    ELSE IF ISNULL(@IdContrato, 0) IN ( 10038, 10044, 10045, 10046, 10144 ) --Ogarrio
+    ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060)) --DEA
     BEGIN
         INSERT INTO @SolpedConMateriales (IdSolicitudPedido)
         SELECT sp.IdSolicitudPedido
