@@ -844,15 +844,17 @@ BEGIN
                        'NO'
                END AS RelacionOperadoraProveedor,
                UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,
-                CASE
-					WHEN SC.NumeroSubcontrato IS NOT NULL THEN 'LICITACIÓN'
-                   WHEN TP.TipoPedido = 'Mercadeo' THEN
-                       'TRES COTIZACIONES'
-                   ELSE
-                       UPPER(TP.TipoPedido)
-               END AS MecanismoContratacion,    
+			   CASE WHEN SC.NumeroSubcontrato IS NOT NULL OR solPed.MotivoUrgencia like '%ESTIMACIÓN COMPLETA PARA OT%' THEN 'LICITACIÓN'
+					ELSE
+						CASE					
+							WHEN TP.TipoPedido = 'Mercadeo' THEN
+								   'TRES COTIZACIONES'
+							ELSE
+								   UPPER(TP.TipoPedido)
+					   END 
+				END AS MecanismoContratacion,    
                
-                isnull(SC.NumeroSubcontrato,DEA_RPO.PO) +'-'+ cast(p.IdPedido as varchar) AS 'Nombre Contrato C-P',
+                isnull(SC.NumeroSubcontrato,DEA_RPO.PO)  AS 'Nombre Contrato C-P',
 				DEA_RPO.PO AS 'No. Contrato',
 				CASE
 					WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105) 
