@@ -739,7 +739,7 @@ AS
         GROUP BY IdOTSolicitud ;
 
 
-		/*AVANCE FINANCIERO*/
+		/*CALCULO AVANCE FINANCIERO*/
 
 		
 		select ot.IdOTSolicitud , Total = SUM(om.Cantidad * mat.PrecioUnitario)
