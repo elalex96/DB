@@ -1,4 +1,4 @@
-﻿create proc p_OT_ObtenerArchivosOTSolicitud
+﻿CREATE proc p_OT_ObtenerArchivosOTSolicitud
 (
 	@pIdOTSolicitud int
 )
@@ -21,5 +21,22 @@ begin
 	on			s.IdOTSolicitud					=	sm.IdOTSolicitud
 	where		sm.IdOTSolicitud				=	@pIdOTSolicitud
 
+	union 
+
+	select pa.ID,
+			PA.IdOTSolicitud,
+			awsd.Bucket,
+				awsd.Folder,
+				awsd.UUIDAmazon,
+				awsd.NombreArchivo,
+				awsd.Meta
+	from [dbo].[OT_ProgramaAdjunto] pa
+	INNER JOIN AWS_Documentos					awsd
+	on		   pa.AWSDocumentoId				=	awsd.AWSDocumentoId
+	WHERE PA.IdOTSolicitud = @pIdOTSolicitud
+
 end
+
+
+
 
