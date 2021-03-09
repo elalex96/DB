@@ -1,6 +1,6 @@
-﻿CREATE PROCEDURE [dbo].[p_OT_BI_Tablero]
+﻿CREATE  PROCEDURE [dbo].[p_OT_BI_Tablero]
 AS
-    BEGIN
+ BEGIN
         DELETE OT_BI_Tablero ;
 
         IF OBJECT_ID('tempdb..#tmpOTManagerNot', 'U') IS NOT NULL
@@ -44,6 +44,11 @@ AS
 
         IF OBJECT_ID('tempdb..#tmpResultaFinalRep', 'U') IS NOT NULL
             DROP TABLE #tmpResultaFinalRep ;
+		IF OBJECT_ID('tempdb..#tmpAF', 'U') IS NOT NULL
+            DROP TABLE #tmpAF ;
+
+
+			
 
         SELECT ot.IdOTSolicitud, u.Nombre, MIN(n.CreadoEl) AS Fecha
         INTO #tmpOTManagerNot
@@ -51,8 +56,10 @@ AS
         INNER JOIN Adinco..OT_Solicitud   ot
             ON ot.IdOTSolicitud=sb.IdOTSolicitud
         INNER JOIN Adinco..S_Notificacion n
-            ON n.Asunto LIKE '%'+ot.Folio+'%' AND n.CreadoEl>ot.CreadoEl
-               AND n.Asunto LIKE '%Control de Obra%'
+            ON --Se agregó un filtro de fechas ya que solo se ocuparán notificaciones a partir de Oct-2019
+				n.CreadoEl >= '20191015' and n.CreadoEl <= '20200401' and
+				n.Asunto LIKE '%Control de Obra%' and
+				n.Asunto LIKE '%'+ot.Folio+'%' AND n.CreadoEl>ot.CreadoEl              
                AND(n.Mensaje LIKE '%La OT ha sido aprobada%'
                    OR n.Mensaje LIKE '%La OT ha sido rechazada%'
                    OR n.Mensaje LIKE '%Es necesario revisar la programacion inicial%'
@@ -79,7 +86,7 @@ AS
                                                                                     MAX(
                                                                                     uf.Nombre)ELSE
                                                                                               '' END,
-                                                                               ''))COLLATE SQL_Latin1_General_CP1_CI_AS END           AS Usuario,
+                                                                               ''))COLLATE SQL_Latin1_General_CP1_CI_AS END         AS Usuario,
             MIN(CASE WHEN ot.ProgIniPorProveedor=1 THEN sb2.CreadoEl ELSE
                                                                          ISNULL(
                                                                              sb.CreadoEl,
@@ -134,7 +141,7 @@ AS
                AND uf.Usuario NOT LIKE '%adinco.mx%'
                AND uf.Usuario NOT LIKE '%ernesto.rodriguez@wintershalldea.com%'
                AND uf.Usuario NOT LIKE '%napoleon.pineiro@wintershalldea.com%'
-               AND uf.Usuario NOT LIKE '%natalia.caro@wintershalldea.com%'
+          AND uf.Usuario NOT LIKE '%natalia.caro@wintershalldea.com%'
         GROUP BY ot.IdOTSolicitud, ot.ProgIniPorProveedor, u.Nombre,
             ot.ProgIniPorProveedor, mana.Nombre, pv.RazonSocial,
             ot.IdOTEstatus ;
@@ -261,7 +268,7 @@ AS
             CAST(0 AS FLOAT)                          AS DiasTotales, fechas.FechaCargaPR,
                                                                                     --CASE
                                                                                     --    WHEN ot.FechaAprobacionSAPPR > MIN(fechas.FechaCierre) THEN
-                                                                                    --        MIN(cap.FechaCierre)
+      --        MIN(cap.FechaCierre)
                                                                                     --    ELSE
                                                                                     --        ot.FechaAprobacionSAPPR
                                                                                     --END AS FechaCargaPR,
@@ -292,7 +299,7 @@ AS
             ON cc.IdCentroCosto=ot.IdCentroCosto
         INNER JOIN SC_SubContrato              sc
             ON sc.IdSubContrato=ot.IdSubContrato
-               AND sc.IdContrato IN (10038, 10044, 10045, 10046, 10144) -- Solo contratos DEA 
+               AND sc.IdContratista IN (10013,10060) -- Solo contratos DEA 
 
         INNER JOIN CO_Contrato                 c
             ON c.IdContrato=sc.IdContrato
@@ -330,7 +337,7 @@ AS
                                                 Fecha2aAprobacion)/ 24.0 AS DECIMAL (20, 2)),
                                        0),
             DiasPR=ISNULL(
-                       CAST(DATEDIFF(hh, Fecha2aAprobacion, FechaCargaPR)
+            CAST(DATEDIFF(hh, Fecha2aAprobacion, FechaCargaPR)
                             / 24.0 AS DECIMAL (20, 2)), 0),
             DiasCargaAvance=ISNULL(
                                 CAST(DATEDIFF(
@@ -463,7 +470,7 @@ AS
                                       WHEN FechaCargaAvance<FechaCargaPR THEN
                                           FechaCargaPR ELSE
                                                            ISNULL(
-                                                               FechaCargaAvance,
+                                   FechaCargaAvance,
                                                                FechaCargaPR)END,
                                       FechaCierreSemana)/ 24.0 AS DECIMAL (20, 2)) ;
 
@@ -501,8 +508,10 @@ AS
             MAX(FechaCierreSemana)                      AS FechaCierreSemana,
             MAX(Responsable_Cierre_Semana)              AS Responsable_Cierre_Semana,
             MAX(DiasCierreSemana)                       AS DiasCierreSemana,
-            MAX(DiasAvanceSemanal)                      AS DiasAvanceSemanal, FechaDeEstimacion,
-            ResponsableEstimacion, MAX(DiasEstimacion)  AS DiasEstimacion,
+            MAX(DiasAvanceSemanal)                      AS DiasAvanceSemanal, 
+			FechaDeEstimacion as FechaDeEstimacion,
+            ResponsableEstimacion as ResponsableEstimacion, 
+			MAX(DiasEstimacion)  AS DiasEstimacion,
             MAX(DiasCargaAvance)+MAX(DiasVoBoOperadora)+MAX(DiasCierreSemana)
             +MAX(DiasAvanceSemanal)+MAX(DiasEstimacion) AS DiasTotales,
             FechaCargaPR, NumberPR, NumeroPO,
@@ -651,7 +660,7 @@ AS
             ON P.IdSolicitudPedido=SP.IdSolicitudPedido
         LEFT JOIN #tmpResultado4                        filtro
             ON filtro.IdPedido=P.IdPedido --filtro 
-        LEFT JOIN Petrovendor.dbo.MM_Pedidos            AS PS
+        LEFT JOIN Petrovendor.dbo.MM_Pedidos         AS PS
             ON PS.IdIdentificador=P.IdPedido
                AND PS.IdProveedorCliente=P.IdProveedorCompras
         LEFT JOIN Petrovendor.dbo.S_Proveedor           AS PR
@@ -730,11 +739,50 @@ AS
         GROUP BY IdOTSolicitud ;
 
 
+		/*CALCULO AVANCE FINANCIERO*/
+
+		
+		select ot.IdOTSolicitud , Total = SUM(om.Cantidad * mat.PrecioUnitario)
+		into #tmpAFOTTotales
+		from OT_Solicitud ot
+		inner join #tmpResultado4 res on res.IdOTSolicitud = ot.IdOTSolicitud
+		inner join OT_SolicitudMaterial om on om.IdOTSolicitud = ot.IdOTSolicitud
+		inner join SC_Materiales mat on mat.IdSCMaterial  = om.IdSCMaterial
+		GROUP BY ot.IdOTSolicitud
+		
+
+		select ot.IdOTSolicitud , Total = SUM(e.Total)
+		into #tmpAFOTEstimado
+		from OT_Solicitud ot
+		inner join #tmpResultado4 res on res.IdOTSolicitud = ot.IdOTSolicitud
+		inner join OT_Estimacion e on e.IdOTSolicitud = ot.IdOTSolicitud AND
+								isnull(e.Cancelada,0) = 0
+		GROUP BY ot.IdOTSolicitud
+
+		
+		select OT.IdOTSolicitud, 
+			AVANCE_FINANCIERO=case when isnull(ot.Total,0) = 0 then 0 else  (ISNULL(E.Total,0) * 100)/isnull(ot.Total,0) end
+		into #tmpAF
+		from #tmpAFOTTotales ot
+		left join #tmpAFOTEstimado e on e.IdOTSolicitud = ot.IdOTSolicitud
+
+
 
         -- Retorno a la vista 
 
-        --insert into OT_BI_Tablero 
-
+        inserT into OT_BI_Tablero (NumeroContrato,IdOTSolicitud,IdSolicitudPedido,Folio,
+					Objeto,CentroCosto,RazonSocialProv,Tarea,
+					SubTarea,Estatus,RegistroDeOT,Requisitor,Responsable1aAprobacion,Fecha1aAprobacion,
+					DiasEspera1aAprobacion,Estatus1aAprobacion,Responsable2aAprobacion,Fecha2aAprobacion,DiasEspera2aAprobacion,Estatus2aAprobacion,
+					FechaCargaPR,NumberPR,DiasPR,ProgramaDel,ProgramaAl,FechaCargaAvance,VolumetriaAvance,
+					DiasCargaAvance,DiasRegistroPR_CargaAvance,FechaVoBoOperadora,ResponsableVoBoOperadora,DiasVoBoOperadora,FechaCierreSemana,
+					Responsable_Cierre_Semana,DiasCierreSemana,DiasAvanceSemanal,FechaDeEstimacion,ResponsableEstimacion,DiasEstimacion,
+					DiasTotales,NumeroPO,FechaRegistroPO,IdPedido,UsuarioRelacionPOSAP,NumeroPOSAP,
+					FechaRelacionPOSAP,DiasRelacionPOSAP,NumeroAceptacionPedido,FechaRecepcionCartaCN,DiasRecepcionCartaCartaCN,DiasRelacionPO_CartaCN,
+					UsuarioApruebaCartaCN,FechaAprobacionCartaCN,DiasAprobacionCartaCN,DiasAprobacionCartaCN2,EstatusCartaCN,FechaRecepcionFactura,
+					DiasRecepcionFactura,FolioFactura,Responsable1aAprobacion_Fac,Fecha1aAprobacion_Fac,DiasEspera1aAprobacionFac,Estatus1aAprobacion_Fac,
+					Responsable2aAprobacion_Fac,Fecha2aAprobacion_Fac,DiasEspera2aAprobacion_Fac,Estatus2aAprobacion_Fac,DiasRelacionPO_AprobacionFactura,AvanceFinanciero)
+        
         SELECT CAST(infoOt.NumeroContrato AS VARCHAR (100))                                  AS NumeroContrato,
             ISNULL(infoOt.IdOTSolicitud, 0)                                                  AS IdOTSolicitud,
             infoOt.IdSolicitudPedido                                                         AS IdSolicitudPedido,
@@ -774,7 +822,7 @@ AS
             infoOt.DiasRegistroPR_CargaAvance                                                AS DiasRegistroPR_CargaAvance,
             infoOt.FechaVoBoOperadora                                                        AS FechaVoBoOperadora,
             CAST(infoOt.ResponsableVoBoOperadora AS VARCHAR (650))                           AS ResponsableVoBoOperadora,
-            infoOt.DiasVoBoOperadora                                                         AS DiasVoBoOperadora,
+            infoOt.DiasVoBoOperadora                             AS DiasVoBoOperadora,
             infoOt.FechaCierreSemana,
             CAST(infoOt.Responsable_Cierre_Semana AS VARCHAR (650))                          AS Responsable_Cierre_Semana,
             infoOt.DiasCierreSemana, infoOt.DiasAvanceSemanal,
@@ -823,7 +871,7 @@ AS
             procura.Responsable1aAprobacion                                                  AS Responsable1aAprobacion_Fac,
             procura.Fecha1aAprobacion                                                        AS Fecha1aAprobacion_Fac,
             procura.DiasEspera1aAprobacion                                                   AS DiasEspera1aAprobacionFac,
-            procura.Estatus1aAprobacion                                                      AS Estatus1aAprobacion_Fac,
+            procura.Estatus1aAprobacion                                                   AS Estatus1aAprobacion_Fac,
             procura.Responsable2aAprobacion                                                  AS Responsable2aAprobacion_Fac,
             procura.Fecha2aAprobacion                                                        AS Fecha2aAprobacion_Fac,
             procura.DiasEspera2aAprobacion                                                   AS DiasEspera2aAprobacion_Fac,
@@ -832,8 +880,9 @@ AS
                 CAST(DATEDIFF(
                          hh, procura.Fecha2aAprobacion,
                          procura.FechaRelacionPOSAP)/ 24.0 AS DECIMAL (20, 2)),
-                0)                                                                           AS DiasRelacionPO_AprobacionFactura
-        INTO #tmpResultado5
+                0)                                                                           AS DiasRelacionPO_AprobacionFactura,
+			AF.AVANCE_FINANCIERO
+        
         FROM #tmpResultado4                 infoOt
         LEFT JOIN OT_Estimacion             e
             ON e.IdSolicitudPedido=infoOt.IdSolicitudPedido
@@ -841,44 +890,9 @@ AS
             ON procura.IdPedido=infoOt.IdPedido
         LEFT JOIN #tmpResumenAbiertaCerrada r
             ON r.IdOTSolicitud=infoOt.IdOTSolicitud
-        WHERE(infoOt.VolumetriaAvance='Abierta'
-              AND infoOt.IdSolicitudPedido IS NULL)
-             OR(infoOt.VolumetriaAvance='Abierta'
-                AND infoOt.IdSolicitudPedido=r.MaxIdCerrada)
-             OR(infoOt.VolumetriaAvance='Cerrada'
-                AND infoOt.IdSolicitudPedido=r.MaxIdCerrada)
-             OR(infoOt.VolumetriaAvance='Cerrada'
-                AND infoOt.IdSolicitudPedido IS NULL) ;
-
-
-
-
-
-        SELECT COUNT(1)                 AS Count, IdOTSolicitud,
-            MAX(IdSolicitudPedido)      AS IdSolicitudPedido,
-            MAX(NumeroAceptacionPedido) AS NumeroAceptacionPedido
-        INTO #tmpResultaFinalRep
-        FROM #tmpResultado5
-        GROUP BY IdOTSolicitud ;
-
-
-
-        insert into OT_BI_Tablero 
-        SELECT t1.*
-        FROM #tmpResultado5            t1
-        INNER JOIN #tmpResultaFinalRep t2
-            ON t2.IdOTSolicitud=t1.IdOTSolicitud
-        WHERE(t2.Count=1
-              OR(t2.Count>1 AND t1.IdSolicitudPedido IS NOT NULL
-                 AND t2.IdSolicitudPedido IS NOT NULL
-                 AND t1.IdSolicitudPedido=t2.IdSolicitudPedido
-                 AND t1.NumeroAceptacionPedido=ISNULL(
-                                                   t2.NumeroAceptacionPedido,
-                                                   t1.NumeroAceptacionPedido))
-              OR(t2.Count>1 AND t1.IdSolicitudPedido IS NULL
-                 AND t2.IdSolicitudPedido IS NULL)) ;
-
-
+		LEFT JOIN #tmpAF AF on AF.IdOTSolicitud = infoOt.IdOTSolicitud 
+       
     END ;
+
 
 
