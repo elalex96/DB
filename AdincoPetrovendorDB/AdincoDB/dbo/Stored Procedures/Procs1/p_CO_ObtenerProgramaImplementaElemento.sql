@@ -1,5 +1,4 @@
-﻿-- p_CO_ObtenerProgramaImplementaElemento 1
-CREATE PRoc p_CO_ObtenerProgramaImplementaElemento
+﻿create PRoc p_CO_ObtenerProgramaImplementaElemento
 @pIdProgramaImplementaPolitica int,
 @pIdProgramaImplementa int,
 @pIdProgramaImplementaElemento	int 
@@ -16,5 +15,8 @@ as
 	FROM [dbo].[CO_ProgramaImplementaElemento] pe	
 	where @pIdProgramaImplementa in (0,pe.IdProgramaImplementa)
 	AND @pIdProgramaImplementaPolitica = IdProgramaImplementaPolitica
-	order by pe.Descripcion
+	order by pe.Orden, pe.Descripcion
+
+
+
 
