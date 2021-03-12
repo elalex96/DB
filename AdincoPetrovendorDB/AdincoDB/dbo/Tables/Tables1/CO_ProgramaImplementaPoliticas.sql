@@ -2,6 +2,7 @@
     [IdProgramaImplementaPolitica] INT            NOT NULL,
     [IdProgramaImplementa]         INT            NOT NULL,
     [Descripcion]                  VARCHAR (1500) NULL,
+    Orden                           INT         NULL,
     [CreadoEl]                     DATETIME       NOT NULL,
     [CreadoPor]                    INT            NULL,
     CONSTRAINT [PK_CO_ProgramaImplementaPoliticas] PRIMARY KEY CLUSTERED ([IdProgramaImplementaPolitica] ASC) WITH (STATISTICS_NORECOMPUTE = ON),

@@ -1,4 +1,4 @@
-﻿CREATE Proc p_CO_ObtenerProgramaImplementaAcciones
+﻿create Proc p_CO_ObtenerProgramaImplementaAcciones
 @pIdProgramaImplementaElemento int,
 @pIdProgramaImplementaAccion int
 as
@@ -26,3 +26,7 @@ as
 	left join EN_ContratoEntregableProgramaImplementaAcciones as cepia
 	on pia.IdProgramaImplementaAccion = cepia.IdProgramaImplementaAccion
 	where @pIdProgramaImplementaElemento in(0,IdProgramaImplementaElemento)
+	order by Orden,pia.Descripcion
+
+
+
