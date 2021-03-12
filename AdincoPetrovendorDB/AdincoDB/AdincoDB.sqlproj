@@ -13031,5 +13031,6 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_VerificacionOpcionesEquinor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spTienePermisosAdmin_2.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_OT_Presupuestos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_OT_RevisarExisteUnidad.sql" />
   </ItemGroup>
 </Project>
