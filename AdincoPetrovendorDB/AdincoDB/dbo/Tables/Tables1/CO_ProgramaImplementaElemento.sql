@@ -3,6 +3,7 @@
     [IdProgramaImplementaPolitica] INT            NOT NULL,
     [IdProgramaImplementa]         INT            NOT NULL,
     [Descripcion]                  VARCHAR (1500) NULL,
+    Orden                           int             NULL,
     [CreadoEl]                     DATETIME       NOT NULL,
     [CreadoPor]                    INT            NOT NULL,
     [ModificadoEl]                 DATETIME       NULL,

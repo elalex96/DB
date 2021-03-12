@@ -13031,5 +13031,14 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_VerificacionOpcionesEquinor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spTienePermisosAdmin_2.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_OT_Presupuestos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_CO_ProgramaImplementa_cmb.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_CO_ProgramaImplementaElemento_Grd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_CO_ProgramaImplementaPoliticas_Grd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_ProgramaImplementaAccion_ReOrden.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_ProgramaImplementaAccion_ReOrdenMoveTo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_ProgramaImplementaElemento_ReOrden.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_ProgramaImplementaElemento_ReOrdenMoveTo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_ProgramaImplementaPolitica_ReOrden.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_ProgramaImplementaPolitica_ReOrdenMoveTo.sql" />
   </ItemGroup>
 </Project>
