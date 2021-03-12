@@ -1,5 +1,4 @@
-﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-/*
+﻿/*
 pIdOTEstatus  
 100 aprobacion de volumenes por proveedor 
 101 aprobacion de volumenes por operador
@@ -7,7 +6,7 @@ pIdOTEstatus
 103 bitacora por proveedor
 */
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- p_OT_CorreoProgramacion_Flujo 6,2,'',11
+
 CREATE PROC p_OT_CorreoProgramacion_Flujo
 @pIdOTSolicitud INT,
 @pCreadoPor INT,
@@ -117,7 +116,7 @@ AS
                             when @progInicialproveedor = 0 then 'Se requiere aprobar/rechazar la volumetría de la OT asignada'
                     end
         set @mensaje = replace(@mensaje,'{folio_ot}',@NumeroOT)
-        set @mensaje = replace(@mensaje,'{nombre_receptor}',@nombreContratista)
+        set @mensaje = replace(@mensaje,'{nombre_receptor}',@nombreOperadorSubcontratista)
         set @mensaje = replace(@mensaje,'{nombre_emisor}','ADINCO-Control de Obra')
         set @mensaje = replace(@mensaje,'{url_ot}',@urlPetrovendor)
         set @mensaje = replace(@mensaje,'{accion}',@tarea)
