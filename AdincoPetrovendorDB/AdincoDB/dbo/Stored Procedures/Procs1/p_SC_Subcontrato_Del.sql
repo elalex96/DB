@@ -1,5 +1,4 @@
-﻿
-create proc p_SC_Subcontrato_Del
+﻿CREATE proc p_SC_Subcontrato_Del
 (
 	@IdSubContrato	int
 )
@@ -23,10 +22,12 @@ begin
 		
 
 			update	SC_SubContrato 
-			set		IsEliminado		=	1
+			set		IsEliminado		=	1,
+					IsActivo = 0
 			where	IdSubContrato	=	@IdSubContrato
 		end
 		select	Error = 0
 	end
 	select Error = 2
 end
+
