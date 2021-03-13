@@ -1,323 +1,397 @@
-﻿
--- p_SC_CargaInicial 2,3,10,'','20200701','20200715',20
-CREATE proc [dbo].[p_SC_CargaInicial]
-@pIdContratista int,
-@pIdContrato int,
-@pCreadoPor int,
-@pError varchar(2540) out
-as
-begin
+﻿create PROC [dbo].[p_SC_CargaInicial]  
+    @pIdContratista INT,  
+    @pIdContrato INT,  
+    @pCreadoPor INT,  
+    @pError VARCHAR(2540) OUT  
+   
+AS  
+DECLARE @i INT = 0,  
+        @idMaestro INT = 0,  
+        @idMaterial INT = 0,  
+        @idSCMaterial INT = 0,  
+        @IdSubContratoPresupuesto INT = 0;  
+  
+  
+  
+BEGIN TRY  
+  
+    BEGIN TRAN;  
+  
+ set dateformat dmy  
+  
+    SELECT @i = MIN(IdSCDetalle)  
+    FROM SC_Importacion  
+    WHERE IdMaterial IS NULL;  
+  
+    DECLARE @idsubcontrato INT;  
+  
+    UPDATE SC_Importacion  
+    SET RFCContratista = RTRIM(LTRIM(RFCContratista)),  
+        RFCProveedor = RTRIM(LTRIM(RFCProveedor)),  
+        IdMaterial = NULL;  
+  
+    WHILE @i IS NOT NULL  
+    BEGIN  
+  
+        SET @idMaestro = 0;  
+  
+        IF EXISTS  
+        (  
+            SELECT 1  
+            FROM SC_Importacion  
+            WHERE IdSCDetalle = @i  
+                  AND IdMaterial IS NULL  
+        )  
+        BEGIN  
+  
+            INSERT INTO Petrovendor..MM_Maestro
+  
+            (  
+            /*IdMaestro,*/  
+                IdTipoCatalogoMaestro,  
+                IdSubFamilia,  
+                TextoCorto,  
+                TextoLargo,  
+                IdMoneda,  
+                IdTipoMaterial, 
+				Prc,  
+                IsActivo,  
+                IsEliminado,  
+                CreadoPor,  
+                CreadoEn,  
+                ModificadoPor,  
+                ModificadoEn,  
+                IdUnidadPreterminada,  
+                IdUnidad_1,  
+                IdUnidad_2,  
+                IdUnidad_3  
+            )  
+            SELECT 1,  
+                   NULL,  
+                   DescripcionPartida,  
+                   DescripcionPartida,  
+                   m.IdMoneda,
+					NULL,  
+                   NULL,  
+                   1,  
+                   0,  
+                   NULL,  
+                   NULL,  
+                   NULL,  
+                   NULL,  
+                   ISNULL(u.IdUnidad, 10011 /*SERVICIO*/),  
+                   NULL,  
+                   NULL,  
+                   NULL  
+            FROM SC_Importacion i  
+                LEFT JOIN Petrovendor..PV_TipoMoneda m  
+                    ON UPPER(m.TipoMonedaCorto) COLLATE SQL_Latin1_General_CP1_CI_AS = UPPER(i.Moneda) COLLATE SQL_Latin1_General_CP1_CI_AS  
+                LEFT JOIN Petrovendor..PV_MM_MaterialUnidad u  
+                    ON (  
+                           UPPER(u.UMB) COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(UPPER(i.UnidadMedida)) COLLATE SQL_Latin1_General_CP1_CI_AS  
+                           OR UPPER(i.UnidadMedida) COLLATE SQL_Latin1_General_CP1_CI_AS LIKE '%'  
+                                                                                              + RTRIM(UPPER(u.Unidad))  
+                                                                                              + '%' COLLATE SQL_Latin1_General_CP1_CI_AS  
+                       )  
+            WHERE IdSCDetalle = @i;  
+  
+            SET @idMaestro = SCOPE_IDENTITY();  
+  
+  
+     
+            INSERT INTO Petrovendor..MM_Material  
+            (  
+                IdProveedor,  
+                IdUnidad,  
+                DescripcionCorta,  
+                DescripcionLarga,  
+                Consumible
 
-	declare @i int=0,
-			@idMaestro int= 0,
-			@idMaterial int = 0,
-			@idSCMaterial int = 0,
-			@IdSubContratoPresupuesto int=0
+,  
+                Inventariable,  
+                TiempoEntregaEstimadoDias,  
+                Marca,  
+                IsPublico,  
+                Imagen,  
+                FechaAlta,  
+                Activo,  
+                IsEliminado,  
+				IdMaestro,  
+                IsClasificionMaestro,  
+                IdTipoProveedor,  
+                IdTipoCatalogoMaestro  
+            )  
+            SELECT prov.IdProveedor,  
+                   mm.IdUnidadPreterminada, 
+					mm.TextoLargo,  
+                   mm.TextoLargo,  
+                   0,  
+                   1,  
+                   0,  
+                 NULL,  
+                   1,  
+                   NULL,  
+                   GETDATE(),  
+					1,  
+        
+           0,  
+                   mm.IdMaestro,  
+                   1,  
+                   2,  
+                   mm.IdTipoCatalogoMaestro  
+            FROM Petrovendor..MM_Maestro mm  
+                INNER JOIN SC_Importacion i
 
+			ON i.IdSCDetalle = @i  
+                INNER JOIN Petrovendor..S_Proveedor prov  
+                    ON prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = i.RFCProveedor COLLATE SQL_Latin1_General_CP1_CI_AS  
+            WHERE mm.IdMaestro = @idMaestro; 
+
+ 
+  
+            SET @idMaterial = SCOPE_IDENTITY();  
+  
+  
+  
+  
+            UPDATE SC_Importacion  
+            SET IdMaterial = @idMaterial  
+            WHERE IdSCDetalle = @i;  
+  
+  
+        END;  
+  
+        SELECT @i = MIN(IdSCDetalle) 
+		FROM SC_Importacion  
+        WHERE IdMaterial IS NULL  
+              AND IdSCDetalle > @i;  
+  
+    END;  
+  
+  
+    DECLARE @pedidoC VARCHAR(50);  
+  
+    SELECT @pedidoC = MIN(NumeroPedido)  
+    FROM SC_Importacion  
+    WHERE IdSubcontrato IS NULL; 
+
+ 
+  
+  
+    WHILE @pedidoC IS NOT NULL  
+    BEGIN  
+  
 	
+  
+        SELECT @idsubcontrato = MAX(IdSubContrato)  
+        FROM SC_SubContrato  
+        WHERE RTRIM(NumeroSubContrato) = RTRIM(@pedidoC)  
+              AND IsActivo = 1  
+              AND ISNULL(IsEliminado, 0) = 0  
+			  AND IdContrato = @pIdContrato
 
-	begin try
+  
+        IF ISNULL(@idsubcontrato, 0) = 0  
+        BEGIN  
+  
+            SELECT @idsubcontrato = ISNULL(MAX(IdSubContrato), 0) + 1  
+            FROM SC_SubContrato;  
+  
+        END;  
+  
+  
+        INSERT INTO SC_SubContrato  
+        (  
+            IdSubContrato,  
+            IdSubContratista,  
+            IdContratista,  
+            NumeroSubContrato,  
+            CreadoPor,  
+            CreadoEl,  
+            ModificadoPor,  
+            ModificadoEl,  
+			IsActivo,  
+            IsEliminado,  
+            Objeto,  
+            IdPedido,  
+            PrefijoOT,  
+            IdContrato,  
+            IdMoneda,  
+            IdTipoPedido
+        )  
+        SELECT @idsubcontrato,  
+               prov.IdSubcontratista,  
+               con.IdContratista,  
+               CAST(tmp.NumeroPedido AS VARCHAR),  
+               @pCreadoPor,  
+               GETDATE(),  
+               NULL,  
+               NULL,  
+               1,  
+               0,  
+               tmp.Descripcion,  
+               NULL,  
+               'OT-' + CASE  
+                           WHEN LEN(tmp.NumeroPedido) <= 5 THEN  
+                               tmp.NumeroPedido  
+                           ELSE  
+                 
 
-	Begin Tran
+              SUBSTRING(tmp.NumeroPedido, LEN(tmp.NumeroPedido) - 4, LEN(tmp.NumeroPedido))  
+                       END,  
+               MAX(c.IdContrato),  
+               m.IdMoneda,  
+               tmp.IdTipoPedido
+        FROM SC_Importacion tmp  
 
-	BEGIN -- SECCION UNIDADES
-	--drop table #UnidadesCarga
-	create table #UnidadesCarga(Unidad nvarchar(max), IdUnidad int, Activo bit )
+            INNER JOIN PV_Subcontratista prov  
+                ON prov.RFC = tmp.RFCProveedor  AND
+				prov.IsActivo = 1
+            INNER JOIN CO_Contratista con  
+                ON con.IdContratista = @pIdContratista  
+            INNER JOIN CO_Contrato c  
+                ON	c.IdContrato = @pIdContrato  
+            LEFT JOIN Petrovendor..PV_TipoMoneda m  
+                ON UPPER(m.TipoMonedaCorto) COLLATE SQL_Latin1_General_CP1_CI_AS = UPPER(tmp.Moneda) COLLATE SQL_Latin1_General_CP1_CI_AS  
+        WHERE NOT EXISTS     	
+		(  
+							SELECT 1  
+							FROM SC_SubContrato  
+							WHERE NumeroSubContrato = CAST(tmp.NumeroPedido AS VARCHAR)  
+								  AND IdContratista = con.IdContratista  
+								  AND IsActivo = 1  
+								  AND ISNULL(IsEliminado, 0) = 0  
+		)  
+        AND tmp.NumeroPedido = @pedidoC  
+        GROUP BY tmp.NumeroPedido,  
+                 prov.IdSubcontratista,  
+                 con.IdContratista,  
+                 tmp.IdSCCarga,                
+				 tmp.RFCProveedor,  
+                 m.IdMoneda,  
+                 tmp.IdTipoPedido,  
+				 tmp.Descripcion;  
+  
+        SELECT @idSCMaterial = ISNULL(MAX(IdSCMaterial), 0)  
+        FROM [SC_Materiales];  
+  
+        INSERT INTO [dbo].[SC_Materiales]  
+        (  
+            IdSCMaterial,  
+            IdSubContrato,  
+            Concepto,  
+            IdMaestro,  
+            IdUnidad,  
+            Cantidad,  
+            PrecioUnitario,  
+            Importe,  
+            Descripcion,
+  
+            DescripcionCorta,  
+            CreadoPor,  
+            CreadoEl,  
+            ModificadoPor,  
+            ModificadoEl,  
+            IdServicio  
+        )  
+        SELECT ROW_NUMBER() OVER (ORDER BY IdSCDetalle ASC) + @idSCMaterial, 
 
-	Insert into #UnidadesCarga(Unidad, Activo)
-	select UnidadMedida, null
-	from SC_Importacion
-	group by UnidadMedida
+ 
+               @idsubcontrato,  
+               I.Partida,  
+               I.IdMaterial,  
+               ISNULL(mat.IdUnidad, 10011),  
+               I.Cantidad,  
+               I.PrecioUnitario,  
+               ISNULL(Cantidad, 0) * ISNULL(I.PrecioUnitario, 0),  
+               CAST(mat.DescripcionLarga AS VARCHAR(510)),  
+               CAST(mat.DescripcionCorta AS VARCHAR(250)),  
+               @pCreadoPor,  
+               GETDATE(),  
+               NULL,  
+               NULL,             
+			NULL  
+        FROM SC_Importacion I  
+            INNER JOIN Petrovendor..MM_Material mat  
+                ON mat.IdMaterial = I.IdMaterial  
+            INNER JOIN SC_SubContrato sc  
+                ON sc.IdSubContrato = @idsubcontrato  
+        WHERE I.NumeroPedido = @pedidoC  
+              AND ISNULL(@idsubcontrato, 0) > 0  
+              AND NOT EXISTS  
+				(  
+					SELECT 1  
+					FROM [SC_Materiales] st1  
+					WHERE st1.IdSubContrato = @idsubcontrato  
+             
+					AND st1.Concepto = I.Partida  
+				);  
+  
+  
+        SELECT @IdSubContratoPresupuesto = ISNULL(MAX(IdSubContratoPresupuesto), 0)  
+        FROM SC_Presupuesto;  
+  
+        INSERT INTO SC_Presupuesto  
+        (  
+            IdSubContratoPresupuesto,  
+            IdSubContrato,  
+            IdPresupuesto,  
+            CreadoPor,  
+            CreadoEl  
+        )  
+        SELECT ROW_NUMBER() OVER (ORDER BY sc.IdSubContrato ASC) + @IdSubContratoPresupuesto,  
+               sc.IdSubContrato,
+  
+               pre.IdPresupuesto,  
+               1,  
+               GETDATE()  
+        FROM SC_SubContrato sc  
+            INNER JOIN CO_Contrato con  
+                ON con.IdContrato = @pIdContrato  
+            INNER JOIN CO_PeriodoContrato pc
 
-	--Revisar existen las unidades y en que estado estan
-	update u
-	set u.activo = mu.IsActivo, u.IdUnidad = mu.IdUnidad
-	from #UnidadesCarga u
-	left join Petrovendor..PV_MM_MaterialUnidad mu
-	on upper(ltrim(rtrim(u.Unidad))) collate SQL_Latin1_General_CP1_CI_AS  = upper(ltrim(rtrim(mu.Unidad)))
-
-
-	--Actualizar las unidades que no estan activas
-	update mu
-	set mu.IsActivo = 1
-	from #UnidadesCarga u
-	left join Petrovendor..PV_MM_MaterialUnidad mu
-	on upper(ltrim(rtrim(u.Unidad))) collate SQL_Latin1_General_CP1_CI_AS  = upper(ltrim(rtrim(mu.Unidad)))
-
-	-- Insertar las unidades que no existen
-	insert into Petrovendor..PV_MM_MaterialUnidad (Unidad, IsActivo, IsEliminado)
-	select Unidad, 1, 0 
-	from #UnidadesCarga
-	where IdUnidad is null
-
-	-- Se actualizan los registros de las unidades no encontradas
-	update u
-	set u.activo = mu.IsActivo, u.IdUnidad = mu.IdUnidad
-	from #UnidadesCarga u
-	left join Petrovendor..PV_MM_MaterialUnidad mu
-	on upper(ltrim(rtrim(u.Unidad))) collate SQL_Latin1_General_CP1_CI_AS  = upper(ltrim(rtrim(mu.Unidad)))
-	where u.IdUnidad is null
-
-END
-
-BEGIN -- SECCION MATERIALES
-	--drop table #MaterialesCarga
-	create table #MaterialesCarga(DescripcionPartida nvarchar(max), IdMaterial int, Unidad nvarchar(max), IdUnidad int, IdDetalle int, IdProveedor int, IdMaestro int, MaestroActivo bit)
-
-	--Se obtienen las partidas con su unidad las que esten nulas seran partidas que se insertaran ya que no existe
-	-- dada de alta con su unidad
-	insert into #MaterialesCarga(DescripcionPartida, Unidad, IdUnidad, IdDetalle, IdProveedor)
-	select upper(ltrim(rtrim(m.DescripcionCorta))), i.UnidadMedida, u.IdUnidad, i.IdSCDetalle, p.IdProveedor
-	from SC_Importacion i
-	inner join petrovendor..s_proveedor p 
-		on upper(rtrim(ltrim(p.RFC))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(i.RFCProveedor)))
-	left join petrovendor..mm_material m 
-		on upper(ltrim(rtrim(i.DescripcionPartida))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(m.DescripcionCorta)))
-		and m.IdProveedor = p.IdProveedor
-	left join Petrovendor..PV_MM_MaterialUnidad u 
-		on u.IdUnidad = m.IdUnidad
-		and upper(ltrim(rtrim(i.UnidadMedida))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(u.Unidad)))
-		and u.IsActivo = 1
-		group by m.DescripcionCorta, i.UnidadMedida, u.IdUnidad, i.IdSCDetalle, p.IdProveedor
-
-		--se setea el valor del idMaterial, se realiza mediante update ya que anteriormente se agregaban entnces puede
-		-- existir muchos valores repetidos en mm_material
-		update carga
-		set carga.IdMaterial = m.IdMaterial
-		from SC_Importacion i
-		inner join petrovendor..s_proveedor p 
-			on upper(rtrim(ltrim(p.RFC))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(i.RFCProveedor)))
-		left join petrovendor..mm_material m 
-			on upper(ltrim(rtrim(i.DescripcionPartida))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(m.DescripcionCorta)))
-			and m.IdProveedor = p.IdProveedor
-		inner join Petrovendor..PV_MM_MaterialUnidad u 
-			on u.IdUnidad = m.IdUnidad
-			and upper(ltrim(rtrim(i.UnidadMedida))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(u.Unidad)))
-			and u.IsActivo = 1
-		inner join #MaterialesCarga carga 
-			on carga.IdDetalle = i.IdSCDetalle
-
-		--se setean los valores del campo intermedio para insertar en mm_material los materiales que no 
-		--tienen dada de alta la unidad
-		update m
-		set m.IdUnidad = u.IdUnidad
-		from #MaterialesCarga m
-		inner join Petrovendor..PV_MM_MaterialUnidad u
-		 on upper(ltrim(rtrim(m.Unidad))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(u.Unidad)))
-		 where m.IdUnidad is null
-
-		-- solo se insertan las que no tienen dada de alta su respectiva unidad
-		insert into petrovendor..mm_material(IdProveedor, DescripcionCorta, DescripcionLarga, Modelo, FechaAlta, Activo, IdTipoCatalogoMaestro, IsPublico, IdUnidad)
-		select IdProveedor, upper(ltrim(rtrim(DescripcionPartida))), upper(ltrim(rtrim(DescripcionPartida))), 'NA', getdate(), 1, 2, 1, IdUnidad
-		from #MaterialesCarga 
-		where IdMaterial is null
-
-		--Se vuelve a actualizar para tener los valores del idmaterial actualizados
-		update carga
-		set carga.IdMaterial = m.IdMaterial
-		from SC_Importacion i
-		inner join petrovendor..s_proveedor p 
-			on upper(rtrim(ltrim(p.RFC))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(i.RFCProveedor)))
-		left join petrovendor..mm_material m 
-			on upper(ltrim(rtrim(i.DescripcionPartida))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(m.DescripcionCorta)))
-			and m.IdProveedor = p.IdProveedor
-		inner join Petrovendor..PV_MM_MaterialUnidad u 
-			on u.IdUnidad = m.IdUnidad
-			and upper(ltrim(rtrim(i.UnidadMedida))) collate SQL_Latin1_General_CP1_CI_AS = upper(rtrim(ltrim(u.Unidad)))
-			and u.IsActivo = 1
-		inner join #MaterialesCarga carga 
-			on carga.IdDetalle = i.IdSCDetalle
-
-		--Se termina seccion materiales
-END
-
-begin --SECCION CATALOGO MAESTRO
-	UPDATE carga
-	set carga.IdMaestro = maestro.IdMaestro, carga.MaestroActivo = maestro.IsActivo
-	from #MaterialesCarga carga
-	inner join petrovendor..MM_Material m
-		on m.idMaterial = carga.IdMaterial
-	inner join petrovendor..MM_Maestro maestro 
-		on maestro.IdMaestro = m.IdMaestro
-	inner join Petrovendor..PV_MM_MaterialUnidad u 
-			on u.IdUnidad = maestro.IdUnidadPreterminada
-			and u.IsActivo = 1	
-
-
-	declare @idsubcontrato int
-
-	update SC_Importacion
-	set RFCContratista = rtrim(ltrim(RFCContratista)),
-		RFCProveedor= rtrim(ltrim(RFCProveedor)),
-		IdMaterial = carga.IdMaterial
-	from SC_Importacion imp
-	inner join #MaterialesCarga carga
-		on carga.IdDetalle = imp.IdSCDetalle
-
-	update m
-	set m.IsActivo = 1
-	from petrovendor..mm_Maestro m
-	inner join #MaterialesCarga carga 
-		on carga.IdMaestro = m.IdMaestro
-	where isnull(carga.MaestroActivo, 0) = 0
-
-
-				insert into Petrovendor..MM_Maestro(
-				IdTipoCatalogoMaestro,	IdSubFamilia,	TextoCorto,		TextoLargo,		IdMoneda,
-				IdTipoMaterial,	Prc,					IsActivo,		IsEliminado,	CreadoPor,		CreadoEn,
-				ModificadoPor,	ModificadoEn,			IdUnidadPreterminada,IdUnidad_1,IdUnidad_2,		IdUnidad_3)
-				select distinct				1,						null,			DescripcionPartida,	DescripcionPartida,	2,
-				null,			null,					1,				0,				null,			null,
-				null,			null,					isnull(IdUnidad,10011/*SERVICIO*/),			null,		null,			null					
-				from #MaterialesCarga
-				where IdMaestro is null
-
-				UPDATE carga
-				set carga.IdMaestro = maestro.IdMaestro, carga.MaestroActivo = maestro.IsActivo
-				from #MaterialesCarga carga
-				inner join petrovendor..MM_Material m
-					on m.idMaterial = carga.IdMaterial
-				inner join petrovendor..MM_Maestro maestro 
-					on upper(ltrim(rtrim(maestro.TextoCorto))) = upper(ltrim(rtrim(m.DescripcionCorta)))
-				inner join Petrovendor..PV_MM_MaterialUnidad u 
-						on u.IdUnidad = maestro.IdUnidadPreterminada
-						and u.IsActivo = 1
-				where carga.IdMaestro is null
-
-					 
-				update m
-				set m.IdMaestro = carga.IdMaestro
-				from petrovendor..MM_Material m
-				inner join #MaterialesCarga carga
-					on carga.IdProveedor = m.IdProveedor
-					and carga.IdMaterial = m.IdMaterial
-				where m.IdMaestro is null
-
-end
-
-	declare @pedidoC varchar(50)
-
-	select @pedidoC = min(NumeroPedido)
-	from SC_Importacion
-	where IdSubcontrato is null
-
-	while @pedidoC is not null
-	begin
-
-		select  @idsubcontrato =  isnull(max(IdSubContrato), 0) + 1
-		from SC_Subcontrato
-
-		
-		insert into SC_Subcontrato(
-			IdSubContrato,		IdSubContratista,		IdContratista,		NumeroSubContrato,		CreadoPor,
-			CreadoEl,			ModificadoPor,			ModificadoEl,		IsActivo,				IsEliminado,
-			Objeto,				IdPedido,				PrefijoOT,			IdContrato,				IdMoneda,
-			IdTipoPedido			
-		)
-		select @idsubcontrato,prov.IdSubcontratista,con.IdContratista,cast(tmp.NumeroPedido as varchar),@pCreadoPor,
-		getdate(),				null,					null,				1,						0,
-		tmp.Descripcion,						null,					
-		'OT-'+ case when len(tmp.NumeroPedido) <= 5 then tmp.NumeroPedido else substring( tmp.NumeroPedido,len( tmp.NumeroPedido)-4,len( tmp.NumeroPedido)) end,
-		max(c.IdContrato),m.IdMoneda,tmp.IdTipoPedido
-		from SC_Importacion tmp
-		inner join PV_Subcontratista prov on prov.RFC = tmp.RFCProveedor
-		inner join CO_Contratista con on con.IdContratista = @pIdContratista
-		inner join CO_Contrato c on c.IdContrato = @pIdContrato	
-		left join Petrovendor..PV_TipoMoneda m on upper(m.TipoMonedaCorto) COLLATE SQL_Latin1_General_CP1_CI_AS = upper(tmp.Moneda) COLLATE SQL_Latin1_General_CP1_CI_AS
-		where not exists (
-			select 1
-			from SC_Subcontrato
-			where NumeroSubContrato =cast(tmp.NumeroPedido as varchar) and
-			IdContratista = con.IdContratista and
-			IsActivo = 1 and
-			isnull(IsEliminado,0) = 0
-		)
-		and tmp.NumeroPedido = @pedidoC
-		group by tmp.NumeroPedido,prov.IdSubcontratista,con.IdContratista,tmp.IdSCCarga,tmp.RFCProveedor,m.IdMoneda	,tmp.IdTipoPedido,tmp.Descripcion
-
-		select @idSCMaterial = isnull(max(IdSCMaterial),0)
-		from [SC_Materiales]
-
-		insert into [dbo].[SC_Materiales](	IdSCMaterial,	IdSubContrato,	Concepto,	IdMaestro,	IdUnidad,
-		Cantidad,	PrecioUnitario,	Importe,					Descripcion,	DescripcionCorta,
-		CreadoPor,	CreadoEl,		ModificadoPor,				ModificadoEl,			IdServicio)
-		select ROW_NUMBER() OVER(ORDER BY IdSCDetalle ASC) + @idSCMaterial, @idsubcontrato, i.Partida, i.IdMaterial, ISNULL(mat.IdUnidad,10011),
-		i.cantidad,	i.PrecioUnitario, isnull(Cantidad,0) * isnull(i.PrecioUnitario,0),cast(mat.DescripcionLarga as varchar(510)),cast(mat.DescripcionCorta as varchar(250)),
-		@pCreadoPor,			getdate(),		null,						null,					null
-		from SC_Importacion I
-		inner join Petrovendor..MM_Material mat on mat.IdMaterial = i.IdMaterial
-		inner join SC_Subcontrato sc on sc.IdSubcontrato = @idsubcontrato
-		where I.NumeroPedido = @pedidoC and isnull(@idsubcontrato,0) > 0
-		and not exists (
-			select 1
-			from [SC_Materiales] st1
-			where st1.IdSubContrato = @idsubcontrato and
-			st1.Concepto = i.Partida
-		)
-
-
-		select @IdSubContratoPresupuesto = isnull(max(IdSubContratoPresupuesto),0)
-		from SC_Presupuesto
-
-		insert into SC_Presupuesto(IdSubContratoPresupuesto,IdSubContrato,IdPresupuesto,CreadoPor,
-		CreadoEl)
-		select  ROW_NUMBER() OVER(ORDER BY sc.IdSubContrato ASC) + @IdSubContratoPresupuesto ,
-		sc.IdSubContrato,pre.IdPresupuesto,1,getdate()
-		from SC_Subcontrato sc
-		inner join CO_Contrato con on con.IdContrato = @pIdContrato
-		inner join CO_PeriodoContrato pc on pc.IdContrato = con.IdContrato
-		inner join CO_ProgramaActividad pa on pa.IdPeriodoContrato = pc.IdPeriodo
-		inner join CO_Presupuesto pre on pre.IdProgramaActividad = pa.IdProgramaActividad
-		where sc.IdSubcontrato = @idsubcontrato
-		and not exists (
-			select 1
-			from SC_Presupuesto s1
-			where s1.IdPresupuesto = pre.IdPresupuesto and
-			s1.IdSubContrato = sc.IdSubContrato
-		)
-		group by sc.IdSubContrato,sc.IdSubContrato,pre.IdPresupuesto
-
-		exec [dbo].[p_SC_Materiales_Gen] @idsubcontrato,''
-
-		update SC_Importacion
-		set IdSubcontrato = @idsubcontrato
-		where IdSubcontrato is null
-		and NumeroPedido = @pedidoC
-
-		select @pedidoC =  min(NumeroPedido)
-		from SC_Importacion
-		where IdSubcontrato is null and
-		NumeroPedido > @pedidoC
-
-	end
-
-	commit tran
-
-	END TRY  
-	BEGIN CATCH
-	
-		rollback tran  
-		set @pError = error_message()
-	END CATCH  
-end
-
-	
-	
-
-	
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
+                ON pc.IdContrato = con.IdContrato  
+            INNER JOIN CO_ProgramaActividad pa  
+                ON pa.IdPeriodoContrato = pc.IdPeriodo  
+            INNER JOIN CO_Presupuesto pre  
+                ON pre.IdProgramaActividad = pa.IdProgramaActividad  
+        WHERE sc.IdSubContrato = @idsubcontrato  
+              AND NOT EXISTS  
+        (  
+            SELECT 1  
+            FROM SC_Presupuesto s1  
+            WHERE s1.IdPresupuesto = pre.IdPresupuesto  
+                  AND s1.IdSubContrato = sc.IdSubContrato  
+        )  
+        GROUP BY sc.IdSubContrato,  
+                 sc.IdSubContrato,  
+                 pre.IdPresupuesto;  
+  
+        EXEC [dbo].[p_SC_Materiales_Gen] @idsubcontrato, '';  
+  
+        UPDATE SC_Importacion  
+        SET IdSubcontrato = @idsubcontrato  
+        WHERE IdSubcontrato IS NULL  
+              AND NumeroPedido = @pedidoC;  
+  
+        SELECT @pedidoC = MIN(NumeroPedido)  
+        FROM SC_Importacion  
+        WHERE IdSubcontrato IS NULL
+     
+         AND NumeroPedido > @pedidoC;  
+  
+    END;  
+  
+    COMMIT TRAN;  
+  
+END TRY  
+BEGIN CATCH  
+  
+    ROLLBACK TRAN;  
+    SET @pError = ERROR_MESSAGE()+'|LINEA:'+cast(ERROR_LINE() as varchar);  
+  
+ select @pError;  
+  
+   
+END CATCH;
