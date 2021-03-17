@@ -100,7 +100,7 @@ BEGIN
                        '#,#0.000')
                    ELSE
                        FORMAT(fiFact.SubTotal, '#,#0.000')
-               END AS MontoUSD,
+     END AS MontoUSD,
                CASE
                    WHEN fiFact.IdMoneda = 2 THEN
                        FORMAT(
@@ -673,7 +673,7 @@ BEGIN
     END;
 
     ---- VALIDA SI EL PROVEEDOR ES DEA
-    ELSE IF ISNULL(@IdContrato, 0) IN ( 10038, 10044, 10045, 10046, 10144 ) --Ogarrio
+    ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060)) --DEA
     BEGIN
         INSERT INTO @SolpedConMateriales (IdSolicitudPedido)
         SELECT sp.IdSolicitudPedido
@@ -716,23 +716,35 @@ BEGIN
                        'NO'
                END AS RelacionOperadoraProveedor,
                UPPER(P.RazonSocial) + ' ' + ISNULL(UPPER(P.RegimenCapital), '') AS Proveedor,
-               'ADJUDICACIÓN DIRECTA' AS MecanismoContratacion,
-               UPPER(ISNULL(TAO.Descripcion, '')) AS 'Nombre Contrato C-P',
-               UPPER(CONCAT(PG.IdPedido, ' CD')) AS 'No. Contrato',
+               CASE WHEN SC.NumeroSubcontrato IS NOT NULL 
+					THEN 'LICITACIÓN' 
+					ELSE 'ADJUDICACIÓN DIRECTA' 
+				END AS MecanismoContratacion,
+				SC.NumeroSubcontrato AS  'Nombre Contrato C-P' ,
+                UPPER(CONCAT(PG.IdPedido, ' CD')) AS 'No. Contrato',
+               
                CASE
+				   WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105)
                    WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN
                        '-'
                    ELSE
                        CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)
                END AS 'Fecha Inicio Contrato',
                CASE
+					WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)
                    WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN
                        '-'
                    ELSE
                        CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)
                END AS 'Fecha Termino Contrato',
-               '1' AS 'Vigencia del contrato',
-               UPPER(SUBSTRING(ISNULL(TAO.Descripcion, ''), 0, 40)) AS 'Objeto del contrato',
+               CASE WHEN  SC.NumeroSubcontrato IS NOT NULL THEN 
+					DATEDIFF(day,OT.FechaInicio,OT.FechaFin)
+					ELSE '1'
+				END AS 'Vigencia del contrato',
+			   CASE 
+					WHEN SC.NumeroSubcontrato IS NOT NULL THEN OT.Objeto
+					ELSE   UPPER(SUBSTRING(ISNULL(TAO.Descripcion, ''), 0, 40)) 
+				END AS 'Objeto del contrato',
                CASE
                    WHEN fiFact.IdMoneda = 1 THEN
                        FORMAT(
@@ -791,8 +803,11 @@ BEGIN
             LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE
                 ON RE.IdProveedor = P.IdProveedor
                    AND RE.IdSubcontratista = P.IdProveedor
-            INNER JOIN Adinco.dbo.CO_Contratista ctista
+			LEFT JOIN Adinco.dbo.CO_Contratista ctista
                 ON ctista.IdContratista = C.IdContratista
+			LEFT JOIN Adinco..OT_Estimacion EST on EST.IdPedido = PG.IdIdentificador and isnull(EST.Cancelada,0) = 0
+			LEFT JOIN Adinco..OT_Solicitud OT ON OT.IdOTSolicitud = EST.IdOTSolicitud
+			LEFT JOIN Adinco..SC_Subcontrato SC ON SC.IdSubcontrato = OT.IdSubcontrato
         WHERE TAO.IdTipoOperacion = 14
               AND TE.IdEstatus = 2
               AND ISNULL(fiFact.IsEliminado, 0) = 0
@@ -829,25 +844,37 @@ BEGIN
                        'NO'
                END AS RelacionOperadoraProveedor,
                UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,
+			   CASE WHEN SC.NumeroSubcontrato IS NOT NULL OR solPed.MotivoUrgencia like '%ESTIMACIÓN COMPLETA PARA OT%' THEN 'LICITACIÓN'
+					ELSE
+						CASE					
+							WHEN TP.TipoPedido = 'Mercadeo' THEN
+								   'TRES COTIZACIONES'
+							ELSE
+								   UPPER(TP.TipoPedido)
+					   END 
+				END AS MecanismoContratacion,    
+               
+                isnull(SC.NumeroSubcontrato,DEA_RPO.PO)  AS 'Nombre Contrato C-P',
+				DEA_RPO.PO AS 'No. Contrato',
+				CASE
+					WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105) 
+				
+				    ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105) 
+				END AS 'Fecha Inicio Contrato',
+				CASE 
+					WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)
+					ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105) 
+				END AS 'Fecha Termino Contrato',
                CASE
-                   WHEN TP.TipoPedido = 'Mercadeo' THEN
-                       'TRES COTIZACIONES'
-                   ELSE
-                       UPPER(TP.TipoPedido)
-               END AS MecanismoContratacion,
-                                                                                                                   --UPPER(solPed.MotivoUrgencia) AS 'Nombre Contrato C-P',  
-                                                                                                                   --PSS.IdPedido AS 'No. Contrato', 
-               DEA_RPO.PO AS 'Nombre Contrato C-P',
-               DEA_RPO.PO AS 'No. Contrato',
-               CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105) AS 'Fecha Inicio Contrato',
-               CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105) AS 'Fecha Termino Contrato',
-               CASE
+				   WHEN SC.NumeroSubcontrato IS NOT NULL THEN cast(DATEDIFF(day,OT.FechaInicio,OT.FechaFin)  as varchar)
                    WHEN CONVERT(VARCHAR(10), solPed.FechaEntregaFinRequerida, 105) IS NULL THEN
                        '-'
                    ELSE
                        CONVERT(VARCHAR(10), solPed.FechaEntregaRequerida, 105)
                END AS 'Vigencia del contrato',
-               UPPER(SUBSTRING(solPed.MotivoUrgencia, 0, 40)) AS 'Objeto del contrato',
+			   CASE WHEN SC.NumeroSubcontrato IS NOT NULL THEN OT.Objeto
+					ELSE UPPER(SUBSTRING(solPed.MotivoUrgencia, 0, 40))
+				END AS 'Objeto del contrato',
                CASE
                    WHEN Mon.IdMoneda = 1 THEN
                        FORMAT(
@@ -920,6 +947,9 @@ BEGIN
                 ON DEA_RPO.IdPedido = P.IdPedido
             LEFT JOIN Adinco.dbo.CO_PeriodoContrato periodo
                 ON periodo.IdPeriodo = solPed.IdPeriodo
+			LEFT JOIN Adinco..OT_Estimacion EST on EST.IdPedido = P.IdPedido and isnull(EST.Cancelada,0) = 0
+			LEFT JOIN Adinco..OT_Solicitud OT ON OT.IdOTSolicitud = EST.IdOTSolicitud 
+			LEFT JOIN Adinco..SC_Subcontrato SC ON SC.IdSubcontrato = OT.IdSubcontrato
         WHERE O.IdTipoOperacion = 9
               AND E.IdEstatus = 2
               AND c.IdContrato = @IdContrato
@@ -953,7 +983,11 @@ BEGIN
                  c.FechaFirma,
                  DEA_RPO.PO,
                  periodo.NombrePeriodo,
-                 P.FechaRecepcionServicio
+                 P.FechaRecepcionServicio,
+				 SC.NumeroSubcontrato,
+				 OT.FechaInicio,
+				 OT.FechaFin,
+				 OT.Objeto
         ORDER BY PSS.IdPedido ASC;
 
 
@@ -1137,7 +1171,7 @@ BEGIN
                CASE
                    WHEN TP.TipoPedido = 'Mercadeo' THEN
                        'TRES COTIZACIONES'
-                   ELSE
+                ELSE
                        UPPER(TP.TipoPedido)
                END AS MecanismoContratacion,
                UPPER(solPed.MotivoUrgencia) AS 'Nombre Contrato C-P',
@@ -1206,7 +1240,7 @@ BEGIN
                 ON TTO.IdTipoOperacion = O.IdTipoOperacion
             LEFT JOIN Petrovendor.dbo.TA_Estatus AS E
                 ON E.IdEstatus = O.IdEstatusOperacion
-            LEFT JOIN Adinco.dbo.CO_Contrato c
+LEFT JOIN Adinco.dbo.CO_Contrato c
                 ON c.IdContrato = P.IdContrato
             INNER JOIN Adinco.dbo.CO_Contratista ctista
                 ON ctista.IdContratista = c.IdContratista
@@ -1280,3 +1314,6 @@ BEGIN
     END;
 
 END;
+
+
+

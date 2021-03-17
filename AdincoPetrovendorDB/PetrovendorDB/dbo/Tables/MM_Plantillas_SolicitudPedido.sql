@@ -21,6 +21,7 @@
     [CreadoEl]                   DATETIME       NULL,
     [IdMatrizEvaluacion]         INT            NULL,
     [IdPorcentajeETEC]           INT            NULL,
+    [Bitacora] NVARCHAR(MAX) NULL, 
     CONSTRAINT [PK_MM_Plantillas_SolicitudPedido] PRIMARY KEY CLUSTERED ([IdPlantillaSolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 

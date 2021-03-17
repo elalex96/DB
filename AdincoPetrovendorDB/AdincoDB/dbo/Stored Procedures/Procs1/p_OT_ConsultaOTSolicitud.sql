@@ -1,5 +1,5 @@
 ﻿-- p_OT_ConsultaOTSolicitud 10013,10038,0,1,0,0,0,0,0,0,10
-CREATE Proc [dbo].[p_OT_ConsultaOTSolicitud]
+CREATE Proc [dbo].[p_OT_ConsultaOTSolicitud]--10013,10038,0,1,0,0,0,0,1,0,10,'20190101','20210309'
 @pIdContratista int,
 @pIdContrato int,
 @pPendientes bit,
@@ -93,16 +93,18 @@ as
                 inner join OT_SolicitudMaterial sm on sm.IdOTSolicitud = sol.IdOTSolicitud
                 inner join [dbo].[OT_SolicitudProgramaCaptura] spc on spc.IdOTSolicitudMaterial = sm.IdOTSolicitudMaterial AND
                                                             spc.VoBoSubcontratista = 1 and
-                                                            spc.VoBoContratista = 1
+                                              spc.VoBoContratista = 1
                 where sol.IdOTEstatus between 5 and 6 AND @pAprobadas  =1
                 and isnull(sol.isActivo,0) = 1 and isnull(sol.isEliminado,0) = 0    
                 and sc.IdContratista = @pIdContratista 
                 and sc.IdContrato = @pIdContrato 
                 group by sol.IdOTSolicitud
             
-        SELECT sol.IdOTSolicitud,
+        SELECT
+			DISTINCT
+			sol.IdOTSolicitud,
             sol.IdSubContrato,
-            Folio,
+            sol.Folio,
             sol.FechaInicio,
             sol.FechaFin,
             PlazoEjecucion,
@@ -120,7 +122,9 @@ as
             NombrePresupuesto=pre.Nombre,
             PuedeEstimar = case when est.IdOTSolicitud is not null then 1 else 0 end,
             Excedida =0,-- cast(case when exc.IdOTSolicitud is not null then 1 else 0 end as bit),
-            AFinanciero =   0/*cast((
+            --AFinanciero =   0
+			ISNULL(BIOT.AvanceFinanciero,0) AS AFinanciero
+			/*cast((
                                 (
                                     select SUM(est.Total)
                                     from OT_Estimacion est
@@ -136,8 +140,8 @@ as
                                 )
                             ) * 100
                                 as decimal(5,2)
-                            )*/
-                            ,
+                   )*/
+             ,
             TotalOT = (
                                     select SUM(otm.Cantidad * scMAT.PrecioUnitario)
                                     from OT_SolicitudMaterial otm
@@ -149,17 +153,35 @@ as
             CentroCosto = cc.CentroCosto,
             sol.SAPPR       
         FROM [OT_Solicitud] sol
-        inner join CO_Presupuesto pre on pre.IdPresupuesto = sol.IdPresupuesto
-        inner join SC_Subcontrato sc on sc.IdSubContrato = sol.IdSubcontrato and
+		JOIN 
+			CO_Presupuesto pre 
+			ON pre.IdPresupuesto = sol.IdPresupuesto
+        JOIN 
+			SC_Subcontrato sc 
+			ON sc.IdSubContrato = sol.IdSubcontrato and
                                         sc.IdContrato = @pIdContrato
-        inner join  [dbo].[AP_UsuarioCentroCosto] ucc on ucc.IdUsuario = @pUsuarioId and
+        JOIN
+			[dbo].[AP_UsuarioCentroCosto] ucc 
+			ON ucc.IdUsuario = @pUsuarioId and
                                                             ucc.IdCentroCosto in (sol.IdCentroCosto)
-        INNER JOIN Petrovendor..CC_CentroCosto cc on cc.IdCentroCosto = sol.IdCentroCosto
+        JOIN 
+			Petrovendor..CC_CentroCosto cc 
+			ON cc.IdCentroCosto = sol.IdCentroCosto
         --left join Petrovendor.dbo.MM_Pedido ped on ped.IdPedido = sc.IdPedido
-        inner join PV_Subcontratista pv on pv.IdSubcontratista = sc.IdSubcontratista        
-        left join Petrovendor.DBO.PV_TipoMoneda mon on mon.idMoneda = sol.IdMoneda
+        JOIN 
+			PV_Subcontratista pv 
+			ON pv.IdSubcontratista = sc.IdSubcontratista        
+        LEFT JOIN 
+			Petrovendor.DBO.PV_TipoMoneda mon 
+			ON mon.idMoneda = sol.IdMoneda
         --left join #tmpOTExcedida exc on exc.IdOTSolicitud = sol.IdOTSolicitud
-        left join #tmpEstimacion est on est.IdOTSolicitud = sol.IdOTSolicitud
+        LEFT JOIN 
+			#tmpEstimacion est 
+			ON est.IdOTSolicitud = sol.IdOTSolicitud
+		LEFT JOIN
+			OT_BI_Tablero	BIOT
+			ON	est.IdOTSolicitud	=	BIOT.IdOTSolicitud
+				
         where isnull(sol.isActivo,0) = 1 and isnull(sol.isEliminado,0) = 0  
         AND (
             ( @pAprobadas  =1 and sol.IdOTEstatus between 5 and 6 )
@@ -168,7 +190,7 @@ as
             OR 
             ( @pRechazadas  =1 and sol.IdOTEstatus between 7 and 8 )
             
-            OR
+        OR
             (@pRequiereConvenio  =1 and sol.IdOTEstatus between 9 and 9  )
             OR
             (@pCerradas  =1 and sol.IdOTEstatus between 12 and 12  )
@@ -179,7 +201,7 @@ as
 		and sol.CreadoEl between dateadd(day, -1, @Desde) and dateadd(day, 1, @Hasta)
         group by sol.IdOTSolicitud,
             sol.IdSubContrato,
-            Folio,
+            sol.Folio,
             sol.FechaInicio,
             sol.FechaFin,
             PlazoEjecucion,
@@ -201,7 +223,8 @@ as
              est.IdOTSolicitud,
              --exc.IdOTSolicitud,
              cc.CentroCosto,
-             sol.SAPPR
+             sol.SAPPR,
+			 ISNULL(BIOT.AvanceFinanciero,0)
         Order by IdOTSolicitud desc
         
     End

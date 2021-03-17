@@ -3,6 +3,13 @@
 -- Create date: 13-09-17
 -- Description:	Consulta la información de cabecera de una aprobación de pedido 
 -- =============================================
+-- Author:		Luis David De La Cruz
+-- Create date: 20/03/2021
+-- Description:	Se optimiza la consulta para la pantalla detalle_pedido del issue 984
+-- =============================================
+IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_TA_ConsultarEncabezadoAprobacionPedido')
+    DROP PROCEDURE SP_TA_ConsultarEncabezadoAprobacionPedido
+go
 CREATE PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoAprobacionPedido]  
 	-- Add the parameters for the stored procedure here
 	
@@ -17,7 +24,6 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-			
 		SELECT 	
 		P.IdSolicitudPedido,		
 		SUM(PD.Subtotal) AS SubTotal,
@@ -31,13 +37,20 @@ BEGIN
 		U.Nombre,
 		U.IdUsuario
 		FROM MM_Pedido AS P
-		INNER JOIN MM_PedidoDetalle AS PD ON PD.IdPedido = P.IdPedido
-		INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = P.IdSolicitudPedido
-		INNER JOIN TA_Operacion AS O ON O.IdDocumento = SP.IdSolicitudPedido 
-		INNER JOIN TA_Tarea AS TA ON TA.IdOperacion = O.IdOperacion 
-		INNER JOIN TA_TipoOperacion AS TTO ON TTO.IdTipoOperacion= O.IdTipoOperacion
-		INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion
-		INNER JOIN S_Usuario AS U ON U.IdUsuario = O.IdAsignador
+		INNER JOIN MM_PedidoDetalle AS PD 
+		ON P.IdPedido = PD.IdPedido 
+		INNER JOIN MM_SolicitudPedido AS SP 
+		ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
+		INNER JOIN TA_Operacion AS O 
+		ON SP.IdSolicitudPedido  = O.IdDocumento 
+		INNER JOIN TA_Tarea AS TA 
+		ON O.IdOperacion = TA.IdOperacion
+		INNER JOIN TA_TipoOperacion AS TTO 
+		ON O.IdTipoOperacion = TTO.IdTipoOperacion
+		INNER JOIN TA_Estatus AS E 
+		ON O.IdEstatusOperacion = E.IdEstatus 
+		INNER JOIN S_Usuario AS U 
+		ON O.IdAsignador = U.IdUsuario 
 		WHERE O.IdTipoOperacion = 9 
 		AND TA.IdAprobador = @IdAprobador 
 		AND P.IdSolicitudPedido = @IdSolicitudPedido 
@@ -54,11 +67,5 @@ BEGIN
 		p.Version,
 		U.Nombre,
 		U.IdUsuario
-			
-
 	--- IdTipoOperacion = 9--> Aprobación de pedido
-
-
 END
-
-
