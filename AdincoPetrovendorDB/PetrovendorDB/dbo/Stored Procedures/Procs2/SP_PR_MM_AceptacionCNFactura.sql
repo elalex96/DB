@@ -67,7 +67,7 @@ BEGIN
         span NVARCHAR(100) NULL,  
         UUID NVARCHAR(MAX),
 		Contrato NVARCHAR(300),
-		IdSolicitudPedido INT NULL
+		IdSolicitudPedido VARCHAR(300) NULL
     );  
   
     IF @Estatus = 0  
@@ -100,7 +100,7 @@ BEGIN
                END,  
                '' AS UUID  ,
 			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
-			   SP.IdSolicitudPedido
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
         FROM dbo.MM_Pedido P  (NOLOCK)
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
@@ -189,7 +189,7 @@ BEGIN
                'label label-default',  
                '' AS UUID ,
 			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
-			   0
+			   PSES.SAPPONumber
         FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
             LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
@@ -233,7 +233,8 @@ BEGIN
                  PSES.IdPRESES,  
                  AP.ReferenceNumber  ,
 				 C.NumeroContrato,
-				 A.NombreAreaContractual
+				 A.NombreAreaContractual,
+				 PSES.SAPPONumber
         ORDER BY AP.IdAceptacionPedido DESC;  
   
     END;  
@@ -268,7 +269,7 @@ BEGIN
                END,  
                '' AS UUID  ,
 			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
-			   SP.IdSolicitudPedido
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
         FROM dbo.MM_Pedido P  (NOLOCK)
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
@@ -366,7 +367,7 @@ BEGIN
                END,  
                '' AS UUID ,
 			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
-			   0
+			   PSES.SAPPONumber
         FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
             LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
@@ -416,7 +417,8 @@ BEGIN
                  PSES.IdPRESES,  
                  AP.ReferenceNumber  ,
 				 C.NumeroContrato, 
-				 A.NombreAreaContractual
+				 A.NombreAreaContractual,
+				 PSES.SAPPONumber
         ORDER BY AP.IdAceptacionPedido DESC  
   
     END;  
@@ -453,7 +455,7 @@ BEGIN
                END,  
                F.UUID,
 			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
-			   SP.IdSolicitudPedido
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
         FROM dbo.MM_Pedido P  (NOLOCK)
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
@@ -557,7 +559,7 @@ BEGIN
                END,  
                F.UUID  ,
 			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
-			   0
+			   PSES.SAPPONumber
         FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
             LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
@@ -608,7 +610,8 @@ BEGIN
                  AP.ReferenceNumber,  
                  F.UUID ,
 				 C.NumeroContrato,
-				 A.NombreAreaContractual
+				 A.NombreAreaContractual,
+				 PSES.SAPPONumber
         ORDER BY AP.IdAceptacionPedido DESC;  
   
   
