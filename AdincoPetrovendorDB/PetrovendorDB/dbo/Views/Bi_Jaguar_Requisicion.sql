@@ -14,21 +14,24 @@ AS
 		NombreInstalacion 'Nombre Instalacion',
 		LugarEntrega	AS 'Lugar entrega',
 --		Eliminado,
-		Concepto,
-		Descripcion	AS 'Descripción',
+		BI_Requisicion.Concepto,
+		BI_Requisicion.Descripcion	AS 'Descripción',
 		AprobadorActual	AS 'Aprobador Actual',
-		IdSolicitudPedidoDetalle	AS 'Partida',
+		BI_Requisicion.IdSolicitudPedidoDetalle	AS 'Partida',
 		TienePedido,
 		FechaAprobacion,
 		EstatusCotizacion  AS  'Estatus cotización',
 		DescripcionGral AS 'Descripcion pedido', 
 		NoPartidaDetalle AS 'No partida detalle',
 		ObservacionPartidaReq AS 'Observacion detalle requisicion',
-		Modelo AS 'Modelo',
-		Marca AS 'Marca',
-		NumeroParte AS 'Numero parte',
-		CentroCosto AS 'Centro costo'
+		BI_Requisicion.Modelo AS 'Modelo',
+		BI_Requisicion.Marca AS 'Marca',
+		BI_Requisicion.NumeroParte AS 'Numero parte',
+		CentroCosto AS 'Centro costo',
+		SPD.IdMaterial
 	FROM	BI_Requisicion	(NOLOCK)
+	LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD 
+		ON BI_Requisicion.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
 
 --EN TAB REQUISICIÓN
 --AQUI NECESITAS SOLO LAS REQUISICIONES QUE TIENEN UN PEDIDO RELACIONADO O SERIAN TODAS LAS REQUISICIONES SIN IMPORTAR TENGAN O NO PEDIDOS? -->SON TODAS 
@@ -182,7 +185,8 @@ Begin DesignProperties =
             End
             DisplayFlags = 280
             TopColumn = 0
-         End', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'Bi_Jaguar_Requisicion';
+         End
+', @level0type = N'SCHEMA', @level0name = N'dbo', @level1type = N'VIEW', @level1name = N'Bi_Jaguar_Requisicion';
 
 
 GO
