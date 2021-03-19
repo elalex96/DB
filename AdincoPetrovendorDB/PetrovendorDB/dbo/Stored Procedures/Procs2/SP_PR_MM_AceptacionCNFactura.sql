@@ -1,5 +1,4 @@
-﻿
--- =============================================    
+﻿-- =============================================    
 -- Author:  <Jose Roman>    
 -- Create date: <04-09-2018>    
 -- Description: <Se permite capturar una Factura si no se solicita una carta de CN>    
@@ -18,8 +17,15 @@
 -- Create date: 10-12-19  
 -- Description: Se consulto la nacionalidad del proveedor, para las aceptaciones que tiene el campo IdNacionalidadProvedor nulo  
 -- =============================================  
+-- Author:           LUIS DAVID DE LA CRUZ
+-- Create date: 17-03-2021
+-- Description: Se agrega el contrato y el numero de requisición por el issue 1021, solicitado por Male
+-- =============================================  
 -- [SP_PR_MM_AceptacionCNFactura] 761,1  
 -- SP_PR_MM_AceptacionCNFactura
+IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_PR_MM_AceptacionCNFactura')
+    DROP PROCEDURE SP_PR_MM_AceptacionCNFactura
+GO
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionCNFactura] --44,4    
     -- Add the parameters for the stored procedure here    
     @IdProveedor INT,  
@@ -59,7 +65,9 @@ BEGIN
         TipoPedido NVARCHAR(100) NULL,  
         Pedido NVARCHAR(MAX) NULL,  
         span NVARCHAR(100) NULL,  
-        UUID NVARCHAR(MAX)  
+        UUID NVARCHAR(MAX),
+		Contrato NVARCHAR(300),
+		IdSolicitudPedido VARCHAR(300) NULL
     );  
   
     IF @Estatus = 0  
@@ -90,32 +98,42 @@ BEGIN
                    WHEN E.IdEstatus IS NULL THEN  
                        'label label-default'  
                END,  
-               '' AS UUID  
-        FROM dbo.MM_Pedido P  
-            INNER JOIN dbo.MM_Pedidos AS PG  
+               '' AS UUID  ,
+			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
+        FROM dbo.MM_Pedido P  (NOLOCK)
+            INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
                    AND PG.IdProveedorCliente = P.IdProveedorCompras  
-            INNER JOIN dbo.MM_AceptacionPedido AS AP  
+				   AND	P.IdSubcontratista = @IdProveedor  
+            INNER JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK) 
                 ON AP.IdPedido = P.IdPedido  
-            LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  
+				AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1   
+            LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND (APC.IdAceptacionCartaPCN IS NOT NULL) --Si no se solicita una CN, se muestra una aceptacion de servicio    
-            INNER JOIN dbo.S_Proveedor AS PV  
+            INNER JOIN dbo.S_Proveedor AS PV  (NOLOCK)
                 ON PV.IdProveedor = P.IdProveedorCompras  
-            LEFT JOIN dbo.MM_AceptacionFactura AS AF  
+            LEFT JOIN dbo.MM_AceptacionFactura AS AF  (NOLOCK)
                 ON AF.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 ---> LA ACEPTACIÓN DE FACTURA NO DEBE ESTAR ELIMINADA PARA MOSTRARSE    
-            LEFT JOIN dbo.TA_Operacion AS O  
+            LEFT JOIN dbo.TA_Operacion AS O  (NOLOCK)
                 ON O.IdDocumento = AF.IdAceptacionFactura  
                    AND P.IdSubcontratista = O.IdProveedor  
-            LEFT JOIN dbo.TA_Estatus AS E  
+            LEFT JOIN dbo.TA_Estatus AS E  (NOLOCK)
                 ON E.IdEstatus = O.IdEstatusOperacion  
-            LEFT JOIN dbo.MM_TipoPedido AS TP  
+            LEFT JOIN dbo.MM_TipoPedido AS TP  (NOLOCK)
                 ON TP.IdTipoPedido = PG.IdTipoPedido  
-            LEFT JOIN dbo.RelacionCartaCNPedido rel  
+            LEFT JOIN dbo.RelacionCartaCNPedido rel  (NOLOCK)
                 ON rel.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND rel.IdPedido = P.IdPedido  
                    AND rel.PedirCarta = 0  
+			LEFT JOIN mm_solicitudpedido as SP
+				ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+			LEFT JOIN Adinco..CO_Contrato as CO
+				ON SP.IdContrato = CO.IdContrato
+			LEFT JOIN Adinco..CO_AreaContractual A
+				ON CO.IdAreaContractual = A.IdAreaContractual
    --LEFT JOIN FI_AceptacionPedido_PedimentoComprobante APCC -- relacion aceptacion/pedimento comprobante  
    --ON APCC.IdAceptacionPedido = AP.IdAceptacionPedido  
         WHERE P.IdSubcontratista = @IdProveedor  
@@ -141,7 +159,10 @@ BEGIN
                  O.IdOperacion,  
                  PG.IdPedido,  
                  TP.TipoPedido,  
-                 E.IdEstatus  
+                 E.IdEstatus,
+				 CO.NumeroContrato,
+				 A.NombreAreaContractual,
+				 SP.IdSolicitudPedido
         ORDER BY AP.IdAceptacionPedido DESC;  
   
   
@@ -166,30 +187,36 @@ BEGIN
                          AP.ReferenceNumber  
                      ),  
                'label label-default',  
-               '' AS UUID  
-        FROM dbo.MPY_MM_AceptacionPedido AS AP  
-            LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  
+               '' AS UUID ,
+			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
+			   PSES.SAPPONumber
+        FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
+            LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
-            LEFT JOIN dbo.S_Proveedor AS PV  
+            LEFT JOIN dbo.S_Proveedor AS PV  (NOLOCK)
                 ON PV.RFC = AP.IdProveedor  
                    AND PV.Activo = 1  
-            LEFT JOIN dbo.MPY_MM_AceptacionFactura AS AF  
+            LEFT JOIN dbo.MPY_MM_AceptacionFactura AS AF  (NOLOCK)
                 ON AF.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 ---> LA ACEPTACIÓN DE FACTURA NO DEBE ESTAR ELIMINADA PARA MOSTRARSE    
-            LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES  
+            LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES  (NOLOCK)
                 ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
                    AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS  
                    AND PSES.IdEstatus = 2 --solo aprobadas  
-            LEFT JOIN Adinco.dbo.CO_SAPSES AS SES  
+            LEFT JOIN Adinco.dbo.CO_SAPSES AS SES  (NOLOCK)
                 ON SES.PO_SAPNumer = PSES.SAPPONumber  
                    AND SES.SESReferenceNumber = PSES.SAPSESNumber  
                    AND SES.SESNumber = PSES.SESN  
-            LEFT JOIN Adinco.dbo.CO_SAPPO AS PO  
+            LEFT JOIN Adinco.dbo.CO_SAPPO AS PO  (NOLOCK)
                 ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
-            LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL  
+            LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL  (NOLOCK)
                 ON PL.Planta = PO.Plant  
-            LEFT JOIN Adinco.dbo.CO_Contratista AS CO  
+            LEFT JOIN Adinco.dbo.CO_Contratista AS CO  (NOLOCK)
                 ON CO.IdContratista = PL.IdContratista  
+			JOIN Adinco..Co_Contrato as C
+				ON AP.IdContrato = C.IdContrato
+			INNER JOIN Adinco..CO_AreaContractual A
+				ON C.IdAreaContractual = A.IdAreaContractual
         WHERE AP.IdSubContratista = @SAPVENDOR  
               AND AF.IdEstatus is null   
               AND APC.IdEstatus = 2  
@@ -204,7 +231,10 @@ BEGIN
                  CO.RazonSocial,  
                  SES.SESNumber,  
                  PSES.IdPRESES,  
-                 AP.ReferenceNumber  
+                 AP.ReferenceNumber  ,
+				 C.NumeroContrato,
+				 A.NombreAreaContractual,
+				 PSES.SAPPONumber
         ORDER BY AP.IdAceptacionPedido DESC;  
   
     END;  
@@ -237,31 +267,40 @@ BEGIN
                    WHEN E.IdEstatus IS NULL THEN  
                        'label label-default'  
                END,  
-               '' AS UUID  
-        FROM dbo.MM_Pedido P  
-            INNER JOIN dbo.MM_Pedidos AS PG  
+               '' AS UUID  ,
+			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
+        FROM dbo.MM_Pedido P  (NOLOCK)
+            INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
-                   AND PG.IdProveedorCliente = P.IdProveedorCompras  
-            INNER JOIN dbo.MM_AceptacionPedido AS AP  
+                   AND PG.IdProveedorCliente = P.IdProveedorCompras 
+				   AND P.IdSubcontratista = @IdProveedor  
+            INNER JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK) 
                 ON AP.IdPedido = P.IdPedido  
-            LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  
+            LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND (APC.IdAceptacionCartaPCN IS NOT NULL) --Si no se solicita una CN, se muestra una aceptacion de servicio       
-            INNER JOIN dbo.MM_AceptacionFactura AS AF  
+            INNER JOIN dbo.MM_AceptacionFactura AS AF  (NOLOCK)
                 ON AF.IdAceptacionPedido = AP.IdAceptacionPedido  
-            INNER JOIN dbo.TA_Operacion AS O  
+            INNER JOIN dbo.TA_Operacion AS O  (NOLOCK)
                 ON O.IdDocumento = AF.IdAceptacionFactura  
                    AND P.IdSubcontratista = O.IdProveedor  
-            INNER JOIN dbo.TA_Estatus AS E  
+            INNER JOIN dbo.TA_Estatus AS E  (NOLOCK)
                 ON E.IdEstatus = O.IdEstatusOperacion  
-            INNER JOIN dbo.S_Proveedor AS PV  
+            INNER JOIN dbo.S_Proveedor AS PV  (NOLOCK)
                 ON PV.IdProveedor = P.IdProveedorCompras  
-            LEFT JOIN dbo.MM_TipoPedido AS TP  
+            LEFT JOIN dbo.MM_TipoPedido AS TP  (NOLOCK)
                 ON TP.IdTipoPedido = PG.IdTipoPedido  
-            LEFT JOIN dbo.RelacionCartaCNPedido rel  
+            LEFT JOIN dbo.RelacionCartaCNPedido rel  (NOLOCK)
                 ON rel.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND rel.IdPedido = P.IdPedido  
                    AND rel.PedirCarta = 0  
+			LEFT JOIN mm_solicitudpedido as SP
+				ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+			LEFT JOIN Adinco..CO_Contrato as CO
+				ON SP.IdContrato = CO.IdContrato
+			LEFT JOIN Adinco..CO_AreaContractual A
+				ON CO.IdAreaContractual = A.IdAreaContractual
         WHERE P.IdSubcontratista = @IdProveedor  
               AND  
               (  
@@ -290,7 +329,10 @@ BEGIN
                  APC.IdEstatusEliminado,  
                  O.IdDocumento,  
                  AF.IdEstatusEliminado,  
-                 E.IdEstatus  
+                 E.IdEstatus  ,
+				 CO.NumeroContrato,
+				 A.NombreAreaContractual,
+				 SP.IdSolicitudPedido
         ORDER BY AP.IdAceptacionPedido DESC;  
   
         INSERT INTO #AceptacionesPedido  
@@ -323,31 +365,37 @@ BEGIN
                    WHEN TVDF.IdTipoValidacionDoc IS NULL THEN  
                        'label label-default'  
                END,  
-               '' AS UUID  
-        FROM dbo.MPY_MM_AceptacionPedido AS AP  
-            LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  
+               '' AS UUID ,
+			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
+			   PSES.SAPPONumber
+        FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
+            LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
-            LEFT JOIN dbo.MPY_MM_AceptacionFactura AS AF  
+            LEFT JOIN dbo.MPY_MM_AceptacionFactura AS AF  (NOLOCK)
                 ON AF.IdAceptacionPedido = AP.IdAceptacionPedido  
-            LEFT JOIN dbo.S_TipoValidacionDoc AS TVDF  
+            LEFT JOIN dbo.S_TipoValidacionDoc AS TVDF  (NOLOCK)
                 ON TVDF.IdTipoValidacionDoc = AF.IdEstatusXML  
-            LEFT JOIN dbo.S_Proveedor AS PV  
+            LEFT JOIN dbo.S_Proveedor AS PV  (NOLOCK)
                 ON PV.RFC = AP.IdProveedor  
                    AND PV.Activo = 1  
-            LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES  
+            LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES	(NOLOCK)  
                 ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
                    AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS  
                    AND PSES.IdEstatus = 2 --solo aprobadas  
-            LEFT JOIN Adinco.dbo.CO_SAPSES AS SES  
+            LEFT JOIN Adinco.dbo.CO_SAPSES AS SES  (NOLOCK)
                 ON SES.PO_SAPNumer = PSES.SAPPONumber  
                    AND SES.SESReferenceNumber = PSES.SAPSESNumber  
                    AND SES.SESNumber = PSES.SESN  
-            LEFT JOIN Adinco.dbo.CO_SAPPO AS PO  
+            LEFT JOIN Adinco.dbo.CO_SAPPO AS PO  (NOLOCK)
                 ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
-            LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL  
+            LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL  (NOLOCK)
                 ON PL.Planta = PO.Plant  
-            LEFT JOIN Adinco.dbo.CO_Contratista AS CO  
+            LEFT JOIN Adinco.dbo.CO_Contratista AS CO  (NOLOCK)
                 ON CO.IdContratista = PL.IdContratista  
+			JOIN Adinco..Co_Contrato as C
+				ON AP.IdContrato = C.IdContrato
+			INNER JOIN Adinco..CO_AreaContractual A
+				ON C.IdAreaContractual = A.IdAreaContractual
         WHERE AP.IdSubContratista = @SAPVENDOR  
               AND AF.IdEstatus = @Estatus  
               AND APC.IdEstatus = 2  
@@ -367,7 +415,10 @@ BEGIN
                  TVDF.IdTipoValidacionDoc,  
                  SES.SESNumber,  
                  PSES.IdPRESES,  
-                 AP.ReferenceNumber  
+                 AP.ReferenceNumber  ,
+				 C.NumeroContrato, 
+				 A.NombreAreaContractual,
+				 PSES.SAPPONumber
         ORDER BY AP.IdAceptacionPedido DESC  
   
     END;  
@@ -402,35 +453,44 @@ BEGIN
                    WHEN E.IdEstatus IS NULL THEN  
                        'label label-default'  
                END,  
-               F.UUID  
-        FROM dbo.MM_Pedido P  
-            INNER JOIN dbo.MM_Pedidos AS PG  
+               F.UUID,
+			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
+        FROM dbo.MM_Pedido P  (NOLOCK)
+            INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
                    AND PG.IdProveedorCliente = P.IdProveedorCompras  
-            INNER JOIN dbo.MM_AceptacionPedido AS AP  
+				   AND P.IdSubcontratista = @IdProveedor 
+            INNER JOIN dbo.MM_AceptacionPedido AS AP  (NOLOCK)
                 ON AP.IdPedido = P.IdPedido  
-            LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  
+            LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND (APC.IdAceptacionCartaPCN IS NOT NULL) --Si no se solicita una CN, se muestra una aceptacion de servicio     
                    AND ISNULL(APC.IdEstatusEliminado, 0) <> 1 --> Que no esten eliminadas     
-            INNER JOIN dbo.S_Proveedor AS PV  
+			INNER JOIN dbo.S_Proveedor AS PV  (NOLOCK)
                 ON PV.IdProveedor = P.IdProveedorCompras  
-            LEFT JOIN dbo.MM_AceptacionFactura AS AF  
+            LEFT JOIN dbo.MM_AceptacionFactura AS AF  (NOLOCK)
                 ON AF.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> Que no esten eliminadas     
-            LEFT JOIN dbo.TA_Operacion AS O  
+            LEFT JOIN dbo.TA_Operacion AS O  (NOLOCK)
                 ON O.IdDocumento = AF.IdAceptacionFactura  
                    AND P.IdSubcontratista = O.IdProveedor  
-            LEFT JOIN dbo.TA_Estatus AS E  
+            LEFT JOIN dbo.TA_Estatus AS E  (NOLOCK)
                 ON E.IdEstatus = O.IdEstatusOperacion  
-            LEFT JOIN dbo.FI_Factura F  
+            LEFT JOIN dbo.FI_Factura F  (NOLOCK)
                 ON F.IdFactura = AF.IdFactura  
-            LEFT JOIN dbo.MM_TipoPedido AS TP  
+            INNER JOIN dbo.MM_TipoPedido AS TP  (NOLOCK)
                 ON TP.IdTipoPedido = PG.IdTipoPedido  
-            LEFT JOIN dbo.RelacionCartaCNPedido rel  
+            LEFT JOIN dbo.RelacionCartaCNPedido rel  (NOLOCK)
                 ON rel.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND rel.IdPedido = P.IdPedido  
                    AND rel.PedirCarta = 0  
+			INNER JOIN mm_solicitudpedido as SP
+				ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+			INNER JOIN Adinco..CO_Contrato as CO
+				ON SP.IdContrato = CO.IdContrato
+			INNER JOIN Adinco..CO_AreaContractual A
+				ON CO.IdAreaContractual = A.IdAreaContractual
         WHERE P.IdSubcontratista = @IdProveedor  
               AND  
               (  
@@ -461,7 +521,10 @@ BEGIN
                  O.IdDocumento,  
                  AF.IdEstatusEliminado,  
                  E.IdEstatus,  
-                 F.UUID  
+                 F.UUID,
+				 CO.NumeroContrato,
+				 A.NombreAreaContractual,
+				 SP.IdSolicitudPedido
         ORDER BY AP.IdAceptacionPedido DESC;  
   
         INSERT INTO #AceptacionesPedido  
@@ -494,33 +557,39 @@ BEGIN
                    WHEN TVDF.IdTipoValidacionDoc IS NULL THEN  
                        'label label-default'  
                END,  
-               F.UUID  
-        FROM dbo.MPY_MM_AceptacionPedido AS AP  
-            LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  
+               F.UUID  ,
+			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
+			   PSES.SAPPONumber
+        FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
+            LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
-            LEFT JOIN dbo.MPY_MM_AceptacionFactura AS AF  
+            LEFT JOIN dbo.MPY_MM_AceptacionFactura AS AF  (NOLOCK)
                 ON AF.IdAceptacionPedido = AP.IdAceptacionPedido  
-            LEFT JOIN dbo.S_TipoValidacionDoc AS TVDF  
+            LEFT JOIN dbo.S_TipoValidacionDoc AS TVDF  (NOLOCK)
                 ON TVDF.IdTipoValidacionDoc = AF.IdEstatusXML  
-            LEFT JOIN dbo.FI_Factura F  
+            LEFT JOIN dbo.FI_Factura F  (NOLOCK)
                 ON F.IdFactura = AF.IdFactura  
-            LEFT JOIN dbo.S_Proveedor AS PV  
+            LEFT JOIN dbo.S_Proveedor AS PV  (NOLOCK)
                 ON PV.RFC = AP.IdProveedor  
                    AND PV.Activo = 1  
-            LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES  
+            LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES	(NOLOCK)  
                 ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
                    AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS  
                    AND PSES.IdEstatus = 2 --solo aprobadas  
-            LEFT JOIN Adinco.dbo.CO_SAPSES AS SES  
+            LEFT JOIN Adinco.dbo.CO_SAPSES AS SES  (NOLOCK)
                 ON SES.PO_SAPNumer = PSES.SAPPONumber  
                    AND SES.SESReferenceNumber = PSES.SAPSESNumber  
                    AND SES.SESNumber = PSES.SESN  
-            LEFT JOIN Adinco.dbo.CO_SAPPO AS PO  
+            LEFT JOIN Adinco.dbo.CO_SAPPO AS PO  (NOLOCK)
                 ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
-LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL  
+			LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL  (NOLOCK)
                 ON PL.Planta = PO.Plant  
-            LEFT JOIN Adinco.dbo.CO_Contratista AS CO  
+            LEFT JOIN Adinco.dbo.CO_Contratista AS CO  (NOLOCK)
                 ON CO.IdContratista = PL.IdContratista  
+			JOIN Adinco..Co_Contrato as C
+				ON AP.IdContrato = C.IdContrato
+			INNER JOIN Adinco..CO_AreaContractual A
+				ON C.IdAreaContractual = A.IdAreaContractual
         WHERE AP.IdSubContratista = @SAPVENDOR  
               AND APC.IdEstatus = 2  
               AND APC.FechaEvaluacion IS NOT NULL  
@@ -539,11 +608,20 @@ LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL
                  SES.SESNumber,  
                  PSES.IdPRESES,  
                  AP.ReferenceNumber,  
-                 F.UUID  
+                 F.UUID ,
+				 C.NumeroContrato,
+				 A.NombreAreaContractual,
+				 PSES.SAPPONumber
         ORDER BY AP.IdAceptacionPedido DESC;  
   
   
     END;  
+
+	
+	--AJUSTE JAGUAR PARA NO PERMITIR SUBIR FACTURAS EN PERIODO DE DICIEMBRE
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%pantera%'   AND EstatusCarga LIKE '%sin iniciar%' 
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%jaguar%'   AND EstatusCarga LIKE '%sin iniciar%' 
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%jeyp%'   AND EstatusCarga LIKE '%sin iniciar%' 
   
     SELECT ROW_NUMBER() OVER (ORDER BY FechaAperturaCarga DESC) AS IdRow,  
            IdAceptacionPedido,  
@@ -556,7 +634,9 @@ LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL
            TipoPedido,  
            Pedido,  
            span,  
-           UUID  
+           UUID  ,
+		   Contrato,
+		   IdSolicitudPedido
     FROM #AceptacionesPedido  
  GROUP BY IdAceptacionPedido,  
              IdPedido,  
@@ -564,13 +644,13 @@ LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL
              Cliente,  
              EstatusCarga,  
              IdOperacion,  
-             IdPedidoGeneral,  
+			 IdPedidoGeneral,  
              TipoPedido,  
              Pedido,  
              span,  
-             UUID  
+             UUID  ,
+			 Contrato,
+			 IdSolicitudPedido
     ORDER BY IdAceptacionPedido DESC;  
   
-END;  
-  
-  
+END; 
