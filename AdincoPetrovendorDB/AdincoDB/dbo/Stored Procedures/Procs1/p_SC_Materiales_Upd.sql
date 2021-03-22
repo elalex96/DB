@@ -1,4 +1,5 @@
-﻿CREATE proc p_SC_Materiales_Upd
+﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE proc p_SC_Materiales_Upd
 (
     @pIdSCMaterial      int,
     @pConcepto          varchar(max),
@@ -7,7 +8,8 @@
     @pPrecioUnitario    money,
     @pDescripcion       varchar(max),
     @pDescripcionCorta  varchar(max),
-	@pModificadoPor int
+	@pModificadoPor int,
+	@pError				varchar(250) out
 )
 as
 begin
@@ -29,7 +31,7 @@ begin
         IDOTEstatus = 9
     )
     begin
-		RAISERROR (15600,-1,-1, 'Hay CONVENIOS pendientes de aprobar para este contrato,no es posible actualizar esta partida. Es necesario  ir a PROCURA a la sección de convenios para subcontratos');         
+		set @pError = '[ALERTA] Hay CONVENIOS pendientes de aprobar para este contrato,no es posible actualizar esta partida. Es necesario  ir a PROCURA a la sección de convenios para subcontratos';         
         return  
     end
 
@@ -40,7 +42,8 @@ begin
 		update  SC_Materiales
 		set     Concepto        =   @pConcepto,
 				IdUnidad        =   @pIdUnidad,
-				Cantidad        =   @pCantidad,
+				Cantidad        =   @pCantidad
+,
 				PrecioUnitario  =   @pPrecioUnitario,
 				Importe         =   @pPrecioUnitario * @pCantidad,
 				Descripcion = @pDescripcion,
@@ -60,11 +63,7 @@ begin
 	end try
 	begin catch
 		rollback tran
-		RAISERROR (15600,-1,-1, 'Ocurrió un error al actualizar');         
+		set @pError = 'Ocurrió un error inesperado'   
 	end catch
 end
 
-
-
-
- 
