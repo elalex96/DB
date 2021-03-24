@@ -2,10 +2,10 @@
 AS
 SELECT IdPedidoUnico AS 'idunico pedido',
        IdSolicitudPedido AS 'idunico de requisición',
-       IdAceptacionPedido AS 'IdAceptacionPedido',
+       BI_Recepcion.IdAceptacionPedido AS 'IdAceptacionPedido',
        NumeroAceptacion AS 'N° de Aceptación',
        NumeroContrato AS 'Contrato',
-       IdPedido AS 'N° Pedido',
+       BI_Recepcion.IdPedido AS 'N° Pedido',
        MaterialCotizadoTextoC AS 'Partida(Pedido)',
 	   MaterialCotizadoTextoL AS 'Descripción',
        NombreRecibidoPor AS 'Recibido Por',   
@@ -17,7 +17,7 @@ SELECT IdPedidoUnico AS 'idunico pedido',
 	   EstatusCN	AS 'Estatus CN',
 	   LugarEntrega	AS 'Lugar de Entrega',
 	   Partida  AS 'Partida',
-	   PrecioUnitario AS 'Precio unitario',
+	   BI_Recepcion.PrecioUnitario AS 'Precio unitario',
 	   Instalacion,
 	    PartidaReq AS 'Partida requisicion',
 		PartidaDetalleReq AS 'Partida requisicion detalle',
@@ -39,9 +39,15 @@ SELECT IdPedidoUnico AS 'idunico pedido',
 		Modelo AS 'Modelo',
 		Marca AS 'Marca',
 		NumeroParte AS 'Numero parte',
-		CentroCosto AS 'Centro costo'
+		CentroCosto AS 'Centro costo',
+		ADN,
+		PD.IdMaterial
 	FROM
 		BI_Recepcion
+	LEFT JOIN dbo.MM_AceptacionPedidoDetalle AS APD
+		ON BI_Recepcion.Partida = APD.IdAceptacionPedidoDetalle
+	LEFT JOIN dbo.MM_PedidoDetalle AS PD
+		ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_DiagramPane1', @value = N'[0E232FF0-B466-11cf-A24F-00AA00A3EFFF, 1.00]
 Begin DesignProperties = 

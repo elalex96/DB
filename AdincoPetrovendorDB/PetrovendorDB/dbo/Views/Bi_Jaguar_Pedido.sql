@@ -2,7 +2,7 @@
 AS
 	  SELECT  
        IdPedido AS 'idpedido unico', 
-	   IdSolicitudPedido AS 'idunico de requisicion',     
+	   BI_Pedido.IdSolicitudPedido AS 'idunico de requisicion',     
 	   FechaPedido AS 'Fecha de pedido', 
 	   RazonSocial AS 'Proveedor', 
 	   MaterialCotizadoTextoC AS 'Concepto',
@@ -10,8 +10,8 @@ AS
 	   Nombre AS 'Comprador', 
 	   NumeroPedido AS 'Numero de Pedido',  
        EstatusPedido AS 'Estatus Pedido',       
-	   IdSolicitudPedidoDetalle AS 'Partida',       
-       Cantidad AS 'Cantidad', 
+	   BI_Pedido.IdSolicitudPedidoDetalle AS 'Partida',       
+       BI_Pedido.Cantidad AS 'Cantidad', 
        UnidadProveedor AS 'Unidad', 
        PrecioUnitario AS 'Precio Unitario', 
        Subtotal AS 'Subtotal', 
@@ -41,9 +41,12 @@ AS
 		Modelo AS 'Modelo',
 		Marca AS 'Marca',
 		NumeroParte AS 'Numero parte',
-		CentroCosto AS 'Centro costo'
+		CentroCosto AS 'Centro costo',
+		SPD.IdMaterial
 	 FROM
 		BI_Pedido
+	LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD
+		ON BI_Pedido.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_DiagramPane1', @value = N'[0E232FF0-B466-11cf-A24F-00AA00A3EFFF, 1.00]
 Begin DesignProperties = 
