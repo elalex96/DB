@@ -10572,6 +10572,6 @@
     <Build Include="dbo\Tables\TA_EnvioCorreoPersonalizado.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_TA_EnvioCorreosPorNotificacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_PV_MM_MaterialUnidad_Cmb.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ActualizarComentarioComprador.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidarPreRegistroProveedor.sql" />
   </ItemGroup>
 </Project>
