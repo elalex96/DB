@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE ObtenerInfoSolped
+﻿CREATE PROCEDURE ObtenerInfoSolped
 @IdSolicitudPedido INT,
 @IdProveedor INT
 AS
@@ -54,7 +54,8 @@ BEGIN
                TP.id_Tarea COLLATE Modern_Spanish_CI_AS,       -- Clave Tarea
                ' | Sub-Tarea: ',
                S.NombreServicio COLLATE Modern_Spanish_CI_AS) -- Sub Tarea  
-               AS subTarea
+               AS subTarea,
+			   u.Unidad
 	FROM dbo.MM_SolicitudPedido sp 
 	INNER JOIN dbo.MM_SolicitudPedidoDetalle spd 
 	ON sp.IdSolicitudPedido = spd.IdSolicitudPedido 
@@ -72,6 +73,8 @@ BEGIN
 	ON tao.IdEstatusOperacion = e.IdEstatus 
 	JOIN Adinco..CO_Instalacion I 
 	on spdl.IdInstalacion = I.IdInstalacion
+	left JOIN PV_MM_MaterialUnidad u 
+	on spd.IdUnidad = u.IdUnidad
 	----------------------------------------
 	JOIN Adinco.dbo.CO_LineaPresupuestoMes lpm 
 	ON spdl.IdLineaPresupuesto = lpm.IdLineaPresupuestoMes
