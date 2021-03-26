@@ -11,3 +11,6 @@
 - [ ] Si el desarrollo tiene interfaces (cargue de archivos, conexión   con otros sistemas, interacción por medio de WS, etc.) bien sean internas o externas, verificar si la implementación se esta realizando acorde con la definición de la interfaz.
 - [ ] El código fuente generado es Reutilizable?
 - [ ] La estructura del código fuente permite un fácil mantenimiento del mismo?
+
+### URL Issue relacionado
+_<Escriba aquí la URL del Issue de repositorio externo relacionado>_
