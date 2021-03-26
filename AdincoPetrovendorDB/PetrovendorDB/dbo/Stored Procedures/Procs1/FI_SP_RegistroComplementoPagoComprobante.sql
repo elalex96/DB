@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <12-06-2018>
 -- Description:	<Se registra un complemento de pago de un comprobante>
@@ -80,7 +81,7 @@ BEGIN
 	IF @documentoRelacionado IS NOT NULL
 	BEGIN 
 		--SE ACTUALIZA LA FECHA DE CO_REGISTRO
-		set @IdDocumentoRelacionado = (select top 1 IdFactura from fi_factura where UUID = @documentoRelacionado)
+		set @IdDocumentoRelacionado = (select top 1 IdFactura from Adinco..fi_factura where UUID = @documentoRelacionado)
 		if	@IdDocumentoRelacionado > 0
 		BEGIN
 			UPDATE Adinco..CO_Registro
