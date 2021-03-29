@@ -7,7 +7,8 @@
 	@pPrecioUnitario	money,
 	@pDescripcion		varchar(max),
 	@pDescripcionCorta	varchar(max),
-	@pIdUsuario			int
+	@pIdUsuario			int,
+	@pError				varchar(250) out
 )
 as
 begin
@@ -51,8 +52,7 @@ begin
 							@pIdUsuario,
 							GETDATE()
 						)
-
-			
+		
 
 			select @idBitacora = isnull(max(IdSCBitacora),0)+1
 			from SC_MaterialesBitacora
@@ -66,7 +66,7 @@ begin
 	end try
 	begin catch
 		rollback tran
-		RAISERROR (15600,-1,-1, 'Ocurrió un error al actualizar');  
+		set @pError = 'Ocurrió un error inesperado'+ERROR_MESSAGE()
 	end catch
 end
 
