@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\AdincoPetrovendorDB",
+    "\\AdincoPetrovendorDB\\PetrovendorDB",
+    "\\AdincoPetrovendorDB\\PetrovendorDB\\dbo"
   ],
   "SelectedNode": "\\about.txt",
   "PreviewInSolutionExplorer": false

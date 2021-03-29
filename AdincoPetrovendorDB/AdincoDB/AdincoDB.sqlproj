@@ -13044,10 +13044,11 @@
     <Build Include="dbo\Stored Procedures\Procs2\sp_ProgramaImplementaPolitica_ReOrdenMoveTo.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_OT_RevisarExisteUnidad.sql" />
     <Build Include="dbo\Tables\Tables1\CO_ContratoEtapas.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDetalleDocumentosEntregables.sql" />
-    <None Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregables.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_GuardarDocumentoGeneral.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerArchivoEntregable.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDetalleDocumentosEntregables.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregables.sql" />
+    <Build Include="dbo\Tables\Tables1\EN_DocumentoGeneral.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
