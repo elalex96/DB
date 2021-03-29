@@ -10,8 +10,7 @@ CREATE PROCEDURE [dbo].[SP_TA_EnvioCorreosPorNotificacion]
 	@TipoNotificacion NVARCHAR(50)
 AS
 BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
+	
 	SET NOCOUNT ON;
 
 	SELECT

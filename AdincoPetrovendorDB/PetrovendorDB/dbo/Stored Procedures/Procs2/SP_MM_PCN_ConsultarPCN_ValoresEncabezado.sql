@@ -107,7 +107,8 @@ BEGIN
 	 SELECT V.IdValoresEnPesosPedidoDetalle, 
 	 V.VNMO_SueldoNacional, 
 	 V.VMO_Sueldo, 
-	 ROUND(ISNULL(APD.PCN,0),3) AS PCN,
+	 --ROUND(ISNULL(APD.PCN,0),3) AS PCN,
+	 CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
 	 --SUBSTRING(LTRIM(ISNULL(APD.PCN,0)),1,CHARINDEX('.',LTRIM(ISNULL(APD.PCN, ''))) + 3) AS PCN,
 	 ISNULL(V.IdTipoMaterialServicio,0) AS TipoMaterial, 
 	 ISNULL(V.IdTipoNacionalidad,0) AS IdTipoNacionalidad, 
@@ -129,4 +130,3 @@ BEGIN
 
  
 END
-
