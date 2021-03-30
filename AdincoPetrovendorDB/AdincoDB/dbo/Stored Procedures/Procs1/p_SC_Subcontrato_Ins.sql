@@ -1,6 +1,7 @@
 ﻿
-create proc p_SC_Subcontrato_Ins
+CREATE proc p_SC_Subcontrato_Ins
 (
+	@pIdSubcontrato int out,
 	@pIdSubContratista	int,
 	@pIdContratista		int,
 	@pNumeroSubContrato	varchar(max),
@@ -9,15 +10,21 @@ create proc p_SC_Subcontrato_Ins
 	@pIdCentroCostos	int,
 	@pIdMoneda			int,
 	@pPrefijoOT			varchar(13),
-	@pObjeto			varchar(300)
+	@pObjeto			varchar(300),
+	@pError				varchar(250)='' out
 )
 as
 begin
-	declare @IdSubContrato int
-	select @IdSubContrato = isnull(max(IdSubContrato),0)+1 from SC_Subcontrato
+	
+	select @pIdSubcontrato = isnull(max(IdSubContrato),0)+1 from SC_Subcontrato
 
-	if not exists (select * from SC_SubContrato where NumeroSubContrato = @pNumeroSubContrato and IdContratista = @pIdContratista)
-	--select @IdSubContrato 
+	if not exists (
+		select * 
+		from SC_SubContrato 
+		where NumeroSubContrato = @pNumeroSubContrato 
+		and IdContratista = @pIdContratista 
+		and IsActivo = 1
+	)	
 	begin
 		insert into SC_SubContrato
 								(
@@ -37,7 +44,7 @@ begin
 								)
 							values
 								(
-									@IdSubContrato,
+									@pIdSubcontrato,
 									@pIdSubContratista,
 									@pIdContratista,
 									@pNumeroSubContrato,
@@ -54,9 +61,13 @@ begin
 	end
 	else
 	begin
-		select @IdSubContrato = 1
+		set @pIdSubcontrato = 0;
+		set @pError = '[ALERTA] El número de contrato ya existe'
 	end
 
-	select IdSubContrato = @IdSubContrato
+	
 
 end
+
+
+

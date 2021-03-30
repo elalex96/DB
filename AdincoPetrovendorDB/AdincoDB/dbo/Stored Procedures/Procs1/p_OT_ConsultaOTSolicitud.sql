@@ -1,5 +1,4 @@
-﻿-- p_OT_ConsultaOTSolicitud 10013,10038,0,1,0,0,0,0,0,0,10
-CREATE Proc [dbo].[p_OT_ConsultaOTSolicitud]--10013,10038,0,1,0,0,0,0,1,0,10,'20190101','20210309'
+﻿CREATE Proc [dbo].[p_OT_ConsultaOTSolicitud]--10013,10038,0,1,0,0,0,0,1,0,10,'20190101','20210309'
 @pIdContratista int,
 @pIdContrato int,
 @pPendientes bit,
@@ -11,8 +10,8 @@ CREATE Proc [dbo].[p_OT_ConsultaOTSolicitud]--10013,10038,0,1,0,0,0,0,1,0,10,'20
 @pTodas bit,
 @pIdSubcontrato int=0,
 @pUsuarioId int,
-@Desde datetime,
-@Hasta datetime
+@Desde datetime=null,
+@Hasta datetime=null
 as
     if(@pExcedidas = 1)
     begin
@@ -58,7 +57,11 @@ as
             and sc.IdContratista = @pIdContratista 
             and sc.IdContrato = @pIdContrato
             and @pIdSubcontrato in (0,sol.IdSubContrato)
-			and sol.CreadoEl between dateadd(day, -1, @Desde) and dateadd(day, 1, @Hasta)
+			and (
+					(sol.CreadoEl between dateadd(day, -1, @Desde) and dateadd(day, 1, @Hasta))
+					OR
+					(@Desde is null AND @Hasta is null)
+				)
             group by sol.IdOTSolicitud,
             sol.IdSubContrato,
             sol.Folio,
@@ -198,7 +201,12 @@ as
             @pTodas = 1
         )
         and @pIdSubcontrato in (0,sol.IdSubContrato)   
-		and sol.CreadoEl between dateadd(day, -1, @Desde) and dateadd(day, 1, @Hasta)
+		and		
+			(
+				(sol.CreadoEl between dateadd(day, -1, @Desde) and dateadd(day, 1, @Hasta))
+				OR
+				(@Desde is null OR @Hasta is null)
+			)
         group by sol.IdOTSolicitud,
             sol.IdSubContrato,
             sol.Folio,

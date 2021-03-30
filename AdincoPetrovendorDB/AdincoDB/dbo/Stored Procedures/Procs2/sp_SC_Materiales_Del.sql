@@ -1,12 +1,13 @@
 ﻿
-create proc sp_SC_Materiales_Del
+CREATE proc sp_SC_Materiales_Del
 (
 	
-	@IdSCMaterial	int
+	@IdSCMaterial	int,
+	@pError varchar(250) out
 )
 as
 begin
-
+	set @pError = ''
 	if not exists(
 		select	1 
 		from	OT_SolicitudMaterial
@@ -24,16 +25,19 @@ begin
 		BEGIN CATCH  
 			 if( ERROR_NUMBER() = 547)
 			 begin
-				select result = 'No se puede eliminar el registro por que esta siendo utilizado'
+				set @pError = 'No se puede eliminar el registro por que esta siendo utilizado'
 			 end
 			 else
 			 begin
-				select result = ERROR_NUMBER();
+				set @pError = ERROR_NUMBER();
 			 end
 		END CATCH
 	end
 	else
 	begin
-		select result = 'No se puede eliminar el registro por que esta siendo utilizado'
+		set @pError = 'No se puede eliminar el registro por que esta siendo utilizado'
 	end		
 end
+
+
+

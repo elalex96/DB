@@ -1,5 +1,5 @@
-﻿-- p_SC_Subcontrato_Upd 78,10813,'FS10012019','100000133',338,10013,2,'OT-00001'
-create proc p_SC_Subcontrato_Upd
+﻿
+CREATE proc p_SC_Subcontrato_Upd
 (
 	@pIdSubContrato		int,
 	@pIdSubContratista	int,
@@ -8,7 +8,8 @@ create proc p_SC_Subcontrato_Upd
 	@pIdCentroCosto		int,
 	@pIdContratista		int,
 	@pIdMoneda			int,
-	@pPrefijoOT			varchar(13)
+	@pPrefijoOT			varchar(13),
+	@pError				varchar(250)='' out
 )
 as
 begin
@@ -27,7 +28,7 @@ begin
 					and		IsActivo			=	1
 				)>1)
 	begin
-		select	Error = 'Hay mas de un registro con ese Numero de Subcontrato'
+		select	@pError = '[ALERTA] Hay mas de un registro con ese Numero de Subcontrato'
 		return
 	end
 
@@ -42,7 +43,7 @@ begin
 				
 	)
 	begin
-		select Error = 'Este número de Sub Contrato esta siendo utilizado en otro contrato activo, es necesario modificar'
+		set @pError = '[ALERTA] Este número de Sub Contrato esta siendo utilizado en otro contrato activo, es necesario modificar'
 		return
 	end
 
@@ -55,9 +56,12 @@ begin
 			IdMoneda			=	@pIdMoneda,
 			PrefijoOT			=	@pPrefijoOT
 	where	IdSubContrato		=	@pIdSubContrato
-	select Error = ''
-	select * from SC_SubContrato where IdSubContrato		=	@pIdSubContrato
+	
+	
 
 
 end
+
+
+
 
