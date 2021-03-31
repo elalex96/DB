@@ -1,4 +1,11 @@
-﻿-- =============================================  
+﻿if exists (select * from sys.procedures where name = 'SP_EN_GuardarAvanceEntregableSeguimiento')
+begin
+	drop proc SP_EN_GuardarAvanceEntregableSeguimiento
+end
+
+go
+
+-- =============================================  
 -- Author:   Daniel AC  
 -- Create date: 15/10/2020  
 -- Description: Guardar avance de porcentaje de un Entregable Instancia 
@@ -31,12 +38,33 @@ BEGIN
     DECLARE @EstadoIdActualEntregable INT;
     DECLARE @PorcentajeCompleto VARCHAR(MAX);
     DECLARE @PorcentajeSinInicia VARCHAR(MAX);
+	declare @EsAdministrador bit
     DECLARE @UsuariosPorcentajes AS TABLE
     (
         EstadoId INT,
         PorcentajeXUsuario FLOAT,
         CantidadUsuarios INT
     );
+
+
+	if exists(
+	select		* 
+	from		Ap_PerfilUsuario	pu
+	inner join	AP_Perfil			p
+	on			pu.PerfilID			=	p.IdPerfil
+	inner join	AP_Rol				r
+	on			p.IdRol				=	r.IdRol
+	where		rol					like '%admin%'
+	and			pu.UsuarioID		=	@UsuarioId
+	and			p.IdContrato		=	@ContratoId
+	)
+	begin
+		select	@EsAdministrador = 1
+	end
+	else
+	begin
+		select	@EsAdministrador = 0
+	end
 
     /*TIPOS DE GUARDADO --> VARIABLE --> @TipoGuardado */
     -- 0 SI NO EXISTE REGISTROS DE SEGUIMIENTO SE CREA UN REGISTRO
@@ -107,7 +135,7 @@ BEGIN
           AND Activo = 1
     GROUP BY IdEstado;
 
-
+	
     --1. OPCIÓN DE REINICIAR EL AVANCE DE LOS PORCENTAJES 
     IF @TipoGuardado = 'REINICIAR'
     BEGIN
@@ -173,6 +201,7 @@ BEGIN
     --2.-SIRVE PARA CUANDO EL USUARIO AGREGA SU AVANCE DE PORCENTAJE POR INTERFAZ
     IF @TipoGuardado = 'PERSONALIZADO'
     BEGIN
+		--select @Estado
         --FINALIZAR SI NO VIENE NINGUNA DE ESAS OPCIONES 
         IF @Estado NOT IN ( 'ELABORACION', 'REVISION', 'APROBACION' )
             RETURN;
@@ -189,17 +218,17 @@ BEGIN
             SET @PorcentajeXusuario = @PorcentajeXusuario * (CAST(@PorcentajeAvance AS FLOAT) / CAST(100 AS FLOAT));
 
             --ACTUALIZAR EL PORCENTAJE DEL USUARIO ACTUAL 
-            UPDATE dbo.EN_AvanceEntregableSeguimientoUsuario
-            SET Porcentaje = @PorcentajeXusuario,
-                EditadoPor = @UsuarioId,
-                EditadoEl = GETDATE(),
-                NombreAvance = @NombreClave,
-                ComentarioUsuario = @Comentario,
-                FechaModificacionUsuario = GETDATE()
-            WHERE IdEstado = @EnElaboracion --> EN ELABORACIÓN
-                  AND EntregableInstanciaId = @EntregableInstanciaId
-                  AND Activo = 1
-                  AND UsuarioId = @UsuarioId;
+            UPDATE	dbo.EN_AvanceEntregableSeguimientoUsuario
+            SET		Porcentaje									=	@PorcentajeXusuario,
+					EditadoPor									=	@UsuarioId,
+					EditadoEl									=	GETDATE(),
+					NombreAvance								=	@NombreClave,
+					ComentarioUsuario							=	@Comentario,
+					FechaModificacionUsuario					=	GETDATE()
+            WHERE	IdEstado									=	@EnElaboracion --> EN ELABORACIÓN
+            AND		EntregableInstanciaId						=	@EntregableInstanciaId
+            AND		Activo										=	1
+            AND		((UsuarioId									=	@UsuarioId) or @EsAdministrador = 1)
 
             SET @Historial = CONCAT(@NombreUsuario, ' actualizó su avance ha: ', @NombreClave);
             SET @EstadoIdModificado = @EnElaboracion;
@@ -208,7 +237,7 @@ BEGIN
 
         IF @Estado = 'REVISION'
         BEGIN
-
+			--select 'ok'
             SELECT @PorcentajeXusuario = PorcentajeXUsuario
             FROM @UsuariosPorcentajes
             WHERE EstadoId = @EnRevision; --> EN REVISIÓN	
@@ -216,33 +245,33 @@ BEGIN
             --OBTENER EL PORCENTAJE SEGUN SU AVANCE
             -- SI LE TOCAN 33% PERO SU AVANCE ES DE 50% EL PORCENTAJE DEBERIA SER EL 16.3333%
             SET @PorcentajeXusuario = @PorcentajeXusuario * (CAST(@PorcentajeAvance AS FLOAT) / CAST(100 AS FLOAT));
-
+			select @PorcentajeXusuario
             --ACTUALIZAR EL PORCENTAJE DEL USUARIO ACTUAL 
-            UPDATE dbo.EN_AvanceEntregableSeguimientoUsuario
-            SET Porcentaje = @PorcentajeXusuario,
-                EditadoPor = @UsuarioId,
-                EditadoEl = GETDATE(),
-                NombreAvance = @NombreClave,
-                ComentarioUsuario = @Comentario,
-                FechaModificacionUsuario = GETDATE()
-            WHERE IdEstado = @EnRevision --> EN REVISIÓN
-                  AND Activo = 1
-                  AND EntregableInstanciaId = @EntregableInstanciaId
-                  AND UsuarioId = @UsuarioId;
+            UPDATE	dbo.EN_AvanceEntregableSeguimientoUsuario
+            SET		Porcentaje									=	@PorcentajeXusuario,
+					EditadoPor									=	@UsuarioId,
+					EditadoEl									=	GETDATE(),
+					NombreAvance								=	@NombreClave,
+					ComentarioUsuario							=	@Comentario,
+					FechaModificacionUsuario					=	GETDATE()
+            WHERE	IdEstado									=	@EnRevision --> EN REVISIÓN
+            AND		Activo										=	1
+            AND		EntregableInstanciaId						=	@EntregableInstanciaId
+            AND		((UsuarioId									=	@UsuarioId) or @EsAdministrador = 1)
 
             --ACTUALIZA A TODOS LOS ELABORADORES 				
 
-            UPDATE AEU
-            SET Porcentaje = UP.PorcentajeXUsuario,
-                EditadoPor = @UsuarioId,
-                EditadoEl = GETDATE(),
-                NombreAvance = @PorcentajeCompleto
-            FROM EN_AvanceEntregableSeguimientoUsuario AEU
-                JOIN @UsuariosPorcentajes UP
-                    ON AEU.IdEstado = UP.EstadoId
-            WHERE AEU.IdEstado = @EnElaboracion --> EN ELABORACIÓN
-                  AND EntregableInstanciaId = @EntregableInstanciaId
-                  AND Activo = 1;
+            UPDATE	AEU
+            SET		Porcentaje									=	UP.PorcentajeXUsuario,
+					EditadoPor									=	@UsuarioId,
+					EditadoEl									=	GETDATE(),
+					NombreAvance								=	@PorcentajeCompleto
+            FROM	EN_AvanceEntregableSeguimientoUsuario		AEU
+			JOIN	@UsuariosPorcentajes						UP
+			ON		AEU.IdEstado								=	UP.EstadoId
+            WHERE	AEU.IdEstado								=	@EnElaboracion --> EN ELABORACIÓN
+			AND		EntregableInstanciaId						=	@EntregableInstanciaId
+			AND		Activo										=	1;
 
             SET @Historial = CONCAT(@NombreUsuario, ' actualizó su avance ha: ', @NombreClave);
             SET @EstadoIdModificado = @EnRevision;
@@ -270,7 +299,7 @@ BEGIN
             WHERE IdEstado = @EnAprobacion --> EN APROBACIÓN	
                   AND Activo = 1
                   AND EntregableInstanciaId = @EntregableInstanciaId
-                  AND UsuarioId = @UsuarioId;
+                  AND ((UsuarioId	 =	@UsuarioId) or @EsAdministrador = 1)
 
 
             --ACTUALIZA A TODOS REVISORES 			 
@@ -384,7 +413,7 @@ BEGIN
         IF @Estado = 'REVISION'
         BEGIN
 
-            --ACTUALIZA A TODOS LOS REVISORES 	
+  --ACTUALIZA A TODOS LOS REVISORES 	
 
             UPDATE AEU
             SET Porcentaje = UP.PorcentajeXUsuario,
@@ -576,7 +605,7 @@ BEGIN
             --ACTUALIZA EL PORCENTAJE GENERAL DE AVANCE DEL ENTREGABLE INSTANCIA
             UPDATE AE
             SET AE.Porcentaje = 100, --> AL SUBIR EL ACUSE EN TEORIA EL ENTREGABLE YA ESTA APROBADO
-                AE.EditadoPor = @UsuarioId,
+    AE.EditadoPor = @UsuarioId,
                 AE.EditadoEl = GETDATE()
             FROM dbo.EN_AvanceEntregableSeguimiento AE
             WHERE AE.EntregableInstanciaId = @EntregableInstanciaId
@@ -610,4 +639,5 @@ BEGIN
     END;
 
 END;
+
 
