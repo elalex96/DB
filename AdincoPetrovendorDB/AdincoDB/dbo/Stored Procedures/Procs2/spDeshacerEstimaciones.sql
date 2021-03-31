@@ -1,12 +1,18 @@
-﻿-- spDeshacerEstimaciones 6, 10, 3
-create proc spDeshacerEstimaciones --6, 10, 3
+﻿CREATE proc spDeshacerEstimaciones --6, 10, 3
 (
 	@pIdOTEstimacion	int,
 	@pIdUsuario			int,
-	@pIdContrato		int
+	@pIdContrato		int,
+	@pError				varchar(250) out
 )
 as
 begin
+
+	BEGIN TRY
+
+	BEGIN TRAN
+
+	set @pError = ''
 
 	declare @IdOTSolicitud		int,@idPedido int,@folioEstimacion2 varchar(20),@motivo varchar(100), @fechaCierre datetime
 
@@ -42,10 +48,11 @@ begin
 		inner join	petrovendor..[MM_AceptacionCartaPCN]	cn 
 		on			cn.IdAceptacionPedido					=	ap.IdAceptacionPedido 
 		and			cn.IdEstatus							=	2
-		where		e.IdOTEstimacion						=	@pIdOTEstimacion
+		where		e.IdOTEstimacion						=	@pIdOTEstimacion AND
+		ap.Activo = 1
 	)
 	begin
-		select	ErrorMessage = 'No es posible deshacer la estimación'
+		set	@pError = '[ALERTA] No es posible deshacer la estimación. Existe una carta de CN aprobada ligada a la estimación'
 	end
 	else
 	begin
@@ -54,7 +61,7 @@ begin
 			and (select count(*) from OT_Estimacion			where		IdOTEstimacion						=	@pIdOTEstimacion)=0
 		)
 		begin
-			select ErrorMessage = 'No hay registros a borrar'
+			SET @pError = '[ALERTA] No se encontró la estimación, no fue posible eliminar'
 		end
 		else
 		begin
@@ -74,18 +81,29 @@ begin
 
 			end
 
+			--Deshacer estimación
 			update	OT_Estimacion
 			set		Cancelada			=	1,
 					FechaCancelacion	=	GETDATE()
 			where	IdOTEstimacion		=	@pIdOTEstimacion
-			--delete from OT_EstimacionDetalle	where		IdOTEstimacion						=	@pIdOTEstimacion
-			--delete from OT_Estimacion			where		IdOTEstimacion						=	@pIdOTEstimacion
+
+			--Rechazar Carta(s)
+
+			UPDATE petrovendor..[MM_AceptacionCartaPCN]
+			SET IdEstatus = 3,
+				ComentarioEvaluador = isnull(ComentarioEvaluador,'') + '|Se rechazó carta a través de cancelación en estimación control de obra '+convert(varchar,getdate(),103) +' '+ convert(varchar,getdate(),108)
+			from petrovendor..[MM_AceptacionCartaPCN] c
+			inner join petrovendor..MM_AceptacionPedido ap on ap.IdAceptacionPedido = c.idAceptacionPedido
+			inner join Adinco..OT_Estimacion e on e.IdPedido = ap.idpedido
+			where isnull(c.IdEstatus,1) = 1 AND
+			e.IdOTEstimacion = @pIdOTEstimacion
+			
 
 			
 			declare	@folioEstimacion	varchar(50)
 
 			select	@IdOTSolicitud		=	IdOTSolicitud,
-					@folioEstimacion	=	'Se canceló estimacion ' + FolioEstimacion
+					@folioEstimacion	=	'Se canceló Estimacion ' + FolioEstimacion
 			from	OT_Estimacion 
 			where	IdOTEstimacion		=	@pIdOTEstimacion
 
@@ -94,14 +112,23 @@ begin
 		end
 
 		
-		select ErrorMessage = ''
+		
 	end
 
 
 	end
 	else
 	begin
-		select ErrorMessage = 'No tienes los privilegios para realizar la acción'
+		SET @pError = '[ALERTA] No tienes los privilegios para realizar la acción'
 	end
+
+	
+	COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRAN
+
+		SET @pError = 'ERROR spDeshacerEstimaciones '+ ERROR_MESSAGE() + ' LINEA:'+ CAST(ERROR_LINE() AS VARCHAR)
+	END CATCH
 end
 
