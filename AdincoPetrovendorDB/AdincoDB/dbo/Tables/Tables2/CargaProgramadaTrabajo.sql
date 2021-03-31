@@ -14,8 +14,10 @@ begin
 		UnidadesTrabajo				decimal (10,2),
 		Estatus						varchar(100),
 		IdContrato					int,
-		Fecha						smalldatetime
-		constraint					PK_CargaProgramadaTrabajo	primary key (IdCargaProgramadaTrabajo)
+		Fecha						smalldatetime,
+		IdUsuario					int
+		constraint					PK_CargaProgramadaTrabajo				primary key (IdCargaProgramadaTrabajo)
+		constraint					FK_CargaProgramadaTrabajo_AP_Usuario	foreign key (IdUsuario)					references AP_Usuario(UsuarioID)
 	)
 end
 

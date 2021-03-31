@@ -13,7 +13,8 @@ create proc spCargaProgramadaTrabajoIns
 	@UnidadesActividad	decimal(10,2),
 	@UnidadesTrabajo	decimal(10,2),
 	@Estatus			varchar(100),
-	@IdContrato			int
+	@IdContrato			int,
+	@IdUsuario			int
 )
 as
 begin
@@ -30,7 +31,8 @@ begin
 					UnidadesTrabajo,
 					IdContrato,
 					Fecha,
-					Estatus
+					Estatus,
+					IdUsuario
 				)
 			values
 				(
@@ -42,6 +44,7 @@ begin
 					@UnidadesTrabajo,
 					@IdContrato,
 					Getdate(),
-					@Estatus
+					@Estatus,
+					@IdUsuario
 				)
 end
