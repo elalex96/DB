@@ -49,7 +49,8 @@ begin
 		on			cn.IdAceptacionPedido					=	ap.IdAceptacionPedido 
 		and			cn.IdEstatus							=	2
 		where		e.IdOTEstimacion						=	@pIdOTEstimacion AND
-		ap.Activo = 1
+		ap.Activo = 1 AND
+		isnull(cn.IdEliminado,0) = 0
 	)
 	begin
 		set	@pError = '[ALERTA] No es posible deshacer la estimación. Existe una carta de CN aprobada ligada a la estimación'
