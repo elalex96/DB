@@ -10,6 +10,11 @@ go
 -- Create date: 15/10/2020  
 -- Description: Guardar avance de porcentaje de un Entregable Instancia 
 -- ============================================= 
+-- =============================================  
+-- Author:   Ramón Portales
+-- Update date: 06/04/2021
+-- Description: Guardar avance de porcentaje de un Entregable Instancia cuando es Administrador
+-- ============================================= 
 CREATE PROCEDURE [dbo].[SP_EN_GuardarAvanceEntregableSeguimiento]
     @EntregableInstanciaId INT,
     @ClaveAvance VARCHAR(100),
