@@ -1,5 +1,11 @@
-﻿
-CREATE PROCEDURE dbo.sp_BI_LlenaTabla_BI_Recepcion
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_BI_LlenaTabla_BI_Recepcion]    Script Date: 30/03/2021 10:59:08 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[sp_BI_LlenaTabla_BI_Recepcion]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -42,7 +48,7 @@ BEGIN
         Contrato VARCHAR(3000),
         Comprador VARCHAR(3000),
         Requisitor VARCHAR(3000),
-        JustificacionRequisicion VARCHAR(3000),
+        JustificacionRequisicion VARCHAR(8000),
         FechaAprobacionPedido DATETIME,
         RegistroPedido DATETIME,
         Moneda VARCHAR(100),
@@ -84,7 +90,9 @@ BEGIN
 		Modelo VARCHAR(MAX),
 		Marca VARCHAR(MAX),
 		NumeroParte VARCHAR(MAX),
-		CentroCosto VARCHAR(300)
+		CentroCosto VARCHAR(300),
+		ADN VARCHAR(3000), 
+		IdMaterial INT
     );
 
     DECLARE @PedidoDetalleOrden TABLE
@@ -163,7 +171,7 @@ BEGIN
                    'Confirmación Rechazada'
                WHEN P.RecepcionServicio IS NULL
                     AND (DATEDIFF(MINUTE, HV.FechaVigencia, GETDATE())) >= 0
-                    AND TAO.IdEstatusOperacion = 2 THEN
+                   AND TAO.IdEstatusOperacion = 2 THEN
                    'Confirmación Vencida '
                WHEN P.RecepcionServicio IS NULL
                     AND (DATEDIFF(MINUTE, HV.FechaVigencia, GETDATE())) <= 0
@@ -222,7 +230,9 @@ BEGIN
 		Modelo,
 		Marca,
 		NumeroParte,
-		CentroCosto
+		CentroCosto,
+		ADN,
+		IdMaterial
     )
     SELECT P.IdPedido,
            PD.IdPedidoDetalle,
@@ -239,7 +249,9 @@ BEGIN
 		   MM.Modelo,
 		   MM.Marca,
 		   MM.NumeroParte,
-		   CC.CentroCosto
+		   CC.CentroCosto,
+		   SPD.observaciones,
+		   PD.IdMaterial
     FROM @Pedidos AS P
         JOIN MM_PedidoDetalle AS PD (NOLOCK)
             ON P.IdPedido = PD.IdPedido
@@ -254,7 +266,7 @@ BEGIN
         JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL (NOLOCK)
             ON SPD.IdSolicitudPedidoDetalle = SPDL.IdSolicitudPedidoDetalle
 		JOIN dbo.CC_CentroCosto AS CC (NOLOCK)
-		ON SPDL.IdCentroCosto=CC.IdCentroCosto		                          
+		ON SPDL.IdCentroCosto=CC.IdCentroCosto		            
         JOIN Adinco.dbo.CO_Instalacion AS INS (NOLOCK)
             ON SPDL.IdInstalacion = INS.IdInstalacion
         LEFT JOIN dbo.MM_Material MM (NOLOCK)
@@ -366,7 +378,7 @@ BEGIN
         JOIN dbo.RelacionCartaCNPedido AS RCN (NOLOCK)
             ON AP.IdAceptacionPedido = RCN.IdAceptacionPedido
         JOIN DG_Domicilio AS LE (NOLOCK)
-            ON AP.IdDomicilioEntrega = LE.IdDomicilio
+           ON AP.IdDomicilioEntrega = LE.IdDomicilio
         LEFT JOIN PV_PaisRepublica AS PAIS (NOLOCK)
             ON LE.IdPais = PAIS.id
     WHERE ISNULL(AP.IdEstatusEliminado, 0) <> 1; --> MOSTRAR ACEPTACIONES NO ELIMINADAS    
@@ -546,7 +558,9 @@ BEGIN
 		Modelo,
 		Marca,
 		NumeroParte,
-		CentroCosto
+		CentroCosto,
+		ADN,
+		IdMaterial
     )
     SELECT AP.IdPedido AS 'idunico pedido',
            P.IdSolicitudPedido AS 'idunico de requisición',
@@ -607,7 +621,9 @@ BEGIN
 		   PD.Modelo,
 		   PD.Marca,
 		   PD.NumeroParte,
-		   PD.CentroCosto
+		   PD.CentroCosto,
+		   PD.ADN,
+		   PD.IdMaterial
     FROM @Aceptaciones AS AP
         JOIN @Pedidos AS P
             ON AP.IdPedido = P.IdPedido
@@ -665,7 +681,9 @@ BEGIN
 		Modelo,
 		Marca,
 		NumeroParte,
-		CentroCosto
+		CentroCosto,
+		ADN,
+		IdMaterial
     )
     SELECT P.IdPedido AS 'idunico pedido',
            P.IdSolicitudPedido AS 'idunico de requisición',
@@ -677,7 +695,7 @@ BEGIN
            PD.PartidaDetalle AS 'Descripción',                        --> DESCRIPCIÓN LARGA DEL PEDIDO
            '' AS 'Recibido Por',                                      --> POR DEFAULT '' POR QUE NO TIENEN ACEPTACIÓN DE PEDIDO 
            PD.Cantidad AS 'Cantidad Pedido',
-           0 AS 'Cantidad Aceptada',                                  --> POR DEFAULT 0 POR QUE NO TIENEN ACEPTACIÓN DE PEDIDO 
+           0 AS 'Cantidad Aceptada',                        --> POR DEFAULT 0 POR QUE NO TIENEN ACEPTACIÓN DE PEDIDO 
            PDR.CantidadRestante AS 'Cantidad Restante',
            0 AS 'Monto Aceptado',                                     --> POR DEFAULT 0 POR QUE NO TIENEN ACEPTACIÓN DE PEDIDO 
            NULL AS 'Fecha de Recepción',                              --> POR DEFAULT NULL POR QUE NO TIENEN ACEPTACIÓN DE PEDIDO 
@@ -706,7 +724,9 @@ BEGIN
 		   PD.Modelo,
 		   PD.Marca,
 		   PD.NumeroParte,
-		   PD.CentroCosto
+		   PD.CentroCosto,
+		   PD.ADN,
+		   PD.IdMaterial
     FROM @PedidoDetalle AS PD
         JOIN @MaterialesRestantes AS PDR
             ON PD.IdPedidoDetalle = PDR.IdPedidoDetalle
@@ -715,4 +735,3 @@ BEGIN
             ON PD.IdPedido = P.IdPedido;
 
 END;
-
