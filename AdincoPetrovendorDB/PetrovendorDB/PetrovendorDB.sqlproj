@@ -10573,5 +10573,17 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_TA_EnvioCorreosPorNotificacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_PV_MM_MaterialUnidad_Cmb.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidarPreRegistroProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerFlujosAprobacion.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_ReasignarAprobadorComprobanteExtranjero.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_ReasignarAprobadorCompraDirecta.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerProveedorOperadoraPorTipoOperacion.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerDetalleAprobacionCompraDirecta.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_ConsultarPosiblesAprobadoresPorOperacion.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_AgregarNuevoFlujoAprobacionComprobanteDirecto.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_AgregarNuevoFlujoAprobacionCompraDirecta.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerDetalleAprobacionComprobanteDirecto.sql" />
   </ItemGroup>
 </Project>
