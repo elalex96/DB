@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_AD_ActualizacionTerminosCondicionesPedido]    Script Date: 08/04/2021 01:29:12 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_AD_ActualizacionTerminosCondicionesPedido]    Script Date: 09/04/2021 11:25:19 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: <05/04/2021>
 -- Description:	<Actualizacion de los terminos y condiciones>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_AD_ActualizacionTerminosCondicionesPedido]
+ALTER PROCEDURE [dbo].[SP_AD_ActualizacionTerminosCondicionesPedido]
 	-- Add the parameters for the stored procedure here
 	@IdOperacion INT,
 	@IdTerminosCondiciones INT,
@@ -27,7 +27,7 @@ BEGIN
 								FROM dbo.TA_Operacion AS OP
 								LEFT JOIN dbo.MM_SolicitudPedido AS SP ON OP.IdDocumento = SP.IdSolicitudPedido
 								LEFT JOIN dbo.MM_Pedido AS P ON SP.IdSolicitudPedido = P.IdSolicitudPedido AND OP.NoVersion = P.Version
-								LEFT JOIN dbo.MM_Pedidos AS PS ON P.IdPedido = PS.IdIdentificador AND  PS.IdTipoPedido = 2
+								LEFT JOIN dbo.MM_Pedidos AS PS ON P.IdPedido = PS.IdIdentificador AND  PS.IdTipoPedido IN (2,4,6)
 								WHERE OP.IdOperacion = @IdOperacion
 								);
 	DECLARE @IDPEDIDO INT = (SELECT TOP 1 ISNULL(P.IdPedido,0)
