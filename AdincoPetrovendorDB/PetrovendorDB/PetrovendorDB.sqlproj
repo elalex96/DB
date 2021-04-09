@@ -10580,6 +10580,12 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_ActualizacionDatosPedidoDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_ConsultaHistorialActualizacionesPedido.sql" />
     <Build Include="dbo\Tables\AD_HistorialActualizacionPedido.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_CC_CentroCosto_Cmb.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_CentroCostoFiltro_Grd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_S_Proveedor_Cmb.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_S_Usuario_Cmb.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spCentroCostoFiltroDel.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spCentroCostoFiltroIns.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
