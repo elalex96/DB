@@ -1,4 +1,11 @@
-﻿-- =============================================  
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 06/04/2021 02:40:53 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:  Manuel Cruz  
 -- Create date: 26-06-17  
 -- Description:   
@@ -26,7 +33,10 @@
 -- Create date: 27/09/2019  
 -- Description: se modifico el ordern del nombre del representante legal (Nombre, Apellidos)  
 -- =============================================  
-
+-- Author:  Alexander Gomez  
+-- Create date: 06/04/2021
+-- Description: Redonde a 3 digitos del PCN segun la SE (Modificacion)
+-- =============================================  
 CREATE PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --480,2058,0,0,'',46
 -- Add the parameters for the stored procedure here  
 @IdProveedor INT,
@@ -594,7 +604,8 @@ BEGIN
            ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
            ISNULL(BSA.Nombre, 'NO CONTENIDO') AS NombreActividad,
            ISNULL(V.ValorFactura, 0) AS ValorFactura,
-           ROUND(APD.PCN, 3) AS PCN,
+		   CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
+           --ROUND(APD.PCN, 3) AS PCN,
            V.IdTipoMaterialServicio AS IdTipoMaterial,
            POD.MaterialCotizadoTextoC,
            AP.IdAceptacionPedido

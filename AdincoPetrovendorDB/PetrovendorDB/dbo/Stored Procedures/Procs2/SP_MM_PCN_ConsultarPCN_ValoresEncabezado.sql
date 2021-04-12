@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 06/04/2021 02:42:05 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14/04/2018
 -- Description:	Agregue nuevos columnas a la consulta TipoMaterial, IdTipoNacionalidad, IdTipoCriterio, IdCatalogoHidrocarburos y si es nueva se calcula el valor factura segun 
@@ -130,3 +137,4 @@ BEGIN
 
  
 END
+

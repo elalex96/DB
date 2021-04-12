@@ -10574,6 +10574,9 @@
     <Build Include="dbo\Stored Procedures\Procs1\sp_PV_MM_MaterialUnidad_Cmb.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidarPreRegistroProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerFlujosAprobacion.sql" />
+
+    <Build Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerDetalleFacturaMercadeo.sql" />
+
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_ConsultaPedidosYSolepeds.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_ActualizacionTerminosCondicionesPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_DiasCreditoPedidoDetalle.sql" />
@@ -10597,5 +10600,6 @@
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_AgregarNuevoFlujoAprobacionComprobanteDirecto.sql" />
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_AgregarNuevoFlujoAprobacionCompraDirecta.sql" />
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerDetalleAprobacionComprobanteDirecto.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\AD_SP_CambiarEstatusFacturaMercadeo.sql" />
   </ItemGroup>
 </Project>
