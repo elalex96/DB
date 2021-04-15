@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5]    Script Date: 06/04/2021 02:32:17 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Update date: 09-02-18
 -- Description:	Muestra Detalle de aceptación pedido detalle 
@@ -6,6 +13,10 @@
 -- Author:		Alexander Gomez
 -- Update date: 24/09/2019
 -- Description:	Redonde a 3 digitos del PCN segun la SE
+-- =============================================
+-- Author:		Alexander Gomez
+-- Update date: 06/04/2021
+-- Description:	Redonde a 3 digitos del PCN segun la SE (Modificacion)
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5] --44,473,1061,0,0
 	-- Add the parameters for the stored procedure here
@@ -32,7 +43,8 @@ AS
 		  APD.Cantidad,
 		  APD.Excedente, 
 		  PD.PrecioUnitario,  
-		  ROUND(ISNULL(APD.PCN,0),3) AS PCN,
+		  CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
+		  --ROUND(ISNULL(APD.PCN,0),3) AS PCN,
 		  --SUBSTRING(LTRIM(ISNULL(APD.PCN,0)),1,CHARINDEX('.',LTRIM(ISNULL(APD.PCN, ''))) + 3) AS PCN,	  
 		  TM.TipoMonedaCorto AS Moneda
 		  FROM MM_AceptacionPedidoDetalle AS APD
@@ -53,6 +65,4 @@ AS
 		  PD.PrecioUnitario,
 		  APD.PCN,
 		  TM.TipoMonedaCorto
-     END;
-
-
+END;

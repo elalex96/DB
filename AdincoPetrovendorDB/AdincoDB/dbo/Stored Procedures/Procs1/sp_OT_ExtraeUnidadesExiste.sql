@@ -11,8 +11,4 @@ BEGIN
         FROM Petrovendor..PV_MM_MaterialUnidad
         WHERE	IsActivo = 1
 		ORDER BY Unidad ASC
-
-
 END;
-
-

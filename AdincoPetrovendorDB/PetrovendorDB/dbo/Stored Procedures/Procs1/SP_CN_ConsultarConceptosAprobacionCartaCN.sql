@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 09/04/2021 10:32:37 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:      Alexander Gomez
 -- Create date: 05/06/2018
 -- Description: Consulta de los conceptos de la carta de contenido nacional
@@ -53,7 +60,8 @@ BEGIN
            ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
            ISNULL(BSA.Nombre, 'NO CONTENIDO')AS NombreActividad,
            ISNULL(V.ValorFactura,0) AS ValorFactura,
-           ROUND(APD.PCN, 3) AS PCN,
+		   CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
+           --ROUND(APD.PCN, 3) AS PCN,
            V.IdTipoMaterialServicio AS  IdTipoMaterial,
            APD.ClasificacionCN,
 		   POD.MaterialCotizadoTextoC,
@@ -143,7 +151,7 @@ BEGIN
     IdAceptacionDetalle, 
     NombreActividad,
     CASE WHEN  ISNULL(SUM(CN),0) > 0 THEN 
-    ROUND((SUM(CN)/SUM(MontoAcumulado)),3)
+    (SUM(CN)/SUM(MontoAcumulado))
     ELSE 
      0
     END  
