@@ -13049,6 +13049,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDetalleDocumentosEntregables.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregables.sql" />
     <Build Include="dbo\Tables\Tables1\EN_DocumentoGeneral.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\sp_OT_ExtraeUnidadesExiste.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
