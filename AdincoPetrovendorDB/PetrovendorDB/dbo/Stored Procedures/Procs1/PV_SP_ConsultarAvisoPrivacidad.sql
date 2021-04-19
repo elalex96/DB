@@ -13,5 +13,5 @@ CREATE procedure PV_SP_ConsultarAvisoPrivacidad
 	/*-------------------------------------------------------------*/
 AS
 BEGIN
-	SELECT AvisoPrivacidad FROM dbo.PV_AvisoPrivacidad WHERE IdAvisoPrivacidad = 1
+	SELECT AvisoPrivacidad FROM dbo.PV_AvisoPrivacidad WHERE IdAvisoPrivacidad = 1 
 END
