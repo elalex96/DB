@@ -4,7 +4,7 @@
     [Folder]         VARCHAR (100)    NOT NULL,
     [UUIDAmazon]     UNIQUEIDENTIFIER NOT NULL,
     [NombreArchivo]  VARCHAR (250)    NOT NULL,
-    [Meta]           VARCHAR (50)     NOT NULL,
+    [Meta]           VARCHAR (1000)     NOT NULL,
     [CreadoPor]      INT              NOT NULL,
     [CreadoEl]       DATETIME         NOT NULL,
     [ModificadoPor]  INT              NULL,
