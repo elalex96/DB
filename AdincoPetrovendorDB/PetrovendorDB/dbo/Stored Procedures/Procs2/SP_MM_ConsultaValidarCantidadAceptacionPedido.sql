@@ -1,4 +1,20 @@
-﻿-- =============================================  
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaValidarCantidadAceptacionPedido'
+)
+    DROP PROCEDURE SP_MM_ConsultaValidarCantidadAceptacionPedido;
+GO 
+
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaValidarCantidadAceptacionPedido]    Script Date: 21/04/2021 11:07:19 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:  Daniel A Cruz  
 -- Create date: 24/Marzo/2017  
 -- Description: Consultar Validar Cantidad de pedido para poder agregar una Aceptación de Pedido    
@@ -41,18 +57,18 @@ BEGIN
   
    
   
- SET @CantidadFaltante = ROUND(ISNULL(@CantidadSolicitadaPedido,0),3) - ROUND(ISNULL(@CantidadYaAceptada,0),3)  
+ SET @CantidadFaltante = ROUND(ISNULL(@CantidadSolicitadaPedido,0),5) - ROUND(ISNULL(@CantidadYaAceptada,0),5)  
   
     IF @CantidadFaltante < 0  
   SET @CantidadFaltante = 0  
   
-   IF @Cantidad > ROUND(@CantidadFaltante,3)  
+   IF @Cantidad > ROUND(@CantidadFaltante,5)  
     BEGIN  
-  SELECT 'CANTIDAD_INVALIDA,'+CAST( ROUND(ISNULL(@CantidadFaltante,0),3) AS NVARCHAR(MAX))  AS VALIDACION  
+  SELECT 'CANTIDAD_INVALIDA,'+CAST( ROUND(ISNULL(@CantidadFaltante,0),5) AS NVARCHAR(MAX))  AS VALIDACION  
     END   
    ELSE   
     BEGIN  
-  SELECT 'CANTIDAD_VALIDA,'+CAST(ROUND(ISNULL(@CantidadFaltante,0),3) AS NVARCHAR(MAX))  AS VALIDACION  
+  SELECT 'CANTIDAD_VALIDA,'+CAST(ROUND(ISNULL(@CantidadFaltante,0),5) AS NVARCHAR(MAX))  AS VALIDACION  
     END   
    
 END
