@@ -80,17 +80,21 @@ BEGIN
             ON F.IdFactura = AF.IdFactura
         INNER JOIN TA_Operacion AS O
             ON O.IdDocumento = AF.IdAceptacionFactura
+	    AND O.IdTipoOperacion = 10 -->Aprobación Factura
         INNER JOIN TA_Tarea AS T
             ON T.IdOperacion = O.IdOperacion
         INNER JOIN TA_Estatus AS E
             ON E.IdEstatus = O.IdEstatusOperacion
         INNER JOIN MM_AceptacionPedido AS AP
             ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+	    AND AP.IdEliminado IS NULL
         INNER JOIN MM_Pedido AS PE
             ON PE.IdPedido = AP.IdPedido
         INNER JOIN MM_Pedidos AS PG
             ON PE.IdPedido = PG.IdIdentificador
-               AND PG.IdProveedorCliente = @IdProveedor
+	    AND PE.IdProveedorCompras	=	PG.IdProveedorCliente
+            AND PG.IdProveedorCliente = @IdProveedor
+	    AND PG.IdTipoPedido in (2,4,6)
         INNER JOIN S_Proveedor AS PR
             ON PR.IdProveedor = PE.IdSubcontratista
         LEFT JOIN dbo.MM_TipoPedido AS TP
