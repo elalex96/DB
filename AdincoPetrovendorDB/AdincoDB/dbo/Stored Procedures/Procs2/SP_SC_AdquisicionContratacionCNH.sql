@@ -1171,7 +1171,7 @@ BEGIN
                        'TRES COTIZACIONES'  
                 ELSE  
                        UPPER(TP.TipoPedido)  
-               END + 'TEST' AS MecanismoContratacion,  
+               END AS MecanismoContratacion,  
                UPPER(solPed.MotivoUrgencia) AS 'Nombre Contrato C-P',  
                PSS.IdPedido AS 'No. Contrato',  
                CONVERT(VARCHAR(10),isnull(P.FechaRecepcionServicio,solPed.FechaEntregaRequerida), 105) AS 'Fecha Inicio Contrato',  
