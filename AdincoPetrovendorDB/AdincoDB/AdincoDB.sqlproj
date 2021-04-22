@@ -13050,6 +13050,8 @@
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregables.sql" />
     <Build Include="dbo\Tables\Tables1\EN_DocumentoGeneral.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_OT_ExtraeUnidadesExiste.sql" />
+    <Build Include="dbo\Tables\Tables1\BitacoraExcepcionNoControlada.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_BitacoraExcepcionNoControlada.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
