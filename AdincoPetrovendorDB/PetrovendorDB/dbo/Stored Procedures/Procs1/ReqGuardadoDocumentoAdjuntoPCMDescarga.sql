@@ -8,7 +8,7 @@ CREATE PROCEDURE [dbo].[ReqGuardadoDocumentoAdjuntoPCMDescarga]
     @IdSolicitudPedido INT
 AS
 BEGIN
-
+	--Falto actualizar este sp en produccion
     SELECT IdDocumento,--0
            NombreDocumento,--1
 		   Extension,--2
