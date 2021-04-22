@@ -32,6 +32,7 @@ CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionCNFactura] --44,4
     @Estatus INT  
 AS  
 BEGIN  
+	--Este SP estaba desactualizado en la BD de producción
     -- SET NOCOUNT ON added to prevent extra result sets from    
     -- interfering with SELECT statements.    
     SET NOCOUNT ON;  
@@ -652,5 +653,5 @@ BEGIN
 			 Contrato,
 			 IdSolicitudPedido
     ORDER BY IdAceptacionPedido DESC;  
-  
+	
 END; 

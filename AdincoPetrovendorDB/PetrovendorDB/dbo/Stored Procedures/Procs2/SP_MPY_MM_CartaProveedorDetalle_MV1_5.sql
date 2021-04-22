@@ -1,4 +1,3 @@
--- =============================================
 -- Author: DANIEL AC 
 -- Create date: 16-05-18
 -- Description:	Actualización agrupación de actividades 
@@ -8,7 +7,11 @@
 -- Create date: 18-02-21
 -- Description:	adecuacion para reporte DEA PROVEEDOR A PROVEEDOR
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedorDetalle_MV1_5] --2682
+-- Author: Luis David De La Cruz
+-- Create date: 18-04-21
+-- Description:	Validación del contrato para generar la carta de contenido nacional de murphy
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_MPY_MM_CartaProveedorDetalle_MV1_5] --2682
     -- Add the parameters for the stored procedure here
     @IdPedido INT,
 	/*--------------------
@@ -32,7 +35,7 @@ BEGIN
 	CREATE TABLE #ACTIVIDAD_AGRUPADA(CodigoCatalogo NVARCHAR(MAX), NombreActividad NVARCHAR(MAX), CN FLOAT, MontoAcumulado MONEY, IdTipoMaterial INT,DescPartidas NVARCHAR(max))
 	/*OBTENER TODOS LOS MATERIALES/SERVICIOS DE UNA ACEPTACIÓN DE PEDIDO Y AGREGARLOS A LA TABLA ACTIVIDA PARA LUEGO AGRUPARLOS POR TIP0 DE MATERIAL*/
 
-	IF @IdContrato IS NOT NULL
+	IF @IdContrato != 0
 	BEGIN
 		
 			INSERT INTO #ACTIVIDAD
