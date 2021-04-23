@@ -2,7 +2,7 @@
     [IdTipoCambio] INT             IDENTITY (1, 1) NOT NULL,
     [IdMoneda]     INT             NOT NULL,
     [Fecha]        DATE            NOT NULL,
-    [TipoCambio]   DECIMAL (12, 4) NULL,
+    [TipoCambio]   DECIMAL (12, 5) NULL,
     [IdUsuario]    INT             NULL,
     [Activo]       BIT             NULL,
     [CreadoPor]    INT             NULL,
