@@ -13049,9 +13049,22 @@
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDetalleDocumentosEntregables.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregables.sql" />
     <Build Include="dbo\Tables\Tables1\EN_DocumentoGeneral.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\sp_OT_ExtraeUnidadesExiste.sql" />
-    <Build Include="dbo\Tables\Tables1\BitacoraExcepcionNoControlada.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SP_BitacoraExcepcionNoControlada.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportBitacora_Grd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportBitacora_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportBitacora_UPD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportCFDI_GRD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportCFDI_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportRML_CONT_25_M_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportRML_CONT_26_M_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportRML_CONT_27_M_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPAC_ImportRML_CONT_28_M_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_SIPACImportacion_Download.sql" />
+    <Build Include="dbo\Tables\Tables2\SIPAC_ImportacionBitacora.sql" />
+    <Build Include="dbo\Tables\Tables2\SIPAC_ImportCFDI.sql" />
+    <Build Include="dbo\Tables\Tables2\SIPAC_ImportRML_CONT_25_M.sql" />
+    <Build Include="dbo\Tables\Tables2\SIPAC_ImportRML_CONT_26_M.sql" />
+    <Build Include="dbo\Tables\Tables2\SIPAC_ImportRML_CONT_27_M.sql" />
+    <Build Include="dbo\Tables\Tables2\SIPAC_ImportRML_CONT_28_M.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
