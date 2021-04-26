@@ -34,7 +34,7 @@ BEGIN
     --##EDITAR ID'S DE CONTRATOS##        
     IF ISNULL(@IdContrato, 0) IN ( 10047, 10048 )  
     BEGIN  
-  
+	
         INSERT INTO @SolpedConMateriales (IdSolicitudPedido)  
         SELECT sp.IdSolicitudPedido  
         FROM Petrovendor.dbo.MM_SolicitudPedido sp  
@@ -89,8 +89,13 @@ BEGIN
                        '-'  
                    ELSE  
                        CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
-               END AS 'Fecha Termino Contrato',  
-               '1' AS 'Vigencia del contrato',  
+               END AS 'Fecha Termino Contrato',                 
+               CASE  
+                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
+                       '-'  
+                   ELSE  
+                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
+               END AS 'Vigencia del contrato',  
                UPPER(ISNULL(TAO.Descripcion, '')) AS 'Objeto del contrato',  
                CASE  
                    WHEN fiFact.IdMoneda = 1 THEN  
@@ -191,16 +196,7 @@ BEGIN
                AXP.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX       
                REPLACE(AXP.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX      
                REPLACE(AXP.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX       
-               CASE  
-                   WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL  
-                        OR dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaEntrega) IS NOT NULL THEN  
-                       DATEDIFF(  
-                       DAY,  
-                       dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra),  
-                       dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaEntrega))  
-                   ELSE  
-                       '-'  
-               END AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO      
+               REPLACE(AXP.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO      
                dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL      
                CASE  
                    WHEN Mon.IdMoneda = 1  
@@ -360,16 +356,7 @@ BEGIN
                AXP.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX       
                REPLACE(AXP.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX      
                REPLACE(AXP.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX       
-               CASE  
-                   WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL  
-                        OR dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaEntrega) IS NOT NULL THEN  
-                       DATEDIFF(  
-                       DAY,  
-                       dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra),  
-                       dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaEntrega))  
-                   ELSE  
-                       '-'  
-               END AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO      
+               REPLACE(AXP.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO      
                dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL      
                CASE  
                    WHEN Mon.IdMoneda = 1  
@@ -530,7 +517,7 @@ BEGIN
                UPPER(PSS.IdPedido) AS 'No. Contrato',                                  --> NUMERO DE PEDIDO DE AX       
                CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS 'Fecha Inicio Contrato',  --> FECHA DE CREACIÓN DEL PEDIDO EN AX      
                CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS 'Fecha Termino Contrato', --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX       
-               '1' AS 'Vigencia del contrato',                                         --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO      
+               CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS 'Vigencia del contrato',                                         --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO      
                solPed.MotivoUrgencia AS 'Objeto del contrato',  
                CASE  
                    WHEN Mon.IdMoneda = 1  
@@ -675,6 +662,8 @@ BEGIN
     ---- VALIDA SI EL PROVEEDOR ES DEA  
     ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060) AND IdContrato = @IdContrato) --DEA 
     BEGIN  
+
+
         INSERT INTO @SolpedConMateriales (IdSolicitudPedido)  
         SELECT sp.IdSolicitudPedido  
         FROM Petrovendor.dbo.MM_SolicitudPedido sp  
@@ -720,26 +709,29 @@ BEGIN
      THEN 'LICITACIÓN'   
      ELSE 'ADJUDICACIÓN DIRECTA'   
     END AS MecanismoContratacion,  
-    SC.NumeroSubcontrato AS  'Nombre Contrato C-P' ,  
+    ISNULL(SC.NumeroSubcontrato,PG.IdPedido) AS  'Nombre Contrato C-P' ,  
                 UPPER(CONCAT(PG.IdPedido, ' CD')) AS 'No. Contrato',  
                  
-               CASE  
-       WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105)  
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
+    CASE  
+       WHEN OT.FechaInicio IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105)  
+       WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
                        '-'  
-                   ELSE  
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
-               END AS 'Fecha Inicio Contrato',  
-               CASE  
-     WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)  
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
+       ELSE  
+            CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
+    END AS 'Fecha Inicio Contrato',  
+    CASE  
+		WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)  
+        WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
                        '-'  
-                   ELSE  
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
-               END AS 'Fecha Termino Contrato',  
-               CASE WHEN  SC.NumeroSubcontrato IS NOT NULL THEN   
-     DATEDIFF(day,OT.FechaInicio,OT.FechaFin)  
-     ELSE '1'  
+        ELSE  
+            CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
+    END AS 'Fecha Termino Contrato',  
+     CASE  
+		WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)  
+        WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
+                       '-'  
+        ELSE  
+            CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
     END AS 'Vigencia del contrato',  
       CASE   
      WHEN SC.NumeroSubcontrato IS NOT NULL THEN OT.Objeto  
@@ -764,14 +756,16 @@ BEGIN
                        FORMAT(fiFact.SubTotal, '#,#0.000')  
                END AS MontoMXN,  
   
-               -- Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio,    
-  
-               Petrovendor.dbo.FN_ValorTipoCambio(CAST(TAO.FechaRegistro AS DATE)) AS TipoCambio,  
-  
-  
-               --CONVERT(VARCHAR, fiFact.FechaTimbrado, 103) AS FechaTipoCambio,    
-  
-               CONVERT(VARCHAR, TAO.FechaRegistro, 103) AS FechaTipoCambio,  
+              --SE CAMBIA LA FECHA DEL TIPO DE CAMBIO POR fiFact.FechaTimbrado, ESTO DE ACUERDO AL MANUAL EL CUAL INDICA
+			  /*
+			  FECHA AL TIPO DE CAMBIO: FECHA AL TIPO DE CAMBIO EN QUE SE LLEVÓ A CABO LA TRANSACCIÓN
+			  */  
+               Petrovendor.dbo.FN_ValorTipoCambio(cast(fiFact.FechaTimbrado as DATE)) AS TipoCambio,   
+			 --SE CAMBIA LA FECHA DEL TIPO DE CAMBIO POR fiFact.FechaTimbrado, ESTO DE ACUERDO AL MANUAL EL CUAL INDICA
+			  /*
+			  FECHA AL TIPO DE CAMBIO: FECHA AL TIPO DE CAMBIO EN QUE SE LLEVÓ A CABO LA TRANSACCIÓN
+			  */
+			  CONVERT(VARCHAR,fiFact.FechaTimbrado, 103)    FechaTipoCambio,  
                UPPER(SUBSTRING(ISNULL(TAO.Descripcion, ''), 0, 40)) AS 'Comentarios',  
                UPPER(ctista.RazonSocial) AS NombreContratista,  
                '' AS FechaEfectiva  
@@ -854,24 +848,21 @@ BEGIN
         END   
     END AS MecanismoContratacion,      
                  
-                isnull(SC.NumeroSubcontrato,DEA_RPO.PO)  AS 'Nombre Contrato C-P',  
+                ISNULL(isnull(SC.NumeroSubcontrato,DEA_RPO.PO),cast(p.IdPedido as varchar))  AS 'Nombre Contrato C-P',  
     DEA_RPO.PO AS 'No. Contrato',  
-    CASE  
-     WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105)   
+    isnull(CASE  
+			 WHEN OT.FechaInicio IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105)   
       
-        ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105)   
-    END AS 'Fecha Inicio Contrato',  
-    CASE   
-     WHEN SC.NumeroSubcontrato IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)  
+			ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105)   
+			END, CONVERT(VARCHAR(10), min(O.FechaRegistro), 105) ) AS 'Fecha Inicio Contrato',  
+    isnull(CASE   
+     WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)  
      ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105)   
-    END AS 'Fecha Termino Contrato',  
-               CASE  
-       WHEN SC.NumeroSubcontrato IS NOT NULL THEN cast(DATEDIFF(day,OT.FechaInicio,OT.FechaFin)  as varchar)  
-                   WHEN CONVERT(VARCHAR(10), solPed.FechaEntregaFinRequerida, 105) IS NULL THEN  
-                       '-'  
-                   ELSE  
-                       CONVERT(VARCHAR(10), solPed.FechaEntregaRequerida, 105)  
-               END AS 'Vigencia del contrato',  
+    END, CONVERT(VARCHAR(10), max(O.FechaRegistro), 105)) AS 'Fecha Termino Contrato',  
+     isnull(CASE   
+     WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)  
+     ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105)   
+    END, CONVERT(VARCHAR(10), max(O.FechaRegistro), 105)) AS 'Vigencia del contrato',  
       CASE WHEN SC.NumeroSubcontrato IS NOT NULL THEN OT.Objeto  
      ELSE UPPER(SUBSTRING(solPed.MotivoUrgencia, 0, 40))  
     END AS 'Objeto del contrato',  
@@ -893,9 +884,9 @@ BEGIN
                    ELSE  
                        FORMAT(SUM(PD.Subtotal), '#,#0.000')  
                END AS MontoMXN,  
-               Petrovendor.dbo.FN_ValorTipoCambio(  
-               CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)) AS TipoCambio,  
-               CONVERT(VARCHAR, ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado), 103) AS FechaTipoCambio, --DWONG 20190712    
+               Petrovendor.dbo.FN_ValorTipoCambio( CAST(PO.FechaFinalizado AS DATE)) AS TipoCambio,  
+				CAST(PO.FechaFinalizado AS DATE)			   
+			   AS FechaTipoCambio, --DWONG 20190712    
   
                UPPER(SUBSTRING(solPed.MotivoUrgencia, 0, 40)) AS 'Comentarios',  
                NombreContratista = UPPER(ctista.RazonSocial),                                                      --DWONG 20190712    
@@ -1014,6 +1005,8 @@ BEGIN
     --- FIN VALIDACION DEA  
     ELSE  
     BEGIN  
+
+		
         INSERT INTO @SolpedConMateriales (IdSolicitudPedido)  
         SELECT sp.IdSolicitudPedido  
         FROM Petrovendor.dbo.MM_SolicitudPedido sp  
@@ -1058,7 +1051,7 @@ BEGIN
                'ADJUDICACIÓN DIRECTA' AS MecanismoContratacion,  
                UPPER(ISNULL(TAO.Descripcion, '')) AS 'Nombre Contrato C-P',  
                UPPER(CONCAT(PG.IdPedido, ' CD')) AS 'No. Contrato',  
-     CASE  
+				CASE  
                    WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
                        '-'  
                    ELSE  
@@ -1070,7 +1063,12 @@ BEGIN
                    ELSE  
                        CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
                END AS 'Fecha Termino Contrato',  
-               '1' AS 'Vigencia del contrato',  
+                CASE  
+                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN  
+                       '-'  
+                   ELSE  
+                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)  
+               END AS 'Vigencia del contrato',  
                UPPER(ISNULL(TAO.Descripcion, '')) AS 'Objeto del contrato',  
                CASE  
                    WHEN fiFact.IdMoneda = 1 THEN  
@@ -1093,12 +1091,12 @@ BEGIN
   
                -- Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio,    
   
-               Petrovendor.dbo.FN_ValorTipoCambio(CAST(TAO.FechaRegistro AS DATE)) AS TipoCambio,  
+               Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio,  
   
   
                --CONVERT(VARCHAR, fiFact.FechaTimbrado, 103) AS FechaTipoCambio,    
   
-               CONVERT(VARCHAR, TAO.FechaRegistro, 103) AS FechaTipoCambio,  
+               CONVERT(VARCHAR, fiFact.FechaTimbrado, 103) AS FechaTipoCambio,  
                UPPER(ISNULL(TAO.Descripcion, '')) AS 'Comentarios',  
                UPPER(ctista.RazonSocial) AS NombreContratista,  
                '' AS FechaEfectiva  
@@ -1176,20 +1174,15 @@ BEGIN
                END AS MecanismoContratacion,  
                UPPER(solPed.MotivoUrgencia) AS 'Nombre Contrato C-P',  
                PSS.IdPedido AS 'No. Contrato',  
-               CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105) AS 'Fecha Inicio Contrato',  
-               CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105) AS 'Fecha Termino Contrato',  
-               CASE  
-                   WHEN CONVERT(VARCHAR(10), solPed.FechaEntregaFinRequerida, 105) IS NULL THEN  
-                       '-'  
-                   ELSE  
-                       CONVERT(VARCHAR(10), solPed.FechaEntregaRequerida, 105)  
-               END AS 'Vigencia del contrato',  
+               CONVERT(VARCHAR(10),isnull(P.FechaRecepcionServicio,solPed.FechaEntregaRequerida), 105) AS 'Fecha Inicio Contrato',  
+               CONVERT(VARCHAR(10), isnull(P.FechaRecepcionServicio,solPed.FechaEntregaRequerida), 105) AS 'Fecha Termino Contrato',  
+               CONVERT(VARCHAR(10),isnull(P.FechaRecepcionServicio,solPed.FechaEntregaRequerida), 105) AS 'Vigencia del contrato',  
                UPPER(solPed.MotivoUrgencia) AS 'Objeto del contrato',  
                CASE  
                    WHEN Mon.IdMoneda = 1 THEN  
                        FORMAT(  
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(  
-                       SUM(PD.Subtotal), CAST(PO.FechaFinalizado AS DATE)),  
+                       SUM(PD.Subtotal), CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)),  
                        '#,#0.000')  
                    ELSE  
                        FORMAT(SUM(PD.Subtotal), '#,#0.000')  
@@ -1198,7 +1191,7 @@ BEGIN
                    WHEN Mon.IdMoneda = 2 THEN  
                        FORMAT(  
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(  
-                       SUM(PD.Subtotal), CAST(PO.FechaFinalizado AS DATE)),  
+                       SUM(PD.Subtotal), ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado)),  
                        '#,#0.000')  
                    ELSE  
                        FORMAT(SUM(PD.Subtotal), '#,#0.000')  
@@ -1250,7 +1243,8 @@ LEFT JOIN Adinco.dbo.CO_Contrato c
                 ON RE.IdProveedor = solPed.IdProveedor  
                    AND RE.IdSubcontratista = P.IdSubcontratista  
             LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP  
-                ON TP.IdTipoPedido = PO.IdTipoProceso  
+				/*SI ES CÁRDENAS MORA TOMAR IdTipoProceso de MM_SolicitudPedido*/
+                ON TP.IdTipoPedido = (CASE WHEN C.IdContratista IN (10010 ) then solPed.IdTipoProceso else  PO.IdTipoProceso END )
             INNER JOIN @SolpedConMateriales filtro  
                 ON filtro.IdSolicitudPedido = solPed.IdSolicitudPedido  
    LEFT JOIN Adinco.dbo.CO_PeriodoContrato periodo  

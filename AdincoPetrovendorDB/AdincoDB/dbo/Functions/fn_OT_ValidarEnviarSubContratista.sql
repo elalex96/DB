@@ -1,5 +1,4 @@
-﻿
---select  dbo.fn_OT_ValidarEnviarSubContratista(14,10)
+﻿--select  dbo.fn_OT_ValidarEnviarSubContratista(14,10)
 CREATE FUNCTION dbo.fn_OT_ValidarEnviarSubContratista(
 	@pIdOTSolicitud int	,
 	@pCreadoPor int
@@ -45,8 +44,11 @@ BEGIN
 		isnull(Cantidad,0) > 0		
 	)
 	begin
-		set @error = 'No se han capturado cantidades'
-		RETURN @error
+		if(@capturaProgramaPorContratista = 1)
+		begin
+			set @error = 'No se han capturado cantidades'
+			RETURN @error
+		end
 	end
 
 	--Enviada a Subcontratista
@@ -89,12 +91,9 @@ BEGIN
 			where IdOTSolicitud = @pIdOTSolicitud 			
 		)
 		begin
-
 			set @error = 'No se han registrado cambios por el contratista, no es posible enviar la solicitud'
-			RETURN @error
-			
+			RETURN @error			
 		end
-
 	end	
 
 	if(@capturaProgramaPorContratista = 1)
@@ -154,20 +153,6 @@ BEGIN
 			SET @error = 'Es necesario capturar las cantidades y programación de los servicios'
 			RETURN @error
 		end
-
-
-
-
 	End
-
-
-
 	RETURN @error
 end
-
-
-
-
-
-
-

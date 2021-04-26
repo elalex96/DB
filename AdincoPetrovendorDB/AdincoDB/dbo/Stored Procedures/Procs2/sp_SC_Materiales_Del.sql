@@ -1,5 +1,4 @@
-﻿
-CREATE proc sp_SC_Materiales_Del
+﻿CREATE proc sp_SC_Materiales_Del
 (
 	
 	@IdSCMaterial	int,
@@ -15,7 +14,11 @@ begin
 	)
 	begin
 
-		BEGIN TRY  
+		BEGIN TRY   
+			delete 
+            from        SC_MaterialesBitacora
+            where       IdSCMaterial    =   @IdSCMaterial
+            --====
 			delete 
 			from		SC_Materiales
 			where		IdSCMaterial	=	@IdSCMaterial
@@ -38,6 +41,3 @@ begin
 		set @pError = 'No se puede eliminar el registro por que esta siendo utilizado'
 	end		
 end
-
-
-
