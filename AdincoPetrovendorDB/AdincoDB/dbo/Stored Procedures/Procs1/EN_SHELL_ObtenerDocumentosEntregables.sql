@@ -29,7 +29,7 @@ SET NOCOUNT ON
 		*/
 		
 		DECLARE @EtapaId INT =  0
-
+		DECLARE @ContadorNiveles INT = 1
 		DECLARE @TotalEtapas INT 
 		DECLARE @Contador INT
 		DECLARE @FechaEtapaInicio DATETIME 
@@ -85,10 +85,11 @@ SET NOCOUNT ON
             Pozo NVARCHAR(MAX),
 			NivelPadre INT)
 
-		DECLARE @CantidadArchivosGeneralN3 AS TABLE 
+		DECLARE @CantidadArchivosGeneral AS TABLE 
 		(
 			 IdPadre INT,
-			 CantidadArchivos INT 
+			 CantidadArchivos INT,
+			 NivelPadre INT
 		)
 
     --IF OBJECT_ID('tempdb.dbo.#CantidadArchivosGeneralN3', 'U') IS NOT NULL
@@ -770,7 +771,7 @@ SET NOCOUNT ON
 
 			BEGIN
         
-				--NIVEL 4  DOCUMENTOS GENERALES DE LOS MARCOS LEGALES
+				--OBTENER LOS DOCUMENTOS GENERALES 
 				INSERT INTO @Lista(IDPadre,EtapaId,ReceptorEntregableId,PozoInstalacionId,MarcoLegalId,EntregableId,Frecuencia,FechaProgramadaEntrega,Titulo,DocumentoEntregableId,Nivel,Detalle,CantidadArchivos,Mime,TipoArchivo,FechaCarga,CargadoPor,Origen)
 				SELECT 
 				LD.ID,  
@@ -824,26 +825,37 @@ SET NOCOUNT ON
 				D.NivelPadre
 				ORDER BY D.FechaCarga ASC   
             
-				/*OBTENER CANTIDAD DE ARCHIVOS DE LAS CARPETAS GENERALES DE NIVEL 3 --> REGULADORES*/
-				DELETE @CantidadArchivosGeneralN3
-				INSERT INTO @CantidadArchivosGeneralN3(IdPadre,CantidadArchivos)
-				SELECT 
-				LD.IDPadre  AS IdPadre,
-				COUNT(LD.IDPadre) AS CantidadArchivos				
-				FROM @Lista LD
-				WHERE		 
-				LD.TipoArchivo <>'Carpeta' --> PARA QUE NO SUMARICE LOS REGISTROS DE TIPO CARPETA
-				AND LD.EtapaId=@EtapaId
-				GROUP BY LD.IDPadre
-                                
-				/*ACTUALIZAR LISTA PRINCIPAL DE NIVEL 3*/
-				UPDATE  LD
-				SET LD.CantidadArchivos=CA.CantidadArchivos 
-				FROM @Lista LD
-				JOIN @CantidadArchivosGeneralN3 CA
-				ON LD.ID=CA.IdPadre
-				WHERE LD.EtapaId=@EtapaId
+				/*OBTENER CANTIDAD DE ARCHIVOS DE LAS CARPETAS GENERALES- RECALCULAR EL TOTAL DE CADA NIVEL :(*/
+				
+				SET @ContadorNiveles = 1
+				/* 7 POR QUE POR EL MOMENTO SOLO SE TIENE 7 NIVELES DE CARPETAS*/
+				WHILE 7 >= @ContadorNiveles 
+				BEGIN 
 
+					DELETE @CantidadArchivosGeneral	
+
+					INSERT INTO @CantidadArchivosGeneral(IdPadre,CantidadArchivos)
+					SELECT 
+					LD.IDPadre  AS IdPadre,
+					COUNT(LD.IDPadre) AS CantidadArchivos							
+					FROM @Lista LD
+					WHERE		
+					LD.Nivel = @ContadorNiveles --> NIVEL EN QUE SE ENCUENTRAN LOS DOCUMENTOS 
+					AND LD.Origen ='GENERAL' --> PARA QUE SUMARICE SOLO LOS ARCHIVOS DE TIPO ARCHIVO GENERAL
+					AND LD.EtapaId=@EtapaId
+					GROUP BY LD.IDPadre
+										
+					/*ACTUALIZAR LISTA PRINCIPAL DE NIVEL 3*/
+					UPDATE  LD
+					SET LD.CantidadArchivos=( LD.CantidadArchivos+CA.CantidadArchivos )
+					FROM @Lista LD
+					JOIN @CantidadArchivosGeneral CA
+					ON LD.ID=CA.IdPadre
+					WHERE LD.EtapaId=@EtapaId	
+
+					SET @ContadorNiveles=@ContadorNiveles+1
+				END 
+                		
 			END 
 						
 		SET @Contador = @Contador + 1;
