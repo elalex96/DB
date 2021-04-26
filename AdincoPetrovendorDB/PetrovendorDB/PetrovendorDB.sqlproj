@@ -10574,9 +10574,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\sp_PV_MM_MaterialUnidad_Cmb.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidarPreRegistroProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerFlujosAprobacion.sql" />
-
     <Build Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerDetalleFacturaMercadeo.sql" />
-
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_ConsultaPedidosYSolepeds.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_ActualizacionTerminosCondicionesPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AD_DiasCreditoPedidoDetalle.sql" />
@@ -10589,6 +10587,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\sp_S_Usuario_Cmb.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCentroCostoFiltroDel.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCentroCostoFiltroIns.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_DesactivarDocumentoGeneral.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />

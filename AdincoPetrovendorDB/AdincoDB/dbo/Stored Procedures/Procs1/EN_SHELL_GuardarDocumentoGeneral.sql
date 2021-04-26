@@ -8,7 +8,8 @@ IF EXISTS
 )
     DROP PROCEDURE EN_SHELL_GuardarDocumentoGeneral;
 GO 
-/****** Object:  StoredProcedure [dbo].[p_EN_ObtenerDocumentosEntregables]    Script Date: 10/03/2021 05:58:03 p. m. ******/
+
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_GuardarDocumentoGeneral]    Script Date: 26/04/2021 1:37:18 ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -20,6 +21,8 @@ CREATE PROCEDURE [dbo].[EN_SHELL_GuardarDocumentoGeneral]
 	@ReceptorId INT,
 	@InstalacionId INT,
 	@MarcoLegalId INT,
+	@Frecuencia  NVARCHAR(max),
+	@FechaEntregaAnioMes  NVARCHAR(max),
 	@EntregableId INT,
 	@Bucket NVARCHAR(max),
 	@Folder NVARCHAR(max),
@@ -42,6 +45,8 @@ BEGIN
 			ReceptorId,
 			InstalacionId,
 			MarcoLegalId,
+			Frecuencia,
+			FechaEntregaAnioMes,
 			EntregableId,
 			Bucket,
 			Folder,
@@ -62,6 +67,8 @@ BEGIN
 			CASE WHEN @ReceptorId = 0 THEN NULL ELSE @ReceptorId END,
 			CASE WHEN @InstalacionId = 0 THEN NULL ELSE @InstalacionId END, --> SI LA INSTALACION ES DIFERENTE DE CERO ENTONCES LA CARPETA ES GENERAL DE UN POZO
 			CASE WHEN @MarcoLegalId = 0 THEN NULL ELSE @MarcoLegalId END,
+			@Frecuencia,
+			@FechaEntregaAnioMes,
 			CASE WHEN @EntregableId = 0 THEN NULL ELSE @EntregableId END,
 			@Bucket,
 			@Folder,
