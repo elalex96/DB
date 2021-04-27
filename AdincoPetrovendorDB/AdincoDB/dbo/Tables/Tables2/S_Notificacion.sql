@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[S_Notificacion] (
     [IdNotificacion]       BIGINT         NOT NULL,
-    [Para]                 VARCHAR (1000) NULL,
+    [Para]                 VARCHAR (3000) NULL,
     [Asunto]               VARCHAR (500)  NULL,
     [Mensaje]              TEXT           NOT NULL,
     [FechaProgramadaEnvio] DATETIME       NOT NULL,
