@@ -1,6 +1,6 @@
 ﻿CREATE proc p_s_notificacion_ins
 @pIdNotificacion int out,
-@pPara varchar(1000),
+@pPara varchar(3000),
 @pAsunto varchar(500),
 @pMensaje text,
 @pFechaProgramadaEnvio DateTime,
