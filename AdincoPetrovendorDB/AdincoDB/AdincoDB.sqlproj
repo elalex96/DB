@@ -13066,6 +13066,8 @@
     <Build Include="dbo\Tables\Tables2\SIPAC_ImportRML_CONT_27_M.sql" />
     <Build Include="dbo\Tables\Tables2\SIPAC_ImportRML_CONT_28_M.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\EN_SHELL_ObtenerRutaDocumentosEntregables_2.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_VerificacionCorreo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_VerificacionCorreoSHELL.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
