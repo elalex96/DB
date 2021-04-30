@@ -73,7 +73,7 @@ begin
 	begin
 		
 		update		#tmpResultado	
-		set			#tmpResultado.Ruta		=	substring( r.Titulo,0,20)+'/'+tr.Ruta,
+		set			#tmpResultado.Ruta		=	substring( r.Titulo,0,50)+'/'+tr.Ruta,
 					#tmpResultado.IdPadre	=	r.IdPadre
 		from		#tmpResultado	tr
 		inner join	#Rutas			r
