@@ -1,0 +1,7 @@
+C:\Users\ramon.portales\Source\Repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\bin\Debug\PetrovendorDB.dacpac
+C:\Users\ramon.portales\Source\Repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\obj\Debug\Model.xml
+C:\Users\ramon.portales\Source\Repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\obj\Debug\refactor.xml
+C:\Users\ramon.portales\Source\Repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\obj\Debug\postdeploy.sql
+C:\Users\ramon.portales\Source\Repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\obj\Debug\predeploy.sql
+C:\Users\ramon.portales\Source\Repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\obj\Debug\PetrovendorDB.dll
+C:\Users\ramon.portales\Source\Repos\adinco-adincopetrodb\AdincoPetrovendorDB\PetrovendorDB\obj\Debug\PetrovendorDB.pdb
