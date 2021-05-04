@@ -1,6 +1,6 @@
 ﻿CREATE VIEW dbo.Bi_Jaguar_Pedido
 AS
-	  SELECT  
+	   SELECT  
        IdPedido AS 'idpedido unico', 
 	   BI_Pedido.IdSolicitudPedido AS 'idunico de requisicion',     
 	   FechaPedido AS 'Fecha de pedido', 
@@ -42,10 +42,12 @@ AS
 		Marca AS 'Marca',
 		NumeroParte AS 'Numero parte',
 		CentroCosto AS 'Centro costo',
-		SPD.IdMaterial
+		SPD.IdMaterial,
+		TotalPedido AS 'Total pedido',
+		TotalPedidoAceptado AS 'Total de Pedido Aceptado'
 	 FROM
 		BI_Pedido
-	LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD
+	 LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD
 		ON BI_Pedido.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_DiagramPane1', @value = N'[0E232FF0-B466-11cf-A24F-00AA00A3EFFF, 1.00]
