@@ -22,6 +22,7 @@ BEGIN
 	SET @MontoMXN = (@MontoUSD * @TipoCambioMXN);
 
 	-- Return the result of the function
-	RETURN @MontoMXN;
+	RETURN isnull(@MontoMXN,0);
 
 END
+

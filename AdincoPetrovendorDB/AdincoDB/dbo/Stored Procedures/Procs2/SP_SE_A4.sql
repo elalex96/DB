@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -92,12 +93,12 @@ AS
          /*Consulta final*/  
   
          SELECT SUM(
-					CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
+					CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
 							ELSE ISNULL(R.MontoRegistro,0) 
 						END
 				) AS SueldosSalarios,   
                 SUM(
-					CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
+					CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
 							ELSE ISNULL(R.MontoRegistro,0) 
 						END * CAST(PCN AS DECIMAL(20, 3))					
 				) AS SueldosSalariosNacional,   

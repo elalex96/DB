@@ -1,9 +1,10 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
 -- =============================================
-create PROCEDURE [dbo].[SP_SE_A5]
+CREATE PROCEDURE [dbo].[SP_SE_A5]
 -- [SP_SE_A5] 10018,1,10079,'2019-01-01','2019-12-01'  
 -- Add the parameters for the stored procedure here  
 @IdContrato    INT,   
@@ -98,7 +99,7 @@ AS
                 SUM(
 					CASE WHEN F.IdMoneda = 1 
 								THEN CAST(ROUND((ISNULL(R.MontoRegistro, 0)), 2) AS DECIMAL(20, 2))
-								ELSE CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,F.Fecha) AS DECIMAL(20, 2))
+								ELSE CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,F.Fecha) AS DECIMAL(20, 2))
 							END
 				) AS SubTotal,   
                 R.PCN AS PCN,   

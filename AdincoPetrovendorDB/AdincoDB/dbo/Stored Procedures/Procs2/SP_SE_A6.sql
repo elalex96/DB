@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -96,7 +97,7 @@ AS
                 SUM(
 					 CASE WHEN F.IdMoneda = 1 
 								THEN CAST(ROUND((ISNULL(R.MontoRegistro, 0)), 2) AS DECIMAL(20, 2))
-								ELSE CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,F.Fecha)AS DECIMAL(20, 2))
+								ELSE CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,F.Fecha)AS DECIMAL(20, 2))
 							END
 				) AS SubTotal
          FROM dbo.CO_Registro R

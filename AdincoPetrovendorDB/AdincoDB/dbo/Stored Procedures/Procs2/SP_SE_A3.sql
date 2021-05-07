@@ -1,9 +1,10 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
 -- =============================================
-create PROCEDURE [dbo].[SP_SE_A3]
+CREATE PROCEDURE [dbo].[SP_SE_A3]
 -- [SP_SE_A3] 10018,1,10079,'2019-01-01','2019-12-01'  
 -- Add the parameters for the stored procedure here  
 @IdContrato    INT,   
@@ -100,13 +101,13 @@ AS
 						SUM(
 							 CASE WHEN F.IdMoneda = 1 
 								THEN CAST(ROUND((ISNULL(R.MontoRegistro, 0)), 2) AS DECIMAL(20, 2))
-								ELSE  CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,F.Fecha)AS DECIMAL(20, 2))
+								ELSE  CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,F.Fecha)AS DECIMAL(20, 2))
 							END
 						)  AS SubTotal,   
                         ISNULL(R.PCN, 0) AS PCN,   
 						CASE WHEN F.IdMoneda = 1 
 								THEN SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) ), 2) AS DECIMAL(20, 2)))
-								ELSE CAST([dbo].[FN_PesosDolaresTipoCambio](SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) ), 2) AS DECIMAL(20, 2))),F.Fecha)AS DECIMAL(20, 2))
+								ELSE CAST([dbo].[FN_DolaresPesosTipoCambio](SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) ), 2) AS DECIMAL(20, 2))),F.Fecha)AS DECIMAL(20, 2))
 						END
                          AS CN,   
                         ROW_NUMBER() OVER(ORDER BY F.IdFactura) AS ID,   
@@ -181,7 +182,7 @@ AS
                         S.RFC AS RFC,   
                         CASE WHEN F.IdMoneda = 1 
 							THEN CAST(R.MontoRegistro AS DECIMAL(20, 2)) 
-							ELSE CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,F.Fecha) AS DECIMAL(20, 2)) 
+							ELSE CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,F.Fecha) AS DECIMAL(20, 2)) 
 						END AS SubTotal,   
                         F.SubTotal AS SubTotalOriginal,   
                         R.PCN AS PCN,   
@@ -217,7 +218,7 @@ AS
                         ISNULL(A.Nombre, 'SinClasificar') AS Descripcion,   
                         S.RazonSocial AS RazonSocial,   
                         S.RFC AS RFC,   
-                        CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
+                        CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
 							ELSE ISNULL(R.MontoRegistro,0) 
 						END AS SubTotal,   
                         F.SubTotal AS SubTotalOriginal,   
