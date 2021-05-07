@@ -3,7 +3,7 @@
 -- Create date: 2018-10-02
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_SE_A7]
+create PROCEDURE [dbo].[SP_SE_A7]
 -- [SP_SE_A7] 10018,1,10079,'2019-01-01','2019-12-01'
 -- Add the parameters for the stored procedure here
 @IdContrato    INT, 
@@ -93,7 +93,12 @@ AS
 
          SELECT ROW_NUMBER() OVER(ORDER BY R.Comentarios) AS NoGasto, 
                 R.Comentarios AS Descripcion, 
-                SUM(CAST(R.MontoRegistro * TCD.TipoCambio AS DECIMAL(20, 2))) AS SubTotal
+                SUM(
+						 CASE WHEN F.IdMoneda = 1 
+								THEN CAST(ROUND((ISNULL(R.MontoRegistro, 0)), 2) AS DECIMAL(20, 2))
+								ELSE CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,F.Fecha)AS DECIMAL(20, 2))
+							END
+				) AS SubTotal
          FROM dbo.CO_Registro R
               JOIN dbo.FI_Factura F ON R.IdFactura = F.IdFactura
               JOIN dbo.PV_Subcontratista S ON F.IdSubcontratista = S.IdSubcontratista
@@ -102,10 +107,7 @@ AS
               JOIN dbo.CO_Presupuesto P ON PP.IdPresupuesto = P.IdPresupuesto
               JOIN dbo.CO_ProgramaActividad PA ON P.IdProgramaActividad = PA.IdProgramaActividad
               JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad
-              JOIN dbo.CO_TipoCambioDiario TCD ON F.IdMoneda <> TCD.IdMoneda
-                                                  AND DAY(TCD.Fecha) = DAY(F.Fecha)
-                                                  AND MONTH(TCD.Fecha) = MONTH(F.Fecha)
-                                                  AND YEAR(TCD.Fecha) = YEAR(F.Fecha)
+              
          WHERE(CAST(F.Fecha AS DATE) >= @FInicio
                AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))
               AND R.IdGastoRubro = 6
@@ -115,6 +117,6 @@ AS
              FROM #RFC
          )
               AND ISNULL(R.PCN, 0) <> 0
-              AND TCD.IdMoneda IN(1, 2)
+              AND F.IdMoneda IN(1, 2)
          GROUP BY R.Comentarios;
      END;

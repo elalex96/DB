@@ -91,8 +91,16 @@ AS
   
          /*Consulta final*/  
   
-         SELECT SUM(CAST(R.MontoRegistro * TCD.TipoCambio AS DECIMAL(20, 2))) AS SueldosSalarios,   
-                SUM(CAST(R.MontoRegistro * TCD.TipoCambio AS DECIMAL(20, 2)) * CAST(PCN AS DECIMAL(20, 3))) AS SueldosSalariosNacional,   
+         SELECT SUM(
+					CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
+							ELSE ISNULL(R.MontoRegistro,0) 
+						END
+				) AS SueldosSalarios,   
+                SUM(
+					CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_PesosDolaresTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
+							ELSE ISNULL(R.MontoRegistro,0) 
+						END * CAST(PCN AS DECIMAL(20, 3))					
+				) AS SueldosSalariosNacional,   
                 R.IdGastoRubro  
          INTO #DATOS  
          FROM dbo.CO_Registro R  
@@ -103,10 +111,7 @@ AS
               JOIN dbo.CO_Presupuesto P ON PP.IdPresupuesto = P.IdPresupuesto  
               JOIN dbo.CO_ProgramaActividad PA ON P.IdProgramaActividad = PA.IdProgramaActividad  
               JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad  
-              JOIN dbo.CO_TipoCambioDiario TCD ON F.IdMoneda <> TCD.IdMoneda  
-                                                  AND DAY(TCD.Fecha) = DAY(F.Fecha)  
-                                                  AND MONTH(TCD.Fecha) = MONTH(F.Fecha)  
-                                                  AND YEAR(TCD.Fecha) = YEAR(F.Fecha)  
+             
          WHERE(CAST(F.Fecha AS DATE) >= @FInicio  
                AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))  
               AND R.IdGastoRubro = 1  
@@ -117,7 +122,7 @@ AS
          )  
               AND F.IdContrato = @IdContrato  
               AND ISNULL(R.PCN, 0) <> 0  
-              AND TCD.IdMoneda IN(1, 2)  
+              AND F.IdMoneda IN(1, 2)  
          GROUP BY R.IdGastoRubro;  
   
          /**/  
