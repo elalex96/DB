@@ -1,5 +1,22 @@
-﻿
-CREATE PROCEDURE dbo.sp_BI_LlenaTabla_BI_Pedido
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_BI_LlenaTabla_BI_Pedido'
+)
+    DROP PROCEDURE sp_BI_LlenaTabla_BI_Pedido;
+GO 
+
+      
+/****** Object:  StoredProcedure [dbo].[sp_BI_LlenaTabla_BI_Pedido]    Script Date: 04/05/2021 10:31:42 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[sp_BI_LlenaTabla_BI_Pedido]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -32,10 +49,36 @@ BEGIN
         PrecioDolar FLOAT
     );
 
+	/*CREAR TABLAS AUXILIZARES*/
+	DECLARE @PedidoMontos AS TABLE (
+	IdPedido INT,
+	TotalPedido MONEY,
+	TotalAceptado MONEY
+	)
+
     DECLARE @Proveedores TABLE
     (
         IdProveedor INT
     );
+
+	/*CREAR TABLAS AUXILIZARES*/
+	DECLARE @Pedidos AS TABLE (
+	IdPedido INT,
+	EstaCerrado VARCHAR(MAX)
+	)
+
+	DECLARE @PedidoDetalleCantidadRestante AS TABLE (
+	IdPedido INT,
+	IdPedidoDetalle INT,
+	CantidadRestante FLOAT,
+	SubtotalAceptado MONEY
+	)
+
+	DECLARE @PedidosCantidadRestante AS TABLE (
+	IdPedido INT,
+	CantidadMaterialesRestantes FLOAT  
+	)
+
 
     INSERT INTO @Proveedores
     (
@@ -201,7 +244,7 @@ BEGIN
 		Modelo,
 		Marca,
 		NumeroParte,
-		CentroCosto
+		CentroCosto		
     )
     SELECT P.IdPedido AS 'idpedido unico',
            S.IdSolicitudPedido AS 'idunico de requisicion',
@@ -275,7 +318,7 @@ BEGIN
 		   MM.Modelo,
 		   MM.Marca,		  
 		   MM.NumeroParte,
-		   CC.CentroCosto
+		   CC.CentroCosto		  
     FROM @Proveedores PC
         JOIN dbo.S_Proveedor AS COR (NOLOCK)
             ON PC.IdProveedor = COR.IdProveedor
@@ -414,6 +457,21 @@ BEGIN
         JOIN @PedidoDetalle PD
             ON P.ID_BI_Pedido = PD.ID_Bi_Pedido;
 
+    --OBTENER EL TOTAL DEL PEDIDO
+	INSERT INTO @PedidoMontos(IdPedido,TotalPedido)
+	SELECT IdPedido,
+	SUM(Subtotal)
+	FROM BI_Pedido
+	GROUP BY IdPedido
+
+	--ACTUALIZAR EL MONTO DEL TOTAL DEL PEDIDO
+	UPDATE P
+    SET P.TotalPedido = PM.TotalPedido,
+	P.TotalPedidoAceptado=0
+    FROM dbo.BI_Pedido P
+    LEFT JOIN @PedidoMontos PM
+            ON P.IdPedido = PM.IdPedido;  
+
     --OBTENER EL PRECIO DEL USD POR PEDIDO QUE ESTAN EN MXN
     INSERT INTO @PedidoPrecioDLS
     (
@@ -431,7 +489,7 @@ BEGIN
 	P.IdPedido,
     TC.TipoCambio
 
-    --CONVERTIR PESOS A DOLARES SEGPUN EL TIPO DE MONEDA DEL PEDIDO
+    --CONVERTIR PESOS A DOLARES SEGUN EL TIPO DE MONEDA DEL PEDIDO
 
     UPDATE P
     SET P.SubtotalUSD = (CASE
@@ -443,41 +501,28 @@ BEGIN
                         )
     FROM dbo.BI_Pedido P
         LEFT JOIN @PedidoPrecioDLS PDLS
-            ON PDLS.IdPedido = P.IdPedido;
+            ON PDLS.IdPedido = P.IdPedido;    
 
 	/*ACTUALIZAR LA COLUMNA DE PEDIDO CERRADO PARA LOS PEDIDOS QUE ESTEN RECEPCIONADOS AL 100%*/
-	/*CREAR TABLAS AUXILIZARES*/
-	DECLARE @Pedidos AS TABLE (
-	IdPedido INT
-	)
-	DECLARE @PedidoDetalleCantidadRestante AS TABLE (
-	IdPedido INT,
-	IdPedidoDetalle INT,
-	CantidadRestante FLOAT
-	)
-	DECLARE @PedidosCantidadRestante AS TABLE (
-	IdPedido INT,
-	CantidadMaterialesRestantes FLOAT  
-	)
-
 	/*OBTENER LOS PEDIDOS QUE NO ESTEN CERRADOS DE LA TABLA DE BI_PEDIDO (ESTOS YA ESTAN CLASIFICADOS ARRIBA)*/
 	INSERT INTO @Pedidos
-	(IdPedido)	
-	SELECT IdPedido 
-	FROM dbo.BI_Pedido 
-	WHERE PedidoCerrado='No'
-	GROUP BY IdPedido
+	(IdPedido,EstaCerrado)	
+	SELECT IdPedido, PedidoCerrado
+	FROM dbo.BI_Pedido 	
+	GROUP BY IdPedido,PedidoCerrado
 
 	/*OBTENER LAS CANTIDADES RESTANTES DE LOS PEDIDOS DETALLE (PEDIDO DETALLE - ACEPTACIONES PEDIDO DETALLE )*/
 	INSERT INTO @PedidoDetalleCantidadRestante
 	(
 	    IdPedido,
 	    IdPedidoDetalle,
-	    CantidadRestante
+	    CantidadRestante,
+		SubtotalAceptado
 	)	
 	SELECT P.IdPedido,
            PD.IdPedidoDetalle,
-           PD.Cantidad - SUM(ISNULL(APD.Cantidad, 0))	   
+           CASE WHEN P.EstaCerrado='Si' THEN 0 ELSE PD.Cantidad - SUM(ISNULL(APD.Cantidad, 0)) END, --> SI ESTA CERRADO POR DEFAULT LA CANTIDAD RESTANTE PASA A SER 0 POR QUE YA NO SE PIENSA RECIBIR ESE MATERIAL
+		   PD.PrecioUnitario*SUM(ISNULL(APD.Cantidad, 0)) 
     FROM @Pedidos P
         JOIN dbo.MM_PedidoDetalle AS PD (NOLOCK)
             ON P.IdPedido = PD.IdPedido
@@ -489,6 +534,8 @@ BEGIN
                AND PD.IdPedidoDetalle = APD.IdPedidoDetalle
     GROUP BY P.IdPedido,
              PD.IdPedidoDetalle,
+			 PD.PrecioUnitario,
+			 P.EstaCerrado,
              PD.Cantidad;
 	
 	/*AGRUPAR LAS CANTIDADES RESTANTES POR PEDIDO Y EL PEDIDO QUE TENGA UNA CANTIDAD RESTANTE IGUAL A 0 
@@ -512,5 +559,20 @@ BEGIN
 	ON P.IdPedido=PCR.IdPedido
 	WHERE PCR.CantidadMaterialesRestantes=0
 	
+	/*OBTENER EL TOTAL DEL PEDIDO ACEPTADO*/
+	DELETE @PedidoMontos
+	INSERT INTO @PedidoMontos(IdPedido,TotalAceptado)
+	SELECT IdPedido,
+	SUM(SubtotalAceptado)
+	FROM @PedidoDetalleCantidadRestante
+	GROUP BY IdPedido
+
+	--ACTUALIZAR EL MONTO DEL TOTAL DEL PEDIDO
+	UPDATE P
+    SET P.TotalPedidoAceptado = ISNULL(PM.TotalAceptado,0)
+    FROM dbo.BI_Pedido P
+    JOIN @PedidoMontos PM
+            ON P.IdPedido = PM.IdPedido; 
+
 END;
 

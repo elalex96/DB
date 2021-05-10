@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -96,10 +97,19 @@ AS
                  SELECT ISNULL(A.Codigo, 'SinClasificar') AS Codigo,   
                         R.Comentarios AS Descripcion,   
                         S.RazonSocial AS RazonSocial,   
-                        S.RFC AS RFC,   
-                        SUM(CAST(ROUND((ISNULL(R.MontoRegistro, 0) * TCD.TipoCambio), 2) AS DECIMAL(20, 2))) AS SubTotal,   
+                        S.RFC AS RFC,  
+						SUM(
+							 CASE WHEN F.IdMoneda = 1 
+								THEN CAST(ROUND((ISNULL(R.MontoRegistro, 0)), 2) AS DECIMAL(20, 2))
+								ELSE  CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,F.Fecha)AS DECIMAL(20, 2))
+							END
+						)  AS SubTotal,   
                         ISNULL(R.PCN, 0) AS PCN,   
-                        SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) * TCD.TipoCambio), 2) AS DECIMAL(20, 2))) AS CN,   
+						CASE WHEN F.IdMoneda = 1 
+								THEN SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) ), 2) AS DECIMAL(20, 2)))
+								ELSE CAST([dbo].[FN_DolaresPesosTipoCambio](SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) ), 2) AS DECIMAL(20, 2))),F.Fecha)AS DECIMAL(20, 2))
+						END
+                         AS CN,   
                         ROW_NUMBER() OVER(ORDER BY F.IdFactura) AS ID,   
                         ROW_NUMBER() OVER(PARTITION BY F.IdFactura,   
                                                        S.RFC ORDER BY R.Comentarios) AS Repetido,   
@@ -111,11 +121,7 @@ AS
                       JOIN dbo.CO_ProgramaActividad PA ON PA.IdProgramaActividad = P.IdProgramaActividad  
                       JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad  
                       LEFT JOIN dbo.CO_PCNPorPeriodos PPP ON PPP.IdTipoPgrogramaActividad = TPA.IdTipoProgramaActividad  
-                      LEFT JOIN dbo.FI_Factura F ON F.IdFactura = R.IdFactura  
-                      LEFT JOIN dbo.CO_TipoCambioDiario TCD ON F.IdMoneda <> TCD.IdMoneda  
-                                                               AND DAY(TCD.Fecha) = DAY(F.Fecha)  
-                                                               AND MONTH(TCD.Fecha) = MONTH(F.Fecha)  
-                                                               AND YEAR(TCD.Fecha) = YEAR(F.Fecha)  
+                      LEFT JOIN dbo.FI_Factura F ON F.IdFactura = R.IdFactura                        
                       LEFT JOIN dbo.PV_Subcontratista S ON S.IdSubcontratista = F.IdSubcontratista  
                       LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad  
                       LEFT JOIN dbo.CO_Servicio SE ON SE.IdServicio = L.IdServicio  
@@ -137,13 +143,16 @@ AS
                           --CAST(ROUND((ISNULL(R.MontoRegistro, 0) * TCD.TipoCambio), 2) AS DECIMAL(20, 2)),   
                           ISNULL(R.PCN, 0),   
                           --CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) * TCD.TipoCambio), 2) AS DECIMAL(20, 2)),   
-                          F.IdFactura  
+                          F.IdFactura  ,
+						  F.IdMoneda
                  ORDER BY S.RFC;  
              END;  
              ELSE  
              BEGIN  
                  CREATE TABLE #DATOS  
-                 (Codigo                    VARCHAR(50),   
+                 (
+				 IdRegistro	INT,
+				  Codigo                    VARCHAR(50),   
                   Descripcion               VARCHAR(300),   
                   RazonSocial               VARCHAR(300),   
                   RFC                       VARCHAR(100),   
@@ -154,7 +163,9 @@ AS
                   IdAceptacionPedidoDetalle INT  
                  )  
                  INSERT INTO #DATOS  
-                 (Codigo,   
+                 (
+				  IdRegistro,
+				 Codigo,   
                   Descripcion,   
                   RazonSocial,   
                   RFC,   
@@ -164,11 +175,15 @@ AS
                   IdFactura,   
                   IdAceptacionPedidoDetalle  
                  )  
-    SELECT ISNULL(A.Codigo, 'SinClasificar') AS Codigo,   
+				SELECT r.IdRegistro,
+						ISNULL(A.Codigo, 'SinClasificar') AS Codigo,   
                         ISNULL(A.Nombre, 'SinClasificar') AS Descripcion,   
                         S.RazonSocial AS RazonSocial,   
                         S.RFC AS RFC,   
-                        CAST(R.MontoRegistro * TCD.TipoCambio AS DECIMAL(20, 2)) AS SubTotal,   
+                        CASE WHEN F.IdMoneda = 1 
+							THEN CAST(R.MontoRegistro AS DECIMAL(20, 2)) 
+							ELSE CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,F.Fecha) AS DECIMAL(20, 2)) 
+						END AS SubTotal,   
                         F.SubTotal AS SubTotalOriginal,   
                         R.PCN AS PCN,   
                         F.IdFactura,   
@@ -182,30 +197,30 @@ AS
                       JOIN dbo.CO_Presupuesto P ON PP.IdPresupuesto = P.IdPresupuesto  
                       JOIN dbo.CO_ProgramaActividad PA ON P.IdProgramaActividad = PA.IdProgramaActividad  
                       JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad  
-                      JOIN dbo.CO_TipoCambioDiario TCD ON F.IdMoneda <> TCD.IdMoneda  
-                                                          AND DAY(TCD.Fecha) = DAY(F.Fecha)  
-                                                          AND MONTH(TCD.Fecha) = MONTH(F.Fecha)  
-                                                          AND YEAR(TCD.Fecha) = YEAR(F.Fecha)  
+                      
                       LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad  
                  WHERE(CAST(F.Fecha AS DATE) >= @FInicio  
                        AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))  
                       AND R.IdGastoRubro = 3  
                       AND S.RFC NOT IN  
-                 (  
-                     SELECT RFC  
-                     FROM #RFC  
-                 )  
-                      AND F.IdContrato = @IdContrato  
-                      AND ISNULL(R.PCN, 0) >= 0  
-                      AND TCD.IdMoneda IN(1, 2)  
+					 (  
+						 SELECT RFC  
+						 FROM #RFC  
+					 )  
+						  AND F.IdContrato = @IdContrato  
+						  AND ISNULL(R.PCN, 0) >= 0  
+						  AND F.IdMoneda IN(1, 2)  
                  --  
                  UNION  
                  --  
-                 SELECT ISNULL(A.Codigo, 'SinClasificar') AS Codigo,   
+                 SELECT r.IdRegistro,
+						ISNULL(A.Codigo, 'SinClasificar') AS Codigo,   
                         ISNULL(A.Nombre, 'SinClasificar') AS Descripcion,   
                         S.RazonSocial AS RazonSocial,   
                         S.RFC AS RFC,   
-                        CAST(F.SubTotal * TCD.TipoCambio AS DECIMAL(20, 2)) AS SubTotal,   
+                        CASE WHEN f.IdMoneda <> 1 then CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro,f.Fecha) AS DECIMAL(20,2))
+							ELSE ISNULL(R.MontoRegistro,0) 
+						END AS SubTotal,   
                         F.SubTotal AS SubTotalOriginal,   
                         R.PCN AS PCN,   
                         F.IdFactura,   
@@ -219,11 +234,8 @@ AS
                       JOIN dbo.CO_Presupuesto P ON PP.IdPresupuesto = P.IdPresupuesto  
                       JOIN dbo.CO_ProgramaActividad PA ON P.IdProgramaActividad = PA.IdProgramaActividad  
                       JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad  
-                      JOIN dbo.CO_TipoCambioDiario TCD ON F.IdMoneda <> TCD.IdMoneda  
-                                                          AND DAY(TCD.Fecha) = DAY(F.Fecha)  
-                                                          AND MONTH(TCD.Fecha) = MONTH(F.Fecha)  
-                                                          AND YEAR(TCD.Fecha) = YEAR(F.Fecha)  
-       LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad  
+                     
+				 LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad  
                  WHERE(CAST(F.Fecha AS DATE) >= @FInicio  
                        AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))  
                       AND R.IdGastoRubro = 3  
@@ -234,10 +246,11 @@ AS
                  )  
                       AND F.IdContrato = @IdContrato  
                       AND ISNULL(R.PCN, 0) <> 0  
-                      AND TCD.IdMoneda IN(1, 2)  
+                      AND F.IdMoneda IN(1, 2)  
                  ORDER BY ISNULL(A.Nombre, 'SinClasificar');  
-  
                  /*SELECT FINAL*/  
+
+				
   
                  SELECT Codigo,   
                         Descripcion,   
@@ -265,6 +278,7 @@ AS
                         ISNULL((SUM(SubTotal)*CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT)),0) AS CN,   
                         IdFactura  
                  FROM #FINAL  
+				
                  GROUP BY Codigo,   
                           Descripcion,   
                           RazonSocial,   
