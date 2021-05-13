@@ -1,9 +1,29 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+
+
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_HistorialProcesoPrimario'
+)
+    DROP PROCEDURE SP_HistorialProcesoPrimario;
+GO 
+
+
+/****** Object:  StoredProcedure [dbo].[SP_HistorialProcesoPrimario]    Script Date: 11/05/2021 11:09:22 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <03/02/2020>
 -- Description:	<Consuta principal del historial de una solped>
 -- =============================================
-create PROCEDURE [dbo].[SP_HistorialProcesoPrimario] --9
+CREATE PROCEDURE [dbo].[SP_HistorialProcesoPrimario] --9
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT
 AS
@@ -37,16 +57,16 @@ BEGIN
 	SELECT
 		R.IdSolPedAnterior,
 		'Reciclaje de Solicitud de Pedido',
-		US.Nombre + ' registro la solicitud de pedido N.' + CAST(R.IdSolPedNueva AS NVARCHAR(10)) + ', reciclada de los datos de la solicitud de pedido N.' + CAST(R.IdSolPedAnterior AS NVARCHAR(10)),
+		ISNULL(US.Nombre,'') + ' registro la solicitud de pedido N.' + CAST(R.IdSolPedNueva AS NVARCHAR(10)) + ', reciclada de los datos de la solicitud de pedido N.' + CAST(R.IdSolPedAnterior AS NVARCHAR(10)),
 		DATEADD(SECOND,-1,SP.FechaAlta),
 		0,
 		'/01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=' + CAST(R.IdSolPedAnterior AS NVARCHAR(10)) + '&origin=s&tp_user=2',
 		0
 	FROM dbo.TA_RecicajeSolPed AS R
 		LEFT JOIN dbo.MM_SolicitudPedido AS SP
-			ON SP.IdSolicitudPedido = R.IdSolPedNueva
+			ON R.IdSolPedNueva = SP.IdSolicitudPedido
 		LEFT JOIN dbo.S_Usuario AS US
-			ON US.IdUsuario = SP.IdUsuarioSolicitante
+			ON  SP.IdUsuarioSolicitante = US.IdUsuario
 	WHERE R.IdSolPedNueva = @IdSolicitudPedido;
 
 	INSERT INTO @HISTORIAL
@@ -61,13 +81,13 @@ BEGIN
 	SELECT
 		SP.IdSolicitudPedido,
 		'Solicitud de Pedido No. ' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)),
-		US.Nombre + ' registro de la Solicitud de Pedido No.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + ' para su aprobación.',
+		ISNULL(US.Nombre,'') + ' registro de la Solicitud de Pedido No.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + ' para su aprobación.',
 		SP.FechaAlta,
 		1, --SOLICITUD DE PEDIDO
 		'/01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=' + CAST(SP.IdSolicitudPedido AS nvarchar(10)) +'&origin=s&tp_user=2'
 	FROM dbo.MM_SolicitudPedido AS SP
 		LEFT JOIN dbo.S_Usuario AS US
-			ON US.IdUsuario = SP.IdUsuarioSolicitante
+			ON SP.IdUsuarioSolicitante = US.IdUsuario 
 	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido;
 
 	INSERT INTO @HISTORIAL
@@ -90,7 +110,7 @@ BEGIN
 		1
 	FROM dbo.MM_SolicitudPedido AS SP
 	LEFT JOIN dbo.TA_Operacion AS TOA
-	 ON TOA.IdDocumento = SP.IdSolicitudPedido
+	 ON SP.IdSolicitudPedido = TOA.IdDocumento 
 		AND TOA.IdTipoOperacion = 6
 	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido
 		AND TOA.IdOperacion IS NOT NULL;
@@ -105,11 +125,11 @@ BEGIN
 		PO.IdPeticionOferta
 	FROM dbo.MM_SolicitudPedido AS SP
 			LEFT JOIN dbo.MM_PeticionOferta AS PO
-				ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
+				ON SP.IdSolicitudPedido = PO.IdSolicitudPedido 
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = PO.IdSubcontratista
+				ON PO.IdSubcontratista = PR.IdProveedor 
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = PO.ModificadoPor
+				ON PO.ModificadoPor = US.IdUsuario 
 	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido
 			AND PO.FechaFinalizado IS NOT NULL
 			AND SP.IdEstatusEliminado IS NULL;
@@ -119,7 +139,7 @@ BEGIN
 		HC.Id_Historial
 	FROM dbo.MM_HistorialCambiosCotizacion AS HC
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = HC.IdEditadoPor
+				ON HC.IdEditadoPor = US.IdUsuario
 	WHERE HC.IdSolicitudPedido = @IdSolicitudPedido;
 
 	IF (SELECT COUNT(HISTORICO) FROM @HISTCO) > 0
@@ -140,22 +160,24 @@ BEGIN
 	)
 	SELECT
 		SP.IdSolicitudPedido,
-		'Fecha Limite de la Cotización para la Solicitud de Pedido No. ' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)),
+		'Fecha Límite de la Cotización para la Solicitud de Pedido No. ' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)),
 		'Finalizó la cotización.',
 		TOA.FechaFinalizacion,
 		3, --COTIZACION
 		CASE
 			WHEN SP.IdTipoProceso = 2 THEN '/02Proveedores/DetalleOferta.aspx?solped=' + CAST(SP.IdSolicitudPedido AS NVARCHAR(10))
 			WHEN SP.IdTipoProceso = 4 THEN '/01Proveedores/DetalleADOferta.aspx?solped='
+			WHEN SP.IdTipoProceso = 6 THEN '/02Proveedores/DetalleOferta.aspx?solped=' + CAST(SP.IdSolicitudPedido AS NVARCHAR(10))
 		END,
 		CASE
 			WHEN SP.IdTipoProceso = 2 THEN 0
 			WHEN SP.IdTipoProceso = 4 THEN 1
+			WHEN SP.IdTipoProceso = 6 THEN 0
 		END,
 		@ISHISTCOTI
 	FROM dbo.MM_SolicitudPedido AS SP
 	LEFT JOIN dbo.TA_Operacion AS TOA
-	 ON TOA.IdDocumento = SP.IdSolicitudPedido
+	 ON  SP.IdSolicitudPedido = TOA.IdDocumento
 		AND TOA.IdTipoOperacion = 6
 	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido
 		AND TOA.IdOperacion IS NOT NULL;
@@ -172,24 +194,25 @@ BEGIN
 	SELECT
 		P.IdPedido,
 		'Pedido No. ' + CAST(PS.IdPedido AS NVARCHAR(100)),
-		US.Nombre + ' registro el Pedido No.' + CAST(PS.IdPedido AS NVARCHAR(100)) + ', para su aprobación.',
+		ISNULL(US.Nombre,'') + ' registro el Pedido No.' + CAST(PS.IdPedido AS NVARCHAR(100)) + ', para su aprobación.',
 		P.CreadoEl,
 		4, --PEDIDO
 		'/02Proveedores/PedidoDetalle.aspx?ped=' + CAST(P.IdPedido AS NVARCHAR(10)) + '&type=2'
 	FROM dbo.MM_SolicitudPedido AS SP
 	LEFT JOIN dbo.TA_Operacion AS TOA
-	 ON TOA.IdDocumento = SP.IdSolicitudPedido
+	 ON  SP.IdSolicitudPedido = TOA.IdDocumento 
 		AND TOA.IdTipoOperacion = 9
 	LEFT JOIN dbo.MM_Pedido AS P
-		ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+		ON SP.IdSolicitudPedido = P.IdSolicitudPedido  
 		 AND P.Version = TOA.NoVersion
 	LEFT JOIN dbo.MM_Pedidos AS PS
-		ON PS.IdIdentificador = P.IdPedido
-		 AND PS.IdProveedorCliente = P.IdProveedorCompras
+		ON  P.IdPedido = PS.IdIdentificador 
+		 AND  P.IdProveedorCompras = PS.IdProveedorCliente
+		 AND PS.IdTipoPedido IN (2,4,6)
 	LEFT JOIN dbo.S_Proveedor AS PR
-		ON PR.IdProveedor = P.IdSubcontratista
+		ON  P.IdSubcontratista = PR.IdProveedor
 	LEFT JOIN dbo.S_Usuario AS US
-		ON US.IdUsuario = P.CreadoPor
+		ON  P.CreadoPor =US.IdUsuario 
 	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido
 		AND TOA.IdOperacion IS NOT NULL
 	ORDER BY P.CreadoEl DESC;
@@ -207,8 +230,8 @@ BEGIN
 	)
 	SELECT
 		PRS.IdPRESES,
-		'Proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ' - PO No.' + PRS.SAPPONumber,
-		CONCAT(US.Nombre , ' from ' , VE.VendorName , ' register the proforma N.' , CAST(PRS.IdPRESES AS NVARCHAR(10)) , ', PO N.' , PRS.SAPPONumber ,', Reference No.',PRS.SAPSESNumber, ', for you approval.') COLLATE SQL_Latin1_General_CP1_CI_AS,
+		'Proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ' - PO No.' + ISNULL(PRS.SAPPONumber,''),
+		CONCAT(ISNULL(US.Nombre,'') , ' from ' , ISNULL(VE.VendorName,'') , ' register the proforma N.' , CAST(PRS.IdPRESES AS NVARCHAR(10)) , ', PO N.' , ISNULL(PRS.SAPPONumber,'') ,', Reference No.',ISNULL(PRS.SAPSESNumber,''), ', for you approval.') COLLATE SQL_Latin1_General_CP1_CI_AS,
 		PRS.CreadoEl,
 		10,--proforma
 		'/Murphy/MPY_RecepcionPreFacturaDetalle.aspx?PRESES=' + CAST(PRS.IdPRESES AS NVARCHAR(10)),
@@ -250,8 +273,8 @@ BEGIN
 	)
 	SELECT 
 		AC.IdAceptacionCartaPCN,
-		'National content letter of the Proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ', PO No.' + PRS.SAPPONumber + ISNULL(',SES No.' + SES.SESNumber,'') COLLATE SQL_Latin1_General_CP1_CI_AS,
-		US.Nombre + ' of ' + VE.VendorName + ' register the National content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ', PO No.' + PRS.SAPPONumber + ISNULL(',SES No.' + SES.SESNumber,'') + ', Reference No.' + PRS.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS,
+		'National content letter of the Proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ', PO No.' + ISNULL(PRS.SAPPONumber,'') + ISNULL(',SES No.' + ISNULL(SES.SESNumber,''),'') COLLATE SQL_Latin1_General_CP1_CI_AS,
+		ISNULL(US.Nombre,'') + ' of ' + ISNULL(VE.VendorName,'') + ' register the National content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ', PO No.' + ISNULL(PRS.SAPPONumber,'') + ISNULL(',SES No.' + SES.SESNumber,'') + ', Reference No.' + ISNULL(PRS.SAPSESNumber,'') COLLATE SQL_Latin1_General_CP1_CI_AS,
 		AC.CreadoEl,
 		11,--contenido nacional para murphy
 		'/MurphyExcel/MPY_AprobacionCNDetalle.aspx?aceptacion=' + CAST(AC.IdAceptacionCartaPCN AS NVARCHAR(10)),
@@ -298,8 +321,8 @@ BEGIN
 	)
 	SELECT 
 		AF.IdAceptacionFactura,
-		'Invoice Approval of the Proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ', PO No.' + PRS.SAPPONumber + ISNULL(',SES No.' + SES.SESNumber,'') COLLATE SQL_Latin1_General_CP1_CI_AS,
-		'Supplier (' + VE.VendorName + ') upload & send an invoice for approval. (proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))  + ', PO No.' + PRS.SAPPONumber + ISNULL(',SES No.' + SES.SESNumber,'') + ', Reference No.' + PRS.SAPSESNumber + ').' COLLATE SQL_Latin1_General_CP1_CI_AS,
+		'Invoice Approval of the Proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ', PO No.' + ISNULL(PRS.SAPPONumber,'') + ISNULL(',SES No.' + SES.SESNumber,'') COLLATE SQL_Latin1_General_CP1_CI_AS,
+		'Supplier (' + VE.VendorName + ') upload & send an invoice for approval. (proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))  + ', PO No.' + ISNULL(PRS.SAPPONumber,'') + ISNULL(',SES No.' + SES.SESNumber,'') + ', Reference No.' + ISNULL(PRS.SAPSESNumber,'') + ').' COLLATE SQL_Latin1_General_CP1_CI_AS,
 		AF.CreadoEl,
 		12,---aprobacion de factura murphy
 		'/MurphyExcel/MPY_RecepcionVentanillaDetalle.aspx?aceptacion=' + CAST(AP.IdAceptacionPedido AS NVARCHAR(10)),
