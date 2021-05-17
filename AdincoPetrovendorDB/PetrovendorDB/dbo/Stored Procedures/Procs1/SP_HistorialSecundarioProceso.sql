@@ -1,9 +1,31 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_HistorialSecundarioProceso'
+)
+    DROP PROCEDURE SP_HistorialSecundarioProceso;
+GO 
+
+/****** Object:  StoredProcedure [dbo].[SP_HistorialSecundarioProceso]    Script Date: 11/05/2021 11:21:56 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <03/03/2020>
 -- Description:	<Consulta del detalle del historial>
 -- =============================================
-create PROCEDURE [dbo].[SP_HistorialSecundarioProceso] --3,12
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <11/05/2020>
+-- Description:	Se agrega isnull a textos
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_HistorialSecundarioProceso] --3,12
 	-- Add the parameters for the stored procedure here
 	@IdDocumento INT,
 	@IdProceso INT
@@ -59,10 +81,10 @@ BEGIN
 		SELECT
 			T.IdTarea,
 			CASE 
-				WHEN T.IdEstatus = 2 THEN US.Nombre + ' aprobo la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 3 THEN US.Nombre + ' rechazo la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 6 THEN US.Nombre + '(Asignador) cancelo la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 7 THEN US.Nombre + ' reasigno la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobo la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazo la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 6 THEN ISNULL(US.Nombre,'') + '(Asignador) cancelo la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 7 THEN ISNULL(US.Nombre,'') + ' reasigno la solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(100)) + '.'
 			END,
 			T.FechaCambioEstatus,
 			CASE 
@@ -71,14 +93,15 @@ BEGIN
 			END
 		FROM dbo.MM_SolicitudPedido AS SP
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = SP.IdSolicitudPedido
+				ON SP.IdSolicitudPedido =OP.IdDocumento 
 				AND OP.IdTipoOperacion = 2
 			LEFT JOIN dbo.TA_Tarea AS T
-				ON T.IdOperacion = OP.IdOperacion
+				ON OP.IdOperacion =T.IdOperacion 
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = T.IdAprobador
+				ON T.IdAprobador = US.IdUsuario 
 		WHERE SP.IdSolicitudPedido = @IdDocumento
 			AND T.IdEstatus <> 1
+			AND T.Activo = 1
 			AND SP.IdEstatusEliminado IS NULL;
 
 		INSERT INTO @HISTORIALSEC
@@ -90,18 +113,18 @@ BEGIN
 		)
 		SELECT TOP 1
 			HF.IdHistorial,
-			'Finalizó la evaluación de la requisición.<br>' + 'La solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(10)) + ' fue ' + TA.Nombre + '.',
+			'Finalizó la evaluación de la requisición.<br>' + 'La solicitud de pedido N.' + CAST(SP.IdSolicitudPedido AS NVARCHAR(10)) + ' fue ' + ISNULL(TA.Nombre,'') + '.',
 			HF.Fecha,
 			TA.IdEstatus
 		FROM dbo.MM_SolicitudPedido AS SP
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = SP.IdSolicitudPedido
-				AND OP.IdTipoOperacion = 2
+				ON SP.IdSolicitudPedido = OP.IdDocumento  
+				AND OP.IdTipoOperacion = 2--> APROBACIÓN DE SOLPED
 			LEFT JOIN dbo.TA_HistorialFlujoTarea AS HF
-				ON HF.IdOperacion = OP.IdOperacion
+				ON OP.IdOperacion = HF.IdOperacion 
 			LEFT JOIN dbo.TA_Estatus AS TA
-				ON TA.IdEstatus = OP.IdEstatusOperacion 
-		WHERE SP.IdSolicitudPedido = 20271
+				ON OP.IdEstatusOperacion  = TA.IdEstatus 
+		WHERE SP.IdSolicitudPedido = @IdDocumento
 			AND HF.IdEstadoFlujo = 7
 			AND SP.IdEstatusEliminado IS NULL
 		ORDER BY HF.Fecha DESC;
@@ -121,20 +144,20 @@ BEGIN
 		SELECT
 			TOPA.IdOperacion,
 			CASE
-				WHEN SP.IdTipoProceso = 2 THEN REPLACE(CONCAT(US.Nombre , ' envio una solicitud de cotización bajo el metodo de mercadeo, a los Proveedores : ' , (SELECT '| -' + PR.RazonSocial
+				WHEN SP.IdTipoProceso = 2 THEN REPLACE(CONCAT(US.Nombre , ' envio una solicitud de cotización bajo el metodo de mercadeo, a los Proveedores : ' , (SELECT '| -' + ISNULL(PR.RazonSocial,'')
 																																							FROM dbo.MM_PeticionOferta AS PO
 																																							INNER JOIN dbo.S_Proveedor AS PR
-																																								ON PR.IdProveedor = PO.IdSubcontratista
+																																								ON PO.IdSubcontratista = PR.IdProveedor 
 																																							WHERE PO.IdSolicitudPedido = TOPA.IdDocumento
 																																							FOR XML PATH (''))),'|','<br>')
-				WHEN SP.IdTipoProceso = 4 THEN REPLACE(CONCAT(US.Nombre , ' envio una solicitud de cotización bajo el metodo de adjudciación directa, al Proveedor : ' , (SELECT '| -' + PR.RazonSocial
+				WHEN SP.IdTipoProceso = 4 THEN REPLACE(CONCAT(US.Nombre , ' envio una solicitud de cotización bajo el metodo de adjudciación directa, al Proveedor : ' , (SELECT '| -' + ISNULL(PR.RazonSocial,'')
 																																							FROM dbo.MM_PeticionOferta AS PO
 																																							INNER JOIN dbo.S_Proveedor AS PR
 																																								ON PR.IdProveedor = PO.IdSubcontratista
 																																							WHERE PO.IdSolicitudPedido = TOPA.IdDocumento
 																																							FOR XML PATH (''))),'|','<br>')
 
-				WHEN SP.IdTipoProceso = 6 THEN REPLACE(CONCAT(US.Nombre , ' envio una solicitud de cotización bajo el metodo de adjudciación directa, al Proveedor : ' , (SELECT '| -' + PR.RazonSocial
+				WHEN SP.IdTipoProceso = 6 THEN REPLACE(CONCAT(US.Nombre , ' envio una solicitud de cotización bajo el metodo de adjudciación directa, al Proveedor : ' , (SELECT '| -' + ISNULL(PR.RazonSocial,'')
 																																							FROM dbo.MM_PeticionOferta AS PO
 																																							INNER JOIN dbo.S_Proveedor AS PR
 																																								ON PR.IdProveedor = PO.IdSubcontratista
@@ -145,10 +168,10 @@ BEGIN
 			2
 		FROM dbo.MM_SolicitudPedido AS SP
 			LEFT JOIN dbo.TA_Operacion AS TOPA
-				ON TOPA.IdDocumento = SP.IdSolicitudPedido
+				ON SP.IdSolicitudPedido = TOPA.IdDocumento 
 				AND TOPA.IdTipoOperacion = 6
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = TOPA.IdAsignador
+				ON TOPA.IdAsignador = US.IdUsuario  
 		WHERE SP.IdSolicitudPedido = @IdDocumento
 			AND SP.IdEstatusEliminado IS NULL;
 
@@ -166,16 +189,16 @@ BEGIN
 		)
 		SELECT
 			PO.IdPeticionOferta,
-			US.Nombre + ' de ' + PR.RazonSocial + ' envio su cotización.',
+			ISNULL(US.Nombre + ' de ','')  + ISNULL(PR.RazonSocial,'') + ' envió su cotización.',
 			PO.FechaFinalizado,
 			2
 		FROM dbo.MM_SolicitudPedido AS SP
 			LEFT JOIN dbo.MM_PeticionOferta AS PO
-				ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
+				ON SP.IdSolicitudPedido = PO.IdSolicitudPedido 
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = PO.IdSubcontratista
+				ON PO.IdSubcontratista = PR.IdProveedor
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = PO.ModificadoPor
+				ON PO.ModificadoPor = US.IdUsuario
 		WHERE SP.IdSolicitudPedido = @IdDocumento
 			AND PO.FechaFinalizado IS NOT NULL
 			AND SP.IdEstatusEliminado IS NULL;
@@ -189,12 +212,12 @@ BEGIN
 		)
 		SELECT
 			HC.Id_Historial,
-			US.Nombre + ' cambio la fecha limite de cotización a ' + CONVERT(VARCHAR,HC.FechaNueva,22)  + '.',
+			ISNULL(US.Nombre,'Se') + ' cambio la fecha límite de cotización a ' + CONVERT(VARCHAR,HC.FechaNueva,22)  + '.',
 			HC.FechaEdicion,
 			1
 		FROM dbo.MM_HistorialCambiosCotizacion AS HC
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = HC.IdEditadoPor
+				ON HC.IdEditadoPor = US.IdUsuario
 		WHERE HC.IdSolicitudPedido = @IdDocumento;
 
 	END
@@ -236,27 +259,31 @@ BEGIN
 		SELECT
 			T.IdTarea,
 			CASE 
-				WHEN T.IdEstatus = 2 THEN US.Nombre + ' aprobo el Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 3 THEN US.Nombre + ' rechazo el pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 6 THEN US.Nombre + '(Asignador) cancelo el pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 7 THEN US.Nombre + ' reasigno el pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó el Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazó el pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 6 THEN ISNULL(US.Nombre,'') + '(Asignador) cancelo el pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 7 THEN ISNULL(US.Nombre,'') + ' reasignó el pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
 			END,
 			T.FechaCambioEstatus,
 			CASE 
-				WHEN T.IdEstatus = 2 THEN 2
-				ELSE 3
+				WHEN T.IdEstatus = 2 THEN 
+				2
+				ELSE 
+				3
 			END
 		FROM dbo.MM_Pedido AS P
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = P.IdSolicitudPedido
+				ON P.IdSolicitudPedido= OP.IdDocumento 
 				AND OP.IdTipoOperacion = 9
-				AND OP.NoVersion = P.Version
+				AND P.Version =OP.NoVersion  
 			LEFT JOIN dbo.TA_Tarea AS T
-				ON T.IdOperacion = OP.IdOperacion
+				ON OP.IdOperacion=T.IdOperacion 
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = T.IdAprobador
+				ON T.IdAprobador = US.IdUsuario 
 			LEFT JOIN dbo.MM_Pedidos AS PS
-				ON PS.IdIdentificador = P.IdPedido
+				ON P.IdPedido = PS.IdIdentificador 
+				AND P.IdProveedorCompras = PS.IdProveedorCliente
+				AND PS.IdTipoPedido IN (2,4,6) ---(Mer, AD, OT)
 		WHERE P.IdPedido = @IdDocumento
 			AND T.IdEstatus <> 1
 			AND P.IdEstatusEliminado IS NULL;
@@ -275,17 +302,19 @@ BEGIN
 			TA.IdEstatus
 		FROM dbo.MM_Pedido AS P
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = P.IdSolicitudPedido
+				ON P.IdSolicitudPedido = OP.IdDocumento 
 				AND OP.IdTipoOperacion = 9
-				AND OP.NoVersion = P.Version
+				AND P.Version = OP.NoVersion 
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = OP.IdAsignador
+				ON OP.IdAsignador = US.IdUsuario
 			LEFT JOIN dbo.MM_Pedidos AS PS
-				ON PS.IdIdentificador = P.IdPedido
+				ON P.IdPedido = PS.IdIdentificador  
+				AND P.IdProveedorCompras= PS.IdProveedorCliente
+				AND PS.IdTipoPedido IN (2,4,6) ---(Mer, AD, OT)
 			LEFT JOIN dbo.TA_HistorialFlujoTarea AS HF
-				ON HF.IdOperacion = OP.IdOperacion
+				ON OP.IdOperacion = HF.IdOperacion 
 			LEFT JOIN dbo.TA_Estatus AS TA
-				ON TA.IdEstatus = OP.IdEstatusOperacion 
+				ON OP.IdEstatusOperacion = TA.IdEstatus 
 		WHERE P.IdPedido = @IdDocumento
 			AND HF.IdEstadoFlujo = 7
 		ORDER BY HF.Fecha DESC;
@@ -300,23 +329,25 @@ BEGIN
 		SELECT
 			P.IdPedido,
 			CASE
-				WHEN P.RecepcionServicio = 1 THEN PR.RazonSocial + ' confirmo la recepción del servicio del Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
-				WHEN P.RecepcionServicio = 0 THEN PR.RazonSocial + ' rechazo la recepción del servicio del Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
+				WHEN P.RecepcionServicio = 1 THEN ISNULL(PR.RazonSocial,'') + ' confirmó la recepción del servicio del Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
+				WHEN P.RecepcionServicio = 0 THEN ISNULL(PR.RazonSocial,'') + ' rechazo la recepción del servicio del Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(100)) + '.'
 			END,
-			P.FechaRecepcionServicio,
+			ISNULL(P.FechaRecepcionServicio,P.CreadoEl) AS FechaRecepcionServicio,
 			CASE
 				WHEN P.RecepcionServicio = 1 THEN 2
 				WHEN P.RecepcionServicio = 0 THEN 3
 			END
 		FROM dbo.MM_Pedido AS P
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = P.IdSolicitudPedido
-				AND OP.IdTipoOperacion = 9
-				AND OP.NoVersion = P.Version
+				ON P.IdSolicitudPedido = OP.IdDocumento 
+				AND OP.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND P.Version = OP.NoVersion 
 			LEFT JOIN dbo.MM_Pedidos AS PS
-				ON PS.IdIdentificador = P.IdPedido
+				ON  P.IdPedido = PS.IdIdentificador 
+				AND P.IdProveedorCompras = PS.IdProveedorCliente
+				AND PS.IdTipoPedido IN (2,4,6) ---(Mer, AD, OT)
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = P.IdSubcontratista
+				ON  P.IdSubcontratista = PR.IdProveedor
 		WHERE P.IdPedido = @IdDocumento
 			AND P.RecepcionServicio IS NOT NULL
 			AND P.IdEstatusEliminado IS NULL;
@@ -333,7 +364,7 @@ BEGIN
 		)
 		SELECT
 			AP.IdAceptacionPedido,
-			US.Nombre + ' registro la Aceptacion N.' + CAST(AP.IdAceptacionPedido AS NVARCHAR(10)) + ', del Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(10)) + '.',
+			ISNULL(US.Nombre,'') + ' registro la Aceptacion N.' + CAST(AP.IdAceptacionPedido AS NVARCHAR(10)) + ', del Pedido N.' + CAST(PS.IdPedido AS NVARCHAR(10)) + '.',
 			AP.Creado,
 			2,
 			1,
@@ -341,12 +372,13 @@ BEGIN
 			'/02Proveedores/AceptacionDetalle.aspx?aceptacion=' + CAST(AP.IdAceptacionPedido AS NVARCHAR(10))
 		FROM dbo.MM_AceptacionPedido AS AP
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = AP.CreadorPor
+				ON AP.CreadorPor = US.IdUsuario
 			LEFT JOIN dbo.MM_Pedido AS P
-				ON P.IdPedido = AP.IdPedido
+				ON AP.IdPedido = P.IdPedido 
 			LEFT JOIN dbo.MM_Pedidos AS PS
-				ON PS.IdIdentificador = P.IdPedido
-					AND PS.IdProveedorCliente = P.IdProveedorCompras
+				ON P.IdPedido = PS.IdIdentificador 
+				AND PS.IdProveedorCliente = P.IdProveedorCompras
+				AND PS.IdTipoPedido IN (2,4,6) ---(Mer, AD, OT)
 		WHERE AP.IdPedido = @IdDocumento
 			AND AP.IdEstatusEliminado IS NULL;
 
@@ -364,12 +396,12 @@ BEGIN
 		)
 		SELECT
 			SECN.IdAprobacionExclucionCN,
-			US.Nombre + ' solicito excluir la Carta de Contenido Nacional para la Aceptacion N.' + CAST(SECN.IdAceptacionPedido AS NVARCHAR(10)) + '.',
+			ISNULL(US.Nombre,'Se') + ' solicito excluir la Carta de Contenido Nacional para la Aceptacion N.' + CAST(SECN.IdAceptacionPedido AS NVARCHAR(10)) + '.',
 			SECN.FechaSolicitud,
 			1
 		FROM dbo.MM_Solicitud_ExclucionCN AS SECN
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = SECN.IdUsuarioRequesitor
+				ON SECN.IdUsuarioRequesitor = US.IdUsuario 
 		WHERE SECN.IdAceptacionPedido = @IdDocumento;
 
 		INSERT INTO @HISTORIALSEC
@@ -382,14 +414,14 @@ BEGIN
 		SELECT
 			SECN.IdAprobacionExclucionCN,
 			CASE
-				WHEN SECN.IdEstatus = 2 THEN US.Nombre + ' aprobo la solicitud para excluir la Carta de Contenido Nacional para la Aceptacion N.' + CAST(SECN.IdAceptacionPedido AS NVARCHAR(10)) + '.'
-				WHEN SECN.IdEstatus = 3 THEN US.Nombre + ' rechazo la solicitud para excluir la Carta de Contenido Nacional para la Aceptacion N.' + CAST(SECN.IdAceptacionPedido AS NVARCHAR(10)) + '.'
+				WHEN SECN.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó la solicitud para excluir la Carta de Contenido Nacional para la Aceptacion N.' + CAST(SECN.IdAceptacionPedido AS NVARCHAR(10)) + '.'
+				WHEN SECN.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazó la solicitud para excluir la Carta de Contenido Nacional para la Aceptacion N.' + CAST(SECN.IdAceptacionPedido AS NVARCHAR(10)) + '.'
 			END,
 			SECN.FechaSolicitud,
 			SECN.IdEstatus
 		FROM dbo.MM_Solicitud_ExclucionCN AS SECN
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = SECN.UsuarioAprobador
+				ON SECN.UsuarioAprobador = US.IdUsuario 
 		WHERE SECN.IdAceptacionPedido = @IdDocumento
 			AND SECN.IdEstatus <> 1;
 
@@ -404,20 +436,20 @@ BEGIN
 		)
 		SELECT
 			ACN.IdAceptacionCartaPCN,
-			ISNULL(US.Nombre + ' de ','') + PR.RazonSocial + ' registro la Carta de Contenido Nacional de la Aceptación N.' + CAST(ACN.IdAceptacionPedido AS NVARCHAR(10)),
+			ISNULL(US.Nombre + ' de ','') + ISNULL(PR.RazonSocial,'') + ' registro la Carta de Contenido Nacional de la Aceptación N.' + CAST(ACN.IdAceptacionPedido AS NVARCHAR(10)),
 			ACN.CreadoEl,
 			1,
 			1,
 			'/02Proveedores/AprobacionCNDetalle.aspx?aceptacion=' + CAST(ACN.IdAceptacionCartaPCN AS NVARCHAR(10))
 		FROM dbo.MM_AceptacionCartaPCN AS ACN
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = ACN.CreadoPor
+				ON ACN.CreadoPor = US.IdUsuario  
 			LEFT JOIN dbo.MM_AceptacionPedido AS AP
-				ON AP.IdAceptacionPedido = ACN.IdAceptacionPedido
+				ON ACN.IdAceptacionPedido = AP.IdAceptacionPedido 
 			LEFT JOIN dbo.MM_Pedido AS P
-				ON P.IdPedido = AP.IdPedido
+				ON AP.IdPedido = P.IdPedido 
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = P.IdSubcontratista
+				ON P.IdSubcontratista = PR.IdProveedor 
 		WHERE ACN.IdAceptacionPedido = @IdDocumento
 			AND ACN.IdEstatusEliminado IS NULL;
 
@@ -431,20 +463,20 @@ BEGIN
 		SELECT
 			ACN.IdAceptacionPedido,
 			CASE
-				WHEN ACN.IdEstatus = 2 THEN US.Nombre + ' aprobo la Carta de Contenido Nacional de la Aceptación N.' + CAST(ACN.IdAceptacionPedido AS NVARCHAR(10))
-				WHEN ACN.IdEstatus = 3 THEN US.Nombre + ' rechazo la Carta de Contenido Nacional de la Aceptación N.' + CAST(ACN.IdAceptacionPedido AS NVARCHAR(10))
+				WHEN ACN.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó la Carta de Contenido Nacional de la Aceptación N.' + CAST(ACN.IdAceptacionPedido AS NVARCHAR(10))
+				WHEN ACN.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazó la Carta de Contenido Nacional de la Aceptación N.' + CAST(ACN.IdAceptacionPedido AS NVARCHAR(10))
 			END,
 			ACN.FechaEvaluacion,
 			ACN.IdEstatus
 		FROM dbo.MM_AceptacionCartaPCN AS ACN
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = ACN.IdUsuarioEvaluador
+				ON  ACN.IdUsuarioEvaluador = US.IdUsuario 
 			LEFT JOIN dbo.MM_AceptacionPedido AS AP
-				ON AP.IdAceptacionPedido = ACN.IdAceptacionPedido
+				ON ACN.IdAceptacionPedido = AP.IdAceptacionPedido  
 			LEFT JOIN dbo.MM_Pedido AS P
-				ON P.IdPedido = AP.IdPedido
+				ON AP.IdPedido = P.IdPedido 
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = P.IdSubcontratista
+				ON P.IdSubcontratista = PR.IdProveedor 
 		WHERE ACN.IdAceptacionPedido = @IdDocumento
 			AND ACN.IdEstatus <> 1
 			AND ACN.IdEstatusEliminado IS NULL;
@@ -460,25 +492,25 @@ BEGIN
 		)
 		SELECT
 			AF.IdAceptacionFactura,
-			ISNULL(US.Nombre + ' de ','') + ISNULL(PR.RazonSocial,'') + ' cargo y envio la factura para su aprobación de la Aceptación N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(10)),
+			ISNULL(US.Nombre + ' de ','') + ISNULL(PR.RazonSocial,'') + ' cargo y envió la factura para su aprobación de la Aceptación N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(10)),
 			OP.FechaRegistro,
 			1,
 			1,
 			'/02Proveedores/RecepcionVentanillaDetalle.aspx?aceptacion=' + CAST(AF.IdAceptacionPedido AS NVARCHAR(10))
 		FROM dbo.MM_AceptacionFactura AS AF
 			LEFT JOIN dbo.MM_AceptacionPedido AS AP
-				ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+				ON AF.IdAceptacionPedido = AP.IdAceptacionPedido 
 			LEFT JOIN dbo.MM_Pedido AS P
-				ON P.IdPedido = AP.IdPedido
+				ON AP.IdPedido = P.IdPedido 
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = P.IdSubcontratista
+				ON  P.IdSubcontratista = PR.IdProveedor
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = AF.IdAceptacionFactura
+				ON AF.IdAceptacionFactura =  OP.IdDocumento 
 				AND OP.IdTipoOperacion = 10
 			LEFT JOIN dbo.FI_Factura AS F
-				ON F.IdFactura = AF.IdFactura
+				ON  AF.IdFactura = F.IdFactura
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = F.CreadoPor
+				ON F.CreadoPor = US.IdUsuario 
 		WHERE AF.IdAceptacionPedido = @IdDocumento
 			AND AF.IdEstatusXML <> 1
 			AND AF.IdEstatusEliminado IS NULL;
@@ -493,10 +525,10 @@ BEGIN
 		SELECT
 			AF.IdAceptacionFactura,
 			CASE 
-				WHEN T.IdEstatus = 2 THEN US.Nombre + ' aprobo la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 3 THEN US.Nombre + ' rechazo la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 6 THEN US.Nombre + '(Asignador) cancelo la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 7 THEN US.Nombre + ' reasigno la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 3 THEN ISNULL(US.Nombre,'')  + ' rechazó la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 6 THEN ISNULL(US.Nombre,'')  + '(Asignador) cancelo la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 7 THEN ISNULL(US.Nombre,'')  + ' reasigno la factura N.' + CAST(AF.IdAceptacionPedido AS NVARCHAR(100)) + '.'
 			END,
 			T.FechaCambioEstatus,
 			CASE 
@@ -505,18 +537,18 @@ BEGIN
 			END
 		FROM dbo.MM_AceptacionFactura AS AF
 			LEFT JOIN dbo.MM_AceptacionPedido AS AP
-				ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+				ON AF.IdAceptacionPedido= AP.IdAceptacionPedido 
 			LEFT JOIN dbo.MM_Pedido AS P
-				ON P.IdPedido = AP.IdPedido
+				ON AP.IdPedido= P.IdPedido 
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = P.IdSubcontratista
+				ON P.IdSubcontratista= PR.IdProveedor 
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = AF.IdAceptacionFactura
+				ON AF.IdAceptacionFactura= OP.IdDocumento 
 				AND OP.IdTipoOperacion = 10
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = OP.IdAsignador
+				ON OP.IdAsignador =US.IdUsuario 
 			LEFT JOIN dbo.TA_Tarea AS T
-				ON T.IdOperacion = OP.IdOperacion
+				ON OP.IdOperacion =T.IdOperacion 
 		WHERE AF.IdAceptacionPedido = @IdDocumento
 			AND T.IdEstatus <> 1
 			AND T.IdEstatus <> 12
@@ -531,21 +563,21 @@ BEGIN
 		)
 		SELECT
 			AF.IdAceptacionFactura,
-			HF.Descripcion + ', fue ' + TE.Nombre,
+			ISNULL(HF.Descripcion,'') + ', fue ' + ISNULL(TE.Nombre,''),
 			HF.Fecha,
 			OP.IdEstatusOperacion
 		FROM dbo.MM_AceptacionFactura AS AF
 			LEFT JOIN dbo.MM_AceptacionPedido AS AP
-				ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+				ON AF.IdAceptacionPedido= AP.IdAceptacionPedido
 			LEFT JOIN dbo.MM_Pedido AS P
-				ON P.IdPedido = AP.IdPedido
+				ON AP.IdPedido= P.IdPedido 
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = AF.IdAceptacionFactura
+				ON  AF.IdAceptacionFactura = OP.IdDocumento 
 				AND OP.IdTipoOperacion = 10
 			LEFT JOIN dbo.TA_HistorialFlujoTarea AS HF
-				ON HF.IdOperacion = OP.IdOperacion
+				ON OP.IdOperacion= HF.IdOperacion
 			LEFT JOIN dbo.TA_Estatus AS TE
-				ON TE.IdEstatus = OP.IdEstatusOperacion
+				ON OP.IdEstatusOperacion= TE.IdEstatus 
 		WHERE AF.IdAceptacionPedido = @IdDocumento
 			AND HF.IdEstadoFlujo = 7
 			AND AF.IdEstatusEliminado IS NULL;
@@ -562,7 +594,7 @@ BEGIN
 		)
 		SELECT
 			APPC.IdAceptacionPedido,
-			US.Nombre + ' registro el Pedimento/Comprobante Extranjero de la Aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(10)) + ' para su aprobación.',
+			ISNULL(US.Nombre,'') + ' registro el Pedimento/Comprobante Extranjero de la Aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(10)) + ' para su aprobación.',
 			APPC.CreadoEl,
 			1,
 			1,
@@ -570,7 +602,7 @@ BEGIN
 			1
 		FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APPC
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = APPC.CreadoPor
+				ON  APPC.CreadoPor = US.IdUsuario 
 		WHERE APPC.IdAceptacionPedido = @IdDocumento;
 		
 
@@ -584,10 +616,10 @@ BEGIN
 		SELECT 
 			APPC.IdAceptacionPedido,
 			CASE 
-				WHEN T.IdEstatus = 2 THEN US.Nombre + ' aprobo el Pedimento/Comprobante Extranjero de la aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 3 THEN US.Nombre + ' rechazo el Pedimento/Comprobante Extranjero de la aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 6 THEN US.Nombre + '(Asignador) cancelo del Pedimento/Comprobante Extranjero aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
-				WHEN T.IdEstatus = 7 THEN US.Nombre + ' reasigno el Pedimento/Comprobante Extranjero N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobo el Pedimento/Comprobante Extranjero de la aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazo el Pedimento/Comprobante Extranjero de la aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 6 THEN ISNULL(US.Nombre,'') + '(Asignador) cancelo del Pedimento/Comprobante Extranjero aceptación N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
+				WHEN T.IdEstatus = 7 THEN ISNULL(US.Nombre,'') + ' reasigno el Pedimento/Comprobante Extranjero N.' + CAST(APPC.IdAceptacionPedido AS NVARCHAR(100)) + '.'
 			END,
 			T.FechaCambioEstatus,
 			CASE 
@@ -596,14 +628,16 @@ BEGIN
 			END
 		FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APPC
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = APPC.IdPedimentoComprobante
+				ON APPC.IdPedimentoComprobante = OP.IdDocumento 
 				AND OP.IdTipoOperacion = 16
 			LEFT JOIN dbo.TA_Tarea AS T
-				ON T.IdOperacion = OP.IdOperacion
+				ON  OP.IdOperacion = T.IdOperacion
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = T.IdAprobador
+				ON T.IdAprobador = US.IdUsuario 
 		WHERE APPC.IdAceptacionPedido = @IdDocumento
+			AND T.Activo = 1 
 			AND T.IdEstatus <> 1;
+
 
 		INSERT INTO @HISTORIALSEC
 		(
@@ -614,17 +648,17 @@ BEGIN
 		)
 		SELECT TOP 1
 			APPC.IdAceptacionPedido,
-			HF.Descripcion + ', fue ' + ES.Nombre,
+			ISNULL(HF.Descripcion,'') + ', fue ' + ISNULL(ES.Nombre,''),
 			HF.Fecha,
 			OP.IdEstatusOperacion
 		FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APPC
 			LEFT JOIN dbo.TA_Operacion AS OP
-				ON OP.IdDocumento = APPC.IdPedimentoComprobante
+				ON  APPC.IdPedimentoComprobante = OP.IdDocumento
 				AND OP.IdTipoOperacion = 16
 			LEFT JOIN dbo.TA_HistorialFlujoTarea AS HF
-				ON HF.IdOperacion = OP.IdOperacion
+				ON OP.IdOperacion =  HF.IdOperacion
 			LEFT JOIN dbo.TA_Estatus AS ES
-				ON ES.IdEstatus = OP.IdEstatusOperacion
+				ON OP.IdEstatusOperacion = ES.IdEstatus 
 		WHERE APPC.IdAceptacionPedido = @IdDocumento
 			AND HF.IdEstadoFlujo = 7
 		ORDER BY HF.Fecha DESC;
@@ -644,14 +678,14 @@ BEGIN
 		SELECT
 			PRS.IdPRESES,
 			CASE 
-				WHEN PRS.IdEstatus = 2 THEN US.Nombre + ' approve the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
-				WHEN PRS.IdEstatus = 3 THEN US.Nombre + ' reject the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
+				WHEN PRS.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' approve the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
+				WHEN PRS.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' reject the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
 			END,
 			PRS.ModificadoEl,
 			PRS.IdEstatus
 		FROM Adinco.dbo.CO_SAPPRESES AS PRS
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = PRS.ModificadoPor
+				ON PRS.ModificadoPor= US.IdUsuario 
 		WHERE PRS.IdPRESES = @IdDocumento
 		AND PRS.IdEstatus <> 1;
 
@@ -670,9 +704,9 @@ BEGIN
 		SELECT
 			AC.IdAceptacionCartaPCN,
 			CASE 
-				WHEN AC.Editado = 1 THEN US.Nombre + ' reject the national content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ' to edit and reload (AUTOMATIC REJECTION FOR EDITING)'
-				WHEN AC.IdEstatus = 2 THEN US.Nombre + ' approve the national content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
-				WHEN AC.IdEstatus = 3 THEN US.Nombre + ' reject the national content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
+				WHEN AC.Editado = 1 THEN ISNULL(US.Nombre,'') + ' reject the national content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10)) + ' to edit and reload (AUTOMATIC REJECTION FOR EDITING)'
+				WHEN AC.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' approve the national content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
+				WHEN AC.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' reject the national content letter of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
 			END,
 			AC.FechaEvaluacion,
 			AC.IdEstatus
@@ -723,8 +757,8 @@ BEGIN
 		SELECT
 			AF.IdAceptacionFactura,
 			CASE 
-				WHEN AF.IdEstatus = 2 THEN US.Nombre + ' approve the invoice of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
-				WHEN AF.IdEstatus = 3 THEN US.Nombre + ' rejecte the invoice of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
+				WHEN AF.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' approve the invoice of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
+				WHEN AF.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rejecte the invoice of the proforma No.' + CAST(PRS.IdPRESES AS NVARCHAR(10))
 			END,
 			AF.FechaAprobacion,
 			AF.IdEstatus
