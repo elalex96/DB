@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists(select * from sys.procedures where name = 'SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5')
+begin
+	drop proc SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5
+end
+
+go
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 06/04/2018
 -- Description:	se adecua ya que ahora se puede añadir mas tiempo de vigencia al pedido, se descartan las cantidades que ya fueron reactivadas
@@ -18,10 +24,7 @@
 -- Create date: 13-08-2019
 -- Description: Agregue validación que si es un Proveedor de CARSO no agregar Marca, Modelo, No Parte a Descripción material  cotizado
 -- =============================================
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5')
-    DROP PROCEDURE SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5
-GO
-CREATE PROCEDURE [dbo].[SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5] 
+create PROCEDURE [dbo].[SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5] 
 	@IdSolicitudPedidoDetalle INT,
 	@IdContrato    INT,
 	@IdUsuario     INT,
@@ -249,11 +252,9 @@ BEGIN
 	AND PD.RecepcionPedido = 0))
 
 	--CANTIDAD DE MATERIALES RECIBIDOS EN LA ACEPTACION DE SERVICIO EN EL CASO QUE EL PEDIDO SE ENCUENTRE CERRADO
-	SET @CM_RECIBIDOS_EN_PEDIDO_CERRADO = (SELECT ROUND(ISNULL(SUM(apd.Cantidad), 0), 2) 
-	FROM dbo.MM_AceptacionPedidoDetalle apd
-		JOIN	MM_AceptacionPedido	AP
-		ON	apd.IdAceptacionPedido	=	AP.IdAceptacionPedido
-		AND ISNULL(AP.IdEliminado,0)	=	0
+	SET --@CM_RECIBIDOS_EN_PEDIDO_CERRADO = (SELECT ROUND(ISNULL(SUM(apd.Cantidad), 0), 2) 
+		@CM_RECIBIDOS_EN_PEDIDO_CERRADO = (SELECT ISNULL(SUM(apd.Cantidad), 0) 
+	FROM dbo.MM_AceptacionPedidoDetalle apd 
 	INNER JOIN dbo.MM_PedidoDetalle AS PD ON PD.IdPedidoDetalle = apd.IdPedidoDetalle 
 	INNER JOIN dbo.MM_Pedido AS P ON P.IdPedido = PD.IdPedido
 	INNER JOIN dbo.MM_PeticionOferta AS PO ON PO.IdPeticionOferta = P.IdPeticionOferta
@@ -275,6 +276,8 @@ BEGIN
 	SET @CM_PEDIDO_APROBADO_EN_RECEPCION= (ISNULL(@CM_PEDIDO_APROBADO_EN_RECEPCION,0) 
 										  +ISNULL(@CM_PEDIDO_APROBADO_SIN_DOCUMENTO_EN_RECEPCION,0))
 
+	--select @CM_SOLICITADOS, @CM_PEDIDO_TEMP, @CM_PEDIDO_EN_APROBACION, @CM_PEDIDO_APROBADO_EN_RECEPCION_CONFIRMADA, @CM_PEDIDO_APROBADO_EN_RECEPCION, @CM_RECIBIDOS_EN_PEDIDO_CERRADO
+
 	SET @CM_FALTANTANTES = (@CM_SOLICITADOS  - 
 	(@CM_PEDIDO_TEMP 
 	+ @CM_PEDIDO_EN_APROBACION	
@@ -291,8 +294,10 @@ BEGIN
 	ROUND(@CM_PEDIDO_APROBADO_EN_RECEPCION_CONFIRMADA,2) AS CantidadEnConfirmacionAceptada,
 	ROUND(@CM_PEDIDO_APROBADO_EN_RECEPCION_RECHAZADA,2) AS CantidadEnConfirmacionRechazada,
 	ROUND(@CM_PEDIDO_APROBADO_EN_RECEPCION_CONFIRMADA_ITEM_RECHAZADO,2) AS CantidadEnConfirmacionitemRechazada,
-	ROUND(@CM_FALTANTANTES,2) AS CantidadPorSolicitar,
+	ROUND(@CM_FALTANTANTES,3) AS CantidadPorSolicitar,
 	@NOMBRE_MATERIAL AS MaterialSolicitado,
 	ROUND(@CM_RECIBIDOS_EN_PEDIDO_CERRADO, 2) AS CantidadRecibidaPedidoCerrado
 	
 END
+
+go
