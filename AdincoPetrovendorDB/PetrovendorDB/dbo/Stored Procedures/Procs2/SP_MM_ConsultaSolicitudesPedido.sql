@@ -1,4 +1,4 @@
-﻿create PROCEDURE SP_MM_ConsultaSolicitudesPedido
+﻿CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudesPedido]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor int, 
 	@IdUsuario int,
@@ -23,7 +23,7 @@ BEGIN
 		SP.FechaAlta,		
 		TE.Nombre AS Nombre,
 		CC.CentroCosto,
-		U.Nombre AS NombreUsuario,
+		ISNULL(USO.Nombre,U.Nombre) AS NombreUsuario,
 		TAO.Descripcion,
 		AC.NombreAreaContractual AS AreaContractual	,
 		PR.ID_PR,
@@ -37,6 +37,7 @@ BEGIN
 		LEFT JOIN Adinco.dbo.CO_Contrato AS C ON SP.IdContrato = C.IdContrato    
 		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC ON C.IdAreaContractual = AC.IdAreaContractual
 		LEFT JOIN dbo.DEA_AdjuntoPR PR ON PR.IdSolicitudPedido=SP.IdSolicitudPedido
+		LEFT JOIN S_Usuario AS USO ON USO.IdUsuario = SP.Solicitante
 	WHERE (SP.IdUsuarioSolicitante = @IdUsuario or @IdTipoUsuario NOT IN (9))
 		AND SP.IdProveedor = @IdProveedor 
 		AND ISNULL(TAO.IdTipoOperacion, 2)=2 
@@ -54,7 +55,7 @@ BEGIN
 		SP.FechaAlta,		
 		TE.Nombre AS Nombre,
 		CC.CentroCosto,
-		U.Nombre AS NombreUsuario,
+		ISNULL(USO.Nombre,U.Nombre) AS NombreUsuario,
 		TAO.Descripcion,
 		AC.NombreAreaContractual AS AreaContractual,
 		PR.ID_PR,
@@ -68,6 +69,7 @@ BEGIN
 		LEFT JOIN Adinco.dbo.CO_Contrato AS C ON SP.IdContrato = C.IdContrato    
 		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC ON C.IdAreaContractual = AC.IdAreaContractual
 		LEFT JOIN dbo.DEA_AdjuntoPR PR ON PR.IdSolicitudPedido=SP.IdSolicitudPedido
+		LEFT JOIN S_Usuario AS USO ON USO.IdUsuario = SP.Solicitante
 	WHERE (SP.IdUsuarioSolicitante = @IdUsuario or @IdTipoUsuario NOT IN (9))
 		AND SP.IdProveedor = @IdProveedor 
 		AND ISNULL(TAO.IdTipoOperacion, 2)=2 

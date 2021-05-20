@@ -42,6 +42,7 @@
     [ComentarioInternoPO]        NVARCHAR (MAX) NULL,
     [FechaAsignado]              DATETIME       NULL,
     [FechaComentarioMod]         DATETIME       NULL,
+    [Solicitante]                INT            NULL
     CONSTRAINT [PK_MM_SolicitudPedido] PRIMARY KEY CLUSTERED ([IdSolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_SolicitudPedido_MM_TipoSolicitudPedido] FOREIGN KEY ([IdTipoSolicitudPedido]) REFERENCES [dbo].[MM_TipoSolicitudPedido] ([IdTipoSolicitudPedido]),
     CONSTRAINT [FK_MM_SolicitudPedido_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])

@@ -33,7 +33,8 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarSolicitudPedido]
         @IdDomiclioEntrega int, 
         @IdContrato int,
         @Fianza bit,
-        @Controlados bit
+        @Controlados bit,
+		@IdSolicitante INT
 AS
 BEGIN
     DECLARE @IdSolicitudPedido int
@@ -118,6 +119,7 @@ BEGIN
            ,[IdCentroCosto]
            ,[Fianza]
            ,[Controlados]
+		   ,[Solicitante]
            )
      VALUES
            (
@@ -146,6 +148,7 @@ BEGIN
             ,@IdCentroCosto
             ,@Fianza
             ,@Controlados
+			,@IdSolicitante
             )
     
     set @IdSolicitudPedido= (select @@IDENTITY)
