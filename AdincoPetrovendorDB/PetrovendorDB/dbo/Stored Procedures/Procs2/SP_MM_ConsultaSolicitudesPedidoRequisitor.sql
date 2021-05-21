@@ -17,55 +17,55 @@ BEGIN
     -- Insert statements for procedure here
 	IF @IdTipoUsuario = 9
 	BEGIN	
-	SELECT 
-	SP.IdSolicitudPedido, 
-	SP.MotivoUrgencia,
-	TSP.TipoSolicitudPedido, 
-	SP.FechaAlta,
-	TE.Nombre	
-	FROM MM_SolicitudPedido AS SP
-	INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido
-	INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido 
-	INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion 
-	WHERE 
-	SP.IdUsuarioSolicitante = @IdUsuario AND 
-	SP.IdProveedor = @IdProveedor AND 
-	TAO.IdTipoOperacion=2
-	ORDER BY SP.FechaAlta DESC
+		SELECT 
+		SP.IdSolicitudPedido, 
+		SP.MotivoUrgencia,
+		TSP.TipoSolicitudPedido, 
+		SP.FechaAlta,
+		TE.Nombre	
+		FROM MM_SolicitudPedido AS SP
+		INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido
+		INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido 
+		INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion 
+		WHERE 
+		SP.IdUsuarioSolicitante = @IdUsuario AND 
+		SP.IdProveedor = @IdProveedor AND 
+		TAO.IdTipoOperacion=2
+		ORDER BY SP.FechaAlta DESC
 	END
 	IF @IdTipoUsuario = 5
 	BEGIN
-	SELECT 
-	SP.IdSolicitudPedido, 
-	SP.MotivoUrgencia,
-	TSP.TipoSolicitudPedido, 
-	SP.FechaAlta,
-	TE.Nombre	
-	FROM MM_SolicitudPedido AS SP
-	INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido
-	INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido 
-	INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion 
-	WHERE 
-	SP.IdProveedor = @IdProveedor AND 
-	TAO.IdTipoOperacion=2
-	ORDER BY SP.FechaAlta DESC
-	END
-	IF @IdTipoUsuario = 3
-	BEGIN
-	SELECT 
-	SP.IdSolicitudPedido, 
-	SP.MotivoUrgencia,
-	TSP.TipoSolicitudPedido, 
-	SP.FechaAlta,
-	TE.Nombre	
-	FROM MM_SolicitudPedido AS SP
-	INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido
-	INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido 
-	INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion 
-	WHERE 
-	SP.IdProveedor = @IdProveedor AND 
-	TAO.IdTipoOperacion=2
-	ORDER BY SP.FechaAlta DESC
+		SELECT 
+		SP.IdSolicitudPedido, 
+		SP.MotivoUrgencia,
+		TSP.TipoSolicitudPedido, 
+		SP.FechaAlta,
+		TE.Nombre	
+		FROM MM_SolicitudPedido AS SP
+		INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido
+		INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido 
+		INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion 
+		WHERE 
+		SP.IdProveedor = @IdProveedor AND 
+		TAO.IdTipoOperacion=2
+		ORDER BY SP.FechaAlta DESC
+		END
+		IF @IdTipoUsuario = 3
+		BEGIN
+		SELECT 
+		SP.IdSolicitudPedido, 
+		SP.MotivoUrgencia,
+		TSP.TipoSolicitudPedido, 
+		SP.FechaAlta,
+		TE.Nombre	
+		FROM MM_SolicitudPedido AS SP
+		INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido
+		INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido 
+		INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion 
+		WHERE 
+		SP.IdProveedor = @IdProveedor AND 
+		TAO.IdTipoOperacion=2
+		ORDER BY SP.FechaAlta DESC
 	END
   
   -- TipoOperacion --> 2 = Solicitud de Pedido
