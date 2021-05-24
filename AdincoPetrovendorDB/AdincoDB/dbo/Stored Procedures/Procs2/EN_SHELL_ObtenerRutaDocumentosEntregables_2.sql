@@ -1,15 +1,22 @@
-﻿use Adinco
+﻿USE [Adinco]
+GO
 
-go
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'EN_SHELL_ObtenerRutaDocumentosEntregables'
+)
+    DROP PROCEDURE EN_SHELL_ObtenerRutaDocumentosEntregables;
+GO 
 
-if exists (select * from sys.procedures where name = 'EN_SHELL_ObtenerRutaDocumentosEntregables')
-begin
-	drop proc EN_SHELL_ObtenerRutaDocumentosEntregables
-end
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerRutaDocumentosEntregables]    Script Date: 18/05/2021 11:33:35 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-go
-
-create proc EN_SHELL_ObtenerRutaDocumentosEntregables
+CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerRutaDocumentosEntregables]
 (
 	@IdContrato		int,
     @IdUsuario		int
@@ -17,7 +24,7 @@ create proc EN_SHELL_ObtenerRutaDocumentosEntregables
 as
 begin
 
-	Create table #Rutas
+	create table #Rutas
 	(
 		Id						int,
 		IdPadre					int,
@@ -26,6 +33,7 @@ begin
 		ReceptorEntregableId	int,
 		PozoInstalacionId		int,
 		MarcoLegalId			int,
+		EtapaPozoId				int,
 		EntregableId			int,
 		FrecuenciaId			varchar(max),
 		Frecuencia				varchar(max),
@@ -73,7 +81,7 @@ begin
 	begin
 		
 		update		#tmpResultado	
-		set			#tmpResultado.Ruta		=	substring( r.Titulo,0,50)+'/'+tr.Ruta,
+		set			#tmpResultado.Ruta		=	substring( r.Titulo,0,20)+'/'+tr.Ruta,--substring( replace( r.Titulo,'/','')+'/',0,20)+tr.Ruta,--substring( r.Titulo,0,20)+'/'+tr.Ruta,
 					#tmpResultado.IdPadre	=	r.IdPadre
 		from		#tmpResultado	tr
 		inner join	#Rutas			r
@@ -89,6 +97,3 @@ begin
 	where	DocumentoEntregableId is not null
 end
 
-go
--- EN_SHELL_ObtenerDocumentosEntregables 3,10109
---exec EN_SHELL_ObtenerRutaDocumentosEntregables 3,10109
