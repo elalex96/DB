@@ -1,7 +1,7 @@
 ﻿
 CREATE VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
 AS
-     /*Consulta general*/
+     //*Consulta general*/
      SELECT ISNULL(F.UUID, '') AS [UUID], 
             C.NumeroContrato, 
             ACC.NombreAreaContractual, 
@@ -93,7 +93,7 @@ AS
             R.PCN AS [PCN], 
             ISNULL(F.MontoConIva, '') AS [MontoFacturaConIVA], 
             ISNULL(F.Moneda, '') AS [MonedaFactura], 
-            ISNULL(F.SubTotal, '') AS [SubtotalFactura],
+          ISNULL(F.SubTotal, '') AS [SubtotalFactura],
             CASE
                 WHEN FP.IdFactura IS NOT NULL
                      AND ACP.IdEstatus = 2
@@ -132,6 +132,8 @@ AS
                 ELSE 'PPD'
             END AS [MetodoPago],
             CASE
+			    WHEN AWSDOCF.IdFactura IS NOT NULL
+				THEN 'Pagado'
                 WHEN TF.IdTransferFactura IS NOT NULL
                      AND (F.MetodoPago LIKE '%exhibi%'
                           OR F.MetodoPago LIKE '%PUE%'
@@ -153,7 +155,9 @@ AS
                 THEN 'NO Pagado'
             END AS EstatusPago, 
             CONCAT(MONTH(LPM.AC_PRESUP_MES), '-', YEAR(LPM.AC_PRESUP_MES)) AS 'MesPresupuestado', 
-            F1.UUID AS UUIDComplemento
+            F1.UUID AS UUIDComplemento,
+			NoAceptacionServicio		=	AP.IdAceptacionPedido,
+			[Pedido/OrdenCompra]		=	P2.IdPedido
      FROM dbo.CO_LineaPresupuestoMes LPM(NOLOCK)
           JOIN dbo.CO_Servicio S(NOLOCK) ON LPM.IdServicio = S.IdServicio
           LEFT JOIN dbo.CO_Instalacion I(NOLOCK) ON LPM.IdInstalacion = I.IdInstalacion
@@ -169,6 +173,7 @@ AS
           LEFT JOIN dbo.CO_Registro R(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
           LEFT JOIN dbo.CO_GastosRubro GR(NOLOCK) ON R.IdGastoRubro = GR.IdGastoRubro
           LEFT JOIN dbo.FI_Factura F(NOLOCK) ON F.IdFactura = R.IdFactura
+		  LEFT JOIN dbo.FacturasAWSDocumentos AWSDOCF (NOLOCK) ON F.IdFactura = AWSDOCF.IdFactura
           LEFT JOIN dbo.FI_PedimentoComprobante PC(NOLOCK) ON PC.IdPedimentoComprobante = R.IdPedimentoComprobante
           LEFT JOIN dbo.PV_Subcontratista SF(NOLOCK) ON F.IdSubcontratista = SF.IdSubcontratista
           LEFT JOIN dbo.PV_Subcontratista SPC(NOLOCK) ON SPC.IdSubcontratista = PC.IdSubcontratistaExportador
@@ -201,8 +206,10 @@ AS
                                                              AND ISNULL(FP.IsEliminado, 0) <> 1
           LEFT JOIN Petrovendor.dbo.MM_AceptacionFactura AF(NOLOCK) ON AF.IdFactura = FP.IdFactura
           LEFT JOIN Petrovendor.dbo.MM_AceptacionPedido AS AP(NOLOCK) ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-          LEFT JOIN Petrovendor.dbo.MM_Pedido(NOLOCK) AS PP ON PP.IdPedido = AP.IdPedido
-                                                               AND PP.IdContrato IN(10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024, 10043, 10052)
+          LEFT JOIN Petrovendor.dbo.MM_Pedido(NOLOCK) AS PP 
+		  ON	PP.IdPedido = AP.IdPedido
+          AND	PP.IdContrato IN(10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024, 10043, 10052)
+		  left JOIN Petrovendor.dbo.MM_Pedidos P2 ON PP.IdPedido = P2.IdIdentificador
           LEFT JOIN Petrovendor.dbo.MM_AceptacionCartaPCN AS ACP(NOLOCK) ON ACP.IdAceptacionPedido = AP.IdAceptacionPedido
                                                                             AND ACP.IdEstatus = 2
                                                                             AND ISNULL(ACP.IdEstatusEliminado, 0) <> 1
@@ -301,6 +308,8 @@ AS
                   ELSE 'PPD'
               END,
               CASE
+				WHEN AWSDOCF.IdFactura IS NOT NULL
+				THEN 'Pagado'
                   WHEN TF.IdTransferFactura IS NOT NULL
                        AND (F.MetodoPago LIKE '%exhibi%'
                             OR F.MetodoPago LIKE '%PUE%'
@@ -322,5 +331,8 @@ AS
                   THEN 'NO Pagado'
               END, 
               CONCAT(MONTH(LPM.AC_PRESUP_MES), '-', YEAR(LPM.AC_PRESUP_MES)), 
-              F1.UUID; 
+              F1.UUID,
+			  AP.IdAceptacionPedido,
+			  P2.IdPedido
 
+GO

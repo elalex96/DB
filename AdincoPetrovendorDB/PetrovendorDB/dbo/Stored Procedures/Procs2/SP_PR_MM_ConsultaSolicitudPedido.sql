@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 10-07-17
 -- Description:	LLenar reporte Solicitudes de Pedido 
@@ -8,7 +7,11 @@
 -- Create date: 11-09-2018
 -- Description:	Se agrega la fecha final si es una entrega parcial 
 -- =============================================
-CREATE PROCEDURE SP_PR_MM_ConsultaSolicitudPedido
+-- Author:		Alexander Gomez
+-- Create date: 20/05/2021
+-- Description:	Se agrega el campo de solicitante
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PR_MM_ConsultaSolicitudPedido]
     -- Add the parameters for the stored procedure here
 
     @IdSolicitudPedido INT,
@@ -119,7 +122,7 @@ BEGIN
            TAO.IdEstatusOperacion,
            TE.Nombre,
            PSP.Prioridad,
-           U.Nombre AS Solicitante,
+           ISNULL(USO.Nombre,U.Nombre) AS Solicitante,
            TAO.IdOperacion,
            ISNULL(SP.PeticionEnviada, 'false') AS PeticionEnviada,
            TiOp.NombreOperacion,
@@ -189,14 +192,9 @@ BEGIN
             ON CON.IdContrato = SP.IdContrato
         LEFT JOIN Adinco.dbo.CO_AreaContractual AS ACON
             ON ACON.IdAreaContractual = CON.IdAreaContractual
+		LEFT JOIN S_Usuario AS USO
+			ON USO.IdUsuario = SP.Solicitante
     WHERE TAO.IdTipoOperacion = 2
           AND SP.IdSolicitudPedido = @IdSolicitudPedido
           AND SP.IdProveedor = @IdProveedor;
 END;
-
-
-
-
-
-
-

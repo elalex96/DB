@@ -1,3 +1,15 @@
+﻿USE Adinco
+
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'EN_BuscaDatosInstanciaParaCalendario'
+)
+    DROP PROCEDURE EN_BuscaDatosInstanciaParaCalendario;
+GO 
+
 -- =============================================  
 -- Author:  Reyna Olvera  
 -- Create date: 20190104  
@@ -8,7 +20,7 @@
 -- Create date: 05/05/2020  
 -- Description: Se agrego columnas de awareness 
 -- =============================================  
-ALTER  PROCEDURE [dbo].[EN_BuscaDatosInstanciaParaCalendario] --10061,3,567960  
+CREATE  PROCEDURE [dbo].[EN_BuscaDatosInstanciaParaCalendario] --10061,3,567960  
     @idUsuario INT,  
     @idContrato INT,  
     @idInstanciaEntregable INT  

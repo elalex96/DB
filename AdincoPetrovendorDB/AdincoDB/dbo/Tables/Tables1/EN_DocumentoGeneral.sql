@@ -6,6 +6,7 @@ CREATE TABLE [dbo].[EN_DocumentoGeneral](
 	[EtapaId] [int] NULL,
 	[ReceptorId] [int] NULL,
 	[InstalacionId] [int] NULL,
+	[EtapaPozoId] [int] NULL,
 	[MarcoLegalId] [int] NULL,
 	[EntregableId] [int] NULL,
 	[Bucket] [nvarchar](max) NULL,

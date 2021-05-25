@@ -1,3 +1,9 @@
+﻿if exists(select * from sys.procedures where name = 'SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5')
+begin
+	drop proc SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5
+end
+
+go
 -- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 06/04/2018
@@ -296,3 +302,5 @@ BEGIN
 	ROUND(@CM_RECIBIDOS_EN_PEDIDO_CERRADO, 2) AS CantidadRecibidaPedidoCerrado
 	
 END
+
+go
