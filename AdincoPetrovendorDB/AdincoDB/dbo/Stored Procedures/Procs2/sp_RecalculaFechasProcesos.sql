@@ -143,7 +143,7 @@ AS
 -- SI EL PROCESO EL PARALELO, EL RECALCULO SE DEBE REALIZAR SOBRE LA FECHA ORIGINAL DEL PROCESO
 IF @IsSerie = 0
 BEGIN
-	SELECT @FechaInicial	=	FechaInicial
+	SELECT @FechaInicial	=	FechaInicioProceso
 	FROM EN_InstanciasProcesosFecha
 	WHERE	IdInstanciasProcesos = @idInstanciaProceso
 END
