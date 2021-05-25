@@ -9,7 +9,6 @@ AS
     BEGIN
         SET NOCOUNT ON;
 	
-
         IF OBJECT_ID('tempdb.dbo.#Actividades', 'U') IS NOT NULL
             DROP TABLE #Actividades;
         IF OBJECT_ID('tempdb.dbo.#DiasHabiles', 'U') IS NOT NULL
@@ -134,13 +133,20 @@ AS
                     Orden ASC;
 
 
-        SELECT
-            @IsSerie = ISNULL(IsSerie, 1)
-     FROM
-            dbo.EN_Procesos
-        WHERE
-            IdProceso = @idProceso; -- si esta null lo tomamos como lineal
+	SELECT
+		@IsSerie = ISNULL(IsSerie, 1)
+	FROM
+		dbo.EN_Procesos
+	WHERE
+		IdProceso = @idProceso; -- si esta null lo tomamos como lineal
 
+-- SI EL PROCESO EL PARALELO, EL RECALCULO SE DEBE REALIZAR SOBRE LA FECHA ORIGINAL DEL PROCESO
+IF @IsSerie = 0
+BEGIN
+	SELECT @FechaInicial	=	FechaInicial
+	FROM EN_InstanciasProcesosFecha
+	WHERE	IdInstanciasProcesos = @idInstanciaProceso
+END
 
 -- CAMBIO PARA SHELL PARA SIEMPRE AGREGAR UN DIA A LA ACTIVIDAD
 	IF 10055 = (SELECT IDCONTRATISTA FROM CO_CONTRATO WHERE IDCONTRATO = @idContrato)
@@ -291,7 +297,7 @@ AS
 
         INSERT INTO #SucesorAntecesor
             (
-                IdActividad,
+            IdActividad,
                 OrdenSucesor,
                 OrdenAntecesor
             )
@@ -335,7 +341,7 @@ AS
             BEGIN
                 SELECT TOP 1
                        @FechaInicialSig = CASE @IsSerie
-                                              WHEN 1
+												WHEN 1
                                                   THEN
                                                   CASE
                                                       WHEN Orden > 0
@@ -378,7 +384,7 @@ AS
                 TRUNCATE TABLE #DiasHabiles;
 
 				IF @BitDiasNaturales = 0
-					BEGIN
+				BEGIN
 					IF 10055 = (SELECT IDCONTRATISTA FROM CO_CONTRATO WHERE IDCONTRATO = @idContrato)
 					BEGIN
 						INSERT INTO #DiasHabiles
@@ -427,9 +433,7 @@ AS
 						ORDER BY
 							A.IdFecha ;
 					END
-
-
-					END
+				END
 					ELSE
 					BEGIN
 						IF 10055 = (SELECT IDCONTRATISTA FROM CO_CONTRATO WHERE IDCONTRATO = @idContrato)
@@ -459,6 +463,7 @@ AS
 							FROM 
 								dbo.AP_Calendario A
   
+
   
 						WHERE
 							A.IdFecha >= @FechaInicialSig
@@ -520,8 +525,7 @@ AS
             END;
 
       
-        UPDATE
-                IA
+        UPDATE  IA
         SET
                 IA.FechaActividad = A.FechaLimite,
                 IA.FechaInicioActividad = A.FechaInicial
@@ -529,12 +533,11 @@ AS
                 #Actividades                 A
         JOIN
                 dbo.EN_InstanciasActividades IA
-                    ON A.IdActividad = IA.IdActividad
-                       AND IdInstanciasProcesos = @idInstanciaProceso;
+                ON A.IdActividad = IA.IdActividad
+                    AND IdInstanciasProcesos = @idInstanciaProceso;
 
 
-        UPDATE
-                IE
+        UPDATE   IE
         SET
                 IE.FechasLimiteAprobacion = A.FechaLimite,
                 IE.FechaCalculadaEntregaReg = A.FechaLimite,
@@ -544,7 +547,7 @@ AS
                 dbo.EN_InstanciasEntregable                     IE
             JOIN
                 dbo.EN_InstanciasEntregables_InstanciaActividad IEIA
-                    ON IE.idInstanciaEntregable = IEIA.idInstanciaEntregable
+				ON IE.idInstanciaEntregable = IEIA.idInstanciaEntregable
             JOIN
                 EN_InstanciasActividades                        IA
                     ON IEIA.idInstanciaActividad = IA.idInstanciaActividad
@@ -554,8 +557,7 @@ AS
                        AND IA.IdInstanciasProcesos = @idInstanciaProceso;
 
 
-        UPDATE
-                IE
+        UPDATE  IE
         SET
                 FechasLimiteRevision = Adinco.dbo.FN_EN_RestaDiasHabiles(IE.FechasLimiteAprobacion, CE.DiasAprobacion)
         --SELECT *
@@ -575,9 +577,7 @@ AS
                 dbo.EN_ContratoEntregable                       CE
                     ON IE.IdContratoEntregable = CE.IdContratoEntregable;
 
-
-        UPDATE
-                IE
+        UPDATE  IE
         SET
                 FechasLimiteElaboracion = Adinco.dbo.FN_EN_RestaDiasHabiles(IE.FechasLimiteRevision, CE.DiasRevision)
         --SELECT * 
@@ -591,7 +591,7 @@ AS
                     ON IEIA.idInstanciaActividad = IA.idInstanciaActividad
             JOIN
                 #Actividades                                    A
-       ON IA.IdActividad = A.IdActividad
+				ON IA.IdActividad = A.IdActividad
                        AND IA.IdInstanciasProcesos = @idInstanciaProceso
             JOIN
                 dbo.EN_ContratoEntregable                       CE
