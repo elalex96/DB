@@ -73,7 +73,7 @@ BEGIN
 		CO_Contrato	C	(NOLOCK)
 		ON	CE.IdContrato	=	C.IdContrato
 		AND	C.IdContrato	=	@IdContrato
-		AND	IE.FechasLimiteElaboracion < DATEADD(MONTH,4,DATEADD(YEAR,1,C.FechaArranqueEntregables))--'20211231' 
+		AND	IE.FechasLimiteElaboracion < DATEADD(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
     JOIN    
 		dbo.EN_Actividad    A	(NOLOCK)
         ON  IE.ActividadID  =   A.ActividadID
@@ -86,7 +86,7 @@ BEGIN
         ON  A.ActividadID   =   EXAR.ActividadIDExcepcion 
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
     WHERE  
-		IE.FechasLimiteElaboracion < DATEADD(MONTH,3,DATEADD(YEAR,1,C.FechaArranqueEntregables))--'20211231' 
+		IE.FechasLimiteElaboracion < DATEADD(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
 		AND (
 		(A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
             AND   EXAR.IdInstanciasEntregables    IS NULL
