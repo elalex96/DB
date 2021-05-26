@@ -27,7 +27,7 @@ AS
 										JOIN dbo.MM_Pedido AS P ON PD.IdPedido = P.IdPedido
 										JOIN dbo.MM_AceptacionPedido AS AP ON P.IdPedido = AP.IdPedido
 										WHERE AP.IdAceptacionPedido = @IdAceptacionPedido AND PD.Activo = 1
-										GROUP BY PD.Cantidad,PrecioUnitario);
+										);
 
 		DECLARE @TablaAcPedido TABLE
 			( IdAceptacionPedido INT ,
