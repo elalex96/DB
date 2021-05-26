@@ -1,4 +1,9 @@
-﻿DROP PROCEDURE IF EXISTS dbo.p_TableroContrato_Sel
+﻿-- =============================================
+-- Author:		luis david
+-- Create date: 26/05/2021
+-- Description:	se castean los null del campo nombremostrar
+-- =============================================
+DROP PROCEDURE IF EXISTS dbo.p_TableroContrato_Sel
 GO
 -- [p_TableroContrato_Sel] 10054 ,10402,'10002,10007,10182'
 CREATE PROCEDURE [dbo].[p_TableroContrato_Sel]
