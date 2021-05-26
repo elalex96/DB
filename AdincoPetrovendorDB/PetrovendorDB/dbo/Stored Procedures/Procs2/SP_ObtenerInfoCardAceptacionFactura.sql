@@ -11,12 +11,23 @@
 -- Create date: 21-10-2020
 -- Description:	se agrega el idadjuntoPO para su visualizacion en la pantalla de factura
 -- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 26-05-2021
+-- Description:	se agrega la variable @MontoTotalOC para almacenar el total del pedido
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ObtenerInfoCardAceptacionFactura] @IdProveedor INT, @IdAceptacionPedido INT
 AS
 	BEGIN
 		SET NOCOUNT ON
 
 		DECLARE @IdSolicitudPedido INT
+		DECLARE @MontoTotalOC FLOAT = (SELECT 
+											SUM((PD.Cantidad * PrecioUnitario))
+										FROM dbo.MM_PedidoDetalle AS PD
+										JOIN dbo.MM_Pedido AS P ON PD.IdPedido = P.IdPedido
+										JOIN dbo.MM_AceptacionPedido AS AP ON P.IdPedido = AP.IdPedido
+										WHERE AP.IdAceptacionPedido = @IdAceptacionPedido AND PD.Activo = 1
+										GROUP BY PD.Cantidad,PrecioUnitario);
 
 		DECLARE @TablaAcPedido TABLE
 			( IdAceptacionPedido INT ,
@@ -199,7 +210,8 @@ AS
 							  WHEN aFact.IdFactura IS NULL THEN
 								  'En proceso'
 							  END, f.IdFactura, ISNULL(ttransf.MontoTransferencia, 0) AS MontoTransferencia,
-					ISNULL(RPRPO.IdAdjuntoPO,0) AS IdAdjuntoPO
+					ISNULL(RPRPO.IdAdjuntoPO,0) AS IdAdjuntoPO,
+					@MontoTotalOC AS MontoTotalOC
 		FROM		@TablaAcPedido ac
 		LEFT JOIN	@TablaFacturado f
 			ON f.IdAceptacionPedido = ac.IdAceptacionPedido
@@ -225,5 +237,3 @@ AS
 		  f.RFC, f.IdSolicitudPedido, f.IdFactura, ttransf.MontoTransferencia, RPRPO.IdAdjuntoPO
 		ORDER BY	ac.IdPedido
 	END
-
-
