@@ -10588,6 +10588,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\spCentroCostoFiltroDel.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCentroCostoFiltroIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_DesactivarDocumentoGeneral.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_DEA_EnviarNotificacionCotizacionProveedores.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
