@@ -25,6 +25,6 @@ BEGIN
 			INNER JOIN TA_EstadoFlujoTarea AS EF 
 				ON TH.IdEstadoFlujo = EF.IdEstado
 			WHERE  TH.IdOperacion = @IdOperacion
-			ORDER BY IdHistorial ASC 
+			ORDER BY TH.Fecha ASC 
 		
 END
