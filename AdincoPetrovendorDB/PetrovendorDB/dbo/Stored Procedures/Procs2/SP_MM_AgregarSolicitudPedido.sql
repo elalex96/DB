@@ -34,7 +34,7 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarSolicitudPedido]
         @IdContrato int,
         @Fianza bit,
         @Controlados bit,
-		@IdSolicitante INT
+		@IdSolicitante INT = NULL
 AS
 BEGIN
     DECLARE @IdSolicitudPedido int
