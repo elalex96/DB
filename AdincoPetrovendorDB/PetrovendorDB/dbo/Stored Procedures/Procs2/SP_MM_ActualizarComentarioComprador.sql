@@ -1,7 +1,12 @@
 ﻿-- =============================================
--- Author:		<Alexander Gomez>
+-- Author:	<Alexander Gomez>
 -- Create date: <24/03/2021>
 -- Description:	<Actualizacion del comentario del comprador del pedido>
+-- Description:	<Este sp faltaba en prod, solo se modifica para contemplarlo en la publicacion>
+-- =============================================
+-- Author:	<Alexander Gomez>
+-- Create date: <27/05/2021>
+-- Description:	<Este sp faltaba en prod, solo se modifica para contemplarlo en la publicacion>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ActualizarComentarioComprador]
 	-- Add the parameters for the stored procedure here
