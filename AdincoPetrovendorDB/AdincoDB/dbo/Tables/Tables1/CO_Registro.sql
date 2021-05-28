@@ -33,7 +33,6 @@
     CONSTRAINT [PK_Registros] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Registro_CO_CatalogoCuentaSH] FOREIGN KEY ([IdCatalogoCuentasSH]) REFERENCES [dbo].[CO_CatalogoCuentaSH] ([IdCatalogoCuentasSH]),
     CONSTRAINT [FK_CO_Registro_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante]),
-    CONSTRAINT [FK_Registros_EstadoRegistro] FOREIGN KEY ([IdEstado]) REFERENCES [dbo].[CO_EstadoRegistro] ([IdEstadoRegistro]),
     CONSTRAINT [FK_Registros_Facturas] FOREIGN KEY ([IdFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura]),
     CONSTRAINT [FK_Registros_Instalaciones] FOREIGN KEY ([IdInstalacion]) REFERENCES [dbo].[CO_Instalacion] ([IdInstalacion]),
     CONSTRAINT [FK_Registros_Programas] FOREIGN KEY ([IdPrograma]) REFERENCES [dbo].[CO_LineaPresupuestoMes] ([IdLineaPresupuestoMes])
