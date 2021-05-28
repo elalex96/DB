@@ -33,9 +33,9 @@ AS
                        FDR.IdFactura
                 FROM dbo.FI_ComplementoDePago AS CDP
                      JOIN dbo.FI_CPDocRelacionado AS CDPR ON CDPR.IdComplementoDePago = CDP.IdComplementoDePago
-                     JOIN dbo.FI_Factura AS F ON F.IdFactura = CDP.IdFactura
+                     JOIN dbo.FI_Factura AS F ON F.IdFactura = CDP.IdFactura AND F.IdContrato = @IdContrato
                      LEFT JOIN dbo.FI_Factura AS FDR ON CDPR.IdDocumento = FDR.UUID
-                WHERE F.IdContrato = @IdContrato
+               
                 GROUP BY CDP.IdFactura, 
                          F.UUID, 
                          CDPR.IdDocumento, 
