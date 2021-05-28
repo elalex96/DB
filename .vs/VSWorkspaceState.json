@@ -2,14 +2,10 @@
   "ExpandedNodes": [
     "",
     "\\AdincoPetrovendorDB",
-    "\\AdincoPetrovendorDB\\AdincoDB",
-    "\\AdincoPetrovendorDB\\AdincoDB\\dbo",
-    "\\AdincoPetrovendorDB\\AdincoDB\\dbo\\Stored Procedures",
-    "\\AdincoPetrovendorDB\\AdincoDB\\dbo\\Stored Procedures\\Procs1",
+    "\\AdincoPetrovendorDB\\PetrovendorDB",
     "\\AdincoPetrovendorDB\\PetrovendorDB\\dbo",
-    "\\AdincoPetrovendorDB\\PetrovendorDB\\dbo\\Stored Procedures",
-    "\\AdincoPetrovendorDB\\PetrovendorDB\\dbo\\Stored Procedures\\Procs1"
+    "\\AdincoPetrovendorDB\\PetrovendorDB\\dbo\\Stored Procedures"
   ],
-  "SelectedNode": "\\AdincoPetrovendorDB\\AdincoDB\\dbo\\Stored Procedures\\Procs1\\SP_EN_ArmadoDivEjemploPenalizaciones.sql",
+  "SelectedNode": "\\AdincoPetrovendorDB\\AdincoPetrovendorDB.sln",
   "PreviewInSolutionExplorer": false
 }
