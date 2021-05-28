@@ -1,9 +1,10 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_ENIArchivosCargados')
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 26-06-2020
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_ENIArchivosCargados] 
+create PROCEDURE [dbo].[SP_ENIArchivosCargados] 
 -- Add the parameters for the stored procedure here
 @IdContrato INT, 
 @IdUsuario  INT
@@ -14,12 +15,17 @@ AS
          SET NOCOUNT ON;
 
          -- Insert statements for procedure here
-         SELECT C.NumeroContrato AS Contrato,
+         SELECT A.Folder,
+				C.NumeroContrato AS Contrato,
                 CASE
-                    WHEN A.Folder LIKE 'ENIArchivos/PMT/'
+                    WHEN A.Folder = 'ENIArchivos/PMT/'
                     THEN 'PMT'
-                    WHEN A.Folder LIKE 'ENIArchivos/JOINTVENTURE/'
+                    WHEN A.Folder = 'ENIArchivos/JOINTVENTURE/'
                     THEN 'JOINT VENTURE'
+					WHEN A.Folder = 'ENIArchivos/PLANESAPROBADOS/'
+                    THEN 'Planes Aprobados'
+					when A.Folder = 'ENIArchivos/PROGRAMAMÍNIMODETRABAJO/'
+					then 'Programa Mínimo de Trabajo'
                 END AS Tipo, 
                 NombreArchivo, 
                 U.Nombre AS CreadoPor, 
@@ -29,7 +35,8 @@ AS
                     THEN 'Público'
                     WHEN ISNULL(A.Privado, 0) = 1
                     THEN 'Privado'
-                END AS Clasificacion
+                END AS Clasificacion,
+				UUIDAmazon
          FROM dbo.AWS_DocumentoENI A
               JOIN dbo.CO_Contrato C ON C.IdContrato = A.IdContrato
               JOIN dbo.AP_Usuario U ON A.CreadoPor = U.UsuarioID
