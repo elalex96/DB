@@ -255,6 +255,9 @@ BEGIN
 	SET --@CM_RECIBIDOS_EN_PEDIDO_CERRADO = (SELECT ROUND(ISNULL(SUM(apd.Cantidad), 0), 2) 
 		@CM_RECIBIDOS_EN_PEDIDO_CERRADO = (SELECT ISNULL(SUM(apd.Cantidad), 0) 
 	FROM dbo.MM_AceptacionPedidoDetalle apd 
+	JOIN	MM_AceptacionPedido	AP
+		ON	apd.IdAceptacionPedido	=	AP.IdAceptacionPedido
+		AND ISNULL(AP.IdEliminado,0)	=	0
 	INNER JOIN dbo.MM_PedidoDetalle AS PD ON PD.IdPedidoDetalle = apd.IdPedidoDetalle 
 	INNER JOIN dbo.MM_Pedido AS P ON P.IdPedido = PD.IdPedido
 	INNER JOIN dbo.MM_PeticionOferta AS PO ON PO.IdPeticionOferta = P.IdPeticionOferta
