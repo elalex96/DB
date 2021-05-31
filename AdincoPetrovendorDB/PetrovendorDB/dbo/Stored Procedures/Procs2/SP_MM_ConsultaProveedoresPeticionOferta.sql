@@ -27,14 +27,12 @@ BEGIN
 	DECLARE @AllRecords INT = (
 						SELECT COUNT(1) 
 						FROM dbo.S_Proveedor AS P WITH (NOLOCK)
-						LEFT JOIN dbo.S_ImagenPerfil AS IMP WITH (NOLOCK)
-							ON IMP.IdProveedor = P.IdProveedor
 						LEFT JOIN Adinco.dbo.ListaNegra AS LN WITH (NOLOCK)
 							ON LN.RFC COLLATE Modern_Spanish_CI_AS = P.RFC COLLATE Modern_Spanish_CI_AS
 						WHERE P.Activo = 1
 							AND P.IdProveedor <> @IdProveedor
 							AND ISNULL(P.IsEliminado,0) = 0
-							AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM Adinco..CO_Contratista WHERE RFC IS NOT NULL)
+							AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM Adinco..CO_Contratista WHERE RFC IS NOT NULL AND RFC NOT LIKE 'TEN150921DA7%')
 							AND (P.RazonSocial LIKE '%' + @Buscar + '%' OR
 								 P.RFC LIKE '%' + @Buscar + '%')
 						);
@@ -77,7 +75,7 @@ BEGIN
 			WHERE P.Activo = 1
 				AND P.IdProveedor <> @IdProveedor
 				AND ISNULL(P.IsEliminado,0) = 0
-				AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM Adinco..CO_Contratista WHERE RFC IS NOT NULL)
+				AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM Adinco..CO_Contratista WHERE RFC IS NOT NULL AND RFC NOT LIKE 'TEN150921DA7%')
 				AND (P.RazonSocial LIKE '%' + @Buscar + '%' OR
 					P.RFC LIKE '%' + @Buscar + '%')
 	)

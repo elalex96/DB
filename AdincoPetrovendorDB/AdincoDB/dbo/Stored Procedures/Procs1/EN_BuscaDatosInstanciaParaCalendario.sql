@@ -59,7 +59,7 @@ BEGIN
    ELSE 
 	0
    END AS bitAwareness,
-   'Please confirm your understanding and compliance with the obligation(s) contained in the JOA to which you have either been named as the accountable or responsible party.' AS mensajeAwareness
+   'Please confirm acknowledgement and understanding of the obligation(s) to which you have either been named as the accountable or responsible party.' AS mensajeAwareness
    FROM dbo.EN_InstanciasEntregable IE  
 	JOIN  EN_ContratoEntregable CE  
 			ON IE.IdContratoEntregable	=	CE.IdContratoEntregable  
@@ -77,4 +77,3 @@ BEGIN
 			idInstanciaEntregable = @idInstanciaEntregable;  
     
 END;  
-  

@@ -1,30 +1,24 @@
-﻿-- =============================================
--- Author:		<Pedro Acuña>
--- Create date: <17-09-2018>
--- Description:	<Se agrega el bit de activo>
--- =============================================
--- =============================================
--- Author:		Daniel AC
--- Create date: 14-04-17
--- Description:	Consultar Solicitudes de Pedido  
--- =============================================
-
--- =============================================
--- Author:		Abel Rivera
--- Create date: 25-01-18
--- Description:	Se agrego a la consulta el campo IdTipoProceso de la solicitud de pedido  
--- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'MM_SP_ConsultaSolicitudPedido'
+)
+    DROP PROCEDURE MM_SP_ConsultaSolicitudPedido;
+/****** Object:  StoredProcedure [dbo].[MM_SP_ConsultaSolicitudPedido]    Script Date: 24/05/2021 06:14:34 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Pedro, Acuña
 -- Create date: 06/02/2018
 -- Description:	se agrega un bit para saber si existen las bases para mostrar o no el boton de descarga de bases
 -- =============================================
--- Author:		Alexander Gomez
--- Create date: 20/05/2021
--- Description:	se agrega el dato de solicitante
--- =============================================
 
-ALTER PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido]
+CREATE PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT
 AS
@@ -57,7 +51,7 @@ AS
 					TE.Nombre ,
 					PSP.Prioridad, 
 					TAO.IdEstatusOperacion, 
-					ISNULL(USO.Nombre,U.Nombre),
+					U.Nombre,
 					--U.Nombre, 
 					TAO.IdOperacion ,
 					ISNULL ( SP.PeticionEnviada, 'false' ) AS PeticionEnviada, 
@@ -76,7 +70,10 @@ AS
 					ISNULL ( SP.IdTipoProceso, 0 ) ,
 					ISNULL ( @ExistenBases, 0 ),
 					ISNULL(PR.CotizacionesRestringidas,0), 
-					ISNULL(SP.IdTipoGasto, 0)
+					ISNULL(SP.IdTipoGasto, 0),
+					ISNULL(USO.Nombre,'N/A') AS NombreSolicitante,
+					ISNULL(FT.Nombre,'') AS FlujoAprobacion,
+					ISNULL(TFO.Nombre,'') AS TipoFlujoAprobacion
 		FROM		MM_SolicitudPedido AS SP
 		INNER JOIN	MM_TipoSolicitudPedido AS TSP
 			ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
@@ -100,7 +97,10 @@ AS
 			ON TG.IdTipoGasto = SP.IdTipoGasto
 		LEFT JOIN dbo.S_Proveedor AS PR 
 			ON PR.IdProveedor = SP.IdProveedor
-		--INNER JOIN dbo.PV_TipoCompra PTC ON PTC.IdTipoCompra = SP.IdTipoProceso
+		LEFT JOIN TA_FlujoTarea FT
+			ON TAO.IdFlujoTarea	= FT.IdFlujoTarea		
+		LEFT JOIN TA_TipoFlujoTarea TFO
+			ON FT.IdTipoFlujo = TFO.IdTipoFlujoTarea
 		WHERE
 					TAO.IdTipoOperacion = 2
 					AND SP.IdSolicitudPedido = @IdSolicitudPedido
