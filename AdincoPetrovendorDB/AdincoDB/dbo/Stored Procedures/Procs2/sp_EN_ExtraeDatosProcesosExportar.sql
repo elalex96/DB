@@ -1,4 +1,6 @@
-﻿CREATE PROCEDURE sp_EN_ExtraeDatosProcesosExportar --3,10061
+DROP PROCEDURE IF EXISTS sp_EN_ExtraeDatosProcesosExportar
+GO
+CREATE PROCEDURE sp_EN_ExtraeDatosProcesosExportar --3,10061
 	@IdContrato int,
 	@IdUsuario int,
 	@ListIdProcesos VARCHAR(MAX),
@@ -12,11 +14,16 @@ BEGIN
 -- Create date: 20200421
 -- Description:	
 -- =============================================
+-- Author:  	DAVID DE LA CRUZ
+-- Create date: 01/06/2121
+-- Description:	SE MODIFICA PARA RETORNAR LA FECHA INICIO Y FIN DEL ISSUE #292 PARA REPORTE DE PROCESOS
+-- =============================================
 CREATE TABLE #InstanciasActividades(
 									Id int identity (1,1),
 									NombreProceso VARCHAR (MAX),
 									DescripcionInstanciaProceso VARCHAR (MAX),
 									NombreActividad VARCHAR (MAX),
+									FechaInicio DATE,
 									FechaEntrega DATE
 									);
 
@@ -92,13 +99,12 @@ JOIN
 	
 				
 --TIPO 10000
-INSERT INTO #InstanciasActividades(NombreProceso,
-									DescripcionInstanciaProceso,
-									NombreActividad,
-									FechaEntrega )
-	SELECT P.NombreProceso, IPF.Descripcion, A.NombreActividad, 
-	CASE WHEN IPF.FechaInicial = 1 THEN ISNULL(IA.FechaRealActividad,FechaActividad) 
-		ELSE ISNULL(IA.FechaRealActividad,FechaInicioActividad) END AS FechaEntrega
+INSERT INTO #InstanciasActividades(
+	NombreProceso,		DescripcionInstanciaProceso,	NombreActividad,	FechaEntrega,
+	FechaInicio)
+	SELECT 
+	P.NombreProceso,	IPF.Descripcion,				A.NombreActividad,  IA.FechaActividad,
+	IA.FechaInicioActividad 
 	FROM 
 		#DatosParaExportar	DP
 	JOIN
@@ -198,7 +204,7 @@ INSERT INTO #InstanciasActividades(NombreProceso,
 			ELSE ISNULL(IA.FechaRealActividad,FechaInicioActividad) END
 
 
-SELECT FechaEntrega,NombreActividad+', '+FORMAT (FechaEntrega, 'dd/MM/yyyy'),NombreProceso,
+SELECT FechaInicio,FechaEntrega,NombreActividad+', '+FORMAT (FechaEntrega, 'dd/MM/yyyy'),NombreProceso,
 CASE ROW_NUMBER() OVER(ORDER BY FechaEntrega ASC) % 6
 	WHEN 0 THEN -4
 	WHEN 1 THEN 5
@@ -212,4 +218,3 @@ FROM
 ORDER BY FechaEntrega		
 
 END
-

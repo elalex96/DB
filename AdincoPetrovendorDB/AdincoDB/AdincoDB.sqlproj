@@ -13077,6 +13077,11 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_EstadoRegistroAntesDeDividir.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_GastoEstadoSelects.sql" />
     <Build Include="dbo\Tables\Tables2\RespaldoRegistro.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_ENI_EstadoPozo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_ENI_GuardadoEdicionPozo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_ENI_Pozos_Edicion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_ENI_VerificacionUsuarioAdmin.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_ENI_EstadoPozo_1.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

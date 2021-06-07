@@ -33,6 +33,7 @@
     [TipoFluidoPetroleo]   NVARCHAR (150)  NULL,
     [TipoFluidoGas]        NVARCHAR (150)  NULL,
     [PuntoEntregaID]       INT             NULL,
+    [FechaConfirmacionDescubrimiento] DATETIME NULL, 
     CONSTRAINT [PK_PR_Pozo] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Pozo_Campo] FOREIGN KEY ([Campo]) REFERENCES [dbo].[PR_Campo] ([Id]),
     CONSTRAINT [FK_Pozo_Estacion] FOREIGN KEY ([Estacion]) REFERENCES [dbo].[PR_Estacion] ([Id]),
