@@ -1,5 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_DesactivarValoresConciliadosProduccion]
-	@IdValoresConciliadosProducion	INT,
+﻿CREATE PROCEDURE [dbo].[SP_CO_DesactivarValoresConciliadosProduccion] 
+    @IdValoresConciliadosProducion	INT,
 	@IdContrato						INT,
 	@IdUsuario						INT,
 	@Error							VARCHAR(500) OUT    
@@ -14,7 +14,11 @@ BEGIN
 	/*===========*/			
 		UPDATE [dbo].[CO_ValoresConciliadosProducion] 
 		SET Activo = 0, ModificadoPor = @IdUsuario, ModificadoEl = GETDATE()
-		WHERE IdValoresConciliadosProducion = @IdValoresConciliadosProducion				
+		WHERE IdValoresConciliadosProducion = @IdValoresConciliadosProducion	
+
+		INSERT INTO [dbo].[CO_ValoresConciliadosProducionBitacora] 
+					([IdValoresConciliadosProducion], [Detalle], [Tipo], [UsuarioID], [Fecha])
+		VALUES (@IdValoresConciliadosProducion, 'Se Desactiva', 'Eliminación', @IdUsuario, GETDATE())			
 	/*===========*/
 	COMMIT TRAN
 	END TRY
