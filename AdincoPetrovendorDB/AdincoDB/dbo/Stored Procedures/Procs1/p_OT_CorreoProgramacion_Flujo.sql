@@ -1,13 +1,13 @@
-﻿/*
+﻿
+/*
 pIdOTEstatus  
 100 aprobacion de volumenes por proveedor 
 101 aprobacion de volumenes por operador
 102 bitacora por operador
 103 bitacora por proveedor
 */
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-CREATE PROC p_OT_CorreoProgramacion_Flujo
+-- p_OT_CorreoProgramacion_Flujo 6,2,'',11
+CREATE PROC [dbo].[p_OT_CorreoProgramacion_Flujo]
 @pIdOTSolicitud INT,
 @pCreadoPor INT,
 @pError VARCHAR(250) OUT,
@@ -116,7 +116,7 @@ AS
                             when @progInicialproveedor = 0 then 'Se requiere aprobar/rechazar la volumetría de la OT asignada'
                     end
         set @mensaje = replace(@mensaje,'{folio_ot}',@NumeroOT)
-        set @mensaje = replace(@mensaje,'{nombre_receptor}',@nombreOperadorSubcontratista)
+        set @mensaje = replace(@mensaje,'{nombre_receptor}',@nombreContratista)
         set @mensaje = replace(@mensaje,'{nombre_emisor}','ADINCO-Control de Obra')
         set @mensaje = replace(@mensaje,'{url_ot}',@urlPetrovendor)
         set @mensaje = replace(@mensaje,'{accion}',@tarea)
@@ -443,7 +443,7 @@ AS
         set @mensaje = replace(@mensaje,'{nombre_receptor}',@nombreSubcontratista)
         set @mensaje = replace(@mensaje,'{nombre_emisor}',@nombreContratista)
         set @mensaje = replace(@mensaje,'{url_ot}',@urlPetrovendorProg)
-        set @mensaje = replace(@mensaje,'{accion}','La oepradora ha realizado cambios en el avance para el día ' + convert(varchar,@fechacambioprog,103))
+        set @mensaje = replace(@mensaje,'{accion}','La operadora ha realizado cambios en el avance para el día ' + convert(varchar,@fechacambioprog,103))
 		set @mensaje = replace(@mensaje,'{contrato}',@contrato)
         
         
@@ -546,4 +546,7 @@ AS
         
         end
     end
+
 GO
+
+
