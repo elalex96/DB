@@ -3,6 +3,10 @@
 -- Create date: 20-03-2020
 -- Description:	Archivos cargados de las instancias de entregables, última versión y no reachazados.
 -- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 09-06-2021
+-- Description:	se agrega la columan META del archivo.
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_EniInstanciasExternoDocumento] --0,0,164
 -- Add the parameters for the stored procedure here
 @IdContrato            INT, 
@@ -22,7 +26,8 @@ AS
                 ED.Folder, 
                 UPPER(ED.UUIDAmazon) AS UUIDAmazon, 
                 IE.idInstanciaEntregable, 
-                LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo)))) AS TipoArchivo
+                LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo)))) AS TipoArchivo,
+				Meta
          FROM dbo.EN_InstanciasEntregable IE
               JOIN dbo.EN_HistorialAprobacionesLineaTiempo HALT ON IE.idInstanciaEntregable = HALT.idInstanciaEntregable
                                                                    AND HALT.Rechazado = 0
@@ -36,5 +41,6 @@ AS
                   ED.Folder, 
                   UPPER(ED.UUIDAmazon), 
                   IE.idInstanciaEntregable, 
-                  LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo))))
+                  LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo)))),
+				  Meta
      END;
