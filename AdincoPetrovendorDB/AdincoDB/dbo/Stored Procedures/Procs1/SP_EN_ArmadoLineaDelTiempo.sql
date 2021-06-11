@@ -3,6 +3,10 @@
 -- Create date: 20-11-2020
 -- Description: Se actualizo filtros de entregables
 -- =============================================
+-- Author: Alexander Gomez
+-- Create date: 09/06/2021
+-- Description: Se actualizan los colores de las cards
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --3,12
 -- ============================================= 
 --[dbo].[SP_EN_ArmadoLineaDelTiempo] 0,0
@@ -222,17 +226,17 @@ order by FechaEntrega asc
         );
         --=============================================    
         INSERT INTO #BulletColor
-        VALUES(1, 'bg-green'),
-        (2, 'bg-black'),
-        (3, 'bg-blue'),
-        (4, 'bg-red'),
-        (5, 'bg-yellow'),
-		(6, 'bg-orange'),
-		(7, 'bg-blue-alt'),
-		(8, 'bg-primary'),
-		(9, 'bg-purple'),
-		(10, 'bg-gray'),
-		(11, 'bg-azure');
+        VALUES(1, '#C6E5B1'),--VERDE CLARO
+        (2, '#BBBBBB'),--GRIS CLARO
+        (3, '#9FBAD5'),--AZUL CLARO
+        (4, '#91B2FD'),--ROJO CLARO
+        (5, '#CAB1CB'),--MORADO CLARO
+		(6, '#96BCEB'),--NARANJA CLARO
+		(7, '#73B1FF'),--AZUL
+		(8, '#BBBBBB'),--GRIS
+		(9, '#85689e'),--MORADO
+		(10, '#BBBBBB'),--GRISS
+		(11, '#73B1FF');--AZUL
 
     --CREAR UNA TABLA PARA GUARDAR EL COLOR DEL POPUP PERSONALIZADO POR AÑO
 	--select * from #BulletColor
@@ -241,7 +245,7 @@ order by FechaEntrega asc
 				html = 
 				' <div class="tl-row" style="width: 50px">
 					<div class="tl-item">
-					<div class="tl-bullet ' + '#BulletColor' + '"></div>
+					<div class="tl-bullet" style="background-color:' + '#BulletColor' + '"></div>
 					<div class="tl-panel">
 					' + CONVERT(NVARCHAR(MAX), Anio) + '
 					</div>
@@ -315,7 +319,7 @@ order by FechaEntrega asc
 					ROW_NUMBER() OVER (	ORDER BY Id   )+@row+1,
 					html = 
 					case when Id%2 > 0 then 
-							'<div class="tl-row" style="width: 300px"><div class="tl-item float-right"><div class="popover bottom"><div class="arrow"></div><div class="'+@color+' popover-content">
+							'<div class="tl-row" style="width: 300px"><div class="tl-item float-right"><div class="popover bottom"><div class="arrow"></div><div class="popover-content" style="background-color:'+ @color+';">
 							<h3 class="tl-title" data-toggle="tooltip" data-placement="top" title="'+DocumentoEntregable+'">' 
 							+ cast(DocumentoEntregable as varchar(60)) + '</h3><div class="tl-time"><i class="glyph-icon icon-clock-o"></i>&nbsp;' 
 							+ ISNULL(FORMAT(FechaEntrega,'dd-MM-yyyy') ,'')
@@ -323,7 +327,7 @@ order by FechaEntrega asc
 							+ CASE WHEN DataArchivo='pdf' THEN cast(DocumentoEntregableId as varchar(20)) else  cast(IdInstanciaEntregable as varchar(20)) END+'" type="button">Ver Archivo</button>'
 							+'</div></div></div></div></div>'
 							else								
-							'<div class="tl-row" style="width: 300px"><div class="tl-item"><div class="popover top"><div class="arrow"></div><div class="'+@color+' popover-content">
+							'<div class="tl-row" style="width: 300px"><div class="tl-item"><div class="popover top"><div class="arrow"></div><div class="popover-content" style="background-color:'+ @color+';">
 							<h3 class="tl-title" data-toggle="tooltip" data-placement="right" data-container="body" title="'+DocumentoEntregable
 							+'">' + cast(DocumentoEntregable as varchar(60))  + '</h3><div class="tl-time"><i class="glyph-icon icon-clock-o"></i>&nbsp;' 
 							+ ISNULL(FORMAT(FechaEntrega,'dd-MM-yyyy') ,'')  
