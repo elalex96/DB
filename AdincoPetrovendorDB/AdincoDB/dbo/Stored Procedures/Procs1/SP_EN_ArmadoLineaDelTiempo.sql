@@ -1,7 +1,11 @@
-﻿-- =============================================
+-- =============================================
 -- Author: Daniel Ac
 -- Create date: 20-11-2020
 -- Description: Se actualizo filtros de entregables
+-- =============================================
+-- Author: Alexander Gomez
+-- Create date: 09/06/2021
+-- Description: Se actualizan los colores de las cards
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --3,12
 -- ============================================= 
@@ -10,24 +14,30 @@ CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --3,12
 @IdContrato INT, 
 @IdUsuario  INT
 AS
-    BEGIN
+BEGIN
+SET NOCOUNT ON
 
 create table #tmp
 (   
 	IdInstanciaEntregable	INT,
 	FechaEntrega			DATE,
 	DocumentoEntregable		VARCHAR(max),
-	Anio					INT
+	Anio					INT,
+	Consecutivo varchar(200),
+	Pozo varchar(200)
 )
 
 --OBTIENE LISTA DE ENTREGABLES APROBADOS INTERNAMENTE CLASIFICADOS POR AÑO Y QUE TIENEN BIT DE MOSTRAR EN LINEA DE TIEMPO
 INSERT INTO #tmp
+(   
+	IdInstanciaEntregable,
+	FechaEntrega,
+	DocumentoEntregable,
+	Anio
+)
 exec SP_ENI_LineaTiempo @IdContrato,@IdUsuario--=10
 
 --OBTENER CONSECUTIVO DEL ENTREGABLE INSTANCIA 
-
-ALTER TABLE #tmp add Consecutivo varchar(200)
-ALTER TABLE #tmp add Pozo varchar(200)
 
 --OBTENER CONSECUTICO Y POZO DE LOS ENTREGABLES 
 UPDATE Temp
@@ -59,16 +69,22 @@ DocumentoEntregable = case
         then        'Fecha del descubrimiento de Pozo '+Pozo+'('+DocumentoEntregable+')'
         when        Consecutivo in ('ADINCO-R1L3107','ADINCO-R2L2112','ADINCO-R2L3112','ADINCO-R1L4118','ADINCO-R1L2089','ADINCO-R2L10116','ADINCO-R2L40113','ADINCO-R3L10121','Farmout-12086') 
         then        'Fecha de convenio modificatorio del Contrato ('+DocumentoEntregable+')'
-        when        Consecutivo in ('ADINCO-R2L40010','ADINCO-R3L10012','ADINCO-R2L3017','ADINCO-R2L2017','ADINCO-R2L10219','ADINCO-R2L10013','ADINCO-R1L3026','ADINCO-R1L2022','Farmout-12018') -- AQUI SE AGREGARON LOS ULTIMOS DOS
+		WHEN        Consecutivo in ('ADINCO-R2L40010','ADINCO-R3L10012','ADINCO-R2L3017','ADINCO-R2L2017','ADINCO-R2L10219','ADINCO-R2L10013','ADINCO-R1L3026','ADINCO-R1L2022','Farmout-12018') -- AQUI SE AGREGARON LOS ULTIMOS DOS
         then        'Fecha de Inicio del Periodo de Exploración'
         when        Consecutivo in ('ADINCO-R2L10221','ADINCO-R1L4012','ADINCO-R2L10015','ADINCO-R2L40013','ADINCO-R3L10015','ADINCO-R2L2019','ADINCO-R2L3019') 
         then        'Fecha del Primer Periodo Adicional de Exploración'
         when        Consecutivo in ('ADINCO-R3L10018','ADINCO-R2L10018','ADINCO-R2L40016','ADINCO-R2L10224','ADINCO-R1L4015') 
         then        'Fecha del Segundo Periodo Adicional de Exploración'
-        when        Consecutivo in ('ADINCO-PERFO503') 
-        then        'Fecha de Perforación del pozo '+Pozo
+--        when        Consecutivo in ('ADINCO-PERFO503') 
+        --then        'Fecha de Perforación del pozo '+Pozo
         when        Consecutivo in ('ADINCO-R2L2028','ADINCO-R2L3028','ADINCO-R2L10230','ADINCO-R1L4022','ADINCO-R2L10024','ADINCO-R2L40022','ADINCO-R3L10024') 
         then        'Fecha de confirmación de existencia del descubrimiento'
+		WHEN		DocumentoEntregable LIKE 'Perforación del Pozo:%'
+		then		DocumentoEntregable
+		WHEN		DocumentoEntregable LIKE '%Resolu%Impacto%Ambiental%'
+		then		DocumentoEntregable
+		WHEN		DocumentoEntregable LIKE '%Autor%SASISOPA%'
+		then		DocumentoEntregable
         else        ''
         end,
 		FechaEntrega,
@@ -104,7 +120,7 @@ order by FechaEntrega asc
 	ON		HALT.idInstanciaEntregable					=	DE.idInstanciaEntregable
 	JOIN	dbo.EN_EntregableDocumento					ED	
 	ON		DE.DocumentoEntregableId					=	ED.DocumentoEntregableId
-	AND		ED.idTipoArchivo							=	10000
+	AND		ED.idTipoArchivo							IN (	10000, 10002)
 	AND		ED.Activo = 1
 	GROUP BY ED.DocumentoEntregableId, 
 	ED.NombreArchivo, 
@@ -210,17 +226,17 @@ order by FechaEntrega asc
         );
         --=============================================    
         INSERT INTO #BulletColor
-        VALUES(1, 'bg-green'),
-        (2, 'bg-black'),
-        (3, 'bg-blue'),
-        (4, 'bg-red'),
-        (5, 'bg-yellow'),
-		(6, 'bg-orange'),
-		(7, 'bg-blue-alt'),
-		(8, 'bg-primary'),
-		(9, 'bg-purple'),
-		(10, 'bg-gray'),
-		(11, 'bg-azure');
+        VALUES(1, '#C6E5B1'),--VERDE CLARO
+        (2, '#BBBBBB'),--GRIS CLARO
+        (3, '#9FBAD5'),--AZUL CLARO
+        (4, '#91B2FD'),--ROJO CLARO
+        (5, '#CAB1CB'),--MORADO CLARO
+		(6, '#96BCEB'),--NARANJA CLARO
+		(7, '#73B1FF'),--AZUL
+		(8, '#BBBBBB'),--GRIS
+		(9, '#85689e'),--MORADO
+		(10, '#BBBBBB'),--GRISS
+		(11, '#73B1FF');--AZUL
 
     --CREAR UNA TABLA PARA GUARDAR EL COLOR DEL POPUP PERSONALIZADO POR AÑO
 	--select * from #BulletColor
@@ -229,7 +245,7 @@ order by FechaEntrega asc
 				html = 
 				' <div class="tl-row" style="width: 50px">
 					<div class="tl-item">
-					<div class="tl-bullet ' + '#BulletColor' + '"></div>
+					<div class="tl-bullet" style="background-color:' + '#BulletColor' + '"></div>
 					<div class="tl-panel">
 					' + CONVERT(NVARCHAR(MAX), Anio) + '
 					</div>
@@ -303,7 +319,7 @@ order by FechaEntrega asc
 					ROW_NUMBER() OVER (	ORDER BY Id   )+@row+1,
 					html = 
 					case when Id%2 > 0 then 
-							'<div class="tl-row" style="width: 300px"><div class="tl-item float-right"><div class="popover bottom"><div class="arrow"></div><div class="'+@color+' popover-content">
+							'<div class="tl-row" style="width: 300px"><div class="tl-item float-right"><div class="popover bottom"><div class="arrow"></div><div class="popover-content" style="background-color:'+ @color+';">
 							<h3 class="tl-title" data-toggle="tooltip" data-placement="top" title="'+DocumentoEntregable+'">' 
 							+ cast(DocumentoEntregable as varchar(60)) + '</h3><div class="tl-time"><i class="glyph-icon icon-clock-o"></i>&nbsp;' 
 							+ ISNULL(FORMAT(FechaEntrega,'dd-MM-yyyy') ,'')
@@ -311,7 +327,7 @@ order by FechaEntrega asc
 							+ CASE WHEN DataArchivo='pdf' THEN cast(DocumentoEntregableId as varchar(20)) else  cast(IdInstanciaEntregable as varchar(20)) END+'" type="button">Ver Archivo</button>'
 							+'</div></div></div></div></div>'
 							else								
-							'<div class="tl-row" style="width: 300px"><div class="tl-item"><div class="popover top"><div class="arrow"></div><div class="'+@color+' popover-content">
+							'<div class="tl-row" style="width: 300px"><div class="tl-item"><div class="popover top"><div class="arrow"></div><div class="popover-content" style="background-color:'+ @color+';">
 							<h3 class="tl-title" data-toggle="tooltip" data-placement="right" data-container="body" title="'+DocumentoEntregable
 							+'">' + cast(DocumentoEntregable as varchar(60))  + '</h3><div class="tl-time"><i class="glyph-icon icon-clock-o"></i>&nbsp;' 
 							+ ISNULL(FORMAT(FechaEntrega,'dd-MM-yyyy') ,'')  
@@ -332,12 +348,8 @@ order by FechaEntrega asc
 
 	select @html = coalesce(@html+ html,html) from #tmpHtml order by Id --#TemporalInfoOrdenada
 	
-
     select @html = '<div class="timeline-box timeline-horizontal" style="width: '+cast(@row as varchar(5))+'px;">'+@html+'</div>'
 
      select HtmlArmado = @html
-
 	
  END;
-
-

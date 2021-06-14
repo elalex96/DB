@@ -1,10 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ENI_GuardadoEdicionPozo]    Script Date: 04/06/2021 01:33:25 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿
 -- =============================================
 -- Author:		<ALEXANDER GOMEZ>
 -- Create date: <02-06-2021>
@@ -26,7 +20,7 @@ BEGIN
     -- Insert statements for procedure here
 	DECLARE @POZO nvarchar(1000) = (SELECT NombreInstalacion FROM dbo.CO_Instalacion where IdInstalacion = @IdInstalacion);
 	DECLARE @POZOalt nvarchar(1000) = (SELECT NombreInstalacionAlterno FROM dbo.CO_Instalacion where IdInstalacion = @IdInstalacion);
-	DECLARE @POZOID INT = (SELECT TOP 1 WelIID FROM dbo.CO_Instalacion where IdInstalacion = 10490);
+	DECLARE @POZOID INT = (SELECT TOP 1 WelIID FROM dbo.CO_Instalacion where IdInstalacion = @IdInstalacion);
 
 
 	UPDATE PR_Pozo
@@ -36,6 +30,9 @@ BEGIN
 		ModificadoPor = @IdUsuario
 	WHERE Id = @POZOID;
 
-	SELECT 'SUCCES'
+	UPDATE CO_Instalacion
+	SET IdEstatus = @Estado
+	WHERE IdInstalacion = @IdInstalacion;
 
+	SELECT 'SUCCES'
 END
