@@ -733,7 +733,7 @@ BEGIN
                1,
                ISNULL(@FolioOT, '') + ' [Creada por: ' + ISNULL(@creadorOT, '') + '] Objeto:' + ISNULL(@ObjetoOT, ''),
 			   GETDATE(),
-			   @IdProveedorCompras
+			   @IdUsuarioCompras
         FROM MM_PeticionOferta AS PO
             INNER JOIN MM_PeticionOfertaDetalle AS POD
                 ON POD.IdPeticionOferta = PO.IdPeticionOferta
@@ -1201,9 +1201,5 @@ BEGIN
 --- VALIDACION ERRROR ---
 
 END;
-
-
-
-
 
 
