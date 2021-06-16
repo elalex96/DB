@@ -1,5 +1,5 @@
 ﻿
-create proc sp_En_DirectoAcprobacion
+CREATE PROCEDURE sp_En_DirectoAcprobacion
 (
 	@idUsuario INT,
     @idContrato INT,
@@ -8,8 +8,8 @@ create proc sp_En_DirectoAcprobacion
     @ComentarioUsuarioElaborador VARCHAR(500),
     @URLRepositorio VARCHAR(1500)
 )
-as
-begin
+AS
+BEGIN
  SET NOCOUNT ON;
     DECLARE @ActividadSiguienteID INT,
             @ActividadIDActual INT,
@@ -17,7 +17,17 @@ begin
             @idVersion INT,
             @ContieneURLRepositorio BIT,
             @idUsuarioRevisor INT,
-            @idUsuarioAprobador INT;
+            @idUsuarioAprobador INT,
+			@EnlaceDetalle		VARCHAR(max),
+			@EnlaceAprobado		VARCHAR(max),
+			@EnlaceRechazo		VARCHAR(max),
+			@Para				VARCHAR(1000),
+			@NombreUsuario		VARCHAR(1500),
+			@idTipoOperacion	int,
+			@NombreInstancia	VARCHAR(max),
+			@FechaInstancia		VARCHAR(1500),
+			@EsEntregableGrupo INT = 0,
+            @IdGrupo INT = 0
 
     SELECT @ActividadIDActual = ActividadID
     FROM dbo.EN_InstanciasEntregable
@@ -43,10 +53,26 @@ begin
                                          exa.idUsuario
                                      ELSE
                                          a.idUsuario
-                                 END
+                                 END,
+			@EsEntregableGrupo = CASE ISNULL(exa.idUsuario, '')
+                                    WHEN '' THEN
+                                        ISNULL(U.IsGrupo, 0)
+                                    ELSE
+                                        ISNULL(UXA.IsGrupo, 0)
+                                END,
+           @IdGrupo	=	CASE
+                          WHEN exa.ActividadIDExcepcion IS NOT NULL THEN
+                              exa.idUsuario
+                          ELSE
+                              a.idUsuario
+                      END
     FROM dbo.EN_Actividad a
+	JOIN AP_Usuario U
+            ON a.idUsuario = U.UsuarioID
     LEFT JOIN dbo.EN_ExcepcionesActividad exa ON a.ActividadID = exa.ActividadIDExcepcion
                                                  AND exa.IdInstanciasEntregables = @idInstanciaEntregable
+	LEFT JOIN AP_Usuario UXA
+            ON exa.idUsuario = UXA.UsuarioID
     WHERE a.IdContratoEntregable = @idContratoEntregable
           AND a.EstadoID = 10002;
 
@@ -98,24 +124,11 @@ begin
                                        0;
 	
 --------------------------------------------------------------------------------------------------------
-
-    EXEC EN_GuardaDocumentosPorVersion @idVersion,
+   EXEC EN_GuardaDocumentosPorVersion @idVersion,
                                        @idInstanciaEntregable,
                                        @idUsuario,
                                        @idContrato;
-
-	------------------------------------------------------------------------------------------------------
-
-
-	declare		@EnlaceDetalle		nvarchar(max),
-				@EnlaceAprobado		nvarchar(max),
-				@EnlaceRechazo		nvarchar(max),
-				@Para				nvarchar(max),
-				@NombreUsuario		nvarchar(max),
-				@idTipoOperacion	int,
-				@NombreInstancia	nvarchar(max),
-				@FechaInstancia		nvarchar(max)
-
+------------------------------------------------------------------------------------------------------
       SELECT	@EnlaceDetalle						=	EnlaceDetalle,
 				@EnlaceAprobado						=   EnlaceAprobado,
 				@EnlaceRechazo						=   EnlaceRechazo,
@@ -128,16 +141,8 @@ begin
     WHERE		ActividadID							=	@ActividadSiguienteID
 	and			idInstanciaEntregable				=	@idInstanciaEntregable
 
-	--select * from dbo.EN_URLResponsablesEntregables
- --   WHERE		ActividadID							=	@ActividadSiguienteID
-	--and			idInstanciaEntregable				=	@idInstanciaEntregable
-
-    --SELECT		@idTipoOperacion					=   tipoOperacion
-    --FROM		dbo.EN_URLResponsablesEntregables
-    --WHERE		ActividadID							=   @ActividadIDActual;
-
-	--select [sp_En_DirectoAcprobacion.idTipoOperacion] = @idTipoOperacion
-
+IF @EsEntregableGrupo = 0
+BEGIN
     EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
                                                 @idContrato,
                                                 @idInstanciaEntregable,
@@ -151,16 +156,45 @@ begin
                                                 @NombreUsuario,
                                                 12,
                                                 0;
-    EXEC [sp_EN_EnviaCorreos]	@idUsuario,
-								@idContrato,
-								@idInstanciaEntregable,
-								10000,
-								@ActividadSiguienteID,
-								@ActividadIDActual;--Correo para el elaborador, cumplio su trabajo
-    
-    
+END
+ELSE
+-- SE DEBEN ENVIAR CORREOS A TODOS LOS APROBADORES DEL GRUPO DE USUARIOS
+BEGIN
+	SELECT @Para = '', @NombreUsuario = ''
+-- VEMOS SI SE ENVIA EL CORREO CON MULTIPLES DESTINATARIOS
+	SELECT
+		@Para = U.Usuario + ';' + @Para,
+		@NombreUsuario = U.Nombre + ' / ' + @NombreUsuario
+	FROM
+		EN_GruposUsuarios	GU
+	JOIN
+		AP_Usuario	U
+		ON	GU.IdUsuario	=	U.UsuarioID
+	WHERE
+		GU.IdGrupo	=	@IdGrupo
+
+	EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
+                                @idContrato,
+                                @idInstanciaEntregable,
+                                @idTipoOperacion,
+                                @EnlaceAprobado,
+                                @EnlaceRechazo,
+                                @NombreInstancia,
+                                @FechaInstancia,
+                                @EnlaceDetalle,
+                                @Para,
+                                @NombreUsuario,
+                                12,
+                                0;
+
+END
   
-  
+EXEC [sp_EN_EnviaCorreos]	@idUsuario,
+							@idContrato,
+							@idInstanciaEntregable,
+							10000,
+							@ActividadSiguienteID,
+							@ActividadIDActual;--Correo para el elaborador, cumplio su trabajo  
 
 
 END;
