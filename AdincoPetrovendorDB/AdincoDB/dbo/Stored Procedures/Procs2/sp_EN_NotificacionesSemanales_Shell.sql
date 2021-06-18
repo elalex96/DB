@@ -1,7 +1,12 @@
-﻿CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
+CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
 AS
 BEGIN
-
+-- =============================================
+-- Author:  Bárbara Arrañaga
+-- Create date: 2018-11-08
+-- Description: 
+-- 20210615 BAAC    Se modifica para que no marque error al enviar correos a grupos de usuarios
+-- =============================================
 SET NOCOUNT ON
 SET LANGUAGE Spanish
 
@@ -10,7 +15,8 @@ CREATE TABLE #NotificacionesProximas
 	Destinatario	VARCHAR(250),
 	TipoCorreo		VARCHAR(250),
 	Ruta			VARCHAR(250),
-	Tabla1			VARCHAR(8000)
+	Tabla1			VARCHAR(8000),
+	EsGrupo			BIT
 )
 
 CREATE TABLE #NotificacionesPendientes
@@ -18,7 +24,8 @@ CREATE TABLE #NotificacionesPendientes
 	Destinatario	VARCHAR(250),
 	TipoCorreo		VARCHAR(250),
 	Ruta			VARCHAR(250),
-	Tabla1			VARCHAR(8000)
+	Tabla1			VARCHAR(8000),
+	EsGrupo			BIT
 )
 
 CREATE TABLE #NotificacionesPendYProx
@@ -27,7 +34,8 @@ CREATE TABLE #NotificacionesPendYProx
 	TipoCorreo		VARCHAR(250),
 	Ruta			VARCHAR(250),
 	Tabla1			VARCHAR(8000),
-	Tabla2			VARCHAR(8000)
+	Tabla2			VARCHAR(8000),
+	EsGrupo			BIT
 )
 
 CREATE TABLE #NotificacionesFinales
@@ -55,7 +63,8 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta,
-		Tabla1
+		Tabla1,
+		EsGrupo
 	)
 	SELECT
 		U1.Usuario,
@@ -83,7 +92,8 @@ SELECT @HOY = GETDATE()
 		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
 			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
 			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla
+		END	AS Tabla,
+		U1.IsGrupo
     FROM
             dbo.EN_InstanciasEntregable IE	(NOLOCK)
         JOIN
@@ -133,7 +143,8 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta,
-		Tabla1
+		Tabla1,
+		EsGrupo
 	)
 	SELECT
 		CE.FocalPoint,
@@ -161,7 +172,8 @@ SELECT @HOY = GETDATE()
 		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
 			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
 			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla
+		END	AS Tabla,
+		0
     FROM
             dbo.EN_InstanciasEntregable IE	(NOLOCK)
         JOIN
@@ -212,7 +224,8 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta,
-		Tabla1
+		Tabla1,
+		EsGrupo
 	)
 	SELECT
 		U1.Usuario,
@@ -241,7 +254,8 @@ SELECT @HOY = GETDATE()
 		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
 			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
 			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla
+		END	AS Tabla,
+		U1.IsGrupo
     FROM
             dbo.EN_InstanciasEntregable IE	(NOLOCK)
         JOIN
@@ -292,14 +306,16 @@ SELECT @HOY = GETDATE()
 		TipoCorreo,
 		Ruta,
 		Tabla1,
-		Tabla2
+		Tabla2,
+		EsGrupo
 	)
 	SELECT
 		Destinatario,
 		TipoCorreo,
 		Ruta,
 		Tabla1,
-		''
+		'',
+		EsGrupo
 	FROM #NotificacionesProximas 
 	ORDER BY Destinatario
 
@@ -309,14 +325,16 @@ SELECT @HOY = GETDATE()
 		TipoCorreo,
 		Ruta,
 		Tabla1,
-		Tabla2
+		Tabla2,
+		EsGrupo
 	)
 	SELECT
 		Destinatario,
 		TipoCorreo,
 		Ruta,
 		'',
-		Tabla1
+		Tabla1,
+		EsGrupo
 	FROM #NotificacionesPendientes 
 	ORDER BY Destinatario
 
@@ -341,8 +359,39 @@ SELECT @HOY = GETDATE()
 		1
 	FROM
 		#NotificacionesPendYProx B
+	WHERE
+		EsGrupo = 0
 	GROUP BY
 		Destinatario,
+		TipoCorreo,
+		Ruta
+
+	UNION
+
+	SELECT
+		UG.Usuario,
+		TipoCorreo,
+		Ruta,
+		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesPendYProx A
+				WHERE UG.Usuario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
+		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE UG.Usuario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
+		1
+	FROM
+		#NotificacionesPendYProx B
+	JOIN
+		AP_Usuario	U
+		ON	B.Destinatario	=	U.Nombre
+	JOIN
+		EN_GruposUsuarios	G
+		ON	U.UsuarioID	=	G.IdGrupo
+	JOIN
+		AP_Usuario	UG
+		ON	G.IdUsuario	=	UG.UsuarioID
+	WHERE
+		B.EsGrupo = 1
+	GROUP BY
+		UG.Usuario,
 		TipoCorreo,
 		Ruta
 
@@ -693,7 +742,6 @@ SELECT @HOY = GETDATE()
 	)
 	SELECT
 		ISNULL(@MaxNotificacion,0) + ID,	-- IdNotificacion
---		'barbara.arranaga@adinco.mx', 
 		Destinatario,						-- Para
 		REPLACE(C.Asunto,'##num##', LTRIM(N.NumCorreo)),
 		REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##',N.Ruta),'##numcorreo##',LTRIM(N.NumCorreo)),
@@ -712,4 +760,3 @@ SELECT @HOY = GETDATE()
 EXEC sp_JOA_NotificacionesSemanales_Shell
 
 END
-
