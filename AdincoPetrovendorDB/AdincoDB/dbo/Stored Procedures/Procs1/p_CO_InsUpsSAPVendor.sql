@@ -1,7 +1,4 @@
-﻿
-
-
-CREATE proc [dbo].[p_CO_InsUpsSAPVendor]
+﻿CREATE proc [dbo].[p_CO_InsUpsSAPVendor]
 @pVendorIDSAP	varchar(20),
 @pIdContrato	int,
 @pVendorName	varchar(250),
@@ -42,7 +39,7 @@ as
 
 		update [CO_SAPVendor]
 		set VendorName = @pVendorName,
-			TaxID = @pTaxID,
+			TaxID = case when RTRIM(LTRIM(ISNULL(@pTaxID,''))) = '' THEN TaxID ELSE  RTRIM(LTRIM(ISNULL(@pTaxID,''))) END ,
 			Country= @pCountry,
 			Address = @pAddress,
 			ContactName = @pContactName,
@@ -56,4 +53,5 @@ as
 		where VendorIDSAP = @pVendorIDSAP and
 		IdContrato = @pIdContrato
 	end
+
 
