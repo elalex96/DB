@@ -1,5 +1,5 @@
 ﻿-- p_ProduccionDiaria_By_ValorConciliado 10022
-CREATE proc p_ProduccionDiaria_By_ValorConciliado
+create proc p_ProduccionDiaria_By_ValorConciliado
 @pIdValoresConciliadosProducion INT
 as
 
@@ -11,13 +11,15 @@ as
 		AceiteProdDiaria = p.ProduccionReal,
 		AguaProdDiariaTot = cast(0 as float),
 		GasProdDiariaTot = cast(0 as float),
-		AceiteProdDiariaTot = cast(0 as float)
+		AceiteProdDiariaTot = cast(0 as float),
+		PuntoEntrega = pe.Nombre
 	into #tmpResult
 	from CO_ValoresConciliadosProducion vp
 	INNER JOIN PR_Pozo pozo on pozo.PuntoEntregaID = vp.PuntoEntregaID
 	INNER JOIN PR_ProdDiariaPozo p on p.Pozo = pozo.Id AND
 								YEAR(p.Fecha) = YEAR(vp.Mes) AND
 								MONTH(p.Fecha) = MONTH(vp.Mes)
+	INNER JOIN CO_PuntosdeEntrega pe on pe.PuntoEntregaID = pozo.PuntoEntregaID
 	WHERE vp.IdValoresConciliadosProducion = @pIdValoresConciliadosProducion
 	order by 
 	p.Fecha,

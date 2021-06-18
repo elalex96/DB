@@ -98,9 +98,9 @@ BEGIN
 	SELECT 
 	ProdDiariaId = e.Id,
 	pd.Id,
-	AceiteOld = CAST(ISNULL(pd.ProduccionControl,0) AS VARCHAR), 
+	AceiteOld = CAST(ISNULL(pd.ProduccionReal,0) AS VARCHAR), 
 	GasOld = CAST(ISNULL(pd.ProduccionRealGasM3,0) AS VARCHAR),
-	AguaOld = CAST(ISNULL(pd.PctAguaAlocada,0) AS VARCHAR),
+	AguaOld = CAST(ISNULL(pd.PctAguaControl,0) AS VARCHAR),
 	f.* ,
 	Bloque = @BloqueId
 	INTO #tmpFinal
