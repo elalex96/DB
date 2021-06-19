@@ -13090,6 +13090,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_DesactivarValoresConciliadosProduccion.sql" />
     <Build Include="dbo\Tables\Tables1\CO_ValoresConciliadosProducionBitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ArchivosPozos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_PR_ProdDiaria_Gen.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_ProduccionDiaria_By_ValorConciliado.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
