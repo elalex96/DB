@@ -1,5 +1,4 @@
-﻿
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:	Daniel A Cruz
 -- Create date: 06-02-2018
@@ -715,7 +714,9 @@ BEGIN
             IdMoneda,
             IdFirma,
             RecepcionServicio,
-            ComentariosAsignado
+            ComentariosAsignado,
+			FechaRecepcionServicio,
+			IdUsuarioRecepcionServicio
         )
         SELECT PO.IdPeticionOferta,
                'Estimacion:' + ISNULL(@FolioEstimacion, ''),
@@ -730,7 +731,9 @@ BEGIN
                @ID_MONEDA_ACTUAL,
                '',
                1,
-               ISNULL(@FolioOT, '') + ' [Creada por: ' + ISNULL(@creadorOT, '') + '] Objeto:' + ISNULL(@ObjetoOT, '')
+               ISNULL(@FolioOT, '') + ' [Creada por: ' + ISNULL(@creadorOT, '') + '] Objeto:' + ISNULL(@ObjetoOT, ''),
+			   GETDATE(),
+			   @IdUsuarioCompras
         FROM MM_PeticionOferta AS PO
             INNER JOIN MM_PeticionOfertaDetalle AS POD
                 ON POD.IdPeticionOferta = PO.IdPeticionOferta
@@ -1198,9 +1201,5 @@ BEGIN
 --- VALIDACION ERRROR ---
 
 END;
-
-
-
-
 
 
