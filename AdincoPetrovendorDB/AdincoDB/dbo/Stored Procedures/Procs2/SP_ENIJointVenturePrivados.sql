@@ -9,11 +9,13 @@
 -- Create date: 18/06/2021
 -- Description:	agregado de indicadores de tipo de archivos
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_ENIJointVenturePrivados] 
+CREATE PROCEDURE [dbo].[SP_ENIJointVenturePrivados] --3,1,1,''
 -- [dbo].[SP_ENIJointVenturePrivados] 3,10113,1
 @IdContrato INT, 
 @IdUsuario  INT, 
-@Case       INT
+@Page INT,
+@Buscar NVARCHAR(MAX)
+--@Case       INT
 AS
      BEGIN
          SET NOCOUNT ON;
@@ -79,8 +81,23 @@ AS
          --                SELECT 0 AS Privados;
          --            END;
          --    END;
+		 DECLARE @AllRecords INT;
+	DECLARE @RecordsByPage INT = 10;
 
-		 SELECT A.Folder,
+	SET @AllRecords = (SELECT COUNT(1)
+						 FROM dbo.AWS_DocumentoENI A
+							  JOIN dbo.CO_Contrato C ON C.IdContrato = A.IdContrato
+							  JOIN dbo.AP_Usuario U ON A.CreadoPor = U.UsuarioID
+						 WHERE A.Privado = 1
+						 AND A.Folder = 'ENIArchivos/JOINTVENTURE/');
+		
+		SELECT *,
+			  @AllRecords AS Records,
+			  @RecordsByPage AS RecordsByPage
+		FROM
+		(
+		 SELECT ROW_NUMBER() OVER(PARTITION BY A.IdAWSDocumento ORDER BY A.IdAWSDocumento DESC) AS R,
+				A.Folder,
 				A.IdAWSDocumento, 
 				C.NumeroContrato AS Contrato,
                 CASE
@@ -102,12 +119,17 @@ AS
                     WHEN ISNULL(A.Privado, 0) = 1
                     THEN 'Privado'
                 END AS Clasificacion,
-				UUIDAmazon
+				UUIDAmazon,
+				A.Meta,
+				(ROW_NUMBER() OVER(ORDER BY A.CreadoEl DESC) - 1) / @RecordsByPage AS _Page
          FROM dbo.AWS_DocumentoENI A
               JOIN dbo.CO_Contrato C ON C.IdContrato = A.IdContrato
               JOIN dbo.AP_Usuario U ON A.CreadoPor = U.UsuarioID
 		 WHERE A.Privado = 1
 		 AND A.Folder = 'ENIArchivos/JOINTVENTURE/'
-         ORDER BY A.CreadoEl DESC;
+         AND (C.NumeroContrato LIKE '%' + @Buscar + '%'
+				OR NombreArchivo LIKE '%' + @Buscar + '%')) AS R
+		 WHERE R.R = 1 AND R._PAGE = (@Page - 1)
+		 ORDER BY R.CreadoEl DESC;
 
-END;
+     END;
