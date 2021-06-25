@@ -3,6 +3,10 @@
 -- Create date: 15-01-2020
 -- Description:	Editar Mediante IdPedimentoComprobante
 -- =============================================
+-- Modificador:		Marcos Garcia
+-- Modificador date: 25-06-2021
+-- Description:	Editar @IsNotaCredito NULL
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_EditarComprobante] 
 -- Add the parameters for the stored procedure here
 @IdPedimentoComprobante     INT, 
@@ -17,7 +21,7 @@ CREATE PROCEDURE [dbo].[SP_FI_EditarComprobante]
 @Subtotal                   MONEY, 
 @IdUsuario                  INT, 
 @CvTipoDoc                  INT, 
-@IsNotaCredito				BIT,
+@IsNotaCredito				BIT = NULL,
 @DocumentoPDF               IMAGE
 AS
      BEGIN
@@ -27,7 +31,13 @@ AS
 
          DECLARE @Validacion INT;
          SET @Validacion = (DATALENGTH(@DocumentoPDF));
-         BEGIN
+	     BEGIN
+
+			 IF EXISTS(SELECT * FROM dbo.FI_PedimentoComprobante WHERE IdPedimentoComprobante = @IdPedimentoComprobante AND EsnotaCredito IS NOT NULL)
+			 BEGIN
+				SET @IsNotaCredito = (SELECT EsnotaCredito FROM dbo.FI_PedimentoComprobante WHERE IdPedimentoComprobante = @IdPedimentoComprobante AND EsnotaCredito IS NOT NULL);
+			 END
+
              UPDATE dbo.FI_PedimentoComprobante
                SET 
                    FolioComprobante = @FolioComprobante, 
