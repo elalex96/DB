@@ -13092,6 +13092,14 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ArchivosPozos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_PR_ProdDiaria_Gen.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_ProduccionDiaria_By_ValorConciliado.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_sp_EdicionComentarioBitacoraBloqueoFacturas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_sp_InsertaBitacoraBloqueoFactura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\Script1.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_sp_ProveedoresBitacoraBloqueadosCargaFactura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_sp_ProveedoresBloqueadosCargaFactura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_sp_ProveedoresProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_ValidaAceptacionPedidoDEA.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_ValidacionCargaFactura.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
