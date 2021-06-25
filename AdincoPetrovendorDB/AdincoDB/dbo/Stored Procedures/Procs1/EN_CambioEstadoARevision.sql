@@ -3,7 +3,6 @@
 -- Update date: 20/10/2020  
 -- Description: Se agrego métodos para avance de entregable instancia EQUINOR
 -- ============================================= 
-
 CREATE PROCEDURE [dbo].[EN_CambioEstadoARevision] --10061,3,285713,16876,'',''
     @idUsuario INT,
     @idContrato INT,
@@ -31,13 +30,13 @@ BEGIN
             @ActividadIDActual INT,
             @IdLineaTiempo INT,
             @idVersion INT,
-            @NombreInstancia NVARCHAR(MAX),
-            @EnlaceDetalle NVARCHAR(MAX),
-            @EnlaceAprobado NVARCHAR(MAX),
-            @EnlaceRechazo NVARCHAR(MAX),
-            @FechaInstancia NVARCHAR(MAX),
-            @Para NVARCHAR(MAX),
-            @NombreUsuario NVARCHAR(MAX),
+            @NombreInstancia VARCHAR(MAX),
+            @EnlaceDetalle VARCHAR(MAX),
+            @EnlaceAprobado VARCHAR(MAX),
+            @EnlaceRechazo VARCHAR(MAX),
+            @FechaInstancia VARCHAR(MAX),
+            @Para VARCHAR(1000),
+            @NombreUsuario VARCHAR(2500),
             @ContieneURLRepositorio BIT,
             @CountRevisores INT,
             @IsUsuarioRev INT,
@@ -131,7 +130,7 @@ BEGIN
         LEFT JOIN AP_Usuario UXA
             ON exa.idUsuario = UXA.UsuarioID
     WHERE a.IdContratoEntregable = @idContratoEntregable
-          AND CE.IdContrato = 10112 --ÁREA 20 SHELL
+          AND CE.IdContrato = @idContrato	--10112 --ÁREA 20 SHELL
           AND a.EstadoID = 10000;
 
 
@@ -195,7 +194,7 @@ BEGIN
                                             @ComentarioUsuarioElaborador,
                                             @URLRepositorio;
 
-            /*EL ENTREGABLABLE FINALIZA ESTADO REVISIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
+   /*EL ENTREGABLABLE FINALIZA ESTADO REVISIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
             EXEC dbo.SP_EN_GuardarAvanceEntregableSeguimiento @EntregableInstanciaId = @idInstanciaEntregable, -- int
                                                               @ClaveAvance = 'COMPLETADO',                     -- float
                                                               @UsuarioId = @idUsuario,                         -- int
@@ -283,7 +282,7 @@ BEGIN
                        @EnlaceRechazo = EnlaceRechazo,
                        @NombreInstancia = NombreInstancia,
                        @FechaInstancia = FechaInstancia,
-                       @Para = correos,
+                     @Para = correos,
                        @NombreUsuario = NombreUsuario
                 FROM #URLResponsables
                 WHERE Id = @IdUrl
@@ -336,6 +335,3 @@ BEGIN
 
     END;
 END;
-
-
-
