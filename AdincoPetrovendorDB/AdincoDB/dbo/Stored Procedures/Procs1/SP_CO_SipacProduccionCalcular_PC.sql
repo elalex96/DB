@@ -18,6 +18,7 @@ BEGIN
 -- 20190219	BAAC	Se crea versión 2 ya que se cambia el calculo de la energia al API 14.5
 -- 20190603	BAAC	Se modifica para calcular el precio del condensado de yacimiento
 -- 20190903	BAAC	Se crea version PC para el caso de contratos de Produccion Compartida sin consorcio con Pemex
+-- 20210615	BAAC	Se modifica para aplicar el Factor de Compresibilidad en el caluclo de los MMBTUs de los componentes del GAS
 -- ===============================================================================================
 SET NOCOUNT ON
 SET ANSI_WARNINGS OFF
@@ -288,7 +289,16 @@ DECLARE
 	@PetroleoVTA_20	FLOAT,
 	@GasVTA_20	FLOAT,
 	@CondensadoVTA_20	FLOAT,
-	@VTA_PrecioPromPonCondensado	FLOAT
+	@VTA_PrecioPromPonCondensado	FLOAT,
+	@AplicaFactorCompresibilidad	BIT
+
+-- SE VERIFICA SI AL CONTRATO LE APLICA EL FACTOR DE COMPRESIBILIDAD EN EL CALCULO DEL GAS
+SELECT
+	@AplicaFactorCompresibilidad	=	ISNULL(AplicaFactorCompresibilidad,0)
+FROM
+	dbo.SCOC_Contrato
+WHERE
+	IdContrato	=	@IdContrato
 
 -- SE VALIDA QUE EL REPORTE SE ESTE GENERANDO DURANTE LOS PRIMEROS 10 DIAS HABILES DEL SIGUIENTE MES
 INSERT INTO #DiasHabiles
@@ -324,67 +334,6 @@ WHERE
 -- SE EJECUTA SP QUE GENERA LA TABLA SIPAC_RM_FMP_53_M
 EXEC PC_Generar_VolMensualProduccion_RM53 @Idcontrato, @fechaMesDiaAnio, @Usuario, @FechaLimite, 0
 
-/*
--- SE GENERA EL VOLUMEN VENDIDO APLICANDO EL PORCENTAJE DE DISTRIBUCIÓN A CADA PERIODO
-SELECT
-	ROW_NUMBER() OVER (ORDER BY FechaInicio) AS Id,
-	MesReporte,
-	FechaInicio,
-	VolumenPetroleoPuntoMedicion,
-	VolumenGasMMPC
-INTO #VolumenPeriodo
-FROM
-	PC_VolumenProduccionPeriodo
-WHERE
-	IdContrato	=	@Idcontrato	--10054
-	AND
-	MesReporte	=	@fechaMesDiaAnio
-
-SELECT
-	ROW_NUMBER() OVER (ORDER BY DATEFROMPARTS(AnioReporte, MesReporte,1)) AS Id,
-	NuevaDistribucionProvisionalContratista,
-	NuevaDistribucionProvisionalContratistaC1
-INTO #Distribucion
-FROM
-	SIPAC_RM_FMP_53_M
-WHERE
-	IdContrato	=	@Idcontrato	--10054
-	AND	DATEFROMPARTS(AnioReporte, MesReporte,1) BETWEEN DATEADD(MONTH,-2,@fechaMesDiaAnio) AND  DATEADD(MONTH,-1,@fechaMesDiaAnio)
-
-SELECT
-	@Idcontrato	as IdContrato,
-	@fechaMesDiaAnio	as MesReporte,
-	SUM(VP.VolumenPetroleoPuntoMedicion * (D.NuevaDistribucionProvisionalContratista/100)) AS Petroleo,
-	SUM(VP.VolumenGasMMPC * (NuevaDistribucionProvisionalContratistaC1/100))	AS Gas
-INTO #Venta
-FROM
-	#VolumenPeriodo	VP
-JOIN
-	#Distribucion	D
-	ON	VP.ID	=	D.ID
-*/
-
--- SE ACTUALIZAN LOS VOLUMENES DE VENTA DE ACUERDO A LO GENERADO EN LA TABLA 53
---UPDATE PM
---	SET VolumenVendido	=	CASE WHEN PM.idHidrocarburo =  1001		-- PETROLEO
---								THEN (V.Petroleo)	+ FMP53.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo
---								WHEN PM.idHidrocarburo =  1000		-- GAS SOLO SE CALCULA EL PORCENTAJE Y YA AL GENERAR LAS COMERCIALIZACIONES SE SUMA LA COMPENSACION
---								THEN (V.Gas )
---								WHEN PM.idHidrocarburo =  1002		-- CONDENSADO
---								THEN (PM.VolumenProgramado * (FMP53.NuevaDistribucionProvisionalContratista / 100) + FMP53.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado)
---								ELSE PM.VolumenProgramado
---							END
---FROM
---	#Venta	V
---JOIN
---	PR_ProduccionMensualSipac	PM
---	ON	V.IdContrato	=	PM.IdContrato
---	AND	V.MesReporte	=	PM.idFecha
---	AND PM.PuntoEntregaID	=	@puntoEntrega
---JOIN
---	SIPAC_RM_FMP_53_M	FMP53
---	ON	FMP53.IdContrato	=	PM.idContrato
---	AND	DATEADD(MONTH,1,DATEFROMPARTS(FMP53.AnioReporte, FMP53.MesReporte,1)) = PM.idFecha
 
 UPDATE	PM
 	SET VolumenVendido	=	CASE WHEN PM.idHidrocarburo =  1001		-- PETROLEO
@@ -448,7 +397,7 @@ SELECT
 	@fechaMesDiaAnio,
 	PuntoEntregaID,
     ISNULL(CV.C1,0),
-    ISNULL(CV.C2,0),
+	ISNULL(CV.C2,0),
     ISNULL(CV.C3,0),
 	ISNULL(CV.lC4,0),
     ISNULL(CV.nC4,0),
@@ -598,6 +547,7 @@ WHERE
 	GPA.IdComponente	=	5	-- bi Presión Base
 	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
 
+-- CALCULO DEL FACTOR DE COMPRESIBILIDAD
 UPDATE #CalculosGPA
 	SET Zmes = ROUND(1 - 14.696  * POWER(PresionParcial_C1 + PresionParcial_C2 + PresionParcial_C3 + PresionParcial_nC4 +
 									PresionParcial_iC4 + PresionParcial_nC5 + PresionParcial_iC5 + PresionParcial_C6Mas +
@@ -647,58 +597,114 @@ UPDATE #CalculosGPA
 		LCi_H2S		= ROUND(LCid_H2S / Zmes,6),
 		LCi_N2		= ROUND(LCid_N2 / Zmes,6)
 
-UPDATE	C
-	SET
-		MMBTU_C1	=	ROUND((GPA.Metano_C1 * ((VolumenGas_15Grados*1000000) * (C.C1 / 100)))/1000000,0),
-		MMBTU_C2	=	ROUND((GPA.Etano_C2 * ((VolumenGas_15Grados*1000000) * (C.C2 / 100)))/1000000,0),
-		MMBTU_C3	=	ROUND((GPA.Propano_C3 * ((VolumenGas_15Grados*1000000) * (C.C3 / 100)))/1000000,0),
-		MMBTU_IC4	=	ROUND((GPA.Butano_iC4 * ((VolumenGas_15Grados*1000000) * (C.IC4 / 100)))/1000000,0),
-		MMBTU_NC4	=	ROUND((GPA.Butano_nC4 * ((VolumenGas_15Grados*1000000) * (C.NC4 / 100)))/1000000,0),
-		MMBTU_IC5	=	ROUND((GPA.Pentano_iC5 * ((VolumenGas_15Grados*1000000) * (C.IC5 / 100)))/1000000,0),
-		MMBTU_NC5	=	ROUND((GPA.Pentano_nC5 * ((VolumenGas_15Grados*1000000) * (C.NC5 / 100)))/1000000,0),
-		MMBTU_C6	=	ROUND((GPA.Hexano_C6 * ((VolumenGas_15Grados*1000000) * (C.C6 / 100)))/1000000,0),
-		MMBTU_C7	=	ROUND((GPA.Heptano_C7 * ((VolumenGas_15Grados*1000000) * (C.C7 / 100)))/1000000,0),
-		MMBTU_C8	=	ROUND((GPA.Octano_C8 * ((VolumenGas_15Grados*1000000) * (C.C8 / 100)))/1000000,0),
-		MMBTU_C9	=	ROUND((GPA.Nonano_C9 * ((VolumenGas_15Grados*1000000) * (C.C9 / 100)))/1000000,0),
-		MMBTU_C10	=	ROUND((GPA.Decano_C10 * ((VolumenGas_15Grados*1000000) * (C.C10 / 100)))/1000000,0),
--- CALCULO DE LOS BTUS DEL GAS BN
-		BN_MMBTU_C1	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Metano_C1 * ((VolumenGasBN_15Grados*1000000) * (C.C1 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_C2	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Etano_C2 * ((VolumenGasBN_15Grados*1000000) * (C.C2 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_C3	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Propano_C3 * ((VolumenGasBN_15Grados*1000000) * (C.C3 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_IC4	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Butano_iC4 * ((VolumenGasBN_15Grados*1000000) * (C.IC4 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_NC4	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Butano_nC4 * ((VolumenGasBN_15Grados*1000000) * (C.NC4 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_IC5	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Pentano_iC5 * ((VolumenGasBN_15Grados*1000000) * (C.IC5 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_NC5	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Pentano_nC5 * ((VolumenGasBN_15Grados*1000000) * (C.NC5 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_C6	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Hexano_C6 * ((VolumenGasBN_15Grados*1000000) * (C.C6 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_C7	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Heptano_C7 * ((VolumenGasBN_15Grados*1000000) * (C.C7 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_C8	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Octano_C8 * ((VolumenGasBN_15Grados*1000000) * (C.C8 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_C9	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Nonano_C9 * ((VolumenGasBN_15Grados*1000000) * (C.C9 / 100)))/1000000,0) ELSE 0 END,
-		BN_MMBTU_C10	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Decano_C10 * ((VolumenGasBN_15Grados*1000000) * (C.C10 / 100)))/1000000,0) ELSE 0 END,
--- CALCULO DE LOS BTUS DE LA VENTA
-		VTA_MMBTU_C1	=	ROUND((GPA.Metano_C1 * ((VolumenGasVTA_15Grados*1000000) * (C.C1 / 100)))/1000000,0),
-		VTA_MMBTU_C2	=	ROUND((GPA.Etano_C2 * ((VolumenGasVTA_15Grados*1000000) * (C.C2 / 100)))/1000000,0),
-		VTA_MMBTU_C3	=	ROUND((GPA.Propano_C3 * ((VolumenGasVTA_15Grados*1000000) * (C.C3 / 100)))/1000000,0),
-		VTA_MMBTU_IC4	=	ROUND((GPA.Butano_iC4 * ((VolumenGasVTA_15Grados*1000000) * (C.IC4 / 100)))/1000000,0),
-		VTA_MMBTU_NC4	=	ROUND((GPA.Butano_nC4 * ((VolumenGasVTA_15Grados*1000000) * (C.NC4 / 100)))/1000000,0),
-		VTA_MMBTU_IC5	=	ROUND((GPA.Pentano_iC5 * ((VolumenGasVTA_15Grados*1000000) * (C.IC5 / 100)))/1000000,0),
-		VTA_MMBTU_NC5	=	ROUND((GPA.Pentano_nC5 * ((VolumenGasVTA_15Grados*1000000) * (C.NC5 / 100)))/1000000,0),
-		VTA_MMBTU_C6	=	ROUND((GPA.Hexano_C6 * ((VolumenGasVTA_15Grados*1000000) * (C.C6 / 100)))/1000000,0),
-		VTA_MMBTU_C7	=	ROUND((GPA.Heptano_C7 * ((VolumenGasVTA_15Grados*1000000) * (C.C7 / 100)))/1000000,0),
-		VTA_MMBTU_C8	=	ROUND((GPA.Octano_C8 * ((VolumenGasVTA_15Grados*1000000) * (C.C8 / 100)))/1000000,0),
-		VTA_MMBTU_C9	=	ROUND((GPA.Nonano_C9 * ((VolumenGasVTA_15Grados*1000000) * (C.C9 / 100)))/1000000,0),
-		VTA_MMBTU_C10	=	ROUND((GPA.Decano_C10 * ((VolumenGasVTA_15Grados*1000000) * (C.C10 / 100)))/1000000,0)
-FROM
-	#CalculosGPA	C
-CROSS JOIN
-	SCOC_ValoresEstandaresGPA_2145	GPA
-WHERE
-	GPA.IdComponente	=	2
-	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
+
+IF @AplicaFactorCompresibilidad = 0
+BEGIN
+	UPDATE	C
+		SET
+			MMBTU_C1	=	ROUND((GPA.Metano_C1 * ((VolumenGas_15Grados*1000000) * (C.C1 / 100)))/1000000,0),
+			MMBTU_C2	=	ROUND((GPA.Etano_C2 * ((VolumenGas_15Grados*1000000) * (C.C2 / 100)))/1000000,0),
+			MMBTU_C3	=	ROUND((GPA.Propano_C3 * ((VolumenGas_15Grados*1000000) * (C.C3 / 100)))/1000000,0),
+			MMBTU_IC4	=	ROUND((GPA.Butano_iC4 * ((VolumenGas_15Grados*1000000) * (C.IC4 / 100)))/1000000,0),
+			MMBTU_NC4	=	ROUND((GPA.Butano_nC4 * ((VolumenGas_15Grados*1000000) * (C.NC4 / 100)))/1000000,0),
+			MMBTU_IC5	=	ROUND((GPA.Pentano_iC5 * ((VolumenGas_15Grados*1000000) * (C.IC5 / 100)))/1000000,0),
+			MMBTU_NC5	=	ROUND((GPA.Pentano_nC5 * ((VolumenGas_15Grados*1000000) * (C.NC5 / 100)))/1000000,0),
+			MMBTU_C6	=	ROUND((GPA.Hexano_C6 * ((VolumenGas_15Grados*1000000) * (C.C6 / 100)))/1000000,0),
+			MMBTU_C7	=	ROUND((GPA.Heptano_C7 * ((VolumenGas_15Grados*1000000) * (C.C7 / 100)))/1000000,0),
+			MMBTU_C8	=	ROUND((GPA.Octano_C8 * ((VolumenGas_15Grados*1000000) * (C.C8 / 100)))/1000000,0),
+			MMBTU_C9	=	ROUND((GPA.Nonano_C9 * ((VolumenGas_15Grados*1000000) * (C.C9 / 100)))/1000000,0),
+			MMBTU_C10	=	ROUND((GPA.Decano_C10 * ((VolumenGas_15Grados*1000000) * (C.C10 / 100)))/1000000,0),
+	-- CALCULO DE LOS BTUS DEL GAS BN
+			BN_MMBTU_C1	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Metano_C1 * ((VolumenGasBN_15Grados*1000000) * (C.C1 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_C2	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Etano_C2 * ((VolumenGasBN_15Grados*1000000) * (C.C2 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_C3	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Propano_C3 * ((VolumenGasBN_15Grados*1000000) * (C.C3 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_IC4	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Butano_iC4 * ((VolumenGasBN_15Grados*1000000) * (C.IC4 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_NC4	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Butano_nC4 * ((VolumenGasBN_15Grados*1000000) * (C.NC4 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_IC5	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Pentano_iC5 * ((VolumenGasBN_15Grados*1000000) * (C.IC5 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_NC5	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Pentano_nC5 * ((VolumenGasBN_15Grados*1000000) * (C.NC5 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_C6	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Hexano_C6 * ((VolumenGasBN_15Grados*1000000) * (C.C6 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_C7	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Heptano_C7 * ((VolumenGasBN_15Grados*1000000) * (C.C7 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_C8	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Octano_C8 * ((VolumenGasBN_15Grados*1000000) * (C.C8 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_C9	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Nonano_C9 * ((VolumenGasBN_15Grados*1000000) * (C.C9 / 100)))/1000000,0) ELSE 0 END,
+			BN_MMBTU_C10	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND((GPA.Decano_C10 * ((VolumenGasBN_15Grados*1000000) * (C.C10 / 100)))/1000000,0) ELSE 0 END,
+	-- CALCULO DE LOS BTUS DE LA VENTA
+			VTA_MMBTU_C1	=	ROUND((GPA.Metano_C1 * ((VolumenGasVTA_15Grados*1000000) * (C.C1 / 100)))/1000000,0),
+			VTA_MMBTU_C2	=	ROUND((GPA.Etano_C2 * ((VolumenGasVTA_15Grados*1000000) * (C.C2 / 100)))/1000000,0),
+			VTA_MMBTU_C3	=	ROUND((GPA.Propano_C3 * ((VolumenGasVTA_15Grados*1000000) * (C.C3 / 100)))/1000000,0),
+			VTA_MMBTU_IC4	=	ROUND((GPA.Butano_iC4 * ((VolumenGasVTA_15Grados*1000000) * (C.IC4 / 100)))/1000000,0),
+			VTA_MMBTU_NC4	=	ROUND((GPA.Butano_nC4 * ((VolumenGasVTA_15Grados*1000000) * (C.NC4 / 100)))/1000000,0),
+			VTA_MMBTU_IC5	=	ROUND((GPA.Pentano_iC5 * ((VolumenGasVTA_15Grados*1000000) * (C.IC5 / 100)))/1000000,0),
+			VTA_MMBTU_NC5	=	ROUND((GPA.Pentano_nC5 * ((VolumenGasVTA_15Grados*1000000) * (C.NC5 / 100)))/1000000,0),
+			VTA_MMBTU_C6	=	ROUND((GPA.Hexano_C6 * ((VolumenGasVTA_15Grados*1000000) * (C.C6 / 100)))/1000000,0),
+			VTA_MMBTU_C7	=	ROUND((GPA.Heptano_C7 * ((VolumenGasVTA_15Grados*1000000) * (C.C7 / 100)))/1000000,0),
+			VTA_MMBTU_C8	=	ROUND((GPA.Octano_C8 * ((VolumenGasVTA_15Grados*1000000) * (C.C8 / 100)))/1000000,0),
+			VTA_MMBTU_C9	=	ROUND((GPA.Nonano_C9 * ((VolumenGasVTA_15Grados*1000000) * (C.C9 / 100)))/1000000,0),
+			VTA_MMBTU_C10	=	ROUND((GPA.Decano_C10 * ((VolumenGasVTA_15Grados*1000000) * (C.C10 / 100)))/1000000,0)
+	FROM
+		#CalculosGPA	C
+	CROSS JOIN
+		SCOC_ValoresEstandaresGPA_2145	GPA
+	WHERE
+		GPA.IdComponente	=	2
+		AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
+END
+ELSE
+BEGIN
+	UPDATE	C
+		SET
+		-- CALCULO DE LOS BTUS DE LA PRODUCCION
+			MMBTU_C1	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Metano_C1*C.C1)/100,3)/ROUND(C.Zmes,4),3),6),
+			MMBTU_C2	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Etano_C2*C.C2)/100,3)/ROUND(C.Zmes,4),3),6),
+			MMBTU_C3	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Propano_C3*C.C3)/100,3)/ROUND(C.Zmes,4),3),6),
+			MMBTU_NC4	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Butano_nC4*C.nC4)/100,3)/ROUND(C.Zmes,4),3),6),
+			MMBTU_IC4	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Butano_iC4*C.iC4)/100,3)/ROUND(C.Zmes,4),3),6),
+			MMBTU_IC5	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Pentano_iC5*C.IC5)/100,3)/ROUND(C.Zmes,4),3),6),
+			MMBTU_NC5	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Pentano_nC5*C.NC5)/100,3)/ROUND(C.Zmes,4),3),6),
+			MMBTU_C6	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Hexano_C6*C.C6)/100,3)/ROUND(C.Zmes,4),3),6),				
+			MMBTU_C7	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Heptano_C7*C.C7)/100,3)/ROUND(C.Zmes,4),3),6),				
+			MMBTU_C8	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Octano_C8*C.C8)/100,3)/ROUND(C.Zmes,4),3),6),				
+			MMBTU_C9	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Nonano_C9*C.C9)/100,3)/ROUND(C.Zmes,4),3),6),				
+			MMBTU_C10	=	ROUND(C.VolumenGas_15Grados * ROUND(ROUND((GPA.Decano_C10*C.C10)/100,3)/ROUND(C.Zmes,4),3),6),
+	-- CALCULO DE LOS BTUS DEL GAS BN
+			BN_MMBTU_C1	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Metano_C1*C.C1)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+			BN_MMBTU_C2	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Etano_C2*C.C2)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+			BN_MMBTU_C3	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Propano_C3*C.C3)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+			BN_MMBTU_NC4	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Butano_nC4*C.nC4)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+			BN_MMBTU_IC4	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Butano_iC4*C.iC4)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+			BN_MMBTU_IC5	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Pentano_iC5*C.IC5)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+			BN_MMBTU_NC5	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Pentano_nC5*C.NC5)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+			BN_MMBTU_C6	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Hexano_C6*C.C6)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,				
+			BN_MMBTU_C7	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Heptano_C7*C.C7)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,				
+			BN_MMBTU_C8	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Octano_C8*C.C8)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,				
+			BN_MMBTU_C9	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Nonano_C9*C.C9)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,				
+			BN_MMBTU_C10	=	CASE WHEN ISNULL(VolumenGasBN_15Grados,0) > 0 THEN ROUND(C.VolumenGasBN_15Grados * ROUND(ROUND((GPA.Decano_C10*C.C10)/100,3)/ROUND(C.Zmes,4),3),6) ELSE 0 END,
+
+		-- CALCULO DE LOS BTUS DE LA VENTA
+			VTA_MMBTU_C1	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Metano_C1*C.C1)/100,3)/ROUND(C.Zmes,4),3),6),
+			VTA_MMBTU_C2	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Etano_C2*C.C2)/100,3)/ROUND(C.Zmes,4),3),6),
+			VTA_MMBTU_C3	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Propano_C3*C.C3)/100,3)/ROUND(C.Zmes,4),3),6),
+			VTA_MMBTU_NC4	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Butano_nC4*C.nC4)/100,3)/ROUND(C.Zmes,4),3),6),
+			VTA_MMBTU_IC4	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Butano_iC4*C.iC4)/100,3)/ROUND(C.Zmes,4),3),6),
+			VTA_MMBTU_IC5	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Pentano_iC5*C.IC5)/100,3)/ROUND(C.Zmes,4),3),6),
+			VTA_MMBTU_NC5	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Pentano_nC5*C.NC5)/100,3)/ROUND(C.Zmes,4),3),6),
+			VTA_MMBTU_C6	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Hexano_C6*C.C6)/100,3)/ROUND(C.Zmes,4),3),6),				
+			VTA_MMBTU_C7	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Heptano_C7*C.C7)/100,3)/ROUND(C.Zmes,4),3),6),				
+			VTA_MMBTU_C8	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Octano_C8*C.C8)/100,3)/ROUND(C.Zmes,4),3),6),				
+			VTA_MMBTU_C9	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Nonano_C9*C.C9)/100,3)/ROUND(C.Zmes,4),3),6),				
+			VTA_MMBTU_C10	=	ROUND(C.VolumenGasVTA_15Grados * ROUND(ROUND((GPA.Decano_C10*C.C10)/100,3)/ROUND(C.Zmes,4),3),6)
+
+	FROM
+		#CalculosGPA	C
+	CROSS JOIN
+		SCOC_ValoresEstandaresGPA_2145	GPA
+	WHERE
+		GPA.IdComponente	=	2
+		AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
+
+END
 
 -- CALCULAR LA VENTA SOLO APLICANDO EL PORCENTAJE DE DISTRIBUCION DE LA ENERGIA TOTAL
 --SELECT * FROM PC_VOLUMENPRODUCCIONPERIODO WHERE IDCONTRATO = 10054
-
-
 
 UPDATE	#CalculosGPA
 	SET	Bll_C5_Equiv	=	ROUND((VolumenGas_15Grados * 1000 * LCi_nC5)/@ConstanteBll,3) + ROUND((VolumenGas_15Grados * 1000 * LCi_iC5)/@ConstanteBll,3) +
@@ -1041,7 +1047,58 @@ FROM
 	#CalculosGPA
 
 IF @Debug = 1
-	SELECT  * FROM #CalculosGPA
+BEGIN
+	--SELECT  * FROM #CalculosGPA
+		SELECT
+		'COMERCIALIZACIONES GAS',
+		C.idContrato,
+		C.MesReporte,
+		DATEADD(DAY,-1,DATEADD(MONTH,1,C.MesReporte))		AS [FechaTransaccion],
+		TH.IdTipoHidrocarburo,
+		CASE TH.IdTipoHidrocarburo
+			WHEN 10000	THEN C.VolumenVTA_Petroleo_15	--C.VolumenPetroleo_15
+			WHEN 10001	THEN C.VolumenCondensadoVTA_15	--C.VolumenCondensado_15
+			WHEN 10002	THEN ROUND(C.VTA_MMBTU_C1,0)	--C.MMBTU_C1
+			WHEN 10003	THEN ROUND(C.VTA_MMBTU_C2,0)	--C.MMBTU_C2
+			WHEN 10004	THEN ROUND(C.VTA_MMBTU_C3,0)	--C.MMBTU_C3
+			WHEN 10005	THEN ROUND(C.VTA_MMBTU_IC4 + C.VTA_MMBTU_NC4,0)	--C.MMBTU_IC4 + C.MMBTU_NC4
+		END	AS	VolumenVendido,
+		CASE TH.IdTipoHidrocarburo
+			WHEN 10000	THEN C.PrecioVTA_Petroleo	--C.Precio_Petroleo
+			WHEN 10001	THEN C.PrecioVTA_Condensado	--C.Precio_Condensado
+			WHEN 10002	THEN C.VTA_Precio_C1	--C.Precio_C1
+			WHEN 10003	THEN C.VTA_Precio_C2	--C.Precio_C2
+			WHEN 10004	THEN C.VTA_Precio_C3	--C.Precio_C3
+			WHEN 10005	THEN C.VTA_Precio_C4	--C.Precio_C4
+		END	AS	Precio,
+		0,	--   CostoUnitarioComercializacion,
+		CASE TH.IdTipoHidrocarburo
+			WHEN 10000	THEN C.PrecioVTA_Petroleo	--C.Precio_Petroleo
+			WHEN 10001	THEN C.PrecioVTA_Condensado	--C.Precio_Condensado
+			WHEN 10002	THEN C.VTA_Precio_C1	--C.Precio_C1
+			WHEN 10003	THEN C.VTA_Precio_C2	--C.Precio_C2
+			WHEN 10004	THEN C.VTA_Precio_C3	--C.Precio_C3
+			WHEN 10005	THEN C.VTA_Precio_C4	--C.Precio_C4
+		END	AS	PrecioPuntoMedicion
+	FROM
+		#CalculosGPA	C
+	CROSS JOIN
+		dbo.CO_TipoHidrocarburo	TH
+
+		SELECT
+		'COMERCIALIZACIONES CONDENSABLE',
+			idContrato,
+			MesReporte,
+			DATEADD(DAY,-1,DATEADD(MONTH,1,MesReporte))		AS [FechaTransaccion],
+			10001,		-- IdTipoHidrocarburo
+			ROUND(VTA_Bll_C5_Equiv,0)	AS	VolumenVendido,
+			VTA_Precio_C5Mas	AS	PrecioVentaUnitario,
+			0,	--   CostoUnitarioComercializacion,
+			VTA_Precio_C5Mas	AS	PrecioPuntoMedicion
+		FROM
+			#CalculosGPA
+
+END
 
 IF @FechaLimite >= GETDATE()
 BEGIN
@@ -1265,10 +1322,10 @@ BEGIN
 		CASE TH.IdTipoHidrocarburo
 			WHEN 10000	THEN C.VolumenVTA_Petroleo_15	--C.VolumenPetroleo_15
 			WHEN 10001	THEN C.VolumenCondensadoVTA_15	--C.VolumenCondensado_15
-			WHEN 10002	THEN C.VTA_MMBTU_C1	--C.MMBTU_C1
-			WHEN 10003	THEN C.VTA_MMBTU_C2	--C.MMBTU_C2
-			WHEN 10004	THEN C.VTA_MMBTU_C3	--C.MMBTU_C3
-			WHEN 10005	THEN C.VTA_MMBTU_IC4 + C.VTA_MMBTU_NC4	--C.MMBTU_IC4 + C.MMBTU_NC4
+			WHEN 10002	THEN ROUND(C.VTA_MMBTU_C1,0)	--C.MMBTU_C1
+			WHEN 10003	THEN ROUND(C.VTA_MMBTU_C2,0)	--C.MMBTU_C2
+			WHEN 10004	THEN ROUND(C.VTA_MMBTU_C3,0)	--C.MMBTU_C3
+			WHEN 10005	THEN ROUND(C.VTA_MMBTU_IC4 + C.VTA_MMBTU_NC4,0)	--C.MMBTU_IC4 + C.MMBTU_NC4
 		END	AS	VolumenVendido,
 		CASE TH.IdTipoHidrocarburo
 			WHEN 10000	THEN C.PrecioVTA_Petroleo	--C.Precio_Petroleo
@@ -1342,7 +1399,7 @@ BEGIN
 			MesReporte,
 			DATEADD(DAY,-1,DATEADD(MONTH,1,MesReporte))		AS [FechaTransaccion],
 			10001,		-- IdTipoHidrocarburo
-			VTA_Bll_C5_Equiv	AS	VolumenVendido,
+			ROUND(VTA_Bll_C5_Equiv,0)	AS	VolumenVendido,
 			VTA_Precio_C5Mas	AS	PrecioVentaUnitario,
 			0,	--   CostoUnitarioComercializacion,
 			VTA_Precio_C5Mas	AS	PrecioPuntoMedicion,
@@ -1442,7 +1499,7 @@ BEGIN
 	    ButanoC4Autoconsumo,
 	    VolumenCondensadoPuntoMedicion,
 	    VolumenCondensadoAutoconsumo,
-	    Bit_CasoFortuito,
+	 Bit_CasoFortuito,
 	    CantDiasCasoFortuito,
 	    OtrosIngresosUsoCompartidoInfraestructura,
 	    VolumenPetroleoContratistaReparticion,

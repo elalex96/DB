@@ -29,6 +29,8 @@ BEGIN
 		 Unidad,
 		 1
          FROM PV_MM_MaterialUnidad as T
+	 WHERE	IsActivo				=	1
+	AND	IsEliminado				=	0
 
 		 --INSERT INTO #UnidadesTemp
 		 --SELECT
