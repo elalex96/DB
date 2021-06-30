@@ -6,6 +6,8 @@
 	[CreadoPor] [int] NULL,
 	[CreadoEl] [datetime] NULL,
 	[EditadoPor] [int] NULL,
-	[EditadoEl] [datetime] NULL
+	[EditadoEl] [datetime] NULL,
+	 CONSTRAINT [FK_MM_SolicitudAceptacionPedidoDetalle_MM_SolicitudAceptacionPedido] FOREIGN KEY([IdSolicitudAceptacionPedido]) REFERENCES [dbo].[MM_SolicitudAceptacionPedido] ([IdSolicitudAceptacionPedido]),
+	 CONSTRAINT [FK_MM_SolicitudAceptacionPedidoDetalle_MM_PedidoDetalle] FOREIGN KEY([IdPedidoDetalle]) REFERENCES [dbo].[MM_PedidoDetalle] ([IdPedidoDetalle])
 ) 
 GO

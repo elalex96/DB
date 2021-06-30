@@ -10,7 +10,10 @@
 	[CreadoEl] [datetime] NULL,	
 	[CreadorPor] [int] NULL,
 	[ModificadoEl] [datetime] NULL,
-	[ModificadoPor] [int] NULL
+	[ModificadoPor] [int] NULL,
+	CONSTRAINT [FK_MM_SolicitudAceptacionPedido_MM_Pedido] FOREIGN KEY([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido]),
+	CONSTRAINT [FK_MM_SolicitudAceptacionPedido_S_Proveedor] FOREIGN KEY([IdProveedorVenta]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
+	CONSTRAINT [FK_MM_SolicitudAceptacionPedido_MM_AceptacionPedido] FOREIGN KEY([IdAceptacionPedido]) REFERENCES [dbo].[MM_AceptacionPedido] ([IdAceptacionPedido])
 ) 
 
 
