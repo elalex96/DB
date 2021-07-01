@@ -18,6 +18,7 @@ CREATE PROCEDURE [dbo].[SP_DEA_ValidarProveedor_CARTACN]
 	@IdProveedor int, 
 	@IdUsuario int, 
 	@IdAceptacion INT
+
 AS
 BEGIN
 	DECLARE @RFC_ACTUAL NVARCHAR(200), @EXISTE_RFC INT;
