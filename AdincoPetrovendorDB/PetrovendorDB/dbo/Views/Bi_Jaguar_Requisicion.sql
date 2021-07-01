@@ -1,4 +1,18 @@
-﻿CREATE VIEW [dbo].[Bi_Jaguar_Requisicion]
+﻿USE [Petrovendor]
+GO
+
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Bi_Jaguar_Requisicion'
+)
+    DROP VIEW Bi_Jaguar_Requisicion;
+	
+GO
+
+CREATE VIEW [dbo].[Bi_Jaguar_Requisicion]
 AS
 	SELECT
 		IdUnicoDeRequisicion	AS 'idunico de requisicion',
@@ -28,7 +42,8 @@ AS
 		BI_Requisicion.Marca AS 'Marca',
 		BI_Requisicion.NumeroParte AS 'Numero parte',
 		CentroCosto AS 'Centro costo',
-		SPD.IdMaterial
+		SPD.IdMaterial,
+		CantidadProveedoresCotizaron AS 'Cantidad de proveedores que cotizaron' 
 	FROM	BI_Requisicion	(NOLOCK)
 	LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD 
 		ON BI_Requisicion.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
