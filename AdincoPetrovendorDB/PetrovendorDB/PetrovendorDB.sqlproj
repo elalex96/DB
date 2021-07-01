@@ -10601,6 +10601,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SRAP_CambioAprobacionSolicitudAceptacionPedido.sql" />
     <Build Include="dbo\Tables\MM_SolicitudAceptacionPedido.sql" />
     <Build Include="dbo\Tables\MM_SolicitudAceptacionPedidoDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_ValidarProveedor_CARTACN.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
