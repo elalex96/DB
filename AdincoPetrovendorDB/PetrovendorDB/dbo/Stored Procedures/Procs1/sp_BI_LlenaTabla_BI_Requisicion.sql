@@ -1,5 +1,22 @@
 ﻿
-CREATE PROCEDURE dbo.sp_BI_LlenaTabla_BI_Requisicion
+USE [Petrovendor]
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_BI_LlenaTabla_BI_Requisicion'
+)
+    DROP PROCEDURE sp_BI_LlenaTabla_BI_Requisicion;
+
+/****** Object:  StoredProcedure [dbo].[sp_BI_LlenaTabla_BI_Requisicion]    Script Date: 30/06/2021 01:15:06 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[sp_BI_LlenaTabla_BI_Requisicion]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -69,7 +86,8 @@ BEGIN
     DECLARE @EstatusCotizacion TABLE
     (
         IdSolicituPedido INT,
-        Estatus VARCHAR(1000)
+        Estatus VARCHAR(1000),
+		CantidadProveedoresCotizaron VARCHAR(MAX)
     );
 
     --CONSULTAR APROBADORES DE PEDIDOS 
@@ -245,7 +263,8 @@ BEGIN
     INSERT INTO @EstatusCotizacion
     (
         IdSolicituPedido,
-        Estatus
+        Estatus,
+		CantidadProveedoresCotizaron
     )
     SELECT SP.IdSolicitudPedido,
            (CASE
@@ -291,7 +310,19 @@ BEGIN
                     ELSE
                         ' '
                 END
-               )
+               ),
+			CAST(SUM(CASE
+                            WHEN PO.NoCotizar = 1 THEN
+                                1
+                            ELSE
+                                CASE
+                                    WHEN PO.Cotizado = 1 THEN
+                                        1
+                                    ELSE
+                                        0
+                                END
+                        END
+                    ) AS NVARCHAR(MAX)) + '/' + CAST(COUNT(PO.IdPeticionOferta) AS NVARCHAR(MAX)) AS ProveedoresCotizaron
     FROM @Proveedores PV
         JOIN MM_SolicitudPedido AS SP (NOLOCK)
             ON PV.IdProveedor = SP.IdProveedor
@@ -336,7 +367,8 @@ BEGIN
 		Modelo,
 		Marca,
 		NumeroParte,
-		CentroCosto
+		CentroCosto,
+		CantidadProveedoresCotizaron
     )
     SELECT R.IdSolicitudPedido AS 'idunico de requisicion',
            C.NumeroContrato AS 'Contrato',
@@ -386,7 +418,8 @@ BEGIN
 		   M.Modelo,
 		   M.Marca,
 		   M.NumeroParte,
-		   CC.CentroCosto
+		   CC.CentroCosto,
+		   EC.CantidadProveedoresCotizaron
     FROM @Proveedores EP
         JOIN MM_SolicitudPedido AS R (NOLOCK)
             ON EP.IdProveedor = R.IdProveedor
@@ -458,6 +491,7 @@ BEGIN
 --SE REPITE EL NO PEDIDO Y EL IDPEDIDOUNICO POR QUE PUEDE SER QUE EXISTAN MÁS DE UN PEDIDO DETALLE (PARTIDA) POR CABECERA DE PEDIDO
 --EL NUMERO DE REQUISICION SE REPITE YA QUE UN PEDIDO CABECERA PUEDE TENER N PEDIDOS 
 END;
+
 
 
 
