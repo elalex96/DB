@@ -10590,6 +10590,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_DesactivarDocumentoGeneral.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_DEA_EnviarNotificacionCotizacionProveedores.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_PlantillaFacturaAprobadaProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_ValidarProveedor_CARTACN.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
