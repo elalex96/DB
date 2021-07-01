@@ -32,9 +32,8 @@ AS
 		DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido')
 
     -- Insert statements for procedure here
-	    	
-						
-	   /*ENCABEZADO DEL PEDIDO*/	       
+	    						
+	  
 		 SELECT     
 		 SAP.IdSolicitudAceptacionPedido,
 		 SAP.Comentario,
@@ -53,7 +52,8 @@ AS
 		 FORMAT(ISNULL(SAP.CreadoEl, GETDATE()),'dd/MM/yyyy') AS SolitudCreadaEl,
 		 UE.Nombre AS CreadoPor,
 		 C.NumeroContrato AS Contrato,
-		 US.Nombre AS SolitanteRequisicion   
+		 US.Nombre AS SolitanteRequisicion,
+		 SAP.IdAceptacionPedido   
 		 FROM MM_SolicitudAceptacionPedido SAP
 		 JOIN TA_Operacion O 
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
@@ -100,7 +100,8 @@ AS
 		 SAP.CreadoEl,
 		 UE.Nombre,
 		 C.NumeroContrato,
-		 US.Nombre 	    
+		 US.Nombre,
+		 SAP.IdAceptacionPedido    	    
 
 END;
 
