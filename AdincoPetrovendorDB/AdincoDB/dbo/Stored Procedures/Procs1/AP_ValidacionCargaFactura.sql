@@ -1,8 +1,5 @@
-﻿USE Petrovendor
+USE Petrovendor
 GO
---Modifier: Luis David
--- Modifier date: 24-06-2021
--- Description: Valida si el usuario esta en la lista de proveedores bloqueados por dea
 DROP PROCEDURE IF EXISTS AP_ValidacionCargaFactura
 GO
 CREATE PROCEDURE AP_ValidacionCargaFactura
@@ -70,10 +67,9 @@ DROP TABLE IF EXISTS #TTableDetalle
 		)
 		VALUES (
 		'Para las facturas con método de pago en parcialidades o diferido (PPD), te recordamos que una vez liquidada la factura debes emitir el complemento de pago y subirlo a PetroVendor, esto a más tardar el décimo día natural del mes siguiente al que se recibió el pago, en caso de no cumplir con esta obligación tus próximos pagos serán retenidos y no podrás ingresar nuevas facturas al sistema.',
-		'Actualmente no puedes subir facturas a Petrovendor para WintershallDEA, debido a un bloqueo por solicitud del área fianciera.',
-		'Por favor Ponte en contacto al siguiente correo: correo@wintershalldea.com para mayor información'
+		'Actualmente no puedes subir facturas a Petrovendor para Wintershall DEA, debido a un bloqueo por solicitud del área financiera.',
+		'Por favor Ponte en contacto al siguiente correo: Invoice.Mexico@deutsche-erdoel-group.com para mayor información'
 		)
 	end
 	select * from #TTableDetalle
 END
--- AP_ValidacionCargaFactura 2837	
