@@ -1,14 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_EN_ArmadoLineaDelTiempoPerforacion'
-)
-    DROP PROCEDURE SP_EN_ArmadoLineaDelTiempoPerforacion;
-GO 
-/****** Object:  StoredProcedure [dbo].[SP_EN_ArmadoLineaDelTiempoPerforacion]    Script Date: 19/05/2021 11:10:23 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_ArmadoLineaDelTiempoPerforacion]    Script Date: 07/07/2021 09:17:53 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,6 +9,10 @@ GO
 -- Author: Daniel Ac
 -- Create date: 20-05-2021
 -- Description: Se agrego linea de tiempo de perforación
+-- =============================================
+-- Author: Alexander Gomez
+-- Create date: 06-07/2021
+-- Description: se modifica los eventos de la linea del tiempo
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempoPerforacion] --SP_EN_ArmadoLineaDelTiempoPerforacion 10050,10019
 @IdContrato INT, 
@@ -187,547 +183,687 @@ BEGIN
 --*/
      
 		--SET @IdContrato = 10054;
-		DECLARE @HTML NVARCHAR(MAX);
-		DECLARE @TEXTO NVARCHAR(MAX);
-		DECLARE @CONT INT = 1;
-		DECLARE @TOTAL INT;
-		DECLARE @TABLADATOS TABLE (FECHA DATETIME,TEXTO NVARCHAR(MAX), NOGRUPOINTERVALO INT, WIDTH_ITEM INT);
-		DECLARE @TABLAID TABLE (ID INT IDENTITY(1,1),FECHA DATETIME,TEXTO NVARCHAR(MAX), NOGRUPOINTERVALO INT,WIDTH_ITEM INT);
-		DECLARE @TABLA_ORDENGRUPO TABLE (NUEVO_GRUPO INT IDENTITY(1,1),FECHA DATETIME,NUMERO_GRUPO INT);
-		DECLARE @Pozos	VARCHAR(250);
-		DECLARE @Periodo	VARCHAR(50);
-		DECLARE @TotalGrupos INT 
-		DECLARE @ContadorGrupo INT 
-		DECLARE @ContadorGrupoActual INT
-		DECLARE @ITEM_SPACE NVARCHAR(MAX) 
-		DECLARE @WIDTH_ITEM NVARCHAR(MAX) 
-		DECLARE @HTML_FINAL NVARCHAR(MAX) 
+		--DECLARE @HTML NVARCHAR(MAX);
+		--DECLARE @TEXTO NVARCHAR(MAX);
+		--DECLARE @CONT INT = 1;
+		--DECLARE @TOTAL INT;
+		--DECLARE @TABLADATOS TABLE (FECHA DATETIME,TEXTO NVARCHAR(MAX), NOGRUPOINTERVALO INT, WIDTH_ITEM INT);
+		--DECLARE @TABLAID TABLE (ID INT IDENTITY(1,1),FECHA DATETIME,TEXTO NVARCHAR(MAX), NOGRUPOINTERVALO INT,WIDTH_ITEM INT);
+		--DECLARE @TABLA_ORDENGRUPO TABLE (NUEVO_GRUPO INT IDENTITY(1,1),FECHA DATETIME,NUMERO_GRUPO INT);
+		--DECLARE @Pozos	VARCHAR(250);
+		--DECLARE @Periodo	VARCHAR(50);
+		--DECLARE @TotalGrupos INT 
+		--DECLARE @ContadorGrupo INT 
+		--DECLARE @ContadorGrupoActual INT
+		--DECLARE @ITEM_SPACE NVARCHAR(MAX) 
+		--DECLARE @WIDTH_ITEM NVARCHAR(MAX) 
+		--DECLARE @HTML_FINAL NVARCHAR(MAX) 
 
-		IF @IdContrato = 10049  --(CHECK)
-		BEGIN 
+		--IF @IdContrato = 10049  --(CHECK)
+		--BEGIN 
 
-			SET @Pozos = 'Sáasken-1EXP';
-			SET @Periodo = 'Exploración';
-			--ETA
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20170925','<div class="tl-row" style="width: 200px; height: 23px">
-																	<div class="tl-item">
-																		<div class="tl-bullet bg-blue"></div>
-																		<div class="tl-panel"> Inicio ' 
-																		+ CONVERT(varchar,CAST('20170925' AS datetime),106) +
-																		'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
-																		<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
-																	</div>',
-																	1,
-																	300);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20170925', 120),'<div class="tl-row" style="width: 200px; height: 23px">
-																									<div class="tl-item">
-																										<div class="tl-bullet bg-blue"></div>
-																										<div class="tl-panel"> Finaliza ' 
-																										+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20170925', 120)),106) +
-																										' </div>
-																										</div>
-																									</div>',
-																									1,
-																									200);
+		--	SET @Pozos = 'Sáasken-1EXP';
+		--	SET @Periodo = 'Exploración';
+		--	--ETA
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20170925','<div class="tl-row" style="width: 200px; height: 23px">
+		--															<div class="tl-item">
+		--																<div class="tl-bullet bg-blue"></div>
+		--																<div class="tl-panel"> Inicio ' 
+		--																+ CONVERT(varchar,CAST('20170925' AS datetime),106) +
+		--																'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
+		--																<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
+		--															</div>',
+		--															1,
+		--															300);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20170925', 120),'<div class="tl-row" style="width: 200px; height: 23px">
+		--																							<div class="tl-item">
+		--																								<div class="tl-bullet bg-blue"></div>
+		--																								<div class="tl-panel"> Finaliza ' 
+		--																								+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20170925', 120)),106) +
+		--																								' </div>
+		--																								</div>
+		--																							</div>',
+		--																							1,
+		--																							200);
 
-			--PERFORACION
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-green"></div>
-																			<div class="tl-panel"> Inicio '
-																				+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
-																		<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
-																	</div>',
-																	2,
-																	500);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
-																										<div class="tl-item">
-																											<div class="tl-bullet bg-green"></div>
-																											<div class="tl-panel"> Finaliza '
-																												+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
-																											'</div>
-																										</div>
-																									</div>',
-																									2,
-																									200);
+		--	--PERFORACION
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-green"></div>
+		--																	<div class="tl-panel"> Inicio '
+		--																		+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
+		--																<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
+		--															</div>',
+		--															2,
+		--															500);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
+		--																								<div class="tl-item">
+		--																									<div class="tl-bullet bg-green"></div>
+		--																									<div class="tl-panel"> Finaliza '
+		--																										+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
+		--																									'</div>
+		--																								</div>
+		--																							</div>',
+		--																							2,
+		--																							200);
 			
-			--PERIODO
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180925','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Inicio ' +
-																			CONVERT(varchar,CAST('20180925' AS datetime),106) +
-																			'</div>
-																			</div>
-																		</div>
-																		<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>',
-																		3,
-																		265);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20220925','<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>
-																	<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Finaliza ' + 
-																			CONVERT(varchar,CAST('20220925' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>',
-																	3,
-																	265);
-		END
+		--	--PERIODO
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180925','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Inicio ' +
+		--																	CONVERT(varchar,CAST('20180925' AS datetime),106) +
+		--																	'</div>
+		--																	</div>
+		--																</div>
+		--																<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>',
+		--																3,
+		--																265);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20220925','<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>
+		--															<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Finaliza ' + 
+		--																	CONVERT(varchar,CAST('20220925' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>',
+		--															3,
+		--															265);
+		--END
 
-		IF @IdContrato = 10050 --(CHECK)
-		BEGIN 
+		--IF @IdContrato = 10050 --(CHECK)
+		--BEGIN 
 
-			SET @Pozos = 'N/A';
-			SET @Periodo = 'Exploración';
-			--ETA
-			INSERT INTO @TABLADATOS (FECHA, TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180627','<div class="tl-row" style="width: 200px; height: 23px">
-																	<div class="tl-item">
-																		<div class="tl-bullet bg-blue"></div>
-																		<div class="tl-panel"> Inicio ' 
-																		+ CONVERT(varchar,CAST('20180627' AS datetime),106) +
-																		'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
-																		<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
-																	</div>',
-																	1,
-																	300);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20180627', 120),'<div class="tl-row" style="width: 200px; height: 23px">
-																									<div class="tl-item">
-																										<div class="tl-bullet bg-blue"></div>
-																										<div class="tl-panel"> Finaliza ' 
-																										+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20170925', 120)),106) +
-																										' </div>
-																										</div>
-																									</div>',
-																									1,
-																									200);
-			--PERFORACION
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-green"></div>
-																			<div class="tl-panel"> Inicio '
-																				+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
-																		<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
-																	</div>',
-																	2,
-																	500);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
-																										<div class="tl-item">
-																											<div class="tl-bullet bg-green"></div>
-																											<div class="tl-panel"> Finaliza '
-																												+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
-																											'</div>
-																										</div>
-																									</div>',
-																									2,
-																									200);
-			--PERIODO
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20190521','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Inicio ' +
-																			CONVERT(varchar,CAST('20190521' AS datetime),106) +
-																			'</div>
-																			</div>
-																		</div>
-																		<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>',
-																		3,
-																		265);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20230521', '<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>
-																	<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Finaliza ' + 
-																			CONVERT(varchar,CAST('20230521' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>',
-																	3,
-																	265);
+		--	SET @Pozos = 'N/A';
+		--	SET @Periodo = 'Exploración';
+		--	--ETA
+		--	INSERT INTO @TABLADATOS (FECHA, TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180627','<div class="tl-row" style="width: 200px; height: 23px">
+		--															<div class="tl-item">
+		--																<div class="tl-bullet bg-blue"></div>
+		--																<div class="tl-panel"> Inicio ' 
+		--																+ CONVERT(varchar,CAST('20180627' AS datetime),106) +
+		--																'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
+		--																<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
+		--															</div>',
+		--															1,
+		--															300);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20180627', 120),'<div class="tl-row" style="width: 200px; height: 23px">
+		--																							<div class="tl-item">
+		--																								<div class="tl-bullet bg-blue"></div>
+		--																								<div class="tl-panel"> Finaliza ' 
+		--																								+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20170925', 120)),106) +
+		--																								' </div>
+		--																								</div>
+		--																							</div>',
+		--																							1,
+		--																							200);
+		--	--PERFORACION
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-green"></div>
+		--																	<div class="tl-panel"> Inicio '
+		--																		+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
+		--																<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
+		--															</div>',
+		--															2,
+		--															500);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
+		--																								<div class="tl-item">
+		--																									<div class="tl-bullet bg-green"></div>
+		--																									<div class="tl-panel"> Finaliza '
+		--																										+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
+		--																									'</div>
+		--																								</div>
+		--																							</div>',
+		--																							2,
+		--																							200);
+		--	--PERIODO
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20190521','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Inicio ' +
+		--																	CONVERT(varchar,CAST('20190521' AS datetime),106) +
+		--																	'</div>
+		--																	</div>
+		--																</div>
+		--																<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>',
+		--																3,
+		--																265);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20230521', '<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>
+		--															<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Finaliza ' + 
+		--																	CONVERT(varchar,CAST('20230521' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>',
+		--															3,
+		--															265);
 
 			
 
 
-		END
+		--END
 
-		IF @IdContrato = 10054 --(CHECK)
-		BEGIN 
-			SET @Pozos = 'Amoca-2DEL, Amoca-3DEL, Amoca-4DEL, Tecoalli-2DEL, Miztón-2DEL, Miztón-3DES, Miztón-5DES, Miztón-7DES';
-			SET @Periodo = 'Desarrollo/Primera modificación';
-			--ETA
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20151130','<div class="tl-row" style="width: 200px; height: 23px">
-																	<div class="tl-item">
-																		<div class="tl-bullet bg-blue"></div>
-																		<div class="tl-panel"> Inicio ' 
-																		+ CONVERT(varchar,CAST('20151130' AS datetime),106) +
-																		'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
-																		<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
-																	</div>',1,300);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20151130', 90),'<div class="tl-row" style="width: 200px; height: 23px">
-																									<div class="tl-item">
-																										<div class="tl-bullet bg-blue"></div>
-																										<div class="tl-panel"> Finaliza ' 
-																										+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20151130', 120)),106) +
-																										' </div>
-																										</div>
-																									</div>',1,200);
-			--PERFORACION
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-green"></div>
-																			<div class="tl-panel"> Inicio '
-																				+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
-																		<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
-																	</div>',2,500);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
-																										<div class="tl-item">
-																											<div class="tl-bullet bg-green"></div>
-																											<div class="tl-panel"> Finaliza '
-																												+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
-																											'</div>
-																										</div>
-																									</div>',2,200);
-			--PERIODO
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180810', '<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Inicio ' +
-																			CONVERT(varchar,CAST('20180810' AS datetime),106) +
-																			'</div>
-																			</div>
-																		</div>
-																		<div class="tl-row" style="width: 70px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>',3,270);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20401130','<div class="tl-row" style="width: 70px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>
-																	<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Finaliza ' + 
-																			CONVERT(varchar,CAST('20401130' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>',3,270);
-		END
+		--IF @IdContrato = 10054 --(CHECK)
+		--BEGIN 
+		--	SET @Pozos = 'Amoca-2DEL, Amoca-3DEL, Amoca-4DEL, Tecoalli-2DEL, Miztón-2DEL, Miztón-3DES, Miztón-5DES, Miztón-7DES';
+		--	SET @Periodo = 'Desarrollo/Primera modificación';
+		--	--ETA
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20151130','<div class="tl-row" style="width: 200px; height: 23px">
+		--															<div class="tl-item">
+		--																<div class="tl-bullet bg-blue"></div>
+		--																<div class="tl-panel"> Inicio ' 
+		--																+ CONVERT(varchar,CAST('20151130' AS datetime),106) +
+		--																'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
+		--																<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
+		--															</div>',1,300);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20151130', 90),'<div class="tl-row" style="width: 200px; height: 23px">
+		--																							<div class="tl-item">
+		--																								<div class="tl-bullet bg-blue"></div>
+		--																								<div class="tl-panel"> Finaliza ' 
+		--																								+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20151130', 120)),106) +
+		--																								' </div>
+		--																								</div>
+		--																							</div>',1,200);
+		--	--PERFORACION
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-green"></div>
+		--																	<div class="tl-panel"> Inicio '
+		--																		+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
+		--																<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
+		--															</div>',2,500);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
+		--																								<div class="tl-item">
+		--																									<div class="tl-bullet bg-green"></div>
+		--																									<div class="tl-panel"> Finaliza '
+		--																										+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
+		--																									'</div>
+		--																								</div>
+		--																							</div>',2,200);
+		--	--PERIODO
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180810', '<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Inicio ' +
+		--																	CONVERT(varchar,CAST('20180810' AS datetime),106) +
+		--																	'</div>
+		--																	</div>
+		--																</div>
+		--																<div class="tl-row" style="width: 70px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>',3,270);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20401130','<div class="tl-row" style="width: 70px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>
+		--															<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Finaliza ' + 
+		--																	CONVERT(varchar,CAST('20401130' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>',3,270);
+		--END
 
-		IF @IdContrato = 10055 --(CHECK)
-		BEGIN 
-			SET @Pozos = 'Ehécatl-1EXP';
-			SET @Periodo = 'Exploración/Primera modificación';
-			--ETA
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20170925','<div class="tl-row" style="width: 200px; height: 23px">
-																	<div class="tl-item">
-																		<div class="tl-bullet bg-blue"></div>
-																		<div class="tl-panel"> Inicio ' 
-																		+ CONVERT(varchar,CAST('20170925' AS datetime),106) +
-																		'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
-																		<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
-																	</div>',
-																	1,
-																	300);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20170925', 90),'<div class="tl-row" style="width: 200px; height: 23px">
-																									<div class="tl-item">
-																										<div class="tl-bullet bg-blue"></div>
-																										<div class="tl-panel"> Finaliza ' 
-																										+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20151130', 120)),106) +
-																										' </div>
-																										</div>
-																									</div>',1,
-																									200);
-			--PERFORACION
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-green"></div>
-																			<div class="tl-panel"> Inicio '
-																				+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
-																		<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
-																	</div>',2,200);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
-																										<div class="tl-item">
-																											<div class="tl-bullet bg-green"></div>
-																											<div class="tl-panel"> Finaliza '
-																												+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
-																											'</div>
-																										</div>
-																									</div>',2,200);
-			--PERIODO
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180925','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Inicio ' +
-																			CONVERT(varchar,CAST('20180925' AS datetime),106) +
-																			'</div>
-																			</div>
-																		</div>
-																		<div class="tl-row" style="width: 80px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>',3,280);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20220925','<div class="tl-row" style="width: 80px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>
-																	<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Finaliza ' + 
-																			CONVERT(varchar,CAST('20220925' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>',3,280);
-		END
+		--IF @IdContrato = 10055 --(CHECK)
+		--BEGIN 
+		--	SET @Pozos = 'Ehécatl-1EXP';
+		--	SET @Periodo = 'Exploración/Primera modificación';
+		--	--ETA
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20170925','<div class="tl-row" style="width: 200px; height: 23px">
+		--															<div class="tl-item">
+		--																<div class="tl-bullet bg-blue"></div>
+		--																<div class="tl-panel"> Inicio ' 
+		--																+ CONVERT(varchar,CAST('20170925' AS datetime),106) +
+		--																'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
+		--																<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
+		--															</div>',
+		--															1,
+		--															300);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20170925', 90),'<div class="tl-row" style="width: 200px; height: 23px">
+		--																							<div class="tl-item">
+		--																								<div class="tl-bullet bg-blue"></div>
+		--																								<div class="tl-panel"> Finaliza ' 
+		--																								+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20151130', 120)),106) +
+		--																								' </div>
+		--																								</div>
+		--																							</div>',1,
+		--																							200);
+		--	--PERFORACION
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-green"></div>
+		--																	<div class="tl-panel"> Inicio '
+		--																		+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
+		--																<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
+		--															</div>',2,200);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
+		--																								<div class="tl-item">
+		--																									<div class="tl-bullet bg-green"></div>
+		--																									<div class="tl-panel"> Finaliza '
+		--																										+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
+		--																									'</div>
+		--																								</div>
+		--																							</div>',2,200);
+		--	--PERIODO
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180925','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Inicio ' +
+		--																	CONVERT(varchar,CAST('20180925' AS datetime),106) +
+		--																	'</div>
+		--																	</div>
+		--																</div>
+		--																<div class="tl-row" style="width: 80px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>',3,280);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20220925','<div class="tl-row" style="width: 80px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>
+		--															<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Finaliza ' + 
+		--																	CONVERT(varchar,CAST('20220925' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>',3,280);
+		--END
 
-		IF @IdContrato = 10056 --(CHECK)
-		BEGIN 
-			SET @Pozos = 'N/A';
-			SET @Periodo = 'Exploración';
-			--ETA
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20170925','<div class="tl-row" style="width: 200px; height: 23px">
-																	<div class="tl-item">
-																		<div class="tl-bullet bg-blue"></div>
-																		<div class="tl-panel"> Inicio ' 
-																		+ CONVERT(varchar,CAST('20170925' AS datetime),106) +
-																		'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
-																		<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
-																	</div>',1,300);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20170925', 90),'<div class="tl-row" style="width: 200px; height: 23px">
-																									<div class="tl-item">
-																										<div class="tl-bullet bg-blue"></div>
-																										<div class="tl-panel"> Finaliza ' 
-																										+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20170925', 120)),106) +
-																										' </div>
-																										</div>
-																									</div>',1,200);
-			--PERFORACION
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-green"></div>
-																			<div class="tl-panel"> Inicio '
-																				+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
-																		<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
-																	</div>',2,500);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
-																										<div class="tl-item">
-																											<div class="tl-bullet bg-green"></div>
-																											<div class="tl-panel"> Finaliza '
-																												+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
-																											'</div>
-																										</div>
-																									</div>',2,200);
-			--PERIODO
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180925','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Inicio ' +
-																			CONVERT(varchar,CAST('20180925' AS datetime),106) +
-																			'</div>
-																			</div>
-																		</div>
-																		<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>',3,265);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20220925','<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>
-																	<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Finaliza ' + 
-																			CONVERT(varchar,CAST('20220925' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>',3,265);
-		END
+		--IF @IdContrato = 10056 --(CHECK)
+		--BEGIN 
+		--	SET @Pozos = 'N/A';
+		--	SET @Periodo = 'Exploración';
+		--	--ETA
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20170925','<div class="tl-row" style="width: 200px; height: 23px">
+		--															<div class="tl-item">
+		--																<div class="tl-bullet bg-blue"></div>
+		--																<div class="tl-panel"> Inicio ' 
+		--																+ CONVERT(varchar,CAST('20170925' AS datetime),106) +
+		--																'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
+		--																<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
+		--															</div>',1,300);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20170925', 90),'<div class="tl-row" style="width: 200px; height: 23px">
+		--																							<div class="tl-item">
+		--																								<div class="tl-bullet bg-blue"></div>
+		--																								<div class="tl-panel"> Finaliza ' 
+		--																								+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20170925', 120)),106) +
+		--																								' </div>
+		--																								</div>
+		--																							</div>',1,200);
+		--	--PERFORACION
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-green"></div>
+		--																	<div class="tl-panel"> Inicio '
+		--																		+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
+		--																<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
+		--															</div>',2,500);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
+		--																								<div class="tl-item">
+		--																									<div class="tl-bullet bg-green"></div>
+		--																									<div class="tl-panel"> Finaliza '
+		--																										+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
+		--																									'</div>
+		--																								</div>
+		--																							</div>',2,200);
+		--	--PERIODO
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180925','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Inicio ' +
+		--																	CONVERT(varchar,CAST('20180925' AS datetime),106) +
+		--																	'</div>
+		--																	</div>
+		--																</div>
+		--																<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>',3,265);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20220925','<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>
+		--															<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Finaliza ' + 
+		--																	CONVERT(varchar,CAST('20220925' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>',3,265);
+		--END
 
-		IF @IdContrato = 10057 --(CHECK)
-		BEGIN 
-			SET @Pozos = 'N/A';
-			SET @Periodo = 'Exploración';
-			--ETA
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180507','<div class="tl-row" style="width: 200px; height: 23px">
-																	<div class="tl-item">
-																		<div class="tl-bullet bg-blue"></div>
-																		<div class="tl-panel"> Inicio ' 
-																		+ CONVERT(varchar,CAST('20180507' AS datetime),106) +
-																		'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
-																		<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
-																	</div>',1,300);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20180507', 90),'<div class="tl-row" style="width: 200px; height: 23px">
-																									<div class="tl-item">
-																										<div class="tl-bullet bg-blue"></div>
-																										<div class="tl-panel"> Finaliza ' 
-																										+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20180507', 120)),106) +
-																										' </div>
-																										</div>
-																									</div>',1,200);
-			--PERFORACION
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-green"></div>
-																			<div class="tl-panel"> Inicio '
-																				+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>
-																	<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
-																		<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
-																	</div>',2,500);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
-																										<div class="tl-item">
-																											<div class="tl-bullet bg-green"></div>
-																											<div class="tl-panel"> Finaliza '
-																												+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
-																											'</div>
-																										</div>
-																									</div>',2,200);
-			--PERIODO
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20190724','<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Inicio ' +
-																			CONVERT(varchar,CAST('20190724' AS datetime),106) +
-																			'</div>
-																			</div>
-																		</div>
-																		<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>',3,265);
-			INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20230724','<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
-																			<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
-																		</div>
-																	<div class="tl-row" style="width: 200px; height: 23px">
-																		<div class="tl-item">
-																			<div class="tl-bullet bg-purple"></div>
-																			<div class="tl-panel"> Finaliza ' + 
-																			CONVERT(varchar,CAST('20230724' AS datetime),106) +
-																			'</div>
-																		</div>
-																	</div>',3,265);
-		END
+		--IF @IdContrato = 10057 --(CHECK)
+		--BEGIN 
+		--	SET @Pozos = 'N/A';
+		--	SET @Periodo = 'Exploración';
+		--	--ETA
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20180507','<div class="tl-row" style="width: 200px; height: 23px">
+		--															<div class="tl-item">
+		--																<div class="tl-bullet bg-blue"></div>
+		--																<div class="tl-panel"> Inicio ' 
+		--																+ CONVERT(varchar,CAST('20180507' AS datetime),106) +
+		--																'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 100px; height: 23px; text-align: center">
+		--																<p style="color: #3498db"><strong>Etapa de Transición de Arranque</strong></p>
+		--															</div>',1,300);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES (dbo.FN_EN_SumaDiasHabiles('20180507', 90),'<div class="tl-row" style="width: 200px; height: 23px">
+		--																							<div class="tl-item">
+		--																								<div class="tl-bullet bg-blue"></div>
+		--																								<div class="tl-panel"> Finaliza ' 
+		--																								+ CONVERT(varchar,(dbo.FN_EN_SumaDiasHabiles('20180507', 120)),106) +
+		--																								' </div>
+		--																								</div>
+		--																							</div>',1,200);
+		--	--PERFORACION
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20191007','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-green"></div>
+		--																	<div class="tl-panel"> Inicio '
+		--																		+ CONVERT(varchar,CAST('20191007' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>
+		--															<div class="tl-row" style="width: 300px; height: 23px; text-align: center">
+		--																<p style="color: #2ecc71"><strong>Perforación del Pozo ' + LTRIM(@Pozos) + '</strong></p>
+		--															</div>',2,500);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20200204','<div class="tl-row" style="width: 200px; height: 23px">
+		--																								<div class="tl-item">
+		--																									<div class="tl-bullet bg-green"></div>
+		--																									<div class="tl-panel"> Finaliza '
+		--																										+ CONVERT(varchar,CAST('20200204' AS datetime),106) +
+		--																									'</div>
+		--																								</div>
+		--																							</div>',2,200);
+		--	--PERIODO
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20190724','<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Inicio ' +
+		--																	CONVERT(varchar,CAST('20190724' AS datetime),106) +
+		--																	'</div>
+		--																	</div>
+		--																</div>
+		--																<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>',3,265);
+		--	INSERT INTO @TABLADATOS (FECHA,TEXTO,NOGRUPOINTERVALO,WIDTH_ITEM) VALUES ('20230724','<div class="tl-row" style="width: 65px; height: 23px; text-align: center">
+		--																	<p style="color: #7a3ecc"><strong>Periodo de ' + @Periodo + '</strong></p>
+		--																</div>
+		--															<div class="tl-row" style="width: 200px; height: 23px">
+		--																<div class="tl-item">
+		--																	<div class="tl-bullet bg-purple"></div>
+		--																	<div class="tl-panel"> Finaliza ' + 
+		--																	CONVERT(varchar,CAST('20230724' AS datetime),106) +
+		--																	'</div>
+		--																</div>
+		--															</div>',3,265);
+		--END
 
-		/*AGREGAR LOS ITEMS POR ORDEN DE FECHA*/
-		INSERT INTO @TABLAID
-		SELECT 
-			FECHA,
-			TEXTO,
-			NOGRUPOINTERVALO,
-			WIDTH_ITEM
-		FROM @TABLADATOS
-		ORDER BY FECHA ASC
+		--/*AGREGAR LOS ITEMS POR ORDEN DE FECHA*/
+		--INSERT INTO @TABLAID
+		--SELECT 
+		--	FECHA,
+		--	TEXTO,
+		--	NOGRUPOINTERVALO,
+		--	WIDTH_ITEM
+		--FROM @TABLADATOS
+		--ORDER BY FECHA ASC
 		
-		/*OBTENER UN NUEVO GRUPO PARA LOS ITEMS DEACUERDO A LA FECHA MINIMA POR GRUPO*/
-		INSERT INTO @TABLA_ORDENGRUPO(NUMERO_GRUPO,FECHA)
-		SELECT 		
-		NOGRUPOINTERVALO,
-		MIN(FECHA)
-		FROM @TABLADATOS
-		GROUP BY NOGRUPOINTERVALO
-		ORDER BY MIN(FECHA) ASC
+		--/*OBTENER UN NUEVO GRUPO PARA LOS ITEMS DEACUERDO A LA FECHA MINIMA POR GRUPO*/
+		--INSERT INTO @TABLA_ORDENGRUPO(NUMERO_GRUPO,FECHA)
+		--SELECT 		
+		--NOGRUPOINTERVALO,
+		--MIN(FECHA)
+		--FROM @TABLADATOS
+		--GROUP BY NOGRUPOINTERVALO
+		--ORDER BY MIN(FECHA) ASC
 		
-		/*REASIGNAR EL ORDEN DE DIBUJADO DE LAS LINEAS DE TIEMPO*/
-		UPDATE TB
-		SET TB.NOGRUPOINTERVALO=TBG.NUEVO_GRUPO
-		FROM @TABLAID TB
-		JOIN @TABLA_ORDENGRUPO TBG
-		ON TB.NOGRUPOINTERVALO=TBG.NUMERO_GRUPO
+		--/*REASIGNAR EL ORDEN DE DIBUJADO DE LAS LINEAS DE TIEMPO*/
+		--UPDATE TB
+		--SET TB.NOGRUPOINTERVALO=TBG.NUEVO_GRUPO
+		--FROM @TABLAID TB
+		--JOIN @TABLA_ORDENGRUPO TBG
+		--ON TB.NOGRUPOINTERVALO=TBG.NUMERO_GRUPO
 				
-		SET @TotalGrupos = (SELECT COUNT(1) FROM @TABLA_ORDENGRUPO) --> OBTENER CANTIDAD DE GRUPOS DE ITEMS --> CADA GRUPO ES ETAPA, PERIODO, PERFO --> Y CADA UNA REPRESENTA UNA LINEA DE TIEMPO
-		SET @ContadorGrupo = 1
-		SET @ContadorGrupoActual = 0
-		SET @ITEM_SPACE = N'<div class="tl-row" style="width: ##WIDTH##px; height:23px"></div>'
-		SET @WIDTH_ITEM =''
-		SET @HTML_FINAL =''
+		--SET @TotalGrupos = (SELECT COUNT(1) FROM @TABLA_ORDENGRUPO) --> OBTENER CANTIDAD DE GRUPOS DE ITEMS --> CADA GRUPO ES ETAPA, PERIODO, PERFO --> Y CADA UNA REPRESENTA UNA LINEA DE TIEMPO
+		--SET @ContadorGrupo = 1
+		--SET @ContadorGrupoActual = 0
+		--SET @ITEM_SPACE = N'<div class="tl-row" style="width: ##WIDTH##px; height:23px"></div>'
+		--SET @WIDTH_ITEM =''
+		--SET @HTML_FINAL =''
 
-		/*RECORRER EL TOTAL DE GRUPOS UN GRUPO ES UNA LINEA DE TIEMPO*/
-		WHILE @TotalGrupos>= @ContadorGrupo
-		BEGIN 
+		--/*RECORRER EL TOTAL DE GRUPOS UN GRUPO ES UNA LINEA DE TIEMPO*/
+		--WHILE @TotalGrupos>= @ContadorGrupo
+		--BEGIN 
 		   
-		    SET @HTML = '<br>
-						<div class="timeline-box timeline-horizontal" style="width: 2400px; height: 100px">
-							<div class="tl-row" style="width: 85px; height: 23px">
-						</div>';
+		--    SET @HTML = '<br>
+		--				<div class="timeline-box timeline-horizontal" style="width: 2400px; height: 100px">
+		--					<div class="tl-row" style="width: 85px; height: 23px">
+		--				</div>';
 
-			/*RECORRER TODOS LOS INTERVALO(ITEMS)S Y  SOLO DIBUJAR DONDE LE CORRESPONDA AL GRUPO DEL INTERVARLO ACTUAL, SI NO LE CORRESPONDE
-			SOLO AGREGAR EL DIV DEFAULT @ITEM_SPACE CON EL WIDTH QUE LE CORRESPONDERIA AL ITEM DEL INTERVALO QUE SE OMITE*/
+		--	/*RECORRER TODOS LOS INTERVALO(ITEMS)S Y  SOLO DIBUJAR DONDE LE CORRESPONDA AL GRUPO DEL INTERVARLO ACTUAL, SI NO LE CORRESPONDE
+		--	SOLO AGREGAR EL DIV DEFAULT @ITEM_SPACE CON EL WIDTH QUE LE CORRESPONDERIA AL ITEM DEL INTERVALO QUE SE OMITE*/
 
-			SET @TOTAL = (SELECT COUNT(1) FROM @TABLAID);
-			SET @CONT	= 1
-			--> LA LISTA DE ITEMS SE TIENE QUE RECORRER PARA SABER CUANTO DE ESPACIO LE CORRESPONDE  A CADA ITEM QUE NO SE DIBUJA <--> PARA DEJAR EL ESPACIO
-			WHILE @TOTAL >= @CONT
-			BEGIN
+		--	SET @TOTAL = (SELECT COUNT(1) FROM @TABLAID);
+		--	SET @CONT	= 1
+		--	--> LA LISTA DE ITEMS SE TIENE QUE RECORRER PARA SABER CUANTO DE ESPACIO LE CORRESPONDE  A CADA ITEM QUE NO SE DIBUJA <--> PARA DEJAR EL ESPACIO
+		--	WHILE @TOTAL >= @CONT
+		--	BEGIN
 		        
-				SELECT @ContadorGrupoActual=NOGRUPOINTERVALO --> OBTENER EL GRUPO A DIBUJAR
-				FROM @TABLAID WHERE ID = @CONT 
+		--		SELECT @ContadorGrupoActual=NOGRUPOINTERVALO --> OBTENER EL GRUPO A DIBUJAR
+		--		FROM @TABLAID WHERE ID = @CONT 
 
-				IF @ContadorGrupoActual=@ContadorGrupo
-				BEGIN
-					SET @TEXTO = (SELECT TEXTO FROM @TABLAID WHERE ID = @CONT);--> AGREGAR EL TEXTO DEL ITEM QUE CORRESPONSE DIBUJAR
-				END 
-				ELSE
-				BEGIN
-					SET @WIDTH_ITEM = CAST(ISNULL((SELECT WIDTH_ITEM FROM @TABLAID WHERE ID = @CONT),0) AS NVARCHAR(MAX));
-					SET @TEXTO = REPLACE(@ITEM_SPACE,'##WIDTH##',@WIDTH_ITEM) --> SUSTITUIR EL WIDTH QUE TENDRIA EL ITEM QUE SE DIBUJARIA 
-				END 
+		--		IF @ContadorGrupoActual=@ContadorGrupo
+		--		BEGIN
+		--			SET @TEXTO = (SELECT TEXTO FROM @TABLAID WHERE ID = @CONT);--> AGREGAR EL TEXTO DEL ITEM QUE CORRESPONSE DIBUJAR
+		--		END 
+		--		ELSE
+		--		BEGIN
+		--			SET @WIDTH_ITEM = CAST(ISNULL((SELECT WIDTH_ITEM FROM @TABLAID WHERE ID = @CONT),0) AS NVARCHAR(MAX));
+		--			SET @TEXTO = REPLACE(@ITEM_SPACE,'##WIDTH##',@WIDTH_ITEM) --> SUSTITUIR EL WIDTH QUE TENDRIA EL ITEM QUE SE DIBUJARIA 
+		--		END 
 
-				SET @HTML = CONCAT(@HTML,@TEXTO);
+		--		SET @HTML = CONCAT(@HTML,@TEXTO);
 
-				SET @CONT = @CONT + 1;
-			END
+		--		SET @CONT = @CONT + 1;
+		--	END
 
-			SET @HTML = CONCAT(@HTML,'</div><br>');
+		--	SET @HTML = CONCAT(@HTML,'</div><br>');
 
-		    SET @HTML_FINAL = CONCAT(@HTML_FINAL,@HTML);
+		--    SET @HTML_FINAL = CONCAT(@HTML_FINAL,@HTML);
 		    
-			SET @ContadorGrupo = @ContadorGrupo + 1
+		--	SET @ContadorGrupo = @ContadorGrupo + 1
+		--END
+
+
+		--SELECT @HTML_FINAL AS HtmlArmado;
+
+		DECLARE @CONTANIOS INT = 1;
+		DECLARE @CONTANIOSTOTAL INT = 0;
+		DECLARE @DATOAÑO INT = 0;
+		DECLARE @DATOCOLOR NVARCHAR(MAX);
+		DECLARE @HTML varchar(MAX);
+		DECLARE @WIDHTTOTAL INT = 0;
+
+		--COLORES DE LOS RECUADROS ORGANIZADOS POR PERIODO
+		CREATE TABLE #BulletColor
+		(
+			IdBullet INT, 
+			bgColor  NVARCHAR(MAX)
+		);
+
+		INSERT INTO #BulletColor
+		VALUES(1, '#C6E5B1'),--VERDE CLARO
+				(2, '#BBBBBB'),--GRIS CLARO
+				(3, '#9FBAD5'),--AZUL CLARO
+				(4, '#91B2FD'),--ROJO CLARO
+				(5, '#CAB1CB'),--MORADO CLARO
+				(6, '#96BCEB'),--NARANJA CLARO
+				(7, '#73B1FF'),--AZUL
+				(8, '#BBBBBB'),--GRIS
+				(9, '#85689e'),--MORADO
+				(10, '#BBBBBB'),--GRISS
+				(11, '#73B1FF');--AZUL
+
+		--CONSULTA DE LOS PERIODOS
+		create table #tmpPeriodos
+		(   
+			RowN INT IDENTITY(1,1),
+			PeriodoID	INT,
+			Color NVARCHAR(100)
+		) 
+
+		INSERT INTO #tmpPeriodos (PeriodoID)
+		SELECT
+			IdPeriodo
+		FROM CO_PeriodoContrato
+			WHERE IdContrato = @IdContrato
+			AND Activo = 1
+
+		--ASIGNACION DE LOS COLORES A LOS PERIODOS
+		UPDATE TP
+		SET TP.Color = BP.bgColor
+		FROM #tmpPeriodos AS TP
+		JOIN #BulletColor AS BP ON TP.RowN = BP.IdBullet
+
+		--CONSULTA DE TODOS LOS EVENTOS
+		create table #Periodos
+		(   
+			NumRow INT IDENTITY(1,1),
+			PeriodoID	INT,
+			Color NVARCHAR(100),
+			Anio INT,
+			Nombre NVARCHAR(1000),
+			Fecha DATE
+		) 
+
+		INSERT INTO #Periodos (PeriodoID, Color, Anio,Nombre,Fecha)
+		SELECT
+			PC.IdPeriodo,
+			TP.Color,
+			YEAR(PC.Inicio),
+			'Inicio: ' + PC.NombrePeriodo,
+			PC.Inicio
+		FROM CO_PeriodoContrato AS PC
+		JOIN #tmpPeriodos AS TP ON PC.IdPeriodo = TP.PeriodoID
+		WHERE PC.IdContrato = @IdContrato
+		AND PC.Activo = 1
+		AND PC.Inicio IS NOT NULL
+		UNION
+		SELECT
+			PC.IdPeriodo,
+			TP.Color,
+			YEAR(PC.Fin),
+			'Fin: ' + PC.NombrePeriodo,
+			PC.Fin
+		FROM CO_PeriodoContrato AS PC
+		JOIN #tmpPeriodos AS TP ON PC.IdPeriodo = TP.PeriodoID
+		WHERE PC.IdContrato = @IdContrato
+		AND PC.Activo = 1
+		AND PC.Fin IS NOT NULL
+
+		--SELECT * FROM #Periodos
+
+		create table #tmpAnios
+		(   
+			Id	INT IDENTITY(1,1),
+			Anio INT
+		)
+
+		INSERT INTO #tmpAnios (Anio)
+		SELECT
+			Anio
+		FROM #Periodos
+		GROUP BY Anio
+
+		--SELECT * FROM #tmpAnios
+
+		SET @CONTANIOSTOTAL = (SELECT COUNT(Id) FROM #tmpAnios);
+
+		WHILE @CONTANIOSTOTAL >= @CONTANIOS
+		BEGIN
+	
+			SET @DATOAÑO = (SELECT Anio FROM #tmpAnios WHERE Id = @CONTANIOS);
+
+			SET @HTML = ISNULL(@HTML,'') +('<div class="tl-row" style="width: 50px">'+
+							'<div class="tl-item">'+
+							'<div class="tl-bullet" style="background-color:#BBBBBB"></div>'+
+							'<div class="tl-panel">'+
+							+ ISNULL(CAST(@DATOAÑO AS nvarchar(100)),'') + '</div>'+
+							+'</div>'
+							+'</div>');
+
+			SET @WIDHTTOTAL = @WIDHTTOTAL + 50;
+
+			SET @HTML = @HTML + (SELECT 
+								 REPLACE(REPLACE(REPLACE(REPLACE(STUFF(
+									(SELECT '<div class="tl-row" style="width: 300px"><div class="tl-item float-right"><div class="popover bottom"><div class="arrow"></div><div class="popover-content" style="background-color:'  + ISNULL(eventos.Color,'')+';">'
+											+ '<h3 class="tl-title" data-toggle="tooltip" data-placement="top" title="'+ ISNULL(eventos.Nombre,'') +'">' 
+											+ ISNULL(eventos.Nombre,'') + '</h3><div class="tl-time"><i class="glyph-icon icon-clock-o"></i>&nbsp;' 
+											+ ISNULL(FORMAT(eventos.Fecha,'dd-MM-yyyy') ,'')
+											+ '</br>'
+											+'</div></div></div></div></div>'
+									FROM #Periodos as eventos
+									WHERE eventos.Anio = @DATOAÑO
+									ORDER BY eventos.Fecha ASC
+									FOR XML PATH('')),
+									1, 2, ''),'&gt;','>'),'&lt;','<'),'t;','<'),'&amp;nbsp;',''));
+				SET @WIDHTTOTAL = @WIDHTTOTAL + 300;
+				SET @CONTANIOS = @CONTANIOS + 1;
 		END
 
+		SET @WIDHTTOTAL = @WIDHTTOTAL + 1000;
 
-		SELECT @HTML_FINAL AS HtmlArmado;
+		SET @HTML = '<div class="timeline-box timeline-horizontal" style="width: ' + CAST(@WIDHTTOTAL AS NVARCHAR) +'px;">'+ISNULL(@HTML,'')+'</div>'
+
+		SELECT @HTML AS HtmlArmado;
 END;
