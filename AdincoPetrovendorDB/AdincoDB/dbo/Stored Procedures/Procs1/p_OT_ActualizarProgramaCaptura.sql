@@ -18,7 +18,8 @@ AS
             @fechaCaptura DATETIME,
             @anioMesDia int,
             @IdOTSolicitud int,
-			@decimales int
+			@decimales int,
+			@pDiaSemana2 TINYINT = @pDiaSemana
 
     select @IdOTSolicitud=IdOTSolicitud
     from OT_SolicitudMaterial
@@ -81,19 +82,19 @@ AS
     END
     if @fechaCaptura is null and  isnull(@pCaptura,0) > 0
     begin
-        set @pErrorOut = case when @pDiaSemana = 1 then 'El Domingo no es válido para la semana seleccionada'
-                            when @pDiaSemana = 2 then 'El Lunes no es válido para la semana seleccionada'
-                            when @pDiaSemana = 3 then 'El Martes no es válido para la semana seleccionada'
-                            when @pDiaSemana = 4 then 'El Miercoles no es válido para la semana seleccionada'
-                            when @pDiaSemana = 5 then 'El Jueves no es válido para la semana seleccionada'
-                            when @pDiaSemana = 6 then 'El Viernes no es válido para la semana seleccionada'
-                            when @pDiaSemana = 7 then 'El Sábado no es válido para la semana seleccionada'
+        set @pErrorOut = case when @pDiaSemana2 = 1 then 'El Domingo no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 2 then 'El Lunes no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 3 then 'El Martes no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 4 then 'El Miercoles no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 5 then 'El Jueves no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 6 then 'El Viernes no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 7 then 'El Sábado no es válido para la semana seleccionada'
                         end
         return
     end
 
 	/***Validar si existe un VoBo. para el dia****/
-	DECLARE @VoBoContratista  BIT, @VoBoSubcontratista  BIT, @CapturaDia DECIMAL
+	DECLARE @VoBoContratista  BIT, @VoBoSubcontratista  BIT, @CapturaDia DECIMAL = 0.0
 	CREATE TABLE #tmpResult ( 
 			IdOTSolicitudMaterial int,
 			Material varchar(200),
@@ -136,59 +137,62 @@ AS
 			TieneArchivos BIT)
 
 	insert  INTO #tmpResult  
-    exec [dbo].[p_OT_ConsultaSolicitudProgramaCaptura]@IdOTSolicitud, @pSemana	
-	
+    exec [dbo].[p_OT_ConsultaSolicitudProgramaCaptura]@IdOTSolicitud, @pSemana, 0
 
-	if(@pDiaSemana = 1)
+	if(@pDiaSemana2 = 1)
 	begin
 		SET @VoBoContratista = (SELECt DomingoVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @VoBoSubcontratista = (SELECt DomingoVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @CapturaDia = (SELECt ISNULL(DomingoCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
-	if(@pDiaSemana = 2)
+	if(@pDiaSemana2 = 2)
 	begin
 		SET @VoBoContratista = (SELECt LunesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @VoBoSubcontratista = (SELECt LunesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @CapturaDia = (SELECt ISNULL(LunesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
-	if(@pDiaSemana = 3)
+	if(@pDiaSemana2 = 3)
 	begin
 		SET @VoBoContratista = (SELECt MartesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @VoBoSubcontratista = (SELECt MartesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @CapturaDia = (SELECt ISNULL(MartesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
-	if(@pDiaSemana = 4)
+	if(@pDiaSemana2 = 4)
 	begin
 		SET @VoBoContratista = (SELECt MiercolesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @VoBoSubcontratista = (SELECt MiercolesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @CapturaDia = (SELECt ISNULL(MiercolesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
-	if(@pDiaSemana = 5)
+	if(@pDiaSemana2 = 5)
 	begin
 		SET @VoBoContratista = (SELECt JuevesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @VoBoSubcontratista = (SELECt JuevesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @CapturaDia = (SELECt ISNULL(JuevesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
-	if(@pDiaSemana = 6)
+	if(@pDiaSemana2 = 6)
 	begin
 		SET @VoBoContratista = (SELECt ViernesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @VoBoSubcontratista = (SELECt ViernesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @CapturaDia = (SELECt ISNULL(ViernesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
-	if(@pDiaSemana = 5)
+	if(@pDiaSemana2 = 7)
 	begin
 		SET @VoBoContratista = (SELECt SabadoVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @VoBoSubcontratista = (SELECt SabadoVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 		SET @CapturaDia = (SELECt ISNULL(SabadoCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
 
-	if ( (@VoBoContratista = 1 or @VoBoSubcontratista = 1))
-	/***CAMBIó VALOR?****/
-	AND	(@CapturaDia <> @pCaptura)
-	begin 
-		SET @pErrorOut = 'Hay un VoBo activado para el día, no es posible actualizar'
-        GOTO fin
-	end
+	SET @VoBoContratista = ISNULL(@VoBoContratista,0)
+	SET @VoBoSubcontratista = ISNULL(@VoBoSubcontratista,0)
+
+	IF(@CapturaDia <> @pCaptura)
+		begin 		
+		if ( (@VoBoContratista = 1 or @VoBoSubcontratista = 1))
+			begin 
+				SET @pErrorOut = 'Hay un VoBo activado para el día, no es posible actualizar'
+					GOTO fin
+			end		
+		end	
 
     /**********Asegurarse que el dia de la semana no este en una semana cerrada******************/
     if exists (
@@ -280,5 +284,8 @@ AS
             IdOTSolicitudMaterial = @pIdOTSolicitudMaterial
         End
     
-    End     
-fin:  
+    End 
+    
+    fin:    
+
+
