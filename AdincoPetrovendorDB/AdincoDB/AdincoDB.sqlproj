@@ -13100,6 +13100,9 @@
     <Build Include="dbo\Stored Procedures\Procs1\AP_sp_ProveedoresProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AP_ValidaAceptacionPedidoDEA.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AP_ValidacionCargaFactura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenHistoricoDiarioConciliado.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenProduccionConciliadaPozoMes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenProduccionDiariaPozoMes.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
