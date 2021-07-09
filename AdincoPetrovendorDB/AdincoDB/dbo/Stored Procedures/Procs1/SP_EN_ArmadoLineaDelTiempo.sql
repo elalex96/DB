@@ -85,6 +85,8 @@ DocumentoEntregable = case
 		then		DocumentoEntregable
 		WHEN		DocumentoEntregable LIKE '%Autor%SASISOPA%'
 		then		DocumentoEntregable
+		WHEN		DocumentoEntregable LIKE '%Aprobación%Plan%'
+		then		DocumentoEntregable
         else        ''
         end,
 		FechaEntrega,
@@ -315,7 +317,7 @@ order by FechaEntrega asc
 
 		
 		insert into #tmpHtml
-		select		top 3
+		select		top 5
 					ROW_NUMBER() OVER (	ORDER BY Id   )+@row+1,
 					html = 
 					case when Id%2 > 0 then 
