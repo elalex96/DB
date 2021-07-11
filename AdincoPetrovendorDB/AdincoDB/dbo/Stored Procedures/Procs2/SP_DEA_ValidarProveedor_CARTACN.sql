@@ -3,7 +3,15 @@
 -- Update: 15-06-2021
 -- Description:	Validacion de Operadora para CARTA CN PR A PR
 -- =============================================
-
+-- =============================================
+-- Author:		Luis David De La Cruz Bautista
+-- Update: 25-01-2021
+-- Description:	issue #930/ Optimización de sp
+-- =============================================
+-- Author:		Luis David De La Cruz Bautista
+-- Update: 08/07/2121
+-- Description:	issue #1201/ Bug de dea carta de proveedor a operadora 
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_DEA_ValidarProveedor_CARTACN]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor int, 
@@ -22,7 +30,9 @@ BEGIN
 	set @EXISTE_RFC = (SELECT COUNT(IdProveedor) 
 						FROM DEA_Proveedor 
 						WHERE RTRIM(LTRIM(RFC))=RTRIM(LTRIM(@RFC_ACTUAL)) 
-						AND Activo = 1)
+						AND Activo = 1
+						AND RFC <> 'DDE151002QY9'
+						)
 
 	IF ISNULL(@EXISTE_RFC,0)  >0 
 	BEGIN 

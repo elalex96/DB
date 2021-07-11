@@ -1,5 +1,4 @@
-﻿
-CREATE PROC p_OT_ActualizarProgramaCaptura
+﻿CREATE PROC [dbo].[p_OT_ActualizarProgramaCaptura]
 @pIdOTSolicitudProgramaCaptura INT,
 @pIdOTSolicitudMaterial INT,
 @pSemana VARCHAR(21),
@@ -19,7 +18,8 @@ AS
             @fechaCaptura DATETIME,
             @anioMesDia int,
             @IdOTSolicitud int,
-			@decimales int
+			@decimales int,
+			@pDiaSemana2 TINYINT = @pDiaSemana
 
     select @IdOTSolicitud=IdOTSolicitud
     from OT_SolicitudMaterial
@@ -82,42 +82,117 @@ AS
     END
     if @fechaCaptura is null and  isnull(@pCaptura,0) > 0
     begin
-        set @pErrorOut = case when @pDiaSemana = 1 then 'El Domingo no es válido para la semana seleccionada'
-                            when @pDiaSemana = 2 then 'El Lunes no es válido para la semana seleccionada'
-                            when @pDiaSemana = 3 then 'El Martes no es válido para la semana seleccionada'
-                            when @pDiaSemana = 4 then 'El Miercoles no es válido para la semana seleccionada'
-                            when @pDiaSemana = 5 then 'El Jueves no es válido para la semana seleccionada'
-                            when @pDiaSemana = 6 then 'El Viernes no es válido para la semana seleccionada'
-                            when @pDiaSemana = 7 then 'El Sábado no es válido para la semana seleccionada'
+        set @pErrorOut = case when @pDiaSemana2 = 1 then 'El Domingo no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 2 then 'El Lunes no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 3 then 'El Martes no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 4 then 'El Miercoles no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 5 then 'El Jueves no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 6 then 'El Viernes no es válido para la semana seleccionada'
+                            when @pDiaSemana2 = 7 then 'El Sábado no es válido para la semana seleccionada'
                         end
         return
     end
 
 	/***Validar si existe un VoBo. para el dia****/
-	if exists(
-		select 1		
-		froM [dbo].[OT_SolicitudProgramaCaptura] pc
-		inner join OT_SolicitudMaterial sm on sm.IdOTSolicitudMaterial = pc.IdOTSolicitudMaterial
-		where convert(varchar,pc.Fecha,112) = convert(varchar,@fechaCaptura,112) and
-		sm.IdOTSolicitud = @IdOTSolicitud and
-		(VoBoContratista = 1 OR VoBoSubcontratista = 1) and
-		IdAnioMesDia = @anioMesDia
-	)
-	/***CAMBIó VALOR?****/
-	AND
-	not EXISTS
-	(
-			select 1
-			from OT_SolicitudProgramaCaptura           
-            WHERE 
-            IdAnioMesDia = @anioMesDia AND
-            IdOTSolicitudMaterial = @pIdOTSolicitudMaterial and
-			Captura = @pCaptura
-	)
-	begin 
-		SET @pErrorOut = 'Hay un VoBo activado para el día, no es posible actualizar'
-        GOTO fin
+	DECLARE @VoBoContratista  BIT, @VoBoSubcontratista  BIT, @CapturaDia DECIMAL = 0.0
+	CREATE TABLE #tmpResult ( 
+			IdOTSolicitudMaterial int,
+			Material varchar(200),
+			IdOTSolicitud int,
+			Folio Varchar(max),
+			Disponible INT,
+			LunesCaptura decimal,
+			MartesCaptura decimal,
+			MiercolesCaptura decimal,
+			JuevesCaptura decimal,
+			ViernesCaptura decimal,
+			SabadoCaptura decimal,
+			DomingoCaptura decimal,
+			TotalSemana decimal,
+			IdEstatus bit,
+	        LunesVoBoC BIT,
+			MartesVoBoC BIT,
+			MiercolesVoBoC BIT,
+			JuevesVoBoC BIT,
+			ViernesVoBoC BIT,
+			SabadoVoBoC BIT,
+			DomingoVoBoC BIT,
+			---------------------------------
+			LunesVoBoSC BIT,
+			MartesVoBoSC BIT,
+			MiercolesVoBoSC BIT,
+			JuevesVoBoSC BIT,
+			ViernesVoBoSC BIT,
+			SabadoVoBoSC BIT,
+			DomingoVoBoSC BIT,
+			---------------------------------
+			LunesCerrado BIT,
+			MartesCerrado BIT,
+			MiercolesCerrado BIT,
+			JuevesCerrado BIT,
+			ViernesCerrado BIT,
+			SabadoCerrado BIT,
+			DomingoCerrado BIT,
+			UploadFile varchar(max),
+			TieneArchivos BIT)
+
+	insert  INTO #tmpResult  
+    exec [dbo].[p_OT_ConsultaSolicitudProgramaCaptura]@IdOTSolicitud, @pSemana, 0
+
+	if(@pDiaSemana2 = 1)
+	begin
+		SET @VoBoContratista = (SELECt DomingoVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @VoBoSubcontratista = (SELECt DomingoVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @CapturaDia = (SELECt ISNULL(DomingoCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
 	end
+	if(@pDiaSemana2 = 2)
+	begin
+		SET @VoBoContratista = (SELECt LunesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @VoBoSubcontratista = (SELECt LunesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @CapturaDia = (SELECt ISNULL(LunesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+	end
+	if(@pDiaSemana2 = 3)
+	begin
+		SET @VoBoContratista = (SELECt MartesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @VoBoSubcontratista = (SELECt MartesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @CapturaDia = (SELECt ISNULL(MartesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+	end
+	if(@pDiaSemana2 = 4)
+	begin
+		SET @VoBoContratista = (SELECt MiercolesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @VoBoSubcontratista = (SELECt MiercolesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @CapturaDia = (SELECt ISNULL(MiercolesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+	end
+	if(@pDiaSemana2 = 5)
+	begin
+		SET @VoBoContratista = (SELECt JuevesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @VoBoSubcontratista = (SELECt JuevesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @CapturaDia = (SELECt ISNULL(JuevesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+	end
+	if(@pDiaSemana2 = 6)
+	begin
+		SET @VoBoContratista = (SELECt ViernesVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @VoBoSubcontratista = (SELECt ViernesVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @CapturaDia = (SELECt ISNULL(ViernesCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+	end
+	if(@pDiaSemana2 = 7)
+	begin
+		SET @VoBoContratista = (SELECt SabadoVoBoC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @VoBoSubcontratista = (SELECt SabadoVoBoSC from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+		SET @CapturaDia = (SELECt ISNULL(SabadoCaptura, 0) from #tmpResult where IdOTSolicitudMaterial = @pIdOTSolicitudMaterial)
+	end
+
+	SET @VoBoContratista = ISNULL(@VoBoContratista,0)
+	SET @VoBoSubcontratista = ISNULL(@VoBoSubcontratista,0)
+
+	IF(@CapturaDia <> @pCaptura)
+		begin 		
+		if ( (@VoBoContratista = 1 or @VoBoSubcontratista = 1))
+			begin 
+				SET @pErrorOut = 'Hay un VoBo activado para el día, no es posible actualizar'
+					GOTO fin
+			end		
+		end	
 
     /**********Asegurarse que el dia de la semana no este en una semana cerrada******************/
     if exists (
