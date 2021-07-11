@@ -13103,6 +13103,15 @@
     <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenHistoricoDiarioConciliado.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenProduccionConciliadaPozoMes.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenProduccionDiariaPozoMes.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_WDEA_Produccion_Diaria.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_WDEA_Produccion_Diaria_Detalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_Detalle_GRD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_Detalle_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_Download.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_GRD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS_Bitacora.sql" />
+
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
