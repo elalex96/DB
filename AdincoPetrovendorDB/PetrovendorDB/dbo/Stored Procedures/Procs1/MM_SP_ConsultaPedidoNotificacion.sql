@@ -1,34 +1,44 @@
-﻿-- =============================================
--- Author:		<Jose Roman>
--- Create date: <17-04-2018>
--- Description:	<Consulta para armar la tabla de pedido del correo de notificación>
--- =============================================
--- Author:		DANIEL AC
--- Create date: <25-06-2018>
--- Description:	<Cambie retorno de No. de pedido al pedido publico>
+﻿USE [Petrovendor]
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'MM_SP_ConsultaPedidoNotificacion'
+)
+    DROP PROCEDURE MM_SP_ConsultaPedidoNotificacion;
+
+/****** Object:  StoredProcedure [dbo].[MM_SP_ConsultaPedidoNotificacion]    Script Date: 06/07/2021 10:51:37 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		Marcos Garcia
 -- Create date: <22-04-2019>
 -- Description:	<Agregar Linea Presupuesto (Tarea y Subtarea) despues de DescripcionCorta
 -- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <06-07-2021>
+-- Description:	Se modifico consulta para evitar html vacio
+-- =============================================
 
-
-CREATE procedure [dbo].[MM_SP_ConsultaPedidoNotificacion] --14183, 1
+CREATE PROCEDURE [dbo].[MM_SP_ConsultaPedidoNotificacion] --14183, 1
 	@IdSolicitudPedido INT,
-	@Version INT,
-	/*--------------------parametros contrato  --------------------*/
+	@Version INT,	
     @IdContrato    INT = null,
     @IdUsuario     INT = null,
     @FechaRegistro DATETIME = null
-	/*-------------------------------------------------------------*/
 AS
 BEGIN
 
 				
 				 CREATE TABLE #TEMP_PRESUPUESTOS --CREAMOS UNA TABLA TEMPORAL
 				( IdRow INT IDENTITY(1,1),Nombre VARCHAR(max));
-
-				
+								
 
 				INSERT INTO #TEMP_PRESUPUESTOS
 				SELECT DISTINCT dbo.Fn_RetornarMesProgramadoActividadConcat(clp.IdLineaPresupuestoMes) AS LineaPresupuesto FROM Petrovendor.dbo.MM_Pedido AS p
@@ -59,30 +69,45 @@ BEGIN
 						SET @texto = @texto + ' '	;			
 				END
 
-	SELECT pe.IdSubcontratista, 
-		p.RazonSocial + ' ' + ISNULL(p.RegimenCapital, '') + '.<br/> <b> Objeto del pedido(Justificación): </b>' + sp.MotivoUrgencia,
-		pg.IdPedido,
-		'<b>'+ m.DescripcionCorta + '</b>' + ' | Linea Presupuesto - '+ @texto AS DescripcionCorta ,
-		pd.PrecioUnitario,
-		pd.Cantidad,
-		u.Unidad,
-		pd.Subtotal,
-		tm.TipoMonedaCorto,
+	SELECT PE.IdSubcontratista, 
+		P.RazonSocial + ' ' + ISNULL(P.RegimenCapital, '') + '.<br/> <b> Objeto del pedido(Justificación): </b>' + SP.MotivoUrgencia,
+		PG.IdPedido,
+		'<b>'+ ISNULL(POD.MaterialCotizadoTextoC,ISNULL(M.DescripcionCorta,'')) + '</b>' + ' | Linea Presupuesto - '+ @texto AS DescripcionCorta ,
+		PD.PrecioUnitario,
+		PD.Cantidad,
+		ISNULL(POD.UnidadProveedor,ISNULL(U.Unidad,'')) AS Unidad,
+		PD.Subtotal,
+		TM.TipoMonedaCorto,
 		ISNULL(C.NumeroContrato,'') + ' - ' + ISNULL(AC.NombreAreaContractual,'') AS Contrato,
 		TP.TipoPedido
-	FROM dbo.MM_Pedido pe
-		INNER JOIN dbo.S_Proveedor p ON p.IdProveedor = pe.IdSubcontratista
-		INNER JOIN dbo.MM_PedidoDetalle pd ON pd.IdPedido = pe.IdPedido
-		INNER JOIN dbo.MM_Material m ON m.IdMaterial = pd.IdMaterial
-		INNER JOIN dbo.PV_MM_MaterialUnidad u ON u.IdUnidad = pd.IdUnidad
-		INNER JOIN dbo.PV_TipoMoneda tm ON tm.IdMoneda = pd.IdMoneda
-		LEFT JOIN dbo.MM_Pedidos pg ON pg.IdIdentificador=pe.IdPedido AND pe.IdProveedorCompras=pg.IdProveedorCliente
-		INNER JOIN dbo.MM_SolicitudPedido sp ON pe.IdSolicitudPedido = sp.IdSolicitudPedido
-		LEFT JOIN Adinco.dbo.CO_Contrato AS C ON C.IdContrato = pe.IdContrato
-		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC ON AC.IdAreaContractual = C.IdAreaContractual
-		LEFT JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = pg.IdTipoPedido
-	WHERE pe.IdSolicitudPedido = @IdSolicitudPedido
-		AND pe.Version = @Version
-	ORDER BY pe.IdSubcontratista, pg.IdPedido,tm.TipoMonedaCorto ASC
+	FROM MM_Pedido PE
+		LEFT JOIN dbo.S_Proveedor p 
+			ON PE.IdSubcontratista = P.IdProveedor 
+		LEFT JOIN dbo.MM_PedidoDetalle PD 
+			ON  PE.IdPedido = PD.IdPedido
+		LEFT JOIN MM_PeticionOfertaDetalle POD
+			ON PE.IdPeticionOferta = POD.IdPeticionOferta
+			AND PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
+		LEFT JOIN dbo.MM_Material M 
+			ON PD.IdMaterial = M.IdMaterial 
+		LEFT JOIN PV_MM_MaterialUnidad U 
+			ON PD.IdUnidad = U.IdUnidad 
+		LEFT JOIN dbo.PV_TipoMoneda TM 
+			ON PD.IdMoneda = TM.IdMoneda 
+		LEFT JOIN dbo.MM_Pedidos PG 
+			ON PE.IdPedido  = PG.IdIdentificador
+			AND PE.IdProveedorCompras=PG.IdProveedorCliente
+			AND PG.IdTipoPedido IN (2,4,6)			
+		LEFT JOIN dbo.MM_SolicitudPedido SP 
+			ON PE.IdSolicitudPedido = SP.IdSolicitudPedido
+		LEFT JOIN Adinco.dbo.CO_Contrato AS C 
+			ON PE.IdContrato = C.IdContrato 
+		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC 
+			ON  C.IdAreaContractual = AC.IdAreaContractual
+		LEFT JOIN dbo.MM_TipoPedido AS TP 
+			ON  PG.IdTipoPedido = TP.IdTipoPedido 
+	WHERE PE.IdSolicitudPedido = @IdSolicitudPedido
+		AND PE.Version = @Version
+	ORDER BY PE.IdSubcontratista, PG.IdPedido,TM.TipoMonedaCorto ASC
 	 
 END

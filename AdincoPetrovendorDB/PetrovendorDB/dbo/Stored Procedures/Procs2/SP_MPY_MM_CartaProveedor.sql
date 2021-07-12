@@ -38,6 +38,7 @@ BEGIN
  DECLARE @IdTipoRegimen INT   
  Declare @NombreOperadora NVARCHAR(MAX)  
  Declare @VendorsName NVARCHAR(MAX)  
+ DECLARE @RFC_ACTUAL_DEA NVARCHAR(200), @EXISTE_RFC_DEA INT;
   
  IF(@IdProveedor = 0)  
  BEGIN  
@@ -298,12 +299,18 @@ Permisionarios proporcionen información sobre contenido nacional en las activid
 ELSE  
 BEGIN  
 
-	SET @PROVEEDOR_DEA = (SELECT COUNT(1)
-							FROM dbo.DEA_Proveedor AS PRDEA
-								JOIN dbo.S_Proveedor AS PR ON PRDEA.RFC = PR.RFC
-							WHERE PR.IdProveedor = @IdProveedor)
+	set @RFC_ACTUAL_DEA = (SELECT TOP 1
+							P.RFC
+						FROM dbo.MM_AceptacionPedido AS AP
+						JOIN dbo.S_Proveedor AS P ON AP.IdProveedor = P.IdProveedor
+						WHERE AP.IdAceptacionPedido = @IdPedido);
 
-  IF  @PROVEEDOR_DEA > 0
+	set @EXISTE_RFC_DEA = (SELECT COUNT(IdProveedor) 
+						FROM DEA_Proveedor 
+						WHERE RTRIM(LTRIM(RFC))=RTRIM(LTRIM(@RFC_ACTUAL_DEA)) 
+						AND Activo = 1)
+
+  IF  @EXISTE_RFC_DEA > 0
   BEGIN
 		
 	SET @CANT_TMAT = (SELECT COUNT(VP.IdTipoMaterialServicio)  
