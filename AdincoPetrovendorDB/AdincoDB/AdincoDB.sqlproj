@@ -9,8 +9,7 @@
     <ProjectGuid>{5be417c5-35e2-4b67-8ac2-2585dd4888c4}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
-    <RootPath>
-    </RootPath>
+    <RootPath />
     <RootNamespace>AdincoDB</RootNamespace>
     <AssemblyName>AdincoDB</AssemblyName>
     <ModelCollation>1033,CI</ModelCollation>
@@ -109,7 +108,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
-    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
     <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
     <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
   </PropertyGroup>
@@ -13090,6 +13088,13 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_DesactivarValoresConciliadosProduccion.sql" />
     <Build Include="dbo\Tables\Tables1\CO_ValoresConciliadosProducionBitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ArchivosPozos.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_WDEA_Produccion_Diaria.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS_Bitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_GRD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_Download_1.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_Detalle_INS_1.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_WDEA_Produccion_Diaria_Detalle_1.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
