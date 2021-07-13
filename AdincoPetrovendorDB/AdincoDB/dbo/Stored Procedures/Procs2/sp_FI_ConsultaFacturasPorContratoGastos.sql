@@ -12,7 +12,10 @@ AS
     -- Create date: 14-01-2017
     -- Description: Lista las facturas de un contrato
     -- =============================================
-
+	-- Modifier: Neri del Angel
+    -- Modifier date: 24-06-2021
+	-- Description: Update tipo comprobante cuando tipo comprobante is null y uuid is null
+    -- =============================================
      BEGIN
          -- SET NOCOUNT ON added to prevent extra result sets from
          -- interfering with SELECT statements.
@@ -366,6 +369,14 @@ AS
          FROM #Facturas F
               JOIN #CartasProcura CP ON CP.UUID = F.UUID
          WHERE F.UUID = CP.UUID;
+
+		 /**/
+		 
+		 UPDATE #Facturas 
+		 SET 
+			TipoComprobante = '' 
+		 WHERE TipoComprobante IS NULL 
+			   AND UUID IS NULL
 
          /**/
 

@@ -7,10 +7,6 @@
 -- Create date: 18-02-21
 -- Description:	adecuacion para reporte DEA PROVEEDOR A PROVEEDOR
 -- =============================================
--- Author: Luis David De La Cruz
--- Create date: 18-04-21
--- Description:	Validación del contrato para generar la carta de contenido nacional de murphy
--- =============================================
 ALTER PROCEDURE [dbo].[SP_MPY_MM_CartaProveedorDetalle_MV1_5] --2682
     -- Add the parameters for the stored procedure here
     @IdPedido INT,

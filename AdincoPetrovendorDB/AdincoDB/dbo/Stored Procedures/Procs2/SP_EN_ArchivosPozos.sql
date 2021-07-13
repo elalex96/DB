@@ -28,7 +28,19 @@ AS
 		UUIDAmazon,
 		NombreArchivo,
 		Meta,
-		LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo)))) AS TipoArchivo
+		LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo)))) AS TipoArchivo,
+		CASE
+			WHEN NombreArchivo LIKE '%RAP%' THEN 'label label-success'
+			WHEN NombreArchivo LIKE '%ACUSE%' THEN 'label label-primary'
+			WHEN NombreArchivo LIKE '%FORMATO%' THEN 'label label-danger'
+			ELSE 'label label-default'
+		END AS TipoArchivoENTSPAN,
+		CASE
+			WHEN NombreArchivo LIKE '%RAP%' THEN 'RAP'
+			WHEN NombreArchivo LIKE '%ACUSE%' THEN 'ACUSE'
+			WHEN NombreArchivo LIKE '%FORMATO%' THEN 'FORMATO'
+			ELSE 'OTROS'
+		END AS TipoArchivoENTTEXT
 	FROM
 		EN_ENTREGABLE   E
 	JOIN

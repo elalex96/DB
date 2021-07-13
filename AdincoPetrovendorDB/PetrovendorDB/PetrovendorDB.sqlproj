@@ -10589,6 +10589,19 @@
     <Build Include="dbo\Stored Procedures\Procs2\spCentroCostoFiltroIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_DesactivarDocumentoGeneral.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_DEA_EnviarNotificacionCotizacionProveedores.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_PlantillaFacturaAprobadaProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_GuardarNuevaSolicitudRecepcion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultarSolicitudesAceptacionPedidoPorPedido.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultarSolicitudesAceptacionPedido.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultarDocumentosAnexos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultaDetalleSolicitudRecepcion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultaDetalleNuevaSolicitudRecepcion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultaDetalleAprobacionSolicitudRecepcion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_CambioAprobacionSolicitudAceptacionPedido.sql" />
+    <Build Include="dbo\Tables\MM_SolicitudAceptacionPedido.sql" />
+    <Build Include="dbo\Tables\MM_SolicitudAceptacionPedidoDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_ValidarProveedor_CARTACN.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
@@ -10601,5 +10614,7 @@
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_AgregarNuevoFlujoAprobacionCompraDirecta.sql" />
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_ObtenerDetalleAprobacionComprobanteDirecto.sql" />
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_CambiarEstatusFacturaMercadeo.sql" />
+    <None Include="dbo\Stored Procedures\Procs2\SRAP_AgregarAdjuntoEnDocumentosS3.sql" />
+    <None Include="dbo\User Defined Types\TY_PedidoDetalleAceptacion.sql" />
   </ItemGroup>
 </Project>

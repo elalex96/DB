@@ -27,6 +27,7 @@
     [Modelo]                   VARCHAR (MAX)  NULL,
     [NumeroParte]              VARCHAR (MAX)  NULL,
     [CentroCosto]              VARCHAR (300)  NULL,
+    [CantidadProveedoresCotizaron] VARCHAR(MAX) NULL
     CONSTRAINT [PK_BI_Requisicion] PRIMARY KEY CLUSTERED ([ID_BI_SolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 
