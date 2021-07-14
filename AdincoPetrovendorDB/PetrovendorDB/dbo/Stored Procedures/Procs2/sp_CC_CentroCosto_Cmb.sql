@@ -1,15 +1,19 @@
-﻿use Petrovendor
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_CC_CentroCosto_Cmb'
+)
+    DROP PROCEDURE sp_CC_CentroCosto_Cmb;
+/****** Object:  StoredProcedure [dbo].[sp_CC_CentroCosto_Cmb]    Script Date: 13/07/2021 01:27:00 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-go
-
-if exists(select * from sys.procedures where name = 'sp_CC_CentroCosto_Cmb')
-begin
-	drop proc sp_CC_CentroCosto_Cmb
-end
-
-go
-
-create proc sp_CC_CentroCosto_Cmb
+CREATE proc [dbo].[sp_CC_CentroCosto_Cmb]
 (
 	@IdProveedor	int
 )
@@ -19,7 +23,6 @@ begin
 				CentroCosto
 		from	CC_CentroCosto
 		where	((IdProveedor =	@IdProveedor) or @IdProveedor = -1)
+		ORDER BY CentroCosto ASC
 end
-
-go
 
