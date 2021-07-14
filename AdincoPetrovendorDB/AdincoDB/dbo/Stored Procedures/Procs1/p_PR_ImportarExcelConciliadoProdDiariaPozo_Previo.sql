@@ -1,5 +1,5 @@
 ﻿
-alter PROc p_PR_ImportarExcelConciliadoProdDiariaPozo_Previo
+CREATE PROc p_PR_ImportarExcelConciliadoProdDiariaPozo_Previo
 @pId int out,
 @pIdProdDiaria int out,
 @pContrato varchar(250),
@@ -55,7 +55,7 @@ as
 	begin
 		select @pidBloque =Id
 		from PR_Bloque
-		where replace(ltrim(RTRIM(Descripcion)),'','') = RTRIM(@pBloque)
+		where UPPER(replace(ltrim(RTRIM(Descripcion)),'','')) = REPLACE(UPPER(LTRIM(RTRIM(@pBloque))),'','')
 	end
 
 
