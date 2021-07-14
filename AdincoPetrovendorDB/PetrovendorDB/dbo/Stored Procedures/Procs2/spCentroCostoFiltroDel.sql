@@ -1,15 +1,20 @@
-﻿use Petrovendor
+﻿USE [Petrovendor]
+GO
 
-go
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'spCentroCostoFiltroDel'
+)
+    DROP PROCEDURE spCentroCostoFiltroDel;
+/****** Object:  StoredProcedure [dbo].[spCentroCostoFiltroDel]    Script Date: 13/07/2021 12:50:08 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
-if exists (select * from sys.procedures where name  = 'spCentroCostoFiltroDel')
-begin
-	drop proc spCentroCostoFiltroDel
-end
-
-go
-
-create proc spCentroCostoFiltroDel
+CREATE proc [dbo].[spCentroCostoFiltroDel]
 (
 	@IdCentroCosto	int,
 	@IdUsuario		int,
