@@ -1,6 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS]    Script Date: 12/07/2021 09:44:49 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS]    Script Date: 16/07/2021 11:42:08 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -56,7 +56,7 @@ BEGIN
 		SELECT
 			@ACTIVO = CASE
 						WHEN Activo = 'SI' THEN 1
-						WHEN Activo = 'NO' THEN 1
+						WHEN Activo = 'NO' THEN 0
 					END,
 			@DIASALERTAPREVIO = DiasAlertaPrevia,
 			@DIASELABORACION = DiasElaboracion,
@@ -83,7 +83,7 @@ BEGIN
 				CE.DiasElaboracion = TE.DiasElaboracion,
 				CE.DiasRevision = TE.DiasRevicion,
 				CE.DiasAprobacion = TE.DiasAprobacion,
-				CE.Activo = @ACTIVO,
+				CE.Activo = ISNULL(@ACTIVO,0),
 				CE.ReceptorAlerta = TE.ReceptorAlerta,
 				CE.AccountableCompliance = TE.LiderArea,
 				CE.FocalPoint = TE.ElaboradorInterno,
