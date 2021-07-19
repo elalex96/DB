@@ -1,6 +1,5 @@
 ﻿USE [Petrovendor]
 GO
-
 IF EXISTS
 (
     SELECT 1
@@ -8,8 +7,7 @@ IF EXISTS
     WHERE name = 'SRAP_ConsultaDetalleAprobacionSolicitudRecepcion'
 )
     DROP PROCEDURE SRAP_ConsultaDetalleAprobacionSolicitudRecepcion;
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallesVenta]    Script Date: 11/06/2021 12:01:56 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 16/07/2021 09:22:00 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -32,9 +30,19 @@ AS
 	-- interfering with SELECT statements.
          SET NOCOUNT ON;
 		DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido')
-		DECLARE @NoSecuenciaUsuarioActual INT 
+		DECLARE @NoSecuenciaUsuarioSolicitante INT 
 		DECLARE @IdEstatusUsuarioAnteriorSecuencia INT
 		DECLARE @NoSecuenciaAprobadorAnterior INT 
+		DECLARE @EstatusIdAprobacionActual INT
+		DECLARE @IdOperacion INT 
+		DECLARE @EstatusSolicitanteId INT 
+		DECLARE @ContratoId INT 
+		DECLARE @tbUsuarioOBS AS TABLE(IdUsuario INT, Nombre NVARCHAR(MAX)) 
+	    DECLARE @CantidadUsuarioOBS INT
+	   /*OBTENER CONTRATO DEL PEDIDO ACTUAL*/
+	   SELECT @ContratoId= IdContrato 
+	   FROM MM_Pedido 
+	   WHERE IdPedido= @IdPedido
     -- Insert statements for procedure here
 	    	
 						
@@ -159,85 +167,218 @@ AS
 
 	   /*TABLA 4 APROBADORES*/
 	   BEGIN     
-         /*TABLA CON INFORMACIÓN DE APROBACIÓN*/
-		 SELECT 
-		 T.IdTarea,
-		 T.IdEstatus,
-		 U.Nombre AS Aprobador,
-		 ISNULL(T.Comentario,'') AS Comentario,
-		 ISNULL(FORMAT(T.FechaCambioEstatus,'dd/MM/yyyy HH:mm'),'') AS FechaCambioEstatus,
-		 E.Nombre AS Estatus,
-		 T.IdOperacion 
+	     -- EN TEORIA SIEMPRE HAY UN APROBADOR NO.1 QUE ES EL SOLICITANTE DE LA REQUISICION 
+		 -- EL SEGUNDO APROBADOR ES CUALQUIER USUARIO DE OBS (SELECT * FROM DEA_UsuarioOBD WHERE ContratoId=@ContratoId)
+		 
+		 /*VALIDAR CUANTOS USUARIOS DE OBS EXISTEN EN EL CONTRATO, SI SOLO EXISTE UNO, MOSTRAR NOMBRE DEL USUARIO, 
+		 SI SON MAS DE UNO MOSTRAR OBS COMO APROBADOR*/
+		  SELECT 			
+			@CantidadUsuarioOBS =	 COUNT(U.IdUsuario)
+			FROM DEA_UsuarioOBS UOBS
+			JOIN S_Usuario U
+			ON UOBS.IdUsuario=U.IdUsuario				
+			WHERE UOBS.Activo = 1	
+			AND UOBS.IdContrato=@ContratoId				
+								
+		
+		IF @CantidadUsuarioOBS = 1 
+		BEGIN 
+			INSERT INTO @tbUsuarioOBS(IdUsuario,Nombre)
+			SELECT 			
+				U.IdUsuario,U.Nombre
+			FROM DEA_UsuarioOBS UOBS
+			JOIN S_Usuario U
+			ON UOBS.IdUsuario=U.IdUsuario				
+			WHERE UOBS.Activo = 1	
+			AND UOBS.IdContrato=@ContratoId		
+			GROUP BY U.Nombre,U.IdUsuario 		 
+		END 
+		ELSE 
+		BEGIN
+			INSERT INTO @tbUsuarioOBS(IdUsuario,Nombre)
+			VALUES(-1,'OBS')
+		END 
+
+		/*OBTENER ESTATUS ACTUAL DE LA APROBACION GRAL*/
+		 SELECT  @EstatusIdAprobacionActual = O.IdEstatusOperacion,
+		 @IdOperacion=O.IdOperacion
 		 FROM TA_Operacion O
-		 JOIN TA_Tarea T 
-			ON O.IdOperacion = T.IdOperacion
-		 JOIN S_Usuario U
-			ON T.IdAprobador = U.IdUsuario
-		 JOIN TA_Estatus E
-			ON T.IdEstatus = E.IdEstatus
-		WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
-		AND O.IdTipoOperacion=@TipoOperacionId		
-		AND T.Activo=1
+		 WHERE 	  
+		 O.IdDocumento=@IdSolicitudAceptacionPedido
+		 AND O.IdTipoOperacion=@TipoOperacionId
+
+		 IF @EstatusIdAprobacionActual IN (2,3) --> SI ESTA APROBADA O RECHAZADA MOSTRAR APROBADORES QUE REALIZARON LA ACCION
+		 BEGIN
+			 /*TABLA CON INFORMACIÓN DE APROBACIÓN*/
+			 SELECT 
+			 T.IdTarea,
+			 T.IdEstatus,
+			 U.Nombre AS Aprobador,
+			 ISNULL(T.Comentario,'') AS Comentario,
+			 ISNULL(FORMAT(T.FechaCambioEstatus,'dd/MM/yyyy HH:mm'),'') AS FechaCambioEstatus,
+			 E.Nombre AS Estatus,
+			 T.IdOperacion 
+			 FROM TA_Operacion O
+			 JOIN TA_Tarea T 
+				ON O.IdOperacion = T.IdOperacion
+			 JOIN S_Usuario U
+				ON T.IdAprobador = U.IdUsuario
+			 JOIN TA_Estatus E
+				ON T.IdEstatus = E.IdEstatus
+			WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
+			AND O.IdTipoOperacion=@TipoOperacionId		
+			AND T.Activo=1
+			ORDER BY T.NoSecuencia ASC 
+		END 
+		ELSE 
+		BEGIN
+		 /*LA APROBACIÓN AUN ESTA EN ESTA APROBACION ENTONCES MOSTRAR USUARIO DE OBS Ó
+		 SE AGREGA UN USUARIO GENERICO PARA EL GRUPO DE USUARIOS DE OBS
+		 */
+			SELECT 
+			 T.IdTarea,
+			 T.IdEstatus,
+			 U.Nombre AS Aprobador,
+			 ISNULL(T.Comentario,'') AS Comentario,
+			 ISNULL(FORMAT(T.FechaCambioEstatus,'dd/MM/yyyy HH:mm'),'') AS FechaCambioEstatus,
+			 E.Nombre AS Estatus,
+			 T.IdOperacion 
+			 FROM TA_Operacion O
+			 JOIN TA_Tarea T 
+				ON O.IdOperacion = T.IdOperacion
+			 JOIN S_Usuario U
+				ON T.IdAprobador = U.IdUsuario
+			 JOIN TA_Estatus E
+				ON T.IdEstatus = E.IdEstatus
+			WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
+			AND O.IdTipoOperacion=@TipoOperacionId		
+			AND T.Activo=1
+
+			UNION ALL
+
+			SELECT 
+			IdTarea= -1,
+			IdEstatus=1,
+			Aprobador=UOBS.Nombre,
+			Comentario='',
+			FechaCambioEstatus='',
+			Estatus='En aprobación', 
+			IdOperacion=@IdOperacion
+			FROM @tbUsuarioOBS UOBS
+
+			
+		END 
+
 	  END 
 
 	  /*TABLA 5 APROBADOR ACTUAL*/
 	  BEGIN
-	    
-		/*POR DEFAULT ESTE TIPO DE APROBACIONES NO TIENEN FLUJO DE APROBACION,  POR DEFAULT SON APROBACIONES SERIALES*/
+	    /*LAS APROBACIONES DE SOLICITUD  DE ACEPTACIONES DE PEDIDO POR DEFAULT SON DE TIPO APROBACION SERIAL(NO TIENEN FLUJO DEFINO EN TA_OPERACION)*/
+		/* EL FLUJO CONSISTE EN DOS APROBADORES 
+		  APROBADOR 1 --> SOLICITANTE DE LA REQUISION --> EN TA_TAREA SE DEFINE EL TIPO COMO NombreTarea = 'Solicitud Aceptación pedido'
+		  APROBADOR 2 --> CUALQUIER USUARIO DE OBS DEL CONTRATO ACTUAL --> EN TA_TAREA SE DEFINE EL TIPO COMO NombreTarea = 'Solicitud Aceptación pedido OBS'
+		  PARA QUE LA APROBACION GRAL ESTE APROBADA DEBE ESTAR APROBADA POR LOS 2 TIPOS DE APROBADORES
+		  SI EL APROBADOR NO.1 RECHAZA YA NO SE MUESTRA LA OPCIÓN DE APROBACIÓN DEL USUARIO NO.2
+		 */
 
-		 ---OBTENER EL NUMERO DE SECUENCIA DEL USUARIO ACTUAL SI ES APROBADOR DEL FLUJO ACTUAL    
-        SELECT @NoSecuenciaUsuarioActual = TT.NoSecuencia  
+		 /*VALIDAR SI APROBADOR NO.1 (SOLICITANTE DE LA REQUISICION) TODAVIA ESTA EN APROBACION*/
+			 		
+        SELECT @EstatusSolicitanteId = TT.IdEstatus,
+		@NoSecuenciaUsuarioSolicitante = TT.NoSecuencia		  
         FROM TA_Operacion O  
             JOIN TA_Tarea TT  
                 ON O.IdOperacion = TT.IdOperacion  
         WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
-			 AND O.IdTipoOperacion=@TipoOperacionId	
-              AND TT.IdAprobador = @IdUsuario  
-              AND TT.Activo = 1;  
-  
-        ---OBTENER EL ESTATUS DEL APROBADOR ANTERIOR     
-        --- ESTO ES PARA BLOQUEAR BOTONES DE APROBACIÓN SI LA APROBACIÓN ES DE TIPO SERIAL    
-        SELECT @IdEstatusUsuarioAnteriorSecuencia = TT.IdEstatus,  
-               @NoSecuenciaAprobadorAnterior = TT.NoSecuencia  
-        FROM TA_OPERACION O  
-            JOIN TA_Tarea TT  
-                ON O.IdOperacion = TT.IdOperacion  
-        WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
-			 AND O.IdTipoOperacion=@TipoOperacionId	 
-              AND TT.NoSecuencia = (ISNULL(@NoSecuenciaUsuarioActual, 0) - 1)  
-              AND TT.Activo = 1;  
+			 AND O.IdTipoOperacion=@TipoOperacionId	             
+              AND TT.Activo = 1
+			  AND TT.NombreTarea ='Solicitud Aceptación pedido' --> ES PARA VERIFICAR LAS APROBACIONES DEL SOLICITANTE
+        ORDER BY TT.NoSecuencia	 DESC
 
-		SELECT 
-		 'ES_APROBADOR'  AS EsAprobador,    
-		 T.NoSecuencia,
-		 T.IdTarea,
-		 T.IdEstatus,
-		 U.Nombre AS Aprobador,
-		 ISNULL(T.Comentario,'') AS Comentario,
-		 ISNULL(FORMAT(T.FechaCambioEstatus,'dd/MM/yyyy HH:mm'),'') AS FechaCambioEstatus,
-		 E.Nombre AS Estatus,
-		 CASE WHEN ISNULL(@IdEstatusUsuarioAnteriorSecuencia, 0) = 1 THEN 
-			'ESPERAR_USUARIO_ANTERIOR'
-		 ELSE 
-		    'HABILITAR_APROBACION'
-		  END
-		 AS EsperarAprobacion,  
-         ISNULL(@NoSecuenciaAprobadorAnterior, 0) AS NoSecuenciaAnterior,
-		 O.IdOperacion  
-		 FROM TA_Operacion O
-		 JOIN TA_Tarea T 
-			ON O.IdOperacion = T.IdOperacion
-		 JOIN S_Usuario U
-			ON T.IdAprobador = U.IdUsuario
-		 JOIN TA_Estatus E
-			ON T.IdEstatus = E.IdEstatus
-		WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
-		AND O.IdTipoOperacion=@TipoOperacionId	
-		AND T.IdAprobador=@IdUsuario
-		AND T.Activo=1
+        IF ISNULL(@EstatusSolicitanteId,0) = 1 --> EL APROBADOR NO.1 ESTA EN APROBACION
+		BEGIN
+			/*VALIDAR SI EL USUARIO ES APROBADOR NO. 1 ES EL USUARIO ACTUAL*/
+			SELECT 
+			 'ES_APROBADOR'  AS EsAprobador,    
+			 T.NoSecuencia,
+			 T.IdTarea,
+			 T.IdEstatus,
+			 U.Nombre AS Aprobador,
+			 ISNULL(T.Comentario,'') AS Comentario,
+			 ISNULL(FORMAT(T.FechaCambioEstatus,'dd/MM/yyyy HH:mm'),'') AS FechaCambioEstatus,
+			 E.Nombre AS Estatus,
+			 'HABILITAR_APROBACION' AS EsperarAprobacion,  
+			 0 AS NoSecuenciaAnterior,
+			 O.IdOperacion,
+			 U.IdUsuario,
+			 'Solicitud Aceptación pedido' AS TipoAprobador 
+			 FROM TA_Operacion O
+			 JOIN TA_Tarea T 
+				ON O.IdOperacion = T.IdOperacion
+			 JOIN S_Usuario U
+				ON T.IdAprobador = U.IdUsuario
+			 JOIN TA_Estatus E
+				ON T.IdEstatus = E.IdEstatus
+			WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
+			AND O.IdTipoOperacion=@TipoOperacionId	
+			AND T.IdAprobador=@IdUsuario
+			AND T.Activo=1
+		END 
+		ELSE 
+		BEGIN
+			/*EL APROBADOR No.1 YA NO ESTA EN APROBACION POR QUE YA APROBO O RECHAZO*/
+			/*VALIDAR SI LA APROBACION GENERAL TODAVIA ESTA EN APROBACION*/			
+			 SELECT  @EstatusIdAprobacionActual = O.IdEstatusOperacion,
+			 @IdOperacion=O.IdOperacion
+			 FROM TA_Operacion O
+			 WHERE 	  
+			 O.IdDocumento=@IdSolicitudAceptacionPedido
+			 AND O.IdTipoOperacion=@TipoOperacionId
+			 			
+				/*VALIDAR SI EL USUARIO ACTUAL ES PARTE DEL GRUPO DE OBS*/
+				SELECT 
+				EsAprobador='ES_APROBADOR',    
+				NoSecuencia= (@NoSecuenciaUsuarioSolicitante+1),
+				 IdTarea =-1,
+				 IdEstatus=1, --> EN APROBACIÓN
+				 Aprobador=U.Nombre,
+				 Comentario= '',
+				 FechaCambioEstatus = '',
+				 Estatus='En aprobación',
+				 EsperarAprobacion='HABILITAR_APROBACION',  
+				 NoSecuenciaAnterior = @NoSecuenciaUsuarioSolicitante,
+				 IdOperacion =@IdOperacion,
+				 U.IdUsuario,
+				 TipoAprobador = 'Solicitud Aceptación pedido OBS'     
+				FROM DEA_UsuarioOBS UOBS
+				JOIN S_Usuario U
+				ON UOBS.IdUsuario=U.IdUsuario				
+				WHERE UOBS.Activo = 1	
+				AND UOBS.IdContrato=@ContratoId
+				AND UOBS.IdUsuario = @IdUsuario
+				AND CASE WHEN ISNULL(@EstatusIdAprobacionActual,0) = 1 THEN 1 ELSE 0 END = 1 -->SOLO MOSTRAR SI LA APROBACIÒN GRAL AUN SIGUE EN APROBACION, FALTA QUE APRUEBE ALGUN USUARIO DE OBS
+				GROUP BY U.Nombre, U.IdUsuario 							
+				ORDER BY U.Nombre ASC 
 
-
+			 
+			 
+		END 
 	  END 
+
+	   /*TABLA 6 USUARIO OBS RELACIONADOS AL CONTRATO DEL PEDIDO*/
+	   BEGIN 
+		
+			SELECT 			
+				Usuario=U.Nombre,				 
+				U.IdUsuario  
+			FROM DEA_UsuarioOBS UOBS
+			JOIN S_Usuario U
+			ON UOBS.IdUsuario=U.IdUsuario				
+			WHERE UOBS.Activo = 1	
+			AND UOBS.IdContrato=@ContratoId		
+			GROUP BY U.Nombre, U.IdUsuario 							
+			ORDER BY U.Nombre ASC
+		
+	   END 
 
 END;
 

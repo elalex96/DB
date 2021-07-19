@@ -1,6 +1,5 @@
 ﻿USE [Petrovendor]
 GO
-
 IF EXISTS
 (
     SELECT 1
@@ -8,8 +7,7 @@ IF EXISTS
     WHERE name = 'SRAP_GuardarNuevaSolicitudRecepcion'
 )
     DROP PROCEDURE SRAP_GuardarNuevaSolicitudRecepcion;
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallesVenta]    Script Date: 11/06/2021 12:01:56 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_GuardarNuevaSolicitudRecepcion]    Script Date: 18/07/2021 01:43:49 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,7 +15,7 @@ GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
--- Description:	Consultar detalle de solicitud de recepción de pedido
+-- Description:	Guardar detalle de solicitud de recepción de pedido -Aprobación Gral
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_GuardarNuevaSolicitudRecepcion] 
 	-- Add the parameters for the stored procedure here
@@ -85,7 +83,7 @@ AS
 		WHERE 		
 		P.IdPedido = @IdPedido
 
-		/*1.1 VALIDAR SE ENCUENTRE PEDIDOS DETALLES*/
+		/*1.1 VALIDAR SE ENCUENTREN PEDIDOS DETALLES*/
 
 		SET @CantidadProductos = (SELECT COUNT(1) FROM @tbPedidoDetalle)
 		IF @CantidadProductos=0
@@ -152,7 +150,7 @@ AS
 
 		/*ACTUALIZAR LA VALIDACION EXITOSA*/
 		UPDATE @tbPedidoDetalle
-		SET ValidacionExitosa = (CASE WHEN CantidadRestante >= CantidadRecepcionar THEN 1 ELSE 0 END)
+		SET ValidacionExitosa = (CASE WHEN CAST(CantidadRestante  AS DECIMAL(28,4)) >=  CAST(CantidadRecepcionar AS DECIMAL(28,4)) THEN 1 ELSE 0 END)
 
 	   SET @ValidacionesNoExitosas =  (SELECT COUNT(1)  FROM @tbPedidoDetalle WHERE ValidacionExitosa = 0)
 	   IF @ValidacionesNoExitosas >	   0
@@ -201,7 +199,7 @@ AS
 		WHERE P.IdPedido=@IdPedido
 
 		/*AGREGAR AL APROBADOR --> 
-			-->NUMERO DE SECUENCIA DEFAULT EN 1 POR QUE SOLO ES UN APROBADOR*/
+		-->NUMERO DE SECUENCIA DEFAULT EN 1 POR QUE SOLO ES UN APROBADOR*/
 	   INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion)
 	   VALUES ('Solicitud Aceptación pedido', @IdSolicitanteRequisicion,@IdEstatusEnAprobacion,0,'','',GETDATE(),1,1,@IdOperacion)
 	  

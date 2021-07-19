@@ -1,5 +1,4 @@
 ﻿
-
 -- p_CO_WDEA_Produccion_Diaria_GRD 170
 Create proc p_CO_WDEA_Produccion_Diaria_GRD
 @IdContrato INT

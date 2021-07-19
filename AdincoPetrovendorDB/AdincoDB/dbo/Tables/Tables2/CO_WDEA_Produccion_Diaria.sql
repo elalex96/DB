@@ -1,10 +1,4 @@
-﻿/****** Object:  Table [dbo].[CO_WDEA_Produccion_Diaria]    Script Date: 09/07/2021 06:11:15 p. m. ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 CREATE TABLE [dbo].[CO_WDEA_Produccion_Diaria](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[IdContrato] [int] NOT NULL,
