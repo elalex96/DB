@@ -1,6 +1,5 @@
-﻿CREUSE [Petrovendor]
+﻿USE [Petrovendor]
 GO
-
 IF EXISTS
 (
     SELECT 1
@@ -8,8 +7,7 @@ IF EXISTS
     WHERE name = 'SRAP_ConsultaDetalleNuevaSolicitudRecepcion'
 )
     DROP PROCEDURE SRAP_ConsultaDetalleNuevaSolicitudRecepcion;
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallesVenta]    Script Date: 11/06/2021 12:01:56 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleNuevaSolicitudRecepcion]    Script Date: 19/07/2021 12:37:01 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,7 +15,7 @@ GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
--- Description:	Consultar detalle de solicitud de recepción de pedido
+-- Description:	Consultar detalle para crear nueva solicitud de recepción de pedido
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleNuevaSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
@@ -122,11 +120,11 @@ AS
 		/*ACTUALIZAR CANTIDADES*/
 		UPDATE @tbPedidoDetalle
 		SET CantidadProcesada = (CantidadAceptada + CantidadEnAprobacion),
-		CantidadRestante = CASE WHEN  (CantidadPedido - (CantidadAceptada + CantidadEnAprobacion)) < 0 THEN 0 ELSE (CantidadPedido - (CantidadAceptada + CantidadEnAprobacion)) END 
+		CantidadRestante = CASE WHEN  CAST((CantidadPedido - (CantidadAceptada + CantidadEnAprobacion)) AS DECIMAL(28,4)) <  CAST(0 AS DECIMAL(28,4)) THEN 0 ELSE (CantidadPedido - (CantidadAceptada + CantidadEnAprobacion)) END 
 
 		/*ACTUALIZAR LA VALIDACION EXITOSA*/
 		UPDATE @tbPedidoDetalle
-		SET TodoProcesado = (CASE WHEN CantidadRestante = 0  THEN 1 ELSE 0 END)
+		SET TodoProcesado = (CASE WHEN CAST(CantidadRestante AS DECIMAL(28,4)) = 0  THEN 1 ELSE 0 END)
 		
 			
 	   /*ENCABEZADO DEL PEDIDO*/	       

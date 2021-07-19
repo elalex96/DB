@@ -1,6 +1,5 @@
 ﻿USE [Petrovendor]
 GO
-
 IF EXISTS
 (
     SELECT 1
@@ -8,8 +7,7 @@ IF EXISTS
     WHERE name = 'SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor'
 )
     DROP PROCEDURE SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor;
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallesVenta]    Script Date: 11/06/2021 12:01:56 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor]    Script Date: 18/07/2021 09:56:26 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -103,6 +101,6 @@ AS
 		 C.NumeroContrato,
 		 US.Nombre,
 		 P.IdPeticionOferta 	    
-
+		 ORDER BY SAP.IdSolicitudAceptacionPedido DESC
 END;
 

@@ -10602,6 +10602,7 @@
     <Build Include="dbo\Tables\MM_SolicitudAceptacionPedido.sql" />
     <Build Include="dbo\Tables\MM_SolicitudAceptacionPedidoDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_ValidarProveedor_CARTACN.sql" />
+    <Build Include="dbo\Tables\DEA_UsuarioOBS.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
@@ -10616,5 +10617,8 @@
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_CambiarEstatusFacturaMercadeo.sql" />
     <None Include="dbo\Stored Procedures\Procs2\SRAP_AgregarAdjuntoEnDocumentosS3.sql" />
     <None Include="dbo\User Defined Types\TY_PedidoDetalleAceptacion.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\DEA_SP_UsuarioOBS_Grid.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\DEA_SP_UsuarioOBS_Combos.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\DEA_SP_AdministrarUsuarioOBS.sql" />
   </ItemGroup>
 </Project>
