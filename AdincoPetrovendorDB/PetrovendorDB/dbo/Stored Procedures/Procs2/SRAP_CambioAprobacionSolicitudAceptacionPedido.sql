@@ -1,6 +1,5 @@
 ﻿USE [Petrovendor]
 GO
-
 IF EXISTS
 (
     SELECT 1
@@ -8,8 +7,7 @@ IF EXISTS
     WHERE name = 'SRAP_CambioAprobacionSolicitudAceptacionPedido'
 )
     DROP PROCEDURE SRAP_CambioAprobacionSolicitudAceptacionPedido;
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallesVenta]    Script Date: 11/06/2021 12:01:56 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_CambioAprobacionSolicitudAceptacionPedido]    Script Date: 16/07/2021 10:40:36 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -32,13 +30,25 @@ CREATE PROCEDURE [dbo].[SRAP_CambioAprobacionSolicitudAceptacionPedido]
 @NombreRecibidoPor NVARCHAR(MAX),
 @IdDomicilioEntrega INT,
 @IdTarea INT,
-@IdOperacion INT
-
+@IdOperacion INT,
+@NombreTarea  NVARCHAR(MAX)
 AS
      BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
          SET NOCOUNT ON;
+
+		 /*LAS APROBACIONES DE SOLICITUD  DE ACEPTACIONES DE PEDIDO POR DEFAULT SON DE TIPO APROBACION SERIAL(NO TIENEN FLUJO DEFINO EN TA_OPERACION)*/
+		/* EL FLUJO CONSISTE EN DOS APROBADORES 
+		  APROBADOR 1 --> SOLICITANTE DE LA REQUISION --> EN TA_TAREA SE DEFINE EL TIPO COMO NombreTarea = 'Solicitud Aceptación pedido'
+		  APROBADOR 2 --> CUALQUIER USUARIO DE OBS DEL CONTRATO ACTUAL --> EN TA_TAREA SE DEFINE EL TIPO COMO NombreTarea = 'Solicitud Aceptación pedido OBS'
+		  PARA QUE LA APROBACION GRAL ESTE APROBADA DEBE ESTAR APROBADA POR LOS 2 TIPOS DE APROBADORES
+		  SI EL APROBADOR 1 APRUEBA LA SOLICITUD, SE ENVIA NOTIFICACION AL APROBADOR 2 (NO SE AFECTA LA OPERACION GRAL)
+		  SI EL APROBADOR 1 RECHAZA SE RECHAZA TODA LA OPERACION GRAL
+		  SI EL APROBADOR 2 APRUEBA SE APRUEBA TODA LA OPERACION GRAL
+		  SI EL APROBADOR 2 RECHAZA SE RECHAZA TODA LA OPERACION GRAL
+		  EL APROBADOR 2 NO PUEDE APROBAR SI EL APROBADOR 1 NO HA REALIZADO LA APROBACION(COMO APROBADA)
+		 */
 
 		 DECLARE @NuevoEstatusId INT 
 		 DECLARE @TareaActualId INT 
@@ -47,6 +57,7 @@ AS
 		 DECLARE @FechaActual DATETIME  = (SELECT GETDATE())
 		 DECLARE @DescripcionH NVARCHAR(MAX)
 		 DECLARE @EstatusAprobacionId INT 
+		 DECLARE @IdEstatusEnAprobacion INT = 1 --> CTE -->EN APROBACIÓN
 		 DECLARE @IdNacionalidadProveedor INT 
 		 DECLARE @IdRegimenProveedor INT 
 		 DECLARE @IdProveedorVenta INT 
@@ -57,7 +68,11 @@ AS
 		 DECLARE @NombreAreaContratual NVARCHAR(MAX)
 	     DECLARE @NombreEstatusAprobacionActual NVARCHAR(MAX)
 		 DECLARE @NombreEstatusAprobacionActualEN NVARCHAR(MAX)
-
+		 DECLARE @EsUsuarioOBS INT
+		 DECLARE @ContratoId INT
+		 DECLARE @NotificarAprobacionOBS BIT =0
+		 DECLARE @NoSecuenciaOBS INT
+		 DECLARE @NombreNuevoEstatusAprobador NVARCHAR(MAX)
 
 		DECLARE @CountTarea INT;
         DECLARE @CountEstApr INT;
@@ -96,21 +111,35 @@ AS
         -- 7 Reasignada
         --12 Eliminado
 		
-		/*0. OBTENER INFORMACION IMPORTANTE */
+		/*1. OBTENER INFORMACION IMPORTANTE --> MAPEAR ESTATUS*/
 		BEGIN
 			 IF @AccionAprobacion = 'APROBAR'
 			 BEGIN 
-				SET @NuevoEstatusId = 2 
+				SET @NuevoEstatusId = 2 --> CTE APROBADO (TA_ESTATUS)
 			 END 
 		 
 			 IF  @AccionAprobacion = 'RECHAZAR'
 			 BEGIN 
-				SET @NuevoEstatusId = 3
+				SET @NuevoEstatusId = 3--> CTE RECHAZADO (TA_ESTATUS)
 			 END
+
+			 /*ADAPTACIÓN DE TEXTOS PARA REGISTRO DE HISTORIAL */
+			 SET @NombreNuevoEstatusAprobador = (SELECT Nombre FROM TA_Estatus WHERE IdEstatus = @NuevoEstatusId)
+
+			IF @NombreNuevoEstatusAprobador = 'Aprobada'
+			BEGIN
+				SET @NombreNuevoEstatusAprobador = N'Aprobado'
+			END
+
+			IF @NombreNuevoEstatusAprobador = 'Rechazada'
+			BEGIN
+				SET @NombreNuevoEstatusAprobador = N'Rechazado'
+			END
 
 			SELECT 
 			@IdPedidoGeneral = PG.IdPedido,
-			@NombreAreaContratual =  CONCAT(ISNULL(C.NumeroContrato,'') ,' - ' , ISNULL(AC.NombreAreaContractual,'')) 
+			@NombreAreaContratual =  CONCAT(ISNULL(C.NumeroContrato,'') ,' - ' , ISNULL(AC.NombreAreaContractual,'')),
+			@ContratoId = P.IdContrato
 			FROM MM_Pedido AS P  
 			JOIN MM_Pedidos AS PG 
 			ON P.IdPedido = PG.IdIdentificador 
@@ -124,165 +153,261 @@ AS
 
 		 END 
 
-		 /*1. VALIDAR QUE EL USUARIO SEA APROBADOR Y QUE LA TAREA ESTE EN APROBACIÓN */
+		 /*2. REALIZAR CAMBIO DE ESTATUS DEL APROBADOR SEGUN EL TIPO DE TAREA */
 		 BEGIN 
 		   
-		   SELECT 
-		   @TareaActualId				 = T.IdTarea,
-		   @EstatusAprobadorActualId	 = T.IdEstatus,
-		   @NombreEstatusAprobadorActual = E.Nombre
-		   FROM TA_Tarea T
-		   LEFT JOIN TA_Estatus E
-			ON T.IdEstatus = E.IdEstatus
-		   WHERE T.IdTarea		= @IdTarea
-		   AND T.IdAprobador	= @UsuarioId
-		   AND T.IdOperacion	= @IdOperacion
-		   AND T.Activo			= 1
 
-		   IF ISNULL(@TareaActualId,0) = 0
+		   IF @NombreTarea ='Solicitud Aceptación pedido' --> APROBADOR NO. 1
 		   BEGIN
-				SELECT 'ERROR_VALIDACION' AS response,
-				'No eres aprobador de esta solicitud de aceptación de pedido' AS detalle
-				RETURN 
-		   END
 
-		   IF ISNULL(@EstatusAprobadorActualId,0) <> 1 --> SI ES DIFERENTE AL ESTATUS EN APROBACIÓN
-		   BEGIN
-				SELECT 'ERROR_VALIDACION' AS response,
-				CONCAT('Ya se ha realizado la acción de aprobación anteriormente, estatus actual: ', ISNULL(@NombreEstatusAprobadorActual,'')) AS detalle
-				RETURN 
+			  /*VALIDAR QUE EL USUARIO SEA APROBADOR (APROBADOR 1)*/
+			   SELECT 
+			   @TareaActualId				 = T.IdTarea,
+			   @EstatusAprobadorActualId	 = T.IdEstatus,
+			   @NombreEstatusAprobadorActual = E.Nombre
+			   FROM TA_Tarea T
+			   LEFT JOIN TA_Estatus E
+				ON T.IdEstatus = E.IdEstatus
+			   WHERE T.IdTarea		= @IdTarea
+			   AND T.IdAprobador	= @UsuarioId
+			   AND T.IdOperacion	= @IdOperacion
+			   AND T.Activo			= 1
+
+			   IF ISNULL(@TareaActualId,0) = 0 --> NOTIFICAR QUE NO ES APROBADOR DE LA SOLICITUD
+			   BEGIN
+					SELECT 'ERROR_VALIDACION' AS response,
+					'No eres aprobador de esta solicitud de aceptación de pedido' AS detalle
+					RETURN 
+			   END
+
+			   IF ISNULL(@EstatusAprobadorActualId,0) <> 1 --> SI ES DIFERENTE AL ESTATUS EN APROBACIÓN NOTIFICAR
+			   BEGIN
+					SELECT 'ERROR_VALIDACION' AS response,
+					CONCAT('Ya se ha realizado la acción de aprobación anteriormente, estatus actual: ', ISNULL(@NombreEstatusAprobadorActual,'')) AS detalle
+					RETURN 
+			   END 
+
+			    /*ACTUALIZAR ESTATUS DE LA TAREA*/
+				BEGIN 
+
+					UPDATE TA_Tarea 
+					SET IdEstatus	= @NuevoEstatusId,
+					ModificadoEl	= @FechaActual,
+					Comentario		= @ComentarioAprobacion,
+					Visto			= 1,
+					FechaCambioEstatus= @FechaActual
+					WHERE IdTarea	= @IdTarea		
+										
+
+					 SET @DescripcionH
+					= N'El Usuario ' + (SELECT Nombre FROM S_Usuario WHERE IdUsuario = @UsuarioId)
+					  + N' ha ' + @NombreNuevoEstatusAprobador + N' la tarea de aprobación'
+			
+					INSERT INTO TA_HistorialFlujoTarea (IdOperacion, Fecha, Descripcion, IdEstadoFlujo)
+					VALUES
+					(@IdOperacion, @FechaActual, @DescripcionH, 2)
+
+				 END 	  
+				 
+				/*ACTUALIZAR ESTATUS DE LA APROBACION GRAL SI TODOS APROBARON O SI SE RECHAZO LA APROBACIÓN*/
+				BEGIN 
+						---CONTAR NUMERO DE APROBADORES EN LA APROBACION GRAL/APROBADORES
+						SET @CountTarea =
+						(
+							SELECT COUNT(T.IdEstatus) AS TOTAL
+							FROM TA_Operacion TAO
+								JOIN TA_Tarea AS T
+									ON T.IdOperacion = TAO.IdOperacion
+							WHERE TAO.IdOperacion = @IdOperacion
+								  AND T.IdEstatus <> 7 --> NO SEA REASIGNADO
+								  AND T.IdEstatus <> 12 --> NO ESTE ELIMINADO
+								  AND T.Activo = 1 --> ESTE ACTIVO
+						);
+
+						 --- CONTAR NUMERO DE APROBADORES QUE FALTAN POR APROBAR 
+						SET @CountEstPen =
+						(
+							SELECT COUNT(T.IdEstatus) AS TOTAL
+							FROM TA_Operacion TAO
+								JOIN TA_Tarea AS T
+									ON T.IdOperacion = TAO.IdOperacion
+							WHERE TAO.IdOperacion = @IdOperacion
+								  AND T.IdEstatus = 1
+								  AND T.Activo = 1
+						);
+
+						--- CONTAR NUMERO DE APROBADORES QUE YA APROBARON 
+						SET @CountEstApr =
+						(
+							SELECT COUNT(T.IdEstatus) AS TOTAL
+							FROM TA_Operacion TAO
+								JOIN TA_Tarea AS T
+									ON T.IdOperacion = TAO.IdOperacion
+							WHERE TAO.IdOperacion = @IdOperacion
+								  AND T.IdEstatus = 2 --> APROBARON
+								  AND T.Activo = 1
+						);
+
+						--- CONTAR NUMERO DE APROBADORES QUE RECHAZARON 
+						SET @CountEstRech =
+						(
+							SELECT COUNT(T.IdEstatus) AS TOTAL
+							FROM TA_Operacion TAO
+								JOIN TA_Tarea AS T
+									ON T.IdOperacion = TAO.IdOperacion
+							WHERE TAO.IdOperacion = @IdOperacion
+								  AND T.IdEstatus = 3 --> RECHAZARON 
+								  AND T.Activo = 1
+						);
+
+						IF (@CountEstRech > 0)
+						BEGIN
+							/*LA TAREA HA SIDO RECHAZADA*/
+							--- ACTUALIZAR EL ESTATUS DE LA OPERACION GRAL---> SE CANCELA LA TAREA 
+							UPDATE TA_Operacion 
+							SET IdEstatusOperacion = 3, 
+							IdEstadoFlujo = 4,
+							FechaModificacion=GETDATE()
+							WHERE IdOperacion = @IdOperacion
+
+							---ACTUALIZAR LOS ESTATUS QUE AUN NO A SIDO APROBADOS(PENDIENTES) ---> SE CANCELAN POR CANCELACIÓN LAS TAREAS NO EVALUADAS
+							UPDATE TA_TAREA 
+							SET IdEstatus= 4 
+							WHERE IdTarea IN (SELECT IdTarea 
+											  FROM TA_Tarea
+											  WHERE IdOperacion = @IdOperacion 
+											  AND IdEstatus= 1
+											  AND Activo = 1)
+
+							SET @DescripcionH = 'Se ha Finalizado la aprobación de la Tarea '
+
+							INSERT INTO TA_HistorialFlujoTarea(IdOperacion,Fecha,Descripcion,IdEstadoFlujo)
+							VALUES(@IdOperacion,GETDATE(),@DescripcionH,7)
+
+						END
+						ELSE 
+						BEGIN 
+							IF (@CountEstApr = @CountTarea)
+							BEGIN 
+								/*SE VALIDA QUE EL APROBADOR NO.1 YA TIENE UN ESTATUS DE APROBADO*/
+								/*ENTONCES NOTIFICAR A LOS USUARIOS DE OBS*/
+								SET @NotificarAprobacionOBS = 1 --> ENTONCES SE DEBE NOTIFICAR A LOS USUARIOS DE OBS QUE TIENEN QUE ENTRAR PARA REALIZAR APROBACION 
+								
+							END 			
+						END   
+					END 	
+
+
 		   END 
+		   ELSE IF @NombreTarea ='Solicitud Aceptación pedido OBS' --> APROBADOR NO.2
+		   BEGIN 
 
+			 /*VALIDAR QUE EL USUARIO ACTUAL SEA PARTE DEL GRUPO DE USUARIOS DE OBS*/
+
+			 SELECT @EsUsuarioOBS = COUNT(UOBS.IdUsuario)
+			 FROM DEA_UsuarioOBS UOBS
+			 WHERE UOBS.IdContrato =  @ContratoId
+			 AND UOBS.IdUsuario = @UsuarioId
+			 AND UOBS.Activo = 1 
+
+				 IF @EsUsuarioOBS = 0
+				 BEGIN
+					SELECT 'ERROR_VALIDACION' AS response,
+						'No eres aprobador OBS de esta solicitud de aceptación de pedido' AS detalle
+						RETURN 
+				 END 
+
+				/*VALIDAR EL ESTATUS DE LA OPERACION GRAL SEA EN APROBACION*/
+				SELECT @EstatusAprobacionId = O.IdEstatusOperacion,
+				@NombreEstatusAprobacionActual = E.Nombre,
+				@NombreEstatusAprobacionActualEN = E.Name
+				FROM TA_Operacion O
+				LEFT JOIN TA_Estatus E
+					ON O.IdEstatusOperacion = E.IdEstatus
+				WHERE O.IdOperacion = @IdOperacion
+				 
+				 IF @EstatusAprobacionId <> 1--> SI NO ESTA EN APROBACION REGRESAR EL SIG MENSAJE
+				 BEGIN
+					SELECT 'ERROR_VALIDACION' AS response,
+						CONCAT('La solicitud de aceptación de pedido ya se encuentrá en el estatus:',@NombreEstatusAprobacionActual) AS detalle
+						RETURN 
+				 END 
+
+				/*TODO VA BIEN REGISTRAR-- > TA_TAREA DE USUARIO OBS */
+				/*ESTAS TAREAS SE REGISTRAN SEGUN EL EVENTO POR QUE AL INICIO NO SE SABE CUAL DE TODOS LOS USUARIO DESIGNADOS A OBS REALIZARA LA ACCION*/
+				/*AGREGAR AL APROBADOR DE TIPO OBS*/
+				BEGIN 
+					/*OBTENER NUMERO DE SECUENCIA DEL APROBADOR ANTERIOR*/
+
+					SELECT @NoSecuenciaOBS=T.NoSecuencia 
+					FROM TA_Tarea AS T								
+					WHERE T.IdOperacion = @IdOperacion
+							AND T.IdEstatus <> 7 --> NO SEA REASIGNADO
+							AND T.IdEstatus <> 12 --> NO ESTE ELIMINADO
+							AND T.Activo = 1 --> ESTE ACTIVO
+					ORDER BY T.NoSecuencia DESC 
+
+					SET @NoSecuenciaOBS = (@NoSecuenciaOBS+1)
+
+					-->INSERTAR TA_TAREA DE NombreTarea:Solicitud Aceptación pedido OBS*/
+					INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion,FechaCambioEstatus)
+					VALUES (@NombreTarea, @UsuarioId,@NuevoEstatusId,1,@ComentarioAprobacion,'',GETDATE(),1,@NoSecuenciaOBS,@IdOperacion,GETDATE())
+										
+
+					  SET @DescripcionH
+					= N'El Usuario ' + (SELECT Nombre FROM S_Usuario WHERE IdUsuario = @UsuarioId)
+					  + N'-(ROL OBS) ha ' + @NombreNuevoEstatusAprobador + N' la tarea de aprobación'
+			
+					INSERT INTO TA_HistorialFlujoTarea (IdOperacion, Fecha, Descripcion, IdEstadoFlujo)
+					VALUES
+					(@IdOperacion, @FechaActual, @DescripcionH, 2)
+				END
+
+				/*APROBAR O RECHAZAR LA OPERACIÓN GRAL SEGUN LA ACCION DEL USUARIO DE OBS*/
+				BEGIN 
+					
+					IF @NuevoEstatusId = 2 -->CTE APROBADA(TA_ESTATUS) OPERACION GRAL APROBADA POR EL USUARIO DE OBS
+					BEGIN 
+						UPDATE TA_Operacion
+						SET IdEstatusOperacion = 2,
+						IdEstadoFlujo = 3, 
+						FechaModificacion=GETDATE()
+						WHERE IdOperacion = @IdOperacion
+				
+						SET @DescripcionH = 'Se ha Finalizado la aprobación de la Tarea '
+
+						INSERT INTO TA_HistorialFlujoTarea(IdOperacion,Fecha,Descripcion,IdEstadoFlujo)
+						VALUES(@IdOperacion,GETDATE(),@DescripcionH,7)
+					END 
+
+					IF @NuevoEstatusId = 3 --> CTE RECHAZADA(TA_ESTATUS) OPERACION GRAL RECHAZADA POR EL USUARIO DE OBS OBS
+					BEGIN 
+						    UPDATE TA_Operacion 
+							SET IdEstatusOperacion = 3, 
+							IdEstadoFlujo = 4,
+							FechaModificacion=GETDATE()
+							WHERE IdOperacion = @IdOperacion
+
+							---ACTUALIZAR LOS ESTATUS QUE AUN NO A SIDO APROBADOS(PENDIENTES) ---> SE CANCELAN POR CANCELACIÓN LAS TAREAS NO EVALUADAS
+							UPDATE TA_TAREA 
+							SET IdEstatus= 4 
+							WHERE IdTarea IN (SELECT IdTarea 
+											  FROM TA_Tarea
+											  WHERE IdOperacion = @IdOperacion 
+											  AND IdEstatus= 1
+											  AND Activo = 1)
+
+							SET @DescripcionH = 'Se ha Finalizado la aprobación de la Tarea'
+
+							INSERT INTO TA_HistorialFlujoTarea(IdOperacion,Fecha,Descripcion,IdEstadoFlujo)
+							VALUES(@IdOperacion,GETDATE(),@DescripcionH,7)
+					END 
+				END 
+		   END 
 		 END 
 
-		 /*2.- ACTUALIZAR ESTATUS DE LA TAREA*/
-		 BEGIN 
-			UPDATE TA_Tarea 
-			SET IdEstatus	= @NuevoEstatusId,
-			ModificadoEl	= @FechaActual,
-			Comentario		= @ComentarioAprobacion,
-			Visto			= 1,
-			FechaCambioEstatus= @FechaActual
-			WHERE IdTarea	= @IdTarea		
 
-			DECLARE @ESTATUSTA NVARCHAR(MAX)
-            =   (SELECT Nombre FROM TA_Estatus WHERE IdEstatus = @NuevoEstatusId)
-
-			IF @ESTATUSTA = 'Aprobada'
-			BEGIN
-				SET @ESTATUSTA = N'Aprobado'
-			END
-
-			IF @ESTATUSTA = 'Rechazada'
-			BEGIN
-				SET @ESTATUSTA = N'Rechazado'
-			END
-
-			 SET @DescripcionH
-            = N'El Usuario ' + (SELECT Nombre FROM S_Usuario WHERE IdUsuario = @UsuarioId)
-              + N' ha ' + @ESTATUSTA + N' la tarea de aprobación'
-			
-			INSERT INTO TA_HistorialFlujoTarea (IdOperacion, Fecha, Descripcion, IdEstadoFlujo)
-			VALUES
-			(@IdOperacion, @FechaActual, @DescripcionH, 2)
-
-		 END 	  			  	  
-
-		/*3- ACTUALIZAR ESTATUS DE LA APROBACION SI TODOS APROBARON O SI SE RECHAZO LA APROBACIÓN*/
-		BEGIN 
-			---CONTAR NUMERO DE APROBADORES EN LA APROBACION GRAL/APROBADORES
-			SET @CountTarea =
-			(
-				SELECT COUNT(T.IdEstatus) AS TOTAL
-				FROM TA_Operacion TAO
-					JOIN TA_Tarea AS T
-						ON T.IdOperacion = TAO.IdOperacion
-				WHERE TAO.IdOperacion = @IdOperacion
-					  AND T.IdEstatus <> 7 --> NO SEA REASIGNADO
-					  AND T.IdEstatus <> 12 --> NO ESTE ELIMINADO
-					  AND T.Activo = 1 --> ESTE ACTIVO
-			);
-
-			 --- CONTAR NUMERO DE APROBADORES QUE FALTAN POR APROBAR 
-			SET @CountEstPen =
-			(
-				SELECT COUNT(T.IdEstatus) AS TOTAL
-				FROM TA_Operacion TAO
-					JOIN TA_Tarea AS T
-						ON T.IdOperacion = TAO.IdOperacion
-				WHERE TAO.IdOperacion = @IdOperacion
-					  AND T.IdEstatus = 1
-					  AND T.Activo = 1
-			);
-
-			--- CONTAR NUMERO DE APROBADORES QUE YA APROBARON 
-			SET @CountEstApr =
-			(
-				SELECT COUNT(T.IdEstatus) AS TOTAL
-				FROM TA_Operacion TAO
-					JOIN TA_Tarea AS T
-						ON T.IdOperacion = TAO.IdOperacion
-				WHERE TAO.IdOperacion = @IdOperacion
-					  AND T.IdEstatus = 2 --> APROBARON
-					  AND T.Activo = 1
-			);
-
-			--- CONTAR NUMERO DE APROBADORES QUE RECHAZARON 
-			SET @CountEstRech =
-			(
-				SELECT COUNT(T.IdEstatus) AS TOTAL
-				FROM TA_Operacion TAO
-					JOIN TA_Tarea AS T
-						ON T.IdOperacion = TAO.IdOperacion
-				WHERE TAO.IdOperacion = @IdOperacion
-					  AND T.IdEstatus = 3 --> RECHAZARON 
-					  AND T.Activo = 1
-			);
-
-			IF (@CountEstRech > 0)
-			BEGIN
-			    /*LA TAREA HA SIFO RECHAZADA*/
-				--- ACTUALIZAR EL ESTATUS DE LA OPERACION ---> SE CANCELA LA TAREA 
-				UPDATE TA_Operacion 
-				SET IdEstatusOperacion = 3, 
-				IdEstadoFlujo = 4
-				WHERE IdOperacion = @IdOperacion
-
-				---ACTUALIZAR LOS ESTATUS QUE AUN NO A SIDO APROBADOS(PENDIENTES) ---> SE CANCELAN POR CANCELACIÓN LAS TAREAS NO EVALUADAS
-				UPDATE TA_TAREA 
-				SET IdEstatus= 4 
-				WHERE IdTarea IN (SELECT IdTarea 
-								  FROM TA_Tarea
-								  WHERE IdOperacion = @IdOperacion 
-								  AND IdEstatus= 1
-								  AND Activo = 1)
-
-				SET @DescripcionH = 'Se ha Finalizado la aprobación de la Tarea '
-
-				INSERT INTO TA_HistorialFlujoTarea(IdOperacion,Fecha,Descripcion,IdEstadoFlujo)
-				VALUES(@IdOperacion,GETDATE(),@DescripcionH,7)
-
-			END
-			ELSE 
-			BEGIN 
-				IF (@CountEstApr = @CountTarea)
-				BEGIN 
-					--ACTUALIZAR EL ESTATUS DE LA OPERACION Y EL ESTADO DEL FLUJO ---> TAREA APROBADA
-
-					UPDATE TA_Operacion
-					SET IdEstatusOperacion = 2,
-					IdEstadoFlujo = 3
-					WHERE IdOperacion = @IdOperacion
-				
-					SET @DescripcionH = 'Se ha Finalizado la aprobación de la Tarea '
-
-					INSERT INTO TA_HistorialFlujoTarea(IdOperacion,Fecha,Descripcion,IdEstadoFlujo)
-					VALUES(@IdOperacion,GETDATE(),@DescripcionH,7)
-				END 			
-			END   
-		END 
-
-		/*3.1 OBTENER EL ESTATUS ACTUAL DE LA APROBACION ACTUAL*/
+		/*3 OBTENER EL ESTATUS ACTUAL DE LA APROBACION ACTUAL*/
 		BEGIN 
 			
 			SELECT @EstatusAprobacionId = O.IdEstatusOperacion,
@@ -295,7 +420,7 @@ AS
 
 		END
 
-		/*4 SI LA APROBACION ESTA APROBADA - GENERAR ACEPTACION DE PEDIDO */
+		/*4 SI LA APROBACION GRAL ESTA APROBADA - GENERAR ACEPTACION DE PEDIDO */
 		BEGIN 
 			IF @EstatusAprobacionId  = 2 --> CTE --> ESTATUS APROBADO
 			BEGIN 
@@ -445,33 +570,12 @@ AS
 			  ModificadoEl = @FechaActual,
 			  ModificadoPor = @UsuarioId
 			  WHERE IdSolicitudAceptacionPedido = @IdSolicitudAceptacionPedido
-
+		
 			END 
 		END 
-
-		/*5.-ENVIAR CORREOS SI LA APROBACIÓN FUE APROBADA O RECHAZADA A LOS APROBADORES*/
-		--BEGIN
-		--		/*POR EL MOMENTO ESTA FUNCIONALIDAD VA ESTAR DESACTIVIDA, SOLO SE ESPERA UN APROBADOR */
-		--		INSERT INTO @Aprobadores(Nombre, Correo, IdUsuario)
-		--		SELECT U.Nombre, U.Correo,U.IdUsuario
-		--		FROM TA_Tarea T
-		--		JOIN TA_Operacion O 
-		--		ON T.IdOperacion = O.IdOperacion
-		--		JOIN S_Usuario U
-		--			ON T.IdAprobador	= U.IdUsuario
-		--		WHERE 
-		--		T.IdOperacion = @IdOperacion
-		--		AND T.Activo=1
-		--		AND T.IdEstatus <> 7 --> NO SEA REASIGNADO
-		--		AND T.IdEstatus <> 12 --> NO ESTE ELIMINADO 								
-
-		--END 
-
-		
-
-		/*6. REGRESAR RESPUESTA TABLA 1*/
-
-
+			
+		/*5. REGRESAR RESPUESTA ENCABEZADO*/
+		/*RETORNO TABLA 1*/
 		SELECT 'SUCCESS' AS response,
 		ISNULL(@EstatusAprobacionId,0) AS estatusAprobacion,
 		ISNULL(@IdNacionalidadProveedor,0) as idNacionalidadProveedor,
@@ -482,10 +586,11 @@ AS
 		ISNULL(@IdOperacion,0) AS idOperacion,
 		ISNULL(@NombreEstatusAprobacionActual,'') AS nombreEstatusAprobacion,
 	    ISNULL(@NombreEstatusAprobacionActualEN,'') AS nombreEstatusAprobacionEn,
-		'Solicitud de aprobación de aceptación de bienes y servicios' AS nombreTipoOperacion
+		'Solicitud de aprobación de aceptación de bienes y servicios' AS nombreTipoOperacion,
+		@NotificarAprobacionOBS AS	notificarAprobacionOBS
 
-		/*7. REGRESAR RESPUESTA TABLA 2 INFORMACION DEL USUARIO ASIGNADOR DE LA APROBACION*/
-
+		/*6. REGRESAR RESPUESTA INFORMACION DEL USUARIO ASIGNADOR DE LA APROBACION*/
+		/*RETORNO TABLA 2*/
 		SELECT 
 		U.Nombre,
 		U.Correo,
@@ -496,6 +601,23 @@ AS
 			ON O.IdAsignador = U.IdUsuario
 		WHERE O.IdOperacion =@IdOperacion
 
+		/*7. REGRESAR USUARIO OBS SI @NotificarAprobacionOBS = true*/
+		/*RETORNO TABLA 3*/
+		IF @NotificarAprobacionOBS = 1
+		BEGIN 
+			SELECT 			
+					Nombre=U.Nombre,				 
+					IdUsuario=U.IdUsuario,
+					Correo=U.Correo  
+			FROM DEA_UsuarioOBS UOBS
+			JOIN S_Usuario U
+			ON UOBS.IdUsuario=U.IdUsuario				
+			WHERE UOBS.Activo = 1	
+			AND UOBS.IdContrato=@ContratoId		
+			GROUP BY U.Nombre, U.IdUsuario, U.Correo 							
+			ORDER BY U.Nombre ASC
+		END
+		
 END
 
 
