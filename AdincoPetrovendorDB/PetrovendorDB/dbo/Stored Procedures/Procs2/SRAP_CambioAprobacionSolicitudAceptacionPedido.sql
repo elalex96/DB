@@ -193,7 +193,7 @@ AS
 					UPDATE TA_Tarea 
 					SET IdEstatus	= @NuevoEstatusId,
 					ModificadoEl	= @FechaActual,
-					Comentario		= @ComentarioAprobacion,
+					Comentario		= CASE WHEN @ComentarioAprobacion='' THEN @ComentarioAceptacion ELSE @ComentarioAprobacion END,
 					Visto			= 1,
 					FechaCambioEstatus= @FechaActual
 					WHERE IdTarea	= @IdTarea		
@@ -351,7 +351,7 @@ AS
 
 					-->INSERTAR TA_TAREA DE NombreTarea:Solicitud Aceptación pedido OBS*/
 					INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion,FechaCambioEstatus)
-					VALUES (@NombreTarea, @UsuarioId,@NuevoEstatusId,1,@ComentarioAprobacion,'',GETDATE(),1,@NoSecuenciaOBS,@IdOperacion,GETDATE())
+					VALUES (@NombreTarea, @UsuarioId,@NuevoEstatusId,1,CASE WHEN @ComentarioAprobacion='' THEN @ComentarioAceptacion ELSE @ComentarioAprobacion END,'',GETDATE(),1,@NoSecuenciaOBS,@IdOperacion,GETDATE())
 										
 
 					  SET @DescripcionH
