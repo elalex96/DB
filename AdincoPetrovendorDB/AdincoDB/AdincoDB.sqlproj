@@ -13111,7 +13111,10 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_GRD.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS_Bitacora.sql" />
-
+    <Build Include="dbo\Stored Procedures\Procs2\sp_EN_Area_Lst.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_EN_FrecuenciaEntregable_Lst.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_EN_MarcoLegal_Lst.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_EN_ReceptorEntregable_Lst.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
