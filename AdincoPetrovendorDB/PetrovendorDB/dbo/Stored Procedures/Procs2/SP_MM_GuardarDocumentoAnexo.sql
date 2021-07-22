@@ -1,4 +1,18 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_GuardarDocumentoAnexo'
+)
+    DROP PROCEDURE SP_MM_GuardarDocumentoAnexo;
+/****** Object:  StoredProcedure [dbo].[SP_MM_GuardarDocumentoAnexo]    Script Date: 20/07/2021 05:04:13 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		<>
 -- Update date: <>
@@ -9,7 +23,7 @@
 -- Description:	<Se agrega el dato de guardado por y creado el >
 -- =============================================
 
-CREATE PROCEDURE SP_MM_GuardarDocumentoAnexo
+CREATE PROCEDURE [dbo].[SP_MM_GuardarDocumentoAnexo]
     @IdPedido INT,
     @IdPedidoDetalle INT,
     @Documento NVARCHAR(MAX),
@@ -19,7 +33,8 @@ CREATE PROCEDURE SP_MM_GuardarDocumentoAnexo
 	@Carpeta NVARCHAR(MAX),
 	@Identificador  NVARCHAR(MAX), 
 	@Extension NVARCHAR(MAX),
-	@Mime NVARCHAR(MAX)
+	@Mime NVARCHAR(MAX),
+	@Bucket NVARCHAR(MAX)
 AS
 BEGIN
 
@@ -35,7 +50,8 @@ BEGIN
 		Mime,
 		Activo,
 		CreadoEl,
-		CreadoPor
+		CreadoPor,
+		Bucket
     )
     VALUES
     (   @IdPedido,        -- IdPedido - int
@@ -48,9 +64,9 @@ BEGIN
 		@Mime,
 		1,
 		GETDATE(),
-		@IdUsuario
-    )
-	 
+		@IdUsuario,
+		@Bucket
+    ) 
 
 END
 

@@ -1,4 +1,20 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ActualizarArchivoPedimentoComprobante_S3_CD'
+)
+    DROP PROCEDURE SP_FI_ActualizarArchivoPedimentoComprobante_S3_CD;
+
+/****** Object:  StoredProcedure [dbo].[SP_FI_ActualizarArchivoPedimentoComprobante_S3_CD]    Script Date: 20/07/2021 02:21:21 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <07/10/2020>
 -- Description:	<Actualizacion del archivo de Pedimento/Comprobante en el S3>
@@ -12,7 +28,8 @@ CREATE PROCEDURE [dbo].[SP_FI_ActualizarArchivoPedimentoComprobante_S3_CD]
 	@NombreDocumento NVARCHAR(MAX),
 	@IdUsuario INT,
 	@IdProveedor INT,
-	@Archivo IMAGE
+	@Archivo IMAGE,
+	@Bucket NVARCHAR(MAX)
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -51,7 +68,7 @@ BEGIN
 		    NULL,         -- IdFactura - int
 		    @IdPedimentoComprobante,         -- IdPedimentoComprobante - int
 		    NULL,       -- IdDocFacturacionSIPAC - nvarchar(50)
-		    'PE_' + @IdPedimentoComprobante + '.pdf',       -- NombreExtensionArchivo - nvarchar(150)
+		    CONCAT('PE_' , CAST(@IdPedimentoComprobante AS NVARCHAR(MAX)),'.pdf'),       -- NombreExtensionArchivo - nvarchar(150)
 		    @IdUsuario,         -- IdUsuario - int
 		    GETDATE(), -- FechaCarga - datetime
 		    NULL,      -- IsEliminado - bit
@@ -85,7 +102,7 @@ BEGIN
 	    Bucket
 	)
 	VALUES
-	(   54,         -- IdTipoDocumento - int Pedimento/Comprobante - Compra Directa
+	(   53,         -- IdTipoDocumento - int Pedimento/Comprobante - Compra Directa
 	    @IdUsuario,         -- IdUsuario - int
 	    1003,         -- IdTipoValidacionDocumento - int
 	    @IdProveedor,         -- IdProveedor - int
@@ -104,8 +121,9 @@ BEGIN
 	    NULL,       -- Duplicado - nvarchar(40)
 	    NULL,       -- SizeDocumento - float
 	    @IdPedimentoComprobante,         -- IdDocumentoTabla - int
-	    NULL        -- Bucket - nvarchar(200)
+	    @Bucket        -- Bucket - nvarchar(200)
 	  );
 
 	  SELECT SCOPE_IDENTITY() AS IdPedimentoS3
 END
+
