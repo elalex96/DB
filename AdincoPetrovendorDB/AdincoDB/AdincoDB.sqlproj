@@ -13111,6 +13111,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_GRD.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_WDEA_Produccion_Diaria_INS_Bitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_sp_EliminaProgramacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_EntregablesHistorialEliminacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_EN_Area_Lst.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_EN_FrecuenciaEntregable_Lst.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_EN_MarcoLegal_Lst.sql" />
