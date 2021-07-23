@@ -1,9 +1,9 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		DANIEL AC 
 -- Update date: 08/05/2018
 -- Description:	Cambio de refrencia de s_documento a s_documento_s3
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PV_PerfilEmpresaReport]
+CREATE PROCEDURE [dbo].[SP_PV_PerfilEmpresaReport] --573
 @IdProveedor INT
 AS
 BEGIN
@@ -46,13 +46,12 @@ SET @DocumentoCurriculum =(SELECT '1'
 			'Organigrama '+ @NombreEmpresa+'.pdf' AS Organigrama,
 			'Curriculum '+ @NombreEmpresa+'.pdf' AS Curriculum
 			FROM PV_PerfilEmpresa AS PE
-			INNER JOIN PV_GiroEmpresarial GE
+			LEFT JOIN PV_GiroEmpresarial GE
 			ON PE.IdGiroEmpresaria = GE.IdGiroProveedor
-			INNER JOIN PV_GiroComercialHijo GCH
+			LEFT JOIN PV_GiroComercialHijo GCH
 			ON GE.PV_GiroComercialHijo = GCH.IdGiroProveedorHijo
-			INNER JOIN PV_GiroComercialPadre GCP
+			LEFT JOIN PV_GiroComercialPadre GCP
 			ON GCH.IdGiroProveedorPadre = GCP.IdGiroProveedorPadre
 			WHERE PE.IdProveedor = @IdProveedor 
 
 END
-
