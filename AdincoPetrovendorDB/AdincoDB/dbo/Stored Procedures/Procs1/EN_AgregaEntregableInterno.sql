@@ -1,27 +1,41 @@
-﻿CREATE PROCEDURE [dbo].[EN_AgregaEntregableInterno]
-    @idUsuario INT,
-    @idContrato INT,
-    @pDocumentoEntregable VARCHAR(MAX),
-    @pDescripcion VARCHAR(MAX),
-    @pIsActivo BIT,
-    @pConsecutivo VARCHAR(MAX),
-    @pIdEntregable INT,
-    @IdReceptorEntregable INT,
+﻿if exists(select * from sys.procedures where name = 'EN_AgregaEntregableInterno')
+begin
+	drop proc EN_AgregaEntregableInterno
+end
+
+go
+
+CREATE PROCEDURE [dbo].[EN_AgregaEntregableInterno]
+    @idUsuario				INT,
+    @idContrato				INT,
+    @pDocumentoEntregable	VARCHAR(MAX),
+    @pDescripcion			VARCHAR(MAX),
+    @pIsActivo				BIT,
+    @pConsecutivo			VARCHAR(MAX),
+    @pIdEntregable			INT,
+    @IdReceptorEntregable	INT,
     @IdFrecuenciaEntregable INT,
-    @EsDeProceso BIT,
-    @idMarcoLegal INT,
-    @Articulo VARCHAR(MAX),
-    @Referencia VARCHAR(MAX),
-    @Condicion VARCHAR(MAX),
-    @TiempoEntrega VARCHAR(MAX),
-    @actividad VARCHAR(MAX)
+    @EsDeProceso			BIT,
+    @idMarcoLegal			INT,
+    @Articulo				VARCHAR(MAX),
+    @Referencia				VARCHAR(MAX),
+    @Condicion				VARCHAR(MAX),
+    @TiempoEntrega			VARCHAR(MAX),
+    @actividad				VARCHAR(MAX),
+	@idArea					int
 AS
 BEGIN
--- =============================================
+-- 
+--=============================================
 -- Author:      Reyna Olvera
 -- Create date: 18/05/2019
 -- Description:Guarda entregables internas
 -- =============================================
+	if(@idArea = -1)
+	begin
+		select @idArea = null
+	end
+
     SET NOCOUNT ON;
     DECLARE @IdRonda INT,
             @Abreviatura VARCHAR(20),
@@ -121,11 +135,13 @@ SET @pIdEntregable = SCOPE_IDENTITY();
         CreadoPor,
         CreadoEl,
         ModificadoPor,
+
         ModificadoEl,
         Activo,
         DiasElaboracion,
 		ContieneInformacionSensible,
-		BitMostrarLineaTiempo
+		BitMostrarLineaTiempo,
+		IdArea
     )
     VALUES
     (   @idContrato,    -- IdContrato - int
@@ -138,8 +154,9 @@ SET @pIdEntregable = SCOPE_IDENTITY();
         @idUsuario,     -- ModificadoPor - int
         GETDATE(),      -- ModificadoEl - datetime
         1,              -- Activo - bit
-        0,               -- DiasElaboracion - int
-		0,0
+        0,				-- DiasElaboracion - int
+		0,0,
+		@idArea
 	);
 
     SET @IdContratoEntregable = @@IDENTITY;
@@ -158,7 +175,7 @@ SET @pIdEntregable = SCOPE_IDENTITY();
         SELECT @IdContratoEntregable AS IdContratoEntregable,
                @pIdEntregable AS IdEntregable,
                CAST(@@ERROR AS NVARCHAR(8)) AS error;
-  ELSE
+	ELSE
         SELECT @IdContratoEntregable AS IdContratoEntregable,
                @pIdEntregable AS IdEntregable,
                '' AS error;
