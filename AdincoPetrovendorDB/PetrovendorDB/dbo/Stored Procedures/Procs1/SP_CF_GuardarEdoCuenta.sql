@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_CF_GuardarEdoCuenta'
+)
+    DROP PROCEDURE SP_CF_GuardarEdoCuenta;
+/****** Object:  StoredProcedure [dbo].[SP_CF_GuardarEdoCuenta]    Script Date: 20/07/2021 03:13:02 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:           Daniel AC
 -- Create date: 26-09-2019
 -- Description: Se agregaron parametros de referencia al S3
@@ -13,13 +27,13 @@ CREATE PROCEDURE [dbo].[SP_CF_GuardarEdoCuenta]
 	@Carpeta NVARCHAR(MAX),
 	@Mime NVARCHAR(MAX),
 	@Identificador NVARCHAR(MAX),
-	@Extension NVARCHAR(MAX)
-
+	@Extension NVARCHAR(MAX),
+	@Bucket  NVARCHAR(MAX)
 AS
 BEGIN
 	
-	insert into CF_EdoCuentaDocumentos
-		(IdProveedor, EdoCuenta, Año, SubidoPor, FechaCarga, NombreDoc, Carpeta, Mime, Identificador, Extension)
-	values(@IdProveedor, '', @Año, @IdUsuario, GETDATE(), @NombreDoc, @Carpeta,@Mime, @Identificador, @Extension)
+	INSERT INTO CF_EdoCuentaDocumentos
+		(IdProveedor, EdoCuenta, Año, SubidoPor, FechaCarga, NombreDoc, Carpeta, Mime, Identificador, Extension, Bucket)
+	values(@IdProveedor, '', @Año, @IdUsuario, GETDATE(), @NombreDoc, @Carpeta,@Mime, @Identificador, @Extension,@Bucket)
 
 END

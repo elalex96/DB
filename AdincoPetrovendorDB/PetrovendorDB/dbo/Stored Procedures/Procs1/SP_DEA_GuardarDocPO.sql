@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DEA_GuardarDocPO'
+)
+    DROP PROCEDURE SP_DEA_GuardarDocPO;
+/****** Object:  StoredProcedure [dbo].[SP_DEA_GuardarDocPO]    Script Date: 20/07/2021 02:54:49 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <22/08/2019>
 -- Description:	<Guardar la PO del Correo>
@@ -14,7 +28,8 @@ CREATE PROCEDURE [dbo].[SP_DEA_GuardarDocPO]
 	@Descripcion NVARCHAR(MAX),
 	@SizeDocumento NVARCHAR(MAX),
 	@CargadoPorUsuarioID INT,
-	@CargadaManualmente BIT 
+	@CargadaManualmente BIT,
+	@Bucket NVARCHAR(MAX)
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -67,7 +82,8 @@ BEGIN
        Extension,
        NombreDocumento,
        SizeDocumento,
-	   IdDocumentoTabla
+	   IdDocumentoTabla,
+	   Bucket
    )
    VALUES
    (   2,         -- IdTipoDocumento - int      
@@ -82,7 +98,8 @@ BEGIN
        @Extension,       -- Extension - nvarchar(max)
        @NombreDocumento,       -- NombreDocumento - nvarchar(max)
        @SizeDocumento,
-	   @IDDOCPO
+	   @IDDOCPO,
+	   @Bucket
       )
 
 	  SET @IDDOCUMENTO = SCOPE_IDENTITY();

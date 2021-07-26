@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		<Ronald>
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
@@ -19,7 +19,7 @@ AS
 
 		IF ( @Identificador = 1 ) --Si viene del grid
 			BEGIN
-				SELECT		doc.IdDocumento, tipo.NombreTipoDocumento
+				SELECT		doc.IdDocumento, tipo.NombreTipoDocumento,ISNULL(doc.ModificadoEl,doc.CreadoEl) AS UltimaVersion, doc.Extension
 				FROM		dbo.S_Documento_S3 doc
 				INNER JOIN	dbo.S_TipoDocumento tipo
 					ON tipo.IdTipoDocumento = doc.IdTipoDocumento
@@ -29,7 +29,16 @@ AS
 							doc.IdProveedor = @idProveedor
 							AND doc.Activo = 1
 							AND doc.IdTipoValidacionDocumento = 1003
-							AND doc.IdTipoDocumento NOT IN ( 23, 15 )	--No Carta de Contenido, No RPPC
+							AND doc.IdTipoDocumento NOT IN ( 23, 15,53 )	--No Carta de Contenido, No RPPC
+				UNION
+SELECT				doc.IdDocumento, tipo.NombreTipoDocumento,ISNULL(doc.ModificadoEl,doc.CreadoEl) AS UltimaVersion,doc.Extension
+				FROM		dbo.S_Documento_S3 doc
+				INNER JOIN	dbo.S_TipoDocumento tipo
+					ON tipo.IdTipoDocumento = doc.IdTipoDocumento
+				WHERE
+							doc.IdProveedor = @idProveedor
+							AND doc.Activo = 1
+							AND doc.IdTipoDocumento NOT IN ( 23, 15,53 )
 			END
 		ELSE
 			BEGIN

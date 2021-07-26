@@ -22,6 +22,7 @@
     [EliminadoEl]               DATETIME       NULL,
     [SizeDocumento]             FLOAT (53)     NULL,
     [IdDocumentoTabla]          INT            NULL,
+    Bucket                      VARCHAR(50) NULL,
     PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 

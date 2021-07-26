@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿if exists(select * from sys.procedures where name = 'sp_EN_RegistraExcepcionesFecha')
+begin
+	drop proc sp_EN_RegistraExcepcionesFecha
+end
+
+go
+
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 2019
 -- Description:Crea excepciones para los responsables de una instancia
@@ -108,31 +115,77 @@ BEGIN
 												  @IdContratoEntregable,
 												  0,0;
 
+		
+
         INSERT INTO #FechasCalcEntregaRegulador (IdFecha)
         EXEC [SP_EN_GeneraInstanciasFechasLimite] @FechaLimiteEntregaRegulador,
-                                                  @idContrato,
+                                       @idContrato,
 												  10008, --Evento Único por que es una sola instancia
 												   @IdContratoEntregable,
 												  0,1;
 
-		SELECT	@ExisteCountFechaLimiteAprob	=	COUNT(1)	
-		FROM	EN_InstanciasEntregable	IE
+		declare @IdProceso int
+		/*Identificar cual es el proceso*/
+		select		@IdProceso									=			IPF.IdProceso 
+		from 		EN_InstanciasEntregable						IE  
+		inner JOIN	EN_InstanciasEntregables_InstanciaActividad IEIA		ON						IE.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
+		inner JOIN	EN_InstanciasActividades					IA			ON						IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
+		inner JOIN	EN_InstanciasProcesosFecha					IPF			ON						IA.IdInstanciasProcesos		=	IPF.IdInstanciasProcesos
+		where		IE.IdInstanciaEntregable					=			@idInstanciaentregable
+		and			IE.IdContratoEntregable						=			@IdContratoEntregable
+		and			IPF.IdProceso								is not null
 		
-		JOIN	
-			#DiasHabilesFrecuencia	FLA
-			ON	IE.IdContratoEntregable	=	@IdContratoEntregable
-			AND IE.FechasLimiteAprobacion	=	FLA.IdFecha
-			AND	IE.idInstanciaEntregable	<>	@idInstanciaentregable
+		if (/*Verificamos que el registro tenga un proceso ligado*/
+					@IdProceso is not null		)
+		begin	/*Si es asi, verificamos si existe otro proceso, que este sea uno distinto al que ya existe*/
+			print 'if 1'
+			if exists(
+				SELECT		IPF.IdProceso
+				FROM		EN_InstanciasEntregable						IE
+				JOIN		#DiasHabilesFrecuencia						FLA		ON			IE.IdContratoEntregable						=		@IdContratoEntregable
+																				AND			IE.FechasLimiteAprobacion					=		FLA.IdFecha
+																				AND			IE.idInstanciaEntregable					<>		@idInstanciaentregable
+				inner join	EN_InstanciasEntregables_InstanciaActividad IEIA	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
+				inner JOIN	EN_InstanciasActividades					IA		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
+				inner JOIN	EN_InstanciasProcesosFecha					IPF		ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
+				where		IPF.IdProceso								<>		@IdProceso
+			)
+			begin	/*De ser asi, le asignamos un 0 a las variales para permitirle guardar, puesto que se trata de procesos diferentes*/
+					print 'if 2'
+					select	@ExisteCountFechaLimiteAprob	=	0,
+							@ExisteCountFechaLimiteReg		=	0
+			end
+			else
+			begin	/*De lo contrario indicamos que almenos existe un registro para posteriormente no dejarlo guardar*/
+					
+					select @ExisteCountFechaLimiteAprob		=	1,
+							@ExisteCountFechaLimiteReg		=	1
+			end
+		end
+		else
+		begin
+			/*Si no, hacemos la validación actual*/
+			--select [@IdProceso] = @IdProceso
+
+			SELECT	@ExisteCountFechaLimiteAprob	=	COUNT(1)	
+			FROM	EN_InstanciasEntregable	IE
+		
+			JOIN	
+				#DiasHabilesFrecuencia	FLA
+				ON	IE.IdContratoEntregable		=	@IdContratoEntregable
+				AND IE.FechasLimiteAprobacion	=	FLA.IdFecha
+				AND	IE.idInstanciaEntregable	<>	@idInstanciaentregable
 		
 
-		SELECT	@ExisteCountFechaLimiteReg	=	COUNT(1)	
-		FROM	EN_InstanciasEntregable	IE
+			SELECT	@ExisteCountFechaLimiteReg	=	COUNT(1)	
+			FROM	EN_InstanciasEntregable	IE
 		
-		JOIN	
-			#FechasCalcEntregaRegulador	FLR
-			ON	IE.IdContratoEntregable	=	@IdContratoEntregable
-			AND	IE.FechaCalculadaEntregaReg	=	FLR.IdFecha
-			AND	IE.idInstanciaEntregable	<>	@idInstanciaentregable
+			JOIN	
+				#FechasCalcEntregaRegulador	FLR
+				ON	IE.IdContratoEntregable		=	@IdContratoEntregable
+				AND	IE.FechaCalculadaEntregaReg	=	FLR.IdFecha
+				AND	IE.idInstanciaEntregable	<>	@idInstanciaentregable
+		end
 
 	IF(@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	=	0)
 	BEGIN
@@ -204,7 +257,7 @@ BEGIN
                                                       TIE.FechasLimiteElaboracion
                                               END,
                     FechaEnvioMensajeAtrasoRevision = CASE CE.tipo
-                                                          WHEN 'Alerta' THEN
+           WHEN 'Alerta' THEN
                                                               DH.IdFecha
                                                           ELSE
                                                               TIE.FechaEnvioMensajeAtrasoRevision
@@ -361,5 +414,4 @@ BEGIN
 
 END;
 
-
-
+go

@@ -13,6 +13,7 @@
     [AMS3]          BIT            NULL,
     [EliminadoS3]   BIT            NULL,
     [isEliminado]   BIT            NULL,
+    [Bucket]        VARCHAR(50)    NULL, 
     CONSTRAINT [PK_CF_EdoCuentaDocumentos] PRIMARY KEY CLUSTERED ([IdEdoCuenta] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CF_EdoCuentaDocumentos_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_CF_EdoCuentaDocumentos_S_Usuario] FOREIGN KEY ([SubidoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
