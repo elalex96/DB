@@ -1,4 +1,23 @@
-﻿CREATE procedure [dbo].[PE_SP_AltaDocumento_S3]
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'PE_SP_AltaDocumento_S3'
+)
+    DROP PROCEDURE PE_SP_AltaDocumento_S3;
+/****** Object:  StoredProcedure [dbo].[PE_SP_AltaDocumento_S3]    Script Date: 26/07/2021 05:17:36 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- ============================================= 
+-- Author:        Daniel Cruz
+-- Create date:	  26-07-21
+-- Description:   Se agrega columna de Bucket
+-- ============================================= 
+CREATE procedure [dbo].[PE_SP_AltaDocumento_S3]
 
 	@IdProveedor INT,
 	@IdDistribuidorAutorizadoDe INT,
@@ -10,7 +29,8 @@
 	@EXTENSION NVARCHAR(MAX),
 	@NOMBRE_DOCUMENTO NVARCHAR(MAX),
 	@IDENTIFICADOR NVARCHAR(MAX),
-	@CARPETA NVARCHAR(MAX)
+	@CARPETA NVARCHAR(MAX),
+	@BUCKET NVARCHAR(MAX)
 
 AS
 BEGIN
@@ -32,7 +52,8 @@ BEGIN
 							[Identificador],
 							[CreadoPor],
 							CreadoEl,
-							[NombreDocumento])
+							[NombreDocumento],
+							[Bucket])
 		VALUES(21,--->TIPO DISTRIBUIDOR AUTORIZADO DE ...
 				@IdProveedor,
 				1,
@@ -43,7 +64,8 @@ BEGIN
 				@IDENTIFICADOR,	
 				@IdUsuario,
 				GETDATE(),
-				@NOMBRE_DOCUMENTO
+				@NOMBRE_DOCUMENTO,
+				@BUCKET
 				)
 
 		set @IdDocumento = (SELECT @@Identity)
@@ -62,7 +84,8 @@ BEGIN
 			[Extension]=@EXTENSION,
 			[Carpeta]=@Carpeta,
 			[Identificador]=@IDENTIFICADOR,
-			[ModificadoEl]=GETDATE()
+			[ModificadoEl]=GETDATE(),
+			[Bucket] = @BUCKET
 			WHERE [IdDocumento]=@existe 
 	end
 END
