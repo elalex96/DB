@@ -1,15 +1,25 @@
-﻿-- =============================================
--- Author:        Daniel Cruz
--- Create date:	  07-08-18
--- Description:   Agregar carta de contenido nacional con información del documento 
--- ============================================= 
--- Author:        Jose Roman
--- Create date:	  22-08-2018
--- Description:   Se consulta el telefono de los aprobadores
--- ============================================= 
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_PCN_AgregarCarta_S3'
+)
+    DROP PROCEDURE SP_PR_MM_PCN_AgregarCarta_S3;
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]    Script Date: 26/07/2021 05:26:45 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:        Marcos Neri
 -- Create date:	  20/05/2018
 -- Description:   Se agrego el contrato y el area contractual
+-- ============================================= 
+-- Author:        Daniel Cruz
+-- Create date:	  26-07-21
+-- Description:   Se agrega columna de Bucket
 -- ============================================= 
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]
 -- Add the parameters for the stored procedure here
@@ -30,7 +40,8 @@ CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]
 @C_MIME             NVARCHAR(MAX), 
 @C_EXTENSION        NVARCHAR(MAX), 
 @C_NOMBREARCHIVO    NVARCHAR(MAX), 
-@C_CARPETA          NVARCHAR(MAX)
+@C_CARPETA          NVARCHAR(MAX),
+@C_BUCKET           NVARCHAR(MAX)
 AS
     BEGIN
         -- SET NOCOUNT ON added to prevent extra result sets from
@@ -52,7 +63,8 @@ AS
          [Carpeta], 
          [Extension], 
          [Mime], 
-         [NombreDocumento]
+         [NombreDocumento],
+		 [Bucket]		 
         )
         VALUES
         (@IdTipoDocumento, 
@@ -67,7 +79,8 @@ AS
          @C_CARPETA, 
          @C_EXTENSION, 
          @C_MIME, 
-         @C_NOMBREARCHIVO
+         @C_NOMBREARCHIVO,
+		 @C_BUCKET
         );
         SET @IdDocumento =
         (

@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DG_AgDocumentoActaConstitutiva_S3'
+)
+    DROP PROCEDURE SP_DG_AgDocumentoActaConstitutiva_S3;
+/****** Object:  StoredProcedure [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]    Script Date: 26/07/2021 04:46:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<DANIEL AC>
 -- Create date: <06/04/2018>
 -- Description:	<Procedimiento para insertar un documento en especidico(INE, RCF, ACTA CONSTITUTIVA) en la tabla S_Documento_S3>
@@ -7,7 +21,11 @@
 -- Create date: <04/03/2019>
 -- Description:	<Se agrega el campo de iddocumento al representante legal ya que ahora puede contener mas de un representante>
 -- =============================================
-
+-- ============================================= 
+-- Author:        Daniel Cruz
+-- Create date:	  26-07-21
+-- Description:   Se agrega columna de Bucket
+-- ============================================= 
 CREATE PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
 
 	-- Insertar Documento nuevo---
@@ -30,11 +48,11 @@ CREATE PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
 
 	-- Nuevos parametros de entrada
 	@NombreDocumento NVARCHAR (MAX), @Mime NVARCHAR (MAX), @Extension NVARCHAR (MAX), @Carpeta NVARCHAR (MAX) ,
-	@IdentificadorS3 NVARCHAR (MAX) ,
+	@IdentificadorS3 NVARCHAR (MAX) ,@Bucket NVARCHAR (MAX),
 
 	-- Nuevos parametros de entrada
 	@NombreDocumentoRPPC NVARCHAR (MAX) = NULL, @MimeRPPC NVARCHAR (MAX) = NULL, @ExtensionRPPC NVARCHAR (MAX) = NULL ,
-	@IdentificadorS3RPPC NVARCHAR (MAX) = NULL, @CarpetaRPPC NVARCHAR (MAX)
+	@IdentificadorS3RPPC NVARCHAR (MAX) = NULL, @CarpetaRPPC NVARCHAR (MAX), @BucketRPPC NVARCHAR (MAX)
 AS
 	BEGIN
 		DECLARE @IdDocumento INT
@@ -59,11 +77,11 @@ AS
 				--- INSERTAR RPPC ----
 				INSERT INTO S_Documento_S3
 					( IdTipoDocumento, IdUsuario, IdTipoValidacionDocumento, IdProveedor, Activo, Documento, CreadoEl ,
-					  NombreDocumento , Mime, Identificador, Extension, Carpeta )
+					  NombreDocumento , Mime, Identificador, Extension, Carpeta , Bucket)
 				VALUES
 					( @IdTipoDocumentoRPPC, @IdUsuario, @IdTipoValidacionDocumento, @IdProveedor, @ActivoRPPC ,
 					  @ArchivoRPPC , GETDATE (), @NombreDocumentoRPPC, @MimeRPPC, @IdentificadorS3RPPC, @ExtensionRPPC ,
-					  @CarpetaRPPC )
+					  @CarpetaRPPC ,@BucketRPPC)
 
 				IF @@ERROR <> 0 SELECT 'false' AS  msj ;
 				ELSE SELECT 'true' AS msj ;
@@ -72,10 +90,10 @@ AS
 				 BEGIN
 					 INSERT INTO	S_Documento_S3
 						 ( IdTipoDocumento, IdUsuario, IdTipoValidacionDocumento, IdProveedor, Activo, Documento ,
-						   CreadoEl , NombreDocumento, Mime, Identificador, Extension, Carpeta )
+						   CreadoEl , NombreDocumento, Mime, Identificador, Extension, Carpeta, Bucket )
 					 VALUES
 						 ( @IdTipoDocumento, @IdUsuario, @IdTipoValidacionDocumento, @IdProveedor, @Activo, @Documento ,
-						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta ) ;
+						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, @Bucket ) ;
 
 					 SELECT @IdDocumento = @@IDENTITY
 
@@ -96,10 +114,10 @@ AS
 				 BEGIN
 					 INSERT INTO	S_Documento_S3
 						 ( IdTipoDocumento, IdUsuario, IdTipoValidacionDocumento, IdProveedor, Activo, Documento ,
-						   CreadoEl , NombreDocumento, Mime, Identificador, Extension, Carpeta )
+						   CreadoEl , NombreDocumento, Mime, Identificador, Extension, Carpeta, Bucket )
 					 VALUES
 						 ( @IdTipoDocumento, @IdUsuario, @IdTipoValidacionDocumento, @IdProveedor, @Activo, @Documento ,
-						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta )
+						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, @Bucket)
 
 					 IF @@ERROR <> 0 SELECT 'false' AS msj ;
 					 ELSE SELECT 'true'	   AS msj ;
