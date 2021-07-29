@@ -1,8 +1,26 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MPY_GuardarDocumentoPRESES'
+)
+    DROP PROCEDURE SP_MPY_GuardarDocumentoPRESES;
+/****** Object:  StoredProcedure [dbo].[SP_MPY_GuardarDocumentoPRESES]    Script Date: 28/07/2021 01:25:49 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 30/10/2018
 -- Description:	se guardan el documento para PRE-SES
 -- =============================================
+-- Author:		Daniel Cruz
+-- Create date: 28-07-2021
+-- Description:	Se agrega parametro de bucket
+-- ============================================= 
 CREATE procedure [dbo].[SP_MPY_GuardarDocumentoPRESES]
 	-- Add the parameters for the stored procedure here
 	@IdPRESES INT,
@@ -12,6 +30,7 @@ CREATE procedure [dbo].[SP_MPY_GuardarDocumentoPRESES]
 	@Identificador NVARCHAR(300),
 	@Extension NVARCHAR(300),
 	@Mime NVARCHAR(300),
+	@Bucket NVARCHAR(300),
 	@IdUsuario INT
 AS
 BEGIN
@@ -31,7 +50,8 @@ BEGIN
 	    Mime,
 	    Activo,
 	    CreadoPor,
-	    CreadoEl
+	    CreadoEl,
+		Bucket
 	)
 	VALUES
 	(   @IdPRESES,         -- IdPRESES - int
@@ -43,7 +63,8 @@ BEGIN
 	    @Mime,       -- Mime - nvarchar(300)
 	    1,      -- Activo - bit
 	    @IdUsuario,         -- CreadoPor - int
-	    GETDATE() -- CreadoEl - datetime
+	    GETDATE(), -- CreadoEl - datetime
+		@Bucket
 	    )
 
 	SELECT @@IDENTITY

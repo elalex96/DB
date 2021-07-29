@@ -12,6 +12,7 @@
     [CreadoEl]        DATETIME       NULL,
     [ModificadoPor]   INT            NULL,
     [ModificadoEl]    DATETIME       NULL,
+    [Bucket]          VARCHAR(50)    NULL
     CONSTRAINT [PK_MPY_DocumentosPRESES] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 
