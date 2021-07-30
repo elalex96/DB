@@ -1,4 +1,9 @@
-﻿
+﻿if exists (select * from sys.procedures where name = 'FI_SP_GuardarPDFComplemento')
+begin
+	drop proc FI_SP_GuardarPDFComplemento
+end
+
+go
 -- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <04-12-2018>
@@ -14,8 +19,9 @@ CREATE PROCEDURE FI_SP_GuardarPDFComplemento
 	/*---------------------Parametros contrato---------------------*/
 	@IdContrato INT = NULL,
 	@IdUsuario INT = NULL,
-	@FechaRegistro DATETIME = NULL	
+	@FechaRegistro DATETIME = NULL,
 	/*---------------------Parametros contrato---------------------*/
+	@Bucket	varchar(max)
 AS
 BEGIN
 	DECLARE @ExistePDF INT
@@ -38,7 +44,8 @@ BEGIN
 	    Carpeta,
 	    Activo,
 	    SubidoPor,
-	    SubidoEl
+	    SubidoEl,
+		Bucket
 	)
 	VALUES
 	(   @IdFacturaComplemento,        -- IdFacturaComplemento - int
@@ -48,6 +55,7 @@ BEGIN
 	    @Carpeta,      -- Carpeta - nvarchar(100)
 	    1,     -- Activo - bit
 	    @IdUsuario,        -- SubidoPor - int
-	    GETDATE() -- SubidoEl - datetime
+	    GETDATE(), -- SubidoEl - datetime
+		@Bucket
 	)
 END
