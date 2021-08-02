@@ -1,4 +1,3 @@
-﻿
 -- =============================================
 -- Author:		<ALEXANDER GOMEZ>
 -- Create date: <02-06-2021>
@@ -10,7 +9,8 @@ CREATE PROCEDURE [dbo].[SP_ENI_GuardadoEdicionPozo]
 	@IdUsuario  INT,
 	@IdInstalacion INT,
 	@Estado INT,
-	@FechaConfirmacion DATETIME
+	@FechaConfirmacion DATETIME,
+	@PozoDesc BIT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -27,7 +27,8 @@ BEGIN
 	SET Estatus = @Estado,
 		FechaConfirmacionDescubrimiento = @FechaConfirmacion,
 		Modificado = GETDATE(),
-		ModificadoPor = @IdUsuario
+		ModificadoPor = @IdUsuario,
+		ConfirmacionDescubrimiento = @PozoDesc
 	WHERE Id = @POZOID;
 
 	UPDATE CO_Instalacion

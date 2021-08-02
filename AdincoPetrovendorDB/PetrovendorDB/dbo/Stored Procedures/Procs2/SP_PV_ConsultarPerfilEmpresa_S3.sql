@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PV_ConsultarPerfilEmpresa_S3'
+)
+    DROP PROCEDURE SP_PV_ConsultarPerfilEmpresa_S3;
+/****** Object:  StoredProcedure [dbo].[SP_PV_ConsultarPerfilEmpresa_S3]    Script Date: 27/07/2021 01:59:03 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author: DANIEL AC
 -- Create date: 18/08/2017
 -- Description:	CONSULTAR PERFIL DETALLE S3
@@ -25,16 +39,18 @@ BEGIN
  DECLARE @CurriculumExtension NVARCHAR(MAX)
  DECLARE @CurriculumMime NVARCHAR(MAX)
  DECLARE @CurriculumCarpeta NVARCHAR(MAX)
+ DECLARE @CurriculumBucket NVARCHAR(MAX)
  DECLARE @OrganigramaExtension NVARCHAR(MAX)
  DECLARE @OrganigramaMime NVARCHAR(MAX)
  DECLARE @OrganigramaCarpeta NVARCHAR(MAX)
+ DECLARE @OrganigramaBucket NVARCHAR(MAX)
 
-    SELECT @DocumentoOrganigrama=D.Identificador, @OrganigramaCarpeta= D.Carpeta, @OrganigramaMime=D.Mime, @OrganigramaExtension=D.Extension
+    SELECT @DocumentoOrganigrama=D.Identificador, @OrganigramaCarpeta= D.Carpeta, @OrganigramaMime=D.Mime, @OrganigramaExtension=D.Extension, @OrganigramaBucket=D.Bucket
 	FROM PV_PerfilEmpresa AS PE
 	INNER JOIN dbo.S_Documento_S3 AS D ON D.IdDocumento = PE.IdDocumentoOrganigrama
 	WHERE PE.IdProveedor = @IdProveedor  AND D.Activo=1
 
-    SELECT @DocumentoCurriculum=D.Identificador, @CurriculumCarpeta= D.Carpeta,@CurriculumMime=D.Mime, @CurriculumExtension=D.Extension
+    SELECT @DocumentoCurriculum=D.Identificador, @CurriculumCarpeta= D.Carpeta,@CurriculumMime=D.Mime, @CurriculumExtension=D.Extension, @CurriculumBucket= D.Bucket
 	FROM PV_PerfilEmpresa AS PE
 	INNER JOIN dbo.S_Documento_S3 AS D ON D.IdDocumento = PE.IdDocumentoCurriculum
 	WHERE PE.IdProveedor = @IdProveedor AND D.Activo=1
@@ -64,7 +80,9 @@ BEGIN
 			ISNULL(@OrganigramaMime,''),--9
 			ISNULL(@CurriculumCarpeta,''),--10
 			ISNULL(@OrganigramaExtension,''),--11
-			ISNULL(@CurriculumMime,'')--12
+			ISNULL(@CurriculumMime,''),--12
+			ISNULL(@CurriculumBucket,''),--13
+			ISNULL(@OrganigramaBucket,'')--14
 			FROM PV_PerfilEmpresa AS PE
 			WHERE PE.IdProveedor = @IdProveedor 
 		END 
@@ -86,7 +104,9 @@ BEGIN
 			ISNULL(@OrganigramaMime,''),--9
 			ISNULL(@CurriculumCarpeta,''),--10
 			ISNULL(@OrganigramaExtension,''),--11
-			ISNULL(@OrganigramaMime,'')--12
+			ISNULL(@OrganigramaMime,''),--12
+			ISNULL(@CurriculumBucket,''),--13
+			ISNULL(@OrganigramaBucket,'')--14
 			FROM PV_PerfilEmpresa AS PE
 			INNER JOIN S_Proveedor AS P ON P.IdProveedor = PE.IdProveedor
 			WHERE PE.IdProveedor = @IdProveedor 

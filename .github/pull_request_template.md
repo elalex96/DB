@@ -11,6 +11,13 @@
 - [ ] Si el desarrollo tiene interfaces (cargue de archivos, conexión   con otros sistemas, interacción por medio de WS, etc.) bien sean internas o externas, verificar si la implementación se esta realizando acorde con la definición de la interfaz.
 - [ ] El código fuente generado es Reutilizable?
 - [ ] La estructura del código fuente permite un fácil mantenimiento del mismo?
+- [ ] La rama que se desea integrar se encuentra actualizada con la rama default?
 
 ### URL Issue relacionado
 _<Escriba aquí la URL del Issue de repositorio externo relacionado>_
+
+### Scripts 
+ *Anexe en esta sección scripts de base de datos, en caso de no aplicar escriba "N/A"*
+ 
+### Descripción general de las actividades realizadas
+ *Describa de manera general las actividades que se realizaron durante el desarrollo de la propuesta, utilice capturas de pantalla en caso de ser necesario*

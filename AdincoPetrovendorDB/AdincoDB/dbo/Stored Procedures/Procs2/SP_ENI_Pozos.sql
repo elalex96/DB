@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 14-05-2020
 -- Description:	
@@ -49,10 +49,12 @@ AS
                     THEN 'PERFORADO Y TERMINADO'
                     ELSE ep.Descripcion
                 END AS EstadoPozo,
-                PZ.FechaConfirmacionDescubrimiento AS FechaConfirmacionDescubrimiento, 
+                --PZ.FechaConfirmacionDescubrimiento AS FechaConfirmacionDescubrimiento, 
                 I.IdInstalacion,
 				I.WelIID,
 				ISNULL(EP.Color,'#FFFFFF') AS Color,
+				PZ.FechaConfirmacionDescubrimiento,
+				PZ.ConfirmacionDescubrimiento,
 				(ROW_NUMBER() OVER(ORDER BY I.IdInstalacion DESC) - 1) / @RecordsByPage AS _Page
          FROM dbo.CO_Instalacion I
               JOIN dbo.CO_ActividadCIEP A ON I.IdActividad = A.IdActividad
@@ -67,4 +69,5 @@ AS
 					OR I.NombreInstalacionAlterno LIKE '%' + @Buscar + '%')) AS R
 		 WHERE R.R = 1 AND R._PAGE = (@Page - 1)
 		 ORDER BY R.IdInstalacion DESC;
+
      END;
