@@ -399,12 +399,8 @@ WHERE pc.IdContrato = @pidContrato
                         THEN 40
                         ELSE @meses
                     END, 
-            Total = isnull(mes1, 0) + isnull(mes2, 0) + isnull(mes3, 0) + isnull(mes4, 0) + isnull(mes5, 0) + isnull(mes6, 0) + isnull(mes7, 0) + isnull(mes8, 0) + isnull(mes9, 0) + isnull(mes10, 0) + isnull(mes11, 0) + isnull(mes12, 0) + isnull(mes13, 0)
-
- + isnull(mes14, 0) + isnull(mes15, 0) + isnull(mes16, 0) + isnull(mes17, 0) + isnull(mes18, 0) + isnull(mes19, 0) + isnull(mes20, 0) + isnull(mes21, 0) 
- + isnull(mes22, 0) + isnull(mes23, 0) + isnull(mes24, 0) + isnull(mes25, 0) + isnull(mes26, 0) + isnull(mes27, 0) + isnull(mes28, 0) + isnull(mes29, 0) + 
- isnull(mes30, 0) + isnull(mes31, 0) + isnull(mes32, 0) + isnull(mes33, 0) + isnull(mes34, 0) + isnull(mes35, 0) + isnull(mes36, 0) + isnull(mes37, 0) + 
- isnull(mes38, 0) + isnull(mes39, 0) + isnull(mes40, 0)
+            Total = isnull(mes1, 0) + isnull(mes2, 0) + isnull(mes3, 0) + isnull(mes4, 0) + isnull(mes5, 0) + isnull(mes6, 0) + isnull(mes7, 0) + isnull(mes8, 0) + isnull(mes9, 0) + 
+			isnull(mes10, 0) + isnull(mes11, 0) + isnull(mes12, 0) + isnull(mes13, 0) + isnull(mes14, 0) +  isnull(mes15, 0) + isnull(mes16, 0) + isnull(mes17, 0) + isnull(mes18, 0)
      FROM #tmpPivote2 t1
           INNER JOIN CO_ActividadPetroleraCNH ON t1.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
           INNER JOIN CO_SubactividadPetrolera ON t1.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
