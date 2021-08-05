@@ -1,13 +1,21 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_AgregarDocumentoMercadeo_S3
+GO-- =============================================
 -- Author:	Pedro Acuña
 -- Create date: 03-07-2018
 -- Description:	SP que agrega DOCUMENTO de Mercadeo en la solicitud de oferta
 -- =============================================
-
+-- =============================================
+-- Author:		LUIS DAVID DE LA CRUZ
+-- Update date: 02/08/2021
+-- Description:	SE AGREGA LA COLUMNA BUCKET
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_AgregarDocumentoMercadeo_S3] @Carpeta NVARCHAR(MAX), @Identificador NVARCHAR(MAX) ,
 												@Extension NVARCHAR(MAX), @Mime NVARCHAR(MAX) ,
 												@NombreDocumento NVARCHAR(MAX), @Descripcion NVARCHAR(MAX) ,
-												@IdSolicitudPedido INT, @IdUsuario INT, @IdProveedor INT
+												@IdSolicitudPedido INT, @IdUsuario INT, @IdProveedor INT,
+												@Bucket VARCHAR(200) = NULL
 AS
 	BEGIN
 		DECLARE @TipoAdjudicacion INT, @IdDocumentoS3 INT
@@ -22,7 +30,7 @@ AS
 			BEGIN
 				INSERT INTO dbo.MM_PeticionOfertaMercadeoAdjunto
 					( Documento, Carpeta, Identificador, Mime, Extension, NombreDocumento, Activo, CreadoPor, CreadoEl ,
-					  ModificadoPor , ModificadoEl, IdSolicitudPedido )
+					  ModificadoPor , ModificadoEl, IdSolicitudPedido, Bucket )
 				VALUES
 					( N'' ,					-- Documento - nvarchar(max)
 					  @Carpeta ,			-- Carpeta - nvarchar(max)
@@ -35,7 +43,8 @@ AS
 					  GETDATE () ,			-- CreadoEl - datetime
 					  NULL ,				-- ModificadoPor - int
 					  NULL ,				-- ModificadoEl - datetime
-					  @IdSolicitudPedido	-- IdSolicitudPedido - int
+					  @IdSolicitudPedido,	-- IdSolicitudPedido - int
+					  @Bucket
 					)
 			END
 
@@ -43,7 +52,7 @@ AS
 			BEGIN
 				INSERT INTO dbo.MM_PeticionOfertaADAdjunto
 					( IdInvitacion, IdPeticionOferta, Descripcion, Documento, Carpeta, Identificador, Mime, Extension ,
-					  NombreDocumento , Activo, CreadoPor, CreadoEl, ModificadoPor, ModificadoEl, IdSolicitudPedido )
+					  NombreDocumento , Activo, CreadoPor, CreadoEl, ModificadoPor, ModificadoEl, IdSolicitudPedido, Bucket )
 				VALUES
 					( 0 ,					-- IdInvitacion - int
 					  NULL ,				-- IdPeticionOferta - int
@@ -59,7 +68,8 @@ AS
 					  GETDATE () ,			-- CreadoEl - datetime
 					  NULL ,				-- ModificadoPor - int
 					  NULL ,				-- ModificadoEl - datetime
-					  @IdSolicitudPedido	-- IdSolicitudPedido - int
+					  @IdSolicitudPedido,	-- IdSolicitudPedido - int
+					  @Bucket
 					)
 			END
 
@@ -78,7 +88,8 @@ AS
 		        Mime,
 		        Extension,
 		        NombreDocumento,
-		        IdDocumentoTabla
+		        IdDocumentoTabla,
+				Bucket
 		    )
 		    VALUES
 		    ( 
@@ -93,7 +104,8 @@ AS
 				@Mime,
 				@Extension,
 				@NombreDocumento,
-				@IdSolicitudPedido				 
+				@IdSolicitudPedido,		 
+				@Bucket
 		    )
 		END
 	END

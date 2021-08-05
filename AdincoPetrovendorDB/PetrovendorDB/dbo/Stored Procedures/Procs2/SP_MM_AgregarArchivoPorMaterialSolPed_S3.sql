@@ -1,4 +1,9 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_MM_AgregarArchivoPorMaterialSolPed_S3
+GO
+
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -11,7 +16,10 @@
 -- Update date: <05-11-2018>
 -- Description:	<Se agrega el guardado del usuario que carga el documento y la fecha de carga>
 -- =============================================
-
+-- Author:		LUIS DAVID DE LA CRUZ
+-- Update date: 02/08/2021
+-- Description:	SE AGREGA LA COLUMNA BUCKET
+-- =============================================
 CREATE PROCEDURE SP_MM_AgregarArchivoPorMaterialSolPed_S3
     @IdSolPedDetalle INT,
     @ArchivoAdjunto NVARCHAR(MAX),
@@ -21,7 +29,8 @@ CREATE PROCEDURE SP_MM_AgregarArchivoPorMaterialSolPed_S3
     @Mime NVARCHAR(MAX),
     @Carpeta NVARCHAR(MAX),
     @Extension NVARCHAR(MAX),
-    @IdentificadorS3 NVARCHAR(MAX)
+    @IdentificadorS3 NVARCHAR(MAX),
+	@Bucket VARCHAR(200) = NULL
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -39,7 +48,8 @@ BEGIN
         Extension,
         Activo,
 		CreadoPor,
-		CreadoEl
+		CreadoEl,
+		Bucket
     )
     VALUES
     (
@@ -52,7 +62,8 @@ BEGIN
 		@Extension, 
 		1,
 		@IdUsuario,
-		GETDATE()
+		GETDATE(),
+		@Bucket
 	);
 
     SELECT @@IDENTITY;

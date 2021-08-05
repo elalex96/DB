@@ -1,4 +1,8 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS MM_SP_GuardarDocumentoSolPed_S3
+GO
+-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 07/04/2018
 -- Description:	Se guarda documento para una SolPed
@@ -11,6 +15,10 @@
 -- Update date: <05-11-2018>
 -- Description:	<Se agrega el guardado del usuario que carga el documento y la fecha de carga>
 -- =============================================
+-- Author:		LUIS DAVID DE LA CRUZ
+-- Update date: 02/08/2021
+-- Description:	SE AGREGA LA COLUMNA BUCKET
+-- =============================================
 CREATE PROCEDURE MM_SP_GuardarDocumentoSolPed_S3
     @IdSolPed INT,
     @Documento NVARCHAR(MAX),
@@ -22,7 +30,8 @@ CREATE PROCEDURE MM_SP_GuardarDocumentoSolPed_S3
     @Mime NVARCHAR(MAX),
     @Carpeta NVARCHAR(MAX),
     @Extension NVARCHAR(MAX),
-    @IdentificadorS3 NVARCHAR(MAX)
+    @IdentificadorS3 NVARCHAR(MAX),
+	@Bucket VARCHAR(200) = NULL
 AS
 BEGIN
     INSERT INTO dbo.MM_DocumentosSolPed
@@ -36,7 +45,8 @@ BEGIN
         Extension,
         Activo,
 		CreadoPor,
-		CreadoEl
+		CreadoEl,
+		Bucket
     )
     VALUES
     (   @IdSolPed,        -- IdSolPed - int
@@ -48,6 +58,7 @@ BEGIN
         @Extension,       -- Extension - nvarchar(300)
         1,
 		@IdUsuario,
-		GETDATE()
+		GETDATE(),
+		@Bucket
     );
 END;
