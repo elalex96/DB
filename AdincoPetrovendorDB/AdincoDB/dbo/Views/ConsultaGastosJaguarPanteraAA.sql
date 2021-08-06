@@ -1,5 +1,5 @@
 ﻿
-CREATE VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
+ALTER VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
 AS
      /*Consulta general*/
 	 
@@ -159,27 +159,12 @@ AS
             F1.UUID AS UUIDComplemento,
 			NoAceptacionServicio		=	AP.IdAceptacionPedido,
 			[Pedido/OrdenCompra]		=	P2.IdPedido,
-			CASE WHEN PD.IdMoneda <> 1 THEN 
-					ROUND(
-					(ISNULL(
-						(
-							SELECT TC.TipoCambio
-							FROM Adinco.dbo.CO_TipoCambioDiario TC
-							WHERE DAY(PTC.FechaTipoCambio) = DAY(TC.Fecha)
-								AND MONTH(PTC.FechaTipoCambio) = MONTH(TC.Fecha)
-								AND YEAR(PTC.FechaTipoCambio) = MONTH(TC.Fecha)
-								AND TC.IdMoneda =1
-						),
-						(
-							SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, P.Creadoel)
-						)
-							) * PD.PrecioUnitario
-					) * (APD.Cantidad),
-					4
-				)
-			ELSE   
-			 (ISNULL(PD.PrecioUnitario,0)* ISNULL(APD.Cantidad,0))  
-			END as TipoCambio
+			CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN (SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, F.Fecha))
+                WHEN R.CvTipoDocFacturacion IN(2, 3)
+                THEN (SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, PC.FechaPago))
+            END AS TipoCambio
      FROM dbo.CO_LineaPresupuestoMes LPM(NOLOCK)
           JOIN dbo.CO_Servicio S(NOLOCK) ON LPM.IdServicio = S.IdServicio
           LEFT JOIN dbo.CO_Instalacion I(NOLOCK) ON LPM.IdInstalacion = I.IdInstalacion
@@ -366,5 +351,6 @@ AS
 			  P.Creadoel,
 			  PD.IdMoneda,
 			  PD.PrecioUnitario,
-			  APD.Cantidad
+			  APD.Cantidad,
+			  PC.FechaPago
 GO
