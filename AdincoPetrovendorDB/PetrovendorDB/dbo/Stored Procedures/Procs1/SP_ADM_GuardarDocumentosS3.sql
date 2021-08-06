@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_ADM_GuardarDocumentosS3
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 20/09/2018
 -- Description:	guardar los documentos en S3 
@@ -14,6 +16,10 @@
 --10 Documentos anexos Pedido
 --11 Adjudicacion directa para PCM
 -- =============================================
+-- Author:		LUIS DAVID DE LA CRUZ
+-- Update date: 05/08/2021
+-- Description:	SE AGREGA LA COLUMNA BUCKET
+-- =============================================
 CREATE PROCEDURE SP_ADM_GuardarDocumentosS3 @TipoDocumento            INT, 
                                             @NombreDoc                NVARCHAR(100), 
                                             @IdSolicitudPedidoDetalle NVARCHAR(MAX), 
@@ -27,7 +33,8 @@ CREATE PROCEDURE SP_ADM_GuardarDocumentosS3 @TipoDocumento            INT,
                                             @IdSolicitudPedido        INT, 
                                             @IdAceptacionPedido       INT, 
                                             @IdPedido                 INT           = NULL, 
-                                            @Version                  INT           = NULL
+                                            @Version                  INT           = NULL,
+											@Bucket					  VARCHAR(200)	= NULL
 AS
     BEGIN
         DECLARE @IdOperacion INT, @IdPeticionOferta INT, @IdIdentityDocumento INT;
@@ -42,7 +49,8 @@ AS
                  Mime, 
                  Activo, 
                  CreadoPor, 
-                 CreadoEl
+                 CreadoEl,
+				 Bucket
                 )
                        SELECT @IdSolicitudPedidoDetalle, 
                               @NombreDoc, 
@@ -52,7 +60,8 @@ AS
                               @Mime, 
                               1, 
                               @IdUsuario, 
-                              GETDATE();
+                              GETDATE(),
+							  @Bucket;
         END;
         IF(@TipoDocumento = 2)
             BEGIN
@@ -66,7 +75,8 @@ AS
                  Activo, 
                  CreadoPor, 
                  CreadoEl, 
-                 Documento
+                 Documento,
+				 Bucket
                 )
                        SELECT @IdSolicitudPedido, 
                               @NombreDoc, 
@@ -77,7 +87,8 @@ AS
                               1, 
                               @IdUsuario, 
                               GETDATE(), 
-                              '';
+                              '',
+							  @Bucket;
         END;
         IF(@TipoDocumento = 3)
             BEGIN
@@ -89,7 +100,7 @@ AS
                          INNER JOIN dbo.MM_SolicitudPedido solPed ON TAO.IdDocumento = solPed.IdSolicitudPedido
                     WHERE doc.IdOperacion IN
                     (
-                        SELECT IdOperacion
+                       SELECT IdOperacion
                         FROM dbo.TA_Operacion
                         WHERE IdDocumento = @IdSolicitudPedido
                               AND IdTipoOperacion = 6
@@ -118,7 +129,8 @@ AS
                          Activo, 
                          CreadoPor, 
                          CreadoEl, 
-                         Documento
+                         Documento,
+						 Bucket
                         )
                                SELECT @IdProveedor, 
                                       @NombreDoc, 
@@ -131,7 +143,8 @@ AS
                                       1, 
                                       @IdUsuario, 
                                       GETDATE(), 
-                                      '';
+                                      '',
+									  @Bucket;
                         UPDATE dbo.MM_SolicitudPedido
                           SET 
                               Fianza = 1
@@ -176,11 +189,12 @@ AS
                          AMS3, 
                          Activo, 
                          CreadoPor, 
-                         CreadoEl
+                         CreadoEl,
+						 Bucket
                         )
                                SELECT @IdProveedor, 
                                       @NombreDoc, 
-                                      @IdOperacion, 
+                      @IdOperacion, 
                                       @Carpeta, 
                                       @Identificador, 
                                       @Extension, 
@@ -188,7 +202,8 @@ AS
                                       1, 
                                       1, 
                                       @IdUsuario, 
-                                      GETDATE();
+                                      GETDATE(),
+									  @Bucket;
                 END;
         END;
         IF(@TipoDocumento = 5)
@@ -202,7 +217,8 @@ AS
                  Activo, 
                  CreadoPor, 
                  CreadoEl, 
-                 IdSolicitudPedido
+                 IdSolicitudPedido,
+				 Bucket
                 )
                        SELECT @Carpeta, 
                               @Identificador, 
@@ -212,7 +228,8 @@ AS
                               1, 
                               @IdUsuario, 
                               GETDATE(), 
-                              @IdSolicitudPedido;
+                              @IdSolicitudPedido,
+							  @Bucket;
         END;
         IF(@TipoDocumento = 6)
             BEGIN
@@ -225,7 +242,8 @@ AS
                  Activo, 
                  CreadoPor, 
                  CreadoEl, 
-                 IdSolicitudPedido
+                 IdSolicitudPedido,
+				 Bucket
                 )
                        SELECT @Carpeta, 
                               @Identificador, 
@@ -235,7 +253,8 @@ AS
                               1, 
                               @IdUsuario, 
                               GETDATE(), 
-                              @IdSolicitudPedido;
+                              @IdSolicitudPedido,
+							  @Bucket;
         END;
 
         --Revisar
@@ -254,7 +273,8 @@ AS
                  Identificador, 
                  Mime, 
                  Extension, 
-                 NombreDocumento
+                 NombreDocumento,
+				 Bucket
                 )
                        SELECT 12, 
                               @IdUsuario, 
@@ -267,7 +287,8 @@ AS
                               @Identificador, 
                               @Mime, 
                               @Extension, 
-                              @NombreDoc;
+                              @NombreDoc,
+							  @Bucket;
                 SELECT @IdIdentityDocumento = SCOPE_IDENTITY();
                 INSERT INTO dbo.MM_AceptacionDocumento
                 (IdAceptacionDocumento, 
@@ -303,7 +324,8 @@ AS
                  Activo, 
                  CreadoPor, 
                  CreadoEl, 
-                 Documento
+                 Documento,
+				 Bucket
                 )
                        SELECT @IdPeticionOferta, 
                               @IdPeticionOfertaDetalle, 
@@ -316,7 +338,8 @@ AS
                               1, 
                               @IdUsuario, 
                               GETDATE(), 
-                              '';
+                              '',
+							  @Bucket;
         END;
         IF(@TipoDocumento = 9)
             BEGIN
@@ -336,7 +359,8 @@ AS
                  Mime, 
                  AMS3, 
                  Eliminado, 
-                 Documento
+                 Documento,
+				 Bucket
                 )
                        SELECT @IdPeticionOferta, 
                               @NombreDoc, 
@@ -348,7 +372,8 @@ AS
                               @Mime, 
                               1, 
                               0, 
-                              '';
+                              '',
+							  @Bucket;
         END;
         IF(@TipoDocumento = 10)
             BEGIN
@@ -363,7 +388,8 @@ AS
                  NombreDocumento, 
                  CreadoPor, 
                  CreadoEl, 
-                 Activo
+                 Activo,
+				 Bucket
                 )
                        SELECT @IdPedido, 
                               @Version, 
@@ -374,7 +400,8 @@ AS
                               @NombreDoc, 
                               @IdUsuario, 
                               GETDATE(), 
-                              1;
+                              1,
+							  @Bucket;
         END;
         IF(@TipoDocumento = 11)
             BEGIN
@@ -400,7 +427,8 @@ AS
                          Identificador, 
                          Mime, 
                          Extension, 
-                         NombreDocumento
+                         NombreDocumento,
+						 Bucket
                         )
                                SELECT @IdSolicitudPedido, 
                                       28, 
@@ -413,7 +441,8 @@ AS
                                       @Identificador, 
                                       @Mime, 
                                       @Extension, 
-                                      @NombreDoc;
+                                      @NombreDoc,
+									  @Bucket;
                 END;
         END;
     END;
