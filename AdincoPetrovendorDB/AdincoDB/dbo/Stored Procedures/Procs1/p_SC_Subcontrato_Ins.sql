@@ -1,4 +1,3 @@
-﻿
 CREATE proc p_SC_Subcontrato_Ins
 (
 	@pIdSubcontrato int out,
@@ -11,6 +10,8 @@ CREATE proc p_SC_Subcontrato_Ins
 	@pIdMoneda			int,
 	@pPrefijoOT			varchar(13),
 	@pObjeto			varchar(300),
+	@pFechaInicio		DateTime=null,
+	@pFechaFin			DateTime=null,
 	@pError				varchar(250)='' out
 )
 as
@@ -40,7 +41,9 @@ begin
 									IsActivo,
 									IdMoneda,
 									PrefijoOT,
-									Objeto
+									Objeto,
+									FechaInicio,
+									FechaFin
 								)
 							values
 								(
@@ -56,7 +59,9 @@ begin
 									1,
 									@pIdMoneda,
 									'OT-'+@pPrefijoOT,
-									@pObjeto 
+									@pObjeto ,
+									@pFechaInicio,
+									@pFechaFin
 								)
 	end
 	else

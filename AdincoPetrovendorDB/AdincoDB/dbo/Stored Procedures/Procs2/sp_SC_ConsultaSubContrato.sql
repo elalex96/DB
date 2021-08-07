@@ -1,5 +1,4 @@
-﻿-- sp_SC_ConsultaSubContrato 4
-CREATE Proc sp_SC_ConsultaSubContrato
+create Proc sp_SC_ConsultaSubContrato
 @pIdSubContrato int
 As
 
@@ -21,15 +20,19 @@ As
 			FolioOTSig =ISNULL(sc.PrefijoOT,'') +'-'+ CAST(ISNULL(COUNT(DISTINCT otSol.IdOTSolicitud),0) + 1 AS varchar) ,
 			IdPresupuesto = ISNULL(pre.IdPresupuesto,0),
 			IdProveedor = prov.IdProveedor,
-			FolioPedido = folio.IdPedido
+			FolioPedido = folio.IdPedido,
+			sc.FechaInicio,
+			sc.FechaFin,
+			sc.IdCentroCosto,
+			sc.IdMoneda
 
 	from SC_Subcontrato sc
 	inner join CO_Contratista c on c.IdContratista = sc.IdContratista
 	inner join pv_Subcontratista psc on psc.IdSubContratista = sc.IdSubContratista
-	left JOIN dbo.SC_Presupuesto PRE ON PRE.IdSubContrato = SC.IdSubContrato
+	LEFT JOIN dbo.SC_Presupuesto PRE ON PRE.IdSubContrato = SC.IdSubContrato
 	LEFT JOIN dbo.OT_Solicitud otSol ON otSol.IdSubContrato = sc.IdSubContrato
 	LEFT join Petrovendor.dbo.S_Proveedor prov on prov.RFC collate SQL_Latin1_General_CP1_CI_AS = psc.RFC collate SQL_Latin1_General_CP1_CI_AS
-	left join Petrovendor.dbo.MM_Pedidos folio on folio.IdIdentificador = sc.IdPedido
+	LEFT join Petrovendor.dbo.MM_Pedidos folio on folio.IdIdentificador = sc.IdPedido
 	where sc.IdSubContrato = @pIdSubContrato
 	GROUP BY sc.IdSubContrato,
 			sc.IdSubContratista,
@@ -43,8 +46,11 @@ As
 			sc.PrefijoOT,
 			pre.IdPresupuesto,
 			prov.IdProveedor,
-			folio.IdPedido
-
+			folio.IdPedido,
+			sc.FechaInicio,
+			sc.FechaFin,
+			sc.IdCentroCosto,
+			sc.IdMoneda
 
 
 

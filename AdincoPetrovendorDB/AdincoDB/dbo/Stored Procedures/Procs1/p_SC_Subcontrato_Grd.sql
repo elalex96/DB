@@ -1,4 +1,4 @@
-﻿CREATE proc p_SC_Subcontrato_Grd
+CREATE proc p_SC_Subcontrato_Grd
 (
 	@pIdContratista	int
 )
@@ -16,7 +16,9 @@ begin
 				TipoMoneda					=	m.TipoMonedaCorto,
 				t1.IdContrato,
 				IdCC = isnull(t1.IdCentroCosto,0),
-				cc.CentroCosto
+				cc.CentroCosto,
+				t1.FechaInicio,
+				t1.FechaFin
 	from		SC_Subcontrato				t1
 	inner join	Adinco..PV_Subcontratista	t2
 	on			t1.IdSubContratista			=	t2.IdSubcontratista
@@ -30,5 +32,4 @@ begin
 	
 	
 end
-
 
