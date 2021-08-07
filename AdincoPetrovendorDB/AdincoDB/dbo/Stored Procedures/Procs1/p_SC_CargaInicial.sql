@@ -1,4 +1,4 @@
-﻿create PROC [dbo].[p_SC_CargaInicial]  
+CREATE PROC [dbo].[p_SC_CargaInicial]  
     @pIdContratista INT,  
     @pIdContrato INT,  
     @pCreadoPor INT,  
@@ -31,7 +31,8 @@ BEGIN TRY
         IdMaterial = NULL;  
   
     WHILE @i IS NOT NULL  
-    BEGIN  
+    BEGIN 
+ 
   
         SET @idMaestro = 0;  
   
@@ -44,8 +45,7 @@ BEGIN TRY
         )  
         BEGIN  
   
-            INSERT INTO Petrovendor..MM_Maestro
-  
+            INSERT INTO Petrovendor..MM_Maestro  
             (  
             /*IdMaestro,*/  
                 IdTipoCatalogoMaestro,  
@@ -79,7 +79,8 @@ BEGIN TRY
                    NULL,  
                    NULL,  
                    NULL,  
-                   ISNULL(u.IdUnidad, 10011 /*SERVICIO*/),  
+                   ISNULL(u.IdUnidad, 10011 /*SERVICIO*/), 
+ 
                    NULL,  
                    NULL,  
                    NULL  
@@ -105,9 +106,7 @@ BEGIN TRY
                 IdUnidad,  
                 DescripcionCorta,  
                 DescripcionLarga,  
-                Consumible
-
-,  
+                Consumible,  
                 Inventariable,  
                 TiempoEntregaEstimadoDias,  
                 Marca,  
@@ -123,18 +122,17 @@ BEGIN TRY
             )  
             SELECT prov.IdProveedor,  
                    mm.IdUnidadPreterminada, 
-					mm.TextoLargo,  
+				   mm.TextoLargo,  
                    mm.TextoLargo,  
                    0,  
                    1,  
                    0,  
-                 NULL,  
+					NULL,  
                    1,  
-                   NULL,  
+				   NULL,  
                    GETDATE(),  
-					1,  
-        
-           0,  
+					1,   
+					0,  
                    mm.IdMaestro,  
                    1,  
                    2,  
@@ -145,14 +143,9 @@ BEGIN TRY
 			ON i.IdSCDetalle = @i  
                 INNER JOIN Petrovendor..S_Proveedor prov  
                     ON prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = i.RFCProveedor COLLATE SQL_Latin1_General_CP1_CI_AS  
-            WHERE mm.IdMaestro = @idMaestro; 
-
- 
+            WHERE mm.IdMaestro = @idMaestro;  
   
             SET @idMaterial = SCOPE_IDENTITY();  
-  
-  
-  
   
             UPDATE SC_Importacion  
             SET IdMaterial = @idMaterial  
@@ -173,9 +166,7 @@ BEGIN TRY
   
     SELECT @pedidoC = MIN(NumeroPedido)  
     FROM SC_Importacion  
-    WHERE IdSubcontrato IS NULL; 
-
- 
+    WHERE IdSubcontrato IS NULL;  
   
   
     WHILE @pedidoC IS NOT NULL  
@@ -198,7 +189,8 @@ BEGIN TRY
             FROM SC_SubContrato;  
   
         END;  
-  
+ 
+ 
   
         INSERT INTO SC_SubContrato  
         (  
@@ -217,7 +209,9 @@ BEGIN TRY
             PrefijoOT,  
             IdContrato,  
             IdMoneda,  
-            IdTipoPedido
+            IdTipoPedido,
+			FechaInicio,
+			FechaFin
         )  
         SELECT @idsubcontrato,  
                prov.IdSubcontratista,  
@@ -227,23 +221,22 @@ BEGIN TRY
                GETDATE(),  
                NULL,  
                NULL,  
-               1,  
+               1,
+  
                0,  
                tmp.Descripcion,  
                NULL,  
                'OT-' + CASE  
                            WHEN LEN(tmp.NumeroPedido) <= 5 THEN  
                                tmp.NumeroPedido  
-                           ELSE  
-                 
-
-              SUBSTRING(tmp.NumeroPedido, LEN(tmp.NumeroPedido) - 4, LEN(tmp.NumeroPedido))  
+                           ELSE  SUBSTRING(tmp.NumeroPedido, LEN(tmp.NumeroPedido) - 4, LEN(tmp.NumeroPedido))  
                        END,  
                MAX(c.IdContrato),  
                m.IdMoneda,  
-               tmp.IdTipoPedido
-        FROM SC_Importacion tmp  
-
+               tmp.IdTipoPedido,
+			   tmp.FechaContratoIni,
+			   tmp.FechaContratoFin
+        FROM SC_Importacion tmp 
             INNER JOIN PV_Subcontratista prov  
                 ON prov.RFC = tmp.RFCProveedor  AND
 				prov.IsActivo = 1
@@ -252,27 +245,31 @@ BEGIN TRY
             INNER JOIN CO_Contrato c  
                 ON	c.IdContrato = @pIdContrato  
             LEFT JOIN Petrovendor..PV_TipoMoneda m  
-                ON UPPER(m.TipoMonedaCorto) COLLATE SQL_Latin1_General_CP1_CI_AS = UPPER(tmp.Moneda) COLLATE SQL_Latin1_General_CP1_CI_AS  
-        WHERE NOT EXISTS     	
-		(  
-							SELECT 1  
-							FROM SC_SubContrato  
-							WHERE NumeroSubContrato = CAST(tmp.NumeroPedido AS VARCHAR)  
-								  AND IdContratista = con.IdContratista  
-								  AND IsActivo = 1  
-								  AND ISNULL(IsEliminado, 0) = 0  
-		)  
-        AND tmp.NumeroPedido = @pedidoC  
-        GROUP BY tmp.NumeroPedido,  
-                 prov.IdSubcontratista,  
-                 con.IdContratista,  
-                 tmp.IdSCCarga,                
-				 tmp.RFCProveedor,  
-                 m.IdMoneda,  
-                 tmp.IdTipoPedido,  
-				 tmp.Descripcion;  
+                ON UPPER(m.TipoMonedaCorto) COLLATE SQL_Latin1_General_CP1_CI_AS = UPPER(tmp.Moneda) COLLATE SQL_Latin1_General_CP1_CI_AS 
+      
+		  WHERE NOT EXISTS     	
+				(  
+									SELECT 1  
+									FROM SC_SubContrato  
+									WHERE NumeroSubContrato = CAST(tmp.NumeroPedido AS VARCHAR)  
+										  AND IdContratista = con.IdContratista  
+										  AND IsActivo = 1  
+										  AND ISNULL(IsEliminado, 0) = 0  
+				)  
+     
+		   AND tmp.NumeroPedido = @pedidoC  
+				GROUP BY tmp.NumeroPedido,  
+						 prov.IdSubcontratista,  
+						 con.IdContratista,  
+						 tmp.IdSCCarga,                
+						 tmp.RFCProveedor,  
+						 m.IdMoneda,  
+						 tmp.IdTipoPedido,  
+						 tmp.Descripcion,
+						 tmp.FechaContratoIni,
+						 tmp.FechaContratoFin
   
-        SELECT @idSCMaterial = ISNULL(MAX(IdSCMaterial), 0)  
+		SELECT @idSCMaterial = ISNULL(MAX(IdSCMaterial), 0)  
         FROM [SC_Materiales];  
   
         INSERT INTO [dbo].[SC_Materiales]  
@@ -295,6 +292,7 @@ BEGIN TRY
             IdServicio  
         )  
         SELECT ROW_NUMBER() OVER (ORDER BY IdSCDetalle ASC) + @idSCMaterial, 
+
 
  
                @idsubcontrato,  
@@ -350,6 +348,7 @@ BEGIN TRY
                 ON con.IdContrato = @pIdContrato  
             INNER JOIN CO_PeriodoContrato pc
 
+
   
                 ON pc.IdContrato = con.IdContrato  
             INNER JOIN CO_ProgramaActividad pa  
@@ -377,8 +376,7 @@ BEGIN TRY
   
         SELECT @pedidoC = MIN(NumeroPedido)  
         FROM SC_Importacion  
-        WHERE IdSubcontrato IS NULL
-     
+        WHERE IdSubcontrato IS NULL     
          AND NumeroPedido > @pedidoC;  
   
     END;  
@@ -391,7 +389,8 @@ BEGIN CATCH
     ROLLBACK TRAN;  
     SET @pError = ERROR_MESSAGE()+'|LINEA:'+cast(ERROR_LINE() as varchar);  
   
- select @pError;  
+	select @pError;  
   
    
 END CATCH;
+
