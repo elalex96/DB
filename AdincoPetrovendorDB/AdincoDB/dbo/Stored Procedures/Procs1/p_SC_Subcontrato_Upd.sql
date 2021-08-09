@@ -1,4 +1,3 @@
-﻿
 CREATE proc p_SC_Subcontrato_Upd
 (
 	@pIdSubContrato		int,
@@ -9,6 +8,8 @@ CREATE proc p_SC_Subcontrato_Upd
 	@pIdContratista		int,
 	@pIdMoneda			int,
 	@pPrefijoOT			varchar(13),
+	@pFechaInicio		DateTime=null,
+	@pFechaFin			DateTime=null,
 	@pError				varchar(250)='' out
 )
 as
@@ -54,7 +55,9 @@ begin
 			Objeto				=	@pObjeto,
 			IdCentroCosto		=	@pIdCentroCosto,
 			IdMoneda			=	@pIdMoneda,
-			PrefijoOT			=	@pPrefijoOT
+			PrefijoOT			=	@pPrefijoOT,
+			FechaInicio			=	@pFechaInicio,
+			FechaFin			=	@pFechaFin
 	where	IdSubContrato		=	@pIdSubContrato
 	
 	

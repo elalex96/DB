@@ -1,8 +1,14 @@
 ﻿
+DROP PROCEDURE IF EXISTS SP_MPY_InsFacturaExtranjero
+GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 19/12/2018
 -- Description: Guardar factura extranjeros
+-- =============================================
+-- Author:		LUIS DAVID DE LA CRUZ
+-- Update date: 05/08/2021
+-- Description:	SE AGREGA LA COLUMNA BUCKET
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_InsFacturaExtranjero]
 	-- Add the parameters for the stored procedure here
@@ -22,8 +28,8 @@ CREATE PROCEDURE [dbo].[SP_MPY_InsFacturaExtranjero]
 	@Extension NVARCHAR(100),
 	@Mime NVARCHAR(MAX),
 	@IdOperadora INT,
-	@IdVendor NVARCHAR(50)
-
+	@IdVendor NVARCHAR(50),
+	@Bucket VARCHAR(200)	= NULL
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -195,7 +201,8 @@ BEGIN
 	    Activo,
 	    CreadoPor,
 	    CreadoEl,
-		IdProveedorVenta
+		IdProveedorVenta,
+		Bucket
 	)
 	VALUES
 	(   @IdPedido,        -- IdPedido - int
@@ -208,11 +215,11 @@ BEGIN
 	    1,     -- Activo - bit
 	    @IdUsuario,        -- CreadoPor - int
 	    GETDATE(), -- CreadoEl - datetime
-		@IdVendor
+		@IdVendor,
+		@Bucket
 	    ); 
 
 		
 
 	SELECT @@IDENTITY
 END
-

@@ -1,4 +1,4 @@
-﻿CREATE PROC sp_SC_InsertarSubContrato
+create PROC sp_SC_InsertarSubContrato
 @pIdSubContrato	int out,
 @pIdSubContratista	int,
 @pIdContratista	int,
@@ -8,8 +8,11 @@
 @pIdContrato int,
 @pCreadoPor	INT,
 @pPrefijoOT VARCHAR(13),
+@pFechaInicio DateTime=null,
+@pFechaFin DateTime = null,
 @pError varchar(250) = '' out
 AS
+BEGIN
 
 	DECLARE @IdSCMaterial int,
 		@IdMoneda int
@@ -23,7 +26,7 @@ AS
 
 	BEGIN TRY	
 
-	BEGIN TRAN
+	
 
 	if exists(
 		select 1
@@ -51,6 +54,7 @@ AS
 		return
 	end
 	
+	BEGIN TRAN
 
 	select @pIdSubContrato = isnull(max(IdSubContrato),0)+1 from SC_Subcontrato
 
@@ -66,7 +70,9 @@ AS
 		IdPedido,
 		PrefijoOT,
 		IdContrato,
-		IdMoneda)
+		IdMoneda,
+		FechaInicio,
+		FechaFin)
 	values(
 		@pIdSubContrato,
 		@pIdSubContratista,
@@ -80,7 +86,9 @@ AS
 		@pIdPedido,
 		@pPrefijoOT,
 		@pIdContrato,
-		@IdMoneda
+		@IdMoneda,
+		@pFechaInicio,
+		@pFechaFin
 	)
 
 
@@ -167,14 +175,16 @@ AS
 
 
 	COMMIT TRAN
+
+
 	END TRY
 	BEGIN CATCH
 		ROLLBACK TRAN
 		set @pError = '[ERROR]'+ ERROR_MESSAGE()
 	END CATCH
-
 	
 
+END
 
 
 

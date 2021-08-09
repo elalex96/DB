@@ -1,5 +1,4 @@
-﻿-- p_SC_Consulta 10013,10038,10
-create Proc p_SC_Consulta
+CREATE Proc p_SC_Consulta
 @pIdContratista int,
 @pIdContrato int,
 @pUsuarioId int
@@ -46,7 +45,9 @@ as
 	SC.[ModificadoPor], SC.[ModificadoEl] ,
 	Moneda = isnull(TipoMonedaCorto,'NO DEFINIDA'),
 	AFinanciero = cast(isnull(tot.Avance,0) as decimal(5,2)), -- 1 = 100%
-	tot.TotalSC
+	tot.TotalSC,
+	sc.FechaInicio,
+	sc.FechaFin
 	FROM [SC_SubContrato] SC
 	INNER JOIN dbo.CO_Contrato  c ON c.IdContratista = sc.IdContratista
 	left join Petrovendor.dbo.MM_Pedido ped on ped.IdPedido = sc.Idpedido

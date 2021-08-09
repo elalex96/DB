@@ -1,4 +1,8 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_MM_AgregarDocBasesOperacion
+GO
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -7,7 +11,10 @@
 -- Update date: <05-11-2018 >
 -- Description:	<Se agrega la fecha y el nombre de cuando y quien subio el documento>
 -- =============================================
-
+-- Author:		LUIS DAVID DE LA CRUZ
+-- Update date: 02/08/2021
+-- Description:	SE AGREGA LA COLUMNA BUCKET
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarDocBasesOperacion]
     @IdProveedor INT,
     @NombreDoc VARCHAR(MAX),
@@ -18,7 +25,8 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarDocBasesOperacion]
     @Carpeta NVARCHAR(MAX),
     @Identificador NVARCHAR(MAX),
     @Extension NVARCHAR(MAX),
-    @Mime NVARCHAR(MAX)
+    @Mime NVARCHAR(MAX),
+	@Bucket VARCHAR(200) = NULL
 AS
 BEGIN
     INSERT INTO dbo.TA_DocBasesOperacion
@@ -33,7 +41,8 @@ BEGIN
         Mime,
         Activo,
 		CreadoPor,
-		CreadoEl
+		CreadoEl,
+		Bucket
     )
     VALUES
     (   @IdProveedor, -- IdProveedor - int
@@ -46,6 +55,7 @@ BEGIN
         @Mime,
         1,
 		@IdUsuario,
-		GETDATE()
+		GETDATE(),
+		@Bucket
     );
 END;
