@@ -13119,6 +13119,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\sp_EN_ReceptorEntregable_Lst.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_sp_GuardaBitacoraExcepcion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_sp_HistorialBitacoraExcepciones.sql" />
+    <Build Include="dbo\Functions\fnObtenCentroCosto.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

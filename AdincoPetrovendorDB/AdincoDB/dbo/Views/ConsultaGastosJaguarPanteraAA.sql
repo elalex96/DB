@@ -1,5 +1,4 @@
-﻿
-ALTER VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
+﻿ALTER VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
 AS
      /*Consulta general*/
 	 
@@ -164,7 +163,8 @@ AS
                 THEN (SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, F.Fecha))
                 WHEN R.CvTipoDocFacturacion IN(2, 3)
                 THEN (SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, PC.FechaPago))
-            END AS TipoCambio
+            END AS TipoCambio,
+			(Petrovendor.dbo.fnObtenCentroCosto(FP.IdFactura)) as CentroCosto
      FROM dbo.CO_LineaPresupuestoMes LPM(NOLOCK)
           JOIN dbo.CO_Servicio S(NOLOCK) ON LPM.IdServicio = S.IdServicio
           LEFT JOIN dbo.CO_Instalacion I(NOLOCK) ON LPM.IdInstalacion = I.IdInstalacion
@@ -224,8 +224,7 @@ AS
 		 ON PP.IdPedido = PD.IdPedido
 		 LEFT JOIN Petrovendor.dbo.MM_AceptacionPedidoDetalle as APD
 		 ON PD.IdPedidoDetalle=APD.IdPedidoDetalle
-		 LEFT JOIN Petrovendor.dbo.MM_PedidoTipoCambio AS PTC
-		 ON PD.IdPedido = PTC.IdPedido 
+		 
      WHERE C.IdContrato IN(10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024, 10043, 10052)
      GROUP BY C.NumeroContrato, 
               ACC.NombreAreaContractual, 
@@ -347,10 +346,10 @@ AS
               F1.UUID,
 			  AP.IdAceptacionPedido,
 			  P2.IdPedido,
-			  PTC.FechaTipoCambio,
 			  P.Creadoel,
 			  PD.IdMoneda,
 			  PD.PrecioUnitario,
 			  APD.Cantidad,
-			  PC.FechaPago
+			  PC.FechaPago,
+			  FP.IdFactura
 GO
