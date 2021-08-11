@@ -1,17 +1,21 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_Aceptacion_ConsultaPedidoDetalle_MV1_5]    Script Date: 10/08/2021 09:48:31 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_Aceptacion_ConsultaPedidoDetalle_MV1_5]    Script Date: 09/08/2021 05:30:21 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-    
 -- =============================================
 -- Author:           Daniel AC
 -- Create date: 05-01-2021
 -- Description: Se agrego información del yacimiento, en la columna de observación
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_Aceptacion_ConsultaPedidoDetalle_MV1_5] --19607,516
+-- =============================================
+-- Author:      Alexander Gomez
+-- Create date: 11/08/2021
+-- Description: se corrige la consulta para no contemplar las aceptaciones eliminadas
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_MM_Aceptacion_ConsultaPedidoDetalle_MV1_5] --22521,1835
 -- Add the parameters for the stored procedure here
 @IdPedido      INT, 
 @IdProveedor   INT,
@@ -20,7 +24,7 @@ ALTER PROCEDURE [dbo].[SP_MM_Aceptacion_ConsultaPedidoDetalle_MV1_5] --19607,516
 @FechaRegistro DATETIME = NULL
 
 AS
-BEGIN
+     BEGIN
 
 	 	SELECT PD.IdPedidoDetalle, 
                 PD.IdMaterialVendedor, 
@@ -38,34 +42,22 @@ BEGIN
 				 CAST( (ISNULL(PD.Cantidad,0) - SUM(ISNULL(APD.Cantidad,0))) AS NVARCHAR(100) ) AS CantidadRestante,
 				 ROW_NUMBER() OVER (ORDER BY PD.IdPedidoDetalle ASC) AS Partida
          FROM dbo.MM_Pedido AS P WITH (NOLOCK)
-              JOIN dbo.MM_PedidoDetalle AS pd WITH (NOLOCK) 
-			  ON P.IdPedido = pd.IdPedido 
-			  AND PD.RecepcionPedido = 1 
-              JOIN dbo.MM_PeticionOfertaDetalle AS POD WITH (NOLOCK) 
-			  ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
-              JOIN dbo.MM_SolicitudPedidoDetalle AS spd WITH (NOLOCK) 
-			  ON POD.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
-              JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPLP WITH (NOLOCK) 
-			  ON spd.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
-              JOIN Adinco.dbo.CO_Instalacion INS WITH (NOLOCK) 
-			  ON SPLP.IdInstalacion = INS.IdInstalacion
-              JOIN dbo.MM_Material m WITH (NOLOCK) 
-			  ON spd.IdMaterial = m.IdMaterial
-              JOIN dbo.MM_SolicitudPedido SOL WITH (NOLOCK) 
-			  ON P.IdSolicitudPedido = SOL.IdSolicitudPedido
-			  LEFT JOIN Adinco..CO_Yacimiento Y WITH (NOLOCK)
-			  ON INS.IdYacimiento=Y.IdYacimiento
-              LEFT JOIN dbo.S_Usuario US WITH (NOLOCK) 
-			  ON SOL.IdUsuarioSolicitante = US.IdUsuario
-			  INNER JOIN dbo.MM_AceptacionPedido AP
-			  ON AP.IdPedido=P.IdPedido AND ISNULL(AP.IdEstatusEliminado,0) <> 1 --> QUE LA ACEPTACIÓN NO ESTE ELIMINADA
-			  LEFT JOIN dbo.MM_AceptacionPedidoDetalle APD 
-			  ON PD.IdPedidoDetalle = APD.IdPedidoDetalle 
+              JOIN dbo.MM_PedidoDetalle AS pd WITH (NOLOCK) ON P.IdPedido = pd.IdPedido AND PD.RecepcionPedido = 1 
+              JOIN dbo.MM_PeticionOfertaDetalle AS POD WITH (NOLOCK) ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
+              JOIN dbo.MM_SolicitudPedidoDetalle AS spd WITH (NOLOCK) ON POD.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
+              JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPLP WITH (NOLOCK) ON spd.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
+              JOIN Adinco.dbo.CO_Instalacion INS WITH (NOLOCK) ON SPLP.IdInstalacion = INS.IdInstalacion
+              JOIN dbo.MM_Material m WITH (NOLOCK) ON spd.IdMaterial = m.IdMaterial
+              JOIN dbo.MM_SolicitudPedido SOL WITH (NOLOCK) ON P.IdSolicitudPedido = SOL.IdSolicitudPedido
+			  LEFT JOIN Adinco..CO_Yacimiento Y ON INS.IdYacimiento=Y.IdYacimiento
+              LEFT JOIN dbo.S_Usuario US WITH (NOLOCK) ON SOL.IdUsuarioSolicitante = US.IdUsuario
+			  JOIN dbo.MM_AceptacionPedido AP WITH (NOLOCK) ON AP.IdPedido=P.IdPedido AND ISNULL(AP.IdEstatusEliminado,0)<>1  --> QUE LA ACEPTACIÓN NO ESTE ELIMINADA
+			  JOIN dbo.MM_AceptacionPedidoDetalle APD WITH (NOLOCK) ON PD.IdPedidoDetalle = APD.IdPedidoDetalle 
 			  AND AP.IdAceptacionPedido=APD.IdAceptacionPedido
          WHERE P.IdPedido = @IdPedido
                AND P.IdProveedorCompras = @IdProveedor
                AND P.RecepcionServicio = 1
-		GROUP BY 
+			   GROUP BY 
 			   spd.idmaterial, 
 			   m.DescripcionCorta,
                INS.NombreInstalacion,
