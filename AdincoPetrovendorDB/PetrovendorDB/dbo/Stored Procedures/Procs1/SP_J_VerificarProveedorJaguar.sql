@@ -1,13 +1,16 @@
-﻿-- =============================================
--- Author:		<Abel Rivera>
--- Create date: <11/05/2020>
--- Description:	<Verifica si el proveedor logueado es Jaguar>
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_J_VerificarProveedorJaguar]    Script Date: 09/08/2021 05:06:37 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <09/11/2020>
--- Description:	<Se actualiza a una nueva tabla actualizada con los contratos de jaguar>
+-- Author:		Alexander Gomez
+-- Update:		09-08-2021
+-- Description:	Validacion para operadora jaguar
 -- =============================================
-create PROCEDURE [dbo].[SP_J_VerificarProveedorJaguar]
+ALTER PROCEDURE [dbo].[SP_J_VerificarProveedorJaguar]
 @IdProveedor INT
 AS
 BEGIN
@@ -15,10 +18,12 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
+	DECLARE @RFCACTUAL NVARCHAR(100)= (SELECT TOP 1 RFC FROM S_Proveedor WHERE IdProveedor = @IdProveedor);
+
 	IF EXISTS
 	(
-		--SELECT IdProveedor FROM dbo.Jaguar_Proveedor WHERE IdProveedor = @IdProveedor AND Activo = 1
-		select * from S_Proveedor where RazonSocial like '%Jaguar%' and IdProveedor = @IdProveedor
+		SELECT IdProveedor FROM dbo.Jaguar_Proveedor WHERE RFC = @RFCACTUAL
+		--select * from S_Proveedor where RazonSocial like '%Jaguar%' and IdProveedor = @IdProveedor
 	)
 	BEGIN
 		SELECT 'JAGUAR'
