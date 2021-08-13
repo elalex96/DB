@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists(select * from sys.procedures where name = 'SP_AD_S3_MM_PeticionOfertaADAdjunto')
+begin
+	drop proc SP_AD_S3_MM_PeticionOfertaADAdjunto
+end
+
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
@@ -11,7 +17,8 @@ CREATE  PROCEDURE [dbo].[SP_AD_S3_MM_PeticionOfertaADAdjunto]
     @Extension NVARCHAR(MAX) = NULL,
     @IdentificadorS3 NVARCHAR(MAX) = NULL,
     @NombreDocumento NVARCHAR(MAX) = NULL,
-	@IdSolicitudPedido INT = NULL 
+	@IdSolicitudPedido INT = NULL,
+	@Bucket nvarchar(max) = NULL
 AS
 BEGIN
 
@@ -57,7 +64,8 @@ BEGIN
                 Extension,
                 NombreDocumento,
                 Activo,
-				IdSolicitudPedido
+				IdSolicitudPedido,
+				Bucket
             )
             VALUES
             (   NULL,                -- IdInvitacion - int
@@ -67,9 +75,10 @@ BEGIN
                 @IdentificadorS3, -- Identificador - nvarchar(max)
                 @Mime,            -- Mime - nvarchar(max)
                 @Extension,       -- Extension - nvarchar(max)
-                @NombreDocumento, -- NombreDocumento - nvarchar(max)
-                1,                 -- Activo - bit    			    
-				@IdSolicitudPedido --IdSolicitudPedido  - int
+                @NombreDocumento,	-- NombreDocumento - nvarchar(max)
+                1,					-- Activo - bit    			    
+				@IdSolicitudPedido, --IdSolicitudPedido  - int
+				@Bucket
                 );
 
             UPDATE dbo.MM_PeticionOferta

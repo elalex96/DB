@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_AD_S3_MM_SolPedArchivoAdjuntoMaterial')
+begin
+	drop proc SP_AD_S3_MM_SolPedArchivoAdjuntoMaterial
+end
+
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
@@ -9,8 +15,8 @@ CREATE PROCEDURE[dbo].[SP_AD_S3_MM_SolPedArchivoAdjuntoMaterial]
 	@Mime NVARCHAR(MAX)=NULL,
 	@Carpeta NVARCHAR(MAX)=NULL,
 	@Extension NVARCHAR(MAX)=NULL,
-	@IdentificadorS3 NVARCHAR(MAX)=NULL
-
+	@IdentificadorS3 NVARCHAR(MAX)=NULL,
+	@bucket	nvarchar(max) = null
 AS
 	
 BEGIN				
@@ -31,9 +37,11 @@ BEGIN
 			SET Mime =@Mime,
 			Carpeta=@Carpeta,
 			Identificador=@IdentificadorS3,
-			Extension=@Extension
+			Extension=@Extension,
+			Bucket=@bucket
 			WHERE IdSolPedMaterialDocumentoAdj= @IdSolPedMaterialDocumentoAdj
 
 			SELECT 'SUCCES' 
 		END 
 END
+
