@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_AD_S3_TA_DocBasesOperacion')
+begin
+	drop proc SP_AD_S3_TA_DocBasesOperacion
+end
+
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
@@ -11,8 +17,8 @@ CREATE PROCEDURE[dbo].[SP_AD_S3_TA_DocBasesOperacion]
 	@Carpeta NVARCHAR(MAX)=NULL,
 	@Extension NVARCHAR(MAX)=NULL,
 	@IdentificadorS3 NVARCHAR(MAX)=NULL,	
-	@NombreDocumento NVARCHAR(MAX)=NULL
-	
+	@NombreDocumento NVARCHAR(MAX)=NULL,
+	@bucket	NVARCHAR(MAX)=NULL
 AS
 	
 BEGIN				
@@ -52,6 +58,7 @@ BEGIN
 			  Identificador=@IdentificadorS3,
 			  Carpeta=@Carpeta,
 			  AMS3=1
+			  Bucket = @bucket
 			  WHERE IdDocBases=@IdDocumento
 
 		    COMMIT TRAN tran1;

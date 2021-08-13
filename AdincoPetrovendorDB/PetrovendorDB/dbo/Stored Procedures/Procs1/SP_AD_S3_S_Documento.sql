@@ -1,18 +1,24 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_AD_S3_S_Documento')
+begin
+	drop proc SP_AD_S3_S_Documento
+end
+
+go
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
 create PROCEDURE[dbo].[SP_AD_S3_S_Documento] 
 	-- Add the parameters for the stored procedure here
 	@ACCION NVARCHAR(MAX),
-
 	@IdDocumento INT = NULL,
 	@Mime NVARCHAR(MAX)=NULL,
 	@Carpeta NVARCHAR(MAX)=NULL,
 	@Extension NVARCHAR(MAX)=NULL,
 	@IdentificadorS3 NVARCHAR(MAX)=NULL,	
-	@NombreDocumento NVARCHAR(MAX)=NULL
-	
+	@NombreDocumento NVARCHAR(MAX)=NULL,
+	@bucket nvarchar(max)= null
 AS
 	
 BEGIN				
@@ -69,10 +75,10 @@ BEGIN
 
 				INSERT INTO dbo.S_Documento_S3
 				(   IdDocumento,IdTipoDocumento,IdUsuario,IdTipoValidacionDocumento,IdProveedor,Activo,Documento,CreadoPor,CreadoEl,ModificadoPor,
-				    ModificadoEl,Descripcion,Carpeta,Identificador,Mime,Extension,NombreDocumento,Duplicado)
+				    ModificadoEl,Descripcion,Carpeta,Identificador,Mime,Extension,NombreDocumento,Duplicado, Bucket)
 				
 				SELECT IdDocumento, IdTipoDocumento, IdUsuario, IdTipoValidacionDocumento, IdProveedor, Activo, '', CreadoPor, CreadoEl, ModificadoPor, ModificadoEl, Descripcion,
-				@Carpeta, @IdentificadorS3, @Mime, @Extension, @NombreDocumento, CAST(@IdDocumento AS NVARCHAR(40))
+				@Carpeta, @IdentificadorS3, @Mime, @Extension, @NombreDocumento, CAST(@IdDocumento AS NVARCHAR(40)), @bucket
 				FROM dbo.S_Documento 
 				WHERE IdDocumento=@IdDocumento
 
