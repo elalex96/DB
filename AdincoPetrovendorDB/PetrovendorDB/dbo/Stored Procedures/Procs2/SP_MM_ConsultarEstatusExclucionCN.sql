@@ -1,9 +1,16 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarEstatusExclucionCN]    Script Date: 11/08/2021 02:07:10 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <09/12/2019>
 -- Description:	<Cosultar estatus solicitud exclucion de carta cn>
 -- =============================================
-create PROCEDURE [dbo].[SP_MM_ConsultarEstatusExclucionCN] --2172,2205
+CREATE PROCEDURE [dbo].[SP_MM_ConsultarEstatusExclucionCN] --2172,2205
 -- Add the parameters for the stored procedure here
 @IdAceptacionPedido INT, 
 @IdUsuario          INT
@@ -14,6 +21,7 @@ AS
         SET NOCOUNT ON;
 
         -- Insert statements for procedure here
+		DECLARE @EXISTESOLICITUD INT = (SELECT TOP 1 Id FROM RelacionCartaCNPedidoModificado WHERE IdAceptacionPedido = @IdAceptacionPedido)
         DECLARE @EXCLUCIONCARTAF BIT=
         (
             SELECT ISNULL(PedirCarta, 0)
@@ -85,7 +93,7 @@ AS
                 );
         END;
         IF @IDREQUISITOR = @IdUsuario
-            BEGIN
+        BEGIN
                 SET @IDROLUSUARIO = 2;
         END;
         IF(ISNULL(@EXCLUCIONCARTA, 0) = 0)
@@ -101,12 +109,16 @@ AS
                     WHERE IdAceptacionPedido = @IdAceptacionPedido
                 );
         END;
+
+
+
         SELECT ISNULL(@EXCLUCIONCARTA, 0) AS ESTATUS, --0
                ISNULL(@REQUISITOR, '') AS REQUISITOR, --1
                ISNULL(@IDROLUSUARIO, 0) AS IDUSUARIOROL, --2
                ISNULL(@APROBADOR, '') AS APROBADOR, --3
                ISNULL(@FECHAEVALUACION, GETDATE()) AS FECHAEVALAUCION, --4
                ISNULL(@FECHASOLICITUD, GETDATE()) AS FECHASOLICITUD, 
-               ISNULL(@EXCLUCIONCARTAF, 0);--5
+               ISNULL(@EXCLUCIONCARTAF, 0),
+			   ISNULL(@EXISTESOLICITUD, 0);--5
 
     END;

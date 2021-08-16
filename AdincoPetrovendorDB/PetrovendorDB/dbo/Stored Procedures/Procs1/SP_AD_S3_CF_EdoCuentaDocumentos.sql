@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_AD_S3_CF_EdoCuentaDocumentos')
+begin
+	drop proc SP_AD_S3_CF_EdoCuentaDocumentos
+end
+
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 26/09/2019
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
@@ -10,8 +16,8 @@ CREATE  PROCEDURE[dbo].[SP_AD_S3_CF_EdoCuentaDocumentos]
 	@Carpeta NVARCHAR(MAX)=NULL,
 	@Extension NVARCHAR(MAX)=NULL,
 	@IdentificadorS3 NVARCHAR(MAX)=NULL,	
-	@NombreDocumento NVARCHAR(MAX)=NULL
-	
+	@NombreDocumento NVARCHAR(MAX)=NULL,
+	@Bucket nvarchar(MAX)=NULL
 AS
 	
 BEGIN				
@@ -49,7 +55,8 @@ BEGIN
 			  Extension=@Extension,
 			  Identificador=@IdentificadorS3,
 			  Carpeta=@Carpeta,
-			  AMS3=1
+			  AMS3=1,
+			  Bucket = @Bucket
 			  WHERE IdEdoCuenta=@IdDocumento
 
 		    COMMIT TRAN tran1;
@@ -67,4 +74,3 @@ BEGIN
 	    END  
 
 END
-

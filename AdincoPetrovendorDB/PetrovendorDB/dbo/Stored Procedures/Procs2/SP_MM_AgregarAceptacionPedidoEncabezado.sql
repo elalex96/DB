@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarAceptacionPedidoEncabezado]    Script Date: 11/08/2021 09:55:26 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 03/07/2017
 -- Description:	ALTA ACEPTACION DE PEDIDO 
@@ -12,6 +19,11 @@
 -- Author:		Pedro Acuña
 -- Create date: 16/10/2019
 -- Description:	AGREGUE PARAMETROS PARA INDICAR QUE SE ESTA PIDIENDO CARTA DE CONTENIDO
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 11/08/2021
+-- Description:	Validacion para agregar automaticamente aceptaciones de WD Admin sin carta CN
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionPedidoEncabezado]
     @IdPedido INT,
@@ -33,6 +45,7 @@ BEGIN
     DECLARE @ID_PAIS_ACTUAL INT = NULL
     DECLARE @ID_REGIMEN_ACTUAL INT = NULL
     DECLARE @IdAceptacionPedido INT
+	DECLARE @IDCONTRATO INT = (SELECT TOP 1 IdContrato FROM MM_Pedido WHERE IdPedido = @IdPedido)
 
 
 
@@ -70,22 +83,46 @@ BEGIN
     SELECT @IdAceptacionPedido = SCOPE_IDENTITY()
 
     -- En caso de que el bit PedirCarta = 1 no pedir carta
-    INSERT INTO dbo.RelacionCartaCNPedido
-    (
-        IdPedido,
-        IdAceptacionPedido,
-        PedirCarta,
-        CreadoPor,
-        FechaCreacion
-    )
-    SELECT @IdPedido,
-           @IdAceptacionPedido,
-           1,
-           @CreadoPor,
-           GETDATE()
+	--EN CASO DE SER WD ADMIN AGREGARLO COMO PedirCarta = 1
+	--IF @IDCONTRATO = 3
+	IF @IDCONTRATO = 10145--CNH-WD ADMIN
+	BEGIN 
+		INSERT INTO dbo.RelacionCartaCNPedido
+		(
+			IdPedido,
+			IdAceptacionPedido,
+			PedirCarta,
+			CreadoPor,
+			FechaCreacion
+		)
+		SELECT @IdPedido,
+			   @IdAceptacionPedido,
+			   0,
+			   @CreadoPor,
+			   GETDATE()
+	END
+	ELSE
+	BEGIN 
+		INSERT INTO dbo.RelacionCartaCNPedido
+		(
+			IdPedido,
+			IdAceptacionPedido,
+			PedirCarta,
+			CreadoPor,
+			FechaCreacion
+		)
+		SELECT @IdPedido,
+			   @IdAceptacionPedido,
+			   1,
+			   @CreadoPor,
+			   GETDATE()
+	END
+	
+    
 
 
     SELECT @IdAceptacionPedido AS IdAceptacion,
            ISNULL(@ID_NACIONALIDAD_ACTUAL, 0)
-END
 
+
+END

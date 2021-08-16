@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_AD_S3_MM_DocSoporteRecepcionFactura')
+begin
+	drop proc SP_AD_S3_MM_DocSoporteRecepcionFactura
+end
+
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
@@ -11,8 +17,8 @@ CREATE  PROCEDURE[dbo].[SP_AD_S3_MM_DocSoporteRecepcionFactura]
 	@Carpeta NVARCHAR(MAX)=NULL,
 	@Extension NVARCHAR(MAX)=NULL,
 	@IdentificadorS3 NVARCHAR(MAX)=NULL,	
-	@NombreDocumento NVARCHAR(MAX)=NULL
-	
+	@NombreDocumento NVARCHAR(MAX)=NULL,
+	@bucket nvarchar(max)= null
 AS
 	
 BEGIN				
@@ -50,7 +56,8 @@ BEGIN
 			  Extension=@Extension,
 			  Identificador=@IdentificadorS3,
 			  Carpeta=@Carpeta,
-			  AMS3=1
+			  AMS3=1,
+			  Bucket = @bucket
 			  WHERE IdDocSoporteRecepcionFactura=@IdDocumento
 
 		    COMMIT TRAN tran1;
@@ -68,3 +75,4 @@ BEGIN
 	    END  
 
 END
+

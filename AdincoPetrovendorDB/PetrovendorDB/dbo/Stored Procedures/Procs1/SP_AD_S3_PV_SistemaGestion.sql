@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_AD_S3_PV_SistemaGestion')
+begin
+	drop proc SP_AD_S3_PV_SistemaGestion
+end
+
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 26/09/2019
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
@@ -11,8 +17,8 @@ CREATE  PROCEDURE[dbo].[SP_AD_S3_PV_SistemaGestion]
 	@Carpeta NVARCHAR(MAX)=NULL,
 	@Extension NVARCHAR(MAX)=NULL,
 	@IdentificadorS3 NVARCHAR(MAX)=NULL,	
-	@NombreDocumento NVARCHAR(MAX)=NULL
-	
+	@NombreDocumento NVARCHAR(MAX)=NULL,
+	@Bucket nvarchar(max)
 AS
 	
 BEGIN				
@@ -50,7 +56,8 @@ BEGIN
 			  Extension=@Extension,
 			  Identificador=@IdentificadorS3,
 			  Carpeta=@Carpeta,
-			  AMS3=1
+			  AMS3=1,
+			  Bucket = @Bucket 
 			  WHERE IdSistemaGestion=@IdDocumento
 
 		    COMMIT TRAN tran1;
@@ -68,4 +75,3 @@ BEGIN
 	    END  
 
 END
-
