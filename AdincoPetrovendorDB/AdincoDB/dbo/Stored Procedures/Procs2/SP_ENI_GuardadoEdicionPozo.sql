@@ -1,7 +1,13 @@
+DROP PROCEDURE IF EXISTS SP_ENI_GuardadoEdicionPozo 
+GO
 -- =============================================
 -- Author:		<ALEXANDER GOMEZ>
 -- Create date: <02-06-2021>
 -- Description:	<GUARDADO DE LA EDICION DE POZO>
+-- =============================================
+-- Author:		<LUIS DAVID>
+-- Create date: <18-08-2021>
+-- Description:	<SE GUARDA LA FECHA FIN PERFORACIÓN>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_ENI_GuardadoEdicionPozo]
 	-- Add the parameters for the stored procedure here
@@ -10,6 +16,7 @@ CREATE PROCEDURE [dbo].[SP_ENI_GuardadoEdicionPozo]
 	@IdInstalacion INT,
 	@Estado INT,
 	@FechaConfirmacion DATETIME,
+	@FechaFinPerfo DATETIME,
 	@PozoDesc BIT
 AS
 BEGIN
@@ -26,6 +33,7 @@ BEGIN
 	UPDATE PR_Pozo
 	SET Estatus = @Estado,
 		FechaConfirmacionDescubrimiento = @FechaConfirmacion,
+		FechaFinPerforacion = @FechaFinPerfo,
 		Modificado = GETDATE(),
 		ModificadoPor = @IdUsuario,
 		ConfirmacionDescubrimiento = @PozoDesc
