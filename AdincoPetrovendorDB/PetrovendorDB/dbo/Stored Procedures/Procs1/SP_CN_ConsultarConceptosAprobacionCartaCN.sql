@@ -1,6 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 09/04/2021 10:32:37 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 20/08/2021 02:59:58 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,9 +10,9 @@ GO
 -- Create date: 05/06/2018
 -- Description: Consulta de los conceptos de la carta de contenido nacional
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN] --330
+ALTER PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN] --10901
     -- Add the parameters for the stored procedure here
-    @IdAcpetacionPedido INT,
+    @IdAceptacion INT,
     /*--------------------
     parametros contrato
   --------------------*/
@@ -27,6 +27,7 @@ BEGIN
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
     -- Insert statements for procedure here
+	SET @IdAceptacion = (SELECT TOP 1 IdAceptacionPedido FROM MM_AceptacionCartaPCN WHERE IdAceptacionCartaPCN = @IdAceptacion);
     DECLARE @IdMonedaNacional INT = 1;   
     -- Insert statements for procedure here 
     
@@ -85,7 +86,7 @@ BEGIN
 		LEFT JOIN dbo.MM_TipoMaterialProcura AS TMP
 			ON TMP.IdTipoMaterialProcura = V.IdTipoMaterialServicio
             
-    WHERE AP.IdAceptacionPedido = @IdAcpetacionPedido;
+    WHERE AP.IdAceptacionPedido = @IdAceptacion;
     CREATE TABLE #ACTIVIDAD_AGRUPADA(CodigoCatalogo NVARCHAR(MAX),
 									 IdAceptacionDetalle int, 
 									 NombreActividad NVARCHAR(MAX), 
