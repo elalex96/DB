@@ -1,9 +1,16 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaAprobacionCNDetalle_S3]    Script Date: 20/08/2021 02:58:52 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:      DANIEL Cruz
 -- Create date: 08-02-18
 -- Description: Consultar detalle de encabezado de aprobación de carta de contenido nacional en procura 
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCNDetalle_S3]
+ALTER PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCNDetalle_S3] --516,12751,2415
     -- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdAceptacionCartaPCN INT,
@@ -46,14 +53,14 @@ AS
             ISNULL(AC.Editado,0) AS Editado,
             ISNULL(AC.IdProceso,0) AS IdProceso
         FROM [dbo].[MM_AceptacionCartaPCN] AS AC
-        INNER JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
-        INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-        INNER JOIN [dbo].[MM_Pedido] AS P ON P.IdPedido = AP.IdPedido
-        INNER JOIN [dbo].[S_Proveedor] AS PR ON PR.IdProveedor = P.IdSubcontratista
-        INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-        INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
-        LEFT JOIN [dbo].[S_Usuario] as U ON U.IdUsuario = AC.IdUsuarioEvaluador
-        LEFT  JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
-        WHERE  P.IdProveedorCompras = @IdProveedor AND IdAceptacionCartaPCN=@IdAceptacionCartaPCN
+        JOIN [dbo].[S_Documento_S3] AS D ON AC.IdDocumento = D.IdDocumento
+        JOIN [dbo].[MM_AceptacionPedido] AS AP ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+        JOIN [dbo].[MM_Pedido] AS P ON AP.IdPedido = P.IdPedido AND P.IdProveedorCompras = @IdProveedor
+        JOIN [dbo].[S_Proveedor] AS PR ON P.IdSubcontratista = PR.IdProveedor
+        JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc 
+        JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
+        LEFT JOIN [dbo].[S_Usuario] as U ON AC.IdUsuarioEvaluador = U.IdUsuario
+        JOIN dbo.MM_TipoPedido AS TP ON PG.IdTipoPedido = TP.IdTipoPedido
+        WHERE  IdAceptacionCartaPCN= @IdAceptacionCartaPCN
 
      END;

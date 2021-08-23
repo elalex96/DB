@@ -1,3 +1,5 @@
+DROP PROCEDURE IF EXISTS SP_ENI_Pozos
+GO
 -- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 14-05-2020
@@ -6,6 +8,10 @@
 -- Author:		Alexander Gomez
 -- Create date: 01/06/2021
 -- Description:	adecuaciones para grid js
+-- =============================================
+-- Author:		Luis David
+-- Create date: 18/08/2021
+-- Description:	se agrega la fecha fin perforación y se ordena alfabeticamente los pozos
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_ENI_Pozos] 
 -- Add the parameters for the stored procedure here
@@ -55,6 +61,7 @@ AS
 				ISNULL(EP.Color,'#FFFFFF') AS Color,
 				PZ.FechaConfirmacionDescubrimiento,
 				PZ.ConfirmacionDescubrimiento,
+				PZ.FechaFinPerforacion,
 				(ROW_NUMBER() OVER(ORDER BY I.IdInstalacion DESC) - 1) / @RecordsByPage AS _Page
          FROM dbo.CO_Instalacion I
               JOIN dbo.CO_ActividadCIEP A ON I.IdActividad = A.IdActividad
@@ -68,6 +75,5 @@ AS
 					OR I.NombreInstalacion LIKE '%' + @Buscar + '%'
 					OR I.NombreInstalacionAlterno LIKE '%' + @Buscar + '%')) AS R
 		 WHERE R.R = 1 AND R._PAGE = (@Page - 1)
-		 ORDER BY R.IdInstalacion DESC;
-
+		 ORDER BY NombreInstalacion asc
      END;

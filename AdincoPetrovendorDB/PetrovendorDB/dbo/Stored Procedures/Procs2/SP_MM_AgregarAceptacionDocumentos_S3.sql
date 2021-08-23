@@ -1,4 +1,7 @@
-﻿-- =============================================
+﻿
+drop procedure if exists SP_MM_AgregarAceptacionDocumentos_S3
+go
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -8,7 +11,9 @@
 -- Create date: 27/04/2018
 -- Description:	AGRESAR SOPORTES DE ACEPTACION DE PEDIDO
 -- =============================================
-
+-- Author:		Luis David
+-- Create date: 17/08/2021
+-- Description:	AGRESAR SOPORTES DE ACEPTACION DE PEDIDO
 CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionDocumentos_S3]
 
 	-----S_Documento-------
@@ -18,7 +23,8 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionDocumentos_S3]
 	@IdAceptacionDocumento INT, @Comentario NVARCHAR(MAX), @NombreDocumento NVARCHAR(MAX) ,
 
 	--- NUEVOS PARAMETROS ----
-	@Mime NVARCHAR(MAX), @Extension NVARCHAR(MAX), @IdetificadorS3 NVARCHAR(MAX), @Carpeta NVARCHAR(MAX)
+	@Mime NVARCHAR(MAX), @Extension NVARCHAR(MAX), @IdetificadorS3 NVARCHAR(MAX), @Carpeta NVARCHAR(MAX),
+	@Bucket varchar(MAX) = null
 AS
 	DECLARE @IdDocumento INT
 
@@ -27,10 +33,10 @@ AS
 
 		INSERT INTO S_Documento_S3
 			( IdTipoDocumento, IdUsuario, IdProveedor, Activo, Documento, CreadoPor, CreadoEl, NombreDocumento ,
-			  Extension , Mime, Carpeta, Identificador )
+			  Extension , Mime, Carpeta, Identificador, Bucket)
 		VALUES
 			( @IdTipoDocumento, @IdUsuario, @IdProveedor, 1, @Documento, @IdUsuario, GETDATE (), @NombreDocumento ,
-			  @Extension , @Mime, @Carpeta, @IdetificadorS3 )
+			  @Extension , @Mime, @Carpeta, @IdetificadorS3, @Bucket)
 
 		SET @IdDocumento =
 			( SELECT @@IDENTITY	   )
