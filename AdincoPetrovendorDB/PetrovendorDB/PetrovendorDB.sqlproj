@@ -10603,6 +10603,10 @@
     <Build Include="dbo\Tables\MM_SolicitudAceptacionPedidoDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_ValidarProveedor_CARTACN.sql" />
     <Build Include="dbo\Tables\DEA_UsuarioOBS.sql" />
+    <Build Include="dbo\Tables\WDEA_Layout_T.sql" />
+    <Build Include="dbo\User Defined Types\WDEA_Layout_T.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_ObtenerIMAPConfiguracion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_InsLayoutWDEA.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
