@@ -3,6 +3,12 @@
 -- Create date: <22/07/2020>
 -- Description:	<Descargar el documento de una plantilla obligatoria para el proveedor>
 -- =============================================
+-- Author:		Luis David
+-- Create date: <26/08/2021>
+-- Description:	retorna el bucket
+-- =============================================
+DROP PROCEDURE IF EXISTS SP_DOC_DescargarDocPlantilla
+GO
 CREATE  PROCEDURE [dbo].[SP_DOC_DescargarDocPlantilla]
 
 @IdProveedor INT,
@@ -19,11 +25,10 @@ BEGIN
 		Extension,
 		Mime,
 		Carpeta,
-		Identificador
+		Identificador,
+		ISNULL(Bucket,'') Bucket
 	FROM dbo.S_Documento_S3
 	WHERE IdDocumento = @IdDocumento;
-
 END
-
 
 
