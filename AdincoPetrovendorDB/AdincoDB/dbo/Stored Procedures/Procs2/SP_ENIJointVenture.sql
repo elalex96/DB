@@ -1,12 +1,13 @@
-﻿-- =============================================
+﻿if exists(select * from sys.procedures where name = 'SP_ENIJointVenture')
+begin
+	drop proc SP_ENIJointVenture
+end
+
+go
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 26-06-2020
 -- Description:	
--- =============================================
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 18/06/2021
--- Description:	agregado de indicadores de tipo de archivos
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_ENIJointVenture] --3,1000,1,''
 -- Add the parameters for the stored procedure here
@@ -66,11 +67,13 @@ AS
          FROM dbo.AWS_DocumentoENI A
               JOIN dbo.CO_Contrato C ON C.IdContrato = A.IdContrato
               JOIN dbo.AP_Usuario U ON A.CreadoPor = U.UsuarioID
-		 WHERE A.Privado = 0
-		 AND A.Folder = 'ENIArchivos/JOINTVENTURE/'
+		 WHERE	A.Privado = 0
+		 AND	A.Folder = 'ENIArchivos/JOINTVENTURE/'
+		 and	A.IdContrato		=	@IdContrato
 		 AND (C.NumeroContrato LIKE '%' + @Buscar + '%'
 				OR NombreArchivo LIKE '%' + @Buscar + '%')) AS R
 		 WHERE R.R = 1 AND R._PAGE = (@Page - 1)
 		 ORDER BY R.CreadoEl DESC;
 
      END;
+
