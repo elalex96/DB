@@ -30,6 +30,7 @@ AS
               JOIN dbo.CO_Contrato C ON C.IdContrato = A.IdContrato
               JOIN dbo.AP_Usuario U ON A.CreadoPor = U.UsuarioID
 		 WHERE A.Privado = 0
+		 and	A.IdContrato = @IdContrato
 		 AND A.Folder = 'ENIArchivos/JOINTVENTURE/');
 
 		 SELECT *,
@@ -77,3 +78,6 @@ AS
 
      END;
 
+go
+
+--exec SP_ENIJointVenture 10054, 10150, 1,''
