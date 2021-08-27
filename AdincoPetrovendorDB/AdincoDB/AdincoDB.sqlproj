@@ -13129,4 +13129,7 @@
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="dbo\User Defined Types\Entregables_Importacion_SHELL.sql" />
+  </ItemGroup>
 </Project>
