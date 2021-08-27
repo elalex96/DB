@@ -13,15 +13,21 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 18/08/2021
--- Description:	Validacion de contratos para importacion
--- =============================================
+DROP PROCEDURE IF EXISTS SP_ValidarContratoImportacionEntregables
+GO
 CREATE PROCEDURE SP_ValidarContratoImportacionEntregables
 	-- Add the parameters for the stored procedure here
 	@IdContrato INT
 AS
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <01/06/2021>
+-- Description:	<Consulta de entregables para importacion>
+-- =============================================
+-- Author:		<Luis David De La Cruz>
+-- Create date: <26/08/2021>
+-- Description:	<Formato para Shell>
+-- =============================================
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
@@ -38,8 +44,10 @@ BEGIN
 	BEGIN
 		SET @RESPONSE= 'ADINCO'
 	END
-
+	IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131) 
+	BEGIN
+		SET @RESPONSE= 'SHELL'
+	END
 	SELECT @RESPONSE AS RESPONSE
 
 END
-GO
