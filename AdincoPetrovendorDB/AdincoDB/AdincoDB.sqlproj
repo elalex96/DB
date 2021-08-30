@@ -13123,8 +13123,13 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidacionDEACartaCNExclucion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_ENIEliminarDocumento.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_ENPozosAprobados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_sp_RevisionEntregables.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_FI_EliminarConsultaPPDComplementos.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dbo\User Defined Types\Entregables_Importacion_SHELL.sql" />
   </ItemGroup>
 </Project>

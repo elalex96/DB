@@ -10603,6 +10603,19 @@
     <Build Include="dbo\Tables\MM_SolicitudAceptacionPedidoDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_ValidarProveedor_CARTACN.sql" />
     <Build Include="dbo\Tables\DEA_UsuarioOBS.sql" />
+    <Build Include="dbo\Tables\WDEA_Layout_T.sql" />
+    <Build Include="dbo\User Defined Types\WDEA_Layout_T.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_ObtenerIMAPConfiguracion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_InsLayoutWDEA.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEAProveedores.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEAProveedoresDescripcionRegistraSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEAProveedoresDescripcionSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEAUsuarioProveedorEliminarSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEAUsuarios.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEAUsuariosDescripcionRegistraSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEAUsuariosDescripcionSAP.sql" />
+    <Build Include="dbo\Tables\DEA_ProveedorDescripcionSAP.sql" />
+    <Build Include="dbo\Tables\DEA_UsuarioSolicitanteSAP.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
