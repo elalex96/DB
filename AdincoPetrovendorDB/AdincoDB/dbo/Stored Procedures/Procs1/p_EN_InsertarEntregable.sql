@@ -1,6 +1,9 @@
-﻿CREATE PROCEDURE [dbo].[p_EN_InsertarEntregable]
+﻿drop procedure if exists p_EN_InsertarEntregable
+go
+CREATE PROCEDURE [dbo].[p_EN_InsertarEntregable]
 	@pIdEntregable	int out,
 	@pDocumentoEntregable	nvarchar(max),
+	@pDocumentoEntregableIngles	nvarchar(max) = null,
 	@pIdMarcoLegal	int,
 	@pTituloAnexo	nvarchar(max),
 	@pCapitulo	nvarchar(max),
@@ -60,12 +63,19 @@
 	@Actividad varchar(500),
 	@Proceso varchar (500),
 	--@FichaTecnica varchar(500),
-	@Idclasificacion int
+	@Idclasificacion int,
+	@pDesarrollo bit,
+	@pExploracion bit,
+	@pEvaluacion bit,
+	@pTransicion bit,
+	@pAbandonoArea bit,
+	@pAbandonoPozo bit
 AS
 BEGIN
 
 INSERT INTO [dbo].[EN_Entregable]
            ([DocumentoEntregable]
+		   , DeliverableName
            ,[IdMarcoLegal]
            ,[TituloAnexo]
            ,[Capitulo]
@@ -134,10 +144,11 @@ INSERT INTO [dbo].[EN_Entregable]
      VALUES
            (
 		   @pDocumentoEntregable
+		   ,@pDocumentoEntregableIngles
            ,@pIdMarcoLegal 
            ,@pTituloAnexo
            ,@pCapitulo
-           ,@pDescripcion
+		   ,@pDescripcion
            ,@pSeccion
            ,@pArticulo
            ,@pInciso
@@ -211,5 +222,10 @@ INSERT INTO [dbo].[EN_Entregable]
 		                                       DiasElaboracion)
 	SELECT IdContrato,@pIdEntregable,0,0,0,@pCreadoPor,GETDATE(),@pCreadoPor,GETDATE(),1,0,0 FROM dbo.CO_Contrato;
 	
+	INSERT INTO EN_Entregable_ConfigAdicional
+				(IdEntregable, Desarrollo, Exploracion,Evaluacion,Transicion,AbandonoArea,AbandonoPozo)
+				VALUES
+				(@pIdEntregable, @pDesarrollo, @pExploracion, @pEvaluacion, @pTransicion,@pAbandonoArea,@pAbandonoPozo)
+
 	SELECT @pIdEntregable
 END
