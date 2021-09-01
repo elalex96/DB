@@ -1,8 +1,11 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Miguel Gomez
 -- Create date: Diciembre 2014
 -- Description:	Inserta un nuevo registro
+-- =============================================
+-- Author Alter: Neri Garcia
+-- Create date: 2021-08-31
+-- Description: Se agrega campo IdCatManoObra
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_CO_InsertaRegistroCEE]
     -- Add the parameters for the stored procedure here
@@ -25,7 +28,8 @@ CREATE PROCEDURE [dbo].[sp_CO_InsertaRegistroCEE]
     @CostoAtrib BIT,
     @IdContrato INT,
     @IdGastoRubro INT,
-    @PCN FLOAT
+    @PCN FLOAT,
+	@IdCatManoObra INT
 AS
 BEGIN
     SET @IdFactura = CASE
@@ -75,14 +79,15 @@ BEGIN
         [CvTipoDocFacturacion],
         [CostosAtribuiblesAdministracion],
         [IdGastoRubro],
-        [PCN]
+        [PCN],
+		[IdCatManoObra]
     )
     VALUES
     (   @IdPrograma, @IdFactura, @MontoRegistro, @InicioEjecucion, @FinEjecucion, @Comentarios, @MesPresentacion,
         10004, @IdUsuarioCreadoPor,
         --@IdUsuarioModPor,
         CURRENT_TIMESTAMP, @IdInstalacion, @IdCuentaCSH, @Poliza, @IdPedimentoComprobante, @CvTipoDoc, @CostoAtrib,
-        @IdGastoRubro, @PCN);
+        @IdGastoRubro, @PCN, @IdCatManoObra);
     SELECT @insertado = @@IDENTITY;
     SELECT @insertado AS INSERTADO,
            CONCAT('El registro se ha guardado exitosamente con el id ', @insertado) AS MSG;
