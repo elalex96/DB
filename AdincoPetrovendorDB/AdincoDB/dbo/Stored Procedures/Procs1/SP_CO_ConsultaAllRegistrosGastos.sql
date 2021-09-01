@@ -3,6 +3,10 @@
 -- Create date: 10-01-2020
 -- Description:	*Agregar columna IdEstado
 -- =============================================
+-- Author:		 Marcos Garcia
+-- Alter date:	 01-09-2021
+-- Description: Add Cat Mano de Obra
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos]
 -- ============================================= 
 -- [SP_CO_ConsultaAllRegistrosGastos] 3,10002
@@ -123,7 +127,8 @@ AS
           LineaPresupuesto         INT, 
           Presupuesto              NVARCHAR(MAX), 
           NombrePresupuesto        NVARCHAR(MAX), 
-          Rubro                    NVARCHAR(MAX), 
+          Rubro                    NVARCHAR(MAX),
+		  CatManoObra			   NVARCHAR(MAX), 
           PCN                      FLOAT, 
           CAA                      NVARCHAR(MAX), 
           CCN                      NVARCHAR(MAX), 
@@ -193,6 +198,7 @@ AS
           Presupuesto, 
           NombrePresupuesto, 
           Rubro, 
+		  CatManoObra,
           PCN, 
           CAA, 
           CCN, 
@@ -288,6 +294,7 @@ AS
                        P.Nombre AS Presupuesto, 
                        TPre.Nombre AS NombrePresupuesto, 
                        rubro.Descripcion AS Rubro, 
+					   catmo.Nombre AS CatManoObra, 
                        R.PCN,
                        CASE
                            WHEN R.CostosAtribuiblesAdministracion = 1
@@ -311,6 +318,7 @@ AS
                      LEFT JOIN dbo.CO_Instalacion I ON LPM.IdInstalacion = I.IdInstalacion
                      LEFT JOIN dbo.CO_Registro R ON R.IdPrograma = LPM.IdLineaPresupuestoMes
                      LEFT JOIN dbo.CO_GastosRubro rubro ON rubro.IdGastoRubro = R.IdGastoRubro
+					 LEFT JOIN dbo.CO_CAT_ManoDeObra catmo(NOLOCK) ON catmo.Id = R.IdCatManoObra
                      LEFT JOIN dbo.FI_Factura F ON F.IdFactura = R.IdFactura
                      LEFT JOIN dbo.FI_PedimentoComprobante PC ON PC.IdPedimentoComprobante = R.IdPedimentoComprobante
                      LEFT JOIN dbo.PV_Subcontratista SF ON F.IdSubcontratista = SF.IdSubcontratista
@@ -398,7 +406,8 @@ AS
                          PC.FolioComprobante, 
                          SPC.RazonSocial, 
                          TMPC.TipoMonedaCorto, 
-                         rubro.Descripcion, 
+                         rubro.Descripcion,
+						 catmo.Nombre,
                          R.PCN,
                          CASE
                              WHEN R.CostosAtribuiblesAdministracion = 1
@@ -460,6 +469,7 @@ AS
                 Presupuesto, 
                 NombrePresupuesto, 
                 Rubro, 
+			    CatManoObra,
                 PCN, 
                 CAA, 
                 CCN, 
