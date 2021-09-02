@@ -1,4 +1,9 @@
-﻿CREATE PROCEDURE [dbo].[p_EN_ObtenerEntregable]
+﻿DROP PROCEDURE IF exists p_EN_ObtenerEntregable
+GO
+--======================================================
+-- LUIS DAVID
+-- SE CONTROLA LOS NULOS PARA NO GENERAR ERROR EN LA CONSULTA
+CREATE PROCEDURE [dbo].[p_EN_ObtenerEntregable]
 	@pIdEntregable INT
 AS
 BEGIN
@@ -8,6 +13,7 @@ SELECT e.IdRegulador,
        FrecuenciaEntregable,
        e.IdEntregable,
        e.DocumentoEntregable,
+	   ISNULL(e.DeliverableName,'') as DocumentoEntregableIngles,
        e.IdMarcoLegal,
        ml.MarcoLegal,
        e.TituloAnexo,
@@ -36,37 +42,43 @@ SELECT e.IdRegulador,
        IsActivo = CAST(ISNULL(e.IsActivo, 0) AS BIT),
        e.IsEliminado,
        e.Consecutivo,
-       e.TCLicencia,
-       e.TCProducionCompartida,
-       e.TCLicenciaFarmOuts,
-       e.TCProducionCompartidaFarmOuts,
-       e.UGTerrestre,
-       e.UGCostaFuera,
-       e.REReguladores,
-       e.REOperadores,
-       e.APAdministracionContratos,
-       e.APPozoAlivio,
-       e.APCierreDesmantelamientoAbandono,
-       e.APPerforacion,
-       e.APTerminacion,
-       e.APActProduccion,
-       e.APEstimulacion,
-       e.APPruebaProduccion,
-       e.APConstruccionCamino,
-       e.APConstruccionLocalizacion,
-       e.APRehabilitacionCamino,
-       e.APRehabilitacionLocalizacion,
-       e.APTomaInformacionSismica,
-       e.APCorteNucleos,
-       e.APConstruccionLineaDescarga,
-       e.APSistemaArtificialProduccion,
-       e.APMedicionPozos,
-       e.APTomaInformacionPozo,
-       e.APReparacionMayor,
-       e.APReparacionMenor,
-       e.APTransporteHidrocarburos,
-       e.APQuemaGas,
+       ISNULL(e.TCLicencia,0) AS TCLicencia,
+       ISNULL(e.TCProducionCompartida,0) AS TCProducionCompartida,
+       ISNULL(e.TCLicenciaFarmOuts,0) AS TCLicenciaFarmOuts,
+       ISNULL(e.TCProducionCompartidaFarmOuts,0) AS TCProducionCompartidaFarmOuts,
+       ISNULL(e.UGTerrestre,0) AS UGTerrestre,
+       ISNULL(e.UGCostaFuera,0) AS UGCostaFuera,
+       ISNULL(e.REReguladores,0) AS REReguladores,
+       ISNULL(e.REOperadores,0) AS REOperadores,
+       ISNULL(e.APAdministracionContratos,0) AS APAdministracionContratos,
+       ISNULL(e.APPozoAlivio,0) AS APPozoAlivio,
+       ISNULL(e.APCierreDesmantelamientoAbandono,0) AS APCierreDesmantelamientoAbandono,
+       ISNULL(e.APPerforacion,0) AS APPerforacion,
+       ISNULL(e.APTerminacion,0) AS APTerminacion ,
+       ISNULL(e.APActProduccion,0) AS APActProduccion,
+       ISNULL(e.APEstimulacion,0) AS APEstimulacion,
+       ISNULL(e.APPruebaProduccion,0) AS APPruebaProduccion,
+       ISNULL(e.APConstruccionCamino,0) AS APConstruccionCamino,
+       ISNULL(e.APConstruccionLocalizacion,0) AS APConstruccionLocalizacion,
+       ISNULL(e.APRehabilitacionCamino,0) AS APRehabilitacionCamino,
+       ISNULL(e.APRehabilitacionLocalizacion,0) AS APRehabilitacionLocalizacion,
+       ISNULL(e.APTomaInformacionSismica,0) AS APTomaInformacionSismica,
+       ISNULL(e.APCorteNucleos,0) AS APCorteNucleos,
+       ISNULL(e.APConstruccionLineaDescarga,0) AS APConstruccionLineaDescarga,
+       ISNULL(e.APSistemaArtificialProduccion,0) AS APSistemaArtificialProduccion,
+       ISNULL(e.APMedicionPozos,0) AS APMedicionPozos,
+       ISNULL(e.APTomaInformacionPozo,0) AS APTomaInformacionPozo,
+       ISNULL(e.APReparacionMayor,0) AS APReparacionMayor,
+       ISNULL(e.APReparacionMenor,0) AS APReparacionMenor,
+       ISNULL(e.APTransporteHidrocarburos,0) AS APTransporteHidrocarburos,
+       ISNULL(e.APQuemaGas,0) AS APQuemaGas,
        ISNULL(et.Etapa, 'Entregable Interno del Contrato') AS Etapa,
+	   ISNULL(Desarrollo,0) AS Desarrollo,
+	   ISNULL(Exploracion,0) AS Exploracion,
+	   ISNULL(Evaluacion,0) AS Evaluacion,
+	   ISNULL(Transicion,0) AS Transicion,
+	   ISNULL(AbandonoArea,0) AS AbandonoArea,
+	   ISNULL(AbandonoPozo,0) AS AbandonoPozo, 
        CASE
            WHEN APPozoAlivio = 1 THEN
                'Pozo de alivio'
@@ -133,8 +145,9 @@ SELECT e.IdRegulador,
 		ON e.IdEntregable=DFI.IdEntregable AND DFI.idTipoFormatoFichaTecnica=10000--FichaTecnica
 	LEFT JOIN EN_DocumentoFormatoFichaTecnica DF (NOLOCK)
 		ON e.IdEntregable=DF.IdEntregable AND DF.idTipoFormatoFichaTecnica=10001--Formato
+	LEFT JOIN EN_Entregable_ConfigAdicional AS CA
+		on e.IdEntregable = CA.IdEntregable
 	WHERE @pIdEntregable IN ( 0, e.IdEntregable )
 --		  AND ISNULL(e.IsEliminado, 0) = 0
 	ORDER BY IdEntregable DESC;
 END
-

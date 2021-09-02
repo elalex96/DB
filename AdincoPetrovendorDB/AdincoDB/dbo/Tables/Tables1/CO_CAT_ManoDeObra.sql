@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[CO_CAT_ManoDeObra]
+(
+    [Id]        INT IDENTITY (1, 1) NOT NULL, 
+    [Nombre]    VARCHAR(MAX)        NOT NULL, 
+    CONSTRAINT [PK_CO_CAT_ManoDeObra] PRIMARY KEY CLUSTERED ([Id] ASC),
+);
