@@ -1,8 +1,17 @@
-﻿CREATE PROCEDURE [dbo].[EN_InsertarMarcoLegal]
+﻿DROP PROCEDURE IF EXISTS EN_InsertarMarcoLegal
+GO
+-- =================================================================
+-- Author:	Luis David
+-- Create date: 27/09/2019
+-- Description:	se agrega el bitjoa y nombreeningles para el issue 419
+-- =================================================================
+CREATE PROCEDURE [dbo].[EN_InsertarMarcoLegal]
     @MarcoLegal VARCHAR(MAX),
     @idUsuario INT,
     @idContrato INT,
-	@activo bit
+	@activo bit,
+	@MarcoLegalIngles VARCHAR(MAX) = null,
+	@BitJoa bit = null
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -14,7 +23,13 @@ BEGIN
 
     IF (@count = 0)
     BEGIN
-        INSERT INTO EN_MarcoLegal (MarcoLegal, IsInterno, CreadoPor, CreadoEn, Activo, BITJOA)
-        VALUES (@MarcoLegal, 0, @idUsuario, GETDATE(), @activo, 0);
+        INSERT INTO EN_MarcoLegal 
+				(MarcoLegal,		MarcoLegalIngles,	IsInterno, 
+				CreadoPor,			CreadoEn,			Activo, 
+				BITJOA)
+        VALUES 
+				(@MarcoLegal,		@MarcoLegalIngles,	0, 
+				@idUsuario,			GETDATE(),			@activo, 
+				@BitJoa);
     END;
 END;
