@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_PC_ConsultaDocContenidoNacional
+GO
+ -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <04/09/2020>
 -- Description:	<Consulta a detalle de un Pedimento/Comprobante de Procura>
+-- =============================================
+-- Author:      <Luis David>
+-- Create date: <31/08/2021>
+-- Description: <Se agrega el campo bucket al sp>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_ConsultaDocContenidoNacional] --1182
 
@@ -15,7 +21,7 @@ BEGIN
 
     -- Insert statements for procedure here
 	
-	SELECT 
+	SELECT top 1
 		IdAchivoCNCD,
 		null,
 		nombreArchivo,
@@ -23,9 +29,8 @@ BEGIN
 		Extension,
 		Mime,
 		Carpeta,
-		Identificador
+		Identificador,
+		Bucket
 	FROM dbo.CN_ArchivoCartaCompraDirecta
 	WHERE IdPedimentoComprobante = @IdPedimentoComprobante
-
-
 END

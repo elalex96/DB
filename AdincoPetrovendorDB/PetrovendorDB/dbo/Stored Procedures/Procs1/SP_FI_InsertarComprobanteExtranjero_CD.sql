@@ -3,7 +3,18 @@
 -- Create date: <27/08/2020>
 -- Description:	<Creacion del flujo de aprobacion para los pedimentos/comprobantes >
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_InsertarComprobanteExtranjero_CD]
+DROP PROCEDURE IF EXISTS SP_FI_InsertarComprobanteExtranjero_CD
+GO
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <27/08/2020>
+-- Description:	<Creacion del flujo de aprobacion para los pedimentos/comprobantes >
+-- =============================================
+-- Author:		<LUIS DAVID>
+-- Create date: <02/09/2021>
+-- Description:	<SE AGREGA EL BUCKET>
+-- =============================================
+CREATE  PROCEDURE [dbo].[SP_FI_InsertarComprobanteExtranjero_CD]
 	-- Add the parameters for the stored procedure here
 	@IdContrato                 INT,
 	@FolioComprobante           NVARCHAR(MAX),
@@ -29,7 +40,8 @@ CREATE PROCEDURE [dbo].[SP_FI_InsertarComprobanteExtranjero_CD]
 	@DiasCredito				INT,
 	@Periodo					INT = NULL,
 	@Presupuesto				INT = NULL,
-	@IdLineaPresupuesto			INT = NULL
+	@IdLineaPresupuesto			INT = NULL,
+	@Bucket						varchar(500) = null
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -187,7 +199,7 @@ BEGIN
 	    NULL,       -- Duplicado - nvarchar(40)
 	    NULL,       -- SizeDocumento - float
 	    @idped,         -- IdDocumentoTabla - int
-	    NULL        -- Bucket - nvarchar(200)
+	    @Bucket        -- Bucket - nvarchar(200)
 	    );
 
 		INSERT INTO dbo.FI_AceptacionPedido_PedimentoComprobante
