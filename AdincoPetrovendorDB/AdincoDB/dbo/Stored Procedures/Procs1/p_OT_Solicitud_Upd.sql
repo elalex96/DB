@@ -9,21 +9,6 @@ as
 
 	BEGIN TRY  
 
-		-- Validar
-
-		if exists (
-			select 1
-			from OT_Solicitud
-			where SAPPR = @pSAPPR and
-			isnull(@pSAPPR,'') <> '' and
-			isActivo = 1 and
-			IdOTSolicitud <> @pIdOTSolicitud
-		)
-		begin
-			 set @pError = 'El número de PR ya está ocupado en otro subcontrato'
-			 return
-		end
-
 		update OT_Solicitud
 		set SAPPR = @pSAPPR,
 			Objeto =case when isnull(@pObjeto,'')='' then Objeto else @pobjeto end,
