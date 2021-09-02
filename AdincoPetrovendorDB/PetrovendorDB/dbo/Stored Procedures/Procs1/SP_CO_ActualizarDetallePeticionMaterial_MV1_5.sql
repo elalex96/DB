@@ -1,11 +1,21 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]    Script Date: 01/09/2021 05:31:19 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:           Daniel AC
 -- Create date: 13-08-2019
 -- Description: Agregue validación que si es un Proveedor de CARSO no agregar Marca, Modelo, No Parte a Descripción material  cotizado
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]
+ALTER PROCEDURE [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]
     -- Add the parameters for the stored procedure here
-    @IdPeticionOfertaDetalle INT, @PrecioUnitario FLOAT, @Disponibilidad FLOAT, @IdMoneda INT ,
+    @IdPeticionOfertaDetalle INT, 
+	@PrecioUnitario FLOAT, 
+	@Disponibilidad FLOAT, 
+	@IdMoneda INT ,
     @ComentarioSubcontratista NVARCHAR (MAX), @IdMaterialVendedor INT, @IdPeticionOferta INT, @FechaVigencia DATETIME ,
     @IdProveedorActual INT, @NoCotizar BIT, @IdEdicionCotizacion INT, @IdEstatusEdicionCotizacion INT ,
     @IdUnidadVendedor INT, @FechaEntrega DATETIME ,
@@ -17,6 +27,13 @@ AS
         -- SET NOCOUNT ON added to prevent extra result sets from
         -- interfering with SELECT statements.
         SET NOCOUNT ON ;
+
+		--SI TIENE @IdEdicionCotizacion ES PORQUE FUE EDITADO
+		IF @IdEdicionCotizacion <> 0
+		BEGIN
+			SET @IdEstatusEdicionCotizacion = 1;
+		END
+
         --VALIDACIÓN CARSO ---      
         DECLARE @EsProveedorDeCARSO INT 
         CREATE TABLE #ProveedoresCARSO(IdProveedor INT)
