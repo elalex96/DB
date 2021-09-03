@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_InsLayoutAX]    Script Date: 25/08/2021 12:05:25 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 03/09/2021 09:56:56 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,7 +11,7 @@ GO
 -- Description: <guardado de datos de servicio de lectura de correos para WDEA>  
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_InsLayoutWDEA] 
-@LayoutWDEA dbo.WDEA_Layout_T READONLY,
+@LayoutWDEA dbo.WDEA_Layout_T_V2 READONLY,
 @Remitente NVARCHAR(100),
 @FileName NVARCHAR(500),
 @Asunto NVARCHAR(500),
@@ -21,6 +21,36 @@ BEGIN
 
 	DECLARE @MENSAJELECUTRA NVARCHAR(MAX) = '';
 	DECLARE @CANT_GUARDADOS INT = 0;
+	DECLARE @IDBITACORA INT = 0;
+
+	SET @CANT_GUARDADOS = (SELECT COUNT(1) FROM @LayoutWDEA);
+
+	SET @MENSAJELECUTRA = ('SE GUARDARON ' + CAST(@CANT_GUARDADOS AS nvarchar) + ' REGISTROS EXITOSAMENTE, ENCONTRADOS EN EL ARCHIVO "' + @FileName + '" ENVIADO POR ' + @Remitente + ' A ' + @Destinatario + ' EN EL CORREO CON ASUNTO "' + @Asunto + '".');
+
+	INSERT INTO AX_BitacoraLecturaCorreos
+	(
+		Asunto,
+		CantidadArchivos,
+		FechaLectura,
+		EnviadoPor,
+		ServicioOperadora,
+		FechaRegBitacora,
+		RecibidoPor,
+		IsError
+	)
+	VALUES
+	(
+		@MENSAJELECUTRA,
+		1,
+		GETDATE(),
+		@Remitente,
+		'WDEA-LAYOUT',
+		GETDATE(),
+		@Destinatario,
+		0
+	);
+
+	SET @IDBITACORA = @@IDENTITY;
 
     --SE INSERTAN LOS NUEVOS  
     INSERT INTO dbo.WDEA_Layout_T
@@ -49,6 +79,8 @@ BEGIN
 		  ,[Terminos_Pago]
 		  ,[Justificacion]
 		  ,[CreadoEl]
+		  ,RowN
+		  ,IdBitacoraLectura
     )
     SELECT [Item]
       ,[Purch_Organization]
@@ -74,34 +106,9 @@ BEGIN
       ,[Terminos_Pago]
       ,[Justificacion]
       ,GETDATE()
+	  ,CAST(RowN AS INT)
+	  ,@IDBITACORA
     FROM @LayoutWDEA;
-
-	SET @CANT_GUARDADOS = (SELECT COUNT(1) FROM @LayoutWDEA);
-
-	SET @MENSAJELECUTRA = ('SE GUARDARON ' + CAST(@CANT_GUARDADOS AS nvarchar) + ' REGISTROS EXITOSAMENTE, ENCONTRADOS EN EL ARCHIVO "' + @FileName + '" ENVIADO POR ' + @Remitente + ' A ' + @Destinatario + ' EN EL CORREO CON ASUNTO "' + @Asunto + '".');
-
-	INSERT INTO AX_BitacoraLecturaCorreos
-	(
-		Asunto,
-		CantidadArchivos,
-		FechaLectura,
-		EnviadoPor,
-		ServicioOperadora,
-		FechaRegBitacora,
-		RecibidoPor,
-		IsError
-	)
-	VALUES
-	(
-		@MENSAJELECUTRA,
-		1,
-		GETDATE(),
-		@Remitente,
-		'WDEA-LAYOUT',
-		GETDATE(),
-		@Destinatario,
-		0
-	);
 
 	SELECT @CANT_GUARDADOS;
 
