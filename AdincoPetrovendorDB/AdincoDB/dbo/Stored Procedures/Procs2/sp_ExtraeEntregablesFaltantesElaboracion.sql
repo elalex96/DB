@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]--3,10061
+CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]--3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -30,8 +30,6 @@ BEGIN--285718
     (
         id INT PRIMARY KEY IDENTITY(1, 1),
         IdUsuarioGrupo int
-
-
     );
 
 	INSERT INTO	#GrupoUsuario	(IdUsuarioGrupo)
@@ -44,9 +42,7 @@ BEGIN--285718
 	SELECT @idUsuario
 	
    INSERT	INTO	#TempInstancias	(FechasLimiteElaboracion,idEntregable)
-  
 	SELECT	MIN(IE.FechasLimiteElaboracion),	CE.IdEntregable
- 
    FROM	EN_InstanciasEntregable	IE
     
 	JOIN	EN_ContratoEntregable	CE	
@@ -84,6 +80,47 @@ BEGIN--285718
 			AND	CE.IdContrato	=	@IdContrato
     GROUP	BY	CE.IdEntregable;
 
+INSERT INTO #TempInstancias	(FechasLimiteElaboracion,idEntregable)
+SELECT
+	MIN(IE.FechasLimiteElaboracion),	CE.IdEntregable
+   FROM	#TempInstancias	TMP
+   JOIN
+		EN_InstanciasEntregable	IE
+		ON	TMP.FechasLimiteElaboracion	<	IE.FechasLimiteElaboracion
+	JOIN	EN_ContratoEntregable	CE	
+		ON	IE.IdContratoEntregable	=	CE.IdContratoEntregable
+		AND	CE.IdContrato	=	@IdContrato
+		AND TMP.idEntregable	=	CE.IdEntregable
+    JOIN	dbo.EN_Actividad	A
+		ON	IE.ActividadID	=	A.ActividadID
+
+    JOIN dbo.EN_Entregable ENT 
+		ON	CE.IdEntregable	=	Ent.IdEntregable
+		AND ENT.BITJOA = 0
+
+    LEFT JOIN dbo.EN_MarcoLegal	ML 
+		ON	ENT.IdMarcoLegal	=	ML.IdMarcoLegal
+
+    LEFT JOIN	dbo.EN_ExcepcionesActividad	EXAR
+        ON	A.ActividadID	=	EXAR.ActividadIDExcepcion 
+        AND	IE.idInstanciaEntregable	=	EXAR.IdInstanciasEntregables 
+
+    WHERE (	        A.idUsuario	IN (SELECT IdUsuarioGrupo	FROM	 #GrupoUsuario)--	@idUsuario
+              AND	EXAR.IdInstanciasEntregables	IS NULL
+              AND	A.EstadoID	=	10000
+              AND	ENT.IsActivo	=	1
+              AND	CE.Activo	=	1
+              AND	IE.Activo	=	1
+          )
+          OR (
+				EXAR.idUsuario		IN (SELECT IdUsuarioGrupo	FROM	 #GrupoUsuario)--	=	@idUsuario 
+            AND	EXAR.IdInstanciasEntregables	IS NOT NULL
+            AND	EXAR.EstadoID	=	10000
+            AND	ENT.IsActivo	=	1
+            AND	CE.Activo	=	1
+            AND	IE.Activo	=	1	) 
+			AND	CE.IdContrato	=	@IdContrato
+    GROUP	BY	CE.IdEntregable;
 
 
 
@@ -299,6 +336,4 @@ BEGIN--285718
 	ORDER BY	
 		IE.FechasLimiteElaboracion	ASC;
   
-    END;
-
-
+END;

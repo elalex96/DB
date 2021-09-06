@@ -1,16 +1,15 @@
-﻿-- =============================================
--- Author:		Reyna Olvera
--- Create date: 20181023
--- Description:	Llama los entregables
--- =============================================
-CREATE PROCEDURE [dbo].[sp_EN_ObtenEntregablesPorActividad] -- 3,10061,0,12108
+﻿CREATE PROCEDURE [dbo].[sp_EN_ObtenEntregablesPorActividad] -- 3,10061,0,12108
     @idContrato INT,
     @idUsuario INT,
     @IdActividad INT,
     @idProceso INT --Para buscar Ronda
 AS
 BEGIN
-
+-- =============================================
+-- Author:		Reyna Olvera
+-- Create date: 20181023
+-- Description:	Llama los entregables
+-- =============================================
     SET NOCOUNT ON;
 
         SELECT    DISTINCT ce.IdContratoEntregable, 
@@ -45,7 +44,8 @@ BEGIN
                          WHEN APQuemaGas = 1 THEN 'Quema de Gas'
 						 WHEN BitInterno = 1 THEN 'Entregable Interno'
                          ELSE 'No Especificado' END AS ActividadPetrolera,
-						 CP.Clave+' '+ CP.Nombre AS CatalogoProceso
+						 --CP.Clave+' '+ CP.Nombre AS CatalogoProceso
+						 '' AS CatalogoProceso
           FROM      EN_ActividadesEntregables AE
 		  JOIN	
 				EN_Entregable	E	
@@ -56,12 +56,12 @@ BEGIN
 				dbo.EN_ContratoEntregable CE
 				ON	CE.IdContrato	=	@idContrato
 				AND	E.IdEntregable	=	CE.IdEntregable
-		 LEFT JOIN 
-				EN_CatalogoProcesosEntregables	CPE
-				ON	CE.IdEntregable	=	CPE.IdEntregable
-		 LEFT JOIN 
-				EN_CatalogoProcesos	CP
-				ON	CPE.IdCatProceso	=	CP.IdCatProceso
+		 --LEFT JOIN 
+			--	EN_CatalogoProcesosEntregables	CPE
+			--	ON	CE.IdEntregable	=	CPE.IdEntregable
+		 --LEFT JOIN 
+			--	EN_CatalogoProcesos	CP
+			--	ON	CPE.IdCatProceso	=	CP.IdCatProceso
          LEFT JOIN      
 				dbo.EN_Etapa	et
 				ON	E.IdEtapa	=	et.IdEtapa
@@ -84,7 +84,3 @@ BEGIN
    
    
 END;
-
-
-
-
