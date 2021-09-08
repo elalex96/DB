@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.sp_ExtraeEntregablesFaltantesElaboracion_SASISOPA --3,10061
+CREATE PROCEDURE dbo.sp_ExtraeEntregablesFaltantesElaboracion_SASISOPA --3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -8,6 +8,7 @@ BEGIN
     -- Create date: 2018-11-08
     -- Description: 
     -- 20190510 BAAC    Se modifica consulta de las fechas proximas para no considerar el id de la instancia
+	-- 20210908	BAAC	Se modifica para considerar siempre los entregables pendientes y los de los proximos 6 meses
     -- =============================================
     SET NOCOUNT ON;
 	SET LANGUAGE Spanish; 
@@ -59,24 +60,25 @@ BEGIN
 		IE.FechasLimiteElaboracion,
 		CE.IdEntregable
    FROM 
-		EN_InstanciasEntregable IE
+		EN_InstanciasEntregable IE	(NOLOCK)
     JOIN    
-		EN_ContratoEntregable   CE  
+		EN_ContratoEntregable   CE  (NOLOCK)
         ON  IE.IdContratoEntregable =   CE.IdContratoEntregable
         AND CE.IdContrato   =   @IdContrato
 		AND   CE.Activo   =   1
         AND   IE.Activo   =   1
+		AND IE.FechaCalculadaEntregaReg < DATEADD(MONTH,6,GETDATE())
 	JOIN
 		#Area	AREA
 		ON	CE.IdArea	=	AREA.IdArea
     JOIN    
-		dbo.EN_Actividad    A
+		dbo.EN_Actividad    A	(NOLOCK)
         ON  IE.ActividadID  =   A.ActividadID
     JOIN 
-		dbo.EN_Entregable ENT 
+		dbo.EN_Entregable ENT (NOLOCK)
         ON  CE.IdEntregable =   Ent.IdEntregable
 		AND ENT.BITJOA = 0
-		AND   ENT.IsActivo    =   1
+		AND   ISNULL(ENT.IsActivo,0)    =   1
 	JOIN
 		CO_Contrato	C
 		ON	CE.IdContrato	=	C.IdContrato
@@ -90,7 +92,7 @@ BEGIN
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
     
 WHERE  
-		IE.FechasLimiteElaboracion < DATEADD(YEAR,1,C.FechaArranqueEntregables)--'20211231' 
+		IE.FechaCalculadaEntregaReg < DATEADD(MONTH,6,GETDATE())
 		AND ((A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
             AND   EXAR.IdInstanciasEntregables    IS NULL
             AND   A.EstadoID  =   10000
@@ -127,7 +129,7 @@ WHERE
         END     AS FocalPoint,
         CASE WHEN AC.Nombre IS NULL THEN ISNULL(CE.AccountableCompliance,'')
             ELSE ISNULL(AC.Nombre,'') 
-        END     AS AccountableCompliance,
+     END     AS AccountableCompliance,
         CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
             ELSE ISNULL(ACC.Nombre,'')
         END  AS Accountable,
@@ -175,8 +177,7 @@ WHERE
 		ON EN.IdRegulador   =   R.IdRegulador
   
   LEFT    JOIN    
-	
-	dbo.EN_FrecuenciaEntregable F 
+		dbo.EN_FrecuenciaEntregable F 
 		ON EN.IdFrecuenciaEntregable    =   F.IdFrecuenciaEntregable
     LEFT    JOIN    
 		EN_Etapa ET 
@@ -315,4 +316,3 @@ WHERE
 		ON CE.IdContratoEntregable	=	CEPIA.IdContratoEntregable
     ORDER BY    IE.FechasLimiteElaboracion  ASC;
 END
-
