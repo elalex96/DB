@@ -1,7 +1,14 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_MPY_DatosDocFacturaPedido
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 21/12/2018
 -- Description:	Consulta de datos para descargar un documento de factura de pedido
+-- =============================================
+-- =============================================
+-- Author:	Luis David De La Cruz 
+-- Create date: 08/09/2021
+-- Description:	Se agrega el bucket en la descarga para la estandarización de descarga amazon s3
 -- =============================================
 CREATE procedure [dbo].[SP_MPY_DatosDocFacturaPedido]
 	-- Add the parameters for the stored procedure here
@@ -18,7 +25,8 @@ BEGIN
 		Extension,
 		Mime,
 		Identificador,
-		Carpeta
+		Carpeta,
+		Isnull(Bucket,'') as Bucket
 	FROM dbo.MPY_FI_RelacionPedimentoComprobantePedido
 	WHERE IdRelacionPedimentoComprobante = @IdDoc
 END
