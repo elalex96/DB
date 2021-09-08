@@ -1,8 +1,3 @@
-﻿-- =============================================
--- Author: Daniel Ac
--- Create date: 20-11-2020
--- Description: Se agrego configuración estatica de reporte para ENI- TAB DE CN
--- =============================================
 CREATE PROCEDURE [dbo].[sp_EN_ExtraeClavesTablero_ENI]
     @idContrato INT,
 	@idUsuario INT,
@@ -28,8 +23,26 @@ BEGIN
   --https://www.smps-adinco.com/#/site/Eni/views/EniLC_15962201107300/LocalContent 
 	IF @IsENI = 1
 	BEGIN
-		
-		SELECT Workbook='EniLC_15962201107300',
+
+		IF @IdTableroContrato = 1--TABLERO PRESUPUESTOS
+		BEGIN
+			
+			SELECT Workbook='PresupuestovsContingente',
+				Sheet='ProgramadeTrabajo',
+				Tabs='no',
+				Site='ADINCO',
+				SiteT='/t/ADINCO',
+				DNS='https://www.smps-adinco.com/trusted/',
+				HeightPX=800,
+				Parametros='',
+				Toolbar='no',
+				UserTableau='admin' 
+
+		END
+		ELSE
+		BEGIN--TABLERO CONTENIDO NACIONAL
+			
+			SELECT Workbook='EniLC_15962201107300',
 				Sheet='LocalContent',
 				Tabs='no',
 				Site='Eni',
@@ -39,6 +52,10 @@ BEGIN
 				Parametros='',
 				Toolbar='no',
 				UserTableau='admin' 
+
+		END
+		
+		
 
 	END
 
@@ -59,5 +76,3 @@ BEGIN
 	END
 	      
 END;
-
-
