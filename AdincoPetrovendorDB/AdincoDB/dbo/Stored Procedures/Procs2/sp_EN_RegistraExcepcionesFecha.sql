@@ -1,11 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'sp_EN_RegistraExcepcionesFecha')
-begin
-	drop proc sp_EN_RegistraExcepcionesFecha
-end
-
-go
-
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 2019
 -- Description:Crea excepciones para los responsables de una instancia
@@ -20,6 +13,8 @@ CREATE PROCEDURE [dbo].[sp_EN_RegistraExcepcionesFecha] --3,10061,249263,'201909
     @MotivoDesactivar VARCHAR(500)
 AS
 BEGIN
+	set nocount on
+
     IF OBJECT_ID('tempdb..#DiasCE', 'U') IS NOT NULL
         DROP TABLE #DiasCE;
     CREATE TABLE #DiasCE
@@ -81,8 +76,8 @@ BEGIN
             @FechaInicialSig DATE,
             @CountDias INT,
             @EstadoId INT,
-			@ExisteCountFechaLimiteAprob INT,
-			@ExisteCountFechaLimiteReg	INT;
+			@ExisteCountFechaLimiteAprob INT = 0,
+			@ExisteCountFechaLimiteReg	INT = 0;
     ----------------------------------------------------------------------
 
     SELECT @EstadoId = A.EstadoID
@@ -119,7 +114,7 @@ BEGIN
 
         INSERT INTO #FechasCalcEntregaRegulador (IdFecha)
         EXEC [SP_EN_GeneraInstanciasFechasLimite] @FechaLimiteEntregaRegulador,
-                                       @idContrato,
+                                    @idContrato,
 												  10008, --Evento Único por que es una sola instancia
 												   @IdContratoEntregable,
 												  0,1;
@@ -135,11 +130,23 @@ BEGIN
 		and			IE.IdContratoEntregable						=			@IdContratoEntregable
 		and			IPF.IdProceso								is not null
 		
+		--select @IdProceso
+		--select * from #DiasHabilesFrecuencia
+		--SELECT		IPF.IdProceso
+		--		FROM		EN_InstanciasEntregable						IE
+		--		JOIN		#DiasHabilesFrecuencia						FLA		ON			IE.IdContratoEntregable						=		@IdContratoEntregable
+		--																		AND			IE.FechasLimiteAprobacion					=		FLA.IdFecha
+		--																		AND			IE.idInstanciaEntregable					<>		@idInstanciaentregable
+		--		inner join	EN_InstanciasEntregables_InstanciaActividad IEIA	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
+		--		inner JOIN	EN_InstanciasActividades					IA		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
+		--		inner JOIN	EN_InstanciasProcesosFecha					IPF		ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
+		--		where		IPF.IdProceso								=		@IdProceso
+
 		if (/*Verificamos que el registro tenga un proceso ligado*/
 					@IdProceso is not null		)
 		begin	/*Si es asi, verificamos si existe otro proceso, que este sea uno distinto al que ya existe*/
 			print 'if 1'
-			if exists(
+			if not exists(
 				SELECT		IPF.IdProceso
 				FROM		EN_InstanciasEntregable						IE
 				JOIN		#DiasHabilesFrecuencia						FLA		ON			IE.IdContratoEntregable						=		@IdContratoEntregable
@@ -148,22 +155,23 @@ BEGIN
 				inner join	EN_InstanciasEntregables_InstanciaActividad IEIA	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
 				inner JOIN	EN_InstanciasActividades					IA		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
 				inner JOIN	EN_InstanciasProcesosFecha					IPF		ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
-				where		IPF.IdProceso								<>		@IdProceso
+				where		IPF.IdProceso								=		@IdProceso
 			)
-			begin	/*De ser asi, le asignamos un 0 a las variales para permitirle guardar, puesto que se trata de procesos diferentes*/
+			begin	/*De ser asi, le asignamos un 0 a las variales para permitirle guardar*/
 					print 'if 2'
 					select	@ExisteCountFechaLimiteAprob	=	0,
 							@ExisteCountFechaLimiteReg		=	0
 			end
-			else
-			begin	/*De lo contrario indicamos que almenos existe un registro para posteriormente no dejarlo guardar*/
+			--else
+			--begin	/*De lo contrario indicamos que almenos existe un registro para posteriormente no dejarlo guardar*/
 					
-					select @ExisteCountFechaLimiteAprob		=	1,
-							@ExisteCountFechaLimiteReg		=	1
-			end
+			--		select @ExisteCountFechaLimiteAprob		=	1,
+			--				@ExisteCountFechaLimiteReg		=	1
+			--end
 		end
 		else
 		begin
+			print 'else 2'
 			/*Si no, hacemos la validación actual*/
 			--select [@IdProceso] = @IdProceso
 
@@ -186,9 +194,10 @@ BEGIN
 				AND	IE.FechaCalculadaEntregaReg	=	FLR.IdFecha
 				AND	IE.idInstanciaEntregable	<>	@idInstanciaentregable
 		end
-
+	
 	IF(@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	=	0)
 	BEGIN
+		
         INSERT INTO #DiasCE (dias, tipo)
         VALUES (@DiasAprobacion, 'Aprobacion'),
                (@DiasRevision, 'revision'),
@@ -208,7 +217,7 @@ BEGIN
                                                     FechasLimiteAprobacion,
                                                     FechaEnvioMensajeAtrasoRevision,
                                                     FechasLimiteEntregaReg,
-                                                    FechaInicioElaboracion)
+                             FechaInicioElaboracion)
             SELECT F.Id,
                    @idInstanciaentregable,
                    NULL,
@@ -290,7 +299,7 @@ BEGIN
 
                 SELECT @FechaInicialSig = DH.IdFecha
                 FROM #TEMP_InstanciasEntregable TIE
-                LEFT JOIN #DiasCE CE ON CE.id = @CantidadDias
+               LEFT JOIN #DiasCE CE ON CE.id = @CantidadDias
                 LEFT JOIN #DiasHabiles DH ON @FechaInicialSig >= DH.IdFecha
                                              AND CE.dias = DH.Id
                 LEFT JOIN dbo.AP_Calendario C2 ON @FechaInicialSig >= C2.IdFecha
@@ -376,7 +385,7 @@ BEGIN
                                                                      ContieneURLRepositorio)
                 VALUES (@idVersion,             -- IdLineaTiempo - int
                         @idInstanciaentregable, -- idInstanciaEntregable - int
-                        @idContrato,            -- idContrato - int
+       @idContrato,            -- idContrato - int
                         @MotivoDesactivar,      -- Comentario - nvarchar(250)
                         0,                      -- Rechazado - bit
                         6,                      -- idTipoOperacion - int
