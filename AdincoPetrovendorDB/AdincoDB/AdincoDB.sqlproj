@@ -13127,6 +13127,13 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_FI_EliminarConsultaPPDComplementos.sql" />
     <Build Include="dbo\Tables\Tables1\CO_CAT_ManoDeObra.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_CO_CAT_ValidarManoObra.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_MM_WDEA_ProcesamientoSAP_Procura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_Ins_WDEA_Bitacora_AdincoSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevoPedidoAutomatico_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_CotizacionAutomatico_WDEA.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP.sql" />
+    <Build Include="dbo\Tables\Tables2\PendientesProcesarProcura_WSDEA.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
