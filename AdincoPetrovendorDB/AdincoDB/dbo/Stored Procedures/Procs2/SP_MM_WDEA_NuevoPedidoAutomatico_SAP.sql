@@ -1,6 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 10/09/2021 09:58:58 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 10/09/2021 03:44:24 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -495,12 +495,32 @@ SELECT
               AND POD.AddPedidoTemp = 1
               AND PO.IdPeticionOferta = @IdPeticionOferta;
 
+		--CONFIRMACION POR PARTE DEL PROVEEDOR
+		--UPDATE MM_PedidoDetalle
+		--   SET RecepcionPedido = 1, 
+		--   FechaRecepcionPedido = GETDATE(),
+		--   IdUsuarioRecepcionServicio = @IdUsuario
+		--WHERE IdPedido = @IdPedidoActual;
+
+		--UPDATE MM_Pedido
+	 --  SET RecepcionServicio = 1, 
+	 --  FechaRecepcionServicio = GETDATE(),
+	 --  IdUsuarioRecepcionServicio = @IdUsuario
+	 --  WHERE IdPedido = @IdPedidoActual;
 
 		SET @RESPONSEPEDIDO = (SELECT COUNT(IdPedido) FROM MM_Pedido WHERE IdPedido = @IdPedidoActual);
 
 
 		IF ISNULL(@RESPONSEPEDIDO,0) > 0
 		BEGIN
+
+			UPDATE WDEA_PurchasingDocumentsImportados
+			SET IdPedidoADINCO = @IdPedidoActual
+			WHERE IDCONTRATO = @IdContrato AND PURCHASING_DOCUMENT = @IdPedidoActual;
+
+			UPDATE PendientesProcesarProcura_WSDEA
+			SET Procesado = 1
+			WHERE IdBitacora = @IdBitacoraLectura;
 
 			SET @MENSAJEFINAL = 'PURCHASING_DOCUMENT ' + @Purchasing + ' PROCESADO EN PROCURA CON EL PEDIDO #' + CAST(@IdPedidoActual AS NVARCHAR) + ' DE LA SOLICITUD DE PEDIDO #' + CAST(@IdSolicitudPedido AS NVARCHAR) + ' CORRECTAMENTE';
 
@@ -543,9 +563,4 @@ SELECT
 			);
 
 		END
-
-
-
 END
-
-
