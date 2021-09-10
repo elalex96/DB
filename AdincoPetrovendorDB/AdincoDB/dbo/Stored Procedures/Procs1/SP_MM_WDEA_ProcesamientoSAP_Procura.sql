@@ -52,9 +52,6 @@ BEGIN
 															@CONTRATO,
 															@IDBITACORA;
 
-		UPDATE PendientesProcesarProcura_WSDEA
-		SET Procesado = 1
-		WHERE IdBitacora = @IDBITACORA;
 
 		SET @CONT = @CONT + 1;
 
