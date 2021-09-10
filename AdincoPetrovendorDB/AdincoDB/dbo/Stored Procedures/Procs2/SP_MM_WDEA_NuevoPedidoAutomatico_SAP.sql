@@ -495,18 +495,6 @@ SELECT
               AND POD.AddPedidoTemp = 1
               AND PO.IdPeticionOferta = @IdPeticionOferta;
 
-		--CONFIRMACION POR PARTE DEL PROVEEDOR
-		UPDATE MM_PedidoDetalle
-		   SET RecepcionPedido = 1, 
-		   FechaRecepcionPedido = GETDATE(),
-		   IdUsuarioRecepcionServicio = @IdUsuario
-		WHERE IdPedido = @IdPedidoActual;
-
-		UPDATE MM_Pedido
-	   SET RecepcionServicio = 1, 
-	   FechaRecepcionServicio = GETDATE(),
-	   IdUsuarioRecepcionServicio = @IdUsuario
-	   WHERE IdPedido = @IdPedidoActual;
 
 		SET @RESPONSEPEDIDO = (SELECT COUNT(IdPedido) FROM MM_Pedido WHERE IdPedido = @IdPedidoActual);
 
