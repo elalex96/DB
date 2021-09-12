@@ -10616,6 +10616,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_DEAUsuariosDescripcionSAP.sql" />
     <Build Include="dbo\Tables\DEA_ProveedorDescripcionSAP.sql" />
     <Build Include="dbo\Tables\DEA_UsuarioSolicitanteSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\EN_EntregablesRechazados.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
