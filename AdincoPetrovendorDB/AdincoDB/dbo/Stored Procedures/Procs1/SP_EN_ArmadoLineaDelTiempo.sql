@@ -11,8 +11,8 @@ CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --3,12
 -- ============================================= 
 --[dbo].[SP_EN_ArmadoLineaDelTiempo] 0,0
 -- ============================================= 
-@IdContrato INT, 
-@IdUsuario  INT
+	@IdContrato INT, 
+	@IdUsuario  INT
 AS
 BEGIN
 SET NOCOUNT ON
@@ -41,25 +41,25 @@ exec SP_ENI_LineaTiempo @IdContrato,@IdUsuario--=10
 
 --OBTENER CONSECUTICO Y POZO DE LOS ENTREGABLES 
 UPDATE Temp
-SET Temp.Consecutivo=E.Consecutivo,
-Temp.Pozo=ISNULL(I.NombreInstalacion,'')
+	SET Temp.Consecutivo=E.Consecutivo,
+	Temp.Pozo=ISNULL(I.NombreInstalacion,'')
 FROM #tmp Temp
-JOIN  dbo.EN_InstanciasEntregable    EI   
+JOIN  dbo.EN_InstanciasEntregable    EI   (NOLOCK)
   ON   Temp.IdInstanciaEntregable=EI.idInstanciaEntregable
-JOIN EN_ContratoEntregable    CE  
+JOIN EN_ContratoEntregable    CE  (NOLOCK)
   ON EI.IdContratoEntregable=CE.IdContratoEntregable 
-JOIN  dbo.EN_Entregable      E   
+JOIN  dbo.EN_Entregable      E   (NOLOCK)
   ON   CE.IdEntregable = E.IdEntregable 
-LEFT JOIN        EN_InstanciasEntregables_InstanciaActividad IEIA
-ON   EI.idInstanciaEntregable = IEIA.idInstanciaEntregable
-LEFT JOIN        EN_InstanciasActividades  IA
-ON  IEIA.idInstanciaActividad =  IA.idInstanciaActividad
-LEFT JOIN EN_InstanciasProcesosFecha  IPF
-ON  IA.IdInstanciasProcesos  =  IPF.IdInstanciasProcesos
-LEFT JOIN EN_Procesos P
-ON  IPF.IdProceso = P.IdProceso
-LEFT JOIN  CO_Instalacion I
-ON  P.IdInstalacion = I.IdInstalacion
+LEFT JOIN        EN_InstanciasEntregables_InstanciaActividad IEIA	(NOLOCK)
+	ON   EI.idInstanciaEntregable = IEIA.idInstanciaEntregable
+LEFT JOIN        EN_InstanciasActividades  IA	(NOLOCK)
+	ON  IEIA.idInstanciaActividad =  IA.idInstanciaActividad
+LEFT JOIN EN_InstanciasProcesosFecha  IPF	(NOLOCK)
+	ON  IA.IdInstanciasProcesos  =  IPF.IdInstanciasProcesos
+LEFT JOIN EN_Procesos P	(NOLOCK)
+	ON  IPF.IdProceso = P.IdProceso
+LEFT JOIN  CO_Instalacion I	(NOLOCK)
+	ON  P.IdInstalacion = I.IdInstalacion
 
 
 --OBTIENE DOCUMENTOS DE LAS INSTANCIAS FILTRADOS POR LOS DOCUMENTOS QUE SE VAN UTIZAR 
@@ -77,9 +77,11 @@ DocumentoEntregable = case
         then        'Fecha del Segundo Periodo Adicional de Exploración'
 --        when        Consecutivo in ('ADINCO-PERFO503') 
         --then        'Fecha de Perforación del pozo '+Pozo
+		WHEN Consecutivo IN ('ADINCO-R1L2021','ADINCO-PLANES100','ADINCO-PLANES101','ADINCO-PLANES106','ENI-2185','ENI-2188')
+		THEN	DocumentoEntregable
         when        Consecutivo in ('ADINCO-R2L2028','ADINCO-R2L3028','ADINCO-R2L10230','ADINCO-R1L4022','ADINCO-R2L10024','ADINCO-R2L40022','ADINCO-R3L10024') 
         then        'Fecha de confirmación de existencia del descubrimiento'
-		WHEN		DocumentoEntregable LIKE 'Perforación del Pozo:%'
+		WHEN		DocumentoEntregable LIKE 'Inicio de Perforación del Pozo:%'
 		then		DocumentoEntregable
 		WHEN		DocumentoEntregable LIKE '%Resolu%Impacto%Ambiental%'
 		then		DocumentoEntregable
@@ -114,23 +116,23 @@ order by FechaEntrega asc
 			IE.idInstanciaEntregable, 
 			LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo)))) AS TipoArchivo
 	into	#tmpDocumentos
-	FROM	dbo.EN_InstanciasEntregable IE
-	JOIN	dbo.EN_HistorialAprobacionesLineaTiempo		HALT 
-	ON		IE.idInstanciaEntregable					=	HALT.idInstanciaEntregable
-	AND		HALT.Rechazado								=	0
-	JOIN	dbo.EN_DocumentoVersion						DE 
-	ON		HALT.idInstanciaEntregable					=	DE.idInstanciaEntregable
-	JOIN	dbo.EN_EntregableDocumento					ED	
-	ON		DE.DocumentoEntregableId					=	ED.DocumentoEntregableId
-	AND		ED.idTipoArchivo							IN (	10000, 10002)
-	AND		ED.Activo = 1
+	FROM	dbo.EN_InstanciasEntregable IE	(NOLOCK)
+	JOIN	dbo.EN_HistorialAprobacionesLineaTiempo		HALT	(NOLOCK)
+		ON		IE.idInstanciaEntregable					=	HALT.idInstanciaEntregable
+		AND		HALT.Rechazado								=	0
+	JOIN	dbo.EN_DocumentoVersion						DE	(NOLOCK)
+		ON		HALT.idInstanciaEntregable					=	DE.idInstanciaEntregable
+	JOIN	dbo.EN_EntregableDocumento					ED	(NOLOCK)
+		ON		DE.DocumentoEntregableId					=	ED.DocumentoEntregableId
+		AND		ED.idTipoArchivo							IN (	10000, 10002)
+		AND		ED.Activo = 1
 	GROUP BY ED.DocumentoEntregableId, 
-	ED.NombreArchivo, 
-	ED.Bucket, 
-	ED.Folder, 
-	ED.UUIDAmazon, 
-	IE.idInstanciaEntregable, 
-	LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo))))
+		ED.NombreArchivo, 
+		ED.Bucket, 
+		ED.Folder, 
+		ED.UUIDAmazon, 
+		IE.idInstanciaEntregable, 
+		LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo))))
 
 	--AGREGAR FECHA EFECTIVA =FECHA INICIO DEL CONTRATO
 	INSERT INTO #tmpEntregablesFinal(IdInstanciaEntregable,DocumentoEntregable,FechaEntrega,Anio)
@@ -140,7 +142,7 @@ order by FechaEntrega asc
 
 	--AGREGAR FECHA DE INICIO DE ETAPA DE TANSICIÓN DE ARRANQUE ETA   (Esta fecha es calculada, se suman 120 dias habiles a la fecha de la firma del contrato (fechafirma de co_contrato), para la suma, usar la funcion FN_EN_SumaDiasHabiles)
 	INSERT INTO #tmpEntregablesFinal(IdInstanciaEntregable,DocumentoEntregable,FechaEntrega,Anio)
-	SELECT -2, 'Fecha de Inicio de Etapa de transición de arranque ETA',CAST(dbo.FN_EN_SumaDiasHabiles(FechaFirma,120) AS DATE), YEAR(CAST(dbo.FN_EN_SumaDiasHabiles(FechaFirma,120) AS DATE))   
+	SELECT -2, 'Fecha Fin de Etapa de transición de arranque ETA',CAST(dbo.FN_EN_SumaDiasHabiles(FechaFirma,120) AS DATE), YEAR(CAST(dbo.FN_EN_SumaDiasHabiles(FechaFirma,120) AS DATE))   
 	FROM CO_Contrato 
 	WHERE IdContrato=@IdContrato
 
@@ -181,34 +183,34 @@ order by FechaEntrega asc
 
 	--Los que tienen solo 1 archivo PDF
 	update		#tmpEntregablesFinal
-	set			#tmpEntregablesFinal.DataArchivo = 'pdf',
-	#tmpEntregablesFinal.DocumentoEntregableId=t2.DocumentoEntregableId
+		set			#tmpEntregablesFinal.DataArchivo = 'pdf',
+				#tmpEntregablesFinal.DocumentoEntregableId=t2.DocumentoEntregableId
 	from		#tmpEntregablesFinal						t
 	inner join	#tmp1Documento				t1
-	on			t.IdInstanciaEntregable		=	t1.idInstanciaEntregable
+		on			t.IdInstanciaEntregable		=	t1.idInstanciaEntregable
 	inner join	#tmpDocumentos				t2
-	on			t1.idInstanciaEntregable	=	t2.idInstanciaEntregable
+		on			t1.idInstanciaEntregable	=	t2.idInstanciaEntregable
 	where		t2.TipoArchivo				=	'.pdf'
 
 	-- Los que tienen solo 1 archivo pero no es PDF
 	update		#tmpEntregablesFinal
-	set			#tmpEntregablesFinal.DataArchivo = 'archivos'
+		set			#tmpEntregablesFinal.DataArchivo = 'archivos'
 	from		#tmpEntregablesFinal						t
 	inner join	#tmp1Documento				t1
-	on			t.IdInstanciaEntregable		=	t1.idInstanciaEntregable
+		on			t.IdInstanciaEntregable		=	t1.idInstanciaEntregable
 	inner join	#tmpDocumentos				t2
-	on			t1.idInstanciaEntregable	=	t2.idInstanciaEntregable
+		on			t1.idInstanciaEntregable	=	t2.idInstanciaEntregable
 	where		t2.TipoArchivo				<>	'.pdf'
 
 	--Los que tienen mas de 1 archivo
 	update		#tmpEntregablesFinal
-	set			#tmpEntregablesFinal.DataArchivo = 'archivos'
+		set			#tmpEntregablesFinal.DataArchivo = 'archivos'
 	
 	from		#tmpEntregablesFinal						t
 	inner join	#tmpNDocumentos				t1
-	on			t.IdInstanciaEntregable		=	t1.idInstanciaEntregable
+		on			t.IdInstanciaEntregable		=	t1.idInstanciaEntregable
 	inner join	#tmpDocumentos				t2
-	on			t1.idInstanciaEntregable	=	t2.idInstanciaEntregable
+		on			t1.idInstanciaEntregable	=	t2.idInstanciaEntregable
 	--where		t2.TipoArchivo				=	'.pdf'
 
 	--Los que no tienen archivos

@@ -1,9 +1,9 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 18/05/2019
 -- Description:Guarda entregables internas
 -- =============================================
-CREATE PROCEDURE dbo.EN_UpdateEntregableInterno
+ALTER PROCEDURE dbo.EN_UpdateEntregableInterno
     @idUsuario INT,
     @idContrato INT,
     @pDocumentoEntregable NVARCHAR(MAX),
@@ -27,12 +27,13 @@ BEGIN
     UPDATE dbo.EN_Entregable
     SET DocumentoEntregable = @pDocumentoEntregable,
         Descripcion = @pDescripcion,
-        CreadoPor = @idUsuario,
-        CreadoEn = GETDATE(),
+--        CreadoPor = @idUsuario,
+--        CreadoEn = GETDATE(),
         ModificadoPor = @idUsuario,
         ModificadoEn = GETDATE(),
         IsActivo = @pIsActivo,
-        IsEliminado = IsEliminado,
+        IsEliminado = CASE WHEN @pIsActivo = 0 THEN 1
+					ELSE 0 END,
         -- Consecutivo = @pConsecutivo,
         IdReceptorEntregable = CASE @IdReceptorEntregable
                                    WHEN 0 THEN
@@ -59,4 +60,3 @@ BEGIN
     ELSE
         SELECT '' AS error;
 END;
-

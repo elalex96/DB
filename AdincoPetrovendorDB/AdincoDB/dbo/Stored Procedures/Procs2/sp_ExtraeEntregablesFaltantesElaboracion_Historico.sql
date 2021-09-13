@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.sp_ExtraeEntregablesFaltantesElaboracion_Historico --3,10061
+CREATE PROCEDURE dbo.sp_ExtraeEntregablesFaltantesElaboracion_Historico --3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -33,6 +33,7 @@ BEGIN
 		EXEC sp_ExtraeEntregablesFaltantesElaboracion_SASISOPA @IdContrato, @idUsuario
 		RETURN
 	END
+
 
     CREATE TABLE #TempInstancias
     (
@@ -73,7 +74,7 @@ BEGIN
 		CO_Contrato	C	(NOLOCK)
 		ON	CE.IdContrato	=	C.IdContrato
 		AND	C.IdContrato	=	@IdContrato
-		AND	IE.FechasLimiteElaboracion < DATEADD(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
+		AND	IE.FechaCalculadaEntregaReg < DATEADD(MONTH,6,GETDATE())
     JOIN    
 		dbo.EN_Actividad    A	(NOLOCK)
         ON  IE.ActividadID  =   A.ActividadID
@@ -86,7 +87,7 @@ BEGIN
         ON  A.ActividadID   =   EXAR.ActividadIDExcepcion 
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
     WHERE  
-		IE.FechasLimiteElaboracion < DATEADD(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
+		IE.FechaCalculadaEntregaReg < DATEADD(MONTH,9,GETDATE())
 		AND (
 		(A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
             AND   EXAR.IdInstanciasEntregables    IS NULL

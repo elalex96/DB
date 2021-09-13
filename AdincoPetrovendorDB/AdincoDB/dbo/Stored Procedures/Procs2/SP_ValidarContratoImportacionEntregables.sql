@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_ValidarContratoImportacionEntregables]    Script Date: 07/09/2021 11:40:33 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_ValidarContratoImportacionEntregables]    Script Date: 10/09/2021 11:03:44 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -66,7 +66,7 @@ BEGIN
 				LEFT JOIN  AP_PermisosUsuarios PU  
 					ON P.IdPermiso = PU.IdPermiso AND PU.UsuarioID = @IdUsuario
 				INNER JOIN AP_Usuario U 
-					ON U.UsuarioID = @IdUsuario AND P.IdPermiso = 44 --HSSE
+					ON U.UsuarioID = @IdUsuario AND P.NombrePermiso = 'Acceso a Entregables de HSSE' --HSSE
 
 
 			IF @PERMISO = 1
@@ -78,7 +78,7 @@ BEGIN
 			ELSE
 			BEGIN 
 				
-				SET @RESPONSE= 'SHELL'
+				SET @RESPONSE= ''
 
 			END
 

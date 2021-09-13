@@ -1,10 +1,3 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_FiltrosImportacion]    Script Date: 12/07/2021 09:43:06 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/06/2021>
@@ -45,7 +38,7 @@ BEGIN
 			A.idArea,
 			A.NombreArea
 		FROM dbo.EN_Area AS A
-		WHERE A.idContrato = 10093    
+		WHERE A.idContrato = @IdContrato    
 		GROUP BY A.idArea,
 			A.NombreArea;
 
@@ -65,6 +58,4 @@ BEGIN
 		 AND ISNULL(IsGrupo,0)=0;
 
 	END
-
-
 END
