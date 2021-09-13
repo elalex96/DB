@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[sp_EN_ExtraeClavesTablero_ENI]
+CREATE PROCEDURE [dbo].[sp_EN_ExtraeClavesTablero_ENI]
     @idContrato INT,
 	@idUsuario INT,
     @IdRol INT,
@@ -33,14 +33,13 @@ BEGIN
 
 		IF @IdTableroContrato = 1--TABLERO PRESUPUESTOS
 		BEGIN
-			
-			SELECT Workbook='EniLC_15962201107300',
-				Sheet='LocalContent',
+  		SELECT Workbook='PresupuestovsContingente',
+				Sheet='ProgramadeTrabajo',
 				Tabs='no',
-				Site='Eni',
-				SiteT='/t/Eni',
+				Site='ADINCO',
+				SiteT='/t/ADINCO',
 				DNS='https://www.smps-adinco.com/trusted/',
-				HeightPX=1110,
+				HeightPX=800,
 				Parametros='',
 				Toolbar='no',
 				UserTableau='admin' 
@@ -61,9 +60,6 @@ BEGIN
 				UserTableau='admin' 
 
 		END
-		
-		
-
 	END
 
 	IF @IsEQUINOR = 1

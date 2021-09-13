@@ -1,4 +1,4 @@
-﻿ALTER VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
+CREATE VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
 AS
      /*Consulta general*/
 	 
@@ -160,9 +160,9 @@ AS
 			[Pedido/OrdenCompra]		=	P2.IdPedido,
 			CASE
                 WHEN R.CvTipoDocFacturacion = 1
-                THEN (SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, F.Fecha))
+                THEN TCDF.TipoCambio	--(SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, F.Fecha))
                 WHEN R.CvTipoDocFacturacion IN(2, 3)
-                THEN (SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, PC.FechaPago))
+                THEN TCDPC.TipoCambio	--(SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, PC.FechaPago))
             END AS TipoCambio,
 			(Petrovendor.dbo.fnObtenCentroCosto(FP.IdFactura)) as CentroCosto
      FROM dbo.CO_LineaPresupuestoMes LPM(NOLOCK)
@@ -174,10 +174,12 @@ AS
           JOIN dbo.CO_Presupuesto P(NOLOCK) ON LPM.IdPresupuesto = P.IdPresupuesto
           JOIN dbo.CO_AnioContractual AC(NOLOCK) ON AC.IdAnioContractual = P.IdAnioContractual
           JOIN dbo.CO_Contrato C(NOLOCK) ON C.IdContrato = AC.IdContrato
+			AND C.IdContrato IN(10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024, 10043, 10052)
           JOIN dbo.CO_Contratista CC(NOLOCK) ON CC.IdContratista = C.IdContratista
           JOIN dbo.CO_AreaContractual ACC(NOLOCK) ON ACC.IdAreaContractual = C.IdAreaContractual
-		  LEFT JOIN dbo.CO_Area A(NOLOCK) ON A.IdArea = LPM.IdArea
-          LEFT JOIN dbo.CO_Registro R(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
+		  JOIN dbo.CO_Area A(NOLOCK) ON A.IdArea = LPM.IdArea
+          JOIN dbo.CO_Registro R(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
+			AND YEAR(R.MesPresentacion) >= 2020
           LEFT JOIN dbo.CO_GastosRubro GR(NOLOCK) ON R.IdGastoRubro = GR.IdGastoRubro
           LEFT JOIN dbo.FI_Factura F(NOLOCK) ON F.IdFactura = R.IdFactura
 		  LEFT JOIN dbo.FacturasAWSDocumentos AWSDOCF (NOLOCK) ON F.IdFactura = AWSDOCF.IdFactura
@@ -216,140 +218,166 @@ AS
           LEFT JOIN Petrovendor.dbo.MM_Pedido(NOLOCK) AS PP 
 		  ON	PP.IdPedido = AP.IdPedido
           AND	PP.IdContrato IN(10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024, 10043, 10052)
-		  left JOIN Petrovendor.dbo.MM_Pedidos P2 ON PP.IdPedido = P2.IdIdentificador
-          LEFT JOIN Petrovendor.dbo.MM_AceptacionCartaPCN AS ACP(NOLOCK) ON ACP.IdAceptacionPedido = AP.IdAceptacionPedido
-                                                                            AND ACP.IdEstatus = 2
-                                                                            AND ISNULL(ACP.IdEstatusEliminado, 0) <> 1
-		 LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle as PD
+		  left JOIN Petrovendor.dbo.MM_Pedidos P2 (NOLOCK) 
+			ON PP.IdPedido = P2.IdIdentificador
+          LEFT JOIN Petrovendor.dbo.MM_AceptacionCartaPCN AS ACP(NOLOCK) 
+			ON ACP.IdAceptacionPedido = AP.IdAceptacionPedido
+                            AND ACP.IdEstatus = 2
+                            AND ISNULL(ACP.IdEstatusEliminado, 0) <> 1
+		 LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle as PD	(NOLOCK) 
 		 ON PP.IdPedido = PD.IdPedido
-		 LEFT JOIN Petrovendor.dbo.MM_AceptacionPedidoDetalle as APD
+		 LEFT JOIN Petrovendor.dbo.MM_AceptacionPedidoDetalle as APD	(NOLOCK) 
 		 ON PD.IdPedidoDetalle=APD.IdPedidoDetalle
 		 
      WHERE C.IdContrato IN(10014, 10015, 10016, 10017, 10018, 10019, 10020, 10021, 10022, 10023, 10024, 10043, 10052)
-     GROUP BY C.NumeroContrato, 
-              ACC.NombreAreaContractual, 
-              PC.NumeroPedimento, 
-              SUBSTRING(CONCAT(ACNH.id_Actividad, ' - ', SAP.[id_Sub-actividad], ' - ', TP.id_Tarea, ' - ', S.NombreServicio), 1, 255), 
-              I.NombreInstalacion, 
-              LPM.AC_FEC_INI, 
-              LPM.AC_FEC_FIN, 
-              F.Fecha, 
-              LTRIM(RTRIM(isnull(F.Serie,'')+' '+isnull(F.Folio,''))), 
-              SF.RazonSocial, 
-              IR.NombreInstalacion, 
-              R.InicioEjecucion, 
-              R.FinEjecucion, 
-              F.Fecha, 
-              U.Nombre, 
-              R.MontoRegistro, 
-              TMF.TipoMonedaCorto, 
-              R.MesPresentacion, 
-              ACNH.DescripcionActividadPetrolera, 
-              SAP.SubactividadPetrolera, 
-              TP.TareaPetrolera, 
-              R.IdRegistro, 
-              ER.NombreEstado, 
-			  A.NombreArea,
-              R.Comentarios, 
-              F.IdFactura, 
-              PC.IdPedimentoComprobante, 
-              IR.CUIP, 
-              IR.WelIID, 
-              LPM.IdLineaPresupuestoMes, 
-              IR.IdInstalacion, 
-              P.Nombre, 
-              R.CvTipoDocFacturacion, 
-              PC.FechaPago, 
-              PC.IdMoneda, 
-              R.IdRegistro, 
-              PC.FolioComprobante, 
-              SPC.RazonSocial, 
-              TMPC.TipoMonedaCorto,
-              CASE
-                  WHEN TR.FechaPago IS NULL
-                  THEN TTFCP.FechaPago
-                  ELSE TR.FechaPago
-              END,
-              CASE
-                  WHEN TR.FechaPago IS NULL
-                  THEN TTFCP.MontoPagado
-                  ELSE ISNULL(TR.MontoPagado, 0)
-              END, 
-              CONVERT(VARCHAR(150), ISNULL(TP.id_Tarea, '')), 
-              ISNULL(GR.Descripcion, ''), 
-              R.PCN, 
-              ISNULL(F.MontoConIva, ''), 
-              ISNULL(F.Moneda, ''), 
-              ISNULL(F.UUID, ''), 
-              ISNULL(F.SubTotal, ''),
-              CASE
-                  WHEN FP.IdFactura IS NOT NULL
-                       AND ACP.IdEstatus = 2
-                       AND ISNULL(ACP.IdEstatusEliminado, 0) <> 1
-                  THEN 'Si tiene carta'
-                  WHEN DADA.IdDocAdinco IS NOT NULL
-                  THEN 'Si tiene carta'
-                  ELSE 'NO TIENE CARTA'
-              END, 
-              CCSH.Nivel3, 
-              CCSH.Descripcion,
-              CASE
-                  WHEN R.IdCBSISH IS NULL
-                  THEN 'SIN CLASIFICAR'
-                  ELSE CONCAT(MA.Codigo, ' - ', MA.Nombre)
-              END,
-              CASE
-                  WHEN R.CvTipoDocFacturacion = 1
-                  THEN SF.RFC
-                  WHEN R.CvTipoDocFacturacion IN(2, 3)
-                  THEN SPC.RFC
-              END,
-              CASE
-                  WHEN REPLACE(F.MetodoPago, 'Ó', 'O') LIKE '%SOL%'
-                       OR F.MetodoPago LIKE '%PUE%'
-                       OR REPLACE(F.FormaPago, 'Ó', 'O') LIKE '%SOL%'
-                       OR F.FormaPago LIKE '%PUE%'
-                       OR F.MetodoPago LIKE '%CONTADO%'
-                       OR F.FormaPago LIKE '%CONTADO%'
-                       OR F.MetodoPago LIKE '%UNA%'
-                       OR F.FormaPago LIKE '%UNA%'
-                  THEN 'PUE'
-                  WHEN F.MetodoPago IS NULL
-                       AND F.FormaPago IS NULL
-                  THEN ''
-                  ELSE 'PPD'
-              END,
-              CASE
-				WHEN AWSDOCF.IdFactura IS NOT NULL
+     GROUP BY 
+	 ISNULL(F.UUID, ''), 
+            C.NumeroContrato, 
+            ACC.NombreAreaContractual, 
+            R.IdRegistro, 
+            SUBSTRING(CONCAT(ACNH.id_Actividad, ' - ', SAP.[id_Sub-actividad], ' - ', TP.id_Tarea, ' - ', S.NombreServicio), 1, 255), 
+            I.NombreInstalacion, 
+            LPM.AC_FEC_INI, 
+            LPM.AC_FEC_FIN,
+            CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN 'CF'
+                WHEN R.CvTipoDocFacturacion = 2
+                THEN 'PI'
+                WHEN R.CvTipoDocFacturacion = 3
+                THEN 'PE'
+            END,
+            CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN LTRIM(RTRIM(isnull(F.Serie,'')+' '+isnull(F.Folio,'')))
+                WHEN R.CvTipoDocFacturacion = 2
+                THEN PC.NumeroPedimento
+                WHEN R.CvTipoDocFacturacion = 3
+                THEN PC.FolioComprobante
+            END,
+            CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN F.Fecha
+                WHEN R.CvTipoDocFacturacion IN(2, 3)
+                THEN PC.FechaPago
+            END,
+			R.CvTipoDocFacturacion,
+            CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN SF.RazonSocial
+                WHEN R.CvTipoDocFacturacion IN(2, 3)
+                THEN SPC.RazonSocial
+            END, 
+            IR.NombreInstalacion, 
+            R.InicioEjecucion, 
+            R.FinEjecucion, 
+            U.Nombre, 
+            R.MontoRegistro,
+            CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN TMF.TipoMonedaCorto
+                WHEN R.CvTipoDocFacturacion IN(2, 3)
+                THEN TMPC.TipoMonedaCorto
+            END, 
+            R.MesPresentacion, 
+            ACNH.DescripcionActividadPetrolera, 
+            SAP.SubactividadPetrolera, 
+            TP.TareaPetrolera,
+            ER.NombreEstado,
+			A.NombreArea,
+            R.Comentarios, 
+            CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN F.IdFactura
+                WHEN R.CvTipoDocFacturacion IN(2, 3)
+                THEN PC.IdPedimentoComprobante
+            END,
+            LPM.IdLineaPresupuestoMes,
+            P.Nombre,
+            CASE
+                WHEN TR.FechaPago IS NULL
+                THEN TTFCP.FechaPago
+                ELSE TR.FechaPago
+            END,
+            CASE
+                WHEN TR.FechaPago IS NULL
+                THEN TTFCP.MontoPagado
+                ELSE ISNULL(TR.MontoPagado, 0)
+            END,
+            CONVERT(VARCHAR(150), ISNULL(TP.id_Tarea, '')),
+            ISNULL(GR.Descripcion, ''),
+            R.PCN,
+            ISNULL(F.MontoConIva, ''),
+            ISNULL(F.Moneda, ''),
+          ISNULL(F.SubTotal, ''),
+            CASE
+                WHEN FP.IdFactura IS NOT NULL
+                     AND ACP.IdEstatus = 2
+                     AND ISNULL(ACP.IdEstatusEliminado, 0) <> 1
+                THEN 'Si tiene carta'
+                WHEN DADA.IdDocAdinco IS NOT NULL
+                THEN 'Si tiene carta'
+                ELSE 'NO TIENE CARTA'
+            END,
+            CCSH.Nivel3, 
+            CCSH.Descripcion,
+            CASE
+                WHEN R.IdCBSISH IS NULL
+                THEN 'SIN CLASIFICAR'
+                ELSE CONCAT(MA.Codigo, ' - ', MA.Nombre)
+            END,
+            CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN SF.RFC
+                WHEN R.CvTipoDocFacturacion IN(2, 3)
+                THEN SPC.RFC
+            END,
+            CASE
+                WHEN REPLACE(F.MetodoPago, 'Ó', 'O') LIKE '%SOL%'
+                     OR F.MetodoPago LIKE '%PUE%'
+                     OR REPLACE(F.FormaPago, 'Ó', 'O') LIKE '%SOL%'
+                     OR F.FormaPago LIKE '%PUE%'
+                     OR F.MetodoPago LIKE '%CONTADO%'
+                     OR F.FormaPago LIKE '%CONTADO%'
+                     OR F.MetodoPago LIKE '%UNA%'
+                     OR F.FormaPago LIKE '%UNA%'
+                THEN 'PUE'
+                WHEN F.MetodoPago IS NULL
+                     AND F.FormaPago IS NULL
+                THEN ''
+                ELSE 'PPD'
+            END,
+            CASE
+			    WHEN AWSDOCF.IdFactura IS NOT NULL
 				THEN 'Pagado'
-                  WHEN TF.IdTransferFactura IS NOT NULL
-                       AND (F.MetodoPago LIKE '%exhibi%'
-                            OR F.MetodoPago LIKE '%PUE%'
-                            OR F.FormaPago LIKE '%exhibi%'
-                            OR F.FormaPago LIKE '%PUE%')
-                  THEN 'Pagado'
-                  WHEN TF.IdTransferFactura IS NOT NULL
-                       AND (F.MetodoPago LIKE '%parcia%'
-                            OR F.MetodoPago LIKE '%dife%'
-                            OR F.MetodoPago LIKE '%PPD%'
-                            OR F.FormaPago LIKE '%parcia%'
-                            OR F.FormaPago LIKE '%dife%'
-                            OR F.FormaPago LIKE '%PPD%')
-                  THEN 'Pagado SIN COMPLEMENTO'
-                  WHEN TFCP.IdTransferFactura IS NOT NULL
-                  THEN 'Pagado CON COMPLEMENTO'
-                  WHEN TF.IdTransferFactura IS NULL
-                       AND TFCP.IdTransferFactura IS NULL
-                  THEN 'NO Pagado'
-              END, 
-              CONCAT(MONTH(LPM.AC_PRESUP_MES), '-', YEAR(LPM.AC_PRESUP_MES)), 
-              F1.UUID,
-			  AP.IdAceptacionPedido,
-			  P2.IdPedido,
-			  P.Creadoel,
-			  PD.IdMoneda,
-			  PD.PrecioUnitario,
-			  APD.Cantidad,
-			  PC.FechaPago,
-			  FP.IdFactura
-GO
+                WHEN TF.IdTransferFactura IS NOT NULL
+                     AND (F.MetodoPago LIKE '%exhibi%'
+                          OR F.MetodoPago LIKE '%PUE%'
+                          OR F.FormaPago LIKE '%exhibi%'
+                          OR F.FormaPago LIKE '%PUE%')
+                THEN 'Pagado'
+                WHEN TF.IdTransferFactura IS NOT NULL
+                     AND (F.MetodoPago LIKE '%parcia%'
+                          OR F.MetodoPago LIKE '%dife%'
+                          OR F.MetodoPago LIKE '%PPD%'
+                          OR F.FormaPago LIKE '%parcia%'
+                          OR F.FormaPago LIKE '%dife%'
+                          OR F.FormaPago LIKE '%PPD%')
+                THEN 'Pagado SIN COMPLEMENTO'
+                WHEN TFCP.IdTransferFactura IS NOT NULL
+                THEN 'Pagado CON COMPLEMENTO'
+                WHEN TF.IdTransferFactura IS NULL
+                     AND TFCP.IdTransferFactura IS NULL
+                THEN 'NO Pagado'
+            END,
+            CONCAT(MONTH(LPM.AC_PRESUP_MES), '-', YEAR(LPM.AC_PRESUP_MES)),
+            F1.UUID,
+			AP.IdAceptacionPedido,
+			P2.IdPedido,
+			CASE
+                WHEN R.CvTipoDocFacturacion = 1
+                THEN TCDF.TipoCambio	--(SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, F.Fecha))
+                WHEN R.CvTipoDocFacturacion IN(2, 3)
+                THEN TCDPC.TipoCambio	--(SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, PC.FechaPago))
+            END,
+			FP.IdFactura
