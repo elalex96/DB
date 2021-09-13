@@ -3,6 +3,10 @@
 -- Create date: 2017-01-01
 -- Description: Consulta Registro de Gasto para Edicion
 -- =============================================
+-- Author Alter: Neri Garcia
+-- Create date: 2021-08-31
+-- Description: Se agrega campo IdCatManoObra
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistroGastoEdicion]
     -- Add the parameters for the stored procedure here
     @IdRegistro INT = 0,
@@ -37,26 +41,33 @@ BEGIN
            pc.IdPeriodo,
            lp.IdLineaPresupuestoMes,
            IdGastoRubro = ISNULL(reg.IdGastoRubro, 0),
+		   IdCatManoObra = ISNULL(reg.IdCatManoObra, 0),
            SoloLectura = CAST(ISNULL(erc.SoloLectura, 0) AS BIT),
            ISNULL(reg.PCN,0) AS PCN,
            ISNULL(reg.CostosAtribuiblesAdministracion,0) AS CAA,
            --reg.IdCuenta,
-           C.IdInstalacion AS InstalacionName
+           C.IdInstalacion AS InstalacionName,
+		   case when reg.CapexOpexEdicion is not null then 
+			   case when reg.CapexOpexEdicion = 1 then 1 
+				else 2 end 
+			else 
+				case when CC.Operacion = 1 then 1 else 2 end end as CapexOpexEdicion
     FROM CO_Registro reg (NOLOCK)
-        INNER JOIN CO_LineaPresupuestoMes lp	(NOLOCK)
+        INNER JOIN CO_LineaPresupuestoMes lp    (NOLOCK)
             ON lp.IdLineaPresupuestoMes = reg.IdPrograma
-			AND reg.IdRegistro = @IdRegistro
-        INNER JOIN CO_Presupuesto p	(NOLOCK)
+            AND reg.IdRegistro = @IdRegistro
+        INNER JOIN CO_Presupuesto p (NOLOCK)
             ON p.IdPresupuesto = lp.IdPresupuesto
-        INNER JOIN CO_ProgramaActividad pa	(NOLOCK)
+        INNER JOIN CO_ProgramaActividad pa  (NOLOCK)
             ON pa.IdProgramaActividad = p.IdProgramaActividad
-        INNER JOIN CO_PeriodoContrato pc	(NOLOCK)
+        INNER JOIN CO_PeriodoContrato pc    (NOLOCK)
             ON pc.IdPeriodo = pa.IdPeriodoContrato
-        LEFT JOIN [CO_EstadoRegistroContrato] erc	(NOLOCK)
+        LEFT JOIN [CO_EstadoRegistroContrato] erc   (NOLOCK)
             ON erc.IdEstadoRegistro = reg.IdEstado
                AND erc.IdContrato = pc.IdContrato
         LEFT JOIN
-            CO_Instalacion  C	(NOLOCK)
+            CO_Instalacion  C   (NOLOCK)
             ON REG.IdInstalacion    =   C.IdInstalacion
+		LEFT JOIN CO_CatalogoCuentaSH CC ON CC.IdCatalogoCuentasSH = reg.IdCatalogoCuentasSH
     WHERE (IdRegistro = @IdRegistro);
 END;

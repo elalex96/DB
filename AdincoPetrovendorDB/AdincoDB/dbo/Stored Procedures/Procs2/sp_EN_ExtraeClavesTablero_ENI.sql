@@ -1,3 +1,10 @@
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_ExtraeClavesTablero_ENI]    Script Date: 01/09/2021 03:00:43 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE PROCEDURE [dbo].[sp_EN_ExtraeClavesTablero_ENI]
     @idContrato INT,
 	@idUsuario INT,
@@ -26,8 +33,7 @@ BEGIN
 
 		IF @IdTableroContrato = 1--TABLERO PRESUPUESTOS
 		BEGIN
-			
-			SELECT Workbook='PresupuestovsContingente',
+  		SELECT Workbook='PresupuestovsContingente',
 				Sheet='ProgramadeTrabajo',
 				Tabs='no',
 				Site='ADINCO',
@@ -54,9 +60,6 @@ BEGIN
 				UserTableau='admin' 
 
 		END
-		
-		
-
 	END
 
 	IF @IsEQUINOR = 1

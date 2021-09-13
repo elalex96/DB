@@ -15,6 +15,7 @@
     [IdProveedor]            INT            NULL,
     [Activo]                 INT            NULL,
     [IdPedimentoComprobante] INT            NULL,
+    [Bucket]                 NVARCHAR(500)  NULL,
     PRIMARY KEY CLUSTERED ([IdAchivoCNCD] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 

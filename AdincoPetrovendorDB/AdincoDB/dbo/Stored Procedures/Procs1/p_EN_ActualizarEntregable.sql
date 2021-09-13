@@ -1,7 +1,14 @@
 ﻿
+DROP PROCEDURE IF EXISTS p_EN_ActualizarEntregable
+--==========================================
+-- Se agrega el nombre en inglés
+-- Luis David
+-- 01/09/2021
+go
 CREATE Proc p_EN_ActualizarEntregable
 @pIdEntregable	int ,
 @pDocumentoEntregable	nvarchar(max),
+@pDocumentoEntregableIngles	nvarchar(max) = null,
 @pIdMarcoLegal	int,
 @pTituloAnexo	nvarchar(max),
 @pCapitulo	nvarchar(max),
@@ -61,12 +68,19 @@ CREATE Proc p_EN_ActualizarEntregable
 @Actividad varchar(500),
 @Proceso varchar (500),
 --@FichaTecnica varchar(500),
-@Idclasificacion int
+@Idclasificacion int,
+@pDesarrollo bit,
+@pExploracion bit,
+@pEvaluacion bit,
+@pTransicion bit,
+@pAbandonoArea bit,
+@pAbandonoPozo bit
 as
 
 			UPDATE [dbo].[EN_Entregable]
            SET
 		   [DocumentoEntregable] = @pDocumentoEntregable
+		   ,DeliverableName = @pDocumentoEntregableIngles
            ,[IdMarcoLegal] = @pIdMarcoLegal
            ,[TituloAnexo]=  @pTituloAnexo
            ,[Capitulo] = @pCapitulo
@@ -130,4 +144,22 @@ as
 			Idclasificacion= @Idclasificacion
 		   WHERE IDENTREGABLE = @pIdEntregable
 
-
+		   IF EXISTS (select 1 from EN_Entregable_ConfigAdicional where IdEntregable = @pIdEntregable)
+		   BEGIN 
+			   update EN_Entregable_ConfigAdicional
+			   SET
+			   Desarrollo = @pDesarrollo,
+			   Exploracion = @pExploracion,
+			   Evaluacion = @pEvaluacion,
+			   Transicion = @pTransicion,
+			   AbandonoArea = @pAbandonoArea,
+			   AbandonoPozo = @pAbandonoPozo
+			   where IdEntregable = @pIdEntregable
+		   END
+		   ELSE
+		   BEGIN
+				INSERT INTO EN_Entregable_ConfigAdicional
+				(IdEntregable, Desarrollo, Exploracion,Evaluacion,Transicion,AbandonoArea,AbandonoPozo)
+				VALUES
+				(@pIdEntregable, @pDesarrollo, @pExploracion, @pEvaluacion, @pTransicion,@pAbandonoArea,@pAbandonoPozo)
+		   END

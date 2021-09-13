@@ -10616,6 +10616,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_DEAUsuariosDescripcionSAP.sql" />
     <Build Include="dbo\Tables\DEA_ProveedorDescripcionSAP.sql" />
     <Build Include="dbo\Tables\DEA_UsuarioSolicitanteSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\EN_EntregablesRechazados.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
@@ -10633,5 +10634,6 @@
     <None Include="dbo\Stored Procedures\Procs1\DEA_SP_UsuarioOBS_Grid.sql" />
     <None Include="dbo\Stored Procedures\Procs1\DEA_SP_UsuarioOBS_Combos.sql" />
     <None Include="dbo\Stored Procedures\Procs1\DEA_SP_AdministrarUsuarioOBS.sql" />
+    <None Include="dbo\User Defined Types\WDEA_Layout_T_V2.sql" />
   </ItemGroup>
 </Project>
