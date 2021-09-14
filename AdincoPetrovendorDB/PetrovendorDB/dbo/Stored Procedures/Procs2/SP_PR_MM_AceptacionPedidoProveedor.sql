@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_PR_MM_AceptacionPedidoProveedor
+go
+-- =============================================
 -- Author:		DAVID DE LA CRUZ
 -- Create date: 22-09-20
 -- Description:	Se agrega el tipo de pedido a la consulta
+-- =============================================
+-- Author:		DAVID DE LA CRUZ
+-- Create date: 13/09/2021
+-- Description:	SE VALIDA QUE CUANDO SEA UN PROVEEDOR EXTRANGERO MUESTRE QUE NO SOLICITA LA CARTA CN 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedor]
     -- Add the parameters for the stored procedure here  
@@ -40,10 +46,10 @@ BEGIN
            TP.TipoPedido,
            MP.IdSolicitudPedido,
            CASE
+               WHEN ISNULL(RC.PedirCarta, 0) = 0 or ISNULL(P.IdNacionalidad,0) = 2 THEN -- SE AGREGA LA VALIDACIÓN DE QUE CUANDO SEA 
+                   'No'																	-- EXTRANJERA O NO ESTÉ EN LA TABLA RelacionCartaCNPedido MUESTRE UN 'NO' 
                WHEN ISNULL(RC.PedirCarta, 0) = 1 THEN
                    'SI'
-               ELSE
-                   'No'
            END AS PedirCarta,
 		   ISNULL(SOT.Objeto,SPO.MotivoUrgencia) AS Justificacion,
 		   Contrato = c.NumeroContrato
