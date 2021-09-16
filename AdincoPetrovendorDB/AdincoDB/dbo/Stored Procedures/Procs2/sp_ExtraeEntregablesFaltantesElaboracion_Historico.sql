@@ -1,4 +1,11 @@
-CREATE PROCEDURE dbo.sp_ExtraeEntregablesFaltantesElaboracion_Historico --3,10061
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_Historico]    Script Date: 16/09/2021 04:51:39 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_Historico] --3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -33,7 +40,6 @@ BEGIN
 		EXEC sp_ExtraeEntregablesFaltantesElaboracion_SASISOPA @IdContrato, @idUsuario
 		RETURN
 	END
-
 
     CREATE TABLE #TempInstancias
     (
@@ -74,7 +80,7 @@ BEGIN
 		CO_Contrato	C	(NOLOCK)
 		ON	CE.IdContrato	=	C.IdContrato
 		AND	C.IdContrato	=	@IdContrato
-		AND	IE.FechaCalculadaEntregaReg < DATEADD(MONTH,6,GETDATE())
+		AND	IE.FechasLimiteElaboracion < DATEADD(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
     JOIN    
 		dbo.EN_Actividad    A	(NOLOCK)
         ON  IE.ActividadID  =   A.ActividadID
@@ -87,7 +93,7 @@ BEGIN
         ON  A.ActividadID   =   EXAR.ActividadIDExcepcion 
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
     WHERE  
-		IE.FechaCalculadaEntregaReg < DATEADD(MONTH,9,GETDATE())
+		IE.FechasLimiteElaboracion < DATEADD(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
 		AND (
 		(A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
             AND   EXAR.IdInstanciasEntregables    IS NULL
@@ -152,7 +158,11 @@ BEGIN
 			THEN	1
 		ELSE	0
 		END	AS BitSasisopa,
-		EN.Observaciones	 
+		EN.Observaciones,
+		CASE
+				WHEN EN.BitAwareness = 1 THEN 'SI'
+				ELSE 'NO'
+			END AS TipoJOA
     FROM    
 		#TempInstancias TI
     JOIN    
@@ -256,8 +266,11 @@ BEGIN
 			THEN	1
 		ELSE	0
 		END	AS BitSasisopa,
-		EN.Observaciones	
-
+		EN.Observaciones,	
+		CASE
+				WHEN EN.BitAwareness = 1 THEN 'SI'
+				ELSE 'NO'
+			END AS TipoJOA
     FROM    
 		#TempInstancias TI
     JOIN    
