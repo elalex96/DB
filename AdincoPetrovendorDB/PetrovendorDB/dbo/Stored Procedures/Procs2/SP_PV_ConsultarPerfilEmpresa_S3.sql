@@ -45,10 +45,16 @@ BEGIN
  DECLARE @OrganigramaCarpeta NVARCHAR(MAX)
  DECLARE @OrganigramaBucket NVARCHAR(MAX)
 
-    SELECT @DocumentoOrganigrama=D.Identificador, @OrganigramaCarpeta= D.Carpeta, @OrganigramaMime=D.Mime, @OrganigramaExtension=D.Extension, @OrganigramaBucket=D.Bucket
-	FROM PV_PerfilEmpresa AS PE
-	INNER JOIN dbo.S_Documento_S3 AS D ON D.IdDocumento = PE.IdDocumentoOrganigrama
-	WHERE PE.IdProveedor = @IdProveedor  AND D.Activo=1
+    SELECT		@DocumentoOrganigrama	=	D.Identificador, 
+				@OrganigramaCarpeta		=	D.Carpeta, 
+				@OrganigramaMime		=	D.Mime, 
+				@OrganigramaExtension	=	D.Extension, 
+				@OrganigramaBucket		=	D.Bucket
+	FROM		PV_PerfilEmpresa		AS	PE
+	INNER JOIN	dbo.S_Documento_S3		D 
+	ON			D.IdDocumento			=	PE.IdDocumentoOrganigrama
+	WHERE		PE.IdProveedor			=	@IdProveedor  
+	AND			D.Activo				=	1
 
     SELECT @DocumentoCurriculum=D.Identificador, @CurriculumCarpeta= D.Carpeta,@CurriculumMime=D.Mime, @CurriculumExtension=D.Extension, @CurriculumBucket= D.Bucket
 	FROM PV_PerfilEmpresa AS PE
@@ -113,3 +119,5 @@ BEGIN
 
 		END 
 END
+
+go

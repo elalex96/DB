@@ -17,7 +17,7 @@ CREATE PROCEDURE [dbo].[sp_consultarDocumentoSG]
 AS
 BEGIN
      
-	 SELECT IdSistemaGestion, NombreCertificacion, Activo, Carpeta, Mime, Extension, Identificador
+	 SELECT IdSistemaGestion, NombreCertificacion, Activo, Carpeta, Mime, Extension, Identificador, Bucket
 	 FROM PV_SistemaGestion
 	 WHERE IdProveedor = @IdProveedor AND IdTipoDocSG = @TipoDocumento AND Activo = 1
 END
