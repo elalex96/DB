@@ -13134,6 +13134,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP.sql" />
     <Build Include="dbo\Tables\Tables2\PendientesProcesarProcura_WSDEA.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_FI_FacturasPorFechaTipo.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
