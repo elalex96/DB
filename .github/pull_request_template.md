@@ -14,7 +14,7 @@
 - [ ] La rama que se desea integrar se encuentra actualizada con la rama default?
 
 ### URL Issue Relacionado
-*En caso de aplicar, escriba la URL del issue relacionado
+*En caso de aplicar, escriba la URL del issue relacionado*
 
 ### Scripts 
  *Anexe en esta sección scripts de base de datos, en caso de no aplicar escriba "N/A"*
