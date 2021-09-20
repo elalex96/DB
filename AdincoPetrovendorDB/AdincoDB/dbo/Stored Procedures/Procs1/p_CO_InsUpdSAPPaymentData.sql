@@ -146,8 +146,20 @@ as
 			v.IdCOntrato = @pIdContrato
 		)
 		begin
-			set @pError = 'No existe la cuenta ' + isnull(@pFinalAccount,'') +' el proveedor ' + isnull(@pNamePayee,'')
+			set @pError = 'No existe la cuenta ' + isnull(@pFinalAccount,'') +' del proveedor ' + isnull(@pNamePayee,'')+' .PaymentReference:'+@pPaymentReference
 		end
+
+		if not exists (
+			SELECT 1
+			FROM PV_CuentaBancaria C
+			INNER JOIN CO_Contrato CO on CO.IdContrato = @pIdContrato AND
+								CO.IdContratista = C.IdContratista AND
+								C.Activa = 1 AND
+								(RTRIM(C.NumeroCuenta) = RTRIM(@pSourceAccount) OR RTRIM(C.CuentaClave)  =RTRIM(@pSourceAccount))
+		)
+		BEGIN
+			set @pError = 'No existe la cuenta Origen ' + isnull(@pSourceAccount,'') +' .PaymentReference:'+@pPaymentReference
+		END
 
 
 
@@ -163,3 +175,6 @@ as
 			
 			
 		END CATCH 
+
+
+
