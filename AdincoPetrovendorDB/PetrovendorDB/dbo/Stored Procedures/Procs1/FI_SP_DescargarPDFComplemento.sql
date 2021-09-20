@@ -25,7 +25,8 @@ BEGIN
 	SELECT NombreDoc,
 			Carpeta,
 			Identificador,
-			Mime
+			Mime,
+			Bucket
 	FROM dbo.FI_PDFComplemento
 	WHERE IdFacturaComplemento = @IdFacturaComplemento
 		AND Activo = 1

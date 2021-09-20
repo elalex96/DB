@@ -14,10 +14,11 @@ CREATE  PROCEDURE [dbo].[sp_consultarInfoDocumentoSG]
 	@IdDoc int
 AS
 BEGIN     
-	 SELECT SG.IdSistemaGestion, DSG.DocSistemaGestion, SG.NombreCertificacion, '', Activo, SG.Carpeta, SG.Mime, SG.Extension, SG.Identificador
+	 SELECT SG.IdSistemaGestion, DSG.DocSistemaGestion, SG.NombreCertificacion, '', Activo, SG.Carpeta, SG.Mime, SG.Extension, SG.Identificador, Bucket
 	 FROM PV_SistemaGestion SG
 	 INNER JOIN PV_DocSistemGestion AS DSG ON DSG.IdDocSistemaGestion = SG.IdTipoDocSG
 	 WHERE SG.IdSistemaGestion = @IdDoc	 
 END
+
 
 
