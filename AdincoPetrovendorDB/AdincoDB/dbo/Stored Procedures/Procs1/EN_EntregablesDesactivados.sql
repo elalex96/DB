@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 21/09/2021 12:43:50 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -346,7 +353,11 @@ BEGIN
 				CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
 					ELSE ISNULL(ACC.Nombre,'') --+ ' (' + CE.Accountable + ')'
 				END		AS Accountable,
-				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos  
+				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos,
+				CASE 
+				WHEN E.BitAwareness = 1 THEN 'SI'
+				ELSE 'NO'
+			END AS TipoJOA    
         FROM #ResponsablesInstancias TI
         JOIN EN_InstanciasEntregable I ON TI.idInstanciaEntregable = I.idInstanciaEntregable
         JOIN EN_ContratoEntregable CE ON I.IdContratoEntregable = CE.IdContratoEntregable
