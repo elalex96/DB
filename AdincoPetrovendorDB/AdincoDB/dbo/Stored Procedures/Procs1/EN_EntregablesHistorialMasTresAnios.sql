@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 21/09/2021 10:38:40 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -276,7 +283,11 @@ BEGIN
 				ISNULL(ECA.Transicion,0)  AS Transicion,
 				ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,
 				ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
-				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos  
+				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos,
+				CASE 
+				WHEN E.BitAwareness = 1 THEN 'SI'
+				ELSE 'NO'
+			END AS TipoJOA   
         FROM #ResponsablesInstancias TI
         JOIN 
 			EN_InstanciasEntregable	I 
@@ -433,7 +444,11 @@ BEGIN
 				ISNULL(ECA.Transicion,0)  AS Transicion,
 				ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,
 				ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
-				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos  
+				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos,
+				CASE 
+				WHEN E.BitAwareness = 1 THEN 'SI'
+				ELSE 'NO'
+			END AS TipoJOA  
         FROM #ResponsablesInstancias TI
         JOIN
 			EN_InstanciasEntregable	I 
