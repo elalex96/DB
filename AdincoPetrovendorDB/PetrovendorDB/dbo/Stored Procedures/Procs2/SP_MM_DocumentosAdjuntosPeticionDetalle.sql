@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿drop procedure if exists SP_MM_DocumentosAdjuntosPeticionDetalle
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-04-17
 -- Description:	Consultar Solicitudes de Oferta 
@@ -30,7 +32,7 @@ BEGIN
 	 
 	 IF @CONSULTA='DOCUMENTO'
 		 BEGIN 
-			SELECT IdDocumentoAnexo,Nombre,'' AS Documento, Carpeta, Identificador, Extension, Mime
+			SELECT IdDocumentoAnexo,Nombre,'' AS Documento, Carpeta, Identificador, Extension, Mime,isnull(Bucket,'')as Bucket
 			FROM dbo.MM_DocumentosAnexos
 			WHERE IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle
 			AND IdDocumentoAnexo = @IdDocumentoAnexo
