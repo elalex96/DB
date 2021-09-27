@@ -1,11 +1,11 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_SC_AdquisicionContratacionCNH]    Script Date: 17/09/2021 10:20:28 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_SC_AdquisicionContratacionCNH]    Script Date: 26/09/2021 11:02:42 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] 
+ALTER PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] --3,'2015/09/04' ,'2021/09/04'
 @IdContrato INT, 
 @Fechainicio DATE, 
 @FechaFin DATE 
@@ -13,7 +13,7 @@ AS
 BEGIN 
    
     --- VALIDAR SI EL CONTRATO ES DE CARSO, EJECUTAR SP DE SP_SC_AdquisicionContratacionCNH_Carso         
-    DECLARE @Tabla TABLE   
+    DECLARE @TablaDEA TABLE   
     (   
         NumeroContrato NVARCHAR(MAX),   
         RelacionOperadoraProveedor NVARCHAR(100),   
@@ -28,6 +28,27 @@ BEGIN
         MontoUSD FLOAT,   
         MontoMXN FLOAT,   
         TipoCambio FLOAT,   
+        FechaTipoCambio NVARCHAR(MAX),   
+        Comentarios NVARCHAR(MAX),   
+        NombreContratista NVARCHAR(MAX),   
+        FechaEfectiva NVARCHAR(10)   
+    );  
+	
+	DECLARE @Tabla TABLE   
+    (   
+        NumeroContrato NVARCHAR(MAX),   
+        RelacionOperadoraProveedor NVARCHAR(100),   
+        Proveedor NVARCHAR(MAX),   
+        MecanismoContratacion NVARCHAR(200),   
+        [Nombre Contrato C-P] NVARCHAR(MAX),   
+        [No. Contrato] NVARCHAR(MAX),   
+        [Fecha Inicio Contrato] NVARCHAR(MAX),   
+        [Fecha Termino Contrato] NVARCHAR(MAX),   
+        [Vigencia del contrato] NVARCHAR(MAX),   
+        [Objeto del contrato] NVARCHAR(MAX),   
+        MontoUSD NVARCHAR(MAX),   
+        MontoMXN NVARCHAR(MAX),   
+        TipoCambio NVARCHAR(MAX),
         FechaTipoCambio NVARCHAR(MAX),   
         Comentarios NVARCHAR(MAX),   
         NombreContratista NVARCHAR(MAX),   
@@ -668,6 +689,7 @@ BEGIN
    
     ---- VALIDA SI EL PROVEEDOR ES DEA   
     ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060) AND IdContrato = @IdContrato) --DEA  
+	--IF @IdContrato = 3
     BEGIN   
  
  
@@ -684,7 +706,7 @@ BEGIN
    
    
    
-        INSERT INTO @Tabla   
+        INSERT INTO @TablaDEA   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -773,6 +795,8 @@ BEGIN
 				ON P.IdPeticionOferta = PO.IdPeticionOferta
 			JOIN Petrovendor.dbo.MM_TipoPedido AS TP (NOLOCK)
 				ON PO.IdTipoProceso = TP.IdTipoPedido
+				AND PO.IdTipoProceso = TP.IdTipoPedido 
+				AND PO.IdTipoProceso NOT IN (6)
 			JOIN Adinco.dbo.CO_Contratista AS CT (NOLOCK)
 				ON CON.IdContratista = CT.IdContratista
 		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
@@ -910,7 +934,7 @@ BEGIN
   --            BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112);   
    
    
-        INSERT INTO @Tabla   
+        INSERT INTO @TablaDEA   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -940,9 +964,9 @@ BEGIN
 			'Licitación' AS MecanismoContratacion,
 			SC.Objeto AS NombreContratoCP,
 			SC.NumeroSubContrato AS NoContratoCP,
-			SC.FechaInicio AS FechaInicio,
-			SC.FechaFin AS FechaFin,
-			SC.FechaFin AS FechaVigencia,
+			ISNULL(SC.FechaInicio,SC.CreadoEl) AS FechaInicio,
+			ISNULL(ISNULL(SC.FechaFin,SC.FechaInicio),SC.CreadoEl) AS FechaFin,
+			ISNULL(ISNULL(SC.FechaFin,SC.FechaInicio),SC.CreadoEl) AS FechaVigencia,
 			SC.Objeto AS ObjetoContrato,
 			CASE
 				WHEN SC.IdMoneda = 1 THEN Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(SCM.Importe),ISNULL(SC.FechaInicio,SC.CreadoEl))
@@ -1160,7 +1184,7 @@ BEGIN
                Comentarios,   
                NombreContratista,   
                FechaEfectiva   
-        FROM @Tabla   
+        FROM @TablaDEA   
         ORDER BY [No. Contrato];   
     END   
     --- FIN VALIDACION DEA   
@@ -1458,7 +1482,7 @@ LEFT JOIN Adinco.dbo.CO_Contrato c
                [Objeto del contrato],   
                MontoUSD,   
                MontoMXN,   
- TipoCambio,   
+			   TipoCambio,   
                FechaTipoCambio,   
                Comentarios,   
                NombreContratista,   
