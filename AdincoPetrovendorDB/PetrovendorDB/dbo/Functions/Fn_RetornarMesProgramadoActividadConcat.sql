@@ -1,10 +1,17 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  UserDefinedFunction [dbo].[Fn_RetornarMesProgramadoActividadConcat]    Script Date: 21/09/2021 01:41:47 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 07/11/2018
 -- Description: retornar el mes programado, la actividad, subactividad, tarea, clave tarea y a subtarea
 -- =============================================
 
-CREATE FUNCTION Fn_RetornarMesProgramadoActividadConcat
+ALTER FUNCTION [dbo].[Fn_RetornarMesProgramadoActividadConcat]
 	( @IdLineaPresupuestoMes INT )
 RETURNS NVARCHAR(MAX)
 AS
@@ -15,16 +22,16 @@ AS
 			= CONCAT (
 				  'Mes Programado: ' , RIGHT('00' + LTRIM ( MONTH ( lpm.AC_PRESUP_MES )), 2), ' ' ,
 				  dbo.Fn_RetornarMesEspanol ( MONTH ( lpm.AC_PRESUP_MES )), ' ', YEAR ( lpm.AC_PRESUP_MES ) ,
-				  ' | Actividad: ' , CASE WHEN CO.IdTipoContrato = 1 THEN
-											 ts.NombreTipoServicio
-									ELSE
-										apCNH.DescripcionActividadPetrolera
-									END COLLATE Modern_Spanish_CI_AS ,				-- Actividad
-				  ' | Sub-Actividad: ', CASE WHEN CO.IdTipoContrato = 1 THEN
-												 aCIEP.NombreActividad
-										ELSE
-											SAP.SubactividadPetrolera
-										END COLLATE Modern_Spanish_CI_AS ,			-- SubActividad
+				  ' | Actividad: ' , CASE
+									   WHEN P.CIEP = 1
+									   THEN ACIEP.NombreActividad
+									   ELSE SAP.SubactividadPetrolera
+								   END COLLATE Modern_Spanish_CI_AS ,				-- Actividad
+				  ' | Sub-Actividad: ', CASE
+										   WHEN P.CIEP = 1
+										   THEN RI.NombreRubro
+										   ELSE TP.TareaPetrolera
+									   END COLLATE Modern_Spanish_CI_AS ,			-- SubActividad
 				  ' | Tarea: ', tp.TareaPetrolera COLLATE Modern_Spanish_CI_AS ,	-- Tarea
 				  ' | Clave Tarea: ', tp.id_Tarea COLLATE Modern_Spanish_CI_AS ,	-- Clave Tarea
 				  ' | Sub-Tarea: ', s.NombreServicio COLLATE Modern_Spanish_CI_AS ) -- Sub Tarea        
@@ -58,7 +65,9 @@ AS
 			ON LPM.IdServicio = S.IdServicio
 		LEFT JOIN	Adinco.dbo.CO_Instalacion I
 			ON LPM.IdInstalacion = I.IdInstalacion
-		WHERE		lpm.IdLineaPresupuestoMes = @IdLineaPresupuestoMes
+		LEFT JOIN dbo.CO_RubroInterno RI(NOLOCK) 
+			ON LPM.IdRubroInterno = RI.IdRubroInterno
+		WHERE lpm.IdLineaPresupuestoMes = @IdLineaPresupuestoMes
 
 		RETURN @retorno
 	END

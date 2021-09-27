@@ -1,13 +1,10 @@
-﻿-- =============================================
--- Author:		<Pedro Acuña>
--- Create date: <17-09-2018>
--- Description:	<Se agrega el bit de activo>
--- =============================================
--- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_MM_ConsultaDocFianzaOperacion
+GO
 -- Author:		Josue Glez
 -- Create date:  05/9/2017
 -- Description:	Obtiene documeto de fianza a partir de una solicitud de pedido en proceso de oferta
 -- Update: 09/05/2018 Daniel AC se agrega parametros de identificación en S3
+-- Update: 21/09/2021 Luis David Se agrega el bucket 
 -- =============================================
 
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaDocFianzaOperacion] @IdSolicitudPedido INT
@@ -18,7 +15,7 @@ AS
 		SET NOCOUNT ON ;
 
 		SELECT		F.IdDocFianza, '' AS Documento, F.IdOperacion, f.NombreDoc, F.Carpeta, F.Identificador, F.Mime ,
-					F.Extension
+					F.Extension, ISNULL(F.Bucket,'') AS Bucket
 		FROM		[TA_DocFianzaOperacion] F
 		LEFT JOIN	TA_Operacion O
 			ON F.Idoperacion = O.IdOperacion
