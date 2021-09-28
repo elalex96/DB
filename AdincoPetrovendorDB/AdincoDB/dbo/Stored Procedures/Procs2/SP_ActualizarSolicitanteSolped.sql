@@ -10,6 +10,12 @@ GO
 -- Update date: 10/08/2021
 -- Description:	actualizacion del campos solicitante
 -- =============================================
+-- Creacion: Luis David
+-- Update date: 27/09/2021
+-- Description:	Se agrega la validación del solicitante null para la comparación del solicitante nuevo vs anterior
+-- =============================================
+DROP PROCEDURE IF EXISTS SP_ActualizarSolicitanteSolped
+GO
 CREATE PROCEDURE [dbo].[SP_ActualizarSolicitanteSolped]
     @IdSolicitudPedido INT,
     @IdSolicitnate INT,
@@ -30,7 +36,7 @@ BEGIN
 													FROM S_Usuario AS US
 													WHERE IdUsuario = @IdSolicitnate);
 
-	IF @SolicitanteAnterior != @SolicitanteNuevo
+	IF ISNULL(@SolicitanteAnterior,'') != ISNULL(@SolicitanteNuevo,'')
 	BEGIN
 
 		IF (ISNULL(@IdSolicitudPedido, 0) <> 0)
@@ -53,7 +59,13 @@ BEGIN
 			   GETDATE();
 
 	END
+	
+	SET @SolicitanteNuevo = (SELECT top 1 S.Nombre
+	FROM MM_SolicitudPedido SP
+	join s_usuario S 
+	on SP.Solicitante = S.IdUsuario
+	WHERE IdSolicitudPedido = @IdSolicitudPedido)
 
-	SELECT 'TRUE' as Guardado,@SolicitanteNuevo as Solicitante
+	SELECT 'TRUE',@SolicitanteNuevo
 
 END
