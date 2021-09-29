@@ -1,10 +1,5 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_SC_AdquisicionContratacionCNH]    Script Date: 26/09/2021 11:02:42 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 ALTER PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] --3,'2015/09/04' ,'2021/09/04'
 @IdContrato INT, 
 @Fechainicio DATE, 
@@ -308,7 +303,7 @@ BEGIN
                    AND RE.IdSubcontratista = P.IdSubcontratista   
             LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
                 ON TP.IdTipoPedido = PO.IdTipoProceso   
-            INNER JOIN @SolpedConMateriales filtro   
+     INNER JOIN @SolpedConMateriales filtro   
                 ON filtro.IdSolicitudPedido = solPed.IdSolicitudPedido   
         WHERE O.IdTipoOperacion = 9   
               AND E.IdEstatus = 2   
@@ -531,7 +526,7 @@ BEGIN
                CASE   
                    WHEN RE.IdRelacion IS NOT NULL THEN   
                        'SI'   
-                   ELSE   
+ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
                UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,   
@@ -672,7 +667,7 @@ BEGIN
                [Fecha Inicio Contrato],   
                [Fecha Termino Contrato],   
                [Vigencia del contrato],   
-               [Objeto del contrato],   
+  [Objeto del contrato],   
                MontoUSD,   
                MontoMXN,   
                TipoCambio,   
@@ -820,7 +815,7 @@ BEGIN
 				P.CreadoEl,
 				TP.TipoPedido,
 				CT.RazonSocial,
-				CON.FechaFirma;   
+				CON.FechaFirma;
   --      SELECT C.NumeroContrato,   
   --             CASE   
   --                 WHEN RE.IdRelacion IS NOT NULL THEN   
