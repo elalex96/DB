@@ -360,7 +360,7 @@ begin
 
 			insert into	#tmpMateriales
 			select		t1.Id,
-						mat.IdMaterial,
+						min(mat.IdMaterial),
 						mat.DescripcionCorta,
 						mat.IdProveedor
 			from		#tmpData		t1
@@ -372,7 +372,7 @@ begin
 			where		mat.IsEliminado					=	0
 			and			mat.Activo						=	1
 			group by	t1.Id,
-						mat.IdMaterial,
+						--mat.IdMaterial,
 						mat.DescripcionCorta,
 						mat.IdProveedor
 
