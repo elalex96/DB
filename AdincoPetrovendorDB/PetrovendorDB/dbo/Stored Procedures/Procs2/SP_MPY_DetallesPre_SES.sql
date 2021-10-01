@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_MPY_DetallesPre_SES
+GO
+-- =============================================
 -- Author:		ALexander Gomez
 -- Create date: 29/10/2018
 -- Description:	Consulta de los detalles de la PRE-SES
+-- =============================================
+-- Author:		Luis David
+-- Create date: 2930/09/2021
+-- Description:	Se agrega el Bucket
 -- =============================================
 CREATE procedure [dbo].[SP_MPY_DetallesPre_SES]
 	-- Add the parameters for the stored procedure here
@@ -26,7 +32,8 @@ BEGIN
 		DOCPRESES.Carpeta,
 		PSES.SAPSESNumber,
 		PSES.MontoTotalPrefactura,
-		ISNULL(PSES.Plant,'') AS Plant
+		ISNULL(PSES.Plant,'') AS Plant,
+		ISNULL(DOCPRESES.Bucket,'') AS Bucket
 	FROM Adinco.dbo.CO_SAPPRESES AS PSES
 		JOIN Adinco.dbo.CO_SAPVendor AS V ON V.VendorIDSAP = PSES.SAPVendorNumber
 		JOIN Adinco.dbo.MPY_DocumentosPRESES AS DOCPRESES ON DOCPRESES.IdPRESES = PSES.IdPRESES
