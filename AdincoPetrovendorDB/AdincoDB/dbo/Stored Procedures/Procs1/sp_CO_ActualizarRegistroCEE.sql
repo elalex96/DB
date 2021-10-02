@@ -1,4 +1,11 @@
-﻿-- =============================================  
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_CO_ActualizarRegistroCEE]    Script Date: 01/10/2021 12:51:49 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:  Miguel Gomez  
 -- Create date: Diciembre 2014  
 -- Description: Inserta un nuevo registro  
@@ -31,7 +38,8 @@ CREATE PROCEDURE [dbo].[sp_CO_ActualizarRegistroCEE]
     @IdGastoRubro INT,  
     @PCN FLOAT,
 	@IdCatManoObra INT,
-	@CapexOpex int  
+	@CapexOpex int  ,
+	@PorcentajeMarkup FLOAT = 0
 AS  
 BEGIN  
     -- SET NOCOUNT ON added to prevent extra result sets from  
@@ -83,5 +91,9 @@ BEGIN
         [PCN] = @PCN,
 		[IdCatManoObra] = @IdCatManoObra,
 		CapexOpexEdicion = case when @CapexOpex = 1 then 1 else 0 end  
-    WHERE IdRegistro = @IdRegistro;  
+    WHERE IdRegistro = @IdRegistro; 
+	
+	
+	EXEC [SP_GuardaPorcentajePorRegistroId] @IdContrato,@IdUsuarioModPor,@IdRegistro,@PorcentajeMarkup,@MontoRegistro;
+	 
 END;
