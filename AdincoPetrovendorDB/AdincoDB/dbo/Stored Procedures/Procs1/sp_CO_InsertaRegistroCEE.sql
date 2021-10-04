@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_CO_InsertaRegistroCEE]    Script Date: 01/10/2021 12:52:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Miguel Gomez
 -- Create date: Diciembre 2014
 -- Description:	Inserta un nuevo registro
@@ -29,7 +36,8 @@ CREATE PROCEDURE [dbo].[sp_CO_InsertaRegistroCEE]
     @IdContrato INT,
     @IdGastoRubro INT,
     @PCN FLOAT,
-	@IdCatManoObra INT
+	@IdCatManoObra INT,
+	@PorcentajeMarkup FLOAT = 0
 AS
 BEGIN
     SET @IdFactura = CASE
@@ -89,6 +97,9 @@ BEGIN
         CURRENT_TIMESTAMP, @IdInstalacion, @IdCuentaCSH, @Poliza, @IdPedimentoComprobante, @CvTipoDoc, @CostoAtrib,
         @IdGastoRubro, @PCN, @IdCatManoObra);
     SELECT @insertado = @@IDENTITY;
+
+	EXEC [SP_GuardaPorcentajePorRegistroId] @IdContrato,@IdUsuarioCreadoPor,@insertado,@PorcentajeMarkup,@MontoRegistro;
+
     SELECT @insertado AS INSERTADO,
            CONCAT('El registro se ha guardado exitosamente con el id ', @insertado) AS MSG;
 END;
