@@ -1,10 +1,5 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_CO_ConsultaRegistroGastoEdicion]    Script Date: 01/10/2021 10:36:23 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:      Miguel Gomez
 -- Create date: 2017-01-01
@@ -18,6 +13,9 @@ GO
 -- Create date: 2021-10-01
 -- Description: Se retorna el PorcentajeMarkup
 -- =============================================
+
+
+-- sp_CO_ConsultaRegistroGastoEdicion 160125
 CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistroGastoEdicion]
     -- Add the parameters for the stored procedure here
     @IdRegistro INT = 0,
@@ -34,7 +32,8 @@ BEGIN
            reg.IdFactura,
            reg.MontoRegistro,
            reg.InicioEjecucion,
-           reg.FinEjecucion,
+ 
+          reg.FinEjecucion,
            reg.Comentarios,
            reg.MesPresentacion,
            reg.IdEstado,
@@ -63,7 +62,8 @@ BEGIN
 				else 2 end 
 			else 
 				case when CC.Operacion = 1 then 1 else 2 end end as CapexOpexEdicion,
-			 ISNULL(CP.Porcentaje,0) AS PorcentajeMarkup
+			 ISNULL(CP.Porcentaje,0) AS PorcentajeMarkup,
+			FechaFactura = F.Fecha
     FROM CO_Registro reg (NOLOCK)
         INNER JOIN CO_LineaPresupuestoMes lp    (NOLOCK)
             ON lp.IdLineaPresupuestoMes = reg.IdPrograma
@@ -74,6 +74,7 @@ BEGIN
             ON pa.IdProgramaActividad = p.IdProgramaActividad
         INNER JOIN CO_PeriodoContrato pc    (NOLOCK)
             ON pc.IdPeriodo = pa.IdPeriodoContrato
+		LEFT JOIN FI_Factura F ON F.IdFactura = reg.IdFactura
         LEFT JOIN [CO_EstadoRegistroContrato] erc   (NOLOCK)
             ON erc.IdEstadoRegistro = reg.IdEstado
                AND erc.IdContrato = pc.IdContrato
@@ -84,5 +85,7 @@ BEGIN
 		LEFT	JOIN 
 			CO_RegistroMarkup	CP	(NOLOCK)
 			ON	reg.IdRegistro	=	CP.GastoId
-    WHERE (IdRegistro = @IdRegistro);
+		WHERE (IdRegistro = @IdRegistro);
 END;
+
+
