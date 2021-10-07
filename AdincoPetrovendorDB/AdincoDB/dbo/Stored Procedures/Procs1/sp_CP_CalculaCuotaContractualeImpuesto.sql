@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.sp_CP_CalculaCuotaContractualeImpuesto
+CREATE PROCEDURE dbo.sp_CP_CalculaCuotaContractualeImpuesto
 	@IdContratista INT,
 	@FechaIni    DATE,
 	@FechaFin    DATE
@@ -37,14 +37,14 @@ GROUP BY
 		M.Fecha	AS [Mes],
 		CO.NumeroContrato,
 		CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1150
-            WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1175.42
-            WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1214.20
-			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1294.71
-			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1355.82
-			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1396.09
-			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1442.58
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
+            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1150
+            WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1175.42
+            WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1214.20
+			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1294.71
+			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1355.82
+			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1396.09
+			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1442.58
+			WHEN DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) > 5 THEN 3449.63
             ELSE 1396.09
         END AS CuotaContractual,
         AC.SuperficieKm2,
@@ -56,7 +56,7 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1355.82 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1396.09 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
+			WHEN DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) > 5 THEN ROUND(3449.63 * AC.SuperficieKm2,2)
             ELSE 0
         END AS TotalCuotaContractual,
 		CASE 
@@ -130,14 +130,14 @@ GROUP BY
 		M.Fecha,
 		CO.NumeroContrato,
 		CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1150
-            WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1175.42
-            WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1214.20
-			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1294.71
-			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1355.82
-			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1396.09
-			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1442.58
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
+            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1150
+            WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1175.42
+            WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1214.20
+			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1294.71
+			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1355.82
+			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1396.09
+			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) < 5	THEN 1442.58
+			WHEN DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) > 5 THEN 3449.63
             ELSE 1396.09
         END,
         AC.SuperficieKm2,
@@ -149,7 +149,7 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1355.82 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1396.09 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
+			WHEN DATEDIFF(YEAR, CO.FechaFirma, M.Fecha) > 5 THEN ROUND(3449.63 * AC.SuperficieKm2,2)
             ELSE 0
         END,
 		CASE 
@@ -204,4 +204,3 @@ GROUP BY
 		M.Fecha,
 		CO.NumeroContrato
 END
-
