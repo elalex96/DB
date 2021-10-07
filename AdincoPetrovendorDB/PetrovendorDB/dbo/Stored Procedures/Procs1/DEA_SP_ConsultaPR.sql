@@ -1,10 +1,17 @@
-﻿
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[DEA_SP_ConsultaPR]    Script Date: 05/10/2021 09:58:10 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <20/08/2019>
 -- Description:	<Consulta de las PR>
 -- =============================================
-CREATE PROCEDURE [dbo].[DEA_SP_ConsultaPR] 
+ALTER PROCEDURE [dbo].[DEA_SP_ConsultaPR] 
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT
 AS
@@ -67,9 +74,9 @@ BEGIN
 		AND ISNULL(P.IdEstatusEliminado,0)<>1 --> QUE NO ESTE ELIMINADO EL PEDIDO		
 		AND O.IdProveedor = @IdProveedor 
 		--DMW si tiene recepcion a null o si es un pedido de control de obra
-		AND (
-			P.RecepcionServicio IS NULL OR est.IdPedido > 0
-		)  
+		--AND (
+		--	P.RecepcionServicio IS NULL OR est.IdPedido > 0
+		--)  
 		AND (O.IdEstatusOperacion = 2 OR O.IdEstatusOperacion=11)  --> EN ESTATUS DE APROBADO O APROBADO SIN DOCUMENTO		
 		AND P.Version=O.NoVersion
 		AND R.ID_R_PR_PO IS NULL ---> QUE NO TENGA RELACION EN LA TABLE DE PEDIDOS 
