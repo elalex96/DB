@@ -29,8 +29,15 @@ BEGIN
 								CreadoEl,
 								De,
 								EN_MsjEnviado)
-								VALUES ((SELECT MAX(IdNotificacion)	+	1 FROM S_Notificacion ),@Para,@Asunto,@Mensaje,GETDATE(),@Enviada,GETDATE(),@idUsuario,GETDATE(),@De ,@EN_MsjEnviado)
+								VALUES ((SELECT MAX(IdNotificacion)	+	1 FROM S_Notificacion ),@Para,@Asunto,@Mensaje,GETDATE(),@Enviada,
+								CASE @Enviada
+								WHEN 1
+								THEN
+									GETDATE()
+									ELSE NULL
+								END,
+								@idUsuario,GETDATE(),@De ,@EN_MsjEnviado)
 
-SELECT '' AS error
+	SELECT '[Registrado correctamente] en S_Notificacion '+  CASE @Enviada WHEN 1 THEN 'y enviado correctamente' ELSE 'se enviará en breve' END AS error
 
 	END;
