@@ -10619,6 +10619,9 @@
     <Build Include="dbo\Stored Procedures\Procs1\MM_EnvioNotificacion_CambioSolicitante.sql" />
     <Build Include="dbo\Tables\WDEA_SAP_CentroCostos.sql" />
     <Build Include="dbo\Functions\WDEA_CC_SplitString.sql" />
+    <Build Include="dbo\Tables\BitacoraReversaComprobantesExtranjeros.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spRevierteComprobantesExtranjerosAprobados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spListaComprobantesExtranjeros.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
