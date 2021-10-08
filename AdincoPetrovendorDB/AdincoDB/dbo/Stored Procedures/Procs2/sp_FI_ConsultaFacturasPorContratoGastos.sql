@@ -1,11 +1,17 @@
-﻿CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContratoGastos]
+﻿
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContratoGastos]
 -- Add the parameters for the stored procedure here
 --[sp_FI_ConsultaFacturasPorContratoGastos] 10015,1
 --[sp_FI_ConsultaFacturasPorContratoGastos] 10016,1
 --[sp_FI_ConsultaFacturasPorContratoGastos] 10018,1
 --[sp_FI_ConsultaFacturasPorContratoGastos] 10007,1
 @IdContrato INT = 0, 
-@IdUsuario  INT = 0
+@IdUsuario  INT = 0,
+@Del DateTime=NULL,
+@Al DateTime=NULL
 AS
     -- =============================================
     -- Author: Miguel Gomez
@@ -199,7 +205,12 @@ AS
                                                              AND ISNULL(D.IsEliminado, 0) = 0
                              LEFT JOIN dbo.AWS_DocAwsDocAdinco WAD (NOLOCK)
 								ON F.IdFactura = WAD.IdDocAdinco
-                        WHERE F.IdContrato = @IdContrato
+                        WHERE F.IdContrato = @IdContrato AND
+						(
+							((@Del IS NOT NULL AND @Al IS NOT NULL) AND CONVERT(VARCHAR,F.Fecha,112) BETWEEN CONVERT(VARCHAR,@Del,112) AND CONVERT(VARCHAR,@Al,112))
+							OR
+							(@Del IS NULL OR @Al IS NULL) 
+						)
                         ORDER BY F.IdFactura DESC;
              END;
 
@@ -280,7 +291,7 @@ AS
                             ELSE 1
                         END AS CCN, 
                         NULL AS CRCCN
-                 FROM dbo.FI_Factura AS F	(NOLOCK)
+					FROM dbo.FI_Factura AS F	(NOLOCK)
                       JOIN dbo.PV_Subcontratista AS S (NOLOCK)
 						ON F.IdSubcontratista = S.IdSubcontratista
 						AND	F.IdContrato = @IdContrato
@@ -297,7 +308,13 @@ AS
                                                       AND ISNULL(D.IsEliminado, 0) = 0
                       LEFT JOIN dbo.AWS_DocAwsDocAdinco WAD ON F.IdFactura = WAD.IdDocAdinco
                  WHERE F.IdContrato = @IdContrato
-                       AND CC.RFC <> F.Emisor
+                       AND CC.RFC <> F.Emisor 
+					   AND
+						(
+							((@Del IS NOT NULL AND @Al IS NOT NULL) AND CONVERT(VARCHAR,F.Fecha,112) BETWEEN CONVERT(VARCHAR,@Del,112) AND CONVERT(VARCHAR,@Al,112))
+							OR
+							(@Del IS NULL OR @Al IS NULL) 
+						)
                  UNION
                  SELECT DISTINCT 
 						F.IdFactura, 
@@ -357,7 +374,12 @@ AS
                                                       AND ISNULL(D.IsEliminado, 0) = 0
                       LEFT JOIN dbo.AWS_DocAwsDocAdinco WAD (NOLOCK)
 						ON F.IdFactura = WAD.IdDocAdinco
-                 WHERE FC.IdContrato = @IdContrato
+                 WHERE FC.IdContrato = @IdContrato AND
+						(
+							((@Del IS NOT NULL AND @Al IS NOT NULL) AND CONVERT(VARCHAR,F.Fecha,112) BETWEEN CONVERT(VARCHAR,@Del,112) AND CONVERT(VARCHAR,@Al,112))
+							OR
+							(@Del IS NULL OR @Al IS NULL) 
+						)
                  ORDER BY F.IdFactura DESC;
              END;
 
@@ -421,3 +443,4 @@ AS
 
          --[sp_FI_ConsultaFacturasPorContratoGastos] 3,1
      END;
+
