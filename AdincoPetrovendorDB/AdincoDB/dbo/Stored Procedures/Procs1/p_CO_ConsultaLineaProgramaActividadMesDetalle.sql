@@ -1,4 +1,5 @@
-﻿CREATE PROC [dbo].[p_CO_ConsultaLineaProgramaActividadMesDetalle] 
+﻿
+CREATE PROC [dbo].[p_CO_ConsultaLineaProgramaActividadMesDetalle] 
 --p_CO_ConsultaLineaProgramaActividadMesDetalle 3,'2018-08-01',10008
 @pidContrato          INT, 
 @pAnioMes             DATETIME, 
@@ -394,7 +395,7 @@ WHERE pc.IdContrato = @pidContrato
 
 	-- RETORNA LOS MESES EN FORMA DE LISTA DESDE LA FECHA INICIO HASTA LA FECHA FIN
 	SET Language 'Spanish';
-	declare @start DATE = '2014-05-01'
+	declare @start DATE = getdate()
 	declare @end DATE = getdate()
 
 	SELECT @start =  isnull(Inicio, getdate()), @end = isnull(Fin, getdate()) FROM CO_PeriodoContrato WHERE IdPeriodo = @pIdPeriodo
