@@ -48,7 +48,7 @@ CREATE PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
 
 	-- Nuevos parametros de entrada
 	@NombreDocumento NVARCHAR (MAX), @Mime NVARCHAR (MAX), @Extension NVARCHAR (MAX), @Carpeta NVARCHAR (MAX) ,
-	@IdentificadorS3 NVARCHAR (MAX) ,@Bucket NVARCHAR (MAX),
+	@IdentificadorS3 NVARCHAR (MAX) ,@Bucket NVARCHAR (MAX) = NULL,
 
 	-- Nuevos parametros de entrada
 	@NombreDocumentoRPPC NVARCHAR (MAX) = NULL, @MimeRPPC NVARCHAR (MAX) = NULL, @ExtensionRPPC NVARCHAR (MAX) = NULL ,
@@ -93,7 +93,7 @@ AS
 						   CreadoEl , NombreDocumento, Mime, Identificador, Extension, Carpeta, Bucket )
 					 VALUES
 						 ( @IdTipoDocumento, @IdUsuario, @IdTipoValidacionDocumento, @IdProveedor, @Activo, @Documento ,
-						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, @Bucket ) ;
+						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, ISNULL(@Bucket,'petrovendor-pr') ) ;
 
 					 SELECT @IdDocumento = @@IDENTITY
 
@@ -117,7 +117,7 @@ AS
 						   CreadoEl , NombreDocumento, Mime, Identificador, Extension, Carpeta, Bucket )
 					 VALUES
 						 ( @IdTipoDocumento, @IdUsuario, @IdTipoValidacionDocumento, @IdProveedor, @Activo, @Documento ,
-						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, @Bucket)
+						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, ISNULL(@Bucket,'petrovendor-pr'))
 
 					 IF @@ERROR <> 0 SELECT 'false' AS msj ;
 					 ELSE SELECT 'true'	   AS msj ;

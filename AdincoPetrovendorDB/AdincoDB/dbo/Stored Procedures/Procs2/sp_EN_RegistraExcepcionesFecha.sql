@@ -130,22 +130,12 @@ BEGIN
 		and			IE.IdContratoEntregable						=			@IdContratoEntregable
 		and			IPF.IdProceso								is not null
 		
-		--select @IdProceso
-		--select * from #DiasHabilesFrecuencia
-		--SELECT		IPF.IdProceso
-		--		FROM		EN_InstanciasEntregable						IE
-		--		JOIN		#DiasHabilesFrecuencia						FLA		ON			IE.IdContratoEntregable						=		@IdContratoEntregable
-		--																		AND			IE.FechasLimiteAprobacion					=		FLA.IdFecha
-		--																		AND			IE.idInstanciaEntregable					<>		@idInstanciaentregable
-		--		inner join	EN_InstanciasEntregables_InstanciaActividad IEIA	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
-		--		inner JOIN	EN_InstanciasActividades					IA		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
-		--		inner JOIN	EN_InstanciasProcesosFecha					IPF		ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
-		--		where		IPF.IdProceso								=		@IdProceso
-
+		declare @puedeGuardar bit
+		select @puedeGuardar = 1
+		
 		if (/*Verificamos que el registro tenga un proceso ligado*/
 					@IdProceso is not null		)
 		begin	/*Si es asi, verificamos si existe otro proceso, que este sea uno distinto al que ya existe*/
-			print 'if 1'
 			if not exists(
 				SELECT		IPF.IdProceso
 				FROM		EN_InstanciasEntregable						IE
@@ -158,22 +148,16 @@ BEGIN
 				where		IPF.IdProceso								=		@IdProceso
 			)
 			begin	/*De ser asi, le asignamos un 0 a las variales para permitirle guardar*/
-					print 'if 2'
-					select	@ExisteCountFechaLimiteAprob	=	0,
-							@ExisteCountFechaLimiteReg		=	0
+					select @puedeGuardar = 1
 			end
-			--else
-			--begin	/*De lo contrario indicamos que almenos existe un registro para posteriormente no dejarlo guardar*/
-					
-			--		select @ExisteCountFechaLimiteAprob		=	1,
-			--				@ExisteCountFechaLimiteReg		=	1
-			--end
+			else
+			begin	/*De lo contrario indicams que almenos existe un registro para posteriormente no dejarlo guardar*/
+					select @puedeGuardar = 0
+			end
 		end
 		else
 		begin
-			print 'else 2'
 			/*Si no, hacemos la validación actual*/
-			--select [@IdProceso] = @IdProceso
 
 			SELECT	@ExisteCountFechaLimiteAprob	=	COUNT(1)	
 			FROM	EN_InstanciasEntregable	IE
@@ -195,9 +179,9 @@ BEGIN
 				AND	IE.idInstanciaEntregable	<>	@idInstanciaentregable
 		end
 	
-	IF(@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	=	0)
+	IF(@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	=	0 and @puedeGuardar = 1)
 	BEGIN
-		
+		--print '@puedeGuardar = 1'
         INSERT INTO #DiasCE (dias, tipo)
         VALUES (@DiasAprobacion, 'Aprobacion'),
                (@DiasRevision, 'revision'),
@@ -283,7 +267,7 @@ BEGIN
                 WHERE TIE.Id = @C;
 
                 IF ((SELECT tipo FROM #DiasCE WHERE id = @CantidadDias) = 'Alerta')
-                BEGIN
+      BEGIN
                     UPDATE TIE
                     SET FechaInicioElaboracion = DH.IdFecha
                     FROM #TEMP_InstanciasEntregable TIE
@@ -341,14 +325,16 @@ BEGIN
 	END
 	ELSE
 	BEGIN
+		--print '@puedeGuardar = 0'
 		SELECT	
 		CASE 
 		WHEN @ExisteCountFechaLimiteAprob	>	0	AND	@ExisteCountFechaLimiteReg	>	0
 		THEN	'Esta obligación ya contiene una programación con la misma fecha de entrega interna y fecha de entrega regulador'	
 		WHEN @ExisteCountFechaLimiteAprob	>	0	AND	@ExisteCountFechaLimiteReg	=	0
 		THEN	'Esta obligación ya contiene una programación con la misma fecha de entrega interna'	
-		WHEN @ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	>	0
+		WHEN (@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	>	0) or @puedeGuardar = 0
 		THEN	'Esta obligación ya contiene una programación con la misma fecha de entrega regulador'	
+		
 		END AS error;
 
 
@@ -422,5 +408,3 @@ BEGIN
 
 
 END;
-
-go

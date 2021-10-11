@@ -25,6 +25,13 @@ CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]
 @IdSolicitudAceptacionPedido INT 
 
 AS
+
+	create table #tmpCantidadesRecibidad
+	(
+		IdPedidoDetalle		int,
+		Cantidad			float
+	)
+
      BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
@@ -120,39 +127,57 @@ AS
 	  /*TABLA 2 PRODUCTOS*/
 	   BEGIN     
 	    /*PRODUCTOS A ENTREGAR*/
-		SELECT 
-		PD.IdPedidoDetalle,
-		PD.IdMaterialVendedor,
-		M.Descripcioncorta as Descripcioncorta,
-		M.DescripcionLarga,
-		PD.Cantidad AS CantidadPedido,
-		PD.PrecioUnitario,
-		PD.Subtotal, 
-		SAPD.Cantidad AS CantidadProcesada, 		
-		TM.TipoMonedaCorto,		
-		ISNULL(PD.RecepcionPedido,'false')  AS Recepcionservicio,		
-		PD.RecepcionPedido,
-		POD.UnidadProveedor AS Unidad	
-		FROM MM_SolicitudAceptacionPedidoDetalle SAPD 		
-		JOIN MM_PedidoDetalle AS PD 
-			ON SAPD.IdPedidoDetalle		= PD.IdPedidoDetalle
-		JOIN MM_Pedido	P
-			ON PD.IdPedido	= P.IdPedido
-		JOIN MM_Material AS M 
-			ON PD.IdMaterialVendedor	=	M.IdMaterial 
-		JOIN MM_PeticionOferta AS PO 
-			ON PO.IdPeticionOFerta = P.IdPeticionOferta		
-		JOIN MM_PeticionOfertaDetalle AS POD 
-			ON PO.IdPeticionOferta = POD.IdPeticionOferta 
-			AND POD.IdMaterial = PD.IdMaterial
-		JOIN MM_SolicitudPedidoDetalle AS SPD 
-			ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle		
-		JOIN PV_TipoMoneda AS TM 
-			ON TM.IdMoneda = PD.IdMoneda 		
-		WHERE P.IdProveedorCompras = @IdProveedor 		
-		AND P.IdPedido = @IdPedido
-		AND SAPD.IdSolicitudAceptacionPedido= @IdSolicitudAceptacionPedido
-		ORDER BY M.Descripcioncorta ASC
+
+		insert into #tmpCantidadesRecibidad
+		select		apd.IdPedidoDetalle,
+					sum(apd.Cantidad)
+		from		MM_PedidoDetalle			pd
+		inner join	MM_AceptacionPedidoDetalle	apd
+		on			pd.IdPedidoDetalle			=	apd.IdPedidoDetalle
+		inner join	MM_AceptacionPedido			ap
+		on			ap.IdAceptacionPedido		=	apd.IdAceptacionPedido
+		and			ap.IdEliminado				is	null
+		and			apd.IdEliminado				is	null
+		where		pd.IdPedido					=	@IdPedido
+		group by	apd.IdPedidoDetalle
+
+		SELECT 		PD.IdPedidoDetalle,
+					PD.IdMaterialVendedor,
+					Descripcioncorta					=	M.Descripcioncorta,
+					M.DescripcionLarga,
+					CantidadPedido						=	PD.Cantidad,
+					PD.PrecioUnitario,
+					PD.Subtotal, 
+					CantidadProcesada					=	SAPD.Cantidad, 		
+					TM.TipoMonedaCorto,		
+					Recepcionservicio					=	ISNULL(PD.RecepcionPedido,'false'),		
+					PD.RecepcionPedido,
+					Unidad								=	POD.UnidadProveedor,
+					CantidadRecibida					=	t1.Cantidad
+		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		
+		JOIN		MM_PedidoDetalle					PD 
+		ON			SAPD.IdPedidoDetalle				=	PD.IdPedidoDetalle
+		JOIN		MM_Pedido							P
+		ON			PD.IdPedido							=	P.IdPedido
+		JOIN		MM_Material							M 
+		ON			PD.IdMaterialVendedor				=	M.IdMaterial 
+		JOIN		MM_PeticionOferta					PO 
+		ON			PO.IdPeticionOFerta					=	P.IdPeticionOferta		
+		JOIN		MM_PeticionOfertaDetalle			POD 
+		ON			PO.IdPeticionOferta					=	POD.IdPeticionOferta 
+		AND			POD.IdMaterial						=	PD.IdMaterial
+		JOIN		MM_SolicitudPedidoDetalle			SPD 
+		ON			SPD.IdSolicitudPedidoDetalle		=	POD.IdSolicitudPedidoDetalle		
+		JOIN		PV_TipoMoneda						TM 
+		ON			TM.IdMoneda							=	PD.IdMoneda
+		inner join	#tmpCantidadesRecibidad				t1
+		on			t1.IdPedidoDetalle					=	PD.IdPedidoDetalle		
+		WHERE		P.IdProveedorCompras				=	@IdProveedor 		
+		AND			P.IdPedido							=	@IdPedido
+		AND			SAPD.IdSolicitudAceptacionPedido	=	@IdSolicitudAceptacionPedido
+		ORDER BY	M.Descripcioncorta ASC
+
+		
 	  END 
 
 	  /*TABLA 3 DOCUMENTOS*/
@@ -381,4 +406,5 @@ AS
 	   END 
 
 END;
+
 
