@@ -13107,6 +13107,18 @@
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ConsultarTiemposEntrega.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_GuardarTiempoEntrega.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_UpdateTiemposEntrega.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ConsultarEntregablesTiemposEntrega.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ReporteTiemposEntrega.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ConsultarTiemposRespuesta.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_GuardarTiempoRespuesta.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_UpdateTiemposRespuesta.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ConsultarEntregablesTiemposRespuesta.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ReporteTiemposRespuesta.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarTiempoRespuesta.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarTiempoEntrega.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

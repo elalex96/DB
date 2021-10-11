@@ -1,5 +1,3 @@
-﻿drop procedure if exists EN_EntregablesHistorialEliminacion
-go
 CREATE PROCEDURE EN_EntregablesHistorialEliminacion
     @idUsuario INT,
     @idContrato INT,
@@ -23,7 +21,7 @@ BEGIN
     SET LANGUAGE spanish;
 
     DECLARE @HoyMasTresAnios DATE;
-    SET @HoyMasTresAnios = DATEADD(YEAR, 2, GETDATE());
+    SET @HoyMasTresAnios = DATEADD(YEAR, -1, GETDATE());
 
     CREATE TABLE #InstanciasEntregable
     (
@@ -65,16 +63,13 @@ BEGIN
 		dbo.EN_Entregable e 
 		ON ce.IdEntregable= e.IdEntregable
 		AND E.BitJOA	=	0
+		AND e.IsActivo = 1
 	LEFT	JOIN 
 		dbo.EN_MarcoLegal	ml 
 		ON	e.IdMarcoLegal	=	ml.IdMarcoLegal
-	LEFT	JOIN
-		EN_CatalogoProcesosEntregables	CPE
-		ON	e.IdEntregable	=	CPE.IdEntregable
     WHERE	ce.IdContrato	=	@idContrato
-          AND	(ml.Activo=1	OR	e.BitInterno=1)
+          AND	(ml.Activo=1) --	OR	e.BitInterno=1)
           AND	I.FechasLimiteElaboracion	>	@HoyMasTresAnios
-		  AND	CPE.IdCatProceso	IS	NULL
     ORDER BY FechasLimiteAprobacion ASC;
 
 
@@ -222,7 +217,7 @@ BEGIN
                REPLICATE('0',2-LEN(MONTH(I.FechaCalculadaEntregaReg))) + LTRIM(MONTH(I.FechaCalculadaEntregaReg)) + '-' + DATENAME(MONTH, FechaCalculadaEntregaReg) AS mesEntrega,
                CASE
                    WHEN APPozoAlivio = 1 THEN
-                   'Pozo de alivio'
+     'Pozo de alivio'
       WHEN APCierreDesmantelamientoAbandono = 1 THEN
                        'Abandono'
                    WHEN APPerforacion = 1 THEN
@@ -310,7 +305,7 @@ BEGIN
         LEFT	JOIN 
 			CO_Regulador 
 			ON	E.IdRegulador	=	CO_Regulador.IdRegulador
-        LEFT	JOIN 
+    LEFT	JOIN 
 			dbo.EN_Etapa	ET 
 			ON	E.IdEtapa	=	ET.IdEtapa
         LEFT	JOIN 

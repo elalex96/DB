@@ -1,10 +1,13 @@
-﻿CREATE PROC [dbo].[p_CO_ConsultaLineaProgramaActividadMesDetalle] 
+﻿
+CREATE PROC [dbo].[p_CO_ConsultaLineaProgramaActividadMesDetalle] 
 --p_CO_ConsultaLineaProgramaActividadMesDetalle 3,'2018-08-01',10008
 @pidContrato          INT, 
 @pAnioMes             DATETIME, 
-@pIdProgramaActividad INT
+@pIdProgramaActividad INT,
+@pIdPeriodo INT
 --
 AS
+BEGIN
 			SELECT DISTINCT   
             pam.IdLineaProgramaActividadMes,   
             pam.IdProgramaActividad,   
@@ -45,14 +48,9 @@ AS
           LEFT JOIN [dbo].CO_Servicio s ON s.IdServicio = pam.IdSubTareaPetrolera  
           LEFT JOIN CO_Unidad uniS ON uniS.IdUnidad = s.IdUnidad  
           LEFT JOIN [CO_LineaProgramaActividadMesDetalle] pamD ON pamD.IdLineaProgramaActividadMes = pam.IdLineaProgramaActividadMes  
-     WHERE pc.IdContrato = @pidContrato --and  
-           --datepart(year,anioC.Inicio) + (pam.NumeroAnio-1) = datepart(year,@pAnioMes)   
-           --and pam.NumeroMes = datepart(month,@pAnioMes)    
-           AND pa.IdProgramaActividad = @pIdProgramaActividad;  
+     WHERE pc.IdContrato = @pidContrato --and      
+           AND pa.IdProgramaActividad = @pIdProgramaActividad;
 
-	
-
-     /**/
 
      SELECT		
      --t1.IdLineaProgramaActividadMes,
@@ -89,29 +87,6 @@ WHERE pc.IdContrato = @pidContrato
 		   , lpamD.CantidadEjecutar
 		   , pc.Inicio, t1.NumeroAnio, t1.NumeroMes
 		   , lpamD.Id;
---		   SELECT		
---     --t1.IdLineaProgramaActividadMes,
---     pa.IdProgramaActividad, 
---     CO_ActividadPetroleraCNH.IdActividadPetrolera, 
---     CO_SubactividadPetrolera.IdSubactividadPetrolera, 
---     CO_TareaPetrolera.IdTareaPetrolera, 
---     CO_ActividadPetroleraCNH.id_Actividad, 
---     CO_Servicio.IdServicio, 
---     PlanAct = t1.Actividades, 
---     AnioMes = ((DATEPART(year, pc.Inicio) + (t1.NumeroAnio - 1)) * 100) + t1.NumeroMes
---     INTO #tmpPlan
---     FROM CO_LineaProgramaActividadMes t1
---          INNER JOIN CO_ActividadPetroleraCNH ON t1.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
---          INNER JOIN CO_SubactividadPetrolera ON t1.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
---          INNER JOIN CO_TareaPetrolera ON t1.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
---          INNER JOIN CO_Servicio ON t1.IdSubTareaPetrolera = CO_Servicio.IdServicio
---          INNER JOIN CO_ProgramaActividad pa ON pa.IdProgramaActividad = t1.IdProgramaActividad
---          INNER JOIN CO_PeriodoContrato pc ON pc.IdPeriodo = pa.IdPeriodoContrato
---     --inner join #tmpPrincipal tmpPrin on tmpPrin.IdLineaProgramaActividadMes = t1.IdLineaProgramaActividadMes
---WHERE pc.IdContrato = @pidContrato
---           AND t1.IdProgramaActividad = @pIdProgramaActividad;
-
-     /**/
 
 	 
 
@@ -399,8 +374,10 @@ WHERE pc.IdContrato = @pidContrato
                         THEN 40
                         ELSE @meses
                     END, 
-            Total = isnull(mes1, 0) + isnull(mes2, 0) + isnull(mes3, 0) + isnull(mes4, 0) + isnull(mes5, 0) + isnull(mes6, 0) + isnull(mes7, 0) + isnull(mes8, 0) + isnull(mes9, 0) + 
-			isnull(mes10, 0) + isnull(mes11, 0) + isnull(mes12, 0) + isnull(mes13, 0) + isnull(mes14, 0) +  isnull(mes15, 0) + isnull(mes16, 0) + isnull(mes17, 0) + isnull(mes18, 0)
+            Total = isnull(mes1, 0) + isnull(mes2, 0) + isnull(mes3, 0) + isnull(mes4, 0) + isnull(mes5, 0) + isnull(mes6, 0) + isnull(mes7, 0) + isnull(mes8, 0) + isnull(mes9, 0) + isnull(mes10, 0) + 
+					isnull(mes11, 0) + isnull(mes12, 0) + isnull(mes13, 0) + isnull(mes14, 0) +  isnull(mes15, 0) + isnull(mes16, 0) + isnull(mes17, 0) + isnull(mes18, 0) + isnull(mes19, 0) + isnull(mes20, 0) + 
+					isnull(mes21, 0) + isnull(mes22, 0) + isnull(mes23, 0) +  isnull(mes24, 0) + isnull(mes25, 0) + isnull(mes26, 0) + isnull(mes27, 0) + isnull(mes28, 0) + isnull(mes29, 0) + isnull(mes30, 0) + 
+					isnull(mes31, 0) + isnull(mes32, 0) +  isnull(mes33, 0) + isnull(mes34, 0) + isnull(mes35, 0) + isnull(mes36, 0) +  isnull(mes37, 0) + isnull(mes38, 0) + isnull(mes39, 0) + isnull(mes40, 0)
      FROM #tmpPivote2 t1
           INNER JOIN CO_ActividadPetroleraCNH ON t1.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
           INNER JOIN CO_SubactividadPetrolera ON t1.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
@@ -416,4 +393,23 @@ WHERE pc.IdContrato = @pidContrato
                                         AND t2.IdServicio = t1.IdServicio 
 										and t1.Id = t2.Id
 
---where t1.id is not null
+	-- RETORNA LOS MESES EN FORMA DE LISTA DESDE LA FECHA INICIO HASTA LA FECHA FIN
+	SET Language 'Spanish';
+	declare @start DATE = getdate()
+	declare @end DATE = getdate()
+
+	SELECT @start =  isnull(Inicio, getdate()), @end = isnull(Fin, getdate()) FROM CO_PeriodoContrato WHERE IdPeriodo = @pIdPeriodo
+		
+	;with months (date)
+	AS
+	(
+	SELECT @start
+	UNION ALL
+	SELECT DATEADD(month, 1, date)
+	from months
+	where DATEADD(month, 1, date) < @end
+	)
+	select     CONCAT(DATENAME(mm, date), '-' , DATEPART(yy, date))
+	from months
+
+END

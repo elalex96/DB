@@ -1,207 +1,104 @@
-﻿CREATE PROCEDURE dbo.sp_CP_CalculaCuotaContractualeImpuesto
-	@IdContratista INT,
-	@FechaIni    DATE,
-	@FechaFin    DATE
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 09/06/2021
+-- Description:	Archivos cargados de las instancias de entregables, última versión y no reachazados.
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_EN_ArchivosPozos] 
+	-- Add the parameters for the stored procedure here
+	@IdContrato            INT, 
+	@IdUsuario             INT, 
+	@IDINSTALACION		   INT,
+	@Page INT
 AS
-BEGIN
--- =============================================
--- Author:		Barbara Arrañaga
--- Create date: 2018-06-07
--- Description:	Proceso para realizar el calculo de la cuota contractual e Impuesto Fase Exploración
--- Parametros de Entrada:	Numero de Contrato y Mes de Calculo
--- ----------------------------------------------------------------------------------
--- BAAC	20191118	Se modifica ya que la cuota contractual no se cobra si ya se esta en desarrollo
--- =============================================
-SET NOCOUNT ON
--- ------------------------------------------------------------------------------------
-CREATE TABLE #Meses
-(
-	Fecha	DATE,
-	IdContratista	INT
-)
+     BEGIN
+         -- SET NOCOUNT ON added to prevent extra result sets from
+         -- interfering with SELECT statements.
+         SET NOCOUNT ON
 
-INSERT INTO #Meses
-(
-    Fecha, IdContratista
-)
-SELECT
-	PrimerDiaMes, @IdContratista
-FROM
-	dbo.AP_Calendario
-WHERE
-	IdFecha	BETWEEN @FechaIni	AND @FechaFin
-GROUP BY
-	PrimerDiaMes
+         -- Insert statements for procedure here
+	DECLARE @NombrePozo VARCHAR(200);
+	DECLARE @AllRecords INT;
+	DECLARE @RecordsByPage INT = 10;
 
-    SELECT
-		M.Fecha	AS [Mes],
-		CO.NumeroContrato,
-		CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1150
-            WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1175.42
-            WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1214.20
-			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1294.71
-			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1355.82
-			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1396.09
-			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1442.58
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
-            ELSE 1396.09
-        END AS CuotaContractual,
-        AC.SuperficieKm2,
-        CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1150 * AC.SuperficieKm2,2)
-            WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1175.42 * AC.SuperficieKm2,2)
-            WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1214.20 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1294.71 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1355.82 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1396.09 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
-            ELSE 0
-        END AS TotalCuotaContractual,
-		CASE 
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN 1688.74
-			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
-				THEN 1768.45
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6754.99
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 7073.83
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6850.3
-		END AS Impuesto,	-- Art. 55
-		CASE 
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN 1688.74 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
-				THEN ROUND(1768.45 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6754.99 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN ROUND(7073.83 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
-		END AS TotalImpuesto
-    FROM
-		#Meses	M
+	SELECT @NombrePozo = NOMBREINSTALACION
+	FROM CO_INSTALACION
+	WHERE IDINSTALACION = @IDINSTALACION;
+
+	--SET @AllRecords = (SELECT COUNT(1)
+	--					FROM
+	--						EN_ENTREGABLE   E
+	--					JOIN
+	--						EN_CONTRATOENTREGABLE   CE
+	--						ON  E.IDENTREGABLE = CE.IDENTREGABLE
+	--						AND CE.IDCONTRATO   =   @IDCONTRATO
+	--						AND E.DocumentoEntregable = 'Perforación del pozo: ' + ltrim(@NombrePozo)
+	--					JOIN
+	--						EN_INSTANCIASENTREGABLE IE
+	--						ON CE.IDCONTRATOENTREGABLE = IE.IDCONTRATOENTREGABLE
+	--					JOIN
+	--						EN_HistorialAprobacionesLineaTiempo FINR    (NOLOCK)
+	--						ON  IE.idInstanciaEntregable    =   FINR.idInstanciaEntregable
+	--						AND FINR.idTipoOperacion IN (2,3,4)
+	--					JOIN
+	--						EN_DocumentoVersion DV
+	--						ON  IE.idInstanciaEntregable    =   DV.idInstanciaEntregable
+	--						AND FINR.IdLineaTiempo  =   DV.N_version
+	--						AND DV.Activo = 1
+	--					JOIN
+	--						EN_EntregableDocumento ED
+	--						ON IE.idInstanciaEntregable =   ED.idInstanciaEntregable);
+
+
+	--SELECT *,
+	--		  @AllRecords AS Records,
+	--		  @RecordsByPage AS RecordsByPage
+	--	FROM
+	--	(
+    SELECT DISTINCT
+	--	ROW_NUMBER() OVER(PARTITION BY ED.DocumentoEntregableId ORDER BY ED.DocumentoEntregableId DESC) AS R,
+		ED.DocumentoEntregableId,
+		Bucket,
+		Folder,
+		UUIDAmazon,
+		NombreArchivo,
+		Meta,
+		LTRIM(RTRIM(SUBSTRING(ED.NombreArchivo, CHARINDEX('.',ED.NOMBREARCHIVO,LEN(ED.NOMBREARCHIVO)-5), LEN(ED.NombreArchivo)))) AS TipoArchivo,
+		CASE
+			WHEN NombreArchivo LIKE '%RAP%' THEN 'label label-success'
+			WHEN NombreArchivo LIKE '%ACUSE%' THEN 'label label-primary'
+			WHEN NombreArchivo LIKE '%FORMATO%' THEN 'label label-danger'
+			ELSE 'label label-default'
+		END AS TipoArchivoENTSPAN,
+		CASE
+			WHEN NombreArchivo LIKE '%RAP%' THEN 'RAP'
+			WHEN NombreArchivo LIKE '%ACUSE%' THEN 'ACUSE'
+			WHEN NombreArchivo LIKE '%FORMATO%' THEN 'FORMATO'
+			ELSE 'OTROS'
+		END AS TipoArchivoENTTEXT
+		--(ROW_NUMBER() OVER(ORDER BY ED.DocumentoEntregableId DESC) - 1) / @RecordsByPage AS _Page
+	FROM
+		EN_ENTREGABLE   E
 	JOIN
-		dbo.CO_Contrato	CO	(NOLOCK)
-		ON	M.IdContratista	=	CO.IdContratista
-		AND CO.Activo = 1
+		EN_CONTRATOENTREGABLE   CE
+		ON  E.IDENTREGABLE = CE.IDENTREGABLE
+		AND CE.IDCONTRATO   =   @IDCONTRATO
+		AND E.DocumentoEntregable = 'Inicio de Perforación del pozo: ' + ltrim(@NombrePozo)
 	JOIN
-		CO_AreaContractual AC	(NOLOCK)
-		ON CO.IdAreaContractual = AC.IdAreaContractual
-	LEFT JOIN
-		CO_PeriodoContrato	PC	(NOLOCK)
-		ON	CO.IdContrato	=	PC.IdContrato
-		AND M.Fecha	BETWEEN	PC.Inicio	AND PC.Fin
-	LEFT JOIN
-		CO_ProgramaActividad	PA
-		ON	PC.IdPeriodo	=	PA.IdPeriodoContrato
-	LEFT JOIN
-		CO_TipoProgramaActividad	TIPO
-		ON	PA.IdTipoProgramaActividad	=	TIPO.IdTipoProgramaActividad
-	GROUP BY
-		M.Fecha,
-		CO.NumeroContrato,
-		CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1150
-            WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1175.42
-            WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1214.20
-			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1294.71
-			WHEN YEAR(M.Fecha) = 2019 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1355.82
-			WHEN YEAR(M.Fecha) = 2020 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1396.09
-			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) < 5	THEN 1442.58
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
-            ELSE 1396.09
-        END,
-        AC.SuperficieKm2,
-        CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1150 * AC.SuperficieKm2,2)
-            WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1175.42 * AC.SuperficieKm2,2)
-            WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1214.20 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1294.71 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1355.82 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1396.09 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
-			WHEN DATEDIFF(YEAR, M.Fecha, CO.FechaFirma) > 5 THEN 0
-            ELSE 0
-        END,
-		CASE 
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN 1688.74
-			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
-				THEN 1768.45
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6754.99
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 7073.83
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6850.3
-		END,	-- Art. 55
-		CASE 
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
-				THEN 1583.74 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN 1688.74 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
-				THEN ROUND(1768.45 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
-				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
-				THEN 6334.98 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN 6754.99 * AC.SuperficieKm2
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN ROUND(7073.83 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
-				THEN ROUND(6850.3 * AC.SuperficieKm2,2)
-		END
-	ORDER BY
-		M.Fecha,
-		CO.NumeroContrato
+		EN_INSTANCIASENTREGABLE IE
+		ON CE.IDCONTRATOENTREGABLE = IE.IDCONTRATOENTREGABLE
+	JOIN
+		EN_HistorialAprobacionesLineaTiempo FINR    (NOLOCK)
+		ON  IE.idInstanciaEntregable    =   FINR.idInstanciaEntregable
+		AND FINR.idTipoOperacion IN (2,3,4)
+	JOIN
+		EN_DocumentoVersion DV
+		ON  IE.idInstanciaEntregable    =   DV.idInstanciaEntregable
+		AND FINR.IdLineaTiempo  =   DV.N_version
+		AND DV.Activo = 1
+	JOIN
+		EN_EntregableDocumento ED
+		ON IE.idInstanciaEntregable =   ED.idInstanciaEntregable
+		--) AS R
+		-- WHERE R.R = 1 AND R._PAGE = (@Page - 1)
+		-- ORDER BY R.DocumentoEntregableId DESC;
 END
-
