@@ -1,10 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_CNH_FormatoPlanes_Inversion_2019]    Script Date: 21/09/2021 03:07:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿
 -- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-09-04
@@ -26,7 +20,8 @@ CREATE PROCEDURE [dbo].[SP_CNH_FormatoPlanes_Inversion_2019]
 @IdContrato          INT,
 @IdUsuario           INT,
 @Mes                 DATE,
-@IdProgramaActividad INT
+@IdProgramaActividad INT,
+@pIdPeriodo INT
 AS
      BEGIN
          -- SET NOCOUNT ON added to prevent extra result sets from
@@ -3122,4 +3117,23 @@ Termina ajuste para Carso
                   DescripcionActividadPetrolera, 
                   SubactividadPetrolera, 
                   TareaPetrolera;
-     END;
+
+		-- RETORNA LOS MESES EN FORMA DE LISTA DESDE LA FECHA INICIO HASTA LA FECHA FIN
+	SET Language 'Spanish';
+	declare @start DATE = getdate()
+	declare @end DATE = getdate()
+
+	SELECT @start =  isnull(Inicio, getdate()), @end = isnull(dateadd(month, 25 , inicio), getdate()) FROM CO_PeriodoContrato WHERE IdPeriodo = @pIdPeriodo
+		
+	;with months (date)
+	AS
+	(
+	SELECT @start
+	UNION ALL
+	SELECT DATEADD(month, 1, date)
+	from months
+	where DATEADD(month, 1, date) < @end
+	)
+	select     CONCAT(DATENAME(mm, date), '-' , DATEPART(yy, date)) as Meses
+	from months
+END;
