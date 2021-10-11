@@ -20,7 +20,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @EXISTE_REGISTRO INT = (SELECT COUNT(1) FROM EN_TiempoEntrega WHERE TiempoEntrega = @TiempoEntrega);
+	DECLARE @EXISTE_REGISTRO INT = (SELECT COUNT(1) FROM EN_TiempoEntrega WHERE UPPER(TiempoEntrega) = UPPER(@TiempoEntrega));
 
 	IF @EXISTE_REGISTRO > 0
 	BEGIN 
