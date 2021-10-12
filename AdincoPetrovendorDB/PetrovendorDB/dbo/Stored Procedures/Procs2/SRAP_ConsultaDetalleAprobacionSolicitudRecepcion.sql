@@ -1,13 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_ConsultaDetalleAprobacionSolicitudRecepcion'
-)
-    DROP PROCEDURE SRAP_ConsultaDetalleAprobacionSolicitudRecepcion;
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 16/07/2021 09:22:00 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 12/10/2021 12:29:29 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -183,8 +176,11 @@ AS
 	  /*TABLA 3 DOCUMENTOS*/
 	   BEGIN     
 		 /*TABLA DE DOCUMENTOS*/
-		 SELECT  D.IdDocumento, D.NombreDocumento, D.IdDocumentoTabla 
+		 SELECT  D.IdDocumento, 
+				D.NombreDocumento + '  -  Cargado Por ' +  US.Nombre + ' el ' + CAST(D.CreadoEl AS nvarchar) AS NombreDocumento, 
+				D.IdDocumentoTabla 
          FROM  S_Documento_S3 D  
+		 LEFT JOIN S_Usuario AS US ON D.IdUsuario = US.IdUsuario
          WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
 		 AND D.Activo=1 
 		 AND D.IdTipoDocumento = 12 --> CTE ACEPTACION DE PEDIDO --> SELECT * FROM S_TipoDocumento WHERE IdTipoDocumento=12  
@@ -406,5 +402,3 @@ AS
 	   END 
 
 END;
-
-
