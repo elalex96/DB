@@ -13124,6 +13124,9 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_ConstantesRemuneracionCIEP_GRD.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_ConstantesRemuneracionCIEP_INS.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_ConstantesRemuneracionCIEP_UPD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarPresupuestosENI.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarEscenarioENI.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarAnioENI.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
