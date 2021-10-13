@@ -10622,6 +10622,7 @@
     <Build Include="dbo\Tables\BitacoraReversaComprobantesExtranjeros.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spRevierteComprobantesExtranjerosAprobados.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spListaComprobantesExtranjeros.sql" />
+    <Build Include="dbo\Functions\fnGetValidacionCantidadMateriales.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
