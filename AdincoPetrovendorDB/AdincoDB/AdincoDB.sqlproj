@@ -13127,6 +13127,12 @@
     <Build Include="dbo\Stored Procedures\Procs2\spCO_ReguladorGrd.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCO_ReguladorIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCO_ReguladorUpd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarPresupuestosENI.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarEscenarioENI.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarAnioENI.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spEN_ReceptorEntregableUpd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spEN_ReceptorEntregableIns.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spEN_ReceptorEntregableGrd.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

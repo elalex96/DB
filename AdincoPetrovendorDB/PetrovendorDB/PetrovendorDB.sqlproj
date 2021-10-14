@@ -10644,5 +10644,6 @@
     <None Include="dbo\Functions\WDEA_Obtener_CentroCostos.sql" />
     <None Include="dbo\Functions\WDEA_Obtener_Relacion_CentroCostos.sql" />
     <None Include="dbo\Functions\WDEA_SP_DesactivarAcronimoSAP.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\SP_MM_ConsultarBotonesodenDetalle.sql" />
   </ItemGroup>
 </Project>
