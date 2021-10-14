@@ -1,3 +1,10 @@
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorDocumentos]    Script Date: 12/10/2021 02:14:53 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorDocumentos]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT, 
@@ -23,10 +30,14 @@ AS
     SET NOCOUNT ON ;
     IF @Accion = 'TABLA'
         BEGIN
-            SELECT      AD.[IdDocumento], AD.[NombreDocumento], AD.[Comentario]
+            SELECT      AD.[IdDocumento], AD.[NombreDocumento], AD.[Comentario], US.Nombre, D.CreadoEl
             FROM        [dbo].[MM_AceptacionDocumento] AS AD
             INNER JOIN  [dbo].[MM_AceptacionPedido] AS AP
                 ON AP.[IdAceptacionPedido] = AD.[IdAceptacionDocumento]
+			INNER JOIN  [dbo].[S_Documento_S3] AS D
+				ON	D.[IdDocumento] = AD.[IdDocumento]
+			LEFT JOIN S_Usuario AS US
+				ON D.IdUsuario = US.IdUsuario
             WHERE
                         AP.[IdAceptacionPedido] = @IdAceptacionPedido
                         AND AP.[IdProveedor] = @IdProveedor
