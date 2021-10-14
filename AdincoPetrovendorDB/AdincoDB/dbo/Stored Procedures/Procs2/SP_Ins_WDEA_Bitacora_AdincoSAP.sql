@@ -1,4 +1,6 @@
-﻿DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
 GO
 create proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]
 (
@@ -6,7 +8,9 @@ create proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]
 )
 as
 begin
-		declare @isDebug bit
+		declare @isDebug bit, 
+		@IdProveedorWDEA int = (SELECT TOP 1 idproveedor FROM S_Proveedor WHERE rfc = 'DDE151002QY9'), 
+		@IdUsuarioAdministradorAdinco int = (SELECT TOP 1 IdUsuario FROM S_Usuario WHERE Correo like '%administrador@smps-adinco.com%');
 		select @isDebug = 0
 		declare @maxNoConsecutivo int
 		--Tabla para convertir de string a los tipos de datos correctos
@@ -44,8 +48,37 @@ begin
 			SubTareaPresupuesto		nvarchar(5)		null,
 			X						nvarchar(5)		null
 		) 
-
-
+		--============================================================
+		-- Se inserta la unidad 
+		INSERT INTO PV_MM_MaterialUnidad(
+		Unidad,				UMB,			IsActivo,	IsEliminado,		
+		CreadoPor,							CreadoEn)
+		SELECT distinct 
+		WDL.Order_Unit,		WDL.Order_Unit, 1,			0,
+		@IdUsuarioAdministradorAdinco,		GETDATE()
+		FROM WDEA_Layout_T WDL
+		LEFT JOIN PV_MM_MaterialUnidad UM 
+		ON WDL.Order_Unit = UM.Unidad
+		AND UM.IsActivo = 1 AND IsEliminado = 0
+		WHERE UM.Unidad IS NULL
+		AND WDL.Order_Unit IS NOT NULL
+		--============================================================
+		-- Se inserta la Material
+		INSERT INTO MM_Material(
+		IdProveedor,		IdUnidad,		DescripcionCorta,	DescripcionLarga,
+		FechaAlta,			Activo,			IsEliminado,		CreadoPor)
+		SELECT DISTINCT 
+		@IdProveedorWDEA,	MU.IdUnidad,	WDL.Short_Text,		WDL.Short_Text, 
+		getdate(),			1,				0 ,					@IdUsuarioAdministradorAdinco
+		FROM 
+		WDEA_Layout_T as WDL
+		left JOIN MM_Material as M 
+		ON WDL.Short_Text = M.DescripcionCorta and IdProveedor = 907
+		left JOIN PV_MM_MaterialUnidad AS MU
+		ON WDL.Order_Unit = MU.Unidad
+		WHERE m.DescripcionCorta is null
+		AND WDL.Short_Text IS NOT NULL
+		--============================================================
 		--Tabla para cachar los errores y posteriormente excluir de la busqueda final esos registros
 		create table #tmpErrores
 		(
@@ -382,14 +415,14 @@ begin
 						mat.IdProveedor
 						
 		--#tmpMaterialesEncontrados
-		/*Justificacion*/
+		/*SE MODIFICA ESTA VALIDACIÓN PARA VALIDAR UNICAMENTE QUE LA UNIDAD, Y EL MATERIAL NO SEAN NULOS*/
+
+			-- No existe el material
 			insert into #tmpErrores 
-			select t1.Id, 'F', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el Material de la celda F, Fila '
+			select t1.Id, 'E', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró un Material en la celda E, Fila'
 			+cast(t1.Id as varchar(10))+'.',1											
 			from		#tmpData t1
-			left join	#tmpMateriales	t2
-			on			t1.ID			=	t2.Id
-			where		t2.IdMaterial	is null
+			where		T1.Short_Text IS NULL
 
 
 			insert into #tmpIncompletedOCs
@@ -415,6 +448,8 @@ begin
 		left join	#tmpErrores			t2
 		on			t1.ID				=	t2.RowId
 		where		t2.RowId			is	null
+					AND T1.Order_Unit IS NOT NULL
+					AND T1.Order_Unit IS NULL
 		group by	Purchasing_Document
 
 		/*Inserto en Bitacora un mensaje de registro exitoso por cada OC que si se hayan validado todas sus filas*/
@@ -493,7 +528,8 @@ begin
 		and			t3.OC							is	null
 		and			p.IsEliminado					=	0
 		and			u.IsEliminado					=	0
-
+		and			t1.Short_Text					is not null
+		and			t1.Order_Unit					is not null
 		INSERT INTO PendientesProcesarProcura_WSDEA
 		(
 			IdBitacora
