@@ -1,5 +1,11 @@
-﻿drop procedure if exists SRAP_ConsultaDetalleAprobacionSolicitudRecepcion
-go
+
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 12/10/2021 12:29:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
