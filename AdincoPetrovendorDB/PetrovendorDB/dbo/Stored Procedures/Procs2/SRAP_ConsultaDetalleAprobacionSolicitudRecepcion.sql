@@ -1,4 +1,5 @@
-USE [Petrovendor]
+
+﻿USE [Petrovendor]
 GO
 /****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 12/10/2021 12:29:29 p. m. ******/
 SET ANSI_NULLS ON
@@ -10,6 +11,10 @@ GO
 -- Create date: 25-05-2021
 -- Description:	Consultar detalle de solicitud de recepción de pedido
 -- =============================================
+-- Author:		Luis David De La Cruz
+-- Create date: 13/10/2021
+-- Description:	Se agrega la validación de cantidad disponible de materiales
+-- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
@@ -18,7 +23,7 @@ CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]
 @IdSolicitudAceptacionPedido INT 
 
 AS
-
+	
 	create table #tmpCantidadesRecibidad
 	(
 		IdPedidoDetalle		int,
@@ -146,7 +151,14 @@ AS
 					Recepcionservicio					=	ISNULL(PD.RecepcionPedido,'false'),		
 					PD.RecepcionPedido,
 					Unidad								=	POD.UnidadProveedor,
-					CantidadRecibida					=	t1.Cantidad
+					CantidadRecibida					=	t1.Cantidad,
+					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
+					then '' else 'La cantidad solicitada excede el límite del pedido.'
+					end as 
+					CantidadValida,
+					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
+					then '' else 'bgcolor="#ff685d"'
+					end as Color
 		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		
 		JOIN		MM_PedidoDetalle					PD 
 		ON			SAPD.IdPedidoDetalle				=	PD.IdPedidoDetalle
@@ -400,5 +412,4 @@ AS
 			ORDER BY U.Nombre ASC
 		
 	   END 
-
-END;
+END
