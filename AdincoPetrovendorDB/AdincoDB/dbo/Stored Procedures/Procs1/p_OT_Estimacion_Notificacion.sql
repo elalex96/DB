@@ -1,5 +1,4 @@
-﻿
--- p_OT_Estimacion_Notificacion 30,2,10
+﻿-- p_OT_Estimacion_Notificacion 510,1,10
 CREATE proc p_OT_Estimacion_Notificacion
 @pIdOTEstimacion int,
 @pTipoCorreo int, 
@@ -14,7 +13,9 @@ as
 			@para VARCHAR(500)='',
 			@asunto VARCHAR(250),
 			@mensaje VARCHAR(MAX),
-			@De VARCHAR(100)= 'procura@adinco.mx',@urlProcura varchar(300),
+			@De VARCHAR(100)= 'procura@adinco.mx',
+			@urlProcura varchar(300),
+			@urlPetroExt varchar(300),
 			@NumeroOT VARCHAR(20),
 				@nombreContratista varchar(100),
 				@IdNotificacion int,
@@ -22,12 +23,34 @@ as
 				@permitirAceptacionAut bit = 0,
 				@pedido varchar(20),
 				@aceptacion varchar(20),
-				@urlProcuraRec varchar(300)='<a href="https://procura.adinco.mx/01Proveedores/APListaReclasificacion.aspx" >Aquí</a>',
+				@urlProcuraRec varchar(300)='',
 				@proveedor varchar(250)='',
-				@urlCN varchar(300) = 'https://petrovendor.com.mx/02Proveedores/AceptacionCNDetalle.aspx?aceptacion=##NO_OPERACION##',
+				@urlCN varchar(300) = '',
 				@operadora varchar(500) = '',
 				@IdProveedor int,
-				@contrato varchar(50)
+				@contrato varchar(50),
+				@IdNacionalidadProveedor INT
+
+	--Obtencion de URL Reclasificación
+	SELECT @urlProcuraRec ='<a href="'+ISNULL(URL,'')+'" >Aquí</a>' 
+	FROM [APP_URLRecursos]
+	WHERE Tipo = 'ProcuraReclasificacionLineasPresupuesto'
+
+	--Obtencion de URL CN
+	SELECT @urlCN =ISNULL(URL,'')
+	FROM [APP_URLRecursos]
+	WHERE Tipo = 'PetrovendorProveedorCartaCN'
+
+	--Obtencion de URL Procura
+	SELECT @urlProcura =ISNULL(URL,'')
+	FROM [APP_URLRecursos]
+	WHERE Tipo = 'ProcuraAceptacionSinParam'
+
+	--Obtencion de URL Procura
+	SELECT @urlPetroExt =ISNULL(URL,'')
+	FROM [APP_URLRecursos]
+	WHERE Tipo = 'PetrovendorInvoicesExtranjeros'
+
 
 	--Obtener los usuarios a excluir para las notificaciones
 	SELECT un.UsuarioId,un.TipoNotificacionId,un.Desactivar 
@@ -57,14 +80,15 @@ as
 		select @para = u.Usuario,
 			@NumeroOT = ot.Folio,
 			@nombreContratista = con.NombreContratista,
-			@urlProcura = '<a href="https://procura.adinco.mx/02Proveedores/AceptacionPedido.aspx?ped='+cast(e.IdPedido as varchar)+'&pedgral='+cast(e.IdPedidoGeneral as varchar)+'&ori=pedido'+'" >Aquí</a>',
+			@urlProcura = '<a href="'+@urlProcura+'?ped='+cast(e.IdPedido as varchar)+'&pedgral='+cast(e.IdPedidoGeneral as varchar)+'&ori=pedido'+'" >Aquí</a>',
 			@permitirAceptacionAut = isnull(cf.permitirAceptacionAut,0),
 			@pedido = cast(e.IdPedidoGeneral as varchar),
 			@aceptacion = cast(ap.IdAceptacionPedido as varchar),
 			@proveedor = prov.RazonSocial,
 			@operadora = prov2.RazonSocial,
 			@IdProveedor = prov.IdProveedor,
-			@contrato = c.NumeroContrato
+			@contrato = c.NumeroContrato,
+			@IdNacionalidadProveedor = prov.IdNacionalidad
 		from OT_Estimacion e
 		inner join petrovendor..MM_Pedido ped on ped.IdPedido= e.IdPedido
 		inner join petrovendor..MM_SolicitudPedido sp on sp.IdSolicitudPedido = ped.IdSolicitudPedido
@@ -127,14 +151,29 @@ as
 
 			end	
 
-			/*Notificacion para Carta CN*/
-			select @asunto = Asunto,
-				@mensaje =HTML 
-			from petrovendor..TA_Correo
-			where idcorreo = 83
+			/*Notificacion para Carta CN o Comprobante extranjero dependiendo de nacionalidad*/
+			IF(@IdNacionalidadProveedor = 1)
+			BEGIN
+				select @asunto = Asunto,
+					@mensaje =HTML 
+				from petrovendor..TA_Correo
+				where idcorreo = 83
+
+				set @mensaje = replace(@mensaje,'##URL_TAREA##',@urlCN)
+			END
+			ELSE
+			BEGIN
+				select @asunto = Asunto,
+					@mensaje =HTML 
+				from petrovendor..TA_Correo
+				where Descripcion = 'SolicitudComprobanteExtranjeroAceptacion'
+
+				set @mensaje = replace(@mensaje,'##URL_TAREA##',@urlPetroExt)
+			END
+			
 
 
-			set @mensaje = replace(@mensaje,'##URL_TAREA##',@urlCN)
+			
 			set @mensaje = replace(@mensaje,'##NOMBRE_USUARIO##',@proveedor)
 			set @mensaje = replace(@mensaje,'##NO_OPERACION##',@aceptacion)
 			set @mensaje = replace(@mensaje,'##NO_PEDIDO##',@pedido)
@@ -176,6 +215,11 @@ as
 		)
 		begin
 
+			--Obtencion de URL Procura
+			SELECT @urlProcura =ISNULL(URL,'')
+			FROM [APP_URLRecursos]
+			WHERE Tipo = 'ProcuraDEARelacionPRPO'
+
 			select @asunto = Asunto,
 				@mensaje =Cuerpo1 
 			from s_correo
@@ -183,7 +227,7 @@ as
 
 			select @para = dbo.fn_OT_GetMailUsuariosEstatus(ot.IdOTSolicitud,0,6,13),
 				@NumeroOT = ot.Folio,				
-				@urlProcura = '<a href="https://procura.adinco.mx/DEA/Relacion_PR_PO.aspx">Aquí</a>',				
+				@urlProcura = '<a href="'+@urlProcura+'">Aquí</a>',				
 				@pedido = cast(e.IdPedidoGeneral as varchar),
 				@operadora = pv.RazonSocial,
 				@aceptacion = ap.IdAceptacionPedido,

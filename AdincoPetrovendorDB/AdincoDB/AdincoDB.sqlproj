@@ -13136,6 +13136,7 @@
     <Build Include="dbo\Tables\Tables2\CarpetasDocumentosEntregables.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CrearNuevaCarpeta.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\EN_SHELL_GuardarDocumentoPersonalizado.sql" />
+    <Build Include="dbo\Tables\Tables2\APP_URLRecursos.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
