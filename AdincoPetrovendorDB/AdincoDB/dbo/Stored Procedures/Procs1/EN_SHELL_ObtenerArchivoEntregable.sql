@@ -1,14 +1,6 @@
 ﻿USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_SHELL_ObtenerArchivoEntregable'
-)
-    DROP PROCEDURE EN_SHELL_ObtenerArchivoEntregable;
-GO 
-/****** Object:  StoredProcedure [dbo].[p_EN_ObtenerDocumentosEntregables]    Script Date: 10/03/2021 05:58:03 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerArchivoEntregable]    Script Date: 15/10/2021 09:47:41 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -63,6 +55,28 @@ BEGIN
 	 FROM EN_DocumentoGeneral doc  
 	 WHERE DocumentoId =@DocumentoId
 	 AND ContratoId=@ContratoId
+
+	END
+
+	IF @Origen = 'CARGADO_USUARIO'
+	BEGIN
+
+	  SELECT   
+	  ID AS DocumentoEntregableId,  
+	  0 AS idContratoEntregable,  
+	  0 AS idInstanciaEntregable,  
+	  Bucket,  
+	  Folder,  
+	  UUIDAmazon,  
+	  NombreArchivo,  
+	  Meta,  
+	  CargadoPor,  
+	  FechaCarga,
+	  NULL,
+	  NULL
+	 FROM CarpetasDocumentosEntregables doc  
+	 WHERE ID = @DocumentoId
+	 AND IdContrato = @ContratoId
 
 	END
 
