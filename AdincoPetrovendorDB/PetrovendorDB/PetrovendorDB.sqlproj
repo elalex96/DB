@@ -10623,6 +10623,10 @@
     <Build Include="dbo\Stored Procedures\Procs2\spRevierteComprobantesExtranjerosAprobados.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spListaComprobantesExtranjeros.sql" />
     <Build Include="dbo\Functions\fnGetValidacionCantidadMateriales.sql" />
+    <Build Include="dbo\Functions\EN_SP_Actualiza_Frecuencias.sql" />
+    <Build Include="dbo\Functions\EN_SP_Agrega_Frecuencias.sql" />
+    <Build Include="dbo\Functions\EN_sp_FrecuenciaEntregablesExport.sql" />
+    <Build Include="dbo\Functions\EN_sp_ValidaFrecuenciaEntregables.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
