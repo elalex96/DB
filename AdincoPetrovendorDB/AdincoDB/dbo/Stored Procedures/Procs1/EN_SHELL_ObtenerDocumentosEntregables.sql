@@ -1,20 +1,12 @@
 ﻿USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_SHELL_ObtenerDocumentosEntregables'
-)
-    DROP PROCEDURE EN_SHELL_ObtenerDocumentosEntregables;
-GO 
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 18/05/2021 09:45:49 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 15/10/2021 09:44:46 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables] --EN_SHELL_ObtenerDocumentosEntregables 10113,10061
+CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables] --EN_SHELL_ObtenerDocumentosEntregables 3,10150
     @ContratoId INT,
     @UsuarioId INT   
 AS
@@ -311,7 +303,48 @@ SET NOCOUNT ON
 	 CE.FechaInicio,
 	 CE.FechaFin
      ORDER BY E.Etapa ASC
-	 
+
+	 INSERT INTO @Lista(IDPadre,EtapaId,Titulo,Nivel,Detalle,CantidadArchivos,TipoArchivo,FechaInicioEtapa,FechaFinEtapa)
+     SELECT 
+     IDPadre				=	NULL,--> EL NIVEL 1 NUNCA TIENE IDPadre     
+     EtapaId				=	CE.EtapaId,
+	 Titulo					=	E.Etapa,
+     Nivel					=	1,
+     Detalle				=	'Etapa',
+     CantidadArchivos		=	0,
+     TipoArchivo			=	'Carpeta',
+	 FechaInicioEtapa		=	CE.FechaInicio,
+	 FechaFinEtapa			=	CE.FechaFin
+     FROM CO_ContratoEtapas CE
+     JOIN EN_Etapa E
+        ON      CE.EtapaId      =   E.IdEtapa
+     WHERE CE.ContratoId        =   @ContratoId
+     AND CE.Activo              =   1       
+	 AND FechaInicio IS NULL
+	 AND FechaFin IS NULL
+	 AND Carpeta = 1
+     GROUP BY   
+     E.Etapa,
+     CE.EtapaId,
+	 CE.FechaInicio,
+	 CE.FechaFin
+     ORDER BY E.Etapa ASC
+
+
+	 -- NIVEL 1 -- INSERTAR CARPETA GENERAL
+	 --INSERT INTO @Lista(IDPadre,EtapaId,Titulo,Nivel,Detalle,CantidadArchivos,TipoArchivo,FechaInicioEtapa,FechaFinEtapa,Icono)
+  --   SELECT 
+  --   IDPadre				=	1,--> EL NIVEL 1 NUNCA TIENE IDPadre     
+  --   EtapaId				=	18,
+	 --Titulo					=	'General ',
+  --   Nivel					=	1,
+  --   Detalle				=	'Regulador',
+  --   CantidadArchivos		=	0,
+  --   TipoArchivo			=	'Carpeta',
+	 --FechaInicioEtapa		=	NULL,
+	 --FechaFinEtapa			=	NULL,
+	 --Icono					= N'<i class="glyph-icon icon-folder" style="color: green;" title="General"></i>';
+
 	 END 
 
 
@@ -352,6 +385,8 @@ SET NOCOUNT ON
 		    RE.ReceptorEntregable,
 		    RE.IdReceptorEntregable
 		    ORDER BY RE.ReceptorEntregable ASC
+
+			
 
 			--NIVEL 2-B CARPETAS PARA LOS POZOS
 			INSERT INTO @Lista(IDPadre,EtapaId,PozoInstalacionId,Titulo,Nivel,Detalle,CantidadArchivos,TipoArchivo)
@@ -934,8 +969,14 @@ SET NOCOUNT ON
                                         <a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoGeneral(''GENERAL'','+CAST(Nivel  AS nvarchar(MAX))+','+CAST(ISNULL(EtapaId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(ReceptorEntregableId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(PozoInstalacionId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(EtapaPozoId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(MarcoLegalId,0)  AS nvarchar(MAX))+','''+CAST(ISNULL(FrecuenciaId,'')  AS nvarchar(MAX))+''','''+CAST(ISNULL(FechaEntregaAnioMes,'')  AS nvarchar(MAX))+''','+CAST(ISNULL(EntregableId,0)  AS nvarchar(MAX))+')&#34;>
                                            Cargar archivo
                                         </a>
-                                    </li>
-                                </ul>">',REPLACE(ISNULL(Titulo,''),'"','&#34;'),
+                                    </li>' +
+									(CASE WHEN Detalle IN ('Regulador','Marco Legal','Etapa') THEN 
+									'<li>
+                                        <a href=&#34;javascript:;&#34; onclick=&#34;nuevaCarpeta(''GENERAL'','+CAST(Nivel  AS nvarchar(MAX))+','+CAST(ISNULL(ID,0)  AS nvarchar(MAX))+','+CAST(ISNULL(EtapaId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(ReceptorEntregableId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(PozoInstalacionId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(EtapaPozoId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(MarcoLegalId,0)  AS nvarchar(MAX))+','''+CAST(ISNULL(FrecuenciaId,'')  AS nvarchar(MAX))+''','''+CAST(ISNULL(Titulo,'')  AS nvarchar(MAX))+''','+CAST(ISNULL(EntregableId,0)  AS nvarchar(MAX)) +')&#34;>
+                                           Nueva Carpeta
+                                        </a>
+                                    </li>' ELSE '' END) +
+                                '</ul>">',REPLACE(ISNULL(Titulo,''),'"','&#34;'),
                  '</a>')
     WHERE TipoArchivo='Carpeta' --> EL ARCHIVO ES UNA CARPETA
 
@@ -971,7 +1012,130 @@ END
 	FROM @Lista LD
 	JOIN @CantidadArchivosGeneral CA
 	ON LD.ID=CA.IdPadre
-       
-	SELECT * FROM @Lista 
+
+	--CARPETA GENERAL EN EXPLORACION
+	INSERT INTO @Lista(
+		IDPadre,
+		Titulo,
+		EtapaId,
+		CantidadArchivos,
+		Detalle,
+		Icono,
+		Acciones,
+		Nivel,
+		TipoArchivo
+	) VALUES (
+		1,
+		'General',
+		18,
+		0,
+		'Carpeta general',
+		'<i class="glyph-icon icon-folder" style="color: green;" title="Carpeta general"></i>',
+		'<a href="javascript:;" title="Carpeta general: General" data-html="true" data-toggle="popover" data-placement="top" data-content="<ul class=&#34;dropdown-menu display-block&#34;><li><a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoPerzonalizado(2,##IDPADRE##,18,0,0,0,-1,'','',0)&#34;>Cargar archivo</a></li></ul>">General</a>',
+		2,
+		'Carpeta'
+	);
+
+	--CARPETAS CREADAS POR EL USUARIO POR CONTRATO
+	INSERT INTO @Lista(
+		IDPadre,
+		Titulo,
+		EtapaId,
+		CantidadArchivos,
+		Detalle,
+		Icono,
+		Acciones,
+		Nivel,
+		TipoArchivo,
+		ReceptorEntregableId,
+		MarcoLegalId,
+		PozoInstalacionId,
+		EtapaPozoId,
+		EntregableId,
+		FrecuenciaId,
+		Frecuencia,
+		Mime,
+		Origen,
+		DocumentoEntregableId,
+		CargadoPor,
+		FechaCarga
+	)
+	SELECT 
+		CDE.IDPadre,
+		CDE.Titulo,
+		CDE.EtapaId,
+		CDE.CantidadArchivos,
+		CDE.Detalle,
+		CDE.Icono,
+		CDE.Acciones,
+		CDE.Nivel,
+		CDE.TipoArchivo,
+		CDE.ReceptorEntregableId,
+		CDE.MarcoLegalId,
+		CDE.PozoInstalacionId,
+		CDE.EtapaPozoId,
+		CDE.EntregableId,
+		CDE.FrecuenciaId,
+		CDE.Frecuencia,
+		CDE.Mime,
+		'CARGADO_USUARIO',
+		CASE	
+			WHEN Detalle = 'Archivo' THEN ID
+			ELSE NULL
+		END,
+		US.Nombre,
+		CDE.FechaCarga
+	FROM CarpetasDocumentosEntregables AS CDE
+	JOIN AP_Usuario AS US
+		ON CDE.CargadoPor = US.UsuarioID
+	WHERE IdContrato = @ContratoId
+	AND CDE.Activo = 1;
+
+	--SUSTITUCION DE ID PADRE
+	UPDATE @Lista
+	SET Acciones = REPLACE(Acciones,'##IDPADRE##',CAST(ID AS nvarchar));
+
+	--SUSTITUCION DE ACCION PARA ARCHIVOS
+	UPDATE @Lista
+	SET Acciones = REPLACE(Acciones,'##ACCION##',CONCAT('<a href="javascript:;" 
+															title="'+ISNULL(Detalle,'')+': '+REPLACE(ISNULL(Titulo,''),'"','&#34;')+'" 
+															data-html="true" 
+															data-toggle="popover" 
+															data-placement="top" 
+															data-content="<ul class=&#34;dropdown-menu display-block&#34;>',
+															CASE WHEN Mime <> 'ARCHIVO' THEN 
+																			'<li>
+																				<a href=&#34;javascript:;&#34; onclick=&#34;loadDocumentoAdjunto('+CAST(ISNULL(DocumentoEntregableId,0) AS nvarchar(MAX))+','''+Mime+''',this,'''+Origen+''')&#34;>
+																				  <i class=&#34;glyph-icon icon-sign-in&#34; aria-hidden=&#34;true&#34;></i>&nbsp;Abrir
+																				</a>
+																			</li>
+																			<li disabled>
+																				<a href=&#34;javascript:;&#34; onclick=&#34;loadNuevaPaginaAdjunto('+CAST(ISNULL(DocumentoEntregableId,0) AS nvarchar(MAX))+','''+Mime+''',this,'''+Origen+''')&#34;>
+																				 <i class=&#34;glyph-icon icon-external-link&#34; aria-hidden=&#34;true&#34;></i>&nbsp;Abrir en nueva pestaña
+																				</a>
+																			</li>'                                    
+															END, --> OPCIONES PARA VISUALIZAR ARCHIVOS DE TIPO IMAGEN, DOCUMENTO EXCEL ETC
+																			'<li>
+																				<a href=&#34;javascript:;&#34; onclick=&#34;descargarArchivoEntregable('+CAST(ISNULL(DocumentoEntregableId,0) AS nvarchar(MAX))+','''+Origen+''')&#34;>
+																				  <i class=&#34;glyph-icon icon-download&#34; aria-hidden=&#34;true&#34;></i>&nbsp;Descargar
+																				</a>
+																			</li>',--> OPCIÓN PARA DESCARGAR 
+																			'<li>
+																				<a href=&#34;javascript:;&#34; onclick=&#34;eliminarArchivoGeneral('+CAST(ISNULL(DocumentoEntregableId,0) AS nvarchar(MAX))+','''+Origen+''')&#34;>
+																				  <i class=&#34;glyph-icon icon-trash&#34; aria-hidden=&#34;true&#34;></i>&nbsp;Eliminar
+																				</a>
+																			</li>',
+															'</ul>">',
+															REPLACE(Titulo,'"','&#34;'),					
+														 '</a>')); 
+
+	UPDATE  L
+	SET L.CantidadArchivos = (SELECT COUNT(ID) FROM CarpetasDocumentosEntregables WHERE IdContrato = @ContratoId AND IDPadre = L.ID)
+	FROM @Lista AS L
+	WHERE L.ID IN (SELECT IDPadre FROM CarpetasDocumentosEntregables WHERE IdContrato = @ContratoId AND Activo = 1)
+		AND L.Detalle = 'Carpeta Personalizada'
+		AND L.TipoArchivo = 'Carpeta';
+
+	SELECT * FROM @Lista;
 
 END

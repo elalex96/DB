@@ -1,14 +1,6 @@
 ﻿USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_SHELL_ObtenerDetalleDocumentosEntregables'
-)
-    DROP PROCEDURE EN_SHELL_ObtenerDetalleDocumentosEntregables;
-GO 
-/****** Object:  StoredProcedure [dbo].[p_EN_ObtenerArchivoEntregable]    Script Date: 12/03/2021 03:57:58 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDetalleDocumentosEntregables]    Script Date: 15/10/2021 09:52:08 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -16,7 +8,8 @@ GO
 --[dbo].[EN_SHELL_ObtenerDetalleDocumentosEntregables] '','1,2,3,4,5'
 CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerDetalleDocumentosEntregables] 
 @DctosEntregablesIdsContatenados NVARCHAR(MAX),
-@DctosGeneralesIdsContatenados NVARCHAR(MAX)
+@DctosGeneralesIdsContatenados NVARCHAR(MAX),
+@DctosPersonalizadosIdsContatenados NVARCHAR(MAX)
 AS
 BEGIN
     DECLARE @Documentos AS TABLE
@@ -26,6 +19,12 @@ BEGIN
     );
 
 	 DECLARE @DocumentosG AS TABLE
+    (
+        IdRow INT IDENTITY(1, 1),
+        DocumentoId INT
+    );
+
+	DECLARE @DocumentosP AS TABLE
     (
         IdRow INT IDENTITY(1, 1),
         DocumentoId INT
@@ -44,6 +43,13 @@ BEGIN
     )    
 	SELECT splitdata
 	FROM dbo.fnSplitString(@DctosGeneralesIdsContatenados,',')
+
+	INSERT INTO @DocumentosP
+    (
+        DocumentoId
+    )    
+	SELECT splitdata
+	FROM dbo.fnSplitString(@DctosPersonalizadosIdsContatenados,',')
 	
 	SELECT
 		DocumentoEntregableId,
@@ -81,6 +87,25 @@ BEGIN
 	 FROM EN_DocumentoGeneral DOC  
 	 JOIN @DocumentosG D
 	  ON DOC.DocumentoId=D.DocumentoId
+
+	UNION ALL 
+
+	SELECT   
+	  DOC.ID AS DocumentoEntregableId,  
+	  0 AS idContratoEntregable,  
+	  0 AS idInstanciaEntregable,  
+	  DOC.Bucket,  
+	  DOC.Folder,  
+	  DOC.UUIDAmazon,  
+	  DOC.NombreArchivo,  
+	  DOC.Meta,  
+	  DOC.CargadoPor,  
+	  DOC.FechaCarga,  
+	  NULL,  
+	  NULL  
+	 FROM CarpetasDocumentosEntregables DOC  
+	 JOIN @DocumentosP D
+	  ON DOC.ID=D.DocumentoId
 	  	
 	
 END
