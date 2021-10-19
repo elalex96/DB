@@ -28,7 +28,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @EXISTE_REGISTRO INT = (SELECT COUNT(1) FROM EN_Etapa WHERE Etapa = 'Accidente');
+	DECLARE @EXISTE_REGISTRO INT = (SELECT COUNT(1) FROM EN_Etapa WHERE Etapa = @Etapa);
 
 	IF @EXISTE_REGISTRO > 0
 	BEGIN 
