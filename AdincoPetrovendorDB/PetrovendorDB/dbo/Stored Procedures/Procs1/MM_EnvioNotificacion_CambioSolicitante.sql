@@ -143,7 +143,7 @@ BEGIN
 <tbody>
 <tr>
 <td style="color: #ffffff;">|</td>
-<td style="font: 10px Helvetica,Arial, sans-serif; color: #ffffff;" align="center">&copy; 2017, Todos los derechos reservados</td>
+<td style="font: 10px Helvetica,Arial, sans-serif; color: #ffffff;" align="center">&copy; ##YEAR_ACTUAL##, Todos los derechos reservados</td>
 <td style="color: #ffffff;">|</td>
 </tr>
 <tr>
@@ -305,7 +305,7 @@ BEGIN
 		BEGIN
 			WHILE @contador <= @cantidadAprobacionPendientesUsuario
 			BEGIN
-				SET @listaPendientesHTML = ISNULL(@listaPendientesHTML,'')+ (SELECT  CONCAT('<p> <a href="http://localhost:58936/02Proveedores/SolicitudAceptacionPedido.aspx?solicitud=',IdSolicitudAceptacionPedido,'&pedido=',IdPedido,'"> No. Solicitud de Aprobación: #',IdSolicitudAceptacionPedido,'</a> </p>') 
+				SET @listaPendientesHTML = ISNULL(@listaPendientesHTML,'')+ (SELECT  CONCAT('<p> <a href="https://procura.adinco.mx/02Proveedores/SolicitudAceptacionPedido.aspx?solicitud=',IdSolicitudAceptacionPedido,'&pedido=',IdPedido,'"> No. Solicitud de Aprobación: #',IdSolicitudAceptacionPedido,'</a> </p>') 
 				FROM #ENCABEZADOSAPROBACIONUSUARIO 
 				WHERE RowNum = @contador)
 				SET @contador = (@contador + 1);
@@ -314,6 +314,7 @@ BEGIN
 			SET @HTML = (replace(@HTML,'##Mensaje##',@Mensaje2))
 			SET @HTML = (replace(@HTML,'##NumeroRequisicion##',@IdSolicitudPedido))
 			SET @HTML = (replace(@HTML,'##Detalle##',@listaPendientesHTML))
+			SET @HTML = (replace(@HTML,'##YEAR_ACTUAL##',CAST(YEAR(getdate()) as varchar(10))))
 			-- INSERTA EN LA TABLA DE NOTIFICACIONES
 			----------------------------------------
 			-- INSERTA EN LA TABLA DE NOTIFICACIONES
@@ -337,11 +338,12 @@ BEGIN
 		END
 		ELSE 
 		BEGIN
-			set @listaPendientesHTML = (SELECT CONCAT('<a href="http://localhost:58936/01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=',@IdSolicitudPedido,'&origin=s&tp_user=2" class="button">Ver solicitud Pedido.</a>'))
+			set @listaPendientesHTML = (SELECT CONCAT('<a href="https://procura.adinco.mx/01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=',@IdSolicitudPedido,'&origin=s&tp_user=2" class="button">Ver solicitud Pedido.</a>'))
 			SET @HTML = (replace(@HTML,'##NombreUsuario##',@SolicitanteNuevo))
 			SET @HTML = (replace(@HTML,'##Mensaje##',@Mensaje1))
 			SET @HTML = (replace(@HTML,'##NumeroRequisicion##',@IdSolicitudPedido))
 			SET @HTML = (replace(@HTML,'##Detalle##',@listaPendientesHTML))
+			SET @HTML = (replace(@HTML,'##YEAR_ACTUAL##',CAST(YEAR(getdate()) as varchar(10))))
 			-- INSERTA EN LA TABLA DE NOTIFICACIONES
 			----------------------------------------
 			select @pIdNotificacion = isnull(max(IdNotificacion),0) + 1

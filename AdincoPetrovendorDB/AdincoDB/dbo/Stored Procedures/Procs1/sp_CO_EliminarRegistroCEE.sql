@@ -2,5 +2,7 @@
 @pIdRegistro int
 AS
 
+	delete CO_RegistroMarkup
+	where GastoId = @pIdRegistro
 	delete CO_Registro
 	where idRegistro = @pIdRegistro

@@ -10622,6 +10622,11 @@
     <Build Include="dbo\Tables\BitacoraReversaComprobantesExtranjeros.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spRevierteComprobantesExtranjerosAprobados.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spListaComprobantesExtranjeros.sql" />
+    <Build Include="dbo\Functions\fnGetValidacionCantidadMateriales.sql" />
+    <Build Include="dbo\Functions\EN_SP_Actualiza_Frecuencias.sql" />
+    <Build Include="dbo\Functions\EN_SP_Agrega_Frecuencias.sql" />
+    <Build Include="dbo\Functions\EN_sp_FrecuenciaEntregablesExport.sql" />
+    <Build Include="dbo\Functions\EN_sp_ValidaFrecuenciaEntregables.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
@@ -10644,5 +10649,6 @@
     <None Include="dbo\Functions\WDEA_Obtener_CentroCostos.sql" />
     <None Include="dbo\Functions\WDEA_Obtener_Relacion_CentroCostos.sql" />
     <None Include="dbo\Functions\WDEA_SP_DesactivarAcronimoSAP.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\SP_MM_ConsultarBotonesodenDetalle.sql" />
   </ItemGroup>
 </Project>

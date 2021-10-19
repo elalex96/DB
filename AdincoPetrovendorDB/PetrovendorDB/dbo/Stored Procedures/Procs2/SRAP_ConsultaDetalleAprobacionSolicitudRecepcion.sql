@@ -1,13 +1,7 @@
+
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_ConsultaDetalleAprobacionSolicitudRecepcion'
-)
-    DROP PROCEDURE SRAP_ConsultaDetalleAprobacionSolicitudRecepcion;
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 16/07/2021 09:22:00 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 12/10/2021 12:29:29 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,6 +11,10 @@ GO
 -- Create date: 25-05-2021
 -- Description:	Consultar detalle de solicitud de recepción de pedido
 -- =============================================
+-- Author:		Luis David De La Cruz
+-- Create date: 13/10/2021
+-- Description:	Se agrega la validación de cantidad disponible de materiales
+-- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
@@ -25,7 +23,7 @@ CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]
 @IdSolicitudAceptacionPedido INT 
 
 AS
-
+	
 	create table #tmpCantidadesRecibidad
 	(
 		IdPedidoDetalle		int,
@@ -153,7 +151,14 @@ AS
 					Recepcionservicio					=	ISNULL(PD.RecepcionPedido,'false'),		
 					PD.RecepcionPedido,
 					Unidad								=	POD.UnidadProveedor,
-					CantidadRecibida					=	t1.Cantidad
+					CantidadRecibida					=	t1.Cantidad,
+					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
+					then '' else 'La cantidad solicitada excede el límite del pedido.'
+					end as 
+					CantidadValida,
+					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
+					then '' else 'bgcolor="#ff685d"'
+					end as Color
 		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		
 		JOIN		MM_PedidoDetalle					PD 
 		ON			SAPD.IdPedidoDetalle				=	PD.IdPedidoDetalle
@@ -183,8 +188,11 @@ AS
 	  /*TABLA 3 DOCUMENTOS*/
 	   BEGIN     
 		 /*TABLA DE DOCUMENTOS*/
-		 SELECT  D.IdDocumento, D.NombreDocumento, D.IdDocumentoTabla 
+		 SELECT  D.IdDocumento, 
+				D.NombreDocumento + '  -  Cargado Por ' +  US.Nombre + ' el ' + CAST(D.CreadoEl AS nvarchar) AS NombreDocumento, 
+				D.IdDocumentoTabla 
          FROM  S_Documento_S3 D  
+		 LEFT JOIN S_Usuario AS US ON D.IdUsuario = US.IdUsuario
          WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
 		 AND D.Activo=1 
 		 AND D.IdTipoDocumento = 12 --> CTE ACEPTACION DE PEDIDO --> SELECT * FROM S_TipoDocumento WHERE IdTipoDocumento=12  
@@ -404,7 +412,4 @@ AS
 			ORDER BY U.Nombre ASC
 		
 	   END 
-
-END;
-
-
+END
