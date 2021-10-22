@@ -13140,6 +13140,9 @@
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ClasificacionGrd.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ClasificacionIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ClasificacionUpd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ReporteEtapas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarEtapa.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\p_AWS_CredencialesDropbox.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
