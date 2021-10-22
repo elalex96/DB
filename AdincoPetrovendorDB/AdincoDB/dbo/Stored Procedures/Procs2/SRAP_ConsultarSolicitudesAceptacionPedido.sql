@@ -121,11 +121,8 @@ AS
 
 	IF @Filtro ='EN-APROBACION'
 	 BEGIN 
-		--select @esOBS
+
 		SELECT		
-		--			O.IdOperacion,
-		--			ta.IdEstatus,
-		--			ta.NoSecuencia,
 					SAP.IdSolicitudAceptacionPedido,
 					SAP.Comentario,
 					P.IdPedido,    
@@ -144,7 +141,11 @@ AS
 					CreadoPor						=	UE.Nombre,
 					Contrato						=	C.NumeroContrato,
 					SolitanteRequisicion			=	US.Nombre,
-					SAP.IdAceptacionPedido
+					SAP.IdAceptacionPedido,
+					x = case when ((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)) then 1 when	 ((@esOBS = 1 )  and ta.IdEstatus = 2) then 2 else 0 end,
+					IdFlujoTarea,
+					ta.IdTarea,
+					ta.IdEstatus
 		FROM		MM_SolicitudAceptacionPedido	SAP
 		JOIN		TA_Operacion					O 
 		ON			SAP.IdSolicitudAceptacionPedido =	O.IdDocumento
@@ -170,12 +171,18 @@ AS
 		ON			P.IdSolicitudPedido				=	SP.IdSolicitudPedido
 		LEFT JOIN	S_Usuario						US
 		ON			SP.Solicitante					=	US.IdUsuario
-		left join	TA_Tarea						ta
+		left join	TA_Tarea						ta	--select object_name(object_id),* from sys.columns where name like '%Flujo%' order by 3  --TA_FlujoTarea
 		on			ta.IdOperacion					=	O.IdOperacion
+		--and			ta.IdEstatus					=	1
 		WHERE 		P.IdProveedorCompras			=	@IdProveedor
 		and			C.IdContrato					=	@IdContrato
 		and			((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)	or ((@esOBS = 1 )  and ta.IdEstatus = 2) )
+		and			ta.Activo						=	1
 		GROUP BY    
+					ta.IdTarea,
+					IdFlujoTarea,
+					ta.IdAprobador,
+					ta.IdEstatus,
 					P.IdPedido,     
 					P.IdSolicitudPedido,		  
 					PC.RazonSocial,     
