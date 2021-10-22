@@ -20,6 +20,10 @@ begin
 	from		EN_Clasificacion		r
 	left join	EN_Entregable				e
 	on			r.IdClasificacion		=	e.IdClasificacion
+	left join	EN_MarcoLegal	ml
+	on			e.IdMarcoLegal	=	ml.IdMarcoLegal
+	where		e.IsActivo		=	1
+	and			e.IsEliminado	=	0
 	group by	r.IdClasificacion,
 				r.NombreClasificacion,
 				r.CreadoPor,
@@ -42,7 +46,7 @@ begin
 	and			e.IsEliminado	=	0
 	and			ml.Activo		=	1
 	and			e.IdRegulador	is	not	null
-	order by	IdReceptorEntregable
+	order by	IdClasificacion, IdReceptorEntregable
 end
 
 go
