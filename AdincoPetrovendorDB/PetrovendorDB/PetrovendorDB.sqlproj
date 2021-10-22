@@ -10650,5 +10650,11 @@
     <None Include="dbo\Functions\WDEA_Obtener_Relacion_CentroCostos.sql" />
     <None Include="dbo\Functions\WDEA_SP_DesactivarAcronimoSAP.sql" />
     <None Include="dbo\Stored Procedures\Procs1\SP_MM_ConsultarBotonesodenDetalle.sql" />
+    <None Include="dbo\User Defined Types\CARSO_ItemDetalle.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\Carso_InsertaItemsCabecera.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\Carso_InsertaItemsDetalle.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\Carso_sp_ObtenComparativasPendientes.sql" />
+    <None Include="dbo\Tables\Carso_Items_comparativaCabecera.sql" />
+    <None Include="dbo\Tables\Carso_Items_comparativaDetalle.sql" />
   </ItemGroup>
 </Project>
