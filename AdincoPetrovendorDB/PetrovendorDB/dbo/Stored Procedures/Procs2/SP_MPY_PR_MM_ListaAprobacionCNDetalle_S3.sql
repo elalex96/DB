@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_MPY_PR_MM_ListaAprobacionCNDetalle_S3
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 14-06-18
 -- Description:	Consultar detalle de encabezado de aprobación de carta de contenido nacional en procura 
+-- =============================================
+-- Author:		Luis David
+-- Create date: 19/10/2021
+-- Description:	Se agrega el bucket a la consulta
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_PR_MM_ListaAprobacionCNDetalle_S3]
 	-- Add the parameters for the stored procedure here
@@ -37,7 +43,8 @@ AS
 		SES.SESNumber,
 		SES.SESReferenceNumber,
 		PSES.IdPRESES,
-		ISNULL(AC.IdProceso,0) AS IdProceso
+		ISNULL(AC.IdProceso,0) AS IdProceso,
+		ISNULL(Bucket,'') as Bucket
 		FROM dbo.MPY_MM_AceptacionCartaPCN AS AC
 		LEFT JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
 		LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
