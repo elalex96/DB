@@ -178,6 +178,7 @@ as
 			set @mensaje = replace(@mensaje,'##NO_OPERACION##',@aceptacion)
 			set @mensaje = replace(@mensaje,'##NO_PEDIDO##',@pedido)
 			set @mensaje = replace(@mensaje,'##OPERADORA##',@operadora)
+			set @mensaje = replace(@mensaje,'##ANIO_ACTUAL##',YEAR(GETDATE()))
 			set @para = ''
 
 			select @para = correo + ';'
