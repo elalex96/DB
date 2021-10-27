@@ -16,5 +16,7 @@
 	[Procesado] bit,
 	Activo bit,
 	CreadoEl datetime,
-	ProcesadoEl datetime
+	ProcesadoEl datetime,
+	IpAdress [nvarchar](max) NULL,
+	Hostname [nvarchar](max) NULL
 )
