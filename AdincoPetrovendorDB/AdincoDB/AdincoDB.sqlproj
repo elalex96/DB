@@ -13148,8 +13148,13 @@
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ResponsableGeneradorGrd.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ResponsableGeneradorIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ResponsableGeneradorUpd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_ENT_ImportacionEntregablesEditables.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ConsultaEntregablesMarcoLegal.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dbo\User Defined Types\Entregables_Importacion_Edicion_01.sql" />
   </ItemGroup>
 </Project>
