@@ -14,22 +14,27 @@ create proc spCO_ReguladorUpd
 )
 as
 begin
-	
+	if(@AWSDocumentoId = 0)
+	begin
+		select @AWSDocumentoId = AWSDocumentoId from CO_Regulador  where IdRegulador	=	@idRegulador
+	end
+
+	--select @AWSDocumentoId
 
 	if not exists (select * from CO_Regulador  where NombreRegulador = @NombreRegulador and IdRegulador	<>	@idRegulador)
 	begin
-			update	CO_Regulador 
-			set		Regulador			=	@regulador,
-					NombreRegulador		=	@nombreRegulador,
-					AWSDocumentoId		=	@AWSDocumentoID
-			where	IdRegulador			=	@idRegulador
+		update	CO_Regulador 
+		set		Regulador			=	@regulador,
+				NombreRegulador		=	@nombreRegulador,
+				AWSDocumentoId		=	@AWSDocumentoID
+		where	IdRegulador			=	@idRegulador
 						
-			select		Error	=	0
-		end
-		else
-		begin
-			select		Error	=	1
-		end
+		select		Error	=	0
+	end
+	else
+	begin
+		select		Error	=	1
+	end
 end
 
 go
