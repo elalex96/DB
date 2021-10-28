@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]    Script Date: 07/10/2021 11:02:28 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]    Script Date: 28/10/2021 02:56:08 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -14,7 +14,8 @@ ALTER PROCEDURE [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]
 	-- Add the parameters for the stored procedure here.
 	@FileName NVARCHAR(MAX),
 	@Asunto NVARCHAR(MAX),
-	@Destinatario NVARCHAR(MAX)
+	@Destinatario NVARCHAR(MAX),
+	@IDBITACORA INT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -26,7 +27,7 @@ BEGIN
 			@CONTTOTAL INT,
 			@PURCHASING NVARCHAR(100),
 			@CONTRATO INT,
-			@IDBITACORA INT,
+			--@IDBITACORA INT,
 			@CONT_PROCESADOS INT,
 			@MENSAJE_ERORRES NVARCHAR(MAX) = '',
 			@MENSAJE_EXITOSOS NVARCHAR(MAX) = '',
@@ -58,6 +59,7 @@ BEGIN
 	FROM WDEA_PurchasingDocumentsImportados AS PD
 	JOIN PendientesProcesarProcura_WSDEA AS PP ON PD.IdBitacora = PP.IdBitacora 
 		AND ISNULL(PP.Procesado,0) = 0 --PENDIENTE DE PROCESAR
+		AND PD.IdBitacora = @IDBITACORA
 	GROUP BY PD.PURCHASING_DOCUMENT,
 			PD.IDCONTRATO;
 
@@ -95,7 +97,7 @@ BEGIN
 	END
 
 	SELECT
-			Purchasing_Document
+		Purchasing_Document
 	INTO #REGISTROSGUARDADOS
 	FROM WDEA_Layout_T
 	WHERE IdBitacoraLectura = @IDBITACORA
@@ -124,9 +126,9 @@ BEGIN
 	SELECT 
 		B.Mensaje
 	INTO #MENSAJES
-	FROM #PROCESADOS AS P 
-	JOIN WDEA_Bitacora_AdincoSAP AS B ON P.IdBitacora = B.IdBitacoraLectura
-	AND ISNULL(B.IsImportacionExitosa,0) = 0;--BIT DE IMPORTACION EXITOSA
+	FROM WDEA_Bitacora_AdincoSAP AS B 
+	WHERE ISNULL(B.IsImportacionExitosa,0) = 0--BIT DE IMPORTACION EXITOSA
+	AND B.IdBitacoraLectura = @IDBITACORA;
 
 	SET @CONT_PROCESADOS = (SELECT COUNT(1) FROM #PROCESADOS);
 	SET @CONT_ERRORES = (SELECT COUNT(1) FROM #MENSAJES);
@@ -176,17 +178,17 @@ BEGIN
 							' con el asunto ' + 
 							@Asunto + 
 							' enviado por ' + 
-							@Destinatario + '. <br><br>' +
-							'Se detectaron ' + CAST(@CONTTOTAL AS nvarchar) + ' Purchasing Document(s) Correctos' +
-							' de ' + CAST(@REGISTROSGUARDADOS as nvarchar) + ' Purchasing Document(s) en el Documento en total,' + 
-							'de los cuales se genero ' + CAST(@CONT_PROCESADOS AS nvarchar) + ' Pedido(s) en ADINCO.');
+							@Destinatario + ' el ' + CONVERT(VARCHAR,GETDATE(),9) + ' con el Numero de Procesamiento Interno #' + CAST(@IDBITACORA AS nvarchar) +'. <br><br>' +
+							'Se detectaron ' + CAST(ISNULL(@CONTTOTAL,0) AS nvarchar) + ' Purchasing Document(s) Correctos' +
+							' de ' + CAST(ISNULL(@REGISTROSGUARDADOS,0) as nvarchar) + ' Purchasing Document(s) en el Documento en total,' + 
+							'de los cuales se genero ' + CAST(ISNULL(@CONT_PROCESADOS,0) AS nvarchar) + ' Pedido(s) en ADINCO.');
 
 
 	SET @HTML = (SELECT HTML FROM dbo.TA_Correo WHERE Asunto = 'Notificación de Resumen de Lectura de WDEA');
 
-	SET @HTML = (REPLACE(@HTML,'##MENSAJE_GENERAL##',@MENSAJE_FINAL));
-	SET @HTML = (REPLACE(@HTML,'##MENSAJE_CORRECTOS##',@MENSAJE_EXITOSOS));
-	SET @HTML = (REPLACE(@HTML,'##MENSAJE_ERRORES##',@MENSAJE_ERORRES));
+	SET @HTML = (REPLACE(@HTML,'##MENSAJE_GENERAL##',ISNULL(@MENSAJE_FINAL,'')));
+	SET @HTML = (REPLACE(@HTML,'##MENSAJE_CORRECTOS##',ISNULL(@MENSAJE_EXITOSOS,'')));
+	SET @HTML = (REPLACE(@HTML,'##MENSAJE_ERRORES##',ISNULL(@MENSAJE_ERORRES,'')));
 	SET @HTML = (REPLACE(@HTML,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
 	SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
@@ -210,7 +212,7 @@ BEGIN
 			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
 			Destinatario, 
 			CAST(CAST(GETDATE() AS DATE) AS nvarchar) + ' Reporte de interfase ADINCO SAP' + ' Envio ' + CAST(@ENVIO as nvarchar) + '/2',
-			REPLACE(@HTML,'##NOMBRE_USUARIO##',Nombre), 
+			REPLACE(@HTML,'##NOMBRE_USUARIO##',ISNULL(Nombre,'Usuario de ADINCO')), 
 			DATEADD(MINUTE, 1, GETDATE()), 
 			0, 
 			NULL, 
@@ -271,7 +273,7 @@ BEGIN
 	VALUES
 	(
 		GETDATE(),
-		'SE PROCESARON ' + CAST((@CONT_PROCESADOS - 1) AS NVARCHAR) + ' PEDIDO(S) DE ' + CAST(@CONT AS nvarchar) + ' PURCHASING.',
+		'SE PROCESARON ' + CAST((ISNULL(@CONT_PROCESADOS,0) - 1) AS NVARCHAR) + ' PEDIDO(S) DE ' + CAST(@CONT AS nvarchar) + ' PURCHASING.',
 		NULL,
 		NULL
 	);
