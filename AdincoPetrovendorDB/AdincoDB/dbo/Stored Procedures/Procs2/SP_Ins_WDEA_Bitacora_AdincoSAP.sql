@@ -1,6 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
+﻿DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
 GO
 create proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]
 (
@@ -63,7 +61,7 @@ begin
 		WHERE UM.Unidad IS NULL
 		AND WDL.Order_Unit IS NOT NULL
 		--============================================================
-		-- Se inserta la Material
+		-- Se inserta el Material
 		INSERT INTO MM_Material(
 		IdProveedor,		IdUnidad,		DescripcionCorta,	DescripcionLarga,
 		FechaAlta,			Activo,			IsEliminado,		CreadoPor)
@@ -73,7 +71,7 @@ begin
 		FROM 
 		WDEA_Layout_T as WDL
 		left JOIN MM_Material as M 
-		ON WDL.Short_Text = M.DescripcionCorta and IdProveedor = 907
+		ON WDL.Short_Text = M.DescripcionCorta and IdProveedor = @IdProveedorWDEA
 		left JOIN PV_MM_MaterialUnidad AS MU
 		ON WDL.Order_Unit = MU.Unidad
 		WHERE m.DescripcionCorta is null
@@ -195,7 +193,7 @@ begin
 			/*******************/
 			/*WBS_Element*/
 			insert into #tmpErrores	
-			SELECT t.Id, 'C', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontraro un centro de costos relacionado al WBS_Element en la celda C, Fila '+cast(t.Id as varchar(10))+'.',1
+			SELECT t.Id, 'C', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró un centro de costos relacionado al WBS_Element en la celda C, Fila '+cast(t.Id as varchar(10))+'.',1
 			FROM #tmpData AS t
 			left JOIN WDEA_SAP_CentroCostos WDCC
 			ON dbo.WDEA_CC_SplitString(t.WBS_Element,'-') = WDCC.AcronimoSAP
@@ -203,7 +201,7 @@ begin
 			where AcronimoSAP is null or WDCC.Activo = 0
 	
 			insert into #tmpErrores
-			select Id, 'D', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontraro WBS Element en la celda D, Fila '+cast(Id as varchar(10))+'.',1												from #tmpData where WBS_Element is null order by Id
+			select Id, 'D', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró WBS Element en la celda D, Fila '+cast(Id as varchar(10))+'.',1												from #tmpData where WBS_Element is null order by Id
 
 			
 
