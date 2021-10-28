@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_SC_AdquisicionContratacionCNH]    Script Date: 30/09/2021 11:23:22 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_SC_AdquisicionContratacionCNH]    Script Date: 28/10/2021 01:27:37 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -735,7 +735,10 @@ BEGIN
 			PRO.RazonSocial AS Proveedor,
 			TP.TipoPedido AS MecanismoContratacion,
 			SP.MotivoUrgencia AS NombreContratoCP,
-			RPRPO.PO  AS NoContratoCP,
+			CASE	
+				WHEN RPRPO.PO IS NOT NULL THEN SUBSTRING(SUBSTRING(RPRPO.PO,CHARINDEX('45', RPRPO.PO) + 2, LEN(RPRPO.PO)-CHARINDEX('@', RPRPO.PO)),0,9)--00558104-ASCOP
+				ELSE ISNULL(PDI.PURCHASING_DOCUMENT,PS.IdPedido)
+			END AS NoContratoCP,
 			SP.FechaEntregaRequerida AS FechaInicio,
 			ISNULL(SP.FechaEntregaFinRequerida, SP.FechaEntregaRequerida) AS FechaFin,
 			ISNULL(SP.FechaEntregaFinRequerida, SP.FechaEntregaRequerida) AS FechaVigencia,
@@ -780,7 +783,7 @@ BEGIN
 				ON P.IdSubContratista = PROSAP.IdProveedor
 			JOIN Petrovendor.dbo.S_Proveedor AS PRO  (NOLOCK)
 				ON P.IdSubcontratista = PRO.IdProveedor
-			JOIN Petrovendor.dbo.DEA_Relacion_PR_PO AS RPRPO (NOLOCK) 
+			LEFT JOIN Petrovendor.dbo.DEA_Relacion_PR_PO AS RPRPO (NOLOCK) 
 				ON P.IdPedido = RPRPO.IdPedido
 			LEFT JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados AS PDI (NOLOCK) 
 				ON P.IdPedido = PDI.IdPedidoADINCO
@@ -989,14 +992,15 @@ BEGIN
 			ON PROP.IdProveedor = PROSAP.IdProveedor
 		LEFT JOIN Adinco.dbo.OT_Solicitud AS OTS (NOLOCK)
 			ON SC.IdSubContrato = OTS.IdSubContrato
-		--LEFT JOIN Adinco.dbo.OT_SolicitudMaterial AS OTSM (NOLOCK)
-		--	ON OTS.IdOTSolicitud = OTSM.IdOTSolicitud
+		LEFT JOIN Adinco.dbo.OT_SolicitudMaterial AS OTSM (NOLOCK)
+			ON OTS.IdOTSolicitud = OTSM.IdOTSolicitud
 		LEFT JOIN Adinco.dbo.SC_Materiales AS SCM (NOLOCK)
-			ON OTS.IdSubContrato = SCM.IdSubContrato
+			ON OTSM.IdSCMaterial = SCM.IdSCMaterial
 		JOIN Adinco.dbo.CO_Contratista AS CT (NOLOCK)
 				ON CON.IdContratista = CT.IdContratista
 		WHERE  CONVERT(VARCHAR, SC.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
+			  AND OTS.IsActivo = 1
 		GROUP BY CON.NumeroContrato,
 				PROSAP.IdProveedor,
 				SUB.RazonSocial,
