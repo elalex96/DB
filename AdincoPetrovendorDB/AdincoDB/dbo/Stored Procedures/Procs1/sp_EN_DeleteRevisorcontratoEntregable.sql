@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS sp_EN_DeleteRevisorcontratoEntregable
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 2019/02/14
 -- Description:Elimina Procesos de Macroproceso
+-- =============================================
+-- Author:		Luis David De La Cruz
+-- Create date: 29/10/2021
+-- Description:	Se agrega a la bitacora EN_Bitacora_EntregablesModificados
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_EN_DeleteRevisorcontratoEntregable] --16623,10061,2,3
     @IdContratoEntregable INT,
@@ -98,7 +104,7 @@ BEGIN
         WHERE ActividadID IN
               (
                   SELECT ActividadID
-                  FROM dbo.EN_Actividad
+         FROM dbo.EN_Actividad
                   WHERE EstadoID = 10001
                         AND IdContratoEntregable = @IdContratoEntregable
                         AND Activo = 0
@@ -110,6 +116,12 @@ BEGIN
               AND Activo = 0;
     END;
     SET @Error = N'';
+
+	INSERT INTO EN_Bitacora_EntregablesModificados(	
+		IdContrato,				IdEntregable,RevisorAnterior,					
+		ModificadoPor,			ModificadoEl) VALUES
+		(@IdContrato,			@IdContratoEntregable,@idUsuario,
+		@idUsuarioSession,		GETDATE())
 
     SELECT @Error AS error;
 END;
