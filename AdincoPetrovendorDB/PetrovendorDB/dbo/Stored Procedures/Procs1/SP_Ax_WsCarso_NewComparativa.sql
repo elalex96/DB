@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROC IF EXISTS SP_Ax_WsCarso_NewComparativa
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 15/10/2018
 -- Description:	AGREGAR DETALLE DE UNA COMPARATIVA
+-- =============================================
+-- Author:		Luis David
+-- Create date: 27/10/2021
+-- Description:	Se corrige la ortografía 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_Ax_WsCarso_NewComparativa]
     -- Add the parameters for the stored procedure here
@@ -216,7 +222,7 @@ BEGIN
                     IdLineaPresupuesto = @LPM
                 WHERE IdComparativa = @IdComparativa
                       AND IdPosicion = @IdPosicion
-                      AND DataAreaId = @DataAreaID;
+             AND DataAreaId = @DataAreaID;
 
                 SELECT @InsertaroActualizar = N'Actualizar'
 
@@ -292,7 +298,7 @@ BEGIN
         BEGIN
             SELECT @ErrorRetorno
                 = CONCAT(
-                            'La linea de presupuesto enviada no existe: ',
+                            'La línea de presupuesto enviada no existe: ',
                             LTRIM(ISNULL(@LineaPresupuesto, ' nulo ')),
                             ' - Mes: ',
                             LTRIM(ISNULL(@p1, ' nulo '))
@@ -451,7 +457,7 @@ BEGIN
         BEGIN
             SELECT 
                    CONCAT(
-                             'Fallo Actualizacion comparativa:',
+                             'Falló Actualización comparativa:',
                              @IdComparativa,
                              ' RecId: ',
                              @IdPosicion,
@@ -463,9 +469,9 @@ BEGIN
         END
         ELSE
         BEGIN
-            SELECT CONCAT('Actualizacion exitosa ', @IdComparativa),
+            SELECT CONCAT('Actualización exitosa ', @IdComparativa),
                    'UPDATE',
-                   'Actualizacion'
+   'Actualizacion'
             FROM dbo.AX_Comparativa
         END
     END
@@ -513,7 +519,7 @@ BEGIN
         BEGIN
             SELECT 
                    CONCAT(
-                             'Fallo Insercion de comparativa:',
+                             'Fallo Inserción de comparativa:',
                              @IdComparativa,
                              ' RecId: ',
                              @IdPosicion,
@@ -532,4 +538,3 @@ BEGIN
 
     END
 END;
-

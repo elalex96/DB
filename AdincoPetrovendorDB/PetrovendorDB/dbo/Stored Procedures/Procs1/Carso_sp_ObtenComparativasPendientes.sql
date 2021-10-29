@@ -34,7 +34,8 @@
 		,CD.[p3]				
 		,CD.[p4]					
 		,CD.[p5]
-				
+		,CC.IpAdress
+		,CC.HostName		
 		
 	FROM 
 	Carso_Items_comparativaCabecera as CC
