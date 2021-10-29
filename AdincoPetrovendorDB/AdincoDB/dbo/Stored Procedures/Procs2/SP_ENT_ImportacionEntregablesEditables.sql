@@ -1,6 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregablesEditables]    Script Date: 28/10/2021 12:48:17 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregablesEditables]    Script Date: 29/10/2021 10:08:26 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: <26/08/2021>  
 -- Description: <Actualizacion de los registros existentes>  
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregablesEditables] 
+ALTER PROCEDURE [dbo].[SP_ENT_ImportacionEntregablesEditables] 
 	@Layout dbo.Entregables_Importacion_Edicion_01 READONLY,
 	@IdContrato INT,
 	@IdUsuario INT
@@ -21,8 +21,13 @@ BEGIN
 	DECLARE @CONTADORAFECTADOS INT = 0;
 	DECLARE @CONTADORERRORES INT = 0;
 	DECLARE @CONT_RE INT = 1;
+	DECLARE @CONT_RE_CORRECTOS INT = 1;
 	DECLARE @CONT_TOTAL INT = 0;
+	DECLARE @CONT_TOTAL_CORRECTO INT = 0;
+	DECLARE @IDENTREGABLE INT;
+	DECLARE @IDCONFIGURACION INT;
 	DECLARE @ERROES_TABLE TABLE (ID INT IDENTITY(1,1),IdEntregables INT, Error NVARCHAR(MAX));
+	DECLARE @DATOS_TABLE TABLE (ID INT IDENTITY(1,1),IdEntregables INT);
 
 	--VERIFICACION DE REGISTROS NO VALIDOS
 	INSERT INTO @ERROES_TABLE
@@ -221,6 +226,12 @@ BEGIN
 
 	END
 
+	INSERT @DATOS_TABLE
+	SELECT
+		IdEntregable
+	FROM @Layout
+	WHERE IdEntregable NOT IN (SELECT IdEntregable FROM @ERROES_TABLE)
+
 	--ACTUALIZACION DE LOS REGISTROS CORRECTOS
 	UPDATE E
 	SET	 E.TCLicencia = (CASE WHEN L.Licencia = 'SI' THEN 1 ELSE 0 END),
@@ -255,7 +266,8 @@ BEGIN
 		 E.APQuemaGas = CASE WHEN L.APQuemaGas = 'SI' THEN 1 ELSE 0 END
 	FROM dbo.EN_Entregable AS E
 	JOIN @Layout AS L ON E.IdEntregable = L.IdEntregable
-	WHERE L.IdEntregable <> '' AND
+	WHERE E.IdEntregable IN (SELECT IdEntregables FROM @DATOS_TABLE) AND
+		 L.IdEntregable <> '' AND
 		 L.Licencia <> '' AND
 		 L.ProduccionCompartida <> '' AND
 		 L.TCProducionCompartidaFarmOuts <> '' AND
@@ -284,22 +296,51 @@ BEGIN
 		 L.APTransporteHidrocarburos <> '' AND
 		 L.APQuemaGas <> '';
 
-	UPDATE EC
-	SET EC.Desarrollo = CASE WHEN L.Desarrollo = 'SI' THEN 1 ELSE 0 END,
-		 EC.Exploracion = CASE WHEN L.Exploracion = 'SI' THEN 1 ELSE 0 END,
-		 EC.Evaluacion = CASE WHEN L.Evaluacion = 'SI' THEN 1 ELSE 0 END,
-		 EC.Transicion = CASE WHEN L.Transicion = 'SI' THEN 1 ELSE 0 END,
-		 EC.AbandonoArea = CASE WHEN L.AbandonoArea = 'SI' THEN 1 ELSE 0 END,
-		 EC.AbandonoPozo = CASE WHEN L.AbandonoPozo = 'SI' THEN 1 ELSE 0 END
-	FROM dbo.EN_Entregable_ConfigAdicional AS EC
-	JOIN @Layout AS L ON EC.IdEntregable = L.IdEntregable
-	WHERE L.IdEntregable <> '' AND
-		 L.Desarrollo <> '' AND
-		 L.Exploracion <> '' AND
-		 L.Evaluacion <> '' AND
-		 L.Transicion <> '' AND
-		 L.AbandonoArea <> '' AND
-		 L.AbandonoPozo <> ''
+	SET @CONT_TOTAL_CORRECTO = (SELECT COUNT(1) FROM @DATOS_TABLE);
+
+	WHILE @CONT_TOTAL_CORRECTO >= @CONT_RE_CORRECTOS
+	BEGIN
+		
+		SET @IDENTREGABLE = (SELECT IdEntregables FROM @DATOS_TABLE where ID = @CONT_RE_CORRECTOS);
+		SET @IDCONFIGURACION = (SELECT IdEntregable FROM EN_Entregable_ConfigAdicional where IdEntregable = @IDENTREGABLE);
+
+		IF ISNULL(@IDCONFIGURACION,0) = 0
+		BEGIN
+
+			INSERT INTO EN_Entregable_ConfigAdicional
+			SELECT
+				 L.IdEntregable,
+				 CASE WHEN L.Desarrollo = 'SI' THEN 1 ELSE 0 END,
+				 CASE WHEN L.Exploracion = 'SI' THEN 1 ELSE 0 END,
+				 CASE WHEN L.Evaluacion = 'SI' THEN 1 ELSE 0 END,
+				 CASE WHEN L.Transicion = 'SI' THEN 1 ELSE 0 END,
+				 CASE WHEN L.AbandonoArea = 'SI' THEN 1 ELSE 0 END,
+				 CASE WHEN L.AbandonoPozo = 'SI' THEN 1 ELSE 0 END
+			FROM @Layout AS L
+			WHERE L.IdEntregable = @IDENTREGABLE;
+
+		END
+		ELSE 
+		BEGIN
+
+			UPDATE EC
+			SET EC.Desarrollo = CASE WHEN L.Desarrollo = 'SI' THEN 1 ELSE 0 END,
+				 EC.Exploracion = CASE WHEN L.Exploracion = 'SI' THEN 1 ELSE 0 END,
+				 EC.Evaluacion = CASE WHEN L.Evaluacion = 'SI' THEN 1 ELSE 0 END,
+				 EC.Transicion = CASE WHEN L.Transicion = 'SI' THEN 1 ELSE 0 END,
+				 EC.AbandonoArea = CASE WHEN L.AbandonoArea = 'SI' THEN 1 ELSE 0 END,
+				 EC.AbandonoPozo = CASE WHEN L.AbandonoPozo = 'SI' THEN 1 ELSE 0 END
+			FROM dbo.EN_Entregable_ConfigAdicional AS EC
+			JOIN @Layout AS L ON EC.IdEntregable = L.IdEntregable
+			WHERE L.IdEntregable = @IDENTREGABLE;
+
+		END
+
+		SET @CONT_RE_CORRECTOS = @CONT_RE_CORRECTOS + 1;
+
+	END
+
+	
 
 	--CONTADOR DE CORRECTOS
 	SET @CONTADORAFECTADOS = (SELECT COUNT(1) FROM @Layout AS L
