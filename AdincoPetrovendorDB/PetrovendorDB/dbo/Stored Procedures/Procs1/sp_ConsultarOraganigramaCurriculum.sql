@@ -12,19 +12,19 @@ AS
 		SET NOCOUNT ON ;
 
 		IF ( @Tipo = 0 ) --curriculum
-			BEGIN
-				SELECT		doc.Carpeta, doc.Identificador, doc.Mime, doc.NombreDocumento
-				FROM		dbo.PV_PerfilEmpresa per
-				INNER JOIN	dbo.S_Documento_S3 doc
-					ON doc.IdDocumento = per.IdDocumentoCurriculum
-				WHERE		per.IdProveedor = @IdProveedor
-			END
-		ELSE
-			BEGIN -- organigrama
-				SELECT		doc.Carpeta, doc.Identificador, doc.Mime, doc.NombreDocumento
-				FROM		dbo.PV_PerfilEmpresa perf
-				INNER JOIN	dbo.S_Documento_S3 doc
-					ON perf.IdDocumentoOrganigrama = doc.IdDocumento
-				WHERE		perf.IdProveedor = @IdProveedor
-			END
+		BEGIN
+			SELECT		doc.Carpeta, doc.Identificador, doc.Mime, doc.NombreDocumento, doc.Bucket
+			FROM		dbo.PV_PerfilEmpresa per
+			INNER JOIN	dbo.S_Documento_S3 doc
+				ON doc.IdDocumento = per.IdDocumentoCurriculum
+			WHERE		per.IdProveedor = @IdProveedor
+		END
+	ELSE
+		BEGIN -- organigrama
+			SELECT		doc.Carpeta, doc.Identificador, doc.Mime, doc.NombreDocumento, doc.Bucket
+			FROM		dbo.PV_PerfilEmpresa perf
+			INNER JOIN	dbo.S_Documento_S3 doc
+				ON perf.IdDocumentoOrganigrama = doc.IdDocumento
+			WHERE		perf.IdProveedor = @IdProveedor
+		END
 	END
