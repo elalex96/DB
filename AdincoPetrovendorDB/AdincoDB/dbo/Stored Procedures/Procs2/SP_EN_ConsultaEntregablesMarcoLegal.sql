@@ -1,6 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_ConsultaEntregablesMarcoLegal]    Script Date: 28/10/2021 01:09:06 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_ConsultaEntregablesMarcoLegal]    Script Date: 29/10/2021 09:39:46 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: 26/10/2021
 -- Description:	Consulta de entregables para importacion por marco legal
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_ConsultaEntregablesMarcoLegal]
+ALTER PROCEDURE [dbo].[SP_EN_ConsultaEntregablesMarcoLegal] --3,10029
 	-- Add the parameters for the stored procedure here
 	@IdContrato INT,
 	@IdMarcoLegal INT
@@ -64,8 +64,8 @@ BEGIN
 		CASE WHEN ECA.AbandonoArea = 1 THEN 'SI' ELSE 'NO' END AS AbandonoArea,
 		CASE WHEN ECA.AbandonoPozo = 1 THEN 'SI' ELSE 'NO' END AS AbandonoPozo
 	FROM dbo.EN_Entregable AS E	
-		JOIN dbo.EN_ContratoEntregable AS CE ON E.IdEntregable = CE.IdEntregable AND CE.IdContrato = @IdContrato
+		LEFT JOIN dbo.EN_ContratoEntregable AS CE ON E.IdEntregable = CE.IdEntregable AND CE.IdContrato = @IdContrato
 		JOIN dbo.EN_MarcoLegal AS ML ON E.IdMarcoLegal = ML.IdMarcoLegal AND ML.IdMarcoLegal = @IdMarcoLegal
-		JOIN dbo.EN_Entregable_ConfigAdicional AS ECA ON E.IdEntregable = ECA.IdEntregable
+		LEFT JOIN dbo.EN_Entregable_ConfigAdicional AS ECA ON E.IdEntregable = ECA.IdEntregable
 
 END
