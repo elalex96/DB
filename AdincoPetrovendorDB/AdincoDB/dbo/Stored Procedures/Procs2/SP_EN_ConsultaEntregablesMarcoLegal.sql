@@ -21,7 +21,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	SELECT Top 40
+	SELECT --Top 40
 		E.IdEntregable,
 		E.Consecutivo,
 		E.DocumentoEntregable,
