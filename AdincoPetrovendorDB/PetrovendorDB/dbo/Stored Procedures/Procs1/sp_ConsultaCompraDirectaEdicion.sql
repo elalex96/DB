@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists(select * from sys.procedures where name = 'sp_ConsultaCompraDirectaEdicion')
+begin
+	drop proc sp_ConsultaCompraDirectaEdicion
+end
+
+go
+-- =============================================
 -- Author:   Daniel AC
 -- Create date: 26-09-2019
 -- Description: Agregue cambio de referecias al s3 en los documentos adjuntos 
@@ -31,10 +37,10 @@ AS
                 SELECT
                         linea.IdPresupuesto,
                         coRegistro.IdLineaPresupuestoMes,
-                        fiFactura.ArchivoXML,
+                        ArchivoXML										= fiFactura.ArchivoXML,
                         fiFactura.NombreXML,
-                        fiFactura.PDF,                    --es de tipo varbinary
-                        ISNULL(fiFactura.ArchivoPDF, ''), -- es byte array
+                        PDF												= fiFactura.PDF,                    --es de tipo varbinary
+                        ArchivoPDF										= ISNULL(fiFactura.ArchivoPDF, ''), -- es byte array
                         fiFactura.SubTotal,
                         linea.IdActvidadHidrocarburo,
                         coRegistro.CuentaContable,
@@ -68,7 +74,7 @@ AS
                                 @RazonSocial
                         END                    AS ProveedorEmisor,
                         ISNULL(PG.IdPedido, 0) AS IdPedidoGeneral,
-                        fiFactura.ComprobantePDFByte,
+                        ComprobantePDFByte								=	fiFactura.ComprobantePDFByte,
                         fiFactura.MontoConIva,
 						ISNULL(fiFactura.IdLectorXMLSAT,1) AS IdLectorXMLSAT,
 						REPLACE(ISNULL(fiFactura.ErroSAT,''),'Error SAT:','') AS ErrorSAT,
@@ -148,10 +154,16 @@ AS
 						Mime,
 						Extension,
 						Identificador,
-						id
+						id,
+						Bucket
 				  FROM	dbo.Pv_DocSoporte_CompraDirecta
 				 WHERE	IdFactura = @IdFactura 
 				 AND ISNULL(isEliminado,0)=0
             END;
     END;
 
+
+go
+
+--exec sp_ConsultaCompraDirectaEdicion 10, 59436, 0
+--exec sp_ConsultaCompraDirectaEdicion 10, 59436, 45348

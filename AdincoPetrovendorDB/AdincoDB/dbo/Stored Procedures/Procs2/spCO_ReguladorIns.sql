@@ -16,7 +16,10 @@ begin
 	--declare @idRegulador int
 
 	--select @idRegulador  = isnull(max(IdRegulador),0)+1 from CO_Regulador
-
+	if(@AWSDocumentoId = 0)
+	begin
+		select @AWSDocumentoId = null
+	end
 	if not exists (select * from CO_Regulador  where NombreRegulador = @NombreRegulador)
 	begin
 		insert into CO_Regulador 
