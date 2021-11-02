@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_MM_ConsultarPeticionOferta
+GO
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -26,7 +28,10 @@
 -- Updated date: <26/07/2019>									
 -- Description: <se modifico el envio de terminos y condiciones>			
 --**************************************************************
-
+-- Modified:      <Luis David>									
+-- Updated date: <01/11/2021>									
+-- Description: <Reacomodo de tablas para optimización>			
+--**************************************************************
 CREATE PROCEDURE [dbo].[SP_MM_ConsultarPeticionOferta] @IdPeticionOferta INT, 
                                                       @IdProveedorVenta INT,
 
@@ -80,21 +85,30 @@ AS
                ISNULL(SP.IdSolicitudPedido, 0), 
                ISNULL(PO.CotizacionRestringida, 0)
         FROM MM_PeticionOferta AS PO
-             INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = PO.IdSolicitudPedido  AND PO.IdPeticionOferta = @IdPeticionOferta AND PO.IdSubcontratista = @IdProveedorVenta
+             INNER JOIN MM_SolicitudPedido AS SP 
+			 ON SP.IdSolicitudPedido = PO.IdSolicitudPedido  
+			 AND PO.IdPeticionOferta = @IdPeticionOferta 
+			 AND PO.IdSubcontratista = @IdProveedorVenta
              --INNER JOIN dbo.MM_TipoSolicitudPedido AS ts ON sp.IdTipoSolicitudPedido = ts.IdTipoSolicitudPedido
-             INNER JOIN TA_Operacion OPT ON OPT.IdDocumento = PO.IdSolicitudPedido AND OPT.IdTipoOperacion = 6
-             INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = OPT.IdEstatusOperacion
-             INNER JOIN MM_PrioridadSolicitudPedido AS PSP ON PSP.IdPrioridadSolicitudPedido = SP.IdPrioridadSolicitudPedido
-             INNER JOIN TA_Prioridad AS TP ON TP.IdPrioridad = OPT.IdPrioridad
-             INNER JOIN TA_Vencimiento AS V ON V.IdVencimiento = OPT.IdVigencia
-             INNER JOIN S_Proveedor AS P ON P.IdProveedor = SP.IdProveedor
-             LEFT JOIN TA_TerminosCondicionesOperacion AS TYC ON TYC.IdOperacion = OPT.IdOperacion
-             LEFT JOIN TA_DocFianzaOperacion AS DFO ON DFO.IdOperacion = OPT.IdOperacion
-                                                       AND DFO.Activo = 1
-             LEFT JOIN dbo.MM_EdicionCotizacion AS EC ON EC.IdPeticionOferta = PO.IdPeticionOferta
-         
-              
-              
-
+             INNER JOIN TA_Operacion OPT 
+			 ON PO.IdSolicitudPedido = OPT.IdDocumento 
+			 AND OPT.IdTipoOperacion = 6
+             INNER JOIN TA_Estatus AS TE 
+			 ON OPT.IdEstatusOperacion = TE.IdEstatus
+             INNER JOIN MM_PrioridadSolicitudPedido AS PSP 
+			 ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
+             INNER JOIN TA_Prioridad AS TP 
+			 ON OPT.IdPrioridad = TP.IdPrioridad
+             INNER JOIN TA_Vencimiento AS V 
+			 ON OPT.IdVigencia = V.IdVencimiento
+             INNER JOIN S_Proveedor AS P 
+			 ON SP.IdProveedor = P.IdProveedor
+             LEFT JOIN TA_TerminosCondicionesOperacion AS TYC 
+			 ON OPT.IdOperacion = TYC.IdOperacion
+             LEFT JOIN TA_DocFianzaOperacion AS DFO 
+			 ON OPT.IdOperacion = DFO.IdOperacion
+             AND DFO.Activo = 1
+             LEFT JOIN dbo.MM_EdicionCotizacion AS EC 
+			 ON PO.IdPeticionOferta = EC.IdPeticionOferta
         --#Donde OPT.IdTipoOperacion = 6 Es tipo de operación de Cotización 
     END;
