@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_MM_ConsultarPeticionOfertaDetalle_MV1_5
+GO
+-- =============================================
 -- Author:   Daniel AC
 -- Create date: 18/12/2017
 -- Description: Consulta detalle de la petición de oferta - Cotización del lado del proveedor  venta
@@ -16,7 +18,11 @@
 -- Create date: 13-08-2019
 -- Description: Add Marca, Modelo, No Parte a Descripción material 
 -- =============================================
-
+-- =============================================
+-- Modified:      <Luis David>									
+-- Updated date: <01/11/2021>									
+-- Description: <Reacomodo de tablas para optimización>	
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultarPeticionOfertaDetalle_MV1_5] --2822,44
 	-- Add the parameters for the stored procedure here
 	@IdPeticionOferta INT, 
@@ -108,29 +114,28 @@ AS
 		  FROM	
 				 MM_PeticionOferta AS PO
 				INNER JOIN MM_PeticionOfertaDetalle AS POD
-						   ON PO.IdPeticionOferta = POD.IdPeticionOferta AND PO.IdSubcontratista = @IdProveedorVenta  AND PO.IdPeticionOferta = @IdPeticionOferta
+						   ON PO.IdPeticionOferta = POD.IdPeticionOferta 
+						   AND PO.IdSubcontratista = @IdProveedorVenta  
+						   AND PO.IdPeticionOferta = @IdPeticionOferta
 				INNER JOIN MM_SolicitudPedido AS SP
-						   ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+						   ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
 				INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-						   ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido
-							  AND	SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+						   ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido
+							  AND	POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
 				INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS spdlp
-						   ON spdlp.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+						   ON SPD.IdSolicitudPedidoDetalle = spdlp.IdSolicitudPedidoDetalle
 				LEFT JOIN Adinco.dbo.CO_Instalacion i
-						  ON i.IdInstalacion = spdlp.IdInstalacion
+						  ON spdlp.IdInstalacion = i.IdInstalacion
 				LEFT JOIN dbo.MM_Material AS MM
-						  ON MM.IdMaterial = POD.IdMaterial
+						  ON POD.IdMaterial = MM.IdMaterial
 				LEFT JOIN PV_MM_MaterialUnidad AS U
-						  ON U.IdUnidad = POD.IdUnidad
+						  ON POD.IdUnidad = U.IdUnidad
 				LEFT JOIN PV_MM_MaterialUnidad AS UP
-						  ON UP.IdUnidad = POD.IdUnidadProveedor
+						  ON POD.IdUnidadProveedor = UP.IdUnidad
 				LEFT JOIN DG_Domicilio AS D
-						  ON D.IdDomicilio = SPD.IdDomicilioEntrega
+						  ON SPD.IdDomicilioEntrega = D.IdDomicilio
 				LEFT JOIN PV_MM_MaterialUnidad AS UN
-						  ON UN.IdUnidad = SPD.IdUnidad
-		 
-				
-				
+						  ON SPD.IdUnidad = UN.IdUnidad
 		 GROUP BY POD.IdPeticionOfertaDetalle, POD.IdMaterial, MM.DescripcionCorta, POD.ComentariosComprador ,
 				  NoMaterialesRequeridos , U.Unidad, POD.IdMaterialVendedor, POD.PrecioUnitario, POD.IdMoneda ,
 				  POD.Disponibilidad, POD.ComentarioSubcontratista, POD.SubTotal, POD.FechaVigencia, D.Calle ,
