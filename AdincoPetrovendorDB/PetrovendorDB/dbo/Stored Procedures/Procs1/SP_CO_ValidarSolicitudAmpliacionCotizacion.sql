@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_CO_ValidarSolicitudAmpliacionCotizacion
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 28/05/2018
 -- Description:	Validacion para mostrar la opcion de envio de solicitud de ampliacion del plazo de cotizacion
@@ -8,7 +10,11 @@
 -- Create date: <18-10-2018>
 -- Description:	<se modifica el store para que tenga en cuenta la operacion eliminada>
 -- =============================================
-
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <01/11/2021>
+-- Description:	<Reacomodo de tablas para optimización>
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_CO_ValidarSolicitudAmpliacionCotizacion]
 	-- Add the parameters for the stored procedure here
 	@IdProvedor INT, @IdPeticionOferta INT ,
@@ -42,7 +48,7 @@ AS
 						INNER JOIN	MM_SolicitudPedido AS SP
 							ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 						INNER JOIN	TA_Operacion AS O
-							ON O.IdDocumento = PO.IdSolicitudPedido
+							ON PO.IdSolicitudPedido = O.IdDocumento
 						WHERE
 									PO.IdPeticionOferta = @IdPeticionOferta
 									AND O.IdTipoOperacion = 6
@@ -59,13 +65,13 @@ AS
 									END AS Disponibilidad
 						FROM		MM_PeticionOferta AS PO
 						INNER JOIN	MM_SolicitudPedido AS SP
-							ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+							ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
 						INNER JOIN	TA_Operacion AS O
-							ON O.IdDocumento = PO.IdSolicitudPedido
+							ON PO.IdSolicitudPedido =O.IdDocumento
 						LEFT JOIN	dbo.MM_Pedido AS PED
-							ON PED.IdSolicitudPedido = PO.IdSolicitudPedido
+							ON PO.IdSolicitudPedido = PED.IdSolicitudPedido
 						LEFT JOIN	dbo.MM_Pedido AS PEDD
-							ON PEDD.IdPeticionOferta = PO.IdPeticionOferta
+							ON PO.IdPeticionOferta = PEDD.IdPeticionOferta
 						WHERE
 									PO.IdPeticionOferta = @IdPeticionOferta
 									AND O.IdTipoOperacion = 6

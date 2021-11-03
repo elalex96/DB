@@ -1,10 +1,16 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_ObtenerDocumentosMinimos
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 18/07/2018
 -- Description:	obtener los documentos del proveedor y relacionarlos en caso de que el proveedor no contenga los documentos minimos que la operadora señalo como requeridos entonces
 -- el proveedor no debe poder cotizar
 -- =============================================
-
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <01/11/2021>
+-- Description:	<Reacomodo de tablas para optimización>
+-- =============================================
 CREATE PROCEDURE SP_ObtenerDocumentosMinimos @IdSolPed INT, @IdOferta INT
 AS
 	BEGIN
@@ -16,9 +22,9 @@ AS
 		SELECT		@FechaFinzalizacion = TAO.FechaFinalizacion
 		FROM		dbo.MM_SolicitudPedido solPed
 		INNER JOIN	dbo.TA_Operacion TAO
-			ON TAO.IdDocumento = solPed.IdSolicitudPedido
+			ON solPed.IdSolicitudPedido = TAO.IdDocumento
 		INNER JOIN	dbo.MM_PeticionOferta PO
-			ON PO.IdSolicitudPedido = solPed.IdSolicitudPedido
+			ON solPed.IdSolicitudPedido = PO.IdSolicitudPedido
 		WHERE
 					solPed.IdSolicitudPedido = @IdSolPed
 					AND PO.IdPeticionOferta = @IdOferta
@@ -27,7 +33,7 @@ AS
 		SELECT		@IdTipoRegimen = prov.IdTipoRegimen
 		FROM		dbo.MM_PeticionOferta PO
 		INNER JOIN	dbo.S_Proveedor prov
-			ON prov.IdProveedor = PO.IdSubcontratista
+			ON PO.IdSubcontratista = prov.IdProveedor
 		WHERE
 					PO.IdPeticionOferta = @IdOferta
 					AND PO.IdSolicitudPedido = @IdSolPed
@@ -44,12 +50,12 @@ AS
 												(	SELECT		docS3.IdTipoDocumento --Son los documentos que tiene carga el proveedor
 													FROM		dbo.MM_PeticionOferta PO
 													INNER JOIN	dbo.S_Proveedor prov
-														ON prov.IdProveedor = PO.IdSubcontratista
+														ON PO.IdSubcontratista = prov.IdProveedor
 													INNER JOIN	dbo.S_TipoDocumentoTipoPersona relTipoDoc
-														ON relTipoDoc.IdTipoRegimen = prov.IdTipoRegimen
+														ON prov.IdTipoRegimen = relTipoDoc.IdTipoRegimen
 													INNER JOIN	dbo.S_Documento_S3 docS3
-														ON docS3.IdProveedor = prov.IdProveedor
-														   AND	docS3.IdTipoDocumento = relTipoDoc.IdTipoDocumento
+														ON prov.IdProveedor = docS3.IdProveedor
+														   AND	relTipoDoc.IdTipoDocumento =docS3.IdTipoDocumento
 													WHERE
 																IdPeticionOferta = @IdOferta
 																AND PO.IdSolicitudPedido = @IdSolPed
