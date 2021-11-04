@@ -34,4 +34,4 @@ BEGIN
    END
 
 
-   select * from EN_EntregableDocumento
+   --select * from EN_EntregableDocumento
