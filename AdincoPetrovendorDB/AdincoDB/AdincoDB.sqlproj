@@ -13154,6 +13154,7 @@
     <Build Include="dbo\Tables\Tables2\FI_RelacionPedimento.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_FI_Pedimentos_Subcontratista.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_FI_RelacionPedimento_INS.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\sp_ExtraeEntregablesFaltantesElaboracionSeleccion.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
