@@ -37,6 +37,7 @@
 	[EditadoPorDC] [nvarchar](max) NULL,
     CONSTRAINT [PK_MM_PedidoDetalle] PRIMARY KEY CLUSTERED ([IdPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_PedidoDetalle_MM_Material] FOREIGN KEY ([IdMaterialVendedor]) REFERENCES [dbo].[MM_Material] ([IdMaterial]),
-    CONSTRAINT [FK_MM_PedidoDetalle_MM_Pedido] FOREIGN KEY ([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido])
+    CONSTRAINT [FK_MM_PedidoDetalle_MM_Pedido] FOREIGN KEY ([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido]),
+	constraint FK_MM_PedidoDetalle_MM_Pedido foreign key (IdPedido) references MM_Pedido(IdPedido)
 );
 
