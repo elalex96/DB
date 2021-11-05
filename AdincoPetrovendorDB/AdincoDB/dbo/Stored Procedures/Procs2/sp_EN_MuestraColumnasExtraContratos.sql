@@ -1,6 +1,6 @@
-﻿CREATE PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]-- 3,10061
-    @idContrato INT,
-    @idUsuario  INT
+﻿CREATE PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]--3,10061
+@idContrato INT,
+@idUsuario  INT
 AS
 BEGIN
 SET NOCOUNT ON
@@ -71,11 +71,11 @@ SET NOCOUNT ON
 			ELSE   0
 		END AS	MostrarFechaRealEvidencia
     FROM
-        CO_Contratista  CC
+        dbo.CO_Contratista  CC
     JOIN
-        CO_Contrato C
+        dbo.CO_Contrato C
         ON  CC.IdContratista    =   C.IdContratista
     WHERE
-        C.IdContrato    =   @idContrato
+        C.IdContrato    = @idContrato
 
 END
