@@ -1,11 +1,16 @@
 ﻿
+DROP PROCEDURE IF EXISTS PP_SP_ConsultarPoliticasPagoPorAceptacion
+GO
 -- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <20-09-2018>
 -- Description:	<Se consultan las politicas de pago por IdAceptacion>
 -- =============================================
-
-CREATE PROCEDURE PP_SP_ConsultarPoliticasPagoPorAceptacion	
+-- Author:		Luis David
+-- Create date: 04/11/2021
+-- Description:	Reacomodo de tablas para optimización
+-- =============================================
+CREATE PROCEDURE PP_SP_ConsultarPoliticasPagoPorAceptacion
 	@IdAceptacionPedido INT,
 	/*---------------------Parametros contrato---------------------*/
 	@IdContrato INT = NULL,
@@ -16,8 +21,7 @@ AS
 BEGIN
 	SELECT pp.PoliticaPago
 	FROM dbo.MM_AceptacionPedido ap
-	INNER JOIN dbo.PP_PoliticasPago pp ON pp.IdProveedor = ap.IdProveedor
+	INNER JOIN dbo.PP_PoliticasPago pp 
+	ON ap.IdProveedor = pp.IdProveedor
 	WHERE ap.IdAceptacionPedido = @IdAceptacionPedido
 END
-
-

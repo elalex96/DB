@@ -1,11 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_MM_ValidacionEliminacionProceso
+GO
+-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 31-05-2018
 -- Description:	/*CONSULTAR ESTATUS DE PROCESOS*/
 -- =============================================
--- Author:		Luis David De La Cruz Bautista
--- Create date: 03/02/2021
--- Description:	Optimización por issue 955
+-- Author:		Luis David
+-- Create date: 04/11/2021
+-- Description:	Reacomodo de tablas para optimización
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ValidacionEliminacionProceso] 
     -- Add the parameters for the stored procedure here
@@ -84,9 +86,9 @@ BEGIN
 		SELECT @IDELIMINADO= PC.IdEliminado 
 		FROM dbo.FI_PedimentoComprobante  PC
 		INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC 
-			ON PC.IdPedimentoComprobante = APC.IdPedimentoComprobante
+		ON PC.IdPedimentoComprobante = APC.IdPedimentoComprobante
 		INNER JOIN dbo.MM_AceptacionPedido AP 
-			ON APC.IdAceptacionPedido = AP.IdAceptacionPedido
+		ON APC.IdAceptacionPedido = AP.IdAceptacionPedido
 		WHERE AP.IdAceptacionPedido = @IdProceso
 
 		/*NO EXISTE PEDIMENTO EXTRANJERO OBTENER EL IDELIMINADO DE LA ACEPTACION PEDIDO */
@@ -129,6 +131,7 @@ BEGIN
 		SELECT @IDELIMINADO= IdEliminado FROM  dbo.MM_SolicitudPedido
 		WHERE IdSolicitudPedido = @IdProceso  
 		 
+		
 		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno FROM dbo.AD_RegistroEliminacion 
 		WHERE IdEliminacion=@IDELIMINADO
 
@@ -137,11 +140,16 @@ BEGIN
 
 	IF @Proceso='APROBACION' 
 	BEGIN 
-		/*VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION*/ 
+		/*VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION*/
+		 
 		SELECT @IDELIMINADO= IdEliminado FROM  dbo.TA_Operacion 
 		WHERE IdOperacion = @IdProceso  
-
+		 
+		
 		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno FROM dbo.AD_RegistroEliminacion 
 		WHERE IdEliminacion=@IDELIMINADO
+
 	END 
+	
+
 END 
