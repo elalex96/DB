@@ -27,6 +27,7 @@
     [IdOcCarso]               VARCHAR (100)  NULL,
     [Asiento]                 VARCHAR (8000) NULL,
     CONSTRAINT [PK_MM_AceptacionPedido] PRIMARY KEY CLUSTERED ([IdAceptacionPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
-    CONSTRAINT [FK_MM_AceptacionPedido_DG_Domicilio] FOREIGN KEY ([IdDomicilioEntrega]) REFERENCES [dbo].[DG_Domicilio] ([IdDomicilio])
+    CONSTRAINT [FK_MM_AceptacionPedido_DG_Domicilio] FOREIGN KEY ([IdDomicilioEntrega]) REFERENCES [dbo].[DG_Domicilio] ([IdDomicilio]),
+	constraint FK_MM_AceptacionPedido_MM_Pedido foreign key (IdPedido) references MM_Pedido(IdPedido)
 );
 

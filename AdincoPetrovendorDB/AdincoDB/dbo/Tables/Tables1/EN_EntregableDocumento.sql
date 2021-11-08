@@ -17,8 +17,9 @@
     [FechaRealEvidencia]      DATETIME         NULL,
     [Comentario]              VARCHAR (500)    NULL,
     PRIMARY KEY CLUSTERED ([DocumentoEntregableId] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
-    CONSTRAINT [FK__EN_Entreg__idIns__591E763C] FOREIGN KEY ([idInstanciaEntregable]) REFERENCES [dbo].[EN_InstanciasEntregable] ([idInstanciaEntregable]),
-    CONSTRAINT [FK__EN_Entrega__Meta__582A5203] FOREIGN KEY ([idContratoEntregable]) REFERENCES [dbo].[EN_ContratoEntregable] ([IdContratoEntregable]),
-    CONSTRAINT [FK_EN_EntregableDocumento_EN_TipoArchivo] FOREIGN KEY ([idTipoArchivo]) REFERENCES [dbo].[EN_TipoArchivo] ([idTipoArchivo])
+    CONSTRAINT [FK__EN_Entreg__idIns__591E763C]				FOREIGN KEY ([idInstanciaEntregable])	REFERENCES [dbo].[EN_InstanciasEntregable] ([idInstanciaEntregable]),
+    CONSTRAINT [FK__EN_Entrega__Meta__582A5203]				FOREIGN KEY ([idContratoEntregable])	REFERENCES [dbo].[EN_ContratoEntregable] ([IdContratoEntregable]),
+    CONSTRAINT [FK_EN_EntregableDocumento_EN_TipoArchivo]	FOREIGN KEY ([idTipoArchivo])			REFERENCES [dbo].[EN_TipoArchivo] ([idTipoArchivo]),
+	constraint FK_EN_EntregableDocumento_AP_Usuario			foreign key (CreadoPor)					references AP_Usuario(UsuarioID)
 );
 

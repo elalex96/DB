@@ -57,7 +57,8 @@
     CONSTRAINT [FK_MM_Pedido_S_Proveedor] FOREIGN KEY ([IdSubcontratista]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_MM_Pedido_S_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
     CONSTRAINT [FK_MM_Pedido_S_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
-    CONSTRAINT [FK_MM_Pedido_S_UsuarioRecepcion] FOREIGN KEY ([IdUsuarioRecepcionServicio]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
+    CONSTRAINT [FK_MM_Pedido_S_UsuarioRecepcion] FOREIGN KEY ([IdUsuarioRecepcionServicio]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
+	constraint FK_MM_PedidoDetalle_MM_Pedido foreign key (IdPedido) references MM_Pedido(IdPedido)
 );
 
 

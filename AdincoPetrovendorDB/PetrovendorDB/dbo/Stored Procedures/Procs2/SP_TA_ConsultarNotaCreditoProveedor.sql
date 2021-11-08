@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_TA_ConsultarNotaCreditoProveedor
+GO
+-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 11/09/2019
 -- Description:	Permite agregar LA OPERACION para hacer relacion con un flujo de tareas
+-- =============================================
+-- Author:		Luis David
+-- Create date: 04/11/2021
+-- Description:	Reacomodo de tablas para optimización
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_TA_ConsultarNotaCreditoProveedor]
     -- Add the parameters for the stored procedure here
@@ -31,18 +37,18 @@ BEGIN
            NC.CFDIRelacionados
     FROM dbo.MM_AceptacionNotaCredito NC
         LEFT JOIN dbo.MM_AceptacionPedido AP
-            ON AP.IdAceptacionPedido = NC.IdAceptacionPedido
+            ON NC.IdAceptacionPedido = AP.IdAceptacionPedido 
         LEFT JOIN dbo.MM_Pedido P
-            ON P.IdPedido = AP.IdPedido
+            ON AP.IdPedido = P.IdPedido
         LEFT JOIN dbo.TA_Operacion O
-            ON O.IdDocumento = NC.IdAceptacionNotaCredito
-               AND O.IdTipoOperacion = 17 --> APROBACIÓN NOTA DE CREDITO
+            ON NC.IdAceptacionNotaCredito = O.IdDocumento
+               AND 17 = O.IdTipoOperacion --> APROBACIÓN NOTA DE CREDITO
         LEFT JOIN dbo.TA_Estatus E
-            ON E.IdEstatus = O.IdEstatusOperacion
+            ON O.IdEstatusOperacion = E.IdEstatus
         LEFT JOIN dbo.FI_Factura F
-            ON F.IdFactura = NC.IdFacturaNotaCredito
+            ON NC.IdFacturaNotaCredito = F.IdFactura
         LEFT JOIN dbo.S_Usuario UC
-            ON UC.IdUsuario = NC.CreadoPor
+            ON NC.CreadoPor = UC.IdUsuario
     WHERE NC.IdAceptacionPedido = @IdAceptacionPedido
           AND P.IdSubcontratista = @IdProveedor
           AND ISNULL(NC.IdEstatusEliminada, 0) = 0
@@ -62,4 +68,3 @@ BEGIN
 	ORDER BY NC.CreadoEl DESC
 
 END;
-

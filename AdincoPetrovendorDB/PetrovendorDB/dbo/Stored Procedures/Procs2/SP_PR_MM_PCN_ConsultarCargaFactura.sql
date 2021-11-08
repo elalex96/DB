@@ -1,7 +1,13 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS SP_PR_MM_PCN_ConsultarCargaFactura
+GO
+-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 08-08-17
 -- Description:	Consulta Aceptaciones que tengan una carta de contenido nacional aprobada para adjuntarle una factura
+-- =============================================
+-- Author:		Luis David
+-- Create date: 04/11/2021
+-- Description:	Reacomodo de tablas para optimización
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_ConsultarCargaFactura]
 	-- Add the parameters for the stored procedure here
@@ -36,13 +42,15 @@ AS
 	 SELECT 18,'Factura XML', ISNULL(TV.TipoValidacion,'Sin Documento'), FechaCargaXML, FechaEvaluacionXML
 	  
 	 FROM MM_AceptacionFactura
-	 LEFT JOIN S_TipoValidacionDoc AS TV ON TV.IdTipoValidacionDoc = IdEstatusXML
+	 LEFT JOIN S_TipoValidacionDoc AS TV 
+	 ON IdEstatusXML = TV.IdTipoValidacionDoc
 	 WHERE IdAceptacionPedido = @IdAceptacionPedido
 
 	 INSERT INTO #FACTURAPDF (IdTipoDocumento, Documento,Estatus,FechaCarga,FechaEvaluacion)
 	 SELECT 17,'Factura PDF', ISNULL(TV.TipoValidacion,'Sin Documento'), FechaCargaPDF, FechaEvaluacionPDF
 	 FROM MM_AceptacionFactura
-	 LEFT JOIN S_TipoValidacionDoc AS TV ON TV.IdTipoValidacionDoc = IdEstatusPDF
+	 LEFT JOIN S_TipoValidacionDoc AS TV 
+	 ON IdEstatusPDF = TV.IdTipoValidacionDoc
 	 WHERE IdAceptacionPedido = @IdAceptacionPedido
 
 	 INSERT INTO #FACTURA
@@ -56,4 +64,3 @@ AS
 
 		 ---APC.IdEstatus=2 EStatus Aprobado 
      END;
-

@@ -1,4 +1,10 @@
-﻿  
+﻿if exists (select * from sys.procedures where name = 'SP_PR_MM_AceptacionPedidoProveedorVentas')
+begin
+	drop proc SP_PR_MM_AceptacionPedidoProveedorVentas
+end
+
+go
+
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------  
 -- =============================================  
 -- Author:  Daniel Cruz  
@@ -16,8 +22,8 @@
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentas] --670,4  
  -- Add the parameters for the stored procedure here  
-@IdProveedor INT,  
-@Estatus INT  
+	@IdProveedor	INT,  
+	@Estatus		INT  
 AS  
      BEGIN  
  -- SET NOCOUNT ON added to prevent extra result sets from  
@@ -25,23 +31,25 @@ AS
          SET NOCOUNT ON;  
   
     -- Insert statements for procedure here  
- DECLARE @SAPVENDOR NVARCHAR(50) = (SELECT TOP 1 VendorIDSAP   
-          FROM Adinco.dbo.CO_SAPVendor AS SV  
-          LEFT JOIN dbo.S_Proveedor AS PR ON PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = SV.TaxID COLLATE SQL_Latin1_General_CP1_CI_AS  
-          WHERE PR.IdProveedor = @IdProveedor );  
+ DECLARE @SAPVENDOR NVARCHAR(50) = (		SELECT TOP 1 VendorIDSAP   
+											FROM		Adinco.dbo.CO_SAPVendor SV  
+											LEFT JOIN	dbo.S_Proveedor			PR 
+											ON			PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = SV.TaxID COLLATE SQL_Latin1_General_CP1_CI_AS  
+											WHERE		PR.IdProveedor			=	@IdProveedor 
+											);  
    
  CREATE TABLE #AceptacionesPedido(  
- IdAceptacionPedido INT null,  
- Pedido NVARCHAR(max) null,  
- IdPedido INT null,  
- Creado DATETIME null,  
- NombreUsuarioEntrega NVARCHAR(max) null,  
- Cliente NVARCHAR(max) null,  
- IdPedidoGeneral INT null,  
- IdAceptacionCartaPCN INT null,  
- IdTipoPedido INT null,  
- EstatusAprobacion NVARCHAR(100) NULL,  
- span NVARCHAR(100) NULL  
+	 IdAceptacionPedido INT null,  
+	 Pedido NVARCHAR(max) null,  
+	 IdPedido INT null,  
+	 Creado DATETIME null,  
+	 NombreUsuarioEntrega NVARCHAR(max) null,  
+	 Cliente NVARCHAR(max) null,  
+	 IdPedidoGeneral INT null,  
+	 IdAceptacionCartaPCN INT null,  
+	 IdTipoPedido INT null,  
+	 EstatusAprobacion NVARCHAR(100) NULL,  
+	 span NVARCHAR(100) NULL  
  );  
   
  IF @Estatus=0  
@@ -118,10 +126,12 @@ AS
   LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = A.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
   LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL ON PL.Planta = PO.Plant  
    LEFT JOIN Adinco.dbo.CO_Contratista AS CC ON CC.IdContratista = PL.IdContratista  
+   inner join  dbo.MPY_MM_AceptacionPedidoDetalle AS APD 
+   on APD.IdAceptacionPedido = A.IdAceptacionPedido
    WHERE A.IdSubContratista = @SAPVENDOR  
    AND AC.IdAceptacionCartaPCN IS NULL  
    AND PSES.IdEstatus = 2  
-   AND EXISTS (SELECT 1 FROM dbo.MPY_MM_AceptacionPedidoDetalle AS APD WHERE APD.IdAceptacionPedido = A.IdAceptacionPedido)  
+   --AND EXISTS (SELECT 1 FROM dbo.MPY_MM_AceptacionPedidoDetalle AS APD WHERE APD.IdAceptacionPedido = A.IdAceptacionPedido)  
    GROUP BY   
    A.IdAceptacionPedido,  
    A.IdPedido,  
@@ -222,6 +232,8 @@ AS
   ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = A.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
   LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL ON PL.Planta = PO.Plant  
    LEFT JOIN Adinco.dbo.CO_Contratista AS CC ON CC.IdContratista = PL.IdContratista  
+   inner join dbo.MPY_MM_AceptacionPedidoDetalle AS APD 
+   on APD.IdAceptacionPedido = A.IdAceptacionPedido
    WHERE A.IdSubContratista = @SAPVENDOR  
    AND ISNULL(A.IdEstatusEliminado,0)<>1 --> OCULTAR CARTAS DE CONTENIDO NACIONAL DONDE EL ESTATUS DE ELIMINACION LOGICA =1 DE ACEPTACIÓN DE PEDIDO   
    AND ISNULL(AC.IdEstatusEliminado,0)<>1 --> OCULTAR CARTAS DE CONTENIDO NACIONAL DONDE EL ESTATUS DE ELIMINACION LOGICA =1 DE ACEPTACION CARTA CN  
@@ -231,7 +243,7 @@ AS
             ORDER BY A_PCN.CreadoEl DESC)        
    ) AND AC.IdEstatus =@Estatus AND ISNULL(A.IdNacionalidadProveedor,0) <> 2 --> NACIONALIDAD EXTRANJERA  
    AND PSES.IdEstatus = 2  
-   AND EXISTS (SELECT 1 FROM dbo.MPY_MM_AceptacionPedidoDetalle AS APD WHERE APD.IdAceptacionPedido = A.IdAceptacionPedido)  
+   --AND EXISTS (SELECT 1 FROM dbo.MPY_MM_AceptacionPedidoDetalle AS APD WHERE APD.IdAceptacionPedido = A.IdAceptacionPedido)  
    GROUP BY     
    A.IdAceptacionPedido,  
    A.IdPedido,  
@@ -332,6 +344,8 @@ AS
   LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = A.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
   LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PL ON PL.Planta = PO.Plant  
    LEFT JOIN Adinco.dbo.CO_Contratista AS CC ON CC.IdContratista = PL.IdContratista  
+   inner join	dbo.MPY_MM_AceptacionPedidoDetalle APD
+   on APD.IdAceptacionPedido = A.IdAceptacionPedido
          WHERE A.IdSubContratista = @SAPVENDOR  
    AND (AC.IdAceptacionCartaPCN IN (SELECT TOP 1  A_PCN.IdAceptacionCartaPCN   
             FROM dbo.MPY_MM_AceptacionCartaPCN A_PCN   
@@ -342,7 +356,7 @@ AS
    AND ISNULL(A.IdEstatusEliminado,0)<>1 --> OCULTAR CARTAS DE CONTENIDO NACIONAL DONDE EL ESTATUS DE ELIMINACION LOGICA =1 DE ACEPTACIÓN DE PEDIDO   
    AND ISNULL(A.IdNacionalidadProveedor,0) <> 2 --> NACIONALIDAD EXTRANJERA   
    AND PSES.IdEstatus = 2    
-   AND EXISTS (SELECT 1 FROM dbo.MPY_MM_AceptacionPedidoDetalle AS APD WHERE APD.IdAceptacionPedido = A.IdAceptacionPedido)  
+   --AND EXISTS (SELECT 1 FROM dbo.MPY_MM_AceptacionPedidoDetalle AS APD WHERE APD.IdAceptacionPedido = A.IdAceptacionPedido)  
    GROUP BY     
    A.IdAceptacionPedido,  
    A.IdPedido,  
@@ -362,7 +376,14 @@ AS
    ORDER BY A.IdAceptacionPedido DESC  
        END    
   
-      
+           --AJUSTE JAGUAR PARA NO RECIBIR FACTURAS EN PERIODO DE DICIEMBRE 
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%pantera%'  AND EstatusAprobacion LIKE '%sin iniciar%' 
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%jaguar%'   AND EstatusAprobacion LIKE '%sin iniciar%' 
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%pantera%'  AND EstatusAprobacion = '' 
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%jaguar%'   AND EstatusAprobacion LIKE '' 
+	--DELETE  FROM #AceptacionesPedido WHERE #AceptacionesPedido.Cliente LIKE '%jeyp%'   AND EstatusAprobacion LIKE '%sin iniciar%'  
+	  
+
   
     SELECT  
   ROW_NUMBER() OVER(ORDER BY Creado DESC) AS IdRow,  
@@ -382,4 +403,4 @@ AS
   END;  
   
   
-  
+
