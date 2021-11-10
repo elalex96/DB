@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS MM_SP_ConsultaMaterialesImportados
+GO
+-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <07-08-2018>
 -- Description:	<Consulta de materiales por proveedor en pantalla de importacion de materiales>
@@ -6,6 +8,10 @@
 -- Author:		<Marcos Neri>
 -- Create date: <17-04-2019>
 -- Description:	<Agregar IdMaterial concatenado con la descripcion corta>
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <08/11/2021>
+-- Description:	<Se agrega el tipo de idcatalogomaestro 3>
 -- =============================================
 CREATE PROCEDURE [dbo].[MM_SP_ConsultaMaterialesImportados]	--420
 	@IdProveedor INT,
@@ -23,7 +29,8 @@ BEGIN
 				'No. Material: '+CAST(m.IdMaterial AS VARCHAR)+' | Descripción: '+m.DescripcionCorta  AS DescripcionCorta ,
 				m.DescripcionLarga,
 				CASE WHEN m.IdTipoCatalogoMaestro = 1 THEN 'Material'
-					 WHEN m.IdTipoCatalogoMaestro = 2 THEN 'Servicio' 
+					 WHEN m.IdTipoCatalogoMaestro = 2 THEN 'Servicio'
+					 WHEN m.IdTipoCatalogoMaestro = 3 THEN 'Bienes'
 					 ELSE 'No especificado' END AS Tipo,
 				up.Unidad AS UnidadPredeterminada,
 				u1.Unidad AS Unidad1,
@@ -53,4 +60,3 @@ BEGIN
 	--select		Fecha from #tmp group by Fecha
 	--select		* from #tmp
 END
-
