@@ -1,6 +1,6 @@
 ﻿USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CrearNuevaCarpeta]    Script Date: 15/10/2021 09:42:32 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_CrearNuevaCarpeta]    Script Date: 11/11/2021 09:43:14 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -79,7 +79,18 @@ BEGIN
 													WHEN @EtapaPozoId = 0 AND @InstalacionId != 0 AND @MarcoLegalId = 0 THEN -1 
 												ELSE @EtapaPozoId END) AS NVARCHAR) + ',' + CAST((CASE 
 			WHEN @MarcoLegalId = 0 AND @InstalacionId = 0 AND @ReceptorId != 0 AND @EtapaPozoId = 0 THEN -1
-			ELSE @MarcoLegalId END) AS NVARCHAR) + ',''' + @Frecuencia + ''','+ CAST(@EntregableId AS NVARCHAR) +')&#34;>Cargar archivo</a></li></ul>">' + @NombreCarpeta +'</a>',
+			ELSE @MarcoLegalId END) AS NVARCHAR) + ',''' + @Frecuencia + ''','+ CAST(@EntregableId AS NVARCHAR) +')&#34;>Cargar archivo</a></li>' + 
+			'<li>
+                <a href=&#34;javascript:;&#34; onclick=&#34;nuevaCarpetaPer(##IDPADRE##' + ',' + CAST(@EtapaId AS NVARCHAR) + ',' + CAST(@ReceptorId AS NVARCHAR) + ',' + CAST(@EntregableId AS NVARCHAR) + ',1)&#34;>
+                Nueva Carpeta
+                </a>
+            </li>'+
+			'<li>
+                <a href=&#34;javascript:;&#34; onclick=&#34;EliminarCarpeta(##ID##,##IDPADRE##,''' + CAST(@NombreCarpeta AS NVARCHAR) + ''')&#34;>
+                Eliminar Carpeta
+                </a>
+            </li>'+
+			'</ul>">' + @NombreCarpeta +'</a>',
 		@NivelPadre,
 		'Carpeta',
 		GETDATE(),
@@ -87,6 +98,10 @@ BEGIN
 		@ContratoId,
 		1
 	);
+
+	UPDATE CarpetasDocumentosEntregables
+	SET Acciones = REPLACE(Acciones,'##ID##',CAST(ID AS nvarchar))
+	WHERE ID = SCOPE_IDENTITY();
 
 	SELECT SCOPE_IDENTITY();
 

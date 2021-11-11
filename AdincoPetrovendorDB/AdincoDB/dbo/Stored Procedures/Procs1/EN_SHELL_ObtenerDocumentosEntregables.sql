@@ -1,6 +1,6 @@
 ﻿USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 15/10/2021 09:44:46 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 11/11/2021 09:39:26 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -21,7 +21,6 @@ SET NOCOUNT ON
 		4.- Frecuencia 
 		5.-	Fecha de entrega Año-Mes
 		6.- Entregable	
-
 		Niveles para pozos
 		1. Etapa
 		2. Pozo
@@ -29,7 +28,6 @@ SET NOCOUNT ON
 		3. Lineamiento
 		4. Entregable
 		5. Archivo
-
 		- Los archivos de tipo Archivo General son los unicos que llevan el enlace de Eliminar
 		- El icono de las carpetas Generales son de color verde, asi tambien los archivos generales
 		*/
@@ -970,7 +968,7 @@ SET NOCOUNT ON
                                            Cargar archivo
                                         </a>
                                     </li>' +
-									(CASE WHEN Detalle IN ('Regulador','Marco Legal','Etapa') THEN 
+									(CASE WHEN Detalle IN ('Regulador','Marco Legal','Etapa','Carpeta general') THEN 
 									'<li>
                                         <a href=&#34;javascript:;&#34; onclick=&#34;nuevaCarpeta(''GENERAL'','+CAST(Nivel  AS nvarchar(MAX))+','+CAST(ISNULL(ID,0)  AS nvarchar(MAX))+','+CAST(ISNULL(EtapaId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(ReceptorEntregableId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(PozoInstalacionId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(EtapaPozoId,0)  AS nvarchar(MAX))+','+CAST(ISNULL(MarcoLegalId,0)  AS nvarchar(MAX))+','''+CAST(ISNULL(FrecuenciaId,'')  AS nvarchar(MAX))+''','''+CAST(ISNULL(Titulo,'')  AS nvarchar(MAX))+''','+CAST(ISNULL(EntregableId,0)  AS nvarchar(MAX)) +')&#34;>
                                            Nueva Carpeta
@@ -1031,7 +1029,15 @@ END
 		0,
 		'Carpeta general',
 		'<i class="glyph-icon icon-folder" style="color: green;" title="Carpeta general"></i>',
-		'<a href="javascript:;" title="Carpeta general: General" data-html="true" data-toggle="popover" data-placement="top" data-content="<ul class=&#34;dropdown-menu display-block&#34;><li><a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoPerzonalizado(2,##IDPADRE##,18,0,0,0,-1,'','',0)&#34;>Cargar archivo</a></li></ul>">General</a>',
+		'<a href="javascript:;" title="Carpeta general: General" data-html="true" data-toggle="popover" data-placement="top" data-content="' +
+		'<ul class=&#34;dropdown-menu display-block&#34;>' + 
+			'<li><a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoPerzonalizado(2,##IDPADRE##,18,0,0,0,-1,'','',0)&#34;>Cargar archivo </a></li>'+ 
+			'<li>
+                <a href=&#34;javascript:;&#34; onclick=&#34;nuevaCarpetaPer(##IDPADRE##' + ',18,0,0,1)&#34;>
+                Nueva Carpeta
+                </a>
+            </li>'+
+			+'</ul>">General</a>',
 		2,
 		'Carpeta'
 	);
@@ -1079,10 +1085,11 @@ END
 		CDE.Frecuencia,
 		CDE.Mime,
 		'CARGADO_USUARIO',
-		CASE	
-			WHEN Detalle = 'Archivo' THEN ID
-			ELSE NULL
-		END,
+		CDE.ID,
+		--CASE	
+		--	WHEN Detalle = 'Archivo' THEN ID
+		--	ELSE NULL
+		--END,
 		US.Nombre,
 		CDE.FechaCarga
 	FROM CarpetasDocumentosEntregables AS CDE
@@ -1136,6 +1143,11 @@ END
 		AND L.Detalle = 'Carpeta Personalizada'
 		AND L.TipoArchivo = 'Carpeta';
 
+	DELETE FROM ListaDocsTemporal WHERE IdContrato = @ContratoId;
+
+	INSERT INTO ListaDocsTemporal
+	SELECT *,@ContratoId FROM @Lista;
+	
 	SELECT * FROM @Lista;
 
 END
