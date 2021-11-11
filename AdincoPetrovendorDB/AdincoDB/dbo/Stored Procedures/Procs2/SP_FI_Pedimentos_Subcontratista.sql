@@ -4,7 +4,7 @@
 -- Create date: 03-11-21
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_Pedimentos_Subcontratista] 
+CREATEPROCEDURE [dbo].[SP_FI_Pedimentos_Subcontratista]-- 10007,10002,11571
 	-- Add the parameters for the stored procedure here
 @IdContrato INT,
 @IdUsuario  INT,
@@ -44,17 +44,19 @@ AS
 					ISNULL(pc.CuentaBancaria,'') CuentaBancaria
              FROM FI_PedimentoComprobante AS PC
                   INNER JOIN FI_PedimentoComprobanteDetalle AS PCD ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
-                  INNER JOIN dbo.PV_Subcontratista SI ON PC.IdSubcontratistaImportador = SI.IdSubcontratista 
                   INNER JOIN dbo.PV_Subcontratista SE ON PC.IdSubcontratistaExportador = SE.IdSubcontratista
 													AND	SE.IdSubcontratista = @IdSubcontratista
                   INNER JOIN dbo.PV_TipoMoneda TM ON PC.IdMoneda = TM.IdMoneda
+				  LEFT JOIN dbo.PV_Subcontratista SI ON PC.IdSubcontratistaImportador = SI.IdSubcontratista 
                   LEFT JOIN dbo.AP_Usuario UC ON PC.CreadoPor = UC.UsuarioID
                   LEFT JOIN dbo.AP_Usuario UM ON PC.ModificadoPor = UM.UsuarioID
                   LEFT JOIN dbo.FI_Documento D ON PC.IdPedimentoComprobante = D.IdPedimentoComprobante
                   LEFT JOIN dbo.FI_ClavesPedimento CP ON PC.ClavePedimento = CP.IdPedimento
-             WHERE PC.CvTipoDocFacturacion = 2
+             WHERE PC.CvTipoDocFacturacion IN (2,3)
                    AND PC.IdContrato = @IdContrato
              ORDER BY IdPedimento DESC;
          END;
+
+
 
 
