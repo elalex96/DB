@@ -1,9 +1,16 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ComprasDirectasEliminadas]    Script Date: 12/11/2021 11:55:39 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <08-07-2019>
 -- Description:	<Consulta de compras directas eliminadas>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_ComprasDirectasEliminadas] --420
+ALTER PROCEDURE [dbo].[SP_PR_MM_ComprasDirectasEliminadas] --1835
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT
 AS
@@ -26,7 +33,7 @@ BEGIN
 		RE.ComentarioExterno AS Justificacion,
 		F.IdFactura
 	FROM dbo.AD_RegistroEliminacion AS RE
-		LEFT JOIN dbo.PR_FI_Factura AS F 
+		JOIN dbo.PR_FI_Factura AS F 
 			ON F.IdEliminacion = RE.IdEliminacion
 		LEFT JOIN dbo.S_Proveedor AS PR 
 			ON PR.RFC = F.Emisor-- AND PR.Activo = 1
