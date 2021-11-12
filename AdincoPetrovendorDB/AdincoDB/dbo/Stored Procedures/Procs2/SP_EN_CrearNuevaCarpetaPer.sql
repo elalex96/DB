@@ -1,6 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CrearNuevaCarpetaPer]    Script Date: 11/11/2021 09:41:39 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_CrearNuevaCarpetaPer]    Script Date: 12/11/2021 12:00:40 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: 09/11/2021
 -- Description:	Creacion de nuevas carpetas para el visor de archivos
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_CrearNuevaCarpetaPer]
+ALTER PROCEDURE [dbo].[SP_EN_CrearNuevaCarpetaPer]
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@Padre INT,
@@ -50,14 +50,14 @@ BEGIN
 	(
 		@Padre,
 		@NombreCarpeta,
-		CASE WHEN @EtapaId = 0 THEN NULL ELSE @EtapaId END,
-		CASE WHEN @ReceptorId = 0 THEN NULL ELSE @ReceptorId END,
-		CASE WHEN @EntregableId = 0 THEN NULL ELSE @EntregableId END,
+		NULL,
+		NULL,
+		NULL,
 		0,
 		'Carpeta Personalizada',
 		'<i class="glyph-icon icon-folder" style="color: green;" title="Carpeta Personalizada"></i>',
 		'<a href="javascript:;" title="Carpeta Personalizada: ' + @NombreCarpeta +'" data-html="true" data-toggle="popover" data-placement="top" data-content="<ul class=&#34;dropdown-menu display-block&#34;>' +
-		'<li><a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoPer(##IDPADRE##,' + CAST(@EtapaId AS NVARCHAR) + ',' + CAST(@ReceptorId AS NVARCHAR) + ',' + CAST(@EntregableId AS NVARCHAR) +')&#34;>Cargar archivo</a></li>' + 
+		'<li><a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoPer(##IDPADRE##,' + CAST(@EtapaId AS NVARCHAR) + ',' + CAST(@ReceptorId AS NVARCHAR) + ',' + CAST(@EntregableId AS NVARCHAR) +',##ID##)&#34;>Cargar archivo</a></li>' + 
 		--VALIDAR QUE SOLO SE PUEDEN CREAR CARPETAS HASTA EL NIVEL 3
 		CASE WHEN @Nivel <= 2 THEN	
 			'<li>
