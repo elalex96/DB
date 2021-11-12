@@ -1,6 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CrearNuevaCarpeta]    Script Date: 11/11/2021 09:43:14 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_CrearNuevaCarpeta]    Script Date: 11/11/2021 11:59:30 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: 14/10/2021
 -- Description:	Creacion de nuevas carpetas para el visor de archivos
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_CrearNuevaCarpeta]
+ALTER PROCEDURE [dbo].[SP_EN_CrearNuevaCarpeta]
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@Padre INT,
@@ -79,7 +79,7 @@ BEGIN
 													WHEN @EtapaPozoId = 0 AND @InstalacionId != 0 AND @MarcoLegalId = 0 THEN -1 
 												ELSE @EtapaPozoId END) AS NVARCHAR) + ',' + CAST((CASE 
 			WHEN @MarcoLegalId = 0 AND @InstalacionId = 0 AND @ReceptorId != 0 AND @EtapaPozoId = 0 THEN -1
-			ELSE @MarcoLegalId END) AS NVARCHAR) + ',''' + @Frecuencia + ''','+ CAST(@EntregableId AS NVARCHAR) +')&#34;>Cargar archivo</a></li>' + 
+			ELSE @MarcoLegalId END) AS NVARCHAR) + ',''' + @Frecuencia + ''','+ CAST(@EntregableId AS NVARCHAR) +',##ID##)&#34;>Cargar archivo</a></li>' + 
 			'<li>
                 <a href=&#34;javascript:;&#34; onclick=&#34;nuevaCarpetaPer(##IDPADRE##' + ',' + CAST(@EtapaId AS NVARCHAR) + ',' + CAST(@ReceptorId AS NVARCHAR) + ',' + CAST(@EntregableId AS NVARCHAR) + ',1)&#34;>
                 Nueva Carpeta
