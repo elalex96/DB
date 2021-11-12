@@ -1,11 +1,11 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]    Script Date: 16/09/2021 04:29:44 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]    Script Date: 11/11/2021 02:08:53 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]-- 3,10061
+ALTER PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]-- 3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -16,6 +16,8 @@ BEGIN--285718
     -- Description: 
     -- 20190510 BAAC    Se modifica consulta de las fechas proximas para no considerar el id de la instancia
     -- =============================================
+	-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
+	-- =============================================
     SET	NOCOUNT	ON;
 	SET LANGUAGE Spanish; 
     DECLARE	@Count	INT	=	0;
@@ -89,6 +91,7 @@ BEGIN--285718
             AND	CE.Activo	=	1
             AND	IE.Activo	=	1	) 
 			AND	CE.IdContrato	=	@IdContrato
+			AND ISNULL(CE.BitNA,0) <> 1
     GROUP	BY	CE.IdEntregable;
 
 
@@ -149,6 +152,7 @@ BEGIN--285718
 	ON	IE.IdContratoEntregable	=	CE.IdContratoEntregable
 			AND TI.idEntregable = CE.IdEntregable
 			AND CE.IdContrato =	@IdContrato
+			AND ISNULL(CE.BitNA,0) <> 1
 
     JOIN	dbo.EN_Actividad A
 	ON	IE.ActividadID	=	A.ActividadID
@@ -255,6 +259,7 @@ BEGIN--285718
 		ON	IE.IdContratoEntregable	=	CE.IdContratoEntregable
         AND	TI.idEntregable	=	CE.IdEntregable
         AND	CE.IdContrato	=	@IdContrato
+		AND ISNULL(CE.BitNA,0) <> 1
 
     JOIN	EN_ExcepcionesActividad	EXACT 
 		ON	IE.idInstanciaEntregable	=	EXACT.IdInstanciasEntregables
@@ -313,5 +318,3 @@ BEGIN--285718
 		IE.FechasLimiteElaboracion	ASC;
   
     END;
-
-

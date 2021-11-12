@@ -1,9 +1,18 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_ExtraeEntregables]    Script Date: 11/11/2021 05:25:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Llama los entregables
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_EN_ExtraeEntregables]  --3,10061,0,12108
+-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
+-- =============================================
+ALTER PROCEDURE [dbo].[sp_EN_ExtraeEntregables]  --3,10061,0,12108
     @idContrato INT,
     @idUsuario INT,
     @IdActividad INT, -- NUEVO
@@ -90,6 +99,7 @@ BEGIN
          WHERE      ISNULL(E.IsEliminado, 0) = 0
            AND      (   E.IdFrecuenciaEntregable IN ( 10018, 10016, 10011, 10010, 10008, 10004, 10003, 10000 ))
            AND      CE.Activo                = 1
+		   AND ISNULL(CE.BitNA,0) <> 1
          ORDER BY Activo DESC;
 
     END;
@@ -184,13 +194,10 @@ BEGIN
           LEFT JOIN dbo.EN_FrecuenciaEntregable FE
             ON E.IdFrecuenciaEntregable = FE.IdFrecuenciaEntregable
          WHERE      ISNULL(E.IsEliminado, 0) = 0
-           AND      (   E.IdFrecuenciaEntregable NOT IN ( 10018, 10019, 10016, 10011, 10010, 10008, 10004, 10003, 10000 )
+           AND      (   E.IdFrecuenciaEntregable NOT IN ( 10018, 10016, 10011, 10010, 10008, 10004, 10003, 10000 )
                    OR   E.BitInterno              = 1)
            AND      CE.Activo                     = 1
+		   AND ISNULL(CE.BitNA,0) <> 1
          ORDER BY Activo DESC;
     END;
 END;
-
-
-
-

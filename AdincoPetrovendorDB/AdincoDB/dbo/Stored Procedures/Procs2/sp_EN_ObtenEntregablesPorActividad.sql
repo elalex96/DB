@@ -1,15 +1,25 @@
-﻿CREATE PROCEDURE [dbo].[sp_EN_ObtenEntregablesPorActividad] -- 3,10061,0,12108
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_ObtenEntregablesPorActividad]    Script Date: 11/11/2021 05:36:56 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Reyna Olvera
+-- Create date: 20181023
+-- Description:	Llama los entregables
+-- =============================================
+-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
+-- =============================================
+ALTER PROCEDURE [dbo].[sp_EN_ObtenEntregablesPorActividad] -- 3,10061,0,12108
     @idContrato INT,
     @idUsuario INT,
     @IdActividad INT,
     @idProceso INT --Para buscar Ronda
 AS
 BEGIN
--- =============================================
--- Author:		Reyna Olvera
--- Create date: 20181023
--- Description:	Llama los entregables
--- =============================================
+
     SET NOCOUNT ON;
 
         SELECT    DISTINCT ce.IdContratoEntregable, 
@@ -56,6 +66,7 @@ BEGIN
 				dbo.EN_ContratoEntregable CE
 				ON	CE.IdContrato	=	@idContrato
 				AND	E.IdEntregable	=	CE.IdEntregable
+				AND ISNULL(CE.BitNA,0) <> 1
 		 --LEFT JOIN 
 			--	EN_CatalogoProcesosEntregables	CPE
 			--	ON	CE.IdEntregable	=	CPE.IdEntregable
