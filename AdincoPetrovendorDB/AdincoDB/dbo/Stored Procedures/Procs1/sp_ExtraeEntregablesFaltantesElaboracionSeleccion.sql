@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracionSeleccion]--3,10,515039,1
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_ExtraeEntregablesFaltantesElaboracionSeleccion]    Script Date: 11/11/2021 02:15:08 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracionSeleccion]--3,10,515039,1
     @IdContrato INT,
     @idUsuario INT,
 	@idInstanciaSeleccionada INT,
@@ -15,6 +22,8 @@ BEGIN
     -- Create date: 2020-05-11
     -- Description: Se agregar NOLOCKS en las tablas que tienen mas recurrencia y referencias al objero dbo
     -- =============================================
+	-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
+	-- =============================================
     SET	NOCOUNT	ON;
 	SET LANGUAGE Spanish; 
     DECLARE	@Count	INT	=	0;
@@ -76,6 +85,7 @@ BEGIN
 				AND	CE.Activo	=	1
 				AND	IE.Activo	=	1	) 
 				AND	CE.IdContrato	=	@IdContrato
+				AND ISNULL(CE.BitNA,0) <> 1
 		GROUP	BY	CE.IdEntregable;
 
 
@@ -185,6 +195,7 @@ BEGIN
 			dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPIA  (NOLOCK)
 			ON CE.IdContratoEntregable	=	CEPIA.IdContratoEntregable
 		WHERE IE.idInstanciaEntregable != @idInstanciaSeleccionada
+		AND ISNULL(CE.BitNA,0) <> 1
 		UNION
 		-- LAS EXCEPCIONES QUE SE LE ASIGNACION AL USUARIO
 		SELECT IE.idInstanciaEntregable AS idInstanciaEntregable,
@@ -290,6 +301,7 @@ BEGIN
 			dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPIA   (NOLOCK)
 			ON CE.IdContratoEntregable	=	CEPIA.IdContratoEntregable
 		WHERE IE.idInstanciaEntregable != @idInstanciaSeleccionada
+		AND ISNULL(CE.BitNA,0) <> 1
 		ORDER BY	
 			IE.FechasLimiteElaboracion	ASC;
 	end
@@ -377,6 +389,7 @@ BEGIN
         AND IE.Activo   =   1   ) )
 
         AND CE.IdContrato   =   @IdContrato
+		AND ISNULL(CE.BitNA,0) <> 1
     GROUP   BY  IE.FechasLimiteElaboracion,
     CE.IdEntregable
 
@@ -486,6 +499,7 @@ BEGIN
 		dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPIA   (NOLOCK)
 		ON CE.IdContratoEntregable	=	CEPIA.IdContratoEntregable
 	WHERE IE.idInstanciaEntregable != @idInstanciaSeleccionada --SE MUESTRAN LOS DEMÁS ENTREGABLES PENDIENTES , MENOS EL SELECCIONADO
+	AND ISNULL(CE.BitNA,0) <> 1
     UNION
 
     -- LAS EXCEPCIONES QUE SE LE ASIGNACION AL USUARIO
@@ -591,6 +605,7 @@ BEGIN
 		dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPIA   (NOLOCK)
 		ON CE.IdContratoEntregable	=	CEPIA.IdContratoEntregable
 	WHERE IE.idInstanciaEntregable != @idInstanciaSeleccionada --SE MUESTRAN LOS DEMÁS ENTREGABLES PENDIENTES , MENOS EL SELECCIONADO
+	AND ISNULL(CE.BitNA,0) <> 1
     ORDER BY    IE.FechasLimiteElaboracion  ASC;
 	end
     END;

@@ -1,11 +1,11 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 21/09/2021 12:43:50 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 11/11/2021 01:26:34 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
+ALTER PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -17,6 +17,8 @@ BEGIN
 -- Description:	Para que el administrador de contratos
 -- =============================================
 -- 20200117	BAAC	Se modifica para agregar las columnas que pidio Shell
+-- =============================================
+-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
@@ -56,6 +58,7 @@ BEGIN
     WHERE IdContrato = @idContrato
           AND CE.Activo = 1
           AND I.Activo = 0
+		  AND ISNULL(CE.BitNA,0) <> 1
     ORDER BY FechasLimiteAprobacion ASC;
 
     INSERT INTO #ResponsablesInstancias (idInstanciaEntregable,
@@ -160,7 +163,8 @@ BEGIN
                REPLACE(REPLACE(REPLACE(Revisores, '</revisores>', ''), '<revisores>', ''), 'revisores>,', '') AS revisores,
                Aprobadores AS Aprobador,
                ISNULL(EN_FrecuenciaEntregable.FrecuenciaEntregable, '') AS FrecuenciaEntregable,
-               ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+               --ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+			   ISNULL(RE.ReceptorEntregable,'') As Regulador,
                Es.NombreEstado AS Estatus,
                DATENAME(MONTH, I.FechaInicioElaboracion) AS mes,
                YEAR(FechasLimiteAprobacion) AS anio,
@@ -224,7 +228,11 @@ BEGIN
 				CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
 					ELSE ISNULL(ACC.Nombre,'') --+ ' (' + CE.Accountable + ')'
 				END		AS Accountable,
-				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos  
+				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos ,
+				 CASE 
+				WHEN E.BitAwareness = 1 THEN 'SI'
+				ELSE 'NO'
+			END AS TipoJOA  
         FROM #ResponsablesInstancias TI
         JOIN EN_InstanciasEntregable I ON TI.idInstanciaEntregable = I.idInstanciaEntregable
         JOIN EN_Actividad A ON I.ActividadID = A.ActividadID
@@ -234,7 +242,9 @@ BEGIN
         JOIN dbo.EN_Estado Es ON A.EstadoID = Es.EstadoID
         LEFT JOIN EN_FrecuenciaEntregable ON E.IdFrecuenciaEntregable = EN_FrecuenciaEntregable.IdFrecuenciaEntregable
         LEFT JOIN EN_MarcoLegal AS ML ON E.IdMarcoLegal = ML.IdMarcoLegal
-        LEFT JOIN CO_Regulador ON E.IdRegulador = CO_Regulador.IdRegulador
+        --LEFT JOIN CO_Regulador ON E.IdRegulador = CO_Regulador.IdRegulador
+		LEFT JOIN EN_ReceptorEntregable	RE
+		ON E.IdReceptorEntregable	= RE.IdReceptorEntregable
         LEFT JOIN dbo.EN_Etapa ET ON E.IdEtapa = ET.IdEtapa
         LEFT JOIN dbo.EN_Area are ON CE.IdArea = are.idArea
 		LEFT JOIN
@@ -261,6 +271,7 @@ BEGIN
 
         WHERE CE.IdContrato = @idContrato
               AND CE.Activo = 1
+			  AND ISNULL(CE.BitNA,0) <> 1
         ORDER BY FechasLimiteAprobacion ASC;
     END;
     ELSE
@@ -289,7 +300,8 @@ BEGIN
                REPLACE(REPLACE(REPLACE(Revisores, '</revisores>', ''), '<revisores>', ''), 'revisores>,', '') AS revisores,
                Aprobadores AS Aprobador,
 				ISNULL(EN_FrecuenciaEntregable.FrecuenciaEntregable, '') AS FrecuenciaEntregable,
-				ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+--				ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+				ISNULL(RE.ReceptorEntregable,'') AS Regulador,
                Es.NombreEstado AS Estatus,
                DATENAME(MONTH, FechaInicioElaboracion) AS mes,
                YEAR(FechasLimiteAprobacion) AS anio,
@@ -371,7 +383,9 @@ BEGIN
         JOIN dbo.EN_Estado Es ON A.EstadoID = Es.EstadoID
         LEFT JOIN EN_FrecuenciaEntregable ON E.IdFrecuenciaEntregable = EN_FrecuenciaEntregable.IdFrecuenciaEntregable
         LEFT JOIN EN_MarcoLegal AS ML ON E.IdMarcoLegal = ML.IdMarcoLegal
-        LEFT JOIN CO_Regulador ON E.IdRegulador = CO_Regulador.IdRegulador
+        --LEFT JOIN CO_Regulador ON E.IdRegulador = CO_Regulador.IdRegulador
+		LEFT JOIN EN_ReceptorEntregable RE
+			ON E.IdReceptorEntregable = RE.IdReceptorEntregable
         LEFT JOIN dbo.EN_Etapa ET ON E.IdEtapa = ET.IdEtapa
 		LEFT JOIN
 				AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
@@ -396,6 +410,7 @@ BEGIN
 				ON	IPF.IdProceso	=	P.IdProceso
         WHERE CE.IdContrato = @idContrato
               AND CE.Activo = 1
+			  AND ISNULL(CE.BitNA,0) <> 1
         ORDER BY FechasLimiteAprobacion ASC;
 
     END;
