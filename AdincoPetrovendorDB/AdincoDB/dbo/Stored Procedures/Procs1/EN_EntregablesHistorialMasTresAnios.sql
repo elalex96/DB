@@ -1,11 +1,11 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 21/09/2021 10:38:40 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 11/11/2021 12:59:19 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
+ALTER PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -17,6 +17,8 @@ BEGIN
 -- Description:	Para que el administrador de contratos
 -- =============================================
 -- 20200117	BAAC	Se modifica para agregar las columnas que pidio Shell
+-- =============================================
+-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
 
     SET NOCOUNT ON;
@@ -75,6 +77,7 @@ BEGIN
           AND	(ml.Activo=1	OR	e.BitInterno=1)
           AND	I.FechasLimiteElaboracion	>	@HoyMasTresAnios
 		  AND	CPE.IdCatProceso	IS	NULL
+		  AND ISNULL(CE.BitNA,0) <> 1
     ORDER BY FechasLimiteAprobacion ASC;
 
 
@@ -213,7 +216,8 @@ BEGIN
                REPLACE(REPLACE(REPLACE(Revisores, '</revisores>', ''), '<revisores>', ''), 'revisores>,', '') AS revisores,
                Aprobadores AS Aprobador,
                ISNULL(EN_FrecuenciaEntregable.FrecuenciaEntregable, '') AS FrecuenciaEntregable,
-               ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+               --ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+			   ISNULL(RE.ReceptorEntregable,'') As Regulador,
                Es.NombreEstado AS Estatus,
                REPLICATE('0',2-LEN(MONTH(I.FechaInicioElaboracion))) + LTRIM(MONTH(I.FechaInicioElaboracion)) + '-' + DATENAME(MONTH, I.FechaInicioElaboracion) AS mes,
                YEAR(FechasLimiteAprobacion) AS anio,
@@ -311,9 +315,12 @@ BEGIN
         LEFT	JOIN 
 			EN_MarcoLegal	AS	ML 
 			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
-        LEFT	JOIN 
-			CO_Regulador 
-			ON	E.IdRegulador	=	CO_Regulador.IdRegulador
+   --     LEFT	JOIN 
+			--CO_Regulador 
+			--ON	E.IdRegulador	=	CO_Regulador.IdRegulador
+		LEFT JOIN
+			EN_ReceptorEntregable	RE
+			ON	E.IdReceptorEntregable = RE.IdReceptorEntregable
         LEFT	JOIN 
 			dbo.EN_Etapa	ET 
 			ON	E.IdEtapa	=	ET.IdEtapa
@@ -346,6 +353,7 @@ BEGIN
 				ON	IPF.IdProceso	=	P.IdProceso
         WHERE CE.IdContrato	=	@idContrato
               AND CE.Activo	=	1
+			  AND ISNULL(CE.BitNA,0) <> 1
     ORDER BY FechasLimiteAprobacion ASC;
     END;
     ELSE
@@ -374,7 +382,8 @@ BEGIN
 				REPLACE(REPLACE(REPLACE(Revisores, '</revisores>', ''), '<revisores>', ''), 'revisores>,', '') AS revisores,
                Aprobadores AS Aprobador,
 				ISNULL(EN_FrecuenciaEntregable.FrecuenciaEntregable, '') AS FrecuenciaEntregable,
-               ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+               --ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+			   ISNULL(RE.ReceptorEntregable,'') As Regulador,
                Es.NombreEstado AS Estatus,
                REPLICATE('0',2-LEN(MONTH(I.FechaInicioElaboracion))) + LTRIM(MONTH(I.FechaInicioElaboracion)) + '-' + DATENAME(MONTH, FechaInicioElaboracion) AS mes,
                YEAR(FechasLimiteAprobacion) AS anio,
@@ -480,9 +489,12 @@ BEGIN
         LEFT	JOIN 
 			EN_MarcoLegal	ML
 			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
-        LEFT	JOIN 
-			CO_Regulador 
-			ON	E.IdRegulador	=	CO_Regulador.IdRegulador
+   --     LEFT	JOIN 
+			--CO_Regulador 
+			--ON	E.IdRegulador	=	CO_Regulador.IdRegulador
+			LEFT JOIN
+				EN_ReceptorEntregable	RE
+				ON E.IdReceptorEntregable = RE.IdReceptorEntregable
         LEFT	JOIN 
 			dbo.EN_Etapa	ET 
 			ON	E.IdEtapa	=	ET.IdEtapa
@@ -512,6 +524,7 @@ BEGIN
 				ON	IPF.IdProceso	=	P.IdProceso
         WHERE	CE.IdContrato	=	@idContrato
 				AND	CE.Activo	=	1
+				AND ISNULL(CE.BitNA,0) <> 1
         ORDER	BY	FechasLimiteAprobacion	ASC;
     END;
 

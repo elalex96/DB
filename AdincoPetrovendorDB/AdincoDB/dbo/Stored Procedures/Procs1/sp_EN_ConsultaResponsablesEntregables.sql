@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[sp_EN_ConsultaResponsablesEntregables]--3,10061,1,0,0,1
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_ConsultaResponsablesEntregables]    Script Date: 10/11/2021 11:19:29 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_EN_ConsultaResponsablesEntregables]--3,10061,1,0,0,1
     @IdContrato INT,
     @IdUsuario INT,
     @Activo INT,
@@ -13,6 +20,8 @@ BEGIN
 -- Description:	
 -- =============================================
 -- 20200117	BAAC	Se modifica para agregar las columnas que pidio Shell
+-- =============================================
+-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
     SET NOCOUNT ON;
 
@@ -268,6 +277,7 @@ BEGIN
                       OR CPE.BitPrincipal = 1
                   )
 				  AND ENM.IdEntregable IS NULL
+				  AND ISNULL(CE.BitNA,0) <> 1
             GROUP BY CE.IdContratoEntregable,
                      CE.IdContrato,
                      FE.FrecuenciaEntregable,
@@ -461,6 +471,7 @@ BEGIN
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
 				  AND ENM.IdEntregable IS NULL
+				  AND ISNULL(CE.BitNA,0) <> 1
             GROUP BY CE.IdContratoEntregable,
                      CE.IdContrato,
                      FE.FrecuenciaEntregable,
@@ -656,6 +667,7 @@ BEGIN
 					ON EN.IdEntregable	=	ECA.IdEntregable
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
+				  AND ISNULL(CE.BitNA,0) <> 1
             GROUP BY CE.IdContratoEntregable,
                      CE.IdContrato,
                      FE.FrecuenciaEntregable,
@@ -876,6 +888,7 @@ BEGIN
                       CPE.IdCatProceso IS NULL
                       OR CPE.BitPrincipal = 1
                   )
+				  AND ISNULL(CE.BitNA,0) <> 1
             GROUP BY CE.IdContratoEntregable,
 					CE.IdContrato,
                      FE.FrecuenciaEntregable,
@@ -1090,6 +1103,7 @@ BEGIN
 					ON	EN.IdEntregable	=	EM.IdEntregable
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
+				  AND ISNULL(CE.BitNA,0) <> 1
             GROUP BY CE.IdContratoEntregable,
                      CE.IdContrato,
                      FE.FrecuenciaEntregable,
@@ -1289,6 +1303,7 @@ BEGIN
 					ON EN.IdEntregable=ECA.IdEntregable
          WHERE 
                 ISNULL(ML.Activo, 0) = 1
+				AND ISNULL(CE.BitNA,0) <> 1
             GROUP BY CE.IdContratoEntregable,
                      CE.IdContrato,
                      FE.FrecuenciaEntregable,

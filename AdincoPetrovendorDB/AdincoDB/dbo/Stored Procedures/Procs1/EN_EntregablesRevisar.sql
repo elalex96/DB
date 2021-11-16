@@ -1,4 +1,12 @@
-﻿CREATE PROCEDURE [dbo].[EN_EntregablesRevisar] --10090,3--16
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesRevisar]    Script Date: 11/11/2021 04:14:17 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER PROCEDURE [dbo].[EN_EntregablesRevisar] --10090,3--16
     @idUsuario  INT,
     @idContrato INT
 AS
@@ -7,6 +15,8 @@ BEGIN
 -- Author:		Reyna Olvera
 -- Create date: 09/04/2018
 -- Description:	Para que el usuario pueba ver que archivos tiene que aprobar 
+-- =============================================
+-- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
 
     SET NOCOUNT ON;
@@ -89,6 +99,7 @@ BEGIN
             AND	CE.IdContrato	=	@idContrato
 			AND	CE.Activo	=	1
 			AND	I.Activo	=	1
+			AND ISNULL(CE.BitNA,0) <> 1
 
         JOIN	EN_Entregable			E
 			ON	CE.IdEntregable	=	E.IdEntregable
