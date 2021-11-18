@@ -1,6 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 06/04/2021 02:40:53 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 17/11/2021 09:30:49 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -36,8 +36,12 @@ GO
 -- Author:  Alexander Gomez  
 -- Create date: 06/04/2021
 -- Description: Redonde a 3 digitos del PCN segun la SE (Modificacion)
+-- ============================================= 
+-- Author:  Alexander Gomez  
+-- Create date: 17/11/2021
+-- Description: Redonde a 3 digitos del PCN segun la SE (Modificacion)
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --480,2058,0,0,'',46
+ALTER PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --480,2058,0,0,'',46
 -- Add the parameters for the stored procedure here  
 @IdProveedor INT,
 @IdAceptacionPedido INT,
@@ -605,7 +609,7 @@ BEGIN
            ISNULL(BSA.Nombre, 'NO CONTENIDO') AS NombreActividad,
            ISNULL(V.ValorFactura, 0) AS ValorFactura,
 		   CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
-           --ROUND(APD.PCN, 3) AS PCN,
+           ---ROUND(APD.PCN, 3) AS PCN,
            V.IdTipoMaterialServicio AS IdTipoMaterial,
            POD.MaterialCotizadoTextoC,
            AP.IdAceptacionPedido
@@ -760,4 +764,3 @@ BEGIN
         INNER JOIN @Agrupada agrupada
             ON agrupada.IdAceptacionPedido = t.IdAceptacionPedido;
 END;
-
