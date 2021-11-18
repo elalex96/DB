@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS sp_EN_UpdateContratoEntregable
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Llama las rondas
@@ -14,6 +16,10 @@
 -- Author:		Reyna Olvera
 -- UPDATE date: 20200326
 -- Description:Se comento el apartado dé entregable interno, ya que tambien pueden agregar fechas, en caso de que no se mecesite proceso
+-- ==========================================
+-- Author:		Luis David
+-- UPDATE date: 17/11/2021
+-- Description:	Se actualiza el bit awareness para issue Adinco/adinco-entregables/issues/473
 -- ==========================================
 CREATE PROCEDURE [dbo].[sp_EN_UpdateContratoEntregable]
     @idContrato INT,
@@ -35,13 +41,15 @@ CREATE PROCEDURE [dbo].[sp_EN_UpdateContratoEntregable]
     @Accountable VARCHAR(500),
 	@ContieneFechaInterna INT,
 	@ContieneFechaRegulador INT,
-	@ContieneInformacionSensible BIT
+	@ContieneInformacionSensible BIT,
+	@BitAwareness BIT = NULL
 AS
 BEGIN
 
     SET NOCOUNT ON;
-    DECLARE @CountInstRevAprob INT,
-            @Error             NVARCHAR(MAX);
+    DECLARE @CountInstRevAprob	INT,
+            @Error				NVARCHAR(MAX),
+			@IdEntregable		INT;
 
 
     SELECT @CountInstRevAprob = COUNT(*)
@@ -103,6 +111,19 @@ BEGIN
              WHERE IdContratoEntregable = @IdContratoEntregable;
         END;
    */
+	IF @BitInterno = 1 
+	BEGIN
+		IF @BitAwareness IS NOT NULL 
+		BEGIN 
+			SET @IdEntregable = (select e.IdEntregable from EN_ContratoEntregable ce
+							join EN_Entregable e
+							on ce.IdEntregable = e.IdEntregable
+							where IdContratoEntregable = @IdContratoEntregable)
+			UPDATE EN_Entregable 
+			SET BitAwareness = @BitAwareness
+			WHERE IdEntregable = @IdEntregable
+		END
+	END
     IF (@CountInstRevAprob > 0)
     BEGIN
         SET @Error = N'NOHAYERROR: Existen '+LTRIM(@CountInstRevAprob)+' entregables pendientes de Revisar/Aprobar, a los cuales se aplicó el mismo cambio.';
@@ -110,9 +131,3 @@ BEGIN
 
     SELECT @Error AS error;
 END;
-
-
-
-
-
-

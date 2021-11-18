@@ -1,4 +1,6 @@
 ﻿
+DROP PROCEDURE IF EXISTS sp_EN_InfoContratoEntregable
+GO
 create PROCEDURE [dbo].[sp_EN_InfoContratoEntregable] --3,10641,10061 -- 10146, 20513,10082
 (
     @IdContrato				INT,
@@ -11,7 +13,11 @@ BEGIN
 -- Author:      Reyna Olvera
 -- Create date: 
 -- Description: 
-	-- =============================================
+-- =============================================
+-- Author:      Luis David
+-- Create date: 17/11/2021
+-- Description: Se agrega el bitawareness para issue Adinco/adinco-entregables/issues/473
+-- =============================================
 	SET NOCOUNT ON;
 	SELECT
 				IsSasisopa					=	case when cepia.IdContratoEntregable is not null then cast(1 as bit) else cast(0 as bit) end,
@@ -43,7 +49,8 @@ BEGIN
 				FocalPoint,
 				AccountableCompliance,
 				Accountable,
-				ContieneInformacionSensible							=		ISNULL(ContieneInformacionSensible,0)
+				ContieneInformacionSensible							=		ISNULL(ContieneInformacionSensible,0),
+				BitAwareness				=	ISNULL(EN.BitAwareness,0)
 	FROM		EN_ContratoEntregable								CE
 	JOIN		EN_Entregable										EN
 	ON			CE.IdEntregable										=		EN.IdEntregable  
