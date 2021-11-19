@@ -1,9 +1,20 @@
-﻿-- =============================================
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_EN_GeneraInstanciasFechasLimite]    Script Date: 18/11/2021 05:38:35 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20/04/2019
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_GeneraInstanciasFechasLimite]-- '20200110',3, 10020,17065,0,1
+-- Author:		Alexander Gomez
+-- Create date: 18/11/2021
+-- Description:	se agrega la programacion para entregables Trianuales y Mensuales cada septimo dia habil del mes
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_EN_GeneraInstanciasFechasLimite]-- '20200110',3, 10020,17065,0,1
     @FechaLimiteFrecuencia DATE,
     @ContratoID INT,
     @Frecuencia INT,
@@ -16,7 +27,8 @@ BEGIN
 			@FinVigenciaContrato DATE,
 			@FechaSIPAC int=0,
 			@NombreDia varchar(50),
-			@TEDecimoDiaHabil int=0;--Tiempo Entrega Decimo Dia habil
+			@TEDecimoDiaHabil int=0,--Tiempo Entrega Decimo Dia habil
+			@TESeptimoDiaHabil int=0;--Tiempo Entrega Decimo Dia habil
 
     IF OBJECT_ID('tempdb..#DiasFechasFinales', 'U') IS NOT NULL
         DROP TABLE #DiasFechasFinales;
@@ -27,7 +39,7 @@ BEGIN
     );
 
 
-	Select @FechaSIPAC=COUNT(1) 
+	Select @FechaSIPAC= COUNT(1) 
 	FROM 
 		EN_ContratoEntregable CE
 	JOIN 
@@ -48,6 +60,17 @@ BEGIN
 		CE.IdContratoEntregable	=	@IdContratoEntregable
 		AND replace(TIEMPOENTREGA,'á','a') LIKE 'dentro%10%habiles%'
 		AND IdFrecuenciaEntregable	=	10013--TRIMESTRAL
+	
+	SELECT @TESeptimoDiaHabil= COUNT(1) 
+	FROM 
+		EN_ContratoEntregable CE
+	JOIN 
+		EN_Entregable E 
+		ON	CE.IdEntregable=E.IdEntregable
+	WHERE 
+		CE.IdContratoEntregable	=	@IdContratoEntregable AND 
+		replace(TIEMPOENTREGA,'á','a') LIKE 'dentro%7%habiles%'
+		AND IdFrecuenciaEntregable	=	10009--MENSUAL
 
 
     IF (@BitProgramaImplementa = 0)
@@ -91,7 +114,7 @@ BEGIN
 				BEGIN
 					SET @CantidadIncrementFecha = 6;
 				END;
-				IF (@Frecuencia = 10013) ----trimestral
+				IF (@Frecuencia = 10013 OR @Frecuencia = 10021) ----trimestral,trianual
 				BEGIN
 					SET @CantidadIncrementFecha = 3;
 				END;
@@ -111,15 +134,54 @@ BEGIN
 					BEGIN
 						IF (@TEDecimoDiaHabil	=	0)	--NO CONTIENE TIEMPO DE ENTREGA DEL DECIMO DÍA
 						BEGIN
-							INSERT INTO #DiasFechasFinales (IdFecha)
-							SELECT TOP 1
-								   IdFecha
-							FROM dbo.AP_Calendario
-							WHERE IdFecha <= @FechaLimiteFrecuencia
-								  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
-								  AND FinDeSemana = 0
-								  AND DiaLaborable = 1
-							ORDER BY IdFecha DESC;
+
+							IF @TESeptimoDiaHabil = 0 --NO CONTIENE TIEMPO DE ENTREGA DEL SEPTIMO DÍA
+							BEGIN
+
+								INSERT INTO #DiasFechasFinales (IdFecha)
+								SELECT TOP 1
+									   IdFecha
+								FROM dbo.AP_Calendario
+								WHERE IdFecha <= @FechaLimiteFrecuencia
+									  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
+									  AND FinDeSemana = 0
+									  AND DiaLaborable = 1
+								ORDER BY IdFecha DESC;
+
+							END
+							ELSE
+							BEGIN
+								
+								IF(@IsFechaRegulador=1)
+									BEGIN
+										INSERT INTO #DiasFechasFinales (IdFecha)
+										SELECT 
+											IdFecha
+											FROM 
+												AP_Calendario 
+											WHERE 
+												Mes	=	MONTH(@FechaLimiteFrecuencia)
+												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
+											AND Descripcion='Dia 7 hábil';
+
+									END
+									ELSE
+									BEGIN
+										INSERT INTO #DiasFechasFinales (IdFecha)
+										Select Adinco.dbo.FN_EN_RestaDiasHabiles(
+													IdFecha,
+													2
+												)
+											from AP_Calendario 
+											WHERE 
+												Mes	=	MONTH(@FechaLimiteFrecuencia)
+												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
+											AND Descripcion='Dia 7 hábil';
+									END
+
+							END
+
+							
 						END
 						ELSE
 						BEGIN	-- TIEMPO DE ENTREGA DECIMO DÍA AHORITA SOLO PARA 10013--TRIMESTRAL
@@ -158,6 +220,7 @@ BEGIN
 							   OR @Frecuencia = 10006
 							   OR @Frecuencia = 10007
 							   OR @Frecuencia = 10017
+							   OR @Frecuencia = 10021
 						   ) --Anual,Bianual,Durante el primer trimestre de cada año,Enero de cada año,Quinquenal(Cada 5 años)
 						BEGIN
 							SELECT @FechaLimiteFrecuencia = DATEADD(YEAR, @CantidadIncrementFecha, @FechaLimiteFrecuencia);
@@ -176,27 +239,36 @@ BEGIN
 				IF(@FechaSIPAC=1)
 				BEGIN
 					IF(@IsFechaRegulador=1)
-				BEGIN
-				INSERT INTO #DiasFechasFinales (IdFecha)
-					Select 
-						IdFecha 
-						from AP_Calendario 
-						WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
-						AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
+					BEGIN
 
+
+							INSERT INTO #DiasFechasFinales (IdFecha)
+							Select 
+							IdFecha 
+							from AP_Calendario 
+							WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
+							AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
+
+
+					END
+					ELSE 
+					BEGIN 
+
+							--SI ES FECHA DE LIMITE INTERNA, SE LE RESTAN DOS DÍAS AL DE LA ENTREGA A REGULADOR
+							INSERT INTO #DiasFechasFinales (IdFecha)
+							Select Adinco.dbo.FN_EN_RestaDiasHabiles(
+									IdFecha,
+									2
+								)
+							from AP_Calendario 
+							WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
+							AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
+
+						
+
+					END
 				END
-				ELSE 
-				BEGIN --SI ES FECHA DE LIMITE INTERNA, SE LE RESTAN DOS DÍAS AL DE LA ENTREGA A REGULADOR
-					INSERT INTO #DiasFechasFinales (IdFecha)
-					Select Adinco.dbo.FN_EN_RestaDiasHabiles(
-								IdFecha,
-								2
-							)
-						from AP_Calendario 
-						WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
-						AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
-				END
-				END
+
 			END
     ELSE
 
@@ -229,9 +301,3 @@ BEGIN
 	SELECT IdFecha
 	FROM #DiasFechasFinales;
 END;
-
-
-
-
-
-
