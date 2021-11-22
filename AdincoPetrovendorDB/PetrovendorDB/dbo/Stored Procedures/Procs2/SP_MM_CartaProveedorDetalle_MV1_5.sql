@@ -1,10 +1,17 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedorDetalle_MV1_5]    Script Date: 17/11/2021 09:21:01 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author: DANIEL AC 
 -- Create date: 16-05-18
 -- Description:	Actualización agrupación de actividades 
 -- =============================================
 
-CREATE PROCEDURE [dbo].[SP_MM_CartaProveedorDetalle_MV1_5] --330
+ALTER PROCEDURE [dbo].[SP_MM_CartaProveedorDetalle_MV1_5] --12720
     -- Add the parameters for the stored procedure here
     @IdPedido INT,
 	/*--------------------
@@ -42,7 +49,8 @@ BEGIN
 	       ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
            ISNULL(BSA.Nombre, 'NO CONTENIDO')AS NombreActividad,
 		   ISNULL(V.ValorFactura,0) AS ValorFactura,
-           ROUND(APD.PCN, 3) AS PCN,
+           CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
+		   --ROUND(APD.PCN, 3) AS PCN,
 		   V.IdTipoMaterialServicio AS  IdTipoMaterial,
 		   POD.MaterialCotizadoTextoC
     FROM MM_AceptacionPedidoDetalle AS APD

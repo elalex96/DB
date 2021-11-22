@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[TA_SP_EnviarCorreo]
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[TA_SP_EnviarCorreo]    Script Date: 17/11/2021 08:21:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[TA_SP_EnviarCorreo]
 	@Para VARCHAR(500),
 	@Asunto VARCHAR(250),
 	@Mensaje TEXT,
@@ -59,5 +66,24 @@ BEGIN
 	    @IdIdentificacion,  -- IdIdentificacion - int
 		@IdUsuario,
 		GETDATE()
-	)
+	);
+
+	--SE VERIFICA QUE SI ESXISTA EL REGISTRO QUE SE ACABA DE INCERTAR
+	SET @IdNotificacion = ISNULL((SELECT IdNotificacion FROM Adinco.dbo.S_Notificacion WHERE IdNotificacion = @IdNotificacion),0);
+
+	--SE VALIDA Y SE REGRESA EL RESULTADO
+	IF @IdNotificacion > 0
+	BEGIN
+
+		SELECT 'true'
+
+	END
+	ELSE
+	BEGIN
+		
+		SELECT 'false'
+
+	END;
+
+
 END

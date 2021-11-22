@@ -1,12 +1,15 @@
 ﻿
 -- p_CO_SAP_ImportBitacoraNotificacion 355,0
-CREATE proc p_CO_SAP_ImportBitacoraNotificacion
+CREATE  proc [dbo].[p_CO_SAP_ImportBitacoraNotificacion]
 @pId int,
 @pIdNotificacion int out
 as
 
 
-	
+	DECLARE @CorreoTB AS TABLE
+		(			
+			Email NVARCHAR(MAX)
+		);
 	
 	--S_Notificacion
 	declare 
@@ -48,6 +51,23 @@ as
 
 	if len(isnull(@para,'')) = 0
 		return
+
+	/*ELIMINAR CORREOS DUPLICADOS*/
+	INSERT INTO @CorreoTB
+	(
+		Email
+	)
+	SELECT splitdata
+	from [dbo].[fnSplitString](@para, ';')
+
+	/*AGRUPAR CORREOS PARA EVITAR DUPLICADOS*/
+	SELECT @para = STUFF((
+         SELECT ';' + Email
+            FROM @CorreoTB
+			GROUP BY Email
+            FOR XML PATH('')
+         ), 1, 1, '')
+
 
 	select @mensaje = replace(@mensaje,'{0}',
 	'<B>RESULT OF IMPORTATION SAP FILES</B><BR><BR>'+
@@ -138,8 +158,3 @@ as
 	SET FechaUltimoEnvio = GETDATE()
 	WHERE IdContratista = @idContratista
 	
-
-
-
-
-
