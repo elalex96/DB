@@ -1,7 +1,4 @@
-﻿
-DROP PROCEDURE IF EXISTS sp_EN_InfoContratoEntregable
-GO
-create PROCEDURE [dbo].[sp_EN_InfoContratoEntregable] --3,10641,10061 -- 10146, 20513,10082
+CREATE PROCEDURE [dbo].[sp_EN_InfoContratoEntregable] --3,10641,10061 -- 10146, 20513,10082
 (
     @IdContrato				INT,
 	@idContratoEntregable	INT,
@@ -13,10 +10,8 @@ BEGIN
 -- Author:      Reyna Olvera
 -- Create date: 
 -- Description: 
--- =============================================
--- Author:      Luis David
--- Create date: 17/11/2021
--- Description: Se agrega el bitawareness para issue Adinco/adinco-entregables/issues/473
+-- ----------------------------------------------
+-- 20211123	BAAC	Se ponen isnull en algunos campos que estaban marcando error en la pantalla
 -- =============================================
 	SET NOCOUNT ON;
 	SELECT
@@ -28,7 +23,7 @@ BEGIN
 				Consecutivo					=	ISNULL(EN.Consecutivo, ''),
 				MarcoLegal					=	ISNULL(ML.MarcoLegal, ''),
 				CE.IdEntregable,
-				idArea						=	CE.idArea,
+				idArea						=	ISNULL(CE.idArea,0),
 				FechaLimiteEntrega			=	CE.FechaLimiteEntrega,
 				DiasElaboracion				=	ISNULL(CE.DiasElaboracion, 0),
 				DiasRevision				=	ISNULL(CE.DiasRevision, 0),
@@ -42,36 +37,45 @@ BEGIN
 				CE.Activo,
 				FechaLimiteEntregaRegulador	=	ISNULL(CE.FechaLimiteEntregaRegulador,CE.FechaLimiteEntrega),
 				DocumentoEntregable			=	EN.DocumentoEntregable,
-				UsuarioElaborador			=	Ae.idUsuario,
-				UsuarioAprobador			=	AP.idUsuario,
+				UsuarioElaborador			=	ISNULL(Ae.idUsuario,0),
+				UsuarioAprobador			=	ISNULL(AP.idUsuario,0),
 				BitInterno					=	EN.BitInterno,
 				Subfuncion,
 				FocalPoint,
 				AccountableCompliance,
 				Accountable,
-				ContieneInformacionSensible							=		ISNULL(ContieneInformacionSensible,0),
-				BitAwareness				=	ISNULL(EN.BitAwareness,0)
-	FROM		EN_ContratoEntregable								CE
-	JOIN		EN_Entregable										EN
-	ON			CE.IdEntregable										=		EN.IdEntregable  
-	AND			CE.IdContrato										=		@IdContrato
-	AND			EN.BITJOA											=		0
-	LEFT JOIN	dbo.EN_Actividad									AE
-	ON			CE.IdContratoEntregable								=		AE.IdContratoEntregable 
-	AND			AE.EstadoID											=		10000
-	LEFT JOIN	dbo.EN_Actividad									AP 
-	ON			CE.IdContratoEntregable								=		AP.IdContratoEntregable  
-	AND			AP.EstadoID											=		10002
-	LEFT JOIN	[EN_FrecuenciaEntregable]							FE
-	ON			EN.IdFrecuenciaEntregable							=		FE.IdFrecuenciaEntregable
-	LEFT JOIN	EN_MarcoLegal										ML
-	ON			EN.IdMarcoLegal										=		ML.IdMarcoLegal
-	left join	EN_ContratoEntregableProgramaImplementaAcciones		cepia
-	on			cepia.IdContratoEntregable							=		ce.IdContratoEntregable
-	left join	CO_Contrato											c
-	on			c.IdContrato										=		ce.IdContrato
-	left join	CO_Contratista										co
-	on			co.IdContratista									=		c.IdContratista
-	and			co.NombreContratista								like	'%Shell%'
-	WHERE		CE.IdContratoEntregable								=		@idContratoEntregable
+				ContieneInformacionSensible					=		ISNULL(ContieneInformacionSensible,0)
+	FROM
+		EN_ContratoEntregable								CE	(NOLOCK)
+	JOIN
+		EN_Entregable										EN	(NOLOCK)
+		ON			CE.IdEntregable							=		EN.IdEntregable  
+		AND			CE.IdContrato							=		@IdContrato
+		AND			EN.BITJOA								=		0
+		AND			CE.IdContratoEntregable					=		@idContratoEntregable
+	JOIN
+		CO_Contrato											c	(NOLOCK)
+		on			c.IdContrato							=		ce.IdContrato
+	LEFT JOIN
+		dbo.EN_Actividad									AE	(NOLOCK)
+		ON			CE.IdContratoEntregable					=		AE.IdContratoEntregable 
+		AND			AE.EstadoID								=		10000
+	LEFT JOIN
+		dbo.EN_Actividad									AP	(NOLOCK)
+		ON			CE.IdContratoEntregable					=		AP.IdContratoEntregable  
+		AND			AP.EstadoID								=		10002
+	LEFT JOIN
+		[EN_FrecuenciaEntregable]							FE	(NOLOCK)
+		ON			EN.IdFrecuenciaEntregable				=		FE.IdFrecuenciaEntregable
+	LEFT JOIN
+		EN_MarcoLegal										ML	(NOLOCK)
+		ON			EN.IdMarcoLegal							=		ML.IdMarcoLegal
+	LEFT JOIN
+		EN_ContratoEntregableProgramaImplementaAcciones		cepia	(NOLOCK)
+		on			cepia.IdContratoEntregable				=		ce.IdContratoEntregable
+	LEFT JOIN
+		CO_Contratista										co		(NOLOCK)
+		ON			co.IdContratista						=		c.IdContratista
+		AND			co.NombreContratista					like	'%Shell%'
+	WHERE		CE.IdContratoEntregable						=		@idContratoEntregable
 END;
