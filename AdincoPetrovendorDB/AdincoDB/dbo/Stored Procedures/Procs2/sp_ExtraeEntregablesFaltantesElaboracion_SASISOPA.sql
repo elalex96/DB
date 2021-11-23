@@ -9,7 +9,7 @@ BEGIN
     -- Description: 
     -- 20190510 BAAC    Se modifica consulta de las fechas proximas para no considerar el id de la instancia
 	-- 20210908	BAAC	Se modifica para considerar siempre los entregables pendientes y los de los proximos 6 meses
-	-- 20211007	BAAC	Se modifica para considerar los entregbales de los proximos 5 años
+	-- 20211007	BAAC	Se modifica para considerar los entregbales de los proximos 5 aÃ±os
     -- =============================================
 		    -- =============================================
     -- Author:  Daniel AC
@@ -18,7 +18,6 @@ BEGIN
     -- =============================================
     SET NOCOUNT ON;
 	SET LANGUAGE Spanish; 
-    DECLARE @Count  INT =   0;
 
     CREATE TABLE #TempInstancias
     (
@@ -39,6 +38,8 @@ BEGIN
   (
 	IdArea	INT
   )
+
+      DECLARE @Count  INT =   0;
 
   INSERT INTO #Area
   SELECT IdArea
@@ -97,8 +98,7 @@ BEGIN
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
     
 WHERE  
-		IE.FechaCalculadaEntregaReg < DATEADD(YEAR,5,GETDATE())
-		AND ((A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
+	((A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
             AND   EXAR.IdInstanciasEntregables    IS NULL
             AND   A.EstadoID  =   10000
           )
@@ -106,7 +106,6 @@ WHERE
         EXAR.idUsuario   IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
         AND EXAR.IdInstanciasEntregables    IS NOT NULL
         AND EXAR.EstadoID   =   10000   ) )
-        AND CE.IdContrato   =   @IdContrato
     GROUP   BY  IE.FechasLimiteElaboracion,
 	    CE.IdEntregable
 
@@ -229,7 +228,7 @@ WHERE
 		IE.FechasLimiteAprobacion,
 		E.NombreEstado AS Estatus,
         ISNULL(f.FrecuenciaEntregable,'') AS FrecuenciaEntregable,
-        ISNULL(Et.Etapa,'') as Etapa,
+    ISNULL(Et.Etapa,'') as Etapa,
         ISNULL(EN.idRegulador,'')as idRegulador,
         @Count AS countI,
         EN.Consecutivo,
