@@ -5,7 +5,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE  PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_Historico] --3,10--3,10061
+CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_Historico] --3,10--3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -24,7 +24,6 @@ BEGIN
     -- =============================================
     SET NOCOUNT ON;
 	SET LANGUAGE Spanish; 
-    DECLARE @Count  INT =   0;
 
 	 CREATE TABLE #TempInstancias
     (
@@ -39,6 +38,8 @@ BEGIN
         id INT PRIMARY KEY IDENTITY(1, 1),
         IdUsuarioGrupo int
     );
+
+    DECLARE @Count  INT =   0;
 
 	IF 0 < (SELECT COUNT(1)
 			FROM
@@ -95,13 +96,12 @@ BEGIN
 		dbo.EN_Entregable ENT	(NOLOCK)
         ON  CE.IdEntregable =   Ent.IdEntregable
 		AND ENT.BITJOA = 0
+		AND ENT.IsActivo = 1
     LEFT JOIN   
 		dbo.EN_ExcepcionesActividad EXAR
         ON  A.ActividadID   =   EXAR.ActividadIDExcepcion 
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
     WHERE  
-		IE.FechaCalculadaEntregaReg < DATEADD(YEAR, 5, GETDATE())	--(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
-		AND
 		(
 		(A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
             AND   EXAR.IdInstanciasEntregables    IS NULL
@@ -118,10 +118,8 @@ BEGIN
         AND ENT.IsActivo    =   1
         AND CE.Activo   =   1
         AND IE.Activo   =   1   ) )
-
-        AND CE.IdContrato   =   @IdContrato
     GROUP   BY  IE.FechasLimiteElaboracion,
-    CE.IdEntregable
+	    CE.IdEntregable
 
 
     SELECT @Count = MAX(id)
@@ -195,6 +193,7 @@ BEGIN
 		dbo.EN_Entregable EN  (NOLOCK)
 		ON CE.IdEntregable  =   EN.IdEntregable
 		AND EN.BITJOA = 0
+		AND EN.IsActivo = 1
     LEFT    JOIN    
 		dbo.CO_Regulador R  (NOLOCK)
 		ON EN.IdRegulador   =   R.IdRegulador
@@ -302,7 +301,8 @@ BEGIN
     JOIN    
 		dbo.EN_Entregable   EN  (NOLOCK)
         ON CE.IdEntregable = EN.IdEntregable
-	AND EN.BITJOA = 0
+		AND EN.BITJOA = 0
+		AND EN.IsActivo = 1
     LEFT    JOIN    
 		dbo.EN_FrecuenciaEntregable F (NOLOCK)
         ON  EN.IdFrecuenciaEntregable   =   F.IdFrecuenciaEntregable
@@ -341,4 +341,3 @@ BEGIN
 		ON CE.IdContratoEntregable	=	CEPIA.IdContratoEntregable
     ORDER BY    IE.FechasLimiteElaboracion  ASC;
 END
-
