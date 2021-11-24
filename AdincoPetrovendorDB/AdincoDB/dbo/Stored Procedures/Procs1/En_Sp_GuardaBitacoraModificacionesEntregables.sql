@@ -1,10 +1,11 @@
-﻿DROP PROCEDURE IF EXISTS En_Sp_GuardaBitacoraModificacionesEntregables
+﻿--=============================================
+-- CREADO POR: LUIS DAVID
+-- FECHA MODIFICACIÓN: 22/11/2021
+-- DESCRIPCIÓN: SE CONTEMPLA EL BIT AWARENESS
+--=============================================
 GO
--- =============================================
--- Author:		Luis David De La Cruz
--- Create date: 28/10/2021
--- Description:	Inserta en la tabla bitacora
--- =============================================
+DROP PROCEDURE IF EXISTS En_Sp_GuardaBitacoraModificacionesEntregables
+GO
 CREATE PROCEDURE En_Sp_GuardaBitacoraModificacionesEntregables
 @IdUsuario int,
 @IdContrato int,
@@ -12,17 +13,18 @@ CREATE PROCEDURE En_Sp_GuardaBitacoraModificacionesEntregables
 @IdArea int = null,
 @IdElaborador int = null,
 @IdAprobador int = null,
-@Activo bit = null
+@Activo bit = null,
+@bitAwareness bit = null
 AS
 BEGIN
-	IF @Activo IS NOT NULL OR @IdElaborador IS NOT NULL OR @IdAprobador IS NOT NULL OR @IdArea IS NOT NULL 
+	IF @Activo IS NOT NULL OR @IdElaborador IS NOT NULL OR @IdAprobador IS NOT NULL OR @IdArea IS NOT NULL OR @bitAwareness IS NOT NULL
 	BEGIN
 		INSERT INTO EN_Bitacora_EntregablesModificados(	
 		IdContrato,				IdEntregable,		IdArea,
 		ElaboradorAnterior,		AprobadorAnterior,	Activo,					
-		ModificadoPor,			ModificadoEl) VALUES
+		ModificadoPor,			ModificadoEl,		BitAwareness) VALUES
 		(@IdContrato,			@IdEntregable,		@IdArea,
 		@IdElaborador,			@IdAprobador,		@Activo,
-		@IdUsuario,				GETDATE())
+		@IdUsuario,				GETDATE(),			@bitAwareness)
 	END
 END
