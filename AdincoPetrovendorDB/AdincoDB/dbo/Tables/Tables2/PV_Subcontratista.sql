@@ -46,3 +46,7 @@
     CONSTRAINT [FK_Empresa_TipoPersonaFiscal] FOREIGN KEY ([TipoPersonaFiscalID]) REFERENCES [dbo].[PV_TipoPersonaFiscal] ([TipoPersonaFiscalID])
 );
 
+go
+
+create nonclustered index IX_PV_Subcontratista	on		PV_Subcontratista(	[RFC]) include ([IdSubcontratista])
+
