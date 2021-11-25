@@ -5,6 +5,8 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+DROP PROCEDURE IF EXISTS SP_EN_GeneraInstanciasFechasLimite
+GO
 -- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20/04/2019
@@ -14,7 +16,22 @@ GO
 -- Create date: 18/11/2021
 -- Description:	se agrega la programacion para entregables Trianuales y Mensuales cada septimo dia habil del mes
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_GeneraInstanciasFechasLimite]-- '20200110',3, 10020,17065,0,1
+-- Author:		Alexander Gomez
+-- Create date: 18/11/2021
+-- Description:	se agrega la programacion para entregables Trianuales y Mensuales cada septimo dia habil del mes
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 18/11/2021
+-- Description:	se agrega la programacion para entregables Trianuales y Mensuales cada septimo dia habil del mes
+-- =============================================
+-- Author:		Luis David
+-- Create date: 23/11/2021
+-- Description:	Se agrega la programación para entregables 
+    --a más tardar el décimo quinto (15) Día Hábil del Periodo subsecuente.
+    --Dentro de los 15 días hábiles posteriores al cumplimiento del mes a reportar.
+
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_EN_GeneraInstanciasFechasLimite]-- '20200110',3, 10020,17065,0,1
     @FechaLimiteFrecuencia DATE,
     @ContratoID INT,
     @Frecuencia INT,
@@ -28,6 +45,7 @@ BEGIN
 			@FechaSIPAC int=0,
 			@NombreDia varchar(50),
 			@TEDecimoDiaHabil int=0,--Tiempo Entrega Decimo Dia habil
+			@TEQuinceDiaHabil int = 0,
 			@TESeptimoDiaHabil int=0;--Tiempo Entrega Decimo Dia habil
 
     IF OBJECT_ID('tempdb..#DiasFechasFinales', 'U') IS NOT NULL
@@ -71,6 +89,19 @@ BEGIN
 		CE.IdContratoEntregable	=	@IdContratoEntregable AND 
 		replace(TIEMPOENTREGA,'á','a') LIKE 'dentro%7%habiles%'
 		AND IdFrecuenciaEntregable	=	10009--MENSUAL
+
+	SELECT @TEQuinceDiaHabil= COUNT(1) 
+	FROM 
+		EN_ContratoEntregable CE
+	JOIN 
+		EN_Entregable E 
+		ON	CE.IdEntregable=E.IdEntregable
+	WHERE 
+		CE.IdContratoEntregable	=	@IdContratoEntregable AND
+		(replace(TIEMPOENTREGA,'á','a') LIKE 'dentro%15%habiles%'
+		or replace(TIEMPOENTREGA,'á','a') LIKE '%décimo quinto%')
+		AND IdFrecuenciaEntregable	=	10009--MENSUAL
+
 
 
     IF (@BitProgramaImplementa = 0)
@@ -138,15 +169,53 @@ BEGIN
 							IF @TESeptimoDiaHabil = 0 --NO CONTIENE TIEMPO DE ENTREGA DEL SEPTIMO DÍA
 							BEGIN
 
-								INSERT INTO #DiasFechasFinales (IdFecha)
-								SELECT TOP 1
-									   IdFecha
-								FROM dbo.AP_Calendario
-								WHERE IdFecha <= @FechaLimiteFrecuencia
-									  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
-									  AND FinDeSemana = 0
-									  AND DiaLaborable = 1
-								ORDER BY IdFecha DESC;
+								IF @TEQuinceDiaHabil = 0
+								BEGIN
+
+									INSERT INTO #DiasFechasFinales (IdFecha)
+									SELECT TOP 1
+										   IdFecha
+									FROM dbo.AP_Calendario
+									WHERE IdFecha <= @FechaLimiteFrecuencia
+										  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
+										  AND FinDeSemana = 0
+										  AND DiaLaborable = 1
+									ORDER BY IdFecha DESC;
+
+								END
+								ELSE
+								BEGIN
+
+									IF(@IsFechaRegulador=1)
+									BEGIN
+										INSERT INTO #DiasFechasFinales (IdFecha)
+										SELECT 
+											IdFecha
+											FROM 
+												AP_Calendario 
+											WHERE 
+												Mes	=	MONTH(@FechaLimiteFrecuencia)
+												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
+											AND Descripcion='Dia 15 habil';
+
+									END
+									ELSE
+									BEGIN
+										INSERT INTO #DiasFechasFinales (IdFecha)
+										Select Adinco.dbo.FN_EN_RestaDiasHabiles(
+													IdFecha,
+													2
+												)
+											from AP_Calendario 
+											WHERE 
+												Mes	=	MONTH(@FechaLimiteFrecuencia)
+												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
+											AND Descripcion='Dia 15 habil';
+									END
+
+								END
+
+								
 
 							END
 							ELSE

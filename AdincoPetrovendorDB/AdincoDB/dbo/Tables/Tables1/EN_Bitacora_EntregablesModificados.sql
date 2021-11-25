@@ -9,5 +9,6 @@
 		AprobadorAnterior int,
 		Activo bit,
 		ModificadoPor int not null,
-		ModificadoEl datetime
+		ModificadoEl datetime,
+		BitAwareness bit null
 )
