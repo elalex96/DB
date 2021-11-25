@@ -1,10 +1,18 @@
-﻿----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_OT_GenerarHistorialPedido]    Script Date: 23/11/2021 01:56:24 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:	Daniel A Cruz
 -- Create date: 06-02-2018
 -- Description:	SP Historico de un Pedido de Orden de Trabajo
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_OT_GenerarHistorialPedido]
+-- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb se sustituyen por simbolo --
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_OT_GenerarHistorialPedido]
     @IdOTSolicitud INT,
     @IdOTEstimacion INT,
     --- PARAMETROS SOLPED ---
@@ -187,12 +195,12 @@ ON cf.IdContrato = sc.IdContrato
 
 
 
-        PRINT @IdSolicitudPedidoActual;
+        -- @IdSolicitudPedidoActual;
     END;
 
     --#### 2.-AGREGAR SOLICITUD DE PEDIDO DETALLE ####----
     BEGIN
-        PRINT 'Solicitud pedido';
+        -- 'Solicitud pedido';
 
         INSERT INTO [dbo].[MM_SolicitudPedidoDetalle]
         (
@@ -230,7 +238,7 @@ ON cf.IdContrato = sc.IdContrato
                  mat.IdUnidad,
                  ot.IdCentroCosto;
 
-        PRINT 'PEDIDO DETALLE';
+        -- 'PEDIDO DETALLE';
 
         exec p_OT_EstimacionLineasPresupuesto @IdOTEstimacion,@IdSolicitudPedidoActual,@error out
 
@@ -241,7 +249,7 @@ ON cf.IdContrato = sc.IdContrato
 				return
         END;
 
-        PRINT 'Linea Presupuesto';
+        -- 'Linea Presupuesto';
 
     END;
 
@@ -280,7 +288,7 @@ ON cf.IdContrato = sc.IdContrato
                    0,
                    @SAPPR;
 
-            PRINT 'PR SAP';
+            -- 'PR SAP';
 
         END;
     END;
@@ -325,7 +333,7 @@ ON cf.IdContrato = sc.IdContrato
         (@IdDocumento, @IdTipoOperacion, @IdEstatusOperacion, @IdProveedor, @IdAsignador, GETDATE(), @Descripcion,
          @IdVigencia, @IdPrioridad, @IdFlujoTarea, @IdEstadoFlujo, '');
 
-        PRINT 'Operación';
+        -- 'Operación';
 
 		DECLARE @IdOperacionActual INT
         SELECT @IdOperacionActual = SCOPE_IDENTITY();
@@ -400,7 +408,7 @@ ON cf.IdContrato = sc.IdContrato
         VALUES
         (@NombreTarea, GETDATE(), @IdEstatus, 1, @Visto, @IdAprobador, @NoSecuencia, @IdOperacion, '', '', GETDATE());
 
-        PRINT 'TA_Tarea';
+        -- 'TA_Tarea';
 
 		DECLARE @IdTarea INT
         SELECT @IdTarea = SCOPE_IDENTITY();
@@ -414,7 +422,7 @@ ON cf.IdContrato = sc.IdContrato
         VALUES
         (@IdTarea, @IdOperacion);
 
-        PRINT 'TA_TareaOperacion';
+        -- 'TA_TareaOperacion';
 
         ---GENERAR HISTORIAL DE APROBACIÓN AUTOMATICA
 
@@ -440,7 +448,7 @@ ON cf.IdContrato = sc.IdContrato
                   SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = 2
               ) + N' de Control de Obra';
 
-        PRINT 'TA_HistorialFlujoTarea';
+        -- 'TA_HistorialFlujoTarea';
 
 
         INSERT INTO TA_HistorialFlujoTarea
@@ -453,7 +461,7 @@ ON cf.IdContrato = sc.IdContrato
         VALUES
         (@IdOperacionActual, GETDATE(), @DescripcionH, 7);
 
-        PRINT 'TA_HistorialFlujoTarea';
+        -- 'TA_HistorialFlujoTarea';
 
     END;
 
@@ -491,7 +499,7 @@ BEGIN
         (@IdSolicitudPedido, @IdProveedor, @IdUsuario, GETDATE(), 1, 1, 0, @IdTipoProceso, 1, 0, 0, 1, 1, GETDATE(), 2);
 
 
-        PRINT 'MM_PeticionOferta';
+        -- 'MM_PeticionOferta';
 
         SELECT @IdPeticionOfertaActual = SCOPE_IDENTITY();
 
@@ -604,7 +612,7 @@ BEGIN
                  mat.Descripcion,
                  spd.IdUnidad,
 				 uni.Unidad
-        PRINT 'MM_PeticionOfertaDetalle';
+        -- 'MM_PeticionOfertaDetalle';
 
 
     END;
@@ -640,7 +648,7 @@ BEGIN
         (@IdDocumento, @IdTipoOperacion, @IdEstatusOperacion, @IdProveedor, @IdAsignador, GETDATE(), @Descripcion,
          @IdVigencia, @IdPrioridad, @FechaLimiteCotizacion);
 
-        PRINT 'TA_Operacion';
+        -- 'TA_Operacion';
 
         DECLARE @IdOperacionCotizacion INT;
         SET @IdOperacionCotizacion =
@@ -659,7 +667,7 @@ BEGIN
             @IdTerminosCondiciones  -- IdTerminosYCondiciones - int
             );
 
-        PRINT 'TA_TerminosCondicionesOperacion';
+        -- 'TA_TerminosCondicionesOperacion';
 
     ---### ESTE OPERACIÓN NO LLEVA DETALLE EN TA_Tarea ###--
 
@@ -762,7 +770,7 @@ BEGIN
             NULL             -- FechaCreacionPedido - smalldatetime
             );
 
-        PRINT 'MM_HorasVigenciaPedido';
+        -- 'MM_HorasVigenciaPedido';
 
         ---#Agregar al pedido detalle
         INSERT INTO MM_PedidoDetalle
@@ -823,7 +831,7 @@ BEGIN
                  POD.IdUnidadProveedor;
 
 
-        PRINT 'MM_PedidoDetalle';
+        -- 'MM_PedidoDetalle';
 
         --#Generar el IdPedidoGeneral   
         DECLARE @IdPedidoGeneral INT;
@@ -838,7 +846,7 @@ BEGIN
                                               @IdProveedorActual = @IdProveedorCompras, -- int
                                               @IdPedidoGeneral = @IdPedidoGeneral OUTPUT,
                                               @CuentaBancaria = '';                     -- int
-        PRINT 'SP_MM_GenerarIdPedidoGeneral';
+        -- 'SP_MM_GenerarIdPedidoGeneral';
 
 
         SET @IdFlujo =
@@ -868,7 +876,7 @@ BEGIN
         (@IdSolicitudPedido, @IdTipoOperacion, @IdFlujo, 3, 2, @IdProveedorCompras, @IdUsuarioCompras, GETDATE(),
          @Mensaje, @IdVigencia, @IdPrioridad, @VERSION, '');
 
-        PRINT 'TA_Operacion 694';
+        -- 'TA_Operacion 694';
 
         SELECT @IdOperacionAprobacionPedido = SCOPE_IDENTITY();
 
@@ -890,7 +898,7 @@ BEGIN
         VALUES
         (@IdOperacionAprobacionPedido, GETDATE(), @DescripcionH, 1);
 
-        PRINT 'TA_HistorialFlujoTarea';
+        -- 'TA_HistorialFlujoTarea';
 
         ----#AGREGAR RELACION OPERACION PEDIDO APROBACION 
         INSERT INTO TA_Tarea
@@ -943,7 +951,7 @@ BEGIN
         VALUES
         (@IdOperacionAprobacionPedido, GETDATE(), @DescripcionH, 7);
 
-        PRINT 'TA_HistorialFlujoTarea 721';
+        -- 'TA_HistorialFlujoTarea 721';
 
 
         UPDATE HV
@@ -1028,7 +1036,7 @@ BEGIN
                     ON u.IdUsuario = p.IdUsuarioRecepcionServicio
             WHERE IdPedido = @IdPedidoActual;
 
-            PRINT 'TA_HistorialFlujoTarea 758';
+            -- 'TA_HistorialFlujoTarea 758';
 
             DECLARE @IdAceptacionPedido INT;
 
@@ -1036,7 +1044,7 @@ BEGIN
             FROM MM_AceptacionPedido
             WHERE IdPedido = @IdPedidoActual;
 
-            PRINT '@IdAceptacionPedido' + CAST(@IdAceptacionPedido AS VARCHAR);
+            -- '@IdAceptacionPedido' + CAST(@IdAceptacionPedido AS VARCHAR);
 
 
             INSERT INTO MM_AceptacionPedidoDetalle
@@ -1079,7 +1087,7 @@ BEGIN
 
 		
 
-            PRINT 'TA_HistorialFlujoTarea 779';
+            -- 'TA_HistorialFlujoTarea 779';
 
 			/**Obtener líneas de presupuesto por material**/
 			select pd.IdMaterial,
@@ -1201,5 +1209,3 @@ BEGIN
 --- VALIDACION ERRROR ---
 
 END;
-
-
