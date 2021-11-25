@@ -44,7 +44,7 @@ BEGIN
 				FocalPoint,
 				AccountableCompliance,
 				Accountable,
-				ContieneInformacionSensible					=		ISNULL(ContieneInformacionSensible,0)
+				ContieneInformacionSensible					=		ISNULL(ContieneInformacionSensible,0),
 				BitAwareness			=	ISNULL(EN.BitAwareness,0)
 	FROM
 		EN_ContratoEntregable								CE	(NOLOCK)
