@@ -1,5 +1,14 @@
-﻿
-CREATE PROCEDURE [dbo].[EN_SqlResponsablesContratoEntregable] -- 16841,10061,3,10002,10001
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[EN_SqlResponsablesContratoEntregable]    Script Date: 23/11/2021 05:37:35 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
+-- =============================================
+ALTER PROCEDURE [dbo].[EN_SqlResponsablesContratoEntregable] -- 16841,10061,3,10002,10001
     @IdContratoEntregable INT,
     @idUsuarioSession INT,
     @idContrato INT,
@@ -31,7 +40,6 @@ BEGIN
             @Error NVARCHAR(MAX),
             @PrimerRevisor INT;
 
-
     SELECT @CountInstRevAprob = COUNT(*)
     FROM dbo.EN_InstanciasEntregable ie
     JOIN dbo.EN_Actividad a ON a.ActividadID = ie.ActividadID
@@ -59,7 +67,6 @@ BEGIN
     WHERE ie.IdContratoEntregable = @IdContratoEntregable;
 
     --------------------------------------------------------------------------
-	--print 1
 
 	DELETE FROM dbo.EN_ExcepcionesActividad
 		WHERE IdInstanciasEntregables IN
@@ -68,8 +75,6 @@ BEGIN
 			UNION 
 			SELECT idInstancia FROM #InstanciasEstatusRevision
         );
-
-	--print 2
 
 	DELETE dbo.EN_Transicion
     WHERE SiguienteActividadID IN
@@ -89,7 +94,6 @@ BEGIN
 					AND Activo = 0
              );
 
-	--print 3
 	DELETE FROM dbo.EN_URLResponsablesEntregables
     WHERE ActividadID IN
           (
@@ -100,7 +104,6 @@ BEGIN
                     AND Activo = 0
           );
 
-	--print 4
     DELETE FROM dbo.EN_Actividad
     WHERE EstadoID = @idEstatus
     AND IdContratoEntregable = @IdContratoEntregable
@@ -113,18 +116,18 @@ BEGIN
         WHERE EstadoID = @idEstatus
               AND IdContratoEntregable = @IdContratoEntregable;
     END;
-	--print 4.1
-	--select		EstadoID=@idEstatus, idUsuario = @idUsuario, IdContratoEntregable=@IdContratoEntregable,       CreadoPor=@idUsuarioSession,	 CreadoEn=GETDATE(), ModificadoPor=@idUsuarioSession,   ModificadoEn=GETDATE(), Activo=1
-	--select	EstadoID,    idUsuario,   IdContratoEntregable, CreadoPor,   CreadoEn,  ModificadoPor, ModificadoEn, Activo
+
+	--select EstadoID=@idEstatus, idUsuario = @idUsuario, IdContratoEntregable=@IdContratoEntregable,       CreadoPor=@idUsuarioSession,	 CreadoEn=GETDATE(), ModificadoPor=@idUsuarioSession,   ModificadoEn=GETDATE(), Activo=1
+	--select EstadoID,    idUsuario,   IdContratoEntregable, CreadoPor,   CreadoEn,  ModificadoPor, ModificadoEn, Activo
 	--from	EN_Actividad 
 	--where	EstadoID =@idEstatus 
-	--and		idUsuario = @idUsuario
+	--and idUsuario = @idUsuario
 	
     INSERT INTO EN_Actividad (EstadoID, idUsuario, IdContratoEntregable,       CreadoPor,	 CreadoEn, ModificadoPor,   ModificadoEn, Activo)
-    VALUES					(@idEstatus, @idUsuario, @IdContratoEntregable, @idUsuarioSession, GETDATE(), @idUsuarioSession, GETDATE(), 1);
+    VALUES (@idEstatus, @idUsuario, @IdContratoEntregable, @idUsuarioSession, GETDATE(), @idUsuarioSession, GETDATE(), 1);
     
-	--			modifica las instancias en pendiente de aprobación, en elaboración y aprobados completamente
-	--print 4.2
+	--modifica las instancias en pendiente de aprobación, en elaboración y aprobados completamente
+
     UPDATE IE
     SET IE.ActividadID = A.ActividadID
     FROM dbo.EN_Actividad A
@@ -136,7 +139,6 @@ BEGIN
           (
               SELECT idInstancia FROM #InstanciasEstatus
           );
-    --------------------------------------------------------------------------------------------
     -------------------------modifica las instancias en pendiente de revisión
     SELECT TOP 1
            @PrimerRevisor = ActividadID --PRIMER Revisor
@@ -154,7 +156,6 @@ BEGIN
               SELECT idInstancia FROM #InstanciasEstatusRevision
           );
     ---------------------------------------------------------------------------------------------
-	--print 5
     DELETE FROM dbo.EN_ExcepcionesActividad
     WHERE IdInstanciasEntregables IN
           (
@@ -162,7 +163,7 @@ BEGIN
 			  UNION 
 			  SELECT idInstancia FROM #InstanciasEstatusRevision
           );
-	--print 6
+
     DELETE dbo.EN_Transicion
     WHERE SiguienteActividadID IN
           (
@@ -180,7 +181,7 @@ BEGIN
                        AND IdContratoEntregable = @IdContratoEntregable
                        AND Activo = 0
              );
-	--print 7
+
     DELETE FROM dbo.EN_URLResponsablesEntregables
     WHERE ActividadID IN
           (
@@ -191,7 +192,6 @@ BEGIN
                     AND Activo = 0
           );
 
-	--print 8
     DELETE FROM dbo.EN_Actividad
     WHERE EstadoID = @idEstatus
           AND IdContratoEntregable = @IdContratoEntregable
@@ -204,4 +204,3 @@ BEGIN
     SELECT @Error AS error;
 
 END;
-
