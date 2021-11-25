@@ -1,4 +1,4 @@
-CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
+ALTER PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
 AS
 BEGIN
 -- =============================================
@@ -6,6 +6,7 @@ BEGIN
 -- Create date: 2018-11-08
 -- Description: 
 -- 20210615 BAAC    Se modifica para que no marque error al enviar correos a grupos de usuarios
+-- 20211125	BAAC	Se modifica para agregar el querystring que permite notificar al accountable compliance cuando leen el correo
 -- =============================================
 SET NOCOUNT ON
 SET LANGUAGE Spanish
@@ -69,30 +70,23 @@ SELECT @HOY = GETDATE()
 	SELECT
 		U1.Usuario,
 		'Notificación Semanal para Responsible/FocalPoint'   AS tipoCorreo,
-		'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx' AS RutaPendiente,
-		'<tr><td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx?identificador=' AS RutaPendiente,
+
+		'<tr><td' + CASE WHEN CC.IdContrato IS NOT NULL
+			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
+			ELSE  '>'+C.NumeroContrato+ '</td>'
+		END + 
+		'<td>' + LTRIM(ML.MarcoLegal) + '</td>'+
+		'<td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+        '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111) + '</td>' +
 		'<td'+
 		CASE
 		WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 THEN ' style="background-color:Tomato;">Delayed'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
-		END	 + '</td>'+
-        '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111) + '</td>'  + 
-		'<td>'+ CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
-			ELSE ISNULL(ACC.Nombre,'')  -- ACCOUNTABLE
-		END	+ '</td>'  + 
-		'<td>'+ U1.Nombre 	+ '</td>'  +	-- RESPONSBILE
-		'<td>'+ CASE WHEN FP.Nombre IS NULL THEN ISNULL(CE.FocalPoint,'')
-			ELSE ISNULL(FP.Nombre,'')	-- FOCALPOINT
-		END		+ '</td>'  + 
-		'<td>'+ CASE WHEN AC.Nombre IS NULL THEN ISNULL(CE.AccountableCompliance,'')
-			ELSE ISNULL(AC.Nombre,'')	-- ACCOUNTABLE COMPLIANCE
-		END		+ '</td>'  + 
-		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
-			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
-			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla,
+		END	 + '</td>'
+		AS Tabla,
 		U1.IsGrupo
     FROM
             dbo.EN_InstanciasEntregable IE	(NOLOCK)
@@ -110,6 +104,7 @@ SELECT @HOY = GETDATE()
             dbo.EN_Entregable           E	(NOLOCK)
 			ON CE.IdEntregable	= E.IdEntregable 
 			AND E.BITJOA = 0
+			AND E.IsActivo = 1
 		JOIN
 			CO_Contrato C	(NOLOCK)
 			ON CE.IdContrato	=	C.IdContrato
@@ -123,17 +118,11 @@ SELECT @HOY = GETDATE()
 			dbo.AP_Rutas ruta	(NOLOCK)
 			ON cita.IdRuta=ruta.idRuta
 		LEFT JOIN
-			AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
-			ON	CE.FocalPoint	=	FP.Usuario
-		LEFT JOIN
-			AP_USUARIO AC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
-			ON	CE.AccountableCompliance	=	AC.Usuario
-		LEFT JOIN
-			AP_USUARIO ACC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
-			ON	CE.Accountable	=	ACC.Usuario
-		LEFT JOIN
 			CO_ContratoConfiguracion	CC
 			ON	C.IdContrato	=	CC.Idcontrato
+		LEFT JOIN
+			EN_MarcoLegal	ML
+			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
 		
@@ -149,30 +138,22 @@ SELECT @HOY = GETDATE()
 	SELECT
 		CE.FocalPoint,
 		'Notificación Semanal para Responsible/FocalPoint'   AS tipoCorreo,
-		'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx' AS RutaPendiente,
-		'<tr><td>' + LTRIM(IE.idInstanciaEntregable) + '-' +  LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx?identificador=' AS RutaPendiente,
+		'<tr><td' + CASE WHEN CC.IdContrato IS NOT NULL
+			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
+			ELSE  '>'+C.NumeroContrato+ '</td>'
+		END +
+		'<td>' + LTRIM(ML.MarcoLegal) + '</td>'+
+		'<td>' + LTRIM(IE.idInstanciaEntregable) + '-' +  LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  +    
 		'<td'+
 		CASE
 		WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,@HOY) > 0 THEN 'style="background-color:Tomato;">Delayed'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
-		END	 + '</td>'+
-        '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  +    
-		'<td>'+ CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
-			ELSE ISNULL(ACC.Nombre,'')  -- ACCOUNTABLE
-		END	+ '</td>'  + 
-		'<td>'+U1.Nombre+ '</td>' +	-- RESPONSIBLE
-		'<td>'+ CASE WHEN FP.Nombre IS NULL THEN ISNULL(CE.FocalPoint,'')
-			ELSE ISNULL(FP.Nombre,'')	-- FOCALPOINT
-		END		+ '</td>'  + 
-		'<td>'+ CASE WHEN AC.Nombre IS NULL THEN ISNULL(CE.AccountableCompliance,'')
-			ELSE ISNULL(AC.Nombre,'')	-- ACCOUNTABLE COMPLIANCE
-		END		+ '</td>'  +            
-		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
-			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
-			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla,
+		END	 + '</td>'
+		AS Tabla,
 		0
     FROM
             dbo.EN_InstanciasEntregable IE	(NOLOCK)
@@ -191,6 +172,7 @@ SELECT @HOY = GETDATE()
             dbo.EN_Entregable           E	(NOLOCK)
 			ON CE.IdEntregable	= E.IdEntregable
 			AND E.BITJOA = 0
+			AND E.IsActivo = 1
 		JOIN
 			CO_Contrato C	(NOLOCK)
 			ON CE.IdContrato	=	C.IdContrato
@@ -204,17 +186,11 @@ SELECT @HOY = GETDATE()
 			dbo.AP_Rutas ruta	(NOLOCK)
 			ON cita.IdRuta=ruta.idRuta
 		LEFT JOIN
-			AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
-			ON	CE.FocalPoint	=	FP.Usuario
-		LEFT JOIN
-			AP_USUARIO AC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
-			ON	CE.AccountableCompliance	=	AC.Usuario
-		LEFT JOIN
-			AP_USUARIO ACC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
-			ON	CE.Accountable	=	ACC.Usuario
-		LEFT JOIN
 			CO_ContratoConfiguracion	CC
 			ON	C.IdContrato	=	CC.Idcontrato
+		LEFT JOIN
+			EN_MarcoLegal	ML
+			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
 		
@@ -230,31 +206,23 @@ SELECT @HOY = GETDATE()
 	SELECT
 		U1.Usuario,
 		'Notificación Semanal para Responsible/FocalPoint'   AS tipoCorreo,
-		'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx' AS RutaPendiente,
-		'<tr><td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx?identificador=' AS RutaPendiente,
+
+		'<tr><td' + CASE WHEN CC.IdContrato IS NOT NULL
+			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
+			ELSE  '>'+C.NumeroContrato+ '</td>'
+		END +
+		'<td>' + LTRIM(ML.MarcoLegal) + '</td>'+
+		'<td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  +  
 		'<td'+
 		CASE
 			WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,@HOY) > 0 THEN ' style="background-color:Tomato;">Delayed'
 			WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
 			WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
 			WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
-		END
-		 + '</td>'+
-        '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  +  
-		'<td>'+ CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
-			ELSE ISNULL(ACC.Nombre,'')  -- ACCOUNTABLE
-		END	+ '</td>'  + 
-		'<td>'+ U1.Nombre 	+ '</td>'  +	-- RESPONSBILE
-		'<td>'+ CASE WHEN FP.Nombre IS NULL THEN ISNULL(CE.FocalPoint,'')
-			ELSE ISNULL(FP.Nombre,'')	-- FOCALPOINT
-		END		+ '</td>'  + 
-		'<td>'+ CASE WHEN AC.Nombre IS NULL THEN ISNULL(CE.AccountableCompliance,'')
-			ELSE ISNULL(AC.Nombre,'')	-- ACCOUNTABLE COMPLIANCE
-		END		+ '</td>'  +            
-		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
-			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
-			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla,
+		END  + '</td>'
+		AS Tabla,
 		U1.IsGrupo
     FROM
             dbo.EN_InstanciasEntregable IE	(NOLOCK)
@@ -272,6 +240,7 @@ SELECT @HOY = GETDATE()
             dbo.EN_Entregable           E	(NOLOCK)
 			ON CE.IdEntregable	= E.IdEntregable
 			AND E.BITJOA = 0
+			AND E.IsActivo = 1
 		JOIN
 			CO_Contrato C	(NOLOCK)
 			ON CE.IdContrato	=	C.IdContrato
@@ -285,17 +254,11 @@ SELECT @HOY = GETDATE()
 			dbo.AP_Rutas ruta	(NOLOCK)
 			ON cita.IdRuta=ruta.idRuta
 		LEFT JOIN
-			AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
-			ON	CE.FocalPoint	=	FP.Usuario
-		LEFT JOIN
-			AP_USUARIO AC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
-			ON	CE.AccountableCompliance	=	AC.Usuario
-		LEFT JOIN
-			AP_USUARIO ACC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
-			ON	CE.Accountable	=	ACC.Usuario
-		LEFT JOIN
 			CO_ContratoConfiguracion	CC
 			ON	C.IdContrato	=	CC.Idcontrato
+		LEFT JOIN
+			EN_MarcoLegal	ML
+			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
 
@@ -501,30 +464,23 @@ SELECT @HOY = GETDATE()
 	SELECT
 		CE.Accountable,
 		'Notificación Semanal para Accountable del Contrato'   AS tipoCorreo,
-		'https://'+ruta.Ruta+'/2/Entregables/HistorialArea.aspx' AS RutaPendiente,
-		'<tr><td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'https://'+ruta.Ruta+'/2/Entregables/HistorialArea.aspx?identificador=' AS RutaPendiente,
+
+		'<tr><td' + CASE WHEN CC.IdContrato IS NOT NULL
+			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
+			ELSE  '>'+C.NumeroContrato+ '</td>'
+		END +
+		'<td>' + LTRIM(ML.MarcoLegal) + '</td>'+
+		'<td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  + 
 		'<td'+
 		CASE
 		WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,@HOY) > 0 THEN 'style="background-color:Tomato;">Delayed'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
-		END	 + '</td>'+
-        '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  + 
-		'<td>'+ CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
-			ELSE ISNULL(ACC.Nombre,'')  -- ACCOUNTABLE
-		END	+ '</td>'  +    
-		'<td>'+U1.Nombre+ '</td>' +		-- RESPONSIBLE
-		'<td>'+ CASE WHEN FP.Nombre IS NULL THEN ISNULL(CE.FocalPoint,'')
-			ELSE ISNULL(FP.Nombre,'')	-- FOCALPOINT
-		END		+ '</td>'  + 
-		'<td>'+ CASE WHEN AC.Nombre IS NULL THEN ISNULL(CE.AccountableCompliance,'')
-			ELSE ISNULL(AC.Nombre,'')	-- ACCOUNTABLE COMPLIANCE
-		END		+ '</td>'  +  
-		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
-			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
-			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla
+		END	 + '</td>'
+		AS Tabla
     FROM
         dbo.EN_InstanciasEntregable IE	(NOLOCK)
     JOIN
@@ -545,6 +501,7 @@ SELECT @HOY = GETDATE()
         dbo.EN_Entregable           E	(NOLOCK)
 		ON CE.IdEntregable	= E.IdEntregable
 		AND E.BITJOA = 0
+		AND E.IsActivo = 1
 	JOIN
 		CO_Contrato C	(NOLOCK)
 		ON CE.IdContrato	=	C.IdContrato
@@ -558,17 +515,11 @@ SELECT @HOY = GETDATE()
 		dbo.AP_Rutas ruta	(NOLOCK)
 		ON cita.IdRuta=ruta.idRuta
 	LEFT JOIN
-		AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
-		ON	CE.FocalPoint	=	FP.Usuario
-	LEFT JOIN
-		AP_USUARIO AC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
-		ON	CE.AccountableCompliance	=	AC.Usuario
-	LEFT JOIN
-		AP_USUARIO ACC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
-		ON	CE.Accountable	=	ACC.Usuario
-	LEFT JOIN
 		CO_ContratoConfiguracion	CC
 		ON	C.IdContrato	=	CC.Idcontrato
+	LEFT JOIN
+			EN_MarcoLegal	ML
+			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
 
@@ -609,7 +560,7 @@ SELECT @HOY = GETDATE()
 	SELECT
 		CE.AccountableCompliance,
 		'Notificación Semanal para AccountableCompliance del Contrato'   AS tipoCorreo,
-		'https://'+ruta.Ruta+'/2/Entregables/EntregablesAdministradorContrato.aspx' AS RutaPendiente,
+		'https://'+ruta.Ruta+'/2/Entregables/EntregablesAdministradorContrato.aspx?identificador=' AS RutaPendiente,
 		'<tr><td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
 		'<td'+
 		CASE
@@ -653,6 +604,7 @@ SELECT @HOY = GETDATE()
         dbo.EN_Entregable           E	(NOLOCK)
 		ON CE.IdEntregable	= E.IdEntregable 
 		AND E.BITJOA = 0
+		AND E.IsActivo = 1
 	JOIN
 		CO_Contrato C	(NOLOCK)
 		ON CE.IdContrato	=	C.IdContrato
@@ -721,7 +673,6 @@ SELECT @HOY = GETDATE()
 /*************************************************/
 --select * from #NotificacionesFinales order by id
 
-
 	SELECT
 		@MaxNotificacion = MAX(IdNotificacion)
 	FROM
@@ -744,7 +695,7 @@ SELECT @HOY = GETDATE()
 		ISNULL(@MaxNotificacion,0) + ID,	-- IdNotificacion
 		Destinatario,						-- Para
 		REPLACE(C.Asunto,'##num##', LTRIM(N.NumCorreo)),
-		REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##',N.Ruta),'##numcorreo##',LTRIM(N.NumCorreo)),
+		REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNotificacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo)),
 		GETDATE(),
 		0,
 		1,
@@ -758,5 +709,4 @@ SELECT @HOY = GETDATE()
 		ON	N.TipoCorreo	=	C.Descripcion
 
 EXEC sp_JOA_NotificacionesSemanales_Shell
-
 END
