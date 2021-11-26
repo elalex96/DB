@@ -1,9 +1,18 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_RegistraExcepcionesFecha]    Script Date: 23/11/2021 05:24:31 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 2019
 -- Description:Crea excepciones para los responsables de una instancia
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_EN_RegistraExcepcionesFecha] --3,10061,249263,'20190910','20190913'
+-- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
+-- =============================================
+ALTER PROCEDURE [dbo].[sp_EN_RegistraExcepcionesFecha] --3,10061,249263,'20190910','20190913'
     @idContrato INT,
     @idUsuario INT,
     @idInstanciaentregable INT,
@@ -98,9 +107,9 @@ BEGIN
                @DiasRevision = CE.DiasRevision,
                @DiasAlerta = CE.DiasAlerta,
                @DiasElaboracion = CE.DiasElaboracion
-        FROM dbo.EN_InstanciasEntregable IE
-        JOIN dbo.EN_ContratoEntregable CE ON IE.IdContratoEntregable = CE.IdContratoEntregable
-        JOIN dbo.EN_Entregable E ON CE.IdEntregable = E.IdEntregable
+        FROM dbo.EN_InstanciasEntregable IE (NOLOCK)
+        JOIN dbo.EN_ContratoEntregable CE (NOLOCK) ON IE.IdContratoEntregable = CE.IdContratoEntregable
+        JOIN dbo.EN_Entregable E (NOLOCK) ON CE.IdEntregable = E.IdEntregable
         WHERE idInstanciaEntregable = @idInstanciaentregable;
 
         INSERT INTO #DiasHabilesFrecuencia (IdFecha)
@@ -122,42 +131,55 @@ BEGIN
 		declare @IdProceso int
 		/*Identificar cual es el proceso*/
 		select		@IdProceso									=			IPF.IdProceso 
-		from 		EN_InstanciasEntregable						IE  
-		inner JOIN	EN_InstanciasEntregables_InstanciaActividad IEIA		ON						IE.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
-		inner JOIN	EN_InstanciasActividades					IA			ON						IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
-		inner JOIN	EN_InstanciasProcesosFecha					IPF			ON						IA.IdInstanciasProcesos		=	IPF.IdInstanciasProcesos
+		from 		EN_InstanciasEntregable						IE (NOLOCK)  
+		inner JOIN	EN_InstanciasEntregables_InstanciaActividad IEIA (NOLOCK)		ON						IE.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
+		inner JOIN	EN_InstanciasActividades					IA (NOLOCK)			ON						IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
+		inner JOIN	EN_InstanciasProcesosFecha					IPF (NOLOCK)		ON						IA.IdInstanciasProcesos		=	IPF.IdInstanciasProcesos
 		where		IE.IdInstanciaEntregable					=			@idInstanciaentregable
 		and			IE.IdContratoEntregable						=			@IdContratoEntregable
 		and			IPF.IdProceso								is not null
 		
-		declare @puedeGuardar bit
-		select @puedeGuardar = 1
-		
+		--select @IdProceso
+		--select * from #DiasHabilesFrecuencia
+		--SELECT		IPF.IdProceso
+		--		FROM		EN_InstanciasEntregable						IE
+		--		JOIN		#DiasHabilesFrecuencia						FLA		ON			IE.IdContratoEntregable						=		@IdContratoEntregable
+		--																		AND			IE.FechasLimiteAprobacion					=		FLA.IdFecha
+		--																		AND			IE.idInstanciaEntregable					<>		@idInstanciaentregable
+		--		inner join	EN_InstanciasEntregables_InstanciaActividad IEIA	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
+		--		inner JOIN	EN_InstanciasActividades					IA		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
+		--		inner JOIN	EN_InstanciasProcesosFecha					IPF		ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
+		--		where		IPF.IdProceso								=		@IdProceso
+
 		if (/*Verificamos que el registro tenga un proceso ligado*/
 					@IdProceso is not null		)
 		begin	/*Si es asi, verificamos si existe otro proceso, que este sea uno distinto al que ya existe*/
 			if not exists(
 				SELECT		IPF.IdProceso
-				FROM		EN_InstanciasEntregable						IE
+				FROM		EN_InstanciasEntregable						IE (NOLOCK)
 				JOIN		#DiasHabilesFrecuencia						FLA		ON			IE.IdContratoEntregable						=		@IdContratoEntregable
 																				AND			IE.FechasLimiteAprobacion					=		FLA.IdFecha
 																				AND			IE.idInstanciaEntregable					<>		@idInstanciaentregable
-				inner join	EN_InstanciasEntregables_InstanciaActividad IEIA	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
-				inner JOIN	EN_InstanciasActividades					IA		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
-				inner JOIN	EN_InstanciasProcesosFecha					IPF		ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
+				inner join	EN_InstanciasEntregables_InstanciaActividad IEIA (NOLOCK)	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
+				inner JOIN	EN_InstanciasActividades					IA (NOLOCK)		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
+				inner JOIN	EN_InstanciasProcesosFecha					IPF	(NOLOCK)	ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
 				where		IPF.IdProceso								=		@IdProceso
 			)
 			begin	/*De ser asi, le asignamos un 0 a las variales para permitirle guardar*/
-					select @puedeGuardar = 1
+					select	@ExisteCountFechaLimiteAprob	=	0,
+							@ExisteCountFechaLimiteReg		=	0
 			end
-			else
-			begin	/*De lo contrario indicams que almenos existe un registro para posteriormente no dejarlo guardar*/
-					select @puedeGuardar = 0
-			end
+			--else
+			--begin	/*De lo contrario indicamos que almenos existe un registro para posteriormente no dejarlo guardar*/
+					
+			--		select @ExisteCountFechaLimiteAprob		=	1,
+			--				@ExisteCountFechaLimiteReg		=	1
+			--end
 		end
 		else
 		begin
 			/*Si no, hacemos la validación actual*/
+			--select [@IdProceso] = @IdProceso
 
 			SELECT	@ExisteCountFechaLimiteAprob	=	COUNT(1)	
 			FROM	EN_InstanciasEntregable	IE
@@ -179,9 +201,9 @@ BEGIN
 				AND	IE.idInstanciaEntregable	<>	@idInstanciaentregable
 		end
 	
-	IF(@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	=	0 and @puedeGuardar = 1)
+	IF(@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	=	0)
 	BEGIN
-		--print '@puedeGuardar = 1'
+		
         INSERT INTO #DiasCE (dias, tipo)
         VALUES (@DiasAprobacion, 'Aprobacion'),
                (@DiasRevision, 'revision'),
@@ -267,7 +289,7 @@ BEGIN
                 WHERE TIE.Id = @C;
 
                 IF ((SELECT tipo FROM #DiasCE WHERE id = @CantidadDias) = 'Alerta')
-      BEGIN
+                BEGIN
                     UPDATE TIE
                     SET FechaInicioElaboracion = DH.IdFecha
                     FROM #TEMP_InstanciasEntregable TIE
@@ -325,16 +347,14 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		--print '@puedeGuardar = 0'
 		SELECT	
 		CASE 
 		WHEN @ExisteCountFechaLimiteAprob	>	0	AND	@ExisteCountFechaLimiteReg	>	0
 		THEN	'Esta obligación ya contiene una programación con la misma fecha de entrega interna y fecha de entrega regulador'	
 		WHEN @ExisteCountFechaLimiteAprob	>	0	AND	@ExisteCountFechaLimiteReg	=	0
 		THEN	'Esta obligación ya contiene una programación con la misma fecha de entrega interna'	
-		WHEN (@ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	>	0) or @puedeGuardar = 0
+		WHEN @ExisteCountFechaLimiteAprob	=	0	AND	@ExisteCountFechaLimiteReg	>	0
 		THEN	'Esta obligación ya contiene una programación con la misma fecha de entrega regulador'	
-		
 		END AS error;
 
 

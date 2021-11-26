@@ -1,4 +1,14 @@
-﻿CREATE PROCEDURE [dbo].[sp_JOA_ConfirmaJOA]
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_JOA_ConfirmaJOA]    Script Date: 23/11/2021 05:27:54 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
+-- =============================================
+ALTER PROCEDURE [dbo].[sp_JOA_ConfirmaJOA]
     @idUsuario INT,
 	@idContrato INT,
 	@idInstanciaEntregable INT,
@@ -36,9 +46,9 @@ BEGIN
 
 	SELECT @Tipo	=	NombreClasificacion
 	FROM
-		EN_Entregable	E
+		EN_Entregable	E (NOLOCK)
 	JOIN
-		En_Clasificacion C
+		En_Clasificacion C (NOLOCK)
 		ON	E.IdClasificacion	=	C.IdClasificacion
 	WHERE
 		E.IdEntregable	=	@idEntregable;
@@ -53,7 +63,7 @@ BEGIN
 			'Comentario: '+@ComentarioUsuarioElaborador
 		END
 	FROM 
-		AP_Usuario	U
+		AP_Usuario	U (NOLOCK)
 		WHERE U.UsuarioID	=	@idUsuario
 
 
@@ -73,7 +83,7 @@ BEGIN
 		INSERT INTO #ContratosEntregables(IdContratoEntregable,IdContrato,IdEntregable )
 		SELECT IdContratoEntregable,IdContrato,IdEntregable
 		FROM 
-			EN_ContratoEntregable C
+			EN_ContratoEntregable C (NOLOCK)
 		WHERE 
 		IdEntregable	=	@idEntregable
 	
@@ -88,7 +98,7 @@ BEGIN
 		)
 		SELECT CE.IdContratoEntregable,IE.idInstanciaEntregable,IE.ActividadID,A.ActividadID
 		FROM 
-			EN_InstanciasEntregable	IE
+			EN_InstanciasEntregable	IE (NOLOCK)
 		JOIN
 			#ContratosEntregables CE
 			ON IE.IdContratoEntregable
@@ -96,10 +106,10 @@ BEGIN
 		=	CE.IdContratoEntregable
 			AND	IE.FechaCalculadaEntregaReg	=	@FechaInstancia	
 		JOIN
-			dbo.EN_Actividad A
+			dbo.EN_Actividad A (NOLOCK)
 			ON	CE.IdContratoEntregable	=	A.IdContratoEntregable
 		LEFT JOIN 
-			dbo.EN_ExcepcionesActividad exa 
+			dbo.EN_ExcepcionesActividad exa (NOLOCK)
 			ON a.ActividadID = exa.ActividadIDExcepcion
 			AND IE.idInstanciaEntregable = exa.IdInstanciasEntregables 
 		WHERE 
@@ -109,7 +119,7 @@ BEGIN
 		SET
 			IE.ActividadID	=	I.ActividadIDSiguiente
 		FROM
-			EN_InstanciasEntregable	IE
+			EN_InstanciasEntregable	IE (NOLOCK)
 		JOIN 
 			#Instancias		I
 			ON	IE.idInstanciaEntregable	=	I.IdInstanciaEntregable
@@ -154,19 +164,18 @@ BEGIN
 			#ContratosEntregables	CE
 			ON I.IdContratoEntregable	=	CE.IdContratoEntregable
 		JOIN
-			AP_Usuario U
+			AP_Usuario U (NOLOCK)
 			ON U.UsuarioID	=	@idUsuario
 		LEFT	JOIN	
-			EN_TipoOperacion	TP
+			EN_TipoOperacion	TP (NOLOCK)
 			ON	TP.idTipoOperacion IN (2,3,4)
 
 		EXEC [sp_JOA_GuardaDocumentosPorVersion] @idInstanciaEntregable, @idUsuario ,@idContrato ,@idEntregable;  
 	END
 	ELSE
-	BEGIN -- PRINT('Action required');
+	BEGIN
 	
 	Exec [sp_En_SubeHistoricoAprueba] @idUsuario,@idContrato,@idInstanciaEntregable,@idContratoEntregable,@ComentarioGeneral,@URLRepositorio;
 
 	END
 END;
-
