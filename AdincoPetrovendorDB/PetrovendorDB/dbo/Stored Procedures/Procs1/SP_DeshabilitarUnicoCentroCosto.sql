@@ -1,15 +1,22 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_DeshabilitarUnicoCentroCosto]    Script Date: 26/11/2021 01:51:30 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <27-09-2019>
 -- Description:	<los proveedores que se encuentren en esta tabla se deshabilitara el check unico centro de costo de la solicitud de pedido>
 -- =============================================
-CREATE PROCEDURE SP_DeshabilitarUnicoCentroCosto @IdProveedor INT
+ALTER PROCEDURE [dbo].[SP_DeshabilitarUnicoCentroCosto] @IdProveedor INT
 AS
 BEGIN
     IF EXISTS
     (
         SELECT 1
-        FROM dbo.DEA_Proveedor
+        FROM dbo.DEA_Proveedor (NOLOCK)
         WHERE IdProveedor = @IdProveedor
 		AND ISNULL(Activo, 0) = 1 
     )
