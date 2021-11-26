@@ -10660,5 +10660,6 @@
     <None Include="dbo\Tables\Carso_Items_comparativaDetalle.sql" />
     <None Include="dbo\Stored Procedures\Procs1\Carso_sp_MarcaProcesadaCabecera.sql" />
     <None Include="dbo\Stored Procedures\Procs1\Carso_sp_EnviaCorreosComparativasPendientes.sql" />
+    <None Include="dbo\LogModificaciones.txt" />
   </ItemGroup>
 </Project>
