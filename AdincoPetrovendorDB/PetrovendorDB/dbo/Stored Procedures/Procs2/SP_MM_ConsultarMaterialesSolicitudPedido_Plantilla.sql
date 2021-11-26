@@ -1,9 +1,16 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarMaterialesSolicitudPedido_Plantilla]    Script Date: 26/11/2021 01:49:41 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <21/11/2019>
 -- Description:	<consultar los materiales de una plantilla de una solicitud de pedido>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultarMaterialesSolicitudPedido_Plantilla]
+ALTER PROCEDURE [dbo].[SP_MM_ConsultarMaterialesSolicitudPedido_Plantilla]
 	-- Add the parameters for the stored procedure here
 	@IdPlantillaSolicitudPedido INT
 AS
@@ -26,9 +33,9 @@ BEGIN
 		SPD.IdCentroCosto,--9
 		SPD.IdInstalacion,--10
 		SPD.IdLineaPresupuesto--11
-	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle AS SPD
-		LEFT JOIN dbo.MM_Material AS M ON M.IdMaterial = SPD.IdMaterial
-		LEFT JOIN dbo.PV_MM_MaterialUnidad AS UN ON UN.IdUnidad = SPD.IdUnidad
+	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle AS SPD (NOLOCK)
+		LEFT JOIN dbo.MM_Material AS M (NOLOCK) ON M.IdMaterial = SPD.IdMaterial
+		LEFT JOIN dbo.PV_MM_MaterialUnidad AS UN (NOLOCK) ON UN.IdUnidad = SPD.IdUnidad
 	WHERE SPD.IdPlantillaSolicitudPedido = @IdPlantillaSolicitudPedido
 		AND SPD.Activo = 1;
 
