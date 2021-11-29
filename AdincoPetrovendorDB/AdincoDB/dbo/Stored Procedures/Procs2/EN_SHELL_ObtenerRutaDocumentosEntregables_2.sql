@@ -1,21 +1,3 @@
-﻿USE [Adinco]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_SHELL_ObtenerRutaDocumentosEntregables'
-)
-    DROP PROCEDURE EN_SHELL_ObtenerRutaDocumentosEntregables;
-GO 
-
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerRutaDocumentosEntregables]    Script Date: 18/05/2021 11:33:35 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerRutaDocumentosEntregables]
 (
 	@IdContrato		int,
@@ -54,9 +36,6 @@ begin
 		FechaFinEtapa			date
 	)
 	
-	insert into #Rutas
-	exec EN_SHELL_ObtenerDocumentosEntregables @IdContrato, @IdUsuario
-	
 	create table #tmpResultado
 	(
 		Id						int, 
@@ -67,21 +46,23 @@ begin
 		DocumentoEntregableId	int
 	)
 
+	declare @maxNivel int, @i int, @query varchar(max)
+	
+	insert into #Rutas
+	exec EN_SHELL_ObtenerDocumentosEntregables @IdContrato, @IdUsuario
+	
 	insert 
 	into	#tmpResultado
 	select	Id, IdPadre, Nivel, Titulo, Titulo, DocumentoEntregableId
 	from	#Rutas 
-	--where	DocumentoEntregableId in (11584,11586)
-	
 
-	declare @maxNivel int, @i int, @query varchar(max)
 	select @maxNivel = max(Nivel), @i = 0 from #Rutas
 
 	while(@i < @maxNivel)
 	begin
 		
 		update		#tmpResultado	
-		set			#tmpResultado.Ruta		=	substring( r.Titulo,0,20)+'/'+tr.Ruta,--substring( replace( r.Titulo,'/','')+'/',0,20)+tr.Ruta,--substring( r.Titulo,0,20)+'/'+tr.Ruta,
+		set			#tmpResultado.Ruta		=	substring( r.Titulo,0,50)+'/'+tr.Ruta,
 					#tmpResultado.IdPadre	=	r.IdPadre
 		from		#tmpResultado	tr
 		inner join	#Rutas			r
@@ -96,4 +77,3 @@ begin
 	from	#tmpResultado 
 	where	DocumentoEntregableId is not null
 end
-
