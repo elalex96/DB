@@ -1,12 +1,20 @@
-﻿--==========================================
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_ExtraeDatosAlertasInstancias]    Script Date: 23/11/2021 05:26:14 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--==============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Crea Alertas 
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_ExtraeDatosAlertasInstancias]
+-- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb se añade (NOLOCK)
+-- =============================================
+ALTER PROCEDURE [dbo].[sp_ExtraeDatosAlertasInstancias]
 AS
     BEGIN
-        --PRINT('En proceso');
         DECLARE @HOY DATE;
         SET @HOY = GETDATE();
 
@@ -45,41 +53,41 @@ AS
                 ''                                                                               AS TextoTipoAlertaSiguiente2,
 				'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx' AS RutaPendiente
         FROM
-                dbo.EN_InstanciasEntregable IE
+                dbo.EN_InstanciasEntregable IE (NOLOCK)
             JOIN
-                dbo.EN_Actividad            A
+                dbo.EN_Actividad            A (NOLOCK)
                     ON IE.ActividadID=A.ActividadID  --Donde se encuentra PENDIENTE DE ELBARORACION
 					AND IE.Activo=1
 					AND DATEADD(DAY, 1, IE.FechasLimiteElaboracion) <=  @HOY
 					AND A.EstadoID = 10000
             JOIN
-                dbo.EN_Transicion           T
+                dbo.EN_Transicion           T 
                     ON A.ActividadID= T.ActividadInicialID 
                        AND T.AccionID = 10000
             JOIN
-                dbo.EN_Actividad            ASI
+                dbo.EN_Actividad            ASI (NOLOCK)
                     ON T.SiguienteActividadID = ASI.ActividadID
             JOIN
-                dbo.AP_Usuario              U1
+                dbo.AP_Usuario              U1 (NOLOCK)
                     ON A.idUsuario = U1.UsuarioID --- PENDIENTE DE ELABORACIÓN
             JOIN
-                dbo.AP_Usuario              U2
+                dbo.AP_Usuario              U2 (NOLOCK)
                     ON ASI.idUsuario=U2.UsuarioID  --- PENDIENTE DE ELABORACIÓN
             JOIN
-                dbo.EN_Estado               E1
+                dbo.EN_Estado               E1 (NOLOCK)
                     ON  A.EstadoID = E1.EstadoID--En estado que se encuentra la instancia
             JOIN
-                dbo.EN_Estado               E2
+                dbo.EN_Estado               E2 (NOLOCK)
                     ON  ASI.EstadoID= E2.EstadoID  --En estado que se encuentra la instancia
             JOIN
-                dbo.EN_ContratoEntregable   CE
+                dbo.EN_ContratoEntregable   CE (NOLOCK)
                     ON IE.IdContratoEntregable= CE.IdContratoEntregable
 					AND CE.Activo=1 
             JOIN
-                dbo.EN_Entregable           E
+                dbo.EN_Entregable           E (NOLOCK)
                     ON CE.IdEntregable= E.IdEntregable
 					AND E.BITJOA = 0
-		    JOIN CO_Contrato C
+		    JOIN CO_Contrato C (NOLOCK)
 			on CE.IdContrato=C.IdContrato
 			JOIN dbo.CO_Contratista cita
 			ON c.IdContratista=cita.IdContratista
@@ -126,41 +134,41 @@ AS
 				'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx' AS RutaPendiente
 				--SELECT *                                                                    
         FROM
-                dbo.EN_InstanciasEntregable IE
+                dbo.EN_InstanciasEntregable IE (NOLOCK)
          JOIN
-                dbo.EN_Actividad            A
+                dbo.EN_Actividad            A (NOLOCK)
                     ON IE.ActividadID=A.ActividadID   --Donde se encuentra PENDIENTE DE REVISIÓN
 					AND A.EstadoID = 10001
 					AND DATEADD(DAY, 1, IE.FechasLimiteRevision) <= @HOY
 					AND IE.Activo=1
           JOIN
-            dbo.EN_Transicion           T
+            dbo.EN_Transicion           T (NOLOCK)
                ON A.ActividadID= T.ActividadInicialID 
                        AND T.AccionID = 10001
           JOIN
-                dbo.EN_Actividad            ASI
+                dbo.EN_Actividad            ASI (NOLOCK)
                     ON ASI.ActividadID=T.SiguienteActividadID 
           JOIN
-                dbo.AP_Usuario              U1
+                dbo.AP_Usuario              U1 (NOLOCK)
                     ON  A.idUsuario= U1.UsuarioID --- PENDIENTE DE REVISIÓN
           JOIN
-                dbo.AP_Usuario              U2
+                dbo.AP_Usuario              U2 (NOLOCK)
                     ON ASI.idUsuario=U2.UsuarioID  --- PENDIENTE DE REVISIÓN
           JOIN
-                dbo.EN_Estado               E1
+                dbo.EN_Estado               E1 (NOLOCK)
                     ON A.EstadoID =E1.EstadoID --En estado que se encuentra la instancia
           JOIN
-                dbo.EN_Estado               E2
+                dbo.EN_Estado               E2 (NOLOCK)
                     ON ASI.EstadoID=E2.EstadoID --En estado que se encuentra la instancia
          JOIN
-                dbo.EN_ContratoEntregable   CE
+                dbo.EN_ContratoEntregable   CE (NOLOCK)
                     ON IE.IdContratoEntregable=CE.IdContratoEntregable
 					AND CE.Activo=1  
           JOIN
-                dbo.EN_Entregable           E
+                dbo.EN_Entregable           E (NOLOCK)
                     ON CE.IdEntregable=E.IdEntregable
 					AND E.BITJOA = 0
-		 JOIN CO_Contrato C
+		 JOIN CO_Contrato C (NOLOCK)
 			on CE.IdContrato=C.IdContrato
 			JOIN dbo.CO_Contratista cita
 			ON c.IdContratista=cita.IdContratista
@@ -202,41 +210,41 @@ AS
                 ''                                                    AS TextoTipoAlertaSiguiente2,
 				'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx' AS RutaPendiente
         FROM
-                dbo.EN_InstanciasEntregable IE
+                dbo.EN_InstanciasEntregable IE (NOLOCK)
             JOIN
-                dbo.EN_Actividad            A
+                dbo.EN_Actividad            A (NOLOCK)
                     ON IE.ActividadID =A.ActividadID --Donde se encuentra PENDIENTE DE APROBACIÓN
 					AND A.EstadoID = 10002
 					AND DATEADD(DAY, 1, IE.FechasLimiteAprobacion) <=  @HOY
 					AND IE.Activo=1
             JOIN
-                dbo.EN_Transicion           T
+                dbo.EN_Transicion           T (NOLOCK)
                 ON A.ActividadID=T.ActividadInicialID 
                        AND T.AccionID = 10001
          JOIN
-                dbo.EN_Actividad            ASI
+                dbo.EN_Actividad            ASI (NOLOCK)
                     ON T.SiguienteActividadID = ASI.ActividadID ----*********
             JOIN
-                dbo.AP_Usuario              U1
+                dbo.AP_Usuario              U1 (NOLOCK)
                     ON A.idUsuario =U1.UsuarioID--- PENDIENTE DE APROBACIÓN
             JOIN
-                dbo.AP_Usuario              U2
+                dbo.AP_Usuario              U2 (NOLOCK)
                     ON  ASI.idUsuario=U2.UsuarioID  --- PENDIENTE DE APROBACIÓN --*********
             JOIN
-                dbo.EN_Estado               E1
+                dbo.EN_Estado               E1 (NOLOCK)
                     ON A.EstadoID=E1.EstadoID  --En estado que se encuentra la instancia
             JOIN
-                dbo.EN_Estado               E2
+                dbo.EN_Estado               E2 (NOLOCK)
                     ON  ASI.EstadoID=E2.EstadoID --En estado que se encuentra la instancia--*********
             JOIN
-                dbo.EN_ContratoEntregable   CE
+                dbo.EN_ContratoEntregable   CE (NOLOCK)
                     ON IE.IdContratoEntregable=CE.IdContratoEntregable
 					AND CE.Activo=1 
             JOIN
-                dbo.EN_Entregable           E
+                dbo.EN_Entregable           E (NOLOCK)
                     ON  CE.IdEntregable=E.IdEntregable
 					AND E.BITJOA = 0
-			JOIN CO_Contrato C
+			JOIN CO_Contrato C (NOLOCK)
 			on CE.IdContrato=C.IdContrato
 			JOIN dbo.CO_Contratista cita
 			ON c.IdContratista=cita.IdContratista
@@ -288,40 +296,40 @@ AS
                 ''                                                     AS TextoTipoAlertaSiguiente2,
 				'https://'+ruta.Ruta+'/2/Entregables/SubeEntregables.aspx' AS RutaPendiente
         FROM
-                dbo.EN_InstanciasEntregable IE
+                dbo.EN_InstanciasEntregable IE (NOLOCK)
             JOIN
-                dbo.EN_Actividad            A
+                dbo.EN_Actividad            A (NOLOCK)
                     ON IE.ActividadID= A.ActividadID   --Donde se encuentra PENDIENTE DE ELBARORACION
 					AND CONVERT(DATE, IE.FechaEnvioMensajeAtrasoRevision) =@HOY
 					AND IE.Activo=1
             JOIN
-                dbo.EN_Transicion           T
+                dbo.EN_Transicion           T (NOLOCK)
                     ON  A.ActividadID=T.ActividadInicialID 
                        AND T.AccionID = 10000
             JOIN
-                dbo.EN_Actividad            ASI
+                dbo.EN_Actividad            ASI (NOLOCK)
                     ON T.SiguienteActividadID = ASI.ActividadID
             JOIN
-                dbo.AP_Usuario              U1
+                dbo.AP_Usuario              U1 (NOLOCK)
                     ON  A.idUsuario=U1.UsuarioID --- PENDIENTE DE ELABORACIÓN
             JOIN
-                dbo.AP_Usuario              U2
+                dbo.AP_Usuario              U2 (NOLOCK)
                     ON ASI.idUsuario=U2.UsuarioID  --- PENDIENTE DE ELABORACIÓN
             JOIN
-                dbo.EN_Estado               E1
+                dbo.EN_Estado               E1 (NOLOCK)
                     ON A.EstadoID=E1.EstadoID  --En estado que se encuentra la instancia
             JOIN
-                dbo.EN_Estado               E2
+                dbo.EN_Estado               E2 (NOLOCK)
                     ON  ASI.EstadoID= E2.EstadoID --En estado que se encuentra la instancia
             JOIN
-                dbo.EN_ContratoEntregable   CE
+                dbo.EN_ContratoEntregable   CE (NOLOCK)
                     ON IE.IdContratoEntregable=CE.IdContratoEntregable
 					AND CE.Activo=1 
             JOIN
-                dbo.EN_Entregable           E
+                dbo.EN_Entregable           E (NOLOCK)
                     ON  CE.IdEntregable=E.IdEntregable
 					AND E.BITJOA = 0
-			JOIN CO_Contrato C
+			JOIN CO_Contrato C (NOLOCK)
 			on CE.IdContrato=C.IdContrato
 			JOIN dbo.CO_Contratista cita
 			ON c.IdContratista=cita.IdContratista

@@ -34,3 +34,11 @@
     CONSTRAINT [FK_OT_Solicitud_SC_SubContrato] FOREIGN KEY ([IdSubContrato]) REFERENCES [dbo].[SC_SubContrato] ([IdSubContrato])
 );
 
+go
+
+create nonclustered index IX_OT_Solicitud		on		OT_Solicitud	 (	[IdSubContrato],		[IsActivo],				[IsEliminado],		[IdOTEstatus]) 
+include (	[IdOTSolicitud],		[Folio],			[FechaInicio],		[FechaFin],				[PlazoEjecucion],		[CreadoPor],		[CreadoEl],				[ModificadoPor],
+			[ModificadoEl],			[IdPresupuesto],	[Objeto],			[FechaFinExtendida],	[IdOTEstatusAnt],		[IdMatContratista],	[IdMatSubcontratista],	[IdCentroCosto],
+			[ProgIniPorProveedor],	[IdMoneda],			[CapturaManual],	[SAPPR],				[FechaAprobacionSAPPR],	[Notas],			[IdTerminos])
+
+

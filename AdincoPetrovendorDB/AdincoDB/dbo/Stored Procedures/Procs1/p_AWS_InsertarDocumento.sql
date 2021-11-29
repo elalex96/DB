@@ -3,7 +3,7 @@
  @pNombreArchivo       VARCHAR(250), 
  @pFolder              VARCHAR(100), 
  @pUUIDAmazon          UNIQUEIDENTIFIER, 
- @pMeta                VARCHAR(1000), 
+ @pMeta                VARCHAR(200), 
  @pBucket              VARCHAR(50), 
  @pCreadoPor           INT, 
  @pAWSDocumentoPadreId INT, 

@@ -23,6 +23,11 @@ GO
 -- Updated date: <01/11/2021>									
 -- Description: <Reacomodo de tablas para optimización>	
 -- =============================================
+-- =============================================
+-- Modified:      <Luis David>									
+-- Updated date: <26/11/2021>									
+-- Description: <Se contemplan los nulls con el método isnull>	
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultarPeticionOfertaDetalle_MV1_5] --2822,44
 	-- Add the parameters for the stored procedure here
 	@IdPeticionOferta INT, 
@@ -99,12 +104,7 @@ AS
 					THEN 'Si los materiales no estan dentro de su catálogo, se agregaran automáticamente al cotizar el material.'
 					ELSE '' 
 				END AS CotizacionRestringida2,
-				CASE WHEN POD.NoCotizar IS NULL THEN 
-					1  --> SI ESTA PENDIENTE PONER EN 1
-				ELSE 
-					POD.IdCondicionPago 
-				END
-				AS IdCondicionPago,
+				ISNULL(POD.NoCotizar,1) IdCondicionPago,
 				CASE WHEN POD.NoCotizar IS NULL THEN 
 					0  --> SI ESTA PENDIENTE PONER EN 1
 				ELSE 
