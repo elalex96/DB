@@ -3,7 +3,7 @@
 -- Create date: 18/05/2019
 -- Description:Guarda entregables internas
 -- =============================================
-ALTER PROCEDURE dbo.EN_UpdateEntregableInterno
+CREATE PROCEDURE [dbo].[EN_UpdateEntregableInterno]
     @idUsuario INT,
     @idContrato INT,
     @pDocumentoEntregable NVARCHAR(MAX),
@@ -19,7 +19,9 @@ ALTER PROCEDURE dbo.EN_UpdateEntregableInterno
     @Referencia VARCHAR(MAX),
     @Condicion VARCHAR(MAX),
     @TiempoEntrega VARCHAR(MAX),
-    @actividad VARCHAR(MAX)
+    @actividad VARCHAR(MAX),
+	@IdReguladorEntregable INT,
+	@IdResponsableGenerador INT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -27,14 +29,11 @@ BEGIN
     UPDATE dbo.EN_Entregable
     SET DocumentoEntregable = @pDocumentoEntregable,
         Descripcion = @pDescripcion,
---        CreadoPor = @idUsuario,
---        CreadoEn = GETDATE(),
         ModificadoPor = @idUsuario,
         ModificadoEn = GETDATE(),
         IsActivo = @pIsActivo,
         IsEliminado = CASE WHEN @pIsActivo = 0 THEN 1
 					ELSE 0 END,
-        -- Consecutivo = @pConsecutivo,
         IdReceptorEntregable = CASE @IdReceptorEntregable
                                    WHEN 0 THEN
                                        NULL
@@ -53,10 +52,20 @@ BEGIN
         Apartado = @Referencia,
         Observaciones = @Condicion,
         TiempoEntrega = @TiempoEntrega,
-        Actividad = @actividad
+        Actividad = @actividad,
+		IdRegulador = CASE @IdReguladorEntregable
+						 WHEN 0 THEN	NULL
+						 ELSE	@IdReguladorEntregable
+					 END,
+		IdResponsableGenerador =CASE @IdResponsableGenerador
+									 WHEN 0 THEN	NULL
+									 ELSE	@IdResponsableGenerador
+								 END
     WHERE IdEntregable = @pIdEntregable;
     IF @@ERROR <> 0
         SELECT CAST(@@ERROR AS NVARCHAR(8)) AS error;
     ELSE
         SELECT '' AS error;
 END;
+
+

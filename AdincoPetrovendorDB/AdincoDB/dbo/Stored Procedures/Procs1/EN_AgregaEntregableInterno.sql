@@ -1,11 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'EN_AgregaEntregableInterno')
-begin
-	drop proc EN_AgregaEntregableInterno
-end
-
-go
-
-CREATE PROCEDURE [dbo].[EN_AgregaEntregableInterno]
+﻿CREATE PROCEDURE [dbo].[EN_AgregaEntregableInterno]
     @idUsuario				INT,
     @idContrato				INT,
     @pDocumentoEntregable	VARCHAR(MAX),
@@ -22,7 +15,9 @@ CREATE PROCEDURE [dbo].[EN_AgregaEntregableInterno]
     @Condicion				VARCHAR(MAX),
     @TiempoEntrega			VARCHAR(MAX),
     @actividad				VARCHAR(MAX),
-	@idArea					int
+	@idArea					int,
+	@IdReguladorEntregable INT,
+	@IdResponsableGenerador INT
 AS
 BEGIN
 -- 
@@ -54,12 +49,7 @@ BEGIN
 		ON	C.IdContratista	=	S.IdContratista
     WHERE	C.IdContrato	=	@idContrato;
 
-  --  SELECT	@IdEntregableMAX	=	ISNULL(MAX(E.IdEntregable), 0)
-  --  FROM	EN_ContratoEntregable	CE
-  --  JOIN	EN_Entregable	E	ON	CE.IdEntregable=E.IdEntregable 
-		--AND	CE.IdContrato	=	@idContrato
-		--AND BitInterno	=	1;
-    
+  
 	SELECT 
 		@IdEntregableMAX	=	ISNULL(MAX(E.IdEntregable), 0)
 	FROM	CO_Contrato	C
@@ -109,20 +99,45 @@ END;
         Observaciones,
         TiempoEntrega,
         Actividad,
-		BitJOA
+		BitJOA,
+		IdRegulador,
+		IdResponsableGenerador
     )
     VALUES
-    (   @pDocumentoEntregable,	@pDescripcion,	@idUsuario, GETDATE(), @idUsuario, GETDATE(), 1, 0, @pConsecutivo, 1,
+    (   @pDocumentoEntregable,	
+		@pDescripcion,	
+		@idUsuario, 
+		GETDATE(), 
+		@idUsuario, 
+		GETDATE(), 
+		1, 
+		0, 
+		@pConsecutivo,
+		1,
         CASE @IdReceptorEntregable
             WHEN 0	 THEN	NULL
 			ELSE	@IdReceptorEntregable
 		END, 
-		@IdFrecuenciaEntregable, @EsDeProceso,
+		@IdFrecuenciaEntregable, 
+		@EsDeProceso,
 		 CASE @idMarcoLegal
              WHEN 0 THEN	NULL
 	         ELSE	@idMarcoLegal
          END,
-		 @Articulo, @Referencia, @Condicion, @TiempoEntrega, @actividad, 0);
+		 @Articulo, 
+		 @Referencia, 
+		 @Condicion, 
+		 @TiempoEntrega, 
+		 @actividad, 
+		 0,
+		  CASE @IdReguladorEntregable
+             WHEN 0 THEN	NULL
+	         ELSE	@IdReguladorEntregable
+         END,
+		 CASE @IdResponsableGenerador
+             WHEN 0 THEN	NULL
+	         ELSE	@IdResponsableGenerador
+         END);
     
 SET @pIdEntregable = SCOPE_IDENTITY();
     INSERT INTO dbo.EN_ContratoEntregable
@@ -135,7 +150,6 @@ SET @pIdEntregable = SCOPE_IDENTITY();
         CreadoPor,
         CreadoEl,
         ModificadoPor,
-
         ModificadoEl,
         Activo,
         DiasElaboracion,
