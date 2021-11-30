@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[EN_Visualiza_EntregablesInternos]--0,10061,3,0
+﻿CREATE PROCEDURE PROCEDURE [dbo].[EN_Visualiza_EntregablesInternos]--0,10061,3,0
 	@pIdEntregable INT,
     @idUsuario INT,
     @idContrato INT,
@@ -36,7 +36,10 @@ BEGIN
 				ISNULL(E.Apartado,'') AS Apartado,
 				ISNULL(E.Observaciones,'') AS Observaciones,
 				ISNULL(E.TiempoEntrega,'') AS TiempoEntrega,
-				ISNULL(E.Actividad,'') AS Actividad
+				ISNULL(E.Actividad,'') AS Actividad,
+				E.IdResponsableGenerador,
+				RG.ResponsableGenerador,
+				R.Regulador
 		FROM	EN_Entregable  E
 
 		JOIN	EN_ContratoEntregable CE
@@ -62,8 +65,8 @@ BEGIN
 		LEFT JOIN EN_MarcoLegal ML
 			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 
---		WHERE	@pIdEntregable IN (0,E.IdEntregable) 
-
+		LEFT JOIN EN_ResponsableGenerador RG
+			ON E.IdResponsableGenerador	= RG.IdResponsableGenerador
 		ORDER BY IdEntregable DESC
     END
 	ELSE
@@ -90,7 +93,8 @@ BEGIN
 			ISNULL(E.Apartado,'') AS Apartado,
 			ISNULL(E.Observaciones,'') AS Observaciones,
 			ISNULL(E.TiempoEntrega,'') AS TiempoEntrega,
-			ISNULL(E.Actividad,'') AS Actividad
+			ISNULL(E.Actividad,'') AS Actividad,
+			E.IdResponsableGenerador
 	FROM	EN_Entregable  E
 
 	JOIN	EN_ContratoEntregable CE
@@ -113,5 +117,7 @@ BEGIN
 
 	LEFT JOIN EN_MarcoLegal ML
 		ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
+
+
 	END
 END;
