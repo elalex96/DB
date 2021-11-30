@@ -1,9 +1,16 @@
-﻿-- =============================================  
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarContratosPorIdSolicitudPedido]    Script Date: 26/11/2021 01:56:27 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:Daniel AC  
 -- Create date: 22-01-2017  
 -- Description: Buscar el nombre del contrato por la solicitud de pedido, si no se encuentra retornar textos vacios   
 -- =============================================  
-CREATE  PROCEDURE [dbo].[SP_MM_ConsultarContratosPorIdSolicitudPedido]   
+ALTER  PROCEDURE [dbo].[SP_MM_ConsultarContratosPorIdSolicitudPedido]   
     -- Add the parameters for the stored procedure here  
      
     @IdSolicitudPedido INT  
@@ -21,10 +28,10 @@ BEGIN
         @NombreAreaContractual=ISNULL(AC.NombreAreaContractual,''),  
         @NumeroContrato=ISNULL(C.NumeroContrato,''),  
         @Contrato=(CONCAT(ISNULL(C.NumeroContrato,''),' - ',ISNULL(AC.NombreAreaContractual,'')))         
-    FROM Adinco.dbo.CO_Contrato C  
-        INNER JOIN Adinco.dbo.CO_AreaContractual AC  
+    FROM Adinco.dbo.CO_Contrato C (NOLOCK)
+        INNER JOIN Adinco.dbo.CO_AreaContractual AC (NOLOCK) 
             ON C.IdAreaContractual = AC.IdAreaContractual  
-  INNER JOIN Petrovendor.dbo.MM_SolicitudPedido SP ON sp.IdContrato= C.IdContrato  
+  INNER JOIN Petrovendor.dbo.MM_SolicitudPedido SP (NOLOCK) ON sp.IdContrato= C.IdContrato  
     WHERE (SP.IdSolicitudPedido = @IdSolicitudPedido);  
    
  SELECT   

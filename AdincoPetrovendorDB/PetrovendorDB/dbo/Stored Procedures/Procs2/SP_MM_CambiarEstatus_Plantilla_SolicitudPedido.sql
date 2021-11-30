@@ -1,14 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_CambiarEstatus_Plantilla_SolicitudPedido'
-)
-    DROP PROCEDURE SP_MM_CambiarEstatus_Plantilla_SolicitudPedido;
-GO 
-/****** Object:  StoredProcedure [dbo].[SP_MM_CambiarEstatus_Plantilla_SolicitudPedido]    Script Date: 10/03/2021 11:07:08 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_CambiarEstatus_Plantilla_SolicitudPedido]    Script Date: 26/11/2021 01:57:02 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,7 +10,7 @@ GO
 -- Create date: <21/11/2019>
 -- Description:	<cambiar el estado de la plantilla de solicitud de pedido>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_CambiarEstatus_Plantilla_SolicitudPedido]
+ALTER PROCEDURE [dbo].[SP_MM_CambiarEstatus_Plantilla_SolicitudPedido]
 	-- Add the parameters for the stored procedure here
 	@IdPlantillaSolicitudPedido INT,
 	@IdUsuario INT,
@@ -32,7 +24,7 @@ BEGIN
 	DECLARE @Bitacora NVARCHAR(MAX)
 
 	SELECT @Bitacora=Bitacora 
-	FROM MM_Plantillas_SolicitudPedido 
+	FROM MM_Plantillas_SolicitudPedido (NOLOCK)
 	WHERE IdPlantillaSolicitudPedido = @IdPlantillaSolicitudPedido;
 
 	IF ISNULL(@Bitacora,'')=''
@@ -49,4 +41,3 @@ BEGIN
 	WHERE IdPlantillaSolicitudPedido = @IdPlantillaSolicitudPedido;
 
 END
-

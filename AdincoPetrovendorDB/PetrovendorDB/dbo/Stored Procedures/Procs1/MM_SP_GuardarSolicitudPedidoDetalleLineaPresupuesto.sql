@@ -1,4 +1,11 @@
-﻿
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[MM_SP_GuardarSolicitudPedidoDetalleLineaPresupuesto]    Script Date: 26/11/2021 01:59:57 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <2017>
@@ -8,8 +15,12 @@
 -- Update date: <22-11-2018>
 -- Description:	<Se agrega la actualizacion del detalle de material>
 -- =============================================
+-- Author:		<Alexander Gomez>
+-- Update date: <26/11/2021>
+-- Description:	<optimizacion>
+-- =============================================
 
-CREATE procedure MM_SP_GuardarSolicitudPedidoDetalleLineaPresupuesto
+ALTER procedure [dbo].[MM_SP_GuardarSolicitudPedidoDetalleLineaPresupuesto]
 	@IdSolicitudPedidoDetalle INT,
 	@IdCentroCosto INT,
 	@IdInstalacion INT,
@@ -17,12 +28,16 @@ CREATE procedure MM_SP_GuardarSolicitudPedidoDetalleLineaPresupuesto
 
 AS
 BEGIN
-	DECLARE @Existe INT
 
-	SET	@Existe = (SELECT COUNT(IdSolicitudPedidoDetalleLineaPresupuesto) FROM dbo.MM_SolicitudPedidoDetalleLineaPresupuesto WHERE IdSolicitudPedidoDetalle = @IdSolicitudPedidoDetalle)
+	UPDATE dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
+	SET IdCentroCosto = @IdCentroCosto,
+			IdInstalacion = @IdInstalacion,
+			IdLineaPresupuesto = @IdLineaPresupuesto
+	WHERE IdSolicitudPedidoDetalle = @IdSolicitudPedidoDetalle
 
-	IF(@Existe = 0)
+	IF @@ROWCOUNT = 0
 	BEGIN
+			
 		INSERT INTO dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
 		(
 			IdSolicitudPedidoDetalle,
@@ -36,13 +51,7 @@ BEGIN
 			@IdInstalacion, -- IdInstalacion - int
 			@IdLineaPresupuesto  -- IdLineaPresupuesto - int
 		)
+
 	END
-	ELSE
-    BEGIN
-        UPDATE dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
-		SET IdCentroCosto = @IdCentroCosto,
-			IdInstalacion = @IdInstalacion,
-			IdLineaPresupuesto = @IdLineaPresupuesto
-		WHERE IdSolicitudPedidoDetalle = @IdSolicitudPedidoDetalle
-    END
+
 END
