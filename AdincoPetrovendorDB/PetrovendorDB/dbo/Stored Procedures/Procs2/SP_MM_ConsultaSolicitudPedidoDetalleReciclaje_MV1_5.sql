@@ -1,4 +1,11 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaSolicitudPedidoDetalleReciclaje_MV1_5]    Script Date: 26/11/2021 01:48:47 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -9,7 +16,7 @@
 -- Description: Consulta Solicitud Pedido Detalle  
 -- =============================================
 
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoDetalleReciclaje_MV1_5]
+ALTER PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoDetalleReciclaje_MV1_5]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT ,
 
@@ -33,14 +40,14 @@ AS
 					  ELSE
 						  'Ninguno'
 					  END ) AS EstatusArchivo
-		FROM		MM_SolicitudPedidoDetalle AS SPD
-		INNER JOIN	dbo.MM_Material AS MM
-			ON MM.IdMaterial = SPD.IdMaterial
-		LEFT JOIN	PV_MM_MaterialUnidad AS U
+		FROM		MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+		INNER JOIN	dbo.MM_Material AS MM (NOLOCK)
+			ON MM.IdMaterial = SPD.IdMaterial 
+		LEFT JOIN	PV_MM_MaterialUnidad AS U (NOLOCK)
 			ON U.IdUnidad = SPD.IdUnidad
-		LEFT JOIN	DG_Domicilio AS D
+		LEFT JOIN	DG_Domicilio AS D (NOLOCK)
 			ON D.IdDomicilio = SPD.IdDomicilioEntrega
-		LEFT JOIN	MM_SolPedArchivoAdjuntoMaterial AS DOC
+		LEFT JOIN	MM_SolPedArchivoAdjuntoMaterial AS DOC (NOLOCK)
 			ON DOC.IdSolPedDetalle = SPD.IdSolicitudPedidoDetalle
 			   AND	DOC.Activo = 1
 		WHERE		IdSolicitudPedido = @IdSolicitudPedido

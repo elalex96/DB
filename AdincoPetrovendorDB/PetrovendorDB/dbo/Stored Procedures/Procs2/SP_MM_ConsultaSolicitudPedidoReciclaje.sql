@@ -1,9 +1,16 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaSolicitudPedidoReciclaje]    Script Date: 26/11/2021 01:48:16 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-04-17
 -- Description:	Consultar Solicitudes de Pedido  
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoReciclaje]
+ALTER PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoReciclaje]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT, 
 	 
@@ -54,7 +61,7 @@ BEGIN
 	 --TG.TipoGasto,
 	 --ISNULL(SP.Fianza,'false'),
 	 --ISNULL(SP.Controlados,'false'),
-	FROM MM_SolicitudPedido AS SP
+	FROM MM_SolicitudPedido AS SP (NOLOCK)
 	WHERE SP.IdSolicitudPedido=@IdSolicitudPedido
 
 END
