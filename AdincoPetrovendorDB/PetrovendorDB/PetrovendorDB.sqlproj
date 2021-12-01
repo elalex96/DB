@@ -10629,6 +10629,7 @@
     <Build Include="dbo\Functions\EN_sp_ValidaFrecuenciaEntregables.sql" />
     <Build Include="dbo\Tables\Carso_Comparativa_Destinatarios.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_PR_MM_ConsultaDescargaXMLFacturaEliminada.sql" />
+    <Build Include="dbo\Functions\fn_ObtenSubtotalPedido.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
