@@ -1,6 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_ConsultaResponsablesEntregables]    Script Date: 10/11/2021 11:19:29 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[sp_EN_ConsultaResponsablesEntregables]    Script Date: 30/11/2021 02:45:24 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -214,7 +214,9 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0)  AS Evaluacion,
 					ISNULL(ECA.Transicion,0)  AS Transicion,
 					ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,
-					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo
+					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
+					CR.Regulador,
+					RG.ResponsableGenerador
             FROM EN_ContratoEntregable AS CE
                 JOIN EN_Entregable AS EN
                     ON CE.IdEntregable = EN.IdEntregable
@@ -270,6 +272,10 @@ BEGIN
 				LEFT JOIN 
 					EN_ENTREGABLE_CONFIGADICIONAL ECA
 					ON EN.IdEntregable=ECA.IdEntregable
+				LEFT JOIN dbo.CO_Regulador AS CR
+					ON EN.IdRegulador = CR.IdRegulador
+				LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON EN.IdResponsableGenerador = RG.IdResponsableGenerador
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
                   AND
@@ -343,7 +349,9 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0),
 					ISNULL(ECA.Transicion,0),
 					ISNULL(ECA.AbandonoArea,0),
-					ISNULL(ECA.AbandonoPozo,0)
+					ISNULL(ECA.AbandonoPozo,0),
+					CR.Regulador,
+					RG.ResponsableGenerador
             ORDER BY 
 					CE.IdContratoEntregable
 					--COUNT(DISTINCT AE.ActividadID),
@@ -414,7 +422,9 @@ BEGIN
 					END		AS AccountableCompliance,
 					CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
 						ELSE ISNULL(ACC.Nombre,'') --+ ' (' + CE.Accountable + ')'
-					END		AS Accountable
+					END		AS Accountable,
+					CR.Regulador,
+					RG.ResponsableGenerador
             FROM EN_ContratoEntregable AS CE	(NOLOCK)
                 JOIN EN_Entregable AS EN	(NOLOCK)
                     ON CE.IdEntregable = EN.IdEntregable
@@ -468,6 +478,10 @@ BEGIN
 				LEFT JOIN
 					#RelacionadosMostrar	EM
 					ON	EN.IdEntregable	=	EM.IdEntregable
+				LEFT JOIN dbo.CO_Regulador AS CR
+					ON EN.IdRegulador = CR.IdRegulador
+				LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON EN.IdResponsableGenerador = RG.IdResponsableGenerador
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
 				  AND ENM.IdEntregable IS NULL
@@ -532,7 +546,9 @@ BEGIN
 					END,
 					CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
 						ELSE ISNULL(ACC.Nombre,'') --+ ' (' + CE.Accountable + ')'
-					END
+					END,
+					CR.Regulador,
+					RG.ResponsableGenerador
             ORDER BY	CE.IdContratoEntregable
 					-- COUNT(DISTINCT AE.ActividadID),
      --                COUNT(DISTINCT AR.ActividadID),
@@ -609,7 +625,9 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0)  AS Evaluacion,
 					ISNULL(ECA.Transicion,0)  AS Transicion,
 					ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,
-					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo
+					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
+					CR.Regulador,
+					RG.ResponsableGenerador
             FROM EN_ContratoEntregable AS CE (NOLOCK)
                 JOIN EN_Entregable AS EN	(NOLOCK)
                ON CE.IdEntregable = EN.IdEntregable
@@ -665,6 +683,10 @@ BEGIN
 				LEFT JOIN 
 					EN_ENTREGABLE_CONFIGADICIONAL ECA
 					ON EN.IdEntregable	=	ECA.IdEntregable
+				LEFT JOIN dbo.CO_Regulador AS CR
+					ON EN.IdRegulador = CR.IdRegulador
+				LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON EN.IdResponsableGenerador = RG.IdResponsableGenerador
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
 				  AND ISNULL(CE.BitNA,0) <> 1
@@ -735,7 +757,9 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0),
 					ISNULL(ECA.Transicion,0),
 					ISNULL(ECA.AbandonoArea,0),
-					ISNULL(ECA.AbandonoPozo,0)
+					ISNULL(ECA.AbandonoPozo,0),
+					CR.Regulador,
+					RG.ResponsableGenerador
             ORDER BY CE.IdContratoEntregable
 					--COUNT(DISTINCT AE.ActividadID),
      --                COUNT(DISTINCT AR.ActividadID),
@@ -749,10 +773,11 @@ BEGIN
         FROM dbo.AP_PermisosUsuarios PU
             JOIN dbo.AP_Permiso P
                 ON PU.IdPermiso = P.IdPermiso
-        WHERE UsuarioID = @IdUsuario
-              AND idContrato = @IdContrato
-              AND P.BitActivo = 1
-              AND PU.BitActivo = 1;
+		GROUP BY REPLACE(P.NombrePermiso, 'Acceso a Entregables de ', '');
+        --WHERE UsuarioID = @IdUsuario
+        --      AND idContrato = @IdContrato
+        --      AND P.BitActivo = 1
+        --      AND PU.BitActivo = 1;
 
         IF (@BitProcesos = 0 AND @BitTodos = 0)
         BEGIN

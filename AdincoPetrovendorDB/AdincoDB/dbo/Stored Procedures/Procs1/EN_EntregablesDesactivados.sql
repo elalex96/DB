@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 11/11/2021 01:26:34 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 30/11/2021 03:40:27 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -232,7 +232,9 @@ BEGIN
 				 CASE 
 				WHEN E.BitAwareness = 1 THEN 'SI'
 				ELSE 'NO'
-			END AS TipoJOA  
+			END AS TipoJOA,
+			REE.ReceptorEntregable,
+			RG.ResponsableGenerador 
         FROM #ResponsablesInstancias TI
         JOIN EN_InstanciasEntregable I ON TI.idInstanciaEntregable = I.idInstanciaEntregable
         JOIN EN_Actividad A ON I.ActividadID = A.ActividadID
@@ -268,7 +270,10 @@ BEGIN
 		LEFT JOIN 
 				EN_Procesos	P
 				ON	IPF.IdProceso	=	P.IdProceso
-
+		LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON E.IdResponsableGenerador = RG.IdResponsableGenerador
+		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	
+			ON E.IdReceptorEntregable = REE.IdReceptorEntregable
         WHERE CE.IdContrato = @idContrato
               AND CE.Activo = 1
 			  AND ISNULL(CE.BitNA,0) <> 1
@@ -369,7 +374,9 @@ BEGIN
 				CASE 
 				WHEN E.BitAwareness = 1 THEN 'SI'
 				ELSE 'NO'
-			END AS TipoJOA    
+			END AS TipoJOA,
+			REE.ReceptorEntregable,
+			RG.ResponsableGenerador 
         FROM #ResponsablesInstancias TI
         JOIN EN_InstanciasEntregable I ON TI.idInstanciaEntregable = I.idInstanciaEntregable
         JOIN EN_ContratoEntregable CE ON I.IdContratoEntregable = CE.IdContratoEntregable
@@ -408,6 +415,10 @@ BEGIN
 		LEFT JOIN 
 				EN_Procesos	P
 				ON	IPF.IdProceso	=	P.IdProceso
+		LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON E.IdResponsableGenerador = RG.IdResponsableGenerador
+		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	
+			ON E.IdReceptorEntregable = REE.IdReceptorEntregable
         WHERE CE.IdContrato = @idContrato
               AND CE.Activo = 1
 			  AND ISNULL(CE.BitNA,0) <> 1
