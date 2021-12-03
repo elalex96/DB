@@ -100,7 +100,7 @@ BEGIN
                END AS 'Fecha Inicio Contrato',   
                CASE   
                    WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
-                       '-'   
+               '-'   
                    ELSE   
                        CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
                END AS 'Fecha Termino Contrato',                  
@@ -376,7 +376,7 @@ BEGIN
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
                        SUM(PD.Subtotal),   
                        CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE)),   
-                       '#,#0.000')   
+     '#,#0.000')   
                    WHEN Mon.IdMoneda = 2   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
                        FORMAT(SUM(PD.Subtotal), '#,#0.000')   
@@ -393,7 +393,7 @@ BEGIN
                        '#,#0.000')   
                    WHEN Mon.IdMoneda = 1   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
+                       (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
                    ELSE   
                        FORMAT(0, '#,#0.000')   
                END AS MontoMXN,   
@@ -554,7 +554,7 @@ ELSE
                    WHEN Mon.IdMoneda = 1   
                --AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL        
                THEN   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
+                    (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
                    ELSE   
                        FORMAT(0, '#,#0.000')   
                END AS MontoMXN,   
@@ -585,7 +585,7 @@ ELSE
             LEFT JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle POD   
                 ON POD.IdPeticionOferta = PO.IdPeticionOferta   
                    AND POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-                   AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle   
+         AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle   
             LEFT JOIN Petrovendor.dbo.S_Proveedor AS PV   
                 ON PV.IdProveedor = PO.IdSubcontratista   
             LEFT JOIN Petrovendor.dbo.TA_Operacion AS O   
@@ -728,8 +728,10 @@ ELSE
 														END
 				ELSE 
 					CASE 
-						WHEN P.IdMoneda = 2 THEN Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
-						ELSE SUM(PD.Subtotal)
+						WHEN 
+						P.IdMoneda = 2 THEN 
+						Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
+						ELSE (DBO.fn_ObtenSubtotalPedido(1,P.IdPedido,@IdContrato))
 				END
 			END AS MontoMXN,
 			Petrovendor.dbo.FN_ValorTipoCambio(SP.FechaEntregaRequerida) AS TipoCambio,
@@ -787,7 +789,8 @@ ELSE
 				P.CreadoEl,
 				TP.TipoPedido,
 				CT.RazonSocial,
-				CON.FechaFirma;   
+				CON.FechaFirma,
+				P.IdPedido;   
   --      SELECT C.NumeroContrato,   
   --             CASE   
   --                 WHEN RE.IdRelacion IS NOT NULL THEN   
@@ -1020,7 +1023,7 @@ CON.NumeroContrato,
    --   CASE WHEN SC.NumeroSubcontrato IS NOT NULL THEN OT.Objeto   
    --  ELSE UPPER(SUBSTRING(solPed.MotivoUrgencia, 0, 40))   
    -- END AS 'Objeto del contrato',   
-   --            CASE   
+   --      CASE   
    --                WHEN Mon.IdMoneda = 1 THEN   
    --                    FORMAT(   
    --                    Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
@@ -1085,7 +1088,7 @@ CON.NumeroContrato,
    --             ON RE.IdProveedor = solPed.IdProveedor   
    --                AND RE.IdSubcontratista = P.IdSubcontratista   
    --         LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
-   --             ON TP.IdTipoPedido = PO.IdTipoProceso   
+   --        ON TP.IdTipoPedido = PO.IdTipoProceso   
    --         INNER JOIN @SolpedConMateriales filtro   
    --             ON filtro.IdSolicitudPedido = solPed.IdSolicitudPedido   
    --         INNER JOIN Petrovendor.dbo.DEA_Relacion_PR_PO DEA_RPO -- se agrego la relación PO    
@@ -1181,7 +1184,7 @@ CON.NumeroContrato,
         )   
         SELECT C.NumeroContrato,   
                CASE   
-                   WHEN RE.IdRelacion IS NOT NULL THEN   
+ WHEN RE.IdRelacion IS NOT NULL THEN   
                        'SI'   
                    ELSE   
                        'NO'   
@@ -1443,4 +1446,4 @@ LEFT JOIN Adinco.dbo.CO_Contrato c
         ORDER BY [No. Contrato];   
    
     END;   
-END; 
+END;
