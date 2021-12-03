@@ -1,10 +1,11 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorDocumentos]    Script Date: 12/10/2021 02:14:53 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+if exists(select * from sys.procedures where name = 'SP_PR_MM_PCN_AceptacionProveedorDocumentos')
+begin
+	drop proc SP_PR_MM_PCN_AceptacionProveedorDocumentos
+end
+
+go
+
+--select top 100 * from S_Documento_S3 where NombreDocumento = 'Curriculum Josue Glez (6)'
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorDocumentos]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT, 
@@ -27,6 +28,9 @@ AS
 -- BAAC 20210607	Se modifica para que regrese una cubeta, de acuerdo a donde se encuentra el archivo 
 --					Si no se guarda que cubeta es, por default se manda la de petrovendor
 -- =============================================
+-- Author:		Ramón Portales
+-- Create date: 03-12-2021
+-- Description:	 Se modificaron las ultimas dos consultas para buscar por UUID y no poor nombre
     SET NOCOUNT ON ;
     IF @Accion = 'TABLA'
         BEGIN
@@ -58,19 +62,21 @@ AS
             ON			D.[IdDocumento] = AD.[IdDocumento]
             WHERE
                         AP.[IdAceptacionPedido] = @IdAceptacionPedido
-                        AND AP.[IdProveedor] = @IdProveedor
-                        AND  AD.[IdDocumento] = @IdDocumento
+                        AND AP.[IdProveedor]	= @IdProveedor
+                        AND  AD.[IdDocumento]	= @IdDocumento
                         AND AD.Activo = 1
 
+			--select * from #tmp
 				/*CONSULTA EL DOCUMENTO EN LA TABLA DE DOCUMENTOS DE PETROVENDOR -- CASO PARA OT´S */
 			select		*
 			into		#tmpAdinco
 			from		Adinco..AWS_Documentos 
-			where		NombreArchivo COLLATE Modern_Spanish_CI_AS 
+			where		UUIDAmazon --COLLATE Modern_Spanish_CI_AS 
 			in			(
-							select	NombreDocumento COLLATE Modern_Spanish_CI_AS 
+							select	Identificador --COLLATE Modern_Spanish_CI_AS 
 							from	#tmp) 
 
+			--select * from #tmpAdinco
 				
 			/*RETORNA EL DOCUMENTO CORRECTO*/
 			select		t1.IdDocumento,
@@ -84,8 +90,8 @@ AS
 			from		#tmp				t1
 			left join	#tmpAdinco			t2
 			on			t2.NombreArchivo	=	t1.NombreDocumento	COLLATE Modern_Spanish_CI_AS
-			where		((t1.NombreDocumento=	@nombre) or @nombre = '')
-			AND t1.IdDocumento=@IdDocumento
+			where		t1.Identificador	=	t2.UUIDAmazon
+			AND			t1.IdDocumento		=	@IdDocumento
 
         END
 END
