@@ -1336,7 +1336,7 @@ CON.NumeroContrato,
                        SUM(PD.Subtotal), ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado)),   
                        '#,#0.000')   
                    ELSE   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
+                       (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
                END AS MontoMXN,   
                Petrovendor.dbo.FN_ValorTipoCambio(   
                CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)) AS TipoCambio,   
