@@ -67,7 +67,7 @@ begin
 	on			ce.IdEntregable				=	e.IdEntregable	
 	left join	CO_Regulador				r
 	on			r.IdRegulador				=	e.IdRegulador
-	left join	CO_MarcoLegal				ml
+	left join	EN_MarcoLegal				ml
 	on			ml.IdMarcoLegal				=	e.IdMarcoLegal
 	left join	EN_Area						a
 	on			ce.IdArea					=	a.idArea
