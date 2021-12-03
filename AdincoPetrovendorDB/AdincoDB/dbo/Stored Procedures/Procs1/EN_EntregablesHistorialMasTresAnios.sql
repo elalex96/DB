@@ -5,7 +5,9 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
+DROP PROCEDURE IF EXISTS EN_EntregablesHistorialMasTresAnios
+GO
+CREATE PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -20,7 +22,9 @@ BEGIN
 -- =============================================
 -- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
-
+-- =============================================
+-- 02/12/21 LDDLCB Se agregan las columnas solicitadas en el issue 493
+-- =============================================  
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
 
@@ -119,7 +123,7 @@ BEGIN
                JOIN 
 					dbo.AP_Usuario UR 
 					ON	AR.idUsuario	=	UR.UsuarioID
-               LEFT	JOIN 
+ LEFT	JOIN 
 					dbo.EN_ExcepcionesActividad EXAR 
 					ON	AR.ActividadID	=	EXAR.ActividadIDExcepcion
                AND TIR.idInstanciaEntregable = EXAR.IdInstanciasEntregables
@@ -293,7 +297,17 @@ BEGIN
 				ELSE 'NO'
 			END AS TipoJOA ,
 			RG.ResponsableGenerador,
-			REE.ReceptorEntregable  
+			REE.ReceptorEntregable,
+			E.APPozoAlivio as 'ExploracionEvaluacionAbandono',
+			E.APCierreDesmantelamientoAbandono AS 'ExploracionEvaluacionDesarrolloAbandono',
+			E.APPerforacion as 'EvaluacionDesarrolloAbandono',
+			E.APPruebaProduccion as 'InicioProduccion',
+			E.APConstruccionCamino as 'Abandono',
+			E.APConstruccionLocalizacion as 'TodaVidaContrato',
+			E.APRehabilitacionCamino as 'InicioActividadesExploracion',
+			E.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
+			E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
+			E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion' 
         FROM #ResponsablesInstancias TI
         JOIN 
 			EN_InstanciasEntregable	I 
@@ -405,7 +419,7 @@ BEGIN
                        'Perforación'
                    WHEN APTerminacion = 1 THEN
                        'Terminación'
-                   WHEN APActProduccion = 1 THEN
+WHEN APActProduccion = 1 THEN
                        'Actividades de Producción'
                    WHEN APEstimulacion = 1 THEN
                        'Estimulación'

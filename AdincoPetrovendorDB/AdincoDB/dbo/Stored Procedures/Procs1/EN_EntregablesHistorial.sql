@@ -5,7 +5,9 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[EN_EntregablesHistorial]--10103,3,0,1,0,0 
+DROP PROCEDURE IF EXISTS EN_EntregablesHistorial
+go
+CREATE PROCEDURE [dbo].[EN_EntregablesHistorial]--10103,3,0,1,0,0 
     @idUsuario INT,  
     @idContrato INT,  
     @BitPantallaArea INT,  
@@ -24,7 +26,8 @@ BEGIN
 -- =============================================
 -- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
-  
+-- 02/12/21 LDDLCB Se agregan las columnas solicitadas en el issue 493
+-- =============================================  
     SET NOCOUNT ON;  
     SET LANGUAGE spanish;  
   
@@ -347,7 +350,7 @@ BEGIN
                ISNULL(I.FechaCalculadaEntregaReg, I.FechasLimiteAprobacion) AS FechaCalculadaEntregaReg,  
                REPLICATE('0',2-LEN(MONTH(I.FechaCalculadaEntregaReg))) + LTRIM(MONTH(I.FechaCalculadaEntregaReg)) + '-' +DATENAME(MONTH, I.FechaCalculadaEntregaReg) AS mesEntrega,  
                CASE  
-                   WHEN APPozoAlivio = 1 THEN  
+                 WHEN APPozoAlivio = 1 THEN  
                        'Pozo de alivio'  
                    WHEN APCierreDesmantelamientoAbandono = 1 THEN  
 						'Abandono'  
@@ -416,7 +419,17 @@ BEGIN
 				ELSE 'NO'
 			END AS TipoJOA ,
 			REE.ReceptorEntregable,
-		RG.ResponsableGenerador      
+		RG.ResponsableGenerador,
+		E.APPozoAlivio as 'ExploracionEvaluacionAbandono',
+		E.APCierreDesmantelamientoAbandono AS 'ExploracionEvaluacionDesarrolloAbandono',
+		E.APPerforacion as 'EvaluacionDesarrolloAbandono',
+		E.APPruebaProduccion as 'InicioProduccion',
+		E.APConstruccionCamino as 'Abandono',
+		E.APConstruccionLocalizacion as 'TodaVidaContrato',
+		E.APRehabilitacionCamino as 'InicioActividadesExploracion',
+		E.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
+		E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
+		E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion' 
 		FROM 
 			#ResponsablesInstancias TI  
 		JOIN 
