@@ -1,11 +1,13 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 11/11/2021 12:59:19 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 30/11/2021 03:35:15 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
+DROP PROCEDURE IF EXISTS EN_EntregablesHistorialMasTresAnios
+GO
+CREATE PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -20,7 +22,9 @@ BEGIN
 -- =============================================
 -- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
-
+-- =============================================
+-- 02/12/21 LDDLCB Se agregan las columnas solicitadas en el issue 493
+-- =============================================  
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
 
@@ -119,7 +123,7 @@ BEGIN
                JOIN 
 					dbo.AP_Usuario UR 
 					ON	AR.idUsuario	=	UR.UsuarioID
-               LEFT	JOIN 
+ LEFT	JOIN 
 					dbo.EN_ExcepcionesActividad EXAR 
 					ON	AR.ActividadID	=	EXAR.ActividadIDExcepcion
                AND TIR.idInstanciaEntregable = EXAR.IdInstanciasEntregables
@@ -291,7 +295,19 @@ BEGIN
 				CASE 
 				WHEN E.BitAwareness = 1 THEN 'SI'
 				ELSE 'NO'
-			END AS TipoJOA   
+			END AS TipoJOA ,
+			RG.ResponsableGenerador,
+			REE.ReceptorEntregable,
+			E.APPozoAlivio as 'ExploracionEvaluacionAbandono',
+			E.APCierreDesmantelamientoAbandono AS 'ExploracionEvaluacionDesarrolloAbandono',
+			E.APPerforacion as 'EvaluacionDesarrolloAbandono',
+			E.APPruebaProduccion as 'InicioProduccion',
+			E.APConstruccionCamino as 'Abandono',
+			E.APConstruccionLocalizacion as 'TodaVidaContrato',
+			E.APRehabilitacionCamino as 'InicioActividadesExploracion',
+			E.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
+			E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
+			E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion' 
         FROM #ResponsablesInstancias TI
         JOIN 
 			EN_InstanciasEntregable	I 
@@ -351,6 +367,10 @@ BEGIN
 		LEFT JOIN 
 				EN_Procesos	P
 				ON	IPF.IdProceso	=	P.IdProceso
+		LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON E.IdResponsableGenerador = RG.IdResponsableGenerador
+		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	
+			ON E.IdReceptorEntregable = REE.IdReceptorEntregable
         WHERE CE.IdContrato	=	@idContrato
               AND CE.Activo	=	1
 			  AND ISNULL(CE.BitNA,0) <> 1
@@ -399,7 +419,7 @@ BEGIN
                        'Perforación'
                    WHEN APTerminacion = 1 THEN
                        'Terminación'
-                   WHEN APActProduccion = 1 THEN
+WHEN APActProduccion = 1 THEN
                        'Actividades de Producción'
                    WHEN APEstimulacion = 1 THEN
                        'Estimulación'
@@ -457,7 +477,9 @@ BEGIN
 				CASE 
 				WHEN E.BitAwareness = 1 THEN 'SI'
 				ELSE 'NO'
-			END AS TipoJOA  
+			END AS TipoJOA ,
+			REE.ReceptorEntregable,
+			RG.ResponsableGenerador
         FROM #ResponsablesInstancias TI
         JOIN
 			EN_InstanciasEntregable	I 
@@ -522,6 +544,10 @@ BEGIN
 		LEFT JOIN 
 				EN_Procesos	P
 				ON	IPF.IdProceso	=	P.IdProceso
+		LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON E.IdResponsableGenerador = RG.IdResponsableGenerador
+		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	
+			ON E.IdReceptorEntregable = REE.IdReceptorEntregable
         WHERE	CE.IdContrato	=	@idContrato
 				AND	CE.Activo	=	1
 				AND ISNULL(CE.BitNA,0) <> 1

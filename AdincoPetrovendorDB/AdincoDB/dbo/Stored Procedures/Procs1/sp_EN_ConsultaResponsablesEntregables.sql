@@ -1,11 +1,13 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_ConsultaResponsablesEntregables]    Script Date: 10/11/2021 11:19:29 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[sp_EN_ConsultaResponsablesEntregables]    Script Date: 30/11/2021 02:45:24 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[sp_EN_ConsultaResponsablesEntregables]--3,10061,1,0,0,1
+DROP PROCEDURE IF EXISTS sp_EN_ConsultaResponsablesEntregables
+GO
+CREATE PROCEDURE [dbo].[sp_EN_ConsultaResponsablesEntregables]--3,10061,1,0,0,1
     @IdContrato INT,
     @IdUsuario INT,
     @Activo INT,
@@ -23,6 +25,9 @@ BEGIN
 -- =============================================
 -- 11/11/2021 MC Ocultar entregables marcados como NA issue 468 entregables  
 -- =============================================
+-- =============================================
+-- 02/12/21 LDDLCB Se agregan las columnas solicitadas en el issue 493
+-- =============================================  
     SET NOCOUNT ON;
 
     CREATE TABLE #Areas
@@ -214,7 +219,19 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0)  AS Evaluacion,
 					ISNULL(ECA.Transicion,0)  AS Transicion,
 					ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,
-					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo
+					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
+					CR.Regulador,
+					RG.ResponsableGenerador,
+					EN.APPozoAlivio as 'ExploracionEvaluacionAbandono',
+					EN.APCierreDesmantelamientoAbandono AS 'ExploracionEvaluacionDesarrolloAbandono',
+					EN.APPerforacion as 'EvaluacionDesarrolloAbandono',
+					EN.APPruebaProduccion as 'InicioProduccion',
+					EN.APConstruccionCamino as 'Abandono',
+					EN.APConstruccionLocalizacion as 'TodaVidaContrato',
+					EN.APRehabilitacionCamino as 'InicioActividadesExploracion',
+					EN.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
+					EN.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
+					EN.APCorteNucleos as 'InicioActividadesDesarrolloOperacion'
             FROM EN_ContratoEntregable AS CE
                 JOIN EN_Entregable AS EN
                     ON CE.IdEntregable = EN.IdEntregable
@@ -270,6 +287,10 @@ BEGIN
 				LEFT JOIN 
 					EN_ENTREGABLE_CONFIGADICIONAL ECA
 					ON EN.IdEntregable=ECA.IdEntregable
+				LEFT JOIN dbo.CO_Regulador AS CR
+					ON EN.IdRegulador = CR.IdRegulador
+				LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON EN.IdResponsableGenerador = RG.IdResponsableGenerador
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
                   AND
@@ -343,7 +364,19 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0),
 					ISNULL(ECA.Transicion,0),
 					ISNULL(ECA.AbandonoArea,0),
-					ISNULL(ECA.AbandonoPozo,0)
+					ISNULL(ECA.AbandonoPozo,0),
+					CR.Regulador,
+					RG.ResponsableGenerador,
+					EN.APPozoAlivio,
+					EN.APCierreDesmantelamientoAbandono,
+					EN.APPerforacion,
+					EN.APPruebaProduccion,
+					EN.APConstruccionCamino,
+					EN.APConstruccionLocalizacion,
+					EN.APRehabilitacionCamino,
+					EN.APRehabilitacionLocalizacion,
+					EN.APTomaInformacionSismica,
+					EN.APCorteNucleos
             ORDER BY 
 					CE.IdContratoEntregable
 					--COUNT(DISTINCT AE.ActividadID),
@@ -382,7 +415,7 @@ BEGIN
                    ISNULL(UA.Nombre, '') AS usuarioAprobador,
                    CASE
                        WHEN APPozoAlivio = 1 THEN 'Pozo de alivio'
-                       WHEN APCierreDesmantelamientoAbandono = 1 THEN 'Abandono'
+       WHEN APCierreDesmantelamientoAbandono = 1 THEN 'Abandono'
                        WHEN APPerforacion = 1 THEN 'Perforación'
                        WHEN APTerminacion = 1 THEN 'Terminación'
                        WHEN APActProduccion = 1 THEN 'Actividades de Producción'
@@ -414,7 +447,22 @@ BEGIN
 					END		AS AccountableCompliance,
 					CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
 						ELSE ISNULL(ACC.Nombre,'') --+ ' (' + CE.Accountable + ')'
-					END		AS Accountable
+					END		AS Accountable,
+					CR.Regulador,
+					RG.ResponsableGenerador,
+					ISNULL(ECA.Desarrollo,0)  AS Desarrollo,
+					ISNULL(ECA.Exploracion,0) AS Exploracion,
+					ISNULL(ECA.Evaluacion,0)  AS Evaluacion,
+					EN.APPozoAlivio as 'ExploracionEvaluacionAbandono',
+					EN.APCierreDesmantelamientoAbandono AS 'ExploracionEvaluacionDesarrolloAbandono',
+					EN.APPerforacion as 'EvaluacionDesarrolloAbandono',
+					EN.APPruebaProduccion as 'InicioProduccion',
+					EN.APConstruccionCamino as 'Abandono',
+					EN.APConstruccionLocalizacion as 'TodaVidaContrato',
+					EN.APRehabilitacionCamino as 'InicioActividadesExploracion',
+					EN.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
+					EN.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
+					EN.APCorteNucleos as 'InicioActividadesDesarrolloOperacion'
             FROM EN_ContratoEntregable AS CE	(NOLOCK)
                 JOIN EN_Entregable AS EN	(NOLOCK)
                     ON CE.IdEntregable = EN.IdEntregable
@@ -468,6 +516,13 @@ BEGIN
 				LEFT JOIN
 					#RelacionadosMostrar	EM
 					ON	EN.IdEntregable	=	EM.IdEntregable
+				LEFT JOIN dbo.CO_Regulador AS CR
+					ON EN.IdRegulador = CR.IdRegulador
+				LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON EN.IdResponsableGenerador = RG.IdResponsableGenerador
+				LEFT JOIN 
+					EN_ENTREGABLE_CONFIGADICIONAL ECA
+					ON EN.IdEntregable	=	ECA.IdEntregable
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
 				  AND ENM.IdEntregable IS NULL
@@ -532,7 +587,24 @@ BEGIN
 					END,
 					CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
 						ELSE ISNULL(ACC.Nombre,'') --+ ' (' + CE.Accountable + ')'
-					END
+					END,
+					CR.Regulador,
+					RG.ResponsableGenerador,
+					ISNULL(ECA.Desarrollo,0),
+					ISNULL(ECA.Exploracion,0),
+					ISNULL(ECA.Evaluacion,0),
+					CR.Regulador,
+					RG.ResponsableGenerador,
+					EN.APPozoAlivio,
+					EN.APCierreDesmantelamientoAbandono,
+					EN.APPerforacion,
+					EN.APPruebaProduccion,
+					EN.APConstruccionCamino,
+					EN.APConstruccionLocalizacion,
+					EN.APRehabilitacionCamino,
+					EN.APRehabilitacionLocalizacion,
+					EN.APTomaInformacionSismica,
+					EN.APCorteNucleos
             ORDER BY	CE.IdContratoEntregable
 					-- COUNT(DISTINCT AE.ActividadID),
      --                COUNT(DISTINCT AR.ActividadID),
@@ -609,7 +681,19 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0)  AS Evaluacion,
 					ISNULL(ECA.Transicion,0)  AS Transicion,
 					ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,
-					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo
+					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
+					CR.Regulador,
+					RG.ResponsableGenerador,
+					EN.APPozoAlivio as 'ExploracionEvaluacionAbandono',
+					EN.APCierreDesmantelamientoAbandono AS 'ExploracionEvaluacionDesarrolloAbandono',
+					EN.APPerforacion as 'EvaluacionDesarrolloAbandono',
+					EN.APPruebaProduccion as 'InicioProduccion',
+					EN.APConstruccionCamino as 'Abandono',
+					EN.APConstruccionLocalizacion as 'TodaVidaContrato',
+					EN.APRehabilitacionCamino as 'InicioActividadesExploracion',
+					EN.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
+					EN.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
+					EN.APCorteNucleos as 'InicioActividadesDesarrolloOperacion'
             FROM EN_ContratoEntregable AS CE (NOLOCK)
                 JOIN EN_Entregable AS EN	(NOLOCK)
                ON CE.IdEntregable = EN.IdEntregable
@@ -665,6 +749,10 @@ BEGIN
 				LEFT JOIN 
 					EN_ENTREGABLE_CONFIGADICIONAL ECA
 					ON EN.IdEntregable	=	ECA.IdEntregable
+				LEFT JOIN dbo.CO_Regulador AS CR
+					ON EN.IdRegulador = CR.IdRegulador
+				LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+					ON EN.IdResponsableGenerador = RG.IdResponsableGenerador
             WHERE 
                   ISNULL(ML.Activo, 0) = 1
 				  AND ISNULL(CE.BitNA,0) <> 1
@@ -735,7 +823,19 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0),
 					ISNULL(ECA.Transicion,0),
 					ISNULL(ECA.AbandonoArea,0),
-					ISNULL(ECA.AbandonoPozo,0)
+					ISNULL(ECA.AbandonoPozo,0),
+					CR.Regulador,
+					RG.ResponsableGenerador,
+					EN.APPozoAlivio,
+					EN.APCierreDesmantelamientoAbandono,
+					EN.APPerforacion,
+					EN.APPruebaProduccion,
+					EN.APConstruccionCamino,
+					EN.APConstruccionLocalizacion,
+					EN.APRehabilitacionCamino,
+					EN.APRehabilitacionLocalizacion,
+					EN.APTomaInformacionSismica,
+					EN.APCorteNucleos
             ORDER BY CE.IdContratoEntregable
 					--COUNT(DISTINCT AE.ActividadID),
      --                COUNT(DISTINCT AR.ActividadID),
@@ -749,10 +849,11 @@ BEGIN
         FROM dbo.AP_PermisosUsuarios PU
             JOIN dbo.AP_Permiso P
                 ON PU.IdPermiso = P.IdPermiso
-        WHERE UsuarioID = @IdUsuario
-              AND idContrato = @IdContrato
-              AND P.BitActivo = 1
-              AND PU.BitActivo = 1;
+		GROUP BY REPLACE(P.NombrePermiso, 'Acceso a Entregables de ', '');
+        --WHERE UsuarioID = @IdUsuario
+        --      AND idContrato = @IdContrato
+        --      AND P.BitActivo = 1
+        --      AND PU.BitActivo = 1;
 
         IF (@BitProcesos = 0 AND @BitTodos = 0)
         BEGIN
@@ -804,7 +905,7 @@ BEGIN
                        WHEN APQuemaGas = 1 THEN	'Quema de Gas'
                        WHEN BitInterno = 1 THEN	'Entregable Interno'
                        ELSE	'No Especificado'
-                   END AS ActividadPetrolera,
+     END AS ActividadPetrolera,
                    ISNULL(et.Etapa, 'No Especificada') AS Etapa,
 				   ISNULL(CE.Subfuncion,'') AS Subfuncion,
 				   CASE WHEN FP.Nombre IS NULL THEN ISNULL(CE.FocalPoint,'')
@@ -952,7 +1053,17 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0),
 					ISNULL(ECA.Transicion,0),
 					ISNULL(ECA.AbandonoArea,0),
-					ISNULL(ECA.AbandonoPozo,0)
+					ISNULL(ECA.AbandonoPozo,0),
+					EN.APPozoAlivio,
+					EN.APCierreDesmantelamientoAbandono,
+					EN.APPerforacion,
+					EN.APPruebaProduccion,
+					EN.APConstruccionCamino,
+					EN.APConstruccionLocalizacion,
+					EN.APRehabilitacionCamino,
+					EN.APRehabilitacionLocalizacion,
+					EN.APTomaInformacionSismica,
+					EN.APCorteNucleos
             ORDER BY CE.IdContratoEntregable
 					--COUNT(DISTINCT AE.ActividadID),
      --                COUNT(DISTINCT AR.ActividadID),
@@ -1241,7 +1352,17 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0)  AS Evaluacion,
 					ISNULL(ECA.Transicion,0)  AS Transicion,
 					ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,
-					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo
+					ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
+					EN.APPozoAlivio as 'ExploracionEvaluacionAbandono',
+					EN.APCierreDesmantelamientoAbandono AS 'ExploracionEvaluacionDesarrolloAbandono',
+					EN.APPerforacion as 'EvaluacionDesarrolloAbandono',
+					EN.APPruebaProduccion as 'InicioProduccion',
+					EN.APConstruccionCamino as 'Abandono',
+					EN.APConstruccionLocalizacion as 'TodaVidaContrato',
+					EN.APRehabilitacionCamino as 'InicioActividadesExploracion',
+					EN.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
+					EN.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
+					EN.APCorteNucleos as 'InicioActividadesDesarrolloOperacion'
             --  SELECT      *
             FROM EN_ContratoEntregable AS CE	(NOLOCK)
                 JOIN EN_Entregable AS EN	(NOLOCK)
@@ -1256,7 +1377,7 @@ BEGIN
                        AND EN.IdEntregable = ER.idEntregable
                 JOIN dbo.EN_Area are	(NOLOCK)
                     ON CE.IdArea = are.idArea
-                       AND are.idContrato = @IdContrato
+ AND are.idContrato = @IdContrato
                 JOIN #Areas TAR
                     ON are.NombreArea = TAR.Area
                 LEFT JOIN dbo.EN_Actividad AE
@@ -1376,7 +1497,17 @@ BEGIN
 					ISNULL(ECA.Evaluacion,0),
 					ISNULL(ECA.Transicion,0),
 					ISNULL(ECA.AbandonoArea,0),
-					ISNULL(ECA.AbandonoPozo,0)
+					ISNULL(ECA.AbandonoPozo,0),
+					EN.APPozoAlivio,
+					EN.APCierreDesmantelamientoAbandono,
+					EN.APPerforacion,
+					EN.APPruebaProduccion,
+					EN.APConstruccionCamino,
+					EN.APConstruccionLocalizacion,
+					EN.APRehabilitacionCamino,
+					EN.APRehabilitacionLocalizacion,
+					EN.APTomaInformacionSismica,
+					EN.APCorteNucleos
             ORDER BY CE.IdContratoEntregable
 					--COUNT(DISTINCT AE.ActividadID),
      --                COUNT(DISTINCT AR.ActividadID),

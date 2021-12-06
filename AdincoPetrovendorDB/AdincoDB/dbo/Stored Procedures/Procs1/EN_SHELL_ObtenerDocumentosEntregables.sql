@@ -1,11 +1,10 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 11/11/2021 11:58:43 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 02/12/2021 12:31:49 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-
 ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables] --EN_SHELL_ObtenerDocumentosEntregables 3,10150
     @ContratoId INT,
     @UsuarioId INT   
@@ -1015,6 +1014,38 @@ END
 				GROUP BY RootID
 			) cnt ON cnt.ID = d.ID
     
+	--CARPETA GENERAL EN EXPLORACION
+	INSERT INTO @Lista(
+		IDPadre,
+		Titulo,
+		EtapaId,
+		CantidadArchivos,
+		Detalle,
+		Icono,
+		Acciones,
+		Nivel,
+		TipoArchivo
+	) VALUES (
+		1,
+		'General',
+		18,
+		0,
+		'Carpeta general Personalizada',
+		'<i class="glyph-icon icon-folder" style="color: green;" title="Carpeta general"></i>',
+		'<a href="javascript:;" title="Carpeta general: General" data-html="true" data-toggle="popover" data-placement="top" data-content="' +
+		'<ul class=&#34;dropdown-menu display-block&#34;>' + 
+			'<li><a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoPerzonalizado(2,##IDPADRE##,18,0,0,0,-1,'','',0)&#34;>Cargar archivo </a></li>'+ 
+			'<li>
+                <a href=&#34;javascript:;&#34; onclick=&#34;nuevaCarpetaPer(##IDPADRE##' + ',18,0,0,1)&#34;>
+                Nueva Carpeta
+                </a>
+            </li>'+
+			+'</ul>">General</a>',
+		2,
+		'Carpeta'
+	);
+
+
 	--	/*ACTUALIZAR LISTA PRINCIPAL DE NIVEL 3*/
 	UPDATE  LD
 	SET LD.CantidadArchivos=CA.CantidadArchivos
@@ -1117,9 +1148,8 @@ END
 																			</li>',
 															'</ul>">',
 															REPLACE(Titulo,'"','&#34;'),					
-														 '</a>'))
-	
-	
+														 '</a>'));
+
 	DECLARE @CONT_TOTAL_CARPETAS INT = 0;
 	DECLARE @CONT_CARPETAS INT = 1; 
 	DECLARE @ID_CARPETA INT = 0; 
@@ -1134,7 +1164,7 @@ END
 		DocumentoEntregableId,
 		ID
 	FROM @Lista
-	WHERE Detalle = 'Carpeta Personalizada';
+	WHERE Detalle IN ('Carpeta Personalizada','Carepta General Personalizada') ;
 
 	SET @CONT_TOTAL_CARPETAS = (SELECT COUNT(1) FROM @CARPETAS_PER);
 
@@ -1257,37 +1287,6 @@ END
 		AND L.Detalle = 'Carpeta Personalizada'
 		AND L.TipoArchivo = 'Carpeta de Usuario';
 
-	--CARPETA GENERAL EN EXPLORACION
-	INSERT INTO @Lista(
-		IDPadre,
-		Titulo,
-		EtapaId,
-		CantidadArchivos,
-		Detalle,
-		Icono,
-		Acciones,
-		Nivel,
-		TipoArchivo
-	) VALUES (
-		1,
-		'General',
-		18,
-		0,
-		'Carpeta general',
-		'<i class="glyph-icon icon-folder" style="color: green;" title="Carpeta general"></i>',
-		'<a href="javascript:;" title="Carpeta general: General" data-html="true" data-toggle="popover" data-placement="top" data-content="' +
-		'<ul class=&#34;dropdown-menu display-block&#34;>' + 
-			'<li><a href=&#34;javascript:;&#34; onclick=&#34;cargarArchivoPerzonalizado(2,##IDPADRE##,18,0,0,0,-1,'','',0)&#34;>Cargar archivo </a></li>'+ 
-			'<li>
-                <a href=&#34;javascript:;&#34; onclick=&#34;nuevaCarpetaPer(##IDPADRE##' + ',18,0,0,1)&#34;>
-                Nueva Carpeta
-                </a>
-            </li>'+
-			+'</ul>">General</a>',
-		2,
-		'Carpeta'
-	);
-
 	--SUSTITUCION DE ID PADRE
 		UPDATE @Lista
 		SET Acciones = REPLACE(Acciones,'##IDPADRE##',CAST(@ID_VISTA AS nvarchar));
@@ -1329,7 +1328,22 @@ END
 
 	INSERT INTO ListaDocsTemporal
 	SELECT *,@ContratoId FROM @Lista;
-	
+
+	UPDATE  L
+	SET L.CantidadArchivos = (SELECT COUNT(ID) FROM CarpetasDocumentosEntregables WHERE IdContrato = @ContratoId AND IDPadre = L.ID)
+	FROM @Lista AS L
+	WHERE L.ID IN (SELECT 
+						IDPadre 
+					FROM CarpetasDocumentosEntregables 
+					WHERE IdContrato = @ContratoId 
+						AND Activo = 1);
+
+	--OBTENER Y ESTABLECER EL ID DIRECTO DE LA TABLA
+	UPDATE CDE
+	SET CDE.IdDocPadre = (SELECT DocumentoEntregableId FROM @Lista WHERE ID = CDE.IDPadre AND Activo = 1 AND IdContrato = @ContratoId)
+	FROM CarpetasDocumentosEntregables AS CDE
+	WHERE IdContrato = @ContratoId;
+
 	SELECT * FROM @Lista ORDER BY ID ASC;
 
 END

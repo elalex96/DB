@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_EliminarCarpeta]    Script Date: 12/11/2021 12:01:35 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_EliminarCarpeta]    Script Date: 02/12/2021 11:44:22 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -43,51 +43,41 @@ BEGIN
 		SET Activo = 0
 		WHERE IDPadre = @IdPadre AND TipoArchivo = 'Archivo general';
 
-		SET @CONTTOTAL1 = (SELECT COUNT(1) FROM CarpetasDocumentosEntregables WHERE IDPadre = @IdPadre AND TipoArchivo = 'Carpeta' AND Activo = 1)
+		SET @CONTTOTAL1 = (SELECT COUNT(1) FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID AND TipoArchivo = 'Carpeta'  AND Activo = 1)
 
 		--RECORRIDO DE CARPETAS Y ARCHIVOS EN CASO DE QUE EXISTAN
 		WHILE @CONTNIVEL1 <= @CONTTOTAL1
 		BEGIN
 
-			SET @ID_1 = (SELECT TOP 1 DocumentoEntregableId FROM ListaDocsTemporal WHERE IDPadre = @IdPadre AND TipoArchivo = 'Carpeta' ORDER BY ID DESC);
-			SET @IDPADRE_1 = (SELECT TOP 1 ID FROM ListaDocsTemporal WHERE IDPadre = @IdPadre AND TipoArchivo = 'Carpeta' ORDER BY ID DESC);
+			SET @ID_1 = (SELECT TOP 1 ID FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID AND TipoArchivo = 'Carpeta' AND Activo = 1 ORDER BY ID DESC);
 
 			--ELIMINADO DE LA CARPETA NIVEL 2
 			UPDATE CarpetasDocumentosEntregables
 			SET Activo = 0
-			WHERE ID = @ID_1; 
-
-			--ELIMINADO EN LA CARPETA TEMPORAL PARA BUSCAR LA SIGUIENTE CARPETA
-			DELETE FROM ListaDocsTemporal
-			WHERE DocumentoEntregableId = @ID_1; 
+			WHERE ID = @ID_1;  
 
 			--ELIMINADO DE LOS ARCHIVOS EN LA CARPETA NIVEL 2
 			UPDATE CarpetasDocumentosEntregables
 			SET Activo = 0
-			WHERE IDPadre = @IDPADRE_1 AND TipoArchivo = 'Archivo general';
+			WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Archivo general';
 
-			SET @CONTTOTAL2 = (SELECT COUNT(1) FROM CarpetasDocumentosEntregables WHERE IDPadre = @IDPADRE_1 AND TipoArchivo = 'Carpeta' AND Activo = 1)
+			SET @CONTTOTAL2 = (SELECT COUNT(1) FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Carpeta' AND Activo = 1)
 			
-			--ELIMINADO NIVEL 3
+			----ELIMINADO NIVEL 3
 			WHILE @CONTNIVEL2 <= @CONTTOTAL2
 			BEGIN
 				
-				SET @ID_2 = (SELECT TOP 1 DocumentoEntregableId FROM ListaDocsTemporal WHERE IDPadre = @IDPADRE_1 AND TipoArchivo = 'Carpeta' ORDER BY ID DESC);
-				SET @IDPADRE_2 = (SELECT TOP 1 ID FROM ListaDocsTemporal WHERE IDPadre = @IDPADRE_1 AND TipoArchivo = 'Carpeta' ORDER BY ID DESC);
+				SET @ID_2 = (SELECT TOP 1 ID FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Carpeta' AND Activo = 1 ORDER BY ID DESC);
 
 				--ELIMINADO DE LA CARPETA
 				UPDATE CarpetasDocumentosEntregables
 				SET Activo = 0
 				WHERE ID = @ID_2; 
 
-				--ELIMINADO EN LA CARPETA TEMPORAL PARA BUSCAR LA SIGUIENTE CARPETA
-				DELETE FROM ListaDocsTemporal
-				WHERE DocumentoEntregableId = @ID_2; 
-
 				--ELIMINADO DE LOS ARCHIVOS EN LA CARPETA
 				UPDATE CarpetasDocumentosEntregables
 				SET Activo = 0
-				WHERE IDPadre = @IDPADRE_2 AND TipoArchivo = 'Archivo general';
+				WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Archivo general';
 				
 				SET @CONTNIVEL2 = @CONTNIVEL2 + 1;
 			END
