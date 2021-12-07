@@ -102,7 +102,7 @@ FROM dbo.WDEA_PurchasingDocumentsImportados
 WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato;
 
 --CONTRATO DE PRUEBAS- COMENTAR PARA PRODUCTIVO
-SET @IdContrato = 10038;
+-- SET @IdContrato = 10038;
 
 --SE BUSCA LA OPERADORA SEGUN EL CONTRATO
 SET @IdOperadora = (SELECT TOP 1
@@ -235,7 +235,8 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 		@IdCentroCosto,
 		@IdInstalacion,
 		@IdLineaPresupuesto
-	FROM MM_SolicitudPedidoDetalle;
+	FROM MM_SolicitudPedidoDetalle
+	WHERE IdSolicitudPedido = @IdSolicitudPedido;
 
 	--BUSQUEDA DEL FLUJO DEFAULT DE APROBACION AUTOMATICA
 	SET @IdFlujoTarea = (SELECT TOP 1 IdFlujoTarea FROM TA_FlujoTarea WHERE Nombre = 'FLUJO APROBACION AUTOMATICA - SOLICITUD DE PEDIDO');
