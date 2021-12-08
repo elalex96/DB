@@ -10,7 +10,8 @@ create PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan
     -- Author:   Miguel      
     -- Create date: Domingo 1 Diciembre 2016 19:49 p.m.      
     -- Description: Reporte de Integración de Gastos a Nivel Actividad      
-    -- =============================================      
+    -- =============================================
+    -- Author:   Reyna 20211208 Issue 1663 
     -- Se borra la linea de AND RRF.MesPresentacion = R.MesPresentacion  del JOIN FI_RelacionRefacturas Ya que no se mostraban las LUMS y se agrego nuevamente los JOINS 
     -- para los comprobantes en el extranjero se muestran como LUMS
     -- =============================================      
