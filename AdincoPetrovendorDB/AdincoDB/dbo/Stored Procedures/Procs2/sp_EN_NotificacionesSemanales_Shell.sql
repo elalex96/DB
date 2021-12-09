@@ -1,4 +1,4 @@
-ALTER PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
+CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
 AS
 BEGIN
 -- =============================================
@@ -7,6 +7,7 @@ BEGIN
 -- Description: 
 -- 20210615 BAAC    Se modifica para que no marque error al enviar correos a grupos de usuarios
 -- 20211125	BAAC	Se modifica para agregar el querystring que permite notificar al accountable compliance cuando leen el correo
+-- 20211206	BAAC	Se modifica para agregar la cantidad de correos que va a recibir el usuario (cuando no cabe la lista en un solo correo)
 -- =============================================
 SET NOCOUNT ON
 SET LANGUAGE Spanish
@@ -48,7 +49,15 @@ CREATE TABLE #NotificacionesFinales
 	TablaProximas	VARCHAR(8000),
 	TablaPendientes		VARCHAR(8000),
 	NumCorreo		INT,
-	NombreDestinatario	VARCHAR(250)
+	NombreDestinatario	VARCHAR(250),
+	TotalCorreos	INT
+)
+
+CREATE TABLE #CantidadCorreos
+(
+	Destinatario	VARCHAR(250),
+	TipoCorreo		VARCHAR(250),
+	TotalCorreos	INT
 )
 
 DECLARE
@@ -89,42 +98,46 @@ SELECT @HOY = GETDATE()
 		AS Tabla,
 		U1.IsGrupo
     FROM
-            dbo.EN_InstanciasEntregable IE	(NOLOCK)
-        JOIN
-            dbo.EN_Actividad            A	(NOLOCK)
-            ON IE.ActividadID	=	A.ActividadID
-			AND	A.EstadoID <> 10003	-- ELABORACION
-			AND	IE.FechaInicioElaboracion	BETWEEN @HOY AND DATEADD(DAY,7,@HOY)
-			AND IE.Activo = 1
-		JOIN
-            dbo.EN_ContratoEntregable   CE	(NOLOCK)
-            ON IE.IdContratoEntregable= CE.IdContratoEntregable
-			AND CE.Activo = 1
-        JOIN
-            dbo.EN_Entregable           E	(NOLOCK)
-			ON CE.IdEntregable	= E.IdEntregable 
-			AND E.BITJOA = 0
-			AND E.IsActivo = 1
-		JOIN
-			CO_Contrato C	(NOLOCK)
-			ON CE.IdContrato	=	C.IdContrato
-		JOIN
-            dbo.AP_Usuario              U1	(NOLOCK)
-            ON A.idUsuario = U1.UsuarioID
-		JOIN
-			dbo.CO_Contratista cita	(NOLOCK)
-			ON	c.IdContratista	=	cita.IdContratista
-		JOIN
-			dbo.AP_Rutas ruta	(NOLOCK)
-			ON cita.IdRuta=ruta.idRuta
-		LEFT JOIN
-			CO_ContratoConfiguracion	CC
-			ON	C.IdContrato	=	CC.Idcontrato
-		LEFT JOIN
-			EN_MarcoLegal	ML
-			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
+		CO_Contrato C	(NOLOCK)
+	JOIN
+		dbo.CO_Contratista cita	(NOLOCK)
+		ON	c.IdContratista	=	cita.IdContratista
+		AND	cita.NombreContratista LIKE '%SHELL%'
+	JOIN
+        dbo.EN_ContratoEntregable   CE	(NOLOCK)
+        ON	C.IdContrato	=	CE.IdContrato
+		AND CE.Activo = 1
+	JOIN
+        dbo.EN_InstanciasEntregable IE	(NOLOCK)
+		ON	CE.IdContratoEntregable	=	IE.IdContratoEntregable
+		AND	IE.FechaInicioElaboracion	BETWEEN @HOY AND DATEADD(DAY,7,@HOY)
+		AND IE.Activo = 1
+    JOIN
+        dbo.EN_Actividad            A	(NOLOCK)
+     ON IE.ActividadID	=	A.ActividadID
+		AND	A.EstadoID <> 10003	-- ELABORACION
+    JOIN
+        dbo.EN_Entregable           E	(NOLOCK)
+		ON CE.IdEntregable	= E.IdEntregable 
+		AND E.BITJOA = 0
+		AND E.IsActivo = 1
+	JOIN
+        dbo.AP_Usuario              U1	(NOLOCK)
+        ON A.idUsuario = U1.UsuarioID
+	JOIN
+		dbo.AP_Rutas ruta	(NOLOCK)
+		ON cita.IdRuta=ruta.idRuta
+	LEFT JOIN
+		CO_ContratoConfiguracion	CC	(NOLOCK)
+		ON	C.IdContrato	=	CC.Idcontrato
+	LEFT JOIN
+		EN_MarcoLegal	ML	(NOLOCK)
+		ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
+	ORDER BY
+		U1.Usuario,
+		C.NumeroContrato
 		
     --================================ NOTIFICACIONES A FOCAL POINT ==============================================
 	INSERT INTO #NotificacionesProximas
@@ -193,6 +206,9 @@ SELECT @HOY = GETDATE()
 			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
+	ORDER BY
+		CE.FocalPoint,
+		C.NumeroContrato
 		
 
 	INSERT INTO #NotificacionesPendientes
@@ -261,7 +277,9 @@ SELECT @HOY = GETDATE()
 			ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
-
+	ORDER BY
+		U1.Usuario,
+		C.NumeroContrato
 
 	INSERT INTO #NotificacionesPendYProx
 	(
@@ -357,6 +375,8 @@ SELECT @HOY = GETDATE()
 		UG.Usuario,
 		TipoCorreo,
 		Ruta
+	ORDER BY
+		Destinatario
 
 
 -- SEGUNDO CORREO DE PENDIENTES CONTINUACION...
@@ -386,6 +406,8 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta
+	ORDER BY
+		Destinatario
 
 
 -- TERCER CORREO DE PENDIENTES CONTINUACION...
@@ -415,6 +437,8 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta
+	ORDER BY
+		Destinatario
 
 
 -- CUARTO CORREO DE PENDIENTES CONTINUACION...
@@ -444,6 +468,215 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta
+	ORDER BY
+		Destinatario
+
+-- QUINTO CORREO DE PENDIENTES CONTINUACION...
+	INSERT INTO #NotificacionesFinales
+	(
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		TablaProximas,
+		TablaPendientes,
+		NumCorreo
+	)
+	SELECT
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		'', --+ '</table>' Detalle
+		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),31971,7990), --+ '</table>' Detalle
+		5
+	FROM
+		#NotificacionesPendYProx B
+	WHERE
+		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 31970 
+	GROUP BY
+		Destinatario,
+		TipoCorreo,
+		Ruta
+	ORDER BY
+		Destinatario
+
+
+-- SEXTO CORREO DE PENDIENTES CONTINUACION...
+	INSERT INTO #NotificacionesFinales
+	(
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		TablaProximas,
+		TablaPendientes,
+		NumCorreo
+	)
+	SELECT
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		'', --+ '</table>' Detalle
+		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),39961,7990), --+ '</table>' Detalle
+		6
+	FROM
+		#NotificacionesPendYProx B
+	WHERE
+		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 39960 
+	GROUP BY
+		Destinatario,
+		TipoCorreo,
+		Ruta
+	ORDER BY
+		Destinatario
+
+-- SEPTIMO CORREO DE PENDIENTES CONTINUACION...
+	INSERT INTO #NotificacionesFinales
+	(
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		TablaProximas,
+		TablaPendientes,
+		NumCorreo
+	)
+	SELECT
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		'', --+ '</table>' Detalle
+		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),47951,7990), --+ '</table>' Detalle
+		7
+	FROM
+		#NotificacionesPendYProx B
+	WHERE
+		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 47950 
+	GROUP BY
+		Destinatario,
+		TipoCorreo,
+		Ruta
+	ORDER BY
+		Destinatario
+
+-- OCTAVO CORREO DE PENDIENTES CONTINUACION...
+	INSERT INTO #NotificacionesFinales
+	(
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		TablaProximas,
+		TablaPendientes,
+		NumCorreo
+	)
+	SELECT
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		'', --+ '</table>' Detalle
+		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),55941,7990), --+ '</table>' Detalle
+		8
+	FROM
+		#NotificacionesPendYProx B
+	WHERE
+		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 55940 
+	GROUP BY
+		Destinatario,
+		TipoCorreo,
+		Ruta
+	ORDER BY
+		Destinatario
+
+-- NOVENO CORREO DE PENDIENTES CONTINUACION...
+	INSERT INTO #NotificacionesFinales
+	(
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		TablaProximas,
+		TablaPendientes,
+		NumCorreo
+	)
+	SELECT
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		'', --+ '</table>' Detalle
+		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),63931,7990), --+ '</table>' Detalle
+		9
+	FROM
+		#NotificacionesPendYProx B
+	WHERE
+		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 63930 
+	GROUP BY
+		Destinatario,
+		TipoCorreo,
+		Ruta
+	ORDER BY
+		Destinatario
+
+-- DECIMO CORREO DE PENDIENTES CONTINUACION...
+	INSERT INTO #NotificacionesFinales
+	(
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		TablaProximas,
+		TablaPendientes,
+		NumCorreo
+	)
+	SELECT
+		Destinatario,
+		TipoCorreo,
+		Ruta,
+		'', --+ '</table>' Detalle
+		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),71921,7990), --+ '</table>' Detalle
+		10
+	FROM
+		#NotificacionesPendYProx B
+	WHERE
+		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 71920 
+	GROUP BY
+		Destinatario,
+		TipoCorreo,
+		Ruta
+	ORDER BY
+		Destinatario
+
+	-- SE OBTIENE CUANTOS CORREOS VA A RECIBIR EL USUARIO
+	INSERT INTO #CantidadCorreos
+	(
+		Destinatario,
+		TipoCorreo,
+		TotalCorreos
+	)
+	SELECT
+		Destinatario,
+		TipoCorreo,
+		MAX(NumCorreo)
+	FROM
+		#NotificacionesFinales
+	GROUP BY
+		Destinatario,
+		TipoCorreo
+
+	UPDATE	NF
+		SET	TotalCorreos	=	CC.TotalCorreos
+	FROM
+		#NotificacionesFinales	NF
+	JOIN
+		#CantidadCorreos	CC
+		ON	NF.Destinatario	=	CC.Destinatario
+		AND	NF.TipoCorreo	=	CC.TipoCorreo
 
 	-- SE CAMBIA EL TIPO DE CORREO
 	UPDATE #NotificacionesFinales
@@ -670,8 +903,11 @@ SELECT @HOY = GETDATE()
 	WHERE
 		NombreDestinatario	IS NULL
 
+	UPDATE #NotificacionesFinales
+		SET TotalCorreos = 1
+	WHERE ISNULL(TotalCorreos,0) = 0
+
 /*************************************************/
---select * from #NotificacionesFinales order by id
 
 	SELECT
 		@MaxNotificacion = MAX(IdNotificacion)
@@ -694,8 +930,19 @@ SELECT @HOY = GETDATE()
 	SELECT
 		ISNULL(@MaxNotificacion,0) + ID,	-- IdNotificacion
 		Destinatario,						-- Para
-		REPLACE(C.Asunto,'##num##', LTRIM(N.NumCorreo)),
-		REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNotificacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo)),
+		CASE 
+			WHEN NumCorreo = 1 AND TotalCorreos = 1 THEN C.Asunto
+			WHEN NumCorreo = 1 AND TotalCorreos > 1	THEN C.Asunto + ' page 1 of ' + LTRIM(TotalCorreos)
+			ELSE REPLACE(C.Asunto,'##num##', LTRIM(N.NumCorreo)) + ' of ' + LTRIM(TotalCorreos)
+		END,
+		CASE WHEN N.NumCorreo = N.TotalCorreos 
+		THEN 
+			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNoti
+ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','')
+		ELSE
+			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNoti
+ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','* There are more information in the next email (Page ' + LTRIM(N.NumCorreo+1) + ')')
+		END,
 		GETDATE(),
 		0,
 		1,
