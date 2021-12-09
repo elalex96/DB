@@ -28,7 +28,7 @@ BEGIN
 	
 	DECLARE @IdFactura INT = 0
 
-	SET @IdFactura = (SELECT FP.IdFactura FROM Adinco.dbo.FI_Factura FA JOIN Petrovendor.dbo.FI_Factura FP ON FA.UUID = FP.UUID COLLATE DATABASE_DEFAULT WHERE FA.IdFactura = @IdFacturaComplemento)
+	SET @IdFactura = ISNULL((SELECT FP.IdFactura FROM Adinco.dbo.FI_Factura FA JOIN Petrovendor.dbo.FI_Factura FP ON FA.UUID = FP.UUID COLLATE DATABASE_DEFAULT WHERE FA.IdFactura = @IdFacturaComplemento),0)
 
 	--DECLARE @IDFACTURA2 INT = (SELECT IdFactura FROM dbo.FI_Factura WHERE UUID = @UUID AND XML <> '')
 
