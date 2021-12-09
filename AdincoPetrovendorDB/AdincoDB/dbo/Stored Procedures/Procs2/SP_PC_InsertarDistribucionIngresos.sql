@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[SP_PC_InsertarDistribucionIngresos]
+CREATE PROCEDURE [dbo].[SP_PC_InsertarDistribucionIngresos]
 	@IdUsuario  INT,
 	@IdContrato INT,
 	@MesReporte NVARCHAR(50)
@@ -21,6 +21,9 @@ DECLARE  @Fecha	DATE
 
 SELECT @Fecha = CONVERT(DATE,SUBSTRING(@MesReporte,7,4)+SUBSTRING(@MesReporte,4,2)+SUBSTRING(@MesReporte,1,2),112)
  
+UPDATE PC_Ingresos
+SET MES = LTRIM(RTRIM(MES))
+
 DELETE PC_DistribucionIngresos 
 WHERE MesReporte = @MesReporte
 
@@ -127,4 +130,3 @@ INSERT INTO [dbo].[PC_DistribucionIngresos]
 	YEAR (CONVERT(DATE,SUBSTRING(CONCAT('01.', CASE WHEN LEN(I.Mes) = 6 THEN '0'+I.Mes ELSE I.Mes END),7,4)+SUBSTRING(CONCAT('01.', CASE WHEN LEN(I.Mes) = 6 THEN '0'+I.Mes ELSE I.Mes END),4,2)+SUBSTRING(CONCAT('01.', CASE WHEN LEN(I.Mes) = 6 THEN '0'+I.Mes ELSE I.Mes END),1,2),112))	=	YEAR(@Fecha)
 	AND MONTH (CONVERT(DATE,SUBSTRING(CONCAT('01.', CASE WHEN LEN(I.Mes) = 6 THEN '0'+I.Mes ELSE I.Mes END),7,4)+SUBSTRING(CONCAT('01.', CASE WHEN LEN(I.Mes) = 6 THEN '0'+I.Mes ELSE I.Mes END),4,2)+SUBSTRING(CONCAT('01.', CASE WHEN LEN(I.Mes) = 6 THEN '0'+I.Mes ELSE I.Mes END),1,2),112))	=	MONTH(@Fecha)
 END
-
