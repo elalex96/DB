@@ -3,7 +3,10 @@ AS
 
 SELECT 
 	C.NumeroContrato		AS Contrato,
-	E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable)  	AS DocumentoEntregable,
+	E.DocumentoEntregable + 
+		CASE WHEN ISNULL(I.NombreInstalacion,'') <> '' THEN ' - ' + LTRIM(I.NombreInstalacion) + ' '
+		ELSE '' END
+		+ '- ' + LTRIM(IE.idInstanciaEntregable)  	AS DocumentoEntregable,
 	AR.NombreArea AS Area,
 	IE.FechaInicioElaboracion	AS [FechaIniProg],
 	IE.FechasLimiteAprobacion	AS [FechaFinProg],
@@ -89,9 +92,15 @@ LEFT JOIN
 LEFT JOIN
 	EN_Procesos PRO	(NOLOCK)
 	ON	IPF.IdProceso	=	PRO.IdProceso
+LEFT JOIN
+	CO_Instalacion	I	(NOLOCK)
+	ON	PRO.IdInstalacion	=	I.IdInstalacion
 GROUP BY
 	C.NumeroContrato,
-	E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable),
+	E.DocumentoEntregable + 
+		CASE WHEN ISNULL(I.NombreInstalacion,'') <> '' THEN ' - ' + LTRIM(I.NombreInstalacion) + ' '
+		ELSE '' END
+		+ '- ' + LTRIM(IE.idInstanciaEntregable),
 	AR.NombreArea,
 	IE.FechaInicioElaboracion,
 	IE.FechasLimiteAprobacion,
