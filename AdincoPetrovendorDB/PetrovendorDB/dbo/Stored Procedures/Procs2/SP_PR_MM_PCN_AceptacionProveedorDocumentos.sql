@@ -90,8 +90,8 @@ AS
 			from		#tmp				t1
 			left join	#tmpAdinco			t2
 			on			t2.NombreArchivo	=	t1.NombreDocumento	COLLATE Modern_Spanish_CI_AS
-			where		t1.Identificador	=	t2.UUIDAmazon
-			AND			t1.IdDocumento		=	@IdDocumento
+			and			t1.Identificador	=	t2.UUIDAmazon
+			where		t1.IdDocumento		=	@IdDocumento
 
         END
 END
