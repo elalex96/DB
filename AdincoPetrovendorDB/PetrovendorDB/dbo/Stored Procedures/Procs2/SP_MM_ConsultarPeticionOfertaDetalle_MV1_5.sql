@@ -1,4 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_MM_ConsultarPeticionOfertaDetalle_MV1_5
+DROP PROCEDURE IF EXISTS SP_MM_ConsultarPeticionOfertaDetalle_MV1_5
 GO
 -- =============================================
 -- Author:   Daniel AC
@@ -104,8 +104,12 @@ AS
 					THEN 'Si los materiales no estan dentro de su catálogo, se agregaran automáticamente al cotizar el material.'
 					ELSE '' 
 				END AS CotizacionRestringida2,
-				ISNULL(POD.NoCotizar,1) IdCondicionPago,
-				CASE WHEN POD.NoCotizar IS NULL THEN 
+				CASE	
+					WHEN ISNULL(POD.DiasCredito,0) > 0 THEN 1
+					ELSE 2
+				END AS IdCondicionPago,
+				CASE 
+					WHEN POD.NoCotizar IS NULL THEN 
 					0  --> SI ESTA PENDIENTE PONER EN 1
 				ELSE 
 					POD.DiasCredito 
