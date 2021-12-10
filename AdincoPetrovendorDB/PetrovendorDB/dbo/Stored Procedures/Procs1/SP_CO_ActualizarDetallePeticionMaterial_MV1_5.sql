@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]    Script Date: 01/09/2021 05:31:19 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]    Script Date: 10/12/2021 01:51:31 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -16,10 +16,19 @@ ALTER PROCEDURE [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]
 	@PrecioUnitario FLOAT, 
 	@Disponibilidad FLOAT, 
 	@IdMoneda INT ,
-    @ComentarioSubcontratista NVARCHAR (MAX), @IdMaterialVendedor INT, @IdPeticionOferta INT, @FechaVigencia DATETIME ,
-    @IdProveedorActual INT, @NoCotizar BIT, @IdEdicionCotizacion INT, @IdEstatusEdicionCotizacion INT ,
-    @IdUnidadVendedor INT, @FechaEntrega DATETIME ,
-    @IdContrato INT, @IdUsuario INT, @FechaRegistro DATETIME,
+    @ComentarioSubcontratista NVARCHAR (MAX), 
+    @IdMaterialVendedor INT, 
+    @IdPeticionOferta INT, 
+    @FechaVigencia DATETIME ,
+    @IdProveedorActual INT, 
+    @NoCotizar BIT,
+    @IdEdicionCotizacion INT,
+    @IdEstatusEdicionCotizacion INT ,
+    @IdUnidadVendedor INT,
+    @FechaEntrega DATETIME ,
+    @IdContrato INT, 
+    @IdUsuario INT, 
+    @FechaRegistro DATETIME,
     @IdCondicionPago INT=NULL,
     @DiasCredito INT=NULL
 AS
@@ -27,6 +36,8 @@ AS
         -- SET NOCOUNT ON added to prevent extra result sets from
         -- interfering with SELECT statements.
         SET NOCOUNT ON ;
+
+        --SET @IdMaterialVendedor = null;
 
 		--SI TIENE @IdEdicionCotizacion ES PORQUE FUE EDITADO
 		IF @IdEdicionCotizacion <> 0
@@ -56,6 +67,9 @@ AS
                 @MaterialCotizadoTextL NVARCHAR (MAX), @UnidadCotizada NVARCHAR (MAX), @FechaEntrega_Actual DATETIME,
                 @IdCondicionDePago_Actual INT, @DiasCredito_Actual INT 
         SET @DisponibilidadNEW = CAST(@Disponibilidad AS DECIMAL (20, 3))
+
+        --IF ISNULL(@IdMaterialVendedor,0) <> 0
+        --BEGIN
         --#EDICION COTIZAR SIN EDICION EN HISTORIAL
         IF @NoCotizar = 0
            AND  @IdEdicionCotizacion = 0
@@ -189,15 +203,24 @@ AS
                             +@CondicionPago + CASE WHEN @IdCondicionPago=1 THEN CONCAT(CAST(@DiasCredito AS nvarchar(MAX)), ' día(s) de crédito') ELSE '' END)
                         UPDATE  [dbo].[MM_PeticionOfertaDetalle]
                            SET  [PrecioUnitario] = CAST(@PrecioUnitario AS NUMERIC (18, 2)) ,
-                                [ComentarioSubcontratista] = @ComentarioSubcontratista, [ModificadoPor] = @IdUsuario ,
-                                [ModificadoEl] = GETDATE (), [IdMoneda] = @IdMoneda ,
-                                [Disponibilidad] = @DisponibilidadNEW, [Cotizado] = 1, [SubTotal] = @Subtotal ,
-                                [FechaVigencia] = @FechaVigencia, [ModificadoProveedorPor] = @IdProveedorActual ,
-                                [IdMaterialVendedor] = @IdMaterialVendedor, [NoCotizar] = @NoCotizar ,
-                                [IdUnidadProveedor] = @IdUnidadVendedor, [UnidadProveedor] = @UnidadCotizada ,
+                                [ComentarioSubcontratista] = @ComentarioSubcontratista, 
+                                [ModificadoPor] = @IdUsuario ,
+                                [ModificadoEl] = GETDATE (), 
+                                [IdMoneda] = @IdMoneda ,
+                                [Disponibilidad] = @DisponibilidadNEW, 
+                                [Cotizado] = 1, 
+                                [SubTotal] = @Subtotal ,
+                                [FechaVigencia] = @FechaVigencia, 
+                                [ModificadoProveedorPor] = @IdProveedorActual ,
+                                [IdMaterialVendedor] = @IdMaterialVendedor, 
+                                [NoCotizar] = @NoCotizar ,
+                                [IdUnidadProveedor] = @IdUnidadVendedor, 
+                                [UnidadProveedor] = @UnidadCotizada ,
                                 [MaterialCotizadoTextoC] = @MaterialCotizadoTextC ,
-                                [MaterialCotizadoTextoL] = @MaterialCotizadoTextL, FechaEntrega = @FechaEntrega,
-                                [IdCondicionPago]=@IdCondicionPago,DiasCredito= @DiasCredito
+                                [MaterialCotizadoTextoL] = @MaterialCotizadoTextL, 
+                                FechaEntrega = @FechaEntrega,
+                                [IdCondicionPago]=@IdCondicionPago,
+                                DiasCredito= @DiasCredito
                          WHERE  [IdPeticionOfertaDetalle] = @IdPeticionOfertaDetalle
                         INSERT INTO MM_HistorialEdicionCotizacion
                             ( [IdEdicionCotizacion], [IdUsuario], [IdProveedor], [Fecha], [IdPeticionOfertaDetalle] ,
@@ -400,15 +423,27 @@ AS
                                 + (ISNULL((SELECT CondicionPago FROM dbo.MM_CondicionPago WHERE IdCondicionPago=ISNULL(@IdCondicionDePago_Actual,0)),'')) + ' ' ) ;
                         SET @Detalle
                             = ( @Detalle + ' *Días de crédito '
-                                + ISNULL(@DiasCredito_Actual,0) + ' ' ) ;
+                                + CAST(ISNULL(@DiasCredito_Actual,0) AS NVARCHAR) + ' ' ) ;
                         UPDATE  [dbo].[MM_PeticionOfertaDetalle]
-                           SET  [NoCotizar] = @NoCotizar, [PrecioUnitario] = NULL, [ComentarioSubcontratista] = NULL ,
-                                [ModificadoPor] = @IdUsuario, [ModificadoEl] = GETDATE (), [IdMoneda] = NULL ,
-                                [Disponibilidad] = NULL, [Cotizado] = 0, [SubTotal] = NULL, [FechaVigencia] = NULL ,
-                                [ModificadoProveedorPor] = @IdProveedorActual, [IdMaterialVendedor] = NULL ,
-                                [IdUnidadProveedor] = NULL, [UnidadProveedor] = NULL, [MaterialCotizadoTextoC] = NULL ,
-                                [MaterialCotizadoTextoL] = NULL, FechaEntrega = NULL,
-                                [IdCondicionPago]=NULL,[DiasCredito]= NULL
+                           SET  [NoCotizar] = @NoCotizar, 
+                                -- [PrecioUnitario] = NULL, 
+                                -- [ComentarioSubcontratista] = NULL ,
+                                -- [ModificadoPor] = @IdUsuario, 
+                                [ModificadoEl] = GETDATE (), 
+                                -- [IdMoneda] = NULL ,
+                                -- [Disponibilidad] = NULL, 
+                                [Cotizado] = 0, 
+                                -- [SubTotal] = NULL, 
+                                -- [FechaVigencia] = NULL ,
+                                [ModificadoProveedorPor] = @IdProveedorActual
+                                -- [IdMaterialVendedor] = NULL ,
+                                -- [IdUnidadProveedor] = NULL, 
+                                -- [UnidadProveedor] = NULL, 
+                                -- [MaterialCotizadoTextoC] = NULL ,
+                                -- [MaterialCotizadoTextoL] = NULL, 
+                                -- FechaEntrega = NULL,
+                                -- [IdCondicionPago]=NULL,
+                                -- [DiasCredito]= NULL
                          WHERE  [IdPeticionOfertaDetalle] = @IdPeticionOfertaDetalle
                         INSERT INTO MM_HistorialEdicionCotizacion
                             ( [IdEdicionCotizacion], [IdUsuario], [IdProveedor], [Fecha], [IdPeticionOfertaDetalle] ,
@@ -418,5 +453,6 @@ AS
                               @IdPeticionOfertaDetalle , ISNULL ( @Detalle, 'Cambio no identificado.' ))
                     END
             END
-        SELECT 'SUCCESS'
-    END
+
+            SELECT 'SUCCESS'
+END
