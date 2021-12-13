@@ -1,4 +1,4 @@
-### Lista de verificación para la revisión por pares
+## Lista de verificación para la revisión por pares
 - [ ] El código fuente es preciso y completo con respecto al diseño.
 - [ ] La documentación del código: es clara y precisa.
 - [ ] Los errores inesperados se encuentran controlados.
@@ -12,12 +12,19 @@
 - [ ] El código fuente generado es Reutilizable?
 - [ ] La estructura del código fuente permite un fácil mantenimiento del mismo?
 - [ ] La rama que se desea integrar se encuentra actualizada con la rama default?
+- [ ] La(s) evidencia(s) es(son) lo suficientemente legibles?
 
-### URL Issue Relacionado
-resolves *En caso de aplicar, escriba la URL del issue relacionado*
+## Informacion Adicional
+### Propuesta relacionada
+*Agregue en esta sección el issue relacion en caso de aplicar con le siguiente formato o elimine esta sección:*
 
-### Scripts 
- *Anexe en esta sección scripts de base de datos, en caso de no aplicar escriba "N/A"*
+resolves Adinco/repositorio/#
+
+### Scripts de base de datos
+*Anexe en esta sección scripts de base de datos, en caso de no aplicar escriba "N/A" o elimine esta sección*
+
+### Acceso
+*Anexe informacion adicional como usuario (no contraseña), contrato y/o pantalla (URL), en caso de no aplicar escriba "N/A" o elimine esta sección*
  
-### Descripción general de las actividades realizadas
+## Descripción General
  *Describa de manera general las actividades que se realizaron durante el desarrollo de la propuesta, utilice capturas de pantalla en caso de ser necesario*
