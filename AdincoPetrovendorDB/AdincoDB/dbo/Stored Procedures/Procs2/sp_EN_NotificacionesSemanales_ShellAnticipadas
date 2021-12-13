@@ -1,4 +1,4 @@
-CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
+ALTER PROCEDURE dbo.sp_EN_NotificacionesSemanales_ShellAnticipadas
 AS
 BEGIN
 -- =============================================
@@ -64,7 +64,12 @@ DECLARE
 	@HOY DATE,
 	@MaxNotificacion	INT = 0
 
-SELECT @HOY = GETDATE()
+-- BUSCAR EL SIGUIENTE LUNES
+SELECT @HOY = DATEADD(DAY, 8 - DiaDeSemana, idfecha)
+FROM AP_Calendario
+WHERE Anio = YEAR(GETDATE())
+AND Mes = MONTH(GETDATE())
+AND Dia = DAY(GETDATE())
 
 
 --================================ NOTIFICACIONES A RESPONSIBLES (LO QUE COMIENZA EN LOS SIGUIENTES 7 DIAS)==============================================
@@ -114,7 +119,7 @@ SELECT @HOY = GETDATE()
 		AND IE.Activo = 1
     JOIN
         dbo.EN_Actividad            A	(NOLOCK)
-     ON IE.ActividadID	=	A.ActividadID
+        ON IE.ActividadID	=	A.ActividadID
 		AND	A.EstadoID <> 10003	-- ELABORACION
     JOIN
         dbo.EN_Entregable           E	(NOLOCK)
@@ -929,7 +934,9 @@ SELECT @HOY = GETDATE()
 	)
 	SELECT
 		ISNULL(@MaxNotificacion,0) + ID,	-- IdNotificacion
-		Destinatario,						-- Para
+--		Destinatario,						-- Para
+		'joshua.gamboa@shell.com; khiani.peredo@shell.com; carmen.martinez@shell.com;',
+--	'barbara.arranaga@adinco.mx',
 		CASE 
 			WHEN NumCorreo = 1 AND TotalCorreos = 1 THEN C.Asunto
 			WHEN NumCorreo = 1 AND TotalCorreos > 1	THEN C.Asunto + ' page 1 of ' + LTRIM(TotalCorreos)
@@ -937,11 +944,9 @@ SELECT @HOY = GETDATE()
 		END,
 		CASE WHEN N.NumCorreo = N.TotalCorreos 
 		THEN 
-			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNoti
-ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','')
+			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNotificacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','')
 		ELSE
-			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNoti
-ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','* There are more information in the next email (Page ' + LTRIM(N.NumCorreo+1) + ')')
+			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNotificacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','* There are more information in the next email (Page ' + LTRIM(N.NumCorreo+1) + ')')
 		END,
 		GETDATE(),
 		0,
@@ -955,5 +960,4 @@ ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreo
 		TA_Correo	C
 		ON	N.TipoCorreo	=	C.Descripcion
 
-EXEC sp_JOA_NotificacionesSemanales_Shell
 END
