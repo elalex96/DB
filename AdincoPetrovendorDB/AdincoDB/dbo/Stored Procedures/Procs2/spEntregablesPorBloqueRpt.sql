@@ -67,7 +67,7 @@ begin
 	on			ce.IdEntregable				=	e.IdEntregable	
 	left join	CO_Regulador				r
 	on			r.IdRegulador				=	e.IdRegulador
-	left join	EN_MarcoLegal				ml
+	left join	EN_MarcoLegal				ml	--Se cambio la tabla CO_MarcoLegal por EN_MarcoLegal
 	on			ml.IdMarcoLegal				=	e.IdMarcoLegal
 	left join	EN_Area						a
 	on			ce.IdArea					=	a.idArea
@@ -80,7 +80,6 @@ begin
 	on			cepia.IdContratoEntregable	=	ce.IdContratoEntregable
 	where		(FEchaCalculadaEntregaReg	between	@FechaIni and @fechaFin)
 	and			co.IdContratista			=	@IdContratista
-	--EN_ContratoEntregableProgramaImplementaAcciones
 end
 
 
