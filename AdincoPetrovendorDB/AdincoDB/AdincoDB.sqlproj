@@ -13161,6 +13161,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_PO_DisableAll.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_PO_Enable.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEntregablesPorBloqueRpt.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_CO_ObtenerContratosPDF.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
