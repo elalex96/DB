@@ -19,7 +19,39 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 DROP TABLE IF EXISTS #PROCESOSOLPED2
+CREATE TABLE #PROCESOSOLPED2
+(
+	IdSolicitudPedido Int null,
+	Folio varchar(300),
+	Descripcion varchar(300),
+	CentroCosto varchar(300),
+	Requisitor varchar(500),
+	FechaRegistro datetime,
+	Responsable1aAprobacion varchar(500),
+	Fecha1aAprobacion datetime,
+	Estatus1aAprobacion varchar(300),
+	ResponsableReasignado varchar(500),
+	FechaAprobacionReasignado datetime,
+	EstatusAprobacionReasignado varchar(500),
+	Responsable2aAprobacion varchar(500),
+    Fecha2aAprobacion datetime,
+    Estatus2aAprobacion varchar(500),
+	Responsable2daReasigacion varchar(500),
+	FechaAprobacion2daReasignacion datetime,
+	EstatusAprobacion2daReasignacion varchar(500),
+	FechaUltimaAprobacion datetime,
+    UsuarioCargaPR varchar(500),
+    FechaCargaPR datetime,
+    NumeroPR varchar(100),
+    EstatusFinal varchar(500)
+)
 DROP TABLE IF EXISTS #tmpOTManagerNot
+CREATE TABLE #tmpOTManagerNot
+(
+	IdOTSolicitud INT PRIMARY KEY NOT NULL,
+	Usuario VARCHAR(500),
+	Fecha DATETIME
+)
 DECLARE @IDCONTRATO INT = (10038);
 DECLARE @CENTROSCOSTOS TABLE(IdSolicitudPedido INT, CentroCosto NVARCHAR(100));
 DECLARE @USUARIOAPROBADOR1 TABLE(IdSolicitudPedido INT, Nombre NVARCHAR(100), FechaRegistro DATETIME, FechaCambioEstatus DATETIME, Dias INT, Estatus NVARCHAR(100));
@@ -86,10 +118,15 @@ DECLARE @DATOSSOLPEDFIN TABLE(
                             FechaRegistroTareaReasignado DATETIME
                             );
 -- PARA OTS SIN BITACORA, BUSCAR ACCIONES DEL MANAGER EN BASE A LAS NOTIFICACIONES
+INSERT INTO #tmpOTManagerNot
+(
+	IdOTSolicitud,
+	Usuario,
+	Fecha 
+)
 SELECT OT.IdOTSolicitud,
 		u.Usuario,
 		Fecha = MIN(n.CreadoEl)
-into #tmpOTManagerNot
 FROM Adinco..OT_SolicitudBitacora sb 
 inner join Adinco..OT_Solicitud ot 
 on sb.IdOTSolicitud = ot.IdOTSolicitud
@@ -133,7 +170,7 @@ SELECT
 FROM dbo.TA_Operacion AS OP
     LEFT JOIN dbo.TA_Tarea AS T
         ON OP.IdOperacion = T.IdOperacion
-        AND T.NoSecuencia = 1
+        AND 1 = T.NoSecuencia
     LEFT JOIN dbo.S_Usuario AS USFA
         ON T.IdAprobador = USFA.IdUsuario
     LEFT JOIN dbo.TA_Estatus (NOLOCK) AS ET1
@@ -576,8 +613,30 @@ GROUP BY SPOT.IdSolicitudPedido,
 		USPROT.Nombre,
 		PR.CreadoEl,
 		PR.ID_PR;
-
-	
+INSERT INTO #PROCESOSOLPED2(
+	IdSolicitudPedido ,
+	Folio ,
+	Descripcion ,
+	CentroCosto ,
+	Requisitor ,
+	FechaRegistro ,
+	Responsable1aAprobacion ,
+	Fecha1aAprobacion ,
+	Estatus1aAprobacion ,
+	ResponsableReasignado ,
+	FechaAprobacionReasignado ,
+	EstatusAprobacionReasignado ,
+	Responsable2aAprobacion ,
+    Fecha2aAprobacion ,
+    Estatus2aAprobacion ,
+	Responsable2daReasigacion ,
+	FechaAprobacion2daReasignacion ,
+	EstatusAprobacion2daReasignacion ,
+	FechaUltimaAprobacion ,
+    UsuarioCargaPR ,
+    FechaCargaPR ,
+    NumeroPR ,
+    EstatusFinal )	
 SELECT
     IdSolicitudPedido,
     ISNULL(Folio,'N/A') AS Folio,
@@ -620,7 +679,6 @@ SELECT
     FechaCargaPR,
     NumeroPR,
     EstatusFinal
-INTO #PROCESOSOLPED2
 FROM @PROCESOSOLPED
 ORDER BY IdSolicitudPedido DESC;
 
