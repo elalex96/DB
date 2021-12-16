@@ -128,6 +128,42 @@ BEGIN
 												   @IdContratoEntregable,
 												  0,1;
 
+                DECLARE @idVersion_fechas INT = 0;
+
+               
+                SELECT @idVersion_fechas = (ISNULL(MAX(IdLineaTiempo), 0) + 1)
+                FROM dbo.EN_HistorialAprobacionesLineaTiempo;
+
+                INSERT INTO dbo.EN_HistorialAprobacionesLineaTiempo (IdLineaTiempo,
+                                                                     idInstanciaEntregable,
+                                                                     idContrato,
+																	Comentario,
+																	Rechazado,
+																	idTipoOperacion,
+                                                                     CreadoPor,
+                                                                     CreadoEn,
+                                                                     ModificadoPor,
+                                                                     ModificadoEn,
+                                                                     Activo,
+                                                                     ActualizadoByApp,
+                                                                     URLRepositorio,
+                                                                     ContieneURLRepositorio)
+                VALUES (@idVersion_fechas,             -- IdLineaTiempo - int
+                        @idInstanciaentregable, -- idInstanciaEntregable - int
+                        @idContrato,            -- idContrato - int
+                        @MotivoDesactivar,      -- Comentario - nvarchar(250)
+                        0,                      -- Rechazado - bit
+                        6,                      -- idTipoOperacion - int
+                        @idUsuario,             -- CreadoPor - int
+                        GETDATE(),              -- CreadoEn - datetime
+                        @idUsuario,             -- ModificadoPor - int
+                        GETDATE(),              -- ModificadoEn - datetime
+                        1,                      -- Activo - bit
+                        0,                      -- ActualizadoByApp - bit
+                        '-',                    -- URLRepositorio - varchar(1500)
+                        0                       -- ContieneURLRepositorio - bit
+                    );
+
 		declare @IdProceso int
 		/*Identificar cual es el proceso*/
 		select		@IdProceso									=			IPF.IdProceso 
@@ -391,7 +427,7 @@ BEGIN
                                                                      ContieneURLRepositorio)
                 VALUES (@idVersion,             -- IdLineaTiempo - int
                         @idInstanciaentregable, -- idInstanciaEntregable - int
-       @idContrato,            -- idContrato - int
+                        @idContrato,            -- idContrato - int
                         @MotivoDesactivar,      -- Comentario - nvarchar(250)
                         0,                      -- Rechazado - bit
                         6,                      -- idTipoOperacion - int
