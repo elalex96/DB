@@ -21,6 +21,7 @@
     [FechaInicioElaboracion]          DATETIME NULL,
     [FechaRealEntregaRegulador]       DATETIME NULL,
     [BitContieneAcuse]                BIT      NULL,
+	[IdInstalacion]					  int	   null
     CONSTRAINT [PK__EN_Insta__BFE7FB394EC72BE9] PRIMARY KEY CLUSTERED ([idInstanciaEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_InstanciasEntregable_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_InstanciasEntregable_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
