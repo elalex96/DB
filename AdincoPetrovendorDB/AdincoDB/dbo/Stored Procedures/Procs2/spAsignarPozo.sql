@@ -31,6 +31,7 @@ begin
 						@FechaCalculadaEntregaReg,
 						@IdUsuario,
 						@IdContrato,
-						GETDATE()
+						GETDATE(),
+						@IdInstalacion
 					)
 end
