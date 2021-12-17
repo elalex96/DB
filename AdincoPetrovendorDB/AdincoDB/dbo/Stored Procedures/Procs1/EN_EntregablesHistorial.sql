@@ -1,12 +1,10 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorial]    Script Date: 30/11/2021 03:43:26 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-DROP PROCEDURE IF EXISTS EN_EntregablesHistorial
+if exists (select * from sys.procedures where name = 'EN_EntregablesHistorial')
+begin
+	drop proc EN_EntregablesHistorial
+end
+
 go
+
 CREATE PROCEDURE [dbo].[EN_EntregablesHistorial]--10103,3,0,1,0,0 
     @idUsuario INT,  
     @idContrato INT,  
@@ -322,6 +320,7 @@ BEGIN
              END,TI.proceso  
     ORDER BY TI.idInstanciaEntregable;  
   
+  --select @BitPantallaArea
   
     IF (@BitPantallaArea = 0)  
     BEGIN  
@@ -429,7 +428,9 @@ BEGIN
 		E.APRehabilitacionCamino as 'InicioActividadesExploracion',
 		E.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
 		E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
-		E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion' 
+		E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion', 
+		I.IdInstalacion,
+		ins.NombreInstalacion
 		FROM 
 			#ResponsablesInstancias TI  
 		JOIN 
@@ -495,6 +496,8 @@ BEGIN
 					ON E.IdResponsableGenerador = RG.IdResponsableGenerador
 		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	
 			ON E.IdReceptorEntregable = REE.IdReceptorEntregable
+		left join	CO_Instalacion ins
+		on			ins.IdInstalacion = I.IdInstalacion
 		WHERE 
 			CE.IdContrato = @idContrato 
 			 AND E.IsActivo = 1
@@ -539,7 +542,7 @@ BEGIN
 				   REPLICATE('0',2-LEN(MONTH(I.FechaInicioElaboracion))) + LTRIM(MONTH(I.FechaInicioElaboracion)) + '-' + DATENAME(MONTH, FechaInicioElaboracion) AS mes,  
 				   YEAR(FechaCalculadaEntregaReg) AS anio,  
 				   ISNULL(ET.Etapa, 'No Especificada') AS Etapa,  
-				   ISNULL(I.FechaCalculadaEntregaReg, I.FechasLimiteAprobacion) AS FechaCalculadaEntregaReg,  
+				   ISNULL(I.FechaCalculadaEntregaReg, I.FechasLimiteAprobacion) AS FechaCalculadaEntregaReg, 
 				   REPLICATE('0',2-LEN(MONTH(I.FechaCalculadaEntregaReg))) + LTRIM(MONTH(I.FechaCalculadaEntregaReg)) + '-' +DATENAME(MONTH, I.FechaCalculadaEntregaReg) AS mesEntrega,  
 				   CASE  
 					   WHEN APPozoAlivio = 1 THEN  
@@ -690,7 +693,7 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-
+		
 			INSERT INTO #Areas (Area)  
 				SELECT REPLACE(P.NombrePermiso, 'Acceso a Entregables de ', '')  
 				FROM dbo.AP_PermisosUsuarios PU  
@@ -875,4 +878,7 @@ BEGIN
 
           
 END;  
-END;  
+END; 
+
+
+go
