@@ -1,6 +1,13 @@
-﻿CREATE PROCEDURE [dbo].[SP_VIEW_DEA_ConsultaProcesoSolicitudPedido_Estatus]
--- Add the parameters for the stored procedure here
-
+﻿USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_VIEW_DEA_ConsultaProcesoSolicitudPedido_Estatus
+--==================================
+--Modificado por: Luis David
+--Modificado el: 17/12/2021
+--Descripción: Optimización para el issue 431 (AdincoPetrovendor_BD)
+--==================================
+GO
+CREATE PROC SP_VIEW_DEA_ConsultaProcesoSolicitudPedido_Estatus
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -9,18 +16,9 @@ BEGIN
 
     --DECLARE @IDCONTRATO INT = (3);
     --DECLARE @IDCONTRATO INT = (10038);
-    DECLARE @Contratos TABLE
-    (
-        ContratoId INT NOT NULL
-    )
-
-	DECLARE @CENTROSCOSTOS TABLE
-    (
-        IdSolicitudPedido INT,
-        CentroCosto NVARCHAR(100)
-    );
-
-    DECLARE @USUARIOAPROBADOR1 TABLE
+    DECLARE @Contratos TABLE(ContratoId INT NOT NULL)
+	DECLARE @CENTROSCOSTOS TABLE(IdSolicitudPedido INT, CentroCosto NVARCHAR(100));
+	DECLARE @USUARIOAPROBADOR1 TABLE
     (
         TareaId INT,
         IdSolicitudPedido INT,
@@ -30,7 +28,6 @@ BEGIN
         Dias INT,
         Estatus NVARCHAR(100)
     );
-
     DECLARE @USUARIOAPROBADOR2 TABLE
     (
         TareaId INT,
@@ -70,22 +67,22 @@ BEGIN
         IdSolicitudPedido INT,
         Folio NVARCHAR(100),
         Descripcion NVARCHAR(MAX),
-        CentroCosto NVARCHAR(MAX),
-        Requisitor NVARCHAR(MAX),
+        CentroCosto NVARCHAR(500),
+        Requisitor NVARCHAR(500),
         FechaRegistro DATETIME,
-        Responsable1aAprobacion NVARCHAR(MAX),
+        Responsable1aAprobacion NVARCHAR(500),
         Fecha1aAprobacion DATETIME,
-        Estatus1aAprobacion NVARCHAR(MAX),
-        ResponsableReasignado NVARCHAR(MAX),
+        Estatus1aAprobacion NVARCHAR(100),
+        ResponsableReasignado NVARCHAR(500),
         FechaAprobacionReasignado DATETIME,
-        EstatusAprobacionReasignado NVARCHAR(MAX),
-        Responsable2aAprobacion NVARCHAR(MAX),
+        EstatusAprobacionReasignado NVARCHAR(300),
+        Responsable2aAprobacion NVARCHAR(500),
         Fecha2aAprobacion DATETIME,
-        Estatus2aAprobacion NVARCHAR(MAX),
-        Responsable2daReasigacion NVARCHAR(MAX),
+        Estatus2aAprobacion NVARCHAR(300),
+        Responsable2daReasigacion NVARCHAR(500),
         FechaAprobacion2daReasignacion DATETIME,
-        EstatusAprobacion2daReasignacion NVARCHAR(MAX),
-        UsuarioCargaPR NVARCHAR(MAX),
+        EstatusAprobacion2daReasignacion NVARCHAR(300),
+        UsuarioCargaPR NVARCHAR(500),
         FechaCargaPR DATETIME,
         NumeroPR NVARCHAR(100),
         EstatusFinal NVARCHAR(100),
@@ -98,26 +95,26 @@ BEGIN
         IdSolicitudPedido INT,
         Folio NVARCHAR(100),
         Descripcion NVARCHAR(MAX),
-        CentroCosto NVARCHAR(MAX),
-        Requisitor NVARCHAR(MAX),
+        CentroCosto NVARCHAR(500),
+        Requisitor NVARCHAR(500),
         FechaRegistro DATETIME,
-        Responsable1aAprobacion NVARCHAR(MAX),
+        Responsable1aAprobacion NVARCHAR(500),
         Fecha1aAprobacion DATETIME,
-        Estatus1aAprobacion NVARCHAR(MAX),
+        Estatus1aAprobacion NVARCHAR(300),
         Dias1apro NVARCHAR(100),
-        ResponsableReasignado NVARCHAR(MAX),
+        ResponsableReasignado NVARCHAR(500),
         FechaAprobacionReasignado DATETIME,
-        EstatusAprobacionReasignado NVARCHAR(MAX),
+        EstatusAprobacionReasignado NVARCHAR(300),
         Dias1asig NVARCHAR(100),
-        Responsable2aAprobacion NVARCHAR(MAX),
+        Responsable2aAprobacion NVARCHAR(500),
         Fecha2aAprobacion DATETIME,
-        Estatus2aAprobacion NVARCHAR(MAX),
+        Estatus2aAprobacion NVARCHAR(300),
         Dias2aprob NVARCHAR(100),
-        Responsable2daReasigacion NVARCHAR(MAX),
+        Responsable2daReasigacion NVARCHAR(500),
         FechaAprobacion2daReasignacion DATETIME,
-        EstatusAprobacion2daReasignacion NVARCHAR(MAX),
+        EstatusAprobacion2daReasignacion NVARCHAR(300),
         Dias2aprobreasig NVARCHAR(100),
-        UsuarioCargaPR NVARCHAR(MAX),
+        UsuarioCargaPR NVARCHAR(500),
         FechaCargaPR DATETIME,
         NumeroPR NVARCHAR(100),
         DiasCargaPR NVARCHAR(100),
@@ -125,15 +122,15 @@ BEGIN
         EstatusFinal NVARCHAR(100),
         FechaRegistroTareaReasignado DATETIME,
         ContratoId INT,
-        Contrato NVARCHAR(MAX),
-        AreaContractual NVARCHAR(MAX)
+        Contrato NVARCHAR(max),
+        AreaContractual NVARCHAR(max)
     );
 
     DECLARE @IDSOLITUDOT2 TABLE
     (
 		Id INT IDENTITY(1,1),
         IdSolicitud INT,
-        Responsable2aAprobacion NVARCHAR(MAX),
+        Responsable2aAprobacion NVARCHAR(500),
         Fecha2aAprobacion DATETIME,
         Estatus2aAprobacion NVARCHAR(100)
     );
@@ -142,15 +139,9 @@ BEGIN
     (
 		Id INT IDENTITY(1,1),
         IdSolicitud INT,
-        Responsable1aAprobacion NVARCHAR(MAX),
+        Responsable1aAprobacion NVARCHAR(500),
         Fecha1aAprobacion DATETIME,
         Estatus1aAprobacion NVARCHAR(100)
-    );
-
-   DECLARE @CENTROSCOSTOSOT TABLE
-    (
-        IdSolicitudPedido INT,
-        CentroCosto NVARCHAR(100)
     );
 
 	DECLARE @Aprobador1 AS TABLE
@@ -190,8 +181,46 @@ BEGIN
         IdSolicitudPedido INT NOT NULL,
         TareaId INT NOT NULL
     );
-
-
+	DECLARE @Reasingado1 AS TABLE
+    (
+        IdSolicitudPedido INT NOT NULL,
+        TareaId INT NOT NULL
+    );
+		DROP TABLE IF EXISTS #tmpOTManagerNot
+	CREATE TABLE #tmpOTManagerNot
+	(
+		IdOTSolicitud INT PRIMARY KEY NOT NULL,
+		Usuario VARCHAR(500),
+		Fecha DATETIME
+	)
+	DROP TABLE IF EXISTS #PROCESOSOLPED2
+	CREATE TABLE #PROCESOSOLPED2
+	(
+		IdSolicitudPedido Int null,
+		Folio varchar(300),
+		Descripcion varchar(max),
+		CentroCosto varchar(300),
+		Requisitor varchar(500),
+		FechaRegistro datetime,
+		Responsable1aAprobacion varchar(500),
+		Fecha1aAprobacion datetime,
+		Estatus1aAprobacion varchar(300),
+		ResponsableReasignado varchar(500),
+		FechaAprobacionReasignado datetime,
+		EstatusAprobacionReasignado varchar(500),
+		Responsable2aAprobacion varchar(500),
+		Fecha2aAprobacion datetime,
+		Estatus2aAprobacion varchar(500),
+		Responsable2daReasigacion varchar(500),
+		FechaAprobacion2daReasignacion datetime,
+		EstatusAprobacion2daReasignacion varchar(500),
+		FechaUltimaAprobacion datetime,
+		UsuarioCargaPR varchar(500),
+		FechaCargaPR datetime,
+		NumeroPR varchar(100),
+		EstatusFinal varchar(500),
+		ContratoId int
+	)
     INSERT INTO @Contratos
     (
         ContratoId
@@ -204,11 +233,15 @@ BEGIN
     (10046), --> CNH-R03-L01-AS-CS-14/2018
     (10144), --> CNH-DEMMA
 	(10145); --> CNH-WD ADMIN
-
+	INSERT INTO #tmpOTManagerNot
+	(
+		IdOTSolicitud,
+		Usuario,
+		Fecha 
+	)
     SELECT ot.IdOTSolicitud,
            u.Usuario,
            Fecha = MIN(n.CreadoEl)
-    INTO #tmpOTManagerNot
     FROM Adinco..OT_SolicitudBitacora sb (NOLOCK)
         INNER JOIN Adinco..OT_Solicitud ot (NOLOCK)
             ON sb.IdOTSolicitud = ot.IdOTSolicitud
@@ -217,11 +250,6 @@ BEGIN
         INNER JOIN Adinco..AP_Usuario u (NOLOCK)
             ON n.CreadoPor = u.UsuarioID
     WHERE n.Asunto LIKE '%Control de Obra%'
-          --AND NOT (sb.IdTipoMovimiento = 2 
-          --		OR sb.Descripcion = 'Rechazada Operador'
-          --		OR sb.Descripcion like '%Aprobada%Operador%'
-          --		OR sb.Descripcion = 'Aprobada Operador'
-          --		OR sb.Descripcion = 'Enviada a Subcontratista')
           AND
           (
               n.Mensaje LIKE '%La OT ha sido aprobada%'
@@ -235,7 +263,7 @@ BEGIN
     
     --SE OBTIENEN LOS CC POR CONTRATO Y SOLPED
     INSERT INTO @CENTROSCOSTOS
-    SELECT DISTINCT
+    SELECT 
            SPC.IdSolicitudPedido,
            CC.CentroCosto
     FROM @Contratos C
@@ -250,26 +278,9 @@ BEGIN
     WHERE (
               CC.CentroCosto IS NOT NULL
               OR CC.CentroCosto <> ''
-          );
-
-    --SE OBTIENEN LOS CC POR CONTRATO Y SOLPED DE LAS OT´S
-     INSERT INTO @CENTROSCOSTOSOT
-    SELECT DISTINCT
-           SPC.IdSolicitudPedido,
+          )
+		  GROUP BY SPC.IdSolicitudPedido,
            CC.CentroCosto
-    FROM @Contratos C
-        JOIN dbo.MM_SolicitudPedido AS SPC (NOLOCK)
-            ON C.ContratoId = SPC.IdContrato
-        LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
-            ON SPC.IdSolicitudPedido = SPD.IdSolicitudPedido
-        LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPLP (NOLOCK)
-            ON SPD.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
-        LEFT JOIN dbo.CC_CentroCosto AS CC (NOLOCK)
-            ON SPLP.IdCentroCosto = CC.IdCentroCosto
-    WHERE (
-              CC.CentroCosto IS NOT NULL
-              OR CC.CentroCosto <> ''
-          );
 
     --SE OBTIENE LA INFORMACIÓN DEL 1 ER APROBADOR 
     INSERT INTO @USUARIOAPROBADOR1
@@ -286,10 +297,10 @@ BEGIN
         JOIN dbo.TA_Operacion AS OP (NOLOCK)
             ON SP.IdSolicitudPedido = OP.IdDocumento
                AND OP.IdProveedor = SP.IdProveedor
-               AND OP.IdTipoOperacion = 2 --> APROBACIÓN DE SOLICITUD DE PEDIDO 		
+               AND 2 = OP.IdTipoOperacion --> APROBACIÓN DE SOLICITUD DE PEDIDO 		
         JOIN dbo.TA_Tarea AS T (NOLOCK)
             ON OP.IdOperacion = T.IdOperacion
-               AND T.NoSecuencia = 1
+               AND 1 = T.NoSecuencia
         LEFT JOIN dbo.S_Usuario AS USFA (NOLOCK)
             ON T.IdAprobador = USFA.IdUsuario
         LEFT JOIN dbo.TA_Estatus AS ET1 (NOLOCK)
@@ -310,11 +321,11 @@ BEGIN
             ON C.ContratoId = SP.IdContrato
         JOIN dbo.TA_Operacion AS OP (NOLOCK)
             ON SP.IdSolicitudPedido = OP.IdDocumento
-               AND OP.IdProveedor = SP.IdProveedor
-               AND OP.IdTipoOperacion = 2 --> APROBACIÓN DE SOLICITUD DE PEDIDO			
+               AND SP.IdProveedor = OP.IdProveedor
+               AND 2 = OP.IdTipoOperacion  --> APROBACIÓN DE SOLICITUD DE PEDIDO			
         JOIN dbo.TA_Tarea AS T (NOLOCK)
-            ON T.IdOperacion = OP.IdOperacion
-               AND T.NoSecuencia = 2
+            ON OP.IdOperacion = T.IdOperacion
+               AND 2 = T.NoSecuencia
         LEFT JOIN dbo.S_Usuario AS USFA (NOLOCK)
             ON T.IdAprobador = USFA.IdUsuario
         LEFT JOIN dbo.TA_Estatus AS ET1 (NOLOCK)
@@ -334,22 +345,27 @@ BEGIN
             ON C.ContratoId = SP.IdContrato
         JOIN dbo.TA_Operacion AS OP (NOLOCK)
             ON SP.IdSolicitudPedido = OP.IdDocumento
-               AND OP.IdProveedor = SP.IdProveedor
-               AND OP.IdTipoOperacion = 2 --> APROBACIÓN DE SOLICITUD DE PEDIDO		
+               AND SP.IdProveedor = OP.IdProveedor
+               AND 2 = OP.IdTipoOperacion--> APROBACIÓN DE SOLICITUD DE PEDIDO		
         JOIN dbo.TA_Tarea AS T (NOLOCK)
             ON OP.IdOperacion = T.IdOperacion
-               AND T.NoSecuencia = 1
-               AND T.IdEstatus <> 7 --> QUE NO ESTE RESIGNADO
+               AND 1 = T.NoSecuencia
+               AND 7 <> T.IdEstatus--> QUE NO ESTE RESIGNADO
         LEFT JOIN dbo.S_Usuario AS USFA (NOLOCK)
             ON T.IdAprobador = USFA.IdUsuario
         LEFT JOIN dbo.TA_Estatus AS ET1 (NOLOCK)
             ON T.IdEstatus = ET1.IdEstatus
-    WHERE USFA.Nombre NOT IN
-          (
-              SELECT Nombre
-              FROM @USUARIOAPROBADOR2
-              WHERE IdSolicitudPedido = SP.IdSolicitudPedido
-          ); --> Y QUE NO SEA EL APROBADOR NO 2 
+		LEFT JOIN @USUARIOAPROBADOR2 UAP
+			ON USFA.Nombre <> UAP.Nombre
+			AND SP.IdSolicitudPedido = UAP.IdSolicitudPedido --Y QUE NO SEA EL APROBADOR NO 2
+		GROUP BY T.IdTarea,
+           SP.IdSolicitudPedido,
+           USFA.Nombre,
+           T.FechaRegistro,
+           T.FechaCambioEstatus,
+           SP.FechaAlta, 
+		   T.FechaCambioEstatus,
+           ET1.Nombre
 
 
     --OBTENER REASIGNADOS CON NUMERO DE SECUENCIA 2
@@ -363,16 +379,16 @@ BEGIN
            ET1.Nombre
     FROM @Contratos C
         JOIN dbo.MM_SolicitudPedido AS SP (NOLOCK)
-ON C.ContratoId = SP.IdContrato
+			ON C.ContratoId = SP.IdContrato
         JOIN dbo.TA_Operacion AS OP (NOLOCK)
             ON SP.IdSolicitudPedido = OP.IdDocumento
-               AND OP.IdProveedor = SP.IdProveedor
-               AND OP.IdTipoOperacion = 2 --> APROBACIÓN DE SOLICITUD DE PEDIDO	
+               AND SP.IdProveedor = OP.IdProveedor
+               AND 2 = OP.IdTipoOperacion --> APROBACIÓN DE SOLICITUD DE PEDIDO	
         JOIN dbo.TA_Tarea AS T (NOLOCK)
             ON OP.IdOperacion = T.IdOperacion
-               AND T.NoSecuencia = 2
-               AND T.IdEstatus <> 7 --> QUE NO ESTE REASIGNADO ES PARA TENER REGISTRO DEL ULTIMO APROBADOR CON SECUENCIA NO 2
-               AND T.Activo = 1 --> QUE ESTE ACTIVO
+               AND 2 = T.NoSecuencia
+               AND 7 <> T.IdEstatus --> QUE NO ESTE REASIGNADO ES PARA TENER REGISTRO DEL ULTIMO APROBADOR CON SECUENCIA NO 2
+               AND 1 = T.Activo --> QUE ESTE ACTIVO
         LEFT JOIN dbo.S_Usuario AS USFA (NOLOCK)
             ON T.IdAprobador = USFA.IdUsuario
         LEFT JOIN dbo.TA_Estatus AS ET1 (NOLOCK)
@@ -411,12 +427,7 @@ ON C.ContratoId = SP.IdContrato
                                       LEFT JOIN Adinco.dbo.AP_Usuario AS US (NOLOCK)
                                           ON FAEU.UsuarioId = US.UsuarioID
                                              AND US.IsActivo = 1
-                                      LEFT JOIN Adinco.dbo.AP_UsuarioCentroCosto AS UCC (NOLOCK)
-                                          ON OTSI.IdCentroCosto = UCC.IdCentroCosto
                                   WHERE OTSI.IdOTSolicitud = ST.IdOTSolicitud
-                                  --AND US.UsuarioID NOT IN ( AP1.UsuarioID)
-                                  --AND US.UsuarioID <> AP1.UsuarioID
-                                  --AND US.UsuarioID IN (10752,10505)
                                   GROUP BY US.Nombre
                                   FOR XML PATH('')
                               ),
@@ -445,19 +456,19 @@ ON C.ContratoId = SP.IdContrato
             ON ST.IdOTSolicitud = SBO.IdOTSolicitud
                AND
                (
-                   SBO.IdTipoMovimiento = 2
-                   OR SBO.Descripcion = 'Rechazada Operador'
+                   2 = SBO.IdTipoMovimiento
+                   OR 'Rechazada Operador' = SBO.Descripcion 
                    OR SBO.Descripcion LIKE '%Aprobada%Operador%'
-                   OR SBO.Descripcion = 'Aprobada Operador'
-                   OR SBO.Descripcion = 'Enviada a Subcontratista'
+                   OR 'Aprobada Operador' = SBO.Descripcion
+                   OR 'Enviada a Subcontratista' = SBO.Descripcion
                )
         LEFT JOIN Adinco.dbo.OT_SolicitudBitacora AS SBP (NOLOCK)
             ON ST.IdOTSolicitud = SBP.IdOTSolicitud
                AND
                (
-                   SBP.IdTipoMovimiento = 4
-                   OR SBP.Descripcion = 'Rechazada Subcontratista'
-                   OR SBP.Descripcion = 'Propuesta por Subcontratista'
+                   4 = SBP.IdTipoMovimiento
+                   OR 'Rechazada Subcontratista' = SBP.Descripcion 
+                   OR 'Propuesta por Subcontratista' = SBP.Descripcion
                )
         LEFT JOIN Adinco.dbo.SC_SubContrato AS SUBOT (NOLOCK)
             ON ST.IdSubContrato = SUBOT.IdSubContrato
@@ -465,10 +476,8 @@ ON C.ContratoId = SP.IdContrato
             ON SUBOT.IdSubContratista = SUCIT.IdSubcontratista
         LEFT JOIN Adinco.dbo.AP_Usuario AS AP1 (NOLOCK)
             ON SBO.UsuarioAdincoId = AP1.UsuarioID
-    WHERE SUBOT.IdContrato IN
-          (
-              SELECT ContratoId FROM @Contratos
-          )
+		JOIN @Contratos AS TC
+			ON SUBOT.IdContrato = TC.ContratoId
     GROUP BY ST.IdOTSolicitud,
              SBP.Descripcion,
              SBO.Descripcion,
@@ -507,14 +516,11 @@ ON C.ContratoId = SP.IdContrato
                                         LEFT JOIN Adinco.dbo.AP_Usuario AS US (NOLOCK)
                                             ON FAEU.UsuarioId = US.UsuarioID
                                                AND US.IsActivo = 1
-                                        LEFT JOIN Adinco.dbo.AP_UsuarioCentroCosto AS UCC (NOLOCK)
-                                            ON OTSI.IdCentroCosto = UCC.IdCentroCosto
                                     WHERE OTSI.IdOTSolicitud = ST.IdOTSolicitud
                                           AND US.UsuarioID <> AP1.UsuarioID
                                           AND US.Usuario NOT LIKE '%@adinco.mx%'
                                           AND US.Usuario NOT LIKE '%@ogss.com.mx%'
                                           AND US.Usuario NOT LIKE '%@smps-sp.com%'
-                                    --AND US.UsuarioID IN (10752,10505)
         GROUP BY US.Nombre
             FOR XML PATH('')
                                 ),
@@ -543,19 +549,19 @@ ON C.ContratoId = SP.IdContrato
             ON ST.IdOTSolicitud = SBO.IdOTSolicitud
                AND
                (
-                   SBO.IdTipoMovimiento = 2
-                   OR SBO.Descripcion = 'Rechazada Operador'
+                   2 = SBO.IdTipoMovimiento 
+                   OR 'Rechazada Operador' = SBO.Descripcion
                    OR SBO.Descripcion LIKE '%Aprobada%Operador%'
-                   OR SBO.Descripcion = 'Aprobada Operador'
-                   OR SBO.Descripcion = 'Enviada a Subcontratista'
+                   OR 'Aprobada Operador' = SBO.Descripcion
+                   OR 'Enviada a Subcontratista' = SBO.Descripcion
                )
         LEFT JOIN Adinco.dbo.OT_SolicitudBitacora AS SBP
             ON ST.IdOTSolicitud = SBP.IdOTSolicitud
                AND
                (
-                   SBP.IdTipoMovimiento = 4
-                   OR SBP.Descripcion = 'Rechazada Subcontratista'
-                   OR SBP.Descripcion = 'Propuesta por Subcontratista'
+                   4 = SBP.IdTipoMovimiento
+                   OR 'Rechazada Subcontratista' = SBP.Descripcion
+                   OR 'Propuesta por Subcontratista' = SBP.Descripcion
                )
         LEFT JOIN Adinco.dbo.SC_SubContrato AS SUBOT (NOLOCK)
             ON ST.IdSubContrato = SUBOT.IdSubContrato
@@ -565,10 +571,8 @@ ON C.ContratoId = SP.IdContrato
             ON SBO.UsuarioAdincoId = AP1.UsuarioID
         LEFT JOIN #tmpOTManagerNot otN1
             ON ST.IdOTSolicitud = otN1.IdOTSolicitud
-    WHERE SUBOT.IdContrato IN
-          (
-              SELECT ContratoId FROM @Contratos
-          )
+		JOIN @Contratos AS TC
+			ON SUBOT.IdContrato = TC.ContratoId
     GROUP BY ST.IdOTSolicitud,
              SBP.Descripcion,
              SBO.Descripcion,
@@ -653,19 +657,16 @@ ON C.ContratoId = SP.IdContrato
         --CARGA DE PR 
         LEFT JOIN dbo.DEA_AdjuntoPR AS PR (NOLOCK)
             ON SP.IdSolicitudPedido = PR.IdSolicitudPedido
-               AND PR.Activo = 1
-               AND ISNULL(PR.IsEliminado, 0) = 0
+               AND 1 = PR.Activo
+               AND 0 = ISNULL(PR.IsEliminado, 0)
         LEFT JOIN dbo.S_Usuario AS USPR (NOLOCK)
             ON PR.CreadoPor = USPR.IdUsuario
-        LEFT JOIN dbo.MM_Pedido AS P (NOLOCK)
-            ON SP.IdSolicitudPedido = P.IdSolicitudPedido
         LEFT JOIN Adinco.dbo.OT_Estimacion estima (NOLOCK)
             ON SP.IdSolicitudPedido = estima.IdSolicitudPedido
     WHERE SP.IdUsuarioSolicitante IS NOT NULL
           AND OP.IdFlujoTarea IS NOT NULL
           AND ISNULL(SP.IdEstatusEliminado, 0) = 0
           AND estima.IdOTEstimacion IS NULL -- que no venga de un OT		 
-    --AND SP.IdSolicitudPedido NOT IN (SELECT IdSolicitudPedido FROM Adinco.dbo.OT_Estimacion)
     GROUP BY SP.IdSolicitudPedido,
              SP.MotivoUrgencia,
              CC2.CentroCosto,
@@ -683,12 +684,6 @@ ON C.ContratoId = SP.IdContrato
 
     /*OBTENER EL ULTIMO APROBADOR REASIGNADO DE LA REQUISICIÓN*/
     /*EN TEORIA EL IdTarea TIENE LA FECHA DE REGISTRO MENOR*/
-    DECLARE @Reasingado1 AS TABLE
-    (
-        IdSolicitudPedido INT NOT NULL,
-        TareaId INT NOT NULL
-    );
-
     INSERT INTO @Aprobador1
     (
         IdSolicitudPedido,
@@ -911,13 +906,11 @@ ON C.ContratoId = SP.IdContrato
             ON SOOT.ModificadoPor = APPR.UsuarioID
         LEFT JOIN dbo.DEA_AdjuntoPR AS PR (NOLOCK)
             ON SPOT.IdSolicitudPedido = PR.IdSolicitudPedido
-               AND PR.Activo = 1
+               AND 1 = PR.Activo
         LEFT JOIN dbo.S_Usuario AS USPROT (NOLOCK)
             ON PR.CreadoPor = USPROT.IdUsuario
-    WHERE SUBOT.IdContrato IN
-          (
-              SELECT C.ContratoId FROM @Contratos C
-          )
+		JOIN @Contratos AS TC 
+			ON SUBOT.IdContrato = TC.ContratoId
     GROUP BY SPOT.IdSolicitudPedido,
              SOOT.Folio,
              SPOT.MotivoUrgencia,
@@ -964,9 +957,9 @@ ON C.ContratoId = SP.IdContrato
 	FROM @PROCESOSOLPED SP
 	JOIN @UsuarioOT1 UTO1
 	ON SP.IdSolicitudPedido=UTO1.IdSolicitudPedido
-	AND UTO1.IdConsecutivo=1--> TOMAR POR DEFAULT EL PRIMER REGISTRO CON LA FECHA MÁS RECIENTE 
+	AND 1 = UTO1.IdConsecutivo--> TOMAR POR DEFAULT EL PRIMER REGISTRO CON LA FECHA MÁS RECIENTE 
 	JOIN @IDSOLITUDOT1 US1 
-	ON UTO1.Id=US1.Id
+	ON UTO1.Id = US1.Id
 
 	/*REALIZAR ACTUALIZACIÓN DE APROBADOR 2 DE OTS
 	OBTENER UN ENUMERADO POR REQUISICION, POR LA FECHA APROBACIÓN DESC Y TOMAR 
@@ -990,10 +983,34 @@ ON C.ContratoId = SP.IdContrato
 	FROM @PROCESOSOLPED SP
 	JOIN @UsuarioOT2 UTO2
 	ON SP.IdSolicitudPedido=UTO2.IdSolicitudPedido
-	AND UTO2.IdConsecutivo=1--> TOMAR POR DEFAULT EL PRIMER REGISTRO
+	AND 1 = UTO2.IdConsecutivo--> TOMAR POR DEFAULT EL PRIMER REGISTRO
 	JOIN @IDSOLITUDOT2 US2 
-	ON UTO2.Id=US2.Id
-
+	ON UTO2.Id = US2.Id;
+	INSERT INTO #PROCESOSOLPED2(
+	IdSolicitudPedido ,
+	Folio ,
+	Descripcion ,
+	CentroCosto ,
+	Requisitor ,
+	FechaRegistro ,
+	Responsable1aAprobacion ,
+	Fecha1aAprobacion ,
+	Estatus1aAprobacion ,
+	ResponsableReasignado ,
+	FechaAprobacionReasignado ,
+	EstatusAprobacionReasignado ,
+	Responsable2aAprobacion ,
+    Fecha2aAprobacion ,
+    Estatus2aAprobacion ,
+	Responsable2daReasigacion ,
+	FechaAprobacion2daReasignacion ,
+	EstatusAprobacion2daReasignacion ,
+	FechaUltimaAprobacion ,
+    UsuarioCargaPR ,
+    FechaCargaPR ,
+    NumeroPR ,
+    EstatusFinal,
+	ContratoId)
     SELECT IdSolicitudPedido,
            ISNULL(Folio, 'N/A') AS Folio,
            Descripcion,
@@ -1050,7 +1067,6 @@ ON C.ContratoId = SP.IdContrato
            NumeroPR,
            EstatusFinal,
            ContratoId
-    INTO #PROCESOSOLPED2
     FROM @PROCESOSOLPED
     ORDER BY IdSolicitudPedido DESC;
 
@@ -1250,13 +1266,5 @@ ON C.ContratoId = SP.IdContrato
 	LEFT JOIN Adinco.dbo.OT_Estimacion	OT
 		 ON T.IdSolicitudPedido = OT.IdSolicitudPedido
 WHERE OT.IdSolicitudPedido IS NULL
-    --WHERE IdSolicitudPedido NOT IN
-    --      (
-    --          SELECT IdSolicitudPedido FROM Adinco.dbo.OT_Estimacion
-    --      )
     ORDER BY T.IdSolicitudPedido DESC;
-
-    DROP TABLE #PROCESOSOLPED2;
-    DROP TABLE #tmpOTManagerNot;
-
 END;
