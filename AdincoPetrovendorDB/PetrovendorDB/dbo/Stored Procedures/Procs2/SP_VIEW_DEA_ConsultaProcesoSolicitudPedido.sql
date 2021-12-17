@@ -23,7 +23,7 @@ CREATE TABLE #PROCESOSOLPED2
 (
 	IdSolicitudPedido Int null,
 	Folio varchar(300),
-	Descripcion varchar(300),
+	Descripcion varchar(max),
 	CentroCosto varchar(300),
 	Requisitor varchar(500),
 	FechaRegistro datetime,
