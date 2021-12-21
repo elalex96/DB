@@ -3,7 +3,12 @@
 -- Create date: 
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_EN_InfoContratoEntregableInstancia] --3,59072,10061
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 14/12/2021
+-- Description:	Se muestra el comentario aunque no este desactivado(historial de cambios en fechas)
+-- =============================================
+ALTER PROCEDURE [dbo].[sp_EN_InfoContratoEntregableInstancia] --3,59072,10061
     @IdContrato INT,
     @idInstanciaEntregable INT,
     @IdUsuario INT
@@ -49,12 +54,7 @@ BEGIN
                    APE.idUsuario
            END AS UsuarioAprobador,
            IE.Activo AS ActivoInstancia,
-           CASE IE.Activo
-               WHEN 0 THEN
-                   @ComentarioDesactivacion
-               ELSE
-                   ''
-           END AS ComentarioDesactivacion
+           @ComentarioDesactivacion AS ComentarioDesactivacion
     FROM EN_Entregable EN (NOLOCK)
 		 JOIN EN_ContratoEntregable CE (NOLOCK)
 			 ON CE.IdContrato=@IdContrato

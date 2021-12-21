@@ -27,7 +27,7 @@ GO
 -- Update date: 25/11/21
 -- Description:	se optimiza el sp para disminuir la carga de los modulos donde es usado
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PV_ConsultarUsuarios] 
+CREATE PROCEDURE [dbo].[SP_PV_ConsultarUsuarios] 
 	@IdProveedor INT ,
 /*--------------------parametros contrato  --------------------*/
 	@IdContrato INT = NULL, @IdUsuario INT = NULL ,
@@ -50,8 +50,7 @@ BEGIN
 				AND U.Activo = 1
 				AND (u.IsEliminado = 0 OR u.IsEliminado IS NULL)
 				AND UP.IdContrato = @IdContrato
-			JOIN dbo.S_Proveedor AS P WITH (NOLOCK) ON UP.IdProveedor = P.IdProveedor 
-				AND UP.IdProveedor = @IdUsuario
+			JOIN dbo.S_Proveedor AS P WITH (NOLOCK) ON UP.IdProveedor = P.IdProveedor
 		GROUP BY U.IdUsuario, U.Nombre, P.IdProveedor, UP.IdUsuario
 
 

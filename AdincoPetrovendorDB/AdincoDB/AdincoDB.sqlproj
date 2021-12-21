@@ -13161,11 +13161,21 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_PO_DisableAll.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_PO_Enable.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEntregablesPorBloqueRpt.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_CO_ObtenerContratosPDF.sql" />
+    <Build Include="dbo\Tables\Tables1\ENT_BitacoraArchivos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spAsignarPozo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spPozosCmb.sql" />
+    <Build Include="dbo\Tables\Tables1\EN_ExcepcionesFechaBitacora.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_SAP_ImportMaxFila.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_ImportMaxFila_INSUPD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_ImportMaxFila_SEL.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_Proformas_List.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\User Defined Types\Entregables_Importacion_Edicion_01.sql" />
+    <None Include="dbo\Stored Procedures\Procs1\ENT_sp_GuardaBitacora.sql" />
   </ItemGroup>
 </Project>
