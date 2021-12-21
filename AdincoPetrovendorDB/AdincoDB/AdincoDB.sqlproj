@@ -13170,6 +13170,9 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_ImportMaxFila_INSUPD.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_ImportMaxFila_SEL.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAP_Proformas_List.sql" />
+    <Build Include="dbo\Tables\Tables2\CaroulseImages.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spCaroulseImagesIns.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\spCaroulseImagesLst.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
