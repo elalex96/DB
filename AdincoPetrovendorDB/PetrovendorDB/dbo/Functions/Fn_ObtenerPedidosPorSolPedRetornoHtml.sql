@@ -1,9 +1,16 @@
-﻿-- =============================================
+﻿use Petrovendor
+go
+drop function if exists Fn_ObtenerPedidosPorSolPedRetornoHtml
+go
+-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 30/08/2018
 -- Description: obtener los pedidos de cada solicitud de pedido
 -- =============================================
-
+-- Author: David
+-- Create date: 06/01/2022
+-- Description: optimización sp para issue #452 AdincoPetroBD
+-- =============================================
 create FUNCTION Fn_ObtenerPedidosPorSolPedRetornoHtml
 	( @IdSolicitudPedido INT ,
 	  @IdProveedor INT )
@@ -17,8 +24,7 @@ AS
 			= '<div id=''demo' + CONVERT ( NVARCHAR(20), @IdSolicitudPedido )
 			  + ''' class=''tablaPedidos collapse'' aria-expanded=''false'' style=''height: 0px''><table class=''tablePedido''>' ,
 				@FinTabla NVARCHAR(100) = '</table></div>'
-		DECLARE @contador INT
-			= 1, @CantidadRegistros INT, @IdPedidoAux INT, @IdTipoPedidoAux INT, @IdPedidoGralAux INT ,
+		DECLARE @contador INT= 1, @CantidadRegistros INT, @IdPedidoAux INT, @IdTipoPedidoAux INT, @IdPedidoGralAux INT ,
 				@EstatusAux NVARCHAR(50), @TotalAux NVARCHAR(150), @TipoMonedaAux NVARCHAR(20), @IdEstatusAux INT ,
 				@AuxEtiqueta NVARCHAR(50), @Materiales NVARCHAR(MAX), @ProveedorAux NVARCHAR(MAX)
 
@@ -45,20 +51,20 @@ AS
 		INNER JOIN	S_Proveedor AS PV
 			ON PV.IdProveedor = P.IdSubcontratista
 		INNER JOIN	TA_Operacion AS O
-			ON O.IdDocumento = P.IdSolicitudPedido
+			ON P.IdSolicitudPedido = O.IdDocumento
 			   AND	P.Version = O.NoVersion
 		INNER JOIN	TA_Prioridad AS PR
-			ON PR.IdPrioridad = O.IdPrioridad
+			ON O.IdPrioridad = PR.IdPrioridad
 		LEFT JOIN	TA_Vencimiento AS V
-			ON V.IdVencimiento = O.IdVigencia
+			ON O.IdVigencia = V.IdVencimiento
 		INNER JOIN	TA_TipoOperacion AS TTO
-			ON TTO.IdTipoOperacion = O.IdTipoOperacion
+			ON O.IdTipoOperacion = TTO.IdTipoOperacion
 		INNER JOIN	TA_Estatus AS E
-			ON E.IdEstatus = O.IdEstatusOperacion
+			ON O.IdEstatusOperacion = E.IdEstatus
 		INNER JOIN	MM_HorasVigenciaPedido AS HV
 			ON P.IdPedido = HV.IdPedido
 		INNER JOIN	PV_TipoMoneda AS TM
-			ON TM.IdMoneda = P.IdMoneda
+			ON P.IdMoneda = TM.IdMoneda
 		INNER JOIN	MM_Pedidos AS PG
 			ON P.IdPedido = PG.IdIdentificador
 			   AND	PG.IdProveedorCliente = @IdProveedor
@@ -91,7 +97,7 @@ AS
 				SELECT	@AuxEtiqueta = CASE WHEN @IdEstatusAux = 1 THEN
 												'warning'
 									   WHEN @IdEstatusAux = 2 THEN
-										   'success'
+											'success'
 									   WHEN @IdEstatusAux IN ( 3, 4, 5, 6, 7, 10 ) THEN
 										   'danger'
 									   WHEN @IdEstatusAux = 9 THEN
@@ -100,16 +106,16 @@ AS
 
 				--Seccion del armado de los materiales
 				INSERT INTO @tablaMateriales
-					( IdMaterial, NombreCorto, Cantidad )
+			
+		( IdMaterial, NombreCorto, Cantidad )
 				SELECT		d.IdMaterial, m.DescripcionCorta, d.Cantidad
 				FROM		dbo.MM_PedidoDetalle d
 				LEFT JOIN	dbo.MM_Material m
-					ON m.IdMaterial = d.IdMaterial
+					ON d.IdMaterial = m.IdMaterial
 				WHERE		IdPedido = @IdPedidoAux
 
 				--y ahora si lo divido por comas los resultados
-				SELECT	@Materiales
-					= STUFF (
+				SELECT	@Materiales= STUFF (
 						  (	  SELECT	CAST(', ' AS VARCHAR(MAX)) + CONVERT ( NVARCHAR(MAX), NombreCorto ) + ' - '
 										+ CONVERT ( NVARCHAR(MAX), Cantidad )
 							  FROM		@tablaMateriales
@@ -131,16 +137,11 @@ AS
 									+ SUBSTRING ( @Materiales, 0, 200 ) + N' </td></tr>'
 
 				SET @AuxEtiqueta = N''
-
 				DELETE @tablaMateriales
 
 				SET @contador += 1
 			END
-
 		SELECT @retorno	 += @FinTabla
-
 		IF ( @CantidadRegistros = 0 ) SET @retorno = N''
-
-		--SELECT @retorno
 		RETURN @retorno
 	END
