@@ -1,9 +1,9 @@
 ﻿DROP PROCEDURE IF EXISTS SP_ADM_DescargarDocumentosS3
 GO
 -- =============================================
--- Author:		Pedro Acuña
+-- Author: Pedro Acuña
 -- Create date: 18/09/2018
--- Description:	Descarga de los documentos cargados en procura Tipo Documento (ADM_TipoDocumentosS3 )
+-- Description:	Descarga de los documentos cargados en procura Tipo Documento (ADM_TipoDocumentosS3)
 --1 Documentos por material SolPed
 --2 Documentos Anexos SolPed 
 --3 Fianza solOferta
@@ -16,6 +16,11 @@ GO
 -- Author:	Luis David De La Cruz 
 -- Create date: 07/09/2021
 -- Description:	Se agrega el bucket en la descarga para la estandarización de descarga amazon s3
+-- =============================================
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: 06/01/2022
+-- Description:	Revision del sp, ya que se mando un sp fix con variables estaticas a PR
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_ADM_DescargarDocumentosS3] @TipoDocumento INT, @IdDocumento INT
 AS
@@ -111,3 +116,4 @@ AS
 			END
 
 	END
+
