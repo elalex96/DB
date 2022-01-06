@@ -1,5 +1,13 @@
-﻿-- =============================================  
+﻿use Adinco
+go
+drop procedure if exists EN_CambioEstadoARevision
+go
+-- =============================================  
 -- Author:   Daniel AC  
+-- Update date: 20/10/2020  
+-- Description: Se agrego métodos para avance de entregable instancia EQUINOR
+-- ============================================= 
+-- Author:   Luis David De La Cruz
 -- Update date: 20/10/2020  
 -- Description: Se agrego métodos para avance de entregable instancia EQUINOR
 -- ============================================= 
@@ -136,15 +144,11 @@ BEGIN
 
     IF (@EsEntregableGrupo = 1)
     BEGIN
-        IF (
-           (
-               SELECT COUNT(1)
-               FROM EN_GruposUsuarios
-               WHERE IdGrupo = @IdGrupo
-                     AND IdUsuario = @idUsuario
-                     AND IdContrato = @idContrato
-           ) > 0
-           )
+        IF ((SELECT COUNT(1)
+             FROM EN_GruposUsuarios
+             WHERE IdGrupo = @IdGrupo
+             AND IdUsuario = @idUsuario
+             AND IdContrato = @idContrato) > 0 and (@IsUsuarioRev = @IsUsuarioElab))
         BEGIN
             SET @BitPasaAprobacion = 1;
         END;
@@ -282,7 +286,7 @@ BEGIN
                        @EnlaceRechazo = EnlaceRechazo,
                        @NombreInstancia = NombreInstancia,
                        @FechaInstancia = FechaInstancia,
-                     @Para = correos,
+                 @Para = correos,
                        @NombreUsuario = NombreUsuario
                 FROM #URLResponsables
                 WHERE Id = @IdUrl
