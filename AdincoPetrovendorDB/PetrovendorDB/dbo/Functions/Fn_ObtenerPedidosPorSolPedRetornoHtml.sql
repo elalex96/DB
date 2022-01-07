@@ -34,7 +34,7 @@ AS
 			  IdTipoPedido INT ,
 			  IdPedidoGral INT ,
 			  IdEstatus INT ,
-			  Proveedor NVARCHAR(MAX) ,
+			  Proveedor NVARCHAR(500) ,
 			  Estatus NVARCHAR(50) ,
 			  Total NVARCHAR(150) ,
 			  TipoMoneda NVARCHAR(20))
@@ -45,24 +45,14 @@ AS
 					CONVERT ( VARCHAR(100), CAST(ROUND ( SUM ( PD.Subtotal ), 2 ) AS MONEY), 1 ), TM.TipoMonedaCorto
 		FROM		MM_Pedido AS P
 		INNER JOIN	MM_PedidoDetalle AS PD
-			ON PD.IdPedido = P.IdPedido
-		INNER JOIN	MM_PeticionOferta AS PO
-			ON PO.IdPeticionOFerta = P.IdPeticionOferta
+			ON P.IdPedido = PD.IdPedido
 		INNER JOIN	S_Proveedor AS PV
-			ON PV.IdProveedor = P.IdSubcontratista
+			ON P.IdSubcontratista = PV.IdProveedor
 		INNER JOIN	TA_Operacion AS O
 			ON P.IdSolicitudPedido = O.IdDocumento
 			   AND	P.Version = O.NoVersion
-		INNER JOIN	TA_Prioridad AS PR
-			ON O.IdPrioridad = PR.IdPrioridad
-		LEFT JOIN	TA_Vencimiento AS V
-			ON O.IdVigencia = V.IdVencimiento
-		INNER JOIN	TA_TipoOperacion AS TTO
-			ON O.IdTipoOperacion = TTO.IdTipoOperacion
 		INNER JOIN	TA_Estatus AS E
 			ON O.IdEstatusOperacion = E.IdEstatus
-		INNER JOIN	MM_HorasVigenciaPedido AS HV
-			ON P.IdPedido = HV.IdPedido
 		INNER JOIN	PV_TipoMoneda AS TM
 			ON P.IdMoneda = TM.IdMoneda
 		INNER JOIN	MM_Pedidos AS PG
