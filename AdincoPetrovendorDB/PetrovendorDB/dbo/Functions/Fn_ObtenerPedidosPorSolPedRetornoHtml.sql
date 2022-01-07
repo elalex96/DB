@@ -45,9 +45,9 @@ AS
 					CONVERT ( VARCHAR(100), CAST(ROUND ( SUM ( PD.Subtotal ), 2 ) AS MONEY), 1 ), TM.TipoMonedaCorto
 		FROM		MM_Pedido AS P
 		INNER JOIN	MM_PedidoDetalle AS PD
-			ON PD.IdPedido = P.IdPedido
+			ON P.IdPedido = PD.IdPedido
 		INNER JOIN	S_Proveedor AS PV
-			ON PV.IdProveedor = P.IdSubcontratista
+			ON P.IdSubcontratista = PV.IdProveedor
 		INNER JOIN	TA_Operacion AS O
 			ON P.IdSolicitudPedido = O.IdDocumento
 			   AND	P.Version = O.NoVersion
