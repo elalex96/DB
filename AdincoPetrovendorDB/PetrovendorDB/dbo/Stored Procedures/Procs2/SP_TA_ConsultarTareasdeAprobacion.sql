@@ -11,16 +11,9 @@ GO
 
 -- =============================================  
 -- Author:      Daniel Cruz  
--- Create date: 04-06-2018  
--- Description: Visualizar todos las aprobaciones de pedido que esten con un estatus diferente a eliminado  <> 1  
--- =============================================  
--- Author:      Pedro Acuña  
--- Create date: 11-07-2018  
--- Description: se agrega la razon social del subcontratista  
--- =============================================  
--- Author:      Jose Roman  
--- Create date: 15-08-2018  
--- Description: Se filtran las aprobaciones de tipo serial, donde los aprobadores con numero de secuencia menos aun no han aprobado la operacion              
+-- Create date: 04-01-2022  
+-- Description: Se clasifican las aprobaciones seriales de las paralelos
+-- =============================================              
 -- =============================================  
 -- Author:      josue Gonzalez  
 -- Create date: 15-08-2018  
@@ -49,11 +42,14 @@ BEGIN
     SELECT O.IdOperacion,  
            t.NoSecuencia  
     FROM dbo.TA_Operacion O  
+		JOIN dbo.TA_FlujoTarea FT (NOLOCK) 
+			ON O.IdFlujoTarea=FT.IdFlujoTarea	 
+		AND FT.IdTipoFlujo= 1 --> FLUJO DE APROBACIÓN SERIAL 
         LEFT JOIN dbo.MM_Pedido p  
-            ON p.IdSolicitudPedido = O.IdDocumento  
-               AND p.Version = O.NoVersion  
+            ON  O.IdDocumento   = p.IdSolicitudPedido 
+               AND O.NoVersion   = p.Version 
         INNER JOIN dbo.TA_Tarea t  
-            ON t.IdOperacion = O.IdOperacion  
+            ON O.IdOperacion  = t.IdOperacion 
     WHERE O.IdTipoOperacion = 9  
           AND ISNULL(O.IdEstatusEliminado, 0) <> 1 -->APROBACIÓN NO ESTE ELIMINADO  
           AND t.IdAprobador = @IdUsuario  
@@ -66,11 +62,11 @@ BEGIN
     SELECT O.IdOperacion  
     FROM dbo.TA_Operacion O  
         INNER JOIN @FlujoSerial f  
-            ON f.IdOperacion = O.IdOperacion  
+            ON O.IdOperacion  = f.IdOperacion 
         INNER JOIN dbo.TA_Tarea T  
-            ON T.IdOperacion = O.IdOperacion  
+            ON O.IdOperacion  = T.IdOperacion 
                AND T.NoSecuencia = (f.NoSecuencia - 1)  
-    WHERE O.IdTipoOperacion = 9  
+    WHERE O.IdTipoOperacion = 9 
           AND T.IdEstatus <> 2; 
 		   
     SELECT O.IdOperacion,  

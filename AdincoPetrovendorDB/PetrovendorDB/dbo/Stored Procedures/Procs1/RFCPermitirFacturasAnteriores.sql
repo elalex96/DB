@@ -1,24 +1,24 @@
-﻿
-CREATE PROC RFCPermitirFacturasAnteriores
+﻿CREATE PROC RFCPermitirFacturasAnteriores 
 (
     @RFC NVARCHAR(MAX),
     @FechaTimbrado DATETIME
 )
 AS
 BEGIN
-    IF (YEAR(GETDATE()) = 2019)
+	DECLARE @ANIO_FISCAL INT = YEAR(GETDATE())
+	IF (YEAR(GETDATE()) = 2019)  
+    BEGIN  
+        SELECT 0  
+    END  
+	ELSE
     BEGIN
-        SELECT 1
-    END
-    ELSE
-    BEGIN
-        IF (YEAR(GETDATE()) = 2020 AND YEAR(@FechaTimbrado) = 2020)
+        IF (YEAR(@FechaTimbrado) = @ANIO_FISCAL)
         BEGIN
             SELECT 1
         END
         ELSE
         BEGIN
-            IF (YEAR(@FechaTimbrado) < 2020)
+            IF (YEAR(@FechaTimbrado) < @ANIO_FISCAL)
             BEGIN
                 IF EXISTS
                 (
@@ -27,7 +27,7 @@ BEGIN
                     WHERE UPPER(RFCOperadora) = UPPER(@RFC)
                           AND Activo = 1
                 )
-                BEGIN
+                BEGIN					
                     SELECT 1
                 END
             END
@@ -38,4 +38,3 @@ BEGIN
         END
     END
 END
-
