@@ -347,7 +347,7 @@ AS
 								GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
 								0,      -- Enviada - bit
 								NULL, -- FechaEnvio - datetime
-								3,-- CTE @IdUsuario,         -- CreadoPor - int
+								1,-- CTE @IdUsuario,         -- CreadoPor - int
 								GETDATE(), -- CreadoEl - datetime
 								NULL,         -- ModificadoPor - int
 								NULL, -- ModificadoEl - datetime
