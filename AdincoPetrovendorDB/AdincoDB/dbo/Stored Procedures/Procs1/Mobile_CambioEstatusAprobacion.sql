@@ -241,6 +241,7 @@ AS
                                  WHERE IdTareaOrigen = @IdAprobacion
                                  ORDER BY FechaCreacion DESC;
                                  SET @NoSecuenciaSiguiente = (@NoSecuenciaActual + 1);
+
                                  IF EXISTS
                                  (
                                      SELECT IdTareaOrigen
@@ -273,6 +274,7 @@ AS
                                                Enviar = 1
                                          WHERE IdTareaOrigen = @SiguienteTarea;
                                      END;
+
                                  ----------------------------Ejecuta cambio de estatus ----------------
                                  ----------------------------------------------------------------------
                                  EXEC Petrovendor.dbo.SP_TA_ActualizarEstatusPedidoAprobacion 
@@ -282,12 +284,15 @@ AS
                                       @Comentario = @Comentario, 
                                       @Version = @Version, 
                                       @IdFirma = @IdFirma;
+
+
                                  UPDATE dbo.AM_Aprobacion
                                    SET 
                                        IdStatusAprobacionM = @idStatus, 
                                        ComentarioAprobacionRechazo = @Comentario, 
                                        FechaModificacion = GETDATE()
                                  WHERE IdTareaOrigen = @IdAprobacion;
+
                              END;
                          IF @Secuencia = 2
                              BEGIN
@@ -298,6 +303,7 @@ AS
                                       @Comentario = @Comentario, 
                                       @Version = @Version, 
                                       @IdFirma = @IdFirma;
+
                                  UPDATE dbo.AM_Aprobacion
                                    SET 
                                        IdStatusAprobacionM = @idStatus, 
@@ -305,6 +311,10 @@ AS
                                        FechaModificacion = GETDATE()
                                  WHERE IdTareaOrigen = @IdAprobacion;
                              END;
+
+						 
+						 /*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobación SERIAL*/
+						 EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion
 
                          --IF @ByMobileApp = 1
                          --BEGIN
