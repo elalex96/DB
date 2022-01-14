@@ -1,30 +1,14 @@
 ﻿-- =============================================
--- Author:		Abel Rivera
--- Update date: 01/12/17 
--- Description:	
--- =============================================
--- Author:		Pedro Acuña
--- Update date: 17/01/2018 
--- Description:	se modifica que solo se muestren los giros activos
--- =============================================
--- Author:		<Jose Roman>
--- Create date: <26-03-2018>
--- Description:	<Se agrega columna VerDetalle para ocultar este boton>
--- =============================================
--- Author:		<Pedro, Acuña>
--- Create date: <05-11-2018>
--- Description:	<correos de los proveedores>. 
--- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 15/Jul/2019
 -- Description:	se agrego la lista negra del sat
 -- =============================================
--- Author:		Abel Rivera
--- Create date: 26/ago/2019
--- Description:	se agrego un campo para validar si el proveedor esta en la lista negra
+-- Author:		Daniel AC
+-- Create date: 14/01/2022
+-- Description:	Optimizacion de SP 
 -- =============================================
 
-CREATE PROCEDURE [dbo].[SP_MM_ProveedoresPorMaterialCat] --0,420,0,0,0
+CREATE PROCEDURE [dbo].[SP_MM_ProveedoresPorMaterialCat]-- 0,420,0,0,0
     -- Add the parameters for the stored procedure here
     @IdMaterialMaestro INT,
 	@IdProveedor2 INT,
@@ -55,25 +39,28 @@ BEGIN
 		VerDetalle BIT,
 		InBlackList BIT
     )
+     CREATE TABLE #Giros (IdProveedor INT, Giro NVARCHAR(MAX))
+	 CREATE TABLE #GirosConcat(IdProveedor INT, Giro NVARCHAR(MAX))
+	 CREATE TABLE #EmailProveedor (IdProveedor INT, Email NVARCHAR(MAX))
 
-    DECLARE @INCREMENTO INT = 1, --- DECLARAMOS LAS VARIABLES NECESARIAS
-            @COUNT_PROVEEDORES INT,
-            @IDPROVEEDOR INT,
-            @GIROS NVARCHAR(MAX),
-			@IDCONTRATISTA INT
-			
+    DECLARE @IDCONTRATISTA INT
+							
 
-			SET @IDCONTRATISTA = (SELECT TOP 1 ci.IdContratista FROM dbo.S_Proveedor AS pr
-			LEFT JOIN Adinco.dbo.CO_Contratista AS ci ON pr.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = ci.RFC COLLATE SQL_Latin1_General_CP1_CI_AS 
-			WHERE pr.IdProveedor=@IdProveedor2)
+	IF ISNULL(@IdContrato,0) = 0 			
+	BEGIN
 
-			IF ISNULL(@IdContrato,0) = 0 
-			
-			BEGIN
-			SET @IdContrato = (SELECT TOP 1 co.IdContrato FROM adinco.dbo.CO_Contrato AS co
-			WHERE co.IdContratista = @IDCONTRATISTA			
-			)
-			end
+			SET @IDCONTRATISTA = (SELECT TOP 1 ci.IdContratista 
+							FROM dbo.S_Proveedor AS pr (NOLOCK)
+							LEFT JOIN Adinco.dbo.CO_Contratista AS ci  (NOLOCK)
+								ON pr.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = ci.RFC COLLATE SQL_Latin1_General_CP1_CI_AS 
+							WHERE pr.IdProveedor=@IdProveedor2)
+
+
+			SET @IdContrato = (SELECT TOP 1 co.IdContrato 
+								FROM adinco.dbo.CO_Contrato AS co (NOLOCK)
+								WHERE co.IdContratista = @IDCONTRATISTA			
+								)
+	END
 
 			                                       
 
@@ -93,26 +80,26 @@ BEGIN
                P.Pais,
                P.Entidad,
                P.Municipio,
-               NULL,
+               null,
                CPY.Nombre AS Clasificacion,
                '',
                P.Telefono,
-               dbo.Fn_ObtenerCorreoVentasoAdministrador(P.IdProveedor) AS CorreoProveedor,
+               '' AS CorreoProveedor,
 			   0,
 			   CASE WHEN LN.RFC  IS NULL THEN 0 ELSE 1 END AS InBlackList
-        FROM dbo.S_Proveedor AS P
+        FROM dbo.S_Proveedor AS P (NOLOCK)
             LEFT JOIN S_Nacionalidad n
                 ON P.IdNacionalidad = n.IdNacionalidad
-            LEFT JOIN MM_Material M
-                ON M.IdProveedor = P.IdProveedor
-            LEFT JOIN MM_Maestro MSF
+            LEFT JOIN MM_Material M (NOLOCK)
+                ON P.IdProveedor = M.IdProveedor 
+            LEFT JOIN MM_Maestro MSF (NOLOCK)
                 ON M.IdMaestro = MSF.IdMaestro
-            LEFT JOIN dbo.PV_ClasificacionEmpresaProveedor AS CEP
-                ON CEP.IdProveedor = P.IdProveedor
-            LEFT JOIN dbo.PV_ClasificacionPyMES AS CPY
-                ON CPY.IdClasificacion = CEP.IdClasificacionEmpresa
-			LEFT JOIN Adinco.dbo.ListaNegra AS LN
-				ON LN.RFC COLLATE Modern_Spanish_CI_AS = P.RFC COLLATE Modern_Spanish_CI_AS
+            LEFT JOIN dbo.PV_ClasificacionEmpresaProveedor AS CEP (NOLOCK)
+                ON  P.IdProveedor = CEP.IdProveedor
+            LEFT JOIN dbo.PV_ClasificacionPyMES AS CPY (NOLOCK)
+                ON CEP.IdClasificacionEmpresa = CPY.IdClasificacion 
+			LEFT JOIN Adinco.dbo.ListaNegra AS LN (NOLOCK)
+				ON P.RFC COLLATE Modern_Spanish_CI_AS = LN.RFC COLLATE Modern_Spanish_CI_AS 
         WHERE M.IdMaestro = @IdMaterialMaestro
               AND P.Activo = 1
               AND ISNULL(P.IsEliminado, 0) = 0
@@ -148,24 +135,24 @@ BEGIN
                Pais,
                Entidad,
                Municipio,
-               NULL,
+              null,
                CPY.Nombre AS Clasificacion,
                '',
                p.Telefono,
-               dbo.Fn_ObtenerCorreoVentasoAdministrador(P.IdProveedor) AS CorreoProveedor,
+               '' AS CorreoProveedor,
 			   0,
 			   CASE WHEN LN.RFC  IS NULL THEN 0 ELSE 1 END AS InBlackList
-        FROM Petrovendor.dbo.S_Proveedor p
-            LEFT JOIN S_Nacionalidad n
+        FROM Petrovendor.dbo.S_Proveedor p (NOLOCK)
+            LEFT JOIN S_Nacionalidad n (NOLOCK)
                 ON p.IdNacionalidad = n.IdNacionalidad
-            LEFT JOIN dbo.PV_ClasificacionEmpresaProveedor AS CEP
-                ON CEP.IdProveedor = p.IdProveedor
-            LEFT JOIN dbo.PV_ClasificacionPyMES AS CPY
-                ON CPY.IdClasificacion = CEP.IdClasificacionEmpresa
-			LEFT JOIN Adinco.dbo.ListaNegra AS LN
-				ON LN.RFC COLLATE Modern_Spanish_CI_AS = P.RFC COLLATE Modern_Spanish_CI_AS
+            LEFT JOIN dbo.PV_ClasificacionEmpresaProveedor AS CEP (NOLOCK)
+                ON  p.IdProveedor = CEP.IdProveedor
+            LEFT JOIN dbo.PV_ClasificacionPyMES AS CPY (NOLOCK)
+                ON CEP.IdClasificacionEmpresa = CPY.IdClasificacion 
+			LEFT JOIN Adinco.dbo.ListaNegra AS LN (NOLOCK)
+				ON  P.RFC COLLATE Modern_Spanish_CI_AS = LN.RFC COLLATE Modern_Spanish_CI_AS 
         WHERE p.Activo = 1
-              AND ISNULL(IsEliminado, 0) = 0
+              AND ISNULL(p.IsEliminado, 0) = 0
         GROUP BY p.IdProveedor,
                  p.RazonSocial,
                  p.RFC,
@@ -180,50 +167,60 @@ BEGIN
 				 LN.RFC,
 				 LN.Situacion
     END
+	  
+	 /*Obtener giros de los proveedores*/
+	 INSERT INTO #Giros(IdProveedor,Giro)
+	 SELECT  P.IdProveedor, GE.GiroProveedor
+     FROM #TEMP_PROVEEDORES P
+		JOIN dbo.PV_PerfilGiroEmpresarial AS PGE  (NOLOCK)
+			ON P.IdProveedor = PGE.IdProveedor
+			AND PGE.Activo = 1
+        JOIN dbo.PV_GiroEmpresarial AS GE (NOLOCK)
+            ON GE.IdGiroProveedor = PGE.IdGiroEmpresarial -- METODO PARA CONCATENAR LOS GIROS EMPRESARIALES POR PROVEEDOR
+    ORDER BY GE.GiroProveedor ASC
 
-    SET @INCREMENTO = 1
-    SET @COUNT_PROVEEDORES = -- SE CONSULTA LA CANTIDAD DE PROVEEDORES 
-    (
-        SELECT COUNT(P.IdProveedor)
-        FROM dbo.S_Proveedor P
-        WHERE P.Activo = 1
-              AND ISNULL(P.IsEliminado, 0) = 0
-    )
+	/*Agrupar giros por proveedor*/
+     INSERT INTO    #GirosConcat(IdProveedor,Giro)
+	 SELECT GE.IdProveedor,
+	 STUFF(
+    (SELECT ', '  + RTRIM(LTRIM(GI.Giro))
+     FROM #Giros GI
+     WHERE GI.IdProveedor= GE.IdProveedor
+     FOR XML PATH('')),
+     1, 2, '') As Giro
+	 FROM #Giros GE
+	 GROUP BY GE.IdProveedor
 
-    WHILE (@INCREMENTO < @COUNT_PROVEEDORES) -- CICLO PARA VERIFICAR LA CANTIDAD DE GIROS DE LA EMPRESA Y CONCATENARLOS EN UNA SOLA COLUMNA 
-    BEGIN
+	 UPDATE temp
+	 SET GiroProveedor =G.Giro
+	 FROM  #TEMP_PROVEEDORES temp
+	 JOIN #GirosConcat G
+		ON temp.IdProveedor= G.IdProveedor
 
-        SET @IDPROVEEDOR =
-        (
-            SELECT IdProveedor FROM #TEMP_PROVEEDORES WHERE IdRow = @INCREMENTO
-        )
+	 /*Obtener el primer contacto por proveedor*/
+	 INSERT INTO #EmailProveedor(IdProveedor,Email)
+	 SELECT IdProveedor,Correo FROM (
+	 SELECT 
+	 ROW_NUMBER() OVER(PARTITION BY P.IdProveedor ORDER BY  U.IdTipoUsuario DESC) AS r,
+	 P.IdProveedor,
+	 U.Correo
+	 FROM #TEMP_PROVEEDORES P
+	 JOIN	dbo.S_UsuarioProveedor uProv (NOLOCK)
+			ON  P.IdProveedor = uProv.IdProveedor
+	 JOIN  S_Usuario U (NOLOCK)
+		ON uProv.IdUsuario = U.IdUsuario
+	WHERE U.IdTipoUsuario IN ( 4, 3 ) --ventas o administrador
+	AND U.Activo = 1
+	AND ISNULL (U.IsEliminado, 0 ) = 0
+	AND u.Correo <> ''
+	GROUP BY P.IdProveedor,U.Correo,U.IdTipoUsuario) as r where r.r=1
 
-        SET @GIROS =
-        (
-            SELECT SUBSTRING(
-                   (
-                       SELECT ', ' + RTRIM(GE.GiroProveedor) AS 'data()'
-                       FROM dbo.S_Proveedor p
-                           LEFT JOIN dbo.PV_PerfilGiroEmpresarial AS PGE
-                               ON PGE.IdProveedor = p.IdProveedor
-                           LEFT JOIN dbo.PV_GiroEmpresarial AS GE
-                               ON GE.IdGiroProveedor = PGE.IdGiroEmpresarial -- METODO PARA CONCATENAR LOS GIROS EMPRESARIALES POR PROVEEDOR
-                       WHERE p.IdProveedor = @IDPROVEEDOR
-                             AND PGE.Activo = 1
-                       FOR XML PATH('')
-                   ),
-                   2,
-                   9999
-                            ) AS giros
-        )
+	UPDATE temp
+	 SET Email =EP.Email
+	 FROM  #TEMP_PROVEEDORES temp
+	 JOIN #EmailProveedor EP
+		ON temp.IdProveedor= EP.IdProveedor
 
-        UPDATE #TEMP_PROVEEDORES --- ACTUALIZAMOS EL CAMPO DE LOS GIROS EMPRESARIALES 
-        SET GiroProveedor = @GIROS
-        WHERE IdProveedor = @IDPROVEEDOR
-
-        SET @INCREMENTO = @INCREMENTO + 1
-
-    END
 
     UPDATE temp --- ACTUALIZAMOS CAMPOS
     SET Contacto = CONCAT(contacto.Nombres, ' ', contacto.Apellidos)
@@ -232,10 +229,6 @@ BEGIN
             ON temp.IdProveedor = contacto.IdProveedor
     	
 	---  Activación de Detalles ---
-	
-	---------------------------if-------------------------
-	
-
 	IF @IdContrato IN (3,10037)
 		BEGIN 
 			UPDATE #TEMP_PROVEEDORES
@@ -247,8 +240,10 @@ BEGIN
 			UPDATE tp
 			SET tp.VerDetalle=1
 			FROM #TEMP_PROVEEDORES tp
-				INNER JOIN dbo.MM_PeticionOferta po ON po.IdSubcontratista = tp.IdProveedor
-				INNER JOIN dbo.MM_SolicitudPedido sp ON sp.IdSolicitudPedido = po.IdSolicitudPedido
+				INNER JOIN dbo.MM_PeticionOferta po (NOLOCK)
+					ON po.IdSubcontratista = tp.IdProveedor
+				INNER JOIN dbo.MM_SolicitudPedido sp (NOLOCK)
+					ON sp.IdSolicitudPedido = po.IdSolicitudPedido
 			WHERE sp.IdProveedor = @IdProveedor2 AND po.Cotizado = 1
 		END
 		----------------------------------------case-------------------------------
@@ -256,10 +251,8 @@ BEGIN
     SELECT *
     FROM #TEMP_PROVEEDORES
 	ORDER BY VerDetalle DESC, RazonSocial
-	--WHERE VerDetalle = 1
-	
 
-    
+	    
 END
 
 
