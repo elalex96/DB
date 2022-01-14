@@ -241,9 +241,9 @@ BEGIN
 			SET tp.VerDetalle=1
 			FROM #TEMP_PROVEEDORES tp
 				INNER JOIN dbo.MM_PeticionOferta po (NOLOCK)
-					ON po.IdSubcontratista = tp.IdProveedor
+					ON tp.IdProveedor = po.IdSubcontratista 
 				INNER JOIN dbo.MM_SolicitudPedido sp (NOLOCK)
-					ON sp.IdSolicitudPedido = po.IdSolicitudPedido
+					ON po.IdSolicitudPedido = sp.IdSolicitudPedido 
 			WHERE sp.IdProveedor = @IdProveedor2 AND po.Cotizado = 1
 		END
 		----------------------------------------case-------------------------------
