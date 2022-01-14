@@ -1,7 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_Help_DetalleIteraciones]    Script Date: 14/01/2022 10:53:47 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Abel Rivera>
 -- Create date: <11-04-18>
 -- Description:	<Consulta el detalle de las nuevas actualizaciones>
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 14/01/2022
+-- Description:	Se removio el consumo de este sp, en la pagina default de Petrovendor
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_Help_DetalleIteraciones]
 @arrayIds NVARCHAR(max)
@@ -86,3 +98,4 @@ BEGIN
 
 
 END
+
