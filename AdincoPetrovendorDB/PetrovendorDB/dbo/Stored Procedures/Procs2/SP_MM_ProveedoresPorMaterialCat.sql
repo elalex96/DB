@@ -11,12 +11,11 @@
 CREATE PROCEDURE [dbo].[SP_MM_ProveedoresPorMaterialCat]-- 0,420,0,0,0
     -- Add the parameters for the stored procedure here
     @IdMaterialMaestro INT,
-	@IdProveedor2 INT,
-    /*--------------------   parametros contrato  --------------------*/
+	@IdProveedor2 INT, 
     @IdContrato INT,
     @IdUsuario INT,
     @FechaRegistro DATETIME
-/*----------------------------------------*/
+
 AS
 BEGIN
     
@@ -91,9 +90,7 @@ BEGIN
             LEFT JOIN S_Nacionalidad n
                 ON P.IdNacionalidad = n.IdNacionalidad
             LEFT JOIN MM_Material M (NOLOCK)
-                ON P.IdProveedor = M.IdProveedor 
-            LEFT JOIN MM_Maestro MSF (NOLOCK)
-                ON M.IdMaestro = MSF.IdMaestro
+                ON P.IdProveedor = M.IdProveedor            
             LEFT JOIN dbo.PV_ClasificacionEmpresaProveedor AS CEP (NOLOCK)
                 ON  P.IdProveedor = CEP.IdProveedor
             LEFT JOIN dbo.PV_ClasificacionPyMES AS CPY (NOLOCK)
@@ -176,7 +173,7 @@ BEGIN
 			ON P.IdProveedor = PGE.IdProveedor
 			AND PGE.Activo = 1
         JOIN dbo.PV_GiroEmpresarial AS GE (NOLOCK)
-            ON GE.IdGiroProveedor = PGE.IdGiroEmpresarial -- METODO PARA CONCATENAR LOS GIROS EMPRESARIALES POR PROVEEDOR
+            ON PGE.IdGiroEmpresarial = GE.IdGiroProveedor   -- METODO PARA CONCATENAR LOS GIROS EMPRESARIALES POR PROVEEDOR
     ORDER BY GE.GiroProveedor ASC
 
 	/*Agrupar giros por proveedor*/
