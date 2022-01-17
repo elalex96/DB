@@ -45,7 +45,7 @@ BEGIN
 	    GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
 	    0,      -- Enviada - bit
 	    NULL, -- FechaEnvio - datetime
-	    3,--@IdUsuario,         -- CreadoPor - int
+	    1,--@IdUsuario,         -- CreadoPor - int
 	    GETDATE(), -- CreadoEl - datetime
 	    NULL,         -- ModificadoPor - int
 	    NULL, -- ModificadoEl - datetime
