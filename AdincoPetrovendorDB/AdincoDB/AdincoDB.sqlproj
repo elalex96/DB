@@ -13173,6 +13173,7 @@
     <Build Include="dbo\Tables\Tables2\CaroulseImages.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCaroulseImagesIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCaroulseImagesLst.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_FI_Factura_Sel.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
