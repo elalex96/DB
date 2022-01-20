@@ -1,4 +1,4 @@
-﻿CREATE VIEW dbo.EntregablesShellFacts
+CREATE VIEW dbo.EntregablesShellFacts
 AS
 SELECT
 	C.NumeroContrato	AS Contrato,
@@ -59,6 +59,7 @@ JOIN
 	ON	IE.IdContratoEntregable	=	CE.IdContratoEntregable
 	AND	ISNULL(IE.Activo,1)	=	1
 	AND	ISNULL(CE.Activo,1)	=	1
+	AND IE.FechaCalculadaEntregaReg	<	DATEADD(YEAR,4,GETDATE())
 JOIN
 	CO_Contrato	C	(NOLOCK)
 	ON	CE.IdContrato	=	C.IdContrato
@@ -125,9 +126,8 @@ LEFT JOIN
 	CO_Instalacion	I	(NOLOCK)
 	ON	PRO.IdInstalacion	=	I.IdInstalacion
 WHERE
-	IE.FechaCalculadaEntregaReg	<	DATEADD(YEAR,2,GETDATE())
 	--AND	AACT.EstadoID NOT IN (10003)
-	AND
+--	AND
 	IE.FechaCalculadaEntregaReg	IS NOT NULL
 	AND IE.Activo =  1
 GROUP BY
