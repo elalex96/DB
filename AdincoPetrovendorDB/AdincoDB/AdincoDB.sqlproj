@@ -13173,6 +13173,9 @@
     <Build Include="dbo\Tables\Tables2\CaroulseImages.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCaroulseImagesIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spCaroulseImagesLst.sql" />
+    <Build Include="dbo\Stored Procedures\Mobile_sp_RegistroBitacora_Aprobacio.sql" />
+    <Build Include="dbo\Stored Procedures\Mobile_sp_CambioEstatusAprobacion.sql" />
+    <Build Include="dbo\Tables\Tables1\AM_BitacoraAprobaciones.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_FI_Factura_Sel.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_sp_HistorialBitacoraExcepciones.sql" />
   </ItemGroup>
