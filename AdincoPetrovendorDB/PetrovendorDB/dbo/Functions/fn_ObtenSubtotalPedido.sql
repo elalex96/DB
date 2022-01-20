@@ -3,7 +3,7 @@
 -- Create date: 29/21/2021
 -- Description:	Función para obtener el subtotal para issue 1489(Petrovendor)
 -- =============================================
-ALTER FUNCTION fn_ObtenSubtotalPedido
+CREATE FUNCTION fn_ObtenSubtotalPedido
 (
 	@Moneda int,
 	@IdPedido int ,
