@@ -47,7 +47,7 @@ JOIN
 	AND	ISNULL(IE.Activo,0)	=	1
 	AND	ISNULL(CE.Activo,1)	=	1
 	AND	IE.FechaCalculadaEntregaReg	IS NOT NULL
-	AND	IE.FechasLimiteElaboracion	<	DATEADD(YEAR,2,GETDATE())
+	AND	IE.FechasLimiteElaboracion	<	DATEADD(YEAR,4,GETDATE())
 JOIN
 	CO_Contrato	C	(NOLOCK)
 	ON	CE.IdContrato	=	C.IdContrato
