@@ -1,20 +1,11 @@
-﻿
-/*
-pIdOTEstatus  
-100 aprobacion de volumenes por proveedor 
-101 aprobacion de volumenes por operador
-102 bitacora por operador
-103 bitacora por proveedor
-*/
--- p_OT_CorreoProgramacion_Flujo 6,2,'',11
-CREATE PROC [dbo].[p_OT_CorreoProgramacion_Flujo]
+﻿CREATE PROC [dbo].[p_OT_CorreoProgramacion_Flujo]
 @pIdOTSolicitud INT,
 @pCreadoPor INT,
 @pError VARCHAR(250) OUT,
 @pIdOTEstatus int -- 100 modificacion de volumenes por operador, --101 modificacion de volumenes por operador,--102 Semana Cerrada por Operador,--103 abrir semana,104 Captura PR
 AS
     DECLARE 
-            @para VARCHAR(1000)='',
+            @para VARCHAR(MAX)='',
             @asunto VARCHAR(250),
             @mensaje VARCHAR(MAX),
             @De VARCHAR(100)= 'procura@adinco.mx',
@@ -24,8 +15,8 @@ AS
             @nombreContratista varchar(100),
             @nombreOperadorSubcontratista varchar(100),
             @nombreSubcontratista varchar(100),
-            @emailContratista varchar(1000)='',
-            @emailSubcontratista varchar(1000)='',
+            @emailContratista varchar(MAX)='',
+            @emailSubcontratista varchar(MAX)='',
             @urlAdinco varchar(300),
             @urlAdincoProg varchar(300),
             @urlPetrovendor varchar(300),           
@@ -34,7 +25,7 @@ AS
             @fechacambioProg datetime   ,
             @idSubcontrato int      ,
             @aprobadoresOT varchar(500) = '',
-            @emailPara  varchar(1000) = '',
+            @emailPara  varchar(MAX) = '',
             @progInicialproveedor bit=0 ,
             @tarea varchar(300),
             @FechaProgramadaEnvio DAteTime,

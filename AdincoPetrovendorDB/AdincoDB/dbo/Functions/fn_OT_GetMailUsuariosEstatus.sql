@@ -6,11 +6,11 @@
 	@pFlujoAprobacionEstatusId int,
 	@pTipoNotificacionId int
 )
-RETURNS varchar(1000)
+RETURNS varchar(MAX)
 AS
 BEGIN
 	
-	declare @result varchar(1000)=''
+	declare @result varchar(MAX)=''
 
 	declare @tmpNotificacion TABLE (UsuarioId int,TipoNotificacionId int,Desactivar bit)
 
