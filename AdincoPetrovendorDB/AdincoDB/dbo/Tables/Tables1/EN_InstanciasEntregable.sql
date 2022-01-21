@@ -26,6 +26,7 @@
     CONSTRAINT [FK_EN_InstanciasEntregable_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_InstanciasEntregable_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [fk_IdContratoEntregable] FOREIGN KEY ([IdContratoEntregable]) REFERENCES [dbo].[EN_ContratoEntregable] ([IdContratoEntregable])
+	
 );
 
 
@@ -38,3 +39,5 @@ GO
 CREATE NONCLUSTERED INDEX [EN_InstanciasEntregable_FechaElaboracion]
     ON [dbo].[EN_InstanciasEntregable]([FechasLimiteElaboracion] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
 
+	go
+	create index IX_EN_InstanciasEntregable on	EN_InstanciasEntregable(idInstanciaEntregable);

@@ -14,3 +14,5 @@
     CONSTRAINT [fk_MarcoLegal_ModificadoPor] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
+go
+create index IX_EN_MarcoLegal			on	EN_MarcoLegal(IdMarcoLegal)

@@ -147,4 +147,6 @@ INSERT INTO EN_ContratoEntregable (IdContrato,
 GO
 DISABLE TRIGGER [dbo].[EN_NuevoEntregable]
     ON [dbo].[EN_Entregable];
+go
 
+create index IX_EN_Entregable			on	EN_Entregable(IdEntregable)

@@ -11,3 +11,6 @@
     CONSTRAINT [FK_EN_Estado_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
+go
+
+create index IX_EN_Estado				on	EN_Estado(EstadoID)

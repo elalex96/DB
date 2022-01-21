@@ -13,3 +13,6 @@
     CONSTRAINT [FK_EN_InstanciasEntregables_InstanciaActividad_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
+go
+
+create index IX_EN_InstanciasEntregables_InstanciaActividad	on	EN_InstanciasEntregables_InstanciaActividad(idInstanciaEntregable)

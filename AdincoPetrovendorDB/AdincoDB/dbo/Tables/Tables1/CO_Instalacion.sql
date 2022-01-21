@@ -32,3 +32,6 @@
     CONSTRAINT [FK_Instalaciones_Yacimiento] FOREIGN KEY ([IdYacimiento]) REFERENCES [dbo].[CO_Yacimiento] ([IdYacimiento])
 );
 
+go
+
+create index IX_CO_Instalacion								on	CO_Instalacion(IdInstalacion)
