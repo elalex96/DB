@@ -62,9 +62,9 @@ BEGIN
 					''
 		FROM		dbo.EN_MarcoLegal			ml  
 		right join	dbo.EN_Entregable			e  
-		ON			e.IdMarcoLegal				=		ml.IdMarcoLegal  
+		ON			ml.IdMarcoLegal				=	e.IdMarcoLegal
 		inner join	dbo.EN_ContratoEntregable		CE		
-		ON			CE.IdEntregable				=		e.IdEntregable 
+		ON			e.IdEntregable				=	CE.IdEntregable 
 		and			IdContrato					=		@idContrato
 		and			E.IsActivo					=		1
 		and			E.BitJOA					=		0
