@@ -6,3 +6,6 @@
     CONSTRAINT [PK_EN_ReceptorEntregable] PRIMARY KEY CLUSTERED ([IdReceptorEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 
+go
+
+create index IX_EN_ReceptorEntregable	on	EN_ReceptorEntregable(IdReceptorEntregable)

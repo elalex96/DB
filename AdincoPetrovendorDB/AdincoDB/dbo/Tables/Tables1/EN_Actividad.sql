@@ -26,3 +26,5 @@ GO
 CREATE NONCLUSTERED INDEX [EN_Actividad_ContratoEntregable_Estado]
     ON [dbo].[EN_Actividad]([IdContratoEntregable] ASC, [EstadoID] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
 
+go
+create index IX_EN_Actividad			on	EN_Actividad(ActividadID)

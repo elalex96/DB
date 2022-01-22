@@ -22,3 +22,6 @@ GO
 CREATE UNIQUE NONCLUSTERED INDEX [indiceInstProcesoActividadFecha]
     ON [dbo].[EN_InstanciasActividades]([IdInstanciasProcesos] ASC, [IdActividad] ASC, [FechaActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
 
+go
+
+create index IX_EN_InstanciasActividades					on	EN_InstanciasActividades(idInstanciaActividad)

@@ -17,3 +17,6 @@ GO
 CREATE UNIQUE NONCLUSTERED INDEX [indiceEN_Area]
     ON [dbo].[EN_Area]([NombreArea] ASC, [idContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
 
+go
+
+create index IX_EN_Area					on	EN_Area(idArea)
