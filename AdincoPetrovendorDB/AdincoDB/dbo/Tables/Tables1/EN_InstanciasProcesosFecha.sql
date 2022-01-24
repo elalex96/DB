@@ -19,3 +19,6 @@
     CONSTRAINT [FK_InstanciasProcesos_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
+go
+
+create index IX_EN_InstanciasProcesosFecha					on	EN_InstanciasProcesosFecha(IdInstanciasProcesos)

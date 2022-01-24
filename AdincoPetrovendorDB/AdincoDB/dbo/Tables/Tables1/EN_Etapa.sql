@@ -4,3 +4,6 @@
     CONSTRAINT [PK_EN_Etapa] PRIMARY KEY CLUSTERED ([IdEtapa] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 
+go
+
+create index IX_EN_Etapa				on	EN_Etapa(IdEtapa)

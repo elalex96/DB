@@ -6,3 +6,6 @@
     CONSTRAINT [PK_EN_ResponsableGenerador] PRIMARY KEY CLUSTERED ([IdResponsableGenerador] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 
+go
+
+create index IX_EN_ResponsableGenerador						on	EN_ResponsableGenerador(IdResponsableGenerador)
