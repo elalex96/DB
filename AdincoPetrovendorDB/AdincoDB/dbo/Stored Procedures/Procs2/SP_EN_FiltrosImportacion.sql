@@ -18,7 +18,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+	--Se agregó la opción de todos
 	create table #todos
 	(
 		Id			int,
