@@ -1,3 +1,10 @@
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_En_SubeHistoricoAprueba]    Script Date: 25/01/2022 09:14:33 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 10/04/2018
@@ -34,7 +41,8 @@ BEGIN
 	SELECT 
 		CON.IdContrato
 	FROM dbo.CO_Contrato AS CON
-	LEFT JOIN dbo.CO_Contratista AS CI ON CON.IdContratista = CON.IdContratista
+	LEFT JOIN dbo.CO_Contratista AS CI 
+	ON CON.IdContratista = CON.IdContratista
 	WHERE CI.RFC = 'SEM150122M86'--EQUINOR
 
 	IF EXISTS (SELECT * FROM @Contratos WHERE IdContrato = @IdContrato)
@@ -47,8 +55,8 @@ BEGIN
 							ON PU.PerfilID = P.IdPerfil
 						JOIN dbo.AP_Rol AS R
 							ON P.IdRol = R.IdRol
-					WHERE PU.UsuarioID = @IdUsuario
-						AND P.IdContrato = @IdContrato
+					WHERE PU.UsuarioID = @idUsuario
+						AND P.IdContrato = @idContrato
 						AND R.Rol IN ('Administrador de Entregables  (Contrato)',
 										'Administración general de entregables')
 					)
@@ -128,6 +136,18 @@ BEGIN
 		WHERE idInstanciaEntregable = @idInstanciaEntregable
 
 	END
+
+	--GUARDAR URL DE ARCHIVO
+	EXEC EN_GuardaHistorialLineaTiempo @idVersion,
+                                       @idInstanciaEntregable,
+                                       @idUsuario,
+                                       @idContrato,
+                                       @ComentarioUsuarioElaborador,
+                                       0,
+                                       2, --Elaborador
+                                       0,
+                                       @URLRepositorio,
+                                       @ContieneURLRepositorio;
 
 	/* 10,003*/--Registro de elaboración
 	IF @IsEquinor = 1
