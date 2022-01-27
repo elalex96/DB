@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_CambioEstadoA]    Script Date: 25/01/2022 02:32:40 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_CambioEstadoA]    Script Date: 25/01/2022 08:41:07 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -78,7 +78,7 @@ BEGIN
             ON P.IdRol = R.IdRol
     WHERE UsuarioID = @idUsuario
           AND P.IdContrato = @idContrato
-          AND (R.Rol LIKE '%Admin%' OR R.ROL LIKE '%SASISOPA%SHELL%');
+          AND (R.Rol LIKE '%Admini%' OR R.ROL LIKE '%SASISOPA%SHELL%');
 
 
     IF (@idContrato = 0 OR @idContrato IS NULL)
@@ -467,6 +467,26 @@ BEGIN
                                                                       @TipoGuardado = 'REINICIAR',                     -- varchar(max)
                                                                       @Comentario = 'SISTEMA';
                 END;
+
+				IF (@EstadoActual = 'REINICIO')
+				BEGIN
+
+					--DESACTIVACION DE SU HISTORIAL PARA NO MOSTRAR LAS URL ARCHIVO
+					UPDATE EN_HistorialAprobacionesLineaTiempo
+					SET Activo = 0
+					WHERE idInstanciaEntregable = @idInstanciaEntregable AND 
+						idTipoOperacion = 2 AND
+						ContieneURLRepositorio = 1 AND
+						Activo = 1;
+
+					--DESACTIVACION DE SU HISTORIAL PARA NO MOSTRAR LAS URL ACUSE
+					UPDATE EN_HistorialAprobacionesLineaTiempo
+					SET Activo = 0
+					WHERE idInstanciaEntregable = @idInstanciaEntregable AND 
+						idTipoOperacion = 7 AND
+						Activo = 1;
+
+				END;
             END;
         END;
     END;
