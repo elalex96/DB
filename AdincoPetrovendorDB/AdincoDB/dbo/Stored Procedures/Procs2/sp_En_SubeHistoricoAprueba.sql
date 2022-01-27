@@ -55,7 +55,7 @@ BEGIN
 							ON PU.PerfilID = P.IdPerfil
 						JOIN dbo.AP_Rol AS R
 							ON P.IdRol = R.IdRol
-					WHERE PU.UsuarioID = @idContrato
+					WHERE PU.UsuarioID = @idUsuario
 						AND P.IdContrato = @idContrato
 						AND R.Rol IN ('Administrador de Entregables  (Contrato)',
 										'Administración general de entregables')
