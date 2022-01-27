@@ -763,7 +763,3 @@ END
 
 
 go
-
---exec SP_EN_ImportacionPorFiltroEntregables 3, 'ML', '-1'
-
---sp_AP_MuestraLoyoutContrato
