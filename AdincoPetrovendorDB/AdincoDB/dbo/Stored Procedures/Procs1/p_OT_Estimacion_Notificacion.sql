@@ -103,12 +103,7 @@ as
 		left join petrovendor..S_Proveedor prov on prov.IdProveedor = ped.IdSubcontratista
 		left join petrovendor..S_Proveedor prov2 on prov2.IdProveedor = ped.IdProveedorCompras
 		where e.IdOTEstimacion = @pIdOTEstimacion	 and
-		isnull(e.Cancelada,0) = 0	and
-		u.UsuarioId not in (
-			select usuarioid
-			from #tmpNotificacionesExcluir
-			where TipoNotificacionId = 11--Nueva estimacion registrada
-		)
+		isnull(e.Cancelada,0) = 0	
 
 		if @permitirAceptacionAut = 0
 		begin
@@ -133,6 +128,16 @@ as
 
 		if @permitirAceptacionAut = 1
 		begin
+
+			select @para = dbo.fn_OT_GetMailUsuariosEstatus(ot.IdOTSolicitud,0,6,12)
+			from OT_Estimacion e
+			inner join OT_Solicitud ot on ot.IdOTSolicitud = e.IdOTSolicitud					
+			inner join SC_SubContrato sc on sc.IdSubContrato = ot.IdSubContrato
+			inner join CO_Contrato c on c.IdContrato = sc.IdContrato
+			inner join PV_Subcontratista pv on pv.IdSubcontratista = sc.IdSubcontratista
+			inner join petrovendor..MM_AceptacionPedido ap on ap.IdPedido = e.IdPedido
+			where e.IdOTEstimacion = @pIdOTEstimacion	 and
+			isnull(e.Cancelada,0) = 0	
 		
 			set @asunto = replace(@asunto,'{folio_ot}',@NumeroOT) + 'Se Requiere Reclasificación para Aceptación:'+@aceptacion
 			set @asunto = replace(@asunto,'{contrato}',@contrato) 
