@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 17/01/2022 02:40:31 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 28/01/2022 01:08:29 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: <13/01/2022>
 -- Description:	<guardado de secuencia de carpetas>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_GuardadoSecuenciaCarpetas]
+ALTER PROCEDURE [dbo].[SP_EN_GuardadoSecuenciaCarpetas]
 	-- Add the parameters for the stored procedure here
 	@IdContrato INT,
 	@IdCarpeta INT,
@@ -34,6 +34,14 @@ BEGIN
 	--VALIDACION DE EXISTENCIA DE LA SECUENCIA
 	IF @ID IS NULL AND @Nivel > 1
 	BEGIN
+
+		IF (@Nivel = 3)
+		BEGIN
+			
+			SET @NivelAnterior = 2;
+			SET @IdCarpetaAnterior = (SELECT TOP 1 IdCarpeta FROM EN_SecuenciaCarpetas WHERE IdContrato = @IdContrato AND Nivel = 2);
+
+		END
 		
 		--GUARDADO DE LA SECUENCIA
 		INSERT INTO EN_SecuenciaCarpetas
