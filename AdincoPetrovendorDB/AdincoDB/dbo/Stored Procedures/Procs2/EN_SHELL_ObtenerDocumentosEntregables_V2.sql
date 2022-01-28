@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 27/01/2022 10:48:07 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 28/01/2022 01:07:41 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: <04/01/2022>
 -- Description:	<Consulta de archivos contract files>
 -- =============================================
-ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] --[EN_SHELL_ObtenerDocumentosEntregables_V2]3,0,5,10162,1,0,10013,0
+ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] --[EN_SHELL_ObtenerDocumentosEntregables_V2]10113,0,7,17784,1,0,10008,0
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@IdUsuario INT,
@@ -51,7 +51,8 @@ BEGIN
 		NivelAnterior INT,
 		IsCarpetaUsuarioAnterior BIT,
 		Ruta VARCHAR(MAX),
-		RutaAnterior VARCHAR(MAX)
+		RutaAnterior VARCHAR(MAX),
+		CredoPorUsuario BIT
 	);
 
 
@@ -281,7 +282,7 @@ BEGIN
 			AND Activo = 1;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Bucket,Folder,UUID,Meta,Ruta,RutaAnterior,CreadoPor)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Bucket,Folder,UUID,Meta,Ruta,RutaAnterior,CreadoPor,CredoPorUsuario)
 		SELECT
 			2,
 			CA.Nombre,
@@ -319,7 +320,8 @@ BEGIN
 			CA.Meta,
 			SC.Ruta,
 			SC.RutaAnterior,
-			US.Nombre
+			US.Nombre,
+			1
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -403,7 +405,7 @@ BEGIN
 			AND Activo = 1;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Folder,UUID,Meta)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Folder,UUID,Meta,CredoPorUsuario)
 		SELECT
 			2,
 			CA.Nombre,
@@ -438,7 +440,8 @@ BEGIN
 			US.Nombre,
 			CA.Folder,
 			CA.UUIDAmazon,
-			CA.Meta
+			CA.Meta,
+			1
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -521,7 +524,7 @@ BEGIN
 			AND Activo = 1;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior, CreadoPor,Folder,UUID,Meta)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior, CreadoPor,Folder,UUID,Meta,CredoPorUsuario)
 		SELECT
 			2,
 			CA.Nombre,
@@ -556,7 +559,8 @@ BEGIN
 			US.CreadoPor,
 			CA.Folder,
 			CA.UUIDAmazon,
-			CA.Meta
+			CA.Meta,
+			1
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -644,7 +648,7 @@ BEGIN
 			AND Activo = 1;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior, CreadoPor,Frecuencia,Folder,UUID,Meta)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior, CreadoPor,Frecuencia,Folder,UUID,Meta,CredoPorUsuario)
 		SELECT
 			2,
 			CA.Nombre,
@@ -679,7 +683,8 @@ BEGIN
 			@Frecuencia,
 			CA.Folder,
 			CA.UUIDAmazon,
-			CA.Meta
+			CA.Meta,
+			1
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -762,7 +767,7 @@ BEGIN
 			AND Activo = 1;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Frecuencia,Folder,UUID,Meta)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Frecuencia,Folder,UUID,Meta,CredoPorUsuario)
 		SELECT
 			6,
 			CA.Nombre,
@@ -798,7 +803,8 @@ BEGIN
 			@Frecuencia,
 			CA.Folder,
 			CA.UUIDAmazon,
-			CA.Meta
+			CA.Meta,
+			1
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -898,7 +904,7 @@ BEGIN
 			AND Activo = 1;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,CreadoPor,Folder,UUID,Meta)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,CreadoPor,Folder,UUID,Meta,CredoPorUsuario)
 		SELECT
 			7,
 			CA.Nombre,
@@ -931,7 +937,8 @@ BEGIN
 			US.Nombre,
 			CA.Folder,
 			CA.UUIDAmazon,
-			CA.Meta
+			CA.Meta,
+			1
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN AP_Usuario AS US
 			ON CA.CreadoPor = US.UsuarioID
@@ -988,7 +995,7 @@ BEGIN
 			CA.CreadoEl;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,IsCarpetaUsuarioAnterior,NivelAnterior, CreadoPor,Folder,UUID,Meta)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,IsCarpetaUsuarioAnterior,NivelAnterior, CreadoPor,Folder,UUID,Meta,CredoPorUsuario)
 		SELECT
 			CA.Nivel,
 			CA.Nombre,
@@ -1027,7 +1034,8 @@ BEGIN
 			US.Nombre,
 			CA.Folder,
 			CA.UUIDAmazon,
-			CA.Meta
+			CA.Meta,
+			1
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta 
@@ -1041,7 +1049,7 @@ BEGIN
 
 	END
 
-	SET @CONTARCHIVOS = (SELECT COUNT(1) FROM @CONTRACT_FILES);
+	SET @CONTARCHIVOS = (SELECT COUNT(IdRow) FROM @CONTRACT_FILES);
 
 	SELECT
 		IdRow,
@@ -1077,7 +1085,8 @@ BEGIN
 			WHEN CreadoPor IS NOT NULL THEN ('Por ' + CreadoPor)
 			ELSE ''
 		END AS CreadoPor,
-		@CONTARCHIVOS AS CONTARCHIVOS
+		@CONTARCHIVOS AS CONTARCHIVOS,
+		ISNULL(CredoPorUsuario,0) AS CredoPorUsuario
 	FROM @CONTRACT_FILES
 	WHERE Nombre IS NOT NULL
 	ORDER BY IdRow ASC;
