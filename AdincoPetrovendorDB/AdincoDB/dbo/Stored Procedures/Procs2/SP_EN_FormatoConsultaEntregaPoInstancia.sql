@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia] -- 100261,3,10061
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia]    Script Date: 25/01/2022 04:57:42 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia] -- 100261,3,10061
     @Idinstancia INT,
     @idContrato INT,
     @idUsuario INT
@@ -11,9 +18,8 @@ BEGIN
 			@URLRepositorioMax VARCHAR(MAX),
 			@URLRepositorioAcuseMax VARCHAR(MAX);
 
-		SELECT TOP 1
-			@idMax	=	MAX(IdLineaTiempo),
-			@comentarioElaborador	=	Comentario,
+	--OBTENER LAS ULTIMAS URLS ACTIVAS
+	SELECT TOP 1
 			@URLRepositorioMax	=	
 			CASE 
 				ContieneURLRepositorio
@@ -30,6 +36,7 @@ BEGIN
 		idInstanciaEntregable	=	@Idinstancia
 		AND	idTipoOperacion	=	2
 		AND	Activo	=	1
+		AND ContieneURLRepositorio = 1
 	GROUP BY 
 		Comentario,
 		IdHistorialAprobacionesVersion,
@@ -44,6 +51,20 @@ BEGIN
 			END
 	ORDER BY 
 		IdHistorialAprobacionesVersion	DESC;
+
+	--OBTENER LOS ULTIMOS COMENTARIOS
+	SELECT TOP 1
+			@idMax	=	MAX(IdLineaTiempo),
+			@comentarioElaborador	=	Comentario
+	FROM 
+		EN_HistorialAprobacionesLineaTiempo
+	WHERE 
+		idInstanciaEntregable	=	@Idinstancia
+		AND	idTipoOperacion	=	2
+	GROUP BY 
+		Comentario,
+		IdHistorialAprobacionesVersion
+	ORDER BY IdHistorialAprobacionesVersion	DESC;
 
 
 	SELECT @URLRepositorioAcuseMax = URLRepositorio

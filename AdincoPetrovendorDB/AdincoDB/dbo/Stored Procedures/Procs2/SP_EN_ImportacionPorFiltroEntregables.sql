@@ -1,14 +1,17 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_ImportacionPorFiltroEntregables]    Script Date: 18/08/2021 01:15:00 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿if exists (select * from sys.procedures where name = 'SP_EN_ImportacionPorFiltroEntregables')
+begin
+	drop proc SP_EN_ImportacionPorFiltroEntregables
+end
+
+go
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/06/2021>
 -- Description:	<Consulta de entregables para importacion>
+-- =============================================
+-- Author:		<Luis David De La Cruz>
+-- Create date: <26/08/2021>
+-- Description:	<Formato para Shell>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_ImportacionPorFiltroEntregables] 
 	-- Add the parameters for the stored procedure here
@@ -24,11 +27,11 @@ BEGIN
     -- Insert statements for procedure here
 	IF @FILTRO = 'ML'
 	BEGIN
-
-		IF @IdContrato IN (10093,10108,10110,10119,10120,10122)--REPSOL
+		--REPSOL
+		IF @IdContrato IN (10093,10108,10110,10119,10120,10122)
 		BEGIN
-			
-			SELECT	DISTINCT TOP 20
+			SELECT	DISTINCT 
+			--TOP 20
 			CE.IdContratoEntregable,
 			E.CONSECUTIVO,
 			E.DOCUMENTOENTREGABLE,
@@ -91,19 +94,20 @@ BEGIN
 			WHERE
 				isnull(e.IsActivo,0) = 1
 				AND CE.IdContrato = @IdContrato
-				AND ML.IdMarcoLegal = CAST(@DATO AS INT)
+				AND ((ML.IdMarcoLegal = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1)
 				 --AND C.DescripcionContrato LIKE '%REPSOL%'
 				and ce.activo = 1
 			ORDER BY
 				ML.MarcoLegal,
 				E.Consecutivo
-
 		END
 
-		IF @IdContrato IN (3,10039,10047,10048,10049,10050,10054,10055,10056,10057,10058)--Eni. Equinor, Murphy, Carso, Smart (México)
+		--Eni. Equinor, Murphy, Carso, Smart (México)
+		IF @IdContrato IN (3,10039,10047,10048,10049,10050,10054,10055,10056,10057,10058)
 		BEGIN
-
-			SELECT	DISTINCT TOP 20
+		
+			SELECT	DISTINCT 
+			--TOP 20
 				CE.IdContratoEntregable,
 				E.CONSECUTIVO, 
 				E.DOCUMENTOENTREGABLE,
@@ -177,15 +181,93 @@ BEGIN
 				LEFT JOIN 
 					EN_ETAPA ET (NOLOCK)
 					ON E.IdEtapa = ET.IdEtapa
-				WHERE
-					isnull(e.IsActivo,0) = 1 AND
-					ML.IdMarcoLegal = CAST(@DATO AS INT)
+				WHERE	isnull(e.IsActivo,0) = 1 
+				AND		((ML.IdMarcoLegal = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1)
 				ORDER BY
 					CE.IdContratoEntregable DESC
 
 		END
 		
-
+		-- SHELL
+		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131) 
+		BEGIN
+			SELECT	DISTINCT 
+			--TOP 20
+			CE.IDCONTRATOENTREGABLE,
+			E.CONSECUTIVO, 
+			E.DOCUMENTOENTREGABLE, 
+			isnull(ML.MarcoLegal,'') as MarcoLegal,
+			FE.FrecuenciaEntregable as Frecuencia , --
+			RE.ReceptorEntregable,
+			ISNULL(A.NombreArea,'') AS Funcion, 
+			ISNULL(CE.Subfuncion,'') AS Subfuncion,
+			ISNULL(CE.DiasAlerta,'') AS 'Dias Alerta',
+			ISNULL(CE.DiasElaboracion,'') AS 'Dias Elaboracion', 
+			CASE WHEN CE.ACTIVO = 1 THEN 'SI' ELSE 'NO' END AS 'Activo',
+			ISNULL(UELAB.NOMBRE,'') AS 'Elaborador', 
+			ISNULL(CE.FocalPoint,'') AS FocalPoint,
+			ISNULL(CE.Accountable,'') as Accountable,
+			ISNULL(CE.AccountableCompliance,'') as AccountableCompliance
+			FROM EN_ContratoEntregable	CE	(NOLOCK)
+			JOIN EN_Entregable	E	(NOLOCK)
+				ON	CE.IDENTREGABLE = E.IDENTREGABLE
+				AND ISNULL(E.BitJOA,0) = 0
+				AND E.IsActivo = 1
+				AND CE.Activo = 1
+			JOIN
+				CO_Contrato	C	(NOLOCK)
+				ON CE.IdContrato	=	C.IdContrato
+				AND C.DescripcionContrato LIKE '%SHELL%'
+			JOIN
+				EN_EntregableRonda	ER	(NOLOCK)
+				ON	E.IdEntregable	=	ER.idEntregable
+				AND	C.IdRonda	=	ER.idRonda
+			LEFT JOIN
+				EN_FrecuenciaEntregable	FE	(NOLOCK)
+				ON	E.IdFrecuenciaEntregable = FE.IdFrecuenciaEntregable
+			LEFT JOIN
+				EN_MarcoLegal	ML	(NOLOCK)
+				ON	E.IdMarcoLegal = ML.IdMarcoLegal
+			LEFT JOIN
+				CO_Regulador	R	(NOLOCK)
+				ON	E.IdRegulador	=	R.IdRegulador
+			LEFT JOIN
+				EN_AREA	A	(NOLOCK)
+				ON	CE.IDAREA = A.IDAREA
+			LEFT JOIN
+				EN_Actividad	ELAB
+				ON	CE.IdContratoEntregable	=	ELAB.IdContratoEntregable
+				AND ELAB.EstadoID	=	10000
+			LEFT JOIN
+				AP_Usuario	UELAB
+				ON	ELAB.idUsuario	=	UELAB.UsuarioID
+			LEFT JOIN
+				EN_RecepTorEntregable RE	(NOLOCK)
+				ON E.IDRECEPTORENTREGABLE = RE.IDRECEPTORENTREGABLE
+			WHERE
+			ISNULL(e.IsActivo,0) = 1 
+			AND ((ML.IdMarcoLegal = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1)
+			AND CE.IdContrato = @IdContrato
+			GROUP BY
+			CE.IDCONTRATOENTREGABLE,
+				FE.FrecuenciaEntregable, R.Regulador, ML.MarcoLegal, replace(replace(E.ARTICULO,char(3),''), CHAR(10),''), E.DOCUMENTOENTREGABLE, E.CONSECUTIVO, 
+			CASE WHEN CE.ACTIVO = 1 THEN 'SI' ELSE 'NO' END,
+			ISNULL(A.NombreArea,''), 
+			ISNULL(CE.Subfuncion,''),
+			ISNULL(UELAB.NOMBRE,''), 
+			ISNULL(CE.Accountable,''),
+			ISNULL(CE.FocalPoint,''),
+			ISNULL(CE.AccountableCompliance,''),
+			ISNULL(CE.DiasElaboracion,''), 
+			ISNULL(CE.DiasAlerta,''),
+			E.TiempoEntrega, 
+			ISNULL(CE.ReceptorAlerta,''),
+			RE.ReceptorEntregable
+			--ORDER BY
+			--	ML.MarcoLegal,
+			--	E.Consecutivo,
+			--	ISNULL(A.NombreArea,'')
+		END
 	END
 
 	IF @FILTRO = 'AR'
@@ -194,7 +276,8 @@ BEGIN
 		IF @IdContrato IN (3,10039,10047,10048,10049,10050,10054,10055,10056,10057,10058)--Eni. Equinor, Murphy, Carso, Smart (México)
 		BEGIN
 
-			SELECT	DISTINCT TOP 20
+			SELECT	DISTINCT 
+			--TOP 20
 				CE.IdContratoEntregable,
 				E.CONSECUTIVO, 
 				E.DOCUMENTOENTREGABLE,
@@ -270,7 +353,7 @@ BEGIN
 					ON E.IdEtapa = ET.IdEtapa
 				WHERE
 					isnull(e.IsActivo,0) = 1
-					AND A.idArea = CAST(@DATO AS INT)
+					AND ((A.idArea = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1)
 				ORDER BY
 					CE.IdContratoEntregable DESC
 
@@ -279,7 +362,8 @@ BEGIN
 		IF @IdContrato IN (10093,10108,10110,10119,10120,10122)--REPSOL
 		BEGIN
 		
-		SELECT	DISTINCT TOP 20
+		SELECT	DISTINCT 
+		--TOP 20
 			CE.IdContratoEntregable,
 			E.CONSECUTIVO,
 			E.DOCUMENTOENTREGABLE,
@@ -342,7 +426,7 @@ BEGIN
 			WHERE
 				isnull(e.IsActivo,0) = 1
 				AND CE.IdContrato = @IdContrato
-				AND A.idArea = CAST(@DATO AS INT)
+				AND ((A.idArea = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1)
 				 --AND C.DescripcionContrato LIKE '%REPSOL%'
 				and ce.activo = 1
 			ORDER BY
@@ -350,6 +434,87 @@ BEGIN
 				E.Consecutivo
 			END
 
+		-- SHELL
+		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131) 
+		BEGIN
+			SELECT	DISTINCT 
+			--TOP 20
+			CE.IDCONTRATOENTREGABLE,
+			E.CONSECUTIVO, 
+			E.DOCUMENTOENTREGABLE, 
+			isnull(ML.MarcoLegal,'') as MarcoLegal,
+			FE.FrecuenciaEntregable as Frecuencia , --
+			RE.ReceptorEntregable,
+			ISNULL(A.NombreArea,'') AS Funcion, 
+			ISNULL(CE.Subfuncion,'') AS Subfuncion,
+			ISNULL(CE.DiasAlerta,'') AS 'Dias Alerta',
+			ISNULL(CE.DiasElaboracion,'') AS 'Dias Elaboracion', 
+			CASE WHEN CE.ACTIVO = 1 THEN 'SI' ELSE 'NO' END AS 'Activo',
+			ISNULL(UELAB.NOMBRE,'') AS 'Elaborador', 
+			ISNULL(CE.FocalPoint,'') AS FocalPoint,
+			ISNULL(CE.Accountable,'') as Accountable,
+			ISNULL(CE.AccountableCompliance,'') as AccountableCompliance
+			FROM EN_ContratoEntregable	CE	(NOLOCK)
+			JOIN EN_Entregable	E	(NOLOCK)
+				ON	CE.IDENTREGABLE = E.IDENTREGABLE
+				AND ISNULL(E.BitJOA,0) = 0
+				AND E.IsActivo = 1
+				AND CE.Activo = 1
+			JOIN
+				CO_Contrato	C	(NOLOCK)
+				ON CE.IdContrato	=	C.IdContrato
+				AND C.DescripcionContrato LIKE '%SHELL%'
+			JOIN
+				EN_EntregableRonda	ER	(NOLOCK)
+				ON	E.IdEntregable	=	ER.idEntregable
+				AND	C.IdRonda	=	ER.idRonda
+			LEFT JOIN
+				EN_FrecuenciaEntregable	FE	(NOLOCK)
+				ON	E.IdFrecuenciaEntregable = FE.IdFrecuenciaEntregable
+			LEFT JOIN
+				EN_MarcoLegal	ML	(NOLOCK)
+				ON	E.IdMarcoLegal = ML.IdMarcoLegal
+			LEFT JOIN
+				CO_Regulador	R	(NOLOCK)
+				ON	E.IdRegulador	=	R.IdRegulador
+			LEFT JOIN
+				EN_AREA	A	(NOLOCK)
+				ON	CE.IDAREA = A.IDAREA
+			LEFT JOIN
+				EN_Actividad	ELAB
+				ON	CE.IdContratoEntregable	=	ELAB.IdContratoEntregable
+				AND ELAB.EstadoID	=	10000
+			LEFT JOIN
+				AP_Usuario	UELAB
+				ON	ELAB.idUsuario	=	UELAB.UsuarioID
+			LEFT JOIN
+				EN_RecepTorEntregable RE	(NOLOCK)
+				ON E.IDRECEPTORENTREGABLE = RE.IDRECEPTORENTREGABLE
+			WHERE
+			isnull(e.IsActivo,0) = 1
+				AND CE.IdContrato = @IdContrato
+				AND ((A.idArea = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1)
+				and ce.activo = 1
+			GROUP BY
+			CE.IDCONTRATOENTREGABLE,
+				FE.FrecuenciaEntregable, R.Regulador, ML.MarcoLegal, replace(replace(E.ARTICULO,char(3),''), CHAR(10),''), E.DOCUMENTOENTREGABLE, E.CONSECUTIVO, 
+			CASE WHEN CE.ACTIVO = 1 THEN 'SI' ELSE 'NO' END,
+			ISNULL(A.NombreArea,''), 
+			ISNULL(CE.Subfuncion,''),
+			ISNULL(UELAB.NOMBRE,''), 
+			ISNULL(CE.Accountable,''),
+			ISNULL(CE.FocalPoint,''),
+			ISNULL(CE.AccountableCompliance,''),
+			ISNULL(CE.DiasElaboracion,''), 
+			ISNULL(CE.DiasAlerta,''),
+			E.TiempoEntrega, 
+			ISNULL(CE.ReceptorAlerta,''),
+			RE.ReceptorEntregable
+			--ORDER BY
+			--	ML.MarcoLegal,
+			--	E.Consecutivo,
+			--	ISNULL(A.NombreArea,'')
+		END
 	END
 
 	IF @FILTRO = 'E'
@@ -358,7 +523,8 @@ BEGIN
 		IF @IdContrato IN (3,10039,10047,10048,10049,10050,10054,10055,10056,10057,10058)--Eni. Equinor, Murphy, Carso, Smart (México)
 		BEGIN
 
-			SELECT	DISTINCT TOP 20
+			SELECT	DISTINCT 
+			--TOP 20
 				CE.IdContratoEntregable,
 				E.CONSECUTIVO, 
 				E.DOCUMENTOENTREGABLE,
@@ -434,7 +600,7 @@ BEGIN
 					ON E.IdEtapa = ET.IdEtapa
 				WHERE
 					isnull(e.IsActivo,0) = 1
-					AND UELAB.UsuarioID = CAST(@DATO AS INT)
+					AND ((UELAB.UsuarioID = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1)
 				ORDER BY
 					CE.IdContratoEntregable DESC
 
@@ -443,7 +609,8 @@ BEGIN
 
 		IF @IdContrato IN (10093,10108,10110,10119,10120,10122)--REPSOL
 		BEGIN
-		SELECT	DISTINCT TOP 20
+		SELECT	DISTINCT 
+		--TOP 20
 			CE.IdContratoEntregable,
 			E.CONSECUTIVO,
 			E.DOCUMENTOENTREGABLE,
@@ -506,7 +673,7 @@ BEGIN
 			WHERE
 				isnull(e.IsActivo,0) = 1
 				AND CE.IdContrato = @IdContrato
-				AND UELAB.UsuarioID = CAST(@DATO AS INT)
+				AND ((UELAB.UsuarioID = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1 )
 				 --AND C.DescripcionContrato LIKE '%REPSOL%'
 				and ce.activo = 1
 			ORDER BY
@@ -514,5 +681,85 @@ BEGIN
 				E.Consecutivo
 			END
 
+		-- SHELL
+		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131) 
+		BEGIN
+			SELECT	DISTINCT 
+			--TOP 20
+			CE.IDCONTRATOENTREGABLE,
+			E.CONSECUTIVO, 
+			E.DOCUMENTOENTREGABLE, 
+			isnull(ML.MarcoLegal,'') as MarcoLegal,
+			FE.FrecuenciaEntregable as Frecuencia , --
+			RE.ReceptorEntregable,
+			ISNULL(A.NombreArea,'') AS Funcion, 
+			ISNULL(CE.Subfuncion,'') AS Subfuncion,
+			ISNULL(CE.DiasAlerta,'') AS 'Dias Alerta',
+			ISNULL(CE.DiasElaboracion,'') AS 'Dias Elaboracion', 
+			CASE WHEN CE.ACTIVO = 1 THEN 'SI' ELSE 'NO' END AS 'Activo',
+			ISNULL(UELAB.NOMBRE,'') AS 'Elaborador', 
+			ISNULL(CE.FocalPoint,'') AS FocalPoint,
+			ISNULL(CE.Accountable,'') as Accountable,
+			ISNULL(CE.AccountableCompliance,'') as AccountableCompliance
+			FROM EN_ContratoEntregable	CE	(NOLOCK)
+			JOIN EN_Entregable	E	(NOLOCK)
+				ON	CE.IDENTREGABLE = E.IDENTREGABLE
+				AND ISNULL(E.BitJOA,0) = 0
+				AND E.IsActivo = 1
+				AND CE.Activo = 1
+			JOIN
+				CO_Contrato	C	(NOLOCK)
+				ON CE.IdContrato	=	C.IdContrato
+				AND C.DescripcionContrato LIKE '%SHELL%'
+			JOIN
+				EN_EntregableRonda	ER	(NOLOCK)
+				ON	E.IdEntregable	=	ER.idEntregable
+				AND	C.IdRonda	=	ER.idRonda
+			LEFT JOIN
+				EN_FrecuenciaEntregable	FE	(NOLOCK)
+				ON	E.IdFrecuenciaEntregable = FE.IdFrecuenciaEntregable
+			LEFT JOIN
+				EN_MarcoLegal	ML	(NOLOCK)
+				ON	E.IdMarcoLegal = ML.IdMarcoLegal
+			LEFT JOIN
+				CO_Regulador	R	(NOLOCK)
+				ON	E.IdRegulador	=	R.IdRegulador
+			LEFT JOIN
+				EN_AREA	A	(NOLOCK)
+				ON	CE.IDAREA = A.IDAREA
+			LEFT JOIN
+				EN_Actividad	ELAB
+				ON	CE.IdContratoEntregable	=	ELAB.IdContratoEntregable
+				AND ELAB.EstadoID	=	10000
+			LEFT JOIN
+				AP_Usuario	UELAB
+				ON	ELAB.idUsuario	=	UELAB.UsuarioID
+			LEFT JOIN
+				EN_RecepTorEntregable RE	(NOLOCK)
+				ON E.IDRECEPTORENTREGABLE = RE.IDRECEPTORENTREGABLE
+			WHERE
+			isnull(e.IsActivo,0) = 1
+				AND CE.IdContrato = @IdContrato
+				AND ((UELAB.UsuarioID = CAST(@DATO AS INT)) or CAST(@DATO AS INT) = -1 )
+				and ce.activo = 1
+			GROUP BY
+			CE.IDCONTRATOENTREGABLE,
+				FE.FrecuenciaEntregable, R.Regulador, ML.MarcoLegal, replace(replace(E.ARTICULO,char(3),''), CHAR(10),''), E.DOCUMENTOENTREGABLE, E.CONSECUTIVO, 
+			CASE WHEN CE.ACTIVO = 1 THEN 'SI' ELSE 'NO' END,
+			ISNULL(A.NombreArea,''), 
+			ISNULL(CE.Subfuncion,''),
+			ISNULL(UELAB.NOMBRE,''), 
+			ISNULL(CE.Accountable,''),
+			ISNULL(CE.FocalPoint,''),
+			ISNULL(CE.AccountableCompliance,''),
+			ISNULL(CE.DiasElaboracion,''), 
+			ISNULL(CE.DiasAlerta,''),
+			E.TiempoEntrega, 
+			ISNULL(CE.ReceptorAlerta,''),
+			RE.ReceptorEntregable
+		END
 	END
 END
+
+
+go

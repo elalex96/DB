@@ -13179,6 +13179,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_FI_Factura_Sel.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_sp_HistorialBitacoraExcepciones.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\EN_AsignarPozo_Grd.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_FiltrosImportacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ImportacionPorFiltroEntregables.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

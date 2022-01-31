@@ -1,5 +1,12 @@
-CREATE PROCEDURE [dbo].[EN_CambioEstadoA]
-    @idUsuario INT,
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[EN_CambioEstadoA]    Script Date: 25/01/2022 08:41:07 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[EN_CambioEstadoA]
+    @idUsuario INT, --10150
     @idContrato INT,
     @idInstanciaEntregable INT,
     @Estatus INT,               --2 aprobada, 3 es rechazada
@@ -19,6 +26,11 @@ BEGIN
 -- Author:		Daniel AC
 -- Update date: 21/10/2020 
 -- Description: Se agregar sp SP_EN_GuardarAvanceEntregableSeguimiento para seguimiento Equinor
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Update date: 25/01/2022 
+-- Description: Se desactivan los registros del hisotrial entregables(url)
 -- =============================================
     SET NOCOUNT ON;
     DECLARE @idVersion INT,
@@ -66,7 +78,7 @@ BEGIN
             ON P.IdRol = R.IdRol
     WHERE UsuarioID = @idUsuario
           AND P.IdContrato = @idContrato
-          AND (R.Rol LIKE '%Administra%Entregables%' OR R.ROL LIKE '%SASISOPA%SHELL%');
+          AND (R.Rol LIKE '%Admini%' OR R.ROL LIKE '%SASISOPA%SHELL%');
 
 
     IF (@idContrato = 0 OR @idContrato IS NULL)
@@ -143,8 +155,8 @@ BEGIN
            @EsUsuarioAprobador = 1
            OR
            (
-               @IsAdmin = 1
-               AND @Rechazado = 1
+               @IsAdmin = 1 AND
+               @Rechazado = 1
                AND @TipoOperacion = 5
            )
        ) --SI ES USUARIO RESPONSABLE O SI ES ADMINISTRADOR Y SE VA A REINICIAR
@@ -364,7 +376,7 @@ BEGIN
             BEGIN
                 UPDATE EN_InstanciasEntregable
                 SET ActividadID = @ActividadSiguienteID,
-        ModificadoEn = GETDATE()
+					ModificadoEn = GETDATE()
                 WHERE idInstanciaEntregable = @idInstanciaEntregable;
 
                 SELECT @Para = CASE ISNULL(EXAE.idUsuario, '')
@@ -455,6 +467,26 @@ BEGIN
                                                                       @TipoGuardado = 'REINICIAR',                     -- varchar(max)
                                                                       @Comentario = 'SISTEMA';
                 END;
+
+				IF (@EstadoActual = 'REINICIO')
+				BEGIN
+
+					--DESACTIVACION DE SU HISTORIAL PARA NO MOSTRAR LAS URL ARCHIVO
+					UPDATE EN_HistorialAprobacionesLineaTiempo
+					SET Activo = 0
+					WHERE idInstanciaEntregable = @idInstanciaEntregable AND 
+						idTipoOperacion = 2 AND
+						ContieneURLRepositorio = 1 AND
+						Activo = 1;
+
+					--DESACTIVACION DE SU HISTORIAL PARA NO MOSTRAR LAS URL ACUSE
+					UPDATE EN_HistorialAprobacionesLineaTiempo
+					SET Activo = 0
+					WHERE idInstanciaEntregable = @idInstanciaEntregable AND 
+						idTipoOperacion = 7 AND
+						Activo = 1;
+
+				END;
             END;
         END;
     END;
