@@ -45,6 +45,9 @@ BEGIN
 		@GRNumber,
 		@IdUsuario,
 		@IdPreses,
-		@IdEstatus
+		@IdEstatus,
+		@Justificacion
+
+	
 END
 

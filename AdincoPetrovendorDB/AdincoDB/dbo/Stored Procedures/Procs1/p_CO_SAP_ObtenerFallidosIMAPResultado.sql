@@ -6,4 +6,5 @@ as
 	select *
 	from CO_SAP_IMAPResultado
 	where Success = 0 and
-	IdContratista = @pIdContratista
+	IdContratista = @pIdContratista AND
+	FechaProcesado >= DATEADD(DD,-30,GETDATE())
