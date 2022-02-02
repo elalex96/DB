@@ -1,10 +1,17 @@
-﻿/****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 29/09/2020 13:23:44 ******/
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 01/02/2022 11:46:51 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 29/09/2020 13:23:44 ******/
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <28/09/2020>
 -- Description:	<Envio de factura, creacion de la operacion y tareas de aprobacion y envio de correos>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ReEnvioAprobacionFactura]
+ALTER PROCEDURE [dbo].[SP_FI_ReEnvioAprobacionFactura]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
 	@IdProveedor INT,
@@ -109,6 +116,7 @@ BEGIN
 		FROM dbo.TA_Tarea AS APR
 			JOIN dbo.S_Usuario AS US 
 				ON US.IdUsuario = APR.IdAprobador
+				AND US.Activo = 1
 		WHERE APR.IdOperacion = @ID_OPERACION
 			AND APR.Activo = 1
 		GROUP BY US.IdUsuario,
