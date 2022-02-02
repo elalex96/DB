@@ -1,4 +1,11 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_ActualizarEstatusAceptacionFactura_RF]    Script Date: 02/02/2022 12:02:54 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel Cruz
 -- Update date: 09-10-2020
 -- Description: Se agrego condición en validación de aprobaciónes aprobadas sea = al número de aprobadores 
@@ -7,7 +14,7 @@
 -- Create date: 30/09/2019
 -- Description:	se agrego la validacion en la tarea de estatus 12(eliminado) 
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ActualizarEstatusAceptacionFactura_RF]
+ALTER PROCEDURE [dbo].[SP_FI_ActualizarEstatusAceptacionFactura_RF]
     -- Add the parameters for the stored procedure here
     @IdProveedor INT,
     @IdUsuario INT,
@@ -77,6 +84,9 @@ BEGIN
             FROM TA_Operacion TAO
                 JOIN TA_Tarea AS T
                     ON T.IdOperacion = TAO.IdOperacion
+				JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario
+						AND US.Activo = 1
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus <> 7 --> NO SEA REASIGNADO
                   AND T.IdEstatus <> 12 --> NO ESTE ELIMINADO
@@ -90,6 +100,9 @@ BEGIN
             FROM TA_Operacion TAO
                 JOIN TA_Tarea AS T
                     ON T.IdOperacion = TAO.IdOperacion
+				JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario
+						AND US.Activo = 1
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 1
                   AND T.Activo = 1
@@ -101,6 +114,9 @@ BEGIN
             FROM TA_Operacion TAO
                 JOIN TA_Tarea AS T
                     ON T.IdOperacion = TAO.IdOperacion
+				JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario
+						AND US.Activo = 1
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 2 --> APROBARON
                   AND T.Activo = 1
@@ -113,6 +129,9 @@ BEGIN
             FROM TA_Operacion TAO
                 JOIN TA_Tarea AS T
                     ON T.IdOperacion = TAO.IdOperacion
+				JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario
+						AND US.Activo = 1
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 3 --> RECHAZARON 
                   AND T.Activo = 1
@@ -284,4 +303,3 @@ BEGIN
     END;
 
 END;
-
