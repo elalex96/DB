@@ -1,9 +1,16 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ConsultarAprobadoresFactura]    Script Date: 02/02/2022 12:11:29 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author: Daniel AC
 -- Create date: 02/09/2019
 -- Description:	Consultar aprobadores de factura
 -- =============================================
-CREATE  PROCEDURE [dbo].[SP_ConsultarAprobadoresFactura]  
+ALTER  PROCEDURE [dbo].[SP_ConsultarAprobadoresFactura]  
 @IdOperacion int,
 @IdProveedor INT,
 @IdUsuario INT 
@@ -34,7 +41,7 @@ BEGIN
 	TAO.IdEstatusOperacion  AS EstatusFactura	
 	FROM TA_Tarea TT 	
 	INNER JOIN TA_Operacion TAO ON TT.IdOperacion = TAO.IdOperacion
-	LEFT JOIN S_Usuario U	ON U.IdUsuario = TT.IdAprobador	
+	LEFT JOIN S_Usuario U	ON U.IdUsuario = TT.IdAprobador	AND U.Activo = 1
 	LEFT JOIN TA_Estatus TE ON TE.IdEstatus = TT.IdEstatus	
 	LEFT JOIN dbo.S_Usuario UA ON TT.AsignadoPor= UA.IdUsuario
 	WHERE   TAO.IdTipoOperacion = 10 ---> APROBACIÓN DE FACTURA
@@ -43,6 +50,4 @@ BEGIN
 	ORDER BY TT.NoSecuencia ASC
 
 	--- TT.IdEstatus = 2
-END
-
- 
+END 
