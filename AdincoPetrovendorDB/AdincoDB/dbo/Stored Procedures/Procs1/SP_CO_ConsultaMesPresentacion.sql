@@ -3,7 +3,8 @@ AS
 BEGIN
     SELECT DISTINCT CONVERT(VARCHAR(10), MesPresentacion, 105) AS MesPresentacion,
                     MONTH (MesPresentacion) AS 'Mes',
-					Year (MesPresentacion) AS 'Year'
+					YEAR (MesPresentacion) AS 'Year'
       FROM CO_Registro
-     ORDER BY MesPresentacion ASC;
+	  WHERE MesPresentacion IS NOT NULL
+     ORDER BY Year (MesPresentacion) DESC, MONTH (MesPresentacion) DESC;
 END;
