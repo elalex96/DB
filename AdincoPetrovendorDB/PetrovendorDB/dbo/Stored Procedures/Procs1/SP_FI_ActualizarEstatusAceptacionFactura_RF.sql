@@ -1,287 +1,333 @@
-﻿-- =============================================
--- Author:		Daniel Cruz
--- Update date: 09-10-2020
--- Description: Se agrego condición en validación de aprobaciónes aprobadas sea = al número de aprobadores 
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_EnvioAprobacionFactura]    Script Date: 01/02/2022 11:32:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_EnvioAprobacionFactura]    Script Date: 01/10/2020 17:14:56 ******/
 -- =============================================
--- Author:		Alexander Gomez
--- Create date: 30/09/2019
--- Description:	se agrego la validacion en la tarea de estatus 12(eliminado) 
+-- Author:		<Alexander Gomez>
+-- Create date: <28/09/2020>
+-- Description:	<Envio de factura, creacion de la operacion y tareas de aprobacion y envio de correos>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ActualizarEstatusAceptacionFactura_RF]
-    -- Add the parameters for the stored procedure here
-    @IdProveedor INT,
-    @IdUsuario INT,
-    @IdAceptacionPedido INT,
-    @Comentario NVARCHAR(MAX),
-    @IdEstatus INT,
-    @IdOperacion INT,
-    @ACCION NVARCHAR(200)
+ALTER PROCEDURE [dbo].[SP_FI_EnvioAprobacionFactura] --3499,670,2338
+	-- Add the parameters for the stored procedure here
+	@IdUsuario INT,
+	@IdProveedor INT,
+	@IdAceptacionPedido INT
 AS
 BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
 
-    -- SET NOCOUNT ON added to prevent extra result sets from
-    -- interfering with SELECT statements.
-    SET NOCOUNT ON;
+    -- Insert statements for procedure here
+	DECLARE @DESCRIPCION_HISTORIAL NVARCHAR(MAX);
+	DECLARE @ID_ESTATUS_FLUJO INT = 1;
+	DECLARE @ID_ESTATUS_OPERACION INT = 1;
+	DECLARE @ID_OPERACION INT;
+	DECLARE @ID_FLUJO_APROBACION INT;
+	DECLARE @NOMBRE_APROBADOR NVARCHAR(200);
+	DECLARE @CORREO_APROBADOR NVARCHAR(200);
+	DECLARE @CONT INT;
+	DECLARE @IDNOTIFICACION INT;
+	DECLARE @CONTTOTAL INT;
+	DECLARE @ID_TIPO_FLUJO INT;
+	DECLARE @PLANTILLA_CORREO NVARCHAR(MAX);
+	DECLARE @PLANTILLA_ASUNTO NVARCHAR(MAX);
+	DECLARE @NOMBRE_CONTRATO NVARCHAR(MAX) = (SELECT TOP 1 C.NumeroContrato + ' - ' + AC.NombreAreaContractual AS NombreContrato
+													FROM dbo.MM_AceptacionPedido AP
+													LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
+													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
+													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
+													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido);
+	DECLARE @TABLE_APROBADORES TABLE(ID INT IDENTITY(1,1), IdAprobador INT, IdSecuencia INT, Nombre NVARCHAR(200), Correo NVARCHAR(200));
+	DECLARE @ID_OPERADORA INT = ( SELECT IdProveedor FROM dbo.MM_AceptacionPedido WHERE IdAceptacionPedido = @IdAceptacionPedido);
+	DECLARE @ID_ACEPTACION_FACTURA int = (SELECT IdAceptacionFactura 
+										  FROM MM_AceptacionFactura 
+										WHERE IdAceptacionPedido = @IdAceptacionPedido);
+	
+	--SE ACTUALIZA EL ESTATUS DE LA APROBACION DE FACTURA(EN APROBACION)
+	UPDATE MM_AceptacionFactura 
+	SET [IdEstatusXML] = 1,
+	[IdEstatusPDF] = 1,
+	[ModificadoPor]  = @IdUsuario,
+	[ModificadoEl] = getdate()
+	WHERE IdAceptacionFactura = @ID_ACEPTACION_FACTURA;
 
-    SET NOCOUNT ON;
-    DECLARE @IdTarea INT;
-    DECLARE @DescripcionH NVARCHAR(MAX);
-    DECLARE @IdFactura INT;
-    DECLARE @IdDocumento INT;
-    DECLARE @ESTATUS_TEMPORAL NVARCHAR(200) = N'';
-    DECLARE @FECHA_CAMBIO_ESTATUS DATETIME;
+	-- se valida si el proveedor es de DEA
+	IF EXISTS (SELECT 1 FROM dbo.DEA_Proveedor WHERE IdProveedor = @ID_OPERADORA)
+	BEGIN
+			-- consultamos el flujo de aprobacion de fatura relacionado con el centro de costo de la requisicion
+			SET @ID_FLUJO_APROBACION = (SELECT TOP 1 
+											RCFA.IdFlujoFactura 
+										FROM dbo.MM_SolicitudPedido SP
+										LEFT JOIN dbo.MM_Pedido P 
+											ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+										LEFT JOIN dbo.MM_AceptacionPedido AP 
+											ON AP.IdPedido = P.IdPedido
+										LEFT JOIN dbo.MM_SolicitudPedidoDetalle SPD
+											ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido
+										LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL
+											ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+										LEFT JOIN dbo.RelacionCentroCostoFlujoAprob RCFA 
+											ON RCFA.IdCentroCosto = SPDL.IdCentroCosto
+										WHERE AP.IdAceptacionPedido = @IdAceptacionPedido 
+											AND RCFA.IdFlujoFactura IS NOT NULL
+											AND RCFA.Activo = 1
+										GROUP BY RCFA.IdFlujoFactura,RCFA.IdCentroCosto);--1445
 
-    -- SE OBTIENE EL NUMERO DE TAREA DEL APROBADOR ACTUAL  
+		   
+	END
+	ELSE
+	BEGIN
+			--CONSULTAMOS EL FLUJO DE APROBACION DE FACTURA PRETERMINADO DE LA OPERADORA
+	    	SET @ID_FLUJO_APROBACION = (SELECT TOP 1 
+											FT.IdFlujoTarea
+										  FROM MM_AceptacionFactura AS AF
+										  INNER JOIN MM_AceptacionPedido AS AP 
+											ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+										  INNER JOIN MM_Pedido   AS P 
+											on P.IdPedido= AP.IdPedido 
+										  INNER JOIN S_Proveedor AS PR 
+											ON PR.IdProveedor = P.IdProveedorCompras
+										  INNER JOIN TA_FlujoTarea AS FT 
+											ON FT.IdProveedor =P.IdProveedorCompras
+										  WHERE AP.IdAceptacionPedido = @IdAceptacionPedido 
+											  AND FT.IdTipoOperacion = 10 
+											  AND FT.Activo=1 
+											  AND FT.Predeterminado=1);
+	END;
 
-    SELECT @IdTarea = T.IdTarea
-    FROM TA_Tarea AS T
-    WHERE T.IdAprobador = @IdUsuario
-          AND T.IdOperacion = @IdOperacion
-          AND T.Activo = 1;
+	--Agregar Operación Si IdFlujoTarea =  0 Es una operación que no tiene flujo de tarea
+	IF ISNULL(@ID_FLUJO_APROBACION,0) = 0
+	BEGIN
 
-    SET @FECHA_CAMBIO_ESTATUS = GETDATE();
+		SET @ID_ESTATUS_OPERACION = 9;
+		SET @ID_ESTATUS_FLUJO = NULL;
+		SET @ID_FLUJO_APROBACION = NULL;
 
-    --- SE CAMBIA EL ESTATUS DEL APROBADOR ACTUAL Y SE VALIDA EL ESTATUS GENERAL DE LA APROBACIÓN(TA_OPERACION) QUE RESULTA AL CAMBIAR ESTATUS DEL APROBADOR ACTUAL
-    -- SI ES RECHAZADA SE CONTINUA EL PROCESO NORMAL 
-    -- SI ES PENDIENTE SE CONTINUA EL PROCESO NORMAL
-    -- SI ES APROBADA SE DETIENE EL PROCESO PARA ENVIAR LA FACTURA A LA BD DE ADINCO
-    IF @ACCION = 'CAMBIAR_ESTATUS_APROBADOR'
-    BEGIN
+	END;
+	    --SE VALIDA LA INEXISTENCIA DE LA OPERACION PARA ESTA FACTURA
+	SET @ID_OPERACION = (SELECT TOP 1 
+								IdOperacion
+							FROM dbo.TA_Operacion 
+							WHERE IdDocumento = @ID_ACEPTACION_FACTURA 
+								AND IdTipoOperacion = 10
+								AND IdProveedor = @IdProveedor);
 
-		--ACTUALIZAR EL ESTATUS DEL USUARIO ACTUAL
-        UPDATE TA_Tarea
-        SET IdEstatus = @IdEstatus,
-            FechaCambioEstatus = @FECHA_CAMBIO_ESTATUS,
-            TA_Tarea.Comentario = @Comentario
-        WHERE IdTarea = @IdTarea;
+	IF ISNULL(@ID_OPERACION,0) = 0
+	BEGIN
 
-        --- OBTENER ESTATUS APROBACIÓN GENERAL CON APROBACIÓN DE APROBADOR ACTUAL
-
-        DECLARE @CountTarea INT;
-        DECLARE @CountEstApr INT;
-        DECLARE @CountEstRech INT;
-        DECLARE @CountEstPen INT;
-
-        ---Glosario ---
-        -- 1 Pendiente
-        -- 2 Aceptada
-        -- 3 Rechazada
-        -- 4 Vencida
-        -- 7 Reasignada
-        --12 Eliminado
-
-        ---CONTAR NUMERO DE APROBADORES EN LA APROBACION GRAL/APROBADORES
-        SET @CountTarea =
-        (
-            SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
-            WHERE TAO.IdOperacion = @IdOperacion
-                  AND T.IdEstatus <> 7 --> NO SEA REASIGNADO
-                  AND T.IdEstatus <> 12 --> NO ESTE ELIMINADO
-                  AND T.Activo = 1 --> ESTE ACTIVO
-        );
-        
-        --- CONTAR NUMERO DE APROBADORES QUE FALTAN POR APROBAR 
-        SET @CountEstPen =
-        (
-            SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
-            WHERE TAO.IdOperacion = @IdOperacion
-                  AND T.IdEstatus = 1
-                  AND T.Activo = 1
-        );
-        --- CONTAR NUMERO DE APROBADORES QUE YA APROBARON 
-        SET @CountEstApr =
-        (
-            SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
-            WHERE TAO.IdOperacion = @IdOperacion
-                  AND T.IdEstatus = 2 --> APROBARON
-                  AND T.Activo = 1
-        );
-
-        --- CONTAR NUMERO DE APROBADORES QUE RECHAZARON 
-        SET @CountEstRech =
-        (
-            SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
-            WHERE TAO.IdOperacion = @IdOperacion
-                  AND T.IdEstatus = 3 --> RECHAZARON 
-                  AND T.Activo = 1
-        );
-
-
-        BEGIN
-            IF (@CountEstRech > 0)
-            BEGIN
-                -- LA APROBACION GRAL FUE RECHAZADA
-                SET @ESTATUS_TEMPORAL = N'CONTINUAR_APROBACION_GENERAL';
-            END;
-            ELSE IF (@CountEstApr = @CountTarea AND @CountEstPen = 0)
-            BEGIN
-                -- LA APROBACION GRAL FUE ACEPTADA YA QUE FALTAN 0 APROBADORES POR APROBAR Y 
-                -- LA CANTIDAD DE APROBADORES ES IGUAL A LA CANTIDAD DE USUARIOS QUE APROBARON              
-                SET @ESTATUS_TEMPORAL = N'DETENER_APROBACION_GENERAL';
-            -- SE CANCELA POR QUE SE TIENE QUE ENVIAR PRIMERO LA FACTURA A LA BD DE ADINCO 
-            END;
-            ELSE
-            BEGIN
-                -- LA APROBACIÓN SIGUE EN PENDIENTE
-                SET @ESTATUS_TEMPORAL = N'CONTINUAR_APROBACION_GENERAL';
-            END;
-        END;
-    END;
-
-    --- LA FACTURA YA FUE ENVIADA A BD DE ADINCO SE TIENE QUE CONTINUAR LA ACTUALIZACIÓN DEL ESTATUS GRAL DE LA APROBACIÓN
-    IF @ACCION = 'ENVIADA_CAMBIAR_ESTATUS_APROBADOR_APROBADO'
-    BEGIN
-        SET @ESTATUS_TEMPORAL = N'CONTINUAR_APROBACION_GENERAL';
-    END;
-
-    --- LA FACTURA DE ADINCO POR ALGUNA RAZON NO SE ENVIO A LA BD DE ADINCO, REVERTIR APROBACIÓN DEL USUARIO ACTUAL NO SE ACTUALIZA ESTATUS DE APROBACIÓN GRAL
-    IF @ACCION = 'REGRESAR_ESTATUS_APROBADOR_PENDIENTE'
-    BEGIN
-        SET @ESTATUS_TEMPORAL = N'';
-        UPDATE TA_Tarea
-        SET IdEstatus = 1,
-            FechaCambioEstatus = NULL,
-            Comentario = ''
-        WHERE IdTarea = @IdTarea;
-        SELECT 'SUCCESS';
-    END;
+			INSERT INTO dbo.TA_Operacion
+			(
+			    IdDocumento,
+			    IdTipoOperacion,
+			    IdFlujoTarea,
+			    IdEstatusOperacion,
+			    IdEstadoFlujo,
+			    IdProveedor,
+			    IdAsignador,
+			    FechaRegistro,
+				IsMercadeo
+			)
+			VALUES
+			(   @ID_ACEPTACION_FACTURA,          -- IdDocumento - int
+			    10,          -- IdTipoOperacion - int
+			    @ID_FLUJO_APROBACION,          -- IdFlujoTarea - int
+			    @ID_ESTATUS_OPERACION,          -- IdEstatusOperacion - int
+			    @ID_ESTATUS_FLUJO,          -- IdEstadoFlujo - int
+			    @IdProveedor,          -- IdProveedor - int
+			    @IdUsuario,          -- IdAsignador - int
+			    GETDATE(),  -- FechaRegistro - datetime
+				1
+			  );
 
 
-    --- # PROCESO DEACUERDO AL ESTATUS GRAL DE LA APROBACIÓN 
+			SET @ID_OPERACION = SCOPE_IDENTITY();
 
-    --- SE RETORNA MENSAJE PARA ENVIAR FACTURA A LA BD DE ADINCO 
-    IF @ESTATUS_TEMPORAL = 'DETENER_APROBACION_GENERAL'
-    BEGIN
+			SET @DESCRIPCION_HISTORIAL = 'El Usuario' + (SELECT Nombre FROM S_USuario WHERE IdUsuario = @IdUsuario)+ ' ha registrado la Tarea de Tipo ' + (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = 10);
 
+			INSERT INTO dbo.TA_HistorialFlujoTarea
+			(
+			    Descripcion,
+			    IdOperacion,
+			    Fecha,
+			    IdEstadoFlujo
+			)
+			VALUES
+			(   @DESCRIPCION_HISTORIAL,       -- Descripcion - nvarchar(max)
+			    @ID_OPERACION,         -- IdOperacion - int
+			    GETDATE(), -- Fecha - datetime
+			    1          -- IdEstadoFlujo - int
+			 );
 
-        SELECT @IdFactura = IdFactura
-        FROM MM_AceptacionFactura
-        WHERE IdAceptacionPedido = @IdAceptacionPedido;
+			IF ISNULL(@ID_FLUJO_APROBACION,0) <> 0
+	BEGIN
+		
+		--CONSULTA DE LOS APROBADORES DE LAS TAREAS
+		INSERT INTO @TABLE_APROBADORES
+		(
+		    IdAprobador,
+		    IdSecuencia,
+		    Nombre,
+		    Correo
+		)
+		SELECT
+			US.IdUsuario,
+			APR.NoSecuencia,
+			US.Nombre,
+			US.Correo
+		FROM dbo.TA_Aprobador AS APR
+			JOIN dbo.S_Usuario AS US 
+				ON US.IdUsuario = APR.IdUsuario
+				AND US.Activo = 1
+		WHERE APR.IdFlujoTarea = @ID_FLUJO_APROBACION
+		GROUP BY US.IdUsuario,
+                 APR.NoSecuencia,
+                 US.Nombre,
+                 US.Correo
+		ORDER BY APR.NoSecuencia ASC;
 
-        SELECT @IdDocumento = IdDocumento
-        FROM TA_Operacion
-        WHERE IdOperacion = @IdOperacion;
+		SET @ID_TIPO_FLUJO = (SELECT IdTipoFlujo FROM dbo.TA_FlujoTarea WHERE IdFlujoTarea = @ID_FLUJO_APROBACION);
 
-        SELECT 'ENVIAR_FACTURA',
-               ISNULL(@IdFactura, 0),
-               ISNULL(@IdDocumento, 0);
+		--CREACION DE LAS TAREAS DE LOS APROBADORES
+		INSERT INTO dbo.TA_Tarea
+		(
+			NombreTarea,
+			IdAprobador,
+			IdEstatus,
+			FechaRegistro,
+			Activo,
+			NoSecuencia,
+			IdOperacion
+		)
+		SELECT 
+			'Aprobación de Factura',
+			TAP.IdAprobador,
+			1,
+			GETDATE(),
+			1,
+			TAP.IdSecuencia,
+			@ID_OPERACION
+		FROM @TABLE_APROBADORES AS TAP;
 
-    END;
+		--ENVIO DE LOS CORREOS DE APROBACION
+		IF @ID_TIPO_FLUJO = 1--FLUJO SERIAL
+		BEGIN
+		    
+			SET @CONT = 1;
+			SET @CONTTOTAL = 1;-- SOLO SE LE ENVIARA AL PRIMERO
 
-    --- ENTRA A ESTA CONDICION SIEMPRE Y CUANDO LA APROBACIÓN GRAL SER RECHAZADA,PENDIENTE O YA SE ENVIO LA FACTURA 
-    IF @ESTATUS_TEMPORAL = 'CONTINUAR_APROBACION_GENERAL'
-    BEGIN
+		END
 
-        -- ACTUALIZAR ESTATUS DE TAREA ---
+		IF @ID_TIPO_FLUJO = 2--FLUJO PARALELO
+		BEGIN
+		    
+			SET @CONT = 1;
+			SET @CONTTOTAL = (SELECT COUNT(1) FROM @TABLE_APROBADORES);--SE ENVIA A TODOS
 
-        UPDATE TA_Tarea
-        SET IdEstatus = @IdEstatus,
-            FechaCambioEstatus = GETDATE(),
-            Comentario = @Comentario
-        WHERE IdTarea = @IdTarea;
+		END
+		
 
-        ----AGREGAR EVENTO AL HISTORIAL DE LA APROBACIÓN---
+		WHILE @CONT <= @CONTTOTAL
+		BEGIN
+			SET @NOMBRE_APROBADOR = (SELECT Nombre FROM @TABLE_APROBADORES WHERE ID = @CONT);
+			SET @CORREO_APROBADOR = (SELECT Correo FROM @TABLE_APROBADORES WHERE ID = @CONT);
+		    SET @PLANTILLA_CORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 37);
+			SET @PLANTILLA_ASUNTO = (SELECT Asunto FROM dbo.TA_Correo WHERE IdCorreo = 37);
 
-        DECLARE @ESTATUSTA NVARCHAR(MAX);
-        SELECT @ESTATUSTA = Nombre
-        FROM TA_Estatus
-        WHERE IdEstatus = @IdEstatus;
+			SET @PLANTILLA_ASUNTO = REPLACE(@PLANTILLA_ASUNTO,'##NUMERO_OPERACION##', CAST(@IdAceptacionPedido AS NVARCHAR));
+			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##NUMERO_OPERACION##', CAST(@IdAceptacionPedido AS NVARCHAR));
+			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##NOMBRE_USUARIO##', ISNULL(@NOMBRE_APROBADOR,''));
+			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'#CONTRATO#', ISNULL(@NOMBRE_CONTRATO,''));
+			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##ANIO_ACTUAL##', YEAR(GETDATE()));
+			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##TIPO_OPERACION##', 'Aprobación de Factura');
+			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##URL_TAREA##', 'https://procura.adinco.mx/02Proveedores/RecepcionVentanillaDetalle.aspx?aceptacion=' + CAST(@IdAceptacionPedido AS NVARCHAR));
 
-        IF @ESTATUSTA = 'Aprobada'
-        BEGIN
-            SET @ESTATUSTA = N'Aprobado';
-        END;
+			SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
-        IF @ESTATUSTA = 'Rechazada'
-        BEGIN
-            SET @ESTATUSTA = N'Rechazado';
-        END;
-        IF @ESTATUSTA = 'Vencida'
-        BEGIN
-            SET @ESTATUSTA = N'Vencido';
-        END;
-        SET @DescripcionH
-            = N'El Usuario ' +
-              (
-                  SELECT Nombre FROM S_Usuario WHERE IdUsuario = @IdUsuario
-              ) + N' ha ' + @ESTATUSTA + N' la Tarea.';
-        IF @Comentario <> ''
-        BEGIN
-            SET @DescripcionH = @DescripcionH + N' Detalle: ' + @Comentario;
-        END;
+			INSERT INTO Adinco.dbo.S_Notificacion
+			(
+				    IdNotificacion,
+				    Para,
+				    Asunto,
+				    Mensaje,
+				    FechaProgramadaEnvio,
+				    Enviada,
+				    FechaEnvio,
+				    CreadoPor,
+				    CreadoEl,
+				    ModificadoPor,
+				    ModificadoEl,
+				    De,
+				    EN_MsjEnviado
+			)
+			VALUES
+			(	@IDNOTIFICACION,         -- IdNotificacion - bigint
+				@CORREO_APROBADOR,        -- Para - varchar(1000)
+				@PLANTILLA_ASUNTO,        -- Asunto - varchar(500)
+				@PLANTILLA_CORREO,        -- Mensaje - text
+				DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
+				0,      -- Enviada - bit
+				NULL, -- FechaEnvio - datetime
+				3,         -- CreadoPor - int
+				GETDATE(), -- CreadoEl - datetime
+				NULL,         -- ModificadoPor - int
+				NULL, -- ModificadoEl - datetime
+				'procura@adinco.mx',        -- De - varchar(100)
+				NULL       -- EN_MsjEnviado - bit
+			);
 
-        INSERT INTO TA_HistorialFlujoTarea
-        (
-            IdOperacion,
-            Fecha,
-            Descripcion,
-            IdEstadoFlujo
-        )
-        VALUES
-        (@IdOperacion, GETDATE(), @DescripcionH, 2);
+			INSERT INTO dbo.TA_EnvioCorreo
+			(
+					IdEnvioAdinco,
+					IdCorreo,
+					IdIdentificacion,
+					EnviadoPor,
+					EnviadoEl
+			)
+			VALUES
+			(   @IdNotificacion, -- IdEnvioAdinco - int
+					37, -- CORREO DE PETICION OFERTA
+					CONCAT(@ID_OPERACION,' - Aprobación Factura de Aceptación Pedido #' , CAST(@IdAceptacionPedido AS NVARCHAR)),  -- IdIdentificacion - int
+					@IdUsuario,
+					GETDATE()
+			);
 
+			INSERT INTO dbo.TA_BitacoraCorreo
+			(
+					IdDocumento,
+					Detalle,
+					Correo,
+					Enviado,
+					FechaEnvio,
+					IdUsuarioEnvio,
+					IdProveedorEnvio,
+					IdUsuarioReceptor
+			)
+			VALUES
+			(   @IdAceptacionPedido,         -- IdDocumento - int
+				@PLANTILLA_ASUNTO,       -- Detalle - nvarchar(max)
+				@CORREO_APROBADOR,       -- Correo - nvarchar(350)
+				1,      -- Enviado - bit
+				GETDATE(), -- FechaEnvio - datetime
+				0,         -- IdUsuarioEnvio - int
+				0,         -- IdProveedorEnvio - int
+				0          -- IdUsuarioReceptor - int
+			);
 
-        --- EJECUTAR EL CAMBIO DE ESTATUS GENERAL DE LA OPERACION  -----
+			SET @CONT = @CONT + 1;
 
-        EXEC SP_TA_CambiarEstatusFlujoFactura @IdOperacion, @IdAceptacionPedido;
+		END
 
+	END;
+	END;
 
-        --- OBTENER LA INFORMACIÓN DEL FLUJO, LISTA DE APROBADORES  --- 
-
-
-        SELECT @IdFactura = IdFactura
-        FROM MM_AceptacionFactura
-        WHERE IdAceptacionPedido = @IdAceptacionPedido;
-
-
-        SELECT DISTINCT
-               TOO.IdDocumento,
-               FT.IdFlujoTarea,
-               FT.IdTipoFlujo,
-               TOO.IdEstatusOperacion,
-               TAE.Nombre,
-               TOO.IdEstadoFlujo,
-               TOO.IdTipoOperacion,
-               TTO.NombreOperacion,
-               U.IdUsuario,
-               T.NoSecuencia,
-               U.Nombre,
-               U.Correo,
-               T.IdEstatus,
-               TOO.IdOperacion,
-               TOO.IdAsignador,
-               TOO.IdProveedor,
-               @IdFactura AS IdFactura,
-               @Comentario,
-               TAE.Name
-        FROM TA_Tarea AS T
-            JOIN TA_Operacion AS TOO
-                ON TOO.IdOperacion = T.IdOperacion
-            JOIN TA_FlujoTarea AS FT
-                ON FT.IdFlujoTarea = TOO.IdFlujoTarea
-            JOIN S_Usuario AS U
-                ON U.IdUsuario = T.IdAprobador
-            JOIN TA_TipoOperacion AS TTO
-                ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
-            JOIN TA_Estatus AS TAE
-                ON TAE.IdEstatus = TOO.IdEstatusOperacion
-        WHERE T.IdOperacion = @IdOperacion
-              AND T.Activo = 1
-        ORDER BY NoSecuencia ASC;
-
-    END;
-
-END;
-
+	
+	
+	SELECT @ID_OPERACION AS IdOperacion;
+	
+	 
+END
