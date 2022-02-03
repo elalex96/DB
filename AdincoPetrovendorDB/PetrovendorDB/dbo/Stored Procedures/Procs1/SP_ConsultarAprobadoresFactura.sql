@@ -41,7 +41,7 @@ BEGIN
 	TAO.IdEstatusOperacion  AS EstatusFactura	
 	FROM TA_Tarea TT 	
 	INNER JOIN TA_Operacion TAO ON TT.IdOperacion = TAO.IdOperacion
-	LEFT JOIN S_Usuario U	ON U.IdUsuario = TT.IdAprobador	AND U.Activo = 1
+	INNER JOIN S_Usuario U	ON U.IdUsuario = TT.IdAprobador	AND U.Activo = 1
 	LEFT JOIN TA_Estatus TE ON TE.IdEstatus = TT.IdEstatus	
 	LEFT JOIN dbo.S_Usuario UA ON TT.AsignadoPor= UA.IdUsuario
 	WHERE   TAO.IdTipoOperacion = 10 ---> APROBACIÓN DE FACTURA
