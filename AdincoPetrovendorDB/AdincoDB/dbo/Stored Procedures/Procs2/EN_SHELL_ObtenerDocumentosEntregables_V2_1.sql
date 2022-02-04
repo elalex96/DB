@@ -1068,7 +1068,7 @@ BEGIN
 			ELSE ''
 		END AS CreadoEl,
 		CantidadArchivos,
-		(SELECT IdCarpeta FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior) AS IdCarpetaAnterior,
+		ISNULL((SELECT IdCarpeta FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior),0) AS IdCarpetaAnterior,
 		ISNULL(CF.Frecuencia,0) AS Frecuencia,
 		LEFT(Funcion,50) AS Funcion,
 		FuncionTipo,
