@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿if exists(select * from sys.procedures where name = 'SP_JA_EnviarCorreoComentarioPregunta')
+begin
+	drop proc SP_JA_EnviarCorreoComentarioPregunta
+end
+
+go
+
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
 -- Description:	<Envio de correo de notificacion de pregunta en la oferta>
@@ -26,6 +33,11 @@ BEGIN
 	DECLARE @CORREOUSUARIOPROVEEDOR NVARCHAR(100);
 	DECLARE @IdNotificacion INT;
 	DECLARE @URL NVARCHAR(MAX);
+
+	declare @IdCorreo int
+
+	select @IdCorreo = IdCorreo from dbo.TA_Correo where Asunto = 'Comentario(Pregunta) Referente a Requisicion '
+	
 
 	CREATE TABLE #DATOSCORREO(
 		IdRow INT IDENTITY(1,1) PRIMARY KEY,
@@ -157,11 +169,19 @@ BEGIN
 	--CONTADOR DEL TOTAL EN LA TABLA
 	SET @TOTALROWS = (SELECT COUNT(IdRow) FROM #DATOSCORREO);
 
+	SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = @IdCorreo);
+	if(@HTMLCORREO is null)
+	begin
+		insert into BitacoraErrores values (0,'No se encontró la plantilla del correo', 'Error en el sp SP_JA_EnviarCorreoComentarioPregunta', @IdUsuario, @IdProveedor, GETDATE())
+		select @HTMLCORREO = ''
+	end
+
 	--ITERACION DE LA TABLA
 	WHILE @CONTROWS <= @TOTALROWS
 	BEGIN
 	    --CONSULTA PARA OBTENER EL HTML DEL CORREO
-		SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 98);
+		--SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 98
+		
 		SET @USUARIOPROVEEDOR = (SELECT NombreUsuario FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
 		SET @CORREOUSUARIOPROVEEDOR = (SELECT Correo FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
 		SET @URL = (SELECT URL FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
@@ -176,7 +196,7 @@ BEGIN
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##URL_TAREA##',@URL));
 
 		SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-
+		
 		INSERT INTO Adinco.dbo.S_Notificacion
 		(
 			IdNotificacion,
@@ -207,23 +227,27 @@ BEGIN
 			NULL,
 			'procura@adinco.mx'
 		);
+		--select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion
+		if (exists(select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion) and isnull(@HTMLCORREO,'')<>'')
+		begin
 
-		INSERT INTO dbo.TA_EnvioCorreo
-		(
-			IdEnvioAdinco,
-			IdCorreo,
-			IdIdentificacion,
-			EnviadoPor,
-			EnviadoEl
-		)
-		VALUES
-		(   
-			@IdNotificacion, -- IdEnvioAdinco - int
-			98, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
-			CONCAT('0 - Nuevo Comentario(Pregunta) Solicitud de Pedido #' , @IdSolicitudPedido),  -- IdIdentificacion - int
-			0,
-			GETDATE()
-		);
+			INSERT INTO dbo.TA_EnvioCorreo
+			(
+				IdEnvioAdinco,
+				IdCorreo,
+				IdIdentificacion,
+				EnviadoPor,
+				EnviadoEl
+			)
+			VALUES
+			(   
+				@IdNotificacion, -- IdEnvioAdinco - int
+				@IdCorreo, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
+				CONCAT('0 - Nuevo Comentario(Pregunta) Solicitud de Pedido #' , @IdSolicitudPedido),  -- IdIdentificacion - int
+				0,
+				GETDATE()
+			);
+		end
 
 		SET @CONTROWS = @CONTROWS + 1;
 
@@ -231,5 +255,4 @@ BEGIN
 
 END
 
-
---SELECT * FROM Adinco.dbo.S_Notificacion ORDER BY IdNotificacion DESC
+go
