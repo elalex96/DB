@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_EnvioAprobacionFactura]    Script Date: 01/02/2022 11:32:22 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_FI_EnvioAprobacionFactura]    Script Date: 04/02/2022 12:29:29 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
