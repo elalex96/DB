@@ -1,82 +1,46 @@
-﻿
-CREATE PROCEDURE [dbo].[SP_MPY_CambioEstatusAprobacionPRESES]
-	-- Add the parameters for the stored procedure here
-	@IdPRESES INT,
-	@IdEstatus INT,
-	@IdUsuario INT,
-	@Justificacion NVARCHAR(MAX)
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
+﻿CREATE proc [dbo].[p_UpdateProformaSES_GR]
+AS 
+begin
+	CREATE TABLE #SESPROFROMATEMP
+	(
+		ID INT IDENTITY(1,1),
+		PROFORMA INT,
+		SES NVARCHAR(50)
+	);
 
-	declare @matDocGR varchar(20),
-			@ReferenceNumber	varchar(20),
-			@GRNumber			varchar(20),
-			@PO					varchar(100)
-
-	--use adinco
-	select	@ReferenceNumber		=	SAPSESNumber, 
-			@GRNumber				=	MatDocN ,
-			@PO						= SAPPONumber
-	from	adinco..CO_SAPPRESES 
-	where	IdPreses				=	@IdPRESES
+	INSERT INTO #SESPROFROMATEMP
+	SELECT
+		PSES.IdPRESES,
+		SES.SESNumber
+	FROM Adinco.dbo.CO_SAPPRESES AS PSES
+	LEFT JOIN Adinco.dbo.CO_SAPVendor AS VE ON VE.VendorIDSAP = PSES.SAPVendorNumber
+	LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber = PSES.SAPPONumber
+	LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber and 
+									po.Plant = ses.Plant
+	WHERE SES.SESNumber <> isnull(PSES.SESN,'') and 
+	ISNULL(SES.SESNumber,'') <> '' AND
+	pses.IdEstatus IN (1,2)
+	
+	GROUP BY PSES.IdPRESES,
+			 SES.SESNumber
 
 	
 
-	--Verificar si la proforma está aprobada
-	IF EXISTS (
-		SELECT 1
-		FROM Adinco..CO_SAPSES
-		WHERE PO_SAPNumer = RTRIM(LTRIM(@PO)) AND
-		SESReferenceNumber = RTRIM(LTRIM(@ReferenceNumber))
-	)
-	OR EXISTS (
-		SELECT 1
-		FROM Adinco..CO_SAPGR
-		WHERE PO_SAPNumber =  RTRIM(LTRIM(@PO)) AND
-		GRReferenceNumber = RTRIM(LTRIM(@ReferenceNumber))
-	)
+	DECLARE @CONTPROFOR INT = (SELECT COUNT(IdPRESES) FROM Adinco.dbo.CO_SAPPRESES);
+	DECLARE @CONT INT = 1;
+	DECLARE @SESNUMBER NVARCHAR(50);
+
+	WHILE @CONT < @CONTPROFOR
 	BEGIN
 	
-			select @matDocGR = gr.MatDocN
-			from Adinco..CO_SAPGR gr
-			inner join Adinco..CO_SAPPRESES  pr on pr.SAPPONumber = gr.PO_SAPNumber 									
-			where pr.IdPRESES		= @IdPRESES and
-			gr.GRReferenceNumber = pr.SAPSESNumber
+		SET @SESNUMBER = (SELECT SES FROM #SESPROFROMATEMP WHERE ID = @CONT)
 
+		UPDATE Adinco.dbo.CO_SAPPRESES
+		SET SESN = @SESNUMBER
+		WHERE IdPRESES IN (SELECT PROFORMA FROM #SESPROFROMATEMP WHERE ID = @CONT)
+		AND IdEstatus = 2--Solo cuando esté aprobada
 
-			-- Insert statements for procedure here
-			UPDATE Adinco.dbo.CO_SAPPRESES 
-			SET		IdEstatus		= @IdEstatus,
-					Justificacion	= @Justificacion,
-					ModificadoPor	= @IdUsuario,
-					ModificadoEl	= GETDATE(),
-					MatDocN = @matDocGR
-			FROM Adinco.dbo.CO_SAPPRESES PRO 
-			WHERE	IdPRESES		= @IdPRESES
-
-			SELECT 'SUCCESS'	
-
-				--use adinco
-			select	@ReferenceNumber		=	SAPPONumber, 
-					@GRNumber				=	MatDocN 
-			from	adinco..CO_SAPPRESES 
-			where	IdPreses				=	@IdPRESES
-
-			exec adinco..p_MPY_CO_SAPPRESES_Bitacora_Ins 
-				@ReferenceNumber,
-				@GRNumber,
-				@IdUsuario,
-				@IdPreses,
-				@IdEstatus,
-				@Justificacion
+		SET @CONT = @CONT + 1;
 
 	END
-
-	
 END
-
-
-
