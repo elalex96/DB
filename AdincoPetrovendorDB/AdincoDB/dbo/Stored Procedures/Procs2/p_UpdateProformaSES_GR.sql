@@ -38,6 +38,7 @@ begin
 		UPDATE Adinco.dbo.CO_SAPPRESES
 		SET SESN = @SESNUMBER
 		WHERE IdPRESES IN (SELECT PROFORMA FROM #SESPROFROMATEMP WHERE ID = @CONT)
+		AND IdEstatus = 2--Solo cuando esté aprobada
 
 		SET @CONT = @CONT + 1;
 
