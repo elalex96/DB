@@ -1,5 +1,5 @@
 ﻿-- p_CO_SAP_Proformas_List 10023,1
-alter PROC p_CO_SAP_Proformas_List
+CREATE PROC p_CO_SAP_Proformas_List
 @pIdCotratista INT,
 @pEstatus INT
 AS
