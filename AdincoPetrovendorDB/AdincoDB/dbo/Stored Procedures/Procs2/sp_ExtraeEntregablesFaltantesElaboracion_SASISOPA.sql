@@ -122,7 +122,7 @@ WHERE
         IE.FechaCalculadaEntregaReg  AS  FechaEntregaRegulador,
         IE.FechasLimiteAprobacion,
         E.NombreEstado   AS  Estatus,
-        ISNULL(F.FrecuenciaEntregable,'')    AS FrecuenciaEntregable,
+ ISNULL(F.FrecuenciaEntregable,'')    AS FrecuenciaEntregable,
         ISNULL(ET.Etapa,'')  AS  Etapa,
         ISNULL(EN.idRegulador,'')    AS  idRegulador,
         @Count AS countI,
@@ -150,8 +150,11 @@ WHERE
 			THEN	1
 		ELSE	0
 		END	AS BitSasisopa,
-		EN.Observaciones  
-
+		EN.Observaciones,
+		CASE
+			WHEN EN.BitAwareness = 1 THEN 'SI'
+			ELSE 'NO'
+		END AS TipoJOA
     FROM    
 		#TempInstancias TI
     JOIN    
@@ -256,7 +259,11 @@ WHERE
 			THEN	1
 		ELSE	0
 		END	AS BitSasisopa,
-		EN.Observaciones  
+		EN.Observaciones,
+				CASE
+			WHEN EN.BitAwareness = 1 THEN 'SI'
+			ELSE 'NO'
+		END AS TipoJOA
     FROM    
 		#TempInstancias TI
     JOIN    
