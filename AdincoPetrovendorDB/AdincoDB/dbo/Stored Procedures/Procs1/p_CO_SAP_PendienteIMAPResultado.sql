@@ -10,5 +10,5 @@ as
 			Procesado
 	from [CO_SAP_IMAPResultado]
 	where IdContratista = @pIdContratista and 
-	isnull(Procesado,0) = 0
-	
+	isnull(Procesado,0) = 0 AND
+	FechaProcesado >= DATEADD(DD,-30,GETDATE())

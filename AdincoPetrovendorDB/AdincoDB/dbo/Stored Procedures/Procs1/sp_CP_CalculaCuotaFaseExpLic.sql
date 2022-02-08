@@ -55,10 +55,10 @@ AS
 				 WHEN YEAR(@Periodo) = 2021  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
 					THEN 3449.63
 				WHEN YEAR(@Periodo) = 2022  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) <= 5
-				 THEN 1442.58  
+				 THEN 1548.88  
 				 WHEN YEAR(@Periodo) = 2022  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
-					THEN 3449.63
-                  ELSE 1442.58  
+					THEN 3703.86
+                  ELSE 1548.88  
                 END AS CuotaKm2,  
                 AC.SuperficieKm2,  
                 CASE 
@@ -79,10 +79,10 @@ AS
 				  WHEN YEAR(@Periodo)  = 2021 AND DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
 				  THEN 3449.63 * AC.SuperficieKm2
 				  WHEN YEAR(@Periodo)  = 2022  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) <= 5
-				 THEN 1442.58  * AC.SuperficieKm2  
+				 THEN 1548.88  * AC.SuperficieKm2  
 				  WHEN YEAR(@Periodo)  = 2022 AND DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
-				  THEN 3449.63 * AC.SuperficieKm2 
-				   ELSE 1442.58 * AC.SuperficieKm2
+				  THEN 3703.86 * AC.SuperficieKm2 
+				   ELSE 1548.88 * AC.SuperficieKm2
                 END AS Cuota  
          FROM CO_AreaContractual AC  
               JOIN co_contrato C ON c.IdAreaContractual = AC.IdAreaContractual  

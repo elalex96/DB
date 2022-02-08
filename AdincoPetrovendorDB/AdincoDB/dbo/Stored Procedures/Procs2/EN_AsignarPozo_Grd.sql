@@ -1,4 +1,4 @@
-﻿if exists (select * from sys.procedures where name = 'EN_AsignarPozo_Grd')
+﻿if exists(select * from sys.procedures where name = 'EN_AsignarPozo_Grd')
 begin
 	drop proc EN_AsignarPozo_Grd
 end
@@ -7,7 +7,6 @@ go
 
 CREATE PROCEDURE [dbo].[EN_AsignarPozo_Grd]
     @idContrato INT
-
 AS  
 BEGIN  
     SET NOCOUNT ON;  
@@ -62,9 +61,9 @@ BEGIN
 					''
 		FROM		dbo.EN_MarcoLegal			ml  
 		right join	dbo.EN_Entregable			e  
-		ON			ml.IdMarcoLegal				=	e.IdMarcoLegal
+		ON			e.IdMarcoLegal				=		ml.IdMarcoLegal  
 		inner join	dbo.EN_ContratoEntregable		CE		
-		ON			e.IdEntregable				=	CE.IdEntregable 
+		ON			CE.IdEntregable				=		e.IdEntregable 
 		and			IdContrato					=		@idContrato
 		and			E.IsActivo					=		1
 		and			E.BitJOA					=		0
@@ -82,6 +81,7 @@ BEGIN
 		ORDER BY	FechasLimiteAprobacion		ASC
 
 		
+
         
 		INSERT INTO #ResponsablesInstancias (idInstanciaEntregable, IdContratoEntregable, Elaborador, Revisores,  
                                          Aprobadores, proceso)  
@@ -124,6 +124,8 @@ BEGIN
 	and				TI.idInstanciaEntregable		=		EXAP.IdInstanciasEntregables  
 	left join		dbo.AP_Usuario					UXP  
 	ON				EXAP.idUsuario					=		UXP.UsuarioID  
+	--inner join		#tmpInstanciasRevisoresXML		t1XML
+	--on				t1XML.IdInstanciaEntregable		=		TI.idInstanciaEntregable
     GROUP BY		TI.idInstanciaEntregable,  
 					TI.IdContratoEntregable,  
 					CASE ISNULL(EXAE.idUsuario, '')		WHEN '' THEN	UE.Nombre  
@@ -202,11 +204,12 @@ BEGIN
 				E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
 				E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion',
 				ISNULL(ECA.AbandonoArea,0) AS AbandonoArea,  
-				ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo
+				ISNULL(ECA.AbandonoPozo,0) AS AbandonoPozo,
+				ins.NombreInstalacion
 
 
 		FROM		#ResponsablesInstancias							TI  
-		inner join	dbo.EN_InstanciasEntregable						I	 
+		inner join	dbo.EN_InstanciasEntregable						I	 --EXEC sp_helpindex EN_InstanciasEntregable
 		ON			TI.idInstanciaEntregable						=	I.idInstanciaEntregable  
 		inner join	dbo.EN_Actividad								A  
 		ON			I.ActividadID									=	A.ActividadID  
@@ -255,6 +258,5 @@ BEGIN
 		WHERE		CE.IdContrato									=		@idContrato 
 		AND			E.IsActivo										=		1
 		AND			ISNULL(CE.BitNA,0)								<>		1
+		and			YEAR(FechaCalculadaEntregaReg)					<=		year(getdate())+3
 end
-
-go

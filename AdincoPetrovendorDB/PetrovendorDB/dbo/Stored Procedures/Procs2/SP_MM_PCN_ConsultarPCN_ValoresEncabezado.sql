@@ -1,6 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 06/04/2021 02:42:05 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 04/02/2022 04:59:02 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,7 +19,11 @@ GO
 -- Update date: 24/09/2019
 -- Description:	Redonde a 3 digitos del PCN segun la SE
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]  
+-- Author:  Alexander Gomez  
+-- Create date: 01/02/2021
+-- Description: Se resta un dia menos a la fecha de tipo de cambio
+-- =============================================  
+ALTER PROCEDURE [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]  
  
 @IdAceptacionPedidoDetalle int
  
@@ -60,13 +64,13 @@ BEGIN
 						(
 							SELECT TC.TipoCambio
 							FROM Adinco.dbo.CO_TipoCambioDiario TC
-							WHERE DAY(PTC.FechaTipoCambio) = DAY(TC.Fecha)
-								AND MONTH(PTC.FechaTipoCambio) = MONTH(TC.Fecha)
-								AND YEAR(PTC.FechaTipoCambio) = MONTH(TC.Fecha)
-								AND TC.IdMoneda =@IdMonedaNacional
+							WHERE DAY(PTC.FechaTipoCambio) = DAY(DATEADD(DAY,-1,GETDATE()))
+								AND MONTH(PTC.FechaTipoCambio) = MONTH(DATEADD(DAY,-1,GETDATE()))
+								AND YEAR(PTC.FechaTipoCambio) = MONTH(DATEADD(DAY,-1,GETDATE()))
+								AND TC.IdMoneda = @IdMonedaNacional
 						),
 						(
-							SELECT TipoCambio FROM dbo.GetTipoCambioActual(@IdMonedaNacional, P.Creadoel)
+							SELECT TipoCambio FROM dbo.GetTipoCambioActual(@IdMonedaNacional, DATEADD(DAY,-1,GETDATE()))
 						)
 							) * PD.PrecioUnitario
 					) * (APD.Cantidad),
@@ -114,8 +118,8 @@ BEGIN
 	 SELECT V.IdValoresEnPesosPedidoDetalle, 
 	 V.VNMO_SueldoNacional, 
 	 V.VMO_Sueldo, 
-	 --ROUND(ISNULL(APD.PCN,0),3) AS PCN,
-	 CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
+	 ROUND(ISNULL(APD.PCN,0),3) AS PCN,
+	 --CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
 	 --SUBSTRING(LTRIM(ISNULL(APD.PCN,0)),1,CHARINDEX('.',LTRIM(ISNULL(APD.PCN, ''))) + 3) AS PCN,
 	 ISNULL(V.IdTipoMaterialServicio,0) AS TipoMaterial, 
 	 ISNULL(V.IdTipoNacionalidad,0) AS IdTipoNacionalidad, 
@@ -137,4 +141,3 @@ BEGIN
 
  
 END
-
