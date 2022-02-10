@@ -1,8 +1,15 @@
-﻿-- =============================================
+﻿USE petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_TA_RemoverAprobadorFactura
+GO
+-- =============================================
 -- Author:		<Daniel AC>
 -- Create date: <02-08-19>
 -- Description:	Agregue, reinicio de aprobación de los aprobadores que ya tenian un estatus de aprobado y consulta para reenviarles notificación de reinicio
 -- =============================================
+-- Author:		Luis David
+-- Create date: 10-03-2022
+-- Description:	Se agrega el filtro de aprobadores activos
 CREATE PROCEDURE [dbo].[SP_TA_RemoverAprobadorFactura] --420, 2
 @IdProveedor INT,
 @IdUsuario INT,
@@ -102,7 +109,8 @@ BEGIN
 			AND T.IdOperacion=@IdOperacion
 		
 			INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
-			SELECT CONCAT('Reinicio de aprobación del usuario ', ISNULL(U.Nombre,''), ', Última modificación: ',FORMAT(TA.FechaCambioEstatus,'dd/MM/yyyy hh:mm tt'),' del Estatus Aprobado al Estatus Pendiente.', 'Modificación (Eliminación de un aprobador del flujo de aprobación) realizada por ', ISNULL(UR.Nombre,'')), T.IdOperacion,@FechaMod, 6 --> Tarea Reiniciada
+			SELECT CONCAT('Reinicio de aprobación del usuario ', ISNULL(U.Nombre,''), ', Última modificación: ',FORMAT(TA.FechaCambioEstatus,'dd/MM/yyyy hh:mm tt'),' del Estatus Aprobado al Estatus Pendiente.', 'Modificación (Eliminación de un aprobador del flujo 
+de aprobación) realizada por ', ISNULL(UR.Nombre,'')), T.IdOperacion,@FechaMod, 6 --> Tarea Reiniciada
 			FROM #TAREAS_APROBADAS TA
 			INNER JOIN dbo.TA_Tarea T ON T.IdTarea = TA.IdTarea
 			LEFT JOIN dbo.S_Usuario U ON U.IdUsuario=T.IdAprobador
@@ -156,7 +164,8 @@ BEGIN
 				AND PG.IdProveedorCliente=P.IdProveedorCompras
 				LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario ---> usuario elimino al aprobador 
 			WHERE T.IdOperacion = @IdOperacion
-			AND T.IdTarea=@IdTarea				
+			AND T.IdTarea=@IdTarea
+			AND ISNULL(U.Activo,0) = 1
 			GROUP BY
 			 U.IdUsuario,--0
 				T.NoSecuencia,--1
@@ -229,7 +238,8 @@ BEGIN
 					LEFT JOIN dbo.MM_Pedidos PG ON PG.IdIdentificador=P.IdPedido
 					AND PG.IdProveedorCliente=P.IdProveedorCompras
 					LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario ---> usuario elimino al aprobador 
-				WHERE T.IdOperacion = @IdOperacion							
+				WHERE T.IdOperacion = @IdOperacion	
+				AND ISNULL(U.Activo,0) = 1
 				GROUP BY
 				 U.IdUsuario,--0
 					T.NoSecuencia,--1
