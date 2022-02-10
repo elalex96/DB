@@ -88,7 +88,8 @@ BEGIN
 				UPDATE T
 				SET T.NoSecuencia=A.NewNoSecuencia
 				FROM dbo.TA_Tarea T
-				INNER JOIN #Aprobadores A ON A.IdTarea = T.IdTarea
+				INNER JOIN #Aprobadores A 
+				ON T.IdTarea = A.IdTarea
 					
 			 END 
 
@@ -105,7 +106,8 @@ BEGIN
 			SET T.IdEstatus=1, --- REINICIO DE ESTATUS
 			T.FechaCambioEstatus=NULL 
 			FROM dbo.TA_Tarea  T 
-			INNER JOIN #TAREAS_APROBADAS TA ON T.IdTarea = TA.IdTarea
+			INNER JOIN #TAREAS_APROBADAS TA 
+			ON T.IdTarea = TA.IdTarea
 			AND T.IdOperacion=@IdOperacion
 		
 			INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
@@ -146,21 +148,23 @@ de aprobación) realizada por ', ISNULL(UR.Nombre,'')), T.IdOperacion,@FechaMod,
 				ISNULL(UE.Nombre, 'No identificado') AS UsuarioElimino --
 			FROM TA_Tarea AS T
 				INNER JOIN TA_Operacion AS TOO
-					ON TOO.IdOperacion = T.IdOperacion
+					ON T.IdOperacion = TOO.IdOperacion
 				INNER JOIN TA_FlujoTarea AS FT
-					ON FT.IdFlujoTarea = TOO.IdFlujoTarea
+					ON TOO.IdFlujoTarea = FT.IdFlujoTarea
 				INNER JOIN S_Usuario AS U
-					ON U.IdUsuario = T.IdAprobador
+					ON T.IdAprobador = U.IdUsuario
 				INNER JOIN TA_TipoOperacion AS TTO
-					ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
+					ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
 				INNER JOIN TA_Estatus AS TAE
-					ON TAE.IdEstatus = TOO.IdEstatusOperacion
+					ON TOO.IdEstatusOperacion = TAE.IdEstatus
 				LEFT JOIN dbo.MM_AceptacionFactura AF 
-					ON AF.IdAceptacionFactura=TOO.IdDocumento
+					ON TOO.IdDocumento = AF.IdAceptacionFactura
 				LEFT JOIN dbo.MM_AceptacionPedido AP 
-					ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-				LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-				LEFT JOIN dbo.MM_Pedidos PG ON PG.IdIdentificador=P.IdPedido
+					ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+				LEFT JOIN dbo.MM_Pedido P 
+					ON AP.IdPedido = P.IdPedido
+				LEFT JOIN dbo.MM_Pedidos PG 
+					ON P.IdPedido = PG.IdIdentificador
 				AND PG.IdProveedorCliente=P.IdProveedorCompras
 				LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario ---> usuario elimino al aprobador 
 			WHERE T.IdOperacion = @IdOperacion
@@ -219,25 +223,28 @@ de aprobación) realizada por ', ISNULL(UR.Nombre,'')), T.IdOperacion,@FechaMod,
 					ISNULL(UE.Nombre, 'No identificado') AS UsuarioElimino --
 				FROM TA_Tarea AS T
 				    INNER JOIN #TAREAS_APROBADAS TA 
-						ON TA.IdTarea = T.IdTarea
+						ON T.IdTarea = TA.IdTarea
 					INNER JOIN TA_Operacion AS TOO
-						ON TOO.IdOperacion = T.IdOperacion
+						ON T.IdOperacion = TOO.IdOperacion
 					INNER JOIN TA_FlujoTarea AS FT
-						ON FT.IdFlujoTarea = TOO.IdFlujoTarea
+						ON TOO.IdFlujoTarea = FT.IdFlujoTarea
 					INNER JOIN S_Usuario AS U
-						ON U.IdUsuario = T.IdAprobador
+						ON T.IdAprobador = U.IdUsuario
 					INNER JOIN TA_TipoOperacion AS TTO
-						ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
+						ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
 					INNER JOIN TA_Estatus AS TAE
-						ON TAE.IdEstatus = TOO.IdEstatusOperacion					
+						ON TOO.IdEstatusOperacion = TAE.IdEstatus					
 					LEFT JOIN dbo.MM_AceptacionFactura AF 
-						ON AF.IdAceptacionFactura=TOO.IdDocumento
+						ON TOO.IdDocumento = AF.IdAceptacionFactura
 					LEFT JOIN dbo.MM_AceptacionPedido AP 
-						ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-					LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-					LEFT JOIN dbo.MM_Pedidos PG ON PG.IdIdentificador=P.IdPedido
+						ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+					LEFT JOIN dbo.MM_Pedido P 
+						ON AP.IdPedido = P.IdPedido
+					LEFT JOIN dbo.MM_Pedidos PG 
+						ON P.IdPedido = PG.IdIdentificador
 					AND PG.IdProveedorCliente=P.IdProveedorCompras
-					LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario ---> usuario elimino al aprobador 
+					LEFT JOIN dbo.S_Usuario UE 
+						ON @IdUsuario = UE.IdUsuario---> usuario elimino al aprobador 
 				WHERE T.IdOperacion = @IdOperacion	
 				AND ISNULL(U.Activo,0) = 1
 				GROUP BY
