@@ -8,6 +8,7 @@ BEGIN
 -- 20210615 BAAC    Se modifica para que no marque error al enviar correos a grupos de usuarios
 -- 20211125	BAAC	Se modifica para agregar el querystring que permite notificar al accountable compliance cuando leen el correo
 -- 20211206	BAAC	Se modifica para agregar la cantidad de correos que va a recibir el usuario (cuando no cabe la lista en un solo correo)
+-- 20220209	BAAC	Se modifica para que el formato de correo del accountable compliance sea igual que los demas
 -- =============================================
 SET NOCOUNT ON
 SET LANGUAGE Spanish
@@ -114,7 +115,7 @@ SELECT @HOY = GETDATE()
 		AND IE.Activo = 1
     JOIN
         dbo.EN_Actividad            A	(NOLOCK)
-     ON IE.ActividadID	=	A.ActividadID
+  ON IE.ActividadID	=	A.ActividadID
 		AND	A.EstadoID <> 10003	-- ELABORACION
     JOIN
         dbo.EN_Entregable           E	(NOLOCK)
@@ -794,74 +795,60 @@ SELECT @HOY = GETDATE()
 		CE.AccountableCompliance,
 		'Notificación Semanal para AccountableCompliance del Contrato'   AS tipoCorreo,
 		'https://'+ruta.Ruta+'/2/Entregables/EntregablesAdministradorContrato.aspx?identificador=' AS RutaPendiente,
-		'<tr><td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'<tr><td' + CASE WHEN CC.IdContrato IS NOT NULL
+			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
+			ELSE  '>'+C.NumeroContrato+ '</td>'
+		END +
+		'<td>' + LTRIM(ML.MarcoLegal) + '</td>'+
+		'<td>' + LTRIM(IE.idInstanciaEntregable) + '-' + LTRIM(RTRIM(E.DocumentoEntregable)) + '</td>'+
+		'<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  +  
 		'<td'+
 		CASE
 		WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,@HOY) > 0 THEN 'style="background-color:Tomato;">Delayed'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
 		WHEN (CONVERT(FLOAT,DATEDIFF(DAY,@HOY,IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
-		END	 + '</td>'+
-        '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111)+ '</td>'  +  
-		'<td>'+ CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
-			ELSE ISNULL(ACC.Nombre,'')  -- ACCOUNTABLE
-		END	+ '</td>'  +   
-		'<td>'+U1.Nombre+ '</td>' +		-- RESPONSIBLE
-		'<td>'+ CASE WHEN FP.Nombre IS NULL THEN ISNULL(CE.FocalPoint,'')
-			ELSE ISNULL(FP.Nombre,'')	-- FOCALPOINT
-		END		+ '</td>'  + 
-		'<td>'+ CASE WHEN AC.Nombre IS NULL THEN ISNULL(CE.AccountableCompliance,'')
-			ELSE ISNULL(AC.Nombre,'')	-- ACCOUNTABLE COMPLIANCE
-		END		+ '</td>'  +  
-		'<td' + CASE WHEN CC.IdContrato IS NOT NULL
-			THEN  ' style="background-color:' + LTRIM(CC.Color_HEX) + ';">'+C.NumeroContrato+ '</td>'	
-			ELSE  '>'+C.NumeroContrato+ '</td>'
-		END	AS Tabla
+		END	 + '</td>'		AS Tabla
     FROM
+		CO_Contrato C	(NOLOCK)
+	JOIN
+		dbo.CO_Contratista cita	(NOLOCK)
+		ON	c.IdContratista	=	cita.IdContratista
+		AND cita.NombreContratista LIKE '%SHELL%'
+	JOIN
+		dbo.EN_ContratoEntregable   CE	(NOLOCK)
+		ON 	C.IdContrato	=	CE.IdContrato
+		AND CE.Activo=1 
+		AND ISNULL(CE.AccountableCompliance,'')	<> ''
+	JOIN
         dbo.EN_InstanciasEntregable IE	(NOLOCK)
+		ON	CE.IdContratoEntregable	=	IE.IdContratoEntregable
+		AND	IE.FechaCalculadaEntregaReg	BETWEEN @HOY AND DATEADD(DAY,7,@HOY)
+		AND IE.Activo=1
     JOIN
         dbo.EN_Actividad            A	(NOLOCK)
         ON IE.ActividadID	=	A.ActividadID
 		AND	A.EstadoID <> 10003	-- ELABORACION
-		AND	IE.FechaCalculadaEntregaReg	BETWEEN @HOY AND DATEADD(DAY,7,@HOY)
-		AND IE.Activo=1
 	JOIN
         dbo.EN_Estado               E1	(NOLOCK)
         ON  A.EstadoID	=	E1.EstadoID--En estado que se encuentra la instancia
-	JOIN
-        dbo.EN_ContratoEntregable   CE	(NOLOCK)
-        ON IE.IdContratoEntregable= CE.IdContratoEntregable
-		AND CE.Activo=1 
-		AND ISNULL(CE.AccountableCompliance,'')	<> ''
     JOIN
         dbo.EN_Entregable           E	(NOLOCK)
 		ON CE.IdEntregable	= E.IdEntregable 
 		AND E.BITJOA = 0
 		AND E.IsActivo = 1
 	JOIN
-		CO_Contrato C	(NOLOCK)
-		ON CE.IdContrato	=	C.IdContrato
-	JOIN
         dbo.AP_Usuario              U1	(NOLOCK)
         ON A.idUsuario = U1.UsuarioID
-	JOIN
-		dbo.CO_Contratista cita	(NOLOCK)
-		ON	c.IdContratista	=	cita.IdContratista
 	JOIN
 		dbo.AP_Rutas ruta	(NOLOCK)
 		ON cita.IdRuta=ruta.idRuta
 	LEFT JOIN
-		AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
-		ON	CE.FocalPoint	=	FP.Usuario
-	LEFT JOIN
-		AP_USUARIO AC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
-		ON	CE.AccountableCompliance	=	AC.Usuario
-	LEFT JOIN
-		AP_USUARIO ACC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
-		ON	CE.Accountable	=	ACC.Usuario
-	LEFT JOIN
 		CO_ContratoConfiguracion	CC
 		ON	C.IdContrato	=	CC.Idcontrato
+	LEFT JOIN
+		EN_MarcoLegal	ML
+		ON	E.IdMarcoLegal	=	ML.IdMarcoLegal
 	WHERE
 		cita.NombreContratista LIKE '%SHELL%'
 
@@ -937,11 +924,9 @@ SELECT @HOY = GETDATE()
 		END,
 		CASE WHEN N.NumCorreo = N.TotalCorreos 
 		THEN 
-			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNoti
-ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','')
+			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNotificacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','')
 		ELSE
-			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNoti
-ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','* There are more information in the next email (Page ' + LTRIM(N.NumCorreo+1) + ')')
+			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.TablaProximas,'')),'{tablaPendientes}',isnull(N.TablaPendientes,'')),'##ENLACE_DETALLE##', (N.Ruta + LTRIM(ISNULL(@MaxNotificacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreos)),'##CONTINUACION##','* There are more information in the next email (Page ' + LTRIM(N.NumCorreo+1) + ')')
 		END,
 		GETDATE(),
 		0,
@@ -955,5 +940,7 @@ ficacion,0)+ID))),'##numcorreo##',LTRIM(N.NumCorreo) + '/' + LTRIM(N.TotalCorreo
 		TA_Correo	C
 		ON	N.TipoCorreo	=	C.Descripcion
 
-EXEC sp_JOA_NotificacionesSemanales_Shell
+-- SE DESHABILITAN LAS NOTIFICACIONES DE JOA A PETICION DE CARMEN MARTINEZ HASTA NUEVO AVISO
+-- SOLICITADO POR CORREO ELECTRONICO EL DIA 16 DE DICIEMBRE DE 2021
+-- EXEC sp_JOA_NotificacionesSemanales_Shell
 END
