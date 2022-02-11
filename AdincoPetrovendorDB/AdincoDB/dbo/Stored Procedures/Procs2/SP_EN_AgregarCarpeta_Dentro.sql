@@ -1,6 +1,6 @@
 ﻿USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 04/02/2022 08:30:29 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 11/02/2022 11:09:11 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: <11/01/2022>
 -- Description:	<Agregado de carpetas en el visor de archivos V2>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro]
+ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro]
 	-- Add the parameters for the stored procedure here
 	@Ruta VARCHAR(MAX),
 	@Nombre NVARCHAR(500),
@@ -34,7 +34,7 @@ BEGIN
 	WHERE Ruta = @Ruta;
 
     -- Insert statements for procedure here
-	INSERT INTO EN_CarpetasArchivosVisor 
+	INSERT INTO EN_CarpetasArchivosVisor
 	(
 		[IsCarpeta],
 		[IsArchivo],
@@ -43,7 +43,8 @@ BEGIN
 		[CreadoPor],
 		[CreadoEl],
 		Nivel,
-		Activo
+		Activo,
+		IdContrato
 	)
 	VALUES
 	(
@@ -54,7 +55,8 @@ BEGIN
 		@IdUsuario,
 		GETDATE(),
 		@Nivel,
-		1
+		1,
+		@IdContrato
 	);
 
 	SELECT SCOPE_IDENTITY() AS IDCARPETA;

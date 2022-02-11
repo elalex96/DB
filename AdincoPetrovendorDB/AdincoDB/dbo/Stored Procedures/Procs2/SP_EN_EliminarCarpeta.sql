@@ -1,19 +1,20 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_EliminarCarpeta]    Script Date: 02/12/2021 11:44:22 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_EliminarCarpeta]    Script Date: 11/02/2022 12:18:15 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
--- Author:		Alexander Gomez
--- Create date: 09/11/2021
--- Description:	Eliminar una carpeta
+-- Author:		<Alexander Gomez>
+-- Create date: <12/01/2022>
+-- Description:	<Eliminar archivo cargado en visor V2>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_EliminarCarpeta]
+ALTER PROCEDURE [dbo].[SP_EN_EliminarCarpeta]-- 'Etapas>Exploración>Nueva Carpeta para descargar>',0,3
 	-- Add the parameters for the stored procedure here
-	@ID INT,
-	@IdPadre INT
+	@Ruta NVARCHAR(MAX),
+	@IdUsuario INT,
+	@IdContrato INT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -21,73 +22,68 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	DECLARE @ID INT,
+			@RutaAnterior NVARCHAR(MAX);
 
-	DECLARE @CONTNIVEL1 INT = 1,
-			@CONTTOTAL1 INT = 0,
-			@CONTNIVEL2 INT = 1,
-			@CONTTOTAL2 INT = 0,
-			@ID_1 INT = @ID,
-			@IDPADRE_1 INT = @IdPadre,
-			@ID_2 INT = 0,
-			@IDPADRE_2 INT = 0;
+	SELECT TOP 1
+		@ID = IdCarpeta,
+		@RutaAnterior = RutaAnterior
+	FROM EN_SecuenciaCarpetas
+	WHERE Ruta = @Ruta
+	AND IdContrato = @IdContrato
+	AND Activo = 1;
 
+	--ELIMINADO DE ARCHIVOS DENTRO DE LAS CARPETAS EN ESA RUTA
+	UPDATE EN_CarpetasArchivosVisor
+	SET Activo = 0,
+		FechaEliminado = GETDATE()
+	WHERE IdPadre IN (SELECT IdCarpeta FROM EN_SecuenciaCarpetas WHERE Ruta LIKE '%' + @Ruta + '%') 
+		AND Activo = 1;
 
-		--PRIMER NIVEL DE ELIMINADO
-		--ELIMINADO DE LA CARPETA
-		UPDATE CarpetasDocumentosEntregables
-		SET Activo = 0
-		WHERE ID = @ID;
+	--ELIMINADO DE CARPETAS DENTRO DE LAS CARPETAS EN ESA RUTA
+	UPDATE EN_CarpetasArchivosVisor
+	SET Activo = 0,
+		FechaEliminado = GETDATE()
+	WHERE IdElemento IN (SELECT IdCarpeta FROM EN_SecuenciaCarpetas WHERE Ruta LIKE '%' + @Ruta + '%') 
+		AND Activo = 1;
 
-		--ELIMINADO DE LOS ARCHIVOS EN LA CARPETA
-		UPDATE CarpetasDocumentosEntregables
-		SET Activo = 0
-		WHERE IDPadre = @IdPadre AND TipoArchivo = 'Archivo general';
+	--ELIMINADO DE LA CARPETA PADRE
+	UPDATE EN_CarpetasArchivosVisor
+	SET Activo = 0,
+		FechaEliminado = GETDATE()
+	WHERE IdElemento = @ID 
+		AND Activo = 1;
 
-		SET @CONTTOTAL1 = (SELECT COUNT(1) FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID AND TipoArchivo = 'Carpeta'  AND Activo = 1)
+	--ELIMINADO DE LA SECUENCIA 
+	UPDATE EN_SecuenciaCarpetas
+	SET Activo = 0
+	WHERE IdCarpeta = @ID 
+		AND Ruta LIKE '%' + @Ruta + '%' 
+		AND Activo = 1;
 
-		--RECORRIDO DE CARPETAS Y ARCHIVOS EN CASO DE QUE EXISTAN
-		WHILE @CONTNIVEL1 <= @CONTTOTAL1
-		BEGIN
+	UPDATE EN_SecuenciaCarpetas
+	SET Activo = 0
+	WHERE IdCarpeta = @ID 
+		AND Ruta = @Ruta 
+		AND Activo = 1;
 
-			SET @ID_1 = (SELECT TOP 1 ID FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID AND TipoArchivo = 'Carpeta' AND Activo = 1 ORDER BY ID DESC);
-
-			--ELIMINADO DE LA CARPETA NIVEL 2
-			UPDATE CarpetasDocumentosEntregables
-			SET Activo = 0
-			WHERE ID = @ID_1;  
-
-			--ELIMINADO DE LOS ARCHIVOS EN LA CARPETA NIVEL 2
-			UPDATE CarpetasDocumentosEntregables
-			SET Activo = 0
-			WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Archivo general';
-
-			SET @CONTTOTAL2 = (SELECT COUNT(1) FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Carpeta' AND Activo = 1)
-			
-			----ELIMINADO NIVEL 3
-			WHILE @CONTNIVEL2 <= @CONTTOTAL2
-			BEGIN
-				
-				SET @ID_2 = (SELECT TOP 1 ID FROM CarpetasDocumentosEntregables WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Carpeta' AND Activo = 1 ORDER BY ID DESC);
-
-				--ELIMINADO DE LA CARPETA
-				UPDATE CarpetasDocumentosEntregables
-				SET Activo = 0
-				WHERE ID = @ID_2; 
-
-				--ELIMINADO DE LOS ARCHIVOS EN LA CARPETA
-				UPDATE CarpetasDocumentosEntregables
-				SET Activo = 0
-				WHERE IdDocPadre = @ID_1 AND TipoArchivo = 'Archivo general';
-				
-				SET @CONTNIVEL2 = @CONTNIVEL2 + 1;
-			END
-
-
-			SET @CONTNIVEL1 = @CONTNIVEL1 + 1;
-
-		END
-
-
-	SELECT @ID;
+	--SE DEVUELVE LA CARPETA ANTERIOR
+	SELECT
+		SC.IdCarpeta,
+		SC.Nivel,
+		SC.Frecuencia,
+		SC.IsCarpetaUsuario,
+		SC.Ruta,
+		CA.Nombre,
+		SC.Etapa,
+		SC.IdReceptorEntregable,
+		SC.AnioMes,
+		SC.IsPozo
+	FROM EN_SecuenciaCarpetas AS SC
+	LEFT JOIN EN_CarpetasArchivosVisor AS CA
+		ON SC.IdCarpeta = CA.IdElemento
+	WHERE SC.Ruta = @RutaAnterior
+	AND SC.Activo = 1
+	AND SC.IdContrato = @IdContrato;
 
 END
