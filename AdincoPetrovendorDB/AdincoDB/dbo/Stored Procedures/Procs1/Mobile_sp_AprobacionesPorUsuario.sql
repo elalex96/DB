@@ -1,9 +1,16 @@
-﻿-- =============================================
+﻿USE adinco
+DROP PROCEDURE IF EXISTS Mobile_sp_AprobacionesPorUsuario
+GO
+-- =============================================
 -- Author:		Luis David De La Cruz
 -- Create date: 11/01/2018
 -- Description:	Se obtienen los pedidos (solped/pedido/cd/p-c)
 -- =============================================
-CREATE PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10019,9,-1,-1,-1
+-- Author:		Luis David De La Cruz
+-- Create date: 14/02/2022
+-- Description:	Se cambia el monto ejercido para el issue 106 del SDK
+-- =============================================
+CREATE  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10019,9,-1,-1,-1
 	@IdUsuario		INT,
 	@IdTipo			INT,
 	@IdOperacion	int		=	-1,
@@ -277,7 +284,7 @@ BEGIN
 			C.IdContrato as IdContrato,
 			fac.FechaTimbrado as FechaCreacion,
 			O.IdDocumento as IdDocumento, 
-			CONCAT(' Emisor: ',fac.Emisor ,' ','|',' Monto ejercido: ',((fac.MontoConIva * 100)/100),' ',fac.Moneda collate SQL_Latin1_General_CP1_CI_AS,' ','|',' Instalación:',instalacion.NombreInstalacion) AS ComentarioDocumento,
+			CONCAT(' Emisor: ',fac.Emisor ,' ','|',' Monto ejercido: ',FORMAT(reg.Montoregistro,'C'),' ',fac.Moneda collate SQL_Latin1_General_CP1_CI_AS,' ','|',' Instalación:',instalacion.NombreInstalacion) AS ComentarioDocumento,
 			O.Descripcion AS ComentarioAprobacion,
 			0 as NoVersion,			
 			O.IdFlujoTarea as TipoFlujo,
@@ -321,7 +328,7 @@ BEGIN
 			O.IdFlujoTarea,
 			PG.IdPedido,
 			fac.Emisor,
-			fac.MontoConIva,
+			reg.Montoregistro,
 			fac.Moneda,
 			instalacion.NombreInstalacion
 	ORDER BY O.IdOperacion DESC;
@@ -457,8 +464,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 					PC.IdContrato as IdContrato,
 					APC.CreadoEl as FechaCreacion,
 					PC.IdPedimentoComprobante as IdDocumento,
-					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' |  Proveedor:
-', APC.IdProveedor) as ComentarioDocumento,
+					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' |  Proveedor:', APC.IdProveedor) as ComentarioDocumento,
 					CONCAT('Cargado Por: ', US.Nombre, 'Flujo tipo' ,@TIPOFLUJO) as ComentarioAprobacion,
 					0 as NoVersion,
 					OP.IdOperacion as TipoFlujo,
@@ -563,4 +569,3 @@ FROM #TM_Aprobacion AS t
 ------------------------------------------------------
 --select * from #IdOperaciones
 end
-
