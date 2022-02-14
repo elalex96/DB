@@ -1,7 +1,15 @@
-﻿-- =============================================
+﻿USE petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_TA_ConsultarAprobadorDetalleFactura
+GO
+-- =============================================
 -- Author: Daniel AC
 -- Create date: 02/09/2019
 -- Description:	Consultar aprobadores de factura
+-- =============================================
+-- Author: Luis David
+-- Create date: 10/02/2022
+-- Description:	Se agrega el filtro de aprobadores activos
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_TA_ConsultarAprobadorDetalleFactura]  
 @IdOperacion int,
@@ -43,25 +51,28 @@ BEGIN
 				T.MensajeAsignacion --21
 			FROM TA_Tarea AS T
 				INNER JOIN TA_Operacion AS TOO
-					ON TOO.IdOperacion = T.IdOperacion
+					ON T.IdOperacion = TOO.IdOperacion
 				INNER JOIN TA_FlujoTarea AS FT
-					ON FT.IdFlujoTarea = TOO.IdFlujoTarea
+					ON TOO.IdFlujoTarea = FT.IdFlujoTarea
 				INNER JOIN S_Usuario AS U
-					ON U.IdUsuario = T.IdAprobador
+					ON T.IdAprobador = U.IdUsuario
 				INNER JOIN TA_TipoOperacion AS TTO
-					ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
+					ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
 				INNER JOIN TA_Estatus AS TAE
-					ON TAE.IdEstatus = TOO.IdEstatusOperacion
+					ON TOO.IdEstatusOperacion = TAE.IdEstatus
 				LEFT JOIN dbo.MM_AceptacionFactura AF 
-					ON AF.IdAceptacionFactura=TOO.IdDocumento
+					ON TOO.IdDocumento = AF.IdAceptacionFactura
 				LEFT JOIN dbo.MM_AceptacionPedido AP 
-					ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-				LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-				LEFT JOIN dbo.MM_Pedidos PG ON PG.IdIdentificador=P.IdPedido
-				AND PG.IdProveedorCliente=P.IdProveedorCompras
+					ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+				LEFT JOIN dbo.MM_Pedido P 
+					ON AP.IdPedido = P.IdPedido
+				LEFT JOIN dbo.MM_Pedidos PG 
+					ON P.IdPedido = PG.IdIdentificador
+					AND P.IdProveedorCompras = PG.IdProveedorCliente
 			WHERE T.IdOperacion = @IdOperacion
 			AND T.IdTarea=@IdTarea
 				  AND T.Activo = 1
+				  AND ISNULL(U.Activo,0) = 1
 			GROUP BY
 			 U.IdUsuario,--0
 				T.NoSecuencia,--1
@@ -88,5 +99,3 @@ BEGIN
 	
 
 END
-
- 

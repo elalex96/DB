@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 28/01/2022 01:08:29 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 10/02/2022 03:10:16 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -21,7 +21,11 @@ ALTER PROCEDURE [dbo].[SP_EN_GuardadoSecuenciaCarpetas]
 	@IsCarpetaUsuario BIT,
 	@IsCarpetaUsuarioAnterior BIT,
 	@Ruta VARCHAR(MAX),
-	@RutaAnterior VARCHAR(MAX)
+	@RutaAnterior VARCHAR(MAX),
+	@IdReceptorEntregable INT,
+	@AnioMes NVARCHAR(10),
+	@IsPozo BIT,
+	@Etapa INT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -29,7 +33,17 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @ID INT = (SELECT TOP 1 Nivel FROM EN_SecuenciaCarpetas WHERE IdCarpeta = @IdCarpeta AND Nivel  = @Nivel AND IdContrato = @IdContrato AND Frecuencia = @Frecuencia);
+	DECLARE @ID INT = (SELECT TOP 1 Nivel 
+						FROM EN_SecuenciaCarpetas 
+						WHERE IdCarpeta = @IdCarpeta 
+							AND Nivel  = @Nivel 
+							AND IdContrato = @IdContrato 
+							AND Frecuencia = @Frecuencia 
+							AND Etapa = @Etapa
+							AND AnioMes = @AnioMes
+							AND IdReceptorEntregable = @IdReceptorEntregable
+							AND IsPozo = @IsPozo
+							AND Activo = 1);
 
 	--VALIDACION DE EXISTENCIA DE LA SECUENCIA
 	IF @ID IS NULL AND @Nivel > 1
@@ -55,7 +69,12 @@ BEGIN
 			IsCarpetaUsuario,
 			IsCarpetaUsuarioAnterior,
 			Ruta,
-			RutaAnterior
+			RutaAnterior,
+			Activo,
+			IdReceptorEntregable,
+			IsPozo,
+			Etapa,
+			AnioMes
 		)
 		VALUES
 		(
@@ -68,7 +87,12 @@ BEGIN
 			@IsCarpetaUsuario,
 			@IsCarpetaUsuarioAnterior,
 			@Ruta,
-			@RutaAnterior
+			@RutaAnterior,
+			1,
+			@IdReceptorEntregable,
+			@IsPozo,
+			@Etapa,
+			@AnioMes
 		);
 
 	END

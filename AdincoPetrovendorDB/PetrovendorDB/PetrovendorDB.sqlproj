@@ -6186,10 +6186,6 @@
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
-    <Build Include="dbo\Stored Procedures\Procs1\SP_FI_VU_ExisteUUID_AceptacionFactura.sql">
-      <AnsiNulls>On</AnsiNulls>
-      <QuotedIdentifier>On</QuotedIdentifier>
-    </Build>
     <Build Include="dbo\Stored Procedures\Procs1\SP_GenerarRemisionCarso.sql">
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
@@ -10633,6 +10629,8 @@
     <Build Include="dbo\Stored Procedures\Procs1\SP_FI_AgregarPDF_CP_PetrovendorAdinco.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\Mobile_EnviarNotificacionAprobacionPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_DOC_DescargaDocumentosOCD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_ValidacionCargaFactura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_FI_VU_ExisteUUID_AceptacionFactura.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />

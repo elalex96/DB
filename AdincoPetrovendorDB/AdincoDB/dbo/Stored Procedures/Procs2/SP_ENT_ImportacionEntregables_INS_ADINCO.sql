@@ -1,10 +1,9 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]    Script Date: 18/08/2021 01:11:58 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿if exists (select * from sys.procedures where name = 'SP_ENT_ImportacionEntregables_INS_ADINCO')
+begin
+	drop proc SP_ENT_ImportacionEntregables_INS_ADINCO
+end
+
+go
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <06/12/2019>  
@@ -16,6 +15,11 @@ CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]
 @IdUsuario INT
 AS
 BEGIN
+
+	create table #tmp
+	(
+		Activo int
+	)
 
 	SELECT
 		ROW_NUMBER() OVER (ORDER BY IdEntregable DESC) AS R,
@@ -111,14 +115,18 @@ BEGIN
 			--ACTUALIZACION DEL APROBADOR
 			IF @IDACTIVIDADACTUAL IS NOT NULL
 			BEGIN
-				UPDATE ACAPROB
-				SET ACAPROB.idUsuario = @IDUSUARIOAPROBADOR,
-					ACAPROB.ModificadoEn = GETDATE(),
-					ACAPROB.ModificadoPor = @IdUsuario
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS ACAPROB ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10002
-				WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
+				UPDATE		ACAPROB
+				SET			ACAPROB.idUsuario			=		@IDUSUARIOAPROBADOR,
+							ACAPROB.ModificadoEn		=		GETDATE(),
+							ACAPROB.ModificadoPor		=		@IdUsuario
+				FROM		dbo.EN_ContratoEntregable	CE
+				JOIN		#TB_EXCEL					TE	
+				ON			CE.IdContratoEntregable		=		TE.IdEntregable
+				LEFT JOIN	EN_Actividad				ACAPROB 
+				ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+				AND			ACAPROB.EstadoID			=		10002
+				WHERE		TE.R						=		@CONT 
+				AND			CE.IdContrato				=		@IdContrato;
 			END
 			ELSE
 			BEGIN
@@ -132,14 +140,86 @@ BEGIN
 			--ACTUALIZACION DEL REVISOR
 			IF @IDACTIVIDADACTUAL IS NOT NULL
 			BEGIN
-				UPDATE ACAPROB
-				SET ACAPROB.idUsuario = @IDUSUARIOREVISOR,
-					ACAPROB.ModificadoEn = GETDATE(),
-					ACAPROB.ModificadoPor = @IdUsuario
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS ACAPROB ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10001
-				WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
+				--select @IDACTIVIDADACTUAL, @IDUSUARIOREVISOR
+				if exists(
+					select	ACAPROB.EstadoID, ACAPROB.idUsuario, ACAPROB.IdContratoEntregable, ACAPROB.Activo, CE.IdContratoEntregable
+					FROM dbo.EN_ContratoEntregable AS CE
+					JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
+					LEFT JOIN EN_Actividad AS ACAPROB ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10001
+					WHERE		TE.R				=	@CONT 
+					AND			CE.IdContrato		=	@IdContrato
+					and			ACAPROB.EstadoID	=	10001
+					and			ACAPROB.Activo		=	1
+				)
+				begin
+
+
+					delete from #tmp
+
+					insert into	#tmp
+					select		Activo				=	1--ACAPROB.Activo
+					FROM		dbo.EN_ContratoEntregable AS CE
+					JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
+					LEFT JOIN EN_Actividad AS ACAPROB ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10001
+					WHERE		TE.R				=	@CONT 
+					AND			CE.IdContrato		=	@IdContrato
+					and			ACAPROB.EstadoID	=	10001
+					and			ACAPROB.idUsuario			=		@IDUSUARIOREVISOR
+					--and			ACAPROB.Activo		=	1
+					group by	ACAPROB.Activo
+
+					if ((select sum(Activo) from #tmp)=2)
+					begin
+						--select 'si'
+						UPDATE		ACAPROB
+						SET			ACAPROB.ModificadoEn		=		GETDATE(),
+									ACAPROB.ModificadoPor		=		@IdUsuario
+						FROM		dbo.EN_ContratoEntregable	CE
+						JOIN		#TB_EXCEL					TE 
+						ON			CE.IdContratoEntregable		=		TE.IdEntregable
+						LEFT JOIN	EN_Actividad				ACAPROB 
+						ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+						AND			ACAPROB.EstadoID			=		10001
+						WHERE		TE.R						=		@CONT 
+						AND			CE.IdContrato				=		@IdContrato
+						and			ACAPROB.idUsuario			=		@IDUSUARIOREVISOR
+					end
+					else
+					begin
+						--select 'no'
+						UPDATE		ACAPROB
+						SET			ACAPROB.Activo				=		0
+						FROM		dbo.EN_ContratoEntregable	CE
+						JOIN		#TB_EXCEL					TE 
+						ON			CE.IdContratoEntregable		=		TE.IdEntregable
+						LEFT JOIN	EN_Actividad				ACAPROB 
+						ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+						AND			ACAPROB.EstadoID			=		10001
+						WHERE		TE.R						=		@CONT 
+						AND			CE.IdContrato				=		@IdContrato;
+
+						UPDATE		ACAPROB
+						SET			ACAPROB.ModificadoEn		=		GETDATE(),
+									ACAPROB.ModificadoPor		=		@IdUsuario,
+									ACAPROB.Activo				=	1
+						FROM		dbo.EN_ContratoEntregable	CE
+						JOIN		#TB_EXCEL					TE 
+						ON			CE.IdContratoEntregable		=		TE.IdEntregable
+						LEFT JOIN	EN_Actividad				ACAPROB 
+						ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+						AND			ACAPROB.EstadoID			=		10001
+						WHERE		TE.R						=		@CONT 
+						AND			CE.IdContrato				=		@IdContrato
+						and			ACAPROB.idUsuario			=		@IDUSUARIOREVISOR
+					end
+				end
+				else
+				begin
+					select 2
+					INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
+					VALUES
+					(10001,@IDUSUARIOREVISOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+				end
 			END
 			ELSE
 			BEGIN
@@ -237,5 +317,6 @@ BEGIN
 	SELECT @CONTADORERRORES AS ERRORES,
 			@CONTADORAFECTADOS AS AFECTADOS,
 			@ERRORES AS TEXTOERRORES
+
 
 END
