@@ -295,7 +295,7 @@ AS
 					
 
 				SET @TotalProductos= (SELECT COUNT(1) FROM @Productos)
-				IF @TotalProductos =0 
+				IF @TotalProductos > 0 
 					BEGIN 
 
 					SELECT 
