@@ -24,10 +24,6 @@ AS
          , @Secuencia INT, @IdDocumento INT, @NoSecuenciaActual INT, @NoSecuenciaSiguiente INT, @SiguienteTarea INT, @UsuarioID INT;
          SET @fecha = GETDATE();
 
-		--- HISTORIAL
-		INSERT INTO Petrovendor..AP_BitacoraAprobacionesApp(IdTarea,IdEstatus,Fecha,App)
-		VALUES (@IdAprobacion,@idStatus,GETDATE(),'V1')
-
          --1 = Aprobada
          --2 = Rechazada
          --3 = El estatus ya fue modificada
@@ -52,6 +48,10 @@ AS
              WHERE IdTareaOrigen = @IdAprobacion
              ORDER BY FechaCreacion DESC
          );
+
+		 		--- HISTORIAL
+		INSERT INTO Petrovendor..APP_BitacoraAprobacionesApp(IdTarea,IdTipoPedido,IdEstatus,Fecha,App)
+	    VALUES (@IdAprobacion,@IdTipoAprobacion,@idStatus,GETDATE(),'V1')
          ----------------------------------------------------------------------------------------
          --------OPERACIONES GENERALES----------------
          SET @EstatusPet =

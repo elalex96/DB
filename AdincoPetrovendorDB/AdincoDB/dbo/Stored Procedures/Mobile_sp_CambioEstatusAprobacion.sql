@@ -39,8 +39,8 @@ DECLARE @IdFirma nvarchar(max),
 	---- Se obtiene el id usuario  de petrovendor
 	SET @IdAprobador = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuarioADINCO = @IdUsuario)
 	--- HISTORIAL
-	INSERT INTO Petrovendor..AP_BitacoraAprobacionesApp(IdTarea,IdEstatus,Fecha,App)
-	VALUES (@IdAprobacion,@IdStatus,GETDATE(),'V2')
+	INSERT INTO Petrovendor..APP_BitacoraAprobacionesApp(IdTarea,IdTipoPedido,IdEstatus,Fecha,App)
+	VALUES (@IdAprobacion,@TipoPedido,@IdStatus,GETDATE(),'V2')
 	------------------------------------
 	--SE VALIDA QUE SEA DEL TIPO SOLPED-
 	------------------------------------
