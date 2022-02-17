@@ -1,4 +1,19 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'TA_SP_ConsultaCorreos'
+)
+    DROP PROCEDURE TA_SP_ConsultaCorreos;
+GO 
+/****** Object:  StoredProcedure [dbo].[TA_SP_ConsultaCorreos]    Script Date: 16/02/2022 10:47:50 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 CREATE PROCEDURE [dbo].[TA_SP_ConsultaCorreos] 
 @FECHAINICIO DATETIME = NULL,
 @FECHAFIN DATETIME =NULL
@@ -20,7 +35,7 @@ BEGIN
                 ON ec.IdEnvioAdinco = n.IdNotificacion
             INNER JOIN dbo.S_Usuario AS u
                 ON u.IdUsuario = ec.EnviadoPor
-        WHERE CreadoPor = 3		 
+        WHERE CreadoPor IN (3,1)	-->ctes 		 
 		 AND  n.CreadoEl BETWEEN @FECHAINICIO AND DATEADD(HOUR,24,@FECHAFIN)
 					 
         UNION ALL
@@ -36,7 +51,7 @@ BEGIN
             INNER JOIN dbo.TA_EnvioCorreo AS ec
                 ON ec.IdEnvioAdinco = n.IdNotificacion
         --INNER JOIN dbo.S_Usuario AS u ON u.IdUsuario = ec.EnviadoPor
-        WHERE CreadoPor = 3
+        WHERE CreadoPor IN (3,1)	-->ctes 	
               AND ec.EnviadoPor = 0
 			  AND n.CreadoEl BETWEEN @FECHAINICIO AND DATEADD(HOUR,24,@FECHAFIN)
 					
@@ -45,6 +60,3 @@ BEGIN
     ORDER BY Correos.IdNotificacion DESC;
 
 END;
-
-
-

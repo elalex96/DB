@@ -1,4 +1,19 @@
-﻿CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] --25374,3,2,12,'APROBANDO DESDE EL SP DE LA APP',0,14
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Mobile_sp_CambioEstatusAprobacion'
+)
+    DROP PROCEDURE Mobile_sp_CambioEstatusAprobacion;
+GO 
+/****** Object:  StoredProcedure [dbo].[Mobile_sp_CambioEstatusAprobacion]    Script Date: 15/02/2022 10:07:54 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] --25374,3,2,12,'APROBANDO DESDE EL SP DE LA APP',0,14
 @IdAprobacion INT ,	--APP
 @IdContrato Int ,		--APP
 @IdStatus INT ,			--APP
@@ -23,6 +38,9 @@ DECLARE @IdFirma nvarchar(max),
 		@IdFacturaAdinco INT;
 	---- Se obtiene el id usuario  de petrovendor
 	SET @IdAprobador = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuarioADINCO = @IdUsuario)
+	--- HISTORIAL
+	INSERT INTO Petrovendor..AP_BitacoraAprobacionesApp(IdTarea,IdEstatus,Fecha,App)
+	VALUES (@IdAprobacion,@IdStatus,GETDATE(),'V2')
 	------------------------------------
 	--SE VALIDA QUE SEA DEL TIPO SOLPED-
 	------------------------------------
@@ -70,15 +88,16 @@ DECLARE @IdFirma nvarchar(max),
 							FROM Petrovendor.dbo.TA_Tarea AS TA
 							JOIN Petrovendor.dbo.TA_Operacion AS TAO ON TAO.IdOperacion = TA.IdOperacion
 							INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON P.IdSolicitudPedido = TAO.IdDocumento
+							AND TAO.NoVersion = P.Version
 							WHERE TAO.IdTipoOperacion = 9 AND
-							TA.IdTarea = @IdAprobacion)
+							TA.IdTarea =  @IdAprobacion)
 		if @Estatus = 1 
 		begin
-			SELECT top 1	@SolicitudPedido = P.IdSolicitudPedido,
+							SELECT top 1 @SolicitudPedido = P.IdSolicitudPedido,
 							@IdFirma = TA.IdFirma
 							FROM Petrovendor.dbo.TA_Tarea AS TA
 							JOIN Petrovendor.dbo.TA_Operacion AS TAO ON TAO.IdOperacion = TA.IdOperacion
-							INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON P.IdSolicitudPedido = TAO.IdDocumento
+							INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON TAO.IdDocumento = P.IdSolicitudPedido   AND TAO.NoVersion = P.Version
 							WHERE TAO.IdTipoOperacion = 9 AND TA.IdTarea = @IdAprobacion
 			--------
 			EXEC Petrovendor.dbo.SP_TA_ActualizarEstatusPedidoAprobacion	@IdEstatus = @IdStatus,  
@@ -87,10 +106,6 @@ DECLARE @IdFirma nvarchar(max),
 																			@Comentario = @Comentario,     
 																			@Version = @NoVersion,      
 																			@IdFirma = @IdFirma
-  
-			 /*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobación SERIAL*/
-			EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion   	
-			
 			-- Se registra en la bitacora de aprobados 
 			exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,
 																@IdContrato = @IdContrato,
@@ -99,6 +114,11 @@ DECLARE @IdFirma nvarchar(max),
 																@AprobadorPetrovendor = @IdAprobador,
 																@AprobadorAdinco = @IdUsuario,
 																@FechaAprobacion = @fecha;
+																
+			/*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobación SERIAL*/
+			EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion,@Origen='Mobile_sp_CambioEstatusAprobacion'   	
+			
+			
 		end
 		else
 		BEGIN

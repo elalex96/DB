@@ -10631,6 +10631,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\SP_DOC_DescargaDocumentosOCD.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AP_ValidacionCargaFactura.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_FI_VU_ExisteUUID_AceptacionFactura.sql" />
+    <Build Include="dbo\Tables\AP_BitacoraAprobacionesApp.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
