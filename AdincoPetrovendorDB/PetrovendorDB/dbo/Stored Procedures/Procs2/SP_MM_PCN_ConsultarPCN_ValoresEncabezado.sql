@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 04/02/2022 04:59:02 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 18/02/2022 10:00:32 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -64,9 +64,9 @@ BEGIN
 						(
 							SELECT TC.TipoCambio
 							FROM Adinco.dbo.CO_TipoCambioDiario TC
-							WHERE DAY(PTC.FechaTipoCambio) = DAY(DATEADD(DAY,-1,GETDATE()))
-								AND MONTH(PTC.FechaTipoCambio) = MONTH(DATEADD(DAY,-1,GETDATE()))
-								AND YEAR(PTC.FechaTipoCambio) = MONTH(DATEADD(DAY,-1,GETDATE()))
+							WHERE DAY(TC.Fecha) = DAY(DATEADD(DAY,-1,GETDATE()))
+								AND MONTH(TC.Fecha) = MONTH(DATEADD(DAY,-1,GETDATE()))
+								AND YEAR(TC.Fecha) = MONTH(DATEADD(DAY,-1,GETDATE()))
 								AND TC.IdMoneda = @IdMonedaNacional
 						),
 						(
