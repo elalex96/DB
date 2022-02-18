@@ -1,4 +1,4 @@
-﻿CREATE FUNCTION dbo.fn_OT_GetMailUsuariosEstatus 
+﻿CREATE FUNCTION [dbo].[fn_OT_GetMailUsuariosEstatus] 
 (
 	-- Add the parameters for the function here
 	@pIdOTSolicitud int,	
@@ -6,11 +6,11 @@
 	@pFlujoAprobacionEstatusId int,
 	@pTipoNotificacionId int
 )
-RETURNS varchar(MAX)
+RETURNS varchar(max)
 AS
 BEGIN
 	
-	declare @result varchar(MAX)=''
+	declare @result varchar(max)=''
 
 	declare @tmpNotificacion TABLE (UsuarioId int,TipoNotificacionId int,Desactivar bit)
 
@@ -23,6 +23,7 @@ BEGIN
 									ot.IdOTSolicitud = @pIdOTSolicitud
 	inner join SC_Subcontrato sc on sc.IdSubcontrato = ot.IdSubcontrato and
 									sc.IdContrato = un.ContratoId
+	INNER JOIN AP_Usuario U ON U.UsuarioId = un.UsuarioId AND U.IsActivo = 1	
 	where un.Desactivar = 1 and
 	un.TipoNotificacionId = @pTipoNotificacionId
 	
@@ -48,8 +49,5 @@ BEGIN
 	return isnull(@result,'')
 
 END
-
-
-
 
 
