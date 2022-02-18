@@ -13188,6 +13188,9 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_EliminarCarpeta_1.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_GuardadoSecuenciaCarpetas_1.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_ENT_ImportacionEntregables_INS_ADINCO.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_Migracion_EntregablesInstanciasBitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_Migracion_EntregablesInstancias.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_Migracion_EntregablesInstanciasDocumentos.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
