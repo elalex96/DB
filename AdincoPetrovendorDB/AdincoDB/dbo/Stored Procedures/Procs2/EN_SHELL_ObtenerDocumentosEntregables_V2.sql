@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 18/02/2022 01:20:48 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 18/02/2022 03:57:24 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -252,8 +252,21 @@ BEGIN
 	BEGIN
 
 		--CONSULTA DE LAS REGULADORES
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior)
-		SELECT 
+		INSERT INTO @CONTRACT_FILES(
+			Nivel,
+			Nombre,
+			IdCarpeta,
+			IdDocumento,
+			Tipo,
+			CreadoEl,
+			CantidadArchivos, 
+			Funcion, 
+			FuncionTipo,
+			IsCarpetaUsuario,
+			Ruta,
+			RutaAnterior
+		)
+		SELECT DISTINCT
 			2,
 			RE.ReceptorEntregable,
 			RE.IdReceptorEntregable,
@@ -264,9 +277,6 @@ BEGIN
 			'Carpeta de Regulador',
 			'Regulador',
 			0,
-			SC.IdCarpetaAnterior,
-			SC.NiveAnterior,
-			SC.IsCarpetaUsuarioAnterior,
 			SC.Ruta,
 			SC.RutaAnterior
 		FROM #Documentos D    
@@ -1444,3 +1454,5 @@ BEGIN
 	ORDER BY IdRow ASC;
 
 END
+
+
