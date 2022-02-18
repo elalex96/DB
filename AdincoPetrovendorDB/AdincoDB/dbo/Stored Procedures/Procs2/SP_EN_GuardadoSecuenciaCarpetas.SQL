@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 10/02/2022 03:10:16 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 18/02/2022 04:10:01 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -33,7 +33,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @ID INT = (SELECT TOP 1 Nivel 
+	DECLARE @ID INT = (SELECT TOP 1 IdCarpeta 
 						FROM EN_SecuenciaCarpetas 
 						WHERE IdCarpeta = @IdCarpeta 
 							AND Nivel  = @Nivel 
@@ -46,7 +46,7 @@ BEGIN
 							AND Activo = 1);
 
 	--VALIDACION DE EXISTENCIA DE LA SECUENCIA
-	IF @ID IS NULL AND @Nivel > 1
+	IF @ID IS NULL --AND @Nivel > 1
 	BEGIN
 
 		IF (@Nivel = 3)
@@ -96,5 +96,7 @@ BEGIN
 		);
 
 	END
+
+	--SELECT @ID
 
 END
