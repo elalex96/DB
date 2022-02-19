@@ -1,18 +1,10 @@
 ﻿USE [Petrovendor]
 GO
-
-/****** Object:  View [dbo].[FacturasAprobadasJaguar]    Script Date: 04/03/2021 02:18:47 p. m. ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
 IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'FacturasAprobadasJaguar')
     DROP VIEW FacturasAprobadasJaguar
 GO
 CREATE VIEW [dbo].[FacturasAprobadasJaguar]
 AS
-
 -------------------------------------------------------------------
 ---------------------- FACTURAS APROBADAS -------------------------
 -------------------------------------------------------------------
@@ -20,7 +12,7 @@ SELECT  U.Nombre as Solicitante,
 		Aprobadores,
 		FechaAprobacionFactura, 
 		EPJ.Contrato, 
-		Proveedor, 
+		EPJ.Proveedor, 
 		ISNULL(F.Serie COLLATE Modern_Spanish_CI_AS, '') AS Serie,  
 		ISNULL(F.Folio COLLATE Modern_Spanish_CI_AS, '') AS Folio,  
 		EPJ.UUID_Adinco , 
@@ -38,12 +30,20 @@ SELECT  U.Nombre as Solicitante,
 		ISNULL(F.MetodoPago, '') AS MetodoPago,
 		F.Emisor COLLATE Modern_Spanish_CI_AS as RFC,
 		ISNULL(F.TotalImpuestosTrasladados,0) AS TotalImpuestosTrasladados,
-		ISNULL(F.TotalImpuestosRetenidos,0) AS TotalImpuestosRetenidos
+		ISNULL(F.TotalImpuestosRetenidos,0) AS TotalImpuestosRetenidos,
+		ISNULL(STUFF ((SELECT ', ' + CC.CentroCosto
+				FROM dbo.MM_SolicitudPedidoDetalle AS SPD 
+					JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP ON SPDLP.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+					JOIN dbo.CC_CentroCosto AS CC ON CC.IdCentroCosto = SPDLP.IdCentroCosto
+				WHERE SPD.IdSolicitudPedido = SP.IdSolicitudPedido
+				GROUP BY CC.CentroCosto
+				for XML PATH ('')), 1, 2, ''),'') CentroDeCosto		
 FROM  EstatusPedidosJaguar EPJ WITH (NOLOCK)
 JOIN  Adinco.dbo. FI_Factura F WITH (NOLOCK) ON F.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = EPJ.UUID_Adinco --collate Modern_Spanish_CI_AS
 join MM_SolicitudPedido SP (NOLOCK) on EPJ.SolicitudPedido = SP.IdSolicitudPedido
 join S_Usuario U (NOLOCK) on SP.IdUsuarioSolicitante = U.IdUsuario
-WHERE        (IdProveedorCompras IN (606,676, 690, 1835))   AND FechaAprobacionFactura IS NOT NULL
+
+WHERE        (EPJ.IdProveedorCompras IN (606,676, 690, 1835))   AND FechaAprobacionFactura IS NOT NULL
 -------------------------------------------------------------------
 -- UNION PARA INCORPORAR LA COMPRA DIRECTA ------------------------
 -------------------------------------------------------------------
@@ -71,7 +71,19 @@ SELECT distinct stuff ((select ', ' + US.Nombre from S_Usuario US
 	   ISNULL(ff.MetodoPago, '') COLLATE Modern_Spanish_CI_AS AS MetodoPago,
 	   ff.Emisor as RFC,
 	   isnull(FA.TotalImpuestosTrasladados,0) AS TotalImpuestosTrasladados,
-	   isnull(FA.TotalImpuestosRetenidos,0) AS TotalImpuestosRetenidos
+	   isnull(FA.TotalImpuestosRetenidos,0) AS TotalImpuestosRetenidos,
+	   ISNULL(STUFF ((SELECT DISTINCT ', ' + CC.CentroCosto 
+				FROM TA_Tarea T  
+				join TA_Operacion O (NOLOCK) on CDF.IdOperacion = T.IdOperacion
+					AND CDF.Receptor IN('JEP1709042B1','JEP1502264H1', 'PEP170906DI5', 'JSE1601292U8')  AND T.IdOperacion = O.IdOperacion
+					and O.IdTipoOperacion = 14
+				join MM_Pedidos PPS (NOLOCK) on O.IdDocumento = PPS.IdIdentificador
+					 AND PPs.IdProveedorCliente in (606,676, 690, 1835) 
+				JOIN MM_Pedido P  ON  PPS.IdPedido = P.IdPedido
+				JOIN dbo.MM_SolicitudPedidoDetalle AS SPD ON P.IdSolicitudPedido = SPD.IdSolicitudPedido
+				JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP ON SPDLP.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+				JOIN dbo.CC_CentroCosto AS CC ON CC.IdCentroCosto = SPDLP.IdCentroCosto
+					for XML PATH ('')), 1, 2, '') ,'')CentroDeCosto			 
 FROM VISTA_ComprasDirectas CDF WITH (NOLOCK)
 join TA_Tarea T  (NOLOCK) on CDF.IdOperacion = T.IdOperacion
 	AND CDF.Receptor IN('JEP1709042B1','JEP1502264H1', 'PEP170906DI5', 'JSE1601292U8') 
@@ -79,7 +91,7 @@ join TA_Operacion O (NOLOCK) on T.IdOperacion = O.IdOperacion
 	and O.IdTipoOperacion = 14
 join S_Usuario U (NOLOCK) ON U.IdUsuario = T.IdAprobador 
 join MM_Pedidos PP (NOLOCK) on O.IdDocumento = PP.IdIdentificador
-	 AND PP.IdProveedorCliente in (606,676, 690, 1835)
+	 AND PP.IdProveedorCliente in (606,676, 690, 1835) 
 join S_Usuario US (NOLOCK) on PP.IdCreadoPor = US.IdUsuario
 JOIN dbo.FI_Factura ff (NOLOCK) ON cdf.UUID_Petrovendor = ff.UUID
 join Adinco.dbo.FI_FacturaAdincoPetrovendor AS FAP (NOLOCK)
@@ -107,12 +119,13 @@ GROUP BY US.Nombre,
 		 ff.MetodoPago,
 		 ff.Emisor,
 		 FA.TotalImpuestosTrasladados,
-		 FA.TotalImpuestosRetenidos
+		 FA.TotalImpuestosRetenidos,
+		 CDF.Receptor		
 -------------------------------------------------------------------
 -- UNION PARA INCORPORAR LOS PEDIMENTOS COMPROBANTES APROBADOS ----
 -------------------------------------------------------------------
  UNION
-SELECT
+SELECT DISTINCT
 			US.Nombre AS Solicitante,
 			dbo.fnGetAprobadores(OP.IdOperacion) COLLATE Modern_Spanish_CI_AS as Aprobadores,
 			dbo.FN_FechaAprobacionPedido (OP.IdOperacion) as FechaAprobacionFactura,
@@ -130,7 +143,15 @@ SELECT
 			ISNULL(FP.Descripcion, '') as MetodoPago,
 			ps.RFC as RFC,
 			0 AS TotalImpuestosTrasladados,
-			0 AS TotalImpuestosRetenidos
+			0 AS TotalImpuestosRetenidos,  
+			ISNULL(STUFF ((SELECT DISTINCT ', ' + CC.CentroCosto 
+					FROM  MM_Pedidos PP 
+					 JOIN MM_Pedido PE ON OP.IdDocumento = PP.IdIdentificador
+						 AND PP.IdProveedorCliente in (606,676, 690, 1835) AND PP.IdPedido = PE.IdPedido
+					 JOIN dbo.MM_SolicitudPedidoDetalle AS SPD ON PE.IdSolicitudPedido = SPD.IdSolicitudPedido
+					 JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP ON SPDLP.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+					 JOIN dbo.CC_CentroCosto AS CC ON CC.IdCentroCosto = SPDLP.IdCentroCosto
+					for XML PATH ('')), 1, 2, ''),'') CentroDeCosto	
 	FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APC	(NOLOCK)
 		JOIN dbo.TA_Operacion AS OP	(NOLOCK)
 			ON	APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
@@ -158,6 +179,7 @@ SELECT
 		left join Adinco.dbo.catCFDI_c_FormaPago AS FP 	(NOLOCK)
 			ON ISNULL(PC.IdFormaPago, 1) = FP.IdFormaPago
 		left join Adinco.dbo.PV_Subcontratista as PS 	(NOLOCK)
-			ON PC.IdSubcontratistaExportador = PS.idSubcontratista
+			ON PC.IdSubcontratistaExportador = PS.idSubcontratista		
 	WHERE APC.IdProveedor in (606, 676, 690, 1835)
 		AND APC.Activo = 1
+GO
