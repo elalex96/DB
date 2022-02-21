@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 19/02/2022 05:45:09 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 21/02/2022 05:20:06 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -9,6 +9,11 @@ GO
 -- Author:		<Alexander Gomez>
 -- Create date: <04/01/2022>
 -- Description:	<Consulta de archivos contract files>
+-- =============================================
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <21/02/2022>
+-- Description:	<correccion en duplicacion de archivos>
 -- =============================================
 ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] --[EN_SHELL_ObtenerDocumentosEntregables_V2] 10113,0,4,10007,1,0,10012,0,0
 	-- Add the parameters for the stored procedure here
@@ -1536,7 +1541,6 @@ BEGIN
 		ISNULL((SELECT TOP 1 Nivel FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),(CF.Nivel - 1)) AS NivelAnterior,
 		ISNULL((SELECT TOP 1 IsCarpetaUsuario FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS IsCarpetaUsuarioAnterior,
 		CF.RutaAnterior,
-		--ISNULL((SELECT TOP 1 Ruta FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1 AND AnioMes = @ANIOMES_INT),'Etapa ->') AS RutaAnterior,
 		CASE
 			WHEN CreadoPor IS NOT NULL THEN ('Por ' + CreadoPor)
 			ELSE ''
