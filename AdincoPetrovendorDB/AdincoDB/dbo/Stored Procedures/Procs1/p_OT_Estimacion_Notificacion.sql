@@ -91,9 +91,10 @@ as
 			@IdNacionalidadProveedor = prov.IdNacionalidad
 		from OT_Estimacion e
 		inner join petrovendor..MM_Pedido ped on ped.IdPedido= e.IdPedido
-		inner join petrovendor..MM_SolicitudPedido sp on sp.IdSolicitudPedido = ped.IdSolicitudPedido
-		--inner join petrovendor..S_Usuario utista on utista.IdUsuario =  sp.IdUsuarioSolicitante
-		inner join AP_usuario u on u.UsuarioId = e.CreadoPor
+		inner join petrovendor..MM_SolicitudPedido sp on sp.IdSolicitudPedido = ped.IdSolicitudPedido		
+		inner join AP_usuario u on u.UsuarioId = e.CreadoPor AND
+									ISNULL(u.IsActivo,0) = 1
+
 		inner join OT_Solicitud ot on ot.IdOTSolicitud = e.IdOTSolicitud
 		inner join SC_Subcontrato sc on sc.IdSubcontrato = ot.IdSubcontrato
 		inner join CO_Contratista con on con.IdContratista = sc.IdContratista
@@ -272,4 +273,3 @@ as
 	end
 
 	
-

@@ -1,4 +1,19 @@
-﻿CREATE PROCEDURE [dbo].[Mobile_CambioEstatusAprobacion] @IdAprobacion INT, 
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Mobile_CambioEstatusAprobacion'
+)
+    DROP PROCEDURE Mobile_CambioEstatusAprobacion;
+GO 
+/****** Object:  StoredProcedure [dbo].[Mobile_CambioEstatusAprobacion]    Script Date: 15/02/2022 10:05:39 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[Mobile_CambioEstatusAprobacion] @IdAprobacion INT, 
                                                        @Comentario   VARCHAR(250), 
                                                        @idStatus     INT, 
                                                        @ByMobileApp  INT          = 0
@@ -33,6 +48,10 @@ AS
              WHERE IdTareaOrigen = @IdAprobacion
              ORDER BY FechaCreacion DESC
          );
+
+		 		--- HISTORIAL
+		INSERT INTO Petrovendor..APP_BitacoraAprobacionesApp(IdTarea,IdTipoPedido,IdEstatus,Fecha,App)
+	    VALUES (@IdAprobacion,@IdTipoAprobacion,@idStatus,GETDATE(),'V1')
          ----------------------------------------------------------------------------------------
          --------OPERACIONES GENERALES----------------
          SET @EstatusPet =
@@ -201,7 +220,7 @@ AS
                      SELECT TOP 1 TA.IdEstatus
                      FROM Petrovendor.dbo.TA_Tarea AS TA
                           JOIN Petrovendor.dbo.TA_Operacion AS TAO ON TAO.IdOperacion = TA.IdOperacion
-                          INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON P.IdSolicitudPedido = TAO.IdDocumento
+                          INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON TAO.IdDocumento = P.IdSolicitudPedido  AND TAO.NoVersion = P.Version
                      WHERE TAO.IdTipoOperacion = 9
                            AND TA.IdTarea = @IdAprobacion
                  );
@@ -215,8 +234,8 @@ AS
                                       @IdUsuario = TA.IdAprobador, 
                                       @IdFirma = TA.IdFirma
                          FROM Petrovendor.dbo.TA_Tarea AS TA
-                              JOIN Petrovendor.dbo.TA_Operacion AS TAO ON TAO.IdOperacion = TA.IdOperacion
-                              INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON P.IdSolicitudPedido = TAO.IdDocumento
+                              JOIN Petrovendor.dbo.TA_Operacion AS TAO ON TA.IdOperacion = TAO.IdOperacion 
+                              INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON TAO.IdDocumento = P.IdSolicitudPedido  AND TAO.NoVersion = P.Version
                          WHERE TAO.IdTipoOperacion = 9
                                AND TA.IdTarea = @IdAprobacion;
 
@@ -314,7 +333,7 @@ AS
 
 						 
 						 /*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobación SERIAL*/
-						 EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion
+						 EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion,@Origen='Mobile_CambioEstatusAprobacion'   	
 
                          --IF @ByMobileApp = 1
                          --BEGIN
