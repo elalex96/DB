@@ -1,4 +1,8 @@
-﻿-- =============================================  
+﻿use petrovendor
+go
+drop procedure if exists SP_TA_ActualizarEstatusTarea
+go
+-- =============================================  
 -- Author:  Daniel A Cruz  
 -- Create date: 04-01-17  
 -- Description:  Actualiza el Estatus de la Tarea y   
@@ -23,6 +27,10 @@
 -- Modified:    Alexander Gomez   
 -- Updated date: 14/08/2020
 -- Description: Se agrego la validacion para verificar el sig aprobador
+--************************************************************** 
+-- Modified:    LUIS DAVID
+-- Updated date: 22/02/2022
+-- Description: Se agrega el idusuarioAdinco para notificaciones push
 --************************************************************** 
 CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusTarea]
 -- Add the parameters for the stored procedure here  
@@ -97,12 +105,12 @@ BEGIN
     IF (SELECT IdEstatus FROM TA_Tarea WHERE IdTarea = @IdTarea) = 1
     BEGIN
 
-        -- Actualizar Estatus de Tarea ---  
+ -- Actualizar Estatus de Tarea ---  
         UPDATE TA_Tarea
         SET IdEstatus = @IdEstatus,
             FechaCambioEstatus = GETDATE(),
             TA_Tarea.Comentario = @Comentario,
-            IdFirma = @IdFirma
+           IdFirma = @IdFirma
         WHERE IdTarea = @IdTarea
 
 
@@ -155,7 +163,9 @@ BEGIN
                TOO.IdAsignador,
                TOO.IdProveedor,
                ISNULL(T.Comentario, '') AS Comentario,
-               TAE.Name
+               TAE.Name,
+			   U.IdUsuarioADINCO,
+			   UA.IdUsuarioADINCO as 'AsignadorId'
         FROM TA_Tarea AS T
             --INNER JOIN TA_TareaOperacion AS TAO ON TAO.IdTarea =T.IdTarea  
             LEFT JOIN TA_Operacion AS TOO
@@ -168,6 +178,8 @@ BEGIN
                 ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
             LEFT JOIN TA_Estatus AS TAE
                 ON TAE.IdEstatus = TOO.IdEstatusOperacion
+			LEFT JOIN S_Usuario UA
+				ON TOO.IdAsignador = UA.IdUsuario
         WHERE TOO.IdOperacion = @IdOperacion
         ORDER BY NoSecuencia ASC
 
@@ -317,13 +329,13 @@ BEGIN
             INNER JOIN dbo.TA_Estatus t
                 ON t.IdEstatus = tao.IdEstatusOperacion
         WHERE tao.IdOperacion = @IdOperacion
-              AND tao.IdTipoOperacion = 14
+             AND tao.IdTipoOperacion = 14
 
         SELECT @IdContratoAux = f.IdContrato,
                @Justificacion = r.Comentarios
         FROM dbo.FI_Factura f
             INNER JOIN dbo.CO_Registro r
-                ON r.IdFactura = f.IdFactura
+        ON r.IdFactura = f.IdFactura
         WHERE f.IdFactura = @Num_Factura
 
         SELECT @AreaContractual = a.NombreAreaContractual
@@ -425,7 +437,7 @@ BEGIN
 	ELSE
     BEGIN
         SET @Mensaje = N'ERROR DOBLE APROBACION'
-        SELECT @Mensaje AS MENSAJE
+SELECT @Mensaje AS MENSAJE
     END
 
 END
