@@ -28,6 +28,7 @@ BEGIN
 	DECLARE @TIPOUSUARIOPREGUNTA NVARCHAR(100);
 	DECLARE @COMENTARIOPREGUNTA NVARCHAR(100);
 	DECLARE @HTMLCORREO NVARCHAR(MAX);
+	DECLARE @HTMLCORREOAUX NVARCHAR(MAX);
 	DECLARE @PROVEEDOR NVARCHAR(100);
 	DECLARE @USUARIOPROVEEDOR NVARCHAR(100);
 	DECLARE @CORREOUSUARIOPROVEEDOR NVARCHAR(100);
@@ -93,11 +94,13 @@ BEGIN
 				ON USPR.IdProveedor = PR.IdProveedor
 			LEFT JOIN dbo.S_Usuario AS US
 				ON US.IdUsuario = USPR.IdUsuario
+				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
 				ON TUS.IdTipoUsuario = US.IdTipoUsuario
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 5)
 			AND PO.IdSubcontratista <> @IdProveedor
+			and	US.Activo = 1
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
@@ -122,10 +125,12 @@ BEGIN
 				ON USPR.IdProveedor = PR.IdProveedor
 			LEFT JOIN dbo.S_Usuario AS US
 				ON US.IdUsuario = USPR.IdUsuario
+				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
 				ON TUS.IdTipoUsuario = US.IdTipoUsuario
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4)
+			and	US.Activo = 1
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
@@ -153,10 +158,12 @@ BEGIN
 				ON USPR.IdProveedor = PR.IdProveedor
 			LEFT JOIN dbo.S_Usuario AS US
 				ON US.IdUsuario = USPR.IdUsuario
+				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
 				ON TUS.IdTipoUsuario = US.IdTipoUsuario
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4)
+			and	US.Activo = 1
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
@@ -177,11 +184,14 @@ BEGIN
 	end
 
 	--ITERACION DE LA TABLA
+	select @HTMLCORREOAUX = @HTMLCORREO
+	
 	WHILE @CONTROWS <= @TOTALROWS
 	BEGIN
 	    --CONSULTA PARA OBTENER EL HTML DEL CORREO
-		--SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 98
-		
+		select @HTMLCORREO = @HTMLCORREOAUX
+
+
 		SET @USUARIOPROVEEDOR = (SELECT NombreUsuario FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
 		SET @CORREOUSUARIOPROVEEDOR = (SELECT Correo FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
 		SET @URL = (SELECT URL FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
@@ -196,7 +206,7 @@ BEGIN
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##URL_TAREA##',@URL));
 
 		SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-		
+				
 		INSERT INTO Adinco.dbo.S_Notificacion
 		(
 			IdNotificacion,
@@ -227,7 +237,7 @@ BEGIN
 			NULL,
 			'procura@adinco.mx'
 		);
-		--select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion
+		
 		if (exists(select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion) and isnull(@HTMLCORREO,'')<>'')
 		begin
 
