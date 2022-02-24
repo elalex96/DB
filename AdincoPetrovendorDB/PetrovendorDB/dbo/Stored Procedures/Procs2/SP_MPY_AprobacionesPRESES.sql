@@ -19,11 +19,11 @@ BEGIN
 	ComentarioInterno NVARCHAR(MAX)
 	);
 
-	DECLARE @IDCONTRATO INT = (SELECT 
-										SCP.IdContrato 
-									FROM Adinco.dbo.CO_Contrato AS SCP
-										JOIN Adinco.dbo.CO_Contratista AS C ON C.IdContratista = SCP.IdContratista
-									WHERE C.RFC = @RFCProveedor);
+	--DECLARE @IDCONTRATO INT = (SELECT 
+	--									SCP.IdContrato 
+	--								FROM Adinco.dbo.CO_Contrato AS SCP
+	--									JOIN Adinco.dbo.CO_Contratista AS C ON C.IdContratista = SCP.IdContratista
+	--								WHERE C.RFC = @RFCProveedor);
 
 	DECLARE @PLANT NVARCHAR(10) = (SELECT TOP 1 CP.Planta
 									FROM Adinco.dbo.CO_SAPContratista_Planta AS CP
