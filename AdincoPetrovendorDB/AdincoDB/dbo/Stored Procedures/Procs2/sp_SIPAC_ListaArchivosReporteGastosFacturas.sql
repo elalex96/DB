@@ -1,16 +1,18 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:      ManuelCruz
 -- Create date: 05-06-17
 -- Description:
 -- =============================================
--- Modificado:       Marcos Garcia
+-- Modificado:       Neri Del Angel
 -- Fecha Modificado: 2020-01-13
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
+-- Modificado:       Neri Del Angel
+-- Fecha Modificado: 2022-02-25
+-- Description:     *Se ajusta para no traer los xml de los E
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_SIPAC_ListaArchivosReporteGastosFacturas]
--- [sp_SIPAC_ListaArchivosReporteGastosFacturas] 10011,'2019-04-01',1
+-- [sp_SIPAC_ListaArchivosReporteGastosFacturas] 10024, '2020-12-01', 0
 -- Add the parameters for the stored procedure here
 @Contrato      INT, 
 @Mes           DATE, 
@@ -87,6 +89,8 @@ AS
                AND R.IdEstado = 10004
                AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
                AND SER.NombreServicio NOT LIKE '%No elegibles%'
+			   AND F.TipoComprobante NOT LIKE '%egreso%'
+			   AND F.TipoComprobante NOT LIKE 'E%'
                AND (F.MetodoPago LIKE '%exhibi%'
                     OR F.MetodoPago LIKE '%PUE%'
                     OR F.FormaPago LIKE '%exhibi%'
