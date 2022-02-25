@@ -48,7 +48,8 @@ BEGIN
 	DECLARE @DIASELABORACION INT;
 	DECLARE @DIASREVISION INT;
 	DECLARE @DIASAPROBACION INT;
-
+	declare @masDeUnRevisor bit
+	select @masDeUnRevisor = 0;
 
 	WHILE @CONT <= @CONTTOTAL
 	BEGIN
@@ -65,6 +66,14 @@ BEGIN
 		--BUSQUEDA DE USUARIO REVISOR SELECCIONADO
 		SET @USUARIOREVISOR = (SELECT TOP 1 Revisor FROM #TB_EXCEL WHERE R = @CONT);
 		SET @IDUSUARIOREVISOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOREVISOR);
+
+		--select @USUARIOREVISOR, @IDUSUARIOREVISOR
+		
+		if((SELECT CHARINDEX(',', @USUARIOREVISOR) position)>0)
+		begin
+			select @masDeUnRevisor = 1
+		end
+
 
 		--BUSQUEDA DE USUARIO APROBADOR SELECCIONADO
 		SET @USUARIOAPROBADOR = (SELECT TOP 1 Aprobador FROM #TB_EXCEL WHERE R = @CONT);
@@ -299,7 +308,14 @@ BEGIN
 
 				IF ISNULL(@IDUSUARIOREVISOR,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Revisor seleccionado no es aceptable.</li>';
+					if(@masDeUnRevisor=1)
+					begin
+						SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> Solo es posible agregar un Revisor mediante importación</li>';
+					end
+					else
+					begin
+						SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Revisor seleccionado no es aceptable.</li>';
+					end
 				END
 
 				IF ISNULL(@IDUSUARIOAPROBADOR,0) = 0
