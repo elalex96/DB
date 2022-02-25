@@ -5,14 +5,16 @@
 -- Modificado: Manuel Cruz
 -- Fecha Modificado: 2019-06-28
 -- Description: Cambio de consulta para mostrar los complementos de pago relacionadolos al gasto
--- Modificado:       Marcos Garcia
+-- Modificado:       Neri Del Angel
 -- Fecha Modificado: 2020-01-13
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
+-- Modificado:       Neri Del Angel
+-- Fecha Modificado: 2022-02-25
+-- Description:     *Se excluyen los E
 -- =============================================
-
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M]
--- [SIPAC_RC_CONT_22_M] 10011,'2019-07-01',1
+-- [SIPAC_RC_CONT_22_M] 10024, '2020-12-01', 0
 -- Add the parameters for the stored procedure here
 @Contrato      INT, 
 @Mes           DATE, 
@@ -290,7 +292,7 @@ AS
          FROM dbo.FI_Factura F WITH(NOLOCK)
               JOIN #MontosTotalTransferencia MTT ON MTT.IdFactura = F.IdFactura
               JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdFactura = F.IdFactura
-              JOIN #Facturas ON #Facturas.IdFactura = R.IdFactura
+              JOIN #Facturas ON #Facturas.IdFactura = R.IdFactura AND #Facturas.TipoComprobante NOT IN ('E')
               JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
               JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
               JOIN dbo.CO_AnioContractual AC WITH(NOLOCK) ON AC.IdAnioContractual = P.IdAnioContractual
