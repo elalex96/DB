@@ -4,6 +4,7 @@ begin
 end
 
 go
+
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <06/12/2019>  
@@ -15,7 +16,7 @@ CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]
 @IdUsuario INT
 AS
 BEGIN
-
+	set nocount on
 	create table #tmp
 	(
 		Activo int
@@ -94,7 +95,7 @@ BEGIN
 			AND ISNULL(@DIASELABORACION,0) > 0
 			AND ISNULL(@DIASREVISION,0) > 0
 		BEGIN 
-
+		
 			--GUARDADO DE LOS DATOS
 			UPDATE CE
 			SET CE.IdArea = @IDAREA,
@@ -115,6 +116,7 @@ BEGIN
 			--ACTUALIZACION DEL APROBADOR
 			IF @IDACTIVIDADACTUAL IS NOT NULL
 			BEGIN
+			
 				UPDATE		ACAPROB
 				SET			ACAPROB.idUsuario			=		@IDUSUARIOAPROBADOR,
 							ACAPROB.ModificadoEn		=		GETDATE(),
@@ -130,9 +132,12 @@ BEGIN
 			END
 			ELSE
 			BEGIN
-				INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-				VALUES
-				(10002,@IDUSUARIOAPROBADOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+				if not exists(select * from EN_Actividad where EstadoID=10002 and idUsuario=@IDUSUARIOAPROBADOR and IdContratoEntregable = @IDENTREGABLE and  Activo = 1)
+				begin
+						INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
+						VALUES
+						(10002,@IDUSUARIOAPROBADOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+				end
 			END;
 
 			--BUSQUEDA DEL REVISOR
@@ -150,9 +155,10 @@ BEGIN
 					AND			CE.IdContrato		=	@IdContrato
 					and			ACAPROB.EstadoID	=	10001
 					and			ACAPROB.Activo		=	1
+					and			ACAPROB.idUsuario	=	@IDUSUARIOREVISOR
 				)
 				begin
-
+				
 
 					delete from #tmp
 
@@ -170,7 +176,7 @@ BEGIN
 
 					if ((select sum(Activo) from #tmp)=2)
 					begin
-						--select 'si'
+
 						UPDATE		ACAPROB
 						SET			ACAPROB.ModificadoEn		=		GETDATE(),
 									ACAPROB.ModificadoPor		=		@IdUsuario
@@ -186,22 +192,35 @@ BEGIN
 					end
 					else
 					begin
-						--select 'no'
-						UPDATE		ACAPROB
-						SET			ACAPROB.Activo				=		0
-						FROM		dbo.EN_ContratoEntregable	CE
-						JOIN		#TB_EXCEL					TE 
-						ON			CE.IdContratoEntregable		=		TE.IdEntregable
-						LEFT JOIN	EN_Actividad				ACAPROB 
-						ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
-						AND			ACAPROB.EstadoID			=		10001
-						WHERE		TE.R						=		@CONT 
-						AND			CE.IdContrato				=		@IdContrato;
+
+						if not exists (select * from dbo.EN_ContratoEntregable	CE
+							JOIN		#TB_EXCEL					TE 
+							ON			CE.IdContratoEntregable		=		TE.IdEntregable
+							LEFT JOIN	EN_Actividad				ACAPROB 
+							ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+							AND			ACAPROB.EstadoID			=		10001
+							WHERE		TE.R						=		@CONT 
+							AND			CE.IdContrato				=		@IdContrato
+							and			ACAPROB.Activo				=		0
+							)
+						begin
+							UPDATE		ACAPROB
+							SET			ACAPROB.Activo				=		0
+							FROM		dbo.EN_ContratoEntregable	CE
+							JOIN		#TB_EXCEL					TE 
+							ON			CE.IdContratoEntregable		=		TE.IdEntregable
+							LEFT JOIN	EN_Actividad				ACAPROB 
+							ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+							AND			ACAPROB.EstadoID			=		10001
+							WHERE		TE.R						=		@CONT 
+							AND			CE.IdContrato				=		@IdContrato;
+						end
+
 
 						UPDATE		ACAPROB
 						SET			ACAPROB.ModificadoEn		=		GETDATE(),
 									ACAPROB.ModificadoPor		=		@IdUsuario,
-									ACAPROB.Activo				=	1
+									ACAPROB.Activo				=		1
 						FROM		dbo.EN_ContratoEntregable	CE
 						JOIN		#TB_EXCEL					TE 
 						ON			CE.IdContratoEntregable		=		TE.IdEntregable
@@ -215,17 +234,23 @@ BEGIN
 				end
 				else
 				begin
-					select 2
-					INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-					VALUES
-					(10001,@IDUSUARIOREVISOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+					
+					if not exists(select * from EN_Actividad where EstadoID=10001 and idUsuario=@IDUSUARIOREVISOR and IdContratoEntregable = @IDENTREGABLE and  Activo = 1)
+					begin
+						INSERT INTO EN_Actividad (	EstadoID,	idUsuario,			IdContratoEntregable,	CreadoPor,CreadoEn,Activo)
+						VALUES					 (	10001,		@IDUSUARIOREVISOR,	@IDENTREGABLE,			@IdUsuario,GETDATE(),1);
+					end
 				end
 			END
 			ELSE
 			BEGIN
-				INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-				VALUES
-				(10001,@IDUSUARIOREVISOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+
+				if not exists(select * from EN_Actividad where EstadoID=10001 and idUsuario=@IDUSUARIOREVISOR and IdContratoEntregable = @IDENTREGABLE and  Activo = 1)
+				begin
+						INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
+						VALUES
+						(10001,@IDUSUARIOREVISOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+				end
 			END;
 
 			--BUSQUEDA DEL ELABORADOR
@@ -244,9 +269,12 @@ BEGIN
 			END
 			ELSE
 			BEGIN
-				INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-				VALUES
-				(10000,@IDUSUARIOAPROBADOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+				if not exists(select * from EN_Actividad where EstadoID=10000 and idUsuario=@IDUSUARIOAPROBADOR and IdContratoEntregable = @IDENTREGABLE and  Activo = 1)
+				begin
+					INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
+					VALUES
+					(10000,@IDUSUARIOAPROBADOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
+				end
 			END;
 
 			--GUARDADO EXITOSO AGREGADO AL CONTADOR
@@ -255,59 +283,63 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			--VALIDACION DE DATOS ERRONES Y AGREGADO DE TEXTO DESCRIPTIVO DEL ERROR
-			IF ISNULL(@IDENTREGABLE,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>Se detecto que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señalo el entregable a editar. </li>'; 
-			END
+			if not (ISNULL(@IDENTREGABLE,0) = 0 and ISNULL(@IDAREA,0) = 0 and ISNULL(@IDUSUARIOREVISOR,0) = 0 and ISNULL(@IDUSUARIOAPROBADOR,0) = 0 and ISNULL(@IDUSUARIOELABORADOR,0) = 0 and
+				@ACTIVO IS NULL and ISNULL(@DIASALERTAPREVIO,0) = 0 and ISNULL(@DIASAPROBACION,0) = 0 and ISNULL(@DIASELABORACION,0) = 0 and ISNULL(@DIASREVISION,0) = 0 )
+			begin
+				--VALIDACION DE DATOS ERRONES Y AGREGADO DE TEXTO DESCRIPTIVO DEL ERROR
+				IF ISNULL(@IDENTREGABLE,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Se detecto que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señalo el entregable a editar. </li>'; 
+				END
 
-			IF ISNULL(@IDAREA,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Area seleccionada no es aceptable.</li>';
-			END
+				IF ISNULL(@IDAREA,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Area seleccionada no es aceptable.</li>';
+				END
 
-			IF ISNULL(@IDUSUARIOREVISOR,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Revisor seleccionado no es aceptable.</li>';
-			END
+				IF ISNULL(@IDUSUARIOREVISOR,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Revisor seleccionado no es aceptable.</li>';
+				END
 
-			IF ISNULL(@IDUSUARIOAPROBADOR,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Aprobador seleccionado no es aceptable.</li>';
-			END
+				IF ISNULL(@IDUSUARIOAPROBADOR,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Aprobador seleccionado no es aceptable.</li>';
+				END
 
-			IF ISNULL(@IDUSUARIOELABORADOR,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Elaborador seleccionado no es aceptable.</li>';
-			END
+				IF ISNULL(@IDUSUARIOELABORADOR,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Elaborador seleccionado no es aceptable.</li>';
+				END
 
-			IF @ACTIVO IS NULL
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el valor de Activo seleccionado no es aceptable.</li>'
-			END
+				IF @ACTIVO IS NULL
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el valor de Activo seleccionado no es aceptable.</li>'
+				END
 
-			IF ISNULL(@DIASALERTAPREVIO,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de alerta previa deben ser mayor a 0.</li>';
-			END
+				IF ISNULL(@DIASALERTAPREVIO,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de alerta previa deben ser mayor a 0.</li>';
+				END
 
-			IF ISNULL(@DIASAPROBACION,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de aprobación deben ser mayor a 0.</li>';
-			END
+				IF ISNULL(@DIASAPROBACION,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de aprobación deben ser mayor a 0.</li>';
+				END
 
-			IF ISNULL(@DIASELABORACION,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de elaboracion deben ser mayor a 0.</li>';
-			END
+				IF ISNULL(@DIASELABORACION,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de elaboracion deben ser mayor a 0.</li>';
+				END
 
-			IF ISNULL(@DIASREVISION,0) = 0
-			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de revisión deben ser mayor a 0.</li>';
-			END
+				IF ISNULL(@DIASREVISION,0) = 0
+				BEGIN
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de revisión deben ser mayor a 0.</li>';
+				END
 
-			--ERROR AGREGADO AL CONTADOR
-			SET @CONTADORERRORES = @CONTADORERRORES + 1;
+				--ERROR AGREGADO AL CONTADOR
+				SET @CONTADORERRORES = @CONTADORERRORES + 1;
+			end
 		END
 
 		SET @CONT = @CONT + 1;
