@@ -123,23 +123,23 @@ BEGIN
 			SP.IdTipoProceso,
 			SP.IdEstatusEliminado,
 			TAO.FechaFinalizacion
-		FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-			JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+		FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+			JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 				ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					AND SP.IdProveedor = @IdProveedor
 					AND SP.Activo = 1
 					AND ISNULL(SP.Visible,1) = 1
 					AND ISNULL(SP.IdEstatusEliminado,0) <> 1
 					AND (SP.PeticionEnviada = 0 OR SP.PeticionEnviada IS NULL )
-			JOIN TA_Operacion (NOLOCK) AS OT
+			JOIN dbo.TA_Operacion (NOLOCK) AS OT
 				ON SP.IdSolicitudPedido = OT.IdDocumento
 					AND OT.IdEstatusOperacion = 2
 					AND OT.IdTipoOperacion = 2
 			LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 				ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-			JOIN S_Usuario (NOLOCK) AS U
+			JOIN dbo.S_Usuario (NOLOCK) AS U
 				ON OT.IdAsignador = U.IdUsuario
-			LEFT JOIN TA_Operacion (NOLOCK) AS TAO
+			LEFT JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 				ON TAO.IdDocumento = SP.IdSolicitudPedido
 					AND TAO.IdTipoOperacion = 6
 					AND TAO.IdProveedor = @IdProveedor
@@ -203,18 +203,18 @@ BEGIN
 					ISNULL(@EsAdministrador,0) AS EsAdministrador,
 					PSP.Prioridad, 
 					(ROW_NUMBER() OVER(ORDER BY SP.IdSolicitudPedido DESC) - 1)/ @RecordsByPage AS _Page
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
 					JOIN #LISTA_SOLPED AS SP
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
 					LEFT JOIN dbo.MM_TipoPedido (NOLOCK) AS TP
 						ON	SP.IdTipoProceso = TP.IdTipoPedido
-					LEFT JOIN MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
+					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados AS CA	
 					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
@@ -263,23 +263,23 @@ BEGIN
 					SP.IdTipoProceso,
 					SP.IdEstatusEliminado,
 					TAO.FechaFinalizacion
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-					JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+					JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 							AND SP.IdProveedor = @IdProveedor
 							AND SP.Activo = 1
 							AND ISNULL(SP.Visible,1) = 1
 							AND ISNULL(SP.IdEstatusEliminado,0) <> 1
 							AND SP.PeticionEnviada = 1
-					JOIN TA_Operacion (NOLOCK) AS OT
+					JOIN dbo.TA_Operacion (NOLOCK) AS OT
 						ON SP.IdSolicitudPedido = OT.IdDocumento
 							AND OT.IdEstatusOperacion = 2
 							AND OT.IdTipoOperacion = 2
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON OT.IdAsignador = U.IdUsuario
-					JOIN TA_Operacion (NOLOCK) AS TAO
+					JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 						ON TAO.IdDocumento = SP.IdSolicitudPedido
 						AND TAO.IdTipoOperacion = 6
 						AND TAO.IdProveedor = @IdProveedor
@@ -378,19 +378,19 @@ BEGIN
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
-					LEFT JOIN MM_PeticionOferta (NOLOCK) AS PO
+					LEFT JOIN dbo.MM_PeticionOferta (NOLOCK) AS PO
 						ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 						AND ISNULL(PO.IdEstatusEliminado,0) = 0
-					LEFT JOIN MM_Pedido (NOLOCK) AS PED
+					LEFT JOIN dbo.MM_Pedido (NOLOCK) AS PED
 						ON SP.IdSolicitudPedido = PED.IdSolicitudPedido
 						AND ISNULL(PED.IdEstatusEliminado,0) = 0
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
 					LEFT JOIN dbo.MM_TipoPedido (NOLOCK) AS TP
 						ON	SP.IdTipoProceso = TP.IdTipoPedido
-					LEFT JOIN MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
+					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados AS CA	
 					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
@@ -449,23 +449,23 @@ BEGIN
 					SP.IdTipoProceso,
 					SP.IdEstatusEliminado,
 					TAO.FechaFinalizacion
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-					JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+					JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 							AND SP.IdProveedor = @IdProveedor
 							AND SP.Activo = 1
 							AND ISNULL(SP.Visible,1) = 1
 							AND ISNULL(SP.IdEstatusEliminado,0) <> 1
 							AND SP.PeticionEnviada = 1
-					JOIN TA_Operacion (NOLOCK) AS OT
+					JOIN dbo.TA_Operacion (NOLOCK) AS OT
 						ON SP.IdSolicitudPedido = OT.IdDocumento
 							AND OT.IdEstatusOperacion = 2
 							AND OT.IdTipoOperacion = 2
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON OT.IdAsignador = U.IdUsuario
-					JOIN TA_Operacion (NOLOCK) AS TAO
+					JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 						ON TAO.IdDocumento = SP.IdSolicitudPedido
 						AND TAO.IdTipoOperacion = 6
 						AND TAO.IdProveedor = @IdProveedor
@@ -559,24 +559,24 @@ BEGIN
 					U.Nombre AS SolicitadoPor,
 					PSP.Prioridad, 
 					(ROW_NUMBER() OVER(ORDER BY SP.IdSolicitudPedido DESC) - 1)/ @RecordsByPage AS _Page
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
 					JOIN #LISTA_SOLPED AS SP
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
-					LEFT JOIN MM_PeticionOferta (NOLOCK) AS PO
+					LEFT JOIN dbo.MM_PeticionOferta (NOLOCK) AS PO
 						ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 						AND ISNULL(PO.IdEstatusEliminado,0) = 0
-					LEFT JOIN MM_Pedido (NOLOCK) AS PED
+					LEFT JOIN dbo.MM_Pedido (NOLOCK) AS PED
 						ON SP.IdSolicitudPedido = PED.IdSolicitudPedido
 						AND ISNULL(PED.IdEstatusEliminado,0) = 0
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
 					LEFT JOIN dbo.MM_TipoPedido (NOLOCK) AS TP
 						ON	SP.IdTipoProceso = TP.IdTipoPedido
-					LEFT JOIN MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
+					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados AS CA	
 					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
@@ -635,30 +635,30 @@ BEGIN
 					SP.IdTipoProceso,
 					SP.IdEstatusEliminado,
 					TAO.FechaFinalizacion
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-					JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+					JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 							AND SP.IdProveedor = @IdProveedor
 							AND SP.Activo = 1
 							AND ISNULL(SP.Visible,1) = 1
 							AND ISNULL(SP.IdEstatusEliminado,0) <> 1
 							AND SP.PeticionEnviada = 1
-					JOIN TA_Operacion (NOLOCK) AS OT
+					JOIN dbo.TA_Operacion (NOLOCK) AS OT
 						ON SP.IdSolicitudPedido = OT.IdDocumento
 							AND OT.IdEstatusOperacion = 2
 							AND OT.IdTipoOperacion = 2
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON OT.IdAsignador = U.IdUsuario
-					JOIN TA_Operacion (NOLOCK) AS TAO
+					JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 						ON TAO.IdDocumento = SP.IdSolicitudPedido
 						AND TAO.IdTipoOperacion = 6
 						AND TAO.IdProveedor = @IdProveedor
-					JOIN MM_PeticionOferta (NOLOCK) AS POF
+					JOIN dbo.MM_PeticionOferta (NOLOCK) AS POF
 						ON SP.IdSolicitudPedido = POF.IdSolicitudPedido
 						AND ISNULL(POF.IdEstatusEliminado,0) = 0
-					JOIN MM_PeticionOfertaDetalle (NOLOCK) AS POFD
+					JOIN dbo.MM_PeticionOfertaDetalle (NOLOCK) AS POFD
 					 ON POF.IdPeticionOferta = POFD.IdPeticionOferta
 						 AND POF.Cotizado = 1
 						 AND POFD.Cotizado = 1
@@ -751,24 +751,24 @@ BEGIN
 					U.Nombre AS SolicitadoPor,
 					PSP.Prioridad, 
 					(ROW_NUMBER() OVER(ORDER BY SP.IdSolicitudPedido DESC) - 1)/ @RecordsByPage AS _Page
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
 					JOIN #LISTA_SOLPED AS SP
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
-					LEFT JOIN MM_PeticionOferta (NOLOCK) AS PO
+					LEFT JOIN dbo.MM_PeticionOferta (NOLOCK) AS PO
 						ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 						AND ISNULL(PO.IdEstatusEliminado,0) = 0
-					LEFT JOIN MM_Pedido (NOLOCK) AS PED
+					LEFT JOIN dbo.MM_Pedido (NOLOCK) AS PED
 						ON SP.IdSolicitudPedido = PED.IdSolicitudPedido
 						AND ISNULL(PED.IdEstatusEliminado,0) = 0
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
 					LEFT JOIN dbo.MM_TipoPedido (NOLOCK) AS TP
 						ON	SP.IdTipoProceso = TP.IdTipoPedido
-					LEFT JOIN MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
+					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados (NOLOCK) AS CA	
 					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
@@ -827,15 +827,15 @@ BEGIN
 				SP.IdTipoProceso,
 				SP.IdEstatusEliminado,
 				TAO.FechaFinalizacion
-			FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-				JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+			FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 					ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 						AND SP.IdProveedor = @IdProveedor
 						AND SP.Activo = 1
 						AND ISNULL(SP.Visible,1) = 1
 						AND ISNULL(SP.IdEstatusEliminado,0) <> 1
 						AND SP.PeticionEnviada = 1
-				JOIN TA_Operacion (NOLOCK) AS OT
+				JOIN dbo.TA_Operacion (NOLOCK) AS OT
 						ON SP.IdSolicitudPedido = OT.IdDocumento
 						AND OT.IdEstatusOperacion = 2
 						AND OT.IdTipoOperacion = 2
@@ -847,9 +847,9 @@ BEGIN
 					 AND PS.IdTipoPedido IN (2, 4) --> MERCADEO/AD DIRECTO
 				LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-				JOIN S_Usuario (NOLOCK) AS U
+				JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON OT.IdAsignador = U.IdUsuario
-				JOIN TA_Operacion (NOLOCK) AS TAO
+				JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 						ON SP.IdSolicitudPedido = TAO.IdDocumento
 						AND TAO.IdTipoOperacion = 6
 						AND DATEDIFF(MINUTE, TAO.FechaFinalizacion, GETDATE()) >= 0
@@ -956,24 +956,24 @@ BEGIN
 					U.Nombre AS SolicitadoPor,
 					PSP.Prioridad, 
 					(ROW_NUMBER() OVER(ORDER BY SP.IdSolicitudPedido DESC) - 1)/ @RecordsByPage AS _Page
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
 					JOIN #LISTA_SOLPED AS SP
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
-					LEFT JOIN MM_PeticionOferta (NOLOCK) AS PO
+					LEFT JOIN dbo.MM_PeticionOferta (NOLOCK) AS PO
 						ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 						AND ISNULL(PO.IdEstatusEliminado,0) = 0
-					LEFT JOIN MM_Pedido (NOLOCK) AS PED
+					LEFT JOIN dbo.MM_Pedido (NOLOCK) AS PED
 						ON SP.IdSolicitudPedido = PED.IdSolicitudPedido
 						AND ISNULL(PED.IdEstatusEliminado,0) = 0
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
 					LEFT JOIN dbo.MM_TipoPedido (NOLOCK) AS TP
 						ON	SP.IdTipoProceso = TP.IdTipoPedido
-					LEFT JOIN MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
+					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados (NOLOCK) AS CA	
 					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
@@ -1032,23 +1032,23 @@ BEGIN
 				SP.IdTipoProceso,
 				SP.IdEstatusEliminado,
 				TAO.FechaFinalizacion
-			FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-				JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+			FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 					ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 						AND SP.IdProveedor = @IdProveedor
 						AND SP.Activo = 1
 						AND ISNULL(SP.Visible,1) = 1
 						AND ISNULL(SP.IdEstatusEliminado,0) <> 1
 						AND SP.PeticionEnviada = 1
-				JOIN TA_Operacion (NOLOCK) AS OT
+				JOIN dbo.TA_Operacion (NOLOCK) AS OT
 						ON SP.IdSolicitudPedido = OT.IdDocumento
 						AND OT.IdEstatusOperacion = 2
 						AND OT.IdTipoOperacion = 2
 				LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-				JOIN S_Usuario (NOLOCK) AS U
+				JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON OT.IdAsignador = U.IdUsuario
-				JOIN TA_Operacion (NOLOCK) AS TAO
+				JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 						ON TAO.IdDocumento = SP.IdSolicitudPedido
 						AND TAO.IdTipoOperacion = 6
 						AND TAO.IdProveedor = @IdProveedor
@@ -1155,24 +1155,24 @@ BEGIN
 					U.Nombre AS SolicitadoPor,
 					PSP.Prioridad, 
 					(ROW_NUMBER() OVER(ORDER BY SP.IdSolicitudPedido DESC) - 1)/ @RecordsByPage AS _Page
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
 					JOIN #LISTA_SOLPED AS SP
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
-					LEFT JOIN MM_PeticionOferta (NOLOCK) AS PO
+					LEFT JOIN dbo.MM_PeticionOferta (NOLOCK) AS PO
 						ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 						AND ISNULL(PO.IdEstatusEliminado,0) = 0
-					LEFT JOIN MM_Pedido (NOLOCK) AS PED
+					LEFT JOIN dbo.MM_Pedido (NOLOCK) AS PED
 						ON SP.IdSolicitudPedido = PED.IdSolicitudPedido
 						AND ISNULL(PED.IdEstatusEliminado,0) = 0
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
 					LEFT JOIN dbo.MM_TipoPedido (NOLOCK) AS TP
 						ON	SP.IdTipoProceso = TP.IdTipoPedido
-					LEFT JOIN MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
+					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados (NOLOCK) AS CA	
 					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
@@ -1247,22 +1247,22 @@ BEGIN
 					SP.IdTipoProceso,
 					SP.IdEstatusEliminado,
 					TAO.FechaFinalizacion
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-					JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+					JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 							AND SP.IdProveedor = @IdProveedor
 							AND SP.Activo = 1
 							AND ISNULL(SP.Visible,1) = 1
 							AND ISNULL(SP.IdEstatusEliminado,0) <> 1
-					JOIN TA_Operacion (NOLOCK) AS OT
+					JOIN dbo.TA_Operacion (NOLOCK) AS OT
 						ON SP.IdSolicitudPedido = OT.IdDocumento
 							AND OT.IdEstatusOperacion = 2
 							AND OT.IdTipoOperacion = 2
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON OT.IdAsignador = U.IdUsuario
-					LEFT JOIN TA_Operacion (NOLOCK) AS TAO
+					LEFT JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 						ON SP.IdSolicitudPedido = TAO.IdDocumento
 						AND TAO.IdTipoOperacion = 6
 						AND TAO.IdProveedor = @IdProveedor
@@ -1354,17 +1354,17 @@ BEGIN
 					SP.ComentarioInternoPO,--ComentarioInternoPO
 					ISNULL(@EsAdministrador,0) AS EsAdministrador,
 					(ROW_NUMBER() OVER(ORDER BY SP.IdSolicitudPedido DESC) - 1)/ @RecordsByPage AS _Page
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
 					JOIN #LISTA_SOLPED AS SP
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
-					LEFT JOIN MM_PeticionOferta (NOLOCK) AS PO
+					LEFT JOIN dbo.MM_PeticionOferta (NOLOCK) AS PO
 						ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 						AND ISNULL(PO.IdEstatusEliminado,0) = 0
-					LEFT JOIN MM_Pedido (NOLOCK) AS PED
+					LEFT JOIN dbo.MM_Pedido (NOLOCK) AS PED
 						ON SP.IdSolicitudPedido = PED.IdSolicitudPedido
 						AND ISNULL(PED.IdEstatusEliminado,0) = 0
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador  (NOLOCK) SPC 
@@ -1420,22 +1420,22 @@ BEGIN
 					SP.IdTipoProceso,
 					SP.IdEstatusEliminado,
 					TAO.FechaFinalizacion
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
-					JOIN MM_SolicitudPedido (NOLOCK) AS SP 
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
+					JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 							AND SP.IdProveedor = @IdProveedor
 							AND SP.Activo = 1
 							AND ISNULL(SP.Visible,1) = 1
 							AND ISNULL(SP.IdEstatusEliminado,0) <> 1
-					JOIN TA_Operacion (NOLOCK) AS OT
+					JOIN dbo.TA_Operacion (NOLOCK) AS OT
 						ON SP.IdSolicitudPedido = OT.IdDocumento
 							AND OT.IdEstatusOperacion = 2
 							AND OT.IdTipoOperacion = 2
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON OT.IdAsignador = U.IdUsuario
-					LEFT JOIN TA_Operacion (NOLOCK) AS TAO
+					LEFT JOIN dbo.TA_Operacion (NOLOCK) AS TAO
 						ON TAO.IdDocumento = SP.IdSolicitudPedido
 						AND TAO.IdTipoOperacion = 6
 						AND TAO.IdProveedor = @IdProveedor
@@ -1504,16 +1504,16 @@ BEGIN
 					SP.MotivoUrgencia, --MotivoUrgencia
 					ISNULL(@EsAdministrador,0) AS EsAdministrador,
 					(ROW_NUMBER() OVER(ORDER BY SP.IdSolicitudPedido DESC) - 1)/ @RecordsByPage AS _Page
-				FROM MM_TipoSolicitudPedido (NOLOCK) AS TSP
+				FROM dbo.MM_TipoSolicitudPedido (NOLOCK) AS TSP
 					JOIN #LISTA_SOLPED AS SP
 						ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
 					JOIN Adinco.dbo.CO_Contrato (NOLOCK) c
 						ON SP.IdContrato = C.IdContrato
-					JOIN S_Usuario (NOLOCK) AS U
+					JOIN dbo.S_Usuario (NOLOCK) AS U
 						ON SP.IdAsignador = U.IdUsuario
 					LEFT JOIN dbo.MM_SolicitudPedidoComprador (NOLOCK) SPC 
 						ON	SP.IdSolicitudPedido = SPC.IdSolicitudPedido
-					LEFT JOIN MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
+					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados AS CA	
 					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
