@@ -9,6 +9,7 @@ BEGIN
 -- 20211125	BAAC	Se modifica para agregar el querystring que permite notificar al accountable compliance cuando leen el correo
 -- 20211206	BAAC	Se modifica para agregar la cantidad de correos que va a recibir el usuario (cuando no cabe la lista en un solo correo)
 -- 20220209	BAAC	Se modifica para que el formato de correo del accountable compliance sea igual que los demas
+-- 20220224	BAAC	Se modifica para que solo se envie un correo a cada usuario
 -- =============================================
 SET NOCOUNT ON
 SET LANGUAGE Spanish
@@ -18,7 +19,7 @@ CREATE TABLE #NotificacionesProximas
 	Destinatario	VARCHAR(250),
 	TipoCorreo		VARCHAR(250),
 	Ruta			VARCHAR(250),
-	Tabla1			VARCHAR(8000),
+	Tabla1			VARCHAR(MAX),
 	EsGrupo			BIT
 )
 
@@ -27,7 +28,7 @@ CREATE TABLE #NotificacionesPendientes
 	Destinatario	VARCHAR(250),
 	TipoCorreo		VARCHAR(250),
 	Ruta			VARCHAR(250),
-	Tabla1			VARCHAR(8000),
+	Tabla1			VARCHAR(MAX),
 	EsGrupo			BIT
 )
 
@@ -36,8 +37,8 @@ CREATE TABLE #NotificacionesPendYProx
 	Destinatario	VARCHAR(250),
 	TipoCorreo		VARCHAR(250),
 	Ruta			VARCHAR(250),
-	Tabla1			VARCHAR(8000),
-	Tabla2			VARCHAR(8000),
+	Tabla1			VARCHAR(MAX),
+	Tabla2			VARCHAR(MAX),
 	EsGrupo			BIT
 )
 
@@ -47,8 +48,8 @@ CREATE TABLE #NotificacionesFinales
 	Destinatario	VARCHAR(250),
 	TipoCorreo		VARCHAR(250),
 	Ruta			VARCHAR(250),
-	TablaProximas	VARCHAR(8000),
-	TablaPendientes		VARCHAR(8000),
+	TablaProximas	VARCHAR(MAX),
+	TablaPendientes		VARCHAR(MAX),
 	NumCorreo		INT,
 	NombreDestinatario	VARCHAR(250),
 	TotalCorreos	INT
@@ -334,10 +335,10 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta,
-		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
-		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
+		REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'), --+ '</table>' Detalle
+		REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'), --+ '</table>' Detalle
 		1
 	FROM
 		#NotificacionesPendYProx B
@@ -354,10 +355,10 @@ SELECT @HOY = GETDATE()
 		UG.Usuario,
 		TipoCorreo,
 		Ruta,
-		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesPendYProx A
-				WHERE UG.Usuario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
-		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE UG.Usuario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
+		REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesPendYProx A
+				WHERE UG.Usuario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'), --+ '</table>' Detalle
+		REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
+				WHERE UG.Usuario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'), --+ '</table>' Detalle
 		1
 	FROM
 		#NotificacionesPendYProx B
@@ -379,279 +380,6 @@ SELECT @HOY = GETDATE()
 	ORDER BY
 		Destinatario
 
-
--- SEGUNDO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),8001,7990), --+ '</table>' Detalle
-		2
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 8000 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
-
--- TERCER CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),15991,7990), --+ '</table>' Detalle
-		3
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 15990 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
-
--- CUARTO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),23981,7990), --+ '</table>' Detalle
-		4
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 23980 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
--- QUINTO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),31971,7990), --+ '</table>' Detalle
-		5
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 31970 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
-
--- SEXTO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),39961,7990), --+ '</table>' Detalle
-		6
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 39960 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
--- SEPTIMO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),47951,7990), --+ '</table>' Detalle
-		7
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 47950 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
--- OCTAVO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),55941,7990), --+ '</table>' Detalle
-		8
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 55940 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
--- NOVENO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),63931,7990), --+ '</table>' Detalle
-		9
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 63930 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
-
--- DECIMO CORREO DE PENDIENTES CONTINUACION...
-	INSERT INTO #NotificacionesFinales
-	(
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		TablaProximas,
-		TablaPendientes,
-		NumCorreo
-	)
-	SELECT
-		Destinatario,
-		TipoCorreo,
-		Ruta,
-		'', --+ '</table>' Detalle
-		'<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),71921,7990), --+ '</table>' Detalle
-		10
-	FROM
-		#NotificacionesPendYProx B
-	WHERE
-		LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla2 FROM #NotificacionesPendYProx A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 71920 
-	GROUP BY
-		Destinatario,
-		TipoCorreo,
-		Ruta
-	ORDER BY
-		Destinatario
 
 	-- SE OBTIENE CUANTOS CORREOS VA A RECIBIR EL USUARIO
 	INSERT INTO #CantidadCorreos
@@ -770,8 +498,8 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta,
-		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesProximas A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
+		REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesProximas A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'), --+ '</table>' Detalle
 		1
 	FROM
 		#NotificacionesProximas B
@@ -821,7 +549,7 @@ SELECT @HOY = GETDATE()
 		AND CE.Activo=1 
 		AND ISNULL(CE.AccountableCompliance,'')	<> ''
 	JOIN
-        dbo.EN_InstanciasEntregable IE	(NOLOCK)
+		dbo.EN_InstanciasEntregable IE	(NOLOCK)
 		ON	CE.IdContratoEntregable	=	IE.IdContratoEntregable
 		AND	IE.FechaCalculadaEntregaReg	BETWEEN @HOY AND DATEADD(DAY,7,@HOY)
 		AND IE.Activo=1
@@ -866,8 +594,8 @@ SELECT @HOY = GETDATE()
 		Destinatario,
 		TipoCorreo,
 		Ruta,
-		SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesProximas A
-				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
+		REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla1 FROM #NotificacionesProximas A
+				WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'), --+ '</table>' Detalle
 		1
 	FROM
 		#NotificacionesProximas B
