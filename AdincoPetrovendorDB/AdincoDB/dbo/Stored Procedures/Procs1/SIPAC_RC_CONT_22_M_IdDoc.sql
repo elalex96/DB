@@ -5,14 +5,17 @@
 -- Modificado: Manuel Cruz
 -- Fecha Modificado: 2019-07-01
 -- Description: Cambio de update para procesar el nombre de los PUE PPD y Complementos de Pago
--- Modificado:       Marcos Garcia
+-- Modificado:       Neri Del Angel
 -- Fecha Modificado: 2020-01-13
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
+-- Modificado:       Neri Del Angel
+-- Fecha Modificado: 2022-02-25
+-- Description:     *Se ajusta para no traer los xml de los E
 -- =============================================
 
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M_IdDoc]
--- [SIPAC_RC_CONT_22_M_IdDoc] 10016,'2019-06-01',1
+-- [SIPAC_RC_CONT_22_M_IdDoc] 10024, '2020-12-01', 0
 -- Add the parameters for the stored procedure here
 @Contrato      INT, 
 @Mes           DATE, 
@@ -107,6 +110,8 @@ AS
                                                 ELSE @IdPresupuesto
                                             END
                       AND SER.NombreServicio NOT LIKE '%No elegibles%'
+					  AND F.TipoComprobante NOT LIKE '%egreso%'
+                      AND F.TipoComprobante NOT LIKE 'E%'
                       AND (F.MetodoPago LIKE '%exhibi%'
                            OR F.MetodoPago LIKE '%PUE%'
                            OR F.FormaPago LIKE '%exhibi%'
@@ -201,7 +206,6 @@ AS
                          FCP.IdContrato, 
                          FCP.Fecha, 
                          FCP.IdSubcontratista;
-
          --
 
          UPDATE F
@@ -233,4 +237,4 @@ AS
 
          --END;
 
-     END;
+ END;
