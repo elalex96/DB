@@ -22,14 +22,19 @@ BEGIN
 
    -- EXEC SP_Migracion_EntregablesInstanciasDocumentos 3,316209
    -- EXEC SP_Migracion_EntregablesInstanciasDocumentos 3,316682
-   	SELECT  		
+   	SELECT  	
+		ROW_NUMBER() OVER(ORDER BY DV.DocumentoEntregableId) AS RowNumber,
+		ED.DocumentoEntregableId,
 		ED.NombreArchivo,
 		T.NombreArchivo as TipoArchivo,
 		DV.CreadoPor ArchivoImportadoPor,
 		DV.CreadoEl CreadoEl,
-		DV.N_version,
-		ED.TextoDocumentoEntregble,
-		ED.Activo
+		DV.N_version AS Version,
+		ED.TextoDocumentoEntregble AS TextoDocumentoEntregable,
+		ED.Activo,
+		ED.UUIDAmazon as Identificador,
+		ED.Meta as Mime,
+		ED.Comentario AS Comentario
 	FROM
 		EN_DocumentoVersion	DV
 	JOIN 
@@ -46,6 +51,4 @@ BEGIN
 		AND DV.Activo	=	1	
 
 END;
-
-
 

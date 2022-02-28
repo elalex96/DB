@@ -28,19 +28,20 @@ BEGIN
 
   -- EXEC SP_Migracion_EntregablesInstanciasBitacora 3,316209
 			
-    SELECT	H.CreadoPor,					
+    SELECT	ROW_NUMBER() OVER(ORDER BY H.IdHistorialAprobacionesVersion) AS RowNumber,
+			H.CreadoPor,					
 			CASE H.idTipoOperacion
 			WHEN 6
 			THEN 'Desactivado'
 			ELSE
 			ES.NombreEstado
 			END AS NombreEstado,
-			ES.EstadoID,
+			ES.EstadoID AS EstadoId,
 			H.IdLineaTiempo AS Version,
 			H.CreadoEn AS CreadoEl,			
 			REPLACE( REPLACE(H.Comentario,'Revisado por usuario Revisor, enviado a aprobación Final',''),'Aprobado por usuario Aprobador con acuse','' )AS Descripcion,
 			H.Rechazado,
-			H.idTipoOperacion,
+			H.idTipoOperacion AS IdTipoOperacion,
 			CASE H.idTipoOperacion
                WHEN	2	THEN
                    'Enviado a revisión por'
@@ -76,7 +77,10 @@ BEGIN
                ELSE
                    UXP.Nombre
 			END AS UsuarioExcepcion,          
-			IE.ActividadID AS ActividadActual			
+			IE.ActividadID AS ActividadActua,
+			H.ActualizadoByApp,
+			H.URLRepositorio,
+			H.ContieneURLRepositorio
     FROM 
 		dbo.EN_HistorialAprobacionesLineaTiempo	H
     JOIN 
@@ -143,7 +147,10 @@ BEGIN
              IE.ActividadID,
              U.Nombre,		
 			 UXP.UsuarioID,
-			 UXP.Nombre
+			 UXP.Nombre,
+			 H.ActualizadoByApp,
+			 H.URLRepositorio,
+			H.ContieneURLRepositorio
     ORDER BY 
 			H.IdLineaTiempo,
             H.CreadoEn  ASC;

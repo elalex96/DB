@@ -20,12 +20,12 @@ CREATE PROCEDURE [dbo].[SP_Migracion_EntregablesInstancias]-- 3,'ADINCO-1086'
 AS
 BEGIN
 	  --> REFERENCIA EN_EntregablesHistorial
-     --  exec SP_Migracion_EntregablesInstancias 3,'ADINCO-1094'
+     --  exec SP_Migracion_EntregablesInstancias 3,'ADINCO-R1L3131'
 
-     DECLARE @EntregableId INT= (SELECT IdEntregable FROM EN_Entregable WHERE Consecutivo=@EntregableIdentificador)
+     DECLARE @EntregableId INT
+	 SELECT @EntregableId = IdEntregable FROM EN_Entregable WHERE Consecutivo=@EntregableIdentificador
 
-	 
-	
+
 	    SELECT I.idInstanciaEntregable AS ProgramacionId,  
 			   I.FechaCalculadaEntregaReg AS FechaCalculadaEntregaReg,
 			   I.FechaRealEntregaRegulador AS FechaRealEntrega,
@@ -35,8 +35,7 @@ BEGIN
 			   I.Activo,
 			   ISNULL(I.BitContieneAcuse, 0) AS ContieneAcuse,
 			   A.EstadoID,  
-			   E.IdEntregable,	
-			   ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos
+			   E.IdEntregable			
         FROM 
 		EN_InstanciasEntregable	I  
         JOIN 
@@ -79,6 +78,7 @@ BEGIN
                   ml.Activo = 1  
                   OR e.BitInterno = 1  
               )  
+			  AND  I.FechaCalculadaEntregaReg IS NOT NULL
         ORDER BY FechasLimiteAprobacion ASC; 
 			
 
