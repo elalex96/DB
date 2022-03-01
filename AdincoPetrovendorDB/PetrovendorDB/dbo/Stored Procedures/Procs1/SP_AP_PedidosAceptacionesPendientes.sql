@@ -1,9 +1,10 @@
-﻿if exists(select * from sys.procedures where name = 'SP_AP_PedidosAceptacionesPendientes')
-begin
-	drop proc SP_AP_PedidosAceptacionesPendientes
-end
-
-go
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_AP_PedidosAceptacionesPendientes]    Script Date: 01/03/2022 04:01:09 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
@@ -11,7 +12,7 @@ go
 -- Create date: <28/09/19>
 -- Description:	<Consulta los pedidos aprobados,sin cerrar, no eliminados y con aceptaciones pendientes>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_AP_PedidosAceptacionesPendientes] --420
+ALTER PROCEDURE [dbo].[SP_AP_PedidosAceptacionesPendientes] --420
 @IdProveedor INT
 AS
 BEGIN
@@ -88,7 +89,13 @@ BEGIN
 	P.Version,
 	PG.IdPedido AS IdPedidoGeneral,
 	P.CreadoEl,
-	P.AsignadoA AS Asignado,
+	CASE 
+		WHEN DPR.IdProveedor IS NOT NULL THEN ISNULL(P.AsignadoA,SPO.Solicitante)
+		ELSE CASE 
+				WHEN P.AsignadoA != 0 THEN P.AsignadoA
+				ELSE NULL
+			END
+	END AS Asignado,
 	ComentariosAsignado,
 	ISNULL(SOT.Objeto,SPO.MotivoUrgencia) AS Justificacion,
 	p.IdContrato
@@ -102,6 +109,8 @@ BEGIN
 	LEFT JOIN Adinco.dbo.OT_Estimacion AS OTS ON OTS.IdPedido = P.IdPedido
 	LEFT JOIN Adinco.dbo.OT_Solicitud AS SOT ON SOT.IdOTSolicitud = OTS.IdOTSolicitud
 	LEFT JOIN dbo.MM_SolicitudPedido AS SPO ON SPO.IdSolicitudPedido = P.IdSolicitudPedido
+	LEFT JOIN dbo.S_Proveedor AS OPR ON SPO.IdProveedor = OPR.IdProveedor
+	LEFT JOIN dbo.DEA_Proveedor AS DPR ON OPR.RFC = DPR.RFC
 	--inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	P.IdContrato	=	C.IdContrato
 	GROUP BY SO.IdPedido,
 			 SO.Cantidad,
@@ -116,7 +125,9 @@ BEGIN
 			 P.ComentariosAsignado,
 			 SOT.Objeto,
 			 SPO.MotivoUrgencia,
-			 p.IdContrato
+			 p.IdContrato,
+			 SPO.Solicitante,
+			 DPR.IdProveedor
 	HAVING SO.Cantidad > A.Cantidad -- Con aceptaciones pendientes o sin aceptaciones	
 	
 	SELECT		t1.IdPedido,
@@ -147,6 +158,3 @@ BEGIN
 	ORDER BY CreadoEl DESC 
 END
 
-go
-
---exec SP_AP_PedidosAceptacionesPendientes @IdProveedor=573
