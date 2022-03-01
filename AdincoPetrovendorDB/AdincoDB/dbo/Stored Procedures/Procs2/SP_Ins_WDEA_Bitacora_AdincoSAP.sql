@@ -1,10 +1,18 @@
-﻿-- Author:		<Ramón Portales>
+﻿USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
+GO
+-- Author:		<Ramón Portales>
 -- Create date: <>
 -- Description:	<>
 -- =============================================
 -- Author:		<Luis David>
 -- Create date: <08/11/2021>
 -- Description:	<Se agrega el tipo de idcatalogomaestro 3 (Bien)>
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <01/03/2022>
+-- Description:	<Se cambia la lógica de obtención de IdProveedor mediante el Supplyer plant Issue#1650(Petro)>
 -- =============================================
 DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
 GO
@@ -24,6 +32,7 @@ begin
 		--select top 5 * from MM_Material where IdProveedor = @IdProveedorWDEA order by 1 desc
 
 		--Tabla para convertir de string a los tipos de datos correctos
+		DROP TABLE IF EXISTS #tmpData
 		CREATE TABLE #tmpData(
 			ID						int ,
 			Item					nvarchar(20)	NULL,
@@ -98,6 +107,7 @@ begin
 		--select count(*) from MM_Material
 		--============================================================
 		--Tabla para cachar los errores y posteriormente excluir de la busqueda final esos registros
+		DROP TABLE IF EXISTS #tmpErrores
 		create table #tmpErrores
 		(
 			Id		int identity,
@@ -106,7 +116,7 @@ begin
 			Error	varchar(max),
 			esError	bit
 		)
-
+		DROP TABLE IF EXISTS #tmpLineasPresupuesto
 		create table #tmpLineasPresupuesto
 		(
 			IdentificadorWDEA		varchar(3), 
@@ -116,39 +126,39 @@ begin
 			IdLineaPresupuestoMes	int, 
 			IdPozo					varchar(10)
 		)
-
+		DROP TABLE IF EXISTS #tmpLineasPresupuestoFinales
 		create table #tmpLineasPresupuestoFinales
 		(
 			Id						int,
 			IdLineaPresupuestoMes	int
 		)
-
+		DROP TABLE IF EXISTS #tmpVendorSupplyingPlant
 		create table #tmpVendorSupplyingPlant
 		(
 			Id			int,
 			IdProveedor	int
 		)
-
+		DROP TABLE IF EXISTS #tmpRequisitioner
 		create table #tmpRequisitioner
 		(
 			Id			int,
 			IdUsuario	int
 		)
-
+		DROP TABLE IF EXISTS #tmpRegistrosPorDocumento
 		create table #tmpRegistrosPorDocumento
 		(
 			Purchasing_Document	varchar(50),
 			Total				int,
 			Id					int
 		)
-
+		DROP TABLE IF EXISTS #tmpRegistrosValidadosPorDocumento
 		create table #tmpRegistrosValidadosPorDocumento
 		(
 			Purchasing_Document	varchar(50),
 			Total				int,
 			Id					int
 		)
-
+		DROP TABLE IF EXISTS #tmpMateriales
 		create table #tmpMateriales
 		(
 			Id					int,
@@ -156,7 +166,7 @@ begin
 			DescripcionCorta	varchar(max),
 			IdProvedor			int
 		)
-
+		DROP TABLE IF EXISTS #tmpIncompletedOCs
 		create table #tmpIncompletedOCs
 		(
 			OC	varchar(max)
@@ -234,7 +244,6 @@ begin
 			JOIN			Petrovendor..WDEA_SubTareasPresupuestales	AS S	ON LMP.IdServicio		= S.IdSubtarea
 			JOIN			Petrovendor..PozosSAP						AS P	ON LMP.IdInstalacion	= P.IdInstalacionAdinco
 			JOIN			Adinco..CO_Presupuesto						AS PR	ON LMP.IdPresupuesto	= PR.IdPresupuesto AND PR.Activo = 1
-			--where			month(AC_PRESUP_MES) = 1
 			group by		S.IdentificadorWDEA,
 							P.IdInstalacionAdinco,
 							S.Tarea,
@@ -254,7 +263,7 @@ begin
 											AND			t1.ConsecutivoPozo		COLLATE SQL_Latin1_General_CP1_CI_AS	=	t2.IdPozo
 											inner join	PurchaseOrganization	t3
 											on			t1.Contrato				=	t3.Siglas	COLLATE SQL_Latin1_General_CP1_CI_AS	
-											and			t3.IdContrato			=	t2.IdContrato
+											and			t2.IdContrato			=	t3.IdContrato
 											group by	t1.ID, t2.IdentificadorWDEA, t2.IdPozo, t2.IdContrato
 										)
 			/*Se guardan los id's y las lineas de presupuesto aprobadas*/
@@ -266,8 +275,8 @@ begin
 			on			t1.SubTareaPresupuesto											=	t2.IdentificadorWDEA	COLLATE SQL_Latin1_General_CP1_CI_AS
 			AND			t1.ConsecutivoPozo		COLLATE SQL_Latin1_General_CP1_CI_AS	=	t2.IdPozo
 			inner join	PurchaseOrganization	t3
-			on			t1.Contrato				=	t3.Siglas	COLLATE SQL_Latin1_General_CP1_CI_AS	
-			and			t3.IdContrato			=	t2.IdContrato
+			on			t1.Contrato			=	t3.Siglas	COLLATE SQL_Latin1_General_CP1_CI_AS	
+			and			t2.IdContrato		=   t3.IdContrato
 			group by	t1.ID, t2.IdentificadorWDEA, t2.IdPozo, t2.IdContrato
 
 			--select '#tmpLineasPresupuestoFinales',	* from #tmpLineasPresupuestoFinales
@@ -341,14 +350,11 @@ begin
 			select		t1.Id,
 						t2.IdProveedor 
 			from		#tmpData					t1
-			inner join	DEA_ProveedorDescripcionSAP	t2
-			on			--t2.IdProveedor	=	cast ( SUBSTRING(t1.Vendor_Supplying_Plant, 1, CHARINDEX(' ', t1.Vendor_Supplying_Plant) - 1) as int)
-						t2.DescripcionSAP	=	t1.Vendor_Supplying_Plant COLLATE SQL_Latin1_General_CP1_CI_AS	
+			inner join	S_Proveedor	t2
+			on			t1.Vendor_Supplying_Plant	= t2.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
 			where		t1.Vendor_Supplying_Plant is not null order by t1.Id
 			
 			--select * from #tmpData
-			--select * from DEA_ProveedorDescripcionSAP where IdProveedor = 72346
-
 
 			--Se insertan en la tabla de errores aquellos registros de #tmpData (tabla principal con todos los registros) que no esten en #tmpVendorSupplyingPlant
 			insert into #tmpErrores
@@ -430,11 +436,9 @@ begin
 						mat.DescripcionCorta,
 						mat.IdProveedor
 			from		#tmpData		t1
-			--inner join	DEA_ProveedorDescripcionSAP		p
-			--on			p.DescripcionSAP				=	t1.Vendor_Supplying_Plant COLLATE SQL_Latin1_General_CP1_CI_AS	--p.IdProveedor					=		cast ( SUBSTRING(t1.Vendor_Supplying_Plant, 1, CHARINDEX(' ', t1.Vendor_Supplying_Plant) - 1) as int)
-			inner join	dbo.MM_Material					mat
-			on			mat.DescripcionCorta			=		t1.Short_Text COLLATE SQL_Latin1_General_CP1_CI_AS
-			and			mat.IdProveedor					=		@IdProveedorWDEA--p.IdProveedor
+			inner join	dbo.MM_Material											mat
+			on			t1.Short_Text COLLATE SQL_Latin1_General_CP1_CI_AS =	mat.DescripcionCorta
+			and			@IdProveedorWDEA =										mat.IdProveedor
 			where		mat.IsEliminado					=	0
 			and			mat.Activo						=	1
 			group by	t1.Id,
@@ -536,24 +540,24 @@ begin
 		inner join	PurchaseOrganization			po
 		on			t1.Contrato						=		po.siglas COLLATE SQL_Latin1_General_CP1_CI_AS
 		inner join	Adinco..PV_TipoMoneda			mo
-		on			mo.TipoMonedaCorto				=		t1.Currency
+		on			t1.Currency =					mo.TipoMonedaCorto				
 		inner join	#tmpLineasPresupuestoFinales	lpm
-		on			lpm.Id							=		t1.ID
-		inner join	DEA_ProveedorDescripcionSAP		p
-		on			p.DescripcionSAP				=	t1.Vendor_Supplying_Plant COLLATE SQL_Latin1_General_CP1_CI_AS	--p.IdProveedor					=		cast ( SUBSTRING(t1.Vendor_Supplying_Plant, 1, CHARINDEX(' ', t1.Vendor_Supplying_Plant) - 1) as int)
+		on			t1.ID =							lpm.Id
+		inner join	S_Proveedor		p
+		on			t1.Vendor_Supplying_Plant COLLATE SQL_Latin1_General_CP1_CI_AS = P.RFC
 		inner join	#tmpRequisitioner				re
-		on			re.Id							=		t1.ID
+		on			t1.ID =							re.Id
 		inner join	dbo.PV_MM_MaterialUnidad		u
-		on			u.umb							=		t1.Order_Unit COLLATE SQL_Latin1_General_CP1_CI_AS
+		on			t1.Order_Unit COLLATE SQL_Latin1_General_CP1_CI_AS = u.umb
 		inner join	#tmpMateriales					mat
-		on			mat.DescripcionCorta			=		t1.Short_Text COLLATE SQL_Latin1_General_CP1_CI_AS
-		and			mat.ID							=		t1.id
-		and			mat.IdProvedor					=		@IdProveedorWDEA--p.IdProveedor
+		on			t1.Short_Text COLLATE SQL_Latin1_General_CP1_CI_AS = mat.DescripcionCorta
+		and			t1.id =							mat.ID
+		and			@IdProveedorWDEA =				mat.IdProvedor
 		left join	#tmpErrores						t2
-		on			t1.ID							=	t2.RowId
-		and			t2.esError						=	1
+		on			t1.ID =							t2.RowId
+		and			1 =								t2.esError
 		left join	#tmpIncompletedOCs				t3
-		on			rtrim(ltrim(t3.OC))				=		rtrim(ltrim(Purchasing_Document))
+		on			rtrim(ltrim(Purchasing_Document)) = rtrim(ltrim(t3.OC))
 		LEFT JOIN	WDEA_SAP_CentroCostos			WDCC
 	    ON			dbo.WDEA_CC_SplitString(t1.WBS_Element,'-') = WDCC.AcronimoSAP 
 	    JOIN		CC_CentroCosto					CC 
@@ -561,7 +565,7 @@ begin
 	    AND			WDCC.Activo						=			1
 		WHERE		t2.RowId						is	null
 		and			t3.OC							is	null
-		and			p.IsEliminado					=	0
+		and			isnull(p.IsEliminado,0)					=	0
 		and			u.IsEliminado					=	0
 		and			t1.Short_Text					is not null
 		and			t1.Order_Unit					is not null
@@ -575,4 +579,4 @@ begin
 			@IdBitacoraLectura
 		);
 
-end
+END
