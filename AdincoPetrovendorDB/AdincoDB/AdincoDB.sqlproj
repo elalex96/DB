@@ -13191,6 +13191,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_Migracion_EntregablesInstanciasBitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_Migracion_EntregablesInstancias.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_Migracion_EntregablesInstanciasDocumentos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\AmatitlanRutaDropbox.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
