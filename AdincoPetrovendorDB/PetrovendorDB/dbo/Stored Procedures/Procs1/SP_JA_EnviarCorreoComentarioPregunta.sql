@@ -1,14 +1,15 @@
-﻿if exists(select * from sys.procedures where name = 'SP_JA_EnviarCorreoComentarioPregunta')
-begin
-	drop proc SP_JA_EnviarCorreoComentarioPregunta
-end
-
-go
-
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_JA_EnviarCorreoComentarioPregunta
+GO
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
 -- Description:	<Envio de correo de notificacion de pregunta en la oferta>
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <01/03/2023>
+-- Description:	<Se evalúa si no está >
 -- =============================================
 create PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta] --20290,2199,420,'PRUEBA 11'
 	-- Add the parameters for the stored procedure here
@@ -34,10 +35,12 @@ BEGIN
 	DECLARE @CORREOUSUARIOPROVEEDOR NVARCHAR(100);
 	DECLARE @IdNotificacion INT;
 	DECLARE @URL NVARCHAR(MAX);
+	DECLARE @EnviarCorreo bit;
+	DECLARE @IdCorreo INT = (SELECT IdCorreo FROM dbo.TA_Correo WHERE Asunto = 'Comentario(Pregunta) Referente a Requisicion ');
+	DECLARE @IdUsuarioEnviarNotificacion int;
 
-	declare @IdCorreo int
 
-	select @IdCorreo = IdCorreo from dbo.TA_Correo where Asunto = 'Comentario(Pregunta) Referente a Requisicion '
+	
 	
 
 	CREATE TABLE #DATOSCORREO(
@@ -183,19 +186,22 @@ BEGIN
 		select @HTMLCORREO = ''
 	end
 
+	--select * from #DATOSCORREO
+	--select @CONTROWS, @TOTALROWS
 	--ITERACION DE LA TABLA
 	select @HTMLCORREOAUX = @HTMLCORREO
-	
+	--select * from #DATOSCORREO
 	WHILE @CONTROWS <= @TOTALROWS
 	BEGIN
 	    --CONSULTA PARA OBTENER EL HTML DEL CORREO
 		select @HTMLCORREO = @HTMLCORREOAUX
-
+		SET @EnviarCorreo = 1;
+		SET @IdUsuarioEnviarNotificacion = '';
 
 		SET @USUARIOPROVEEDOR = (SELECT NombreUsuario FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
 		SET @CORREOUSUARIOPROVEEDOR = (SELECT Correo FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
 		SET @URL = (SELECT URL FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
-
+		SET @IdUsuarioEnviarNotificacion = (SELECT IdUsuario FROM S_Usuario WHERE Correo = @CORREOUSUARIOPROVEEDOR);
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@USUARIOPROVEEDOR));
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##USUARIO##',@USUARIOPREGUNTA));
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPOUSUARIO##',@TIPOUSUARIOPREGUNTA));
@@ -206,8 +212,10 @@ BEGIN
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##URL_TAREA##',@URL));
 
 		SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-				
-		INSERT INTO Adinco.dbo.S_Notificacion
+		SET @EnviarCorreo= (select IsEliminado from Petrovendor..TA_NoNotificacion where IdCorreo = @IdCorreo AND IdUsuario = @IdUsuarioEnviarNotificacion);
+		IF ISNULL(@EnviarCorreo,1) = 1
+		BEGIN
+			INSERT INTO Adinco.dbo.S_Notificacion
 		(
 			IdNotificacion,
 			Para,
@@ -237,7 +245,7 @@ BEGIN
 			NULL,
 			'procura@adinco.mx'
 		);
-		
+		END
 		if (exists(select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion) and isnull(@HTMLCORREO,'')<>'')
 		begin
 
@@ -264,5 +272,3 @@ BEGIN
 	END
 
 END
-
-go
