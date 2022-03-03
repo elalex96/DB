@@ -1,4 +1,8 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_PR_MM_ListaAprobacionCN_S3
+GO
+-- =============================================
 -- Author:		DANIEL AC
 -- Update date: 07/02/2018
 -- Description:	agregue filtro para todos los estatus de carta de contenido nacional y cambio tipo pedido
@@ -8,6 +12,10 @@
 -- Author:		Alexander Gomez
 -- Update date: 04/12/2018
 -- Description:	se agregaron las adecuaciones para murphy
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 02/03/2022
+-- Description:	SE AGREGA EL PO PARA DEA ISSUE#1651
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCN_S3] --364,0
 	-- Add the parameters for the stored procedure here
@@ -34,13 +42,14 @@ AS
 	TipoPedido NVARCHAR(100) null,
 	IdSolicitudPedido NVARCHAR(100) NULL,
 	span NVARCHAR(MAX) NULL,
-	Contrato varchar(50)
+	Contrato varchar(50),
+	PO varchar(300)
 	);
 
 	DECLARE @PLANT NVARCHAR(10) = (SELECT TOP 1
 										P.Planta
 										FROM Adinco.dbo.CO_Contrato AS C
-										LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS P ON P.IdContratista = C.IdContratista
+										LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS P ON C.IdContratista = P.IdContratista
 										WHERE C.IdContrato = @IdContrato)
 
 
@@ -66,16 +75,18 @@ AS
 				WHEN TD.IdTipoValidacionDoc = 3 THEN 'label label-danger'
 				WHEN TD.IdTipoValidacionDoc IS NULL THEN 'label label-default'
 			END,
-			Contrato = c.NumeroContrato
+			Contrato = c.NumeroContrato,
+			ISNULL(RPO.PO,'Sin PO relacionada') AS PO
 		FROM [dbo].[MM_AceptacionCartaPCN] AS AC
-		INNER JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
-		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-		INNER JOIN [dbo].[MM_Pedido] AS P ON P.IdPedido = AP.IdPedido
-		INNER JOIN [dbo].[S_Proveedor] AS PR ON PR.IdProveedor = P.IdSubcontratista
-		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
+		INNER JOIN [dbo].[S_Documento_S3] AS D ON AC.IdDocumento = D.IdDocumento
+		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+		INNER JOIN [dbo].[MM_Pedido] AS P ON AP.IdPedido = P.IdPedido
+		INNER JOIN [dbo].[S_Proveedor] AS PR ON P.IdSubcontratista = PR.IdProveedor
+		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
 		INNER JOIN [dbo].[MM_Pedidos] AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor AND PG.IdTipoPedido IN (2, 4, 6)
-	    LEFT  JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
-		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	c.IdContrato	=	P.IdContrato
+	    LEFT  JOIN dbo.MM_TipoPedido AS TP ON PG.IdTipoPedido = TP.IdTipoPedido
+		INNER JOIN Adinco.dbo.CO_Contrato	AS	C 	ON	P.IdContrato = c.IdContrato
+		LEFT JOIN DEA_Relacion_PR_PO AS RPO	ON P.IdPedido = RPO.IdPedido
 		WHERE 
 		P.IdProveedorCompras = @IdProveedor 
 		AND AC.IdEstatus = @Estado
@@ -101,17 +112,18 @@ AS
 				WHEN TD.IdTipoValidacionDoc = 3 THEN 'label label-danger'
 				WHEN TD.IdTipoValidacionDoc IS NULL THEN 'label label-default'
 			END,
-			Contrato = c.NumeroContrato
+			Contrato = c.NumeroContrato,
+			PO.SAPPONumber AS PO
 		FROM dbo.MPY_MM_AceptacionPedido AS AP 
-		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-		LEFT JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
-		LEFT JOIN [dbo].[S_Proveedor] AS PR ON PR.RFC = AP.IdSubContratista AND PR.Activo = 1
-		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV ON  SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS
-		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber AND SES.SESNumber = PSES.SESN
-		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
-		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	c.IdContrato	=	SPV.IdContrato
+		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+		LEFT JOIN [dbo].[S_Documento_S3] AS D ON AC.IdDocumento = D.IdDocumento
+		LEFT JOIN [dbo].[S_Proveedor] AS PR ON AP.IdSubContratista = PR.RFC AND PR.Activo = 1
+		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON PSES.SAPPONumber = SES.PO_SAPNumer AND PSES.SAPSESNumber = SES.SESReferenceNumber AND PSES.SESN = SES.SESNumber
+		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	SPV.IdContrato = c.IdContrato
 		WHERE 
 		PO.Plant = @PLANT
 		AND AC.IdAceptacionCartaPCN IS NOT NULL
@@ -144,7 +156,8 @@ AS
                  TD.TipoValidacion,
 				 ap.ReferenceNumber,
 				 c.NumeroContrato,
-				 c.IdContrato
+				 c.IdContrato,
+				 PO.SAPPONumber
 		ORDER BY  Ac.IdAceptacionPedido DESC;
 
      END;
@@ -170,16 +183,18 @@ AS
 				WHEN TD.IdTipoValidacionDoc = 3 THEN 'label label-danger'
 				WHEN TD.IdTipoValidacionDoc IS NULL THEN 'label label-default'
 			END,
-			Contrato = c.NumeroContrato
+			Contrato = c.NumeroContrato,
+			ISNULL(RPO.PO,'Sin PO relacionada') AS PO
 		FROM [dbo].[MM_AceptacionCartaPCN] AS AC
-		INNER JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
-		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-		INNER JOIN [dbo].[MM_Pedido] AS P ON P.IdPedido = AP.IdPedido
-		INNER JOIN [dbo].[S_Proveedor] AS PR ON PR.IdProveedor = P.IdSubcontratista
-		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-		INNER JOIN [dbo].[MM_Pedidos] AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor AND PG.IdTipoPedido IN (2,4, 6)
-	    LEFT  JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
-		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	c.IdContrato	=	P.IdContrato
+		INNER JOIN [dbo].[S_Documento_S3] AS D ON AC.IdDocumento = D.IdDocumento
+		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+		INNER JOIN [dbo].[MM_Pedido] AS P ON AP.IdPedido =  P.IdPedido
+		INNER JOIN [dbo].[S_Proveedor] AS PR ON P.IdSubcontratista = PR.IdProveedor
+		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		INNER JOIN [dbo].[MM_Pedidos] AS PG ON PG.IdIdentificador = P.IdPedido AND PG.IdProveedorCliente = @IdProveedor AND PG.IdTipoPedido IN (2,4, 6)
+	    LEFT  JOIN dbo.MM_TipoPedido AS TP ON PG.IdTipoPedido = TP.IdTipoPedido
+		INNER JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	P.IdContrato = c.IdContrato
+		LEFT JOIN DEA_Relacion_PR_PO AS RPO	ON P.IdPedido = RPO.IdPedido
 		WHERE  P.IdProveedorCompras = @IdProveedor
 		AND ISNULL(AC.IdEstatusEliminado,0) <> 1  --> QUE NO ESTEN ELIMINADOS
 		ORDER BY  Ac.IdAceptacionPedido DESC;
@@ -203,16 +218,17 @@ AS
 				WHEN TD.IdTipoValidacionDoc = 3 THEN 'label label-danger'
 				WHEN TD.IdTipoValidacionDoc IS NULL THEN 'label label-default'
 			END,
-			Contrato = c.NumeroContrato
+			Contrato = c.NumeroContrato,
+			PO.SAPPONumber AS PO
 		FROM dbo.MPY_MM_AceptacionPedido AS AP 
 		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
 		LEFT JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
 		LEFT JOIN [dbo].[S_Proveedor] AS PR ON PR.RFC = AP.IdSubContratista AND PR.Activo = 1
-		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV ON  SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS
-		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
 		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber AND SES.SESNumber = PSES.SESN
-		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
 		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	c.IdContrato	=	SPV.IdContrato
 		WHERE 
 		PO.Plant = @PLANT
@@ -245,7 +261,8 @@ AS
                  AP.Creado,
 				 AP.ReferenceNumber,
 				 c.NumeroContrato,
-				 c.IdContrato
+				 c.IdContrato,
+				 PO.SAPPONumber
 		ORDER BY  AP.Creado DESC;
 
      END
@@ -264,6 +281,7 @@ AS
 		TipoPedido,
 		IdSolicitudPedido,
 		span,
-		Contrato
+		Contrato,
+		PO
 	 FROM #AceptacionesPedido ORDER BY CreadoEl DESC;
 END
