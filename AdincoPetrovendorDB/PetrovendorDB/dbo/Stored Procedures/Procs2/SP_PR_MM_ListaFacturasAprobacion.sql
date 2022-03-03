@@ -1,18 +1,16 @@
-﻿use Petrovendor
-
-go
-
-if exists (select * from sys.procedures where name = 'SP_PR_MM_ListaFacturasAprobacion')
-begin
-	drop proc SP_PR_MM_ListaFacturasAprobacion
-end
-
-go
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_PR_MM_ListaFacturasAprobacion
+GO
 -- =============================================  
 -- Author:  <Daniel AC>  
 -- Create date: <18/11/2020>  
 -- Description: <Se revisa sp relacioando al issue #835 montos duplicados >  
 -- =============================================  
+-- Author:		LUIS DAVID
+-- Create date: 02/03/2022
+-- Description:	SE AGREGA EL PO PARA DEA ISSUE#1651
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] --420,1
 @IdProveedor int,
 @Estatus int,
@@ -22,17 +20,6 @@ CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] --420,1
 AS
 BEGIN
   SET NOCOUNT ON;
-
-	/*
-	DECLARE @IDCONTRATO2 int = (	SELECT		TOP 1
-											C.IdContrato
-								FROM		Adinco.dbo.CO_Contrato		C
-								LEFT JOIN	Adinco.dbo.CO_Contratista	CON
-								ON			C.IdContratista				=		CON.IdContratista 
-								LEFT JOIN	dbo.S_Proveedor				PR
-								ON			CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS=PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS 
-								WHERE		PR.IdProveedor = @IdProveedor);
-	*/
 	DECLARE @PLANT			nvarchar(10),
 			@PROVEDORRFC	nvarchar(20),
 			@IDCONTRATISTA	nvarchar(50)
@@ -63,7 +50,8 @@ BEGIN
 		span				nvarchar(100)	NULL,
 		PedirCarta			bit,
 		IdOperacion			int,
-		Contrato			varchar(50)
+		Contrato			varchar(50),
+		PO					varchar(300)
 	)
 
 
@@ -118,7 +106,7 @@ BEGIN
       ON O.IdOperacion=f.IdOperacion 
     JOIN dbo.TA_Tarea T
       ON O.IdOperacion=T.IdOperacion 
-      AND T.NoSecuencia = (f.NoSecuencia - 1)
+      AND (f.NoSecuencia - 1) = T.NoSecuencia
     WHERE O.IdTipoOperacion = 10
     AND T.Activo = 1
     AND T.IdEstatus <> 2;
@@ -142,7 +130,8 @@ BEGIN
         '',
         RC.PedirCarta,
         NULL,
-        Contrato = c.NumeroContrato
+        Contrato = c.NumeroContrato,
+		ISNULL(RPO.PO,'Sin PO relacionada') AS PO
       FROM MM_AceptacionFactura AS AF
       JOIN TA_Operacion AS O
         ON AF.IdAceptacionFactura =O.IdDocumento  --AND O.IdProveedor = @IdProveedor  
@@ -158,9 +147,9 @@ BEGIN
       JOIN MM_Pedido AS PE
         ON  AP.IdPedido=PE.IdPedido
         AND O.IdProveedor=PE.IdSubcontratista 
-        AND PE.IdProveedorCompras = @IdProveedor
+        AND @IdProveedor = PE.IdProveedorCompras
       JOIN MM_PedidoDetalle AS PED
-        ON PE.IdPedido=PED.IdPedido 
+        ON PE.IdPedido=PED.IdPedido
       JOIN dbo.MM_AceptacionPedidoDetalle AS APD
         ON AP.IdAceptacionPedido=APD.IdAceptacionPedido 
         AND PED.IdPedidoDetalle=APD.IdPedidoDetalle
@@ -178,6 +167,8 @@ BEGIN
         ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 
       JOIN Adinco.dbo.CO_Contrato AS C
         ON PE.IdContrato=C.IdContrato 
+	  LEFT JOIN DEA_Relacion_PR_PO AS RPO	
+		ON PE.IdPedido = RPO.IdPedido
       WHERE ISNULL(AF.IdEstatusEliminado, 0) <> 1
       GROUP BY AF.IdAceptacionPedido,
                Pe.IdPedido,
@@ -193,7 +184,8 @@ BEGIN
                fi.UUID,
                RC.PedirCarta,
                c.IdContrato,
-               c.NumeroContrato
+               c.NumeroContrato,
+			   RPO.PO
       ORDER BY AF.IdAceptacionPedido DESC;
 
     IF ISNULL(@PLANT, '') <> ''
@@ -221,7 +213,8 @@ BEGIN
           END,
           RC.PedirCarta,
           NULL,
-          Contrato = c.NumeroContrato
+          Contrato = c.NumeroContrato,
+		  PO.SAPPONumber AS PO
         FROM MPY_MM_AceptacionFactura AS AF
         LEFT JOIN TA_Estatus AS E
           ON AF.IdEstatus=E.IdEstatus 
@@ -274,7 +267,8 @@ BEGIN
                  F.FechaTimbrado,
                  RC.PedirCarta,
                  c.IdContrato,
-                 c.NumeroContrato
+                 c.NumeroContrato,
+				 PO.SAPPONumber
         ORDER BY AF.IdAceptacionPedido DESC
     END
 
@@ -298,12 +292,12 @@ BEGIN
           WHEN E.IdEstatus = 2 THEN 'label label-success'
           WHEN E.IdEstatus = 1 THEN 'label label-primary'
           WHEN E.IdEstatus = 3 THEN 'label label-danger'
-
           WHEN E.IdEstatus IS NULL THEN 'label label-default'
         END,
         RC.PedirCarta,
         NULL,
-        Contrato = c.NumeroContrato
+        Contrato = c.NumeroContrato,
+		ISNULL(RPO.PO,'Sin PO relacionada') AS PO
       FROM MM_AceptacionFactura AS AF
       JOIN TA_Operacion AS O
         ON AF.IdAceptacionFactura=O.IdDocumento   --AND O.IdProveedor = @IdProveedor   
@@ -321,13 +315,13 @@ BEGIN
       JOIN MM_Pedido AS PE
         ON AP.IdPedido=PE.IdPedido 
         AND O.IdProveedor=PE.IdSubcontratista  
-        AND PE.IdProveedorCompras = @IdProveedor
+        AND @IdProveedor = PE.IdProveedorCompras
       JOIN MM_PedidoDetalle AS PED
         ON PE.IdPedido=PED.IdPedido 
         AND APD.IdPedidoDetalle = PED.IdPedidoDetalle
       JOIN MM_Pedidos AS PG
         ON PE.IdPedido = PG.IdIdentificador
-        AND PG.IdProveedorCliente = @IdProveedor
+        AND @IdProveedor = PG.IdProveedorCliente
         AND PG.IdTipoPedido IN (2, 4, 6)-->	MERCADEO, ADJUDICACIÓN DIRECTA, CONTROL DE OBRA
       JOIN S_Proveedor AS PR
         ON PE.IdSubcontratista=PR.IdProveedor  
@@ -337,8 +331,10 @@ BEGIN
         ON AF.IdFactura=fi.IdFactura
       LEFT JOIN dbo.RelacionCartaCNPedido RC
         ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 
- INNER JOIN Adinco.dbo.CO_Contrato AS C
+	  INNER JOIN Adinco.dbo.CO_Contrato AS C
         ON PE.IdContrato=C.IdContrato  
+	  LEFT JOIN DEA_Relacion_PR_PO AS RPO	
+		ON PE.IdPedido = RPO.IdPedido
       WHERE ISNULL(AF.IdEstatusEliminado, 0) <> 1
       GROUP BY AF.IdAceptacionPedido,
                Pe.IdPedido,
@@ -355,7 +351,8 @@ BEGIN
                fi.UUID,
                RC.PedirCarta,
                c.IdContrato,
-               c.NumeroContrato
+               c.NumeroContrato,
+			   RPO.PO
       ORDER BY AF.IdAceptacionPedido DESC;
 
     IF ISNULL(@PLANT, '') <> ''
@@ -384,7 +381,8 @@ BEGIN
           END,
           RC.PedirCarta,
           NULL,
-          Contrato = c.NumeroContrato
+          Contrato = c.NumeroContrato,
+		  PO.SAPPONumber as PO
         FROM MPY_MM_AceptacionFactura AS AF
         LEFT JOIN TA_Estatus AS E
           ON AF.IdEstatus = E.IdEstatus
@@ -426,7 +424,7 @@ BEGIN
                  E.Nombre,
                  PR.RFC,
                  AP.IdSubContratista,
-                 AF.IdEstatusEliminado,
+         AF.IdEstatusEliminado,
                  AF.CreadoEl,
          SV.VendorName,
                  APD.IdMoneda,
@@ -441,7 +439,8 @@ BEGIN
                  F.FechaTimbrado,
                  RC.PedirCarta,
                  c.IdContrato,
-                 c.NumeroContrato
+                 c.NumeroContrato,
+				 PO.SAPPONumber
         ORDER BY AF.IdAceptacionPedido DESC;
     END
 
@@ -470,7 +469,8 @@ BEGIN
         END,
         RC.PedirCarta,
         O.IdOperacion,
-        Contrato = c.NumeroContrato
+        Contrato = c.NumeroContrato,
+		ISNULL(RPO.PO,'Sin PO relacionada') AS PO
       FROM MM_AceptacionFactura AS AF
       JOIN TA_Operacion AS O
         ON AF.IdAceptacionFactura=O.IdDocumento --AND O.IdProveedor = @IdProveedor  
@@ -506,6 +506,8 @@ BEGIN
         ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 
       INNER JOIN Adinco.dbo.CO_Contrato AS C
         ON PE.IdContrato=C.IdContrato 
+	  LEFT JOIN DEA_Relacion_PR_PO AS RPO	
+		ON PE.IdPedido = RPO.IdPedido
       WHERE ISNULL(AF.IdEstatusEliminado, 0) <> 1
       GROUP BY AF.IdAceptacionPedido,
                Pe.IdPedido,
@@ -523,7 +525,8 @@ BEGIN
                O.IdOperacion,
                RC.PedirCarta,
                c.IdContrato,
-               c.NumeroContrato
+               c.NumeroContrato,
+			   RPO.PO
       ORDER BY AF.IdAceptacionPedido DESC;
 
     IF ISNULL(@PLANT, '') = ''
@@ -553,34 +556,35 @@ BEGIN
           END,
           RC.PedirCarta,
           NULL,
-          Contrato = c.NumeroContrato
+          Contrato = c.NumeroContrato,
+		  PO.SAPPONumber AS PO
         FROM MPY_MM_AceptacionFactura AS AF
         LEFT JOIN TA_Estatus AS E
           ON E.IdEstatus = AF.IdEstatus
         LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP
-          ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+          ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
         LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD
-          ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
+          ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
         LEFT JOIN Adinco.dbo.CO_SAPVendor AS SV
-          ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS
+          ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
         LEFT JOIN S_Proveedor AS PR
-          ON PR.RFC = AP.IdSubContratista
+          ON AP.IdSubContratista = PR.RFC
           AND PR.Activo = 1
         LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES
-          ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
-          AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+          ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
+          AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
         LEFT JOIN Adinco.dbo.CO_SAPSES AS SES
-          ON SES.PO_SAPNumer = PSES.SAPPONumber
-          AND SES.SESReferenceNumber = PSES.SAPSESNumber
-          AND SES.SESNumber = PSES.SESN
+          ON PSES.SAPPONumber = SES.PO_SAPNumer
+          AND PSES.SAPSESNumber = SES.SESReferenceNumber
+          AND PSES.SESN = SES.SESNumber
         LEFT JOIN Adinco.dbo.CO_SAPPO AS PO
-          ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
+          ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
         LEFT JOIN dbo.FI_Factura AS F
-          ON F.IdFactura = AF.IdFactura
+          ON AF.IdFactura = F.IdFactura
         LEFT JOIN dbo.RelacionCartaCNPedido AS RC
-          ON RC.IdAceptacionPedido = AP.IdAceptacionPedido
+          ON AP.IdAceptacionPedido = RC.IdAceptacionPedido
         INNER JOIN Adinco.dbo.CO_Contrato AS C
-          ON c.IdContrato = SV.IdContrato
+          ON SV.IdContrato = c.IdContrato
         WHERE AF.IdEstatus = @Estatus
         AND ISNULL(AF.IdEstatusEliminado, 0) <> 1
         AND PO.Plant = @PLANT
@@ -607,7 +611,8 @@ BEGIN
                  F.FechaTimbrado,
                  RC.PedirCarta,
                  c.IdContrato,
-                 c.NumeroContrato
+                 c.NumeroContrato,
+				 PO.SAPPONumber
         ORDER BY AF.IdAceptacionPedido DESC
     END
   END;
@@ -632,7 +637,8 @@ BEGIN
       ELSE 'No'
     END AS PedirCarta,
     IdOperacion,
-    Contrato
+    Contrato,
+	PO
   FROM #AceptacionesPedido
   GROUP BY IdAceptacionPedido,
            Pedido,
@@ -647,10 +653,7 @@ BEGIN
            span,
            PedirCarta,
            IdOperacion,
-           Contrato
+           Contrato,
+		   PO
   ORDER BY FechaRegistro DESC;
 END;
-
-go
-
---exec SP_PR_MM_ListaFacturasAprobacion @IdProveedor=516,@IdUsuario=2572,@IdContrato=3,@Estatus=2
