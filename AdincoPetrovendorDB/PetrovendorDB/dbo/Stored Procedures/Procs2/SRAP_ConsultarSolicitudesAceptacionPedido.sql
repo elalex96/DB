@@ -1,9 +1,6 @@
-﻿USE [Petrovendor]
+﻿USE Petrovendor
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]    Script Date: 23/11/2021 05:21:31 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SRAP_ConsultarSolicitudesAceptacionPedido
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -12,7 +9,11 @@ GO
 -- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
 -- =============================================
-ALTER PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
+-- Author:		LUIS DAVID
+-- Create date: 02/03/2022
+-- Description:	SE AGREGA EL PO PARA DEA ISSUE#1651
+-- =============================================
+CREATE PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario   INT,
@@ -65,7 +66,8 @@ AS
 					CreadoPor								=	UE.Nombre,
 					Contrato								=	C.NumeroContrato,
 					SolitanteRequisicion					=	US.Nombre,
-					SAP.IdAceptacionPedido   
+					SAP.IdAceptacionPedido   ,
+					ISNULL(RPO.PO,'Sin PO relacionada') AS PO
 		FROM		MM_SolicitudAceptacionPedido			SAP (NOLOCK)
 		JOIN		TA_Operacion							O (NOLOCK)
 		ON			SAP.IdSolicitudAceptacionPedido			=	O.IdDocumento
@@ -93,7 +95,9 @@ AS
 		left join	TA_Tarea								ta (NOLOCK)
 		on			ta.IdOperacion							=	O.IdOperacion
 		and			ta.IdAprobador							=	@IdUsuario
-		WHERE		P.IdProveedorCompras					=	@IdProveedor 
+		LEFT JOIN	DEA_Relacion_PR_PO AS RPO
+		ON			P.IdPedido								= RPO.IdPedido
+		WHERE		P.IdProveedorCompras					=	@IdProveedor
 		and			SAP.Activo								=	1
 		and			((ta.IdAprobador						=	@IdUsuario) or @esOBS = 1 or @esAdministrador = 1)	
 		and			C.IdContrato							=	@IdContrato
@@ -117,7 +121,8 @@ AS
 					 UE.Nombre,
 					 C.NumeroContrato,
 					 US.Nombre,
-					 SAP.IdAceptacionPedido 
+					 SAP.IdAceptacionPedido,
+					 RPO.PO
 		ORDER BY	SAP.IdSolicitudAceptacionPedido DESC	    	    
 	END 
 
@@ -147,7 +152,8 @@ AS
 					x = case when ((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)) then 1 when	 ((@esOBS = 1 )  and ta.IdEstatus = 2) then 2 else 0 end,
 					IdFlujoTarea,
 					ta.IdTarea,
-					ta.IdEstatus
+					ta.IdEstatus,
+					ISNULL(RPO.PO,'Sin PO relacionada') AS PO
 		FROM		MM_SolicitudAceptacionPedido	SAP (NOLOCK)
 		JOIN		TA_Operacion					O (NOLOCK)
 		ON			SAP.IdSolicitudAceptacionPedido =	O.IdDocumento
@@ -173,9 +179,10 @@ AS
 		ON			P.IdSolicitudPedido				=	SP.IdSolicitudPedido
 		LEFT JOIN	S_Usuario						US (NOLOCK)
 		ON			SP.Solicitante					=	US.IdUsuario
-		left join	TA_Tarea						ta (NOLOCK)	--select object_name(object_id),* from sys.columns where name like '%Flujo%' order by 3  --TA_FlujoTarea
+		left join	TA_Tarea						ta (NOLOCK)	
 		on			ta.IdOperacion					=	O.IdOperacion
-		--and			ta.IdEstatus					=	1
+		LEFT JOIN	DEA_Relacion_PR_PO AS RPO
+		ON			P.IdPedido								= RPO.IdPedido
 		WHERE 		P.IdProveedorCompras			=	@IdProveedor
 		and			C.IdContrato					=	@IdContrato
 		and			((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)	or ((@esOBS = 1 )  and ta.IdEstatus = 2) )
@@ -205,7 +212,8 @@ AS
 					UE.Nombre,
 					C.NumeroContrato,
 					US.Nombre,
-					SAP.IdAceptacionPedido
+					SAP.IdAceptacionPedido,
+					RPO.PO
 		ORDER BY	SAP.IdSolicitudAceptacionPedido DESC	    
 		END 
 END
