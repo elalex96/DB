@@ -348,11 +348,14 @@ begin
 			--Se inserta en la temporal #tmpVendorSupplyingPlant registros de aquellos que si estan en el catálogo
 			insert into #tmpVendorSupplyingPlant
 			select		t1.Id,
-						t2.IdProveedor 
+						p.IdProveedor 
 			from		#tmpData					t1
-			inner join	S_Proveedor	t2
-			on			t1.Vendor_Supplying_Plant	= t2.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
-			where		t1.Vendor_Supplying_Plant is not null order by t1.Id
+			inner join	S_Proveedor	p
+			on			t1.Vendor_Supplying_Plant	= p.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+			where		t1.Vendor_Supplying_Plant is not null 
+			and p.Activo = 1
+			order by t1.Id
+			
 			
 			--select * from #tmpData
 
@@ -569,7 +572,7 @@ begin
 		and			u.IsEliminado					=	0
 		and			t1.Short_Text					is not null
 		and			t1.Order_Unit					is not null
-		
+		and			p.Activo						= 1
 		INSERT INTO PendientesProcesarProcura_WSDEA
 		(
 			IdBitacora
