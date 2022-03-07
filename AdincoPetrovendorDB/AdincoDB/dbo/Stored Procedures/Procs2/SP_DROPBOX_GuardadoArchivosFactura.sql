@@ -1,6 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_DROPBOX_GuardadoArchivosFactura]    Script Date: 04/03/2022 01:04:55 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_DROPBOX_GuardadoArchivosFactura]    Script Date: 04/03/2022 05:07:13 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: <02/03/2022>
 -- Description:	<Guardado de los archivos pertinentes a la factura para guardado en dropbox>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_DROPBOX_GuardadoArchivosFactura] 
+ALTER PROCEDURE [dbo].[SP_DROPBOX_GuardadoArchivosFactura] 
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
 	@IdAceptacionPedido INT
@@ -61,7 +61,7 @@ BEGIN
 		SELECT
 			'.pdf',
 			'application/pdf',
-			'F' + @FOLIO + '.pdf',
+			'F ' + @FOLIO + '.pdf',
 			GETDATE(),
 			ComprobantePDFByte,
 			1,
@@ -82,7 +82,7 @@ BEGIN
 		SELECT
 			'.xml',
 			'application/xml',
-			'F' + @FOLIO + '.xml',
+			'F ' + @FOLIO + '.xml',
 			GETDATE(),
 			ComprobanteXMLByte,
 			1,
@@ -113,7 +113,7 @@ BEGIN
 			D.SizeDocumento,
 			GETDATE(),
 			1,
-			'/2 INFORMES DE GE/' + @ANIO + '-' + @MES + ' INFORME GE/01 Soportes' 
+			'/2 INFORMES DE GE/' + @ANIO + '-' + @MES + ' INFORME GE/01 Soportes/PAT ' + @ANIO + '/' + @NOMBRE_PROVEEDOR + '/F ' + @FOLIO
 		FROM        [dbo].[MM_AceptacionDocumento] AS AD
 			INNER JOIN  [dbo].[MM_AceptacionPedido] AS AP
 				ON AP.[IdAceptacionPedido] = AD.[IdAceptacionDocumento]
@@ -148,7 +148,7 @@ BEGIN
 			NULL,
 			GETDATE(),
 			1,
-			'/2 INFORMES DE GE/' + @ANIO + '-' + @MES + ' INFORME GE/01 Soportes' 
+			'/2 INFORMES DE GE/' + @ANIO + '-' + @MES + ' INFORME GE/01 Soportes/PAT ' + @ANIO + '/' + @NOMBRE_PROVEEDOR + '/F ' + @FOLIO
 		FROM dbo.MM_DocSoporteRecepcionFactura AS DSF
 		WHERE IdAceptacionPedido = @IdAceptacionPedido
 			AND Eliminado = 0;
@@ -162,4 +162,6 @@ BEGIN
 		SELECT 'FALSE' AS RESPUES
 
 	END
+	
+
 END
