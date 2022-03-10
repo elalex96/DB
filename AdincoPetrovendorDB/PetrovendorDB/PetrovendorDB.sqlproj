@@ -10633,6 +10633,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\SP_FI_VU_ExisteUUID_AceptacionFactura.sql" />
     <Build Include="dbo\Tables\AP_BitacoraAprobacionesApp.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\WS_sp_ObtenWSURLPorDescripcion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_DEA_ConsultarPrefijoAsuntoFactura.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
