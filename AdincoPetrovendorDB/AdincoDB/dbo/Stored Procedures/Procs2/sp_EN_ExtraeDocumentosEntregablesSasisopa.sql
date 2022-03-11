@@ -1,4 +1,13 @@
-﻿CREATE PROCEDURE dbo.sp_EN_ExtraeDocumentosEntregablesSasisopa-- 3,10061,'2020-01-01','2020-07-30'
+﻿USE adinco
+GO
+DROP PROCEDURE IF EXISTS sp_EN_ExtraeDocumentosEntregablesSasisopa
+GO
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 10/Marzo/2022
+-- Description:	Se cambia la longitud de caracteres a 50
+-- =============================================
+CREATE PROCEDURE dbo.sp_EN_ExtraeDocumentosEntregablesSasisopa --3,10061,'2020-01-01','2020-07-30'
     @IdContrato INT,
     @idUsuario INT,
 	@FechaInicio DATETIME,
@@ -15,10 +24,10 @@ SELECT DISTINCT
 	PIE.IdProgramaImplementaElemento AS IdElemento,
 	PIA.IdProgramaImplementaAccion AS IdAccion,
 	IE.IdInstanciaEntregable,
-	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIT.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,30) AS NombrePrograma,
-	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIP.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,30) AS Politica, 
-	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIE.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,30) AS Elemento,
-	SUBSTRING(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIA.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,20) AS Accion,
+	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIT.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS NombrePrograma,
+	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIP.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS Politica, 
+	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIE.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS Elemento,
+	SUBSTRING(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIA.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS Accion,
 	IE.FechaCalculadaEntregaReg	AS	FechaEstimadaEntregaRegulador
 FROM
 	CO_ProgramaImplementa	CPI
@@ -63,8 +72,4 @@ WHERE
 	PIT.IdContrato	=	@IdContrato
 	AND
 		IE.FechaCalculadaEntregaReg between  @FechaInicio AND @FechaFin;
-
-
-
-	
 END
