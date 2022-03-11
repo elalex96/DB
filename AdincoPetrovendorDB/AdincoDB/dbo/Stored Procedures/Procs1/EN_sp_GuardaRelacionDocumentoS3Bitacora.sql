@@ -191,7 +191,7 @@ href="##URL_TAREA##/2/Entregables/ReporteSasisopa.aspx" target="_blank" name="bt
 				FechaProgramadaEnvio,	Enviada,		FechaEnvio,		CreadoPor,
 				CreadoEl,				ModificadoPor,	ModificadoEl,	De,				EN_MsjEnviado)
 				VALUES (
-				@pIdNotificacion ,		@para,			'Descargade Reporte SASISOPA',	isnull(@HTML,''),
+				@pIdNotificacion ,		@para,			'Descarga de Reporte SASISOPA',	isnull(@HTML,''),
 				getdate(),				0,				null,			1,
 				getdate(),				null,			null,			'notificaciones@adinco.mx',null)
 END
