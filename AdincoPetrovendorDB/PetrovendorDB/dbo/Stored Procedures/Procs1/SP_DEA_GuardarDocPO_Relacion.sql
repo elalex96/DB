@@ -10,7 +10,7 @@ GO
 -- Create date: <22/08/2019>
 -- Description:	<Guardar la PO del Correo>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_DEA_GuardarDocPO]
+ALTER PROCEDURE [dbo].[SP_DEA_GuardarDocPO_Relacion]
 	-- Add the parameters for the stored procedure here
 	@ID_PO NVARCHAR(MAX),
 	@Mime NVARCHAR(MAX),
