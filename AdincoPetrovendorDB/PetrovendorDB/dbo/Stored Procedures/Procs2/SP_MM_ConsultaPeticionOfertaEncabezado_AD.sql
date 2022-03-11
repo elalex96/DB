@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado_AD]    Script Date: 10/03/2022 07:13:43 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -15,7 +22,7 @@
 -- Description:	Consultar Detalle de La Oferta Cabecera y detalle del anexo de ad s3
 -- =============================================
 
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado_AD]
+ALTER PROCEDURE [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado_AD]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT, @IdProveedor INT, @IdContrato INT, @IdUsuario INT, @FechaRegistro DATETIME
 AS
@@ -31,7 +38,14 @@ AS
 		DECLARE @EXISTE_PEDIDO INT =
 					(	SELECT	COUNT ( IdPedido )
 						FROM	MM_Pedido
-						WHERE	IdSolicitudPedido = @IdSolicitudPedido )
+						WHERE	IdSolicitudPedido = @IdSolicitudPedido );
+		DECLARE @PROVEEDORES_DOCUMENTOS_REPSE TABLE(
+			RFC_PROVEEDOR VARCHAR(100)
+		);
+
+		--TIPO DE DOCUMENTO QUE LA OPERADORA QUIERE POR DEFAULT Y EL RFC DE LA OPERADORA
+		INSERT INTO @PROVEEDORES_DOCUMENTOS_REPSE(RFC_PROVEEDOR) VALUES ('DDM0906096A6');
+		INSERT INTO @PROVEEDORES_DOCUMENTOS_REPSE(RFC_PROVEEDOR) VALUES ('OBT1708213V6');
 
 		IF @EXISTE_PEDIDO > 0 SET @EXISTE_PEDIDO_BIT = 1
 
@@ -78,7 +92,11 @@ AS
 					( PR.RazonSocial + ' ' + PR.RegimenCapital ) AS Proveedor, PR.Municipio + ' ' + PR.Entidad AS Lugar ,
 					ISNULL ( TAO.FechaFinalizacion, GETDATE ()), @EXISTE_FLUJOAPROBACION AS ExisteFlujoAprobacion ,
 					ISNULL ( DFO.IdDocFianza, 0 ) AS IdFianza, ISNULL ( DBO.IdDocBases, 0 ) AS IdBases, @Justificacion ,
-					@IdPeticionOferta , @ExisteDocumento
+					@IdPeticionOferta , @ExisteDocumento,
+					CAST((CASE	
+						WHEN PDR.RFC_PROVEEDOR IS NOT NULL THEN 1
+						ELSE 0
+					END) AS BIT)  AS MostrarOpcionesREPSE
 		FROM		MM_SolicitudPedido AS SP
 		INNER JOIN	TA_Operacion AS TAO
 			ON TAO.IdDocumento = SP.IdSolicitudPedido
@@ -98,6 +116,10 @@ AS
 		LEFT JOIN	dbo.TA_DocBasesOperacion AS DBO
 			ON DBO.IdOperacion = TAO.IdOperacion
 			   AND	DBO.Activo = 1
+		LEFT JOIN S_Proveedor AS OPE
+			ON SP.IdProveedor = OPE.IdProveedor
+		LEFT JOIN @PROVEEDORES_DOCUMENTOS_REPSE AS PDR
+			ON PDR.RFC_PROVEEDOR = OPE.RFC
 		WHERE
 					SP.IdSolicitudPedido = @IdSolicitudPedido
 					AND IdTipoOperacion = 6
