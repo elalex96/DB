@@ -77,7 +77,7 @@ BEGIN
                ELSE
                    UXP.Nombre
 			END AS UsuarioExcepcion,          
-			IE.ActividadID AS ActividadActua,
+			IE.ActividadID AS ActividadActual,
 			H.ActualizadoByApp,
 			H.URLRepositorio,
 			H.ContieneURLRepositorio
@@ -156,6 +156,9 @@ BEGIN
             H.CreadoEn  ASC;
 
 END;
+
+
+
 
 
 
