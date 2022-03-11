@@ -1,13 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_DEA_GuardarDocPO'
-)
-    DROP PROCEDURE SP_DEA_GuardarDocPO;
-/****** Object:  StoredProcedure [dbo].[SP_DEA_GuardarDocPO]    Script Date: 20/07/2021 02:54:49 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_DEA_GuardarDocPO]    Script Date: 10/03/2022 10:36:26 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,7 +10,7 @@ GO
 -- Create date: <22/08/2019>
 -- Description:	<Guardar la PO del Correo>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_DEA_GuardarDocPO]
+ALTER PROCEDURE [dbo].[SP_DEA_GuardarDocPO]
 	-- Add the parameters for the stored procedure here
 	@ID_PO NVARCHAR(MAX),
 	@Mime NVARCHAR(MAX),
@@ -29,7 +22,7 @@ CREATE PROCEDURE [dbo].[SP_DEA_GuardarDocPO]
 	@SizeDocumento NVARCHAR(MAX),
 	@CargadoPorUsuarioID INT,
 	@CargadaManualmente BIT,
-	@Bucket NVARCHAR(MAX)
+	@Bucket NVARCHAR(MAX) = NULL
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -38,7 +31,8 @@ BEGIN
 
 	DECLARE @IDDOCPO INT;
 	DECLARE @IDDOCUMENTO INT;
-	DECLARE @ExistePO INT 
+	DECLARE @ExistePO INT, @ExisteImportado INT;
+	DECLARE @ExisteRelacionPO INT , @ExisteRelacionPedidoPR INT, @IdProveedor INT;
 
 	--SELECT @ExistePO = COUNT(IdAdjuntoPO) FROM dbo.DEA_AdjuntoPO WHERE ID_PO=@ID_PO
 
@@ -64,7 +58,7 @@ BEGIN
 	    @ID_PO ,       -- ID_PO - nvarchar(max)
 		@CargadoPorUsuarioID,
 		@CargadaManualmente
-	    )
+	 )
 
 	SET @IDDOCPO = SCOPE_IDENTITY();
 
@@ -108,19 +102,63 @@ BEGIN
 	  SET IdDocumento = @IDDOCUMENTO
 	  WHERE IdAdjuntoPO = @IDDOCPO;
 
+	  --SE BUSCA EN IMPORTACION
+	  SET @ExisteImportado = (SELECT TOP 1 IdPedidoADINCO FROM WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @ID_PO);
+	  SET @IdProveedor = (SELECT TOP 1 IdProveedorCompras FROM MM_Pedido WHERE IdPedido = @ExisteImportado);
+
+	  IF ISNULL(@ExisteImportado,0) > 0
+	  BEGIN
+			--VALIDAR SI LA PO NO ESTA RELACIONADA
+			SELECT @ExisteRelacionPO =COUNT(ID_R_PR_PO)
+			FROM DEA_Relacion_PR_PO  RP
+			INNER JOIN dbo.MM_Pedido P ON P.IdPedido=RP.IdPedido	
+			WHERE RP.IdAdjuntoPO=@IDDOCPO 
+			AND ISNULL(P.IdEstatusEliminado,0)=0  --> SI EL PEDIDO ESTA ELIMINADO SI SE PUEDE VOLVER A RELACIONAR LA PO 
+ 
+			--VALIDAR QUE EL PEDIDO-PR NO ESTE RELACIONADO 
+			SELECT @ExisteRelacionPedidoPR =COUNT(ID_R_PR_PO)
+			FROM DEA_Relacion_PR_PO  RP
+			INNER JOIN dbo.MM_Pedido P ON P.IdPedido=RP.IdPedido
+			WHERE RP.IdPedido=@ExisteImportado 
+			AND ISNULL(P.IdEstatusEliminado,0)=0  --> SI EL PEDIDO ESTA ELIMINADO SI SE PUEDE VOLVER A RELACIONAR LA PO 
+  
+			--SI LA PO Y EL PEDIDO PR NO ESTAN RELACIONADOS AGREGAR NUEVA RELACIÓN
+			IF ISNULL(@ExisteRelacionPO,0)=0  AND ISNULL(@ExisteRelacionPedidoPR,0)=0
+			BEGIN 
+
+				-- Insert statements for procedure here
+				INSERT INTO dbo.DEA_Relacion_PR_PO
+				(
+					PO,
+					IdPedido,
+					FechaAltaRelacion,
+					--CreadoPor,
+					Activo,
+					IdCreadoProveedor,
+					IdAdjuntoPO
+				)
+				VALUES
+				(   @ID_PO,       -- PR - nvarchar(30)
+					@ExisteImportado,       -- PO - nvarchar(30)
+					GETDATE(), -- FechaAltaRelacion - datetime
+					--@IdUsuario,         -- CreadoPor - int
+					1,      -- Activo - bit
+					@IdProveedor,
+					@IDDOCPO
+				)
+
+				SET @ExisteRelacionPO = (SELECT SCOPE_IDENTITY());
+
+			END
+	  END
+
+
 	  SELECT
 		IdAdjuntoPO,
-		IdDocumento
+		IdDocumento,
+		ISNULL(@ExisteRelacionPO,0) AS Relacion,
+		ISNULL(@ExisteImportado,0) AS Pedido
 	  FROM dbo.DEA_AdjuntoPO
 	  WHERE IdAdjuntoPO = @IDDOCPO
-
-	  --END 
-	 -- ELSE 
-	 -- BEGIN 
-		--SELECT -1,'PO_YA_EXISTENTE'
-	 -- END 
 		
 END
-
-
-
