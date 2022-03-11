@@ -13197,6 +13197,12 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_DROPBOX_ConsultaArchivosPendientesGuardado.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_DROPBOX_GuardarArchivoDB.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_DROPBOX_ActualizarRegistroDocumentoEnviado.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_sp_GuardaBitacoraReporteSASISOPA.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_sp_GuardaRelacionDocumentoS3Bitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\En_sp_ObtenBitacoraDocumentosSASISOPA.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EN_sp_ObtenResporteNoProcesadosSASISOPA.sql" />
+    <Build Include="dbo\Tables\Tables1\EN_Documentos_BitacoraReporteSASISOPA.sql" />
+    <Build Include="dbo\Tables\Tables1\EN_DocumentosSASISOPA_Relacion.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
