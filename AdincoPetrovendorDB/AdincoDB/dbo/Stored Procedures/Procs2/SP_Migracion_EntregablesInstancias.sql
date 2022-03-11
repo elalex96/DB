@@ -21,10 +21,52 @@ AS
 BEGIN
 	  --> REFERENCIA EN_EntregablesHistorial
      --  exec SP_Migracion_EntregablesInstancias 3,'ADINCO-R1L3131'
+	 --  exec SP_Migracion_EntregablesInstancias 3,'OBTENER-INSTANCIAS-CONTRATO'
+	 DECLARE @EntregableId INT
 
-     DECLARE @EntregableId INT
-	 SELECT @EntregableId = IdEntregable FROM EN_Entregable WHERE Consecutivo=@EntregableIdentificador
-
+	 IF @EntregableIdentificador = 'OBTENER-INSTANCIAS-POR-CONTRATO'
+	 BEGIN 
+	    -- OBTENER TODAS LAS INSTANCIAS DEL CONTRATO APROBADAS INTERNAMENTE
+		SELECT I.idInstanciaEntregable AS ProgramacionId,  			 
+			   E.IdEntregable,
+			   e.Consecutivo
+        FROM 
+		EN_InstanciasEntregable	I  
+        JOIN 
+			EN_ContratoEntregable	CE  
+			ON	I.IdContratoEntregable	=	CE.IdContratoEntregable  
+			AND	CE.IdContrato	=	@ContratoId
+			AND	CE.Activo	=	1
+			AND	I.Activo	=	1  
+		JOIN
+			EN_Actividad	A
+			ON	I.ActividadID	=	A.ActividadID
+			AND	A.EstadoID	=	10003	-->CTE Aprobado Internamente    
+		JOIN 
+			EN_Estado Es  
+			ON A.EstadoID = Es.EstadoID  
+		JOIN 
+			dbo.EN_Entregable	e  
+			ON	CE.IdEntregable	=	e.IdEntregable  			
+			AND	E.IsActivo	=	1
+			AND E.BitJOA	=	0
+        LEFT JOIN 
+			dbo.EN_MarcoLegal ml  
+			ON	e.IdMarcoLegal	=	ml.IdMarcoLegal  		
+        WHERE	CE.IdContrato	=	@ContratoId
+              AND  
+              (  
+                  ml.Activo = 1  
+                  OR e.BitInterno = 1  
+              )  
+			  AND  I.FechaCalculadaEntregaReg IS NOT NULL  
+	
+			
+	 END 
+	 ELSE
+	 BEGIN 
+		 -- OBTENER TODAS LAS INSTANCIAS DEL CONTRATO APROBADAS INTERNAMENTE POR ENTREGABLE
+		SELECT @EntregableId = IdEntregable FROM EN_Entregable WHERE Consecutivo=@EntregableIdentificador
 
 	    SELECT I.idInstanciaEntregable AS ProgramacionId,  
 			   I.FechaCalculadaEntregaReg AS FechaCalculadaEntregaReg,
@@ -47,7 +89,7 @@ BEGIN
 		JOIN
 			EN_Actividad	A
 			ON	I.ActividadID	=	A.ActividadID
-			AND	A.EstadoID	=	10003	--Aprobado Internamente    
+			AND	A.EstadoID	=	10003	-- CTE Aprobado Internamente    
 		JOIN 
 			EN_Estado Es  
 			ON A.EstadoID = Es.EstadoID  
@@ -80,7 +122,9 @@ BEGIN
               )  
 			  AND  I.FechaCalculadaEntregaReg IS NOT NULL
         ORDER BY FechasLimiteAprobacion ASC; 
-			
+
+		 
+	 END 
 
 END;
 
