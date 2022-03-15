@@ -1,10 +1,10 @@
 CREATE PROCEDURE [dbo].[SP_CO_GastoEstadoSelects] 
 	@EstadoRegistroId INT, @Tipo NVARCHAR(MAX), @IdContrato INT
     AS
-	BEGIN
+BEGIN
 		IF(@Tipo = 'Catalogo')
 		BEGIN
-			SELECT IdClvEstado, NombreEstado FROM CO_EstadoRegistro_V2 WHERE IdContrato = @IdContrato
+			SELECT IdClvEstado, NombreEstado FROM CO_EstadoRegistro_V2 WHERE IdContrato = @IdContrato AND ACTIVO = 1
 		END
 		
 		IF(@Tipo = 'Factura')
