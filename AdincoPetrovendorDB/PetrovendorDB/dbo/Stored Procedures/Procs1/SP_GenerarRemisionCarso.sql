@@ -1,4 +1,24 @@
-﻿CREATE PROCEDURE [dbo].[SP_GenerarRemisionCarso]
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_GenerarRemisionCarso'
+)
+    DROP PROCEDURE SP_GenerarRemisionCarso;
+
+/****** Object:  StoredProcedure [dbo].[SP_GenerarRemisionCarso]    Script Date: 09/03/2022 01:17:40 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 14/03/2022
+-- Description: Se agrega condicion para que no se tomen las aceptaciones de pedido eliminadas
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_GenerarRemisionCarso]
 @IdOC VARCHAR(8000),
 @RecId VARCHAR(MAX),
 @IdPedido INT,
@@ -78,25 +98,25 @@ BEGIN --EMPIEZA STORE
            pd.IdMaterial
     FROM dbo.MM_SolicitudPedido sp
         INNER JOIN dbo.AX_Comparativa comp
-            ON comp.IdSolicitudPedido = sp.IdSolicitudPedido
+            ON  sp.IdSolicitudPedido = comp.IdSolicitudPedido 
         INNER JOIN dbo.AX_Remision r
-            ON UPPER(r.DataAreaId) = UPPER(comp.DataAreaId)
-               AND UPPER(r.RECID) = UPPER(comp.IdPosicion)
+            ON UPPER(comp.DataAreaId) = UPPER(r.DataAreaId) 
+               AND UPPER(comp.IdPosicion) = UPPER(r.RECID)
         INNER JOIN dbo.MM_SolicitudPedidoDetalle spd
-            ON spd.IdDinamicsAx = comp.IdDinamicsAx
+            ON comp.IdDinamicsAx = spd.IdDinamicsAx 
         INNER JOIN dbo.MM_PeticionOfertaDetalle pod -- apartir de aqui no se muestra ya que no hay peticion oferta aun    
-            ON pod.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
+            ON spd.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle 
         INNER JOIN dbo.MM_PedidoDetalle pd
-            ON pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle
-               AND pd.IdPedido = r.IdPedido
+            ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle 
+               AND r.IdPedido = pd.IdPedido
         INNER JOIN dbo.TA_Operacion O --filtrar para que solo sean los que esa antes de crear    
-            ON O.IdDocumento = sp.IdSolicitudPedido
-               AND O.IdProveedor = sp.IdProveedor
-               AND O.IdTipoOperacion = 9
+            ON sp.IdSolicitudPedido = O.IdDocumento 
+               AND sp.IdProveedor = O.IdProveedor 
+               AND O.IdTipoOperacion = 9 --> CTE PEDIDO
         INNER JOIN dbo.MM_Pedido p
-            ON p.IdSolicitudPedido = sp.IdSolicitudPedido
-               AND p.Version = O.NoVersion
-               AND p.IdPeticionOferta = pod.IdPeticionOferta
+            ON sp.IdSolicitudPedido = p.IdSolicitudPedido 
+               AND  O.NoVersion = p.Version 
+               AND  pod.IdPeticionOferta = p.IdPeticionOferta
     WHERE UPPER(r.RECID) = UPPER(@RecId)
           AND r.IdPedido = @IdPedido
           AND UPPER(r.IdOC) = UPPER(@IdOC)
@@ -107,23 +127,23 @@ BEGIN --EMPIEZA STORE
     (   SELECT 1
         FROM dbo.MM_SolicitudPedido sp
             INNER JOIN dbo.AX_Comparativa comp
-                ON comp.IdSolicitudPedido = sp.IdSolicitudPedido
+                ON sp.IdSolicitudPedido = comp.IdSolicitudPedido 
             INNER JOIN dbo.AX_Remision r
-                ON UPPER(r.DataAreaId) = UPPER(comp.DataAreaId)
-                   AND UPPER(r.RECID) = UPPER(comp.IdPosicion)
+                ON UPPER(comp.DataAreaId) = UPPER(r.DataAreaId) 
+                   AND UPPER(comp.IdPosicion) = UPPER(r.RECID) 
             INNER JOIN dbo.MM_SolicitudPedidoDetalle spd
-                ON spd.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = spd.IdDinamicsAx 
             INNER JOIN dbo.MM_PeticionOfertaDetalle pod -- apartir de aqui no se muestra ya que no hay peticion oferta aun    
-                ON pod.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
+                ON  spd.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle
             INNER JOIN dbo.MM_PedidoDetalle pd
-                ON pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle
+                ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle 
             INNER JOIN dbo.TA_Operacion O --filtrar para que solo sean los que esa antes de crear    
-                ON O.IdDocumento = sp.IdSolicitudPedido
-                   AND O.IdProveedor = sp.IdProveedor
-                   AND O.IdTipoOperacion = 9
+                ON sp.IdSolicitudPedido = O.IdDocumento 
+                   AND sp.IdProveedor = O.IdProveedor 
+                   AND O.IdTipoOperacion = 9 --> CTE Aprobacion de pedido
             INNER JOIN dbo.MM_Pedido p
-                ON p.IdSolicitudPedido = sp.IdSolicitudPedido
-                   AND p.Version = O.NoVersion
+                ON sp.IdSolicitudPedido = p.IdSolicitudPedido 
+                   AND O.NoVersion = p.Version 
         WHERE UPPER(r.RECID) = UPPER(@RecId)
               AND r.IdPedido = @IdPedido
               AND UPPER(r.IdOC) = UPPER(@IdOC)
@@ -217,7 +237,7 @@ BEGIN --EMPIEZA STORE
         SET tr.IdMaterialPetrov = am.IdMaterialPetrov
         FROM @TablaRemisionSinOperacion tr
             INNER JOIN dbo.AX_MATERIAL am
-                ON am.IdMaterialAx = tr.Item
+                ON tr.Item = am.IdMaterialAx 
 
         -- se aprueba la operacion     
         UPDATE o
@@ -225,8 +245,8 @@ BEGIN --EMPIEZA STORE
             o.IdEstadoFlujo = 3
         FROM @TablaRemision r
             INNER JOIN dbo.TA_Operacion o
-                ON o.IdOperacion = r.IdOperacion
-                   AND o.IdProveedor = r.IdProveedor
+                ON r.IdOperacion = o.IdOperacion 
+                   AND r.IdProveedor = o.IdProveedor 
 
 
         -- si no contiene aceptacion de servicio    
@@ -234,9 +254,11 @@ BEGIN --EMPIEZA STORE
         (   SELECT 1
             FROM dbo.MM_AceptacionPedido ap
                 INNER JOIN @TablaRemisionSinOperacion r
-                    ON r.IdOC = ap.IdOcCarso
-                       AND r.IdProveedor = ap.IdProveedor
-                       AND r.Asiento = ap.Asiento)
+                    ON ap.IdOcCarso = r.IdOC 
+                       AND ap.IdProveedor = r.IdProveedor 
+                       AND ap.Asiento = r.Asiento 
+					   AND ISNULL(ap.IdEstatusEliminado,0)=0		
+					   )
         BEGIN
             DECLARE @IdAceptacionPedidoAux INT,
                     @IdUsuario INT
@@ -294,12 +316,14 @@ BEGIN --EMPIEZA STORE
         (   SELECT 1
             FROM dbo.MM_AceptacionPedido ap
                 INNER JOIN @TablaRemisionSinOperacion r
-                    ON r.IdOC = ap.IdOcCarso
-                       AND r.IdProveedor = ap.IdProveedor
-                       AND r.Asiento = ap.Asiento
+                    ON ap.IdOcCarso = r.IdOC  
+                       AND ap.IdProveedor = r.IdProveedor  
+                       AND ap.Asiento = r.Asiento 
                 INNER JOIN dbo.MM_AceptacionPedidoDetalle apd
-                    ON apd.IdAceptacionPedido = ap.IdAceptacionPedido
-                       AND apd.RecId = r.RECID)
+                    ON ap.IdAceptacionPedido = apd.IdAceptacionPedido 
+                       AND r.RECID = apd.RecId  
+				WHERE	 ISNULL(ap.IdEstatusEliminado,0)=0	
+				AND ISNULL(apd.IdEstatusEliminado,0)=0)
         BEGIN
             INSERT INTO dbo.MM_AceptacionPedidoDetalle
             (
@@ -322,27 +346,27 @@ BEGIN --EMPIEZA STORE
                    r.DataAreaId
             FROM @TablaRemisionSinOperacion r
                 INNER JOIN dbo.MM_AceptacionPedido ap
-                    ON ap.IdOcCarso = r.IdOC
-                       AND ap.IdPedido = r.IdPedido
-                       AND ap.IdProveedor = r.IdProveedor
-                       AND ap.Asiento = r.Asiento
+                    ON  r.IdOC = ap.IdOcCarso 
+                       AND  r.IdPedido = ap.IdPedido 
+                       AND  r.IdProveedor = ap.IdProveedor 
+                       AND r.Asiento =  ap.Asiento 
                 LEFT JOIN dbo.MM_AceptacionPedidoDetalle apd
-                    ON apd.IdAceptacionPedido = ap.IdAceptacionPedido
-                       AND apd.RecId = r.RECID
+                    ON ap.IdAceptacionPedido = apd.IdAceptacionPedido 
+                       AND r.RECID =  apd.RecId 
                 INNER JOIN dbo.MM_Pedido p
-                    ON p.IdPedido = ap.IdPedido
+                    ON ap.IdPedido = p.IdPedido  
                 INNER JOIN dbo.MM_PedidoDetalle pd
-                    ON pd.IdPedido = p.IdPedido
+                    ON p.IdPedido = pd.IdPedido  
                        AND r.IdPedido = p.IdPedido
                 INNER JOIN dbo.MM_PeticionOferta po
-                    ON po.IdSolicitudPedido = p.IdSolicitudPedido
-                       AND po.IdPeticionOferta = p.IdPeticionOferta
+                    ON p.IdSolicitudPedido = po.IdSolicitudPedido 
+                       AND p.IdPeticionOferta = po.IdPeticionOferta 
                 INNER JOIN dbo.MM_PeticionOfertaDetalle pod
-                    ON pod.IdPeticionOferta = po.IdPeticionOferta
-                       AND pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle
+                    ON po.IdPeticionOferta = pod.IdPeticionOferta 
+                       AND  pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle 
                 INNER JOIN dbo.AX_Comparativa comp
-                    ON comp.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle
-                       AND comp.IdSolicitudPedido = p.IdSolicitudPedido
+                    ON pod.IdSolicitudPedidoDetalle = comp.IdSolicitudPedidoDetalle 
+                       AND p.IdSolicitudPedido = comp.IdSolicitudPedido 
                        AND r.RECID = comp.IdPosicion
             WHERE UPPER(r.RECID) = UPPER(@RecId)
                   AND r.IdPedido = @IdPedido
@@ -352,6 +376,8 @@ BEGIN --EMPIEZA STORE
                   AND apd.RecId IS NULL
                   AND ISNULL(p.IdEstatusEliminado, 0) <> 1
                   AND ISNULL(pd.IdEstatusEliminado, 0) <> 1
+				  AND ISNULL(ap.IdEstatusEliminado, 0) = 0
+				  AND ISNULL(apd.IdEstatusEliminado,0)=0
             GROUP BY ap.IdAceptacionPedido,
                      r.IdPedidoDetalle,
                      r.RECID,
@@ -379,25 +405,27 @@ BEGIN --EMPIEZA STORE
                    spdl.IdLineaPresupuesto
             FROM @TablaRemisionSinOperacion r
                 INNER JOIN dbo.MM_AceptacionPedido ap
-                    ON ap.IdOcCarso = r.IdOC
-                       AND ap.IdPedido = r.IdPedido
-                       AND ap.IdProveedor = r.IdProveedor
-                       AND ap.Asiento = r.Asiento
-                LEFT JOIN dbo.MM_AceptacionPedidoDetalle apd
-                    ON apd.IdAceptacionPedido = ap.IdAceptacionPedido
-                       AND apd.RecId = r.RECID
+                    ON r.IdOC = ap.IdOcCarso 
+                       AND  r.IdPedido = ap.IdPedido 
+                       AND  r.IdProveedor = ap.IdProveedor 
+                       AND  r.Asiento = ap.Asiento 
+					   AND ISNULL(ap.IdEstatusEliminado, 0) = 0
+                JOIN dbo.MM_AceptacionPedidoDetalle apd
+                    ON ap.IdAceptacionPedido = apd.IdAceptacionPedido 
+                       AND r.RECID = apd.RecId 
+					   AND ISNULL(apd.IdEstatusEliminado,0) = 0
                 INNER JOIN dbo.MM_PedidoDetalle pd
-                    ON pd.IdPedidoDetalle = apd.IdPedidoDetalle
+                    ON apd.IdPedidoDetalle = pd.IdPedidoDetalle 
                 INNER JOIN dbo.MM_PeticionOfertaDetalle pod
-                    ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle
+                    ON pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle 
                 INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdl
-                    ON spdl.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle
+                    ON pod.IdSolicitudPedidoDetalle = spdl.IdSolicitudPedidoDetalle 
             WHERE UPPER(r.RECID) = UPPER(@RecId)
                   AND r.IdPedido = @IdPedido
                   AND UPPER(r.IdOC) = UPPER(@IdOC)
                   AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
                   AND UPPER(r.Asiento) = UPPER(@Asiento)
-                  AND ISNULL(pd.IdEstatusEliminado, 0) <> 1
+                  AND ISNULL(pd.IdEstatusEliminado, 0) <> 1					
             GROUP BY ap.IdAceptacionPedido,
                      apd.IdAceptacionPedidoDetalle,
                      apd.IdPedidoDetalle,
@@ -421,34 +449,38 @@ BEGIN --EMPIEZA STORE
             SET apd.Cantidad = @Cantidad
             FROM @TablaRemisionSinOperacion r
                 INNER JOIN dbo.MM_AceptacionPedido ap
-                    ON ap.IdOcCarso = r.IdOC
-                       AND ap.IdPedido = r.IdPedido
-                       AND ap.IdProveedor = r.IdProveedor
+                    ON r.IdOC =  ap.IdOcCarso 
+                       AND r.IdPedido = ap.IdPedido 
+                       AND r.IdProveedor = ap.IdProveedor
                 INNER JOIN dbo.MM_AceptacionPedidoDetalle apd
-                    ON apd.IdAceptacionPedido = ap.IdAceptacionPedido
-                       AND apd.RecId = r.RECID
+                    ON ap.IdAceptacionPedido = apd.IdAceptacionPedido 
+                       AND  r.RECID = apd.RecId 
             WHERE UPPER(apd.RecId) = UPPER(@RecId)
                   AND UPPER(r.IdOC) = UPPER(@IdOC)
                   AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
                   AND UPPER(r.Asiento) = UPPER(@Asiento)
+				  AND ISNULL(ap.IdEstatusEliminado, 0) = 0
+				   AND ISNULL(apd.IdEstatusEliminado,0)= 0
 
             UPDATE apdi
             SET apdi.Cantidad = @Cantidad
             FROM @TablaRemisionSinOperacion r
                 INNER JOIN dbo.MM_AceptacionPedido ap
-                    ON ap.IdOcCarso = r.IdOC
-                       AND ap.IdPedido = r.IdPedido
-                       AND ap.IdProveedor = r.IdProveedor
+                    ON r.IdOC =  ap.IdOcCarso 
+                       AND r.IdPedido = ap.IdPedido 
+                       AND r.IdProveedor = ap.IdProveedor 
                 INNER JOIN dbo.MM_AceptacionPedidoDetalle apd
-                    ON apd.IdAceptacionPedido = ap.IdAceptacionPedido
-                       AND apd.RecId = r.RECID
+                    ON ap.IdAceptacionPedido = apd.IdAceptacionPedido 
+                       AND  r.RECID = apd.RecId 
                 INNER JOIN dbo.MM_AceptacionPedidoDetalleInstalacion apdi
-                    ON apdi.IdAceptacionPedido = ap.IdAceptacionPedido
-                       AND apdi.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
+                    ON ap.IdAceptacionPedido = apdi.IdAceptacionPedido 
+                       AND apd.IdAceptacionPedidoDetalle = apdi.IdAceptacionPedidoDetalle 
             WHERE UPPER(apd.RecId) = UPPER(@RecId)
                   AND UPPER(r.IdOC) = UPPER(@IdOC)
                   AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
                   AND UPPER(r.Asiento) = UPPER(@Asiento)
+				  AND ISNULL(ap.IdEstatusEliminado, 0)=0
+				  AND ISNULL(apd.IdEstatusEliminado,0)=0
         END
 
         -- se coloca la fecha de inicio de ejecucion    
@@ -459,26 +491,31 @@ BEGIN --EMPIEZA STORE
             p.FechaEnvioPedido = GETDATE()
         FROM @TablaRemisionSinOperacion r
             INNER JOIN dbo.MM_AceptacionPedido ap
-                ON ap.IdOcCarso = r.IdOC
-                   AND ap.IdPedido = r.IdPedido
-                   AND ap.IdProveedor = r.IdProveedor
-                   AND ap.Asiento = r.Asiento
+                ON  r.IdOC = ap.IdOcCarso 
+                   AND r.IdPedido = ap.IdPedido 
+                   AND r.IdProveedor = ap.IdProveedor 
+                   AND r.Asiento = ap.Asiento 
             INNER JOIN dbo.MM_Pedido p
-                ON p.IdPedido = ap.IdPedido
+                ON ap.IdPedido = p.IdPedido 
+			WHERE   ISNULL(ap.IdEstatusEliminado, 0)= 0
 
 
         UPDATE pd
         SET pd.RecepcionPedido = 1
         FROM @TablaRemisionSinOperacion r
             INNER JOIN dbo.MM_AceptacionPedido ap
-                ON ap.IdOcCarso = r.IdOC
-                   AND ap.IdPedido = r.IdPedido
-                   AND ap.IdProveedor = r.IdProveedor
-                   AND ap.Asiento = r.Asiento
+                ON r.IdOC =  ap.IdOcCarso 
+                   AND r.IdPedido = ap.IdPedido
+                   AND r.IdProveedor = ap.IdProveedor 
+                   AND r.Asiento = ap.Asiento 
             INNER JOIN dbo.MM_Pedido p
-                ON p.IdPedido = ap.IdPedido
+                ON  ap.IdPedido = p.IdPedido 
             INNER JOIN dbo.MM_PedidoDetalle pd
-                ON pd.IdPedido = p.IdPedido
+                ON p.IdPedido = pd.IdPedido 
+			WHERE   ISNULL(ap.IdEstatusEliminado, 0)= 0
+
     END
 
 END
+
+ 
