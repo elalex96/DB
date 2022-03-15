@@ -10,6 +10,10 @@ GO
 -- Create date: <02/03/2022>
 -- Description:	<Guardado de los archivos pertinentes a la factura para guardado en dropbox>
 -- =============================================
+-- Author:		<Luis David>
+-- Create date: <15/03/2022>
+-- Description:	<Validación para que las facturas timbradas despues del día 20 se guarden en el próximo mes Issue(1673)>
+-- =============================================
 ALTER PROCEDURE [dbo].[SP_DROPBOX_GuardadoArchivosFactura] 
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
@@ -34,7 +38,11 @@ BEGIN
 		
 		SELECT
 			@ANIO = CAST(YEAR(F.FechaTimbrado) AS VARCHAR),
-			@MES = CAST(MONTH(F.FechaTimbrado) AS VARCHAR),
+			@MES = CASE WHEN DAY(F.FechaTimbrado) > 20 THEN -- Si la fecha de timbrado es del 21 en adelante ->
+				CAST(MONTH(DATEADD(MONTH, 1, F.FechaTimbrado)) AS VARCHAR) -- Se guarda en la carpeta del siguiente mes 
+				ELSE
+				CAST(MONTH(F.FechaTimbrado) AS VARCHAR) -- Sino se guarda en la del mes actual
+			END,
 			@NOMBRE_PROVEEDOR = PR.RazonSocial,
 			@FOLIO = F.Folio,
 			@IDFACTURA = F.IdFactura
@@ -116,9 +124,9 @@ BEGIN
 			'/2 INFORMES DE GE/' + @ANIO + '-' + @MES + ' INFORME GE/01 Soportes/PAT ' + @ANIO + '/' + @NOMBRE_PROVEEDOR + '/F ' + @FOLIO
 		FROM        [dbo].[MM_AceptacionDocumento] AS AD
 			INNER JOIN  [dbo].[MM_AceptacionPedido] AS AP
-				ON AP.[IdAceptacionPedido] = AD.[IdAceptacionDocumento]
+				ON AD.[IdAceptacionDocumento] = AP.[IdAceptacionPedido]
 			INNER JOIN  [dbo].[S_Documento_S3] AS D
-				ON	D.[IdDocumento] = AD.[IdDocumento]
+				ON	AD.[IdDocumento] = D.[IdDocumento]
 		WHERE
 			AP.[IdAceptacionPedido] = @IdAceptacionPedido
 			AND AP.[IdProveedor] = @IdProveedor
