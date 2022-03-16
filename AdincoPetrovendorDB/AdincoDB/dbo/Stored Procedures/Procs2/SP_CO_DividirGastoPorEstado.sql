@@ -40,10 +40,6 @@ CREATE PROCEDURE [dbo].[SP_CO_DividirGastoPorEstado]
 							IdCBSISH, IdAceptacionPedidoDetalle, MesGasto, ModificadoEn, CapexOpexEdicion 
 			FROM CO_Registro R 
 			INNER JOIN #REGISTRO_RES RES ON R.IdRegistro = RES.IdRegistro
-
-			--SELECT * FROM #RegistroABorrar
 			
-			DELETE CO_RegistroMarkup WHERE GastoId IN (SELECT IdRegistro FROM #RegistroABorrar)
 			DELETE FROM CO_Registro WHERE IdRegistro IN (SELECT IdRegistro FROM #RegistroABorrar)
 	 END
-
