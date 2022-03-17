@@ -1,10 +1,6 @@
-
-﻿USE [Petrovendor]
+USE Petrovendor
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 12/10/2021 12:29:29 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SRAP_ConsultaDetalleAprobacionSolicitudRecepcion
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -14,6 +10,10 @@ GO
 -- Author:		Luis David De La Cruz
 -- Create date: 13/10/2021
 -- Description:	Se agrega la validación de cantidad disponible de materiales
+-- =============================================
+-- Author:		Luis David
+-- Create date: 17-03-2022
+-- Description:	Se agrega la tabla de documento fieldticket y proforma
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
@@ -34,7 +34,9 @@ AS
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
          SET NOCOUNT ON;
-		DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido')
+		DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido'),
+		@IdDocumentoFieldTicket INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'FIELD TICKET'),
+		@IdDocumentoProforma INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'PROFORMA');
 		DECLARE @NoSecuenciaUsuarioSolicitante INT 
 		DECLARE @IdEstatusUsuarioAnteriorSecuencia INT
 		DECLARE @NoSecuenciaAprobadorAnterior INT 
@@ -412,4 +414,22 @@ AS
 			ORDER BY U.Nombre ASC
 		
 	   END 
+	   /*TABLA DE DOCUMENTO FIELD TICKET*/
+		SELECT  D.IdDocumento, 
+				D.NombreDocumento + '  -  Cargado Por ' +  US.Nombre + ' el ' + CAST(D.CreadoEl AS nvarchar) AS NombreDocumento, 
+				D.IdDocumentoTabla 
+         FROM  S_Documento_S3 D  
+		 LEFT JOIN S_Usuario AS US ON D.IdUsuario = US.IdUsuario
+         WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
+		 AND D.Activo=1 
+		 AND D.IdTipoDocumento = @IdDocumentoFieldTicket
+		/*TABLA DE DOCUMENTO PROFORMA*/
+		SELECT  D.IdDocumento, 
+				D.NombreDocumento + '  -  Cargado Por ' +  US.Nombre + ' el ' + CAST(D.CreadoEl AS nvarchar) AS NombreDocumento, 
+				D.IdDocumentoTabla 
+         FROM  S_Documento_S3 D  
+		 LEFT JOIN S_Usuario AS US ON D.IdUsuario = US.IdUsuario
+         WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
+		 AND D.Activo=1 
+		 AND D.IdTipoDocumento = @IdDocumentoProforma
 END
