@@ -8,6 +8,7 @@
     [CreadoEn]      DATETIME       NULL,
     [ModificadoPor] INT            NULL,
     [ModificadoEn]  DATETIME       NULL,
+    [Activo ] BIT NULL, 
     CONSTRAINT [PK_CO_EstadoRegistro_V2] PRIMARY KEY CLUSTERED ([IdEstado] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_EstadoRegistro_V2_AP_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_EstadoRegistro_V2_AP_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
