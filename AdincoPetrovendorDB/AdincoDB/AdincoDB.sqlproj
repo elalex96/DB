@@ -13203,6 +13203,14 @@
     <Build Include="dbo\Stored Procedures\Procs1\EN_sp_ObtenResporteNoProcesadosSASISOPA.sql" />
     <Build Include="dbo\Tables\Tables1\EN_Documentos_BitacoraReporteSASISOPA.sql" />
     <Build Include="dbo\Tables\Tables1\EN_DocumentosSASISOPA_Relacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_EsGastoDelContrato.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\sp_CO_ConsultaRegistrosGastosPorFechas.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
