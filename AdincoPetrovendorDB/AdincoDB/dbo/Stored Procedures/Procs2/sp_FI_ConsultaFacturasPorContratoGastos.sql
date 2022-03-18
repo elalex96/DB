@@ -1,6 +1,4 @@
-﻿
-
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContratoGastos]
 -- Add the parameters for the stored procedure here
@@ -95,7 +93,7 @@ AS
 						AND P.IdContrato = @IdContrato
                      JOIN Petrovendor.dbo.S_Proveedor AS PR (NOLOCK)
 						ON PR.IdProveedor = P.IdSubcontratista
-                     JOIN Petrovendor.dbo.S_TipoValidacionDoc AS TD (NOLOCK)
+       JOIN Petrovendor.dbo.S_TipoValidacionDoc AS TD (NOLOCK)
 						ON TD.IdTipoValidacionDoc = AC.IdEstatus
                      JOIN Petrovendor.dbo.MM_Pedidos AS PG (NOLOCK)
 						ON P.IdPedido = PG.IdIdentificador
@@ -280,7 +278,7 @@ AS
                         CC.RazonSocial AS Receptor, 
                         TieneArchivo = CAST(CASE
                                                 WHEN D.DocumentoByte IS NULL
-                                                THEN 0
+                            THEN 0
                                                 ELSE 1
                                             END AS BIT), 
                         ISNULL((F.MontoConIva * .16), 0) AS IVA, 
@@ -385,6 +383,11 @@ AS
 
          /**/
 
+		 UPDATE #Facturas
+           SET 
+               CCN = 0
+        
+
          UPDATE #Facturas
            SET 
                CCN = 1
@@ -443,4 +446,6 @@ AS
 
          --[sp_FI_ConsultaFacturasPorContratoGastos] 3,1
      END;
+
+
 
