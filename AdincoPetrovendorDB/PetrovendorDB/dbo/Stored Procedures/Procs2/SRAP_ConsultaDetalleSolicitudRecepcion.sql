@@ -1,23 +1,15 @@
-﻿USE [Petrovendor]
+﻿USE Petrovendor
 GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_ConsultaDetalleSolicitudRecepcion'
-)
-    DROP PROCEDURE SRAP_ConsultaDetalleSolicitudRecepcion;
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallesVenta]    Script Date: 11/06/2021 12:01:56 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SRAP_ConsultaDetalleSolicitudRecepcion
 GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
 -- Description:	Consultar detalle de solicitud de recepción de pedido
+-- =============================================
+-- Author:		Luis David
+-- Create date: 17-03-2022
+-- Description:	Se agrega la tabla de documento fieldticket y proforma
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
@@ -29,7 +21,9 @@ AS
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
          SET NOCOUNT ON;
-		DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido')
+		DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido'),
+		@IdDocumentoFieldTicket INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'FIELD TICKET'),
+		@IdDocumentoProforma INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'PROFORMA')
 
     -- Insert statements for procedure here
 	    	
@@ -66,7 +60,7 @@ AS
 			AND PG.IdProveedorCliente = P.IdProveedorCompras 
 			AND PG.IdTipoPedido in (2,4,6) 
 		 LEFT JOIN S_Proveedor AS PV 
-			ON PV.IdProveedor = P.IdProveedorCompras
+			ON P.IdProveedorCompras = PV.IdProveedor
 		 LEFT JOIN S_Usuario UE
 			ON SAP.CreadorPor = UE.IdUsuario
 		 WHERE 
@@ -116,14 +110,14 @@ AS
 		JOIN MM_Material AS M 
 			ON PD.IdMaterialVendedor	=	M.IdMaterial 
 		JOIN MM_PeticionOferta AS PO 
-			ON PO.IdPeticionOFerta = P.IdPeticionOferta		
+			ON P.IdPeticionOferta = PO.IdPeticionOFerta 
 		JOIN MM_PeticionOfertaDetalle AS POD 
 			ON PO.IdPeticionOferta = POD.IdPeticionOferta 
-			AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle
+			AND PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
 		JOIN MM_SolicitudPedidoDetalle AS SPD 
-			ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle		
-		JOIN PV_TipoMoneda AS TM 
-			ON TM.IdMoneda = PD.IdMoneda 		
+			ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+			JOIN PV_TipoMoneda AS TM 
+			ON PD.IdMoneda = TM.IdMoneda 		
 		WHERE P.IdSubcontratista = @IdProveedor 		
 		AND P.IdPedido = @IdPedido
 		AND SAPD.IdSolicitudAceptacionPedido= @IdSolicitudAceptacionPedido
@@ -155,5 +149,16 @@ AS
 		AND T.IdEstatus IN (2,3) --> RECHAZADO
 		AND T.Activo=1
 
+		/*TABLA DE DOCUMENTO FIELD TICKET*/
+		SELECT  D.IdDocumento, D.NombreDocumento, D.IdDocumentoTabla 
+        FROM  S_Documento_S3 D  
+        WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
+		AND D.Activo=1 
+		AND D.IdTipoDocumento = @IdDocumentoFieldTicket
+		/*TABLA DE DOCUMENTO PROFORMA*/
+		SELECT  D.IdDocumento, D.NombreDocumento, D.IdDocumentoTabla 
+        FROM  S_Documento_S3 D  
+        WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
+		AND D.Activo=1 
+		AND D.IdTipoDocumento = @IdDocumentoProforma
 END;
-
