@@ -14,7 +14,18 @@ GO
 -- Create date: <15/03/2022>
 -- Description:	<Validación para que las facturas timbradas despues del día 20 se guarden en el próximo mes Issue(1673)>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_DROPBOX_GuardadoArchivosFactura] 
+DROP PROCEDURE IF EXISTS SP_DROPBOX_GuardadoArchivosFactura
+GO
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <02/03/2022>
+-- Description:	<Guardado de los archivos pertinentes a la factura para guardado en dropbox>
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <15/03/2022>
+-- Description:	<Validación para que las facturas timbradas despues del día 20 se guarden en el próximo mes Issue(1673)>
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_DROPBOX_GuardadoArchivosFactura] 
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
 	@IdAceptacionPedido INT
@@ -37,7 +48,10 @@ BEGIN
 	BEGIN
 		
 		SELECT
-			@ANIO = CAST(YEAR(F.FechaTimbrado) AS VARCHAR),
+			@ANIO = CASE WHEN MONTH(F.FechaTimbrado) = 12 AND  DAY(F.FechaTimbrado) > 20 
+				THEN CAST(YEAR(DATEADD(YEAR,1,F.FechaTimbrado)) AS VARCHAR) 
+				ELSE CAST(YEAR(F.FechaTimbrado) AS VARCHAR)
+			END,
 			@MES = CASE WHEN DAY(F.FechaTimbrado) > 20 THEN -- Si la fecha de timbrado es del 21 en adelante ->
 				CAST(MONTH(DATEADD(MONTH, 1, F.FechaTimbrado)) AS VARCHAR) -- Se guarda en la carpeta del siguiente mes 
 				ELSE
