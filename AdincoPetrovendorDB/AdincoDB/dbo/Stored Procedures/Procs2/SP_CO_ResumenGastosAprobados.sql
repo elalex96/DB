@@ -1,0 +1,10 @@
+﻿USE Adinco;
+GO
+CREATE PROCEDURE [dbo].[SP_CO_ResumenGastosAprobados] 
+    @IdPresupuesto INT,
+    @MesPresentacion DATE
+AS
+BEGIN
+Select 'SE AGREGA STORED YA QUE NO SE ENCUENTRA EN DEV Y EN CODIGO MARCA ERROR LOS REPORTES, BUSCANDO ESTE SP'
+END;
+
