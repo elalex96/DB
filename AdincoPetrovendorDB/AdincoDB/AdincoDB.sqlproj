@@ -6632,6 +6632,10 @@
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\Mobile_sp_EnvioCorreosOCD.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
     <Build Include="dbo\Stored Procedures\Procs1\ObtenerAP_TipoCambioConfiguracion.sql">
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
