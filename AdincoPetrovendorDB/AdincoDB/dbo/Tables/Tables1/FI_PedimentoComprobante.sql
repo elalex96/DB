@@ -32,6 +32,7 @@
     [Reportado]                         BIT            NULL,
     [EsnotaCredito]                     BIT            NULL,
     [CuentaBancaria]                    NVARCHAR (500) NULL,
+    [ProcesadoHash]                     BIT NULL DEFAULT 0,
     CONSTRAINT [PK_FI_PedimentoComprobante] PRIMARY KEY CLUSTERED ([IdPedimentoComprobante] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_PedimentoComprobante_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_FI_PedimentoComprobante_FI_ClavesPedimento] FOREIGN KEY ([ClavePedimento]) REFERENCES [dbo].[FI_ClavesPedimento] ([IdPedimento]),
