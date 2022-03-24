@@ -1,18 +1,12 @@
-﻿USE [Adinco]
+﻿USE Adinco
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Mobile_sp_CambioEstatusAprobacion'
-)
-    DROP PROCEDURE Mobile_sp_CambioEstatusAprobacion;
-GO 
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_CambioEstatusAprobacion]    Script Date: 15/02/2022 10:07:54 p. m. ******/
-SET ANSI_NULLS ON
+DROP PROCEDURE IF EXISTS Mobile_sp_CambioEstatusAprobacion
 GO
-SET QUOTED_IDENTIFIER ON
-GO
+-- =============================================
+-- Author:		Luis David
+-- Create date: 23-03-2022
+-- Description:	Se actualiza el sp para aprobación de pedimento comprobante
+-- =============================================
 CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] --25374,3,2,12,'APROBANDO DESDE EL SP DE LA APP',0,14
 @IdAprobacion INT ,	--APP
 @IdContrato Int ,		--APP
@@ -35,7 +29,9 @@ DECLARE @IdFirma nvarchar(max),
 		@UUID NVARCHAR(100),
 		@IdFacturaPetro INT,
 		@IdPedidoCD INT,
-		@IdFacturaAdinco INT;
+		@IdFacturaAdinco INT,
+		@Secuencia INT,
+		@IdPedimentoComprobante INT;
 	---- Se obtiene el id usuario  de petrovendor
 	SET @IdAprobador = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuarioADINCO = @IdUsuario)
 	--- HISTORIAL
@@ -179,7 +175,7 @@ DECLARE @IdFirma nvarchar(max),
 
 				exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,
 																@IdContrato = @IdContrato,
-																@IdEstatus = @Estatus,
+																@IdEstatus = @IdStatus,
 																@Comentario = @Comentario,
 																@AprobadorPetrovendor = @IdAprobador,
 																@AprobadorAdinco = @IdUsuario,
@@ -354,5 +350,94 @@ DECLARE @IdFirma nvarchar(max),
 		END
 
 	END
+	------------------------------------
+	--SE VALIDA QUE SEA DEL TIPO PEDIDO-COMPROBANTE/PEDIMENTO
+	------------------------------------
+	IF @TipoPedido = 19
+	BEGIN
+		
+		--OBTENCION DEL ESTATUS ORIGINAL
+		set @Estatus = (SELECT TOP 1
+						PTA.IdEstatus AS 'Estatus Petrovendor' 
+						from Petrovendor.dbo.TA_Tarea AS PTA 
+						JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
+						WHERE PTA.IdTarea = @IdAprobacion);
 
+		IF @Estatus = 1
+		BEGIN
+				
+			SELECT 
+				@IdOperacion = OP.IdOperacion,
+				@IdProveedor = OP.IdProveedor,
+				@Secuencia = PTA.NoSecuencia,
+				@IdPedimentoComprobante = APC.IdPedimentoComprobante
+			from Petrovendor.dbo.TA_Tarea AS PTA 
+			JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
+			JOIN Petrovendor.dbo.FI_AceptacionPedido_PedimentoComprobante AS APC ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
+			WHERE PTA.IdTarea = @IdAprobacion;
+
+			CREATE TABLE #RESULTADOAPROBACIONPC (RESPUESTA NVARCHAR(200));
+
+			INSERT INTO #RESULTADOAPROBACIONPC
+			EXEC Petrovendor.dbo.SP_PC_CambiarEstatusTareaPedimentoComprobante_CD @IdAprobador,
+																								@IdOperacion,
+																								@IdProveedor,
+																								@IdStatus,
+																								@Secuencia,
+																								@Comentario,
+																								@IdPedimentoComprobante;
+
+
+				SELECT DISTINCT
+				   TOO.IdOperacion,
+				   FT.IdFlujoTarea,
+				   FT.IdTipoFlujo,
+				   TOO.IdEstatusOperacion,
+				   TAE.Nombre,
+				   TOO.IdEstadoFlujo,
+				   TOO.IdTipoOperacion,
+				   TTO.NombreOperacion,
+				   U.IdUsuario,
+				   T.NoSecuencia,
+				   U.Nombre,
+				   U.Correo,
+				   T.IdEstatus,
+				   TOO.IdDocumento,
+				   TOO.IdAsignador,
+				   TOO.IdProveedor,
+				   ISNULL(T.Comentario, '') AS Comentario,
+				   TAE.Name
+			FROM Petrovendor.dbo.TA_Tarea AS T
+				LEFT JOIN Petrovendor.dbo.TA_Operacion AS TOO
+					ON TOO.IdOperacion = T.IdOperacion
+				LEFT JOIN Petrovendor.dbo.TA_FlujoTarea AS FT
+					ON FT.IdFlujoTarea = TOO.IdFlujoTarea
+				LEFT JOIN Petrovendor.dbo.S_Usuario AS U
+					ON U.IdUsuario = T.IdAprobador
+				LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO
+					ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
+				LEFT JOIN Petrovendor.dbo.TA_Estatus AS TAE
+					ON TAE.IdEstatus = TOO.IdEstatusOperacion
+			WHERE TOO.IdOperacion = @IdOperacion
+			ORDER BY NoSecuencia ASC
+			
+			
+			exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,
+																@IdContrato = @IdContrato,
+																@IdEstatus = @IdStatus,
+																@Comentario = @Comentario,
+																@AprobadorPetrovendor = @IdAprobador,
+																@AprobadorAdinco = @IdUsuario,
+																@FechaAprobacion = @fecha;
+
+
+
+		END
+		ELSE
+		BEGIN
+			SELECT 'El estatus del pedido ya fue cambiado con anterioridad' AS MENSAJE
+		END
+
+
+	END
 END

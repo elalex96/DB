@@ -10,6 +10,10 @@ GO
 -- Create date: 14/02/2022
 -- Description:	Se cambia el monto ejercido para el issue 106 del SDK
 -- =============================================
+-- Author:		Luis David De La Cruz
+-- Create date: 23-03-2022
+-- Description:	Se agrega el filtro de proveedores activos
+-- =============================================
 CREATE  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10019,9,-1,-1,-1
 	@IdUsuario		INT,
 	@IdTipo			INT,
@@ -60,6 +64,9 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 						Petrovendor.dbo.s_usuario u 
 						JOIN Petrovendor.dbo.S_UsuarioProveedor AS up
 						ON u.IdUsuario = up.IdUsuario  
+						JOIN Petrovendor..S_Proveedor AS P
+						ON up.IdProveedor = P.IdProveedor
+							AND ISNULL(P.Activo,0) = 1
 		WHERE u.IdUsuarioADINCO = @IdUsuario
 -- SE CREA UNA TABLA PARA LOS idOperacion de los pedimentos comprobantes
 		CREATE TABLE #IdOperaciones
@@ -120,8 +127,6 @@ BEGIN
 				TF.IdFlujoTarea AS TipoFlujo, 
 				NULL AS IdPedido
 				FROM Petrovendor.dbo.TA_Operacion AS O 
-				INNER JOIN Petrovendor.dbo.TA_TipoOperacion AS OT ON O.IdTipoOperacion = OT.IdTipoOperacion
-				INNER JOIN Petrovendor.dbo.TA_Estatus AS E ON O.IdEstatusOperacion = E.IdEstatus 
 				INNER JOIN Petrovendor.dbo.TA_TareaOperacion AS TTO ON O.IdOperacion = TTO.IdOperacion 
 				INNER JOIN Petrovendor.dbo.TA_Tarea AS T ON TTO.IdTarea = T.IdTarea 
 				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP ON O.IdDocumento = SP.IdSolicitudPedido 
@@ -219,13 +224,7 @@ BEGIN
 			LEFT JOIN Petrovendor.dbo.MM_Pedido AS P ON O.IdDocumento = P.IdSolicitudPedido
 			INNER JOIN    Petrovendor.dbo.MM_Pedidos P2 ON P.IdPedido = P2.IdIdentificador
 			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
-			LEFT JOIN Petrovendor.dbo.TA_Estatus AS E ON O.IdEstatusOperacion = E.IdEstatus
 			LEFT JOIN Petrovendor.dbo.TA_Tarea AS T ON O.IdOperacion = T.IdOperacion
-			LEFT JOIN Petrovendor.dbo.S_Usuario U ON T.IdAprobador = U.IdUsuario
-			LEFT JOIN Petrovendor.dbo.S_UsuarioProveedor UP ON U.IdUsuario = UP.IdUsuario
-												   AND SP.IdContrato = UP.IdContrato
-												   AND O.IdProveedor = UP.IdProveedor
-			LEFT JOIN Petrovendor.dbo.S_Proveedor prov ON P.IdSubcontratista = prov.IdProveedor
 		WHERE T.IdAprobador = @IdUsuarioP
 			  AND O.IdProveedor = @IdProveedorCursorPedido
 			  AND O.IdTipoOperacion = @IdTipo
@@ -294,8 +293,6 @@ BEGIN
 				ON Petrovendor..S_Usuario.IdUsuario = TA.IdAprobador 
 		LEFT JOIN Petrovendor..TA_Operacion O
 				ON TA.IdOperacion = O.IdOperacion
-		LEFT JOIN Petrovendor..TA_Vencimiento vigencia
-				ON O.IdVigencia = vigencia.IdVencimiento 
 		LEFT JOIN Petrovendor..MM_Pedidos PG
 				ON O.IdDocumento = PG.IdIdentificador 
 			   AND O.IdProveedor = PG.IdProveedorCliente
@@ -366,19 +363,10 @@ BEGIN
 				FROM Petrovendor..FI_AceptacionPedido_PedimentoComprobante AS APC
 					JOIN Petrovendor..TA_Operacion AS OP
 						ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento 
-						AND OP.IdTipoOperacion = 19
-						AND APC.IdProveedor = OP.IdProveedor 
-					JOIN Petrovendor..FI_PedimentoComprobante AS PC
-						ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante 
-					JOIN Petrovendor..S_Usuario AS US
-						ON APC.CreadoPor = US.IdUsuario 
-					JOIN Adinco.dbo.PV_Subcontratista AS PVS
-						ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista 
-					JOIN Adinco.dbo.PV_TipoMoneda AS TM
-						ON PC.IdMoneda = TM.IdMoneda 
-					JOIN Petrovendor..TA_Estatus AS ET
-						ON OP.IdEstatusOperacion = ET.IdEstatus
-					LEFT JOIN Petrovendor.dbo.TA_Tarea AS T ON OP.IdOperacion = T.IdOperacion 
+							AND OP.IdTipoOperacion = 19
+							AND APC.IdProveedor = OP.IdProveedor 					
+					LEFT JOIN Petrovendor.dbo.TA_Tarea AS T 
+						ON OP.IdOperacion = T.IdOperacion 
 				WHERE 
 					APC.IdProveedor = @IdProveedorCursorPedimentoComprobante
 					AND 
@@ -464,7 +452,8 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 					PC.IdContrato as IdContrato,
 					APC.CreadoEl as FechaCreacion,
 					PC.IdPedimentoComprobante as IdDocumento,
-					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' |  Proveedor:', APC.IdProveedor) as ComentarioDocumento,
+					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' |  Proveedor:'
+, APC.IdProveedor) as ComentarioDocumento,
 					CONCAT('Cargado Por: ', US.Nombre, 'Flujo tipo' ,@TIPOFLUJO) as ComentarioAprobacion,
 					0 as NoVersion,
 					OP.IdOperacion as TipoFlujo,
@@ -541,7 +530,6 @@ FROM #TM_Aprobacion AS t
 			ON t.IdContrato = c.IdContrato
 		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
 		ON C.IdAreaContractual = AC.IdAreaContractual
-		--where t.IdContrato = 3
 		where	((IdOperacion	=	@IdOperacion)	or		@IdOperacion	=	-1	)
 		and		((T.IdDocumento		=	@IdPedido	)	or		@IdPedido		=	-1	)
 		and		((t.NoVersion	=	@noVersion	)	or		@noVersion		=	-1	)
