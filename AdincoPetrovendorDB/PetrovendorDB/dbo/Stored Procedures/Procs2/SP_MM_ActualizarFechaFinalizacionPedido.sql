@@ -231,7 +231,7 @@ BEGIN
 
 				--REEMPLAZAR ENCABEZADO DEL HTML --> C# Tipo_Correo._CambioFechaPedido
 
-				SET @URL_Detalle = CONCAT(@Dominio,'02Proveedores/OrdenesDetalle.aspx?pedido=',CAST(ISNULL(@IdPedido,0) AS nvarchar(MAX)),'&pc==',CAST(ISNULL(@ProveedorComprasId,0) AS nvarchar(MAX)))
+				SET @URL_Detalle = CONCAT(@Dominio,'02Proveedores/OrdenesDetalle.aspx?pedido=',CAST(ISNULL(@IdPedido,0) AS nvarchar(MAX)),'&pc=',CAST(ISNULL(@ProveedorComprasId,0) AS nvarchar(MAX)))
 	
 				SET  @Asunto= REPLACE(@Asunto,'##NO_PEDIDO##',CAST(ISNULL(@NoPedidoGeneral,0) AS nvarchar(MAX)))	
 				-- PERSONALIZAR DETALLE DEL CORREO 
@@ -327,7 +327,7 @@ BEGIN
 				END 
 
 				 
-
+				 
 	SELECT 1 AS RESPONSE--retorno algo para saber que llegue hasta aqui
 
 	COMMIT TRAN
@@ -339,7 +339,7 @@ BEGIN
 			CONCAT('ERROR- : PedidoId: ',cast(@IdPedido as nvarchar(MAX)),'ERROR-SP:SP_MM_ActualizarFechaFinalizacionPedido ['+ ERROR_MESSAGE() + '] LINEA ['+ CAST(ERROR_LINE() AS VARCHAR)+']' )
 							
 		/*===========*/	
-		 RAISERROR(15600, -1, -1, @error);
+		 RAISERROR(@error,16,1)
 	END CATCH
 	END
 END 
