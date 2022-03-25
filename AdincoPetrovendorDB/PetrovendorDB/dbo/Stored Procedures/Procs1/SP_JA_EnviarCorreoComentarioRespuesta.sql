@@ -1,4 +1,10 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_JA_EnviarCorreoComentarioRespuesta')
+begin
+	drop proc SP_JA_EnviarCorreoComentarioRespuesta
+end
+
+go
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
 -- Description:	<Envio de correo de notificacion de respuesta en la oferta>
@@ -32,8 +38,13 @@ BEGIN
 	DECLARE @HTMLCORREO NVARCHAR(MAX);
 	DECLARE @IdNotificacion INT;
 	DECLARE @IDUSUARIOADINCO INT = (SELECT IdUsuarioADINCO FROM dbo.S_Usuario WHERE IdUsuario = @IDUSUARIOPREGUNTA);
+	declare @IdCorreo  int
+	
+	select @IdCorreo = IdCorreo from dbo.TA_Correo where Descripcion = 'Notificacion de respuesta a una pregunta en la oferta'
 
-	SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 99);
+
+	--SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 99);
+	SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = @IdCorreo);
 
 	SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@NOMBREUSUARIOPREGUNTA));
 	SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##USUARIO##',@NOMBREUSUARIORESPUESTA));
@@ -97,15 +108,10 @@ BEGIN
 	VALUES
 	(   
 		@IdNotificacion, -- IdEnvioAdinco - int
-		99, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
+		@IdCorreo, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
 		CONCAT('0 - Nuevo Comentario(Respuesta) Solicitud de Pedido #' , @IdSolicitudPedido),  -- IdIdentificacion - int
 		0,
 		GETDATE()
 	);
 
 END
-
-
---SELECT * FROM Adinco.dbo.S_Notificacion ORDER BY IdNotificacion DESC
-
---SELECT * FROM dbo.TA_EnvioCorreo
