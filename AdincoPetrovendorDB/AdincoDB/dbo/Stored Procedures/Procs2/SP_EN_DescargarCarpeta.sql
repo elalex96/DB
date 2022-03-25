@@ -1,6 +1,14 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 17/01/2022 02:43:15 a. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_DescargarCarpeta'
+)
+    DROP PROCEDURE SP_EN_DescargarCarpeta;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 25/03/2022 12:06:16 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +18,12 @@ GO
 -- Create date: <13/02/2022>
 -- Description:	<Descarga de carpetas etapas, reguladores, marcos legales, frecuencias, años y entregables>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/Carpeta Descarga/',3,1000
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <25/03/2022>
+-- Description:	<Se agrego función para acortar rutas de los archivos de las carpetas del visor>
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/',10112,1000
 	-- Add the parameters for the stored procedure here
 	@Ruta VARCHAR(MAX),
 	@IdContrato		int,
@@ -21,7 +34,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+	declare @maxNivel int, @i int, @query varchar(max), @maxIds int,@size int=20
     -- Insert statements for procedure here
 	create table #Rutas
 	(
@@ -60,24 +73,33 @@ BEGIN
 		Nivel					int, 
 		Ruta					varchar(max),
 		Titulo					varchar(max),
-		DocumentoEntregableId	int
+		DocumentoEntregableId	int,
+		RutaCompleta			nvarchar(max)
 	)
 
 	create table #tmpResultadoRuta
 	(
 		Id						int,
 		Ruta					varchar(max),
+		Titulo					varchar(max)		
+	)
+
+	create table #tmpResultadoVisor
+	(
+		Id						int, 
+		Ruta					varchar(max),
+		RutaCompleta			nvarchar(max),
 		Titulo					varchar(max)
 	)
 
-	declare @maxNivel int, @i int, @query varchar(max)
+
 	
 	insert into #Rutas
 	exec EN_SHELL_ObtenerDocumentosEntregables @IdContrato, @IdUsuario
 	
 	insert 
 	into	#tmpResultado
-	select	Id, IdPadre, Nivel, Titulo, Titulo, DocumentoEntregableId
+	select	Id, IdPadre, Nivel, Titulo, Titulo, DocumentoEntregableId,Titulo
 	from	#Rutas 
 
 	select @maxNivel = max(Nivel), @i = 0 from #Rutas
@@ -86,7 +108,8 @@ BEGIN
 	begin
 		
 		update		#tmpResultado	
-		set			#tmpResultado.Ruta		=	substring( r.Titulo,0,50)+'/'+tr.Ruta,
+		set			#tmpResultado.Ruta		=	substring(RTRIM(LTRIM(r.Titulo)),0,@size)+'/'+tr.Ruta,
+					#tmpResultado.RutaCompleta		=	RTRIM(LTRIM(r.Titulo))+'/'+tr.Ruta,
 					#tmpResultado.IdPadre	=	r.IdPadre
 		from		#tmpResultado	tr
 		inner join	#Rutas			r
@@ -95,7 +118,20 @@ BEGIN
 		select @i = @i  + 1
 	end
 
+	select @maxIds = MAX(Id) 
+	from #tmpResultado
 
+
+	insert into #tmpResultadoVisor(Id,Ruta,RutaCompleta,Titulo)
+	SELECT
+		(IdElemento + @maxIds) AS Id,
+		[dbo].[fn_ent_RutaArchivo](Ruta,@size),
+		Ruta,
+		Nombre
+	FROM EN_CarpetasArchivosVisor
+	WHERE IdContrato = @IdContrato
+	AND Ruta IS NOT NULL
+	AND Activo = 1;
 
 	--TODAS LAS RUTAS
 	select	Id,
@@ -104,16 +140,11 @@ BEGIN
 	from	#tmpResultado 
 	where	DocumentoEntregableId is not null
 	UNION ALL
-	SELECT
-		(IdElemento + 2000) AS Id,
-		Ruta,
-		Nombre
-	FROM EN_CarpetasArchivosVisor
-	WHERE IdContrato = @IdContrato
-	AND Ruta IS NOT NULL;
-
-	--SELECT * FROM #tmpResultado
-
+	select Id, 
+	Ruta,
+	Titulo
+	from #tmpResultadoVisor
+	
 	--RUTAS DE LA CARPETA QUE SE DESEA DESCARGAR
 	select	R.Id,
 			R.Ruta,
@@ -133,28 +164,30 @@ BEGIN
 	from	#tmpResultado AS R
 	JOIN EN_EntregableDocumento AS DE ON R.DocumentoEntregableId = DE.DocumentoEntregableId
 	where	R.DocumentoEntregableId is not null
-		AND R.Ruta LIKE '%' + @Ruta + '%'
+		AND R.RutaCompleta LIKE '%' + @Ruta + '%'
+		AND Activo = 1
 	UNION ALL
 	SELECT
-		(IdElemento + 2000) AS Id,
-		Ruta,
-		Nombre AS Titulo,
-		IdElemento as DocumentoEntregableId,
+		(V.IdElemento + @maxIds) AS Id,
+		RV.Ruta,
+		V.Nombre AS Titulo,
+		V.IdElemento as DocumentoEntregableId,
 		0 AS idContratoEntregable,
 		0 AS idInstanciaEntregable,
-		Bucket,
-		Folder,
-		UUIDAmazon,
-		Nombre AS NombreArchivo,
-		Meta,
-		CreadoPor,
-		CreadoEl,
+		V.Bucket,
+		V.Folder,
+		V.UUIDAmazon,
+		V.Nombre AS NombreArchivo,
+		V.Meta,
+		V.CreadoPor,
+		V.CreadoEl,
 		NULL AS ModificadoPor,
 		NULL AS ModificadoEl
-	FROM EN_CarpetasArchivosVisor
-	WHERE IdContrato = @IdContrato
-	AND Ruta IS NOT NULL
-	AND Ruta LIKE '%' + @Ruta + '%';
+	FROM EN_CarpetasArchivosVisor V
+	JOIN #tmpResultadoVisor RV
+		ON(V.IdElemento + @maxIds) = RV.Id
+	WHERE V.IdContrato = @IdContrato	
+	AND RV.RutaCompleta LIKE '%' + @Ruta + '%'
 
 
 END

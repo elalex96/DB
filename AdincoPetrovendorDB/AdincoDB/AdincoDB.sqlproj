@@ -13217,6 +13217,9 @@
     </Build>
     <Build Include="dbo\Stored Procedures\Procs2\SP_FI_CCNFactura_CartaCN_Sel.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_FI_CCNFactura_UPD.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_DescargarCarpeta.sql" />
+    <Build Include="dbo\Functions\fn_ent_RutaArchivo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_AgregarCarpeta.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
