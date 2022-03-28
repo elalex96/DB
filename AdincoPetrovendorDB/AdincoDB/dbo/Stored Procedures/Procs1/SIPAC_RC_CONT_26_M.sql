@@ -1,4 +1,11 @@
-﻿
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[SIPAC_RC_CONT_26_M]    Script Date: 28/03/2022 12:53:40 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author: Yazmin Glez.
 -- Create date: 01-11-17
@@ -15,7 +22,15 @@
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
 -- =============================================
-CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_26_M]
+-- Modificado:       Manuel Cruz
+-- Fecha Modificado: 2021-03-22
+-- Description:      Se ajustó consulta de PE/PI para evitar la multiplicación de los montos por la cantidad de registros
+-- =============================================
+-- Modificado:       Manuel Cruz
+-- Fecha Modificado: 2022-03-28
+-- Description:      Se ajusta tipo de cambio RC_26_10 a 4 decimales
+-- =============================================
+ALTER PROCEDURE [dbo].[SIPAC_RC_CONT_26_M]
 -- [SIPAC_RC_CONT_26_M] 10036,'2018-12-01',1
 -- Add the parameters for the stored procedure here
 @Contrato      INT, 
@@ -347,6 +362,7 @@ AS
                                                                                AND YEAR(TCD.Fecha) = YEAR(T.FechaPago)
                     WHERE #Facturas.MetodoPago = 'PPD'
                           AND TF.CvTipoDocFacturacion = 6
+						  AND T.IdMoneda <> TM.IdMoneda
                           AND TM.IdMoneda <> FCPDR.IdMoneda
                     GROUP BY F.IdFactura, 
                              F.UUID, 
@@ -362,6 +378,140 @@ AS
                                  THEN 2
                              END, 
                              T.IdTransferencia
+					UNION
+					--Se agrego para los casos donde el complemento es igual a la moneda de la transferencia (USD = USD)
+					--y la factura ppd es igual a la moneada del documento relacionado (MXN = MXN)
+					SELECT F.IdFactura AS IdFacturaCP, 
+							F.UUID AS UUIDCP, 
+							CP.FormaDePagoP AS FormaPagoCP, 
+							CASE
+								WHEN TM.IdMoneda = 2
+									AND FCPDR.IdMoneda = 1
+								THEN 1
+								WHEN TM.IdMoneda = 1
+									AND FCPDR.IdMoneda = 2
+								THEN TCDD.TipoCambio
+							END,
+							TM.IdMoneda AS MonedaCP, 
+							CAST((SUM(CASE
+											WHEN TM.IdMoneda = 2
+												AND FCPDR.IdMoneda = 1
+											THEN CPDR.ImpPagado / TCD.TipoCambio
+											WHEN TM.IdMoneda = 1
+												AND FCPDR.IdMoneda = 2
+											THEN CPDR.ImpPagado * TCDD.TipoCambio
+										END)) AS DECIMAL(15, 2)) AS MontoCP,
+							CASE
+								WHEN TM.IdMoneda = 2
+									AND FCPDR.IdMoneda = 1
+								THEN FCPDR.IdMoneda
+								WHEN TM.IdMoneda = 1
+									AND FCPDR.IdMoneda = 2
+								THEN FCPDR.IdMoneda
+							END AS MonedaPPD, 
+							CAST((SUM(CASE
+											WHEN TM.IdMoneda = 2
+												AND FCPDR.IdMoneda = 1
+											THEN CPDR.ImpPagado / TCD.TipoCambio
+											WHEN TM.IdMoneda = 1
+												AND FCPDR.IdMoneda = 2
+											THEN CPDR.ImpPagado
+										END)) AS DECIMAL(15, 2)) AS MontoDolares, 
+							T.IdTransferencia --SELECT *
+					FROM dbo.FI_Transfer T WITH(NOLOCK)
+							JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TF.IdTransfer = T.IdTransferencia
+							JOIN dbo.FI_ComplementoDePago CP WITH(NOLOCK) ON CP.IdFactura = TF.IdFactura
+							JOIN dbo.FI_Factura F WITH(NOLOCK) ON F.IdFactura = CP.IdFactura
+							JOIN dbo.FI_CPDocRelacionado CPDR WITH(NOLOCK) ON CPDR.IdComplementoDePago = CP.IdComplementoDePago
+							JOIN dbo.FI_Factura FCPDR WITH(NOLOCK) ON CPDR.IdDocumento = FCPDR.UUID
+																	AND F.IdContrato = FCPDR.IdContrato
+							JOIN #Facturas ON #Facturas.IdFactura = FCPDR.IdFactura
+							JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON CP.MonedaP = TM.TipoMonedaCorto
+							LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda <> TM.IdMoneda
+																				AND TCD.IdMoneda = FCPDR.IdMoneda
+																				AND DAY(TCD.Fecha) = DAY(T.FechaPago)
+																				AND MONTH(TCD.Fecha) = MONTH(T.FechaPago)
+																				AND YEAR(TCD.Fecha) = YEAR(T.FechaPago)
+							LEFT JOIN dbo.CO_TipoCambioDiario TCDD WITH(NOLOCK) ON TCDD.IdMoneda <> FCPDR.IdMoneda
+																				AND TCDD.IdMoneda NOT IN  (10000,10003,10004)
+																				AND DAY(TCDD.Fecha) = DAY(T.FechaPago)
+																				AND MONTH(TCDD.Fecha) = MONTH(T.FechaPago)
+																				AND YEAR(TCDD.Fecha) = YEAR(T.FechaPago)
+					WHERE #Facturas.MetodoPago = 'PPD'
+							AND TF.CvTipoDocFacturacion = 6
+							AND T.IdMoneda = TM.IdMoneda
+							AND TM.IdMoneda <> FCPDR.IdMoneda
+					GROUP BY F.IdFactura,
+								F.UUID,
+								CP.FormaDePagoP,
+								CASE
+									WHEN TM.IdMoneda = 2
+										AND FCPDR.IdMoneda = 1
+									THEN 1
+									WHEN TM.IdMoneda = 1
+										AND FCPDR.IdMoneda = 2
+									THEN TCDD.TipoCambio
+								END,
+								TM.IdMoneda,
+								CASE
+									WHEN TM.IdMoneda = 2
+										AND FCPDR.IdMoneda = 1
+									THEN FCPDR.IdMoneda
+									WHEN TM.IdMoneda = 1
+										AND FCPDR.IdMoneda = 2
+									THEN FCPDR.IdMoneda
+								END,
+								T.IdTransferencia
+					/*SELECT F.IdFactura AS IdFacturaCP, 
+							F.UUID AS UUIDCP, 
+							CP.FormaDePagoP AS FormaPagoCP, 
+							1 AS TipoCambioCP, 
+							TM.IdMoneda AS MonedaCP, 
+							CAST((SUM(CASE
+											WHEN TM.IdMoneda = 2
+												AND FCPDR.IdMoneda = 1
+											THEN CPDR.ImpPagado / TCD.TipoCambio
+										END)) AS DECIMAL(15, 2)) AS MontoCP,
+							CASE
+								WHEN TM.IdMoneda = 2
+									AND FCPDR.IdMoneda = 1
+								THEN 2
+							END AS MonedaPPD, 
+							CAST((SUM(CASE
+											WHEN TM.IdMoneda = 2
+												AND FCPDR.IdMoneda = 1
+											THEN CPDR.ImpPagado / TCD.TipoCambio
+										END)) AS DECIMAL(15, 2)) AS MontoDolares, 
+							T.IdTransferencia
+					FROM dbo.FI_Transfer T WITH(NOLOCK)
+							JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TF.IdTransfer = T.IdTransferencia
+							JOIN dbo.FI_ComplementoDePago CP WITH(NOLOCK) ON CP.IdFactura = TF.IdFactura
+							JOIN dbo.FI_Factura F WITH(NOLOCK) ON F.IdFactura = CP.IdFactura
+							JOIN dbo.FI_CPDocRelacionado CPDR WITH(NOLOCK) ON CPDR.IdComplementoDePago = CP.IdComplementoDePago
+							JOIN dbo.FI_Factura FCPDR WITH(NOLOCK) ON CPDR.IdDocumento = FCPDR.UUID
+																	AND F.IdContrato = FCPDR.IdContrato
+							JOIN #Facturas ON #Facturas.IdFactura = FCPDR.IdFactura
+							JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON CP.MonedaP = TM.TipoMonedaCorto
+							LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda <> TM.IdMoneda
+																				AND TCD.IdMoneda = FCPDR.IdMoneda
+																				AND DAY(TCD.Fecha) = DAY(T.FechaPago)
+																				AND MONTH(TCD.Fecha) = MONTH(T.FechaPago)
+																				AND YEAR(TCD.Fecha) = YEAR(T.FechaPago)
+					WHERE #Facturas.MetodoPago = 'PPD'
+							AND TF.CvTipoDocFacturacion = 6
+							AND T.IdMoneda = TM.IdMoneda
+							AND TM.IdMoneda <> FCPDR.IdMoneda
+					GROUP BY F.IdFactura, 
+								F.UUID, 
+								CP.FormaDePagoP, 
+								TCD.TipoCambio, 
+								TM.IdMoneda,
+								CASE
+									WHEN TM.IdMoneda = 2
+										AND FCPDR.IdMoneda = 1
+									THEN 2
+								END, 
+								T.IdTransferencia*/
                 ) AS Result
                 GROUP BY Result.IdFacturaCP, 
                          Result.UUIDCP, 
@@ -437,7 +587,7 @@ AS
                                                                            AND YEAR(TCD.Fecha) = YEAR(TR.FechaPago)
                      LEFT JOIN dbo.CO_TipoCambioDiario TCDT WITH(NOLOCK) ON TCDT.IdMoneda <> TR.IdMoneda
                                                                             AND TCDT.IdMoneda <> F.IdMoneda
-                                                                            AND TCDT.IdMoneda <> 10000
+                                                                            AND TCDT.IdMoneda NOT IN  (10000,10003,10004)
                                                                             AND DAY(TCDT.Fecha) = DAY(TR.FechaPago)
                                                                             AND MONTH(TCDT.Fecha) = MONTH(TR.FechaPago)
                                                                             AND YEAR(TCDT.Fecha) = YEAR(TR.FechaPago)
@@ -490,7 +640,7 @@ AS
                                                                            AND YEAR(TCD.Fecha) = YEAR(TR.FechaPago)
                      LEFT JOIN dbo.CO_TipoCambioDiario TCDT WITH(NOLOCK) ON TCDT.IdMoneda <> TR.IdMoneda
                                                                             AND TCDT.IdMoneda = F.IdMoneda
-                                                                            AND TCDT.IdMoneda <> 10000
+                                                                            AND TCDT.IdMoneda NOT IN  (10000,10003,10004)
                                                                             AND DAY(TCDT.Fecha) = DAY(TR.FechaPago)
                                                                             AND MONTH(TCDT.Fecha) = MONTH(TR.FechaPago)
                                                                             AND YEAR(TCDT.Fecha) = YEAR(TR.FechaPago)
@@ -534,7 +684,7 @@ AS
                 CAST(MTT.MontoDolares --/ COUNT(R.IdRegistro))
 
                 AS DECIMAL(15, 2)) AS [RC26_09], 
-                MTT.TipoCambio AS [RC26_10],
+                CAST(MTT.TipoCambio AS DECIMAL(15,4)) AS [RC26_10],
 
                 --LTRIM(RTRIM(SUBSTRING(SUBD.RazonSocial, 0, 119))) AS [RC26_11],
 
@@ -606,7 +756,7 @@ AS
                   TR.FechaPago, 
                   TR.HashSHA256, 
                   TM.TipoMonedaCorto, 
-                  MTT.TipoCambio
+                  CAST(MTT.TipoCambio AS DECIMAL(15,4))
          --
          UNION
          --
@@ -633,7 +783,7 @@ AS
                 CAST(MTT.MontoDolares --/ COUNT(R.IdRegistro))
 
                 AS DECIMAL(15, 2)) AS [RC26_09], 
-                MTT.TipoCambioCP AS [RC26_10],
+                CAST(MTT.TipoCambioCP AS DECIMAL(15,4)) AS [RC26_10],
 
                 --LTRIM(RTRIM(SUBSTRING(SUBD.RazonSocial, 0, 119))) AS [RC26_11],
 
@@ -716,50 +866,43 @@ AS
                   TR.FechaPago, 
                   TR.HashSHA256, 
                   TM.TipoMonedaCorto, 
-                  MTT.TipoCambioCP
+                  CAST(MTT.TipoCambioCP AS DECIMAL(15,4))
          --
          UNION
          --
-         SELECT LTRIM(RTRIM(CON.IDSIPAC)) AS [RF_00], 
-                C.IDRegFiducidiario AS [RI_00], 
-                MONTH(R.MesPresentacion) AS [RC26_00], 
-                YEAR(R.MesPresentacion) AS [RC26_01], 
+         SELECT LTRIM(RTRIM(CON.IDSIPAC)) AS [RF_00],
+                C.IDRegFiducidiario AS [RI_00],
+                MONTH(R.MesPresentacion) AS [RC26_00],
+                YEAR(R.MesPresentacion) AS [RC26_01],
                 PVM.C_FormaPago AS [RC26_02],
                 CASE
                     WHEN R.CvTipoDocFacturacion = 2
                     THEN ISNULL(PC.NumeroPedimento, 'NA')
                     WHEN R.CvTipoDocFacturacion = 3
                     THEN ISNULL(PC.IdDocFacturacionSIPAC, 'NA')
-                END AS [RC26_04], 
+                END AS [RC26_04],
                 TR.FechaPago AS [RC26_04],
                 CASE
                     WHEN TR.AWSPDFId IS NULL
-
                                 --OR TR.PDF = ''
-
                     THEN 'NOTA:Falta ingresar archivo PDF'
                     ELSE TR.NombreExtencionArchivo
-                END AS [RC26_05], 
-                TR.HashSHA256 AS [RC26_06], 
-                CAST(SUM(TF.MontoPagado) --/ COUNT(R.IdRegistro))
-
-                AS DECIMAL(15, 2)) AS [RC26_07], 
-                TM.TipoMonedaCorto AS [RC26_08], 
+                END AS [RC26_05],
+                TR.HashSHA256 AS [RC26_06],
+                CAST(SUM(TF.MontoPagado) / COUNT(R.IdRegistro)
+                AS DECIMAL(15, 2)) AS [RC26_07],
+                TM.TipoMonedaCorto AS [RC26_08],
                 CAST((SUM(CASE
                               WHEN ISNULL(TF.MontoPagado, 0) <> 0
                               THEN CAST((ISNULL(TF.MontoPagado, 0) / TCD.TipoCambio) AS DECIMAL(15, 2))
                               ELSE 0
-                          END)) --/ COUNT(R.IdRegistro))
-
-                AS DECIMAL(15, 2)) AS [RC26_09], 
-                TCD.TipoCambio AS [RC26_10],
-
+                          END)) / COUNT(R.IdRegistro)
+                AS DECIMAL(15, 2)) AS [RC26_09],
+                CAST(TCD.TipoCambio AS DECIMAL(15,4)) AS [RC26_10],
                 --LTRIM(RTRIM(SUBSTRING(SUBD.RazonSocial, 0, 119))) AS [RC26_11],
-
-                LTRIM(RTRIM(SUBSTRING(S.RazonSocial, 0, 119))) AS [RC26_11], 
-                2 AS [RC26_12] --,
+                LTRIM(RTRIM(SUBSTRING(S.RazonSocial, 0, 119))) AS [RC26_11],
+                2 AS [RC26_12]--,
          --COUNT(R.IdRegistro)
-
          FROM dbo.FI_Transfer TR WITH(NOLOCK)
               JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TR.IdTransferencia = TF.IdTransfer
               JOIN dbo.FI_PedimentoComprobante PC WITH(NOLOCK) ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante
@@ -772,14 +915,12 @@ AS
               JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
               JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
                                                        AND SER.IdContrato = C.IdContrato
-
               --JOIN dbo.PV_CuentaBancaria CBO ON TR.IdCuentaOrigen = CBO.DatoBancarioID
               --JOIN dbo.PV_CuentaBancaria CBD ON TR.IdCuentaDestino = CBD.DatoBancarioID
               --JOIN dbo.PV_Subcontratista SUBO ON CBO.IdProveedor = SUBO.IdSubcontratista
               --JOIN dbo.PV_Subcontratista SUBD ON CBD.IdProveedor = SUBD.IdSubcontratista
               --JOIN dbo.PV_Banco BO ON CBO.BancoID = BO.BancoID
               --JOIN dbo.PV_Banco BD ON CBD.BancoID = BD.BancoID
-
               JOIN dbo.PV_Subcontratista S WITH(NOLOCK) ON PC.IdSubcontratistaExportador = S.IdSubcontratista
               JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON TR.IdMoneda = TM.IdMoneda
               LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TR.IdMoneda
@@ -799,9 +940,8 @@ AS
                                          ELSE @IdPresupuesto
                                      END
          --AND DATEFROMPARTS(YEAR(TR.FechaPago), MONTH(TR.FechaPago), 1) = @Mes
-
-         GROUP BY LTRIM(RTRIM(CON.IDSIPAC)), 
-                  MONTH(R.MesPresentacion), 
+         GROUP BY LTRIM(RTRIM(CON.IDSIPAC)),
+                  MONTH(R.MesPresentacion),
                   YEAR(R.MesPresentacion),
                   CASE
                       WHEN R.CvTipoDocFacturacion = 2
@@ -811,20 +951,16 @@ AS
                   END,
                   CASE
                       WHEN TR.AWSPDFId IS NULL
-
                   --OR TR.PDF = ''
-
                       THEN 'NOTA:Falta ingresar archivo PDF'
                       ELSE TR.NombreExtencionArchivo
                   END,
-
                   --LTRIM(RTRIM(SUBSTRING(SUBD.RazonSocial, 0, 119))),
-
-                  LTRIM(RTRIM(SUBSTRING(S.RazonSocial, 0, 119))), 
-                  C.IDRegFiducidiario, 
-                  PVM.C_FormaPago, 
-                  TR.FechaPago, 
-                  TR.HashSHA256, 
-                  TM.TipoMonedaCorto, 
-                  TCD.TipoCambio;
+                  LTRIM(RTRIM(SUBSTRING(S.RazonSocial, 0, 119))),
+                  C.IDRegFiducidiario,
+                  PVM.C_FormaPago,
+                  TR.FechaPago,
+                  TR.HashSHA256,
+                  TM.TipoMonedaCorto,
+                  CAST(TCD.TipoCambio AS DECIMAL(15,4));
      END;
