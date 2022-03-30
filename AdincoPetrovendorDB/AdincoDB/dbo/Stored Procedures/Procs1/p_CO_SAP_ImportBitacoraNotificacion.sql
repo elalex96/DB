@@ -3,9 +3,9 @@
 --Fecha:	   30 de Marzo del 20222
 --Notas:	   *Se ajustó filtrado de consultas principales 
 --			    por [CO_SAP_ImportBitacora].Id = @pId
---			   *Se garegan NOLOCK a las consultas
+--			   *Se agregan NOLOCK a las consultas
 --			   *Se agrega Begin End al PROC
---			   *Se agrega creacion de tabla temporal #tmpVendorBlank al principio del PROC
+--			   *Se agrega creación de tabla temporal #tmpVendorBlank al principio del PROC
 --===========================================
 -- p_CO_SAP_ImportBitacoraNotificacion 7099,0
 CREATE PROC [dbo].[p_CO_SAP_ImportBitacoraNotificacion]
