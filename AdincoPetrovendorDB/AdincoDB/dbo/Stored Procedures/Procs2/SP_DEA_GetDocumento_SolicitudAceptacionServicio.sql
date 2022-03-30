@@ -10,7 +10,7 @@ GO
 -- Create date: <29/03/2022>
 -- Description:	<obtiene la informacion del documento de la solicitud de aceptacion se servicio>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_DEA_GetDocumento_SolicitudAceptacionServicio] --907,0,17166
+CREATE PROCEDURE [dbo].[SP_DEA_GetDocumento_SolicitudAceptacionServicio] --907,0,17166
 @IdProveedor INT,
 @IdUsuario INT,
 @IdAceptacion INT
