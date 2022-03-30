@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿if exists (select * from sys.procedures where name = 'SP_ProcenDocumentosProveedor')
+begin
+	drop proc SP_ProcenDocumentosProveedor
+end
+
+go
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:		Alexander G
 -- Create date: 21/06/2017
 -- Description:	Consulta la relación de Documento Proveedor mediante tipo de persona fiscal y cuenta los documentos cargados y faltantes
@@ -11,11 +18,15 @@
 --				se utiliza el top 1 ordeado desc para que tome el ultimo archivo subido)
 --update Daniel AC cambio de referencia de S_Documento a S_Documento_S3
 -- =============================================
+-- =============================================
+-- Author:			Ramón Portales
+-- Modified date:	28/03/2022
+-- Description:		Se validó un posible división entre cero (select @PORC_POR_DOCUMENTO = (100/@CANT_DOC_TOTAL))
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ProcenDocumentosProveedor] 
 
 @IdTipoRegimen int,
 @IdProveedor int
---@IdUsuario int
 
 AS
 
@@ -97,11 +108,6 @@ SET @ContadorDocumentosExistentes =(
 				 AND IdProveedor = @IdProveedor AND Activo = 1 ORDER BY IdDocumento DESC) AS VALOR)
 
 
-		--IF @IDDOCUMENTO > 0
-		--BEGIN
-		--	SET @Porcentaje = @Porcentaje+9
-		--END
-
 		--- ACTUALIZAR TABLA TEMPORAL 
 
 		UPDATE #TbTempDocumentos
@@ -109,9 +115,6 @@ SET @ContadorDocumentosExistentes =(
 		IdDocumento = ISNULL(@IDDOCUMENTO,0)
 		WHERE IdRow = @Incremento
 
-		--UPDATE #TbTempPorcent
-		--SET  Porcentaje = @Porcentaje
-		--WHERE IdRow = 1
 
 	 END 
 
@@ -119,16 +122,22 @@ SET @ContadorDocumentosExistentes =(
 
 	 END 
 
-	 --SELECT * FROM #TbTempDocumentos
-
 	 DECLARE @CANT_DOC_CARGADOS INT = (SELECT COUNT (IdRow) FROM #TbTempDocumentos WHERE TipoValidacionDocumento = 'Documento Cargado')
 	 DECLARE @CANT_DOC_TOTAL INT = (SELECT COUNT (IdRow) FROM #TbTempDocumentos)
 	 DECLARE @PORC_DOC_SUBIDO INT 
 	 DECLARE @PORC_DOC_RESTANTE INT
-	 DECLARE @PORC_POR_DOCUMENTO INT = (100/@CANT_DOC_TOTAL)
+	 DECLARE @PORC_POR_DOCUMENTO INT 
+
+	 if(isnull(@CANT_DOC_TOTAL,0)=0)
+	 begin
+		select @PORC_POR_DOCUMENTO = 0
+	 end	
+	 else
+	 begin
+			select @PORC_POR_DOCUMENTO = (100/@CANT_DOC_TOTAL)
+	 end
 
 	 SET @PORC_DOC_SUBIDO = (@CANT_DOC_CARGADOS * @PORC_POR_DOCUMENTO)
-	 
 
 	 IF (@PORC_DOC_SUBIDO >= 98)
 	    SET @PORC_DOC_SUBIDO = 100
@@ -137,8 +146,6 @@ SET @ContadorDocumentosExistentes =(
 
 	 SELECT @PORC_DOC_SUBIDO AS PorcentajeSubido,@PORC_DOC_RESTANTE AS PorcentajeRestante
 
---SELECT 
---	   COUNT(CASE TbTemp.TipoValidacionDocumento WHEN 'Pendiente' THEN 1 ELSE NULL END) AS DocPendientes,
---	   COUNT(CASE TbTemp.TipoValidacionDocumento WHEN 'Sin Documento' THEN 1 ELSE NULL END) AS DocRestantes
---       FROM #TbTempDocumentos AS TbTemp
 END
+
+go
