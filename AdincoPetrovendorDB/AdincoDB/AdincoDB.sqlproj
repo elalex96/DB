@@ -13095,6 +13095,7 @@
     <Build Include="dbo\Tables\Tables1\CO_ValoresConciliadosProducionBitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ArchivosPozos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_Ins_WDEA_Bitacora_AdincoSAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_GetDocumento_SolicitudAceptacionServicio.sql" />
     <Build Include="dbo\Tables\Tables1\CO_RegistroMarkup.sql">
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
