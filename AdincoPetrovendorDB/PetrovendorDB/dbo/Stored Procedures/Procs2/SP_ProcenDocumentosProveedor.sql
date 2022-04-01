@@ -1,4 +1,4 @@
-﻿if exists (select * from sys.procedures where name = 'SP_ProcenDocumentosProveedor')
+﻿	if exists (select * from sys.procedures where name = 'SP_ProcenDocumentosProveedor')
 begin
 	drop proc SP_ProcenDocumentosProveedor
 end
@@ -50,9 +50,6 @@ NombreTipoDocumento varchar(50),
 TipoValidacionDocumento varchar(50) null
 )
 
-
-
---drop table #TbTempDocumentos
 INSERT INTO #TbTempDocumentos  
  SELECT  
  ROW_NUMBER() OVER(ORDER BY TPersona.[IdTipoDocumento]  ASC) AS Row#,
@@ -84,8 +81,7 @@ SET @ContadorDocumentosExistentes =(
  SELECT COUNT([IdDocumento]) AS ContadorDocumentosExistentes
  FROM [dbo].[S_Documento_S3]
  WHERE [IdTipoDocumento] = @IdDocumentoTemp
- ---AND IdUsuario = @IdUsuario
- AND IdProveedor = @IdProveedor AND Activo = 1)
+  AND IdProveedor = @IdProveedor AND Activo = 1)
 
  --- Validar 
  IF @ContadorDocumentosExistentes  > 0 
