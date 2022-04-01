@@ -1,9 +1,10 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_InformeRevGast_TotalObjetados]
+﻿CREATE PROCEDURE [dbo].[SP_CO_InformeRevGast_TotalObjetados] 
     @IdPresupuesto INT,
     @MesPresentacion DATE
 AS
 BEGIN
-    SELECT CAST(SUM(USD) AS DECIMAL(10, 2)) AS TOTALObjet
+    SELECT
+		ISNULL(CAST(SUM(USD) AS DECIMAL(10, 2)), 0.00) AS TOTALObjet
       FROM (   SELECT      CASE
                                 WHEN R.CvTipoDocFacturacion = 1 THEN
                                     SUM(CASE
