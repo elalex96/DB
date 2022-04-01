@@ -13222,6 +13222,7 @@
     <Build Include="dbo\Functions\fn_ent_RutaArchivo.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_AgregarCarpeta.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spConsultaProgramaImplementaRpt.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_GastosAmatitlan2020_SEL.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
