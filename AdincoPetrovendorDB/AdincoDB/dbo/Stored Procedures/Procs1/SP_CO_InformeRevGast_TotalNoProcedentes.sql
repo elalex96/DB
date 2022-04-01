@@ -3,7 +3,8 @@
     @MesPresentacion DATE
 AS
 BEGIN
-    SELECT CAST(SUM(USD) AS DECIMAL(10, 2)) AS TOTALNoProce
+    SELECT 
+		ISNULL(CAST(SUM(USD) AS DECIMAL(10, 2)), 0.00) AS TOTALNoProce
       FROM (   SELECT      CASE
                                 WHEN R.CvTipoDocFacturacion = 1 THEN
                                     SUM(CASE

@@ -3,8 +3,23 @@
     @MesPresentacion DATE
 AS
 BEGIN
-    SELECT CAST(SUM(USD) AS DECIMAL(10, 2)) AS TOTAL
-      FROM (   SELECT      CASE
+	SET LANGUAGE SPANISH;
+	DECLARE @FechaSumaMes DATE = DATEADD(month, 1, @MesPresentacion)
+	DECLARE @Fecha VARCHAR(150) = LTRIM(UPPER(CONCAT( datename(month, @MesPresentacion), '/', YEAR(@MesPresentacion))));
+	DECLARE @FechaRevGastosElegibles VARCHAR(150) = LTRIM(CONCAT( '(Ver el Informe de Revisión de Gastos Elegibles ',datename(month, @MesPresentacion), '/', YEAR(@MesPresentacion), ')'));
+	DECLARE @FechaGastosPendientesReconocer VARCHAR(150) = LTRIM(CONCAT('(Ver el Informe de Saldos de Gastos Elegibles Pendientes de Reconocer a ',datename(month, @MesPresentacion), '/', YEAR(@MesPresentacion), ')'));
+	DECLARE @FechaInformeContableGastos VARCHAR(200) = LTRIM(CONCAT('De acuerdo al Informe Contable de Gastos elegibles correspondiente al mes de ',datename(month, @MesPresentacion), ' ', YEAR(@MesPresentacion), ' que se presento con fecha de 06/',RIGHT('0' + RTRIM(MONTH(@FechaSumaMes)), 2),'/',YEAR(@FechaSumaMes),' le notifico lo siguiente de acuerdo a nuestra revisión:'));
+	DECLARE @Presupuesto VARCHAR(150) = (SELECT TOP 1 Nombre FROM CO_Presupuesto WHERE IdPresupuesto = @IdPresupuesto);
+	SET @Presupuesto = LTRIM(UPPER(@Presupuesto));
+   SELECT 
+	   ISNULL(CAST(SUM(USD) AS DECIMAL(10, 2)), 0.00) AS TOTAL,
+	   @Fecha AS MES,
+	   @FechaRevGastosElegibles AS MesRevGastosElegibles,
+	   @FechaGastosPendientesReconocer AS MesGastosPendientesReconocer,
+	   @FechaInformeContableGastos AS MesInformeContableGastos,
+	   @Presupuesto AS Presupuesto
+     FROM (   SELECT      
+	  CASE
                                 WHEN R.CvTipoDocFacturacion = 1 THEN
                                     SUM(CASE
                                              WHEN ISNULL(R.MontoRegistro, 0) <> 0 THEN
@@ -14,7 +29,9 @@ BEGIN
                                     SUM(CASE
                                              WHEN ISNULL(R.MontoRegistro, 0) <> 0 THEN
                                                  ISNULL(R.MontoRegistro, 0) / TCDPC.TipoCambio
-                                             ELSE 0 END) END AS USD
+                                             ELSE 0 END
+											 ) END AS USD
+											
                  FROM      dbo.CO_LineaPresupuestoMes LPM
                  LEFT JOIN dbo.CO_Servicio S
                    ON LPM.IdServicio              = S.IdServicio
@@ -22,6 +39,8 @@ BEGIN
                    ON LPM.IdInstalacion           = I.IdInstalacion
                  LEFT JOIN dbo.CO_Registro R
                    ON R.IdPrograma                = LPM.IdLineaPresupuestoMes
+				 INNER JOIN CO_RegistroMarkup 
+					ON R.MesPresentacion = CO_RegistroMarkup.MesCertificado
                  LEFT JOIN dbo.FI_Factura F
                    ON F.IdFactura                 = R.IdFactura
                  LEFT JOIN dbo.FI_PedimentoComprobante PC
@@ -62,7 +81,7 @@ BEGIN
                    ON LPM.IdAnexo4                = CA.IdAnexo4
                  LEFT JOIN dbo.CO_Presupuesto P
                    ON LPM.IdPresupuesto           = P.IdPresupuesto
-                 LEFT JOIN dbo.CO_ActividadPetroleraCNH ACNH
+				LEFT JOIN dbo.CO_ActividadPetroleraCNH ACNH
                    ON LPM.IdActividadPetrolera    = ACNH.IdActividadPetrolera
                  LEFT JOIN dbo.CO_SubactividadPetrolera SAP
                    ON LPM.IdSubactividadPetrolera = SAP.IdSubactividadPetrolera
@@ -142,7 +161,7 @@ BEGIN
                          PC.IdMoneda,
                          R.IdRegistro,
                          PC.FolioComprobante,
-                         SPC.RazonSocial,
+						 SPC.RazonSocial,
                          TMPC.TipoMonedaCorto,
                          ER.NombreEstado,
                          I.NombreInstalacion,
@@ -150,4 +169,3 @@ BEGIN
                          UC.Nombre,
                          UM.Nombre) SRC;
 END;
-
