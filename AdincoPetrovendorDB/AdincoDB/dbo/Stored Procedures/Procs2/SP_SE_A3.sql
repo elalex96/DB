@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -18,10 +17,8 @@ AS
          -- interfering with SELECT statements.  
          SET NOCOUNT ON;  
          CREATE TABLE #Presupuestos(IdPresupuesto INT);  
-         CREATE TABLE #RFC(RFC VARCHAR(25));  
-  
-         /**/  
-  
+         CREATE TABLE #RFC(RFC VARCHAR(25));    
+         /**/ 
          --IF 1 =  
          --(  
          --    SELECT COUNT(1)  
@@ -66,10 +63,8 @@ AS
              BEGIN  
                  INSERT INTO #Presupuestos(IdPresupuesto)  
              SELECT @IdPresupuesto;  
-             END;  
-  
-         /**/  
-  
+             END; 
+         /**/    
          INSERT INTO #RFC(RFC)  
                 SELECT 'FMP140930MW3'  
                 UNION  
@@ -88,10 +83,8 @@ AS
                         SELECT 'FMO930803PB1'  
                         UNION  
                         SELECT 'GMS971110BTA';  
-             END;  
-  
-         /*Consulta final*/  
-  
+             END;    
+         /*Consulta final*/    
          IF(@FFin <= '2018-12-01')  
              BEGIN  
                  SELECT ISNULL(A.Codigo, 'SinClasificar') AS Codigo,   
@@ -143,8 +136,9 @@ AS
                           --CAST(ROUND((ISNULL(R.MontoRegistro, 0) * TCD.TipoCambio), 2) AS DECIMAL(20, 2)),   
                           ISNULL(R.PCN, 0),   
                           --CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0) * TCD.TipoCambio), 2) AS DECIMAL(20, 2)),   
-                          F.IdFactura  ,
-						  F.IdMoneda
+                          F.IdFactura,
+						  F.IdMoneda,
+						  F.Fecha
                  ORDER BY S.RFC;  
              END;  
              ELSE  
@@ -196,8 +190,7 @@ AS
                       JOIN #Presupuestos PP ON L.IdPresupuesto = PP.IdPresupuesto  
                       JOIN dbo.CO_Presupuesto P ON PP.IdPresupuesto = P.IdPresupuesto  
                       JOIN dbo.CO_ProgramaActividad PA ON P.IdProgramaActividad = PA.IdProgramaActividad  
-                      JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad  
-                      
+                      JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad                       
                       LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad  
                  WHERE(CAST(F.Fecha AS DATE) >= @FInicio  
                        AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))  
@@ -233,8 +226,7 @@ AS
                       JOIN #Presupuestos PP ON L.IdPresupuesto = PP.IdPresupuesto  
                       JOIN dbo.CO_Presupuesto P ON PP.IdPresupuesto = P.IdPresupuesto  
                       JOIN dbo.CO_ProgramaActividad PA ON P.IdProgramaActividad = PA.IdProgramaActividad  
-                      JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad  
-                     
+                      JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad                       
 				 LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad  
                  WHERE(CAST(F.Fecha AS DATE) >= @FInicio  
                        AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))  
@@ -249,9 +241,6 @@ AS
                       AND F.IdMoneda IN(1, 2)  
                  ORDER BY ISNULL(A.Nombre, 'SinClasificar');  
                  /*SELECT FINAL*/  
-
-				
-  
                  SELECT Codigo,   
                         Descripcion,   
                         RazonSocial,   
@@ -265,20 +254,23 @@ AS
                           Descripcion,   
                           RazonSocial,   
                           RFC,   
-                          IdFactura;  
-  
-                 /**/  
-  
+                          IdFactura;    
+                 /**/    
                  SELECT Codigo,   
                         Descripcion,   
                         RazonSocial,   
                         RFC,   
-                        ISNULL(SUM(SubTotal),0) AS SubTotal,   
-                        ISNULL(CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT),0) AS PCN,   
-                        ISNULL((SUM(SubTotal)*CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT)),0) AS CN,   
+                        ISNULL(SUM(SubTotal),0) AS SubTotal, 
+						CASE
+							WHEN SUM(SubTotal) = 0 THEN 0
+							ELSE  ISNULL(CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT),0) 
+						END AS PCN, 
+						CASE
+							WHEN SUM(SubTotal) = 0 THEN 0
+							ELSE ISNULL((SUM(SubTotal)*CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT)),0)
+						END AS CN,   
                         IdFactura  
-                 FROM #FINAL  
-				
+                 FROM #FINAL  				
                  GROUP BY Codigo,   
                           Descripcion,   
                           RazonSocial,   
