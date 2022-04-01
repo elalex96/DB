@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -18,9 +17,7 @@ AS
          -- interfering with SELECT statements.    
          SET NOCOUNT ON;    
          CREATE TABLE #Presupuestos(IdPresupuesto INT);    
-         CREATE TABLE #RFC(RFC VARCHAR(25));    
-    
-   
+         CREATE TABLE #RFC(RFC VARCHAR(25));   
          IF 1 =    
          (    
              SELECT COUNT(1)    
@@ -44,11 +41,9 @@ AS
              ELSE    
              BEGIN    
                  INSERT INTO #Presupuestos(IdPresupuesto)    
-     SELECT @IdPresupuesto;    
-             END;    
-    
-         /**/    
-    
+				 SELECT @IdPresupuesto;    
+             END; 
+         /**/  
          INSERT INTO #RFC(RFC)    
                 SELECT 'FMP140930MW3'    
                 UNION    
@@ -67,10 +62,8 @@ AS
                         SELECT 'FMO930803PB1'    
                         UNION    
                         SELECT 'GMS971110BTA';    
-             END;    
-    
-         /*Consulta final*/    
-    
+             END;   
+         /*Consulta final*/  
          IF(@FFin <= '2018-12-01')    
              BEGIN    
                  SELECT ISNULL(A.Codigo, 'SinClasificar') AS Codigo,     
@@ -96,7 +89,11 @@ AS
                       JOIN dbo.CO_ProgramaActividad PA ON PA.IdProgramaActividad = P.IdProgramaActividad    
                       JOIN dbo.CO_TipoProgramaActividad TPA ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad    
                       LEFT JOIN dbo.CO_PCNPorPeriodos PPP ON PPP.IdTipoPgrogramaActividad = TPA.IdTipoProgramaActividad    
-                      LEFT JOIN dbo.FI_Factura F ON F.IdFactura = R.IdFactura                          
+                      LEFT JOIN dbo.FI_Factura F ON F.IdFactura = R.IdFactura     
+					  JOIN dbo.CO_TipoCambioDiario TCD ON F.IdMoneda <> TCD.IdMoneda    
+                                                          AND DAY(TCD.Fecha) = DAY(F.Fecha)    
+                                                          AND MONTH(TCD.Fecha) = MONTH(F.Fecha)    
+                                                          AND YEAR(TCD.Fecha) = YEAR(F.Fecha)    
                       LEFT JOIN dbo.PV_Subcontratista S ON S.IdSubcontratista = F.IdSubcontratista    
                       LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad    
                       LEFT JOIN dbo.CO_Servicio SE ON SE.IdServicio = L.IdServicio    
@@ -146,7 +143,7 @@ AS
                   IdFactura,     
                   IdAceptacionPedidoDetalle    
                  )    
-						SELECT ISNULL(A.Codigo, 'SinClasificar') AS Codigo,     
+				SELECT ISNULL(A.Codigo, 'SinClasificar') AS Codigo,     
                         ISNULL(A.Nombre, 'SinClasificar') AS Descripcion,     
                         S.RazonSocial AS RazonSocial,     
                         S.RFC AS RFC,     
@@ -220,10 +217,8 @@ AS
            AND F.IdContrato = @IdContrato    
            --AND ISNULL(R.PCN, 0) <> 0    
            AND F.IdMoneda IN(1, 2)    
-         ORDER BY ISNULL(A.Nombre, 'SinClasificar');    
-    
-                 /*SELECT FINAL*/    
-    
+         ORDER BY ISNULL(A.Nombre, 'SinClasificar');
+         /*SELECT FINAL*/    
                  SELECT Codigo,     
                         Descripcion,     
                         RazonSocial,     
@@ -237,17 +232,21 @@ AS
                           Descripcion,     
                           RazonSocial,     
                           RFC,     
-                          IdFactura;    
-    
+                          IdFactura; 
                  /**/    
-    
                  SELECT Codigo,     
                         Descripcion,     
                         RazonSocial,     
                         RFC,     
-                        ISNULL(SUM(SubTotal),0) AS SubTotal,     
-                        ISNULL(CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT),0) AS PCN,     
-                        ISNULL((SUM(SubTotal)*CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT)),0) AS CN,     
+                        ISNULL(SUM(SubTotal),0) AS SubTotal,  
+						CASE
+							WHEN SUM(SubTotal) = 0 THEN 0
+							ELSE ISNULL(CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT),0)
+						END AS PCN, 
+						CASE
+							WHEN SUM(SubTotal) = 0 THEN 0
+							ELSE ISNULL((SUM(SubTotal)*CAST(SUBSTRING(LTRIM(SUM(PCN)/SUM(SubTotal)), 1, CHARINDEX('.', LTRIM(SUM(PCN)/SUM(SubTotal)))+3) AS FLOAT)),0)
+						END AS CN,   
                         IdFactura    
                  FROM #FINAL    
                  GROUP BY Codigo,     
