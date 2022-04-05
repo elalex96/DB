@@ -298,7 +298,13 @@ AS
 					    F.UUID
                 FROM dbo.CO_LineaPresupuestoMes LPM					 
 					 INNER JOIN #TPresuspuestos TPre ON TPre.IdPresupuesto = LPM.IdPresupuesto
-					 INNER JOIN dbo.CO_Registro R ON R.IdPrograma = LPM.IdLineaPresupuestoMes AND 
+					 INNER JOIN dbo.CO_Registro R ON													
+													(
+														(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND R.FecMovto BETWEEN @FechaDel AND @FechaAl)
+														OR
+														(@FechaDel IS NULL AND @FechaAl IS NULL)
+													) AND
+													R.IdPrograma = LPM.IdLineaPresupuestoMes AND 
 													R.IdRegistro IS NOT NULL  AND
 													(
 														(
@@ -310,12 +316,7 @@ AS
 															R.IdEstado IN(10000, 10001, 10002, 10003, 10004, 10005, 10006)
 															AND TPre.IdPresupuesto <> 10000
 														)
-													) AND
-													(
-														(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND R.FecMovto BETWEEN @FechaDel AND @FechaAl)
-														OR
-														(@FechaDel IS NULL AND @FechaAl IS NULL)
-													)
+													) 
 					 LEFT JOIN dbo.CO_Presupuesto P ON LPM.IdPresupuesto = P.IdPresupuesto					 
                      LEFT JOIN dbo.CO_Servicio S ON LPM.IdServicio = S.IdServicio
                      LEFT JOIN dbo.CO_Instalacion I ON LPM.IdInstalacion = I.IdInstalacion
