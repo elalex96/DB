@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 03/09/2021 09:56:56 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 05/04/2022 01:04:32 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,8 +10,8 @@ GO
 -- Create date: <25/08/2021>  
 -- Description: <guardado de datos de servicio de lectura de correos para WDEA>  
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_InsLayoutWDEA] 
-@LayoutWDEA dbo.WDEA_Layout_T_V2 READONLY,
+ALTER PROCEDURE [dbo].[SP_InsLayoutWDEA] 
+@LayoutWDEA dbo.WDEA_Layout_T_V3 READONLY,
 @Remitente NVARCHAR(100),
 @FileName NVARCHAR(500),
 @Asunto NVARCHAR(500),
@@ -23,7 +23,7 @@ BEGIN
 	DECLARE @CANT_GUARDADOS INT = 0;
 	DECLARE @IDBITACORA INT = 0;
 
-	SET @CANT_GUARDADOS = (SELECT COUNT(1) FROM @LayoutWDEA);
+	SET @CANT_GUARDADOS = (SELECT COUNT(1) FROM @LayoutWDEA WHERE Item <> '');
 
 	SET @MENSAJELECUTRA = ('SE GUARDARON ' + CAST(@CANT_GUARDADOS AS nvarchar) + ' REGISTROS EXITOSAMENTE, ENCONTRADOS EN EL ARCHIVO "' + @FileName + '" ENVIADO POR ' + @Remitente + ' A ' + @Destinatario + ' EN EL CORREO CON ASUNTO "' + @Asunto + '".');
 
@@ -78,6 +78,11 @@ BEGIN
 		  ,[Requisitioner]
 		  ,[Terminos_Pago]
 		  ,[Justificacion]
+		  ,[GL_Account]
+		  ,[Purchasing_Group]
+		  ,[Material_Group]
+		  ,[Created_On]
+		  ,[Mecanismo_de_Contratacion]
 		  ,[CreadoEl]
 		  ,RowN
 		  ,IdBitacoraLectura
@@ -86,8 +91,8 @@ BEGIN
       ,[Purch_Organization]
       ,[Cost_Center]
       ,[WBS_Element]
-      ,[Short_Text]
       ,[Outline_Agreegement]
+      ,[Short_Text]
       ,[Validity_Per_Start]
       ,[Validity_Period_End]
       ,[Deletion_Indicador]
@@ -105,11 +110,18 @@ BEGIN
       ,[Requisitioner]
       ,[Terminos_Pago]
       ,[Justificacion]
+	  ,[GL_Account]
+	  ,[Purchasing_Group]
+	  ,[Material_Group]
+	  ,[Created_On]
+	  ,[Mecanismo_de_Contratacion]
       ,GETDATE()
 	  ,CAST(RowN AS INT)
 	  ,@IDBITACORA
-    FROM @LayoutWDEA;
+    FROM @LayoutWDEA
+	WHERE Item <> '';
 
-	SELECT @CANT_GUARDADOS;
+	SELECT @IDBITACORA;
 
+	exec SP_Ins_WDEA_Bitacora_AdincoSAP @IDBITACORA
 END
