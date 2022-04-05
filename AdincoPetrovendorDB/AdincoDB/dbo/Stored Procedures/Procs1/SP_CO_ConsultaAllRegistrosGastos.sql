@@ -7,11 +7,16 @@
 -- Alter date:	 01-09-2021
 -- Description: Add Cat Mano de Obra
 -- =============================================
+-- Author:		 Daniel Moreno
+-- Alter date:	 05-04-2021
+-- Description: Se agregan filtros de fechas
 CREATE PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos]
 -- ============================================= 
 -- [SP_CO_ConsultaAllRegistrosGastos] 3,10002
 @IdContrato INT, 
-@IdUsuario  INT
+@IdUsuario  INT,
+@FechaDel DATETIME = NULL,
+@FechaAl DATETIME = NULL
 AS
      BEGIN
          -- =============================================
@@ -134,37 +139,13 @@ AS
           CCN                      NVARCHAR(MAX), 
           ModificadoPor            NVARCHAR(MAX), 
           CreacionGasto            DATE, 
-          IdEstado                 INT
+          IdEstado                 INT,
+		  UUID						NVARCHAR(200)
          );
 
          /**/
 
-         INSERT INTO #CartasProcura
-         (IdFacutraP, 
-          UUID, 
-          IdFacutraA
-         )
-                SELECT DISTINCT 
-                       FP.IdFactura, 
-                       FP.UUID, 
-                       FA.IdFactura
-                FROM Petrovendor.dbo.MM_AceptacionCartaPCN AS AC
-                     JOIN Petrovendor.dbo.S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
-                     JOIN Petrovendor.dbo.MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-                     JOIN Petrovendor.dbo.MM_Pedido AS P ON P.IdPedido = AP.IdPedido
-                     JOIN Petrovendor.dbo.S_Proveedor AS PR ON PR.IdProveedor = P.IdSubcontratista
-                     JOIN Petrovendor.dbo.S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-                     JOIN Petrovendor.dbo.MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador
-                     LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
-                     LEFT JOIN Petrovendor.dbo.MM_AceptacionFactura AF ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
-                     LEFT JOIN Petrovendor.dbo.FI_Factura FP ON FP.IdFactura = AF.IdFactura
-                     LEFT JOIN Adinco.dbo.FI_Factura FA ON FP.UUID = FA.UUID COLLATE DATABASE_DEFAULT
-                WHERE AC.IdEstatus = 2
-                      AND ISNULL(AC.IdEstatusEliminado, 0) <> 1
-                      AND P.IdContrato = 3
-                      AND FP.UUID IS NOT NULL
-                      AND FP.Activa = 1
-                      AND ISNULL(FP.IsEliminado, 0) <> 1;--*******
+         
 
          /**/
 
@@ -188,7 +169,7 @@ AS
           MesPresentacion, 
           TipoDeServicio, 
           Actividad, 
-          SubActividad, 
+         SubActividad, 
           EstadoValidacion, 
           Area, 
           Comentarios, 
@@ -204,7 +185,8 @@ AS
           CCN, 
           ModificadoPor, 
           CreacionGasto, 
-          IdEstado
+          IdEstado,
+		  UUID
          )
                 SELECT R.IdRegistro, 
                        S.NombreServicio AS Servicio, 
@@ -276,7 +258,7 @@ AS
                            ELSE SAP.SubactividadPetrolera
                        END AS Actividad,
                        CASE
-                           WHEN P.CIEP = 1
+						   WHEN P.CIEP = 1
                            THEN RI.NombreRubro
                            ELSE TP.TareaPetrolera
                        END AS SubActividad, 
@@ -312,11 +294,32 @@ AS
                        END AS CCN, 
                        UM.Nombre AS ModificadoPor, 
                        CAST(R.FecMovto AS DATE) AS CreacionGasto, 
-                       R.IdEstado
-                FROM dbo.CO_LineaPresupuestoMes LPM
+                       R.IdEstado,
+					    F.UUID
+                FROM dbo.CO_LineaPresupuestoMes LPM					 
+					 INNER JOIN #TPresuspuestos TPre ON TPre.IdPresupuesto = LPM.IdPresupuesto
+					 INNER JOIN dbo.CO_Registro R ON R.IdPrograma = LPM.IdLineaPresupuestoMes AND 
+													R.IdRegistro IS NOT NULL  AND
+													(
+														(
+															R.IdEstado = 10004
+															AND TPre.IdPresupuesto = 10000
+														)
+														OR 
+														(
+															R.IdEstado IN(10000, 10001, 10002, 10003, 10004, 10005, 10006)
+															AND TPre.IdPresupuesto <> 10000
+														)
+													) AND
+													(
+														(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND R.FecMovto BETWEEN @FechaDel AND @FechaAl)
+														OR
+														(@FechaDel IS NULL AND @FechaAl IS NULL)
+													)
+					 LEFT JOIN dbo.CO_Presupuesto P ON LPM.IdPresupuesto = P.IdPresupuesto					 
                      LEFT JOIN dbo.CO_Servicio S ON LPM.IdServicio = S.IdServicio
                      LEFT JOIN dbo.CO_Instalacion I ON LPM.IdInstalacion = I.IdInstalacion
-                     LEFT JOIN dbo.CO_Registro R ON R.IdPrograma = LPM.IdLineaPresupuestoMes
+                     
                      LEFT JOIN dbo.CO_GastosRubro rubro ON rubro.IdGastoRubro = R.IdGastoRubro
 					 LEFT JOIN dbo.CO_CAT_ManoDeObra catmo(NOLOCK) ON catmo.Id = R.IdCatManoObra
                      LEFT JOIN dbo.FI_Factura F ON F.IdFactura = R.IdFactura
@@ -340,21 +343,14 @@ AS
                                                                 AND DAY(TCDPC.Fecha) = DAY(PC.FechaPago)
                                                                 AND MONTH(TCDPC.Fecha) = MONTH(PC.FechaPago)
                                                                 AND YEAR(TCDPC.Fecha) = YEAR(PC.FechaPago)
-                     LEFT JOIN dbo.CO_ClasificacionAnexo4 CA ON LPM.IdAnexo4 = CA.IdAnexo4
-                     LEFT JOIN dbo.CO_Presupuesto P ON LPM.IdPresupuesto = P.IdPresupuesto
+                     LEFT JOIN dbo.CO_ClasificacionAnexo4 CA ON LPM.IdAnexo4 = CA.IdAnexo4                    
                      LEFT JOIN dbo.CO_ActividadPetroleraCNH ACNH ON LPM.IdActividadPetrolera = ACNH.IdActividadPetrolera
                      LEFT JOIN dbo.CO_SubactividadPetrolera SAP ON LPM.IdSubactividadPetrolera = SAP.IdSubactividadPetrolera
                      LEFT JOIN dbo.CO_RubroInterno RI ON LPM.IdRubroInterno = RI.IdRubroInterno
                      LEFT JOIN dbo.CO_TareaPetrolera TP ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera
                      LEFT JOIN dbo.AWS_DocAwsDocAdinco WA ON F.IdFactura = WA.IdDocAdinco
                      LEFT JOIN dbo.AP_Usuario UM ON R.IdUsuarioModPor = UM.UsuarioID
-                     INNER JOIN #TPresuspuestos TPre ON TPre.IdPresupuesto = P.IdPresupuesto
-                WHERE --R.IdPrograma = 9
-                ((R.IdEstado = 10004
-                  AND TPre.IdPresupuesto = 10000)
-                 OR (R.IdEstado IN(10000, 10001, 10002, 10003, 10004, 10005, 10006)
-                AND TPre.IdPresupuesto <> 10000))
-                     AND (R.IdRegistro IS NOT NULL)
+				
                 GROUP BY PC.NumeroPedimento, 
                          S.NombreServicio, 
                          F.UUID, --I.NombreInstalacion, 
@@ -428,6 +424,35 @@ AS
                          R.IdEstado
                 ORDER BY R.IdRegistro DESC;
 
+		INSERT INTO #CartasProcura
+         (IdFacutraP, 
+          UUID, 
+          IdFacutraA
+         )
+                SELECT DISTINCT 
+                       FP.IdFactura, 
+                       FP.UUID, 
+                       FA.IdFactura
+                FROM #Datos datos
+				JOIN Petrovendor.dbo.FI_Factura FP ON FP.UUID = datos.UUID COLLATE DATABASE_DEFAULT	 AND
+													FP.UUID IS NOT NULL AND 
+													FP.Activa = 1 AND
+													ISNULL(FP.IsEliminado, 0) <> 1
+				JOIN Adinco.dbo.FI_Factura FA ON FP.UUID = FA.UUID COLLATE DATABASE_DEFAULT	 
+				JOIN Petrovendor.dbo.MM_AceptacionFactura AF ON AF.IdFactura = FP.IdFactura
+				JOIN Petrovendor.dbo.MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+				JOIN Petrovendor.dbo.MM_AceptacionCartaPCN AS AC ON AC.IdAceptacionPedido = AP.IdAceptacionPedido AND 
+																AC.IdEstatus = 2 AND
+																ISNULL(AC.IdEstatusEliminado, 0) <> 1
+				JOIN Petrovendor.dbo.S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
+				JOIN Petrovendor.dbo.MM_Pedido AS P ON P.IdPedido = AP.IdPedido AND 
+													P.IdContrato = @IdContrato
+				JOIN Petrovendor.dbo.S_Proveedor AS PR ON PR.IdProveedor = P.IdSubcontratista
+				JOIN Petrovendor.dbo.S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
+				JOIN Petrovendor.dbo.MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador	
+				JOIN Petrovendor.dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido                     					 
+                
+
          /**/
 
          UPDATE D
@@ -437,6 +462,7 @@ AS
               JOIN #CartasProcura CP ON D.Identificador = CP.IdFacutraA
          WHERE D.Identificador = CP.IdFacutraA
                AND D.TipoDocumento = 'CF';
+			  
 
          /**/
 
@@ -479,3 +505,5 @@ AS
          FROM #Datos
 		 ORDER BY MesPresentacion DESC;
      END;
+
+
