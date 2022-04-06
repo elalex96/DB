@@ -1,6 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 05/04/2022 01:04:32 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 06/04/2022 11:24:40 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,7 +11,7 @@ GO
 -- Description: <guardado de datos de servicio de lectura de correos para WDEA>  
 -- =============================================  
 ALTER PROCEDURE [dbo].[SP_InsLayoutWDEA] 
-@LayoutWDEA dbo.WDEA_Layout_T_V3 READONLY,
+@LayoutWDEA dbo.WDEA_Layout_T_V4 READONLY,
 @Remitente NVARCHAR(100),
 @FileName NVARCHAR(500),
 @Asunto NVARCHAR(500),
@@ -59,8 +59,8 @@ BEGIN
 		  ,[Purch_Organization]
 		  ,[Cost_Center]
 		  ,[WBS_Element]
-		  ,[Short_Text]
 		  ,[Outline_Agreegement]
+		  ,[Short_Text]
 		  ,[Validity_Per_Start]
 		  ,[Validity_Period_End]
 		  ,[Deletion_Indicador]
