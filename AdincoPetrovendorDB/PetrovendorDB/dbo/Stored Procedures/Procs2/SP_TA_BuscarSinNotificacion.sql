@@ -1,4 +1,8 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_TA_BuscarSinNotificacion
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 08/03/2018
 -- Description:	Retorna un bit para saber si existe o no el usuario que no quiere ser notificado
@@ -10,6 +14,10 @@
 -- Author:		Jose Roman
 -- Create date: 23-01-2019
 -- Description:	Se excluyen las notificaciones del tipo de correo 23 (Notificacion alta de material) para todas las empresas que no sean 863 (Cardenaz Mora)
+-- =============================================
+-- Author:		Luis David
+-- Create date: 06-04-22
+-- Description:	Se mejora la consulta para la tabla dbo.TA_NoNotificacion y no depender del parámetro 'destinatario', que en algunas partes del código se envía diferente 
 -- =============================================
 CREATE PROCEDURE SP_TA_BuscarSinNotificacion
     @Destinatario NVARCHAR(MAX),
@@ -47,7 +55,6 @@ BEGIN
         IF (@IdProveedor = 0)
         BEGIN
             --SELECT uProv.IdProveedor , usuario.IdUsuario FROM dbo.S_Usuario usuario INNER JOIN dbo.S_UsuarioProveedor uProv ON uProv.IdUsuario = usuario.IdUsuario WHERE usuario.IdUsuario = @IdUsuario AND usuario.Activo =  1 AND usuario.IsEliminado = 0 
-
             INSERT INTO @tablaProveedor
             (
                 fila,
@@ -102,7 +109,7 @@ BEGIN
                 --SELECT @usuario ucliente, @Correo correo, @IdProveedor proveedor,  @Contador contador
                 SET @Contador += 1;
             END;
-            --Revisar si alguno es igual entonces negar el acceso
+      --Revisar si alguno es igual entonces negar el acceso
             SELECT @cuentaRegIguales = COUNT(*)
             FROM @tablaProveedor
             WHERE iguales = 1;
@@ -117,21 +124,18 @@ BEGIN
         END;
         ELSE
         BEGIN
-            SELECT @IdUsuarioCliente = IdUsuario
-            FROM dbo.TA_NoNotificacion
-            WHERE IdProveedor = @IdProveedor
-                  AND IdUsuario = @IdUsuario
-                  AND IdCorreo = @TipoCorreo
-                  AND IsEliminado = 0;
-            SELECT @Correo = Correo
-            FROM dbo.S_Usuario
-            WHERE IdUsuario = @IdUsuarioCliente
-                  AND IsEliminado = 0;
-
-            IF (@Correo = @Destinatario OR (@Correo IS NULL AND @Destinatario IS NULL))
-                SELECT 0; --niega el acceso
-            ELSE
-                SELECT 1; --son diferentes deja que envie la notificacion
+		-- Se busca directamente el valor eliminado en la tabla TA_NoNotificacion para no matchear y depender con el parámetro @Destinatario
+			IF EXISTS (SELECT 1 FROM dbo.TA_NoNotificacion WHERE		IdProveedor = @IdProveedor
+																	AND IdUsuario = @IdUsuario
+																	AND IdCorreo = @TipoCorreo
+																	AND IsEliminado = 0)
+			BEGIN
+					SELECT 0
+			END
+			ELSE 
+			BEGIN
+					SELECT 1
+			END
         END;
     END;
 END;
