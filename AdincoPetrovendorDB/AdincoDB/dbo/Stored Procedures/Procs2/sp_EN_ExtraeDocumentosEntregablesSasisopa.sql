@@ -14,8 +14,7 @@ CREATE PROCEDURE dbo.sp_EN_ExtraeDocumentosEntregablesSasisopa --3,10061,'2020-0
 	@FechaFin	DATETIME
 AS
 BEGIN
-    SET NOCOU
-NT ON;
+    SET NOCOUNT ON;
 	SET LANGUAGE Spanish; 
 
 SELECT DISTINCT
