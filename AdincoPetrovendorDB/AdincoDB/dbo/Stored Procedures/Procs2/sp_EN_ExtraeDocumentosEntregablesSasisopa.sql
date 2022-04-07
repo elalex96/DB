@@ -14,7 +14,8 @@ CREATE PROCEDURE dbo.sp_EN_ExtraeDocumentosEntregablesSasisopa --3,10061,'2020-0
 	@FechaFin	DATETIME
 AS
 BEGIN
-    SET NOCOUNT ON;
+    SET NOCOU
+NT ON;
 	SET LANGUAGE Spanish; 
 
 SELECT DISTINCT
@@ -24,10 +25,10 @@ SELECT DISTINCT
 	PIE.IdProgramaImplementaElemento AS IdElemento,
 	PIA.IdProgramaImplementaAccion AS IdAccion,
 	IE.IdInstanciaEntregable,
-	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIT.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS NombrePrograma,
-	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIP.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS Politica, 
-	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIE.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS Elemento,
-	SUBSTRING(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIA.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,50) AS Accion,
+	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIT.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,30) AS NombrePrograma,
+	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIP.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,30) AS Politica, 
+	SUBSTRING( REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIE.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,30) AS Elemento,
+	SUBSTRING(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(PIA.Descripcion)),CHAR(9),''),CHAR(13),''), '$',''),'%',''),',',''),'*',''),'<',''),'>',''),'|',''),':',''),'?',''),'"',''),0,30) AS Accion,
 	IE.FechaCalculadaEntregaReg	AS	FechaEstimadaEntregaRegulador
 FROM
 	CO_ProgramaImplementa	CPI
