@@ -40,7 +40,9 @@ BEGIN TRY
 	(
 	SELECT RFCProveedor FROM SC_Importacion GROUP BY RFCProveedor)
 	INSERT INTO #Subcontratista(Repetidos, RfcProveedor)
-	SELECT COUNT( RFCProveedor) Repetidos, RFCProveedor FROM MyCte INNER JOIN PV_Subcontratista ON UPPER(MyCte.RFCProveedor) = UPPER(PV_Subcontratista.RFC) GROUP BY RFCProveedor
+	SELECT COUNT( RFCProveedor) Repetidos, RFCProveedor FROM MyCte 
+    INNER JOIN PV_Subcontratista ON UPPER(MyCte.RFCProveedor) = UPPER(PV_Subcontratista.RFC) AND PV_Subcontratista.IsActivo = 1
+    GROUP BY RFCProveedor
 
 	SELECT @RFCRepetidos = COALESCE(@RFCRepetidos + ', ' + RfcProveedor, RfcProveedor) 
         From #Subcontratista
