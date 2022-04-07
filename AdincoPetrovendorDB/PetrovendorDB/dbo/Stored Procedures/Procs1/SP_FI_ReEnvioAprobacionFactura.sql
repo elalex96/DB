@@ -49,6 +49,12 @@ BEGIN
 													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
 													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
 													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido);
+	DECLARE @IDPROVEEDOROPERADORA INT = (SELECT TOP 1 AP.IdProveedor
+													FROM dbo.MM_AceptacionPedido AP
+													LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
+													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
+													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
+													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido)
 	DECLARE @TABLE_APROBADORES TABLE(ID INT IDENTITY(1,1), IdAprobador INT, IdSecuencia INT, Nombre NVARCHAR(200), Correo NVARCHAR(200));
 	DECLARE @ID_OPERADORA INT = ( SELECT IdProveedor FROM dbo.MM_AceptacionPedido WHERE IdAceptacionPedido = @IdAceptacionPedido);
 	DECLARE @ID_ACEPTACION_FACTURA int = (SELECT IdAceptacionFactura 
@@ -172,7 +178,7 @@ BEGIN
 
 			SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
-			IF NOT EXISTS (SELECT * FROM dbo.TA_NoNotificacion WHERE		IDPROVEEDOR = @IdProveedor AND
+			IF NOT EXISTS (SELECT * FROM dbo.TA_NoNotificacion WHERE		IDPROVEEDOR = @IDPROVEEDOROPERADORA AND
 																			IdUsuario = @IDUSUARIOAPROBADOR
 																			AND IdCorreo = 37
 																			AND IsEliminado = 0)
