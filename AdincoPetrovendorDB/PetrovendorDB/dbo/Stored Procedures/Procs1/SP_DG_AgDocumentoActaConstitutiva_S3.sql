@@ -1,17 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_DG_AgDocumentoActaConstitutiva_S3'
-)
-    DROP PROCEDURE SP_DG_AgDocumentoActaConstitutiva_S3;
-/****** Object:  StoredProcedure [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]    Script Date: 26/07/2021 04:46:30 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿
 -- =============================================
 -- Author:		<DANIEL AC>
 -- Create date: <06/04/2018>
@@ -26,13 +13,21 @@ GO
 -- Create date:	  26-07-21
 -- Description:   Se agrega columna de Bucket
 -- ============================================= 
-CREATE PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
+-- ============================================= 
+-- Author:        Alexander Gomez
+-- Create date:	  09-03-2022
+-- Description:   Se agrega el parametro para la fecha del documento repse
+-- ============================================= 
+ALTER PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
 
 	-- Insertar Documento nuevo---
-	@IdTipoDocumento INT, @IdTipoValidacionDocumento INT, @Activo BIT, @Documento NVARCHAR (MAX), @IdProveedor INT ,
+	@IdTipoDocumento INT, 
+	@IdTipoValidacionDocumento INT, 
+	@Activo BIT,
+	@Documento NVARCHAR (MAX),
+	@IdProveedor INT ,
 	@IdUsuario INT ,
-	--@CreadoPor int
-
+	@FechaVigenciaREPSE DATETIME = NULL,
 	--- Insertar Acta constitutiva ---
 	@NoActaConstitutiva NVARCHAR (150) = NULL, @Fecha DATE = NULL, @Nombre NVARCHAR (50) = NULL ,
 	@NoNotario NVARCHAR (150) = NULL, @LugarNotarioPublico NVARCHAR (150) = NULL, @RPPC NVARCHAR (10) = NULL ,
@@ -55,7 +50,7 @@ CREATE PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
 	@IdentificadorS3RPPC NVARCHAR (MAX) = NULL, @CarpetaRPPC NVARCHAR (MAX), @BucketRPPC NVARCHAR (MAX)
 AS
 	BEGIN
-		DECLARE @IdDocumento INT
+		DECLARE @IdDocumento INT,@NOMBRETIPODOCUMENTO VARCHAR(1000);
 
 		IF @IdTipoDocumento = 1 --Insertar Documento Acta Constitutiva-
 			BEGIN
@@ -112,14 +107,28 @@ AS
 		ELSE
 				 ---Insertar documento
 				 BEGIN
-					 INSERT INTO	S_Documento_S3
+					
+					SET @NOMBRETIPODOCUMENTO = (SELECT TOP 1 NombreTipoDocumento FROM S_TipoDocumento WHERE IdTipoDocumento = @IdTipoDocumento);
+					--SE VALIDA SI EL DOCUMENTO ES DE REPSE
+					IF (@NOMBRETIPODOCUMENTO = 'Certificado de aprobación de REPSE')
+					BEGIN
+						--SE ACTUALIZA LA FECHA DE VIGENCIA DEL REPSE
+						UPDATE S_Proveedor
+						SET FechaVigenciaREPSE = @FechaVigenciaREPSE
+						WHERE IdProveedor = @IdProveedor;
+
+					END
+
+					INSERT INTO	S_Documento_S3
 						 ( IdTipoDocumento, IdUsuario, IdTipoValidacionDocumento, IdProveedor, Activo, Documento ,
 						   CreadoEl , NombreDocumento, Mime, Identificador, Extension, Carpeta, Bucket )
-					 VALUES
-						 ( @IdTipoDocumento, @IdUsuario, @IdTipoValidacionDocumento, @IdProveedor, @Activo, @Documento ,
-						   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, ISNULL(@Bucket,'petrovendor-pr'))
+						 VALUES
+							 ( @IdTipoDocumento, @IdUsuario, @IdTipoValidacionDocumento, @IdProveedor, @Activo, @Documento ,
+							   GETDATE (), @NombreDocumento, @Mime, @IdentificadorS3, @Extension, @Carpeta, ISNULL(@Bucket,'petrovendor-pr'))
 
-					 IF @@ERROR <> 0 SELECT 'false' AS msj ;
-					 ELSE SELECT 'true'	   AS msj ;
+						 IF @@ERROR <> 0 SELECT 'false' AS msj ;
+						 ELSE SELECT 'true'	   AS msj ;
+
+					 
 				 END
 	END
