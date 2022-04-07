@@ -1,6 +1,9 @@
-USE Petrovendor
+USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SRAP_ConsultaDetalleAprobacionSolicitudRecepcion
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 05/04/2022 05:56:23 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -11,11 +14,11 @@ GO
 -- Create date: 13/10/2021
 -- Description:	Se agrega la validación de cantidad disponible de materiales
 -- =============================================
--- Author:		Luis David
--- Create date: 17-03-2022
--- Description:	Se agrega la tabla de documento fieldticket y proforma
+-- Author:		Alexander Gomez
+-- Create date: 07/04/2022
+-- Description:	se modifica la consulta de los materiales para contemplar el caso cuando no se tienen aceptaciones previas
 -- =============================================
-CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
+ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario INT,
@@ -153,7 +156,7 @@ AS
 					Recepcionservicio					=	ISNULL(PD.RecepcionPedido,'false'),		
 					PD.RecepcionPedido,
 					Unidad								=	POD.UnidadProveedor,
-					CantidadRecibida					=	t1.Cantidad,
+					CantidadRecibida					=	ISNULL(t1.Cantidad,0),
 					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
 					then '' else 'La cantidad solicitada excede el límite del pedido.'
 					end as 
@@ -177,7 +180,7 @@ AS
 		ON			SPD.IdSolicitudPedidoDetalle		=	POD.IdSolicitudPedidoDetalle		
 		JOIN		PV_TipoMoneda						TM 
 		ON			TM.IdMoneda							=	PD.IdMoneda
-		inner join	#tmpCantidadesRecibidad				t1
+		LEFT join	#tmpCantidadesRecibidad				t1
 		on			t1.IdPedidoDetalle					=	PD.IdPedidoDetalle		
 		WHERE		P.IdProveedorCompras				=	@IdProveedor 		
 		AND			P.IdPedido							=	@IdPedido
