@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Marcos Neri
 -- Create date: 10-01-2020
 -- Description:	*Agregar columna IdEstado
@@ -301,7 +300,7 @@ AS
 				INNER JOIN	dbo.CO_LineaPresupuestoMes LPM		ON TPre.IdPresupuesto = LPM.IdPresupuesto			 					 
 				INNER JOIN dbo.CO_Registro R ON													
 													(
-														(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND convert(VARCHAR,R.FecMovto,112) BETWEEN @FechaDel AND @FechaAl)
+														(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND R.MesPresentacion BETWEEN @FechaDel AND @FechaAl)
 														OR
 														(@FechaDel IS NULL AND @FechaAl IS NULL)
 													) AND
