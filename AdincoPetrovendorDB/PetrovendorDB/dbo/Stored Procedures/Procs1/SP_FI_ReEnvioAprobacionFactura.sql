@@ -1,5 +1,7 @@
 USE [Petrovendor]
 GO
+DROP PROCEDURE IF EXISTS SP_FI_ReEnvioAprobacionFactura
+GO
 /****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 01/02/2022 11:46:51 p. m. ******/
 SET ANSI_NULLS ON
 GO
@@ -11,7 +13,11 @@ GO
 -- Create date: <28/09/2020>
 -- Description:	<Envio de factura, creacion de la operacion y tareas de aprobacion y envio de correos>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_FI_ReEnvioAprobacionFactura]
+-- Author:		<Luis David>
+-- Create date: <06/04/2022>
+-- Description:	<Validación de usuario en tabla TA_NoNotificacion para ver si está bloqueado>
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_ReEnvioAprobacionFactura]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
 	@IdProveedor INT,
@@ -30,6 +36,7 @@ BEGIN
 	DECLARE @ID_FLUJO_APROBACION INT;
 	DECLARE @NOMBRE_APROBADOR NVARCHAR(200);
 	DECLARE @CORREO_APROBADOR NVARCHAR(200);
+	DECLARE @IDUSUARIOAPROBADOR INT;
 	DECLARE @CONT INT;
 	DECLARE @IDNOTIFICACION INT;
 	DECLARE @CONTTOTAL INT;
@@ -42,6 +49,12 @@ BEGIN
 													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
 													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
 													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido);
+	DECLARE @IDPROVEEDOROPERADORA INT = (SELECT TOP 1 AP.IdProveedor
+													FROM dbo.MM_AceptacionPedido AP
+													LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
+													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
+													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
+													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido)
 	DECLARE @TABLE_APROBADORES TABLE(ID INT IDENTITY(1,1), IdAprobador INT, IdSecuencia INT, Nombre NVARCHAR(200), Correo NVARCHAR(200));
 	DECLARE @ID_OPERADORA INT = ( SELECT IdProveedor FROM dbo.MM_AceptacionPedido WHERE IdAceptacionPedido = @IdAceptacionPedido);
 	DECLARE @ID_ACEPTACION_FACTURA int = (SELECT IdAceptacionFactura 
@@ -151,6 +164,7 @@ BEGIN
 		BEGIN
 			SET @NOMBRE_APROBADOR = (SELECT Nombre FROM @TABLE_APROBADORES WHERE ID = @CONT);
 			SET @CORREO_APROBADOR = (SELECT Correo FROM @TABLE_APROBADORES WHERE ID = @CONT);
+			SET @IDUSUARIOAPROBADOR = (SELECT IdAprobador FROM @TABLE_APROBADORES WHERE ID = @CONT)
 		    SET @PLANTILLA_CORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 37);
 			SET @PLANTILLA_ASUNTO = (SELECT Asunto FROM dbo.TA_Correo WHERE IdCorreo = 37);
 
@@ -164,7 +178,12 @@ BEGIN
 
 			SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
-			INSERT INTO Adinco.dbo.S_Notificacion
+			IF NOT EXISTS (SELECT * FROM dbo.TA_NoNotificacion WHERE		IDPROVEEDOR = @IDPROVEEDOROPERADORA AND
+																			IdUsuario = @IDUSUARIOAPROBADOR
+																			AND IdCorreo = 37
+																			AND IsEliminado = 0)
+			BEGIN
+				INSERT INTO Adinco.dbo.S_Notificacion
 			(
 				    IdNotificacion,
 				    Para,
@@ -232,7 +251,8 @@ BEGIN
 				0,         -- IdUsuarioEnvio - int
 				0,         -- IdProveedorEnvio - int
 				0          -- IdUsuarioReceptor - int
-			);
+			);	
+			END
 
 			SET @CONT = @CONT + 1;
 
