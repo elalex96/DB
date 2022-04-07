@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Marcos Neri
 -- Create date: 10-01-2020
 -- Description:	*Agregar columna IdEstado
@@ -188,7 +189,7 @@ AS
           IdEstado,
 		  UUID
          )
-                SELECT R.IdRegistro, 
+                SELECT  R.IdRegistro, 
                        S.NombreServicio AS Servicio, 
                        F.UUID, --I.NombreInstalacion AS InstalacionPresupuestada, 
                        LPM.AC_FEC_INI AS FechaInicio, 
@@ -296,11 +297,11 @@ AS
                        CAST(R.FecMovto AS DATE) AS CreacionGasto, 
                        R.IdEstado,
 					    F.UUID
-                FROM dbo.CO_LineaPresupuestoMes LPM					 
-					 INNER JOIN #TPresuspuestos TPre ON TPre.IdPresupuesto = LPM.IdPresupuesto
-					 INNER JOIN dbo.CO_Registro R ON													
+                FROM #TPresuspuestos TPre
+				INNER JOIN	dbo.CO_LineaPresupuestoMes LPM		ON TPre.IdPresupuesto = LPM.IdPresupuesto			 					 
+				INNER JOIN dbo.CO_Registro R ON													
 													(
-														(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND R.FecMovto BETWEEN @FechaDel AND @FechaAl)
+														(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND convert(VARCHAR,R.FecMovto,112) BETWEEN @FechaDel AND @FechaAl)
 														OR
 														(@FechaDel IS NULL AND @FechaAl IS NULL)
 													) AND
@@ -317,7 +318,7 @@ AS
 															AND TPre.IdPresupuesto <> 10000
 														)
 													) 
-					 LEFT JOIN dbo.CO_Presupuesto P ON LPM.IdPresupuesto = P.IdPresupuesto					 
+					 INNER JOIN dbo.CO_Presupuesto P ON LPM.IdPresupuesto = P.IdPresupuesto					 
                      LEFT JOIN dbo.CO_Servicio S ON LPM.IdServicio = S.IdServicio
                      LEFT JOIN dbo.CO_Instalacion I ON LPM.IdInstalacion = I.IdInstalacion
                      
