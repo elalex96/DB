@@ -17,6 +17,10 @@ GO
 -- Create date: 02/03/2022
 -- Description:	SE AGREGA EL PO PARA DEA ISSUE#1651
 -- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 07/04/2022
+-- Description:	Se agrega la relación a la aceptación del pedido para correcta agrupación #1720
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCN_S3] --364,0
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
@@ -78,15 +82,26 @@ AS
 			Contrato = c.NumeroContrato,
 			ISNULL(RPO.PO,'Sin PO relacionada') AS PO
 		FROM [dbo].[MM_AceptacionCartaPCN] AS AC
-		INNER JOIN [dbo].[S_Documento_S3] AS D ON AC.IdDocumento = D.IdDocumento
-		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
-		INNER JOIN [dbo].[MM_Pedido] AS P ON AP.IdPedido = P.IdPedido
-		INNER JOIN [dbo].[S_Proveedor] AS PR ON P.IdSubcontratista = PR.IdProveedor
-		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
-		INNER JOIN [dbo].[MM_Pedidos] AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor AND PG.IdTipoPedido IN (2, 4, 6)
-	    LEFT  JOIN dbo.MM_TipoPedido AS TP ON PG.IdTipoPedido = TP.IdTipoPedido
-		INNER JOIN Adinco.dbo.CO_Contrato	AS	C 	ON	P.IdContrato = c.IdContrato
-		LEFT JOIN DEA_Relacion_PR_PO AS RPO	ON P.IdPedido = RPO.IdPedido
+		INNER JOIN [dbo].[S_Documento_S3] AS D 
+			ON AC.IdDocumento = D.IdDocumento
+		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP 
+			ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+		INNER JOIN [dbo].[MM_Pedido] AS P
+			ON AP.IdPedido = P.IdPedido
+		INNER JOIN [dbo].[S_Proveedor] AS PR
+			ON P.IdSubcontratista = PR.IdProveedor
+		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD 
+			ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		INNER JOIN [dbo].[MM_Pedidos] AS PG 
+			ON P.IdPedido = PG.IdIdentificador 
+			AND PG.IdProveedorCliente = @IdProveedor 
+			AND PG.IdTipoPedido IN (2, 4, 6)
+	    LEFT  JOIN dbo.MM_TipoPedido AS TP 
+			ON PG.IdTipoPedido = TP.IdTipoPedido
+		INNER JOIN Adinco.dbo.CO_Contrato	AS	C 	
+			ON	P.IdContrato = C.IdContrato
+		LEFT JOIN DEA_Relacion_PR_PO AS RPO	
+			ON P.IdPedido = RPO.IdPedido
 		WHERE 
 		P.IdProveedorCompras = @IdProveedor 
 		AND AC.IdEstatus = @Estado
@@ -115,15 +130,25 @@ AS
 			Contrato = c.NumeroContrato,
 			PO.SAPPONumber AS PO
 		FROM dbo.MPY_MM_AceptacionPedido AS AP 
-		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
-		LEFT JOIN [dbo].[S_Documento_S3] AS D ON AC.IdDocumento = D.IdDocumento
-		LEFT JOIN [dbo].[S_Proveedor] AS PR ON AP.IdSubContratista = PR.RFC AND PR.Activo = 1
-		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
-		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
-		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON PSES.SAPPONumber = SES.PO_SAPNumer AND PSES.SAPSESNumber = SES.SESReferenceNumber AND PSES.SESN = SES.SESNumber
-		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
-		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	SPV.IdContrato = c.IdContrato
+		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC 
+			ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
+		LEFT JOIN [dbo].[S_Documento_S3] AS D 
+			ON AC.IdDocumento = D.IdDocumento
+		LEFT JOIN [dbo].[S_Proveedor] AS PR ON 
+			AP.IdSubContratista = PR.RFC 
+			AND PR.Activo = 1
+		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD 
+			ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV 
+			ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES 
+			ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES 
+			ON PSES.SAPPONumber = SES.PO_SAPNumer AND PSES.SAPSESNumber = SES.SESReferenceNumber AND PSES.SESN = SES.SESNumber
+		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO 
+			ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	
+			ON	AP.IdContrato = C.IdContrato
 		WHERE 
 		PO.Plant = @PLANT
 		AND AC.IdAceptacionCartaPCN IS NOT NULL
@@ -186,15 +211,26 @@ AS
 			Contrato = c.NumeroContrato,
 			ISNULL(RPO.PO,'Sin PO relacionada') AS PO
 		FROM [dbo].[MM_AceptacionCartaPCN] AS AC
-		INNER JOIN [dbo].[S_Documento_S3] AS D ON AC.IdDocumento = D.IdDocumento
-		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
-		INNER JOIN [dbo].[MM_Pedido] AS P ON AP.IdPedido =  P.IdPedido
-		INNER JOIN [dbo].[S_Proveedor] AS PR ON P.IdSubcontratista = PR.IdProveedor
-		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
-		INNER JOIN [dbo].[MM_Pedidos] AS PG ON PG.IdIdentificador = P.IdPedido AND PG.IdProveedorCliente = @IdProveedor AND PG.IdTipoPedido IN (2,4, 6)
-	    LEFT  JOIN dbo.MM_TipoPedido AS TP ON PG.IdTipoPedido = TP.IdTipoPedido
-		INNER JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	P.IdContrato = c.IdContrato
-		LEFT JOIN DEA_Relacion_PR_PO AS RPO	ON P.IdPedido = RPO.IdPedido
+		INNER JOIN [dbo].[S_Documento_S3] AS D 
+			ON AC.IdDocumento = D.IdDocumento
+		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP 
+			ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+		INNER JOIN [dbo].[MM_Pedido] AS P 
+			ON AP.IdPedido =  P.IdPedido
+		INNER JOIN [dbo].[S_Proveedor] AS PR 
+			ON P.IdSubcontratista = PR.IdProveedor
+		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD 
+			ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		INNER JOIN [dbo].[MM_Pedidos] AS PG 
+			ON P.IdPedido = PG.IdIdentificador
+			AND PG.IdProveedorCliente = @IdProveedor 
+			AND PG.IdTipoPedido IN (2,4, 6)
+	    LEFT  JOIN dbo.MM_TipoPedido AS TP 
+			ON PG.IdTipoPedido = TP.IdTipoPedido
+		INNER JOIN	Adinco.dbo.CO_Contrato	AS	C 	
+			ON	P.IdContrato = C.IdContrato
+		LEFT JOIN DEA_Relacion_PR_PO AS RPO	
+			ON P.IdPedido = RPO.IdPedido
 		WHERE  P.IdProveedorCompras = @IdProveedor
 		AND ISNULL(AC.IdEstatusEliminado,0) <> 1  --> QUE NO ESTEN ELIMINADOS
 		ORDER BY  Ac.IdAceptacionPedido DESC;
@@ -221,15 +257,26 @@ AS
 			Contrato = c.NumeroContrato,
 			PO.SAPPONumber AS PO
 		FROM dbo.MPY_MM_AceptacionPedido AS AP 
-		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-		LEFT JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
-		LEFT JOIN [dbo].[S_Proveedor] AS PR ON PR.RFC = AP.IdSubContratista AND PR.Activo = 1
-		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD ON AC.IdEstatus = TD.IdTipoValidacionDoc
-		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
-		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber AND SES.SESNumber = PSES.SESN
-		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
-		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	c.IdContrato	=	SPV.IdContrato
+		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC 
+			ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
+		LEFT JOIN [dbo].[S_Documento_S3] AS D 
+			ON AC.IdDocumento = D.IdDocumento
+		LEFT JOIN [dbo].[S_Proveedor] AS PR 
+			ON PR.RFC = AP.IdSubContratista AND PR.Activo = 1
+		LEFT JOIN [dbo].[S_TipoValidacionDoc] AS TD 
+			ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SPV 
+			ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SPV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES 
+			ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES 
+			ON PSES.SAPPONumber = SES.PO_SAPNumer
+			AND PSES.SAPSESNumber = SES.SESReferenceNumber
+			AND PSES.SESN = SES.SESNumber
+		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO 
+			ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		INNER JOIN	Adinco.dbo.CO_Contrato AS C 	
+			ON AP.IdContrato = C.IdContrato
 		WHERE 
 		PO.Plant = @PLANT
 		AND AC.IdAceptacionCartaPCN IS NOT NULL
