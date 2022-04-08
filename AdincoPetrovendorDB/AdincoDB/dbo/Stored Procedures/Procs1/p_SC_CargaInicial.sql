@@ -18,21 +18,50 @@ BEGIN TRY
     BEGIN TRAN;  
   
  set dateformat dmy  
-  
+
     SELECT @i = MIN(IdSCDetalle)  
     FROM SC_Importacion  
     WHERE IdMaterial IS NULL;  
-  
-    DECLARE @idsubcontrato INT;  
-  
+	
+
+    DECLARE @idsubcontrato INT,
+			@RFCRepetidos NVARCHAR(MAX)
+	
+	CREATE TABLE #Subcontratista(Repetidos INT, RfcProveedor NVARCHAR(800))
+
     UPDATE SC_Importacion  
     SET RFCContratista = RTRIM(LTRIM(RFCContratista)),  
         RFCProveedor = RTRIM(LTRIM(RFCProveedor)),  
         IdMaterial = NULL;  
-  
+	
+	
+	--validacion de subcontratista
+	WITH MyCte AS 
+	(
+	SELECT RFCProveedor FROM SC_Importacion GROUP BY RFCProveedor)
+	INSERT INTO #Subcontratista(Repetidos, RfcProveedor)
+	SELECT COUNT( RFCProveedor) Repetidos, RFCProveedor FROM MyCte 
+    INNER JOIN PV_Subcontratista ON UPPER(MyCte.RFCProveedor) = UPPER(PV_Subcontratista.RFC) 
+    WHERE PV_Subcontratista.IsActivo = 1
+    GROUP BY RFCProveedor
+
+	SELECT @RFCRepetidos = COALESCE(@RFCRepetidos + ', ' + RfcProveedor, RfcProveedor) 
+        From #Subcontratista
+        WHERE Repetidos >= 2
+
+	IF(ISNULL(@RFCRepetidos, '') != '')
+	BEGIN
+		DECLARE @MensajeError nvarchar(max)
+		SELECT @MensajeError = CONCAT('El o los RFC siguientes están repetidos como subcontratistas activos: ', @RFCRepetidos)
+		RAISERROR (@MensajeError, -- Message text.  
+               16, -- Severity.  
+               1 -- State.  
+               );
+	END
+
+
     WHILE @i IS NOT NULL  
     BEGIN 
- 
   
         SET @idMaestro = 0;  
   
@@ -393,4 +422,3 @@ BEGIN CATCH
   
    
 END CATCH;
-
