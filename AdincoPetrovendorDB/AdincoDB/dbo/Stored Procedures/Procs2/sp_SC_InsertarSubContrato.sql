@@ -1,4 +1,5 @@
-create PROC sp_SC_InsertarSubContrato
+
+CREATE PROC sp_SC_InsertarSubContrato
 @pIdSubContrato	int out,
 @pIdSubContratista	int,
 @pIdContratista	int,
@@ -115,7 +116,13 @@ BEGIN
 	)		
 	SELECT  ROW_NUMBER() OVER(ORDER BY ped.IdMaterial ASC)+@IdSCMaterial AS ID,
 	@pIdSubContrato,
-	ped.IdMaterial,
+	CAST(ped.IdMaterial AS VARCHAR) + 
+	CAST(
+		CASE WHEN ROW_NUMBER()OVER(Partition By ped.IdMaterial Order By ped.PrecioUnitario DESC) > 1 
+			 THEN ROW_NUMBER()OVER(Partition By ped.IdMaterial Order By ped.PrecioUnitario DESC) 
+			 ELSE '' 
+		END 
+	AS VARCHAR),
 	ped.IdMaterial,
 	ISNULL(MAT.IdUnidad,10011) /****SI VIENE NULO PONER UNIDAD SERVICIO PV_MM_MaterialUnidad POR DEFAULT*/,
 	sum(ped.Cantidad),
@@ -185,7 +192,6 @@ BEGIN
 	
 
 END
-
 
 
 

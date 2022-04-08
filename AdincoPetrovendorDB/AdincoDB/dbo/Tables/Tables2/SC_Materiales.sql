@@ -24,6 +24,3 @@
 
 
 GO
-CREATE UNIQUE NONCLUSTERED INDEX [IX_SC_Materiales]
-    ON [dbo].[SC_Materiales]([IdMaestro] ASC, [IdSubContrato] ASC, [IdServicio] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
-
