@@ -69,6 +69,48 @@ BEGIN TRY
                   AND IdMaterial IS NULL
         )
         BEGIN
+
+            DECLARE @IdUnidad INT;
+            IF EXISTS
+            (
+                SELECT TOP 1
+                    u.IdUnidad
+                FROM SC_Importacion i
+                    INNER JOIN Petrovendor..PV_MM_MaterialUnidad u
+                        ON IsActivo = 1
+                           AND (
+                                   UPPER(u.UMB) COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(UPPER(i.UnidadMedida)) COLLATE SQL_Latin1_General_CP1_CI_AS
+                                   OR UPPER(i.UnidadMedida) COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(UPPER(u.Unidad)) COLLATE SQL_Latin1_General_CP1_CI_AS
+                               )
+                WHERE IdSCDetalle = @i
+            )
+            BEGIN
+                SELECT TOP 1
+                    @IdUnidad = u.IdUnidad
+                FROM SC_Importacion i
+                    INNER JOIN Petrovendor..PV_MM_MaterialUnidad u
+                        ON IsActivo = 1
+                           AND (
+                                   UPPER(u.UMB) COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(UPPER(i.UnidadMedida)) COLLATE SQL_Latin1_General_CP1_CI_AS
+                                   OR UPPER(i.UnidadMedida) COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(UPPER(u.Unidad)) COLLATE SQL_Latin1_General_CP1_CI_AS
+                               )
+                WHERE IdSCDetalle = @i
+            END;
+            ELSE
+            BEGIN
+                SELECT TOP 1
+                    @IdUnidad = ISNULL(u.IdUnidad, 10011 /*SERVICIO*/)
+                FROM SC_Importacion i
+                    LEFT JOIN Petrovendor..PV_MM_MaterialUnidad u
+                        ON IsActivo = 1
+                           AND (
+                                   UPPER(u.UMB) COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(UPPER(i.UnidadMedida)) COLLATE SQL_Latin1_General_CP1_CI_AS
+                                   OR UPPER(i.UnidadMedida) COLLATE SQL_Latin1_General_CP1_CI_AS LIKE '%'
+                                                                                                      + RTRIM(UPPER(u.Unidad))
+                                                                                                      + '%' COLLATE SQL_Latin1_General_CP1_CI_AS
+                               )
+                WHERE IdSCDetalle = @i;
+            END
             INSERT INTO Petrovendor..MM_Maestro
             (
                 /*IdMaestro,*/
@@ -104,20 +146,13 @@ BEGIN TRY
                 NULL,
                 NULL,
                 NULL,
-                ISNULL(u.IdUnidad, 10011 /*SERVICIO*/),
+                @IdUnidad,
                 NULL,
                 NULL,
                 NULL
             FROM SC_Importacion i
                 LEFT JOIN Petrovendor..PV_TipoMoneda m
                     ON UPPER(m.TipoMonedaCorto) COLLATE SQL_Latin1_General_CP1_CI_AS = UPPER(i.Moneda) COLLATE SQL_Latin1_General_CP1_CI_AS
-                LEFT JOIN Petrovendor..PV_MM_MaterialUnidad u
-                    ON IsActivo = 1 AND (
-                           UPPER(u.UMB) COLLATE SQL_Latin1_General_CP1_CI_AS = RTRIM(UPPER(i.UnidadMedida)) COLLATE SQL_Latin1_General_CP1_CI_AS
-                           OR UPPER(i.UnidadMedida) COLLATE SQL_Latin1_General_CP1_CI_AS LIKE '%'
-                                                                                              + RTRIM(UPPER(u.Unidad))
-                                                                                              + '%' COLLATE SQL_Latin1_General_CP1_CI_AS
-                       )
             WHERE IdSCDetalle = @i;
             SET @idMaestro = SCOPE_IDENTITY();
             INSERT INTO Petrovendor..MM_Material
