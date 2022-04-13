@@ -1,14 +1,24 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_RPT_OCM_AprobadoresPorPedido'
+)
+    DROP PROCEDURE SP_RPT_OCM_AprobadoresPorPedido;
+/****** Object:  StoredProcedure [dbo].[SP_RPT_OCM_AprobadoresPorPedido]    Script Date: 12/04/2022 05:04:19 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
--- Author:		Daniel A Cruz
--- Create date: 04-01-17
--- Description:	 Consultar Aprobadores recibiendo el IdOperador
+-- Author: Daniel AC
+-- Create date: 12-04-2022
+-- Description:	 Se cambian los aprobadores mostrados por los aprobadores de pedido, mostrando la columna Estatus
 -- =============================================
--- Author:		Jose Roman
--- Create date: 24-04-18
--- Description:	 Se cambian los aprobadores mostrados por los aprobadores de pedido
--- =============================================
-CREATE  PROCEDURE SP_RPT_OCM_AprobadoresPorPedido
+CREATE  PROCEDURE [dbo].[SP_RPT_OCM_AprobadoresPorPedido]
 	@IdPedido INT
 AS
 BEGIN
@@ -18,18 +28,19 @@ BEGIN
 		U.Nombre, 
 		t.FechaCambioEstatus, 
 		t.IdTarea,
-		t.IdFirma
-	FROM TA_Tarea AS T
-		--INNER JOIN TA_TareaOperacion AS TAO ON TAO.IdTarea =T.IdTarea
+		t.IdFirma,
+		tae.Nombre as Estatus
+	FROM TA_Tarea AS T		
 		INNER JOIN TA_Operacion AS TOO ON T.IdOperacion = TOO.IdOperacion
-		INNER JOIN dbo.MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = too.IdDocumento
-		INNER JOIN dbo.MM_Pedido AS p ON p.IdSolicitudPedido = sp.IdSolicitudPedido AND p.Version = too.NoVersion
-		INNER JOIN S_Usuario AS U on u.IdUsuario = T.IdAprobador
-		INNER JOIN TA_Estatus AS TAE ON TAE.IdEstatus = T.IdEstatus
+		INNER JOIN dbo.MM_SolicitudPedido AS SP ON TOO.IdDocumento = SP.IdSolicitudPedido 
+		INNER JOIN dbo.MM_Pedido AS p ON sp.IdSolicitudPedido = p.IdSolicitudPedido  AND  too.NoVersion = p.Version
+		INNER JOIN S_Usuario AS U on T.IdAprobador = u.IdUsuario 
+		INNER JOIN TA_Estatus AS TAE ON T.IdEstatus = TAE.IdEstatus 
 	WHERE p.IdPedido = @IdPedido 
-		AND t.IdEstatus = 2
-		AND TOO.IdTipoOperacion = 9
+		AND t.IdEstatus = 2 --> CTE APROBADO
+		AND TOO.IdTipoOperacion = 9 --> CTE APROBACION DE PEDIDO
 	ORDER BY NoSecuencia ASC 		
 END
+
 
 

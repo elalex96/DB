@@ -1,7 +1,22 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ReasignarAprobadorPedido'
+)
+    DROP PROCEDURE SP_TA_ReasignarAprobadorPedido;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_TA_ReasignarAprobadorPedido]    Script Date: 12/04/2022 10:11:57 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel A Cruz
--- Create date: 06-04-2017
--- Description:	 SP que reasigna una tarea a otra aprobador
+-- Create date: 12-04-2020
+-- Description:	 Se retorna la información de la nueva tarea
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_TA_ReasignarAprobadorPedido] 
 	-- Add the parameters for the stored procedure here
@@ -16,17 +31,21 @@ BEGIN
 	SET NOCOUNT ON;
 	 
 	 DECLARE @IdTareaActual int 
-	 DECLARE @IdTareaNueva int  
+	 DECLARE @IdTareaNueva int
+	 DECLARE @NoSecuencia INT 
 	 DECLARE @Descripcion nvarchar(max)
 
 
 	 SET NOCOUNT ON;
 	 --- Obtener el IdTarea de la Tarea del Usuario Actual----
 
-	    SET @IdTareaActual = (SELECT T.IdTarea
-							   FROM TA_Tarea AS T
-							   INNER JOIN TA_Operacion AS TOO ON TOO.IdOperacion = T.IdOperacion
-							   WHERE TOO.IdOperacion = @IdOperacion AND T.IdAprobador = @IdAprobador)
+	    SELECT @IdTareaActual= T.IdTarea		
+		FROM TA_Tarea AS T
+		JOIN TA_Operacion AS TOO 
+		ON T.IdOperacion = TOO.IdOperacion
+		WHERE TOO.IdOperacion = @IdOperacion 
+		AND T.IdAprobador = @IdAprobador
+		AND T.Activo=1 -->CTE 
 
 	 --- Agregar Tarea Usuario Nuevo --- 
 	
@@ -44,7 +63,7 @@ BEGIN
 		 UPDATE TA_TAREA  SET Activo  = 0, IdEstatus = 7
 		 WHERE IdTarea = @IdTareaActual
 
-	 --- Agregar Evento Historial --- 
+	    --- Agregar Evento Historial --- 
 
 		 SET @Descripcion = 'El usuario '+
 							(SELECT Nombre FROM S_Usuario WHERE IdUsuario = @IdAprobador)+ 
@@ -53,12 +72,16 @@ BEGIN
 							
 		 INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
 		 VALUES(@Descripcion,@IdOperacion,GETDATE(),8)
+
+		 SELECT 
+		 @NoSecuencia =NoSecuencia
+		 FROM TA_Tarea WHERE IdTarea=@IdTareaNueva
     
 	--- Enviar Datos del Nuevo Aprobador ---
 
-		   SELECT Nombre, Correo
-		   FROM S_Usuario
-		   WHERE IdUsuario = @IdNuevoAprobador
+		SELECT Nombre, Correo,@IdTareaNueva,@NoSecuencia
+		FROM S_Usuario
+		WHERE IdUsuario = @IdNuevoAprobador
     
  END
 

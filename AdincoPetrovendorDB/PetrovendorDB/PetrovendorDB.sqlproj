@@ -7162,10 +7162,6 @@
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
-    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ConsultaIdTareaPorPedido.sql">
-      <AnsiNulls>On</AnsiNulls>
-      <QuotedIdentifier>On</QuotedIdentifier>
-    </Build>
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ConsultaListaTodosLosPedidos.sql">
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
@@ -10639,6 +10635,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\WS_sp_ObtenWSURLPorDescripcion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_DEA_ConsultarPrefijoAsuntoFactura.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SRAP_sp_AgregarAdjuntoEnDocumentosS3.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_MM_ConsultaIdTareaPorPedido.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
@@ -10672,5 +10669,6 @@
     <None Include="dbo\Stored Procedures\Procs1\Carso_sp_EnviaCorreosComparativasPendientes.sql" />
     <None Include="dbo\LogModificaciones.txt" />
     <None Include="dbo\User Defined Types\TY_PedidoDetalle.sql" />
+    <None Include="dbo\Stored Procedures\Procs2\SP_MM_ActualizarFirmaTareaPedido.sql" />
   </ItemGroup>
 </Project>
