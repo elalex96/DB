@@ -10635,6 +10635,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\WS_sp_ObtenWSURLPorDescripcion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_DEA_ConsultarPrefijoAsuntoFactura.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SRAP_sp_AgregarAdjuntoEnDocumentosS3.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_MM_ConsultaIdTareaPorPedido.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />

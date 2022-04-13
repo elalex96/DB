@@ -1,0 +1,42 @@
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaIdTareaPorPedido'
+)
+    DROP PROCEDURE SP_MM_ConsultaIdTareaPorPedido;
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaIdTareaPorPedido]    Script Date: 12/04/2022 02:18:33 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- Author: Daniel AC
+-- Create date: 12-04-2022
+-- Description:	 Se actualiza información para retornar el no de tarea correctamente 
+-- =============================================
+CREATE procedure [dbo].[SP_MM_ConsultaIdTareaPorPedido]
+	@IdSolicitudPedido INT,
+	@Version INT,
+    @IdContrato    INT = null, 
+	@IdUsuario     INT,
+    @FechaRegistro DATETIME = null
+AS
+BEGIN
+	SELECT t.IdTarea
+	FROM MM_Pedido P
+	JOIN dbo.TA_Operacion O ON
+		 P.IdSolicitudPedido  = O.IdDocumento
+		 AND P.Version =O.NoVersion 
+	JOIN dbo.TA_Tarea T
+		ON  O.IdOperacion = T.IdOperacion 
+	WHERE P.IdSolicitudPedido = @IdSolicitudPedido
+		AND O.IdTipoOperacion = 9 --> CTE APROBACION DE PEDIDO
+		AND O.NoVersion=@Version
+		AND T.IdAprobador=@IdUsuario
+		AND ISNULL(t.Activo,0)=1 --> CTE DEBE ESTAR ACTIVA LA TAREA
+	GROUP BY t.IdTarea
+END
