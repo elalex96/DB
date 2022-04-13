@@ -1,21 +1,15 @@
-﻿USE [Petrovendor]
+﻿USE Petrovendor
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_CambioAprobacionSolicitudAceptacionPedido'
-)
-    DROP PROCEDURE SRAP_CambioAprobacionSolicitudAceptacionPedido;
-/****** Object:  StoredProcedure [dbo].[SRAP_CambioAprobacionSolicitudAceptacionPedido]    Script Date: 16/07/2021 10:40:36 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SRAP_CambioAprobacionSolicitudAceptacionPedido
 GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
 -- Description:	Aprobar detalle de solicitud de recepción de pedido
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 12/04/2022
+-- Description:	Se valida cuando hay comentarios de la aceptación (Issue #1718 Petrovendor)
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_CambioAprobacionSolicitudAceptacionPedido] 
 	-- Add the parameters for the stored procedure here
@@ -49,7 +43,7 @@ AS
 		  SI EL APROBADOR 2 RECHAZA SE RECHAZA TODA LA OPERACION GRAL
 		  EL APROBADOR 2 NO PUEDE APROBAR SI EL APROBADOR 1 NO HA REALIZADO LA APROBACION(COMO APROBADA)
 		 */
-
+		 DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido');
 		 DECLARE @NuevoEstatusId INT 
 		 DECLARE @TareaActualId INT 
 		 DECLARE @EstatusAprobadorActualId INT 
@@ -79,9 +73,55 @@ AS
         DECLARE @CountEstRech INT;
         DECLARE @CountEstPen INT;
 
-		DECLARE @CantidadProductos INT
-		DECLARE @ContadorProductos INT 
+		DECLARE @CantidadProductos INT;
+		DECLARE @ContadorProductos INT;
+		DECLARE @NombreAprobador VARCHAR(500) = (SELECT TOP 1 Nombre FROM S_Usuario WHERE IdUsuario = @UsuarioId);
+		DECLARE @MensajeUltimoAprobadorAprobado VARCHAR(max) = (SELECT TOP 1 T.Comentario AS Comentario
+																FROM TA_Operacion O	
+																JOIN TA_Tarea T
+																	ON O.IdOperacion = T.IdOperacion
+																JOIN S_Usuario U
+																	ON T.IdAprobador = U.IdUsuario
+																JOIN TA_Estatus E
+																	ON T.IdEstatus = E.IdEstatus
+																	WHERE O.IdDocumento = @IdSolicitudAceptacionPedido
+																	AND O.IdTipoOperacion = @TipoOperacionId		
+																	AND T.Activo=1
+																	AND T.IdEstatus = 2
+																	ORDER BY T.NoSecuencia DESC);
 
+		IF @ComentarioAceptacion = '' OR @ComentarioAceptacion IS NULL OR @ComentarioAceptacion = ' '
+		BEGIN
+			IF @AccionAprobacion = 'APROBAR' -- SE VALIDA PARA EL MENSAJE
+			BEGIN
+				IF @MensajeUltimoAprobadorAprobado IS NOT NULL -- SI EL ULTIMO MENSAJE DE LA APROBACIÓN Y ESTÁ APROBADO SE CONCATENA AL NUEVO
+				BEGIN
+					SET @ComentarioAceptacion  = CONCAT(@MensajeUltimoAprobadorAprobado,'/ ','Aprobado por ',@NombreAprobador, ', sin comentarios.')
+				END
+				ELSE
+				BEGIN 
+					SET @ComentarioAceptacion  = CONCAT('Aprobado por ',@NombreAprobador, ', sin comentarios.')
+				END
+			END
+			IF @AccionAprobacion = 'RECHAZAR'
+			BEGIN 
+				IF @MensajeUltimoAprobadorAprobado IS NOT NULL
+				BEGIN
+					SET @ComentarioAceptacion  = CONCAT(@MensajeUltimoAprobadorAprobado,'/ ','Rechazado por ',@NombreAprobador, ', sin comentarios.')
+				END
+				ELSE
+				BEGIN
+					SET @ComentarioAceptacion  = CONCAT('Rechazado por ',@NombreAprobador, ', sin comentarios.')
+				END
+			END
+		END
+		ELSE
+		BEGIN
+			IF	@MensajeUltimoAprobadorAprobado IS NOT NULL
+			BEGIN
+				SET @ComentarioAceptacion = CONCAT(@MensajeUltimoAprobadorAprobado,'/ ',@ComentarioAceptacion);
+			END
+		END
 		DECLARE @Aprobadores AS TABLE 
 		(
 		IdRow  INT IDENTITY(1,1) PRIMARY KEY,
@@ -143,7 +183,7 @@ AS
 			FROM MM_Pedido AS P  
 			JOIN MM_Pedidos AS PG 
 			ON P.IdPedido = PG.IdIdentificador 
-			AND PG.IdProveedorCliente = P.IdProveedorCompras 
+			AND P.IdProveedorCompras = PG.IdProveedorCliente 
 			AND PG.IdTipoPedido in (2,4,6) 
 			LEFT JOIN Adinco..CO_Contrato C
 				ON P.IdContrato = C.IdContrato
@@ -200,7 +240,7 @@ AS
 										
 
 					 SET @DescripcionH
-					= N'El Usuario ' + (SELECT Nombre FROM S_Usuario WHERE IdUsuario = @UsuarioId)
+					= N'El Usuario ' + @NombreAprobador
 					  + N' ha ' + @NombreNuevoEstatusAprobador + N' la tarea de aprobación'
 			
 					INSERT INTO TA_HistorialFlujoTarea (IdOperacion, Fecha, Descripcion, IdEstadoFlujo)
@@ -217,7 +257,7 @@ AS
 							SELECT COUNT(T.IdEstatus) AS TOTAL
 							FROM TA_Operacion TAO
 								JOIN TA_Tarea AS T
-									ON T.IdOperacion = TAO.IdOperacion
+									ON TAO.IdOperacion = T.IdOperacion
 							WHERE TAO.IdOperacion = @IdOperacion
 								  AND T.IdEstatus <> 7 --> NO SEA REASIGNADO
 								  AND T.IdEstatus <> 12 --> NO ESTE ELIMINADO
@@ -230,7 +270,7 @@ AS
 							SELECT COUNT(T.IdEstatus) AS TOTAL
 							FROM TA_Operacion TAO
 								JOIN TA_Tarea AS T
-									ON T.IdOperacion = TAO.IdOperacion
+									ON TAO.IdOperacion = T.IdOperacion
 							WHERE TAO.IdOperacion = @IdOperacion
 								  AND T.IdEstatus = 1
 								  AND T.Activo = 1
@@ -254,7 +294,7 @@ AS
 							SELECT COUNT(T.IdEstatus) AS TOTAL
 							FROM TA_Operacion TAO
 								JOIN TA_Tarea AS T
-									ON T.IdOperacion = TAO.IdOperacion
+									ON TAO.IdOperacion = T.IdOperacion
 							WHERE TAO.IdOperacion = @IdOperacion
 								  AND T.IdEstatus = 3 --> RECHAZARON 
 								  AND T.Activo = 1
@@ -355,7 +395,7 @@ AS
 										
 
 					  SET @DescripcionH
-					= N'El Usuario ' + (SELECT Nombre FROM S_Usuario WHERE IdUsuario = @UsuarioId)
+					= N'El Usuario ' + @NombreAprobador
 					  + N'-(ROL OBS) ha ' + @NombreNuevoEstatusAprobador + N' la tarea de aprobación'
 			
 					INSERT INTO TA_HistorialFlujoTarea (IdOperacion, Fecha, Descripcion, IdEstadoFlujo)
@@ -436,7 +476,7 @@ AS
 						@IdRegimenProveedor			= S.IdTipoRegimen
 				FROM MM_Pedido P
 				INNER JOIN S_Proveedor S
-						ON S.IdProveedor = P.IdSubcontratista
+						ON P.IdSubcontratista = S.IdProveedor
 				WHERE P.IdPedido = @IdPedido
 
 
@@ -619,6 +659,3 @@ AS
 		END
 		
 END
-
-
- 
