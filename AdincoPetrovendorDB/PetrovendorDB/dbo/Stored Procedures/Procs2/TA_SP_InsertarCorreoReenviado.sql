@@ -1,13 +1,26 @@
-﻿-- =============================================
--- Author:		<Author,,Name>
--- Create date: <Create Date,,>
--- Description:	<Description,,>
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'TA_SP_InsertarCorreoReenviado'
+)
+    DROP PROCEDURE TA_SP_InsertarCorreoReenviado;
+/****** Object:  StoredProcedure [dbo].[TA_SP_InsertarCorreoReenviado]    Script Date: 13/04/2022 08:37:57 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
-create PROCEDURE TA_SP_InsertarCorreoReenviado
+-- Author:	Daniel AC
+-- Create date: 13-04-2022
+-- Description:Retornar el IdNotificacion
+-- =============================================
+CREATE PROCEDURE [dbo].[TA_SP_InsertarCorreoReenviado]
 	@Para VARCHAR(500),
 	@Asunto VARCHAR(250),
-	@Mensaje TEXT,
-	--@FechaProgramada DATETIME,
+	@Mensaje TEXT,	
 	@IdUsuario INT,
 	@De VARCHAR(100),
 	@IdCorreo INT,
@@ -68,5 +81,5 @@ BEGIN
 		GETDATE()
 	)
 
-
+	SELECT @IdNotificacion
 END
