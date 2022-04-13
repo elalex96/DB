@@ -124,7 +124,7 @@ BEGIN
 								THEN DATEADD(MONTH,1,f.FechaTimbrado)
 							WHEN DAY(f.FechaTimbrado) > 20 AND MONTH(f.FechaTimbrado) = 12
 								THEN DATEADD(YEAR,1,(DATEADD(month, 1, f.FechaTimbrado)))
-							WHEN DAY(f.FechaTimbrado) <= 20 AND MONTH(f.FechaTimbrado) < 12
+							WHEN DAY(f.FechaTimbrado) <= 20 AND MONTH(f.FechaTimbrado) <= 12
 								THEN f.FechaTimbrado
 						END AS MesPresentacion,
 					   10004,
