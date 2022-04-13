@@ -1,7 +1,7 @@
 ﻿USE Petrovendor
 GO
 DROP PROCEDURE IF EXISTS MM_SP_EnvioDeGastoAdinco
-GO-- =============================================  
+GO
 -- Author:  <DANIEL AC>  
 -- Create date: 01/10/2019  
 -- Description: Se  removio insertado de XML en Adinco   
@@ -120,12 +120,12 @@ BEGIN
 					   pr.InicioEjecucion,
 					   pr.FinEjecucion,
 					   pr.Comentarios,
-					   CASE WHEN DAY(f.FechaTimbrado) > 20
-								THEN DATEADD(MONTH,1,f.FechaTimbrado)
-							WHEN DAY(f.FechaTimbrado) > 20 AND MONTH(f.FechaTimbrado) = 12
-								THEN DATEADD(YEAR,1,(DATEADD(month, 1, f.FechaTimbrado)))
+					   CASE WHEN DAY(f.FechaTimbrado) > 20 AND MONTH(f.FechaTimbrado) = 12
+								THEN DATEFROMPARTS ( YEAR(DATEADD(YEAR,1,f.FechaTimbrado)), MONTH(DATEADD(MONTH,1,f.FechaTimbrado)), 01 )
 							WHEN DAY(f.FechaTimbrado) <= 20 AND MONTH(f.FechaTimbrado) <= 12
-								THEN f.FechaTimbrado
+								THEN DATEFROMPARTS ( YEAR(f.FechaTimbrado), MONTH(f.FechaTimbrado), 01 )
+							WHEN DAY(f.FechaTimbrado) > 20
+								THEN DATEFROMPARTS ( YEAR(f.FechaTimbrado), MONTH(dateadd(MONTH,1,f.FechaTimbrado)), 01 )
 						END AS MesPresentacion,
 					   10004,
 					   @IdUsuario,
