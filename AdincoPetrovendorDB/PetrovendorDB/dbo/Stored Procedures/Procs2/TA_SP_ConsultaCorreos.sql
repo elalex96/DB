@@ -7,8 +7,7 @@ IF EXISTS
     WHERE name = 'TA_SP_ConsultaCorreos'
 )
     DROP PROCEDURE TA_SP_ConsultaCorreos;
-GO 
-/****** Object:  StoredProcedure [dbo].[TA_SP_ConsultaCorreos]    Script Date: 16/02/2022 10:47:50 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[TA_SP_ConsultaCorreos]    Script Date: 13/04/2022 09:32:09 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -26,14 +25,14 @@ BEGIN
                n.Para,
                n.Asunto,
                n.Enviada,
-               u.Nombre AS EnviadoPor,
+               ISNULL(u.Nombre,'Administrador Petrovendor') AS EnviadoPor,
                ec.EnviadoEl,
                ec.IdIdentificacion,
                n.Mensaje
         FROM Adinco.dbo.S_Notificacion AS n
             INNER JOIN dbo.TA_EnvioCorreo AS ec
                 ON ec.IdEnvioAdinco = n.IdNotificacion
-            INNER JOIN dbo.S_Usuario AS u
+            LEFT JOIN dbo.S_Usuario AS u
                 ON u.IdUsuario = ec.EnviadoPor
         WHERE CreadoPor IN (3,1)	-->ctes 		 
 		 AND  n.CreadoEl BETWEEN @FECHAINICIO AND DATEADD(HOUR,24,@FECHAFIN)
@@ -60,3 +59,6 @@ BEGIN
     ORDER BY Correos.IdNotificacion DESC;
 
 END;
+
+
+
