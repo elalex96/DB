@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿USE ADINCO;
+GO
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -8,8 +10,14 @@
 -- Description:		Se agrega filtrado de todos
 --					los presupuestos del periodo
 --					seleccionado
--- =============================================
-CREATE PROCEDURE [dbo].[SP_SE_A4]
+-- ============================================
+-- Modificado Por:	Reyna 
+-- Create date:		13 de Abril del 2022
+-- Description:		se Actualiza el stored procedure para mostrar el nuevo catalogo 
+--					de mano de obra y para tomar en cuenta gastos con PCN >=0 (issue 1890 adinco)
+-- ============================================
+
+CREATE PROCEDURE [dbo].[SP_SE_A4]--10038,10109,0,'20210101','20211201',10195,'Exploración'
     @IdContrato INT,
     @IdUsuario INT,
     @IdPresupuesto INT,
@@ -20,9 +28,17 @@ CREATE PROCEDURE [dbo].[SP_SE_A4]
 AS
 BEGIN
     SET NOCOUNT ON;
-    CREATE TABLE #Presupuestos (IdPresupuesto INT);
+	CREATE TABLE #Presupuestos (IdPresupuesto INT);
     CREATE TABLE #RFC (RFC VARCHAR(25));
-    /*Se valida si el presupuesto viene en 0 para obtener todos los presupuestos del perido.*/
+	CREATE TABLE #Sueldos(SueldosSalarios DECIMAL(20, 2), SueldosSalariosNacional DECIMAL(20, 2), Catalogo VARCHAR(25), CatalogoId INT);
+
+
+	DECLARE @CatalogoOtrosId int=0;
+	SELECT  @CatalogoOtrosId = ID FROM CO_CAT_ManoDeObra
+
+	INSERT INTO #Sueldos(SueldosSalarios, SueldosSalariosNacional, Catalogo, CatalogoId)
+	SELECT 0,0,Nombre, Id FROM CO_CAT_ManoDeObra
+
     IF (@IdPresupuesto = 0)
     BEGIN
         INSERT INTO #Presupuestos
@@ -116,7 +132,7 @@ BEGIN
     IF 1 =
     (
         SELECT COUNT(1)
-        FROM dbo.CO_Presupuesto P (NOLOCK)
+    FROM dbo.CO_Presupuesto P (NOLOCK)
             JOIN dbo.CO_AnioContractual AC (NOLOCK)
                 ON P.IdAnioContractual = AC.IdAnioContractual
             JOIN dbo.CO_Contrato C (NOLOCK)
@@ -133,6 +149,7 @@ BEGIN
         UNION
         SELECT 'GMS971110BTA';
     END;
+
     /*Consulta final*/
     SELECT SUM(   CASE
                       WHEN f.IdMoneda <> 1 then
@@ -148,8 +165,8 @@ BEGIN
                           ISNULL(R.MontoRegistro, 0)
                   END * CAST(PCN AS DECIMAL(20, 3))
               ) AS SueldosSalariosNacional,
-           R.IdGastoRubro
-    INTO #DATOS
+           ISNULL(R.IdCatManoObra,@CatalogoOtrosId) AS IdCatManoObra
+	INTO #DATOS
     FROM dbo.CO_Registro R (NOLOCK)
         JOIN dbo.FI_Factura F (NOLOCK)
             ON R.IdFactura = F.IdFactura
@@ -174,16 +191,20 @@ BEGIN
                                SELECT RFC FROM #RFC
                            )
           AND F.IdContrato = @IdContrato
-          AND ISNULL(R.PCN, 0) <> 0
+		    AND ISNULL(R.PCN, 0) >= 0
           AND F.IdMoneda IN ( 1, 2 )
-    GROUP BY R.IdGastoRubro;
-    /**/
-    SELECT ISNULL(CAST(ISNULL(D.SueldosSalarios, 0) AS DECIMAL(20, 2)), 0) AS SueldosSalarios,
-           ISNULL(CAST(ISNULL(D.SueldosSalariosNacional, 0) AS DECIMAL(20, 2)), 0) AS SueldosSalariosNacional,
-           GR.IdGastoRubro
-    FROM #DATOS D
-        RIGHT JOIN dbo.CO_GastosRubro GR
-            ON D.IdGastoRubro = GR.IdGastoRubro
-    WHERE GR.IdGastoRubro NOT IN ( 6, 7 )
-    ORDER BY GR.IdGastoRubro DESC;
+    GROUP BY R.IdCatManoObra;
+
+	
+	UPDATE S
+	SET S.SueldosSalarios = D.SueldosSalarios,
+	S.SueldosSalariosNacional = D.SueldosSalariosNacional
+	FROM 
+		#SUELDOS S
+	JOIN
+		#DATOS D
+		ON	S.CatalogoId	=	D.IdCatManoObra;
+		
+	
+	SELECT SueldosSalarios,SueldosSalariosNacional, Catalogo FROM #SUELDOS
 END;

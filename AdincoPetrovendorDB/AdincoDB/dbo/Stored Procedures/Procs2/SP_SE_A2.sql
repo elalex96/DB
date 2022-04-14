@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿USE Adinco;
+GO
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -16,6 +18,11 @@
 --					los presupuestos del periodo
 --					seleccionado
 -- =============================================
+-- Modificado Por:	Reyna 
+-- Create date:		12 de Abril del 2022
+-- Description:		se Actualiza el stored procedure 
+--                  para tomar en cuenta gastos con PCN >=0 (issue 1890 adinco)
+-- ============================================
 CREATE PROCEDURE [dbo].[SP_SE_A2]
     @IdContrato INT,
     @IdUsuario INT,
@@ -107,7 +114,7 @@ BEGIN
         BEGIN
             INSERT INTO #Presupuestos
             (
-                IdPresupuesto
+   IdPresupuesto
             )
             SELECT @IdPresupuesto;
         END;
@@ -203,7 +210,7 @@ BEGIN
               AND PPP.IdContrato = @IdContrato
         GROUP BY ISNULL(A.Codigo, 'SinClasificar'),
                  R.Comentarios,
-                 S.RazonSocial,
+                S.RazonSocial,
                  S.RFC, 
                  ISNULL(R.PCN, 0),
                  F.IdFactura,
@@ -304,7 +311,7 @@ BEGIN
                    AND S.TipoPersonaFiscalID = 1
             JOIN dbo.CO_LineaPresupuestoMes L (NOLOCK)
                 ON R.IdPrograma = L.IdLineaPresupuestoMeS
-            JOIN #Presupuestos PP
+        JOIN #Presupuestos PP
                 ON L.IdPresupuesto = PP.IdPresupuesto
             JOIN dbo.CO_Presupuesto P (NOLOCK)
                 ON PP.IdPresupuesto = P.IdPresupuesto
@@ -329,6 +336,7 @@ BEGIN
                                )
               AND F.IdContrato = @IdContrato
               AND F.IdMoneda IN ( 1, 2 )
+			  AND ISNULL(R.PCN, 0) >= 0
         ORDER BY ISNULL(A.Nombre, 'SinClasificar');
         /*SELECT FINAL*/
         SELECT Codigo,
@@ -391,3 +399,4 @@ BEGIN
                  IdFactura
     END;
 END;
+

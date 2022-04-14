@@ -1,4 +1,7 @@
-﻿-- =============================================
+﻿USE Adinco;
+GO
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -17,6 +20,11 @@
 --					los presupuestos del periodo
 --					seleccionado
 -- =============================================
+-- Modificado Por:	Reyna 
+-- Create date:		12 de Abril del 2022
+-- Description:		se Actualiza el stored procedure 
+--                  para tomar en cuenta gastos con PCN >=0 (issue 1890 adinco)
+-- ============================================
 CREATE PROCEDURE [dbo].[SP_SE_A3]
     @IdContrato INT,
     @IdUsuario INT,
@@ -337,7 +345,7 @@ BEGIN
                                    SELECT RFC FROM #RFC
                                )
               AND F.IdContrato = @IdContrato
-              AND ISNULL(R.PCN, 0) <> 0
+			    AND ISNULL(R.PCN, 0) >= 0
               AND F.IdMoneda IN ( 1, 2 )
         ORDER BY ISNULL(A.Nombre, 'SinClasificar');
         /*SELECT FINAL*/
@@ -391,7 +399,7 @@ BEGIN
                END AS CN,
                IdFactura
         FROM #FINAL
-        GROUP BY Codigo,
+      GROUP BY Codigo,
                  Descripcion,
                  RazonSocial,
                  RFC,
@@ -401,3 +409,4 @@ BEGIN
                  IdFactura
     END;
 END;
+

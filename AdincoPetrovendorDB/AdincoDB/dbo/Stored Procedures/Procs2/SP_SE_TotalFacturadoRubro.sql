@@ -1,8 +1,18 @@
-﻿-- =============================================
+﻿use Adinco;
+go
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
--- =============================================
+-- ============================================
+-- Modificado Por:	Reyna 
+-- Create date:		12 de Abril del 2022
+-- Description:		se Actualiza el stored procedure  
+--					para tomar en cuenta gastos con PCN >=0,
+--				    tambien para poder retornar montos cuando el usuario selecciona Presupuesto: TODOS
+--					tambien se modifica la conversión de dolares a pesor, ya que los montos no cuadraban con lo que se mostraba en las hojas
+--					(issue 1890 adinco)
+-- ============================================
 CREATE PROCEDURE [dbo].[SP_SE_TotalFacturadoRubro] 
 -- [SP_SE_TotalFacturadoRubro] 10018,1,10079,'2019-01-01','2019-12-01',2 --BIENES
 -- [SP_SE_TotalFacturadoRubro] 10018,1,10079,'2019-01-01','2019-12-01',3 --SERVICIOS
@@ -12,7 +22,9 @@ CREATE PROCEDURE [dbo].[SP_SE_TotalFacturadoRubro]
 @IdPresupuesto INT, 
 @FInicio       DATE, 
 @FFin          DATE, 
-@IdRubro       INT
+@IdRubro       INT,
+@IdPeriodo INT,
+@Etapa VARCHAR(20)
 AS
      BEGIN
          -- SET NOCOUNT ON added to prevent extra result sets from
@@ -55,6 +67,67 @@ AS
          --                     AND P.nombre LIKE '%provisional%'
          --                     AND C.IdContratista IN(10005, 10006);
          --    END;
+
+		 -- SE AGREGA LA OPCIÓN DE PRESUPUESTOS TODOS ISSUE 1890 RO
+
+  IF (@IdPresupuesto = 0) -- TODOS
+    BEGIN
+			IF 1 =
+			 (
+				 SELECT COUNT(1)
+				 FROM dbo.CO_Presupuesto P (NOLOCK)
+					  JOIN dbo.CO_AnioContractual AC (NOLOCK)
+						ON P.IdAnioContractual = AC.IdAnioContractual
+						AND P.idpresupuesto = @IdPresupuesto
+					  JOIN dbo.CO_Contrato C (NOLOCK)
+						ON AC.IdContrato = C.IdContrato
+				 WHERE P.idpresupuesto = @IdPresupuesto
+					   AND P.nombre LIKE '%exploración%'
+					   AND C.IdContratista IN(10005, 10006)
+			 )
+				 BEGIN
+					 INSERT INTO #Presupuestos(IdPresupuesto)
+							SELECT P.IdPresupuesto
+							FROM 
+								CO_ProgramaActividad CPA (NOLOCK)
+							JOIN 
+								CO_PeriodoContrato CPC (NOLOCK)
+								ON CPA.IdPeriodoContrato = CPC.IdPeriodo
+							JOIN 
+								CO_Presupuesto P (NOLOCK)
+								ON CPA.IdProgramaActividad = P.IdProgramaActividad
+							JOIN
+								dbo.CO_AnioContractual AC (NOLOCK)
+								ON P.IdAnioContractual = AC.IdAnioContractual
+								AND P.nombre LIKE '%exploración%'
+							JOIN 
+								dbo.CO_Contrato C (NOLOCK)
+								ON AC.IdContrato = C.IdContrato
+							WHERE C.IdContrato = @IdContrato
+								  AND P.nombre LIKE '%exploración%'
+								  AND C.IdContratista IN(10005, 10006)
+								 AND CPC.IdPeriodo = @IdPeriodo
+								 AND P.Activo = 1
+				 END;
+				 ELSE
+				 BEGIN
+              
+					INSERT INTO #Presupuestos
+					(
+						IdPresupuesto
+					)
+					SELECT CP.IdPresupuesto
+					FROM CO_ProgramaActividad CPA (NOLOCK)
+						INNER JOIN CO_PeriodoContrato CPC (NOLOCK)
+							ON CPA.IdPeriodoContrato = CPC.IdPeriodo
+						INNER JOIN CO_Presupuesto CP (NOLOCK)
+							ON CPA.IdProgramaActividad = CP.IdProgramaActividad
+					WHERE CPC.IdPeriodo = @IdPeriodo
+						  AND CP.Activo = 1
+				 END;
+	END
+	ELSE
+	BEGIN --VERSION ANTERIOR (SOLO CON UN PRESUPUESTO)
          IF 1 =
          (
              SELECT COUNT(1)
@@ -83,16 +156,17 @@ AS
              END;
              ELSE
              BEGIN
-                 INSERT INTO #Presupuestos(IdPresupuesto)
+              INSERT INTO #Presupuestos(IdPresupuesto)
              SELECT @IdPresupuesto;
              END;
+	END
 
          /**/
-
          INSERT INTO #RFC(RFC)
                 SELECT 'FMP140930MW3'
                 UNION
                 SELECT 'SAT970701NN3';
+				/**/
          IF 1 =
          (
              SELECT COUNT(1)
@@ -175,7 +249,7 @@ AS
 
                  /*RESUMEN*/
 
-                 IF(@IdRubro = 2)
+		IF(@IdRubro = 2)
                      BEGIN
                          SELECT CAST(ISNULL(SUM(SubTotal), 0) AS DECIMAL(20, 2)) AS SubTotalGastos, 
                                 IdGastoRubro AS IdRubroGasto
@@ -213,7 +287,12 @@ AS
                         ISNULL(A.Nombre, 'SinClasificar') AS Descripcion, 
                         S.RazonSocial AS RazonSocial, 
                         S.RFC AS RFC, 
-                        CAST(R.MontoRegistro * TCD.TipoCambio AS DECIMAL(20, 2)) AS SubTotal, 
+						CASE
+						   WHEN f.IdMoneda <> 1 then
+							   CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro, f.Fecha) AS DECIMAL(20, 2))
+						   ELSE
+							   ISNULL(R.MontoRegistro, 0)
+					   END AS SubTotal,
                         F.SubTotal AS SubTotalOriginal, 
                         R.PCN AS PCN, 
                         F.IdFactura, 
@@ -238,11 +317,6 @@ AS
                 LEFT JOIN dbo.PV_Subcontratista S (NOLOCK)
 					ON F.IdSubcontratista = S.IdSubcontratista
 					AND S.TipoPersonaFiscalID = 2
-                LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-					ON F.IdMoneda <> TCD.IdMoneda
-                    AND DAY(TCD.Fecha) = DAY(F.Fecha)
-                    AND MONTH(TCD.Fecha) = MONTH(F.Fecha)
-                    AND YEAR(TCD.Fecha) = YEAR(F.Fecha)
                 LEFT JOIN dbo.MM_BS_Actividad A ON R.IdCBSISH = A.IdActividad
                  WHERE(CAST(F.Fecha AS DATE) >= @FInicio
                        AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))
@@ -252,8 +326,9 @@ AS
                      FROM #RFC
                  )
                       AND F.IdContrato = @IdContrato
-                      AND TCD.IdMoneda IN(1, 2)
+                      AND F.IdMoneda IN(1, 2)
                       AND R.IdGastoRubro IN(2, 3)
+					  AND ISNULL(R.PCN, 0) >= 0
                  --ORDER BY ISNULL(A.Nombre, 'SinClasificar')
                  --
                  UNION
@@ -263,7 +338,12 @@ AS
                         ISNULL(A.Nombre, 'SinClasificar') AS Descripcion, 
                         S.RazonSocial AS RazonSocial, 
                         S.RFC AS RFC, 
-                        CAST(F.SubTotal * TCD.TipoCambio AS DECIMAL(20, 2)) AS SubTotal, 
+					  CASE
+						   WHEN f.IdMoneda <> 1 then
+							   CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro, f.Fecha) AS DECIMAL(20, 2))
+						   ELSE
+							   ISNULL(R.MontoRegistro, 0)
+					   END AS SubTotal,
                         F.SubTotal AS SubTotalOriginal, 
                         R.PCN AS PCN, 
                      F.IdFactura, 
@@ -288,11 +368,6 @@ AS
                 LEFT JOIN dbo.PV_Subcontratista S (NOLOCK)
 					ON F.IdSubcontratista = S.IdSubcontratista
                                                     AND S.TipoPersonaFiscalID = 1
-                LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-					ON F.IdMoneda <> TCD.IdMoneda
-					AND DAY(TCD.Fecha) = DAY(F.Fecha)
-					AND MONTH(TCD.Fecha) = MONTH(F.Fecha)
-					AND YEAR(TCD.Fecha) = YEAR(F.Fecha)
                 LEFT JOIN dbo.MM_BS_Actividad A (NOLOCK)
 					ON R.IdCBSISH = A.IdActividad
                  WHERE(CAST(F.Fecha AS DATE) >= @FInicio
@@ -303,8 +378,9 @@ AS
                      FROM #RFC
                  )
                       AND F.IdContrato = @IdContrato
-                      AND TCD.IdMoneda IN(1, 2)
+                      AND F.IdMoneda IN(1, 2)
                       AND R.IdGastoRubro IN(2, 3)
+					 AND ISNULL(R.PCN, 0) >= 0
                  ORDER BY ISNULL(A.Nombre, 'SinClasificar')
 
                  /*RESUMEN*/
@@ -327,3 +403,4 @@ AS
                      END;
              END;
      END;
+
