@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿USE Adinco;
+GO
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -8,8 +10,13 @@
 -- Description:		Se agrega filtrado de todos
 --					los presupuestos del periodo
 --					seleccionado
--- =============================================
-CREATE PROCEDURE [dbo].[SP_SE_A5]
+-- ============================================
+-- Modificado Por:	Reyna 
+-- Create date:		12 de Abril del 2022
+-- Description:		se Actualiza el stored procedure  
+--					para tomar en cuenta gastos con PCN >=0 (issue 1890 adinco)
+-- ============================================
+ALTER PROCEDURE [dbo].[SP_SE_A5]
     @IdContrato INT,
     @IdUsuario INT,
     @IdPresupuesto INT,
@@ -116,7 +123,7 @@ BEGIN
     IF 1 =
     (
         SELECT COUNT(1)
-        FROM dbo.CO_Presupuesto P (NOLOCK)
+    FROM dbo.CO_Presupuesto P (NOLOCK)
             JOIN dbo.CO_AnioContractual AC (NOLOCK)
                 ON P.IdAnioContractual = AC.IdAnioContractual
             JOIN dbo.CO_Contrato C (NOLOCK)
@@ -173,7 +180,7 @@ BEGIN
                                SELECT RFC FROM #RFC
                            )
           AND F.IdContrato = @IdContrato
-          AND ISNULL(R.PCN, 0) <> 0
+		    AND ISNULL(R.PCN, 0) >= 0
           AND F.IdMoneda IN ( 1, 2 )
     GROUP BY R.Comentarios,
              S.RazonSocial,
@@ -201,3 +208,4 @@ BEGIN
              RFC,
              IdFactura;
 END;
+

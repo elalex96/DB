@@ -1,4 +1,7 @@
-﻿-- =============================================  
+﻿USE Adinco;
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================  
 -- Author:  Manuel CD  
 -- Create date: 2018-10-16  
 -- Description:   
@@ -7,8 +10,13 @@
 -- Create date:		04 de Abril del 2022
 -- Description:		Se agrega filtrado de todos
 --					los presupuestos del periodo
---					seleccionado
--- =============================================
+-- ============================================
+-- Modificado Por:	Reyna 
+-- Create date:		12 de Abril del 2022
+-- Description:		se Actualiza el stored procedure  
+--					para tomar en cuenta gastos con PCN >=0
+--				    se agrego filtro de rubros (issue 1890 adinco)
+-- ============================================
 CREATE PROCEDURE [dbo].[SP_SE_ListaCartasS3]
     @IdContrato INT,
     @IdUsuario INT,
@@ -180,8 +188,9 @@ BEGIN
                                SELECT RFC FROM #RFC
                            )
           AND F.IdContrato = @IdContrato
-          AND ISNULL(R.PCN, 0) <> 0
-          AND TCD.IdMoneda IN ( 1, 2 )
+		  AND ISNULL(R.PCN, 0) >= 0
+          AND TCD.IdMoneda IN ( 1, 2 ) 
+		  AND R.IdGastoRubro IN (1,2,3,4,5)
           AND (
                   F.IdFactura IS NOT NULL
                   AND F.UUID IS NOT NULL
