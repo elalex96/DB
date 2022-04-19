@@ -1,11 +1,20 @@
-﻿  
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]    Script Date: 19/04/2022 02:13:44 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================  
 -- Author:  Daniel AC  
 -- Update date: 01/10/19  
 -- Description: Se modificio columna de razón social  
 -- ============================================  
-  
-CREATE PROCEDURE SP_MM_ConsultaPedidosVenta_MV1_5  
+-- Author:		Alexander Gomez
+-- Create date: 19/04/2022
+-- Description:	Se agrega a la consulta el dato del No.PO
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
     -- Add the parameters for the stored procedure here  
     @IdProveedor INT,  
     @CONSULTA NVARCHAR(300),  
@@ -278,7 +287,7 @@ BEGIN
                  Version,  
                  [FechaVigencia],  
                  P.IdProveedorCompras,  
-                 PG.IdPedido,  
+            PG.IdPedido,  
                  TM.TipoMonedaCorto,  
                  TP.TipoPedido,  
                  TP.IdTipoPedido  
@@ -393,7 +402,8 @@ BEGIN
                        'En confirmación'        
                END AS EstatusRecepcion,  
                TP.TipoPedido,  
-               TP.IdTipoPedido  
+               TP.IdTipoPedido ,
+			   ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'N/A') AS NoPO
         FROM MM_Pedido AS P  
             INNER JOIN MM_PedidoDetalle AS PD  
                 ON PD.IdPedido = P.IdPedido  
@@ -421,7 +431,11 @@ BEGIN
             INNER JOIN PV_TipoMoneda AS TM  
                 ON TM.IdMoneda = P.IdMoneda  
             LEFT JOIN dbo.MM_TipoPedido AS TP  
-                ON TP.IdTipoPedido = PG.IdTipoPedido  
+                ON TP.IdTipoPedido = PG.IdTipoPedido
+			LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI
+				ON P.IdPedido = WPI.IdPedidoADINCO
+			LEFT JOIN DEA_Relacion_PR_PO AS POW
+				ON P.IdPedido = POW.IdPedido
         WHERE O.IdTipoOperacion = 9  
               AND P.IdSubcontratista = @IdProveedor  
               AND O.IdEstatusOperacion = 2  
@@ -441,12 +455,12 @@ BEGIN
                  P.RecepcionServicio,  
                  TP.TipoPedido,  
                  TP.IdTipoPedido,  
-     P.IdEstatusEliminado  
+				 P.IdEstatusEliminado ,
+				 WPI.PURCHASING_DOCUMENT,
+				 POW.PO 
         ORDER BY PG.IdPedido DESC;  
   
     END;  
   
 END;  
-  
-  
   

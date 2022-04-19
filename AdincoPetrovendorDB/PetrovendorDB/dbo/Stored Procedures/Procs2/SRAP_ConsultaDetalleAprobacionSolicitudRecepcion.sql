@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 05/04/2022 05:56:23 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 19/04/2022 01:48:56 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,6 +17,10 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 07/04/2022
 -- Description:	se modifica la consulta de los materiales para contemplar el caso cuando no se tienen aceptaciones previas
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 19/04/2022
+-- Description:	Se agrega a la consulta el dato del No.PO
 -- =============================================
 ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
@@ -78,7 +82,8 @@ AS
 		 UE.Nombre AS CreadoPor,
 		 ISNULL(SAP.IdAceptacionPedido,0) AS IdAceptacionPedido ,
 		 SR.Nombre AS  SolicitanteRequisicion,
-		 PG.IdTipoPedido
+		 PG.IdTipoPedido,
+		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,PO.PO),'SIN PO RELACIONADO') AS NoPO
 		 FROM MM_SolicitudAceptacionPedido SAP
 		 JOIN TA_Operacion O 
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
@@ -99,6 +104,10 @@ AS
 			ON P.IdSolicitudPedido	= SP.IdSolicitudPedido
 		LEFT JOIN S_Usuario SR 
 			ON SP.Solicitante = SR.IdUsuario
+		LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI
+			ON P.IdPedido = WPI.IdPedidoADINCO
+		LEFT JOIN DEA_Relacion_PR_PO AS PO
+			ON P.IdPedido = PO.IdPedido
 		 WHERE 
 			P.IdProveedorCompras = @IdProveedor 
 			AND SAP.IdPedido = @IdPedido 
@@ -124,7 +133,9 @@ AS
 		 SAP.IdAceptacionPedido,
 		 SR.Nombre,
 		 PG.IdTipoPedido,
-		 PV.RegimenCapital
+		 PV.RegimenCapital,
+		 WPI.PURCHASING_DOCUMENT,
+		 PO.PO
 	END
 	  
 	  /*TABLA 2 PRODUCTOS*/
