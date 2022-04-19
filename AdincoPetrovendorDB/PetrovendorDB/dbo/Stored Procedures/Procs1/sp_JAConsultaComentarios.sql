@@ -1,4 +1,8 @@
-﻿-- ============================================= 
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS sp_JAConsultaComentarios
+GO
+-- ============================================= 
 -- Modified: DANIEL AC 
 -- Updated date: 08/01/2017 
 -- Description: Agregue parametro de imagen de proveedor 
@@ -7,6 +11,10 @@
 -- Modified: DANIEL AC 
 -- Updated date: 16/01/2017  1:40PM
 -- Description: Agregue CONDICION DE QUE EL USUARIO SEA DEL PROVEEDOR DEL COMENTARIO
+-- =============================================
+-- Modified: Luis David
+-- Updated date: 18/04/2022
+-- Description: Se agrupan las cotizaciones para que no se repitan dependiendo los contratos (Issue#1727)
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_JAConsultaComentarios]  
 (
@@ -26,7 +34,7 @@ BEGIN
         Nombre NVARCHAR(MAX),
         IdUsuario INT,
 		IdProveedor INT,
-		ImageProveedor IMAGE
+		IdImagen INT
     )
 
     INSERT INTO @tablaAux
@@ -39,7 +47,7 @@ BEGIN
         Nombre,
         IdUsuario,
 		IdProveedor,
-		ImageProveedor
+		IdImagen
     )
     SELECT base.IdComentarioBase,
            base.Comentario,
@@ -49,11 +57,7 @@ BEGIN
            usuario.Nombre,
            base.IdUsuario,
 		   ISNULL(base.IdProveedor,0),
-		   CASE WHEN DATALENGTH(IP.ImagenProveedorThumb)>0 THEN
-		   IP.ImagenProveedorThumb
-		   ELSE 
-		   (SELECT ImagenThumb FROM dbo.PV_ImagenPredeterminada WHERE IdImagenPredeterminada=2)
-		   END AS ImageProveedor		   
+		   IP.IdImagen		   
     FROM dbo.JA_ComentarioBase base
         INNER JOIN dbo.S_Usuario usuario
             ON usuario.IdUsuario = base.IdUsuario
@@ -62,6 +66,14 @@ BEGIN
 		LEFT JOIN dbo.S_ImagenPerfil AS IP ON 
 		IP.IdProveedor = base.IdProveedor
     WHERE base.IdSolPed = @IdSolPed
+	GROUP BY base.IdComentarioBase,
+           base.Comentario,
+           base.IdSolPed,
+           base.FechaCreado,
+           usuario.Nombre,
+           base.IdUsuario,
+		   ISNULL(base.IdProveedor,0),
+		   IP.IdImagen
     ORDER BY base.IdComentarioBase
 
 
@@ -78,10 +90,22 @@ BEGIN
           AND IdProveedor = @IdProveedor
 
     --Retorno a la vista
-    SELECT *
-    FROM @tablaAux
+    SELECT 
+		TA.IdComentarioBase,
+        TA.Comentario,
+        TA.IdPerfil,
+        TA.IdSolPed,
+        TA.FechaCreado,
+        TA.Nombre,
+        TA.IdUsuario,
+		TA.IdProveedor,
+		CASE WHEN DATALENGTH(IP.ImagenProveedorThumb)>0 THEN
+		   IP.ImagenProveedorThumb
+		   ELSE 
+		   (SELECT ImagenThumb FROM dbo.PV_ImagenPredeterminada WHERE IdImagenPredeterminada=2)
+		   END AS ImageProveedor		   
+    FROM @tablaAux AS TA
+	LEFT JOIN dbo.S_ImagenPerfil AS IP ON 
+		TA.IdImagen = IP.IdImagen 
 	ORDER BY FechaCreado DESC 
 END
-
-
-
