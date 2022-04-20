@@ -1,13 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_ConsultaDetalleNuevaSolicitudRecepcion'
-)
-    DROP PROCEDURE SRAP_ConsultaDetalleNuevaSolicitudRecepcion;
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleNuevaSolicitudRecepcion]    Script Date: 19/07/2021 12:37:01 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleNuevaSolicitudRecepcion]    Script Date: 19/04/2022 02:45:49 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,7 +10,11 @@ GO
 -- Create date: 25-05-2021
 -- Description:	Consultar detalle para crear nueva solicitud de recepción de pedido
 -- =============================================
-CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleNuevaSolicitudRecepcion]  
+-- Author:		Alexander Gomez
+-- Create date: 19/04/2022
+-- Description:	Se agrega a la consulta el dato del No.PO
+-- =============================================
+ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleNuevaSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdPedido    INT
@@ -144,7 +141,8 @@ AS
 		 TP.TipoPedido,    
 		 TP.IdTipoPedido,  
 		 ISNULL(P.Cerrado, 0) AS Cerrado,
-		 P.IdSubcontratista AS ProveedorVentaId		    
+		 P.IdSubcontratista AS ProveedorVentaId	,
+		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'SIN PO RELACIONADO') AS NoPO	    
 		 FROM MM_Pedido AS P    
 		 INNER JOIN MM_Pedidos AS PG 
 			ON P.IdPedido = PG.IdIdentificador 
@@ -170,7 +168,11 @@ AS
 		 LEFT JOIN CC_CentroCosto AS CC 
 			ON SP.IdCentroCosto = CC.IdCentrocosto     
 		 LEFT JOIN dbo.MM_HorasVigenciaPedido AS H 
-			ON H.IdPedido = P.IdPedido    
+			ON H.IdPedido = P.IdPedido   
+		LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI
+			ON P.IdPedido = WPI.IdPedidoADINCO
+		LEFT JOIN DEA_Relacion_PR_PO AS POW
+			ON P.IdPedido = POW.IdPedido 
 		 WHERE O.IdTipoOperacion = 9 
 			AND P.IdSubcontratista = @IdProveedor 
 			AND P.IdPedido = @IdPedido 
@@ -192,7 +194,9 @@ AS
 		 TP.IdTipoPedido,    
 		 P.DiasCredito,    
 		 P.Cerrado,  
-		 P.IdSubcontratista
+		 P.IdSubcontratista,
+		 WPI.PURCHASING_DOCUMENT,
+		 POW.PO	     
 
 
 	    /*PRODUCTOS A ENTREGAR*/
@@ -235,4 +239,3 @@ AS
 		 
  
 END;
-

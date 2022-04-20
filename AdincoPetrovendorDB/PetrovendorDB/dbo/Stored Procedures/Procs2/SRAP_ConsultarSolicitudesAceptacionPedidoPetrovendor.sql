@@ -1,13 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor'
-)
-    DROP PROCEDURE SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor;
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor]    Script Date: 18/07/2021 09:56:26 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor]    Script Date: 19/04/2022 02:18:09 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,7 +10,11 @@ GO
 -- Create date: 25-05-2021
 -- Description:	Consultar solicitudes de recepción de pedido
 -- =============================================
-CREATE PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor]  
+-- Author:		Alexander Gomez
+-- Create date: 19/04/2022
+-- Description:	Se agrega a la consulta el dato del No.PO
+-- =============================================
+ALTER PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedidoPetrovendor]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario   INT
@@ -52,7 +49,8 @@ AS
 		 UE.Nombre AS CreadoPor,
 		 C.NumeroContrato AS Contrato,
 		 US.Nombre AS SolitanteRequisicion,
-		 P.IdPeticionOferta AS IdPeticionOferta   
+		 P.IdPeticionOferta AS IdPeticionOferta,
+		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'N/A') AS NoPO   
 		 FROM MM_SolicitudAceptacionPedido SAP
 		 JOIN TA_Operacion O 
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
@@ -77,6 +75,10 @@ AS
 			ON P.IdSolicitudPedido = SP.IdSolicitudPedido
 		 LEFT JOIN S_Usuario US
 			ON SP.Solicitante = US.IdUsuario
+		LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI
+			ON P.IdPedido = WPI.IdPedidoADINCO
+		LEFT JOIN DEA_Relacion_PR_PO AS POW
+			ON P.IdPedido = POW.IdPedido
 		 WHERE 
 			P.IdSubcontratista = @IdProveedor 
 		 GROUP BY     
@@ -100,7 +102,8 @@ AS
 		 UE.Nombre,
 		 C.NumeroContrato,
 		 US.Nombre,
-		 P.IdPeticionOferta 	    
+		 P.IdPeticionOferta,
+		 WPI.PURCHASING_DOCUMENT,
+		 POW.PO	    
 		 ORDER BY SAP.IdSolicitudAceptacionPedido DESC
 END;
-

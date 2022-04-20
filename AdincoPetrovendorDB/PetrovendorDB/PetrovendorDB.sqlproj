@@ -10637,6 +10637,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\SRAP_sp_AgregarAdjuntoEnDocumentosS3.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_MM_ConsultaIdTareaPorPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\TA_SP_ConsultarInfoReenvioCorreoAdjuntos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidarProveedorPedidosWDEA.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
