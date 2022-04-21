@@ -13225,6 +13225,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\spConsultaProgramaImplementaRpt.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_GastosAmatitlan2020_SEL.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\RPT_CertificadoElegibles.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_AprobacionesPorUsuarioContador.sql" />
     <Build Include="dbo\Consultas\QRY_Adinco_0901.sql" />
   </ItemGroup>
   <ItemGroup>

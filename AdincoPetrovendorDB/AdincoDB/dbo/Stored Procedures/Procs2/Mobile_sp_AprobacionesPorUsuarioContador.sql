@@ -1,13 +1,21 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuarioContador]    Script Date: 18/01/2022 11:18:26 a. m. ******/
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Mobile_sp_AprobacionesPorUsuarioContador'
+)
+    DROP PROCEDURE Mobile_sp_AprobacionesPorUsuarioContador;
+/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuarioContador]    Script Date: 18/04/2022 05:17:36 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
 
-ALTER PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuarioContador] --Mobile_sp_AprobacionesPorUsuarioContador 10067
+CREATE PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuarioContador] --Mobile_sp_AprobacionesPorUsuarioContador 10019 10
 @IdUsuario INT
 as
 begin 
@@ -35,12 +43,14 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			[TipoFlujo] [int] NULL,
 			[IdPedido] [int] NULL
 		) 
+
 -- SE CREA UNA TABLA PARA TODOS LOS PROVEDDORES QUE TIENE UN USUARIO ADINCO 
 		DROP TABLE IF EXISTS #IdsProveedore
 		CREATE TABLE #IdsProveedore
 		(
 			IdProveedor INT NOT null
 		)
+
 --SE INSERTAN LOS IDS DE PROVEEDORES QUE TIENE UN USUARIO
 		INSERT INTO #IdsProveedore
 		(
@@ -52,6 +62,7 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 						JOIN Petrovendor.dbo.S_UsuarioProveedor AS up
 						ON u.IdUsuario = up.IdUsuario  
 		WHERE u.IdUsuarioADINCO = @IdUsuario
+
 -- SE CREA UNA TABLA PARA LOS idOperacion de los pedimentos comprobantes
 		CREATE TABLE #IdOperaciones
 		(
@@ -115,10 +126,11 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP ON O.IdDocumento = SP.IdSolicitudPedido 
 				INNER JOIN Petrovendor.dbo.TA_FlujoTarea AS TF ON O.IdFlujoTarea = TF.IdFlujoTarea 
 				WHERE T.IdAprobador = @IdUsuarioP
-				AND O.IdTipoOperacion = 2
-				AND t.IdEstatus = 1
+				AND O.IdTipoOperacion = 2  --> CTE APROBACIÓN DE SOLICITUD DE PEDIDO
+				AND t.IdEstatus = 1 --> EN APROBACIÓN
 				AND O.IdProveedor = @IdProveedorCursor
 				AND ISNULL(O.IdEstatusEliminado, 0) <> 1  --> MOSTRAR NO ELIMINADAS 
+				AND T.Activo=1 --> CTE TAREA ACTIVA
 				AND O.IdOperacion NOT IN (SELECT IdOperacion FROM Petrovendor.dbo.FN_FlujoSerialNoAprobados(@IdUsuarioP,@IdProveedorCursor,2))
 
 			FETCH NEXT FROM CursorSolucitudesPedido INTO @IdProveedorCursor
@@ -159,10 +171,12 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 				   AND O.NoVersion = p.Version 
 			INNER JOIN Petrovendor.dbo.TA_Tarea t
 				ON O.IdOperacion = t.IdOperacion 
-		WHERE O.IdTipoOperacion = 9
+		WHERE O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
 			  AND ISNULL(O.IdEstatusEliminado, 0) <> 1 -->APROBACIÓN NO ESTE ELIMINADO
+			  AND t.Activo=1 --> CTE ESTE ACTIVA
 			  AND t.IdAprobador = @IdUsuarioP
 			  AND t.NoSecuencia > 1;
+			  
 		INSERT INTO @OperacionNoAprobadas
 		(
 			IdOperacion
@@ -174,8 +188,9 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			INNER JOIN Petrovendor.dbo.TA_Tarea T
 				ON T.IdOperacion = O.IdOperacion
 				   AND T.NoSecuencia = (f.NoSecuencia - 1)
-		WHERE O.IdTipoOperacion = 9
-			  AND T.IdEstatus <> 2;
+		WHERE O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
+			  AND T.IdEstatus <> 2; --> CTE QUE NO ESTE APROBADA
+
 		INSERT INTO #TM_Aprobacion
 	(
 		IdTipoAprobacion,
@@ -214,11 +229,12 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			LEFT JOIN Petrovendor.dbo.S_Proveedor prov ON P.IdSubcontratista = prov.IdProveedor
 		WHERE T.IdAprobador = @IdUsuarioP
 			  AND O.IdProveedor = @IdProveedorCursorPedido
-			  AND O.IdTipoOperacion = 9
+			  AND O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
 			  AND P.Version = O.NoVersion
-			  AND t.IdEstatus = 1
+			  AND t.IdEstatus = 1 --> CTE EN ESTATUS DE APROBACIÓN
 			  AND ISNULL(O.IdEstatusEliminado, 0) <> 1 -->APROBACIÓN NO ESTE ELIMINADO
 			  AND ISNULL(p.IdEstatusEliminado, 0) <> 1 -->Pedido no eliminado
+			  AND T.Activo = 1 --> CTE ACTIVO
 			  AND O.IdOperacion NOT IN (
 										   SELECT IdOperacion FROM @OperacionNoAprobadas
 									   )
@@ -273,9 +289,9 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			0 as NoVersion,			
 			O.IdFlujoTarea as TipoFlujo,
 			PG.IdPedido as IdPedido
-	FROM Petrovendor..S_Usuario      
+	FROM Petrovendor..S_Usuario  UA    
 		LEFT JOIN Petrovendor..TA_Tarea TA
-				ON Petrovendor..S_Usuario.IdUsuario = TA.IdAprobador 
+				ON UA.IdUsuario = TA.IdAprobador 
 		LEFT JOIN Petrovendor..TA_Operacion O
 				ON TA.IdOperacion = O.IdOperacion
 		LEFT JOIN Petrovendor..TA_Vencimiento vigencia
@@ -283,7 +299,7 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 		LEFT JOIN Petrovendor..MM_Pedidos PG
 				ON O.IdDocumento = PG.IdIdentificador 
 			   AND O.IdProveedor = PG.IdProveedorCliente
-			   AND PG.IdTipoPedido = 1 
+			   AND PG.IdTipoPedido = 1 --> CTE  TOPO DE PEDIDO COMPRA DIRECTA
 		LEFT JOIN Petrovendor..FI_Factura fac
 				ON O.IdDocumento = fac.IdFactura       
 		LEFT JOIN Petrovendor..CO_Registro reg
@@ -291,25 +307,27 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 		LEFT JOIN Adinco.dbo.CO_Instalacion instalacion
 				ON reg.IdInstalacion = instalacion.IdInstalacion 
 		LEFT JOIN Petrovendor..S_UsuarioProveedor UP
-				ON Petrovendor..S_Usuario.IdUsuario = UP.IdUsuario 
+				ON UA.IdUsuario = UP.IdUsuario 
 		LEFT JOIN Adinco.dbo.CO_Contrato AS C
 			ON fac.IdContrato = C.IdContrato    
 		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
 			ON C.IdAreaContractual = AC.IdAreaContractual
-	WHERE O.IdEstatusOperacion = 1
-		AND O.IdTipoOperacion = 14
-		AND S_Usuario.IdUsuario = @IdUsuarioP
+	WHERE O.IdEstatusOperacion = 1 --> CTE ESTATUS EN APROBACIÓN
+		AND O.IdTipoOperacion = 14 --> CTE APROBACIÓN DE COMPRA DIRECTA 
+		AND UA.IdUsuario = @IdUsuarioP
 		AND UP.IdProveedor = @IdProveedorCursorComprasDirecta
 		AND fac.IdContrato = UP.idContrato
+		AND TA.IdEstatus=1 --> CTE EL ESTATUS DEBE ESTAR EN APROBACIÓN
 		AND O.IdOperacion NOT IN (SELECT IdOperacion FROM Petrovendor..FN_FlujoSerialNoAprobados(@IdUsuarioP,@IdProveedorCursorComprasDirecta,14))
 	ORDER BY O.IdOperacion DESC;
+
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------
 		FETCH NEXT FROM CursorCompraDirecta INTO @IdProveedorCursorComprasDirecta
 		END 
 		CLOSE CursorCompraDirecta
 		DEALLOCATE CursorCompraDirecta
-	
+
 --END
 ----------------------------------------------------------------
 ----------------------------------------------------------------
@@ -356,7 +374,7 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 					APC.Activo = 1
 					AND T.IdEstatus = 1
 					AND T.IdAprobador = @IdUsuarioP
-					AND OP.IdTipoOperacion = 19
+					AND OP.IdTipoOperacion = 19 --> CTE APROBACIÓN DE COMPROBANTES/PEDIMENTOS 
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------
@@ -392,8 +410,8 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 			TA.IdAprobador  
 			 FROM Petrovendor..TA_Tarea AS TA  
 			 WHERE TA.IdOperacion = @IdOperacionCursor  
-			  AND TA.IdEstatus <> 7  
-			  AND TA.Activo = 1  
+			  AND TA.IdEstatus <> 7  --> CTE DIFERENTE DE Cancelado por Reasignacion
+			  AND TA.Activo = 1  -->CTE ACTIVO
 			  AND TA.FechaCambioEstatus IS NULL  
 			 ORDER BY TA.NoSecuencia ASC);
 		END
@@ -403,8 +421,8 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 			  TA.IdAprobador  
 			 FROM Petrovendor..TA_Tarea AS TA  
 			 WHERE TA.IdOperacion = @IdOperacionCursor  
-			  AND TA.IdEstatus <> 7  
-			  AND TA.Activo = 1  
+			  AND TA.IdEstatus <> 7  --> CTE DIFERENTE DE Cancelado por Reasignacion
+			  AND TA.Activo = 1   -->CTE ACTIVO
 			  AND TA.FechaCambioEstatus IS NULL  
 			  AND TA.IdAprobador = @IdUsuarioP)
 		END
@@ -457,10 +475,10 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 				WHERE 
 					OP.IdOperacion = @IdOperacionCursor
 					AND 
-					APC.Activo = 1
-					AND T.IdEstatus = 1
+					APC.Activo = 1 --> CTE ACTIVO
+					AND T.IdEstatus = 1 --> CTE ACTIVO
 					AND T.IdAprobador = @IdUsuarioP
-					AND OP.IdTipoOperacion = 19
+					AND OP.IdTipoOperacion = 19 --> CTE APROBACIÓN DE COMPROBANTES/PEDIMENTOS 
 		END
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------
@@ -477,7 +495,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 -----------------------SE SELECCIONAN TODOS LOS REGISTROS----------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
-
+	
 SELECT
 		t.IdContrato,
 		CONCAT(AC.NombreAreaContractual,'- - ',C.NumeroContrato) AS NumeroContrato,
@@ -509,12 +527,28 @@ FROM #TM_Aprobacion AS t
 		left JOIN dbo.CO_CONTRATO as c
 			ON t.IdContrato = c.IdContrato
 		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
-		ON C.IdAreaContractual = AC.IdAreaContractual
-		--where t.IdContrato = 3
+		ON C.IdAreaContractual = AC.IdAreaContractual	
+		GROUP BY 
+		t.IdContrato,
+		AC.NombreAreaContractual,
+		C.NumeroContrato,
+		ta.NombreOperacion,
+		t.IdTipoAprobacion,
+		t.FechaCreacion,
+		t.FechaCreacion,
+		t.ComentarioDocumento,
+		t.ComentarioAprobacion,
+		e.Status,		
+		t.IdStatusAprobacionM,
+		t.IdTareaOrigen,
+		t.NoVersion,
+		t.IdPedido,
+		t.IdTipoAprobacion ,
+		t.IdDocumento,
+		t.IdPedido, 
+		t.TipoFlujo
 		ORDER BY t.FechaCreacion ASC
 ------------------------------------------------------
---select * from #IdOperaciones
-
 SELECT COUNT(1) AS APROBACIONES_PENDIENTES FROM #DATOSAPROBACIONES
 
 end
