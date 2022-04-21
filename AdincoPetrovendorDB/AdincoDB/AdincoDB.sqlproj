@@ -130,6 +130,7 @@
     <Folder Include="dbo\Stored Procedures\Procs1\" />
     <Folder Include="dbo\Stored Procedures\Procs2\" />
     <Folder Include="dbo\User Defined Types\" />
+    <Folder Include="dbo\Consultas" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Tables\Tables1\00_MurphyNov2019.sql">
@@ -13225,6 +13226,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\p_GastosAmatitlan2020_SEL.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\RPT_CertificadoElegibles.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_AprobacionesPorUsuarioContador.sql" />
+    <Build Include="dbo\Consultas\QRY_Adinco_0901.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
