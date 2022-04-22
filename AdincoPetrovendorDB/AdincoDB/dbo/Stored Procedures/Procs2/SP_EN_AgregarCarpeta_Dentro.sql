@@ -1,14 +1,6 @@
 USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_EN_AgregarCarpeta_Dentro'
-)
-    DROP PROCEDURE SP_EN_AgregarCarpeta_Dentro;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 24/03/2022 08:56:15 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 22/04/2022 12:22:00 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -23,14 +15,15 @@ GO
 -- Create date: <25/03/2022>
 -- Description:	Se agrego parametro de Nivel y CarpetaId del padre de la nueva carpeta
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro]
+ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro]
 	-- Add the parameters for the stored procedure here
 	@Ruta VARCHAR(MAX),
 	@Nombre NVARCHAR(500),
 	@IdUsuario INT,
 	@NivelPadre INT,
 	@CarpetaPadreId INT,
-	@IdContrato INT
+	@IdContrato INT,
+	@Limitador INT
 
 AS
 BEGIN
@@ -42,6 +35,10 @@ BEGIN
 			@Nivel INT,
 			@Frecuencia INT,
 			@IdNuevaCarpeta INT;
+
+	DECLARE @LIMITADOR_GUARDADO INT = (SELECT TOP 1 Limitador FROM EN_CarpetasArchivosVisor WHERE IdElemento = 1787);
+
+	SET @LIMITADOR_GUARDADO = ((ISNULL(@LIMITADOR_GUARDADO,0)) + 1);
 			
 
     -- Insert statements for procedure here
@@ -55,7 +52,8 @@ BEGIN
 		[CreadoEl],
 		Nivel,
 		Activo,
-		IdContrato
+		IdContrato,
+		Limitador
 	)
 	VALUES
 	(
@@ -67,7 +65,8 @@ BEGIN
 		GETDATE(),
 		@NivelPadre,
 		1,
-		@IdContrato
+		@IdContrato,
+		@LIMITADOR_GUARDADO
 	);
 
 	SET @IdNuevaCarpeta = (SELECT SCOPE_IDENTITY());
