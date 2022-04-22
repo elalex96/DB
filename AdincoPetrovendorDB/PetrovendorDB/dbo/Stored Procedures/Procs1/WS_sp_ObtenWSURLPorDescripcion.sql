@@ -1,9 +1,13 @@
-﻿USE Petrovendor
+﻿USE PETROVENDOR
 GO
 DROP PROCEDURE IF EXISTS WS_sp_ObtenWSURLPorDescripcion
-go
+GO
+--==================================
+-- LUIS DAVID
+-- 22/04/22
+-- SE CAMBIA LA LONGITUD DE CARACTERES DEL PARAMETRO PARA NO TRUNCAR LA DESCRIPCION
 CREATE PROCEDURE WS_sp_ObtenWSURLPorDescripcion
-@descripcion varchar(50)
+@descripcion varchar(500)
 as
 BEGIN 
 	SELECT * FROM WS_URLS 
