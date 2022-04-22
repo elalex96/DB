@@ -1,4 +1,4 @@
-﻿USE Petrovendor
+﻿USE PETROVENDOR
 GO
 DROP PROCEDURE IF EXISTS SP_JA_EnviarCorreoComentarioPregunta
 GO
@@ -9,7 +9,7 @@ GO
 -- =============================================
 -- Author:		<Luis David>
 -- Create date: <01/03/2023>
--- Description:	<Se evalúa si no está >
+-- Description:	<Se evalúa si no está bloqueada la notificación>
 -- =============================================
 create PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta] --20290,2199,420,'PRUEBA 11'
 	-- Add the parameters for the stored procedure here
@@ -212,7 +212,7 @@ BEGIN
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##URL_TAREA##',@URL));
 
 		SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-		SET @EnviarCorreo= (select IsEliminado from Petrovendor..TA_NoNotificacion where IdCorreo = @IdCorreo AND IdUsuario = @IdUsuarioEnviarNotificacion);
+		SET @EnviarCorreo= (select TOP 1 IsEliminado from Petrovendor..TA_NoNotificacion where IdCorreo = @IdCorreo AND IdUsuario = @IdUsuarioEnviarNotificacion);
 		IF ISNULL(@EnviarCorreo,1) = 1
 		BEGIN
 			INSERT INTO Adinco.dbo.S_Notificacion
