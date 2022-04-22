@@ -1,17 +1,16 @@
-﻿USE Petrovendor
+USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SRAP_ConsultaDetalleSolicitudRecepcion
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]    Script Date: 22/04/2022 05:18:00 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
 -- Description:	Consultar detalle de solicitud de recepción de pedido
 -- =============================================
--- Author:		Luis David
--- Create date: 17-03-2022
--- Description:	Se agrega la tabla de documento fieldticket y proforma
--- =============================================
-CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]  
+ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdPedido    INT,
@@ -46,7 +45,8 @@ AS
 		 O.IdEstatusOperacion AS IdEstatus,
 		 FORMAT(ISNULL(SAP.CreadoEl, GETDATE()),'dd/MM/yyyy') AS SolitudCreadaEl  ,
 		 UE.Nombre AS CreadoPor,
-		 P.IdSubcontratista	    
+		 P.IdSubcontratista	    ,
+		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'SIN PO RELACIONADO') AS NoPO
 		 FROM MM_SolicitudAceptacionPedido SAP
 		 JOIN TA_Operacion O 
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
@@ -63,6 +63,10 @@ AS
 			ON P.IdProveedorCompras = PV.IdProveedor
 		 LEFT JOIN S_Usuario UE
 			ON SAP.CreadorPor = UE.IdUsuario
+		LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI
+			ON P.IdPedido = WPI.IdPedidoADINCO
+		LEFT JOIN DEA_Relacion_PR_PO AS POW
+			ON P.IdPedido = POW.IdPedido
 		 WHERE 
 			P.IdSubcontratista = @IdProveedor 
 			AND SAP.IdPedido = @IdPedido 
@@ -86,7 +90,9 @@ AS
 		 O.IdEstatusOperacion,
 		 SAP.CreadoEl,
 		 UE.Nombre,
-		 P.IdSubcontratista	   
+		 P.IdSubcontratista	,
+		 WPI.PURCHASING_DOCUMENT,
+		 POW.PO  
 
 	    /*PRODUCTOS A ENTREGAR*/
 		SELECT 
@@ -101,7 +107,8 @@ AS
 		TM.TipoMonedaCorto,		
 		ISNULL(PD.RecepcionPedido,'false')  AS Recepcionservicio,		
 		PD.RecepcionPedido,
-		POD.UnidadProveedor AS Unidad	
+		POD.UnidadProveedor AS Unidad,
+		ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'SIN PO RELACIONADO') AS NoPO
 		FROM MM_SolicitudAceptacionPedidoDetalle SAPD 		
 		JOIN MM_PedidoDetalle AS PD 
 			ON SAPD.IdPedidoDetalle		= PD.IdPedidoDetalle
@@ -117,7 +124,11 @@ AS
 		JOIN MM_SolicitudPedidoDetalle AS SPD 
 			ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
 			JOIN PV_TipoMoneda AS TM 
-			ON PD.IdMoneda = TM.IdMoneda 		
+			ON PD.IdMoneda = TM.IdMoneda
+		LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI
+			ON P.IdPedido = WPI.IdPedidoADINCO
+		LEFT JOIN DEA_Relacion_PR_PO AS POW
+			ON P.IdPedido = POW.IdPedido  		
 		WHERE P.IdSubcontratista = @IdProveedor 		
 		AND P.IdPedido = @IdPedido
 		AND SAPD.IdSolicitudAceptacionPedido= @IdSolicitudAceptacionPedido
