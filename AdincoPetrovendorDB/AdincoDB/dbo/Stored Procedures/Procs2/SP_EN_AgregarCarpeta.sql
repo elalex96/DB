@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta]    Script Date: 18/02/2022 04:11:12 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta]    Script Date: 22/04/2022 12:21:52 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -16,12 +16,17 @@ ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta]
 	@Nombre VARCHAR(500),
 	@Nivel INT,
 	@IdUsuario INT,
-	@IdContrato INT
+	@IdContrato INT,
+	@Limitador INT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
+
+	DECLARE @LIMITADOR_GUARDADO INT = (SELECT TOP 1 Limitador FROM EN_CarpetasArchivosVisor WHERE IdElemento = @IdPadre);
+
+	SET @LIMITADOR_GUARDADO = ((ISNULL(@LIMITADOR_GUARDADO,0)) + 1);
 
     -- Insert statements for procedure here
 	INSERT INTO EN_CarpetasArchivosVisor 
@@ -34,7 +39,8 @@ BEGIN
 		[CreadoEl],
 		Nivel,
 		Activo,
-		IdContrato
+		IdContrato,
+		Limitador
 	)
 	VALUES
 	(
@@ -46,7 +52,8 @@ BEGIN
 		GETDATE(),
 		@Nivel,
 		1,
-		@IdContrato
+		@IdContrato,
+		@LIMITADOR_GUARDADO
 	);
 
 	SELECT SCOPE_IDENTITY() AS IDCARPETA;

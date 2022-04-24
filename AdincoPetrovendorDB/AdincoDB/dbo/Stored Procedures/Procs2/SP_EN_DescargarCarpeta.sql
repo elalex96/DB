@@ -1,14 +1,6 @@
 USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_EN_DescargarCarpeta'
-)
-    DROP PROCEDURE SP_EN_DescargarCarpeta;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 25/03/2022 12:06:16 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 22/04/2022 12:24:01 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -23,7 +15,7 @@ GO
 -- Create date: <25/03/2022>
 -- Description:	<Se agrego función para acortar rutas de los archivos de las carpetas del visor>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/',10112,1000
+ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/',10112,1000
 	-- Add the parameters for the stored procedure here
 	@Ruta VARCHAR(MAX),
 	@IdContrato		int,
@@ -188,6 +180,7 @@ BEGIN
 		ON(V.IdElemento + @maxIds) = RV.Id
 	WHERE V.IdContrato = @IdContrato	
 	AND RV.RutaCompleta LIKE '%' + @Ruta + '%'
+	AND V.Activo = 1
 
 
 END
