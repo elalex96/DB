@@ -16,10 +16,22 @@
 	IF OBJECT_ID('tempdb..#PedimentosPagados', 'U') IS NOT NULL
      DROP TABLE #PedimentosPagados;
 
-	 IF OBJECT_ID('tempdb..#temp', 'U') IS NOT NULL
-     DROP TABLE #temp;
-	  declare @NombrePresupuesto varchar (150) = 'Provisional Cárdenas-Mora 2018-';
+	 IF OBJECT_ID('tempdb..#Resultados', 'U') IS NOT NULL
+     DROP TABLE #Resultados;
+	 
+
+	 	 IF OBJECT_ID('tempdb..#FacturasPagadasDis', 'U') IS NOT NULL
+     DROP TABLE #FacturasPagadasDis;
+
+	  declare @NombrePresupuesto varchar (150) = 'Desarrollo Cárdenas-Mora 2020';
 		--
+			/*
+				Provisional Cárdenas-Mora 2018-
+Desarrollo Cárdenas-Mora 2019
+Desarrollo Cárdenas-Mora 2020
+Desarrollo Cárdenas-Mora 2021
+				*/
+
     CREATE TABLE #Gastos --gastos del presupuesto 
     (IdRegistro      INT, 
     IdFactura       INT, 
@@ -60,6 +72,13 @@
 	CantidadGastos INT
     );
 
+	CREATE TABLE #FacturasPagadasDis 
+    (
+    	IdFactura       INT, 
+		MontoPagadoUSD   FLOAT,
+		MontoPagadoPESOS   FLOAT
+    );
+
 	CREATE TABLE #FacturasPagadas 
     (
     	IdFactura       INT, 
@@ -95,14 +114,14 @@
                         ELSE 0
                     END
         FROM dbo.CO_Registro R WITH(NOLOCK)
-				LEFT JOIN
+				JOIN
 						dbo.FI_Factura AS F WITH (NOLOCK) 
 						ON  R.IdFactura	=	F.IdFactura
-                LEFT JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-				LEFT JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON LPM.IdPresupuesto = P.IdPresupuesto
-				LEFT JOIN CO_AnioContractual	AC ON P.IdAnioContractual = AC.IdAnioContractual
-                LEFT JOIN dbo.CO_Servicio S WITH(NOLOCK) ON S.IdServicio = LPM.IdServicio
-                                                    AND AC.IdContrato  = S.IdContrato
+                 JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
+				 JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON LPM.IdPresupuesto = P.IdPresupuesto
+				 JOIN CO_AnioContractual	AC ON P.IdAnioContractual = AC.IdAnioContractual
+                 JOIN dbo.CO_Servicio S WITH(NOLOCK) ON S.IdServicio = LPM.IdServicio
+                                                      AND AC.IdContrato = S.IdContrato
 				LEFT JOIN 
 					dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) 
 					ON TCD.IdMoneda = F.IdMoneda
@@ -112,7 +131,7 @@
         WHERE P.Nombre =@NombrePresupuesto --2018 (tiene un guion "provisional"),2019,2020,2021,2022
 		AND	AC.IdContrato = 10036
 		 AND R.CvTipoDocFacturacion = 1--		AND	F.IdFactura IS NOT NULL AND	F.IdFactura >0;
-
+	--	 AND R.IdEstado =10004
 
 			INSERT INTO  #Gastos
     (IdRegistro, 
@@ -155,13 +174,7 @@
 			AND	R.IdPedimentoComprobante IS NOT NULL AND	R.IdPedimentoComprobante >0 
 			AND R.CvTipoDocFacturacion IN (2, 3) 
 	  --SELECT SUM(MontoRegistroUSD) FROM #Gastos 
-				/*
-				Provisional Cárdenas-Mora 2018-
-Desarrollo Cárdenas-Mora 2019
-Desarrollo Cárdenas-Mora 2020
-Desarrollo Cárdenas-Mora 2021
-				*/
-
+			
 
 	-- FACTURAS DE LOS GASTOS
     INSERT INTO #Facturas
@@ -321,11 +334,7 @@ Desarrollo Cárdenas-Mora 2021
 	--	SELECT * FROM #Facturas
 	--	SELECT * FROM #PedimentosComprobantes
 
-
-
--- B8B30268-7B92-4E8E-933C-65E85005C745	 TR EN 
-
-     INSERT INTO #FacturasPagadas (
+     INSERT INTO #FacturasPagadasDis (
 		MontoPagadoPESOS,
 		MontoPagadoUSD,
     	IdFactura)
@@ -355,7 +364,7 @@ Desarrollo Cárdenas-Mora 2021
                                                                            AND YEAR(TCD.Fecha) = YEAR(T.FechaPago)
                 WHERE FT.MetodoPago = 'PPD'
                       AND TF.CvTipoDocFacturacion = 6
-                      AND TCD.IdMoneda = FCPDR.IdMoneda
+                      AND TCD.IdMoneda = FCPDR.IdMoneda 
                 GROUP BY 
 						  FCPDR.IdFactura
                 UNION
@@ -411,7 +420,6 @@ Desarrollo Cárdenas-Mora 2021
 									END)) AS DECIMAL(15, 2)) AS MontoDolares, 
 						
 						 FCPDR.IdFactura
-						--, TM.IdMoneda AS TM, TMCPDR.IdMoneda as TMCPDR,FCPDR.IdMoneda as FCPDR,T.IdMoneda AS T,F.IdMoneda AS F, CPDR.MonedaDR, CP.MonedaP, TCDUSDAUSD.TipoCambio, TCDUSDAUSD.IdMoneda,TCDUSDAUSD.Fecha,TCDMXAUSD.TipoCambio, TCDMXAUSD.IdMoneda,TCDMXAUSD.Fecha, FCPDR.UUID,CPDR.ImpPagado 
 				FROM dbo.FI_Transfer T WITH(NOLOCK)
 						JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TF.IdTransfer = T.IdTransferencia
 						JOIN dbo.FI_ComplementoDePago CP WITH(NOLOCK) ON CP.IdFactura = TF.IdFactura
@@ -438,14 +446,7 @@ Desarrollo Cárdenas-Mora 2021
 						AND TM.IdMoneda <> FCPDR.IdMoneda
 				GROUP BY 
 							 FCPDR.IdFactura
-							 --,TM.IdMoneda,T.IdMoneda,F.IdMoneda, FCPDR.IdMoneda, CPDR.MonedaDR,FCPDR.IdMoneda, CP.MonedaP, TCDUSDAUSD.TipoCambio, TCDUSDAUSD.IdMoneda,TCDUSDAUSD.Fecha,TCDMXAUSD.TipoCambio, TCDMXAUSD.IdMoneda,TCDMXAUSD.Fecha,FCPDR.UUID,CPDR.ImpPagado, TMCPDR.IdMoneda
-								-- select * from FI_ComplementoDePago where IdFactura=120528	
-								 --select * from FI_CPDocRelacionado where IdComplementoDePago = 13280
-								--select * from CO_TipoCambioDiario where Fecha ='2019-06-28'
-								--4CE18EA5-9671-4693-8E91-A69CEE58FCB3   --ya quedo 
-								--D4C92642-1C63-4E1F-ABD9-3B5F8A91ECBF   -- no quedo el doc relacionado dice que es en pesos
-								--247D2616-60DE-4C55-876D-566153BFFE84 --ya quedo
-
+						
 
 
 	IF OBJECT_ID('tempdb..#SumaDePagosDolares', 'U') IS NOT NULL
@@ -487,7 +488,6 @@ DROP TABLE #SumaDePagosDolares;
                                                                         AND YEAR(TCD.Fecha) = YEAR(T.FechaPago)
              WHERE MCF.MetodoPago IN ('PUE','PPD')
                    AND TCD.IdMoneda = MCF.IdMoneda 
-				   
              --
              UNION
              --
@@ -535,7 +535,7 @@ DROP TABLE #SumaDePagosDolares;
                   Con.MetodoPago, 
                   Con.IdMoneda;
 
-		INSERT INTO #FacturasPagadas (MontoPagadoPESOS,IdFactura,MontoPagadoUSD)
+		INSERT INTO #FacturasPagadasDis (MontoPagadoPESOS,IdFactura,MontoPagadoUSD)
 		SELECT DISTINCT 
 		0,
         MCF.Idfactura, 
@@ -564,6 +564,13 @@ WHERE MCF.MetodoPago IN ('PUE','PPD')
                 GROUP BY P.IdPedimentoComprobante
 
 
+
+
+				
+		INSERT INTO #FacturasPagadas (IdFactura, MontoPagadoPESOS,MontoPagadoUSD)
+		SELECT IdFactura, SUM(ISNULL(MontoPagadoPESOS,0)),SUM(ISNULL(MontoPagadoUSD,0)) FROM  #FacturasPagadasDis
+		GROUP BY Idfactura
+                 
 
 
 	UPDATE F
@@ -733,7 +740,7 @@ WHERE MCF.MetodoPago IN ('PUE','PPD')
 							WHEN R.CvTipoDocFacturacion IN (2, 3) 
 							THEN 	PCT.CantidadGastos
 					END AS CantidadGastos
-					into #temp
+					into #Resultados
 				FROM 
 				        
 					#Gastos   G
@@ -883,3 +890,6 @@ WHERE MCF.MetodoPago IN ('PUE','PPD')
 						WHEN R.CvTipoDocFacturacion IN (2, 3) 
 						THEN CAST(PCT.MontoPagadoTotalUSD AS DECIMAL(20, 2))
 				END ASC 
+
+					
+				SELECT * FROM #Resultados -- WHERE MontoPAGADOProrrateoUSD = 0 AND MontoPendienteProrrateoUSD > 0;
