@@ -5,21 +5,16 @@ CREATE PROCEDURE GuardarRelacionCartaPDFNoExisteEnPetrovendor
 @IdUsuario INT
 AS
      BEGIN
-		DECLARE @AWSDocumentoId INT,
-				@IdDocAwsDocAdinco INT
 
-		SELECT @AWSDocumentoId = AWSDocumentoId FROM AWS_Documentos WHERE AWSDocumentoId = @AwsId
-
-		SELECT @IdDocAwsDocAdinco = IdDocAwsDocAdinco FROM AWS_DocAwsDocAdinco WHERE AWSDocumentoId = @AWSDocumentoId
-
-		IF(ISNULL(@IdDocAwsDocAdinco, 0) > 0)
+		IF EXISTS(SELECT 1 FROM AWS_DocAwsDocAdinco WHERE IdDocAdinco = @IdFactura)
 		BEGIN
-			DELETE AWS_DocAwsDocAdinco WHERE IdDocAdinco = @IdFactura
+			DELETE AWS_DocAwsDocAdinco WHERE IdDocAdinco = @IdFactura AND IdTipoDocumento = 1
 		END
 		
 		INSERT INTO AWS_DocAwsDocAdinco(AWSDocumentoId, IdDocAdinco, IdTipoDocumento, IdContrato, CreadoPor, CreadoEn)
-		SELECT @AWSDocumentoId, @IdFactura, 1, @IdContrato, @IdUsuario, GETDATE()
+		SELECT @AwsId, @IdFactura, 1, @IdContrato, @IdUsuario, GETDATE()
      END;
 
 
 
+	 
