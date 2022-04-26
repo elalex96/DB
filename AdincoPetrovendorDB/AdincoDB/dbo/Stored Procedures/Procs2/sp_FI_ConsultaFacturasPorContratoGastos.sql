@@ -397,6 +397,12 @@ AS
 
 		 /**/
 		 
+         UPDATE #Facturas
+		 SET CCN = 1
+		 FROM #Facturas
+		 JOIN FI_Factura ON #Facturas.UUID = FI_Factura.UUID
+		 JOIN AWS_DocAwsDocAdinco ON AWS_DocAwsDocAdinco.IdDocAdinco = FI_Factura.IdFactura
+
 		 UPDATE #Facturas 
 		 SET 
 			TipoComprobante = '' 
