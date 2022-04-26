@@ -20,7 +20,7 @@ AS
     -- Modifier date: 24-06-2021
 	-- Description: Update tipo comprobante cuando tipo comprobante is null y uuid is null
     -- =============================================
-     BEGIN
+ BEGIN
          -- SET NOCOUNT ON added to prevent extra result sets from
          -- interfering with SELECT statements.
          SET NOCOUNT ON;
@@ -397,6 +397,12 @@ AS
 
 		 /**/
 		 
+		 UPDATE #Facturas
+		 SET CCN = 1
+		 FROM #Facturas
+		 JOIN FI_Factura ON #Facturas.UUID = FI_Factura.UUID
+		 JOIN AWS_DocAwsDocAdinco ON AWS_DocAwsDocAdinco.IdDocAdinco = FI_Factura.IdFactura
+
 		 UPDATE #Facturas 
 		 SET 
 			TipoComprobante = '' 
