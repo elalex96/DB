@@ -1,4 +1,3 @@
-﻿USE ADINCO;
 GO
 CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastosPorFechas]
 -- ============================================= 
