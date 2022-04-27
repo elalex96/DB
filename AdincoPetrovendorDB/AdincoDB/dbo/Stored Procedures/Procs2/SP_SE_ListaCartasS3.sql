@@ -100,7 +100,7 @@ BEGIN
                     ON P.IdAnioContractual = AC.IdAnioContractual
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
-            WHERE C.IdContrato = @IdContrato
+  WHERE C.IdContrato = @IdContrato
                   AND P.Nombre LIKE '%exploración%'
                   AND C.IdContratista IN ( 10005, 10006 );
         END;
@@ -297,8 +297,8 @@ BEGIN
              FP.UUID;
     /*Consulta final*/
     SELECT UPPER(D.UUIDAmazon) AS Identificador,
-           D.Folder AS Carpeta,
-           CONCAT(D.Folder, D.UUIDAmazon) AS Ruta,
+          CASE WHEN CHARINDEX('/',D.Folder) > 0 THEN D.Folder ELSE CONCAT( D.Folder, '/' )END AS Carpeta,
+           CONCAT(CASE WHEN CHARINDEX('/',D.Folder ) > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/' ) END, D.UUIDAmazon) AS Ruta,
            D.Bucket AS Cubeta,
            CONCAT('CCN-', FA.RFC, '-', ROW_NUMBER() OVER (ORDER BY D.UUIDAmazon), '.pdf') AS NombreDocumento,
            FA.IdFactura,
