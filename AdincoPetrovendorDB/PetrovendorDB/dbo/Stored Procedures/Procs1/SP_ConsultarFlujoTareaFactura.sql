@@ -1,9 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ConsultarFlujoTareaFactura'
+)
+    DROP PROCEDURE SP_ConsultarFlujoTareaFactura;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ConsultarFlujoTareaFactura]    Script Date: 26/04/2022 06:52:44 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:	Daniel AC
 -- Create date: 29-06-17
 -- Description:	consultar todos los flujos de aprobación de factura 
 -- =============================================
-
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- =============================================
 CREATE  PROCEDURE [dbo].[SP_ConsultarFlujoTareaFactura] @IdProveedor INT, @IdUsuario INT
 AS
 	BEGIN
@@ -18,15 +36,17 @@ AS
 		A.NoSecuencia,
 		U.Nombre AS Aprobador, 
 		U.IdUsuario
-		FROM		TA_FlujoTarea FT
-		INNER JOIN	TA_TipoFlujoTarea AS TF
-			ON TF.IdTipoFlujoTarea = FT.IdTipoFlujo
-		LEFT JOIN dbo.TA_Aprobador A ON A.IdFlujoTarea = FT.IdFlujoTarea
-		LEFT JOIN dbo.S_Usuario U ON U.IdUsuario = A.IdUsuario
+		FROM	TA_FlujoTarea FT
+		JOIN	TA_TipoFlujoTarea AS TF
+			ON FT.IdTipoFlujo = TF.IdTipoFlujoTarea 
+		LEFT JOIN dbo.TA_Aprobador A 
+			ON  FT.IdFlujoTarea = A.IdFlujoTarea 
+		LEFT JOIN dbo.S_Usuario U 
+			ON A.IdUsuario = U.IdUsuario 
 		WHERE
-		IdProveedor = @IdProveedor
-		AND IdTipoOperacion = 10 --> TIPO FACTURA 
-		AND ISNULL(Eliminado,0)=0
+		FT.IdProveedor = @IdProveedor
+		AND FT.IdTipoOperacion = 10 --> CTE TIPO FACTURA 
+		AND ISNULL(FT.Eliminado,0)=0
 		ORDER BY FT.Nombre ASC
 						
 
