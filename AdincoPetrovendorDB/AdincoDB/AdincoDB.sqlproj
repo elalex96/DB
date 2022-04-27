@@ -13227,6 +13227,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\RPT_CertificadoElegibles.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_AprobacionesPorUsuarioContador.sql" />
     <Build Include="dbo\Consultas\QRY_Adinco_0901.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\GuardarRelacionCartaPDFNoExisteEnPetrovendor.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
