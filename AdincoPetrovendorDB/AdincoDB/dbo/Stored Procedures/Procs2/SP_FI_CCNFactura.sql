@@ -52,10 +52,11 @@ AS
                  SELECT D.Identificador AS Identificador, 
                         D.Carpeta AS Carpeta, 
                         CONCAT(D.Carpeta, D.Identificador) AS Ruta, 
-                        'petrovendor-pr' AS CubetaDev, 
+                        ISNULL(D.Bucket,'petrovendor-pr') AS CubetaDev, 
                         CONCAT('IdFacturaAdinco: ', @IdFactura, ' - ', D.NombreDocumento) AS NombreDocumento, 
                         AF.IdFactura, 
-                        FP.UUID
+                        FP.UUID,
+						D.IdDocumento
                  FROM Petrovendor.dbo.FI_Factura FP
                       LEFT JOIN Petrovendor.dbo.MM_AceptacionFactura AF ON FP.IdFactura = AF.IdFactura
                       LEFT JOIN Petrovendor.dbo.MM_AceptacionCartaPCN AC ON AC.IdAceptacionPedido = AF.IdAceptacionPedido
@@ -72,8 +73,8 @@ AS
              ELSE
              BEGIN
                  SELECT UPPER(D.UUIDAmazon) AS Identificador, 
-                        D.Folder AS Carpeta, 
-                        CONCAT(D.Folder, D.UUIDAmazon) AS Ruta, 
+                        CASE WHEN CHARINDEX(D.Folder, '/') > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END AS Carpeta, 
+                        CONCAT(CASE WHEN CHARINDEX(D.Folder, '/') > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END, D.UUIDAmazon) AS Ruta, 
                         'adinco-pr' AS CubetaDev, 
                         CONCAT('IdFacturaAdinco: ', F.IdFactura, ' - ', D.NombreArchivo) AS NombreDocumento, 
                         F.IdFactura, 
@@ -85,3 +86,6 @@ AS
                  WHERE F.IdFactura = @IdFactura;
              END;
      END;
+
+
+
