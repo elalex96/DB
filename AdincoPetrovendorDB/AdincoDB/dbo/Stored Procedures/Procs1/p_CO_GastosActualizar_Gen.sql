@@ -1,4 +1,6 @@
-﻿CREATE proc p_CO_GastosActualizar_Gen
+﻿USE ADINCO;
+GO
+CREATE PROCEDURE p_CO_GastosActualizar_Gen
 @pUsuarioID int,
 @pUUIDImport varchar(100),
 @pIdContrato int 
@@ -6,6 +8,7 @@ as
 
 
 	declare @Id int,@IdLineaP int
+	DECLARE @IdCatalogoCuentasSH INT, @Poliza VARCHAR(100)= '',@CostosAtribuiblesAdministracion VARCHAR(100)='',@IdPrograma INT;
 
 	select  Id,
 		UUIDImport,
@@ -130,14 +133,10 @@ as
 
 		if @IdLineaP is not null
 		begin 
-			update CO_Registro 
-			set Poliza = tmp.Poliza,
-				CostosAtribuiblesAdministracion = tmp.GastoAdmon,
-				--IdCBSISH = cc.IdCatalogoCuentasSH,
-				IdCatalogoCuentasSH = cc.IdCatalogoCuentasSH,
-				IdUsuarioModPor= @pUsuarioID,
-				FecMovto = getdate()
-				,IdPrograma = tmp.IdLineaPresupuesto
+			SELECT TOP 1 @Poliza = tmp.Poliza,
+				@CostosAtribuiblesAdministracion = tmp.GastoAdmon,
+				@IdCatalogoCuentasSH = cc.IdCatalogoCuentasSH,
+				@IdPrograma = tmp.IdLineaPresupuesto
 			from CO_Registro reg				
 			inner join #tmpProcesarGastos tmp on tmp.Id = @Id
 			inner join FI_Factura fac on  rtrim(fac.UUID) = rtrim(tmp.UUID) and
@@ -147,15 +146,26 @@ as
 			inner join AP_Usuario u on u.UsuarioID = pu.UsuarioID
 			inner join CO_CatalogoCuentaSH cc on rtrim(cc.Nivel3) = rtrim(tmp.CuentaContable)
 			where u.UsuarioID = @pUsuarioID 
+			ORDER BY cc.IdVersion DESC
+
+			update CO_Registro 
+			set Poliza = @Poliza,
+				CostosAtribuiblesAdministracion = @CostosAtribuiblesAdministracion,
+				IdCatalogoCuentasSH = @IdCatalogoCuentasSH,
+				IdUsuarioModPor= @pUsuarioID,
+				FecMovto = getdate(),
+				IdPrograma = @IdPrograma
+			from CO_Registro reg				
+			inner join #tmpProcesarGastos tmp on tmp.Id = @Id
+			inner join FI_Factura fac on  rtrim(fac.UUID) = rtrim(tmp.UUID) and
+											fac.idFactura = reg.IdFactura;
 		end
 		if @IdLineaP is null
 		begin 
-			update CO_Registro 
-			set Poliza = tmp.Poliza,
-				CostosAtribuiblesAdministracion = tmp.GastoAdmon,
-				IdCatalogoCuentasSH = cc.IdCatalogoCuentasSH,
-				IdUsuarioModPor= @pUsuarioID,
-				FecMovto = getdate()
+			SELECT TOP 1
+				@Poliza = tmp.Poliza,
+				@CostosAtribuiblesAdministracion = tmp.GastoAdmon,
+				@IdCatalogoCuentasSH = cc.IdCatalogoCuentasSH
 			from CO_Registro reg				
 			inner join #tmpProcesarGastos tmp on tmp.Id = @Id
 			inner join FI_Factura fac on  rtrim(fac.UUID) = rtrim(tmp.UUID) and
@@ -165,6 +175,20 @@ as
 			inner join AP_Usuario u on u.UsuarioID = pu.UsuarioID
 			inner join CO_CatalogoCuentaSH cc on rtrim(cc.Nivel3) = rtrim(tmp.CuentaContable)
 			where u.UsuarioID = @pUsuarioID 
+			ORDER BY cc.IdVersion DESC
+
+
+			update CO_Registro 
+			set Poliza = @Poliza,
+				CostosAtribuiblesAdministracion = @CostosAtribuiblesAdministracion,
+				IdCatalogoCuentasSH = @IdCatalogoCuentasSH,
+				IdUsuarioModPor= @pUsuarioID,
+				FecMovto = getdate()
+			from CO_Registro reg				
+			inner join #tmpProcesarGastos tmp on tmp.Id = @Id
+			inner join FI_Factura fac on  rtrim(fac.UUID) = rtrim(tmp.UUID) and
+											fac.idFactura = reg.IdFactura
+
 		end
 
 		if @@error <> 0
@@ -197,3 +221,4 @@ as
 		set @IdLineaP = (select IdLineaPresupuesto from #tmpProcesarGastos where Id = @Id)
 
 	end
+
