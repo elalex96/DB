@@ -1,6 +1,13 @@
 USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_AP_PedidosAceptacionesPendientes'
+)
+    DROP PROCEDURE SP_AP_PedidosAceptacionesPendientes;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_AP_PedidosAceptacionesPendientes]    Script Date: 01/03/2022 04:01:09 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_AP_PedidosAceptacionesPendientes]    Script Date: 26/04/2022 12:34:10 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -12,7 +19,12 @@ GO
 -- Create date: <28/09/19>
 -- Description:	<Consulta los pedidos aprobados,sin cerrar, no eliminados y con aceptaciones pendientes>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_AP_PedidosAceptacionesPendientes] --420
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_AP_PedidosAceptacionesPendientes] --420
 @IdProveedor INT
 AS
 BEGIN
@@ -34,26 +46,40 @@ BEGIN
 		Cantidad		FLOAT
 	)
 
-	--DROP TABLE #result
+	create table #result 
+	(
+		IdPedido INT,
+		IdSolicitudPedido INT,
+		Proveedor VARCHAR(MAX),
+		Version INT,
+		IdPedidoGeneral INT,
+		CreadoEl DATETIME,
+		Asignado VARCHAR(MAX),
+		ComentariosAsignado VARCHAR(MAX),
+		Justificacion VARCHAR(MAX),
+		IdContrato INT				
+	)
 
 	INSERT INTO #tb_solicitadas
 	SELECT
 				P.IdPedido,
 				PD.IdPedidoDetalle,
 				Solicitadas			=	ISNULL(PD.Cantidad,0)
-	FROM		dbo.MM_Pedido					P
-	LEFT JOIN	dbo.MM_PedidoDetalle			PD	ON PD.IdPedido			= P.IdPedido
-	LEFT JOIN	dbo.MM_AceptacionPedidoDetalle	APD ON APD.IdPedidoDetalle	= PD.IdPedidoDetalle
-	INNER JOIN	TA_Operacion					O	ON O.IdDocumento		= P.IdSolicitudPedido
-	INNER JOIN	TA_TipoOperacion				TTO ON TTO.IdTipoOperacion	= O.IdTipoOperacion
-	INNER JOIN	TA_Estatus						E	ON E.IdEstatus			= O.IdEstatusOperacion
-	WHERE		O.IdTipoOperacion				=	9 
-	AND			O.IdProveedor					=	@IdProveedor
-	AND			E.IdEstatus						=	2 -- Aprobados
+	FROM		MM_Pedido					P	(NOLOCK)
+	JOIN	TA_Operacion					O	(NOLOCK)
+		ON		 P.IdSolicitudPedido			=	O.IdDocumento
+				 AND P.Version						=	O.NoVersion
+				 AND O.IdTipoOperacion			=	9 -->CTE 
+				 AND O.IdEstatusOperacion		=	2 -- CTE Aprobados		
+	LEFT JOIN	MM_PedidoDetalle			PD	(NOLOCK)
+				ON P.IdPedido					=	PD.IdPedido			
+	LEFT JOIN	MM_AceptacionPedidoDetalle	APD (NOLOCK)
+				ON PD.IdPedidoDetalle			=	APD.IdPedidoDetalle	
+	WHERE		
+	O.IdProveedor					=	@IdProveedor				
 	AND			ISNULL(P.Cerrado,0)				<>	1 -- Cerrados
 	AND			ISNULL(P.IdEstatusEliminado,0)	<>	1 -- No eliminados
-	AND			P.RecepcionServicio				=	1  
-	AND			P.Version						=	O.NoVersion
+	AND			P.RecepcionServicio				=	1 --> CTE RECEPCIONADO
 	GROUP BY	P.IdPedido,
 				PD.IdPedidoDetalle,
 				PD.Cantidad
@@ -64,24 +90,43 @@ BEGIN
 	P.IdPedido,
 	PD.IdPedidoDetalle,
 	SUM(ISNULL(APD.Cantidad,0)) AS Aceptadas
-	FROM dbo.MM_Pedido P
-	LEFT JOIN dbo.MM_PedidoDetalle PD ON PD.IdPedido = P.IdPedido
-	LEFT JOIN dbo.MM_AceptacionPedido AP ON AP.IdPedido = P.IdPedido AND AP.IdEstatusEliminado IS NULL
-	LEFT JOIN dbo.MM_AceptacionPedidoDetalle APD ON APD.IdPedidoDetalle = PD.IdPedidoDetalle AND AP.IdAceptacionPedido=APD.IdAceptacionPedido
-	INNER JOIN TA_Operacion AS O ON O.IdDocumento = P.IdSolicitudPedido
-	INNER JOIN TA_TipoOperacion AS TTO ON TTO.IdTipoOperacion= O.IdTipoOperacion
-	INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion
-	WHERE O.IdTipoOperacion = 9 
-	AND O.IdProveedor = @IdProveedor
-	AND  E.IdEstatus=2 -- Aprobados
+	FROM dbo.MM_Pedido P (NOLOCK)
+	JOIN TA_Operacion AS O (NOLOCK)
+		ON P.IdSolicitudPedido			=	O.IdDocumento 
+		AND O.IdTipoOperacion			=	9  -->CTE
+		AND P.Version					=	O.NoVersion 
+		AND  O.IdEstatusOperacion=2 -->CTE PEDIDO APROBADO 
+	LEFT JOIN dbo.MM_PedidoDetalle PD (NOLOCK)
+		ON P.IdPedido					=	PD.IdPedido 
+	LEFT JOIN dbo.MM_AceptacionPedido AP (NOLOCK)
+		ON P.IdPedido					=	AP.IdPedido 
+		AND AP.IdEstatusEliminado IS NULL
+	LEFT JOIN dbo.MM_AceptacionPedidoDetalle APD (NOLOCK)
+		ON PD.IdPedidoDetalle			=	APD.IdPedidoDetalle 
+		AND AP.IdAceptacionPedido		=	APD.IdAceptacionPedido
+	WHERE 
+	O.IdProveedor = @IdProveedor	
 	AND ISNULL(P.Cerrado,0) <> 1 -- Cerrados
 	AND ISNULL(P.IdEstatusEliminado,0)<>1 -- No eliminados
-	AND P.RecepcionServicio = 1  
-	AND P.Version = O.NoVersion
+	AND P.RecepcionServicio = 1  	--> CTE RECEPCIONADO
 	GROUP BY P.IdPedido,
 			 PD.IdPedidoDetalle
 	ORDER BY P.IdPedido ASC
 
+
+	INSERT INTO #result 
+	(
+		IdPedido,
+		IdSolicitudPedido,
+		Proveedor,
+		Version,
+		IdPedidoGeneral,
+		CreadoEl,
+		Asignado,
+		ComentariosAsignado,
+		Justificacion,
+		IdContrato				
+	)
 	SELECT 
 	SO.IdPedido,
 	P.IdSolicitudPedido,
@@ -92,26 +137,34 @@ BEGIN
 	CASE 
 		WHEN DPR.IdProveedor IS NOT NULL THEN ISNULL(P.AsignadoA,SPO.Solicitante)
 		ELSE CASE 
-				WHEN P.AsignadoA != 0 THEN P.AsignadoA
+				WHEN P.AsignadoA != 0 OR P.AsignadoA IS NOT NULL THEN P.AsignadoA
 				ELSE NULL
 			END
 	END AS Asignado,
 	ComentariosAsignado,
 	ISNULL(SOT.Objeto,SPO.MotivoUrgencia) AS Justificacion,
-	p.IdContrato
-	--Contrato = c.NumeroContrato
-	INTO #result
-	FROM #tb_solicitadas SO
-	LEFT JOIN #tb_aceptadas A ON SO.IdPedidoDetalle = A.IdPedidoDetalle
-	LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = SO.IdPedido
-	INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = P.IdProveedorCompras AND PG.IdTipoPedido IN (2, 4, 6)
-	LEFT JOIN dbo.S_Proveedor PR ON PR.IdProveedor = P.IdSubcontratista
-	LEFT JOIN Adinco.dbo.OT_Estimacion AS OTS ON OTS.IdPedido = P.IdPedido
-	LEFT JOIN Adinco.dbo.OT_Solicitud AS SOT ON SOT.IdOTSolicitud = OTS.IdOTSolicitud
-	LEFT JOIN dbo.MM_SolicitudPedido AS SPO ON SPO.IdSolicitudPedido = P.IdSolicitudPedido
-	LEFT JOIN dbo.S_Proveedor AS OPR ON SPO.IdProveedor = OPR.IdProveedor
-	LEFT JOIN dbo.DEA_Proveedor AS DPR ON OPR.RFC = DPR.RFC
-	--inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	P.IdContrato	=	C.IdContrato
+	P.IdContrato	
+	FROM #tb_solicitadas SO	
+	JOIN dbo.MM_Pedido P (NOLOCK)
+		ON SO.IdPedido				=	P.IdPedido 
+	JOIN MM_Pedidos AS PG (NOLOCK)
+		ON P.IdPedido				=	PG.IdIdentificador 
+		AND PG.IdProveedorCliente	=	P.IdProveedorCompras 
+		AND PG.IdTipoPedido				IN (2, 4, 6) -->ctes 
+	LEFT JOIN #tb_aceptadas A 
+		ON SO.IdPedidoDetalle		= A.IdPedidoDetalle
+	LEFT JOIN dbo.S_Proveedor PR (NOLOCK)
+		ON P.IdSubcontratista		=	PR.IdProveedor
+	LEFT JOIN Adinco.dbo.OT_Estimacion AS OTS (NOLOCK)
+		ON P.IdPedido				=	OTS.IdPedido
+	LEFT JOIN Adinco.dbo.OT_Solicitud AS SOT (NOLOCK)
+		ON OTS.IdOTSolicitud		=	SOT.IdOTSolicitud
+	LEFT JOIN dbo.MM_SolicitudPedido AS SPO (NOLOCK)
+		ON  P.IdSolicitudPedido			=	SPO.IdSolicitudPedido 
+	LEFT JOIN dbo.S_Proveedor AS OPR (NOLOCK)
+		ON SPO.IdProveedor				=	OPR.IdProveedor
+	LEFT JOIN dbo.DEA_Proveedor AS DPR (NOLOCK)
+		ON OPR.RFC					=	DPR.RFC
 	GROUP BY SO.IdPedido,
 			 SO.Cantidad,
 			 A.Cantidad,
@@ -130,6 +183,7 @@ BEGIN
 			 DPR.IdProveedor
 	HAVING SO.Cantidad > A.Cantidad -- Con aceptaciones pendientes o sin aceptaciones	
 	
+
 	SELECT		t1.IdPedido,
 				t1.IdSolicitudPedido,
 				t1.Proveedor,
@@ -140,10 +194,10 @@ BEGIN
 				t1.ComentariosAsignado,
 				t1.Justificacion,
 				t1.IdContrato,
-				--Contrato,
 				Contrato	=	c.NumeroContrato	
 	FROM		#result		t1
-	inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	c.IdContrato	=	t1.IdContrato
+	JOIN		Adinco.dbo.CO_Contrato	AS	C 	
+				ON	t1.IdContrato	=	c.IdContrato		
 	GROUP BY	t1.IdPedido,
 				t1.IdSolicitudPedido,
 				t1.Proveedor,
@@ -157,4 +211,3 @@ BEGIN
 				c.NumeroContrato
 	ORDER BY CreadoEl DESC 
 END
-

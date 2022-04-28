@@ -1,7 +1,29 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_PCN_RecepcionFacturaEncabezado'
+)
+    DROP PROCEDURE SP_PR_MM_PCN_RecepcionFacturaEncabezado;
+
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_RecepcionFacturaEncabezado]    Script Date: 26/04/2022 05:05:19 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 14-10-2019
 -- Description:	Agregue Columna ErrorSAT y IdTipoLectorXML y 
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins, 
+-- SE DEVUELVE NULL EN EL RETORNO DE COLUMNA ComprobantePDFByte DEL PDF PARA CONSUMIRLO DESDE OTRO SP Y EN LA PANTALLA POR AJAX
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_RecepcionFacturaEncabezado]
     -- Add the parameters for the stored procedure here
@@ -22,32 +44,35 @@ BEGIN
                 CAST(', ' AS VARCHAR (MAX))
                 + CONVERT(NVARCHAR (MAX), ISNULL(y.NombreYacimiento, ''))
         FROM
-                dbo.MM_AceptacionPedido                       ap
-            INNER JOIN
-                dbo.MM_Pedido                                 p
-                    ON p.IdPedido = ap.IdPedido
-            INNER JOIN
-                dbo.MM_PedidoDetalle                          pd
-                    ON pd.IdPedido = p.IdPedido
+                dbo.MM_AceptacionPedido                       ap (NOLOCK)
+            JOIN
+                dbo.MM_Pedido                                 p (NOLOCK)
+                    ON ap.IdPedido = p.IdPedido  
+            JOIN
+                dbo.MM_PedidoDetalle                          pd (NOLOCK)
+                    ON  p.IdPedido = pd.IdPedido 
             LEFT JOIN
-                dbo.MM_PeticionOfertaDetalle                  pod
-                    ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle
+                dbo.MM_PeticionOfertaDetalle                  pod (NOLOCK)
+                    ON  pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle 
             LEFT JOIN
-                dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdl
-                    ON spdl.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle
+                dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdl (NOLOCK)
+                    ON pod.IdSolicitudPedidoDetalle = spdl.IdSolicitudPedidoDetalle 
             LEFT JOIN
-                Adinco.dbo.CO_Instalacion                     i
-                    ON i.IdInstalacion = spdl.IdInstalacion
+                Adinco.dbo.CO_Instalacion                     i (NOLOCK)
+                    ON  spdl.IdInstalacion = i.IdInstalacion
             LEFT JOIN
-                Adinco.dbo.CO_Yacimiento                      y
-                    ON y.IdYacimiento = i.IdYacimiento
+                Adinco.dbo.CO_Yacimiento                      y (NOLOCK)
+                    ON  i.IdYacimiento = y.IdYacimiento
         WHERE
                 ap.IdAceptacionPedido = @IdAceptacionPedido
         GROUP BY
                 y.NombreYacimiento
         FOR XML PATH('')), 1, 1, '')
 
-    SELECT ISNULL(F.ArchivoPDF, ''),
+
+
+    SELECT 
+		   '' AS ArchivoPDF,		  
            F.XML,
            AF.IdAceptacionPedido,
            PE.IdPedido,
@@ -59,11 +84,7 @@ BEGIN
            PR.IdProveedor,
            PG.IdPedido AS IdPedidoGeneral,
            F.IdFactura,
-           (
-               SELECT ComprobantePDFByte
-               FROM dbo.FI_Factura
-               WHERE IdFactura = F.IdFactura
-           ) AS ComprobantePDFByte,
+           NULL AS ComprobantePDFByte,		   
 		   TP.TipoPedido,
 		   TP.IdTipoPedido,
 		   FT.Nombre,
@@ -76,36 +97,37 @@ BEGIN
 		   ISNULL(F.Receptor,'') AS RFC_Receptor,
 		   RCN.PedirCarta
     FROM MM_AceptacionFactura AS AF
-        INNER JOIN FI_Factura AS F
-            ON F.IdFactura = AF.IdFactura
-        INNER JOIN TA_Operacion AS O
-            ON O.IdDocumento = AF.IdAceptacionFactura
-	    AND O.IdTipoOperacion = 10 -->Aprobación Factura
-        INNER JOIN TA_Tarea AS T
-            ON T.IdOperacion = O.IdOperacion
-        INNER JOIN TA_Estatus AS E
-            ON E.IdEstatus = O.IdEstatusOperacion
-        INNER JOIN MM_AceptacionPedido AS AP
+         JOIN FI_Factura AS F
+            ON AF.IdFactura = F.IdFactura 
+         JOIN TA_Operacion AS O 
+            ON AF.IdAceptacionFactura = O.IdDocumento 
+			AND O.IdTipoOperacion = 10 -->CTE Aprobación Factura           
+         JOIN TA_Estatus AS E (NOLOCK)
+            ON O.IdEstatusOperacion = E.IdEstatus 
+         JOIN MM_AceptacionPedido AS AP 
             ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-	    AND AP.IdEliminado IS NULL
-        INNER JOIN MM_Pedido AS PE
-            ON PE.IdPedido = AP.IdPedido
-        INNER JOIN MM_Pedidos AS PG
+			AND AP.IdEliminado IS NULL  
+         JOIN MM_Pedido AS PE
+            ON  AP.IdPedido = PE.IdPedido 
+         JOIN MM_Pedidos AS PG
             ON PE.IdPedido = PG.IdIdentificador
-	    AND PE.IdProveedorCompras	=	PG.IdProveedorCliente
+			AND PE.IdProveedorCompras	=	PG.IdProveedorCliente
             AND PG.IdProveedorCliente = @IdProveedor
-	    AND PG.IdTipoPedido in (2,4,6)
-        INNER JOIN S_Proveedor AS PR
-            ON PR.IdProveedor = PE.IdSubcontratista
-        LEFT JOIN dbo.MM_TipoPedido AS TP
-            ON TP.IdTipoPedido = PG.IdTipoPedido
-		LEFT JOIN dbo.TA_FlujoTarea FT ON FT.IdFlujoTarea = O.IdFlujoTarea
-		LEFT JOIN dbo.TA_TipoFlujoTarea TF ON TF.IdTipoFlujoTarea=FT.IdTipoFlujo
-		LEFT JOIN dbo.InfoSAT ISAT ON ISAT.Id = 1
-		LEFT JOIN dbo.RelacionCartaCNPedido RCN ON RCN.IdAceptacionPedido = AP.IdAceptacionPedido
-    WHERE O.IdTipoOperacion = 10  --> APROBACIÓN DE TIPO FACTURA 
-          AND PE.IdProveedorCompras = @IdProveedor
-          AND AF.IdAceptacionPedido =@IdAceptacionPedido ---> 441
+			 AND PG.IdTipoPedido in (2,4,6) --> CTES 
+         JOIN S_Proveedor AS PR (NOLOCK)
+            ON PE.IdSubcontratista = PR.IdProveedor 
+         JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
+            ON  PG.IdTipoPedido = TP.IdTipoPedido 
+		LEFT JOIN dbo.TA_FlujoTarea FT (NOLOCK)
+			ON O.IdFlujoTarea = FT.IdFlujoTarea 
+		LEFT JOIN dbo.TA_TipoFlujoTarea TF  (NOLOCK)
+			ON FT.IdTipoFlujo = TF.IdTipoFlujoTarea
+		LEFT JOIN dbo.InfoSAT ISAT (NOLOCK)
+			ON ISAT.Id = 1
+		LEFT JOIN dbo.RelacionCartaCNPedido RCN 
+			ON AP.IdAceptacionPedido = RCN.IdAceptacionPedido 
+    WHERE PE.IdProveedorCompras = @IdProveedor
+          AND AF.IdAceptacionPedido =@IdAceptacionPedido 
     GROUP BY F.ArchivoPDF,
              F.XML,
              AF.IdAceptacionPedido,
@@ -133,9 +155,3 @@ BEGIN
 
 
 END;
-
-
-
-
-
-

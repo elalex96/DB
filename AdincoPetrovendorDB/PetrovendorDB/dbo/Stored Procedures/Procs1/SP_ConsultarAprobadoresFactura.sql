@@ -1,6 +1,13 @@
 USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ConsultarAprobadoresFactura'
+)
+    DROP PROCEDURE SP_ConsultarAprobadoresFactura;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_ConsultarAprobadoresFactura]    Script Date: 02/02/2022 12:11:29 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_ConsultarAprobadoresFactura]    Script Date: 26/04/2022 06:55:50 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +17,12 @@ GO
 -- Create date: 02/09/2019
 -- Description:	Consultar aprobadores de factura
 -- =============================================
-ALTER  PROCEDURE [dbo].[SP_ConsultarAprobadoresFactura]  
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- =============================================
+CREATE  PROCEDURE [dbo].[SP_ConsultarAprobadoresFactura]  
 @IdOperacion int,
 @IdProveedor INT,
 @IdUsuario INT 
@@ -40,14 +52,19 @@ BEGIN
 	END  AS Asignador, 
 	TAO.IdEstatusOperacion  AS EstatusFactura	
 	FROM TA_Tarea TT 	
-	INNER JOIN TA_Operacion TAO ON TT.IdOperacion = TAO.IdOperacion
-	INNER JOIN S_Usuario U	ON U.IdUsuario = TT.IdAprobador	AND U.Activo = 1
-	LEFT JOIN TA_Estatus TE ON TE.IdEstatus = TT.IdEstatus	
-	LEFT JOIN dbo.S_Usuario UA ON TT.AsignadoPor= UA.IdUsuario
-	WHERE   TAO.IdTipoOperacion = 10 ---> APROBACIÓN DE FACTURA
-	 AND TT.IdOperacion= @IdOperacion
+	JOIN TA_Operacion TAO 
+		ON TT.IdOperacion = TAO.IdOperacion
+		AND TAO.IdTipoOperacion = 10 ---> CTE APROBACIÓN DE FACTURA
+	JOIN S_Usuario U	
+		ON TT.IdAprobador	= U.IdUsuario 		
+	LEFT JOIN TA_Estatus TE 
+		ON TT.IdEstatus = TE.IdEstatus 
+	LEFT JOIN dbo.S_Usuario UA 
+		ON TT.AsignadoPor= UA.IdUsuario
+	WHERE  TT.IdOperacion= @IdOperacion
 	 AND TT.Activo=1
 	ORDER BY TT.NoSecuencia ASC
 
-	--- TT.IdEstatus = 2
-END 
+END
+
+ 

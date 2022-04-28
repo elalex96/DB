@@ -1,6 +1,13 @@
 ﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SRAP_ConsultarSolicitudesAceptacionPedido
+go
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SRAP_ConsultarSolicitudesAceptacionPedido'
+)
+    DROP PROCEDURE SRAP_ConsultarSolicitudesAceptacionPedido;
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -12,6 +19,11 @@ GO
 -- Author:		LUIS DAVID
 -- Create date: 02/03/2022
 -- Description:	SE AGREGA EL PO PARA DEA ISSUE#1651
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
 	-- Add the parameters for the stored procedure here
@@ -33,22 +45,21 @@ AS
 		select	@IdRol				=	IdRol from S_Rol where Rol = 'Administrador Solicitudes de Aceptación'
 		
 		/*Se verifica si tiene el Rol de "Administrador Solicitudes de Aceptación" */
-		if exists(select * from S_UsuarioRol where IdUsuario = @IdUsuario and Activo = 1 and IdRol = @IdRol)
+		if exists(select 1 from S_UsuarioRol where IdUsuario = @IdUsuario and Activo = 1 and IdRol = @IdRol)
 		begin
 				select @esAdministrador	=	1
 		end
 
-		if exists(select * from DEA_UsuarioOBS where IdUsuario = @IdUsuario and IdContrato = @IdContrato and Activo=1)
+		if exists(select 1 from DEA_UsuarioOBS where IdUsuario = @IdUsuario and IdContrato = @IdContrato and Activo=1)
 		begin
 				select @esOBS =	1
 		end
 
-		--select esAdministrador = @esAdministrador, esOBS = @esOBS
 					    						
 	    IF @Filtro ='TODAS'
 		BEGIN 
 		 
-		SELECT		SAP.IdSolicitudAceptacionPedido,
+		SELECT	    SAP.IdSolicitudAceptacionPedido,
 					SAP.Comentario,
 					P.IdPedido,    
 					P.IdSolicitudPedido,    		 
@@ -71,15 +82,17 @@ AS
 		FROM		MM_SolicitudAceptacionPedido			SAP (NOLOCK)
 		JOIN		TA_Operacion							O (NOLOCK)
 		ON			SAP.IdSolicitudAceptacionPedido			=	O.IdDocumento
+		AND			SAP.Activo								=	1
 		AND			O.IdTipoOperacion						=	@TipoOperacionId -->CTE 20
 		JOIN		TA_Estatus								E (NOLOCK)
 		ON			O.IdEstatusOperacion					=	E.IdEstatus
 		JOIN		MM_Pedido								P (NOLOCK)
 		ON			SAP.IdPedido							=	P.IdPedido
-		INNER JOIN	MM_Pedidos								PG (NOLOCK)
+		AND			P.IdProveedorCompras					=	@IdProveedor
+		JOIN		MM_Pedidos								PG (NOLOCK)
 		ON			P.IdPedido								=	PG.IdIdentificador 
-		AND			PG.IdProveedorCliente					=	P.IdProveedorCompras 
-		AND			PG.IdTipoPedido							in	(2,4,6) 
+		AND			P.IdProveedorCompras					=	PG.IdProveedorCliente						
+		AND			PG.IdTipoPedido							in	(2,4,6) --> CTES
 		LEFT JOIN	S_Proveedor								PC (NOLOCK)
 		ON			P.IdSubcontratista						=	PC.IdProveedor
 		LEFT JOIN	S_Usuario								UE (NOLOCK)
@@ -95,7 +108,7 @@ AS
 		left join	TA_Tarea								ta (NOLOCK)
 		on			ta.IdOperacion							=	O.IdOperacion
 		and			ta.IdAprobador							=	@IdUsuario
-		LEFT JOIN	DEA_Relacion_PR_PO AS RPO
+		LEFT JOIN	DEA_Relacion_PR_PO AS RPO	(NOLOCK)
 		ON			P.IdPedido								= RPO.IdPedido
 		WHERE		P.IdProveedorCompras					=	@IdProveedor
 		and			SAP.Activo								=	1
@@ -129,8 +142,7 @@ AS
 	IF @Filtro ='EN-APROBACION'
 	 BEGIN 
 
-		SELECT		
-					SAP.IdSolicitudAceptacionPedido,
+		SELECT		SAP.IdSolicitudAceptacionPedido,
 					SAP.Comentario,
 					P.IdPedido,    
 					P.IdSolicitudPedido,    		 
@@ -163,10 +175,11 @@ AS
 		ON			O.IdEstatusOperacion			=	E.IdEstatus
 		JOIN		MM_Pedido						P (NOLOCK)
 		ON			SAP.IdPedido					=	P.IdPedido
-		INNER JOIN	MM_Pedidos						PG (NOLOCK)
+					AND P.IdProveedorCompras		=	@IdProveedor
+		JOIN		MM_Pedidos						PG (NOLOCK)
 		ON			P.IdPedido						=	PG.IdIdentificador 
 		AND			PG.IdProveedorCliente			=	P.IdProveedorCompras 
-		AND			PG.IdTipoPedido					in	(2,4,6) 
+		AND			PG.IdTipoPedido					in	(2,4,6) -->CTES
 		LEFT JOIN	S_Proveedor						PC (NOLOCK)
 		ON			P.IdSubcontratista				=	PC.IdProveedor
 		LEFT JOIN	S_Usuario						UE (NOLOCK)
@@ -179,10 +192,10 @@ AS
 		ON			P.IdSolicitudPedido				=	SP.IdSolicitudPedido
 		LEFT JOIN	S_Usuario						US (NOLOCK)
 		ON			SP.Solicitante					=	US.IdUsuario
-		left join	TA_Tarea						ta (NOLOCK)	
-		on			ta.IdOperacion					=	O.IdOperacion
-		LEFT JOIN	DEA_Relacion_PR_PO AS RPO
-		ON			P.IdPedido								= RPO.IdPedido
+		LEFT JOIN	TA_Tarea						ta (NOLOCK)	
+		on			O.IdOperacion					= ta.IdOperacion					
+		LEFT JOIN	DEA_Relacion_PR_PO AS RPO (NOLOCK)
+		ON			P.IdPedido						=  RPO.IdPedido
 		WHERE 		P.IdProveedorCompras			=	@IdProveedor
 		and			C.IdContrato					=	@IdContrato
 		and			((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)	or ((@esOBS = 1 )  and ta.IdEstatus = 2) )

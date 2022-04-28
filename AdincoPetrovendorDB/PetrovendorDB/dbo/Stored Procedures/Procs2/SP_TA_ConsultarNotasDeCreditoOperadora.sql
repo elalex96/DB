@@ -1,7 +1,28 @@
-﻿-- =============================================
+﻿USE Petrovendor
+go
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ConsultarNotasDeCreditoOperadora'
+)
+    DROP PROCEDURE SP_TA_ConsultarNotasDeCreditoOperadora;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarNotasDeCreditoOperadora]    Script Date: 26/04/2022 04:00:37 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 11/09/2019
 -- Description:	Permite agregar LA OPERACION para hacer relacion con un flujo de tareas
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
 CREATE  PROCEDURE [dbo].[SP_TA_ConsultarNotasDeCreditoOperadora]--420,2205,10037
     -- Add the parameters for the stored procedure here
@@ -32,28 +53,28 @@ BEGIN
 		   F.UUID,
 		   cast(PG.IdPedido as varchar) AS NoPedido,
 		   NC.CFDIRelacionados,
-		   Contrato = c.NumeroContrato
-		   --IdPedido = isnull(p.IdPedido,0)
-    FROM	dbo.MM_AceptacionNotaCredito	NC
-	JOIN	dbo.MM_AceptacionPedido			AP
-	ON		AP.IdAceptacionPedido			=	NC.IdAceptacionPedido
-	JOIN	dbo.MM_Pedido					P
-	ON		P.IdPedido						=	AP.IdPedido
-	AND		P.IdProveedorCompras			=	@IdProveedor
-	JOIN	dbo.MM_Pedidos					PG	
+		   Contrato = c.NumeroContrato		  
+    FROM	dbo.MM_AceptacionNotaCredito	NC (NOLOCK)
+	JOIN	dbo.MM_AceptacionPedido			AP (NOLOCK)
+	ON		NC.IdAceptacionPedido			=	AP.IdAceptacionPedido			
+	JOIN	dbo.MM_Pedido					P (NOLOCK)
+	ON		AP.IdPedido						=	P.IdPedido						
+			AND	P.IdProveedorCompras		=	@IdProveedor
+	JOIN	dbo.MM_Pedidos					PG	(NOLOCK)
 	ON		PG.IdIdentificador				=	P.IdPedido
 	AND		PG.IdProveedorCliente			=	P.IdProveedorCompras
-	JOIN	dbo.TA_Operacion				O
-	ON		O.IdDocumento					=	NC.IdAceptacionNotaCredito
-	AND		O.IdTipoOperacion				=	17 --> APROBACIÓN NOTA DE CREDITO
-	JOIN	dbo.TA_Estatus					E
-	ON		E.IdEstatus						=	O.IdEstatusOperacion
-	JOIN	dbo.FI_Factura					F
-	ON		F.IdFactura						=	NC.IdFacturaNotaCredito
-	JOIN	dbo.S_Usuario					UC
-	ON		UC.IdUsuario					=	NC.CreadoPor
-	inner JOIN	Adinco.dbo.CO_Contrato		AS	C 	
-	ON		c.IdContrato					=	P.IdContrato
+	AND		PG.IdTipoPedido					IN (2, 4, 6) -->CTES MERCADEO, ADJUDICACIÓN DIRECTA, CONTROL DE OBRA
+	JOIN	dbo.TA_Operacion				O (NOLOCK)
+	ON		NC.IdAceptacionNotaCredito		=	O.IdDocumento						
+	AND		O.IdTipoOperacion				=	17 -->CTE APROBACIÓN NOTA DE CREDITO
+	JOIN	dbo.TA_Estatus					E (NOLOCK)
+	ON		O.IdEstatusOperacion			=	E.IdEstatus							
+	JOIN	dbo.FI_Factura					F (NOLOCK)
+	ON		NC.IdFacturaNotaCredito			=	F.IdFactura							
+	JOIN	dbo.S_Usuario					UC (NOLOCK)
+	ON		NC.CreadoPor					=	UC.IdUsuario					
+	JOIN	Adinco.dbo.CO_Contrato		AS	C   (NOLOCK)
+	ON		P.IdContrato					=	C.IdContrato				
     WHERE	ISNULL(NC.IdEstatusEliminada, 0) = 0
 	UNION
 	SELECT NC.IdAceptacionPedido,
@@ -72,35 +93,31 @@ BEGIN
 		   F.UUID,
 		   ap.IdPedido AS NoPedido,
 		   NC.CFDIRelacionados,
-		   Contrato = c.NumeroContrato
-		   --IdPedido = 0
+		   Contrato = c.NumeroContrato		  
     FROM dbo.MPY_MM_AceptacionNotaCredito NC
-        LEFT JOIN dbo.MPY_MM_AceptacionPedido AP
-            ON AP.IdAceptacionPedido = NC.IdAceptacionPedido
-       
+        JOIN dbo.MPY_MM_AceptacionPedido AP
+            ON  NC.IdAceptacionPedido	=	AP.IdAceptacionPedido      
+		JOIN	Adinco.dbo.CO_Contrato	AS	C 	
+			ON	AP.IdContrato				=	C.IdContrato	
         LEFT JOIN dbo.TA_Estatus E
-            ON E.IdEstatus = NC.IdEstatus
+            ON NC.IdEstatus				=	E.IdEstatus 
         LEFT JOIN dbo.FI_Factura F
-            ON F.IdFactura = NC.IdFacturaNotaCredito
+            ON NC.IdFacturaNotaCredito	=	F.IdFactura 
         LEFT JOIN dbo.S_Usuario UC
-            ON UC.IdUsuario = NC.CreadoPor
-		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	c.IdContrato	=	AP.IdContrato
+            ON NC.CreadoPor				=	UC.IdUsuario 			
     WHERE AP.IdContrato = @IdContrato
           AND ISNULL(NC.IdEstatusEliminada, 0) = 0
-     GROUP BY --Descripcion,
+     GROUP BY
              E.Nombre,
              NC.CreadoEl,
              UC.Nombre,
              F.IdFactura,
-             NC.IdAceptacionNotaCredito,
-             --O.IdOperacion,
+             NC.IdAceptacionNotaCredito,            
              F.SubTotal,
-             F.MontoConIva,
-            -- O.FechaModificacion,
+             F.MontoConIva,           
 			 F.Moneda,
 			 F.UUID,
-			 NC.IdAceptacionPedido,
-			-- PG.IdPedido,
+			 NC.IdAceptacionPedido,			
 			 NC.CFDIRelacionados,
 			  ap.IdPedido,
 			  nc.FechaAprobacion,

@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ObtenerInfoCardAceptacionFactura'
+)
+    DROP PROCEDURE SP_ObtenerInfoCardAceptacionFactura;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ObtenerInfoCardAceptacionFactura]    Script Date: 26/04/2022 05:21:17 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 29-11-18
 -- Description:	Obtener la informacion de la card reporte que se encuentra en la aceptacion de la factura
@@ -15,7 +29,14 @@
 -- Create date: 26-05-2021
 -- Description:	se agrega la variable @MontoTotalOC para almacenar el total del pedido
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_ObtenerInfoCardAceptacionFactura] @IdProveedor INT, @IdAceptacionPedido INT
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_ObtenerInfoCardAceptacionFactura]
+@IdProveedor INT, 
+@IdAceptacionPedido INT
 AS
 	BEGIN
 		SET NOCOUNT ON
@@ -23,10 +44,13 @@ AS
 		DECLARE @IdSolicitudPedido INT
 		DECLARE @MontoTotalOC FLOAT = (SELECT 
 											SUM((PD.Cantidad * PrecioUnitario))
-										FROM dbo.MM_PedidoDetalle AS PD
-										JOIN dbo.MM_Pedido AS P ON PD.IdPedido = P.IdPedido
-										JOIN dbo.MM_AceptacionPedido AS AP ON P.IdPedido = AP.IdPedido
-										WHERE AP.IdAceptacionPedido = @IdAceptacionPedido AND PD.Activo = 1
+										FROM dbo.MM_PedidoDetalle AS PD (NOLOCK)
+										JOIN dbo.MM_Pedido AS P (NOLOCK)
+											ON PD.IdPedido = P.IdPedido
+										JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK)
+											ON P.IdPedido = AP.IdPedido
+										WHERE AP.IdAceptacionPedido = @IdAceptacionPedido 
+										AND PD.Activo = 1
 										);
 
 		DECLARE @TablaAcPedido TABLE
@@ -39,7 +63,7 @@ AS
 			  IdTipoPedido INT ,
 			  TipoPedido NVARCHAR(300) ,
 			  IdSolicitudPedido INT ,
-			  MotivoUrgencia NVARCHAR(MAX) ,
+			  MotivoUrgencia NVARCHAR(MAX),
 			  MontoAceptado FLOAT ,
 			  IdMoneda INT ,
 			  TipoMoneda NVARCHAR(200))
@@ -62,12 +86,12 @@ AS
 		DECLARE @TablaTransferencia TABLE(IdFactura INT, MontoTransferencia float)
 		-- Obtener el numero de solicitud de pedido para traer todas las aceptaciones de pedido
 		SELECT		@IdSolicitudPedido = p.IdSolicitudPedido
-		FROM		dbo.MM_AceptacionPedido ap
-		INNER JOIN	dbo.MM_Pedido p
-			ON p.IdPedido = ap.IdPedido
+		FROM		dbo.MM_AceptacionPedido ap (NOLOCK)
+		JOIN	dbo.MM_Pedido p (NOLOCK)
+			ON ap.IdPedido = p.IdPedido 
 		WHERE
-					ap.IdAceptacionPedido = @IdAceptacionPedido
-					AND ISNULL ( ap.IdEstatusEliminado, 0 ) <> 1
+		ap.IdAceptacionPedido = @IdAceptacionPedido
+		AND ISNULL ( ap.IdEstatusEliminado, 0 ) <> 1
 
 		--> MOSTRAR ACEPTACIONES NO ELIMINADAS	
 
@@ -76,77 +100,66 @@ AS
 		INSERT INTO @TablaAcPedido
 			( IdAceptacionPedido, IdPedido, Comentario, LugarEntrega, TipoDomicilio, IdPedidoGral, IdTipoPedido ,
 			  TipoPedido , IdSolicitudPedido, MotivoUrgencia, MontoAceptado, IdMoneda, TipoMoneda )
-		SELECT		AP.IdAceptacionPedido, AP.IdPedido, AP.Comentario ,
-					-- AP.Creado,
+		SELECT		AP.IdAceptacionPedido, AP.IdPedido, AP.Comentario ,					
 					CONCAT (
 						LE.[Calle], ' ', LE.[NoExterior], ' ', LE.[NoInterior], ' ', LE.[Colonia], ' ', LE.[Municipio] ,
 						' ' , LE.[Estado], ' ', PAIS.Pais ) AS LugarEntrega, TD.TipoDomicilio ,
 					PG.IdPedido AS IdPedidoGeneral, PG.IdTipoPedido, TP.TipoPedido, MP.IdSolicitudPedido ,
 					sp.MotivoUrgencia, SUM ( apd.Cantidad * pd.PrecioUnitario ) AS MontoAceptacion, pd.IdMoneda ,
 					tm.TipoMonedaCorto
-		FROM		MM_AceptacionPedido AS AP
-		INNER JOIN	MM_Pedido AS MP
-			ON MP.IdPedido = AP.IdPedido
-		INNER JOIN	dbo.MM_PedidoDetalle pd
-			ON pd.IdPedido = MP.IdPedido
-		INNER JOIN	dbo.MM_AceptacionPedidoDetalle apd
-			ON apd.IdAceptacionPedido = AP.IdAceptacionPedido
-			   AND	apd.IdPedidoDetalle = pd.IdPedidoDetalle
-		INNER JOIN	DG_Domicilio AS LE
-			ON LE.IdDomicilio = AP.IdDomicilioEntrega
-		INNER JOIN	DG_TipoDomicilio AS TD
-			ON TD.IdTipoDomicilio = LE.IdTipoDomicilio
-		INNER JOIN	PV_PaisRepublica AS PAIS
-			ON PAIS.id = LE.IdPais
-		INNER JOIN	S_Proveedor AS P
-			ON P.IdProveedor = MP.IdSubcontratista
-		INNER JOIN	MM_Pedidos AS PG
+		FROM		MM_AceptacionPedido AS AP (NOLOCK)
+		JOIN	MM_Pedido AS MP (NOLOCK)
+			ON  AP.IdPedido = MP.IdPedido 
+			AND AP.IdProveedor = @IdProveedor
+			AND MP.IdSolicitudPedido = @IdSolicitudPedido
+		JOIN	dbo.MM_PedidoDetalle pd (NOLOCK)
+			ON MP.IdPedido = pd.IdPedido 
+		JOIN	dbo.MM_AceptacionPedidoDetalle apd (NOLOCK)
+			ON AP.IdAceptacionPedido = apd.IdAceptacionPedido 
+			   AND	pd.IdPedidoDetalle = apd.IdPedidoDetalle 
+		JOIN	DG_Domicilio AS LE (NOLOCK)
+			ON AP.IdDomicilioEntrega = LE.IdDomicilio 
+		JOIN	DG_TipoDomicilio AS TD (NOLOCK)
+			ON LE.IdTipoDomicilio = TD.IdTipoDomicilio 
+		JOIN	PV_PaisRepublica AS PAIS (NOLOCK)
+			ON LE.IdPais = PAIS.id 
+		JOIN	S_Proveedor AS P (NOLOCK)
+			ON MP.IdSubcontratista = P.IdProveedor 
+		JOIN	MM_Pedidos AS PG (NOLOCK)
 			ON MP.IdPedido = PG.IdIdentificador
-			   AND	PG.IdProveedorCliente = MP.IdProveedorCompras
-		LEFT JOIN	dbo.MM_TipoPedido AS TP
-			ON TP.IdTipoPedido = PG.IdTipoPedido
-		LEFT JOIN	dbo.MM_SolicitudPedido sp
-			ON sp.IdSolicitudPedido = MP.IdSolicitudPedido
-		LEFT JOIN	dbo.PV_TipoMoneda tm
-			ON tm.IdMoneda = pd.IdMoneda
-		WHERE
-					AP.IdProveedor = @IdProveedor
-					AND ISNULL ( AP.IdEstatusEliminado, 0 ) <> 1 --> MOSTRAR ACEPTACIONES NO ELIMINADAS	
-					AND MP.IdSolicitudPedido = @IdSolicitudPedido
+			 AND	PG.IdProveedorCliente = MP.IdProveedorCompras
+			 AND PG.IdTipoPedido in (2,4,6) -->CTES 
+		LEFT JOIN	dbo.MM_TipoPedido AS TP (NOLOCK)
+			ON PG.IdTipoPedido = TP.IdTipoPedido 
+		LEFT JOIN	dbo.MM_SolicitudPedido sp (NOLOCK)
+			ON MP.IdSolicitudPedido = sp.IdSolicitudPedido
+		LEFT JOIN	dbo.PV_TipoMoneda tm (NOLOCK)
+			ON pd.IdMoneda = tm.IdMoneda 
+		WHERE		ISNULL ( AP.IdEstatusEliminado, 0 ) <> 1 --> MOSTRAR ACEPTACIONES NO ELIMINADAS						
 		GROUP BY	LE.Calle, LE.NoExterior, LE.NoInterior, LE.Colonia, LE.Municipio, LE.Estado, PAIS.Pais ,
 					AP.IdAceptacionPedido, AP.IdPedido, AP.Comentario, TD.TipoDomicilio, PG.IdPedido, PG.IdTipoPedido ,
 					TP.TipoPedido, MP.IdSolicitudPedido, sp.MotivoUrgencia, pd.IdMoneda, tm.TipoMonedaCorto
 		ORDER BY	IdAceptacionPedido DESC
-
-		-- Obtener los montos aceptados de los pedidos y su moneda
-		----INSERT INTO @TablaMontoPedido
-		----	( IdPedido, MontoAceptado, IdMoneda, TipoMoneda )
-		----SELECT		*
-		----FROM		dbo.MM_AceptacionPedidoDetalle apd
-		----INNER JOIN	dbo.MM_PedidoDetalle pd
-		----	ON pd.IdPedidoDetalle = apd.IdPedidoDetalle
-
-		--SELECT		p.IdPedido, SUM ( pd.Subtotal ) AS MontoAceptado, pd.IdMoneda, tm.TipoMonedaCorto
-		--FROM		dbo.MM_Pedido p
-		--INNER JOIN	dbo.MM_PedidoDetalle pd
-		--	ON pd.IdPedido = p.IdPedido
-		--LEFT JOIN	dbo.PV_TipoMoneda tm
-		--	ON tm.IdMoneda = pd.IdMoneda
-		--WHERE
-		--			ISNULL ( p.IdEstatusEliminado, 0 ) <> 1 --> MOSTRAR ACEPTACIONES NO ELIMINADAS	
-		--			AND p.IdProveedorCompras = @IdProveedor
-		--			AND p.IdSolicitudPedido = @IdSolicitudPedido
-		--			AND pd.RecepcionPedido = 1	--> Solo los que hayan sido aceptados
-		--GROUP BY	pd.IdMoneda, tm.TipoMonedaCorto, p.IdPedido
+	
 
 		INSERT INTO @TablaTransferencia
-		SELECT fa.IdFactura, SUM(transf.MontoPagado) FROM dbo.MM_AceptacionFactura af INNER JOIN dbo.MM_AceptacionPedido ap ON ap.IdAceptacionPedido = af.IdAceptacionPedido
-		INNER JOIN dbo.MM_Pedido p ON p.IdPedido = ap.IdPedido
-		INNER JOIN dbo.FI_Factura f ON f.IdFactura = af.IdFactura
-		INNER JOIN Adinco.dbo.FI_FacturaAdincoPetrovendor fact ON f.IdFactura = fact.IdFacturaPetrovendor
-		INNER JOIN Adinco.dbo.FI_Factura fa ON fact.IdFacturaAdinco = fa.IdFactura
-		LEFT JOIN Adinco.dbo.FI_TransferFactura transFact ON transFact.IdFactura = fa.IdFactura
-		LEFT JOIN Adinco.dbo.FI_Transfer transf ON transf.IdTransferencia = transFact.IdTransfer
+		SELECT fa.IdFactura, SUM(transf.MontoPagado) 
+		FROM dbo.MM_AceptacionFactura af (NOLOCK)
+		JOIN dbo.MM_AceptacionPedido ap (NOLOCK)
+			ON af.IdAceptacionPedido = ap.IdAceptacionPedido 
+		JOIN dbo.MM_Pedido p (NOLOCK)
+			ON ap.IdPedido = p.IdPedido 
+			AND p.IdSolicitudPedido = @IdSolicitudPedido
+		JOIN dbo.FI_Factura f (NOLOCK)
+			ON af.IdFactura = f.IdFactura 
+		JOIN Adinco.dbo.FI_FacturaAdincoPetrovendor fact 
+			ON f.IdFactura = fact.IdFacturaPetrovendor
+		JOIN Adinco.dbo.FI_Factura fa (NOLOCK)
+			ON fact.IdFacturaAdinco = fa.IdFactura
+		LEFT JOIN Adinco.dbo.FI_TransferFactura transFact (NOLOCK)
+			ON fa.IdFactura = transFact.IdFactura 
+		LEFT JOIN Adinco.dbo.FI_Transfer transf (NOLOCK)
+			ON transf.IdTransferencia = transFact.IdTransfer
 		WHERE p.IdSolicitudPedido = @IdSolicitudPedido
 		GROUP BY fa.IdFactura
 
@@ -158,35 +171,36 @@ AS
 					PR.RazonSocial + ' ' + ISNULL ( Pr.RegimenCapital, '' ) AS Proveedor, E.Nombre, E.IdEstatus ,
 					PG.IdPedido AS IdPedidoGeneral, TP.TipoPedido, f.SubTotal AS TotalFacturado, f.Moneda AS Moneda ,
 					PR.RFC, PE.IdSolicitudPedido, AF.IdFactura
-		FROM		MM_AceptacionFactura AS AF
-		INNER JOIN	TA_Operacion AS O
-			ON O.IdDocumento = AF.IdAceptacionFactura
-		INNER JOIN	TA_Estatus AS E
-			ON E.IdEstatus = O.IdEstatusOperacion
-		INNER JOIN	MM_AceptacionPedido AS AP
-			ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-		INNER JOIN	dbo.MM_AceptacionPedidoDetalle AS APD
-			ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
-		INNER JOIN	MM_Pedido AS PE
-			ON PE.IdPedido = AP.IdPedido
-		INNER JOIN	MM_PedidoDetalle AS PED
-			ON PED.IdPedido = PE.IdPedido
+		FROM		MM_AceptacionFactura AS AF (NOLOCK)
+		JOIN	TA_Operacion AS O (NOLOCK)
+			ON AF.IdAceptacionFactura =	O.IdDocumento 
+			AND O.IdTipoOperacion = 10 --> APROBACIÓN DE FACTURA		
+		JOIN	MM_AceptacionPedido AS AP (NOLOCK)
+			ON AF.IdAceptacionPedido	=	AP.IdAceptacionPedido 
+		JOIN	dbo.MM_AceptacionPedidoDetalle AS APD (NOLOCK)
+			ON AP.IdAceptacionPedido	=	APD.IdAceptacionPedido 
+		JOIN	MM_Pedido AS PE (NOLOCK)
+			ON AP.IdPedido	=	PE.IdPedido 
+			AND PE.IdProveedorCompras = @IdProveedor
+		JOIN	TA_Estatus AS E (NOLOCK)
+			ON O.IdEstatusOperacion = E.IdEstatus 
+		JOIN	MM_PedidoDetalle AS PED (NOLOCK)
+			ON PE.IdPedido	=	 PED.IdPedido
 			   AND	APD.IdPedidoDetalle = PED.IdPedidoDetalle
-		INNER JOIN	MM_Pedidos AS PG
+		JOIN	MM_Pedidos AS PG (NOLOCK)
 			ON PE.IdPedido = PG.IdIdentificador
 			   AND	PG.IdProveedorCliente = @IdProveedor
-		INNER JOIN	S_Proveedor AS PR
-			ON PR.IdProveedor = PE.IdSubcontratista
-		INNER JOIN	dbo.PV_TipoMoneda AS TM
-			ON TM.IdMoneda = PE.IdMoneda
-		LEFT JOIN	dbo.MM_TipoPedido AS TP
-			ON TP.IdTipoPedido = PG.IdTipoPedido
-		LEFT JOIN	dbo.FI_Factura f
-			ON f.IdFactura = AF.IdFactura
-		WHERE
-					O.IdTipoOperacion = 10
-					AND PE.IdProveedorCompras = @IdProveedor
-					AND ISNULL ( AF.IdEstatusEliminado, 0 ) <> 1 --> QUE NO ESTE CON ESTATUS ELIMINADO
+			   AND  PG.IdTipoPedido in (2,4,6) -->CTES 
+		JOIN	S_Proveedor AS PR (NOLOCK)
+			ON PE.IdSubcontratista = PR.IdProveedor 
+		JOIN	dbo.PV_TipoMoneda AS TM (NOLOCK)
+			ON  PE.IdMoneda = TM.IdMoneda
+		LEFT JOIN	dbo.MM_TipoPedido AS TP (NOLOCK)
+			ON  PG.IdTipoPedido = TP.IdTipoPedido
+		LEFT JOIN	dbo.FI_Factura f (NOLOCK)
+			ON  AF.IdFactura = f.IdFactura
+		WHERE	
+					ISNULL ( AF.IdEstatusEliminado, 0 ) <> 1 --> QUE NO ESTE CON ESTATUS ELIMINADO
 					AND PE.IdSolicitudPedido = @IdSolicitudPedido
 		GROUP BY	AF.IdAceptacionPedido, Pe.IdPedido, O.FechaRegistro, PR.RazonSocial, Pr.RegimenCapital, E.Nombre ,
 					PG.IdPedido, TP.TipoPedido, PR.RFC, AF.IdEstatusEliminado, PE.IdSolicitudPedido, E.IdEstatus ,
@@ -214,21 +228,22 @@ AS
 					@MontoTotalOC AS MontoTotalOC
 		FROM		@TablaAcPedido ac
 		LEFT JOIN	@TablaFacturado f
-			ON f.IdAceptacionPedido = ac.IdAceptacionPedido
-			   AND	f.IdPedido = ac.IdPedido
-		LEFT JOIN	Adinco.dbo.FI_FacturaAdincoPetrovendor relFact
+			ON ac.IdAceptacionPedido = f.IdAceptacionPedido 
+			   AND	ac.IdPedido = f.IdPedido 
+		LEFT JOIN	Adinco.dbo.FI_FacturaAdincoPetrovendor relFact (NOLOCK)
 			ON f.IdFactura = relFact.IdFacturaPetrovendor
-		LEFT JOIN	Adinco.dbo.FI_Factura aFact
+		LEFT JOIN	Adinco.dbo.FI_Factura aFact (NOLOCK)
 			ON aFact.IdFactura = relFact.IdFacturaAdinco
-			   AND	aFact.Activa = 1
-		LEFT JOIN	Adinco.dbo.FI_TransferFactura transFac
-			ON transFac.IdFactura = aFact.IdFactura
-		LEFT JOIN	Adinco.dbo.FI_Transfer transf
-			ON transf.IdTransferencia = transFac.IdTransfer
+			   AND	aFact.Activa = 1 -->CTE
+		LEFT JOIN	Adinco.dbo.FI_TransferFactura transFac (NOLOCK)
+			ON aFact.IdFactura = transFac.IdFactura 
+		LEFT JOIN	Adinco.dbo.FI_Transfer transf (NOLOCK)
+			ON transFac.IdTransfer = transf.IdTransferencia 
 			   AND	transf.PDF IS NOT NULL
-		LEFT JOIN @TablaTransferencia ttransf ON ttransf.IdFactura = aFact.IdFactura
-		LEFT JOIN dbo.DEA_Relacion_PR_PO AS RPRPO 
-			ON RPRPO.IdPedido = ac.IdPedido
+		LEFT JOIN @TablaTransferencia ttransf  
+			ON aFact.IdFactura = ttransf.IdFactura 
+		LEFT JOIN dbo.DEA_Relacion_PR_PO AS RPRPO (NOLOCK)
+			ON ac.IdPedido = RPRPO.IdPedido 
 		WHERE		f.IdAceptacionPedido IS NOT NULL	--> Solo mostrar los que ya tienen facturas cargadas 
 		GROUP BY transf.PDF, f.EstatusFactura, f.IdEstatusFactura, aFact.IdFactura, ac.IdAceptacionPedido, ac.IdPedido ,
 		  ac.Comentario, ac.LugarEntrega, ac.TipoDomicilio, ac.IdPedidoGral, ac.IdTipoPedido, ac.TipoPedido ,

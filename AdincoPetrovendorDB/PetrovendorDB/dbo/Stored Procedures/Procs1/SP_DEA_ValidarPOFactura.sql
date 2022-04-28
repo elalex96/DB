@@ -1,7 +1,26 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DEA_ValidarPOFactura'
+)
+    DROP PROCEDURE SP_DEA_ValidarPOFactura;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_DEA_ValidarPOFactura]    Script Date: 27/04/2022 12:19:02 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <12/09/2020>
 -- Description:	<Validacion de PO para dea al aprobar factura>
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DEA_ValidarPOFactura] --2337,420
 	-- Add the parameters for the stored procedure here
@@ -16,9 +35,9 @@ BEGIN
 
 	DECLARE @RFC_ACTUAL NVARCHAR(MAX);
 	DECLARE @EXISTE_PO NVARCHAR(MAX);
-	SELECT @RFC_ACTUAL=RFC FROM dbo.S_Proveedor WHERE IdProveedor=@IdProveedor 
+	SELECT @RFC_ACTUAL=RFC FROM dbo.S_Proveedor  (NOLOCK)  WHERE IdProveedor=@IdProveedor 
 
-	DECLARE @EXISTE_RFC INT = (SELECT COUNT(IdProveedor) FROM DEA_Proveedor WHERE RTRIM(LTRIM(RFC))=RTRIM(LTRIM(@RFC_ACTUAL)) AND Activo=1)
+	DECLARE @EXISTE_RFC INT = (SELECT COUNT(IdProveedor) FROM DEA_Proveedor  (NOLOCK) WHERE RTRIM(LTRIM(RFC))=RTRIM(LTRIM(@RFC_ACTUAL)) AND Activo=1)
 
 	IF ISNULL(@EXISTE_RFC,0) > 0 
 	BEGIN 
@@ -26,11 +45,11 @@ BEGIN
 		SET @EXISTE_PO = (
 							SELECT TOP 1
 								PRPO.PO
-							FROM dbo.MM_AceptacionPedido AS AP
-								LEFT JOIN dbo.MM_Pedido AS P ON
-									P.IdPedido = AP.IdPedido
-								LEFT JOIN dbo.DEA_Relacion_PR_PO AS PRPO ON
-									PRPO.IdPedido = P.IdPedido
+							FROM dbo.MM_AceptacionPedido AS AP  (NOLOCK) 
+								JOIN dbo.MM_Pedido AS P (NOLOCK) 
+									ON AP.IdPedido = P.IdPedido 
+								JOIN dbo.DEA_Relacion_PR_PO AS PRPO (NOLOCK) 
+									ON P.IdPedido = PRPO.IdPedido 
 							WHERE AP.IdAceptacionPedido = @IdAceptacionPedido);
 
 		IF @EXISTE_PO IS NOT NULL
