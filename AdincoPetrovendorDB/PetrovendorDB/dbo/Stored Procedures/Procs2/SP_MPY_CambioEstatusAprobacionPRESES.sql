@@ -13,12 +13,14 @@ BEGIN
 	declare @matDocGR varchar(20),
 			@ReferenceNumber	varchar(20),
 			@GRNumber			varchar(20),
-			@PO					varchar(100)
+			@PO					varchar(100),
+			@IdEstatusSAP INT
 
 	--use adinco
 	select	@ReferenceNumber		=	SAPSESNumber, 
 			@GRNumber				=	MatDocN ,
-			@PO						= SAPPONumber
+			@PO						= SAPPONumber,
+			@IdEstatusSAP = IdEstatus
 	from	adinco..CO_SAPPRESES 
 	where	IdPreses				=	@IdPRESES
 
@@ -73,7 +75,30 @@ BEGIN
 				@Justificacion
 
 	END
+	ELSE
+	BEGIN
+		-- SI ESTA EN APROBACION Y ES UN RECHAZO EL CAMBIO DE ESTATUS
+		IF(@IdEstatusSAP = 1 AND @IdEstatus = 3)
+		BEGIN
+			UPDATE Adinco.dbo.CO_SAPPRESES 
+			SET		IdEstatus		= @IdEstatus,
+					Justificacion	= @Justificacion,
+					ModificadoPor	= @IdUsuario,
+					ModificadoEl	= GETDATE()
+			FROM Adinco.dbo.CO_SAPPRESES PRO 
+			WHERE	IdPRESES		= @IdPRESES
 
+			SELECT 'SUCCESS'	
+
+			exec adinco..p_MPY_CO_SAPPRESES_Bitacora_Ins 
+				@ReferenceNumber,
+				@GRNumber,
+				@IdUsuario,
+				@IdPreses,
+				@IdEstatus,
+				@Justificacion
+		END
+	END
 	
 END
 
