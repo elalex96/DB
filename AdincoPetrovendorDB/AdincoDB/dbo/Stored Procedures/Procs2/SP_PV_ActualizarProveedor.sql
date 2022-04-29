@@ -1,8 +1,12 @@
-﻿--╔═════════════════════════════════════════════╗
+﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--╔═════════════════════════════════════════════╗
 --║Create Author: Marcos Garcia                 ║
 --║Create Date:   12-03-2020                    ║
 --║Description:   Update a Proveedor Mediante ID║
 --╚═════════════════════════════════════════════╝
+--Modificado Por: Daniel Moreno
+--Modificado El: 28/04/2022
+--Descripción: Se agrega campo Actio AL update
 CREATE PROCEDURE [dbo].[SP_PV_ActualizarProveedor] 
 --
 @IdSubcontratista    INT, 
@@ -12,7 +16,8 @@ CREATE PROCEDURE [dbo].[SP_PV_ActualizarProveedor]
 @RegimenCapital      NVARCHAR(MAX), 
 @NombreComercial     NVARCHAR(MAX), 
 @IdUsuario           INT, 
-@IdContrato          INT
+@IdContrato          INT,
+@IsActivo BIt
 AS
      BEGIN
          UPDATE dbo.PV_Subcontratista
@@ -24,7 +29,9 @@ AS
                TipoPersonaFiscalID = @TipoPersonaFiscalID, 
                RazonSocial = @NombreComercial, 
                ModificadoPor = @IdUsuario, 
-               ModificadoEn = GETDATE()
+               ModificadoEn = GETDATE(),
+			   IsActivo = ISNULL(@IsActivo,0),
+			   IsEliminado = CASE WHEN ISNULL(@IsActivo,0) = 1 THEN 0 ELSE 1 END
          WHERE IdSubcontratista = @IdSubcontratista;
       --╔══════════════════════════╗
          IF @@ERROR <> 0

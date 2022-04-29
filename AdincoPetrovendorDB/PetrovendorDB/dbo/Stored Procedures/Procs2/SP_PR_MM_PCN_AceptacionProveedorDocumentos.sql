@@ -1,25 +1,34 @@
-if exists(select * from sys.procedures where name = 'SP_PR_MM_PCN_AceptacionProveedorDocumentos')
-begin
-	drop proc SP_PR_MM_PCN_AceptacionProveedorDocumentos
-end
+USE Petrovendor
+GO
 
-go
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_PCN_AceptacionProveedorDocumentos'
+)
+    DROP PROCEDURE SP_PR_MM_PCN_AceptacionProveedorDocumentos;
 
---select top 100 * from S_Documento_S3 where NombreDocumento = 'Curriculum Josue Glez (6)'
+
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorDocumentos]    Script Date: 26/04/2022 06:34:43 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorDocumentos]
 	-- Add the parameters for the stored procedure here
-	@IdProveedor INT, 
+	@IdProveedor		INT, 
 	@IdAceptacionPedido INT, 
-	@Accion NVARCHAR(MAX), 
-	@IdDocumento INT,
-	@nombre			varchar(100)
+	@Accion				NVARCHAR(MAX), 
+	@IdDocumento		INT,
+	@nombre				varchar(100)
 AS
 	BEGIN
--- =============================================
--- Author:		<Pedro Acuña>
--- Create date: <17-09-2018>
--- Description:	<Se agrega el bit de activo>
--- =============================================
 -- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 06-01-2020
@@ -29,19 +38,21 @@ AS
 --					Si no se guarda que cubeta es, por default se manda la de petrovendor
 -- =============================================
 -- Author:		Ramón Portales
--- Create date: 03-12-2021
--- Description:	 Se modificaron las ultimas dos consultas para buscar por UUID y no poor nombre
+-- Create date: 09-12-2021
+-- Description:	Se modificó la ultima consulta, se movio el filtro por UUID al join y se quitó del where
+-- =============================================
+
     SET NOCOUNT ON ;
     IF @Accion = 'TABLA'
         BEGIN
-            SELECT      AD.[IdDocumento], AD.[NombreDocumento], AD.[Comentario], US.Nombre, D.CreadoEl
-            FROM        [dbo].[MM_AceptacionDocumento] AS AD
-            INNER JOIN  [dbo].[MM_AceptacionPedido] AS AP
-                ON AP.[IdAceptacionPedido] = AD.[IdAceptacionDocumento]
-			INNER JOIN  [dbo].[S_Documento_S3] AS D
-				ON	D.[IdDocumento] = AD.[IdDocumento]
-			LEFT JOIN S_Usuario AS US
-				ON D.IdUsuario = US.IdUsuario
+            SELECT   AD.[IdDocumento], AD.[NombreDocumento], AD.[Comentario], US.Nombre, D.CreadoEl
+            FROM  [dbo].[MM_AceptacionDocumento] AS AD (NOLOCK)
+            JOIN  [dbo].[MM_AceptacionPedido] AS AP (NOLOCK)
+                ON AD.[IdAceptacionDocumento] = AP.[IdAceptacionPedido] 
+			INNER JOIN  [dbo].[S_Documento_S3] AS D (NOLOCK)
+				ON	AD.[IdDocumento] = D.[IdDocumento] 
+			LEFT JOIN S_Usuario AS US (NOLOCK)
+				ON US.IdUsuario = D.IdUsuario 
             WHERE
                         AP.[IdAceptacionPedido] = @IdAceptacionPedido
                         AND AP.[IdProveedor] = @IdProveedor
@@ -55,28 +66,26 @@ AS
             SELECT      AD.[IdDocumento], AD.[NombreDocumento], '' AS Documento, D.[Carpeta], D.[Extension] ,
                         D.Identificador, d.Bucket AS Bucket, D.Mime
 			into		#tmp
-            FROM        [dbo].[MM_AceptacionDocumento]	AS AD --[MM_AceptacionDocumento] where IdAceptacionDocumento = 907
-            INNER JOIN  [dbo].[MM_AceptacionPedido]		AS AP
-            ON			AP.[IdAceptacionPedido] = AD.[IdAceptacionDocumento]
-            INNER JOIN  [dbo].[S_Documento_S3] AS D
-            ON			D.[IdDocumento] = AD.[IdDocumento]
+            FROM        [dbo].[MM_AceptacionDocumento]	AS AD (NOLOCK)
+            JOIN  [dbo].[MM_AceptacionPedido]		AS AP (NOLOCK)
+            ON			AD.[IdAceptacionDocumento] = AP.[IdAceptacionPedido] 
+            JOIN  [dbo].[S_Documento_S3] AS D (NOLOCK)
+            ON			 AD.[IdDocumento] = D.[IdDocumento]
             WHERE
                         AP.[IdAceptacionPedido] = @IdAceptacionPedido
                         AND AP.[IdProveedor]	= @IdProveedor
                         AND  AD.[IdDocumento]	= @IdDocumento
                         AND AD.Activo = 1
 
-			--select * from #tmp
 				/*CONSULTA EL DOCUMENTO EN LA TABLA DE DOCUMENTOS DE PETROVENDOR -- CASO PARA OT´S */
 			select		*
 			into		#tmpAdinco
-			from		Adinco..AWS_Documentos 
+			from		Adinco..AWS_Documentos  (NOLOCK)
 			where		UUIDAmazon --COLLATE Modern_Spanish_CI_AS 
 			in			(
 							select	Identificador --COLLATE Modern_Spanish_CI_AS 
 							from	#tmp) 
 
-			--select * from #tmpAdinco
 				
 			/*RETORNA EL DOCUMENTO CORRECTO*/
 			select		t1.IdDocumento,
@@ -95,3 +104,4 @@ AS
 
         END
 END
+

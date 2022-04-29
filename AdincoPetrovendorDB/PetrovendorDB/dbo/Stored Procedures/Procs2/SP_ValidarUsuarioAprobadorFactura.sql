@@ -1,8 +1,29 @@
-﻿-- =============================================  
+﻿USE Petrovendor
+go
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ValidarUsuarioAprobadorFactura'
+)
+    DROP PROCEDURE SP_ValidarUsuarioAprobadorFactura;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ValidarUsuarioAprobadorFactura]    Script Date: 26/04/2022 06:46:53 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:  Daniel AC   
 -- Create date: 09/10/2020  
 -- Description: Validar si el usuario actual es aprobador de la factura actual  
 -- =============================================  
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 27-04-2022
+-- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ValidarUsuarioAprobadorFactura]
     @IdUsuario INT,
     @IdOperacion INT
@@ -23,7 +44,7 @@ BEGIN
     WHERE IdOperacion = @IdOperacion;
 
     SELECT @TipoFlujoAprobacion = IdTipoFlujo
-    FROM dbo.TA_FlujoTarea
+    FROM dbo.TA_FlujoTarea (NOLOCK)
     WHERE IdFlujoTarea = @IdFlujoAprobacion;
 
 
