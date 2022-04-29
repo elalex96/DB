@@ -13228,6 +13228,13 @@
     <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_AprobacionesPorUsuarioContador.sql" />
     <Build Include="dbo\Consultas\QRY_Adinco_0901.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\GuardarRelacionCartaPDFNoExisteEnPetrovendor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\[SP_SE_A2_MPY].sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\[SP_SE_A3_MPY].sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\[SP_SE_A4_MPY].sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\[SP_SE_A5_MPY].sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\[SP_SE_A6_MPY].sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\[SP_SE_A7_MPY].sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_SE_TotalFacturadoRubro_MPY.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
