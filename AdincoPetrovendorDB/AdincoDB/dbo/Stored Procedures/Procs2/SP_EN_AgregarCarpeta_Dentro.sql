@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 22/04/2022 12:22:00 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 27/04/2022 03:30:29 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -15,7 +15,12 @@ GO
 -- Create date: <25/03/2022>
 -- Description:	Se agrego parametro de Nivel y CarpetaId del padre de la nueva carpeta
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro]
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <27/04/2022>
+-- Description:	<VALIDACION DE CARPETA EXISTENTE DENTRO DE LA MISMA RUTA>
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro] --'','PRUEBA',0,2,18,3,1
 	-- Add the parameters for the stored procedure here
 	@Ruta VARCHAR(MAX),
 	@Nombre NVARCHAR(500),
@@ -36,53 +41,66 @@ BEGIN
 			@Frecuencia INT,
 			@IdNuevaCarpeta INT;
 
-	DECLARE @LIMITADOR_GUARDADO INT = (SELECT TOP 1 Limitador FROM EN_CarpetasArchivosVisor WHERE IdElemento = 1787);
-
+	DECLARE @LIMITADOR_GUARDADO INT = (SELECT TOP 1 Limitador FROM EN_CarpetasArchivosVisor WHERE IdElemento = @IdPadre);
+	DECLARE @CARPETA_EXISTENTE INT = (SELECT TOP 1 IdElemento FROM EN_CarpetasArchivosVisor WHERE Nombre = @Nombre AND Nivel = @NivelPadre AND IdPadre = @CarpetaPadreId AND IdContrato = @IdContrato AND Activo = 1);
 	SET @LIMITADOR_GUARDADO = ((ISNULL(@LIMITADOR_GUARDADO,0)) + 1);
 			
+	--VALIDACION DE CARPETA EXISTENTE DENTRO DE LA MISMA RUTA
+	IF ISNULL(@CARPETA_EXISTENTE,0) = 0
+	BEGIN
+		
+		-- Insert statements for procedure here
+		INSERT INTO EN_CarpetasArchivosVisor
+		(
+			[IsCarpeta],
+			[IsArchivo],
+			[Nombre],
+			[IdPadre],
+			[CreadoPor],
+			[CreadoEl],
+			Nivel,
+			Activo,
+			IdContrato,
+			Limitador
+		)
+		VALUES
+		(
+			1,
+			0,
+			@Nombre,
+			@CarpetaPadreId,
+			@IdUsuario,
+			GETDATE(),
+			@NivelPadre,
+			1,
+			@IdContrato,
+			@LIMITADOR_GUARDADO
+		);
 
-    -- Insert statements for procedure here
-	INSERT INTO EN_CarpetasArchivosVisor
-	(
-		[IsCarpeta],
-		[IsArchivo],
-		[Nombre],
-		[IdPadre],
-		[CreadoPor],
-		[CreadoEl],
-		Nivel,
-		Activo,
-		IdContrato,
-		Limitador
-	)
-	VALUES
-	(
-		1,
-		0,
-		@Nombre,
-		@CarpetaPadreId,
-		@IdUsuario,
-		GETDATE(),
-		@NivelPadre,
-		1,
-		@IdContrato,
-		@LIMITADOR_GUARDADO
-	);
+		SET @IdNuevaCarpeta = (SELECT SCOPE_IDENTITY());
 
-	SET @IdNuevaCarpeta = (SELECT SCOPE_IDENTITY());
+		SELECT TOP 1
+			'SUCCESS',
+			IdCarpeta,
+			Frecuencia,
+			IsCarpetaUsuario,
+			IdReceptorEntregable,
+			IsPozo,
+			Etapa,
+			AnioMes,
+			Nivel
+		FROM EN_SecuenciaCarpetas
+		WHERE IdCarpeta = @CarpetaPadreId
+		AND Nivel = @NivelPadre
+		AND Activo = 1;
 
-	SELECT TOP 1
-		IdCarpeta,
-		Frecuencia,
-		IsCarpetaUsuario,
-		IdReceptorEntregable,
-		IsPozo,
-		Etapa,
-		AnioMes,
-		Nivel
-	FROM EN_SecuenciaCarpetas
-	WHERE IdCarpeta = @CarpetaPadreId
-	AND Nivel = @NivelPadre
-	AND Activo = 1;
+		SELECT @CARPETA_EXISTENTE
+
+	END
+	ELSE
+	BEGIN
+		SELECT 'ERROR CARPETA EXISTENTE',0,0,0,0,0,0,0,0;
+	END
+    
 
 END

@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 22/04/2022 12:21:33 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 28/04/2022 06:51:11 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,7 +11,7 @@ GO
 -- Description:	<Consulta de archivos contract files>
 -- =============================================
 ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] 
---[EN_SHELL_ObtenerDocumentosEntregables_V2] 10031,10150,5,10030,1,0,10001,0,10004,'',0,0
+--[EN_SHELL_ObtenerDocumentosEntregables_V2] 3,10150,2,10004,1,0,0,0,0,'',0,0
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@IdUsuario INT,
@@ -335,7 +335,7 @@ BEGIN
 			JOIN CO_ContratoEtapas CE	(NOLOCK)
 				ON D.FechaProgramadaEntrega BETWEEN CE.FechaInicio AND CE.FechaFin
 				AND CE.EtapaId = @IdCarpeta
-			JOIN EN_SecuenciaCarpetas AS SC
+			LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
 					AND SC.Nivel = @Nivel
 					AND SC.IdContrato = @ContratoId
@@ -367,7 +367,7 @@ BEGIN
 			US.Nombre,
 			ISNULL(CA.Limitador,0)
 		FROM EN_CarpetasArchivosVisor AS CA
-		JOIN EN_SecuenciaCarpetas AS SC
+		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = CA.IdPadre
 					AND SC.Nivel = CA.Nivel
 					AND SC.IdContrato = CA.IdContrato
@@ -421,7 +421,7 @@ BEGIN
 			US.Nombre,
 			1
 		FROM EN_CarpetasArchivosVisor AS CA
-		JOIN EN_SecuenciaCarpetas AS SC
+		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = CA.IdPadre
 					AND SC.Nivel = CA.Nivel
 					AND SC.IdContrato = CA.IdContrato
@@ -509,7 +509,7 @@ BEGIN
 					ON  D.IdMarcoLegal =   ML.IdMarcoLegal AND
 						D.IdReceptorEntregable = @IdCarpeta AND 
 						D.EsDeProceso = 0 -->QUE NO SEA DOCUMENTO DE UN PROCESO
-				JOIN EN_SecuenciaCarpetas AS SC
+				LEFT JOIN EN_SecuenciaCarpetas AS SC
 					ON SC.IdCarpeta = @IdCarpeta 
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
@@ -546,7 +546,7 @@ BEGIN
 			US.Nombre,
 			ISNULL(CA.Limitador,0)
 		FROM EN_CarpetasArchivosVisor AS CA
-		JOIN EN_SecuenciaCarpetas AS SC
+		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
 					AND SC.Nivel = @Nivel
 					AND SC.IdContrato = @ContratoId
@@ -596,7 +596,7 @@ BEGIN
 			CA.Meta,
 			1
 		FROM EN_CarpetasArchivosVisor AS CA
-		JOIN EN_SecuenciaCarpetas AS SC
+		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
 					AND SC.Nivel = @Nivel
 					AND SC.IdContrato = @ContratoId
@@ -616,6 +616,7 @@ BEGIN
 
 		IF @IsPozo = 1
 		BEGIN
+
 			INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos,Frecuencia, Funcion, FuncionTipo,IsCarpetaUsuario, IdCarpetaAnterior, NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior,IdReceptorEntregable,IsPozo,Etapa)
 			SELECT 
 				4,
@@ -704,6 +705,36 @@ BEGIN
 
 		END;
 
+		--CONSULTA DE LAS CARPETAS POR USUARIO
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Limitador)
+		SELECT
+			2,
+			CA.Nombre,
+			CA.IdElemento,
+			NULL,
+			'Carpeta de Usuario',
+			CA.CreadoEl,
+			0,
+			'Carpeta de Usuario',
+			'Carpeta de Usuario',
+			1,
+			CA.IdPadre,
+			SC.Ruta,
+			SC.RutaAnterior,
+			US.Nombre,
+			ISNULL(CA.Limitador,0)
+		FROM EN_CarpetasArchivosVisor AS CA
+		LEFT JOIN EN_SecuenciaCarpetas AS SC
+				ON SC.IdCarpeta = @IdCarpeta
+					AND SC.Nivel = @Nivel
+					AND SC.IdContrato = @ContratoId
+		LEFT JOIN AP_Usuario AS US
+			ON CA.CreadoPor = US.UsuarioID
+		WHERE IsCarpeta = 1
+			AND IdPadre = @IdCarpeta
+			AND CA.Nivel = @Nivel
+			AND CA.Activo = 1;
+
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
 		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior, CreadoPor,Folder,UUID,Meta,CredoPorUsuario,IdReceptorEntregable)
 		SELECT
@@ -744,7 +775,7 @@ BEGIN
 			1,
 			@IdReceptorEntregable
 		FROM EN_CarpetasArchivosVisor AS CA
-		JOIN EN_SecuenciaCarpetas AS SC
+		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
 					AND SC.Nivel = @Nivel
 					AND SC.IdContrato = @ContratoId
@@ -1490,7 +1521,7 @@ BEGIN
 		CAST(ISNULL((SELECT TOP 1 IsPozo FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS BIT) AS IsPozoAnterior,
 		ISNULL((SELECT TOP 1 IdReceptorEntregable FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS IdReceptorAnterior,
 		ISNULL((SELECT TOP 1 AnioMes FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),'') AS AnioMesAnterior,
-		Limitador
+		ISNULL(Limitador,0) AS Limitador
 	FROM @CONTRACT_FILES AS CF
 	WHERE Nombre IS NOT NULL
 	ORDER BY IdRow ASC;
