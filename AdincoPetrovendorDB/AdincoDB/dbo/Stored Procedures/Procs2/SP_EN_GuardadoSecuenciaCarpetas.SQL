@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 19/02/2022 05:50:56 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_GuardadoSecuenciaCarpetas]    Script Date: 28/04/2022 06:42:47 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -45,7 +45,12 @@ BEGIN
 							AND IsPozo = @IsPozo
 							AND Activo = 1);
 
-	--VALIDACION DE EXISTENCIA DE LA SECUENCIA
+	DECLARE @RUTA_EXISTENTE NVARCHAR(MAX) = (SELECT TOP 1 Ruta FROM EN_SecuenciaCarpetas WHERE Ruta = @Ruta);
+
+	IF ISNULL(@RUTA_EXISTENTE,'') <> @Ruta
+	BEGIN
+
+		--VALIDACION DE EXISTENCIA DE LA SECUENCIA
 	IF @ID IS NULL --AND @Nivel > 1
 	BEGIN
 
@@ -95,7 +100,11 @@ BEGIN
 			@AnioMes
 		);
 
+		END
+
 	END
+
+	
 
 	--SELECT @ID
 
