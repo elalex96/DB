@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta]    Script Date: 22/04/2022 12:21:52 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta]    Script Date: 27/04/2022 03:32:05 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -9,6 +9,11 @@ GO
 -- Author:		<Alexander Gomez>
 -- Create date: <11/01/2022>
 -- Description:	<Agregado de carpetas en el visor de archivos V2>
+-- =============================================
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <27/04/2022>
+-- Description:	<VALIDACION DE CARPETA EXISTENTE DENTRO DE LA MISMA RUTA>
 -- =============================================
 ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta]
 	-- Add the parameters for the stored procedure here
@@ -25,37 +30,49 @@ BEGIN
 	SET NOCOUNT ON;
 
 	DECLARE @LIMITADOR_GUARDADO INT = (SELECT TOP 1 Limitador FROM EN_CarpetasArchivosVisor WHERE IdElemento = @IdPadre);
+	DECLARE @CARPETA_EXISTENTE INT = (SELECT TOP 1 IdElemento FROM EN_CarpetasArchivosVisor WHERE Nombre = @Nombre AND Nivel = @Nivel AND IdPadre = @IdPadre AND IdContrato = @IdContrato AND Activo = 1);
 
 	SET @LIMITADOR_GUARDADO = ((ISNULL(@LIMITADOR_GUARDADO,0)) + 1);
 
-    -- Insert statements for procedure here
-	INSERT INTO EN_CarpetasArchivosVisor 
-	(
-		[IsCarpeta],
-		[IsArchivo],
-		[Nombre],
-		[IdPadre],
-		[CreadoPor],
-		[CreadoEl],
-		Nivel,
-		Activo,
-		IdContrato,
-		Limitador
-	)
-	VALUES
-	(
-		1,
-		0,
-		@Nombre,
-		@IdPadre,
-		@IdUsuario,
-		GETDATE(),
-		@Nivel,
-		1,
-		@IdContrato,
-		@LIMITADOR_GUARDADO
-	);
+	--VALIDACION DE CARPETA EXISTENTE DENTRO DE LA MISMA RUTA
+	IF ISNULL(@CARPETA_EXISTENTE,0) = 0
+	BEGIN
+		
+		INSERT INTO EN_CarpetasArchivosVisor 
+		(
+			[IsCarpeta],
+			[IsArchivo],
+			[Nombre],
+			[IdPadre],
+			[CreadoPor],
+			[CreadoEl],
+			Nivel,
+			Activo,
+			IdContrato,
+			Limitador
+		)
+		VALUES
+		(
+			1,
+			0,
+			@Nombre,
+			@IdPadre,
+			@IdUsuario,
+			GETDATE(),
+			@Nivel,
+			1,
+			@IdContrato,
+			@LIMITADOR_GUARDADO
+		);
 
-	SELECT SCOPE_IDENTITY() AS IDCARPETA;
+		SELECT SCOPE_IDENTITY() AS IDCARPETA,'SUCCESS';
+
+	END
+	ELSE
+	BEGIN
+		
+		SELECT 0,'ERROR CARPETA EXISTENTE'
+
+	END
 
 END
