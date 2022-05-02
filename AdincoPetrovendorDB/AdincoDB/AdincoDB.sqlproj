@@ -13236,6 +13236,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\[SP_SE_A7_MPY].sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_SE_TotalFacturadoRubro_MPY.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ValidarArchivoCarga.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAPSES_BuscarSESSinImportacion.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
