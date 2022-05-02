@@ -4,7 +4,7 @@
 -- Create date: 2019-01-30
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_CCNFactura]
+CREATE  PROCEDURE [dbo].[SP_FI_CCNFactura]--10036,10109,200752
 -- [SP_FI_CCNFactura] 3,1,61855
 -- Add the parameters for the stored procedure here
 @IdContrato INT, 
@@ -21,7 +21,7 @@ AS
 
          --DECLARE @IdFactura INT= 61498;
          DECLARE @UUID NVARCHAR(MAX);
-         DECLARE @Contador INT;
+         DECLARE @Contador INT=0;
          DECLARE @IdFacturaP INT;
 
          /**/
@@ -73,8 +73,8 @@ AS
              ELSE
              BEGIN
                  SELECT UPPER(D.UUIDAmazon) AS Identificador, 
-                        CASE WHEN CHARINDEX(D.Folder, '/') > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END AS Carpeta, 
-                        CONCAT(CASE WHEN CHARINDEX(D.Folder, '/') > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END, D.UUIDAmazon) AS Ruta, 
+                        CASE WHEN CHARINDEX('/',D.Folder ) > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END AS Carpeta, 
+                        CONCAT(CASE WHEN CHARINDEX('/',D.Folder) > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END, D.UUIDAmazon) AS Ruta, 
                         'adinco-pr' AS CubetaDev, 
                         CONCAT('IdFacturaAdinco: ', F.IdFactura, ' - ', D.NombreArchivo) AS NombreDocumento, 
                         F.IdFactura, 
@@ -86,6 +86,4 @@ AS
                  WHERE F.IdFactura = @IdFactura;
              END;
      END;
-
-
 
