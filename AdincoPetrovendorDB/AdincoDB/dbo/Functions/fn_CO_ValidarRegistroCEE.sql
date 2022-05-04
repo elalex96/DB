@@ -11,7 +11,6 @@
 )
 returns varchar(500)
 As
-
 begin
 
 	declare @numReg int,
@@ -41,7 +40,7 @@ begin
 
 
 	if @numReg > 0
-		set @error = 'Ya existe un registro con la misma coincidencia de Instalación,Programa,Factura,Rubro, Monto y Fechas de Ejecución'
+		set @error = 'Se ha agregado el registro, pero ya existe uno con la misma coincidencia de Instalación, Programa, Factura, Rubro, Monto y Fechas de Ejecución'
 
 	if @totalGasto + isnull(@pMontoRegistro,0) > (@totalFactura + 0.1)
 	begin
