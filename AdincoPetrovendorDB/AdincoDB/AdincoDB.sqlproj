@@ -13238,6 +13238,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ValidarArchivoCarga.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAPSES_BuscarSESSinImportacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarAreaContrato.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

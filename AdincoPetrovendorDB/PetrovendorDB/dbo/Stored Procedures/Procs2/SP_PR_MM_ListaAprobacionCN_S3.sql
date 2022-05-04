@@ -1,12 +1,6 @@
 ﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_ListaAprobacionCN_S3'
-)
-    DROP PROCEDURE SP_PR_MM_ListaAprobacionCN_S3;
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaAprobacionCN_S3]    Script Date: 27/04/2022 01:36:20 p. m. ******/
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaAprobacionCN_S3]    Script Date: 02/05/2022 06:39:34 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -35,7 +29,12 @@ GO
 -- Create date: 27-04-2022
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCN_S3] 
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 03-05-2022
+-- Description:	se corrige la consulta de murphy para consultar por contrato 
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCN_S3] 
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @Estado INT,
@@ -69,7 +68,7 @@ AS
 										FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
 										LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS P (NOLOCK)
 											ON C.IdContratista = P.IdContratista
-										WHERE C.IdContrato = @IdContrato)
+										WHERE C.IdContrato = @IdContrato);
 
 
 
