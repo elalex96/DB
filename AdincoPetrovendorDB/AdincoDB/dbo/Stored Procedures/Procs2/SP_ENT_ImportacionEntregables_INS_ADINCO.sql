@@ -168,9 +168,13 @@ BEGIN
 			END;
 
 			--BUSQUEDA DEL REVISORES Y ACTUALIZACIÓN
-			DELETE FROM #Revisores
-			DELETE FROM #responseAccionesResponsable
+			truncate table #Revisores
+			truncate table #responseAccionesResponsable
 			
+			set @CantidadRevisores=0
+			set @UsuarioActualEsRevisor=0
+			set @RevisorIsActivo = 1
+
 			INSERT INTO #Revisores(IdRevisor,activo)
 			SELECT  idUsuario, Activo
 			FROM dbo.EN_Actividad 
@@ -178,11 +182,11 @@ BEGIN
 			AND EstadoID = 10001 --> CTE Revisión					
 
 			SELECT @CantidadRevisores= COUNT(1) 
-			FROM #Revisores			
+			FROM #Revisores						
 
 			SELECT @UsuarioActualEsRevisor = COUNT(1) 
 			FROM #Revisores 
-			WHERE IdRevisor=@IDUSUARIOREVISOR
+			WHERE IdRevisor=@IDUSUARIOREVISOR			
 
 			--> SI CANTIDAD DE REVISORES ES 1 Y SOLO SI EL REVISOR DEL EXCEL ES EL MISMO QUIERE DECIR QUE NO HUBO CAMBIO SOLO VALIDAR SI ESTA ACTIVO
 			IF @CantidadRevisores = 1 AND @UsuarioActualEsRevisoR = 1
@@ -211,7 +215,7 @@ BEGIN
 
 				WHILE @CantidadRevisores>=@IndRevidores
 				BEGIN 
-
+					SET @IdRevisorRow=0
 					SELECT @IdRevisorRow=IdRevisor 
 					FROM #Revisores 
 					WHERE IdRow=@IndRevidores
@@ -222,7 +226,7 @@ BEGIN
 						@idUsuarioSession =@IdUsuario,
 						@idUsuario =@IdRevisorRow,
 						@idContrato =@IdContrato
-						SET @IndRevidores =@IndRevidores+ 1
+						SET @IndRevidores =@IndRevidores+ 1						
 				END 
 
 				--> SE INSERTA EL NUEVO REVISOR CARGADO EN EL EXCEL
