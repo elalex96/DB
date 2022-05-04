@@ -1,6 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_CAT_ValidarEtapa]    Script Date: 03/05/2022 02:58:31 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_CAT_ValidarAreaContrato]    Script Date: 04/05/2022 10:45:25 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -13,8 +13,7 @@ GO
 CREATE PROCEDURE [dbo].[SP_CAT_ValidarAreaContrato]
 	-- Add the parameters for the stored procedure here
 	@NombreArea NVARCHAR(MAX),
-	@idContrato INT,
-	@Activo BIT
+	@idContrato INT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -25,8 +24,7 @@ BEGIN
 	DECLARE @EXISTE_REGISTRO INT = (SELECT COUNT(1) 
 									FROM EN_Area 
 									WHERE NombreArea = @NombreArea 
-									AND idContrato = @idContrato
-									AND Activo = @Activo);
+									AND idContrato = @idContrato);
 
 	IF @EXISTE_REGISTRO > 0
 	BEGIN 
