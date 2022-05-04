@@ -1,14 +1,28 @@
-﻿if exists (select * from sys.procedures where name = 'SP_ENT_ImportacionEntregables_INS_ADINCO')
-begin
-	drop proc SP_ENT_ImportacionEntregables_INS_ADINCO
-end
-
-go
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ENT_ImportacionEntregables_INS_ADINCO'
+)
+    DROP PROCEDURE SP_ENT_ImportacionEntregables_INS_ADINCO;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]    Script Date: 03/05/2022 03:08:33 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <06/12/2019>  
 -- Description: <Actualizacion de los registros existentes>  
+-- =============================================  
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: <04/05/2022>  
+-- Description: Se actualiza modificación de revisores usando sps existentes en la pantalla EditaContratoEntreagble.aspx
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO] 
 @Layout dbo.Entregables_Importacion_01 READONLY,
@@ -50,6 +64,10 @@ BEGIN
 	DECLARE @DIASAPROBACION INT;
 	declare @masDeUnRevisor bit
 	select @masDeUnRevisor = 0;
+
+	create table #responseAccionesResponsable(response nvarchar(max))	
+	create table #Revisores(IdRow int identity(1,1), IdRevisor int, activo bit)	
+	DECLARE @CantidadRevisores INT, @UsuarioActualEsRevisor INT,@RevisorIsActivo BIT, @IndRevidores int , @IdRevisorRow INT
 
 	WHILE @CONT <= @CONTTOTAL
 	BEGIN
@@ -135,7 +153,7 @@ BEGIN
 				ON			CE.IdContratoEntregable		=		TE.IdEntregable
 				LEFT JOIN	EN_Actividad				ACAPROB 
 				ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
-				AND			ACAPROB.EstadoID			=		10002
+				AND			ACAPROB.EstadoID			=		10002 --> CTE Aprobación
 				WHERE		TE.R						=		@CONT 
 				AND			CE.IdContrato				=		@IdContrato;
 			END
@@ -149,118 +167,74 @@ BEGIN
 				end
 			END;
 
-			--BUSQUEDA DEL REVISOR
-			SET @IDACTIVIDADACTUAL = (SELECT TOP 1 ActividadID FROM dbo.EN_Actividad WHERE IdContratoEntregable = @IDENTREGABLE AND Activo = 1 AND EstadoID = 10001 ORDER BY CreadoEn ASC);
-			--ACTUALIZACION DEL REVISOR
-			IF @IDACTIVIDADACTUAL IS NOT NULL
+			--BUSQUEDA DEL REVISORES Y ACTUALIZACIÓN
+			DELETE FROM #Revisores
+			DELETE FROM #responseAccionesResponsable
+			
+			INSERT INTO #Revisores(IdRevisor,activo)
+			SELECT  idUsuario, Activo
+			FROM dbo.EN_Actividad 
+			WHERE IdContratoEntregable = @IDENTREGABLE  
+			AND EstadoID = 10001 --> CTE Revisión					
+
+			SELECT @CantidadRevisores= COUNT(1) 
+			FROM #Revisores			
+
+			SELECT @UsuarioActualEsRevisor = COUNT(1) 
+			FROM #Revisores 
+			WHERE IdRevisor=@IDUSUARIOREVISOR
+
+			--> SI CANTIDAD DE REVISORES ES 1 Y SOLO SI EL REVISOR DEL EXCEL ES EL MISMO QUIERE DECIR QUE NO HUBO CAMBIO SOLO VALIDAR SI ESTA ACTIVO
+			IF @CantidadRevisores = 1 AND @UsuarioActualEsRevisoR = 1
 			BEGIN
-				--select @IDACTIVIDADACTUAL, @IDUSUARIOREVISOR
-				if exists(
-					select	ACAPROB.EstadoID, ACAPROB.idUsuario, ACAPROB.IdContratoEntregable, ACAPROB.Activo, CE.IdContratoEntregable
-					FROM dbo.EN_ContratoEntregable AS CE
-					JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-					LEFT JOIN EN_Actividad AS ACAPROB ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10001
-					WHERE		TE.R				=	@CONT 
-					AND			CE.IdContrato		=	@IdContrato
-					and			ACAPROB.EstadoID	=	10001
-					and			ACAPROB.Activo		=	1
-					and			ACAPROB.idUsuario	=	@IDUSUARIOREVISOR
-				)
-				begin
-				
 
-					delete from #tmp
+				SELECT @RevisorIsActivo = activo 
+				FROM #Revisores 
+				WHERE IdRevisor=@IDUSUARIOREVISOR
 
-					insert into	#tmp
-					select		Activo				=	1--ACAPROB.Activo
-					FROM		dbo.EN_ContratoEntregable AS CE
-					JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-					LEFT JOIN EN_Actividad AS ACAPROB ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10001
-					WHERE		TE.R				=	@CONT 
-					AND			CE.IdContrato		=	@IdContrato
-					and			ACAPROB.EstadoID	=	10001
-					and			ACAPROB.idUsuario			=		@IDUSUARIOREVISOR
-					--and			ACAPROB.Activo		=	1
-					group by	ACAPROB.Activo
-
-					if ((select sum(Activo) from #tmp)=2)
-					begin
-
-						UPDATE		ACAPROB
-						SET			ACAPROB.ModificadoEn		=		GETDATE(),
-									ACAPROB.ModificadoPor		=		@IdUsuario
-						FROM		dbo.EN_ContratoEntregable	CE
-						JOIN		#TB_EXCEL					TE 
-						ON			CE.IdContratoEntregable		=		TE.IdEntregable
-						LEFT JOIN	EN_Actividad				ACAPROB 
-						ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
-						AND			ACAPROB.EstadoID			=		10001
-						WHERE		TE.R						=		@CONT 
-						AND			CE.IdContrato				=		@IdContrato
-						and			ACAPROB.idUsuario			=		@IDUSUARIOREVISOR
-					end
-					else
-					begin
-
-						if not exists (select * from dbo.EN_ContratoEntregable	CE
-							JOIN		#TB_EXCEL					TE 
-							ON			CE.IdContratoEntregable		=		TE.IdEntregable
-							LEFT JOIN	EN_Actividad				ACAPROB 
-							ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
-							AND			ACAPROB.EstadoID			=		10001
-							WHERE		TE.R						=		@CONT 
-							AND			CE.IdContrato				=		@IdContrato
-							and			ACAPROB.Activo				=		0
-							)
-						begin
-							UPDATE		ACAPROB
-							SET			ACAPROB.Activo				=		0
-							FROM		dbo.EN_ContratoEntregable	CE
-							JOIN		#TB_EXCEL					TE 
-							ON			CE.IdContratoEntregable		=		TE.IdEntregable
-							LEFT JOIN	EN_Actividad				ACAPROB 
-							ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
-							AND			ACAPROB.EstadoID			=		10001
-							WHERE		TE.R						=		@CONT 
-							AND			CE.IdContrato				=		@IdContrato;
-						end
-
-
-						UPDATE		ACAPROB
-						SET			ACAPROB.ModificadoEn		=		GETDATE(),
-									ACAPROB.ModificadoPor		=		@IdUsuario,
-									ACAPROB.Activo				=		1
-						FROM		dbo.EN_ContratoEntregable	CE
-						JOIN		#TB_EXCEL					TE 
-						ON			CE.IdContratoEntregable		=		TE.IdEntregable
-						LEFT JOIN	EN_Actividad				ACAPROB 
-						ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
-						AND			ACAPROB.EstadoID			=		10001
-						WHERE		TE.R						=		@CONT 
-						AND			CE.IdContrato				=		@IdContrato
-						and			ACAPROB.idUsuario			=		@IDUSUARIOREVISOR
-					end
-				end
-				else
-				begin
-					
-					if not exists(select * from EN_Actividad where EstadoID=10001 and idUsuario=@IDUSUARIOREVISOR and IdContratoEntregable = @IDENTREGABLE and  Activo = 1)
-					begin
-						INSERT INTO EN_Actividad (	EstadoID,	idUsuario,			IdContratoEntregable,	CreadoPor,CreadoEn,Activo)
-						VALUES					 (	10001,		@IDUSUARIOREVISOR,	@IDENTREGABLE,			@IdUsuario,GETDATE(),1);
-					end
-				end
-			END
+				IF ISNULL(@RevisorIsActivo,0) = 0
+					BEGIN 
+						--> SI EXISTE RESPONSABLE PERO ESTA INACTIVO ENTONCES SE VUELVE A INSERTAR PARA QUE SE ACTIVE
+						INSERT INTO #responseAccionesResponsable(response)
+						EXEC EN_SqlResponsablesContratoEntregable
+							@IdContratoEntregable =@IDENTREGABLE,
+							@idUsuarioSession =@IdUsuario,
+							@idContrato =@IdContrato,
+							@idUsuario =@IDUSUARIOREVISOR, --Responsable
+							@idEstatus = 10001 --> CTE Revisión
+					END 
+			END 
 			ELSE
-			BEGIN
+			BEGIN 
+				--> SE ELIMINAN TODOS LOS REVISORES ACTUALES Y AL FINAL SE INSERTA EL NUEVO REVISOR 
+				SET @IndRevidores = 1 -->CTE REINICIO DE CONTADOR
 
-				if not exists(select * from EN_Actividad where EstadoID=10001 and idUsuario=@IDUSUARIOREVISOR and IdContratoEntregable = @IDENTREGABLE and  Activo = 1)
-				begin
-						INSERT INTO EN_Actividad (EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-						VALUES
-						(10001,@IDUSUARIOREVISOR,@IDENTREGABLE,@IdUsuario,GETDATE(),1);
-				end
-			END;
+				WHILE @CantidadRevisores>=@IndRevidores
+				BEGIN 
+
+					SELECT @IdRevisorRow=IdRevisor 
+					FROM #Revisores 
+					WHERE IdRow=@IndRevidores
+
+					INSERT INTO #responseAccionesResponsable(response)
+					 exec [dbo].[sp_EN_DeleteRevisorcontratoEntregable] 
+						@IdContratoEntregable =@IDENTREGABLE,
+						@idUsuarioSession =@IdUsuario,
+						@idUsuario =@IdRevisorRow,
+						@idContrato =@IdContrato
+						SET @IndRevidores =@IndRevidores+ 1
+				END 
+
+				--> SE INSERTA EL NUEVO REVISOR CARGADO EN EL EXCEL
+				INSERT INTO #responseAccionesResponsable(response)
+				EXEC EN_SqlResponsablesContratoEntregable
+					@IdContratoEntregable =@IDENTREGABLE,
+					@idUsuarioSession =@IdUsuario,
+					@idContrato =@IdContrato,
+					@idUsuario =@IDUSUARIOREVISOR, --Responsable
+					@idEstatus = 10001 --> CTE Revisión
+
+			END 
 
 			--BUSQUEDA DEL ELABORADOR
 			SET @IDACTIVIDADACTUAL = (SELECT TOP 1 ActividadID FROM dbo.EN_Actividad WHERE IdContratoEntregable = @IDENTREGABLE AND Activo = 1 AND EstadoID = 10000 ORDER BY CreadoEn ASC);
@@ -273,7 +247,8 @@ BEGIN
 					ACAPROB.ModificadoPor = @IdUsuario
 				FROM dbo.EN_ContratoEntregable AS CE
 				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS ACAPROB ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10000
+				LEFT JOIN EN_Actividad AS ACAPROB 
+				ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10000 --> CTE Elaboración ó Correción
 				WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
 			END
 			ELSE
@@ -303,7 +278,7 @@ BEGIN
 
 				IF ISNULL(@IDAREA,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Area seleccionada no es aceptable.</li>';
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> el Área seleccionada no es aceptable.</li>';
 				END
 
 				IF ISNULL(@IDUSUARIOREVISOR,0) = 0
@@ -335,22 +310,22 @@ BEGIN
 
 				IF ISNULL(@DIASALERTAPREVIO,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de alerta previa deben ser mayor a 0.</li>';
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de alerta previa deben ser mayor a 0.</li>';
 				END
 
 				IF ISNULL(@DIASAPROBACION,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de aprobación deben ser mayor a 0.</li>';
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de aprobación deben ser mayor a 0.</li>';
 				END
 
 				IF ISNULL(@DIASELABORACION,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de elaboracion deben ser mayor a 0.</li>';
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de elaboracion deben ser mayor a 0.</li>';
 				END
 
 				IF ISNULL(@DIASREVISION,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de revisión deben ser mayor a 0.</li>';
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de revisión deben ser mayor a 0.</li>';
 				END
 
 				--ERROR AGREGADO AL CONTADOR
@@ -368,3 +343,4 @@ BEGIN
 
 
 END
+
