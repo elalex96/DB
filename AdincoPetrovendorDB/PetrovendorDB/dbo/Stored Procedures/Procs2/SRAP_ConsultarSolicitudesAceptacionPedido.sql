@@ -1,13 +1,9 @@
-﻿USE Petrovendor
-go
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_ConsultarSolicitudesAceptacionPedido'
-)
-    DROP PROCEDURE SRAP_ConsultarSolicitudesAceptacionPedido;
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]    Script Date: 05/05/2022 01:23:59 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -25,7 +21,12 @@ GO
 -- Create date: 27-04-2022
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
-CREATE PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 05/05/2022
+-- Description:	Issue #1765  adecuaciones para mostrar las solicitudes pendientes a los usuarios obs
+-- =============================================
+ALTER PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario   INT,
@@ -171,7 +172,7 @@ AS
 		ON			SAP.IdSolicitudAceptacionPedido =	O.IdDocumento
 		AND			O.IdTipoOperacion				=	@TipoOperacionId -->CTE 20
 		AND			O.IdEstatusOperacion			=	1 --> EN APROBACION CTE TA_Estatus
-		JOIN		TA_Estatus						E (NOLOCK)
+		LEFT JOIN		TA_Estatus						E (NOLOCK)
 		ON			O.IdEstatusOperacion			=	E.IdEstatus
 		JOIN		MM_Pedido						P (NOLOCK)
 		ON			SAP.IdPedido					=	P.IdPedido
@@ -198,8 +199,13 @@ AS
 		ON			P.IdPedido						=  RPO.IdPedido
 		WHERE 		P.IdProveedorCompras			=	@IdProveedor
 		and			C.IdContrato					=	@IdContrato
-		and			((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)	or ((@esOBS = 1 )  and ta.IdEstatus = 2) )
-		and			ta.Activo						=	1
+		and			O.IdEstatusOperacion			=	1
+		--AGREGADO DE ESTE PARAMETRO PARA MOSTRARLE LAS APROBACIONES A LOS OBS
+		and			(@esOBS = 1)
+		--COMENTADO PARA ISSUE 1765
+		--and			((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)	or ((@esOBS = 1 )  and ta.IdEstatus = 2) )
+		--and			ta.IdEstatus					=   1
+		--and			ta.Activo						=	1
 		GROUP BY    
 					ta.IdTarea,
 					IdFlujoTarea,
