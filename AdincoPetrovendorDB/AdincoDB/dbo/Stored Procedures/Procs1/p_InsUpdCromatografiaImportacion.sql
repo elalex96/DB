@@ -1,4 +1,7 @@
-﻿CREATE PROC dbo.p_InsUpdCromatografiaImportacion
+﻿--Modificado por: Daniel Moreno
+--Modificado El: 05/05/2022
+--Descripción: Se agregan campos de temperatura periodos para que se consideren en el calculo de precio
+CREATE PROC dbo.p_InsUpdCromatografiaImportacion
     @pIdCromatografia             INT OUT,
     @pIdContrato                  INT,
     @pIdPuntoEntregaContrato      INT,
@@ -37,7 +40,11 @@
     @pPrecioUnitarioCondensadoDLS FLOAT,
     @pVolumenCondensado           FLOAT,
 	@H2O                          FLOAT, --Se añadio por ROlvera el 20190913
-	@O2                           FLOAT --Se añadio por ROlvera el 20190913
+	@O2                           FLOAT, --Se añadio por ROlvera el 20190913
+	@pTemperaturaPrecioPetroleo		FLOAT=0,
+	@pTemperaturaPrecioCondensado	FLOAT=0,
+	@pTemperaturaPetroleo			FLOAT=0,
+	@pTemperaturaCondensado			FLOAT=0
 AS
     BEGIN
         SET NOCOUNT ON;
@@ -48,13 +55,54 @@ AS
             @IdUnidad              INT,
             @IdPuntoEntrega        INT;
 
+		----SI LAS TEMPERATURA DEL PETROLEO SON DIFERENTES		
+		IF ISNULL(@pTemperaturaPetroleo,0) >0 AND  ISNULL(@pTemperaturaPrecioPetroleo,0) > 0
+		BEGIN
+			--SI LA TEMPERATURA DE VOL. PETROLEO ES MENOR QUE LA TEMP. PRECIO PETROLEO
+			IF ISNULL(@pTemperaturaPetroleo,0) < ISNULL(@pTemperaturaPrecioPetroleo,0) 
+			BEGIN
+				SET @pVolumen = 
+				@pTemperaturaPetroleo 
+				/ 
+				EXP( -(341.0957 / POWER(((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8 * (1 + 0.8 * (341.0957 / POWER( ((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8))
+			END
+			--SI LA TEMPERATURA DE VOL. PETROLEO ES MAYOR QUE LA TEMP. PRECIO PETROLEO
+			IF ISNULL(@pTemperaturaPetroleo,0) > ISNULL(@pTemperaturaPrecioPetroleo,0) 
+			BEGIN
+				SET @pVolumen = 
+				@pTemperaturaPrecioPetroleo 
+				/ 
+				EXP( -(341.0957 / POWER(((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8 * (1 + 0.8 * (341.0957 / POWER( ((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8))
+			END
+		END
+
+		----SI LAS TEMPERATURA DEL CONDENSADO SON DIFERENTES		
+		IF ISNULL(@pTemperaturaCondensado,0) >0 AND  ISNULL(@pTemperaturaPrecioCondensado,0) > 0
+		BEGIN
+			--SI LA TEMPERATURA DE VOL. PETROLEO ES MENOR QUE LA TEMP. PRECIO PETROLEO
+			IF ISNULL(@pTemperaturaCondensado,0) < ISNULL(@pTemperaturaPrecioCondensado,0) 
+			BEGIN
+				SET @pVolumenCondensado = 
+				@pTemperaturaCondensado 
+				/ 
+				EXP( -(341.0957 / POWER(((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8 * (1 + 0.8 * (341.0957 / POWER( ((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8))
+			END
+			--SI LA TEMPERATURA DE VOL. PETROLEO ES MAYOR QUE LA TEMP. PRECIO PETROLEO
+			IF ISNULL(@pTemperaturaCondensado,0) > ISNULL(@pTemperaturaPrecioCondensado,0) 
+			BEGIN
+				SET @pVolumenCondensado = 
+				@pTemperaturaPrecioCondensado 
+				/ 
+				EXP( -(341.0957 / POWER(((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8 * (1 + 0.8 * (341.0957 / POWER( ((141.5 / (@pGradosAPI + 131.5)) * 999.012), 2 )) * 8))
+			END
+		END
 
         SELECT
             @pPrecioPetroleo   = CASE
                                      WHEN @pEsPetroleo = 1
-                                         THEN
-                                         ISNULL(@pVolumen, 0) * ISNULL(@pPrecioUnitDLS, 0)
-                                     ELSE
+										THEN												
+										ISNULL(@pVolumen, 0) * ISNULL(@pPrecioUnitDLS, 0)
+									  ELSE
                                          0
                                  END,
             @pPrecioCondensado = CASE
@@ -204,7 +252,9 @@ AS
                         C10,
                         PrecioUnitarioCondensadoDLS,
 						H2O,
-						O2
+						O2,
+						TemperaturaPrecioPetroleo,
+						TemperaturaPrecioCondensado
                     )
                             SELECT
                                 @pIdCromatografiaValor,
@@ -216,7 +266,7 @@ AS
                                 @pnC4,
                                 @plC4,
                                 @pnC5,
-                                @plC5,
+                               @plC5,
                                 @pC6_plus,
                                 @pMOL_CO2,
                                 @pMOL_N2,
@@ -243,7 +293,9 @@ AS
                                 @pC10,
                                 ISNULL(@pPrecioUnitarioCondensadoDLS, 0),
 								@H2O,
-								@O2;
+								@O2,
+								ISNULL(@pTemperaturaPrecioPetroleo,0),
+								ISNULL(@pTemperaturaPrecioCondensado,0)
 
 
                 IF @@error <> 0
@@ -319,12 +371,12 @@ AS
                     lC5 = CASE
                               WHEN @pEsPetroleo = 0
                                   THEN
-                                  @plC5
+									@plC5
                               ELSE
                                   lC5
                           END,
                     C6_plus = CASE
-    WHEN @pEsPetroleo = 0
+							 WHEN @pEsPetroleo = 0
                                       THEN
                                       @pC6_plus
                                   ELSE
@@ -408,7 +460,7 @@ AS
                                         THEN
                                         @pGradosAPI
                                     ELSE
-                                        GradosAPI
+                    GradosAPI
                                 END,
                     AguaSedimento = CASE
                                         WHEN @pEsPetroleo = 1
@@ -475,7 +527,9 @@ AS
                                  @O2
                              ELSE
                                  O2
-                         END
+                         END,
+					TemperaturaPrecioPetroleo = ISNULL(@pTemperaturaPrecioPetroleo,0),
+					TemperaturaPrecioCondensado = ISNULL(@pTemperaturaPrecioCondensado,0)
                 WHERE
                     IdCromatografiaValor = @pIdCromatografiaValor;
 
@@ -494,7 +548,7 @@ AS
                                           THEN
                                           1001
                                       ELSE
-                                          1000
+                  1000
                                   END,
             @IdUnidad           = CASE
                                       WHEN @pEsPetroleo = 1
@@ -531,7 +585,9 @@ AS
                         CreadoEl,
                         ModificadoPor,
                         ModificadoEl,
-                        Activo
+                        Activo,
+						TemperaturaPetroleo,
+						TemperaturaCondensado
                     )
                             SELECT
                                 CAST(CAST(@pAnio * 10000 + @pMes * 100 + 1 AS VARCHAR(255)) AS DATE),
@@ -545,7 +601,9 @@ AS
                                 GETDATE(),
                                 NULL,
                                 NULL,
-                                1;
+                                1,
+								isnull(@pTemperaturaPetroleo,0),
+								ISNULL(@pTemperaturaCondensado,0);
 
                 IF @@error <> 0
                     BEGIN
@@ -563,7 +621,9 @@ AS
                     VolumenProgramado = @pVolumen,
                     GradosAPI = @pGradosAPI,
                     ModificadoPor = @pCreadoPor,
-                    ModificadoEl = GETDATE()
+                    ModificadoEl = GETDATE(),
+					TemperaturaPetroleo = ISNULL(@pTemperaturaPetroleo,0),
+					TemperaturaCondensado = ISNULL(@pTemperaturaCondensado,0)
                 WHERE
                     IdContrato = @pIdContrato
                     AND DATEPART(YEAR, IdFecha) = @pAnio
@@ -620,7 +680,10 @@ AS
                                 CreadoEl,
                                 ModificadoPor,
                                ModificadoEl,
-                                Activo
+                                Activo,
+								TemperaturaPetroleo,
+								TemperaturaCondensado
+
                             )
                                     SELECT
                                         CAST(CAST(@pAnio * 10000 + @pMes * 100 + 1 AS VARCHAR(255)) AS DATE),
@@ -634,7 +697,9 @@ AS
                                         GETDATE(),
                                         NULL,
                                         NULL,
-                                        1;
+                                        1,
+										isnull(@pTemperaturaPetroleo,0),
+										ISNULL(@pTemperaturaCondensado,0)
 
                         IF @@error <> 0
                             BEGIN
@@ -651,7 +716,9 @@ AS
                             VolumenProgramado = @pVolumenCondensado,
                             GradosAPI = @pGradosAPI,
                             ModificadoPor = @pCreadoPor,
-                            ModificadoEl = GETDATE()
+                            ModificadoEl = GETDATE(),
+							TemperaturaPetroleo = ISNULL(@pTemperaturaPetroleo,0),
+							TemperaturaCondensado = ISNULL(@pTemperaturaCondensado,0)
                         WHERE
                             IdContrato = @pIdContrato
                             AND DATEPART(YEAR, IdFecha) = @pAnio

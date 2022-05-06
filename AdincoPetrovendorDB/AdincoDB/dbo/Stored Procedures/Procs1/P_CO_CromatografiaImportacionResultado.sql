@@ -92,8 +92,8 @@ AS
                                             THEN
                                             'Valores Actualizados'
                                         ELSE
- 'Valores Insertados'
-                                    END,
+											'Valores Insertados'
+                END,
                 FechaUltimoCambio = CASE
                                         WHEN cv.ModificadoEl IS NOT NULL
                                             THEN
@@ -120,7 +120,9 @@ AS
                         cv.PrecioGas / PMSG.VolumenProgramado / 1000
                 END               AS PrecioUnitarioGas,
 				cv.H2O,
-				cv.O2
+				cv.O2,
+				cv.TemperaturaPrecioPetroleo,
+				cv.TemperaturaPrecioCondensado
         FROM
                 CO_Cromatografia                   c
             INNER JOIN
