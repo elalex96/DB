@@ -528,8 +528,20 @@ AS
                              ELSE
                                  O2
                          END,
-					TemperaturaPrecioPetroleo = ISNULL(@pTemperaturaPrecioPetroleo,0),
-					TemperaturaPrecioCondensado = ISNULL(@pTemperaturaPrecioCondensado,0)
+					TemperaturaPrecioPetroleo = CASE
+													WHEN @pEsPetroleo = 1
+														 THEN
+														 ISNULL(@pTemperaturaPrecioPetroleo,0)
+													ELSE
+														 TemperaturaPrecioPetroleo
+												END,
+					TemperaturaPrecioCondensado = CASE
+													WHEN @pEsPetroleo = 1
+														 THEN
+														 ISNULL(@pTemperaturaPrecioCondensado,0)
+													ELSE
+														 TemperaturaPrecioCondensado
+												END 
                 WHERE
                     IdCromatografiaValor = @pIdCromatografiaValor;
 
