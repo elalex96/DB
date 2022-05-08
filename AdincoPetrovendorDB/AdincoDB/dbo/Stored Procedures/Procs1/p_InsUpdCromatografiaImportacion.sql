@@ -512,7 +512,14 @@ AS
                                              ELSE
                                                  PoderCalorificoGas
                                          END,
-                    PrecioUnitarioCondensadoDLS = ISNULL(@pPrecioUnitarioCondensadoDLS, 0),
+                    PrecioUnitarioCondensadoDLS = 
+										CASE
+                                             WHEN @pEsPetroleo = 1
+                                                 THEN
+                                                 ISNULL(@pPrecioUnitarioCondensadoDLS, 0)
+                                             ELSE
+                                                 PrecioUnitarioCondensadoDLS
+                                         END,
 					--Se añadio el H2o y O2 por R Olvera el 20190913
 					H2O = CASE
                              WHEN @pEsPetroleo = 0
