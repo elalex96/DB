@@ -1,12 +1,12 @@
 GO
 CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastosPorFechas]
 -- ============================================= 
-@FechaInicio DATETIME,
-@FechaFin DATETIME,
+@FechaMes DATETIME,
 @IdContrato INT,
 @IdUsuario INT
 AS
      BEGIN
+	 DECLARE @FechaInicio DATETIME,@FechaFin  DATETIME;
          -- =============================================
          -- Author:		Miguel
          -- Create date: 
@@ -128,14 +128,15 @@ AS
          /**/
 		 -- NUEVA VALIDACIÓN PARA QUE PEMEX NO VEA LOS GASTOS UN NO APROBADOS HASTA EL SIGUIENTE MES DÍA 6 (ISSUE 1891)
 		INSERT INTO #MesesAnio(PrimerDiaMes,UltimoDiaMes)
-		 SELECT DISTINCT PrimerDiaMes, UltimoDiaMes
+		 SELECT DISTINCT PrimerDiaMes, UltimoDiaMes  -- se buscan el primer día y el ultimo día del mes seleccionado, ya que se encontraron gastos con día del mes presentación mayor a 1
 		 FROM AP_Calendario 
-		 WHERE IdFecha BETWEEN CAST(@FechaInicio AS DATE) AND  CAST(@FechaFin AS DATE)
-		 ORDER BY UltimoDiaMes	DESC
+		 WHERE IdFecha = @FechaMes
+		 ORDER BY UltimoDiaMes	DESC;
+
 
 		UPDATE #MesesAnio 
 		SET SiguienteMesSeis =  DATEFROMPARTS(YEAR(DATEADD(MONTH, 1, PrimerDiaMes)),MONTH(DATEADD(MONTH, 1, PrimerDiaMes)),6);
-	
+
 		 DELETE FROM #MesesAnio WHERE SiguienteMesSeis > @DiaActual; --SE BORRAN EL MES QUE AUN NO SE PUEDE MOSTRAR HASTA DESPUES DEL DÍA 6 DEL SIGUIENTE MES
 
 		 IF((SELECT COUNT(1) FROM #MesesAnio) > 0)
@@ -330,7 +331,7 @@ AS
                      LEFT JOIN dbo.CO_ActividadPetroleraCNH ACNH(NOLOCK) ON LPM.IdActividadPetrolera = ACNH.IdActividadPetrolera
                      LEFT JOIN dbo.CO_SubactividadPetrolera SAP(NOLOCK) ON LPM.IdSubactividadPetrolera = SAP.IdSubactividadPetrolera
                      LEFT JOIN dbo.CO_RubroInterno RI(NOLOCK) ON LPM.IdRubroInterno = RI.IdRubroInterno
-                     LEFT JOIN dbo.CO_TareaPetrolera TP(NOLOCK) ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera
+     LEFT JOIN dbo.CO_TareaPetrolera TP(NOLOCK) ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera
                      LEFT JOIN dbo.AWS_DocAwsDocAdinco WA(NOLOCK) ON F.IdFactura = WA.IdDocAdinco
                      LEFT JOIN dbo.AP_Usuario UM(NOLOCK) ON R.IdUsuarioModPor = UM.UsuarioID
                 WHERE 
@@ -461,7 +462,5 @@ AS
 
 		
      END;
-
-
 
 
