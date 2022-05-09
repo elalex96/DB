@@ -405,11 +405,18 @@ BEGIN
                                    cast(0 as bit)
                                else
                                    cast(1 as bit)
-                           end
+                           end,
+			FacturaRelacionadaDropbox = CASE WHEN APP_RelacionRutaDropboxFactura.IdFactura IS NULL THEN
+									CAST(0 AS BIT)
+								ELSE
+									CAST(1 AS BIT)
+								END
     FROM #Facturas F
         JOIN dbo.CO_Contrato C WITH (NOLOCK)
             ON F.IdContrato = C.IdContrato
         left join #tmpFiles t1
             on f.IdFactura = t1.IdFactura
+		LEFT JOIN APP_RelacionRutaDropboxFactura 
+			ON APP_RelacionRutaDropboxFactura.IdFactura = F.IdFactura
     ORDER BY F.IdFactura DESC;
 END;
