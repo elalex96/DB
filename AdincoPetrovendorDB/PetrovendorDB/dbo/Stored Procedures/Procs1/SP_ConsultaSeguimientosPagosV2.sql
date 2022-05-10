@@ -1,4 +1,8 @@
-﻿-- Author:		<Alexander Gomez>
+﻿USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_ConsultaSeguimientosPagosV2
+GO
+-- Author:		<Alexander Gomez>
 -- Create date: <06-12-2018>
 -- Description:	<Se consultan tambien los registros de murphy>
 -- =============================================
@@ -7,27 +11,35 @@
 -- Create date: 13/12/2019
 -- Description: Se agrego validación columna de AWSPDFId
 -- =============================================
+-- =============================================
+-- Author:		Luis David
+-- Create date: 10/05/2022
+-- Description: Optimización de sp
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ConsultaSeguimientosPagosV2] @IdProveedor   INT, 
                                                        @Pagado        BIT, 
                                                        @Facturas      NVARCHAR(MAX) = NULL, 
                                                        @IdContrato    INT           = NULL, 
                                                        @IdUsuario     INT           = NULL, 
-                                                       @FechaRegistro DATETIME      = NULL
+                                                       @FechaRegistro DATETIME      = NULL,
+													   @Del DateTime=NULL,  
+													   @Al DateTime=NULL
 AS
     BEGIN
+	DECLARE @COUNT_FACTURAS INT;
+        DECLARE @FiltroFacturas NVARCHAR(MAX);
         DECLARE @PROVEDORRFC NVARCHAR(20)=
         (
             SELECT RFC
-            FROM dbo.S_Proveedor
+            FROM dbo.S_Proveedor (NOLOCK)
             WHERE IdProveedor = @IdProveedor
         );
-        --DECLARE @Facturas NVARCHAR(max) ='19761,19745,' 
-        DECLARE @FiltroFacturas NVARCHAR(MAX);
         SELECT @FiltroFacturas = COALESCE(STUFF(T.Col, LEN(T.Col) - CHARINDEX(',', REVERSE(T.Col)) + 1, 1, ''), T.Col)
         FROM(VALUES(@Facturas)) AS T(Col);
         SET @FiltroFacturas = LTRIM(RTRIM(@FiltroFacturas));
         --SELECT @FiltroFacturas
 
+		DROP TABLE IF EXISTS #Facturas
         CREATE TABLE #Facturas
         (IdFactura INT
         );
@@ -39,7 +51,7 @@ AS
         END;
 
         --SELECT * FROM #Facturas
-
+		DROP TABLE IF EXISTS #SEGUIMIENTOPAGOS
         CREATE TABLE #SEGUIMIENTOPAGOS
         (IdFactura          INT NULL, 
          IdFacturaPet       INT NULL, 
@@ -57,6 +69,7 @@ AS
          ReceptorRFC        VARCHAR(500), 
          AWSPDFId           INT
         );
+		DROP TABLE IF EXISTS #SEGUIMIENTOPAGOS_PPD
         CREATE TABLE #SEGUIMIENTOPAGOS_PPD
         (IdFactura          INT NULL, 
          IdFacturaPet       INT NULL, 
@@ -91,7 +104,7 @@ AS
                                     THEN 'No Pagado'
                                     WHEN(TR.AWSPDFId IS NOT NULL)
                                     THEN 'Pagado'
-                                    WHEN FA.IdFactura IS NULL
+                               WHEN FA.IdFactura IS NULL
                                     THEN 'En Proceso'
                                 END, 
                       TieneArchivo = CAST(CASE
@@ -104,20 +117,28 @@ AS
                       FP.Receptor, 
                       TR.AWSPDFId
                FROM dbo.MM_AceptacionFactura AS AF
-                    LEFT JOIN dbo.FI_Factura AS FP ON FP.IdFactura = AF.IdFactura
-                    LEFT JOIN dbo.MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-                    LEFT JOIN dbo.MM_Pedido AS P ON P.IdPedido = AP.IdPedido
-                    LEFT JOIN dbo.PV_TipoMoneda AS M ON M.IdMoneda = FP.IdMoneda
-                    LEFT JOIN Adinco.dbo.FI_Factura AS FA ON FA.UUID COLLATE Modern_Spanish_CI_AS = FP.UUID COLLATE Modern_Spanish_CI_AS
-                    LEFT JOIN dbo.S_Proveedor AS PR ON PR.RFC = FP.Receptor
-                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF ON TRF.IdFactura = FA.IdFactura
-                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR ON TR.IdTransferencia = TRF.IdTransfer
+                    LEFT JOIN dbo.FI_Factura AS FP 
+					ON AF.IdFactura = FP.IdFactura
+                    LEFT JOIN dbo.MM_AceptacionPedido AS AP 
+					ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+                    LEFT JOIN dbo.MM_Pedido AS P 
+					ON AP.IdPedido = P.IdPedido
+                    LEFT JOIN dbo.PV_TipoMoneda (NOLOCK) AS M 
+					ON FP.IdMoneda = M.IdMoneda
+                    LEFT JOIN Adinco.dbo.FI_Factura AS FA 
+					ON FP.UUID COLLATE Modern_Spanish_CI_AS = FA.UUID COLLATE Modern_Spanish_CI_AS
+                    LEFT JOIN dbo.S_Proveedor (NOLOCK) AS PR 
+					ON FP.Receptor = PR.RFC
+                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF 
+					ON FA.IdFactura = TRF.IdFactura
+                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR 
+					ON TRF.IdTransfer = TR.IdTransferencia
                WHERE AF.IdEstatusXML = 2 --XML APROBADO
                      AND AF.IdEstatusPDF = 2 --PDF APROBADO
                      AND P.IdSubcontratista = @IdProveedor --PROVEEDOR
                      AND FP.Activa = 1
                      AND ISNULL(FP.IsEliminado, 0) = 0
-                     AND FA.IdFactura IS NOT NULL --FACTURA EN ADINCO
+                     --AND FA.IdFactura IS NOT NULL --FACTURA EN ADINCO
                GROUP BY FA.IdFactura, 
                         FP.IdFactura, 
                         P.IdSolicitudPedido, 
@@ -164,14 +185,22 @@ AS
                       aFact.Receptor, 
                       transf.AWSPDFId
                FROM Adinco.dbo.FI_Factura aFact
-                    LEFT JOIN Petrovendor.dbo.FI_Factura pFact ON pFact.UUID = aFact.UUID COLLATE Modern_Spanish_CI_AS
-                    LEFT JOIN dbo.MPY_MM_AceptacionFactura acepFact ON acepFact.IdFactura = pFact.IdFactura
-                    INNER JOIN dbo.MPY_MM_AceptacionPedido acepPed ON acepPed.IdAceptacionPedido = acepFact.IdAceptacionPedido
-                    LEFT JOIN Petrovendor.dbo.TA_Estatus AS TE ON TE.IdEstatus = acepFact.IdEstatus
-                    LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = pFact.Receptor COLLATE SQL_Latin1_General_CP1_CI_AS
-                    LEFT JOIN Adinco.dbo.PV_TipoMoneda M ON M.IdMoneda = aFact.IdMoneda
-                    LEFT JOIN Adinco.dbo.FI_TransferFactura transFac ON transFac.IdFactura = aFact.IdFactura
-                    LEFT JOIN Adinco.dbo.FI_Transfer transf ON transf.IdTransferencia = transFac.IdTransfer
+                    LEFT JOIN Petrovendor.dbo.FI_Factura pFact
+					ON aFact.UUID COLLATE Modern_Spanish_CI_AS = pFact.UUID
+                    LEFT JOIN dbo.MPY_MM_AceptacionFactura acepFact
+					ON pFact.IdFactura = acepFact.IdFactura
+                    INNER JOIN dbo.MPY_MM_AceptacionPedido acepPed 
+					ON acepFact.IdAceptacionPedido = acepPed.IdAceptacionPedido
+                    LEFT JOIN Petrovendor.dbo.TA_Estatus (NOLOCK) AS TE
+					ON acepFact.IdEstatus = TE.IdEstatus
+                    LEFT JOIN Adinco.dbo.CO_Contratista (NOLOCK) AS CON
+					ON pFact.Receptor COLLATE SQL_Latin1_General_CP1_CI_AS = CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+                    LEFT JOIN Adinco.dbo.PV_TipoMoneda (NOLOCK) AS M
+					ON aFact.IdMoneda = M.IdMoneda
+                    LEFT JOIN Adinco.dbo.FI_TransferFactura transFac
+					ON aFact.IdFactura = transFac.IdFactura
+                    LEFT JOIN Adinco.dbo.FI_Transfer transf 
+					ON transFac.IdTransfer = transf.IdTransferencia
                WHERE TE.IdEstatus = 2 --aprobadas
                      AND aFact.Activa = 1
                      AND pFact.Activa = 1
@@ -236,23 +265,33 @@ AS
                       FP.Receptor, 
                       TR.AWSPDFId
                FROM dbo.MM_AceptacionFactura AS AF
-                    LEFT JOIN dbo.FI_Factura AS FP ON FP.IdFactura = AF.IdFactura
-                    LEFT JOIN dbo.MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-                    LEFT JOIN dbo.MM_Pedido AS P ON P.IdPedido = AP.IdPedido
-                    LEFT JOIN dbo.PV_TipoMoneda AS M ON M.IdMoneda = FP.IdMoneda
-                    LEFT JOIN Adinco.dbo.FI_Factura AS FA ON FA.UUID COLLATE Modern_Spanish_CI_AS = FP.UUID COLLATE Modern_Spanish_CI_AS
-                    LEFT JOIN dbo.S_Proveedor AS PR ON PR.RFC = FP.Receptor
-                    LEFT JOIN Adinco.dbo.FI_CPDocRelacionado dr ON DR.IdDocumento = FA.UUID
-                    JOIN Adinco.dbo.FI_ComplementoDePago cp ON cp.IdComplementoDePago = dr.IdComplementoDePago
-                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF ON TRF.IdFactura = CP.IdFactura
-                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR ON TR.IdTransferencia = TRF.IdTransfer
+                    LEFT JOIN dbo.FI_Factura AS FP 
+					ON AF.IdFactura = FP.IdFactura
+                    LEFT JOIN dbo.MM_AceptacionPedido AS AP 
+					ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+                    LEFT JOIN dbo.MM_Pedido AS P
+					ON AP.IdPedido = P.IdPedido
+                    LEFT JOIN dbo.PV_TipoMoneda (NOLOCK) AS M
+					ON FP.IdMoneda = M.IdMoneda
+                    LEFT JOIN Adinco.dbo.FI_Factura AS FA 
+					ON FP.UUID COLLATE Modern_Spanish_CI_AS = FA.UUID COLLATE Modern_Spanish_CI_AS
+                    LEFT JOIN dbo.S_Proveedor (NOLOCK) AS PR
+					ON FP.Receptor = PR.RFC
+                    LEFT JOIN Adinco.dbo.FI_CPDocRelacionado (NOLOCK) AS dr
+					ON FA.UUID = DR.IdDocumento
+                    LEFT JOIN Adinco.dbo.FI_ComplementoDePago cp 
+					ON dr.IdComplementoDePago = cp.IdComplementoDePago
+                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF 
+					ON CP.IdFactura = TRF.IdFactura
+                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR 
+					ON TRF.IdTransfer = TR.IdTransferencia
                WHERE AF.IdEstatusXML = 2 --XML APROBADO
                      AND AF.IdEstatusPDF = 2 --PDF APROBADO
                      AND P.IdSubcontratista = @IdProveedor --PROVEEDOR
                      AND FP.Activa = 1
                      AND ISNULL(FP.IsEliminado, 0) = 0
-                     AND FA.IdFactura IS NOT NULL --FACTURA EN ADINCO
-                     AND TR.AWSPDFId IS NOT NULL --> QUE SI TENGA UN ARCHIVO CARGADO EN FI_TRANSFER
+                     --AND FA.IdFactura IS NOT NULL --FACTURA EN ADINCO
+                     --AND TR.AWSPDFId IS NOT NULL --> QUE SI TENGA UN ARCHIVO CARGADO EN FI_TRANSFER
                GROUP BY FA.IdFactura, 
                         FP.IdFactura, 
                         P.IdSolicitudPedido, 
@@ -278,7 +317,7 @@ AS
         FROM #SEGUIMIENTOPAGOS SP
              JOIN #SEGUIMIENTOPAGOS_PPD SPP ON SPP.UUID = SP.UUID
                                                AND SPP.IdFactura = SP.IdFactura;
-        DECLARE @COUNT_FACTURAS INT;
+        
         SET @COUNT_FACTURAS =
         (
             SELECT COUNT(IdFactura)
@@ -303,5 +342,6 @@ AS
                   THEN 1
                   ELSE 0
               END = 1
+		AND FECHA BETWEEN @Del AND @Al
         ORDER BY Fecha DESC;
     END;
