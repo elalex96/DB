@@ -13243,6 +13243,10 @@
     <Build Include="dbo\Stored Procedures\Procs2\GuardarRelacionRutaFacturaDropbox.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\RevisarFacturaPerteneceAContrato.sql" />
     <Build Include="dbo\Tables\Tables2\APP_RelacionDropboxFactura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\sp_Obten_AP_LogPantallaPorFechasContrato.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
