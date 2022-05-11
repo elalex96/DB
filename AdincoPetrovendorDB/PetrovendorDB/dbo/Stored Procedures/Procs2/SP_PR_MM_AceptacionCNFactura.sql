@@ -1,38 +1,48 @@
-﻿-- =============================================    
--- Author:  <Jose Roman>    
--- Create date: <04-09-2018>    
--- Description: <Se permite capturar una Factura si no se solicita una carta de CN>    
--- =============================================    
--- Author:  <Alexander Gomez>    
--- Create date: <04-12-2018>    
--- Description: <agregado los registros de adecuaciones para murphy>    
--- =============================================    
--- =============================================  
--- Author:           Daniel AC  
--- Create date: 26-09-2019  
--- Description: Agregue columna de UUID para el filtro de todas las facturas  
--- =============================================  
--- =============================================  
--- Author:           Abel Rivera  
--- Create date: 10-12-19  
--- Description: Se consulto la nacionalidad del proveedor, para las aceptaciones que tiene el campo IdNacionalidadProvedor nulo  
--- =============================================  
--- Author:           LUIS DAVID DE LA CRUZ
--- Create date: 17-03-2021
--- Description: Se agrega el contrato y el numero de requisición por el issue 1021, solicitado por Male
--- =============================================  
--- [SP_PR_MM_AceptacionCNFactura] 761,1  
--- SP_PR_MM_AceptacionCNFactura
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_PR_MM_AceptacionCNFactura')
-    DROP PROCEDURE SP_PR_MM_AceptacionCNFactura
+﻿USE [Petrovendor]
 GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_AceptacionCNFactura'
+)
+    DROP PROCEDURE SP_PR_MM_AceptacionCNFactura;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_AceptacionCNFactura]    Script Date: 10/05/2022 01:17:13 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================      
+-- Author:  <Jose Roman>      
+-- Create date: <04-09-2018>      
+-- Description: <Se permite capturar una Factura si no se solicita una carta de CN>      
+-- =============================================      
+-- Author:  <Alexander Gomez>      
+-- Create date: <04-12-2018>      
+-- Description: <agregado los registros de adecuaciones para murphy>      
+-- =============================================      
+-- =============================================    
+-- Author:           Daniel AC    
+-- Create date: 26-09-2019    
+-- Description: Agregue columna de UUID para el filtro de todas las facturas    
+-- =============================================    
+-- =============================================    
+-- Author:           Abel Rivera    
+-- Create date: 10-12-19    
+-- Description: Se consulto la nacionalidad del proveedor, para las aceptaciones que tiene el campo IdNacionalidadProvedor nulo    
+-- =============================================  
+-- =============================================    
+-- Author:           Daniel AC    
+-- Create date: 11-05-2020    
+-- Description: Se agrega condición para que las facturas de Murphy que todavia no tiene documentos cargados se muestren en Pendientes de Carga (TAB)
+-- =============================================    
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionCNFactura] --44,4    
     -- Add the parameters for the stored procedure here    
     @IdProveedor INT,  
     @Estatus INT  
 AS  
 BEGIN  
-	--Este SP estaba desactualizado en la BD de producción
     -- SET NOCOUNT ON added to prevent extra result sets from    
     -- interfering with SELECT statements.    
     SET NOCOUNT ON;  
@@ -106,7 +116,8 @@ BEGIN
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
                    AND PG.IdProveedorCliente = P.IdProveedorCompras  
-				   AND	P.IdSubcontratista = @IdProveedor  
+				   AND	P.IdSubcontratista = @IdProveedor
+				   AND PG.IdTipoPedido in (2,4,6)
             INNER JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK) 
                 ON AP.IdPedido = P.IdPedido  
 				AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1   
@@ -135,8 +146,6 @@ BEGIN
 				ON SP.IdContrato = CO.IdContrato
 			LEFT JOIN Adinco..CO_AreaContractual A
 				ON CO.IdAreaContractual = A.IdAreaContractual
-   --LEFT JOIN FI_AceptacionPedido_PedimentoComprobante APCC -- relacion aceptacion/pedimento comprobante  
-   --ON APCC.IdAceptacionPedido = AP.IdAceptacionPedido  
         WHERE P.IdSubcontratista = @IdProveedor  
               AND  
               (  
@@ -219,8 +228,8 @@ BEGIN
 			INNER JOIN Adinco..CO_AreaContractual A
 				ON C.IdAreaContractual = A.IdAreaContractual
         WHERE AP.IdSubContratista = @SAPVENDOR  
-              AND AF.IdEstatus is null   
-              AND APC.IdEstatus = 2  
+              AND (ISNULL(AF.IdEstatusXML,1003) = 1003  OR ISNULL(AF.IdEstatusPDF,1003) = 1003 ) -->CTE Documento Cargado SI NO TIENE DOCUMENTOS CARGADOS QUIERE DECIR QUE AUN ESTAN PENDIENTES DE CARGAR DOCUMENTO O SOLO ESTA CARGADO EL DOCUMENTO PERO NO SE HA ENVIADO A APROBACIÓN 
+              AND APC.IdEstatus = 2 --> CTE CARTA APROBADA  
               AND APC.FechaEvaluacion IS NOT NULL  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA CARTA CONTENIDO ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA    
         GROUP BY AP.IdAceptacionPedido,  
@@ -237,7 +246,7 @@ BEGIN
 				 A.NombreAreaContractual,
 				 PSES.SAPPONumber
         ORDER BY AP.IdAceptacionPedido DESC;  
-  
+
     END;  
   
     IF @Estatus IN ( 1, 2, 3, 10 )  
@@ -275,7 +284,8 @@ BEGIN
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
                    AND PG.IdProveedorCliente = P.IdProveedorCompras 
-				   AND P.IdSubcontratista = @IdProveedor  
+				   AND P.IdSubcontratista = @IdProveedor 
+				   AND PG.IdTipoPedido in (2,4,6)
             INNER JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK) 
                 ON AP.IdPedido = P.IdPedido  
             LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  (NOLOCK)
@@ -344,7 +354,7 @@ BEGIN
                ISNULL(TVDF.TipoValidacion, 'Sin Iniciar Aprobación') AS EstatusCarga,  
                00,  
                00,  
-               00,  
+  00,  
                CONCAT(  
                          'PO Number:',  
                          AP.IdPedido COLLATE Modern_Spanish_CI_AS,  
@@ -365,7 +375,7 @@ BEGIN
                        'label label-danger'  
                    WHEN TVDF.IdTipoValidacionDoc IS NULL THEN  
                        'label label-default'  
-               END,  
+    END,  
                '' AS UUID ,
 			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
 			   PSES.SAPPONumber
@@ -462,6 +472,7 @@ BEGIN
                 ON P.IdPedido = PG.IdIdentificador  
                    AND PG.IdProveedorCliente = P.IdProveedorCompras  
 				   AND P.IdSubcontratista = @IdProveedor 
+				   AND PG.IdTipoPedido in (2,4,6)
             INNER JOIN dbo.MM_AceptacionPedido AS AP  (NOLOCK)
                 ON AP.IdPedido = P.IdPedido  
             LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  (NOLOCK)
@@ -653,5 +664,5 @@ BEGIN
 			 Contrato,
 			 IdSolicitudPedido
     ORDER BY IdAceptacionPedido DESC;  
-	
+  
 END; 

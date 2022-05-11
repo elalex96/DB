@@ -1,7 +1,22 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MPY_PR_MM_EliminarFacturaPDF'
+)
+    DROP PROCEDURE SP_MPY_PR_MM_EliminarFacturaPDF;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MPY_PR_MM_EliminarFacturaPDF]    Script Date: 10/05/2022 01:50:11 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel Cruz
--- Create date: 08-08-17
--- Description:	 Elimina la factura de mercadeo de lado de petrovendor
+-- Create date: 11-05-2022
+-- Description:	Se agrega actualización para actualir las tablas correctas MPY_MM_AceptacionFactura y no las del flujo normal
 -- =============================================
 CREATE procedure [dbo].[SP_MPY_PR_MM_EliminarFacturaPDF]
 	-- Add the parameters for the stored procedure here
@@ -26,10 +41,10 @@ AS
 			[ComprobantePDFByte]=NULL
 			WHERE [IdFactura]= @IdFactura
 
-			UPDATE MM_AceptacionFactura
+			UPDATE MPY_MM_AceptacionFactura
 			SET [FechaCargaPDF]=NULL,
 			[FechaEvaluacionPDF]=NULL,
-			[IdEstatusPDF]= 4
+			[IdEstatusPDF]= 4 --> CTE Sin Documento:S_TipoValidacionDoc 
 			WHERE [IdAceptacionPedido]= @IdAceptacionPedido
 
 			SELECT 'Factura PDF Eliminado'
@@ -98,8 +113,7 @@ AS
 			UPDATE MPY_MM_AceptacionFactura
 			SET [FechaCargaXML]=NULL,
 			[FechaEvaluacionXML]=NULL,
-
-			[IdEstatusXML]	= 4	
+			[IdEstatusXML]	= 4	 --> CTE Sin Documento:S_TipoValidacionDoc 
 			WHERE [IdAceptacionPedido]= @IdAceptacionPedido
 			SELECT 'Factura XML Eliminado'
 	END 
