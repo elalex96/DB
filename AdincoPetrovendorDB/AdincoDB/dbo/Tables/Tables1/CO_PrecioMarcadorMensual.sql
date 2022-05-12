@@ -3,7 +3,7 @@
     [IdMarcador]              INT      NOT NULL,
     [IdContrato]              INT      NOT NULL,
     [Mes]                     DATE     NOT NULL,
-    [Precio]                  MONEY    NULL,
+    [Precio]                  DECIMAL(19,5)    NULL,
     [CreadoPor]               INT      NULL,
     [CreadoEn]                DATETIME NULL,
     [ModificadoPor]           INT      NULL,
