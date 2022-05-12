@@ -7,8 +7,8 @@ IF EXISTS
     WHERE name = 'SP_GenerarRemisionCarso'
 )
     DROP PROCEDURE SP_GenerarRemisionCarso;
-
-/****** Object:  StoredProcedure [dbo].[SP_GenerarRemisionCarso]    Script Date: 09/03/2022 01:17:40 p. m. ******/
+GO
+/****** Object:  StoredProcedure [dbo].[SP_GenerarRemisionCarso]    Script Date: 12/05/2022 07:45:12 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,6 +17,11 @@ GO
 -- Author:		Daniel AC
 -- Create date: 14/03/2022
 -- Description: Se agrega condicion para que no se tomen las aceptaciones de pedido eliminadas
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 12/05/2022
+-- Description: CAMBIA COLUMNA CANTIDAD DE DECIMAL A FLOAT
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_GenerarRemisionCarso]
 @IdOC VARCHAR(8000),
@@ -34,7 +39,7 @@ BEGIN --EMPIEZA STORE
         DataAreaId VARCHAR(MAX),
         IdPedido INT,
         Item VARCHAR(MAX),
-        Cantidad DECIMAL(20, 2),
+        Cantidad FLOAT,
         Asiento VARCHAR(8000),
         IdSolicitudPedido INT,
         IdProveedor INT,
@@ -53,7 +58,7 @@ BEGIN --EMPIEZA STORE
         DataAreaId VARCHAR(MAX),
         IdPedido INT,
         Item VARCHAR(MAX),
-        Cantidad DECIMAL(20, 2),
+        Cantidad FLOAT,
         Asiento VARCHAR(8000),
         IdSolicitudPedido INT,
         IdProveedor INT,
@@ -436,7 +441,7 @@ BEGIN --EMPIEZA STORE
         END
         ELSE
         BEGIN
-            DECLARE @Cantidad DECIMAL(20, 2)
+            DECLARE @Cantidad FLOAT
 
             SELECT @Cantidad = SUM(r.Cantidad)
             FROM dbo.AX_Remision r
