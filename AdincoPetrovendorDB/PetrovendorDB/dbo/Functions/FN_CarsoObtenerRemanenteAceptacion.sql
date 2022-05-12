@@ -1,13 +1,15 @@
 ﻿USE [Petrovendor]
 GO
-
-IF object_id('FN_CarsoObtenerRemanenteAceptacion', 'FN') IS NOT NULL
-BEGIN
-   DROP FUNCTION [dbo].[FN_CarsoObtenerRemanenteAceptacion]
-END
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'FN_CarsoObtenerRemanenteAceptacion'
+)
+    DROP FUNCTION FN_CarsoObtenerRemanenteAceptacion;
 GO
 
-/****** Object:  UserDefinedFunction [dbo].[FN_CarsoObtenerRemanenteAceptacion]    Script Date: 14/03/2022 06:04:48 p. m. ******/
+/****** Object:  UserDefinedFunction [dbo].[FN_CarsoObtenerRemanenteAceptacion]    Script Date: 12/05/2022 08:05:45 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,8 +21,8 @@ GO
 -- =============================================
 -- =============================================
 -- Author:		Daniel AC
--- Create date: 14/03/2022
--- Description: Se agrega condicion de que la aceptación no este eliminada
+-- Create date: 12/05/2022
+-- Description: Se AGREGA QUE RETORNE UN VALOR FLOAT
 -- =============================================
 CREATE FUNCTION [dbo].[FN_CarsoObtenerRemanenteAceptacion]
 (
@@ -30,10 +32,10 @@ CREATE FUNCTION [dbo].[FN_CarsoObtenerRemanenteAceptacion]
     @IdOC VARCHAR(4000),
 	@Asiento VARCHAR(8000)
 )
-RETURNS DECIMAL
+RETURNS FLOAT
 AS
 BEGIN
-    DECLARE @RetornoRemanente DECIMAL(20, 2)
+    DECLARE @RetornoRemanente FLOAT
 	
     SELECT @RetornoRemanente = SUM(ISNULL(pd.Cantidad, 0)) - SUM(ISNULL(apd.Cantidad, 0))
     FROM dbo.MM_AceptacionPedido ap

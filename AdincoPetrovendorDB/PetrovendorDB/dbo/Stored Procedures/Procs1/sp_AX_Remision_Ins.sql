@@ -1,4 +1,24 @@
-﻿CREATE PROCEDURE [dbo].[sp_AX_Remision_Ins] --'','5156','5116',59,'49',45.3,'789'  
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_AX_Remision_Ins'
+)
+    DROP PROCEDURE sp_AX_Remision_Ins;
+GO
+/****** Object:  StoredProcedure [dbo].[sp_AX_Remision_Ins]    Script Date: 12/05/2022 07:59:48 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 12/05/2022
+-- Description: CAMBIA COLUMNA CANTIDAD DE DECIMAL A FLOAT
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_AX_Remision_Ins] --'','5156','5116',59,'49',45.3,'789'  
   
     --@IdRemision VARCHAR(max) out,  
     @IdOC VARCHAR(8000),  
@@ -6,7 +26,7 @@
     @DataAreaId VARCHAR(MAX),  
     @IdPedido INT,  
     @Item VARCHAR(MAX),  
-    @Cantidad DECIMAL (20,2),  
+    @Cantidad FLOAT,  
     @Asiento VARCHAR(8000),  
     @IdRemisionCARSO VARCHAR(MAX)  
 AS  
@@ -141,7 +161,7 @@ BEGIN
   
         IF ISNULL(@EXISTE_REMISION, 0) > 0  
         BEGIN  
-            DECLARE @Balance DECIMAL(20, 2),  
+            DECLARE @Balance FLOAT,  
                     @IdRemision INT  
   
   
