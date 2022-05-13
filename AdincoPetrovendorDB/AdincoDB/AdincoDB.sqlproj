@@ -13270,5 +13270,6 @@
   <ItemGroup>
     <None Include="dbo\User Defined Types\Entregables_Importacion_Edicion_01.sql" />
     <None Include="dbo\Stored Procedures\Procs1\ENT_sp_GuardaBitacora.sql" />
+    <None Include="dbo\User Defined Types\EN_IMP_CONFIGURACION_REPSOL.sql" />
   </ItemGroup>
 </Project>
