@@ -1,4 +1,4 @@
-﻿CREATE proc [dbo].[p_s_notificacion_ins]
+CREATE proc [dbo].[p_s_notificacion_ins]
 @pIdNotificacion int out,
 @pPara varchar(max),
 @pAsunto varchar(500),
