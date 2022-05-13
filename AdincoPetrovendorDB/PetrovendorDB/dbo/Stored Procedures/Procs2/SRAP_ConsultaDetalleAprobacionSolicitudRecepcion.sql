@@ -22,7 +22,7 @@ GO
 -- Create date: 19/04/2022
 -- Description:	Se agrega a la consulta el dato del No.PO
 -- =============================================
-ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
+CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario INT,
@@ -175,21 +175,22 @@ AS
 					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
 					then '' else 'bgcolor="#ff685d"'
 					end as Color
-		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		
-		JOIN		MM_PedidoDetalle					PD 
+		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		(NOLOCK)
+		JOIN		MM_PedidoDetalle					PD (NOLOCK)
 		ON			SAPD.IdPedidoDetalle				=	PD.IdPedidoDetalle
-		JOIN		MM_Pedido							P
+		JOIN		MM_Pedido							P	(NOLOCK)
 		ON			PD.IdPedido							=	P.IdPedido
-		JOIN		MM_Material							M 
+		JOIN		MM_Material							M (NOLOCK)
 		ON			PD.IdMaterialVendedor				=	M.IdMaterial 
-		JOIN		MM_PeticionOferta					PO 
+		JOIN		MM_PeticionOferta					PO (NOLOCK)
 		ON			PO.IdPeticionOFerta					=	P.IdPeticionOferta		
-		JOIN		MM_PeticionOfertaDetalle			POD 
+		JOIN		MM_PeticionOfertaDetalle			POD (NOLOCK)
 		ON			PO.IdPeticionOferta					=	POD.IdPeticionOferta 
 		AND			POD.IdMaterial						=	PD.IdMaterial
-		JOIN		MM_SolicitudPedidoDetalle			SPD 
+		AND			PD.IdPeticionOfertaDetalle		=	POD.IdPeticionOfertaDetalle
+		JOIN		MM_SolicitudPedidoDetalle			SPD (NOLOCK)
 		ON			SPD.IdSolicitudPedidoDetalle		=	POD.IdSolicitudPedidoDetalle		
-		JOIN		PV_TipoMoneda						TM 
+		JOIN		PV_TipoMoneda						TM (NOLOCK)
 		ON			TM.IdMoneda							=	PD.IdMoneda
 		LEFT join	#tmpCantidadesRecibidad				t1
 		on			t1.IdPedidoDetalle					=	PD.IdPedidoDetalle		
@@ -334,7 +335,7 @@ AS
 			 		
         SELECT @EstatusSolicitanteId = TT.IdEstatus,
 		@NoSecuenciaUsuarioSolicitante = TT.NoSecuencia		  
-        FROM TA_Operacion O  
+        FROM TA_Operacion O 
             JOIN TA_Tarea TT  
                 ON O.IdOperacion = TT.IdOperacion  
         WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
