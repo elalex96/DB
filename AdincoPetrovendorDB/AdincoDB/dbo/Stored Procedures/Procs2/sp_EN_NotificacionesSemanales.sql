@@ -1,4 +1,4 @@
-CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales
+CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_ENI
 AS
 BEGIN
 -- =============================================
@@ -59,8 +59,10 @@ DECLARE
         U1.Nombre,
         U1.Usuario,
         'Notificación Semanal Elaborador',
-        '<tr><td>' + E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
-        '<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 THEN ' style="background-color:Tomato;">Delayed'
+        '<tr><td>' + E.DocumentoEntregable + CASE WHEN ISNULL(I.NombreInstalacion,'') <> '' THEN ' - ' + LTRIM(I.NombreInstalacion) + ' '
+		ELSE '' END + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
+        '<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 AND YEAR(IE.FechaCalculadaEntregaReg) <= 2019 THEN ' style="background-color:Tomato;">Historical'
+		WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 AND YEAR(IE.FechaCalculadaEntregaReg) > 2019 THEN ' style="background-color:Tomato;">Delayed'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
 
@@ -89,29 +91,39 @@ DECLARE
         dbo.EN_ContratoEntregable   CE  (NOLOCK)
         ON IE.IdContratoEntregable= CE.IdContratoEntregable
         AND CE.Activo=1
+   JOIN
+        CO_Contrato C   (NOLOCK)
+        ON CE.IdContrato=C.IdContrato
+        AND DATEADD(DAY, 1, IE.FechasLimiteElaboracion) > ISNULL(C.FechaArranqueEntregables,'20180101')
     JOIN
-        dbo.EN_Entregable           E   (NOLOCK)
+     dbo.EN_Entregable           E   (NOLOCK)
         ON CE.IdEntregable= E.IdEntregable
         AND E.IsActivo  =   1
         AND E.BITJOA = 0
-    JOIN
-        CO_Contrato C   (NOLOCK)
-        ON CE.IdContrato=C.IdContrato
-        AND DATEADD(DAY, 1, IE.FechasLimiteElaboracion) > ISNULL(C.FechaArranqueEntregables,'20190101')
+		AND	E.IdResponsableGenerador	IN (10005, 10006,10009,10011,10014,10015,10038)
     JOIN
         dbo.CO_Contratista cita (NOLOCK)
-		ON c.IdContratista=cita.IdContratista
+        ON c.IdContratista=cita.IdContratista
     JOIN
         dbo.AP_Rutas ruta   (NOLOCK)
         ON cita.IdRuta=ruta.idRuta
+	LEFT JOIN
+		EN_InstanciasEntregables_InstanciaActividad	IEIA	(NOLOCK)
+		ON	IE.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
+	LEFT JOIN
+		EN_InstanciasActividades IA	(NOLOCK)
+		ON	IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
+	LEFT JOIN
+		EN_InstanciasProcesosFecha IPF	(NOLOCK)
+		ON	IA.IdInstanciasProcesos	=	IPF.IdInstanciasProcesos
+	LEFT JOIN
+		EN_Procesos PRO	(NOLOCK)
+		ON	IPF.IdProceso	=	PRO.IdProceso
+	LEFT JOIN
+		CO_Instalacion	I	(NOLOCK)
+		ON	PRO.IdInstalacion	=	I.IdInstalacion
     WHERE
-        cita.NombreContratista NOT LIKE '%SHELL%'
-        AND cita.NombreContratista NOT LIKE '%BP%'
-        AND cita.NombreContratista NOT LIKE '%REPSOL%'
-        AND cita.NombreContratista NOT LIKE '%MURPHY%'
-        AND cita.NombreContratista NOT LIKE '%Wintershall%'
-		AND cita.NombreContratista NOT LIKE '%ENI%'
-		AND cita.NombreContratista NOT LIKE '%EQUINOR%'
+		cita.NombreContratista  LIKE '%ENI%'
     ORDER BY
         C.NumeroContrato,
         IE.FechaCalculadaEntregaReg
@@ -133,10 +145,13 @@ DECLARE
         U1.Nombre,
         U1.Usuario,
         'Notificación Semanal Revisor',
-        '<tr><td>' + E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
-        '<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 THEN ' style="background-color:Tomato;">Delayed'
+        '<tr><td>' + E.DocumentoEntregable + CASE WHEN ISNULL(I.NombreInstalacion,'') <> '' THEN ' - ' + LTRIM(I.NombreInstalacion) + ' '
+		ELSE '' END + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
+		'<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 AND YEAR(IE.FechaCalculadaEntregaReg) <= 2019 THEN ' style="background-color:Tomato;">Historical'
+		WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 AND YEAR(IE.FechaCalculadaEntregaReg) > 2019 THEN ' style="background-color:Tomato;">Delayed'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
+
 
 
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
@@ -162,30 +177,40 @@ DECLARE
     JOIN
         dbo.EN_ContratoEntregable   CE  (NOLOCK)
         ON IE.IdContratoEntregable  =   CE.IdContratoEntregable 
-        AND CE.Activo=1 
+        AND CE.Activo=1
+	JOIN
+        CO_Contrato C   (NOLOCK)
+        ON CE.IdContrato	=	C.IdContrato
+        AND DATEADD(DAY, 1, IE.FechasLimiteRevision) > ISNULL(C.FechaArranqueEntregables,'20180101')
     JOIN
         dbo.EN_Entregable           E   (NOLOCK)
         ON CE.IdEntregable  =   E.IdEntregable
         AND E.IsActivo  =   1
         AND E.BITJOA = 0
-    JOIN
-        CO_Contrato C   (NOLOCK)
-        ON CE.IdContrato=C.IdContrato
-        AND DATEADD(DAY, 1, IE.FechasLimiteRevision) > ISNULL(C.FechaArranqueEntregables,'20190101')
+		AND	E.IdResponsableGenerador	IN (10005, 10006,10009,10011,10014,10015,10038)
     JOIN
         dbo.CO_Contratista cita (NOLOCK)
         ON c.IdContratista=cita.IdContratista
     JOIN
         dbo.AP_Rutas ruta   (NOLOCK)
         ON cita.IdRuta=ruta.idRuta
+	LEFT JOIN
+		EN_InstanciasEntregables_InstanciaActividad	IEIA	(NOLOCK)
+		ON	IE.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
+	LEFT JOIN
+		EN_InstanciasActividades IA	(NOLOCK)
+		ON	IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
+	LEFT JOIN
+		EN_InstanciasProcesosFecha IPF	(NOLOCK)
+		ON	IA.IdInstanciasProcesos	=	IPF.IdInstanciasProcesos
+	LEFT JOIN
+		EN_Procesos PRO	(NOLOCK)
+		ON	IPF.IdProceso	=	PRO.IdProceso
+	LEFT JOIN
+		CO_Instalacion	I	(NOLOCK)
+		ON	PRO.IdInstalacion	=	I.IdInstalacion
     WHERE
-        cita.NombreContratista NOT LIKE '%SHELL%'
-        AND cita.NombreContratista NOT LIKE '%BP%'
-        AND cita.NombreContratista NOT LIKE '%REPSOL%'
-        AND cita.NombreContratista NOT LIKE '%MURPHY%'
-        AND cita.NombreContratista NOT LIKE '%Wintershall%'
-		AND cita.NombreContratista NOT LIKE '%ENI%'
-		AND cita.NombreContratista NOT LIKE '%EQUINOR%'
+		cita.NombreContratista LIKE '%ENI%'
     ORDER BY
         C.NumeroContrato,
         IE.FechaCalculadaEntregaReg 
@@ -207,8 +232,10 @@ DECLARE
         U1.Nombre,
         U1.Usuario,
         'Notificación Semanal Aprobador',
-        '<tr><td>' + E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
-        '<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 THEN ' style="background-color:Tomato;">Delayed'
+        '<tr><td>' + E.DocumentoEntregable + CASE WHEN ISNULL(I.NombreInstalacion,'') <> '' THEN ' - ' + LTRIM(I.NombreInstalacion) + ' '
+		ELSE '' END + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
+		'<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 AND YEAR(IE.FechaCalculadaEntregaReg) <= 2019 THEN ' style="background-color:Tomato;">Historical'
+		WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 AND YEAR(IE.FechaCalculadaEntregaReg) > 2019 THEN ' style="background-color:Tomato;">Delayed'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
 
@@ -236,30 +263,40 @@ DECLARE
     JOIN
         dbo.EN_ContratoEntregable   CE  (NOLOCK)
         ON IE.IdContratoEntregable  =   CE.IdContratoEntregable
-        AND CE.Activo   =   1 
+        AND CE.Activo   =   1
+    JOIN
+        CO_Contrato C   (NOLOCK)
+        on CE.IdContrato    =   C.IdContrato
+        AND DATEADD(DAY, 1, IE.FechasLimiteAprobacion) > ISNULL(C.FechaArranqueEntregables,'20180101')
     JOIN
         dbo.EN_Entregable           E   (NOLOCK)
         ON  CE.IdEntregable=E.IdEntregable
         AND E.IsActivo  =   1
         AND E.BITJOA = 0
-    JOIN
-        CO_Contrato C   (NOLOCK)
-        on CE.IdContrato    =   C.IdContrato
-        AND DATEADD(DAY, 1, IE.FechasLimiteAprobacion) > ISNULL(C.FechaArranqueEntregables,'20190101')
+		AND	E.IdResponsableGenerador	IN (10005, 10006,10009,10011,10014,10015,10038)
     JOIN
         dbo.CO_Contratista cita (NOLOCK)
         ON c.IdContratista  =   cita.IdContratista
     JOIN
         dbo.AP_Rutas ruta   (NOLOCK)
         ON cita.IdRuta  =   ruta.idRuta
+	LEFT JOIN
+		EN_InstanciasEntregables_InstanciaActividad	IEIA	(NOLOCK)
+		ON	IE.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
+	LEFT JOIN
+		EN_InstanciasActividades IA	(NOLOCK)
+		ON	IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
+	LEFT JOIN
+		EN_InstanciasProcesosFecha IPF	(NOLOCK)
+		ON	IA.IdInstanciasProcesos	=	IPF.IdInstanciasProcesos
+	LEFT JOIN
+		EN_Procesos PRO	(NOLOCK)
+		ON	IPF.IdProceso	=	PRO.IdProceso
+	LEFT JOIN
+		CO_Instalacion	I	(NOLOCK)
+		ON	PRO.IdInstalacion	=	I.IdInstalacion
     WHERE
-        cita.NombreContratista NOT LIKE '%SHELL%'
-        AND cita.NombreContratista NOT LIKE '%BP%'
-        AND cita.NombreContratista NOT LIKE '%REPSOL%'
-        AND cita.NombreContratista NOT LIKE '%MURPHY%'
-        AND cita.NombreContratista NOT LIKE '%Wintershall%'
-		AND cita.NombreContratista NOT LIKE '%ENI%'
-		AND cita.NombreContratista NOT LIKE '%EQUINOR%'
+		cita.NombreContratista LIKE '%ENI%'
     ORDER BY
         C.NumeroContrato,
         IE.FechaCalculadaEntregaReg
@@ -313,13 +350,12 @@ DECLARE
         Destinatario,
         TipoCorreo,
         Ruta,
-        SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
-                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),1,8000), --+ '</table>' Detalle
+        REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
+                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'), --+ '</table>' Detalle
         1
     FROM
         #Notificaciones B
-		
-		WHERE ISNULL(B.IsGrupo,0) = 0
+	WHERE ISNULL(B.IsGrupo,0) = 0
     GROUP BY
         NombreDestinatario,
         Destinatario,
@@ -327,102 +363,97 @@ DECLARE
         Ruta
 
 
-    INSERT INTO #NotificacionesFinales
-    (
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta,
-        Tabla,
-        NumCorreo
-    )
-    SELECT
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta,
-        '<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
-                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),8001,7990), --+ '</table>' Detalle
-        2
-    FROM
-        #Notificaciones B
-    WHERE
-        LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
-                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 8000
-	
-	AND ISNULL(B.IsGrupo,0) = 0
-    GROUP BY
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta
+  --  INSERT INTO #NotificacionesFinales
+  --  (
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta,
+  --      Tabla,
+  --      NumCorreo
+  --  )
+  --  SELECT
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta,
+  --      '<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
+  --              WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),8001,7990), --+ '</table>' Detalle
+  --      2
+  --  FROM
+  --      #Notificaciones B
+  --  WHERE
+  --      LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
+  --              WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 8000
+		--AND ISNULL(B.IsGrupo,0) = 0
+  --  GROUP BY
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta
 
 
-    INSERT INTO #NotificacionesFinales
-    (
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta,
-        Tabla,
-        NumCorreo
-    )
-    SELECT
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta,
-        '<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
-                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),15991,7990), --+ '</table>' Detalle
-        3
-    FROM
-        #Notificaciones B
-    WHERE
-        LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
-                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 15990
+  --  INSERT INTO #NotificacionesFinales
+  --  (
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta,
+  --      Tabla,
+  --      NumCorreo
+  --  )
+  --  SELECT
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta,
+  --      '<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
+  --              WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),15991,7990), --+ '</table>' Detalle
+  --      3
+  --  FROM
+  --      #Notificaciones B
+  --  WHERE
+  --      LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
+  --              WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 15990
+		--AND ISNULL(B.IsGrupo,0) = 0
+  --  GROUP BY
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta
 
-		AND ISNULL(B.IsGrupo,0) = 0
-    GROUP BY
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta
 
-
-    INSERT INTO #NotificacionesFinales
-    (
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta,
-        Tabla,
-        NumCorreo
-    )
-    SELECT
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-        Ruta,
-        '<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
-                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),23981,7990), --+ '</table>' Detalle
-        4
-    FROM
-        #Notificaciones B
-    WHERE
-        LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
-                WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 23980
-
-		AND ISNULL(B.IsGrupo,0) = 0
-    GROUP BY
-        NombreDestinatario,
-        Destinatario,
-        TipoCorreo,
-    Ruta
+  --  INSERT INTO #NotificacionesFinales
+  --  (
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta,
+  --      Tabla,
+  --      NumCorreo
+  --  )
+  --  SELECT
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta,
+  --      '<tr><td>' +SUBSTRING(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
+  --              WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<'),23981,7990), --+ '</table>' Detalle
+  --      4
+  --  FROM
+  --      #Notificaciones B
+  --  WHERE
+  --      LEN(REPLACE(REPLACE(REPLACE(STUFF(( SELECT  ''+ Tabla FROM #Notificaciones A
+  --              WHERE B.Destinatario = A.Destinatario AND B.TipoCorreo = A.TipoCorreo AND B.Ruta = A.Ruta FOR XML PATH('')),1 ,1, ''),'&lt;','<'),'&gt;','>'),'lt;','<')) > 23980
+		--AND ISNULL(B.IsGrupo,0) = 0
+  --  GROUP BY
+  --      NombreDestinatario,
+  --      Destinatario,
+  --      TipoCorreo,
+  --      Ruta
 
 
 --================================S_NOTIFICACIÓN===========================================================
---select * from #NotificacionesFinales
-	
     SELECT
         @MaxNotificacion = MAX(IdNotificacion)
     FROM
@@ -444,10 +475,10 @@ DECLARE
     )
     SELECT
         ISNULL(@MaxNotificacion,0) + ID,    -- IdNotificacion
-        Destinatario,                       -- Para
+		Destinatario,                       -- Para
         CASE WHEN N.NumCorreo = 1 THEN C.Asunto
             ELSE C.Asunto + ' Continuación ' +  LTRIM(N.NumCorreo)
-        END AS  Asunto,
+        END AS Asunto,
         REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.Tabla,'')),'##ENLACE_DETALLE##',N.Ruta),'##numcorreo##',LTRIM(N.NumCorreo)),
         GETDATE(),
         0,
