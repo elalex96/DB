@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales
+CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales
 AS
 BEGIN
 -- =============================================
@@ -18,7 +18,7 @@ CREATE TABLE #Notificaciones--*
     NombreDestinatario  VARCHAR(250),
     Destinatario        VARCHAR(250),
     TipoCorreo          VARCHAR(250),
-    Tabla               VARCHAR(8000),
+    Tabla               VARCHAR(MAX),
     Ruta                VARCHAR(500),
 	IsGrupo				BIT,
 	IdContrato			INT,
@@ -32,7 +32,7 @@ CREATE TABLE #NotificacionesFinales
     Destinatario        VARCHAR(250),
     TipoCorreo          VARCHAR(250),
     Ruta                VARCHAR(500),
-    Tabla               VARCHAR(8000),
+    Tabla               VARCHAR(MAX),
     NumCorreo           INT
 )
 
@@ -62,7 +62,10 @@ DECLARE
         '<tr><td>' + E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
         '<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 THEN ' style="background-color:Tomato;">Delayed'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
-        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
+        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
+
+
+        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
         END  + '</td>'+
         '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111) + '</td>'  + 
         '<td>'+C.NumeroContrato+ '</td>'                                                AS  Tabla,
@@ -81,6 +84,7 @@ DECLARE
     JOIN
         dbo.AP_Usuario              U1  (NOLOCK)
         ON A.idUsuario = U1.UsuarioID --- PENDIENTE DE ELABORACIÓN
+		AND U1.IsActivo = 1
     JOIN
         dbo.EN_ContratoEntregable   CE  (NOLOCK)
         ON IE.IdContratoEntregable= CE.IdContratoEntregable
@@ -132,7 +136,10 @@ DECLARE
         '<tr><td>' + E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
         '<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 THEN ' style="background-color:Tomato;">Delayed'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
-        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
+        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
+
+
+        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
         END  + '</td>'+
         '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111) + '</td>'  + 
         '<td>'+C.NumeroContrato+ '</td>'                                                AS Tabla,
@@ -151,6 +158,7 @@ DECLARE
     JOIN
         dbo.AP_Usuario              U1  (NOLOCK)
         ON  A.idUsuario= U1.UsuarioID --- PENDIENTE DE REVISIÓN
+		AND U1.IsActivo = 1
     JOIN
         dbo.EN_ContratoEntregable   CE  (NOLOCK)
         ON IE.IdContratoEntregable  =   CE.IdContratoEntregable 
@@ -189,7 +197,7 @@ DECLARE
         NombreDestinatario,
         Destinatario,
         TipoCorreo,
-   Tabla,
+		Tabla,
         Ruta,
 		IsGrupo,
 		IdContrato,
@@ -202,7 +210,10 @@ DECLARE
         '<tr><td>' + E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable) + '</td>' +
         '<td' + CASE WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 THEN ' style="background-color:Tomato;">Delayed'
         WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN ' style="background-color:Tomato;">0-40% of time remaining'
-        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
+        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN ' style="background-color:#ffdd99;">40-70% of time remaining'
+
+
+        WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN ' style="background-color:#8cd98c;">More than 70% of time remaining'
         END  + '</td>'+
         '<td>'+ CONVERT(VARCHAR(10),IE.FechaCalculadaEntregaReg,111) + '</td>'  + 
         '<td>'+C.NumeroContrato+ '</td>'                                                AS Tabla,
@@ -221,6 +232,7 @@ DECLARE
     JOIN
         dbo.AP_Usuario              U1  (NOLOCK)
         ON A.idUsuario =    U1.UsuarioID--- PENDIENTE DE APROBACIÓN
+		AND U1.IsActivo = 1
     JOIN
         dbo.EN_ContratoEntregable   CE  (NOLOCK)
         ON IE.IdContratoEntregable  =   CE.IdContratoEntregable
@@ -283,6 +295,7 @@ DECLARE
 	JOIN 
 		AP_Usuario AS UG
 		ON	GU.IdUsuario	=	UG.UsuarioID
+		AND UG.IsActivo = 1
 	
 	--================================NOTIFICACIONES FINALES===========================================================*
 
@@ -404,7 +417,7 @@ DECLARE
         NombreDestinatario,
         Destinatario,
         TipoCorreo,
-        Ruta
+    Ruta
 
 
 --================================S_NOTIFICACIÓN===========================================================
@@ -431,7 +444,6 @@ DECLARE
     )
     SELECT
         ISNULL(@MaxNotificacion,0) + ID,    -- IdNotificacion
---      'barbara.arranaga@adinco.mx', 
         Destinatario,                       -- Para
         CASE WHEN N.NumCorreo = 1 THEN C.Asunto
             ELSE C.Asunto + ' Continuación ' +  LTRIM(N.NumCorreo)
