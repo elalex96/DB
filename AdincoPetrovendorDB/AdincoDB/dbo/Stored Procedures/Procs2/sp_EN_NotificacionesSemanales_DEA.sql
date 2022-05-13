@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_DEA
+CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_DEA
 AS
 BEGIN
 -- =============================================
@@ -69,6 +69,7 @@ DECLARE
     JOIN
         dbo.AP_Usuario              U1	(NOLOCK)
 		ON A.idUsuario = U1.UsuarioID --- PENDIENTE DE ELABORACIÓN
+		AND U1.IsActivo = 1
     JOIN
         dbo.EN_ContratoEntregable   CE	(NOLOCK)
 		ON IE.IdContratoEntregable= CE.IdContratoEntregable
@@ -128,6 +129,7 @@ DECLARE
 	JOIN
 		dbo.AP_Usuario              U1	(NOLOCK)
 		ON  A.idUsuario= U1.UsuarioID --- PENDIENTE DE REVISIÓN
+		AND U1.IsActivo = 1
 	JOIN
 		dbo.EN_ContratoEntregable   CE	(NOLOCK)
 		ON IE.IdContratoEntregable	=	CE.IdContratoEntregable 
@@ -187,6 +189,7 @@ DECLARE
     JOIN
         dbo.AP_Usuario              U1	(NOLOCK)
 		ON A.idUsuario =	U1.UsuarioID--- PENDIENTE DE APROBACIÓN
+		AND U1.IsActivo = 1
     JOIN
         dbo.EN_ContratoEntregable   CE	(NOLOCK)
 		ON IE.IdContratoEntregable	=	CE.IdContratoEntregable
@@ -344,7 +347,6 @@ DECLARE
 	)
 	SELECT
 		ISNULL(@MaxNotificacion,0) + ID,	-- IdNotificacion
---		'barbara.arranaga@adinco.mx', 
 		Destinatario,						-- Para
 		CASE WHEN N.NumCorreo = 1 THEN C.Asunto
 			ELSE C.Asunto + ' Continuación ' +  LTRIM(N.NumCorreo)
