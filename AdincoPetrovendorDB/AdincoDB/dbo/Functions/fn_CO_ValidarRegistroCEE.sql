@@ -1,4 +1,7 @@
-﻿CREATE FUNCTION [dbo].[fn_CO_ValidarRegistroCEE]
+﻿--Modificado Por: Daniel Moreno
+--Modificado El: 12-05-2022
+--Descripción: Se agrega un código de error a cada mensaje, para poderlo controlar desde la pantalla RegistrarGasto.aspx
+CREATE FUNCTION [dbo].[fn_CO_ValidarRegistroCEE]
 (
 	@pIdRegistro int,
 	@pIdInstalacion int,
@@ -11,6 +14,7 @@
 )
 returns varchar(500)
 As
+
 begin
 
 	declare @numReg int,
@@ -38,15 +42,18 @@ begin
 	from Fi_Factura
 	where  IdFactura = @pIdFactura 
 
-
 	if @numReg > 0
-		set @error = 'Se ha agregado el registro, pero ya existe uno con la misma coincidencia de Instalación, Programa, Factura, Rubro, Monto y Fechas de Ejecución'
+		set @error = 'A0001-Se ha agregado el registro pero ya existe un registro con la misma coincidencia de Instalación, Programa, Factura, Rubro, Monto y Fechas de Ejecución'
 
+
+
+	
 	if @totalGasto + isnull(@pMontoRegistro,0) > (@totalFactura + 0.1)
 	begin
-		set @error = @error + 'No es posible registrar el gasto ya que se excedería el total de la factura. Solo se puede capturar hasta $'+
+		set @error = 'E0001-No es posible registrar el gasto ya que se excedería el total de la factura. Solo se puede capturar hasta $'+
 		cast((isnull(@totalFactura,0) - isnull(@totalGasto,0)) as varchar)+ ' en el monto'
 	end
+
 
 	if exists(
 		select 1
@@ -56,7 +63,7 @@ begin
 		p.Generada = 1
 	)
 	begin
-		set @error =  @error +'|No es posible modificar el registro ya que hay una póliza generada ligada a este gasto'
+		set @error =  @error +'|E0002-No es posible modificar el registro ya que hay una póliza generada ligada a este gasto'
 	end
 	
 	---------------------------------------------------------------------------------------------------------
