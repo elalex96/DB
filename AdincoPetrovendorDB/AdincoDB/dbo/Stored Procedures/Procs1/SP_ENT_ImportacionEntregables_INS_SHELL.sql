@@ -1,11 +1,21 @@
-﻿DROP PROCEDURE IF EXISTS SP_ENT_ImportacionEntregables_INS_SHELL
+USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS_SHELL]    Script Date: 12/05/2022 03:45:58 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================  
 -- Author:  <Luis David De La Cruz>  
 -- Create date: <26/08/2021>  
 -- Description: <Actualizacion de los registros existentes>  
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_SHELL] 
+-- =============================================  
+-- Author:  <Alexander Gomez>  
+-- Create date: <12/05/2022>  
+-- Description: <descarte de elementos vacios, incertado en en_Actividad en caso de que el entregable no tenga registros en esta tabla>  
+-- =============================================  
+ALTER PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_SHELL] 
 @Layout dbo.Entregables_Importacion_SHELL READONLY,
 @IdContrato INT,
 @IdUsuario INT
@@ -15,7 +25,8 @@ BEGIN
 		ROW_NUMBER() OVER (ORDER BY IdEntregable DESC) AS R,
 		*
 	INTO #TB_EXCEL
-	FROM @Layout;
+	FROM @Layout
+	WHERE IdEntregable <> '';
 	DECLARE @CONT INT = 1;
 	DECLARE @CONTTOTAL INT = (SELECT COUNT(R) FROM #TB_EXCEL);
 	DECLARE @FUNCION NVARCHAR(500);
@@ -26,6 +37,7 @@ BEGIN
 	DECLARE @DIASREVISION INT = 1;
 	DECLARE @DIASAPROBACION INT = 1;
 	DECLARE @ACTIVO BIT;
+	DECLARE @ID_ACTIVIDAD INT;
 
 
 	DECLARE @USUARIOELABORADOR NVARCHAR(500); -- Guardar en idUsuario de EN_Actividad para el estado (EstadoID) 10000
@@ -97,168 +109,37 @@ BEGIN
 			TE.R = @CONT AND 
 			CE.IdContrato = @IdContrato;
 
-			--select * FROM dbo.EN_ContratoEntregable AS CE
-			--JOIN #TB_EXCEL AS TE 
-			--ON CE.IdContratoEntregable = TE.IdEntregable
-			--WHERE 
-			--TE.R = @CONT 
-			--AND 
-			--CE.IdContrato = @IdContrato;
-
-			UPDATE AC
-			SET AC.idUsuario = @IDUSUARIOELABORADOR,
-				AC.ModificadoEn = GETDATE(),
-				AC.ModificadoPor = @IdUsuario
+			SELECT TOP 1
+				@ID_ACTIVIDAD = AC.ActividadID
 			FROM dbo.EN_ContratoEntregable AS CE
 			JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-			LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-			AC.IdContratoEntregable AND AC.EstadoID IN (10000, 10001, 10002, 10003)
-			WHERE 
-			TE.R = @CONT AND 
-			CE.IdContrato = @IdContrato;
+			LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = AC.IdContratoEntregable AND AC.EstadoID IN (10000, 10001, 10002, 10003)
+			WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato
+			ORDER BY CreadoEn DESC;
 
-			--VALIDA SI EXISTEN USUARIO DE APROBACIÓN
-			IF EXISTS (SELECT 1 FROM 
-						dbo.EN_ContratoEntregable AS CE
-						JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-						LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-						AC.IdContratoEntregable AND AC.EstadoID = 10000
-						WHERE 
-						TE.R = @CONT AND 
-						CE.IdContrato = @IdContrato)
+			IF ISNULL(@ID_ACTIVIDAD,0) > 0
 			BEGIN
+				
 				UPDATE AC
 				SET AC.idUsuario = @IDUSUARIOELABORADOR,
 					AC.ModificadoEn = GETDATE(),
 					AC.ModificadoPor = @IdUsuario
 				FROM dbo.EN_ContratoEntregable AS CE
 				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-				AC.IdContratoEntregable AND AC.EstadoID IN (10000)
-				WHERE 
-				TE.R = @CONT AND 
-				CE.IdContrato = @IdContrato;
+				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = AC.IdContratoEntregable AND AC.EstadoID IN (10000, 10001, 10002, 10003)
+				WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
+
 			END
 			ELSE
-			begin
-				INSERT INTO en_actividad (ActividadID,EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-				SELECT TOP 1
-				AC.ActividadID,
-				10000,
-				@USUARIOELABORADOR,
-				CE.IdContratoEntregable,
-				@IdUsuario,
-				GETDATE(),
-				1
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-				AC.IdContratoEntregable
-				WHERE 
-				TE.R = @CONT AND 
-				CE.IdContrato = @IdContrato;
-			end
-
-			--VALIDA SI EXISTEN USUARIO DE REVISOR
-			IF EXISTS (SELECT 1 FROM 
-						dbo.EN_ContratoEntregable AS CE
-						JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-						LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-						AC.IdContratoEntregable AND AC.EstadoID = 10001
-						WHERE 
-						TE.R = @CONT AND 
-						CE.IdContrato = @IdContrato)
 			BEGIN
-				UPDATE AC
-				SET AC.idUsuario = @IDUSUARIOELABORADOR,
-					AC.ModificadoEn = GETDATE(),
-					AC.ModificadoPor = @IdUsuario
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-				AC.IdContratoEntregable AND AC.EstadoID IN (10001)
-				WHERE 
-				TE.R = @CONT AND 
-				CE.IdContrato = @IdContrato;
-			END
-			ELSE
-			begin
-				INSERT INTO en_actividad (ActividadID,EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-				SELECT TOP 1
-				AC.ActividadID,
-				10001,
-				@USUARIOELABORADOR,
-				CE.IdContratoEntregable,
-				@IdUsuario,
-				GETDATE(),
-				1
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-				AC.IdContratoEntregable
-				WHERE 
-				TE.R = @CONT AND 
-				CE.IdContrato = @IdContrato;
-			end
 
-			--VALIDA SI EXISTEN USUARIO DE APROBADOR
-			IF EXISTS (SELECT 1 FROM 
-						dbo.EN_ContratoEntregable AS CE
-						JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-						LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-						AC.IdContratoEntregable AND AC.EstadoID IN (10002,10003)
-						WHERE 
-						TE.R = @CONT AND 
-						CE.IdContrato = @IdContrato)
-			BEGIN
-				UPDATE AC
-				SET AC.idUsuario = @IDUSUARIOELABORADOR,
-					AC.ModificadoEn = GETDATE(),
-					AC.ModificadoPor = @IdUsuario
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-				AC.IdContratoEntregable AND AC.EstadoID IN (10002,10003)
-				WHERE 
-				TE.R = @CONT AND 
-				CE.IdContrato = @IdContrato;
-			END
-			ELSE
-			begin
-				INSERT INTO en_actividad (ActividadID,EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-				SELECT TOP 1
-				AC.ActividadID,
-				10002,
-				@USUARIOELABORADOR,
-				CE.IdContratoEntregable,
-				@IdUsuario,
-				GETDATE(),
-				1
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-				AC.IdContratoEntregable
-				WHERE 
-				TE.R = @CONT AND 
-				CE.IdContrato = @IdContrato;
+				INSERT INTO EN_Actividad (EstadoID,idUsuario,CreadoPor,CreadoEn,Activo,IdContratoEntregable) VALUES (10000,@IDUSUARIOELABORADOR,@IdUsuario,GETDATE(),1,@IDENTREGABLE);
+				INSERT INTO EN_Actividad (EstadoID,idUsuario,CreadoPor,CreadoEn,Activo,IdContratoEntregable) VALUES (10001,@IDUSUARIOELABORADOR,@IdUsuario,GETDATE(),1,@IDENTREGABLE);
+				INSERT INTO EN_Actividad (EstadoID,idUsuario,CreadoPor,CreadoEn,Activo,IdContratoEntregable) VALUES (10002,@IDUSUARIOELABORADOR,@IdUsuario,GETDATE(),1,@IDENTREGABLE);
+				INSERT INTO EN_Actividad (EstadoID,idUsuario,CreadoPor,CreadoEn,Activo,IdContratoEntregable) VALUES (10003,@IDUSUARIOELABORADOR,@IdUsuario,GETDATE(),1,@IDENTREGABLE);
 
-				INSERT INTO en_actividad (ActividadID,EstadoID,idUsuario,IdContratoEntregable,CreadoPor,CreadoEn,Activo)
-				SELECT TOP 1
-				AC.ActividadID,
-				10003,
-				@USUARIOELABORADOR,
-				CE.IdContratoEntregable,
-				@IdUsuario,
-				GETDATE(),
-				1
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS AC ON CE.IdContratoEntregable = 
-				AC.IdContratoEntregable
-				WHERE 
-				TE.R = @CONT AND 
-				CE.IdContrato = @IdContrato;
-			end
+			END
+
 			SET @CONTADORAFECTADOS = @CONTADORAFECTADOS + 1;
 		END
 		ELSE
