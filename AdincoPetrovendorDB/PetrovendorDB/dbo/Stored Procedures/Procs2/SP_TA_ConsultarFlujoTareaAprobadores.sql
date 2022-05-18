@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarFlujoTareaAprobadores]    Script Date: 16/05/2022 10:17:37 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarFlujoTareaAprobadores]    Script Date: 18/05/2022 03:46:56 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,11 +19,11 @@ GO
 -- Updated date: 22/02/2022
 -- Description: Se agrega el idusuarioAdinco para notificaciones push
 --************************************************************** 
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 16/05/2022
--- Description:	 Se descartan en la aprobacion los usuarios eliminados
--- =============================================
+--************************************************************** 
+-- Modified:    Alexander GOMEZ
+-- Updated date: 18/05/2022
+-- Description: se realiza una secuencia de acuerdo a los usuarios activos
+--************************************************************** 
 ALTER  PROCEDURE [dbo].[SP_TA_ConsultarFlujoTareaAprobadores]
 	-- Add the parameters for the stored procedure here
 	 @IdFlujoTarea int 
@@ -38,7 +38,7 @@ BEGIN
 	 SELECT 
 		A.IdUsuario, 
 		IdFlujoTarea, 
-		NoSecuencia, 
+		ROW_NUMBER() OVER(ORDER BY NoSecuencia ASC) AS NoSecuencia, 
 		Nombre, 
 		Correo, 
 		ISNULL(U.Telefono, ''),
@@ -52,3 +52,4 @@ BEGIN
 	 ORDER BY  NoSecuencia ASC
 
 END
+
