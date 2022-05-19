@@ -88,7 +88,8 @@ BEGIN
         (
             SELECT *
             FROM [dbo].[CO_RegistroMarkup]
-            WHERE GastoId = @IdRegistro
+            WHERE Activo = 1
+                  AND GastoId = @IdRegistro
         )
         BEGIN
             INSERT INTO [Adinco].[dbo].[CO_RegistroMarkup]
