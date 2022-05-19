@@ -1,5 +1,5 @@
 ﻿
-CREATE PROCEDURE [dbo].[EPT_RegistraImportaLayout]--10007,10,10000,'20220401',12.3333,0
+CREATE PROCEDURE [dbo].[EPT_RegistraImportaLayout]
 	@IdContrato INT,
 	@IdUsuario INT,
 	@ArchivoImportado VARCHAR(150)
