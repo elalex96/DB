@@ -1,11 +1,21 @@
-﻿
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PC_CambiarEstatusFlujoPeticionComprobante]    Script Date: 16/05/2022 11:30:12 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 28-03-17
 -- Description:	 Actualiza el Estatus de de la operacion
 -- =============================================
-
-CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusFlujoPeticionComprobante] 
+-- Author:		Alexander Gomez
+-- Create date: 16/05/2022
+-- Description:	 Se descartan en la aprobacion los usuarios eliminados
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_PC_CambiarEstatusFlujoPeticionComprobante] 
 	-- Add the parameters for the stored procedure here
 	@IdOperacion INT,
 	@IdAceptacionPedido INT 
@@ -37,27 +47,51 @@ BEGIN
 	-- 7 Reasignada
 
     SET @CountTarea =  (SELECT	COUNT(IdEstatus) AS TOTAL
-	FROM TA_Operacion TAO
-	INNER JOIN TA_Tarea AS T ON T.IdOperacion = TAO.IdOperacion
-	WHERE TAO.IdOperacion = @IdOperacion AND T.IdEstatus <> 7)
+						FROM TA_Operacion TAO
+						INNER JOIN TA_Tarea AS T 
+							ON T.IdOperacion = TAO.IdOperacion
+						INNER JOIN S_Usuario AS US
+							ON US.IdUsuario = T.IdAprobador
+							AND US.Activo = 1
+							AND ISNULL(US.IsEliminado,0) = 0
+						WHERE TAO.IdOperacion = @IdOperacion 
+						AND T.IdEstatus <> 7)
 
 	--- T.IdEstatus <> 7 ---> Es Cancelado por Reasignación ---
 
 	SET @CountEstPen = (SELECT	COUNT(IdEstatus) AS TOTAL
-	FROM TA_Operacion TAO
-	INNER JOIN TA_Tarea AS T ON T.IdOperacion = TAO.IdOperacion 
-	WHERE TAO.IdOperacion = @IdOperacion  AND T.IdEstatus = 1)
+						FROM TA_Operacion TAO
+						INNER JOIN TA_Tarea AS T 
+							ON T.IdOperacion = TAO.IdOperacion 
+						INNER JOIN S_Usuario AS US
+							ON US.IdUsuario = T.IdAprobador
+							AND US.Activo = 1
+							AND ISNULL(US.IsEliminado,0) = 0
+						WHERE TAO.IdOperacion = @IdOperacion  
+						AND T.IdEstatus = 1)
 	
 	SET @CountEstApr = (SELECT	COUNT(IdEstatus) AS TOTAL
-	FROM TA_Operacion TAO
-	INNER JOIN TA_Tarea AS T ON T.IdOperacion = TAO.IdOperacion
-	WHERE TAO.IdOperacion = @IdOperacion  AND T.IdEstatus = 2)
+						FROM TA_Operacion TAO
+						INNER JOIN TA_Tarea AS T 
+							ON T.IdOperacion = TAO.IdOperacion
+						INNER JOIN S_Usuario AS US
+							ON US.IdUsuario = T.IdAprobador
+							AND US.Activo = 1
+							AND ISNULL(US.IsEliminado,0) = 0
+						WHERE TAO.IdOperacion = @IdOperacion  
+						AND T.IdEstatus = 2)
 
 
 	SET @CountEstRech = (SELECT	COUNT(IdEstatus) AS TOTAL
-	FROM TA_Operacion TAO
-	INNER JOIN TA_Tarea AS T ON T.IdOperacion = TAO.IdOperacion
-	WHERE TAO.IdOperacion = @IdOperacion  AND T.IdEstatus = 3)
+						FROM TA_Operacion TAO
+						INNER JOIN TA_Tarea AS T 
+							ON T.IdOperacion = TAO.IdOperacion
+						INNER JOIN S_Usuario AS US
+							ON US.IdUsuario = T.IdAprobador
+							AND US.Activo = 1
+							AND ISNULL(US.IsEliminado,0) = 0
+						WHERE TAO.IdOperacion = @IdOperacion  
+						AND T.IdEstatus = 3)
 
 		
 	BEGIN
