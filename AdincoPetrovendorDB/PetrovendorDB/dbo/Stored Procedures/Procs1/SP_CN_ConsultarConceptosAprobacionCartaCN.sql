@@ -13,7 +13,7 @@ GO
 -- =============================================  
 -- Author:  Alexander Gomez  
 -- Create date: 18/05/2022
--- Description: truncado a 3 digitos sin redondeo del PCN segun la SE (Modificacion)
+-- Description: truncado a 3 digitos sin redondeo del PCN segun la SE y optimizacion
 -- =============================================  
 ALTER PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]-- 17262
     -- Add the parameters for the stored procedure here
@@ -34,7 +34,14 @@ BEGIN
     -- Insert statements for procedure here
 	SET @IdAceptacion = (SELECT TOP 1 IdAceptacionPedido FROM MM_AceptacionCartaPCN WHERE IdAceptacionCartaPCN = @IdAceptacion);
     DECLARE @IdMonedaNacional INT = 1;   
-    -- Insert statements for procedure here 
+	CREATE TABLE #ACTIVIDAD_AGRUPADA(CodigoCatalogo NVARCHAR(MAX),
+									 IdAceptacionDetalle int, 
+									 NombreActividad NVARCHAR(MAX), 
+									 CN FLOAT, MontoAcumulado MONEY, 
+									 IdTipoMaterial INT, 
+									 IdClasificacionCN INT,
+									 DescPartida NVARCHAR(MAX)
+									);
     
     CREATE TABLE #ACTIVIDAD(
 							IdRow INT,
@@ -46,7 +53,7 @@ BEGIN
 							  IdClasificacionCN INT, 
 							  DescPartida NVARCHAR(MAX),
 							  TipoMaterial NVARCHAR(max)
-							  )
+							  );
     /*OBTENER TODOS LOS MATERIALES/SERVICIOS DE UNA ACEPTACIÓN DE PEDIDO Y AGREGARLOS A LA TABLA ACTIVIDA PARA LUEGO AGRUPARLOS POR TIP0 DE MATERIAL*/
     INSERT INTO #ACTIVIDAD
     (
@@ -71,34 +78,23 @@ BEGIN
            APD.ClasificacionCN,
 		   POD.MaterialCotizadoTextoC,
 		   TMP.Descripcion AS TipoMaterial
-		  
     FROM MM_AceptacionPedidoDetalle AS APD
-        LEFT JOIN MM_AceptacionPedido AS AP
+        JOIN MM_AceptacionPedido AS AP
             ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
+			AND AP.IdAceptacionPedido = @IdAceptacion
         LEFT JOIN dbo.MM_PCN_ValoresPesos AS V 
-        ON V.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle
-        LEFT JOIN MM_PedidoDetalle AS PD
+			ON APD.IdAceptacionPedidoDetalle = V.IdAceptacionPedidoDetalle
+        JOIN MM_PedidoDetalle AS PD
             ON PD.IdPedidoDetalle = APD.IdPedidoDetalle        
         LEFT JOIN dbo.MM_BS_Actividad AS BSA
-            ON BSA.IdActividad = V.IdCatalogoHidrocarburos       
-        INNER JOIN MM_Pedido AS P
-            ON P.IdPedido = PD.IdPedido
-        LEFT JOIN dbo.MM_Pedido AS PE 
-			ON PE.IdPedido = PD.IdPedido AND AP.IdPedido = PE.IdPedido
-        LEFT JOIN MM_PeticionOfertaDetalle AS POD 
-			ON POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle
+            ON V.IdCatalogoHidrocarburos = BSA.IdActividad        
+        JOIN dbo.MM_Pedido AS PE 
+			ON PD.IdPedido = PE.IdPedido
+				AND PE.IdPedido = AP.IdPedido
+        JOIN MM_PeticionOfertaDetalle AS POD 
+			ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
 		LEFT JOIN dbo.MM_TipoMaterialProcura AS TMP
-			ON TMP.IdTipoMaterialProcura = V.IdTipoMaterialServicio
-            
-    WHERE AP.IdAceptacionPedido = @IdAceptacion;
-    CREATE TABLE #ACTIVIDAD_AGRUPADA(CodigoCatalogo NVARCHAR(MAX),
-									 IdAceptacionDetalle int, 
-									 NombreActividad NVARCHAR(MAX), 
-									 CN FLOAT, MontoAcumulado MONEY, 
-									 IdTipoMaterial INT, 
-									 IdClasificacionCN INT,
-									 DescPartida NVARCHAR(MAX)
-									)
+			ON V.IdTipoMaterialServicio = TMP.IdTipoMaterialProcura;
     
     /*AGRUPAR ACTIVIDAD POR TIPO DE MATERIAL(MATERIAL/SERVICIO)*/
     INSERT INTO #ACTIVIDAD_AGRUPADA
@@ -130,8 +126,6 @@ BEGIN
 			 IdAceptacionDetalle,
 			 DescPartida,
 			 TipoMaterial
-		
-    
     UNION ALL 
     SELECT CodigoCatalogo,
         IdAceptacionDetalle,       

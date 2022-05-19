@@ -24,12 +24,12 @@ GO
 -- =============================================
 -- Author:      Alexander Gomez
 -- Update date: 17/11/2021
--- Description: se recorta a 3 digitos del PCN segun la SE
+-- Description: se recorta a 3 digitos del PCN segun la SE 
 -- =============================================
--- =============================================  
--- Author:  Alexander Gomez  
--- Create date: 18/05/2022
--- Description: truncado a 3 digitos sin redondeo del PCN segun la SE (Modificacion)
+-- =============================================
+-- Author:      Alexander Gomez
+-- Update date: 19/05/2022
+-- Description: se recorta a 3 digitos sin redondear del PCN segun la SE y se optimiza
 -- =============================================
 ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5] 
     -- Add the parameters for the stored procedure here
@@ -58,36 +58,34 @@ AS
                 TM.TipoMonedaCorto              AS Moneda
         FROM
                 MM_AceptacionPedidoDetalle AS APD
-            INNER JOIN
+            JOIN
                 MM_AceptacionPedido        AS A
                     ON APD.IdAceptacionPedido = A.IdAceptacionPedido
-            INNER JOIN
+					AND A.IdAceptacionPedido = @IdAceptacionPedido
+            JOIN
                 MM_PedidoDetalle           AS PD
                     ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
-            INNER JOIN
+            JOIN
                 MM_Pedido                  AS P
                     ON A.IdPedido = P.IdPedido
-            INNER JOIN
+						AND P.IdSubcontratista = @IdProveedor
+            JOIN
                 MM_PeticionOferta          AS PO
                     ON P.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN
+            JOIN
                 MM_PeticionOfertaDetalle   AS POD
                     ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
-            INNER JOIN PV_TipoMoneda              AS TM
+            JOIN PV_TipoMoneda              AS TM
                     ON PD.IdMoneda = TM.IdMoneda
-            LEFT JOIN dbo.MM_Material AS M
+            JOIN dbo.MM_Material AS M
                 ON PD.IdMaterialVendedor = M.IdMaterial
-            LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD
+            JOIN dbo.MM_SolicitudPedidoDetalle AS SPD
                 ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
-            LEFT JOIN dbo.MM_Material AS MSP
+            JOIN dbo.MM_Material AS MSP
                 ON SPD.IdMaterial = MSP.IdMaterial
-         LEFT JOIN dbo.CO_CONTRATOSJAGUAR AS PJ
+			LEFT JOIN dbo.CO_CONTRATOSJAGUAR AS PJ
                 ON P.IdProveedorCompras = PJ.IdOperadora
-        WHERE
-                P.IdSubcontratista = @IdProveedor
-                AND A.IdAceptacionPedido = @IdAceptacionPedido
         GROUP BY
-      
           APD.IdAceptacionPedidoDetalle,
                 PD.IdMaterialVendedor,
                 POD.MaterialCotizadoTextoC,
