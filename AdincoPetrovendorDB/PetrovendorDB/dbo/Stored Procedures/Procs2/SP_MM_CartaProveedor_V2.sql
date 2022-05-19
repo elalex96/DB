@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 17/11/2021 09:30:49 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 18/05/2022 11:37:53 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -41,7 +41,11 @@ GO
 -- Create date: 17/11/2021
 -- Description: Redonde a 3 digitos del PCN segun la SE (Modificacion)
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --480,2058,0,0,'',46
+-- Author:  Alexander Gomez  
+-- Create date: 18/05/2022
+-- Description: truncado a 3 digitos sin redondeo del PCN segun la SE (Modificacion)
+-- =============================================  
+ALTER PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --552,17262,0,0,'',46
 -- Add the parameters for the stored procedure here  
 @IdProveedor INT,
 @IdAceptacionPedido INT,
@@ -585,7 +589,7 @@ BEGIN
         IdRow INT,
         CodigoCatalogo NVARCHAR(MAX),
         NombreActividad NVARCHAR(MAX),
-        ValorFactura MONEY,
+        ValorFactura FLOAT,
         PCN FLOAT,
         IdTipoMaterial INT,
         DescPartidas NVARCHAR(MAX),
@@ -608,8 +612,9 @@ BEGIN
            ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
            ISNULL(BSA.Nombre, 'NO CONTENIDO') AS NombreActividad,
            ISNULL(V.ValorFactura, 0) AS ValorFactura,
-		   CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
-           ---ROUND(APD.PCN, 3) AS PCN,
+		   APD.PCN,
+		   --CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
+           --ROUND(APD.PCN, 3) AS PCN,
            V.IdTipoMaterialServicio AS IdTipoMaterial,
            POD.MaterialCotizadoTextoC,
            AP.IdAceptacionPedido
@@ -636,7 +641,7 @@ BEGIN
         CodigoCatalogo NVARCHAR(MAX),
         NombreActividad NVARCHAR(MAX),
         CN FLOAT,
-        MontoAcumulado MONEY,
+        MontoAcumulado FLOAT,
         IdTipoMaterial INT,
         DescPartidas NVARCHAR(MAX),
         IdAceptacionPedido INT
@@ -697,13 +702,14 @@ BEGIN
              IdTipoMaterial,
              IdAceptacionPedido;
 
+
     /*AGRUPADO POR ACTIVIDAD PCN DE CADA ACTIVIDAD*/
     DECLARE @Agrupada TABLE
     (
         CodigoCatalogo NVARCHAR(MAX),
         NombreActividad NVARCHAR(MAX),
         PorcentajeContenidoNacional FLOAT,
-        MontoFacturado NVARCHAR(500),
+        MontoFacturado FLOAT,
         DescPartidas NVARCHAR(MAX),
         IdAceptacionPedido INT
     )
@@ -720,13 +726,8 @@ BEGIN
     SELECT CodigoCatalogo,
            NombreActividad AS MaterialCotizadoTextoC,
            CASE
-               WHEN ISNULL(SUM(CN), 0) > 0 THEN
-                   CAST(SUBSTRING(
-                        LTRIM(SUM(CN) / SUM(MontoAcumulado)),
-                        1,
-                        CHARINDEX('.', LTRIM(SUM(CN) / SUM(MontoAcumulado))) + 3) AS FLOAT)
-               ELSE
-                   0
+               WHEN ISNULL(SUM(CN), 0) > 0 THEN SUM(CN)/SUM(MontoAcumulado)
+               ELSE 0
            END AS PorcentajeContenidoNacional,
            LTRIM(ISNULL(CAST(SUM(MontoAcumulado) AS DECIMAL(34,4)), 0)) AS MontoFacturado,
            DescPartidas,
@@ -756,11 +757,16 @@ BEGIN
            t.IdAceptacionPedido,
            agrupada.CodigoCatalogo,
            agrupada.NombreActividad,
-           agrupada.PorcentajeContenidoNacional,
-           CONCAT('$ ', CASE WHEN CHARINDEX('.' , agrupada.MontoFacturado) = 0 THEN agrupada.MontoFacturado ELSE (REPLACE(RTRIM(REPLACE(agrupada.MontoFacturado, '0', ' ')), ' ', '0')) END)  AS MontoFacturado, -- esto es para quitar los 0 de la derecha, teniendo en cuenta el caso de que no contenga punto decimal
+           CAST(SUBSTRING(CAST(ISNULL(agrupada.PorcentajeContenidoNacional,0) AS nvarchar),1,5) AS nvarchar) AS PorcentajeContenidoNacional,
+		   CONCAT('$ ', 
+						CASE 
+							WHEN CHARINDEX('.' , agrupada.MontoFacturado) = 0 THEN agrupada.MontoFacturado
+							ELSE (REPLACE(RTRIM(REPLACE(agrupada.MontoFacturado, '0', ' ')), ' ', '0')) 
+						END) AS MontoFacturado,
            agrupada.DescPartidas,
            agrupada.IdAceptacionPedido
     FROM @TablaRelacion t
         INNER JOIN @Agrupada agrupada
             ON agrupada.IdAceptacionPedido = t.IdAceptacionPedido;
+
 END;

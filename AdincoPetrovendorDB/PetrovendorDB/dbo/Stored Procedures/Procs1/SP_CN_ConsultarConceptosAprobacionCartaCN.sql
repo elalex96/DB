@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 17/11/2021 08:56:32 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 18/05/2022 05:05:27 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,11 +10,12 @@ GO
 -- Create date: 05/06/2018
 -- Description: Consulta de los conceptos de la carta de contenido nacional
 -- =============================================
--- Author:  Alexander Gomez  
--- Create date: 17/11/2021
--- Description: Redonde a 3 digitos del PCN segun la SE (Modificacion)
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN] --19193
+-- Author:  Alexander Gomez  
+-- Create date: 18/05/2022
+-- Description: truncado a 3 digitos sin redondeo del PCN segun la SE (Modificacion)
+-- =============================================  
+ALTER PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]-- 17262
     -- Add the parameters for the stored procedure here
     @IdAceptacion INT,
     /*--------------------
@@ -65,8 +66,7 @@ BEGIN
            ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
            ISNULL(BSA.Nombre, 'NO CONTENIDO')AS NombreActividad,
            ISNULL(V.ValorFactura,0) AS ValorFactura,
-		   CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
-           --ROUND(APD.PCN, 3) AS PCN,
+		   APD.PCN,
            V.IdTipoMaterialServicio AS  IdTipoMaterial,
            APD.ClasificacionCN,
 		   POD.MaterialCotizadoTextoC,
@@ -155,13 +155,11 @@ BEGIN
     SELECT CodigoCatalogo,
     IdAceptacionDetalle, 
     NombreActividad,
-    CASE WHEN  ISNULL(SUM(CN),0) > 0 THEN 
-    (SUM(CN)/SUM(MontoAcumulado))
-    ELSE 
-     0
-    END  
-     AS PorcentajeContenidoNacional,
-     SUM(MontoAcumulado) AS MontoFacturado,
+	CASE 
+		WHEN ISNULL(SUM(CN),0) > 0 THEN CAST(SUBSTRING(CAST((SUM(CN)/SUM(MontoAcumulado)) AS nvarchar),1,5) AS nvarchar)
+		ELSE '0' 
+	END AS PorcentajeContenidoNacional,
+    SUM(MontoAcumulado) AS MontoFacturado,
      IdClasificacionCN,
 	 DescPartida  AS MaterialCotizadoTextoC
     FROM #ACTIVIDAD_AGRUPADA
@@ -171,4 +169,5 @@ BEGIN
 			 IdAceptacionDetalle,
 			 DescPartida
     ORDER BY PorcentajeContenidoNacional DESC 
+
 END

@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 18/02/2022 10:00:32 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 18/05/2022 04:53:20 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -23,11 +23,13 @@ GO
 -- Create date: 01/02/2021
 -- Description: Se resta un dia menos a la fecha de tipo de cambio
 -- =============================================  
+-- =============================================  
+-- Author:  Alexander Gomez  
+-- Create date: 18/05/2022
+-- Description: truncado a 3 digitos sin redondeo del PCN segun la SE (Modificacion)
+-- =============================================
 ALTER PROCEDURE [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]  
- 
 @IdAceptacionPedidoDetalle int
- 
- 
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -118,9 +120,7 @@ BEGIN
 	 SELECT V.IdValoresEnPesosPedidoDetalle, 
 	 V.VNMO_SueldoNacional, 
 	 V.VMO_Sueldo, 
-	 ROUND(ISNULL(APD.PCN,0),3) AS PCN,
-	 --CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
-	 --SUBSTRING(LTRIM(ISNULL(APD.PCN,0)),1,CHARINDEX('.',LTRIM(ISNULL(APD.PCN, ''))) + 3) AS PCN,
+	 CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar),1,5) AS nvarchar) AS PCN,  
 	 ISNULL(V.IdTipoMaterialServicio,0) AS TipoMaterial, 
 	 ISNULL(V.IdTipoNacionalidad,0) AS IdTipoNacionalidad, 
 	 ISNULL(V.IdTipoCriterio,0) AS IdTipoCriterio,
@@ -136,7 +136,7 @@ BEGIN
 	 LEFT JOIN MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedidoDetalle=V.IdAceptacionPedidoDetalle
 	 LEFT JOIN dbo.MM_PedidoDetalle AS PD ON PD.IdPedidoDetalle= APD.IdPedidoDetalle
 	 LEFT JOIN dbo.MM_Material AS M ON M.IdMaterial= PD.IdMaterialVendedor
-	 WHERE V.IdAceptacionPedidoDetalle  =@IdAceptacionPedidoDetalle
+	 WHERE V.IdAceptacionPedidoDetalle  = @IdAceptacionPedidoDetalle
 
 
  
