@@ -13281,6 +13281,7 @@
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_DuplicarRegistroGasto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_ENIJointVentureTablaDinamica.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
