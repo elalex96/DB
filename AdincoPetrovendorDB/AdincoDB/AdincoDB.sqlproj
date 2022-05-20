@@ -13260,6 +13260,27 @@
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
     <Build Include="dbo\Stored Procedures\Procs2\p_s_notificacion_ins.sql" />
+    <Build Include="dbo\Tables\Tables1\EPT_ImportacionLayout.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Tables\Tables1\EPT_ImportacionLayoutDetalle.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\EPT_ObtenImportaLayout.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\EPT_RegistraImportaLayoutDetalle.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\EPT_RegistraImportaLayout.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_DuplicarRegistroGasto.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
