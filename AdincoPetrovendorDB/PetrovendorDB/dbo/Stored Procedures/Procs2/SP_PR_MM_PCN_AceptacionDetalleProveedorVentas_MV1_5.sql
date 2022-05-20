@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5]    Script Date: 06/04/2021 02:32:17 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5]    Script Date: 18/05/2022 04:52:05 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,7 +18,12 @@ GO
 -- Update date: 06/04/2021
 -- Description:	Redonde a 3 digitos del PCN segun la SE (Modificacion)
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5] --44,473,1061,0,0
+-- =============================================  
+-- Author:  Alexander Gomez  
+-- Create date: 18/05/2022
+-- Description: truncado a 3 digitos sin redondeo del PCN segun la SE Y optimizacion
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5] --44,473,1061,0,0
 	-- Add the parameters for the stored procedure here
 	@IdProveedor        INT,
 	@IdAceptacionPedido INT,
@@ -36,25 +41,31 @@ AS
     -- Insert statements for procedure here
           
 		  SELECT 
-		  APD.IdAceptacionPedidoDetalle,
-		  PD.IdMaterialVendedor AS IdMaterial,
-		  POD.MaterialCotizadoTextoC AS DescripcionCorta,
-		  POD.UnidadProveedor AS Unidad,
-		  APD.Cantidad,
-		  APD.Excedente, 
-		  PD.PrecioUnitario,  
-		  CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
-		  --ROUND(ISNULL(APD.PCN,0),3) AS PCN,
-		  --SUBSTRING(LTRIM(ISNULL(APD.PCN,0)),1,CHARINDEX('.',LTRIM(ISNULL(APD.PCN, ''))) + 3) AS PCN,	  
-		  TM.TipoMonedaCorto AS Moneda
+			  APD.IdAceptacionPedidoDetalle,
+			  PD.IdMaterialVendedor AS IdMaterial,
+			  POD.MaterialCotizadoTextoC AS DescripcionCorta,
+			  POD.UnidadProveedor AS Unidad,
+			  APD.Cantidad,
+			  APD.Excedente, 
+			  PD.PrecioUnitario,  
+			  CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar),1,5) AS nvarchar) AS PCN,  
+			  TM.TipoMonedaCorto AS Moneda
 		  FROM MM_AceptacionPedidoDetalle AS APD
-		  INNER JOIN MM_AceptacionPedido AS A ON A.IdAceptacionPedido = APD.IdAceptacionPedido
-		  INNER JOIN MM_PedidoDetalle AS PD ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-		  INNER JOIN MM_Pedido AS P ON P.IdPedido =  A.IdPedido
-		  INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta=P.IdPeticionOferta
-		  INNER JOIN MM_PeticionOfertaDetalle AS POD ON POD.IdPeticionOfertaDetalle=PD.IdPeticionOfertaDetalle 
-		  INNER JOIN PV_TipoMoneda AS TM ON TM.IdMoneda = PD.IdMoneda
-		  WHERE P.IdSubcontratista =@IdProveedor  AND A.IdAceptacionPedido = @IdAceptacionPedido AND APD.IdAceptacionPedidoDetalle= @IdAceptacionPedidoDetalle
+			  JOIN MM_AceptacionPedido AS A 
+				ON APD.IdAceptacionPedido = A.IdAceptacionPedido
+				AND A.IdAceptacionPedido = @IdAceptacionPedido 
+				AND APD.IdAceptacionPedidoDetalle= @IdAceptacionPedidoDetalle
+			  JOIN MM_PedidoDetalle AS PD 
+				ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
+			  JOIN MM_Pedido AS P 
+				ON P.IdPedido =  A.IdPedido
+				and P.IdSubcontratista =@IdProveedor
+			  JOIN MM_PeticionOferta AS PO 
+				ON PO.IdPeticionOferta=P.IdPeticionOferta
+			  JOIN MM_PeticionOfertaDetalle AS POD 
+				ON POD.IdPeticionOfertaDetalle=PD.IdPeticionOfertaDetalle 
+			  JOIN PV_TipoMoneda AS TM 
+				ON TM.IdMoneda = PD.IdMoneda
 		  GROUP BY 
 		  APD.IdAceptacionPedidoDetalle,
 		  PD.IdMaterialVendedor,

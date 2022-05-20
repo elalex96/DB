@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 17/11/2021 09:30:49 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 18/05/2022 11:37:53 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -41,7 +41,11 @@ GO
 -- Create date: 17/11/2021
 -- Description: Redonde a 3 digitos del PCN segun la SE (Modificacion)
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --480,2058,0,0,'',46
+-- Author:  Alexander Gomez  
+-- Create date: 18/05/2022
+-- Description: truncado a 3 digitos sin redondeo del PCN segun la SE y optimizacion
+-- =============================================  
+ALTER PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --552,17262,0,0,'',46
 -- Add the parameters for the stored procedure here  
 @IdProveedor INT,
 @IdAceptacionPedido INT,
@@ -52,54 +56,56 @@ ALTER PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --480,2058,0,0,'',46
 AS
 BEGIN
     SET NOCOUNT ON;
-
+	SET LANGUAGE spanish;
     -- /////////////////////////////////////Seccion cabecera  
-    DECLARE @IdTipoRegimen INT;
-    DECLARE @NombreOperadora NVARCHAR(MAX);
-    --/** Validacion BIenes o servicio **/  
-    DECLARE @CantidadTiposXAceptacion INT;
+    DECLARE @IdTipoRegimen INT,
+			 @NombreOperadora NVARCHAR(MAX), 
+			 @CantidadTiposXAceptacion INT,
+			 @TipoSolicitud NVARCHAR(MAX),
+			 @RepresentanteLegal NVARCHAR(MAX),
+			 @UsuarioFisico NVARCHAR(MAX),
+			 @NoActaConst NVARCHAR(MAX),
+             @FechaActa NVARCHAR(MAX),
+             @NoNotario NVARCHAR(MAX),
+             @NombreNotario NVARCHAR(MAX),
+             @UbicacionNotario NVARCHAR(MAX),
+             @NumeroRppc NVARCHAR(MAX),
+			 @IdMonedaNacional INT = 1;
 
-    --Cuenta los tipos de materiales para determinar si son Materiales / Servicios o la combinacion de ambas --  
-    SET @CantidadTiposXAceptacion =
-    (   SELECT COUNT(DISTINCT (tmp.Descripcion))
-        FROM dbo.MM_AceptacionPedidoDetalle APD
-            LEFT JOIN dbo.MM_PedidoDetalle PD
-                ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-            LEFT JOIN dbo.MM_Material mat
-                ON mat.IdMaterial = PD.IdMaterialVendedor
-            LEFT JOIN dbo.MM_TipoMaterialProcura tmp
-                ON mat.IdTipoCatalogoMaestro = tmp.IdTipoMaterialProcura
-        WHERE IdAceptacionPedido = @IdAceptacionPedido);
-    --Si son 2 Tipo de solicitud es igual a Bienes y servicios  
-    IF (@CantidadTiposXAceptacion = 2)
-    BEGIN
-        DECLARE @TipoSolicitud NVARCHAR(MAX);
-        SET @TipoSolicitud = N'Bienes y servicios';
-    END;
-    ELSE
-    BEGIN
-        --Si olo es 1 Tipo de solicitud es igual a la descripcion del tipo de material /servicio  
+	DECLARE @TablaIdsRepresentanteLegal TABLE (IdRepresentante INT);
 
-        SET @TipoSolicitud =
-        (   SELECT DISTINCT
-                   (tmp.Descripcion)
-            FROM dbo.MM_AceptacionPedidoDetalle APD
-                LEFT JOIN dbo.MM_PedidoDetalle PD
-                    ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-                LEFT JOIN dbo.MM_Material mat
-                    ON mat.IdMaterial = PD.IdMaterialVendedor
-                LEFT JOIN dbo.MM_TipoMaterialProcura tmp
-                    ON mat.IdTipoCatalogoMaestro = tmp.IdTipoMaterialProcura
-            WHERE IdAceptacionPedido = @IdAceptacionPedido
-                  AND mat.IdTipoCatalogoMaestro IS NOT NULL
-            GROUP BY (tmp.Descripcion));
-    END;
+    DECLARE @Agrupada TABLE
+    (
+        CodigoCatalogo NVARCHAR(MAX),
+        NombreActividad NVARCHAR(MAX),
+        PorcentajeContenidoNacional FLOAT,
+        MontoFacturado FLOAT,
+        DescPartidas NVARCHAR(MAX),
+        IdAceptacionPedido INT
+    )
 
+	CREATE TABLE #ACTIVIDAD_AGRUPADA
+    (
+        CodigoCatalogo NVARCHAR(MAX),
+        NombreActividad NVARCHAR(MAX),
+        CN FLOAT,
+        MontoAcumulado FLOAT,
+        IdTipoMaterial INT,
+        DescPartidas NVARCHAR(MAX),
+        IdAceptacionPedido INT
+    );
 
-
-
-    /**Validacion bienes o servicio**/
-    DECLARE @TablaIdsRepresentanteLegal TABLE (IdRepresentante INT);
+    CREATE TABLE #ACTIVIDAD
+    (
+        IdRow INT,
+        CodigoCatalogo NVARCHAR(MAX),
+        NombreActividad NVARCHAR(MAX),
+        ValorFactura FLOAT,
+        PCN FLOAT,
+        IdTipoMaterial INT,
+        DescPartidas NVARCHAR(MAX),
+        IdAceptacionPedido INT
+    );
 
     DECLARE @TablaRelacion TABLE
     (
@@ -119,26 +125,6 @@ BEGIN
         IdAceptacionPedido INT
     );
 
-    SET @IdTipoRegimen = (SELECT IdTipoRegimen FROM S_Proveedor WHERE IdProveedor = @IdProveedor);
-
-
-
-    IF (@IdTipoRegimen = 2)
-    BEGIN
-        DECLARE @UsuarioFisico NVARCHAR(MAX) =
-                (   SELECT TOP 1
-                           U.Nombre AS RepresentanteLegal
-                    FROM S_Proveedor AS P
-                        JOIN S_UsuarioProveedor UP
-                            ON P.IdProveedor = UP.IdProveedor
-                        JOIN S_Usuario U
-                            ON UP.IdUsuario = U.IdUsuario
-                    WHERE U.IdTipoUsuario = 3
-                          AND P.IdProveedor = @IdProveedor);
-    END;
-
-    DECLARE @RepresentanteLegal NVARCHAR(MAX);
-
     DECLARE @tablaAux TABLE
     (
         IdContrato INT,
@@ -147,27 +133,81 @@ BEGIN
         IdAceptacionPedido INT
     );
 
+    --Cuenta los tipos de materiales para determinar si son Materiales / Servicios o la combinacion de ambas --  
+    SET @CantidadTiposXAceptacion = (SELECT 
+											COUNT(DISTINCT (tmp.Descripcion))
+										FROM dbo.MM_AceptacionPedidoDetalle APD
+											JOIN dbo.MM_PedidoDetalle PD
+												ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
+												AND APD.IdAceptacionPedido = @IdAceptacionPedido
+											LEFT JOIN dbo.MM_Material mat
+												ON PD.IdMaterialVendedor = mat.IdMaterial
+											LEFT JOIN dbo.MM_TipoMaterialProcura tmp
+												ON tmp.IdTipoMaterialProcura = mat.IdTipoCatalogoMaestro);
+    --Si son 2 Tipo de solicitud es igual a Bienes y servicios  
+    IF (@CantidadTiposXAceptacion = 2)
+    BEGIN
+        
+        SET @TipoSolicitud = N'Bienes y servicios';
+
+    END;
+    ELSE
+    BEGIN
+        --Si olo es 1 Tipo de solicitud es igual a la descripcion del tipo de material /servicio  
+
+        SET @TipoSolicitud =
+        (   SELECT DISTINCT
+                   (tmp.Descripcion)
+            FROM dbo.MM_AceptacionPedidoDetalle APD
+                JOIN dbo.MM_PedidoDetalle PD
+                    ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
+                LEFT JOIN dbo.MM_Material mat
+                    ON PD.IdMaterialVendedor = mat.IdMaterial
+                LEFT JOIN dbo.MM_TipoMaterialProcura tmp
+                    ON tmp.IdTipoMaterialProcura = mat.IdTipoCatalogoMaestro
+            WHERE IdAceptacionPedido = @IdAceptacionPedido
+                  AND mat.IdTipoCatalogoMaestro IS NOT NULL
+            GROUP BY (tmp.Descripcion));
+    END;
+
+    SET @IdTipoRegimen = (SELECT IdTipoRegimen FROM S_Proveedor WHERE IdProveedor = @IdProveedor);
+
+    IF (@IdTipoRegimen = 2)
+    BEGIN
+        SET @UsuarioFisico =
+                (   SELECT TOP 1
+                           U.Nombre AS RepresentanteLegal
+                    FROM S_Proveedor AS P
+                        JOIN S_UsuarioProveedor UP
+                            ON P.IdProveedor = UP.IdProveedor
+							AND P.IdProveedor = @IdProveedor
+                        JOIN S_Usuario U
+                            ON UP.IdUsuario = U.IdUsuario
+                    WHERE U.IdTipoUsuario = 3);
+    END;
+
+    
+
     INSERT INTO @tablaAux (IdContrato, NombreContrato, NombreOperadora, IdAceptacionPedido)
     SELECT SP.IdContrato,
            N'Contrato ' + NumeroContrato,
            prov.RazonSocial,
            AP.IdAceptacionPedido
     FROM MM_SolicitudPedido AS SP
-        INNER JOIN MM_PeticionOferta AS PO
-            ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-        INNER JOIN MM_Pedido AS P
-            ON P.IdPeticionOferta = PO.IdPeticionOferta
-        INNER JOIN MM_AceptacionPedido AS AP
-            ON AP.IdPedido = P.IdPedido
-        INNER JOIN Adinco.dbo.CO_Contrato c
-            ON c.IdContrato = SP.IdContrato
+        JOIN MM_PeticionOferta AS PO
+            ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+        JOIN MM_Pedido AS P
+            ON PO.IdPeticionOferta = P.IdPeticionOferta
+        JOIN MM_AceptacionPedido AS AP
+            ON P.IdPedido = AP.IdPedido
+			AND AP.IdAceptacionPedido = @IdAceptacionPedido
+        JOIN Adinco.dbo.CO_Contrato c
+            ON SP.IdContrato = c.IdContrato
         INNER JOIN dbo.S_Proveedor prov
-            ON prov.IdProveedor = P.IdProveedorCompras
-    WHERE AP.IdAceptacionPedido = @IdAceptacionPedido;
+            ON P.IdProveedorCompras = prov.IdProveedor;
 
     IF (@IdTipoRegimen = 2)
     BEGIN
-        SET LANGUAGE spanish;
 
         INSERT INTO @TablaRelacion
         (
@@ -271,44 +311,26 @@ BEGIN
                END) AS Domicilio,
                AP.IdAceptacionPedido
         FROM S_Proveedor P
-            --LEFT JOIN DG_RepresentanteLegal RL  
-            --    ON P.IdProveedor = RL.IdProveedor  
-            --       AND RL.IsActivo = 1  
-            --LEFT JOIN DG_ActaConstitutiva AC  
-            --    ON P.IdProveedor = AC.IdProveedor  
-            --       AND AC.IsActivo = 1  
             LEFT JOIN S_UsuarioProveedor UP
                 ON P.IdProveedor = UP.IdProveedor
+				AND P.IdProveedor = @IdProveedor
             LEFT JOIN S_Usuario U
                 ON UP.IdUsuario = U.IdUsuario
-            LEFT JOIN MM_Pedido MP
-                ON MP.IdSubcontratista = P.IdProveedor
-            LEFT JOIN MM_AceptacionPedido AS AP
-                ON AP.IdPedido = MP.IdPedido
-            --AND MP.IdUsuarioRecepcionServicio = U.IdUsuario  
-            LEFT JOIN MM_PeticionOferta AS PO
-                ON PO.IdPeticionOferta = MP.IdPeticionOferta
-            LEFT JOIN MM_SolicitudPedido SP
-                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-            LEFT JOIN MM_TipoSolicitudPedido TSP
-                ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+				AND U.Activo = 1
+            JOIN MM_Pedido MP
+                ON P.IdProveedor = MP.IdSubcontratista
+            JOIN MM_AceptacionPedido AS AP
+                ON MP.IdPedido = AP.IdPedido
+				AND AP.IdAceptacionPedido = @IdAceptacionPedido
             LEFT JOIN dbo.DG_Domicilio domicilio
                 ON domicilio.IdProveedor = P.IdProveedor
                    AND domicilio.IdTipoDomicilio = 1
                    AND domicilio.Activo = 1
             INNER JOIN @tablaAux t
                 ON AP.IdAceptacionPedido = t.IdAceptacionPedido
-        WHERE P.IdProveedor = @IdProveedor
-              AND AP.IdAceptacionPedido = @IdAceptacionPedido
-              AND U.Activo = 1
         GROUP BY P.RazonSocial,
                  P.RegimenCapital,
-                 --RL.Nombre,  
-                 --RL.APaterno,  
-                 --RL.AMaterno,  
-                 --AC.Nombre,  
                  P.CURP,
-                 TSP.TipoSolicitudPedido,
                  domicilio.TipoViabilidad,
                  domicilio.NombreViabilidad,
                  domicilio.NoExterior,
@@ -335,7 +357,6 @@ BEGIN
     END;
     ELSE
     BEGIN
-        SET LANGUAGE spanish;
 
         INSERT INTO @TablaIdsRepresentanteLegal (IdRepresentante)
         SELECT splitdata
@@ -352,14 +373,6 @@ BEGIN
               1,
               1,
               '');
-
-        DECLARE @NoActaConst NVARCHAR(MAX),
-                @FechaActa NVARCHAR(MAX),
-                @NoNotario NVARCHAR(MAX),
-                @NombreNotario NVARCHAR(MAX),
-                @UbicacionNotario NVARCHAR(MAX),
-                @NumeroRppc NVARCHAR(MAX)
-
 
         SELECT @NoActaConst
             = CASE
@@ -548,50 +561,31 @@ BEGIN
         FROM S_Proveedor P
             LEFT JOIN S_UsuarioProveedor UP
                 ON P.IdProveedor = UP.IdProveedor
+				AND P.IdProveedor = @IdProveedor
             INNER JOIN S_Usuario U
                 ON UP.IdUsuario = U.IdUsuario
+				AND U.Activo = 1
             LEFT JOIN dbo.DG_ActaConstitutiva acta
-                ON acta.IdProveedor = P.IdProveedor
+                ON P.IdProveedor = acta.IdProveedor
                    AND acta.IsActivo = 1
-            LEFT JOIN MM_Pedido MP
-                ON MP.IdSubcontratista = P.IdProveedor
-            LEFT JOIN MM_AceptacionPedido AS AP
-                ON AP.IdPedido = MP.IdPedido
-            LEFT JOIN MM_PeticionOferta AS PO
-                ON PO.IdPeticionOferta = MP.IdPeticionOferta
-            LEFT JOIN MM_SolicitudPedido SP
-                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-            LEFT JOIN MM_TipoSolicitudPedido TSP
-                ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+            JOIN MM_Pedido MP
+                ON P.IdProveedor = MP.IdSubcontratista
+            JOIN MM_AceptacionPedido AS AP
+                ON MP.IdPedido = AP.IdPedido
+				AND AP.IdAceptacionPedido = @IdAceptacionPedido
             LEFT JOIN dbo.DG_Domicilio domicilio
                 ON domicilio.IdProveedor = P.IdProveedor
                    AND domicilio.IdTipoDomicilio = 1
                    AND domicilio.Activo = 1
             INNER JOIN @tablaAux t
                 ON AP.IdAceptacionPedido = t.IdAceptacionPedido
-        WHERE P.IdProveedor = @IdProveedor
-              AND AP.IdAceptacionPedido = @IdAceptacionPedido
-              AND U.Activo = 1
         ORDER BY U.IdTipoUsuario;
     END;
 
     -- /////////////////////////////////////Seccion cabecera FIN  
 
     -- ////////////////////////////////////Seccion Detalle INICIO  
-    DECLARE @IdMonedaNacional INT = 1;
-
-    CREATE TABLE #ACTIVIDAD
-    (
-        IdRow INT,
-        CodigoCatalogo NVARCHAR(MAX),
-        NombreActividad NVARCHAR(MAX),
-        ValorFactura MONEY,
-        PCN FLOAT,
-        IdTipoMaterial INT,
-        DescPartidas NVARCHAR(MAX),
-        IdAceptacionPedido INT
-    );
-
+    
     /*OBTENER TODOS LOS MATERIALES/SERVICIOS DE UNA ACEPTACIÓN DE PEDIDO Y AGREGARLOS A LA TABLA ACTIVIDA PARA LUEGO AGRUPARLOS POR TIP0 DE MATERIAL*/
     INSERT INTO #ACTIVIDAD
     (
@@ -608,39 +602,23 @@ BEGIN
            ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
            ISNULL(BSA.Nombre, 'NO CONTENIDO') AS NombreActividad,
            ISNULL(V.ValorFactura, 0) AS ValorFactura,
-		   CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
-           ---ROUND(APD.PCN, 3) AS PCN,
+		   APD.PCN,
            V.IdTipoMaterialServicio AS IdTipoMaterial,
            POD.MaterialCotizadoTextoC,
            AP.IdAceptacionPedido
     FROM MM_AceptacionPedidoDetalle AS APD
         JOIN MM_AceptacionPedido AS AP
-            ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
+            ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
+				AND AP.IdAceptacionPedido = @IdAceptacionPedido
         JOIN dbo.MM_PCN_ValoresPesos AS V
-            ON V.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle
+            ON APD.IdAceptacionPedidoDetalle = V.IdAceptacionPedidoDetalle
         JOIN MM_PedidoDetalle AS PD
-            ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
+            ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
         LEFT JOIN dbo.MM_BS_Actividad AS BSA
-            ON BSA.IdActividad = V.IdCatalogoHidrocarburos
-        INNER JOIN MM_Pedido AS P
-            ON P.IdPedido = PD.IdPedido
-        LEFT JOIN dbo.MM_Pedido AS PE
-            ON PE.IdPedido = PD.IdPedido
-               AND AP.IdPedido = PE.IdPedido
-        LEFT JOIN MM_PeticionOfertaDetalle AS POD
-            ON POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle
-    WHERE AP.IdAceptacionPedido = @IdAceptacionPedido;
+            ON V.IdCatalogoHidrocarburos = BSA.IdActividad
+        JOIN MM_PeticionOfertaDetalle AS POD
+            ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle;
 
-    CREATE TABLE #ACTIVIDAD_AGRUPADA
-    (
-        CodigoCatalogo NVARCHAR(MAX),
-        NombreActividad NVARCHAR(MAX),
-        CN FLOAT,
-        MontoAcumulado MONEY,
-        IdTipoMaterial INT,
-        DescPartidas NVARCHAR(MAX),
-        IdAceptacionPedido INT
-    );
 
     /*AGRUPAR ACTIVIDAD POR TIPO DE MATERIAL(MATERIAL/SERVICIO)*/
     INSERT INTO #ACTIVIDAD_AGRUPADA
@@ -697,17 +675,6 @@ BEGIN
              IdTipoMaterial,
              IdAceptacionPedido;
 
-    /*AGRUPADO POR ACTIVIDAD PCN DE CADA ACTIVIDAD*/
-    DECLARE @Agrupada TABLE
-    (
-        CodigoCatalogo NVARCHAR(MAX),
-        NombreActividad NVARCHAR(MAX),
-        PorcentajeContenidoNacional FLOAT,
-        MontoFacturado NVARCHAR(500),
-        DescPartidas NVARCHAR(MAX),
-        IdAceptacionPedido INT
-    )
-
     INSERT INTO @Agrupada
     (
         CodigoCatalogo,
@@ -720,13 +687,8 @@ BEGIN
     SELECT CodigoCatalogo,
            NombreActividad AS MaterialCotizadoTextoC,
            CASE
-               WHEN ISNULL(SUM(CN), 0) > 0 THEN
-                   CAST(SUBSTRING(
-                        LTRIM(SUM(CN) / SUM(MontoAcumulado)),
-                        1,
-                        CHARINDEX('.', LTRIM(SUM(CN) / SUM(MontoAcumulado))) + 3) AS FLOAT)
-               ELSE
-                   0
+               WHEN ISNULL(SUM(CN), 0) > 0 THEN SUM(CN)/SUM(MontoAcumulado)
+               ELSE 0
            END AS PorcentajeContenidoNacional,
            LTRIM(ISNULL(CAST(SUM(MontoAcumulado) AS DECIMAL(34,4)), 0)) AS MontoFacturado,
            DescPartidas,
@@ -756,11 +718,16 @@ BEGIN
            t.IdAceptacionPedido,
            agrupada.CodigoCatalogo,
            agrupada.NombreActividad,
-           agrupada.PorcentajeContenidoNacional,
-           CONCAT('$ ', CASE WHEN CHARINDEX('.' , agrupada.MontoFacturado) = 0 THEN agrupada.MontoFacturado ELSE (REPLACE(RTRIM(REPLACE(agrupada.MontoFacturado, '0', ' ')), ' ', '0')) END)  AS MontoFacturado, -- esto es para quitar los 0 de la derecha, teniendo en cuenta el caso de que no contenga punto decimal
+           CAST(SUBSTRING(CAST(ISNULL(agrupada.PorcentajeContenidoNacional,0) AS nvarchar),1,5) AS nvarchar) AS PorcentajeContenidoNacional,
+		   CONCAT('$ ', 
+						CASE 
+							WHEN CHARINDEX('.' , agrupada.MontoFacturado) = 0 THEN agrupada.MontoFacturado
+							ELSE (REPLACE(RTRIM(REPLACE(agrupada.MontoFacturado, '0', ' ')), ' ', '0')) 
+						END) AS MontoFacturado,
            agrupada.DescPartidas,
            agrupada.IdAceptacionPedido
     FROM @TablaRelacion t
         INNER JOIN @Agrupada agrupada
             ON agrupada.IdAceptacionPedido = t.IdAceptacionPedido;
+
 END;

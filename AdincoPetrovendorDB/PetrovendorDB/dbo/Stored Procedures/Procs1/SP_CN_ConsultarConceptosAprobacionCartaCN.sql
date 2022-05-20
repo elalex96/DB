@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 17/11/2021 08:56:32 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 18/05/2022 05:05:27 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,11 +10,12 @@ GO
 -- Create date: 05/06/2018
 -- Description: Consulta de los conceptos de la carta de contenido nacional
 -- =============================================
--- Author:  Alexander Gomez  
--- Create date: 17/11/2021
--- Description: Redonde a 3 digitos del PCN segun la SE (Modificacion)
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN] --19193
+-- Author:  Alexander Gomez  
+-- Create date: 18/05/2022
+-- Description: truncado a 3 digitos sin redondeo del PCN segun la SE y optimizacion
+-- =============================================  
+ALTER PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]-- 17262
     -- Add the parameters for the stored procedure here
     @IdAceptacion INT,
     /*--------------------
@@ -33,7 +34,14 @@ BEGIN
     -- Insert statements for procedure here
 	SET @IdAceptacion = (SELECT TOP 1 IdAceptacionPedido FROM MM_AceptacionCartaPCN WHERE IdAceptacionCartaPCN = @IdAceptacion);
     DECLARE @IdMonedaNacional INT = 1;   
-    -- Insert statements for procedure here 
+	CREATE TABLE #ACTIVIDAD_AGRUPADA(CodigoCatalogo NVARCHAR(MAX),
+									 IdAceptacionDetalle int, 
+									 NombreActividad NVARCHAR(MAX), 
+									 CN FLOAT, MontoAcumulado MONEY, 
+									 IdTipoMaterial INT, 
+									 IdClasificacionCN INT,
+									 DescPartida NVARCHAR(MAX)
+									);
     
     CREATE TABLE #ACTIVIDAD(
 							IdRow INT,
@@ -45,7 +53,7 @@ BEGIN
 							  IdClasificacionCN INT, 
 							  DescPartida NVARCHAR(MAX),
 							  TipoMaterial NVARCHAR(max)
-							  )
+							  );
     /*OBTENER TODOS LOS MATERIALES/SERVICIOS DE UNA ACEPTACIÓN DE PEDIDO Y AGREGARLOS A LA TABLA ACTIVIDA PARA LUEGO AGRUPARLOS POR TIP0 DE MATERIAL*/
     INSERT INTO #ACTIVIDAD
     (
@@ -65,40 +73,28 @@ BEGIN
            ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
            ISNULL(BSA.Nombre, 'NO CONTENIDO')AS NombreActividad,
            ISNULL(V.ValorFactura,0) AS ValorFactura,
-		   CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar(10)),1,5) AS float) AS PCN,
-           --ROUND(APD.PCN, 3) AS PCN,
+		   APD.PCN,
            V.IdTipoMaterialServicio AS  IdTipoMaterial,
            APD.ClasificacionCN,
 		   POD.MaterialCotizadoTextoC,
 		   TMP.Descripcion AS TipoMaterial
-		  
     FROM MM_AceptacionPedidoDetalle AS APD
-        LEFT JOIN MM_AceptacionPedido AS AP
+        JOIN MM_AceptacionPedido AS AP
             ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
+			AND AP.IdAceptacionPedido = @IdAceptacion
         LEFT JOIN dbo.MM_PCN_ValoresPesos AS V 
-        ON V.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle
-        LEFT JOIN MM_PedidoDetalle AS PD
+			ON APD.IdAceptacionPedidoDetalle = V.IdAceptacionPedidoDetalle
+        JOIN MM_PedidoDetalle AS PD
             ON PD.IdPedidoDetalle = APD.IdPedidoDetalle        
         LEFT JOIN dbo.MM_BS_Actividad AS BSA
-            ON BSA.IdActividad = V.IdCatalogoHidrocarburos       
-        INNER JOIN MM_Pedido AS P
-            ON P.IdPedido = PD.IdPedido
-        LEFT JOIN dbo.MM_Pedido AS PE 
-			ON PE.IdPedido = PD.IdPedido AND AP.IdPedido = PE.IdPedido
-        LEFT JOIN MM_PeticionOfertaDetalle AS POD 
-			ON POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle
+            ON V.IdCatalogoHidrocarburos = BSA.IdActividad        
+        JOIN dbo.MM_Pedido AS PE 
+			ON PD.IdPedido = PE.IdPedido
+				AND PE.IdPedido = AP.IdPedido
+        JOIN MM_PeticionOfertaDetalle AS POD 
+			ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
 		LEFT JOIN dbo.MM_TipoMaterialProcura AS TMP
-			ON TMP.IdTipoMaterialProcura = V.IdTipoMaterialServicio
-            
-    WHERE AP.IdAceptacionPedido = @IdAceptacion;
-    CREATE TABLE #ACTIVIDAD_AGRUPADA(CodigoCatalogo NVARCHAR(MAX),
-									 IdAceptacionDetalle int, 
-									 NombreActividad NVARCHAR(MAX), 
-									 CN FLOAT, MontoAcumulado MONEY, 
-									 IdTipoMaterial INT, 
-									 IdClasificacionCN INT,
-									 DescPartida NVARCHAR(MAX)
-									)
+			ON V.IdTipoMaterialServicio = TMP.IdTipoMaterialProcura;
     
     /*AGRUPAR ACTIVIDAD POR TIPO DE MATERIAL(MATERIAL/SERVICIO)*/
     INSERT INTO #ACTIVIDAD_AGRUPADA
@@ -130,8 +126,6 @@ BEGIN
 			 IdAceptacionDetalle,
 			 DescPartida,
 			 TipoMaterial
-		
-    
     UNION ALL 
     SELECT CodigoCatalogo,
         IdAceptacionDetalle,       
@@ -155,13 +149,11 @@ BEGIN
     SELECT CodigoCatalogo,
     IdAceptacionDetalle, 
     NombreActividad,
-    CASE WHEN  ISNULL(SUM(CN),0) > 0 THEN 
-    (SUM(CN)/SUM(MontoAcumulado))
-    ELSE 
-     0
-    END  
-     AS PorcentajeContenidoNacional,
-     SUM(MontoAcumulado) AS MontoFacturado,
+	CASE 
+		WHEN ISNULL(SUM(CN),0) > 0 THEN CAST(SUBSTRING(CAST((SUM(CN)/SUM(MontoAcumulado)) AS nvarchar),1,5) AS nvarchar)
+		ELSE '0' 
+	END AS PorcentajeContenidoNacional,
+    SUM(MontoAcumulado) AS MontoFacturado,
      IdClasificacionCN,
 	 DescPartida  AS MaterialCotizadoTextoC
     FROM #ACTIVIDAD_AGRUPADA
@@ -171,4 +163,5 @@ BEGIN
 			 IdAceptacionDetalle,
 			 DescPartida
     ORDER BY PorcentajeContenidoNacional DESC 
+
 END
