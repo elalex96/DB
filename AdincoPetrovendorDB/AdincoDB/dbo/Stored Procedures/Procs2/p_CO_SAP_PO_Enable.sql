@@ -1,5 +1,4 @@
-﻿
-CREATE proc p_CO_SAP_PO_Enable
+﻿CREATE proc p_CO_SAP_PO_Enable
 @pIdContratista int,
 @pPO varchar(max),
 @pError varchar(250) out
@@ -32,8 +31,7 @@ as
 	from CO_SAPPO po
 	inner join CO_Contrato c on c.IdContrato = po.IdContrato
 	LEFT JOIN #tmpPO TPO ON TPO.PO = PO.SAPPONumber
-	where c.IdContratista = @pIdContratista and
-	po.SAPPONumber = @pPO AND
+	where c.IdContratista = @pIdContratista and	
 	TPO.PO IS NOT NULL
 
 	COMMIT TRAN
@@ -44,6 +42,7 @@ as
 		ROLLBACK TRAN
 		
 	END CATCH
+
 
 
 
