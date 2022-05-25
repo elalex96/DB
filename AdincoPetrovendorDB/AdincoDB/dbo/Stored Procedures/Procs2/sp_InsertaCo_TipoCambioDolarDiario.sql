@@ -56,7 +56,7 @@ END
 END
 
 select @RowAffected= @@ROWCOUNT
- select @RowAffected as FilasAfectadas;
+ 
  END try
  	BEGIN CATCH
 	SELECT   
@@ -76,4 +76,6 @@ select @RowAffected= @@ROWCOUNT
 						,ERROR_LINE() AS LineaError  
 						,ERROR_MESSAGE() AS MensajeError;
 	END CATCH
+
+	select @RowAffected as FilasAfectadas;
 END
