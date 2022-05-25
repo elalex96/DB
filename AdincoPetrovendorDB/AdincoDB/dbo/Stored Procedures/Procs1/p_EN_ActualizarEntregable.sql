@@ -1,11 +1,13 @@
-﻿
+﻿USE [Adinco]
+GO
 DROP PROCEDURE IF EXISTS p_EN_ActualizarEntregable
---==========================================
--- Se agrega el nombre en inglés
--- Luis David
--- 01/09/2021
-go
-CREATE Proc p_EN_ActualizarEntregable
+
+/****** Object:  StoredProcedure [dbo].[p_EN_ActualizarEntregable]    Script Date: 25/05/2022 12:40:14 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE Proc [dbo].[p_EN_ActualizarEntregable]
 @pIdEntregable	int ,
 @pDocumentoEntregable	nvarchar(max),
 @pDocumentoEntregableIngles	nvarchar(max) = null,
@@ -27,8 +29,8 @@ CREATE Proc p_EN_ActualizarEntregable
 @pIdFrecuenciaEntregable	int,
 @pTiempoEntrega	nvarchar(max),
 @pIdTiempoRespuesta	int,
-@pFechaPublicacion	datetime,
-@pFechaModificacion	datetime,
+@pFechaPublicacion	datetime=NULL,
+@pFechaModificacion	datetime=NULL,
 @pCreadoPor	int,
 @pIsActivo	bit,
 @pIsEliminado	bit,
