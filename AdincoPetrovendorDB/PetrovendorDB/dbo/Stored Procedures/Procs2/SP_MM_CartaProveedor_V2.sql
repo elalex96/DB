@@ -1,10 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedor_V2]    Script Date: 18/05/2022 11:37:53 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+
 -- =============================================  
 -- Author:  Manuel Cruz  
 -- Create date: 26-06-17  
@@ -45,7 +41,7 @@ GO
 -- Create date: 18/05/2022
 -- Description: truncado a 3 digitos sin redondeo del PCN segun la SE y optimizacion
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --552,17262,0,0,'',46
+CREATE PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --552,17262,0,0,'',46
 -- Add the parameters for the stored procedure here  
 @IdProveedor INT,
 @IdAceptacionPedido INT,
@@ -79,7 +75,7 @@ BEGIN
         CodigoCatalogo NVARCHAR(MAX),
         NombreActividad NVARCHAR(MAX),
         PorcentajeContenidoNacional FLOAT,
-        MontoFacturado FLOAT,
+        MontoFacturado MONEY,
         DescPartidas NVARCHAR(MAX),
         IdAceptacionPedido INT
     )
@@ -89,7 +85,7 @@ BEGIN
         CodigoCatalogo NVARCHAR(MAX),
         NombreActividad NVARCHAR(MAX),
         CN FLOAT,
-        MontoAcumulado FLOAT,
+        MontoAcumulado MONEY,
         IdTipoMaterial INT,
         DescPartidas NVARCHAR(MAX),
         IdAceptacionPedido INT
@@ -100,7 +96,7 @@ BEGIN
         IdRow INT,
         CodigoCatalogo NVARCHAR(MAX),
         NombreActividad NVARCHAR(MAX),
-        ValorFactura FLOAT,
+        ValorFactura MONEY,
         PCN FLOAT,
         IdTipoMaterial INT,
         DescPartidas NVARCHAR(MAX),
@@ -111,7 +107,7 @@ BEGIN
     (
         Carta NVARCHAR(MAX),
         DIA INT,
-        MES NVARCHAR(100),
+		MES NVARCHAR(100),
         ANIO INT,
         FECHA NVARCHAR(MAX),
         NombreOperadora NVARCHAR(MAX),
@@ -136,13 +132,13 @@ BEGIN
     --Cuenta los tipos de materiales para determinar si son Materiales / Servicios o la combinacion de ambas --  
     SET @CantidadTiposXAceptacion = (SELECT 
 											COUNT(DISTINCT (tmp.Descripcion))
-										FROM dbo.MM_AceptacionPedidoDetalle APD
-											JOIN dbo.MM_PedidoDetalle PD
+										FROM dbo.MM_AceptacionPedidoDetalle APD (NOLOCK)
+											JOIN dbo.MM_PedidoDetalle PD (NOLOCK)
 												ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
 												AND APD.IdAceptacionPedido = @IdAceptacionPedido
-											LEFT JOIN dbo.MM_Material mat
+											LEFT JOIN dbo.MM_Material mat (NOLOCK)
 												ON PD.IdMaterialVendedor = mat.IdMaterial
-											LEFT JOIN dbo.MM_TipoMaterialProcura tmp
+											LEFT JOIN dbo.MM_TipoMaterialProcura tmp (NOLOCK)
 												ON tmp.IdTipoMaterialProcura = mat.IdTipoCatalogoMaestro);
     --Si son 2 Tipo de solicitud es igual a Bienes y servicios  
     IF (@CantidadTiposXAceptacion = 2)
@@ -158,12 +154,12 @@ BEGIN
         SET @TipoSolicitud =
         (   SELECT DISTINCT
                    (tmp.Descripcion)
-            FROM dbo.MM_AceptacionPedidoDetalle APD
-                JOIN dbo.MM_PedidoDetalle PD
+            FROM dbo.MM_AceptacionPedidoDetalle APD (NOLOCK)
+                JOIN dbo.MM_PedidoDetalle PD (NOLOCK)
                     ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
-                LEFT JOIN dbo.MM_Material mat
+                LEFT JOIN dbo.MM_Material mat (NOLOCK)
                     ON PD.IdMaterialVendedor = mat.IdMaterial
-                LEFT JOIN dbo.MM_TipoMaterialProcura tmp
+                LEFT JOIN dbo.MM_TipoMaterialProcura tmp (NOLOCK)
                     ON tmp.IdTipoMaterialProcura = mat.IdTipoCatalogoMaestro
             WHERE IdAceptacionPedido = @IdAceptacionPedido
                   AND mat.IdTipoCatalogoMaestro IS NOT NULL
@@ -177,8 +173,8 @@ BEGIN
         SET @UsuarioFisico =
                 (   SELECT TOP 1
                            U.Nombre AS RepresentanteLegal
-                    FROM S_Proveedor AS P
-                        JOIN S_UsuarioProveedor UP
+                    FROM S_Proveedor AS P (NOLOCK)
+                        JOIN S_UsuarioProveedor UP (NOLOCK)
                             ON P.IdProveedor = UP.IdProveedor
 							AND P.IdProveedor = @IdProveedor
                         JOIN S_Usuario U
@@ -193,17 +189,17 @@ BEGIN
            N'Contrato ' + NumeroContrato,
            prov.RazonSocial,
            AP.IdAceptacionPedido
-    FROM MM_SolicitudPedido AS SP
-        JOIN MM_PeticionOferta AS PO
+    FROM MM_SolicitudPedido AS SP (NOLOCK)
+        JOIN MM_PeticionOferta AS PO (NOLOCK)
             ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
-        JOIN MM_Pedido AS P
+        JOIN MM_Pedido AS P (NOLOCK)
             ON PO.IdPeticionOferta = P.IdPeticionOferta
-        JOIN MM_AceptacionPedido AS AP
+        JOIN MM_AceptacionPedido AS AP (NOLOCK)
             ON P.IdPedido = AP.IdPedido
 			AND AP.IdAceptacionPedido = @IdAceptacionPedido
-        JOIN Adinco.dbo.CO_Contrato c
+        JOIN Adinco.dbo.CO_Contrato c (NOLOCK)
             ON SP.IdContrato = c.IdContrato
-        INNER JOIN dbo.S_Proveedor prov
+        INNER JOIN dbo.S_Proveedor prov (NOLOCK)
             ON P.IdProveedorCompras = prov.IdProveedor;
 
     IF (@IdTipoRegimen = 2)
@@ -222,7 +218,7 @@ BEGIN
             NoActaConstitutiva,
             Listado,
             TipoInstrumento,
-            AnioFacturas,
+			AnioFacturas,
             Domicilio,
             IdAceptacionPedido
         )
@@ -308,21 +304,21 @@ BEGIN
                        ''
                    ELSE
                        ', Tel. ' + P.Telefono
-               END) AS Domicilio,
+            END) AS Domicilio,
                AP.IdAceptacionPedido
-        FROM S_Proveedor P
-            LEFT JOIN S_UsuarioProveedor UP
+        FROM S_Proveedor P (NOLOCK)
+            LEFT JOIN S_UsuarioProveedor UP (NOLOCK)
                 ON P.IdProveedor = UP.IdProveedor
 				AND P.IdProveedor = @IdProveedor
-            LEFT JOIN S_Usuario U
+            LEFT JOIN S_Usuario U (NOLOCK)
                 ON UP.IdUsuario = U.IdUsuario
 				AND U.Activo = 1
-            JOIN MM_Pedido MP
+            JOIN MM_Pedido MP (NOLOCK)
                 ON P.IdProveedor = MP.IdSubcontratista
-            JOIN MM_AceptacionPedido AS AP
+            JOIN MM_AceptacionPedido AS AP (NOLOCK)
                 ON MP.IdPedido = AP.IdPedido
 				AND AP.IdAceptacionPedido = @IdAceptacionPedido
-            LEFT JOIN dbo.DG_Domicilio domicilio
+            LEFT JOIN dbo.DG_Domicilio domicilio (NOLOCK)
                 ON domicilio.IdProveedor = P.IdProveedor
                    AND domicilio.IdTipoDomicilio = 1
                    AND domicilio.Activo = 1
@@ -405,8 +401,8 @@ BEGIN
                                            ''
                                        ELSE
                                            CONCAT(', de ', LugarNotarioPublico)
-                                   END,
-               @NumeroRppc
+                    END,
+         @NumeroRppc
                    = CASE
                          WHEN RPPC IS NULL THEN
                              ''
@@ -606,17 +602,17 @@ BEGIN
            V.IdTipoMaterialServicio AS IdTipoMaterial,
            POD.MaterialCotizadoTextoC,
            AP.IdAceptacionPedido
-    FROM MM_AceptacionPedidoDetalle AS APD
-        JOIN MM_AceptacionPedido AS AP
+    FROM MM_AceptacionPedidoDetalle AS APD (NOLOCK)
+        JOIN MM_AceptacionPedido AS AP (NOLOCK)
             ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
 				AND AP.IdAceptacionPedido = @IdAceptacionPedido
-        JOIN dbo.MM_PCN_ValoresPesos AS V
+        JOIN dbo.MM_PCN_ValoresPesos AS V (NOLOCK)
             ON APD.IdAceptacionPedidoDetalle = V.IdAceptacionPedidoDetalle
-        JOIN MM_PedidoDetalle AS PD
+        JOIN MM_PedidoDetalle AS PD (NOLOCK)
             ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
-        LEFT JOIN dbo.MM_BS_Actividad AS BSA
+        LEFT JOIN dbo.MM_BS_Actividad AS BSA (NOLOCK)
             ON V.IdCatalogoHidrocarburos = BSA.IdActividad
-        JOIN MM_PeticionOfertaDetalle AS POD
+        JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
             ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle;
 
 
@@ -721,7 +717,7 @@ BEGIN
            CAST(SUBSTRING(CAST(ISNULL(agrupada.PorcentajeContenidoNacional,0) AS nvarchar),1,5) AS nvarchar) AS PorcentajeContenidoNacional,
 		   CONCAT('$ ', 
 						CASE 
-							WHEN CHARINDEX('.' , agrupada.MontoFacturado) = 0 THEN agrupada.MontoFacturado
+							WHEN CHARINDEX('.' , LTRIM(agrupada.MontoFacturado)) > 0 THEN agrupada.MontoFacturado
 							ELSE (REPLACE(RTRIM(REPLACE(agrupada.MontoFacturado, '0', ' ')), ' ', '0')) 
 						END) AS MontoFacturado,
            agrupada.DescPartidas,
