@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 28/04/2022 06:51:11 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 27/05/2022 12:07:28 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,7 +11,7 @@ GO
 -- Description:	<Consulta de archivos contract files>
 -- =============================================
 ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] 
---[EN_SHELL_ObtenerDocumentosEntregables_V2] 3,10150,2,10004,1,0,0,0,0,'',0,0
+--[EN_SHELL_ObtenerDocumentosEntregables_V2] 3,10150,2,18,1,0,0,0,0,'',0,0
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@IdUsuario INT,
@@ -377,7 +377,7 @@ BEGIN
 			AND CA.IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
 			AND CA.Activo = 1
-			AND SC.IdContrato = @ContratoId;
+			AND CA.IdContrato = @ContratoId;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
 		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Bucket,Folder,UUID,Meta,Ruta,RutaAnterior,CreadoPor,CredoPorUsuario)
@@ -1218,10 +1218,14 @@ BEGIN
 			'Archivo de Entregable',
 			0,
 			SC.Ruta,
+			--NULL,
 			SC.RutaAnterior,
+			--NULL,
 			SC.Frecuencia,
+			--NULL,
 			D.IdReceptorEntregable,
 			SC.AnioMes,
+			--NULL,
 			ED.Bucket,
 			ED.Folder,
 			ED.UUIDAmazon,
@@ -1506,7 +1510,6 @@ BEGIN
 		ISNULL((SELECT TOP 1 Nivel FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),(CF.Nivel - 1)) AS NivelAnterior,
 		ISNULL((SELECT TOP 1 IsCarpetaUsuario FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS IsCarpetaUsuarioAnterior,
 		CF.RutaAnterior,
-		--ISNULL((SELECT TOP 1 Ruta FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1 AND AnioMes = @ANIOMES_INT),'Etapa ->') AS RutaAnterior,
 		CASE
 			WHEN CreadoPor IS NOT NULL THEN ('Por ' + CreadoPor)
 			ELSE ''
