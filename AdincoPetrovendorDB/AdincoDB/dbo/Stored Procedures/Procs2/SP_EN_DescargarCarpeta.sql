@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 22/04/2022 12:24:01 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 30/05/2022 08:21:02 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
