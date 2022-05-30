@@ -249,7 +249,7 @@ AS
 
                         SET @Detalle =
                         CONCAT(@Detalle ,' *Condición de pago: '
-                            ,@CondicionPago , CASE WHEN @IdCondicionPago=1 THEN CONCAT(CAST(@DiasCredito AS nvarchar(MAX)), ' día(s) de crédito') ELSE '' END)
+                            ,@CondicionPago , CASE WHEN @IdCondicionPago=1 THEN CONCAT(' ',CAST(@DiasCredito AS nvarchar(MAX)), ' día(s) de crédito') ELSE '' END)
 
 						SET @Subtotal = @PrecioUnitario * @DisponibilidadNEW;
 
