@@ -471,7 +471,7 @@ AS
                                 @FechaVigencia_Actual = FechaVigencia, 
 								@FechaEntrega_Actual = FechaEntrega,
                                 @IdCondicionDePago_Actual=IdCondicionPago,
-								@DiasCredito=DiasCredito
+								@DiasCredito_Actual=DiasCredito
                           FROM  dbo.MM_PeticionOfertaDetalle
                          WHERE  IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle
 
