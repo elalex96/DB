@@ -13285,6 +13285,12 @@
     <Build Include="dbo\Stored Procedures\Procs2\GenerarPromedioMensualTipoDeCambio.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAPGR_BuscarGRSinImportacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\p_CO_SAPPO_BuscarPOSinImportacion.sql" />
+    <Build Include="dbo\Tables\Tables2\EN_CF_SolicitUDescargaCarpetas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CF_ActualizarEstatusSolicitudDescarga.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CF_ConsultaSolicitudesDescargaPendientes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CF_GenerarSolicitudDescarga.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CF_SolicitudesDescarga.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_DescargarCarpeta_1.sql" />
     <Build Include="dbo\Tables\Tables2\APP_ConfiguracionDropbox.sql" />
   </ItemGroup>
   <ItemGroup>
