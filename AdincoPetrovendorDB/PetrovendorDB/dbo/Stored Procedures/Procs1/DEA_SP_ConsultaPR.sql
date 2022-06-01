@@ -75,7 +75,7 @@ BEGIN
 		INNER JOIN TA_Estatus AS E ON O.IdEstatusOperacion = E.IdEstatus
 		INNER JOIN MM_HorasVigenciaPedido AS HV ON P.IdPedido = HV.IdPedido
 		INNER JOIN PV_TipoMoneda AS TM ON P.IdMoneda = TM.IdMoneda 
-		INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador  AND PG.IdProveedorCliente = P.IdProveedorCompras AND PG.IdTipoPedido IN (2,4,6)
+		INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador  AND P.IdProveedorCompras = PG.IdProveedorCliente  AND PG.IdTipoPedido IN (2,4,6)
 		LEFT  JOIN dbo.MM_TipoPedido AS TP ON  PG.IdTipoPedido = TP.IdTipoPedido
 		LEFT JOIN dbo.DEA_Relacion_PR_PO R ON P.IdPedido  = R.IdPedido AND R.Activo = 1
 		LEFT JOIN Adinco..OT_Estimacion est on p.IdPedido = est.IdPedido 

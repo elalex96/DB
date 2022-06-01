@@ -53,9 +53,9 @@ BEGIN
 			ON R.IdAdjuntoPO=PO.IdAdjuntoPO --> LA DIFERENCIA ES EL IDADJUNTOPO
 		INNER JOIN dbo.MM_Pedido AS P ON R.IdPedido = P.IdPedido 
 		INNER JOIN dbo.MM_SolicitudPedido AS SP ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
-		LEFT JOIN dbo.DEA_AdjuntoPR AS PR ON SP.IdSolicitudPedido = PR.IdSolicitudPedido AND PR.IdSolicitudPedido	 = P.IdSolicitudPedido
+		LEFT JOIN dbo.DEA_AdjuntoPR AS PR ON SP.IdSolicitudPedido = PR.IdSolicitudPedido AND  P.IdSolicitudPedido = PR.IdSolicitudPedido
 		LEFT JOIN dbo.DEA_Documento_S3 DR ON PR.IdAjuntoPr = DR.IdDocumentoTabla AND DR.IdTipoDocumento=1 --> Documento de tipo PR
-		LEFT JOIN dbo.MM_Pedidos AS PS ON P.IdPedido  = PS.IdIdentificador AND PS.IdTipoPedido IN (2,4,6) AND P.IdProveedorCompras= PS.IdProveedorCliente  --> CTES TIPOS DE PEDIDO
+		LEFT JOIN dbo.MM_Pedidos AS PS ON P.IdPedido  = PS.IdIdentificador AND P.IdProveedorCompras= PS.IdProveedorCliente  AND PS.IdTipoPedido IN (2,4,6) --> CTES TIPOS DE PEDIDO
 		LEFT JOIN dbo.S_Proveedor AS PRS ON P.IdSubcontratista = PRS.IdProveedor 
 		LEFT JOIN dbo.MM_PedidoDetalle AS PD ON P.IdPedido = PD.IdPedido 
 		LEFT JOIN PV_TipoMoneda AS TM ON P.IdMoneda		 = TM.IdMoneda 
