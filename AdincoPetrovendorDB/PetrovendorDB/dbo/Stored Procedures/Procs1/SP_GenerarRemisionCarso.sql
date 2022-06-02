@@ -1,12 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_GenerarRemisionCarso'
-)
-    DROP PROCEDURE SP_GenerarRemisionCarso;
+DROP PROCEDURE IF EXISTS SP_GenerarRemisionCarso
 GO
 /****** Object:  StoredProcedure [dbo].[SP_GenerarRemisionCarso]    Script Date: 12/05/2022 07:45:12 a. m. ******/
 SET ANSI_NULLS ON
@@ -22,6 +16,11 @@ GO
 -- Author:		Daniel AC
 -- Create date: 12/05/2022
 -- Description: CAMBIA COLUMNA CANTIDAD DE DECIMAL A FLOAT
+-- =============================================
+-- =============================================
+-- Author:		Luis David
+-- Create date: 26/02/2022
+-- Description: Se agrega la validación para el pedido eliminado
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_GenerarRemisionCarso]
 @IdOC VARCHAR(8000),
@@ -127,7 +126,7 @@ BEGIN --EMPIEZA STORE
           AND UPPER(r.IdOC) = UPPER(@IdOC)
           AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
           AND UPPER(r.Asiento) = UPPER(@Asiento)
-
+          AND ISNULL(p.IdEstatusEliminado, 0) <> 1
     IF NOT EXISTS
     (   SELECT 1
         FROM dbo.MM_SolicitudPedido sp
