@@ -3,7 +3,8 @@
 -- Modification Date:	01 de Junio del 2022
 -- Description:			Se ajusta el campo Comentarios de las tablas temporales de #Conceptos, #ConceptosFactura y 
 --						el campo Concepto #tmpResult de VARCHAR(500) a VARCHAR(MAX) para corregir error 
---						[String or binary data would be truncated.  The statement has been terminated.]
+--						[String or binary data would be truncated.  The statement has been terminated.],
+--						se declara la creación la tabla #tmpResult correctamente y se elimina código comentado.
 -- =============================================
 CREATE PROC [dbo].[p_ReporteGastosProv]
     @pIdContrato INT,
@@ -68,12 +69,12 @@ BEGIN
     )
     SELECT fac.IdFactura,
            RTRIM(LTRIM(reg.Comentarios))
-    FROM CO_Registro reg
-        JOIN FI_Factura fac
+    FROM CO_Registro reg (NOLOCK)
+        JOIN FI_Factura fac (NOLOCK)
             ON fac.IdFactura = reg.idFactura
-        JOIN dbo.FI_TransferFactura TR
+        JOIN dbo.FI_TransferFactura TR (NOLOCK)
             ON fac.IdFactura = TR.IdFactura
-        JOIN dbo.FI_Transfer T
+        JOIN dbo.FI_Transfer T (NOLOCK)
             ON TR.IdTransfer = T.IdTransferencia
     WHERE fac.idContrato = @pidContrato
           AND T.FechaPago
@@ -159,16 +160,16 @@ BEGIN
            TotalExpensesTot = CAST(0 AS DECIMAL(18, 4)),
            SumaPCMTot = CAST(0 AS DECIMAL(18, 4)),
            SumaPemexTot = CAST(0 AS DECIMAL(18, 4))
-    FROM FI_Factura fac
-        JOIN PV_Subcontratista subC
+    FROM FI_Factura fac (NOLOCK)
+        JOIN PV_Subcontratista subC (NOLOCK)
             ON subC.IdSubcontratista = fac.idSubcontratista
-        JOIN dbo.FI_TransferFactura TR
+        JOIN dbo.FI_TransferFactura TR (NOLOCK)
             ON fac.IdFactura = TR.IdFactura
-        JOIN dbo.FI_Transfer T
+        JOIN dbo.FI_Transfer T (NOLOCK)
             ON TR.IdTransfer = T.IdTransferencia
-        JOIN #ConceptosFactura CF
+        JOIN #ConceptosFactura CF (NOLOCK)
             ON fac.IdFactura = CF.IdFactura
-        LEFT JOIN [dbo].[CO_TipoCambioDiario] tc
+        LEFT JOIN [dbo].[CO_TipoCambioDiario] tc (NOLOCK)
             ON tc.IdMoneda = T.idmoneda
                AND CONVERT(VARCHAR, t.FechaPago, 112) = CONVERT(VARCHAR, tc.Fecha, 112)
     WHERE fac.idContrato = @pidContrato
