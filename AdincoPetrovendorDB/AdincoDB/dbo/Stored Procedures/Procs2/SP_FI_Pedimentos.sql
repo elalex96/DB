@@ -23,7 +23,8 @@ BEGIN
         ModificadoPor INT,
         ModificadoPorTexto VARCHAR(MAX),
         ClavePedimento INT,
-        ClavePedimentoTexto VARCHAR(MAX)
+        ClavePedimentoTexto VARCHAR(MAX),
+		PRIMARY KEY (IdPedimentoComprobante)
     )
 
     INSERT INTO #FI_PedimentoComprobante

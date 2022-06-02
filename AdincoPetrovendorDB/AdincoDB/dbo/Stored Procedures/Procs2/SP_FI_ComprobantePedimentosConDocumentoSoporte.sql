@@ -15,9 +15,8 @@ CREATE PROCEDURE [dbo].[SP_FI_ComprobantePedimentosConDocumentoSoporte]
 AS
 BEGIN
     SET NOCOUNT ON;
-    IF @idTipoArchivo = 2
-    BEGIN
-        CREATE TABLE #FI_Pedimento
+
+	 CREATE TABLE #FI_Pedimento
         (
             IdPedimentoComprobante INT,
             Archivo VARCHAR(50),
@@ -27,8 +26,38 @@ BEGIN
             ModificadoPorTexto VARCHAR(MAX),
             ClavePedimento INT,
             ClavePedimentoTexto VARCHAR(MAX),
-            TieneSoporte BIT
-        )
+            TieneSoporte BIT,
+			PRIMARY KEY (IdPedimentoComprobante)
+        );
+
+	 CREATE TABLE #FI_Comprobante
+        (
+            IdPedimentoComprobante INT,
+            Archivo VARCHAR(50),
+            NumeroSerieMercancia NVARCHAR(MAX),
+            ClaseBienServicio NVARCHAR(MAX),
+            PrecioUnitario MONEY,
+            Cantidad NUMERIC,
+            ImporteTotal MONEY,
+            IdUnidadMedida INT,
+            IdUnidadMedidaTexto VARCHAR(MAX),
+            IdSubcontratistaImportador INT,
+            IdSubcontratistaImportadorTexto VARCHAR(MAX),
+            IdSubcontratistaExportador INT,
+            IdSubcontratistaExportadorTexto VARCHAR(MAX),
+            IdMoneda INT,
+            IdMonedaTexto VARCHAR(MAX),
+            IdFormaPago INT,
+            IdFormaPagoTexto VARCHAR(MAX),
+            CreadoPor INT,
+            CreadoPorTexto VARCHAR(MAX),
+            ModificadoPor INT,
+            ModificadoPorTexto VARCHAR(MAX),
+            TieneSoporte BIT,
+			PRIMARY KEY (IdPedimentoComprobante)
+        );
+    IF @idTipoArchivo = 2
+    BEGIN       
         INSERT INTO #FI_Pedimento
         (
             IdPedimentoComprobante,
@@ -128,33 +157,6 @@ BEGIN
     END
     ELSE IF @idTipoArchivo = 3
     BEGIN
-
-        CREATE TABLE #FI_Comprobante
-        (
-            IdPedimentoComprobante INT,
-            Archivo VARCHAR(50),
-            NumeroSerieMercancia NVARCHAR(MAX),
-            ClaseBienServicio NVARCHAR(MAX),
-            PrecioUnitario MONEY,
-            Cantidad NUMERIC,
-            ImporteTotal MONEY,
-            IdUnidadMedida INT,
-            IdUnidadMedidaTexto VARCHAR(MAX),
-            IdSubcontratistaImportador INT,
-            IdSubcontratistaImportadorTexto VARCHAR(MAX),
-            IdSubcontratistaExportador INT,
-            IdSubcontratistaExportadorTexto VARCHAR(MAX),
-            IdMoneda INT,
-            IdMonedaTexto VARCHAR(MAX),
-            IdFormaPago INT,
-            IdFormaPagoTexto VARCHAR(MAX),
-            CreadoPor INT,
-            CreadoPorTexto VARCHAR(MAX),
-            ModificadoPor INT,
-            ModificadoPorTexto VARCHAR(MAX),
-            TieneSoporte BIT
-        )
-
         INSERT INTO #FI_Comprobante
         (
             IdPedimentoComprobante,

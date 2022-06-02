@@ -19,6 +19,8 @@ BEGIN
     --==============Contratos Relacionados al Contratista===========       
     IF OBJECT_ID('tempdb..#Facturas', 'U') IS NOT NULL
         DROP TABLE #Facturas;
+    IF OBJECT_ID('tempdb..#FI_Factura', 'U') IS NOT NULL
+        DROP TABLE #FI_Factura;
     --======================== 
     CREATE TABLE #Facturas
     (
@@ -52,8 +54,18 @@ BEGIN
         TieneArchivo BIT,
         IVA FLOAT,
         IdContrato INT,
-        IdMoneda INT
+        IdMoneda INT,
+        PRIMARY KEY (IdFactura)
     );
+
+    CREATE TABLE #FI_Factura
+    (
+        IdFactura INT,
+        TieneArchivo BIT,
+        IdMoneda INT,
+        IdMonedaTexto VARCHAR(MAX),
+        PRIMARY KEY (IdFactura)
+    )
     --========================
     DECLARE @IdContratista INT;
     --========================
@@ -65,13 +77,7 @@ BEGIN
     );
     IF @IdContrato = 10007
     BEGIN
-        CREATE TABLE #FI_Factura
-        (
-            IdFactura INT,
-            TieneArchivo BIT,
-            IdMoneda INT,
-            IdMonedaTexto VARCHAR(MAX)
-        )
+
         INSERT INTO #FI_Factura
         (
             IdFactura,
@@ -85,6 +91,7 @@ BEGIN
                ''
         FROM dbo.FI_Factura F (NOLOCK)
         WHERE F.IdContrato = @IdContrato
+              AND Activa = 1
 
         UPDATE TEMP
         SET TieneArchivo = CASE
@@ -249,12 +256,13 @@ BEGIN
                ISNULL((F.MontoConIva * .16), 0) AS IVA,
                C.IdContrato,
                F.IdMoneda
-        FROM dbo.FI_Factura AS F (NOLOCK)
-            JOIN dbo.CO_Contrato C (NOLOCK)
-                ON F.IdContrato = C.IdContrato
+        FROM dbo.CO_Contrato C (NOLOCK)
             JOIN dbo.CO_Contratista CC (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
                    AND CC.IdContratista = @IdContratista
+            JOIN dbo.FI_Factura AS F (NOLOCK)
+                ON C.IdContrato = F.IdContrato
+                   AND F.Activa = 1
             JOIN dbo.PV_Subcontratista AS S (NOLOCK)
                 ON F.IdSubcontratista = S.IdSubcontratista
         GROUP BY F.IdFactura,
@@ -317,14 +325,15 @@ BEGIN
                ISNULL((F.MontoConIva * .16), 0) AS IVA,
                F.IdContrato,
                F.IdMoneda
-        FROM dbo.FI_Factura AS F (NOLOCK)
-            JOIN dbo.FI_FacturaContrato FC (NOLOCK)
-                ON F.IdFactura = FC.IdFactura
-            JOIN dbo.CO_Contrato C (NOLOCK)
-                ON FC.IdContrato = C.IdContrato
+        FROM dbo.CO_Contrato C (NOLOCK)
             JOIN dbo.CO_Contratista CC (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
                    AND CC.IdContratista = @IdContratista
+            JOIN dbo.FI_FacturaContrato FC (NOLOCK)
+                ON C.IdContrato = FC.IdContrato
+            JOIN dbo.FI_Factura AS F (NOLOCK)
+                ON FC.IdFactura = F.IdFactura
+                   AND F.Activa = 1
             JOIN dbo.PV_Subcontratista AS S (NOLOCK)
                 ON F.IdSubcontratista = S.IdSubcontratista
         GROUP BY F.IdFactura,

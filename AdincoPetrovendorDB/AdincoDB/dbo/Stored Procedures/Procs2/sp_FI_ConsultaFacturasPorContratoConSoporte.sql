@@ -25,7 +25,8 @@ BEGIN
         IdMonedaTexto VARCHAR(MAX),
         IdReceptor INT,
         IdReceptorTexto VARCHAR(MAX),
-        TieneSoporte BIT
+        TieneSoporte BIT,
+		PRIMARY KEY (IdFactura)
     )
     INSERT INTO #FI_Factura
     (
@@ -49,7 +50,7 @@ BEGIN
            '',
            0
     FROM FI_Factura F (NOLOCK)
-    WHERE F.IdContrato = @IdContrato
+    WHERE F.IdContrato = @IdContrato AND F.Activa = 1
 
     UPDATE TEMP
     SET Archivo = CASE

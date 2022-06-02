@@ -36,7 +36,8 @@ BEGIN
         CreadoPor INT,
         CreadoPorTexto VARCHAR(MAX),
         ModificadoPor INT,
-        ModificadoPorTexto VARCHAR(MAX)
+        ModificadoPorTexto VARCHAR(MAX),
+		PRIMARY KEY (IdPedimentoComprobante)
     )
 
     INSERT INTO #FI_Comprobante
