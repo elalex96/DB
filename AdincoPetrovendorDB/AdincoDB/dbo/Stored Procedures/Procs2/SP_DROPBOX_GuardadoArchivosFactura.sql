@@ -1,6 +1,14 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_DROPBOX_GuardadoArchivosFactura]    Script Date: 04/03/2022 05:07:13 p. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DROPBOX_GuardadoArchivosFactura'
+)
+    DROP PROCEDURE SP_DROPBOX_GuardadoArchivosFactura;
+	GO
+/****** Object:  StoredProcedure [dbo].[SP_DROPBOX_GuardadoArchivosFactura]    Script Date: 02/06/2022 12:03:21 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -14,16 +22,10 @@ GO
 -- Create date: <15/03/2022>
 -- Description:	<Validación para que las facturas timbradas despues del día 20 se guarden en el próximo mes Issue(1673)>
 -- =============================================
-DROP PROCEDURE IF EXISTS SP_DROPBOX_GuardadoArchivosFactura
-GO
 -- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <02/03/2022>
--- Description:	<Guardado de los archivos pertinentes a la factura para guardado en dropbox>
--- =============================================
--- Author:		<Luis David>
--- Create date: <15/03/2022>
--- Description:	<Validación para que las facturas timbradas despues del día 20 se guarden en el próximo mes Issue(1673)>
+-- Author:		Daniel AC
+-- Create date: 02/06/2022
+-- Description:	Se reemplazan espacios y diagonales de la razón social y folio de la factura 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DROPBOX_GuardadoArchivosFactura] 
 	-- Add the parameters for the stored procedure here
@@ -44,7 +46,7 @@ BEGIN
 	DECLARE @RFC VARCHAR(100) = (SELECT RFC FROM S_Proveedor WHERE IdProveedor = @IdProveedor)
 
 	--VALIDACION AMATITLAN
-	IF @RFC IN ('DDM0906096A6','PAM140722DK6')
+	IF @RFC IN ('DDM0906096A6','PAM140722DK6', 'OSS160826780')
 	BEGIN
 		
 		SELECT
@@ -57,8 +59,8 @@ BEGIN
 				ELSE
 				CAST(MONTH(F.FechaTimbrado) AS VARCHAR) -- Sino se guarda en la del mes actual
 			END,
-			@NOMBRE_PROVEEDOR = PR.RazonSocial,
-			@FOLIO = F.Folio,
+			@NOMBRE_PROVEEDOR = REPLACE(RTRIM(LTRIM(PR.RazonSocial)),'/','-'),
+			@FOLIO =  REPLACE(RTRIM(LTRIM(F.Folio)),'/','-'),
 			@IDFACTURA = F.IdFactura
 		FROM MM_AceptacionFactura AS AF
 			JOIN FI_Factura AS F ON AF.IdFactura = F.IdFactura
@@ -87,7 +89,7 @@ BEGIN
 			GETDATE(),
 			ComprobantePDFByte,
 			1,
-			'/2 INFORMES DE GE/' + @ANIO + '-' + @MES + ' INFORME GE/01 Soportes/PAT ' + @ANIO + '/' + @NOMBRE_PROVEEDOR + '/F ' + @FOLIO
+			'/2 INFORMES DE GE/' + @ANIO + '-' + @MES + ' INFORME GE/01 Soportes/PAT ' + @ANIO + '/' + @NOMBRE_PROVEEDOR + '/F ' +@FOLIO
 		FROM FI_Factura 
 		WHERE IdFactura = @IDFACTURA;
 
