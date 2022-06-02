@@ -1,17 +1,28 @@
 USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[DEA_SP_ConsultaPR]    Script Date: 05/10/2021 09:58:10 a. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'DEA_SP_ConsultaPR'
+)
+    DROP PROCEDURE DEA_SP_ConsultaPR;
+	GO
+/****** Object:  StoredProcedure [dbo].[DEA_SP_ConsultaPR]    Script Date: 31/05/2022 04:04:16 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <20/08/2019>
 -- Description:	<Consulta de las PR>
 -- =============================================
-ALTER PROCEDURE [dbo].[DEA_SP_ConsultaPR] 
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <31/05/2022>
+-- Description:	<Se ordena llamadas a tablas y filtro por tipos de pedido>
+-- =============================================
+create PROCEDURE [dbo].[DEA_SP_ConsultaPR] 
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT
 AS
@@ -52,22 +63,22 @@ BEGIN
 			SPR.IdAjuntoPr,
 			Contrato = c.NumeroContrato
 		FROM MM_Pedido AS P
-		INNER JOIN dbo.MM_SolicitudPedido SP ON SP.IdSolicitudPedido = P.IdSolicitudPedido
-		LEFT JOIN dbo.DEA_AdjuntoPR SPR ON SPR.IdSolicitudPedido = SP.IdSolicitudPedido
-		LEFT JOIN dbo.DEA_Documento_S3 DPR ON DPR.IdDocumentoTabla = SPR.IdAjuntoPr AND DPR.IdTipoDocumento=1 --AdjuntoPR 
+		INNER JOIN dbo.MM_SolicitudPedido SP ON  P.IdSolicitudPedido = SP.IdSolicitudPedido
+		LEFT JOIN dbo.DEA_AdjuntoPR SPR ON SP.IdSolicitudPedido = SPR.IdSolicitudPedido 
+		LEFT JOIN dbo.DEA_Documento_S3 DPR ON SPR.IdAjuntoPr = DPR.IdDocumentoTabla  AND DPR.IdTipoDocumento=1 --AdjuntoPR 
 		LEFT JOIN S_Usuario AS U ON SP.IdUsuarioSolicitante = U.IdUsuario
-		INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido 
-		INNER JOIN MM_PedidoDetalle AS PD ON PD.IdPedido = P.IdPedido
-		INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOFerta = P.IdPeticionOferta
-		INNER JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista
-		INNER JOIN TA_Operacion AS O ON O.IdDocumento = P.IdSolicitudPedido		
-		INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion
+		INNER JOIN MM_TipoSolicitudPedido AS TSP ON SP.IdTipoSolicitudPedido  = TSP.IdTipoSolicitudPedido
+		INNER JOIN MM_PedidoDetalle AS PD ON P.IdPedido = PD.IdPedido 
+		INNER JOIN MM_PeticionOferta AS PO ON  P.IdPeticionOferta = PO.IdPeticionOFerta 
+		INNER JOIN S_Proveedor AS PV ON P.IdSubcontratista = PV.IdProveedor  
+		INNER JOIN TA_Operacion AS O ON P.IdSolicitudPedido = O.IdDocumento		
+		INNER JOIN TA_Estatus AS E ON O.IdEstatusOperacion = E.IdEstatus
 		INNER JOIN MM_HorasVigenciaPedido AS HV ON P.IdPedido = HV.IdPedido
-		INNER JOIN PV_TipoMoneda AS TM ON TM.IdMoneda = P.IdMoneda
-		INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador  AND PG.IdProveedorCliente = P.IdProveedorCompras
-		LEFT  JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
-		LEFT JOIN dbo.DEA_Relacion_PR_PO R ON R.IdPedido=P.IdPedido AND R.Activo = 1
-		LEFT JOIN Adinco..OT_Estimacion est on est.IdPedido = p.IdPedido
+		INNER JOIN PV_TipoMoneda AS TM ON P.IdMoneda = TM.IdMoneda 
+		INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador  AND P.IdProveedorCompras = PG.IdProveedorCliente  AND PG.IdTipoPedido IN (2,4,6)
+		LEFT  JOIN dbo.MM_TipoPedido AS TP ON  PG.IdTipoPedido = TP.IdTipoPedido
+		LEFT JOIN dbo.DEA_Relacion_PR_PO R ON P.IdPedido  = R.IdPedido AND R.Activo = 1
+		LEFT JOIN Adinco..OT_Estimacion est on p.IdPedido = est.IdPedido 
 		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	SP.IdContrato	=	C.IdContrato 
 		WHERE 
 		O.IdTipoOperacion =9 --> APROBACIÓN DE PEDIDO
