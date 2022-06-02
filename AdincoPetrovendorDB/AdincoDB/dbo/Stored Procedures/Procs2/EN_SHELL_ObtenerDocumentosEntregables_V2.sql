@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 27/05/2022 12:07:28 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 01/06/2022 03:41:28 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,7 +11,8 @@ GO
 -- Description:	<Consulta de archivos contract files>
 -- =============================================
 ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] 
---[EN_SHELL_ObtenerDocumentosEntregables_V2] 3,10150,2,18,1,0,0,0,0,'',0,0
+--[EN_SHELL_ObtenerDocumentosEntregables_V2] 10106,10150,7,10164,1,0,10001,0,10021,'2020-11',0,0,16774
+--[EN_SHELL_ObtenerDocumentosEntregables_V2] 3,10150,5,10078,1,0,0,0,10078,'',1,6,0
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@IdUsuario INT,
@@ -24,7 +25,8 @@ ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]
 	@IdReceptorEntregable INT,
 	@AnioMes NVARCHAR(10),
 	@IsPozo BIT,
-	@Etapa INT
+	@Etapa INT,
+	@IdEntregable INT = null
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -69,7 +71,8 @@ BEGIN
 		IsPozo BIT,
 		Etapa INT,
 		AnioMes VARCHAR(10),
-		Limitador INT
+		Limitador INT,
+		IdEntregable INT
 	);
 
 
@@ -824,6 +827,8 @@ BEGIN
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
 						AND SC.Frecuencia = @Frecuencia
+						AND SC.Etapa = @Etapa
+						AND SC.IsPozo = 1
 			WHERE D.IdMarcoLegal = @IdCarpeta
 				AND D.EsDeProceso = 1
 				AND D.IdInstalacion = @IdReceptorEntregable
@@ -1004,6 +1009,8 @@ BEGIN
 					ON SC.IdCarpeta = @IdCarpeta 
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
+						AND SC.Etapa = @Etapa
+						AND SC.IsPozo = 1
 			WHERE D.IdEntregable = @IdCarpeta AND D.EsDeProceso = 1
 			GROUP BY    
 				D.NombreArchivo,
@@ -1036,7 +1043,8 @@ BEGIN
 				RutaAnterior,
 				Frecuencia,
 				IdReceptorEntregable,
-				AnioMes
+				AnioMes,
+				IdEntregable
 			)
 			SELECT DISTINCT
 				6,
@@ -1053,7 +1061,8 @@ BEGIN
 				SC.RutaAnterior,
 				SC.Frecuencia,
 				D.IdReceptorEntregable,
-				SC.AnioMes
+				SC.AnioMes,
+				D.IdEntregable
 			FROM #Documentos D 
 			LEFT JOIN EN_SecuenciaCarpetas AS SC
 					ON SC.IdCarpeta = D.IdMarcoLegal
@@ -1147,7 +1156,6 @@ BEGIN
 			AND IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
 			AND CA.Activo = 1
-			--AND ('Etapas ->' + REPLACE((REPLACE(CA.Ruta,CA.Nombre,'')),'/',' ->')) = SC.Ruta;
 		GROUP BY CA.Nombre,
 			CA.IdElemento,
 			CA.Meta,
@@ -1239,6 +1247,7 @@ BEGIN
 			AND D.FechaProgramadaEntregaAnioMes = @AnioMes
 			AND D.IdReceptorEntregable = @IdReceptorEntregable
 			AND D.FrecuenciaEntregableID = @Frecuencia
+			AND D.IdEntregable = @IdEntregable
 		GROUP BY    
 		    D.NombreArchivo,
 			D.DocumentoEntregableId,
@@ -1506,6 +1515,7 @@ BEGIN
 		ISNULL((SELECT TOP 1 Nivel FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),(CF.Nivel - 1)) AS NivelAnterior,
 		ISNULL((SELECT TOP 1 IsCarpetaUsuario FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS IsCarpetaUsuarioAnterior,
 		CF.RutaAnterior,
+		--ISNULL((SELECT TOP 1 Ruta FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1 AND AnioMes = @ANIOMES_INT),'Etapa ->') AS RutaAnterior,
 		CASE
 			WHEN CreadoPor IS NOT NULL THEN ('Por ' + CreadoPor)
 			ELSE ''
@@ -1520,12 +1530,15 @@ BEGIN
 		CAST(ISNULL((SELECT TOP 1 IsPozo FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS BIT) AS IsPozoAnterior,
 		ISNULL((SELECT TOP 1 IdReceptorEntregable FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS IdReceptorAnterior,
 		ISNULL((SELECT TOP 1 AnioMes FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),'') AS AnioMesAnterior,
-		ISNULL(Limitador,0) AS Limitador
+		ISNULL(Limitador,0) AS Limitador,
+		ISNULL(IdEntregable,0) AS IdEntregable
 	FROM @CONTRACT_FILES AS CF
 	WHERE Nombre IS NOT NULL
 	ORDER BY IdRow ASC;
 
 	SELECT ISNULL(@LIMITADOR,0) AS LIMITADOR
+
+	--SELECT * FROM #Documentos
 
 END
 

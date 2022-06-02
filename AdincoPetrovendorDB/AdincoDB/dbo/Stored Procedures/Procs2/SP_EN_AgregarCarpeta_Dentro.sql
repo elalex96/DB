@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 27/04/2022 03:30:29 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 01/06/2022 02:32:39 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -14,11 +14,6 @@ GO
 -- Author:		DANIEL AC
 -- Create date: <25/03/2022>
 -- Description:	Se agrego parametro de Nivel y CarpetaId del padre de la nueva carpeta
--- =============================================
--- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <27/04/2022>
--- Description:	<VALIDACION DE CARPETA EXISTENTE DENTRO DE LA MISMA RUTA>
 -- =============================================
 ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro] --'','PRUEBA',0,2,18,3,1
 	-- Add the parameters for the stored procedure here
@@ -88,7 +83,8 @@ BEGIN
 			IsPozo,
 			Etapa,
 			AnioMes,
-			Nivel
+			Nivel,
+			ISNULL(IdEntregable,0) AS IdEntregable
 		FROM EN_SecuenciaCarpetas
 		WHERE IdCarpeta = @CarpetaPadreId
 		AND Nivel = @NivelPadre
