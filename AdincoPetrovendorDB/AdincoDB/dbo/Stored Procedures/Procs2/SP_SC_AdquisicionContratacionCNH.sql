@@ -1,7 +1,3 @@
-USE ADINCO
-GO
-DROP PROCEDURE IF EXISTS SP_SC_AdquisicionContratacionCNH
-GO
 CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] --3,'2015/09/04' ,'2021/09/04'
 @IdContrato INT, 
 @Fechainicio DATE, 
@@ -39,14 +35,14 @@ SET NOCOUNT ON
         MecanismoContratacion NVARCHAR(200),   
         [Nombre Contrato C-P] NVARCHAR(MAX),   
         [No. Contrato] NVARCHAR(MAX),   
-        [Fecha Inicio Contrato] NVARCHAR(MAX),   
-        [Fecha Termino Contrato] NVARCHAR(MAX),   
-        [Vigencia del contrato] NVARCHAR(MAX),   
+        [Fecha Inicio Contrato] DATETIME,   
+        [Fecha Termino Contrato] DATETIME,   
+        [Vigencia del contrato] DATETIME,   
         [Objeto del contrato] NVARCHAR(MAX),   
         MontoUSD VARCHAR(500),   
         MontoMXN VARCHAR(500),   
         TipoCambio FLOAT,   
-        FechaTipoCambio NVARCHAR(MAX),   
+        FechaTipoCambio DATETIME,   
         Comentarios NVARCHAR(MAX),   
         NombreContratista NVARCHAR(MAX),   
         FechaEfectiva NVARCHAR(10)   
@@ -982,7 +978,7 @@ SET NOCOUNT ON
             FechaEfectiva   
         )   
 	SELECT
-CON.NumeroContrato,
+			CON.NumeroContrato,
 			CASE 
 				WHEN PROSAP.IdProveedor IS NOT NULL THEN 'SI'
 				ELSE 'NO'
@@ -1201,18 +1197,18 @@ CON.NumeroContrato,
                Proveedor,   
                MecanismoContratacion,   
                [Nombre Contrato C-P],   
-               [No. Contrato],   
-               [Fecha Inicio Contrato],   
-               [Fecha Termino Contrato],   
-               [Vigencia del contrato],   
+               [No. Contrato], 
+			   CONVERT(VARCHAR(10),[Fecha Inicio Contrato], 105),
+			   CONVERT(VARCHAR(10),[Fecha Termino Contrato], 105),
+			   CONVERT(VARCHAR(10),[Vigencia del contrato], 105),
                [Objeto del contrato],   
                MontoUSD,   
                MontoMXN,   
                TipoCambio,   
-               FechaTipoCambio,   
+               CONVERT(VARCHAR(10), FechaTipoCambio, 105),   
                Comentarios,   
                NombreContratista,   
-               FechaEfectiva   
+               FechaEfectiva
         FROM @TablaDEA   
         ORDER BY [No. Contrato];   
     END   
