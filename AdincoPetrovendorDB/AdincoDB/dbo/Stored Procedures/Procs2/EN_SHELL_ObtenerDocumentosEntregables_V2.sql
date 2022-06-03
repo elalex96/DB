@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 01/06/2022 03:41:28 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 03/06/2022 09:02:08 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,8 +11,6 @@ GO
 -- Description:	<Consulta de archivos contract files>
 -- =============================================
 ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] 
---[EN_SHELL_ObtenerDocumentosEntregables_V2] 10106,10150,7,10164,1,0,10001,0,10021,'2020-11',0,0,16774
---[EN_SHELL_ObtenerDocumentosEntregables_V2] 3,10150,5,10078,1,0,0,0,10078,'',1,6,0
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@IdUsuario INT,
@@ -376,7 +374,7 @@ BEGIN
 					AND SC.IdContrato = CA.IdContrato
 		LEFT JOIN AP_Usuario AS US
 			ON CA.CreadoPor = US.UsuarioID
-		WHERE IsCarpeta = 1
+		WHERE CA.IsCarpeta = 1
 			AND CA.IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
 			AND CA.Activo = 1
@@ -558,7 +556,8 @@ BEGIN
 		WHERE IsCarpeta = 1
 			AND IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
-			AND CA.Activo = 1;
+			AND CA.Activo = 1
+			AND CA.IdContrato = @ContratoId;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
 		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Folder,UUID,Meta,CredoPorUsuario)
@@ -608,7 +607,8 @@ BEGIN
 		WHERE IsArchivo = 1
 			AND IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
-			AND CA.Activo = 1;
+			AND CA.Activo = 1
+			AND CA.IdContrato = @ContratoId;
 
 		SET @LIMITADOR = @Nivel;
 
@@ -691,6 +691,7 @@ BEGIN
 					ON SC.IdCarpeta = @IdCarpeta 
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
+						AND SC.IdReceptorEntregable = @IdReceptorEntregable
 			WHERE D.IdMarcoLegal = @IdCarpeta 
 				AND D.EsDeProceso = 0 
 				AND D.IdReceptorEntregable = @IdReceptorEntregable
@@ -736,7 +737,8 @@ BEGIN
 		WHERE IsCarpeta = 1
 			AND IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
-			AND CA.Activo = 1;
+			AND CA.Activo = 1
+			AND CA.IdContrato = @ContratoId;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
 		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior, CreadoPor,Folder,UUID,Meta,CredoPorUsuario,IdReceptorEntregable)
@@ -787,7 +789,8 @@ BEGIN
 		WHERE IsArchivo = 1
 			AND IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
-			AND CA.Activo = 1;
+			AND CA.Activo = 1
+			AND CA.IdContrato = @ContratoId;
 
 		SET @LIMITADOR = @Nivel;
 
@@ -888,6 +891,7 @@ BEGIN
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
 						AND SC.Frecuencia = @Frecuencia
+						AND SC.IdReceptorEntregable = @IdReceptorEntregable
 			WHERE D.IdMarcoLegal = @IdCarpeta 
 				AND FrecuenciaEntregableID = @Frecuencia 
 				AND D.EsDeProceso = 0
@@ -951,6 +955,9 @@ BEGIN
 				ON SC.IdCarpeta = @IdCarpeta
 					AND SC.Nivel = @Nivel
 					AND SC.IdContrato = @ContratoId
+					AND SC.IdReceptorEntregable = @IdReceptorEntregable
+					AND SC.Frecuencia = @Frecuencia
+					AND SC.AnioMes = @AnioMes
 		LEFT JOIN AP_Usuario AS US
 			ON CA.CreadoPor = US.UsuarioID
 		WHERE IsArchivo = 1
@@ -968,7 +975,7 @@ BEGIN
 		IF @IsPozo = 1
 		BEGIN
 
-			INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos,Funcion,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior,Frecuencia,IdReceptorEntregable,IsPozo)
+			INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos,Funcion,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior,Frecuencia,IdReceptorEntregable,IsPozo,Bucket,Folder,UUID,Meta)
 			SELECT 
 				6,
 				D.NombreArchivo,
@@ -1003,7 +1010,11 @@ BEGIN
 				SC.RutaAnterior,
 				@Frecuencia,
 				D.IdReceptorEntregable,
-				1
+				1,
+				ED.Bucket,
+				ED.Folder,
+				ED.UUIDAmazon,
+				ED.Meta
 			FROM #Documentos D 
 			LEFT JOIN EN_SecuenciaCarpetas AS SC
 					ON SC.IdCarpeta = @IdCarpeta 
@@ -1011,7 +1022,12 @@ BEGIN
 						AND SC.IdContrato = @ContratoId
 						AND SC.Etapa = @Etapa
 						AND SC.IsPozo = 1
-			WHERE D.IdEntregable = @IdCarpeta AND D.EsDeProceso = 1
+			LEFT JOIN EN_EntregableDocumento AS ED
+				ON D.DocumentoEntregableId = ED.DocumentoEntregableId
+			WHERE D.IdEntregable = @IdCarpeta 
+				AND D.EsDeProceso = 1
+				AND D.EtapaPozoId = @Etapa
+				AND D.IdInstalacion = @IdReceptorEntregable
 			GROUP BY    
 				D.NombreArchivo,
 				D.DocumentoEntregableId,
@@ -1021,7 +1037,11 @@ BEGIN
 				SC.IsCarpetaUsuarioAnterior,
 				SC.Ruta,
 				SC.RutaAnterior,
-				D.IdReceptorEntregable
+				D.IdReceptorEntregable,
+				ED.Bucket,
+				ED.Folder,
+				ED.UUIDAmazon,
+				ED.Meta
 			ORDER BY D.NombreArchivo ASC;
 
 		END
@@ -1069,6 +1089,8 @@ BEGIN
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
 						AND SC.AnioMes = @AnioMes
+						AND SC.Frecuencia = @Frecuencia
+						AND SC.IdReceptorEntregable = @IdReceptorEntregable
 			WHERE D.FechaProgramadaEntregaAnioMes = @AnioMes
 				AND D.FrecuenciaEntregableID = @Frecuencia
 				AND D.IdReceptorEntregable = @IdReceptorEntregable
@@ -1196,7 +1218,8 @@ BEGIN
 			Bucket,
 			Folder,
 			UUID,
-			Meta
+			Meta,
+			IdEntregable
 		)
 		SELECT 
 			7,
@@ -1233,13 +1256,16 @@ BEGIN
 			ED.Bucket,
 			ED.Folder,
 			ED.UUIDAmazon,
-			ED.Meta
+			ED.Meta,
+			SC.IdEntregable
 		FROM #Documentos D 
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta 
 					AND SC.Nivel = @Nivel
 					AND SC.IdContrato = @ContratoId
 					AND SC.AnioMes = @AnioMes
+					AND SC.Frecuencia = @Frecuencia
+					AND SC.IdEntregable = @IdEntregable
 		LEFT JOIN EN_EntregableDocumento AS ED
 			ON D.DocumentoEntregableId = ED.DocumentoEntregableId
 		WHERE D.IdMarcoLegal = @IdCarpeta 
@@ -1261,11 +1287,12 @@ BEGIN
 			ED.Bucket,
 			ED.Folder,
 			ED.UUIDAmazon,
-			ED.Meta
+			ED.Meta,
+			SC.IdEntregable
 		ORDER BY D.NombreArchivo ASC;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,IsCarpetaUsuarioAnterior,NivelAnterior, CreadoPor,Folder,UUID,Meta,CredoPorUsuario, Frecuencia)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,IsCarpetaUsuarioAnterior,NivelAnterior, CreadoPor,Folder,UUID,Meta,CredoPorUsuario, Frecuencia,IdEntregable)
 		SELECT
 			CA.Nivel,
 			CA.Nombre,
@@ -1306,19 +1333,26 @@ BEGIN
 			CA.UUIDAmazon,
 			CA.Meta,
 			1,
-			SC.Frecuencia
+			SC.Frecuencia,
+			CA.IdEntregable
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = CA.IdPadre
-					AND SC.Nivel = CA.Nivel
-					AND SC.IdContrato = CA.IdContrato
-					AND SC.IsCarpetaUsuario = 1
+					AND SC.Nivel = @Nivel
+					AND SC.IdContrato = @ContratoId
+					AND SC.IdEntregable = @IdEntregable
+					AND SC.Frecuencia = @Frecuencia
+					AND SC.AnioMes = @AnioMes
+					AND SC.IdReceptorEntregable = @IdReceptorEntregable
 		LEFT JOIN AP_Usuario AS US
 			ON CA.CreadoPor = US.UsuarioID
 		WHERE CA.IsArchivo = 1
 			AND CA.IdPadre = @IdCarpeta
 			AND CA.Activo = 1
 			AND CA.IdContrato = @ContratoId
+			AND CA.IdEntregable = @IdEntregable
+			AND CA.Frecuencia = @Frecuencia
+			AND CA.AnioMes = @AnioMes
 		GROUP BY CA.Nivel,
 			CA.Nombre,
 			CA.IdElemento,
@@ -1333,7 +1367,8 @@ BEGIN
 			CA.Folder,
 			CA.UUIDAmazon,
 			CA.Meta,
-			SC.Frecuencia;
+			SC.Frecuencia,
+			CA.IdEntregable;
 
 		SET @LIMITADOR = @Nivel;
 
@@ -1515,7 +1550,6 @@ BEGIN
 		ISNULL((SELECT TOP 1 Nivel FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),(CF.Nivel - 1)) AS NivelAnterior,
 		ISNULL((SELECT TOP 1 IsCarpetaUsuario FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS IsCarpetaUsuarioAnterior,
 		CF.RutaAnterior,
-		--ISNULL((SELECT TOP 1 Ruta FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1 AND AnioMes = @ANIOMES_INT),'Etapa ->') AS RutaAnterior,
 		CASE
 			WHEN CreadoPor IS NOT NULL THEN ('Por ' + CreadoPor)
 			ELSE ''
