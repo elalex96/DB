@@ -48,7 +48,7 @@ BEGIN --EMPIEZA STORE
         FechaRegistroRemision DATETIME,
         IdMaterialPetrov INT
     )
-
+	DECLARE @Retorno NVARCHAR(MAX)
 
     DECLARE @TablaRemisionSinOperacion TABLE
     (
@@ -127,6 +127,46 @@ BEGIN --EMPIEZA STORE
           AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
           AND UPPER(r.Asiento) = UPPER(@Asiento)
           AND ISNULL(p.IdEstatusEliminado, 0) <> 1
+	IF NOT EXISTS (SELECT 1 FROM @TablaRemision)
+	BEGIN
+        SELECT @Retorno
+            = CONCAT(
+              ' La consulta no encontro datos con la siguiente información, debido a que el pedido fue eliminado: ',
+              'RecId: ',
+              UPPER(@RecId),
+              ', IdPedido: ',
+              @IdPedido,
+              ', IdOc: ',
+              @IdOC,
+              ', DataAreaId: ',
+              @DataAreaId,
+              ', Asiento: ',
+              @Asiento)
+
+        INSERT INTO dbo.Ax_BitacoraCarso
+        (
+            ErrorMotivo,
+            Lugar,
+            DataAreaId,
+            RecId,
+            FechaRegistro,
+            IdPedido,
+            IdOc,
+            IdAsientoPago
+        )
+        SELECT @Retorno,
+               'SP_GenerarRemisionCarso',
+               @DataAreaId,
+               @RecId,
+               GETDATE(),
+               @IdPedido,
+               @IdOC,
+               @Asiento
+
+        RAISERROR(@Retorno, 16, 1)
+	END
+	ELSE
+	BEGIN
     IF NOT EXISTS
     (   SELECT 1
         FROM dbo.MM_SolicitudPedido sp
@@ -154,7 +194,7 @@ BEGIN --EMPIEZA STORE
               AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
               AND UPPER(r.Asiento) = UPPER(@Asiento))
     BEGIN
-        DECLARE @Retorno NVARCHAR(MAX)
+        
         SELECT @Retorno
             = CONCAT(
               ' La consulta no encontro datos con la siguiente información: ',
@@ -519,7 +559,5 @@ BEGIN --EMPIEZA STORE
 			WHERE   ISNULL(ap.IdEstatusEliminado, 0)= 0
 
     END
-
+	END
 END
-
- 
