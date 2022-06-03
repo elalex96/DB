@@ -484,17 +484,21 @@ IF 0 =
             Precio,
             Volumen,
             TasaRegalia,
-			Valor
+			Valor,
+			FechaCreacion,
+			CreadoPor
         ) 
         SELECT
-@IdContrato,
-     2,
+			@IdContrato,
+				 2,
             @IdMetodoCalculo,
             @Mes,
             @PrecioContractualCondensados,
             @VolumenCondensadoEntregado,
             @Regalia,
-			@PrecioContractualCondensados * @VolumenCondensadoEntregado
+			@PrecioContractualCondensados * @VolumenCondensadoEntregado,
+			GETDATE(),
+			@IdUsuario
     END
 ELSE
     BEGIN
@@ -505,7 +509,9 @@ ELSE
             Precio = @PrecioContractualCondensados,
             Volumen = @VolumenCondensadoEntregado,
             TasaRegalia = @Regalia,
-			Valor	=	@PrecioContractualCondensados * @VolumenCondensadoEntregado
+			Valor	=	@PrecioContractualCondensados * @VolumenCondensadoEntregado,
+			FechaModificacion = GETDATE(),
+			ModificadoPor = @IdUsuario
 		WHERE
             IdContrato        = @IdContrato
 			AND Mes       = @Mes

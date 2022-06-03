@@ -474,7 +474,9 @@ BEGIN
             Volumen,
             TasaRegalia,
             UrlImgRegalia,
-            Valor
+            Valor,
+			FechaCreacion,
+			CreadoPor
         )
         SELECT
             @IdContrato,
@@ -485,7 +487,9 @@ BEGIN
             @VolumenPetroleoEntregado,
             @Regalia,
             @UrlImgRegalia,
-            @PrecioContractualPetroleo * @VolumenPetroleoEntregado
+            @PrecioContractualPetroleo * @VolumenPetroleoEntregado,
+			GETDATE(),
+			@IdUsuario
     END
   ELSE
     BEGIN
@@ -516,7 +520,9 @@ BEGIN
             Volumen = @VolumenPetroleoEntregado,
             TasaRegalia = @Regalia,
             UrlImgRegalia = @UrlImgRegalia,
-            Valor = @PrecioContractualPetroleo * @VolumenPetroleoEntregado
+            Valor = @PrecioContractualPetroleo * @VolumenPetroleoEntregado,
+			FechaModificacion = GETDATE(),
+			ModificadoPor = @IdUsuario
 		WHERE
             IdContrato            = @IdContrato
             AND Mes                = @Mes
