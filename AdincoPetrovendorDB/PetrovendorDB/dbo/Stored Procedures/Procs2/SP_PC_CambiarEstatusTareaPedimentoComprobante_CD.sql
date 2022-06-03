@@ -1,7 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_CambiarEstatusTareaPedimentoComprobante_CD'
+)
+    DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]    Script Date: 03/06/2022 10:15:22 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/09/2020>
 -- Description:	<Cambio de estatus de de la tarea de la aprobacion de comprobante extranjero>
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -20,6 +40,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @ID_DOCUMENTO_FI INT;
 	DECLARE @TOTAL_APROBADORES INT;
 	DECLARE @TOTAL_APROBADOS INT;
@@ -144,6 +165,12 @@ BEGIN
 
 				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
+				SET @CorreoNotificaciones = (SELECT TOP 1 CuentaRegistro
+											FROM TA_Correo AS C
+												INNER JOIN TA_CorreoServidor AS S
+													ON S.IdServidor = C.IdServidor
+											WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo) -- CORREO DE PETICION OFERTA
+
 				INSERT INTO Adinco.dbo.S_Notificacion
 				(
 				    IdNotificacion,
@@ -172,7 +199,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    @CorreoNotificaciones,        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 

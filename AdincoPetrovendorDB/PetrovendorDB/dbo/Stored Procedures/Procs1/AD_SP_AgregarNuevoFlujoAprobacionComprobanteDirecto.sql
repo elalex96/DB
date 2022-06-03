@@ -7,13 +7,23 @@ IF EXISTS
     WHERE name = 'AD_SP_AgregarNuevoFlujoAprobacionComprobanteDirecto'
 )
     DROP PROCEDURE AD_SP_AgregarNuevoFlujoAprobacionComprobanteDirecto;
-GO 
+GO
+/****** Object:  StoredProcedure [dbo].[AD_SP_AgregarNuevoFlujoAprobacionComprobanteDirecto]    Script Date: 03/06/2022 12:15:34 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 
 -- =============================================  
 -- Author:  <Daniel AC>  
 -- Create date: <07-04-2021>  
 -- Description: <Cambia flujo de aprobación de un comprobante extranjero directo>  
 -- =============================================  
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
 CREATE PROCEDURE [dbo].[AD_SP_AgregarNuevoFlujoAprobacionComprobanteDirecto]    
 @IdProveedor INT,  
 @IdUsuario INT,  
@@ -34,6 +44,7 @@ BEGIN
  DECLARE @TareaIdRow INT 
  DECLARE @TIPOFLUJO INT 
  DECLARE @IDSIGAPROBADOR INT
+ DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 
   DECLARE   
    @CONTTOTAL    INT,  
@@ -46,6 +57,12 @@ BEGIN
    @CORREOSIG    NVARCHAR(MAX),  
    @IDNOTIFICACION   NVARCHAR(MAX);  
    DECLARE @APROBADORESTABLE  TABLE(ID INT IDENTITY(1,1),IdAprobador INT, Nombre NVARCHAR(1000), Correo NVARCHAR(MAX));  
+
+   SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
 
   --VALIDAR QUE LA APROBACIÓN ESTE EN ESTATUS DE EN_APROBACIÓN   
   
@@ -192,7 +209,7 @@ BEGIN
         GETDATE(), -- CreadoEl - datetime  
         NULL,         -- ModificadoPor - int  
         NULL, -- ModificadoEl - datetime  
-        'procura@adinco.mx',        -- De - varchar(100)  
+        ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)  
         NULL       -- EN_MsjEnviado - bit  
         );  
   
@@ -316,7 +333,7 @@ BEGIN
         GETDATE(), -- CreadoEl - datetime  
         NULL,         -- ModificadoPor - int  
         NULL, -- ModificadoEl - datetime  
-        'procura@adinco.mx',        -- De - varchar(100)  
+        ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)  
         NULL       -- EN_MsjEnviado - bit  
         );  
   

@@ -1,7 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DOC_ActualizacionDocumentoProveedorOpe'
+)
+    DROP PROCEDURE SP_DOC_ActualizacionDocumentoProveedorOpe;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_DOC_ActualizacionDocumentoProveedorOpe]    Script Date: 03/06/2022 11:59:09 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <25/07/2020>
 -- Description:	<Actualizacion y creacion de aprobacion de documentos solicitados al proveedor>
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DOC_ActualizacionDocumentoProveedorOpe]
 	-- Add the parameters for the stored procedure here
@@ -31,7 +51,7 @@ BEGIN
 
 	DECLARE @IDDOCUMENTOS3 INT;
 	--DECLARE @IDACEPTACIONDOCUMENTO INT;
-	
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @HTMLCORREO NVARCHAR(MAX);
 	DECLARE @CONTOTAL INT;
 	DECLARE @CONT INT = 1;
@@ -213,6 +233,12 @@ BEGIN
 
 			SET @CONTOTAL = (SELECT COUNT(ID) FROM @APROBADORES);
 
+			SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 102) --> CTE NUMERO CORREO (TA_Correo)
+
 			WHILE @CONT <= @CONTOTAL
 			BEGIN
 			    
@@ -255,7 +281,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 
@@ -366,6 +392,13 @@ BEGIN
 			WHERE IdFlujoTarea = @IDFLUJOAPROBACION
 			ORDER BY NoSecuencia ASC;
 
+
+			SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 100) --> CTE NUMERO CORREO (TA_Correo)
+
 			IF @TIPOFLUJO = 1 --FLUJO SERIAL SE NOTIFICARA SOLO AL PRIMER APROBADOR
 			BEGIN
 			    --SE OBTIENE LOS APROBADORES
@@ -425,7 +458,7 @@ BEGIN
 					GETDATE(), -- CreadoEl - datetime
 					NULL,         -- ModificadoPor - int
 					NULL, -- ModificadoEl - datetime
-					'procura@adinco.mx',        -- De - varchar(100)
+					ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 					NULL       -- EN_MsjEnviado - bit
 				);
 
@@ -439,7 +472,7 @@ BEGIN
 					)
 					VALUES
 					(   @IdNotificacion, -- IdEnvioAdinco - int
-						102, -- CORREO DE PETICION OFERTA
+						100, -- CORREO DE PETICION OFERTA
 						CONCAT('0 - Notificacion Revision Documentos por Operadora #' , @IdAceptacionDocumento),  -- IdIdentificacion - int
 						@IdUsuario,
 						GETDATE()
@@ -489,7 +522,7 @@ BEGIN
 					WHERE TA.IdFlujoTarea = @IDFLUJOAPROBACION
 					ORDER BY TA.NoSecuencia ASC;
 
-					SET @CONTOTAL = (SELECT COUNT(ID) FROM @APROBADORES);
+					SET @CONTOTAL = (SELECT COUNT(ID) FROM @APROBADORES);					
 
 					WHILE @CONT <= @CONTOTAL
 					BEGIN
@@ -533,7 +566,7 @@ BEGIN
 							GETDATE(), -- CreadoEl - datetime
 							NULL,         -- ModificadoPor - int
 							NULL, -- ModificadoEl - datetime
-							'procura@adinco.mx',        -- De - varchar(100)
+							ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 							NULL       -- EN_MsjEnviado - bit
 							);
 

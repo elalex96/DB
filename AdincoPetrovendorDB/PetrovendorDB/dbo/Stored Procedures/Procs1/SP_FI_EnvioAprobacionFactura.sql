@@ -1,6 +1,14 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_EnvioAprobacionFactura]    Script Date: 04/02/2022 12:29:29 p. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_EnvioAprobacionFactura'
+)
+    DROP PROCEDURE SP_FI_EnvioAprobacionFactura;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_EnvioAprobacionFactura]    Script Date: 03/06/2022 11:29:28 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,7 +19,12 @@ GO
 -- Create date: <28/09/2020>
 -- Description:	<Envio de factura, creacion de la operacion y tareas de aprobacion y envio de correos>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_FI_EnvioAprobacionFactura] --3499,670,2338
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_EnvioAprobacionFactura] --3499,670,2338
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
 	@IdProveedor INT,
@@ -23,6 +36,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @DESCRIPCION_HISTORIAL NVARCHAR(MAX);
 	DECLARE @ID_ESTATUS_FLUJO INT = 1;
 	DECLARE @ID_ESTATUS_OPERACION INT = 1;
@@ -230,6 +244,11 @@ BEGIN
 
 		END
 		
+		SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+									FROM TA_Correo AS C
+										INNER JOIN TA_CorreoServidor AS S
+											ON S.IdServidor = C.IdServidor
+									WHERE IdCorreo = 37) --> CTE NUMERO CORREO (TA_Correo)
 
 		WHILE @CONT <= @CONTTOTAL
 		BEGIN
@@ -276,7 +295,7 @@ BEGIN
 				GETDATE(), -- CreadoEl - datetime
 				NULL,         -- ModificadoPor - int
 				NULL, -- ModificadoEl - datetime
-				'procura@adinco.mx',        -- De - varchar(100)
+				ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				NULL       -- EN_MsjEnviado - bit
 			);
 

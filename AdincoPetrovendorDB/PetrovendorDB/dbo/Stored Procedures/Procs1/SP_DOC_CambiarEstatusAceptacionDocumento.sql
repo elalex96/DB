@@ -1,9 +1,29 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DOC_CambiarEstatusAceptacionDocumento'
+)
+    DROP PROCEDURE SP_DOC_CambiarEstatusAceptacionDocumento;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_DOC_CambiarEstatusAceptacionDocumento]    Script Date: 03/06/2022 11:49:57 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/07/2020>
 -- Description:	<Cambiar de estatus la revision del documento>
 -- =============================================
-create PROCEDURE [dbo].[SP_DOC_CambiarEstatusAceptacionDocumento] --4,2,'Documento Correcto solicitado',420,2205,2
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_DOC_CambiarEstatusAceptacionDocumento] --4,2,'Documento Correcto solicitado',420,2205,2
 	-- Add the parameters for the stored procedure here
 	@IdAceptacionDocumento INT,
 	@IdEstatus INT,
@@ -16,7 +36,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-	
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @HTMLCORREO NVARCHAR(MAX) = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 101);
     -- Insert statements for procedure here
 	DECLARE @IDNOTIFICACION INT;
@@ -136,6 +156,12 @@ BEGIN
 										WHERE T.IdTarea = @SIGUIENTETAREA
 										GROUP BY US.Correo)
 
+				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 102) --> CTE NUMERO CORREO (TA_Correo)
+
 				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 102);
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@NOMBREAPROBADOR));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPO_DOCUMENTO##',@NOMBRETIPODOCUMENTO));
@@ -173,7 +199,7 @@ BEGIN
 					GETDATE(), -- CreadoEl - datetime
 					NULL,         -- ModificadoPor - int
 					NULL, -- ModificadoEl - datetime
-					'procura@adinco.mx',        -- De - varchar(100)
+					ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 					NULL       -- EN_MsjEnviado - bit
 				);
 
@@ -279,6 +305,12 @@ BEGIN
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre)
 
+				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 101) --> CTE NUMERO CORREO (TA_Correo)
+
 				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 101);
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@NOMBREAPROBADOR));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPO_DOCUMENTO##',@NOMBRETIPODOCUMENTO));
@@ -321,7 +353,7 @@ BEGIN
 					GETDATE(), -- CreadoEl - datetime
 					NULL,         -- ModificadoPor - int
 					NULL, -- ModificadoEl - datetime
-					'procura@adinco.mx',        -- De - varchar(100)
+					ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 					NULL       -- EN_MsjEnviado - bit
 				);
 
@@ -335,7 +367,7 @@ BEGIN
 					)
 					VALUES
 					(   @IdNotificacion, -- IdEnvioAdinco - int
-						102, -- CORREO DE PETICION OFERTA
+						101, -- CORREO DE PETICION OFERTA
 						CONCAT('0 - Notificacion Revision Documentos por Operadora #' , @IDACEPTACIONDOCUMENTO),  -- IdIdentificacion - int
 						@IdUsuario,
 						GETDATE()
@@ -430,6 +462,12 @@ BEGIN
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre)
 
+				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 101) --> CTE NUMERO CORREO (TA_Correo)
+
 				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 101);
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@NOMBREAPROBADOR));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPO_DOCUMENTO##',@NOMBRETIPODOCUMENTO));
@@ -472,7 +510,7 @@ BEGIN
 					GETDATE(), -- CreadoEl - datetime
 					NULL,         -- ModificadoPor - int
 					NULL, -- ModificadoEl - datetime
-					'procura@adinco.mx',        -- De - varchar(100)
+					ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 					NULL       -- EN_MsjEnviado - bit
 				);
 
@@ -486,7 +524,7 @@ BEGIN
 					)
 					VALUES
 					(   @IdNotificacion, -- IdEnvioAdinco - int
-						102, -- CORREO DE PETICION OFERTA
+						101, -- CORREO DE PETICION OFERTA
 						CONCAT('0 - Notificacion Revision Documentos por Operadora #' , @IDACEPTACIONDOCUMENTO),  -- IdIdentificacion - int
 						@IdUsuario,
 						GETDATE()

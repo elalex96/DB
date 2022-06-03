@@ -1,7 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DOC_GuardarDocumentoProveedor'
+)
+    DROP PROCEDURE SP_DOC_GuardarDocumentoProveedor;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_DOC_GuardarDocumentoProveedor]    Script Date: 03/06/2022 11:45:03 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <23-07-2020>
 -- Description:	<Guardado y Envio del documento obligario por operadora>
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DOC_GuardarDocumentoProveedor] --670,1,3499,'CARTACONTENIDONACIONAL/COMPRADIRECTA/','50122c83-0642-42cb-9724-013f1813fed2','application/pdf','.pdf','DOCUMENTO_PO.pdf',0
 	-- Add the parameters for the stored procedure here
@@ -45,6 +65,13 @@ BEGIN
 	DECLARE @IDFLUJOAPROBACION INT = (SELECT TOP 1 IdFlujoTarea FROM dbo.TA_FlujoTarea WHERE IdTipoOperacion = 18 AND Activo = 1 AND Predeterminado = 1 AND IdProveedor = @IDOPERADORA);
 	DECLARE @NOTIFICACION BIT = (SELECT TOP 1 SoloNotificar FROM dbo.TA_FlujoTarea WHERE IdTipoOperacion = 18 AND Activo = 1 AND Predeterminado = 1 AND IdProveedor = @IDOPERADORA);
 	DECLARE @TIPOFLUJO INT = (SELECT TOP 1 IdTipoFlujo FROM dbo.TA_FlujoTarea WHERE IdTipoOperacion = 18 AND Activo = 1 AND Predeterminado = 1 AND IdProveedor = @IDOPERADORA);
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
+
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 102) --> CTE NUMERO CORREO (TA_Correo)
 
 	INSERT INTO dbo.S_Documento_S3
 	(
@@ -305,7 +332,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 
@@ -472,7 +499,7 @@ BEGIN
 					GETDATE(), -- CreadoEl - datetime
 					NULL,         -- ModificadoPor - int
 					NULL, -- ModificadoEl - datetime
-					'procura@adinco.mx',        -- De - varchar(100)
+					ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 					NULL       -- EN_MsjEnviado - bit
 				);
 
@@ -581,7 +608,7 @@ BEGIN
 							GETDATE(), -- CreadoEl - datetime
 							NULL,         -- ModificadoPor - int
 							NULL, -- ModificadoEl - datetime
-							'procura@adinco.mx',        -- De - varchar(100)
+							ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 							NULL       -- EN_MsjEnviado - bit
 							);
 

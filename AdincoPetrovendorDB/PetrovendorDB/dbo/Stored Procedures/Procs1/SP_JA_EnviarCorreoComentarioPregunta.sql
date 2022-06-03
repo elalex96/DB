@@ -1,6 +1,17 @@
-﻿USE PETROVENDOR
+﻿USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SP_JA_EnviarCorreoComentarioPregunta
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_JA_EnviarCorreoComentarioPregunta'
+)
+    DROP PROCEDURE SP_JA_EnviarCorreoComentarioPregunta;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_JA_EnviarCorreoComentarioPregunta]    Script Date: 03/06/2022 11:09:06 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		<Alexander Gomez>
@@ -9,9 +20,14 @@ GO
 -- =============================================
 -- Author:		<Luis David>
 -- Create date: <01/03/2023>
--- Description:	<Se evalúa si no está bloqueada la notificación>
+-- Description:	<Se evalúa si no está >
 -- =============================================
-create PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta] --20290,2199,420,'PRUEBA 11'
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta] --20290,2199,420,'PRUEBA 11'
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdUsuario INT,
@@ -38,7 +54,7 @@ BEGIN
 	DECLARE @EnviarCorreo bit;
 	DECLARE @IdCorreo INT = (SELECT IdCorreo FROM dbo.TA_Correo WHERE Asunto = 'Comentario(Pregunta) Referente a Requisicion ');
 	DECLARE @IdUsuarioEnviarNotificacion int;
-
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 
 	
 	
@@ -186,6 +202,11 @@ BEGIN
 		select @HTMLCORREO = ''
 	end
 
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = @IdCorreo) --> CTE NUMERO CORREO (TA_Correo)
 	--select * from #DATOSCORREO
 	--select @CONTROWS, @TOTALROWS
 	--ITERACION DE LA TABLA
@@ -243,7 +264,7 @@ BEGIN
 			GETDATE(),
 			NULL,
 			NULL,
-			'procura@adinco.mx'
+			ISNULL(@CorreoNotificaciones,'')
 		);
 		END
 		if (exists(select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion) and isnull(@HTMLCORREO,'')<>'')

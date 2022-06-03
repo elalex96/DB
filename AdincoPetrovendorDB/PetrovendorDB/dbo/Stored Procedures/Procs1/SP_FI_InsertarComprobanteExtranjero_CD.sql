@@ -1,18 +1,27 @@
-﻿-- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <27/08/2020>
--- Description:	<Creacion del flujo de aprobacion para los pedimentos/comprobantes >
--- =============================================
-DROP PROCEDURE IF EXISTS SP_FI_InsertarComprobanteExtranjero_CD
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_InsertarComprobanteExtranjero_CD'
+)
+    DROP PROCEDURE SP_FI_InsertarComprobanteExtranjero_CD;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_InsertarComprobanteExtranjero_CD]    Script Date: 03/06/2022 11:26:34 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/08/2020>
 -- Description:	<Creacion del flujo de aprobacion para los pedimentos/comprobantes >
 -- =============================================
--- Author:		<LUIS DAVID>
--- Create date: <02/09/2021>
--- Description:	<SE AGREGA EL BUCKET>
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
 CREATE  PROCEDURE [dbo].[SP_FI_InsertarComprobanteExtranjero_CD]
 	-- Add the parameters for the stored procedure here
@@ -65,7 +74,7 @@ BEGIN
 	DECLARE @IdFlujoTarea INT;
 	DECLARE @IdOperacion INT;
 	DECLARE @IDSIGAPROBADOR INT;
-	    
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);    
 
     INSERT INTO [dbo].[FI_PedimentoComprobante]
 	([IdContrato],
@@ -281,6 +290,12 @@ BEGIN
 										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
 								WHERE OP.IdOperacion = @IdOperacion);
 
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
+
 	IF @TIPOFLUJO = 1
 		BEGIN
 
@@ -341,7 +356,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 
@@ -463,7 +478,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 

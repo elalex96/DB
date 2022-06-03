@@ -1,6 +1,5 @@
 ﻿USE [Petrovendor]
 GO
-
 IF EXISTS
 (
     SELECT 1
@@ -8,8 +7,8 @@ IF EXISTS
     WHERE name = 'SP_DEA_EnviarNotificacionCotizacionProveedores'
 )
     DROP PROCEDURE SP_DEA_EnviarNotificacionCotizacionProveedores;
-
-/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarAprobadoresPedido]    Script Date: 24/05/2021 06:54:34 p. m. ******/
+GO
+/****** Object:  StoredProcedure [dbo].[SP_DEA_EnviarNotificacionCotizacionProveedores]    Script Date: 03/06/2022 12:04:58 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,6 +18,11 @@ GO
 -- Create date: 26-05-2020
 -- Description:	 Enviar nbotificaciones a los proveedores que aun tiene cotizaciones pendientes de cotizar (SOLO PROVEEDORES DE DEA)
 -- Filtro por contrato
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DEA_EnviarNotificacionCotizacionProveedores] 
 	-- Add the parameters for the stored procedure here	
@@ -44,6 +48,7 @@ BEGIN
 	DECLARE @NombreUsuario NVARCHAR(MAX)
 	DECLARE @ComentarioOperadora NVARCHAR(MAX)
 	DECLARE @DetalleBitacora NVARCHAR(MAX)
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 
 	---> MODIFICAR CONTRATOS DE LAS OPERADORAS QUE VAN APLICAR LAS NOTIFICACIONES
 	DECLARE @Contratos TABLE
@@ -159,6 +164,12 @@ BEGIN
 	SET @SolicitudPedidoId = 0 
 	SET @PeticionOfertaId = 0
 
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
+
     WHILE @Contador <= @TotalCorreoInvitados  
     BEGIN  
 
@@ -199,7 +210,7 @@ BEGIN
         VALUES  
         (@IdNotificacion, @CorreoInvitado, 'Invitación Cotización Petrovendor ',
 		 @HTMLporInvitacionPersonalizado, DATEADD(MINUTE, 1, GETDATE()), 0,
-		 NULL, 3, GETDATE(), NULL, NULL,'procura@adinco.mx');  
+		 NULL, 3, GETDATE(), NULL, NULL,ISNULL(@CorreoNotificaciones,''));  
   
         INSERT INTO dbo.TA_EnvioCorreo (IdEnvioAdinco, IdCorreo, IdIdentificacion, EnviadoPor, EnviadoEl)  
         VALUES  
@@ -244,6 +255,12 @@ BEGIN
 	SET @CorreoProveedor =''
 	SET @NombreUsuario=''
 	SET @ComentarioOperadora=''
+
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON S.IdServidor = C.IdServidor
+								WHERE IdCorreo = 11) --> CTE NUMERO CORREO (TA_Correo)
 
 	WHILE @Contador <= @TotalCorreoPetro  
         BEGIN  
@@ -301,7 +318,7 @@ BEGIN
             VALUES  
             (@IdNotificacion, @CorreoProveedor,CONCAT('Petición Oferta No.', ISNULL(@PeticionOfertaId, 0)), @HTMLcotizacionPersonalizado,  
              DATEADD(MINUTE, 1, GETDATE()), 0, 
-			 NULL, 3, GETDATE(), NULL, NULL, 'procura@adinco.mx');  
+			 NULL, 3, GETDATE(), NULL, NULL, ISNULL(@CorreoNotificaciones,''));  
   
             INSERT INTO dbo.TA_EnvioCorreo (IdEnvioAdinco, IdCorreo, IdIdentificacion, EnviadoPor, EnviadoEl)  
             VALUES  
@@ -360,5 +377,3 @@ BEGIN
            ,GETDATE())
 
 END
-
-
