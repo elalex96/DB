@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 03/06/2022 09:02:08 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 03/06/2022 11:25:05 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -330,7 +330,7 @@ BEGIN
 			SC.RutaAnterior,
 			1
 		FROM #Documentos D    
-			JOIN EN_ReceptorEntregable RE 
+			LEFT JOIN EN_ReceptorEntregable RE 
 		        ON D.IdReceptorEntregable  =   RE.IdReceptorEntregable AND
 					D.EsDeProceso = 1 -->QUE NO SEA DOCUMENTO DE UN PROCESO
 			JOIN CO_ContratoEtapas CE	(NOLOCK)
@@ -648,6 +648,8 @@ BEGIN
 					ON SC.IdCarpeta = @IdCarpeta 
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
+						AND SC.IsPozo = 1
+						AND SC.IdReceptorEntregable = @IdReceptorEntregable
 			WHERE D.EtapaPozoId = @IdCarpeta 
 				AND D.EsDeProceso = 1
 				AND D.IdInstalacion = @IdReceptorEntregable
@@ -832,6 +834,7 @@ BEGIN
 						AND SC.Frecuencia = @Frecuencia
 						AND SC.Etapa = @Etapa
 						AND SC.IsPozo = 1
+						AND SC.IdReceptorEntregable = @IdReceptorEntregable
 			WHERE D.IdMarcoLegal = @IdCarpeta
 				AND D.EsDeProceso = 1
 				AND D.IdInstalacion = @IdReceptorEntregable
@@ -982,22 +985,24 @@ BEGIN
 				NULL,
 				D.DocumentoEntregableId,
 				CASE
-					WHEN D.MIME = 'application/pdf' THEN 'Archivo PDF'
-					WHEN D.MIME = 'image/jpeg' THEN 'Archivo JPG'
-					WHEN D.MIME = 'image/png' THEN 'Archivo PNG'
-					WHEN D.MIME = 'text/xml' THEN 'Archivo XML'
-					WHEN D.MIME = 'text/plain' THEN 'Archivo TXT'
-					WHEN D.MIME = 'text/html' THEN 'Archivo HTML'
-					WHEN D.MIME = 'application/vnd.openxmlformats-officedocument.spre' THEN 'Archivo XLSX'
-					WHEN D.MIME = 'application/zip' THEN 'Archivo ZIP'
-					WHEN D.MIME = 'application/x-zip-compressed' THEN 'Archivo ZIP'
-					WHEN D.MIME = 'application/vnd.openxmlformats-officedocument.word' THEN 'Archivo DOCX'
-					WHEN D.MIME = 'application/msword' THEN 'Archivo DOCX'
-					WHEN D.MIME = 'application/vnd.ms-excel' THEN 'Archivo XLSX'
-					WHEN D.MIME = 'application/mspowerpoint' THEN 'Archivo PPT'
-					WHEN D.MIME = 'application/vnd.openxmlformats-officedocument.pres' THEN 'Archivo PPT'
-					WHEN D.MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' THEN 'Archivo DOCX'
-					ELSE 'Archivo'
+				WHEN ED.Meta = 'application/pdf' THEN 'Archivo PDF'
+				WHEN ED.Meta = 'image/jpeg' THEN 'Archivo JPG'
+				WHEN ED.Meta = 'image/png' THEN 'Archivo PNG'
+				WHEN ED.Meta = 'text/xml' THEN 'Archivo XML'
+				WHEN ED.Meta = 'text/plain' THEN 'Archivo TXT'
+				WHEN ED.Meta = 'text/html' THEN 'Archivo HTML'
+				WHEN ED.Meta = 'application/vnd.openxmlformats-officedocument.spre' THEN 'Archivo XLSX'
+				WHEN ED.Meta = 'application/zip' THEN 'Archivo ZIP'
+				WHEN ED.Meta = 'application/x-zip-compressed' THEN 'Archivo ZIP'
+				WHEN ED.Meta = 'application/vnd.openxmlformats-officedocument.word' THEN 'Archivo DOCX'
+				WHEN ED.Meta = 'application/msword' THEN 'Archivo DOCX'
+				WHEN ED.Meta = 'application/vnd.ms-excel' THEN 'Archivo XLSX'
+				WHEN ED.Meta = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' THEN 'Archivo XLSX'
+				WHEN ED.Meta = 'application/mspowerpoint' THEN 'Archivo PPT'
+				WHEN ED.Meta = 'application/vnd.openxmlformats-officedocument.pres' THEN 'Archivo PPT'
+				WHEN ED.Meta = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' THEN 'Archivo DOCX'
+				WHEN ED.Meta = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'THEN 'Archivo PPT'
+				ELSE 'Archivo'
 				END,
 				NULL,
 				0,
@@ -1020,8 +1025,8 @@ BEGIN
 					ON SC.IdCarpeta = @IdCarpeta 
 						AND SC.Nivel = @Nivel
 						AND SC.IdContrato = @ContratoId
-						AND SC.Etapa = @Etapa
 						AND SC.IsPozo = 1
+						AND SC.IdReceptorEntregable = @IdReceptorEntregable
 			LEFT JOIN EN_EntregableDocumento AS ED
 				ON D.DocumentoEntregableId = ED.DocumentoEntregableId
 			WHERE D.IdEntregable = @IdCarpeta 
@@ -1143,9 +1148,11 @@ BEGIN
 				WHEN CA.Meta = 'application/vnd.openxmlformats-officedocument.word' THEN 'Archivo DOCX'
 				WHEN CA.Meta = 'application/msword' THEN 'Archivo DOCX'
 				WHEN CA.Meta = 'application/vnd.ms-excel' THEN 'Archivo XLSX'
+				WHEN CA.Meta = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' THEN 'Archivo XLSX'
 				WHEN CA.Meta = 'application/mspowerpoint' THEN 'Archivo PPT'
 				WHEN CA.Meta = 'application/vnd.openxmlformats-officedocument.pres' THEN 'Archivo PPT'
 				WHEN CA.Meta = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' THEN 'Archivo DOCX'
+				WHEN CA.Meta = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'THEN 'Archivo PPT'
 				ELSE 'Archivo'
 			END,
 			CA.CreadoEl,
@@ -1171,7 +1178,6 @@ BEGIN
 					AND SC.IdContrato = @ContratoId
 					AND SC.AnioMes = @AnioMes
 					AND SC.IdReceptorEntregable = @IdReceptorEntregable
-					AND SC.IsCarpetaUsuario = 1
 		LEFT JOIN AP_Usuario AS US
 			ON CA.CreadoPor = US.UsuarioID
 		WHERE IsArchivo = 1
@@ -1572,7 +1578,6 @@ BEGIN
 
 	SELECT ISNULL(@LIMITADOR,0) AS LIMITADOR
 
-	--SELECT * FROM #Documentos
 
 END
 
