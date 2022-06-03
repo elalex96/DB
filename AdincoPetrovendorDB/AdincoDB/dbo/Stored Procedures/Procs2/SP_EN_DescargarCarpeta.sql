@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 02/06/2022 11:34:14 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 03/06/2022 03:22:38 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -15,7 +15,7 @@ GO
 -- Create date: <25/03/2022>
 -- Description: <Se agrego función para acortar rutas de los archivos de las carpetas del visor>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/ASEA/Oficio ASEA-UGl-DGGEERNCM-0058-2021/',10106,1000
+ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/CONAGUA (Comisión Nacional del Agua)/Ley de Aguas Nacionales /Trimestral/2021-10/CONAGUA - Water Discharge (Quarterly)/',10106,1000
     -- Add the parameters for the stored procedure here
     @Ruta VARCHAR(MAX),
     @IdContrato     int,
@@ -153,7 +153,7 @@ BEGIN
     UNION ALL
     SELECT
         (V.IdElemento + @maxIds) AS Id,
-        RV.Ruta,
+        REPLACE(RV.Ruta,'//','/') AS Ruta,
         V.Nombre AS Titulo,
         V.IdElemento as DocumentoEntregableId,
         0 AS idContratoEntregable,
@@ -173,5 +173,7 @@ BEGIN
     WHERE V.IdContrato = @IdContrato
     AND RV.RutaCompleta LIKE '%' + @Ruta + '%'
     AND V.Activo = 1
+
+	---SELECT @NuevaRuta
 
 END
