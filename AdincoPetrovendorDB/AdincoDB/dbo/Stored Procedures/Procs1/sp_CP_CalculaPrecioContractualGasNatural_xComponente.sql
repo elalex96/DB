@@ -435,7 +435,9 @@ BEGIN
 		Precio,
 		Volumen,
 		Valor,
-		TasaRegalia
+		TasaRegalia,
+		FechaCreacion,
+		CreadoPor
 	)
 	SELECT
 		@IdContrato,
@@ -445,7 +447,9 @@ BEGIN
 		@PrecioContractualGases,
 		@VolumenGasesEntregado,
 		@PrecioContractualGases * @VolumenGasesEntregado AS ValorHidrocarburos,
-		@Regalia
+		@Regalia,
+		GETDATE(),
+		@IdUsuario
 
 END
 ELSE
@@ -457,7 +461,9 @@ BEGIN
 			Precio = @PrecioContractualGases,
 			Volumen = @VolumenGasesEntregado,
 			Valor	=	@PrecioContractualGases * @VolumenGasesEntregado,
-			TasaRegalia	=	@Regalia
+			TasaRegalia	=	@Regalia,
+			FechaModificacion = GETDATE(),
+			ModificadoPor = @IdUsuario
 	WHERE
 		IdContrato	=	@IdContrato
 		AND		IdTipoHidrocarburo	=	@TipoHidrocarburo

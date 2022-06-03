@@ -9,6 +9,12 @@
     [Volumen]                        INT            NULL,
     [TasaRegalia]                    FLOAT (53)     NULL,
     [UrlImgRegalia]                  NVARCHAR (MAX) NULL,
+    FechaCreacion DATETIME, 
+    CreadoPor INT, 
+    FechaModificacion DATETIME, 
+    ModificadoPor INT,
+    FOREIGN KEY (CreadoPor) REFERENCES AP_USUARIO(UsuarioId),
+    FOREIGN KEY (ModificadoPor) REFERENCES AP_USUARIO(UsuarioId),
     CONSTRAINT [PK_CP_MetodoCalculoHidrocarburoMes] PRIMARY KEY CLUSTERED ([IdMetodoCalculoHidrocarburoMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 
