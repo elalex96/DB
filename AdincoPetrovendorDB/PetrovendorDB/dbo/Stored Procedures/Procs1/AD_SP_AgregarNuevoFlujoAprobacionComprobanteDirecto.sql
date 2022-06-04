@@ -61,7 +61,7 @@ BEGIN
    SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
 
   --VALIDAR QUE LA APROBACIÓN ESTE EN ESTATUS DE EN_APROBACIÓN   
@@ -75,7 +75,7 @@ BEGIN
   /*NOMBRE FLUJO ANTERIOR*/
   SELECT @NombreFlujoAnterior=FT.Nombre
   FROM TA_FlujoTarea AS FT  
-  INNER JOIN TA_Operacion AS O ON O.IdFlujoTarea = FT.IdFlujoTarea  
+  INNER JOIN TA_Operacion AS O ON FT.IdFlujoTarea   = O.IdFlujoTarea 
   WHERE O.IdOperacion = @IdOperacion;  
 
   /*NOMBRE FLUJO NUEVO*/
@@ -102,7 +102,7 @@ BEGIN
   @FECHAMODIFICACION,  
   10--> ESTATUS DE ELIMINACIÓN DE  SELECT * FROM dbo.TA_EstadoFlujoTarea WHERE Idestado=10  
   FROM dbo.TA_Tarea  T  
-  LEFT JOIN dbo.S_Usuario UA ON UA.IdUsuario=T.IdAprobador  
+  LEFT JOIN dbo.S_Usuario UA ON T.IdAprobador  = UA.IdUsuario
   LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL  
   WHERE T.Activo=1  
   AND T.IdOperacion=@IdOperacion   
@@ -133,7 +133,7 @@ BEGIN
 	  @FECHAMODIFICACION,  
 	  8--> REASIGNACIÓN DE TAREA   
 	  FROM dbo.TA_Aprobador A  
-	  LEFT JOIN dbo.S_Usuario UA ON UA.IdUsuario=A.IdUsuario  
+	  LEFT JOIN dbo.S_Usuario UA ON A.IdUsuario = UA.IdUsuario 
 	  LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL  
 	  WHERE A.IdFlujoTarea=@IdNuevoFlujoAprobacion  
 
@@ -144,9 +144,9 @@ BEGIN
          TFT.IdTipoFlujoTarea  
         FROM dbo.TA_Operacion AS OP  
          JOIN dbo.TA_FlujoTarea AS FT  
-          ON FT.IdFlujoTarea = OP.IdFlujoTarea  
+          ON OP.IdFlujoTarea  = FT.IdFlujoTarea 
          JOIN dbo.TA_TipoFlujoTarea AS TFT  
-          ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo  
+          ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea  
         WHERE OP.IdOperacion = @IdOperacion); 
 		 
 	IF @TIPOFLUJO = 1  --> FLUJO SERIAL--> SOLO AL PRIMER APROBADOR
@@ -166,7 +166,7 @@ BEGIN
                  PVS.RazonSocial  
                 FROM dbo.FI_PedimentoComprobante AS PC  
                  JOIN Adinco.dbo.PV_Subcontratista AS PVS  
-                  ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador  
+                  ON  PC.IdSubcontratistaExportador  = PVS.IdSubcontratista 
                 WHERE PC.IdPedimentoComprobante = @IdComprobante);  
          
     SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);  
@@ -273,7 +273,7 @@ BEGIN
     US.Correo  
    FROM dbo.TA_Tarea AS T  
    JOIN dbo.S_Usuario AS US  
-    ON US.IdUsuario = T.IdAprobador  
+    ON T.IdAprobador   = US.IdUsuario
    WHERE T.IdOperacion = @IdOperacion  
    AND T.Activo = 1  
    AND T.FechaCambioEstatus IS NULL;  
@@ -290,7 +290,7 @@ BEGIN
                  PVS.RazonSocial  
                 FROM dbo.FI_PedimentoComprobante AS PC  
                  JOIN Adinco.dbo.PV_Subcontratista AS PVS  
-                  ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador  
+                  ON  PC.IdSubcontratistaExportador   = PVS.IdSubcontratista
                 WHERE PC.IdPedimentoComprobante = @IdComprobante);  
          
     SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM @APROBADORESTABLE WHERE ID = @CONT);  
