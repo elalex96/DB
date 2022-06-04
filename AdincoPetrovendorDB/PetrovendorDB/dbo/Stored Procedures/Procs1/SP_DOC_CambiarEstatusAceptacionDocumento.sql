@@ -46,21 +46,21 @@ BEGIN
 													DPO.NombreDocumentoObligatorio
 												FROM dbo.S_DocumentoPlantillaOperadora AS DPO
 													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
-														ON ADP.IdTipoDocumentoOperadora = DPO.IdDocumentoPlantilla
+														ON DPO.IdDocumentoPlantilla = ADP.IdTipoDocumentoOperadora
 												WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento);
 
 	DECLARE @NOMBREPROVEEDOR NVARCHAR(MAX) = (SELECT 
 													PR.RazonSocial
 												FROM dbo.S_Proveedor AS PR
 													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
-														ON ADP.IdProveedor = PR.IdProveedor
+														ON PR.IdProveedor = ADP.IdProveedor
 												WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento);
 
 	DECLARE @NOMBREOPERADORA NVARCHAR(MAX) = (SELECT 
 													PR.RazonSocial
 												FROM dbo.S_Proveedor AS PR
 													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
-														ON ADP.IdOperadora = PR.IdProveedor
+														ON PR.IdProveedor = ADP.IdOperadora
 												WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento);
 	--SE OBTIENE LA OPERACION
 	DECLARE @IDOPERACION INT = (SELECT
@@ -144,7 +144,7 @@ BEGIN
 											US.Nombre
 										FROM dbo.S_Usuario AS US
 											LEFT JOIN dbo.TA_Tarea AS T
-												ON T.IdAprobador = US.IdUsuario
+												ON US.IdUsuario = T.IdAprobador
 										WHERE T.IdTarea = @SIGUIENTETAREA
 										GROUP BY US.Nombre);
 
@@ -152,14 +152,14 @@ BEGIN
 											US.Correo
 										FROM dbo.S_Usuario AS US
 											LEFT JOIN dbo.TA_Tarea AS T
-												ON T.IdAprobador = US.IdUsuario
+												ON US.IdUsuario = T.IdAprobador
 										WHERE T.IdTarea = @SIGUIENTETAREA
 										GROUP BY US.Correo)
 
 				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 102) --> CTE NUMERO CORREO (TA_Correo)
 
 				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 102);
@@ -293,7 +293,7 @@ BEGIN
 											US.Nombre
 										FROM dbo.S_Usuario AS US
 											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
-												ON ADP.CreadoPor = US.IdUsuario
+												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre);
 
@@ -301,14 +301,14 @@ BEGIN
 											US.Nombre
 										FROM dbo.S_Usuario AS US
 											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
-												ON ADP.CreadoPor = US.IdUsuario
+												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre)
 
 				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 101) --> CTE NUMERO CORREO (TA_Correo)
 
 				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 101);
@@ -450,7 +450,7 @@ BEGIN
 											US.Nombre
 										FROM dbo.S_Usuario AS US
 											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
-												ON ADP.CreadoPor = US.IdUsuario
+												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre);
 
@@ -458,14 +458,14 @@ BEGIN
 											US.Nombre
 										FROM dbo.S_Usuario AS US
 											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
-												ON ADP.CreadoPor = US.IdUsuario
+												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre)
 
 				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 101) --> CTE NUMERO CORREO (TA_Correo)
 
 				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 101);

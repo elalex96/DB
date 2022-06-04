@@ -58,15 +58,15 @@ BEGIN
 														PVS.RazonSocial
 													FROM dbo.FI_PedimentoComprobante AS PC
 														JOIN Adinco.dbo.PV_Subcontratista AS PVS
-															ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+															ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista 
 													WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante);
 	SET @TIPOFLUJO = (SELECT TOP 1
 									TFT.IdTipoFlujoTarea
 								FROM dbo.TA_Operacion AS OP
 									JOIN dbo.TA_FlujoTarea AS FT
-										ON FT.IdFlujoTarea = OP.IdFlujoTarea
+										ON OP.IdFlujoTarea = FT.IdFlujoTarea 
 									JOIN dbo.TA_TipoFlujoTarea AS TFT
-										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
+										ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
 								WHERE OP.IdOperacion = @IdOperacion);
 	SET @IDSIGAPROBADOR = (SELECT TOP 1
 										IdAprobador
@@ -168,7 +168,7 @@ BEGIN
 				SET @CorreoNotificaciones = (SELECT TOP 1 CuentaRegistro
 											FROM TA_Correo AS C
 												INNER JOIN TA_CorreoServidor AS S
-													ON S.IdServidor = C.IdServidor
+													ON C.IdServidor = S.IdServidor
 											WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo) -- CORREO DE PETICION OFERTA
 
 				INSERT INTO Adinco.dbo.S_Notificacion
@@ -311,7 +311,7 @@ BEGIN
 					PC.RazonSocialP,
 					PC.CuentaBancaria
 				FROM Petrovendor.dbo.FI_PedimentoComprobante AS PC
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PC.CreadoPor
+				LEFT JOIN dbo.S_Usuario AS US ON PC.CreadoPor = US.IdUsuario 
 				WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				SET @IdPedimentoComprobante_ADINCO = SCOPE_IDENTITY();
@@ -335,7 +335,7 @@ BEGIN
 					PCD.CreadoEn,
 					PCD.ImporteTotal
 				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor
+				LEFT JOIN dbo.S_Usuario AS US ON PCD.CreadoPor = US.IdUsuario 
 				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				INSERT INTO Adinco.dbo.FI_Documento
@@ -357,7 +357,7 @@ BEGIN
 					FID.IsEliminado,
 					FID.DocumentoByte
 				FROM Petrovendor.dbo.FI_Documento AS FID
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = FID.IdUsuario
+				LEFT JOIN dbo.S_Usuario AS US ON FID.IdUsuario = US.IdUsuario
 				WHERE FID.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				INSERT INTO dbo.FI_RelacionAdincoPedimentoComprobante

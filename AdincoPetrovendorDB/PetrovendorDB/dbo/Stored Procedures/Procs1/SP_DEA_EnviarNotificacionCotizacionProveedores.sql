@@ -167,7 +167,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
 
     WHILE @Contador <= @TotalCorreoInvitados  
@@ -259,7 +259,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 11) --> CTE NUMERO CORREO (TA_Correo)
 
 	WHILE @Contador <= @TotalCorreoPetro  

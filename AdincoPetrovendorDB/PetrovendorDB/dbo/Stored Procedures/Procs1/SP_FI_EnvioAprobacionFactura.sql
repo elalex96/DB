@@ -52,9 +52,9 @@ BEGIN
 	DECLARE @PLANTILLA_ASUNTO NVARCHAR(MAX);
 	DECLARE @NOMBRE_CONTRATO NVARCHAR(MAX) = (SELECT TOP 1 C.NumeroContrato + ' - ' + AC.NombreAreaContractual AS NombreContrato
 													FROM dbo.MM_AceptacionPedido AP
-													LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
-													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
+													LEFT JOIN dbo.MM_Pedido P ON AP.IdPedido = P.IdPedido
+													LEFT JOIN Adinco.dbo.CO_Contrato C ON P.IdContrato = C.IdContrato 
+													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON C.IdAreaContractual =  AC.IdAreaContractual
 													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido);
 	DECLARE @TABLE_APROBADORES TABLE(ID INT IDENTITY(1,1), IdAprobador INT, IdSecuencia INT, Nombre NVARCHAR(200), Correo NVARCHAR(200));
 	DECLARE @ID_OPERADORA INT = ( SELECT IdProveedor FROM dbo.MM_AceptacionPedido WHERE IdAceptacionPedido = @IdAceptacionPedido);
@@ -78,15 +78,15 @@ BEGIN
 											RCFA.IdFlujoFactura 
 										FROM dbo.MM_SolicitudPedido SP
 										LEFT JOIN dbo.MM_Pedido P 
-											ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+											ON SP.IdSolicitudPedido = P.IdSolicitudPedido
 										LEFT JOIN dbo.MM_AceptacionPedido AP 
-											ON AP.IdPedido = P.IdPedido
+											ON  P.IdPedido = AP.IdPedido
 										LEFT JOIN dbo.MM_SolicitudPedidoDetalle SPD
-											ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido
+											ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido
 										LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL
-											ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+											ON SPD.IdSolicitudPedidoDetalle = SPDL.IdSolicitudPedidoDetalle
 										LEFT JOIN dbo.RelacionCentroCostoFlujoAprob RCFA 
-											ON RCFA.IdCentroCosto = SPDL.IdCentroCosto
+											ON SPDL.IdCentroCosto = RCFA.IdCentroCosto
 										WHERE AP.IdAceptacionPedido = @IdAceptacionPedido 
 											AND RCFA.IdFlujoFactura IS NOT NULL
 											AND RCFA.Activo = 1
@@ -101,13 +101,13 @@ BEGIN
 											FT.IdFlujoTarea
 										  FROM MM_AceptacionFactura AS AF
 										  INNER JOIN MM_AceptacionPedido AS AP 
-											ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+											ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
 										  INNER JOIN MM_Pedido   AS P 
-											on P.IdPedido= AP.IdPedido 
+											on AP.IdPedido = P.IdPedido
 										  INNER JOIN S_Proveedor AS PR 
-											ON PR.IdProveedor = P.IdProveedorCompras
+											ON  P.IdProveedorCompras = PR.IdProveedor
 										  INNER JOIN TA_FlujoTarea AS FT 
-											ON FT.IdProveedor =P.IdProveedorCompras
+											ON P.IdProveedorCompras = FT.IdProveedor
 										  WHERE AP.IdAceptacionPedido = @IdAceptacionPedido 
 											  AND FT.IdTipoOperacion = 10 
 											  AND FT.Activo=1 
@@ -195,7 +195,7 @@ BEGIN
 			US.Correo
 		FROM dbo.TA_Aprobador AS APR
 			JOIN dbo.S_Usuario AS US 
-				ON US.IdUsuario = APR.IdUsuario
+				ON APR.IdUsuario = US.IdUsuario
 				AND US.Activo = 1
 		WHERE APR.IdFlujoTarea = @ID_FLUJO_APROBACION
 		GROUP BY US.IdUsuario,
@@ -247,7 +247,7 @@ BEGIN
 		SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 									FROM TA_Correo AS C
 										INNER JOIN TA_CorreoServidor AS S
-											ON S.IdServidor = C.IdServidor
+											ON C.IdServidor = S.IdServidor
 									WHERE IdCorreo = 37) --> CTE NUMERO CORREO (TA_Correo)
 
 		WHILE @CONT <= @CONTTOTAL

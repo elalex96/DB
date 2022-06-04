@@ -87,7 +87,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
 
 	WHILE @CONTCORREOSINVITADOS <= @TOTALCORREOSINVITADOS
@@ -220,7 +220,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 11) --> CTE NUMERO CORREO (TA_Correo)
 
 	--ENVIO DE LA PETICIONES OFERTAS A LOS PROVEEDORES
@@ -337,9 +337,9 @@ BEGIN
 			U.IdUsuario
 		FROM S_Usuario AS U
 			INNER JOIN S_UsuarioProveedor AS UP 
-				ON UP.IdUsuario= U.IdUsuario
+				ON U.IdUsuario = UP.IdUsuario
 			INNER JOIN S_Proveedor AS P 
-				ON P.IdProveedor = UP.IdProveedor
+				ON UP.IdProveedor = P.IdProveedor 
 		WHERE P.IdProveedor = @IDPROVEEDORINV
 			AND (U.IdTipoUsuario = 4 OR U.IdTipoUsuario= 3) 
 			AND U.Activo = 1;

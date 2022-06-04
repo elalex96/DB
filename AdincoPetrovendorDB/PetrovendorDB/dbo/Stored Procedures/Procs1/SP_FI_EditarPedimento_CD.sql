@@ -113,7 +113,7 @@ AS
 							OP.IdOperacion
 						FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APC
 							JOIN dbo.TA_Operacion AS OP
-								ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
+								ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
 								AND OP.IdTipoOperacion = 19
 								AND	OP.IdProveedor = APC.IdProveedor
 						WHERE APC.IdPedimentoComprobante = @IdPedimentoComprobante);
@@ -122,7 +122,7 @@ AS
 							OP.IdEstatusOperacion
 						FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APC
 							JOIN dbo.TA_Operacion AS OP
-								ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
+								ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
 								AND OP.IdTipoOperacion = 19
 								AND	OP.IdProveedor = APC.IdProveedor
 						WHERE APC.IdPedimentoComprobante = @IdPedimentoComprobante);
@@ -168,7 +168,7 @@ AS
 			@IdOperacion
 		FROM dbo.TA_Aprobador AS APT
 			JOIN dbo.TA_FlujoTarea AS FT 
-				ON FT.IdFlujoTarea = APT.IdFlujoTarea
+				ON APT.IdFlujoTarea = FT.IdFlujoTarea
 		WHERE FT.IdFlujoTarea = @IdFlujoTarea
 		GROUP BY APT.IdUsuario,
 				 APT.NoSecuencia;
@@ -183,15 +183,15 @@ AS
 									TFT.IdTipoFlujoTarea
 								FROM dbo.TA_Operacion AS OP
 									JOIN dbo.TA_FlujoTarea AS FT
-										ON FT.IdFlujoTarea = OP.IdFlujoTarea
+										ON OP.IdFlujoTarea = FT.IdFlujoTarea
 									JOIN dbo.TA_TipoFlujoTarea AS TFT
-										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
+										ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
 								WHERE OP.IdOperacion = @IdOperacion);
 
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
 
 	IF @TIPOFLUJO = 1
@@ -211,7 +211,7 @@ AS
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
 																WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
@@ -316,7 +316,7 @@ AS
 				US.Correo
 			FROM dbo.TA_Tarea AS T
 			JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = T.IdAprobador
+				ON T.IdAprobador = US.IdUsuario
 			WHERE T.IdOperacion = @IdOperacion
 			AND T.Activo = 1
 			AND T.FechaCambioEstatus IS NULL;
@@ -333,7 +333,7 @@ AS
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
 																WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM @APROBADORESTABLE WHERE ID = @CONT);

@@ -61,7 +61,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = @IdCorreo) --> CTE NUMERO CORREO (TA_Correo)
 
 	--SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 99);

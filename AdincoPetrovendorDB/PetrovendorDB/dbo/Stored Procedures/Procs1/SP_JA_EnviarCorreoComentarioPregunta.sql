@@ -84,7 +84,7 @@ BEGIN
 								TUS.NombreTipoUsuario
 							FROM dbo.S_Usuario AS US
 								LEFT JOIN dbo.S_TipoUsuario AS TUS
-									ON TUS.IdTipoUsuario = US.IdTipoUsuario
+									ON US.IdTipoUsuario = TUS.IdTipoUsuario
 							WHERE US.IdUsuario = @IdUsuario);
 
 	--COMENTARIO PREGUNTA
@@ -108,14 +108,14 @@ BEGIN
 			CONCAT('https://petrovendor.mx/01Proveedores/CO_CotizacionDetalle.aspx?oferta=' , CAST(PO.IdPeticionOferta AS NVARCHAR(100)))
 		FROM dbo.MM_PeticionOferta AS PO
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = PO.IdSubcontratista
+				ON PO.IdSubcontratista = PR.IdProveedor 
 			LEFT JOIN dbo.S_UsuarioProveedor AS USPR
-				ON USPR.IdProveedor = PR.IdProveedor
+				ON  PR.IdProveedor = USPR.IdProveedor 
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = USPR.IdUsuario
+				ON USPR.IdUsuario = US.IdUsuario 
 				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
-				ON TUS.IdTipoUsuario = US.IdTipoUsuario
+				ON US.IdTipoUsuario = TUS.IdTipoUsuario 
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 5)
 			AND PO.IdSubcontratista <> @IdProveedor
@@ -137,16 +137,16 @@ BEGIN
 			CONCAT('https://procura.adinco.mx/02Proveedores/DetalleOferta.aspx?solped=' , CAST(@IdSolicitudPedido AS NVARCHAR(100)))
 		FROM dbo.MM_PeticionOferta AS PO
 			LEFT JOIN dbo.MM_SolicitudPedido AS SP 
-				ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+				ON  PO.IdSolicitudPedido = SP.IdSolicitudPedido
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = SP.IdProveedor
+				ON SP.IdProveedor = PR.IdProveedor 
 			LEFT JOIN dbo.S_UsuarioProveedor AS USPR
-				ON USPR.IdProveedor = PR.IdProveedor
+				ON PR.IdProveedor = USPR.IdProveedor 
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = USPR.IdUsuario
+				ON USPR.IdUsuario = US.IdUsuario  
 				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
-				ON TUS.IdTipoUsuario = US.IdTipoUsuario
+				ON US.IdTipoUsuario = TUS.IdTipoUsuario 
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4)
 			and	US.Activo = 1
@@ -172,14 +172,14 @@ BEGIN
 			CONCAT('https://petrovendor.mx/01Proveedores/CO_CotizacionDetalle.aspx?oferta=' , CAST(PO.IdPeticionOferta AS NVARCHAR(100)))
 		FROM dbo.MM_PeticionOferta AS PO
 			LEFT JOIN dbo.S_Proveedor AS PR
-				ON PR.IdProveedor = PO.IdSubcontratista
+				ON PO.IdSubcontratista = PR.IdProveedor 
 			LEFT JOIN dbo.S_UsuarioProveedor AS USPR
-				ON USPR.IdProveedor = PR.IdProveedor
+				ON PR.IdProveedor = USPR.IdProveedor
 			LEFT JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = USPR.IdUsuario
+				ON USPR.IdUsuario = US.IdUsuario
 				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
-				ON TUS.IdTipoUsuario = US.IdTipoUsuario
+				ON US.IdTipoUsuario = TUS.IdTipoUsuario
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4)
 			and	US.Activo = 1
@@ -205,7 +205,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = @IdCorreo) --> CTE NUMERO CORREO (TA_Correo)
 	--select * from #DATOSCORREO
 	--select @CONTROWS, @TOTALROWS
@@ -256,7 +256,7 @@ BEGIN
 			@IdNotificacion,
 			@CORREOUSUARIOPROVEEDOR,
 			CONCAT('Comentario(Pregunta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)),
-			@HTMLCORREO,
+			ISNULL(@HTMLCORREO,''),
 			DATEADD(MINUTE,1,GETDATE()),
 			0,
 			NULL,

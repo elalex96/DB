@@ -285,15 +285,15 @@ BEGIN
 									TFT.IdTipoFlujoTarea
 								FROM dbo.TA_Operacion AS OP
 									JOIN dbo.TA_FlujoTarea AS FT
-										ON FT.IdFlujoTarea = OP.IdFlujoTarea
+										ON OP.IdFlujoTarea = FT.IdFlujoTarea
 									JOIN dbo.TA_TipoFlujoTarea AS TFT
-										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
+										ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
 								WHERE OP.IdOperacion = @IdOperacion);
 
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
 
 	IF @TIPOFLUJO = 1
@@ -313,7 +313,7 @@ BEGIN
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
 																WHERE PC.IdPedimentoComprobante = @idped);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
@@ -418,7 +418,7 @@ BEGIN
 				US.Correo
 			FROM dbo.TA_Tarea AS T
 			JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = T.IdAprobador
+				ON T.IdAprobador = US.IdUsuario
 			WHERE T.IdOperacion = @IdOperacion
 			AND T.Activo = 1
 			AND T.FechaCambioEstatus IS NULL;
@@ -435,7 +435,7 @@ BEGIN
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
 																WHERE PC.IdPedimentoComprobante = @idped);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM @APROBADORESTABLE WHERE ID = @CONT);

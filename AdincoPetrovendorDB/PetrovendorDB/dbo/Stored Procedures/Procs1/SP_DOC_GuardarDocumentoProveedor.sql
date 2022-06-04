@@ -70,7 +70,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 102) --> CTE NUMERO CORREO (TA_Correo)
 
 	INSERT INTO dbo.S_Documento_S3
@@ -283,7 +283,7 @@ BEGIN
 				US.Correo
 			FROM dbo.TA_Aprobador AS TA
 			LEFT JOIN dbo.S_Usuario AS US 
-				ON US.IdUsuario = TA.IdUsuario
+				ON TA.IdUsuario = US.IdUsuario
 			WHERE TA.IdFlujoTarea = @IDFLUJOAPROBACION
 			ORDER BY TA.NoSecuencia ASC;
 
@@ -454,7 +454,7 @@ BEGIN
 					US.Correo
 				FROM dbo.TA_Aprobador AS TA
 				LEFT JOIN dbo.S_Usuario AS US 
-					ON US.IdUsuario = TA.IdUsuario
+					ON TA.IdUsuario = US.IdUsuario
 				WHERE TA.IdFlujoTarea = @IDFLUJOAPROBACION
 				ORDER BY TA.NoSecuencia ASC;
 
@@ -559,7 +559,7 @@ BEGIN
 						US.Correo
 					FROM dbo.TA_Aprobador AS TA
 					LEFT JOIN dbo.S_Usuario AS US 
-						ON US.IdUsuario = TA.IdUsuario
+						ON TA.IdUsuario = US.IdUsuario
 					WHERE TA.IdFlujoTarea = @IDFLUJOAPROBACION
 					ORDER BY TA.NoSecuencia ASC;
 
