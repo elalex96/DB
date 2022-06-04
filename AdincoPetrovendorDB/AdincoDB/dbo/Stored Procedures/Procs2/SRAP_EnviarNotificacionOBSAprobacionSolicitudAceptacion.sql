@@ -88,7 +88,7 @@ BEGIN
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
 								FROM TA_Correo AS C
 									INNER JOIN TA_CorreoServidor AS S
-										ON S.IdServidor = C.IdServidor
+										ON  C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 109) --> CTE NUMERO CORREO (TA_Correo)
 
 	--SE RECORREN Y ENVIAN LOS CORREOS DE NOTIFICACIONES A LOS USUARIOS
