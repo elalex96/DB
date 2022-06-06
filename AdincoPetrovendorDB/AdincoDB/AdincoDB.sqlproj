@@ -13295,6 +13295,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CargarArchivo_1.sql" />
     <Build Include="dbo\Tables\Tables2\EN_CarpetasArchivosVisor_1.sql" />
     <Build Include="dbo\Tables\Tables2\EN_SecuenciaCarpetas_1.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CargarArchivo.SQL" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
