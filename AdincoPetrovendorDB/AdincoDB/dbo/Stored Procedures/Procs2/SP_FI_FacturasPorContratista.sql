@@ -294,7 +294,40 @@ BEGIN
                  ISNULL((F.MontoConIva * .16), 0),
                  C.IdContrato,
                  F.IdMoneda
-        UNION
+
+        INSERT INTO #Facturas
+        (
+            IdFactura,
+            NombreEmisor,
+            RFC_Emisor,
+            NumeroContrato,
+            Fecha,
+            Serie,
+            Folio,
+            SubTotal,
+            Descuento,
+            TipoCambio,
+            Total,
+            TipoComprobante,
+            MetodoPago,
+            LugarExpedicion,
+            NumCtaPago,
+            RFC_Receptor,
+            UUID,
+            FechaTimbrado,
+            SelloCFD,
+            NoCertificadoSAT,
+            SelloSAT,
+            Tipo,
+            FechaRecepcion,
+            Año,
+            Mes,
+            NombreReceptor,
+            TieneArchivo,
+            IVA,
+            IdContrato,
+            IdMoneda
+        )
         SELECT F.IdFactura,
                S.RazonSocial AS NombreEmisor,
                S.RFC AS RFC_Emisor,
@@ -333,6 +366,9 @@ BEGIN
                 ON C.IdContrato = FC.IdContrato
             JOIN dbo.FI_Factura AS F (NOLOCK)
                 ON FC.IdFactura = F.IdFactura
+                   AND F.IdFactura NOT IN (
+                                              SELECT IdFactura FROM #Facturas
+                                          )
                    AND F.Activa = 1
             JOIN dbo.PV_Subcontratista AS S (NOLOCK)
                 ON F.IdSubcontratista = S.IdSubcontratista
