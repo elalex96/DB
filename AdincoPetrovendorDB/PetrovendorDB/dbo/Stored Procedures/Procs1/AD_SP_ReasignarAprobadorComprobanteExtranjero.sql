@@ -7,12 +7,22 @@ IF EXISTS
     WHERE name = 'AD_SP_ReasignarAprobadorComprobanteExtranjero'
 )
     DROP PROCEDURE AD_SP_ReasignarAprobadorComprobanteExtranjero;
-GO 
+GO
+/****** Object:  StoredProcedure [dbo].[AD_SP_ReasignarAprobadorComprobanteExtranjero]    Script Date: 03/06/2022 12:11:01 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================  
 -- Author:  Daniel AC
 -- Create date: 07-04-2017  
 -- Description:  SP que reasigna una tarea a otra aprobador de un comprobante extranjero  
 -- =============================================  
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
 CREATE PROCEDURE [dbo].[AD_SP_ReasignarAprobadorComprobanteExtranjero]   
  -- Add the parameters for the stored procedure here  
  @IdOperacion int,   
@@ -30,6 +40,7 @@ BEGIN
   DECLARE @IdTareaNueva int    
   DECLARE @Descripcion nvarchar(max)   
   DECLARE @IdAprobador INT 
+  DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 
    DECLARE   
    @CONTTOTAL    INT,  
@@ -47,6 +58,13 @@ BEGIN
 
   SET NOCOUNT ON;  
   --- Obtener el IdTarea de la Tarea del Usuario Actual----  
+
+  SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
+
   
     SELECT @IdAprobador =T.IdAprobador,
 	@EstatusId=T.IdEstatus
@@ -103,9 +121,9 @@ BEGIN
          TFT.IdTipoFlujoTarea  
         FROM dbo.TA_Operacion AS OP  
          JOIN dbo.TA_FlujoTarea AS FT  
-          ON FT.IdFlujoTarea = OP.IdFlujoTarea  
+          ON OP.IdFlujoTarea = FT.IdFlujoTarea
          JOIN dbo.TA_TipoFlujoTarea AS TFT  
-          ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo  
+          ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea 
         WHERE OP.IdOperacion = @IdOperacion); 
 		 
 	 IF @TIPOFLUJO = 1  --> SERIAL
@@ -126,7 +144,7 @@ BEGIN
                  PVS.RazonSocial  
                 FROM dbo.FI_PedimentoComprobante AS PC  
                  JOIN Adinco.dbo.PV_Subcontratista AS PVS  
-                  ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador  
+                  ON  PC.IdSubcontratistaExportador  = PVS.IdSubcontratista
                 WHERE PC.IdPedimentoComprobante = @IdComprobante);  
          
     SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);  
@@ -169,7 +187,7 @@ BEGIN
         GETDATE(), -- CreadoEl - datetime  
         NULL,         -- ModificadoPor - int  
         NULL, -- ModificadoEl - datetime  
-        'procura@adinco.mx',        -- De - varchar(100)  
+        ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)  
         NULL       -- EN_MsjEnviado - bit  
         );  
   
@@ -233,7 +251,7 @@ BEGIN
     US.Correo  
    FROM dbo.TA_Tarea AS T  
    JOIN dbo.S_Usuario AS US  
-    ON US.IdUsuario = T.IdAprobador  
+    ON T.IdAprobador = US.IdUsuario
    WHERE T.IdOperacion = @IdOperacion  
    AND T.Activo = 1  --> ACTIVO
    AND T.IdEstatus = 1 ---> EN APROBACIÓN
@@ -251,7 +269,7 @@ BEGIN
                  PVS.RazonSocial  
                 FROM dbo.FI_PedimentoComprobante AS PC  
                  JOIN Adinco.dbo.PV_Subcontratista AS PVS  
-                  ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador  
+                  ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
                 WHERE PC.IdPedimentoComprobante = @IdComprobante);  
          
     SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM @APROBADORESTABLE WHERE ID = @CONT);  
@@ -294,7 +312,7 @@ BEGIN
         GETDATE(), -- CreadoEl - datetime  
         NULL,         -- ModificadoPor - int  
         NULL, -- ModificadoEl - datetime  
-        'procura@adinco.mx',        -- De - varchar(100)  
+        ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)  
         NULL       -- EN_MsjEnviado - bit  
         );  
   

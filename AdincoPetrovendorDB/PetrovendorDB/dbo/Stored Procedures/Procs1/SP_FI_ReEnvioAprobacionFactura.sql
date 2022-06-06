@@ -1,8 +1,14 @@
 USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SP_FI_ReEnvioAprobacionFactura
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ReEnvioAprobacionFactura'
+)
+    DROP PROCEDURE SP_FI_ReEnvioAprobacionFactura;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 01/02/2022 11:46:51 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 03/06/2022 11:14:26 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,6 +23,11 @@ GO
 -- Create date: <06/04/2022>
 -- Description:	<Validación de usuario en tabla TA_NoNotificacion para ver si está bloqueado>
 -- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ReEnvioAprobacionFactura]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
@@ -29,6 +40,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @DESCRIPCION_HISTORIAL NVARCHAR(MAX);
 	DECLARE @ID_ESTATUS_FLUJO INT;
 	DECLARE @ID_ESTATUS_OPERACION INT;
@@ -45,15 +57,15 @@ BEGIN
 	DECLARE @PLANTILLA_ASUNTO NVARCHAR(MAX);
 	DECLARE @NOMBRE_CONTRATO NVARCHAR(MAX) = (SELECT TOP 1 C.NumeroContrato + ' - ' + AC.NombreAreaContractual AS NombreContrato
 													FROM dbo.MM_AceptacionPedido AP
-													LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
-													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
+													LEFT JOIN dbo.MM_Pedido P ON AP.IdPedido = P.IdPedido 
+													LEFT JOIN Adinco.dbo.CO_Contrato C ON P.IdContrato = C.IdContrato
+													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON C.IdAreaContractual = AC.IdAreaContractual
 													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido);
 	DECLARE @IDPROVEEDOROPERADORA INT = (SELECT TOP 1 AP.IdProveedor
 													FROM dbo.MM_AceptacionPedido AP
-													LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-													LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
-													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
+													LEFT JOIN dbo.MM_Pedido P ON AP.IdPedido =  P.IdPedido
+													LEFT JOIN Adinco.dbo.CO_Contrato C ON P.IdContrato = C.IdContrato
+													LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON C.IdAreaContractual = AC.IdAreaContractual
 													WHERE AP.IdAceptacionPedido = @IdAceptacionPedido)
 	DECLARE @TABLE_APROBADORES TABLE(ID INT IDENTITY(1,1), IdAprobador INT, IdSecuencia INT, Nombre NVARCHAR(200), Correo NVARCHAR(200));
 	DECLARE @ID_OPERADORA INT = ( SELECT IdProveedor FROM dbo.MM_AceptacionPedido WHERE IdAceptacionPedido = @IdAceptacionPedido);
@@ -128,7 +140,7 @@ BEGIN
 			US.Correo
 		FROM dbo.TA_Tarea AS APR
 			JOIN dbo.S_Usuario AS US 
-				ON US.IdUsuario = APR.IdAprobador
+				ON APR.IdAprobador = US.IdUsuario 
 				AND US.Activo = 1
 		WHERE APR.IdOperacion = @ID_OPERACION
 			AND APR.Activo = 1
@@ -159,6 +171,12 @@ BEGIN
 
 		END
 		
+		
+		SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+									FROM TA_Correo AS C
+										INNER JOIN TA_CorreoServidor AS S
+											ON C.IdServidor = S.IdServidor
+									WHERE IdCorreo = 37) --> CTE NUMERO CORREO (TA_Correo)
 
 		WHILE @CONT <= @CONTTOTAL
 		BEGIN
@@ -211,7 +229,7 @@ BEGIN
 				GETDATE(), -- CreadoEl - datetime
 				NULL,         -- ModificadoPor - int
 				NULL, -- ModificadoEl - datetime
-				'procura@adinco.mx',        -- De - varchar(100)
+				ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				NULL       -- EN_MsjEnviado - bit
 			);
 

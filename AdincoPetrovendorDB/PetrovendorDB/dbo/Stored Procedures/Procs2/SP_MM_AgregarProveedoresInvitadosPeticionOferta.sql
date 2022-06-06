@@ -1,9 +1,29 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_AgregarProveedoresInvitadosPeticionOferta'
+)
+    DROP PROCEDURE SP_MM_AgregarProveedoresInvitadosPeticionOferta;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarProveedoresInvitadosPeticionOferta]    Script Date: 03/06/2022 10:58:18 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <06/02/2020>
 -- Description:	<Agregar proveedores invitados cuando la peticion ya fue enviada>
 -- =============================================
-create PROCEDURE [dbo].[SP_MM_AgregarProveedoresInvitadosPeticionOferta] --'633,674','',20251,420,2205 
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_AgregarProveedoresInvitadosPeticionOferta] --'633,674','',20251,420,2205 
 	-- Add the parameters for the stored procedure here
 	@ProveedoresInvitados NVARCHAR(MAX),
 	@CorreosInvitados NVARCHAR(MAX),
@@ -15,6 +35,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @IDPROVEEDORINV INT;
 	DECLARE @CONTPROVEDORES INT;
 	DECLARE @IDPETICIONOFERTA INT;
@@ -62,6 +83,13 @@ BEGIN
 
 	SET @TOTALCORREOSINVITADOS = (SELECT COUNT(IdRow) FROM #CORREOSINVITADOS);
 
+
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
+
 	WHILE @CONTCORREOSINVITADOS <= @TOTALCORREOSINVITADOS
 	BEGIN
 		SET @CORREOINVITACIONC = (SELECT CorreoInvitado FROM #CORREOSINVITADOS WHERE IdRow = @CONTCORREOSINVITADOS);
@@ -105,7 +133,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				'procura@adinco.mx'
+				ISNULL(@CorreoNotificaciones,'')
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo
@@ -188,6 +216,12 @@ BEGIN
 	FROM dbo.SplitString(@ProveedoresInvitados,',');
 
 	SET @CONTPROVEDORES = (SELECT COUNT(IdRow) FROM #PROVEEDORESINVITADOS);
+
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 11) --> CTE NUMERO CORREO (TA_Correo)
 
 	--ENVIO DE LA PETICIONES OFERTAS A LOS PROVEEDORES
 	WHILE @CONT <= @CONTPROVEDORES
@@ -303,9 +337,9 @@ BEGIN
 			U.IdUsuario
 		FROM S_Usuario AS U
 			INNER JOIN S_UsuarioProveedor AS UP 
-				ON UP.IdUsuario= U.IdUsuario
+				ON U.IdUsuario = UP.IdUsuario
 			INNER JOIN S_Proveedor AS P 
-				ON P.IdProveedor = UP.IdProveedor
+				ON UP.IdProveedor = P.IdProveedor 
 		WHERE P.IdProveedor = @IDPROVEEDORINV
 			AND (U.IdTipoUsuario = 4 OR U.IdTipoUsuario= 3) 
 			AND U.Activo = 1;
@@ -363,7 +397,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				'procura@adinco.mx'
+				ISNULL(@CorreoNotificaciones,'')
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo

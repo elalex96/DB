@@ -1,14 +1,29 @@
-﻿if exists (select * from sys.procedures where name = 'SP_JA_EnviarCorreoComentarioRespuesta')
-begin
-	drop proc SP_JA_EnviarCorreoComentarioRespuesta
-end
-
-go
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_JA_EnviarCorreoComentarioRespuesta'
+)
+    DROP PROCEDURE SP_JA_EnviarCorreoComentarioRespuesta;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_JA_EnviarCorreoComentarioRespuesta]    Script Date: 03/06/2022 11:05:10 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
 -- Description:	<Envio de correo de notificacion de respuesta en la oferta>
 -- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
+
 CREATE PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioRespuesta] 
 	-- Add the parameters for the stored procedure here
 		@IdSolicitudPedido INT,
@@ -23,6 +38,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @IDPETICIONOFERTA INT = (SELECT TOP 1 IdPeticionOferta FROM dbo.MM_PeticionOferta WHERE IdSubcontratista = @IdProveedor AND IdSolicitudPedido = @IdSolicitudPedido);
 	DECLARE @IDUSUARIOPREGUNTA INT = (SELECT IdUsuario FROM dbo.JA_ComentarioBase WHERE IdComentarioBase = @IdComentarioBase);
 	DECLARE @NOMBREUSUARIOPREGUNTA NVARCHAR(500) = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDUSUARIOPREGUNTA);
@@ -42,6 +58,11 @@ BEGIN
 	
 	select @IdCorreo = IdCorreo from dbo.TA_Correo where Descripcion = 'Notificacion de respuesta a una pregunta en la oferta'
 
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = @IdCorreo) --> CTE NUMERO CORREO (TA_Correo)
 
 	--SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 99);
 	SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = @IdCorreo);
@@ -94,7 +115,7 @@ BEGIN
 		GETDATE(),
 		NULL,
 		NULL,
-		'procura@adinco.mx'
+		ISNULL(@CorreoNotificaciones,'')
 	);
 
 	INSERT INTO dbo.TA_EnvioCorreo
@@ -115,3 +136,7 @@ BEGIN
 	);
 
 END
+
+
+
+

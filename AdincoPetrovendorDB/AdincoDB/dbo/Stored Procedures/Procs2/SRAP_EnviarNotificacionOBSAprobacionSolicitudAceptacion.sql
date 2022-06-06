@@ -1,6 +1,14 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion]    Script Date: 03/05/2022 01:29:08 p. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion'
+)
+    DROP PROCEDURE SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion;
+GO
+/****** Object:  StoredProcedure [dbo].[SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion]    Script Date: 03/06/2022 10:06:54 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -9,6 +17,11 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 02/05/2022
 -- Description:	Envio de notificacion de usuarios OBS
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla 
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion] --10038,12185,27250,1081,'4500000002',2653
 	-- Add the parameters for the stored procedure hePut your HTML text herere
@@ -25,6 +38,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @HTML NVARCHAR(MAX);
 	DECLARE @ASUNTO NVARCHAR(1000);
 	DECLARE @DESTINATARIO NVARCHAR(500);
@@ -71,6 +85,11 @@ BEGIN
 
 	--SE OBTIENE EL TOTAL DE APROBADORES
 	SET @CONT_TOTAL = (SELECT COUNT(1) FROM @USUARIOS_OBS);
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON  C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 109) --> CTE NUMERO CORREO (TA_Correo)
 
 	--SE RECORREN Y ENVIAN LOS CORREOS DE NOTIFICACIONES A LOS USUARIOS
 	WHILE @CONT_TOTAL >= @ROW
@@ -127,7 +146,7 @@ BEGIN
 			GETDATE(), -- CreadoEl - datetime
 			NULL,         -- ModificadoPor - int
 			NULL, -- ModificadoEl - datetime
-			'procura@adinco.mx',        -- De - varchar(100)
+			ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 			NULL       -- EN_MsjEnviado - bit
 		);
 

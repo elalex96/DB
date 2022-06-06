@@ -1,7 +1,28 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_InsertarPedimentoComprobante_CD'
+)
+    DROP PROCEDURE SP_FI_InsertarPedimentoComprobante_CD;
+GO
+
+/****** Object:  StoredProcedure [dbo].[SP_FI_InsertarPedimentoComprobante_CD]    Script Date: 03/06/2022 11:19:40 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/08/2020>
 -- Description:	<Creacion del flujo de aprobacion para los pedimentos/comprobantes >
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_InsertarPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -41,7 +62,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @idped INT;
     DECLARE @IdSubcontratistaImportador INT;
 	DECLARE @IDACEPTACIONPEDIMENTO INT;
@@ -272,7 +293,7 @@ BEGIN
 		@IdOperacion
 	FROM dbo.TA_Aprobador AS APT
 		JOIN dbo.TA_FlujoTarea AS FT 
-			ON FT.IdFlujoTarea = APT.IdFlujoTarea
+			ON APT.IdFlujoTarea = FT.IdFlujoTarea
 	WHERE FT.IdFlujoTarea = @IdFlujoTarea
 	GROUP BY APT.IdUsuario,
              APT.NoSecuencia;
@@ -284,13 +305,19 @@ BEGIN
 	INSERT INTO TA_HistorialFlujoTarea(IdOperacion, Fecha,Descripcion, IdEstadoFlujo)
 	VALUES(@IdOperacion,GETDATE(),@DescripcionH,1)
 
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
+
 	SET @TIPOFLUJO = (SELECT TOP 1
 									TFT.IdTipoFlujoTarea
 								FROM dbo.TA_Operacion AS OP
 									JOIN dbo.TA_FlujoTarea AS FT
-										ON FT.IdFlujoTarea = OP.IdFlujoTarea
+										ON OP.IdFlujoTarea = FT.IdFlujoTarea
 									JOIN dbo.TA_TipoFlujoTarea AS TFT
-										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
+										ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
 								WHERE OP.IdOperacion = @IdOperacion);
 
 	IF @TIPOFLUJO = 1
@@ -310,7 +337,7 @@ BEGIN
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
 																WHERE PC.IdPedimentoComprobante = @idped);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
@@ -353,7 +380,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 
@@ -415,7 +442,7 @@ BEGIN
 				US.Correo
 			FROM dbo.TA_Tarea AS T
 			JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = T.IdAprobador
+				ON T.IdAprobador = US.IdUsuario
 			WHERE T.IdOperacion = @IdOperacion
 			AND T.Activo = 1
 			AND T.FechaCambioEstatus IS NULL;
@@ -432,7 +459,7 @@ BEGIN
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista 
 																WHERE PC.IdPedimentoComprobante = @idped);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM @APROBADORESTABLE WHERE ID = @CONT);
@@ -475,7 +502,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 

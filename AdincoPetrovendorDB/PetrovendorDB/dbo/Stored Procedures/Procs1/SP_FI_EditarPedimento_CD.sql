@@ -1,7 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_EditarPedimento_CD'
+)
+    DROP PROCEDURE SP_FI_EditarPedimento_CD;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_EditarPedimento_CD]    Script Date: 03/06/2022 11:36:56 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:      Alexander Gomez
 -- Create date: 08/09/2020
 -- Description: Editar Pedimento
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 03/06/2022
+-- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_EditarPedimento_CD]
 -- Add the parameters for the stored procedure here
@@ -29,6 +49,7 @@ CREATE PROCEDURE [dbo].[SP_FI_EditarPedimento_CD]
 AS
      BEGIN
          SET NOCOUNT ON;
+		 DECLARE @CorreoNotificaciones NVARCHAR(MAX);
          DECLARE @IdSubcontratistaImportador INT;
          DECLARE @Validacion INT;
          SET @Validacion = (DATALENGTH(@DocumentoPDF));
@@ -92,7 +113,7 @@ AS
 							OP.IdOperacion
 						FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APC
 							JOIN dbo.TA_Operacion AS OP
-								ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
+								ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
 								AND OP.IdTipoOperacion = 19
 								AND	OP.IdProveedor = APC.IdProveedor
 						WHERE APC.IdPedimentoComprobante = @IdPedimentoComprobante);
@@ -101,7 +122,7 @@ AS
 							OP.IdEstatusOperacion
 						FROM dbo.FI_AceptacionPedido_PedimentoComprobante AS APC
 							JOIN dbo.TA_Operacion AS OP
-								ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
+								ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
 								AND OP.IdTipoOperacion = 19
 								AND	OP.IdProveedor = APC.IdProveedor
 						WHERE APC.IdPedimentoComprobante = @IdPedimentoComprobante);
@@ -147,7 +168,7 @@ AS
 			@IdOperacion
 		FROM dbo.TA_Aprobador AS APT
 			JOIN dbo.TA_FlujoTarea AS FT 
-				ON FT.IdFlujoTarea = APT.IdFlujoTarea
+				ON APT.IdFlujoTarea = FT.IdFlujoTarea
 		WHERE FT.IdFlujoTarea = @IdFlujoTarea
 		GROUP BY APT.IdUsuario,
 				 APT.NoSecuencia;
@@ -162,10 +183,16 @@ AS
 									TFT.IdTipoFlujoTarea
 								FROM dbo.TA_Operacion AS OP
 									JOIN dbo.TA_FlujoTarea AS FT
-										ON FT.IdFlujoTarea = OP.IdFlujoTarea
+										ON OP.IdFlujoTarea = FT.IdFlujoTarea
 									JOIN dbo.TA_TipoFlujoTarea AS TFT
-										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
+										ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
 								WHERE OP.IdOperacion = @IdOperacion);
+
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
 
 	IF @TIPOFLUJO = 1
 		BEGIN
@@ -184,7 +211,7 @@ AS
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
 																WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
@@ -227,7 +254,7 @@ AS
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 
@@ -289,7 +316,7 @@ AS
 				US.Correo
 			FROM dbo.TA_Tarea AS T
 			JOIN dbo.S_Usuario AS US
-				ON US.IdUsuario = T.IdAprobador
+				ON T.IdAprobador = US.IdUsuario
 			WHERE T.IdOperacion = @IdOperacion
 			AND T.Activo = 1
 			AND T.FechaCambioEstatus IS NULL;
@@ -306,7 +333,7 @@ AS
 																	PVS.RazonSocial
 																FROM dbo.FI_PedimentoComprobante AS PC
 																	JOIN Adinco.dbo.PV_Subcontratista AS PVS
-																		ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
+																		ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista
 																WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante);
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM @APROBADORESTABLE WHERE ID = @CONT);
@@ -349,7 +376,7 @@ AS
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
+				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 
