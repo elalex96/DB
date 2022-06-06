@@ -974,7 +974,7 @@ BEGIN
 					AND SC.Frecuencia = @Frecuencia
 					AND SC.AnioMes = @AnioMes
 					AND SC.Etapa = @Etapa
-					AND SC.IsPozo = @Etapa
+					AND SC.IsPozo = @IsPozo
 					AND SC.IdReceptorEntregable = @IdReceptorEntregable
 		LEFT JOIN AP_Usuario AS US
 			ON CA.CreadoPor = US.UsuarioID
@@ -1194,7 +1194,11 @@ BEGIN
 				ON SC.IdCarpeta = @IdCarpeta
 					AND SC.Nivel = @Nivel
 					AND SC.IdContrato = @ContratoId
+					AND SC.IdReceptorEntregable = @IdReceptorEntregable
+					AND SC.Frecuencia = @Frecuencia
 					AND SC.AnioMes = @AnioMes
+					AND SC.Etapa = @Etapa
+					AND SC.IsPozo = @IsPozo
 					AND SC.IdReceptorEntregable = @IdReceptorEntregable
 		LEFT JOIN AP_Usuario AS US
 			ON CA.CreadoPor = US.UsuarioID
@@ -1202,6 +1206,9 @@ BEGIN
 			AND IdPadre = @IdCarpeta
 			AND CA.Nivel = @Nivel
 			AND CA.Activo = 1
+			AND CA.IdReceptorEntregable = @IdReceptorEntregable
+			AND CA.Etapa = @Etapa
+			AND CA.IsPozo = @IsPozo
 		GROUP BY CA.Nombre,
 			CA.IdElemento,
 			CA.Meta,
