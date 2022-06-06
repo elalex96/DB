@@ -1209,6 +1209,7 @@ BEGIN
 			AND CA.IdReceptorEntregable = @IdReceptorEntregable
 			AND CA.Etapa = @Etapa
 			AND CA.IsPozo = @IsPozo
+			AND CA.IdContrato = @ContratoId
 		GROUP BY CA.Nombre,
 			CA.IdElemento,
 			CA.Meta,
