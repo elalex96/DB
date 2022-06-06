@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CargarArchivo]    Script Date: 03/06/2022 09:35:22 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_CargarArchivo]    Script Date: 05/06/2022 03:18:05 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -25,12 +25,40 @@ ALTER PROCEDURE [dbo].[SP_EN_CargarArchivo]
 	@SizeBytes FLOAT,
 	@Ruta VARCHAR(MAX),
 	@IdEntregable INT,
-	@AnioMes NVARCHAR(100)
+	@AnioMes NVARCHAR(100),
+	@Etapa INT, 
+	@IdReceptorEntregable INT, 
+	@IsPozo BIT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
+	--RECUPERAR LA RUTA GUARDADA AL ENTRAR A LA CARPETA
+	--DECLARE @RUTA_GUARDADA NVARCHAR(MAX) = (SELECT TOP 1
+	--											Ruta
+	--										FROM EN_SecuenciaCarpetas 
+	--										WHERE IdCarpeta = @IdCarpeta
+	--											AND Nivel = @Nivel
+	--											AND Frecuencia = @Frecuencia
+	--											AND IdContrato = @ContratoId
+	--										ORDER BY Ruta ASC);
+
+	--SET @RUTA_GUARDADA = REPLACE(@RUTA_GUARDADA,'Etapas ->','');
+	--SET @RUTA_GUARDADA = REPLACE(@RUTA_GUARDADA,' ->','/');
+	--SET @RUTA_GUARDADA = REPLACE(@RUTA_GUARDADA,' ->','/') + @NombreArchivo;
+
+	----COMPARARLA CON LA RUTA RECIBIDA PARA VALIDAR QUE SEA LA MISMA
+	--IF ISNULL(@RUTA_GUARDADA,'') <> ''
+	--BEGIN
+
+	--	IF (@RUTA_GUARDADA <> @Ruta)
+	--	BEGIN
+	--		--ESTABLECER LA RUTA GUARDADA
+	--		SET @Ruta = @RUTA_GUARDADA;
+	--	END
+
+	--END
 
     -- Insert statements for procedure here
 	INSERT INTO EN_CarpetasArchivosVisor (
@@ -50,7 +78,10 @@ BEGIN
 		IdContrato,
 		Ruta,
 		IdEntregable,
-		AnioMes
+		AnioMes,
+		Etapa,
+		IdReceptorEntregable,
+		IsPozo
 	)
 	VALUES
 	(
@@ -70,7 +101,10 @@ BEGIN
 		@ContratoId,
 		@Ruta,
 		@IdEntregable,
-		@AnioMes
+		@AnioMes,
+		@Etapa,
+		@IdReceptorEntregable,
+		@IsPozo
 	);
 
 	SELECT SCOPE_IDENTITY() AS IDDOCUMENTO;
