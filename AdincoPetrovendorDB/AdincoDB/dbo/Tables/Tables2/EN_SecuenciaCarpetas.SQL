@@ -18,7 +18,8 @@ CREATE TABLE [dbo].[EN_SecuenciaCarpetas](
 	[IsCarpetaUsuario] [bit] NULL,
 	[IsCarpetaUsuarioAnterior] [bit] NULL,
 	[Ruta] [varchar](max) NULL,
-	[RutaAnterior] [varchar](max) NULL
+	[RutaAnterior] [varchar](max) NULL,
+	[IdEntregable] [int] NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 

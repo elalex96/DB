@@ -27,6 +27,11 @@ CREATE TABLE [dbo].[EN_CarpetasArchivosVisor](
 	[IdContrato] [int] NULL,
 	[FechaEliminado] [datetime] NULL,
 	[Ruta] [varchar](max) NULL,
+	[IdEntregable] [int] NULL,
+	[AnioMes] [varchar](100) NULL,
+	[Etapa] [int] NULL,
+	[IdReceptorEntregable] [int] NULL,
+	[IsPozo] [bit] NULL
  CONSTRAINT [PK_EN_CarpetasArchivosVisor] PRIMARY KEY CLUSTERED 
 (
 	[IdElemento] ASC
