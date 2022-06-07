@@ -27,10 +27,6 @@ ALTER TABLE [dbo].[EN_ExcepcionesFechaBitacora]  WITH CHECK ADD FOREIGN KEY([Con
 REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 GO
 
-ALTER TABLE [dbo].[EN_ExcepcionesFechaBitacora]  WITH CHECK ADD FOREIGN KEY([IdInstanciaEntregable])
-REFERENCES [dbo].[EN_InstanciasEntregable] ([idInstanciaEntregable])
-GO
-
 ALTER TABLE [dbo].[EN_ExcepcionesFechaBitacora]  WITH CHECK ADD FOREIGN KEY([UsuarioId])
 REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 GO
