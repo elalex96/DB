@@ -106,7 +106,7 @@ CREATE TABLE #Complementos
        WHERE TipoComprobante = 'P'
        AND 
 				IdContrato IN(10039, 10053)
-                                       --
+
 SELECT 
 		Company = ctista.NombreContratista,
 		SAPV.VendorName AS [Vendor Name],
@@ -455,4 +455,3 @@ DROP TABLE #Complementos;
 DROP TABLE #tablePCN;
 DROP TABLE #tmpPCNFinal;
 GO
-
