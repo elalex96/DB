@@ -426,7 +426,7 @@ BEGIN
     )
     SELECT faws.IdFactura
     FROM adinco..FacturasAWSDocumentos faws
-        INNER JOIN AWS_Documentos awsd
+        INNER JOIN AWS_Documentos awsd (NOLOCK)
             ON faws.AWSDocumentoId = awsd.AWSDocumentoId
     GROUP BY faws.IdFactura
 
@@ -449,7 +449,7 @@ BEGIN
                                             CAST(1 AS BIT)
                                     END
     FROM #Facturas F
-        JOIN APP_RelacionRutaDropboxFactura DF
+        JOIN APP_RelacionRutaDropboxFactura DF (NOLOCK)
             ON DF.IdFactura = F.IdFactura
 
     SELECT F.IdFactura,
