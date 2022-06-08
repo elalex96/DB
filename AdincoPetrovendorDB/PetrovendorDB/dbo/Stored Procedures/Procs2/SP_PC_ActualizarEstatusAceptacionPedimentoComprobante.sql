@@ -1,8 +1,16 @@
 ﻿
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_PC_ActualizarEstatusAceptacionPedimentoComprobante
+GO
 -- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 16-08-17
 -- Description:	Actualiza el estatus de aprobador y de la aprobacion general  
+-- =============================================
+-- Author:		Luis David
+-- Create date: 06-06-22
+-- Description:	Se optimiza el sp y se retorna el estatus en inglés
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_ActualizarEstatusAceptacionPedimentoComprobante]
     -- Add the parameters for the stored procedure here
@@ -13,11 +21,7 @@ CREATE PROCEDURE [dbo].[SP_PC_ActualizarEstatusAceptacionPedimentoComprobante]
     @IdEstatus INT,
     @IdOperacion INT,
     @ACCION NVARCHAR(200)
-
-
 --- SP_FI_ActualizarEstatusAceptacionFactura_RF 420,2205,48,'ejemplo', 1,2400
-
-
 AS
 BEGIN
 
@@ -82,7 +86,11 @@ BEGIN
             SELECT COUNT(IdEstatus) AS TOTAL
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+                    ON TAO.IdOperacion = T.IdOperacion
+				INNER JOIN S_Usuario (NOLOCK) AS US
+					ON T.IdAprobador = US.IdUsuario
+					AND US.Activo = 0
+					AND US.IsEliminado = 0
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus <> 7
         );
@@ -94,7 +102,11 @@ BEGIN
             SELECT COUNT(IdEstatus) AS TOTAL
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+                    ON TAO.IdOperacion = T.IdOperacion
+				INNER JOIN S_Usuario (NOLOCK) AS US
+					ON T.IdAprobador = US.IdUsuario
+					AND US.Activo = 0
+					AND US.IsEliminado = 0
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 1
         );
@@ -104,7 +116,11 @@ BEGIN
             SELECT COUNT(IdEstatus) AS TOTAL
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+                    ON TAO.IdOperacion = T.IdOperacion
+				INNER JOIN S_Usuario (NOLOCK) AS US
+					ON T.IdAprobador = US.IdUsuario
+					AND US.Activo = 0
+					AND US.IsEliminado = 0
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 2
         );
@@ -115,7 +131,11 @@ BEGIN
             SELECT COUNT(IdEstatus) AS TOTAL
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+                    ON TAO.IdOperacion = T.IdOperacion
+				INNER JOIN S_Usuario (NOLOCK) AS US
+					ON T.IdAprobador = US.IdUsuario
+					AND US.Activo = 0
+					AND US.IsEliminado = 0
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 3
         );
@@ -236,34 +256,31 @@ BEGIN
 				TOO.IdEstadoFlujo,--5
 				TOO.IdTipoOperacion,--6
 				TTO.NombreOperacion,--7
-				U.IdUsuario,--8
+				US.IdUsuario,--8
 				T.NoSecuencia,--9
-				U.Nombre,--10
-				U.Correo,--11
+				US.Nombre,--10
+				US.Correo,--11
 				T.IdEstatus,--12
 				TOO.IdOperacion,--13
-				TOO.IdAsignador,--14
+				TOO.IdAsignador,--14	
 				TOO.IdProveedor,		--15	
 				TAE.Nombre,--16
-				TAE.Nombre--17	
+				TAE.name,--17	
+				ISNULL(T.Comentario,'') AS Comentario
 			FROM TA_Tarea AS T
 				INNER JOIN TA_Operacion AS TOO
-					ON TOO.IdOperacion = T.IdOperacion
-				INNER JOIN TA_FlujoTarea AS FT
-					ON FT.IdFlujoTarea = TOO.IdFlujoTarea
+					ON T.IdOperacion = TOO.IdOperacion
+				INNER JOIN TA_FlujoTarea  (NOLOCK)  AS FT
+					ON TOO.IdFlujoTarea = FT.IdFlujoTarea
 				---INNER JOIN TA_Aprobador  AS TAA on TAA.IdUsuario= T.IdAprobador  AND TAA.IdFlujoTarea = FT.IdFlujoTarea
-				INNER JOIN S_Usuario AS U
-					ON U.IdUsuario = T.IdAprobador
-				INNER JOIN TA_TipoOperacion AS TTO
-					ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
-				INNER JOIN TA_Estatus AS TAE
-					ON TAE.IdEstatus = TOO.IdEstatusOperacion
+				INNER JOIN S_Usuario (NOLOCK) AS US
+					ON T.IdAprobador = US.IdUsuario
+				INNER JOIN TA_TipoOperacion (NOLOCK) AS TTO
+					ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
+				INNER JOIN TA_Estatus (NOLOCK) AS TAE
+					ON TOO.IdEstatusOperacion = TAE.IdEstatus
 			WHERE T.IdOperacion = @IdOperacion
 				  AND T.Activo = 1
 			ORDER BY NoSecuencia ASC;
-
 	END
-	
 END;
-
-
