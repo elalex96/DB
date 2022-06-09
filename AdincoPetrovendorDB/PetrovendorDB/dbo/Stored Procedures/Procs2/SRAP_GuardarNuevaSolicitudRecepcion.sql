@@ -1,8 +1,16 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_GuardarNuevaSolicitudRecepcion]    Script Date: 02/05/2022 07:09:47 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_GuardarNuevaSolicitudRecepcion]    Script Date: 08/06/2022 02:48:56 p. m. ******/
 SET ANSI_NULLS ON
 GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SRAP_GuardarNuevaSolicitudRecepcion'
+)
+    DROP PROCEDURE SRAP_GuardarNuevaSolicitudRecepcion;
+	GO
 SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
@@ -15,7 +23,12 @@ GO
 -- Create date: 03/05/2022
 -- Description:	Eliminado temporal de la primera aprobacion de aceptacion de pedido
 -- =============================================
-ALTER PROCEDURE [dbo].[SRAP_GuardarNuevaSolicitudRecepcion] 
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 08-06-2022
+-- Description:	Se revierte Eliminado temporal de la primera aprobacion de aceptacion de pedido
+-- =============================================
+CREATE PROCEDURE [dbo].[SRAP_GuardarNuevaSolicitudRecepcion] 
 	-- Add the parameters for the stored procedure here
 @IdPedido    INT,
 @IdProveedor INT,
@@ -198,19 +211,19 @@ AS
 			ON P.IdSolicitudPedido = SP.IdSolicitudPedido
 		WHERE P.IdPedido=@IdPedido
 
-		--NO  ELIMINAR EL SIGUIENTE CODIGO COMENTADO ESTO FUE COMENTADO TEMPORALMENTE PARA EL ISSUE 1765
+		
 		/*AGREGAR AL APROBADOR --> 
 		-->NUMERO DE SECUENCIA DEFAULT EN 1 POR QUE SOLO ES UN APROBADOR*/
-	  -- INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion)
-	  -- VALUES ('Solicitud Aceptación pedido', @IdSolicitanteRequisicion,@IdEstatusEnAprobacion,0,'','',GETDATE(),1,1,@IdOperacion)
+	   INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion)
+	   VALUES ('Solicitud Aceptación pedido', @IdSolicitanteRequisicion,@IdEstatusEnAprobacion,0,'','',GETDATE(),1,1,@IdOperacion)
 	  
 
-	  --SET @Descripcion_historial = CONCAT('El Usuario',
-			--						(SELECT Nombre FROM S_USuario WHERE IdUsuario = @UsuarioId), 
-			--						' ha registrado la ', (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = @TipoOperacionId))
+	  SET @Descripcion_historial = CONCAT('El Usuario',
+									(SELECT Nombre FROM S_USuario WHERE IdUsuario = @UsuarioId), 
+									' ha registrado la ', (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = @TipoOperacionId))
 
-	  -- INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
-	  -- VALUES (@Descripcion_historial,@IdOperacion,GETDATE(),1)
+	   INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
+	   VALUES (@Descripcion_historial,@IdOperacion,GETDATE(),1)
 
 	   END 
 
@@ -232,8 +245,8 @@ AS
 				 ON C.IdAreaContractual = AC.IdAreaContractual  
 			LEFT JOIN TA_Operacion AS O
 				ON P.IdSolicitudPedido  = O.IdDocumento
-				AND O.IdEstatusOperacion = 2 
-				AND O.IdTipoOperacion = 9 
+				AND O.IdEstatusOperacion = 2 --> CTE APROBADO
+				AND O.IdTipoOperacion = 9  --> CTE PEDIDO
 			AND P.Version = O.NoVersion    		 
 		    LEFT JOIN S_Proveedor AS PV 
 				ON P.IdSubcontratista = PV.IdProveedor
@@ -244,18 +257,7 @@ AS
 			WHERE P.IdPedido = @IdPedido
 
 	   END 
-
-	   --ENVIO DE NOTIFICACIONES TEMPORAL A OBS PARA ISSUE 1765
-	   BEGIN
-
-			EXEC SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion @ContratoId = @IdContrato,
-																			@NumeroPedidoGral = @IdPedidoGeneral,
-																			@IdPedido = @IdPedido,
-																			@NoSolicitudRecepcionPedido = @IdSolicitudAceptacionPedido,
-																			@PO = @PO,
-																			@IdUsuario = @UsuarioId;
-
-	   END
+	  
 
 	  /*RETORNAR TABLA 1 DETALLE*/
 	  SELECT Response = 'SUCCESS',
