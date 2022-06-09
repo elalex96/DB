@@ -35,13 +35,13 @@ BEGIN
 												FROM Adinco.dbo.CO_SAPPO AS PO
 													LEFT JOIN Adinco.dbo.CO_SAPVendor AS V ON V.VendorIDSAP = PO.SAPVendorNumber
 												WHERE PO.SAPPONumber = @PONumber);
-	DECLARE @IDPROVEEDOR INT = (SELECT TOP 1
-												P.IdProveedor
+	DECLARE @IDPROVEEDOR INT = (SELECT TOP 1 UP.IdProveedor
 												FROM Adinco.dbo.CO_SAPPO AS PO
-													LEFT JOIN Adinco.dbo.CO_SAPVendor AS V ON V.VendorIDSAP = PO.SAPVendorNumber
-													JOIN Petrovendor..S_Proveedor as P on V.TaxID collate Modern_Spanish_CI_AS = P.RFC collate Modern_Spanish_CI_AS
+													JOIN Petrovendor.dbo.S_UsuarioProveedor AS UP
+													on Po.IdContrato = UP.IdContrato
 												WHERE PO.SAPPONumber = @PONumber
-												GROUP BY P.IdProveedor);
+												GROUP BY IdProveedor);
+												
 
 	
 	SELECT
