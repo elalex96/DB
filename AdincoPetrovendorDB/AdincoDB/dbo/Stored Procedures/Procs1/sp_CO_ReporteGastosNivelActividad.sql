@@ -1,11 +1,5 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_CO_ReporteGastosNivelActividad]    Script Date: 11/01/2021 11:54:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[sp_CO_ReporteGastosNivelActividad] --10159,09,2020  
+﻿-- [sp_CO_ReporteGastosNivelActividad] 10159,09,2020  
+CREATE PROCEDURE [dbo].[sp_CO_ReporteGastosNivelActividad] --10159,09,2020  
 @IdPresupuesto INT = 0,  
 @MesGE         INT = 0,  
 @Anio          INT = 0  
@@ -110,10 +104,10 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
                     SELECT CO_LineaPresupuestoMes.IdTipoServicio,  
                            CO_LineaPresupuestoMes.IdActividad,  
                            SUM(CASE  
-                                   WHEN CO_Registro.CvTipoDocFacturacion = 1  
-                                        AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0  
-                                   --THEN ISNULL(CO_Registro.MontoRegistro, 0) / CO_TipoCambioMensual.TipoCambio  
-           THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio)
+                                    WHEN CO_Registro.CvTipoDocFacturacion = 1  
+                                       AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0  
+                                   
+										THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
                                    WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)  
                            AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0  
                                    --THEN ISNULL(CO_Registro.MontoRegistro, 0) / TCDPC.TipoCambio  
@@ -217,9 +211,10 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
              SELECT CO_LineaPresupuestoMes.IdTipoServicio,  
                            CO_LineaPresupuestoMes.IdActividad,  
                            SUM(CASE  
-                                   WHEN CO_Registro.CvTipoDocFacturacion = 1  
-                                        AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0  
-                                   THEN ISNULL(RM.MontoGasto+ rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio)  
+                                    WHEN CO_Registro.CvTipoDocFacturacion = 1  
+                                       AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0  
+                                   
+										THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
                                    WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)  
                            AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0  
                                    THEN ISNULL(RM.MontoGasto+ rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio)

@@ -1,11 +1,6 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_CO_ReporteIntegracionGastosNivelActividadRenglon]    Script Date: 12/01/2021 12:33:21 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosNivelActividadRenglon]-- 2015,05,10000  
+﻿-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- [sp_CO_ReporteIntegracionGastosNivelActividadRenglon] 2015,05,10000  
+CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosNivelActividadRenglon]-- 2015,05,10000  
 @Anio          INT = 0,    
 @Mes           INT = 0,    
 @IdPresupuesto INT = 0    
@@ -106,19 +101,21 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual)
                           AND YEAR(L.[AC_PRESUP_MES]) = @Anio    
                           AND S.IdServicio = L.IdServicio;    
 /**/    
-   -- gasto acumulado mes actual   
+  -- gasto acumulado mes actual   
              INSERT INTO #Gastos    
                     SELECT CO_LineaPresupuestoMes.IdTipoServicio AS Servicio,    
                       CO_LineaPresupuestoMes.IdActividad AS Actividad,    
-                           SUM(CASE    
-                           WHEN CO_Registro.CvTipoDocFacturacion = 1    
-                                        AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
-                                   THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
-                                   WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)    
-                           AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
-                                   THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio) 
-                                   ELSE 0    
-                               END) AS Gastos,    
+                           SUM(
+						   CASE    
+							   WHEN CO_Registro.CvTipoDocFacturacion = 1    
+							   AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0    
+									   THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
+							   WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)    
+							   AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
+									   THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio) 
+							   ELSE 0    
+                               
+						   END) AS Gastos,    
                            CO_LineaPresupuestoMes.IdServicio AS NoServicio,  
          CO_LineaPresupuestoMes.IdRubro  
                     FROM CO_LineaPresupuestoMes    
@@ -148,8 +145,8 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual)
                            CO_LineaPresupuestoMes.IdActividad AS Actividad,    
                            SUM(CASE    
                                    WHEN CO_Registro.CvTipoDocFacturacion = 1    
-                                        AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
-                                    THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio)
+							   AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0    
+									   THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
                                    WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)    
                            AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
                                    THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio)
@@ -229,7 +226,7 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual)
              WHERE CO_Servicio.IdServicio = NoServicio;    
 --    
              UPDATE #Reporte    
-               SET    
+               SET 
                    orden = CO_ServicioActividad.Orden    
              FROM CO_ServicioActividad    
              WHERE CO_ServicioActividad.IdTipoServicio = #Reporte.Servicio    
@@ -308,8 +305,4 @@ INSERT INTO dbo.TempReporteIntegracionGastosNivelActividadRenglon
      'Saldo Remanente ' + isnull(@nombrePresupuesto, '') + ' ($USD)' as Etiqueta1  
              FROM TempReporteIntegracionGastosNivelActividadRenglon GNAR;    
          END;
-  
-  
-
-
 
