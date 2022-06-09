@@ -1,7 +1,16 @@
-﻿-- =============================================
+﻿
+ USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_MPY_AprobadoresFacturaPO
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 06/11/2018
 -- Description:	Consultar los aprobadores de factura
+-- =============================================
+-- Author:		Luis David
+-- Create date: 08/06/2022
+-- Description:	Se agrega el id proveedor para validar si se bloqueó el correo Issue 1780
 -- =============================================
 CREATE procedure [dbo].[SP_MPY_AprobadoresFacturaPO] --'4500095093'
 	-- Add the parameters for the stored procedure here
@@ -26,12 +35,21 @@ BEGIN
 												FROM Adinco.dbo.CO_SAPPO AS PO
 													LEFT JOIN Adinco.dbo.CO_SAPVendor AS V ON V.VendorIDSAP = PO.SAPVendorNumber
 												WHERE PO.SAPPONumber = @PONumber);
+	DECLARE @IDPROVEEDOR INT = (SELECT TOP 1 UP.IdProveedor
+												FROM Adinco.dbo.CO_SAPPO AS PO
+													JOIN Petrovendor.dbo.S_UsuarioProveedor AS UP
+													on Po.IdContrato = UP.IdContrato
+												WHERE PO.SAPPONumber = @PONumber
+												GROUP BY IdProveedor);
+												
+
 	
 	SELECT
 		US.IdUsuario,
 		US.Nombre,
 		US.Correo,
-		@VENDORNAME AS VendorName
+		@VENDORNAME AS VendorName,
+		@IDPROVEEDOR AS IdProveedor
 	FROM dbo.S_Usuario AS US
 		LEFT JOIN dbo.S_UsuarioProveedor AS UP ON UP.IdUsuario = US.IdUsuario
 		LEFT JOIN dbo.S_Proveedor AS PR ON PR.IdProveedor = UP.IdProveedor
