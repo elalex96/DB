@@ -1,6 +1,14 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]    Script Date: 05/05/2022 01:23:59 p. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SRAP_ConsultarSolicitudesAceptacionPedido'
+)
+    DROP PROCEDURE SRAP_ConsultarSolicitudesAceptacionPedido;
+	GO
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]    Script Date: 08/06/2022 03:15:13 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,23 +18,17 @@ GO
 -- Create date: 25-05-2021
 -- Description:	Consultar solicitudes de recepción de pedido
 -- =============================================
--- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
--- =============================================
--- Author:		LUIS DAVID
--- Create date: 02/03/2022
--- Description:	SE AGREGA EL PO PARA DEA ISSUE#1651
--- =============================================
--- =============================================
--- Author:		Daniel AC
--- Create date: 27-04-2022
--- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
--- =============================================
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 05/05/2022
 -- Description:	Issue #1765  adecuaciones para mostrar las solicitudes pendientes a los usuarios obs
 -- =============================================
-ALTER PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 08-06-2022
+-- Description:	Se revierte Eliminado temporal de la primera aprobacion de aceptacion de pedido
+-- =============================================
+CREATE PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario   INT,
@@ -198,14 +200,9 @@ AS
 		LEFT JOIN	DEA_Relacion_PR_PO AS RPO (NOLOCK)
 		ON			P.IdPedido						=  RPO.IdPedido
 		WHERE 		P.IdProveedorCompras			=	@IdProveedor
-		and			C.IdContrato					=	@IdContrato
-		and			O.IdEstatusOperacion			=	1
-		--AGREGADO DE ESTE PARAMETRO PARA MOSTRARLE LAS APROBACIONES A LOS OBS
-		and			(@esOBS = 1)
-		--COMENTADO PARA ISSUE 1765
-		--and			((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)	or ((@esOBS = 1 )  and ta.IdEstatus = 2) )
-		--and			ta.IdEstatus					=   1
-		--and			ta.Activo						=	1
+		and			C.IdContrato					=	@IdContrato		
+		and			((ta.IdAprobador				=	@IdUsuario and ta.IdEstatus = 1)	or ((@esOBS = 1 )  and ta.IdEstatus = 2) )		
+		and			ta.Activo						=	1
 		GROUP BY    
 					ta.IdTarea,
 					IdFlujoTarea,

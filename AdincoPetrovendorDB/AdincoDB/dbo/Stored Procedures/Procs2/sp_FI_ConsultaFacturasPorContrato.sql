@@ -1,8 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
-    @IdContrato INT = 0,
-    @IdUsuario INT = 0
-AS
--- =============================================  
+﻿-- =============================================  
 -- Author: Miguel Gomez  
 -- Create date: 14-01-2017  
 -- Description: Lista las facturas de un contrato  
@@ -12,45 +8,56 @@ AS
 -- Description: Quitar UNION,  
 --				Agregar Campos (Creado En, Creado Por)  
 -- =============================================  
--- =============================================  
 -- Author: Marcos Garcia  
 -- Alter date: 18-04-2022  
 -- Description: Ajustar Importe,  
 --				Se realiza SUM de importes
 -- ============================================= 
+-- Author:		Neri Garcia
+-- Create date: 07 de Mayo del 2022
+-- Description:	Ajustes de Consulta principal y se agregan filtros de @FechaInicio y @FechaFin
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
+    @IdContrato INT = 0,
+    @IdUsuario INT = 0,
+    @FechaInicio DATETIME = NULL,
+    @FechaFin DATETIME = NULL
+AS
 BEGIN
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
-    /*  
-         --DROP TABLE #CartasProcura;  
-         --DROP TABLE #Facturas;  
-         */
+    IF OBJECT_ID('tempdb..#tmpFiles') IS NOT NULL
+        DROP TABLE #tmpFiles
 
+    IF OBJECT_ID('tempdb..#CartasProcura') IS NOT NULL
+        DROP TABLE #CartasProcura
+
+    IF OBJECT_ID('tempdb..#Importes') IS NOT NULL
+        DROP TABLE #Importes
+
+    IF OBJECT_ID('tempdb..#Facturas') IS NOT NULL
+        DROP TABLE #Facturas
+
+    IF OBJECT_ID('tempdb..#FI_Factura_General') IS NOT NULL
+        DROP TABLE #FI_Factura_General
+
+    /*Creación de Tablas Temporales*/
+    CREATE TABLE #tmpFiles
+    (
+        IdFactura INT,
+        PRIMARY KEY (IdFactura)
+    )
     CREATE TABLE #CartasProcura
     (
-        IdFacutra INT,
+        IdFactura INT,
         UUID NVARCHAR(200)
     );
     CREATE TABLE #Importes
     (
         IdFactura INT,
-        Importe DECIMAL(18, 4)
+        Importe DECIMAL(18, 4),
+        PRIMARY KEY (IdFactura)
     );
-    /**/
-    INSERT INTO #Importes
-    (
-        IdFactura,
-        Importe
-    )
-    SELECT FIm.IdFactura,
-           SUM(Fim.Importe)
-    FROM FI_Factura F WITH (NOLOCK)
-        INNER JOIN FI_CFDIImpuesto FIm WITH (NOLOCK)
-            ON F.IdContrato = @IdContrato
-               AND F.IdFactura = Fim.IdFactura
-    GROUP BY FIm.IdFactura
-    ORDER BY FIm.IdFactura
-
     CREATE TABLE #Facturas
     (
         IdFactura INT,
@@ -86,14 +93,21 @@ BEGIN
         CCN BIT,
         CRCCN NVARCHAR(1000),
         CreadoEn DATE,
-        CreadoPor NVARCHAR(MAX)
+        CreadoPor NVARCHAR(MAX),
+        TieneArchivos BIT,
+        FacturaRelacionadaDropbox BIT,
+        IdMoneda INT,
+        TipoMonedaCorto VARCHAR(MAX),
+        CreadoPorID INT,
+        Nombre VARCHAR(MAX),
+        IdSubcontratista INT,
+        Emisor VARCHAR(MAX),
+        PRIMARY KEY (IdFactura)
     );
-
-    /**/
 
     INSERT INTO #CartasProcura
     (
-        IdFacutra,
+        IdFactura,
         UUID
     )
     SELECT DISTINCT
@@ -125,7 +139,6 @@ BEGIN
                AND FP.Activa = 1
                AND ISNULL(FP.IsEliminado, 0) <> 1
     /**/
-
     IF @IdContrato = 10007
     BEGIN
         INSERT INTO #Facturas
@@ -163,11 +176,18 @@ BEGIN
             CCN,
             CRCCN,
             CreadoEn,
-            CreadoPor
+            CreadoPor,
+            TieneArchivos,
+            FacturaRelacionadaDropbox,
+            IdMoneda,
+            TipoMonedaCorto,
+            CreadoPorID,
+            IdSubcontratista,
+            Emisor
         )
         SELECT F.IdFactura,
-               S.RazonSocial AS NombreEmisor,
-               S.RFC AS RFC_Emisor,
+               S.RazonSocial,
+               S.RFC,
                C.NumeroContrato,
                F.Fecha,
                F.Serie,
@@ -176,12 +196,12 @@ BEGIN
                F.Descuento,
                F.TipoCambio,
                F.MontoConIva AS Total,
-               M.TipoMonedaCorto AS Moneda,
+               '',
                SUBSTRING(F.TipoComprobante, 1, 1) AS TipoComprobante,
                F.MetodoPago,
                SUBSTRING(F.LugarExpedicion, 0, 20) AS LugarExpedicion,
                F.NumCtaPago,
-               CC.RFC AS Receptor,
+               CC.RFC,
                F.UUID,
                F.FechaTimbrado,
                F.SelloCFD,
@@ -191,49 +211,32 @@ BEGIN
                F.FechaRecepcion,
                YEAR(F.Fecha) AS Año,
                CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS NVARCHAR(20)), 2), ' ', DATENAME(MONTH, F.Fecha)) AS Mes,
-               CC.RazonSocial AS Receptor,
-               TieneArchivo = CAST(CASE
-                                       WHEN D.DocumentoByte IS NULL THEN
-                                           0
-                                       ELSE
-                                           1
-                                   END AS BIT),
-               imp.importe as IVA,
+               CC.RazonSocial,
+               0,
+               0,
                C.IdContrato,
-               CASE
-                   WHEN WAD.IdDocAwsDocAdinco IS NULL THEN
-                       0
-                   ELSE
-                       1
-               END AS CCN,
+               0,
                NULL AS CRCCN,
                CONVERT(DATE, F.CreadoEn) AS CreadoEn,
-               UM.Nombre AS CreadoPor
-        FROM dbo.FI_Factura AS F WITH (NOLOCK)
+               '' AS CreadoPor,
+               0,
+               0,
+               F.IdMoneda,
+               'NA',
+               F.CreadoPor,
+               F.IdSubcontratista,
+               F.Emisor
+        FROM dbo.FI_Factura AS F (NOLOCK)
             JOIN dbo.PV_Subcontratista AS S WITH (NOLOCK)
-                ON F.IdSubcontratista = S.IdSubcontratista
-                   AND F.IdContrato = @IdContrato
+                ON F.IdContrato = @IdContrato
+                   AND CONVERT(DATE, ISNULL(F.FechaTimbrado, F.Fecha))
+                   BETWEEN CONVERT(DATE, @FechaInicio) AND CONVERT(DATE, @FechaFin)
+                   AND F.IdSubcontratista = S.IdSubcontratista
             JOIN dbo.CO_Contrato C WITH (NOLOCK)
                 ON F.IdContrato = C.IdContrato
             JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
-            LEFT JOIN dbo.PV_TipoMoneda M WITH (NOLOCK)
-                ON F.IdMoneda = M.IdMoneda
-            LEFT JOIN dbo.FI_Documento D WITH (NOLOCK)
-                ON F.IdFactura = D.IdFactura
-                   AND D.IdTipoDocumento = 1
-                   AND ISNULL(D.IsEliminado, 0) = 0
-            LEFT JOIN dbo.AWS_DocAwsDocAdinco WAD WITH (NOLOCK)
-                ON F.IdFactura = WAD.IdDocAdinco
-            LEFT JOIN dbo.AP_Usuario UM WITH (NOLOCK)
-                ON F.CreadoPor = UM.UsuarioID
-            left join #Importes imp
-                on imp.idfactura = f.IdFactura
-        ORDER BY F.IdFactura DESC;
     END;
-
-    /**/
-
     ELSE
     BEGIN
         INSERT INTO #Facturas
@@ -271,83 +274,232 @@ BEGIN
             CCN,
             CRCCN,
             CreadoEn,
-            CreadoPor
+            CreadoPor,
+            TieneArchivos,
+            FacturaRelacionadaDropbox,
+            IdMoneda,
+            TipoMonedaCorto,
+            CreadoPorID,
+            IdSubcontratista,
+            Emisor
         )
-        SELECT DISTINCT
-            F.IdFactura,
-            S.RazonSocial AS NombreEmisor,
-            S.RFC AS RFC_Emisor,
-            C.NumeroContrato,
-            F.Fecha,
-            F.Serie,
-            F.Folio,
-            F.SubTotal,
-            F.Descuento,
-            F.TipoCambio,
-            F.MontoConIva AS Total,
-            M.TipoMonedaCorto AS Moneda,
-            SUBSTRING(F.TipoComprobante, 1, 1) AS TipoComprobante,
-            F.MetodoPago,
-            SUBSTRING(F.LugarExpedicion, 0, 20) AS LugarExpedicion,
-            F.NumCtaPago,
-            CC.RFC AS Receptor,
-            F.UUID,
-            F.FechaTimbrado,
-            F.SelloCFD,
-            F.NoCertificadoSAT,
-            F.SelloSAT,
-            F.Tipo,
-            F.FechaRecepcion,
-            YEAR(F.Fecha) AS Año,
-            CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS NVARCHAR(20)), 2), ' ', DATENAME(MONTH, F.Fecha)) AS Mes,
-            CC.RazonSocial AS Receptor,
-            TieneArchivo = CAST(CASE
-                                    WHEN D.DocumentoByte IS NULL THEN
-                                        0
-                                    ELSE
-                                        1
-                                END AS BIT),
-            I.Importe as IVA,
-            C.IdContrato,
-            CASE
-                WHEN WAD.IdDocAwsDocAdinco IS NULL THEN
-                    0
-                ELSE
-                    1
-            END AS CCN,
-            NULL AS CRCCN,
-            CONVERT(DATE, F.CreadoEn) AS CreadoEn,
-            UM.Nombre AS CreadoPor
-        FROM dbo.FI_Factura AS F WITH (NOLOCK)
-            LEFT JOIN dbo.FI_FacturaContrato FC WITH (NOLOCK)
-                ON F.IdFactura = FC.IdFactura
+        SELECT F.IdFactura,
+               S.RazonSocial,
+               S.RFC,
+               C.NumeroContrato,
+               F.Fecha,
+               F.Serie,
+               F.Folio,
+               F.SubTotal,
+               F.Descuento,
+               F.TipoCambio,
+               F.MontoConIva AS Total,
+               '',
+               SUBSTRING(F.TipoComprobante, 1, 1) AS TipoComprobante,
+               F.MetodoPago,
+               SUBSTRING(F.LugarExpedicion, 0, 20) AS LugarExpedicion,
+               F.NumCtaPago,
+               F.Receptor,
+               F.UUID,
+               F.FechaTimbrado,
+               F.SelloCFD,
+               F.NoCertificadoSAT,
+               F.SelloSAT,
+               F.Tipo,
+               F.FechaRecepcion,
+               YEAR(F.Fecha) AS Año,
+               CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS NVARCHAR(20)), 2), ' ', DATENAME(MONTH, F.Fecha)) AS Mes,
+               '',
+               0,
+               0,
+               C.IdContrato,
+               0,
+               NULL AS CRCCN,
+               CONVERT(DATE, F.CreadoEn) AS CreadoEn,
+               '' AS CreadoPor,
+               0,
+               0,
+               F.IdMoneda,
+               'NA',
+               F.CreadoPor,
+               F.IdSubcontratista,
+               F.Emisor
+        FROM dbo.FI_Factura AS F (NOLOCK)
+            JOIN dbo.PV_Subcontratista AS S WITH (NOLOCK)
+                ON F.IdContrato = @IdContrato
+                   AND CONVERT(DATE, ISNULL(F.FechaTimbrado, F.Fecha))
+                   BETWEEN CONVERT(DATE, @FechaInicio) AND CONVERT(DATE, @FechaFin)
+                   AND F.IdSubcontratista = S.IdSubcontratista
+            JOIN dbo.CO_Contrato C WITH (NOLOCK)
+                ON F.IdContrato = C.IdContrato
+            LEFT JOIN dbo.CO_Contratista CC WITH (NOLOCK)
+                ON C.IdContratista = CC.IdContratista
+                   AND CC.RFC <> F.Receptor
+
+        INSERT INTO #Facturas
+        (
+            IdFactura,
+            NombreEmisor,
+            RFC_Emisor,
+            NumeroContrato,
+            Fecha,
+            Serie,
+            Folio,
+            SubTotal,
+            Descuento,
+            TipoCambio,
+            Total,
+            Moneda,
+            TipoComprobante,
+            MetodoPago,
+            LugarExpedicion,
+            NumCtaPago,
+            RFC_Receptor,
+            UUID,
+            FechaTimbrado,
+            SelloCFD,
+            NoCertificadoSAT,
+            SelloSAT,
+            Tipo,
+            FechaRecepcion,
+            Año,
+            Mes,
+            NombreReceptor,
+            TieneArchivo,
+            IVA,
+            IdContrato,
+            CCN,
+            CRCCN,
+            CreadoEn,
+            CreadoPor,
+            TieneArchivos,
+            FacturaRelacionadaDropbox,
+            IdMoneda,
+            TipoMonedaCorto,
+            CreadoPorID,
+            IdSubcontratista,
+            Emisor
+        )
+        SELECT F.IdFactura,
+               S.RazonSocial,
+               S.RFC,
+               C.NumeroContrato,
+               F.Fecha,
+               F.Serie,
+               F.Folio,
+               F.SubTotal,
+               F.Descuento,
+               F.TipoCambio,
+               F.MontoConIva AS Total,
+               '',
+               SUBSTRING(F.TipoComprobante, 1, 1) AS TipoComprobante,
+               F.MetodoPago,
+               SUBSTRING(F.LugarExpedicion, 0, 20) AS LugarExpedicion,
+               F.NumCtaPago,
+               F.Receptor,
+               F.UUID,
+               F.FechaTimbrado,
+               F.SelloCFD,
+               F.NoCertificadoSAT,
+               F.SelloSAT,
+               F.Tipo,
+               F.FechaRecepcion,
+               YEAR(F.Fecha) AS Año,
+               CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS NVARCHAR(20)), 2), ' ', DATENAME(MONTH, F.Fecha)) AS Mes,
+               '',
+               0,
+               0,
+               C.IdContrato,
+               0,
+               NULL AS CRCCN,
+               CONVERT(DATE, F.CreadoEn) AS CreadoEn,
+               '' AS CreadoPor,
+               0,
+               0,
+               F.IdMoneda,
+               '',
+               F.CreadoPor,
+               F.IdSubcontratista,
+               F.Emisor
+        FROM dbo.FI_FacturaContrato FC WITH (NOLOCK)
+            JOIN #Facturas TEMP
+                ON FC.IdContrato = @IdContrato
+                   AND FC.IdFactura NOT IN ( TEMP.IdFactura )
+            JOIN dbo.FI_Factura AS F WITH (NOLOCK)
+                ON FC.IdFactura = F.IdFactura
+                   AND CONVERT(DATE, ISNULL(F.FechaTimbrado, F.Fecha))
+                   BETWEEN CONVERT(DATE, @FechaInicio) AND CONVERT(DATE, @FechaFin)
             JOIN dbo.PV_Subcontratista AS S WITH (NOLOCK)
                 ON F.IdSubcontratista = S.IdSubcontratista
             JOIN dbo.CO_Contrato C WITH (NOLOCK)
                 ON F.IdContrato = C.IdContrato
-                   AND (
-                           F.IdContrato = @IdContrato
-                           OR FC.IdContrato = @IdContrato
-                       )
             LEFT JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
-                   AND CC.RFC <> F.Emisor
-            LEFT JOIN dbo.PV_TipoMoneda M WITH (NOLOCK)
-                ON F.IdMoneda = M.IdMoneda
-            LEFT JOIN dbo.FI_Documento D WITH (NOLOCK)
-                ON F.IdFactura = D.IdFactura
-                   AND D.IdTipoDocumento = 1
-                   AND ISNULL(D.IsEliminado, 0) = 0
-            LEFT JOIN dbo.AWS_DocAwsDocAdinco WAD WITH (NOLOCK)
-                ON F.IdFactura = WAD.IdDocAdinco
-            LEFT JOIN dbo.AP_Usuario UM WITH (NOLOCK)
-                ON F.CreadoPor = UM.UsuarioID
-            LEFT JOIN #Importes I
-                on I.IdFactura = F.IdFactura
-        ORDER BY F.IdFactura DESC;
-    END;
+                   AND CC.RFC <> F.Receptor
 
+        UPDATE TEMP
+        SET NombreReceptor = PV.RazonSocial
+        FROM #Facturas TEMP
+            JOIN dbo.PV_Subcontratista PV WITH (NOLOCK)
+                ON TEMP.RFC_Receptor = PV.RFC
+    END;
     /**/
+    UPDATE TEMP
+    SET TieneArchivo = CASE
+                           WHEN D.DocumentoByte LIKE 0x THEN
+                               0
+                           ELSE
+                               1
+                       END
+    FROM #Facturas TEMP
+        JOIN dbo.FI_Documento D (NOLOCK)
+            ON TEMP.IdFactura = D.IdFactura
+               AND D.DocumentoByte IS NOT NULL
+               AND D.IdTipoDocumento = 1
+               AND ISNULL(D.IsEliminado, 0) = 0
+
+    UPDATE TEMP
+    SET TipoMonedaCorto = M.TipoMonedaCorto
+    FROM #Facturas TEMP
+        JOIN dbo.PV_TipoMoneda M (NOLOCK)
+            ON TEMP.IdMoneda = M.IdMoneda
+
+    UPDATE TEMP
+    SET CCN = CASE
+                  WHEN WAD.IdDocAwsDocAdinco IS NULL THEN
+                      0
+                  ELSE
+                      1
+              END
+    FROM #Facturas TEMP
+        JOIN dbo.AWS_DocAwsDocAdinco WAD WITH (NOLOCK)
+            ON TEMP.IdFactura = WAD.IdDocAdinco
+
+    UPDATE TEMP
+    SET CreadoPor = UM.Nombre
+    FROM #Facturas TEMP
+        JOIN dbo.AP_Usuario UM WITH (NOLOCK)
+            ON TEMP.CreadoPorID = UM.UsuarioID
+
+    /*Importes de Facturas*/
+    INSERT INTO #Importes
+    (
+        IdFactura,
+        Importe
+    )
+    SELECT FIM.IdFactura,
+           SUM(FIM.Importe)
+    FROM #Facturas F WITH (NOLOCK)
+        INNER JOIN FI_CFDIImpuesto FIM WITH (NOLOCK)
+            ON F.IdFactura = FIM.IdFactura
+    GROUP BY FIM.IdFactura
+    ORDER BY FIM.IdFactura
+
+    UPDATE TEMP
+    SET IVA = IMP.Importe
+    FROM #Facturas TEMP
+        JOIN #Importes IMP
+            ON TEMP.IdFactura = IMP.IdFactura
 
     UPDATE #Facturas
     SET CCN = 1
@@ -355,20 +507,43 @@ BEGIN
         JOIN #CartasProcura CP
             ON CP.UUID = F.UUID
     WHERE F.UUID = CP.UUID;
-
     /**/
+    INSERT INTO #tmpFiles
+    (
+        IdFactura
+    )
+    SELECT faws.IdFactura
+    FROM adinco..FacturasAWSDocumentos faws
+        INNER JOIN AWS_Documentos awsd (NOLOCK)
+            ON faws.AWSDocumentoId = awsd.AWSDocumentoId
+    GROUP BY faws.IdFactura
 
-    select faws.IdFactura
-    into #tmpFiles
-    from adinco..FacturasAWSDocumentos faws
-        inner join AWS_Documentos awsd
-            on faws.AWSDocumentoId = awsd.AWSDocumentoId
-    group by faws.IdFactura
+    UPDATE #Facturas
+    SET TieneArchivos = case
+                            when t1.IdFactura is null then
+                                cast(0 as bit)
+                            else
+                                cast(1 as bit)
+                        end
+    FROM #Facturas F
+        join #tmpFiles t1
+            on f.IdFactura = t1.IdFactura
+
+    UPDATE #Facturas
+    SET FacturaRelacionadaDropbox = CASE
+                                        WHEN DF.IdFactura IS NULL THEN
+                                            CAST(0 AS BIT)
+                                        ELSE
+                                            CAST(1 AS BIT)
+                                    END
+    FROM #Facturas F
+        JOIN APP_RelacionRutaDropboxFactura DF (NOLOCK)
+            ON DF.IdFactura = F.IdFactura
 
     SELECT F.IdFactura,
            F.NombreEmisor AS NombreEmisor,
            F.RFC_Emisor AS RFC_Emisor,
-           C.NumeroContrato,
+           F.NumeroContrato,
            F.Fecha,
            F.Serie,
            F.Folio,
@@ -376,7 +551,7 @@ BEGIN
            ISNULL(F.Descuento, 0) AS Descuento,
            ISNULL(F.TipoCambio, 0) AS TipoCambio,
            ISNULL(F.Total, 0) AS Total,
-           ISNULL(F.Moneda, 'NA') AS Moneda,
+           ISNULL(F.TipoMonedaCorto, 'NA') AS Moneda,
            UPPER(ISNULL(F.TipoComprobante, '')) AS TipoComprobante,
            UPPER(ISNULL(F.MetodoPago, '')) AS MetodoPago,
            UPPER(ISNULL(F.LugarExpedicion, '')) AS LugarExpedicion,
@@ -397,26 +572,11 @@ BEGIN
            F.IdContrato,
            F.CCN,
            F.CRCCN,
-           C.NumeroContrato,
+           F.NumeroContrato,
            F.CreadoEn,
            F.CreadoPor,
-           TieneArchivos = case
-                               when t1.IdFactura is null then
-                                   cast(0 as bit)
-                               else
-                                   cast(1 as bit)
-                           end,
-			FacturaRelacionadaDropbox = CASE WHEN APP_RelacionRutaDropboxFactura.IdFactura IS NULL THEN
-									CAST(0 AS BIT)
-								ELSE
-									CAST(1 AS BIT)
-								END
+           F.TieneArchivos,
+           F.FacturaRelacionadaDropbox
     FROM #Facturas F
-        JOIN dbo.CO_Contrato C WITH (NOLOCK)
-            ON F.IdContrato = C.IdContrato
-        left join #tmpFiles t1
-            on f.IdFactura = t1.IdFactura
-		LEFT JOIN APP_RelacionRutaDropboxFactura 
-			ON APP_RelacionRutaDropboxFactura.IdFactura = F.IdFactura
     ORDER BY F.IdFactura DESC;
 END;

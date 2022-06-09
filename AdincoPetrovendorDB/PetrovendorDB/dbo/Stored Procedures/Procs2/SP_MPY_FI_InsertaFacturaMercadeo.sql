@@ -1,4 +1,24 @@
-﻿CREATE PROCEDURE [dbo].[SP_MPY_FI_InsertaFacturaMercadeo] 
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MPY_FI_InsertaFacturaMercadeo'
+)
+    DROP PROCEDURE SP_MPY_FI_InsertaFacturaMercadeo;
+	GO
+/****** Object:  StoredProcedure [dbo].[SP_MPY_FI_InsertaFacturaMercadeo]    Script Date: 07/06/2022 05:14:56 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <03/03/2022>
+-- Description:	Se manda a llamar la ruta inicial del folder de dropbox
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MPY_FI_InsertaFacturaMercadeo] 
 	@Serie	nvarchar(MAX) ,
 	@Folio	nvarchar(MAX) ,
 	@Fecha	datetime ,
@@ -35,7 +55,9 @@
 	@IdUsuario int,
 	@IdAceptacionPedido INT,
 	@ComprobanteXMLByte IMAGE,
-	@IdTipoPedido INT
+	@IdTipoPedido INT,
+	@IdWS_LectorFactura INT=null,
+	@ErroSAT nvarchar(MAX)=null
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -94,7 +116,9 @@ IF @IdFactura IS NULL OR @IdFactura = 0
 				,[ModificadoEn]
 				,[ProcesadoSIPAC]
 				,[ComprobanteXMLByte]
-				,[IdTipoPedido])
+				,[IdTipoPedido],
+				 IdLectorXMLSAT,
+			     ErroSAT)
 				VALUES
 				(
 				    @Serie,
@@ -135,7 +159,9 @@ IF @IdFactura IS NULL OR @IdFactura = 0
 				    CURRENT_TIMESTAMP,
 				    0,
 					@ComprobanteXMLByte,
-					@IdTipoPedido)
+					@IdTipoPedido,
+					@IdWS_LectorFactura,
+					@ErroSAT)
 
 				SELECT CAST( @@IDENTITY  as nvarchar)  AS INSERTADO , 'La factura ' + @Serie +'-'+ @Folio + ' se ha registrado correctamente con el id ' + CAST( @@IDENTITY  as nvarchar)  as MSG,@@IDENTITY
 		 
@@ -193,7 +219,9 @@ IF @IdFactura IS NULL OR @IdFactura = 0
 			  ,[ClaveFormaPago]=null
 			  ,[IdEstatusEnviado]=NULL			  
 			  ,[ComprobanteXMLByte]=NULL
-			  ,[IdTipoPedido]=NULL	
+			  ,[IdTipoPedido]=NULL,
+			  IdLectorXMLSAT =NULL,
+			  ErroSAT =NULL
 			WHERE IdFactura = @IdFactura
 			
 		
@@ -235,7 +263,9 @@ IF @IdFactura IS NULL OR @IdFactura = 0
 			,[ModificadoEn]=CURRENT_TIMESTAMP
 			,[ProcesadoSIPAC]=0
 			,[ComprobanteXMLByte]=@ComprobanteXMLByte
-			,[IdTipoPedido]=@IdTipoPedido			
+			,[IdTipoPedido]=@IdTipoPedido	
+			, IdLectorXMLSAT =@IdWS_LectorFactura,
+			  ErroSAT =@ErroSAT
 			WHERE IdFactura = @IdFactura
 
 			SELECT CAST( @IdFactura  as nvarchar)  AS INSERTADO , 'La factura ' + @Serie +'-'+ @Folio + ' se ha Actualizado correctamente con el id ' + CAST(@IdFactura  as nvarchar)  as MSG, @IdFactura
