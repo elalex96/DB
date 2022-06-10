@@ -38,6 +38,7 @@ AS
                         AND c.idcontrato = co_sap_importbitacora.idcontrato
              INNER JOIN [dbo].[co_sap_correosrespuesta] (nolock)
                      ON co_sap_correosrespuesta.idcontratista = c.idcontratista
+	  WHERE  ISNULL(co_sap_importbitacora.notificacionenviada, 0) = 0
 	  GROUP BY ISNULL(LTRIM(RTRIM(co_sap_correosrespuesta.correo)), '')
 
 	  
