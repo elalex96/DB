@@ -20,7 +20,7 @@ CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M]
 @Mes           DATE, 
 @IdPresupuesto INT  = 0
 AS
-     BEGIN
+      BEGIN
          SET NOCOUNT ON;
 
          /*Generar nombre de archivos*/
@@ -34,12 +34,14 @@ AS
 
          IF OBJECT_ID('tempdb..#Facturas', 'U') IS NOT NULL
              DROP TABLE #Facturas;
+
          CREATE TABLE #Facturas
          (IdFactura       INT, 
           UUID            VARCHAR(500), 
           TipoComprobante VARCHAR(50), 
           MetodoPago      VARCHAR(50)
          );
+
          INSERT INTO #Facturas
          (IdFactura, 
           UUID, 
@@ -208,7 +210,7 @@ AS
                        '99' AS FormaPago, --CP.FormaDePagoP,
 
                        TM.IdMoneda, 
-                       CPDR.MetodoDePagoDR AS MetodoPago, 
+                       CASE WHEN CPDR.MetodoDePagoDR IS NULL THEN FCPDR.MetodoPago ELSE CPDR.MetodoDePagoDR END AS MetodoPago,
                        T.IdMoneda, 
                        MAX(TCD.TipoCambio), 
                        0, 
@@ -233,11 +235,8 @@ AS
                       AND TF.CvTipoDocFacturacion = 6
                 GROUP BY FCPDR.IdFactura, 
                          CPDR.IdDocumento,
-
-                         --CP.FormaDePagoP,
-
                          TM.IdMoneda, 
-                         CPDR.MetodoDePagoDR, 
+                         CASE WHEN CPDR.MetodoDePagoDR IS NULL THEN FCPDR.MetodoPago ELSE CPDR.MetodoDePagoDR END,
                          T.IdMoneda;
 
          /*Omitir facturas en la hoja 22*/
