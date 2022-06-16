@@ -1,6 +1,11 @@
 ﻿USE ADINCO;
 GO
 
+----------------------------------------
+-- Creado Por: Reyna olvera
+-- Día: 14/06/2022
+-- Extrae los documentos de las facturas apartir de los uuid
+----------------------------------------
 CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 	@IdUsuario INT = 0,
 	@IdContrato INT = 0,
