@@ -1,8 +1,4 @@
-﻿USE ADINCO;
-GO
-
-----------------------------------------
--- Creado Por: Reyna olvera
+﻿-- Creado Por: Reyna olvera
 -- Día: 14/06/2022
 -- Extrae los documentos de las facturas apartir de los uuid
 ----------------------------------------
@@ -14,16 +10,14 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 	AS
 	BEGIN
 		SET NOCOUNT ON;
-		CREATE TABLE #UUID(UUID VARCHAR(MAX), Sistema Varchar(150));
+		CREATE TABLE #UUID(UUID VARCHAR(MAX));
 
 		CREATE TABLE #Temp_UUIDFacturas(
 		Id INT IDENTITY(1,1) PRIMARY KEY,
-		CFDIId INT,
+		CFDIAdincoId INT,
+		CFDIPetrovendorId INT,
 		UUID VARCHAR(150),
-		IdContrato INT,
-		Receptor VARCHAR(150),
-		Emisor VARCHAR(150),
-		Sistema Varchar(150)
+		SistemaCartas VARCHAR(150)
 		);
 		
 		CREATE TABLE #Temp_CartasPDF(
@@ -46,49 +40,73 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 		 --Eliminación de vacios o null para que en el select no se incrementen facturas equivocadas
 		DELETE #UUID WHERE UUID IS NULL OR UUID = '';
 
-		INSERT INTO #Temp_UUIDFacturas (CFDIId,UUID,IdContrato,Receptor,Emisor)
-		SELECT DISTINCT F.IdFactura,U.UUID,F.IdContrato, F.Receptor, f.Emisor
+		INSERT INTO #Temp_UUIDFacturas (CFDIAdincoId,UUID)
+		SELECT DISTINCT F.IdFactura,U.UUID
 		FROM 
 			#UUID U
 		JOIN
 			FI_FACTURA F
-			ON	U.UUID	=	F.UUID COLLATE DATABASE_DEFAULT
+			ON	U.UUID	=	F.UUID COLLATE DATABASE_DEFAULT;
+		
+		INSERT INTO #Temp_UUIDFacturas (CFDIPetrovendorId,UUID)
+		SELECT DISTINCT FP.IdFactura,U.UUID
+		FROM 
+			#UUID U
 		JOIN
-			CO_Contrato	C
-			ON F.IdContrato	=	C.IdContrato
-		JOIN
-			CO_Contratista CS
-			ON	C.IdContratista	=	CS.IdContratista;
-
+				Petrovendor.dbo.FI_Factura FP 
+				ON	U.UUID	=	FP.UUID COLLATE DATABASE_DEFAULT
+		LEFT JOIN
+			#Temp_UUIDFacturas TF
+			ON	U.UUID	=	TF.UUID	COLLATE DATABASE_DEFAULT
+		WHERE 
+			TF.Id IS NULL
+			
 
 		IF(@Tipo = 'XML')
 		BEGIN
-			SELECT  UF.CFDIId,
-				 FIAX.ArchivoXml AS xml,
-				   UF.UUID AS NombreArchivo
+			SELECT  
+				UF.CFDIAdincoId,
+				FIAX.ArchivoXml AS xml,
+				UF.UUID AS NombreArchivo
 			  FROM 
 					#Temp_UUIDFacturas UF
 			JOIN
 				FI_ArchivoXml FIAX
-				ON	UF.CFDIId	=	FIAX.IdFactura;
+				ON	UF.CFDIAdincoId	=	FIAX.IdFactura
+				WHERE	CFDIAdincoId IS NOT NULL
+			UNION ALL
+			SELECT  
+				UF.CFDIPetrovendorId,
+				FIAX.ArchivoXml AS xml,
+				UF.UUID AS NombreArchivo
+			  FROM 
+					#Temp_UUIDFacturas UF
+			JOIN
+				Petrovendor.dbo.FI_ArchivoXml FIAX
+				ON	UF.CFDIPetrovendorId	=	FIAX.IdFactura
+				WHERE	CFDIPetrovendorId IS NOT NULL;
 		END
 		ELSE IF(@Tipo = 'PDF CFDI')
 		BEGIN
-			SELECT UF.CFDIId, 
+			SELECT UF.CFDIAdincoId, 
 				   Documento=D.DocumentoByte,
 				   UF.UUID AS NombreArchivo
 			FROM 
 				#Temp_UUIDFacturas UF
 			JOIN 
 				FI_DOCUMENTO D 
-			ON UF.CFDIId = D.IdFactura 
-			AND D.IdTipoDocumento = 1;
+			ON 
+				UF.CFDIAdincoId = D.IdFactura 
+			AND
+				D.IdTipoDocumento = 1
+			WHERE	
+				CFDIAdincoId IS NOT NULL
 		END
 		ELSE IF(@Tipo = 'PDF Carta')
 		BEGIN
 			
 		UPDATE U
-			SET U.Sistema = 'Petrovendor'
+			SET U.SistemaCartas = 'Petrovendor'
          FROM 
 				#Temp_UUIDFacturas U
 			JOIN
@@ -110,7 +128,13 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
                         D.Carpeta , 
                         CONCAT(D.Carpeta, D.Identificador), 
                         ISNULL(D.Bucket,'petrovendor-pr') , 
-                        CONCAT('IdFacturaAdinco: ', U.CFDIId, ' - ', D.NombreDocumento),
+						CASE 
+						WHEN U.CFDIAdincoId IS NOT NULL
+						THEN  
+							CONCAT('IdFacturaAdinco: ', U.CFDIAdincoId, ' - ', D.NombreDocumento)
+						ELSE
+							CONCAT('IdFacturaPetrovendor: ', U.CFDIPetrovendorId, ' - ', D.NombreDocumento)
+						END,
 						D.IdDocumento
                  FROM 
 					#Temp_UUIDFacturas	U
@@ -118,14 +142,14 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 					Petrovendor.dbo.FI_Factura FP
 					ON	U.UUID	=	FP.UUID COLLATE DATABASE_DEFAULT
 				AND
-					U.Sistema	=	'Petrovendor'
+					U.SistemaCartas	=	'Petrovendor'
                 LEFT JOIN Petrovendor.dbo.MM_AceptacionFactura AF ON FP.IdFactura = AF.IdFactura  
                 LEFT JOIN Petrovendor.dbo.MM_AceptacionCartaPCN AC ON AC.IdAceptacionPedido = AF.IdAceptacionPedido 
                 LEFT JOIN Petrovendor.dbo.MM_AceptacionPedido AP ON AP.IdAceptacionPedido = AC.IdAceptacionPedido  
                 LEFT JOIN Petrovendor.dbo.S_Documento_S3 D ON D.IdDocumento = AC.IdDocumento  
                 LEFT JOIN Petrovendor.dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido  
                 LEFT JOIN Petrovendor.dbo.S_Proveedor PR ON PR.IdProveedor = P.IdSubcontratista 
-                WHERE  U.Sistema	=	'Petrovendor'
+                WHERE  U.SistemaCartas	=	'Petrovendor'
 				AND		ISNULL(AC.IdEstatus, 0) = 2
                 AND		ISNULL(AC.IdEstatusEliminado, 0) <> 1
                 AND		ISNULL(FP.Activa, 0) = 1
@@ -146,13 +170,13 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 			JOIN
 				dbo.FI_Factura F
 			ON	
-				U.CFDIId	=	F.IdFactura
+				U.CFDIAdincoId	=	F.IdFactura
             JOIN dbo.AWS_DocAwsDocAdinco DA ON F.IdFactura = DA.IdDocAdinco
             JOIN dbo.AWS_Documentos D ON D.AWSDocumentoId = DA.AWSDocumentoId  
             JOIN dbo.PV_Subcontratista S ON S.IdSubcontratista = F.IdSubcontratista  
-			WHERE  U.Sistema	IS NULL ;
+			WHERE  U.SistemaCartas	IS NULL;
 
 		 SELECT * FROM #Temp_CartasPDF;
 		
 	END;
-END
+END;
