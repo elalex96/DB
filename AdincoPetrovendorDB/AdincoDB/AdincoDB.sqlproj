@@ -13146,6 +13146,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_CAT_ValidarEtapa.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_CP_EliminarComplementoPago.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\p_AWS_CredencialesDropbox.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SRAP_ConsultarSolicitudesAceptacionPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ResponsableGeneradorGrd.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ResponsableGeneradorIns.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\spEN_ResponsableGeneradorUpd.sql" />
@@ -13296,6 +13297,10 @@
     <Build Include="dbo\Tables\Tables2\EN_SecuenciaCarpetas_1.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_CargarArchivo.SQL" />
     <Build Include="dbo\Stored Procedures\Procs2\EN_SHELL_ObtenerDocumentosEntregables_V2.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\FI_sp_ExtraeDocumentosPorUUID.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
