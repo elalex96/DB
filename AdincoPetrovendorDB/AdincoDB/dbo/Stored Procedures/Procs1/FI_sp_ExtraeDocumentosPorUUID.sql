@@ -65,7 +65,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 		IF(@Tipo = 'XML')
 		BEGIN
 			SELECT  
-				UF.CFDIAdincoId,
+				UF.CFDIAdincoId AS CFDIId,
 				FIAX.ArchivoXml AS xml,
 				UF.UUID AS NombreArchivo
 			  FROM 
@@ -76,7 +76,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 				WHERE	CFDIAdincoId IS NOT NULL
 			UNION ALL
 			SELECT  
-				UF.CFDIPetrovendorId,
+				UF.CFDIPetrovendorId AS CFDIId,
 				FIAX.ArchivoXml AS xml,
 				UF.UUID AS NombreArchivo
 			  FROM 
@@ -88,7 +88,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 		END
 		ELSE IF(@Tipo = 'PDF CFDI')
 		BEGIN
-			SELECT UF.CFDIAdincoId, 
+			SELECT UF.CFDIAdincoId AS CFDIId,
 				   Documento=D.DocumentoByte,
 				   UF.UUID AS NombreArchivo
 			FROM 
@@ -134,7 +134,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 							CONCAT('IdFacturaAdinco: ', U.CFDIAdincoId, ' - ', D.NombreDocumento)
 						ELSE
 							CONCAT('IdFacturaPetrovendor: ', U.CFDIPetrovendorId, ' - ', D.NombreDocumento)
-						END,
+						END  AS NombreArchivo,
 						D.IdDocumento
                  FROM 
 					#Temp_UUIDFacturas	U
@@ -163,7 +163,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
                 CASE WHEN CHARINDEX('/',D.Folder ) > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END, 
                 CONCAT(CASE WHEN CHARINDEX('/',D.Folder) > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END, D.UUIDAmazon), 
                 'adinco', 
-                CONCAT('IdFacturaAdinco: ', F.IdFactura, ' - ', D.NombreArchivo),
+                CONCAT('IdFacturaAdinco: ', F.IdFactura, ' - ', D.NombreArchivo) AS NombreArchivo,
 				D.AWSDocumentoId
             FROM 
 				#Temp_UUIDFacturas	U
