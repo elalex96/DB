@@ -1,4 +1,8 @@
 ﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_MPY_ConsultarAprobadoresCompraDirecta
+GO
 -- =============================================
 -- Author:		<Author,,Name>
 -- Create date: <Create Date,,>
@@ -7,7 +11,10 @@
 -- Author:		<Jose Roman>
 -- Create date: <19-09-2018>
 -- Description:	<Se consulta el usuario que aprobo o rechazo la factura>
-
+-- =============================================
+-- Author:		Luis David
+-- Create date: 17/06/2022
+-- Description:	Se quita la duplicidad de aprobadores
 -- =============================================
 
 -- SP_MPY_ConsultarAprobadoresCompraDirecta 4183,0
@@ -26,30 +33,56 @@ BEGIN
 	--WHERE IdAceptacionPedido = @IdAceptacionPedido --AND IdProveedor = @IdProveedor
 
 	--- TT.IdEstatus = 2
+	DROP TABLE IF EXISTS #AprobacionAceptacionHistorial
+	CREATE TABLE #AprobacionAceptacionHistorial
+	(
+		IdAprobador_FI INT,
+		Nombre varchar(500),
+		Correo varchar(500),
+		EstatusAprobacion varchar(500),
+		Comentario varchar(500),
+		FechaEvaluacion varchar(500)
+	)
 
+	INSERT INTO #AprobacionAceptacionHistorial
 	SELECT u.IdUsuario AS IdAprobador_FI,
 		u.Nombre,
 		u.Correo, 
 		t.Nombre AS EstatusAprobacion,
 		af.Comentario,
-		af.FechaAprobacion as FechaEvaluacion
+		FORMAT(af.FechaAprobacion, 'hh\:mm tt') as FechaEvaluacion
 	FROM dbo.MPY_MM_AceptacionFactura af
 	left JOIN dbo.S_Usuario u ON af.IdAprobador = u.IdUsuario
 	left JOIN dbo.TA_estatus t ON  af.IdEstatus = t.IdEstatus 
 	WHERE af.IdAceptacionPedido = @IdAceptacionPedido
 	union
-
 	SELECT u.IdUsuario AS IdAprobador_FI,
 		u.Nombre,
 		u.Correo, 
 		t.Nombre AS EstatusAprobacion,
 		af.Comentario,
-		af.FechaAprobacion as FechaEvaluacion
+		FORMAT(af.FechaAprobacion, 'hh\:mm tt') as FechaEvaluacion
 	FROM dbo.MPY_MM_AceptacionFactura_bitacora af
 	inner join MPY_MM_AceptacionFactura af1 on af1.IdAceptacionFactura = af.IdAceptacionFactura
 	left JOIN dbo.S_Usuario u ON af.IdAprobador = u.IdUsuario
 	left JOIN dbo.TA_estatus t ON  af.IdEstatus = t.IdEstatus 
 	WHERE af1.IdAceptacionPedido = @IdAceptacionPedido
+	
 
+	SELECT 
+		IdAprobador_FI ,
+		Nombre ,
+		Correo ,
+		EstatusAprobacion ,
+		Comentario ,
+		FechaEvaluacion 
+	FROM #AprobacionAceptacionHistorial
+	GROUP BY IdAprobador_FI ,
+		Nombre ,
+		Correo ,
+		EstatusAprobacion ,
+		Comentario ,
+		FechaEvaluacion
+	order by CONVERT (datetime, FechaEvaluacion, 103)
+	asc
 END
-
