@@ -1,11 +1,18 @@
 ﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS MPY_MM_SP_GuardarGasto
+GO
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <26-06-2018>
 -- Description:	<Se guarda el gasto de una factura>
 -- =============================================
-
+-- Author:		<Luis David>
+-- Create date: <15/06/2022>
+-- Description:	<Se valida si la factura es de Murphy para así agregar la linea presupuesto 241612 (Issue #1865 Petrovendor)>
+-- =============================================
 --  [MPY_MM_SP_GuardarGasto] 21847,null,10039,2,null
 CREATE procedure [dbo].[MPY_MM_SP_GuardarGasto]
 	@IdFactura INT,
@@ -20,18 +27,28 @@ BEGIN
 
 	declare @IdLineapresupuesto int,
 			@IdPrograma int,
-			@IdInstalacion int
+			@IdInstalacion int,
+			@RFC varchar(100);
 
 	select	@IdLineapresupuesto = pm.IdLineapresupuestoMes ,
 			@IdPrograma = p.IdProgramaActividad,
 			@IdInstalacion = pm.IdInstalacion
 	from Adinco..CO_LineaPresupuestoMes pm
 	inner join Adinco..CO_Presupuesto p on p.IdPresupuesto = pm.IdPresupuesto
-	inner join Adinco..[CO_AnioContractual] ac on ac.IdAnioContractual = p.IdAnioContractual
-	inner join FI_Factura f on f.IdContrato = ac.IdContrato and
-							datepart(yy,f.Fecha) = datepart(yy,pm.AC_PRESUP_MES)
+	inner join Adinco..[CO_AnioContractual] ac on p.IdAnioContractual = ac.IdAnioContractual 
+	inner join FI_Factura f on ac.IdContrato = f.IdContrato and
+							datepart(yy,pm.AC_PRESUP_MES) = datepart(yy,f.Fecha)
 	where f.IdContrato = @IdContrato
+	
+	SET @RFC = (
+	SELECT TOP 1 receptor 
+	FROM FI_Factura 
+	WHERE IdFactura = @IdFactura)
 
+	IF @RFC = 'MSU150922EYA'
+	BEGIN
+		SET @IdLineapresupuesto = (241612)
+	END
 	BEGIN TRY  
 
 		begin tran
@@ -72,11 +89,8 @@ BEGIN
 				NULL,
 				0
 			from FI_Factura f
-			inner join [dbo].[FI_CFDIConcepto] fd on fd.IdFactura = f.IdFactura
+			inner join [dbo].[FI_CFDIConcepto] fd on f.IdFactura = fd.IdFactura
 			where f.IdFactura = @IdFactura
-
-		
-
 		--Insertar gastos en Adinco
 			INSERT INTO Adinco..CO_Registro
 			(
@@ -98,22 +112,21 @@ BEGIN
 				PCN = 0,				NULL,					NULL,				NULL,
 				NULL,					f.Fecha			
 			from FI_Factura f
-			inner join [dbo].[FI_CFDIConcepto] fd on fd.IdFactura = f.IdFactura
-			INNER JOIN Adinco..FI_factura f2 on f2.UUID collate Modern_Spanish_CI_AS = f.UUID collate Modern_Spanish_CI_AS
+			inner join [dbo].[FI_CFDIConcepto] fd on f.IdFactura = fd.IdFactura
+			INNER JOIN Adinco..FI_factura f2 on f.UUID collate Modern_Spanish_CI_AS = f2.UUID collate Modern_Spanish_CI_AS
 			where f.IdFactura = @IdFactura
 
-			
 			
 			insert into [dbo].[CO_RelacionRegistroAdinco](
 				IdRegistroPetrovendor,IdRegistroAdinco
 			)
 			select rp.IdRegistro,ra.IdRegistro
 			from CO_Registro rp 
-			inner join FI_factura  f on f.IdFactura = rp.IdFactura
-			inner join [FI_CFDIConcepto] fd on fd.IdFactura = rp.IdFactura 
-			inner join Adinco..FI_factura fa on fa.UUID COLLATE Modern_Spanish_CI_AS = f.UUID COLLATE Modern_Spanish_CI_AS
-			inner join Adinco..CO_Registro ra on ra.IdFactura = fa.IdFactura and
-											ra.Comentarios COLLATE Modern_Spanish_CI_AS  = rp.Comentarios COLLATE Modern_Spanish_CI_AS 
+			inner join FI_factura  f on rp.IdFactura = f.IdFactura
+			inner join [FI_CFDIConcepto] fd on rp.IdFactura = fd.IdFactura
+			inner join Adinco..FI_factura fa on f.UUID COLLATE Modern_Spanish_CI_AS = fa.UUID COLLATE Modern_Spanish_CI_AS
+			inner join Adinco..CO_Registro ra on fa.IdFactura = ra.IdFactura and
+											rp.Comentarios COLLATE Modern_Spanish_CI_AS = ra.Comentarios COLLATE Modern_Spanish_CI_AS
 			where rp.IdFactura = @IDFACTURA and			
 			convert(varchar,rp.FecMovto,112) = convert(varchar,getdate(),112) and
 			not exists (
@@ -142,4 +155,3 @@ BEGIN
 	
  
 END
-

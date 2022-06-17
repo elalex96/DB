@@ -18,6 +18,10 @@ GO
 -- UPDATED at: <11/04/2022>
 -- Description:	<Clasificación gasto en mes presentación corriente Amatitlán (Issue#1730)>
 -- =============================================
+-- Author:		<Luis David>
+-- Create date: <15/06/2022>
+-- Description:	<Se valida si la factura es de Murphy para así agregar la linea presupuesto 241612 (Issue #1865 Petrovendor)>
+-- =============================================
 CREATE PROCEDURE [dbo].[MM_SP_EnvioDeGastoAdinco]
 @idFacturaP INT,
 @IdFacturaAdinco INT,
@@ -84,7 +88,7 @@ BEGIN
         SELECT @IdRegistroAdinco = ar.IdRegistro
         FROM Adinco.dbo.CO_Registro ar
             INNER JOIN dbo.CO_Registro r
-                ON r.IdAceptacionPedidoDetalle = ar.IdAceptacionPedidoDetalle
+                ON ar.IdAceptacionPedidoDetalle = r.IdAceptacionPedidoDetalle
         WHERE r.IdRegistro = @IdRegistro
 
         IF (ISNULL(@IdRegistroAdinco, 0) = 0)
