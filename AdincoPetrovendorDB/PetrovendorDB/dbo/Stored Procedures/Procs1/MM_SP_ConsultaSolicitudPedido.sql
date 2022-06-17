@@ -1,31 +1,35 @@
-﻿USE [Petrovendor]
+﻿USE Petrovendor
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'MM_SP_ConsultaSolicitudPedido'
-)
-    DROP PROCEDURE MM_SP_ConsultaSolicitudPedido;
-/****** Object:  StoredProcedure [dbo].[MM_SP_ConsultaSolicitudPedido]    Script Date: 24/05/2021 06:14:34 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS MM_SP_ConsultaSolicitudPedido
 GO
 -- =============================================
 -- Author:		Pedro, Acuña
 -- Create date: 06/02/2018
 -- Description:	se agrega un bit para saber si existen las bases para mostrar o no el boton de descarga de bases
 -- =============================================
+-- Author:		Luis David
+-- Create date: 06/02/2018
+-- Description:	se agrega un bit para saber si existen las bases para mostrar o no el boton de descarga de bases
+-- =============================================
 
-CREATE PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido]
+CREATE PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido] --26352
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT
 AS
 	BEGIN
 		SET NOCOUNT ON 
 
-		DECLARE @ExistenBases BIT = 0
+		DECLARE @ExistenBases BIT = 0,
+		@IdLineaPresupuesto int = (SELECT  
+									TOP 1
+									SPLP.IdLineaPresupuesto FROM 
+									dbo.MM_SolicitudPedido AS SPC
+										LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD 
+											ON SPC.IdSolicitudPedido = SPD.IdSolicitudPedido
+										LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPLP
+											ON SPD.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
+											WHERE SPC.IdSolicitudPedido = @IdSolicitudPedido
+											GROUP BY SPLP.IdLineaPresupuesto);
 
 		SELECT		@ExistenBases = CASE WHEN F.IdDocBases IS NULL THEN 0 ELSE 1 END
 		FROM		TA_DocBasesOperacion F
@@ -61,7 +65,7 @@ AS
 					SP.IdContrato, 
 					SP.IdPeriodo, 
 					SP.IdPresupuesto ,
-					SP.IdLineaPresupuesto, 
+					@IdLineaPresupuesto, 
 					TG.TipoGasto, 
 					ISNULL ( SP.Fianza, 'false' ), 
 					ISNULL ( SP.Controlados, 'false' ) ,
