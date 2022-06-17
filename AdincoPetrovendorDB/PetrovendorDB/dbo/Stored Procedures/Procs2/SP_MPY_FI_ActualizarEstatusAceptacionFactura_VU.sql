@@ -1,7 +1,15 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_MPY_FI_ActualizarEstatusAceptacionFactura_VU
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 21-06-2018
 -- Description:	Permite agregar un condicion a un flujo de tareas
+-- =============================================
+-- Author:		Luis David
+-- Create date: 17/06/22
+-- Description:	se agrega el nombre del cliente
 -- =============================================
 CREATE  PROCEDURE  [dbo].[SP_MPY_FI_ActualizarEstatusAceptacionFactura_VU] 
 	-- Add the parameters for the stored procedure here
@@ -22,7 +30,20 @@ BEGIN
 						  FROM MPY_MM_AceptacionFactura 
 						  WHERE IdAceptacionPedido = @IdAceptacionPedido)
 
-	 
+	 DECLARE @ProveedorCliente varchar(500) = (SELECT TOP 1
+			 CONCAT (CC.NUMEROCONTRATO,' - ',AC.NOMBREAREACONTRACTUAL)
+		  FROM MPY_MM_AceptacionPedido AS AP
+			  LEFT JOIN MPY_MM_AceptacionFactura AS AF ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+			  LEFT JOIN MPY_MM_AceptacionCartaPCN AS AC_PCN ON AC_PCN.IdAceptacionPedido = AP.IdAceptacionPedido
+			  LEFT JOIN Adinco.dbo.CO_Contrato AS CC ON CAST(AP.IdContrato AS INT) = CC.IdContrato
+			  LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+			  LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber AND SES.SESNumber = PSES.SESN
+			  LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
+			  LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant
+			  LEFT JOIN Adinco.dbo.CO_Contratista AS CO ON CO.IdContratista = CP.IdContratista
+			  JOIN ADINCO..CO_AREACONTRACTUAL AC ON CC.IDAREACONTRACTUAL = AC.IDAREACONTRACTUAL
+		  WHERE 
+			AP.IdAceptacionPedido = @IdAceptacionPedido AND AC_PCN.IdEstatus = 2);
 	UPDATE MPY_MM_AceptacionFactura 
 	SET [IdEstatusXML] = 1,
 	[IdEstatusPDF] = 1,
@@ -62,7 +83,7 @@ BEGIN
 			@IDPRESES,
 			@IDSES,
 			@REFERENCE,
-			@PO 
+			@PO,
+			@ProveedorCliente
 
 END
- 
