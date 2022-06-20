@@ -1,19 +1,6 @@
 USE Petrovendor
 GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_PCN_AceptacionProveedorDocumentos'
-)
-    DROP PROCEDURE SP_PR_MM_PCN_AceptacionProveedorDocumentos;
-
-
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorDocumentos]    Script Date: 26/04/2022 06:34:43 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SP_PR_MM_PCN_AceptacionProveedorDocumentos
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -41,7 +28,21 @@ AS
 -- Create date: 09-12-2021
 -- Description:	Se modificó la ultima consulta, se movio el filtro por UUID al join y se quitó del where
 -- =============================================
-
+-- Author:		Luis David
+-- Create date: 13/06/2022
+-- Description:	Se retorna la tabla de documentos de Field Ticket y Proforma
+-- =============================================
+DECLARE @IdDocumentoFieldTicket INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'FIELD TICKET'),
+		@IdDocumentoProforma INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'PROFORMA');
+DECLARE @IdPedido INT = (SELECT TOP 1 AP.IdPedido
+						FROM dbo.MM_AceptacionPedido AP
+						LEFT JOIN dbo.MM_Pedido P 
+						ON AP.IdPedido = P.IdPedido
+						WHERE  P.IdProveedorCompras = @IdProveedor
+							  AND AP.IdAceptacionPedido = @IdAceptacionPedido);
+DECLARE @IdSolicitudAceptacionPedido INT = (SELECT IdSolicitudAceptacionPedido 
+											FROM MM_SolicitudAceptacionPedido 
+											WHERE IdPedido = @IdPedido AND IdAceptacionPedido = @IdAceptacionPedido)
     SET NOCOUNT ON ;
     IF @Accion = 'TABLA'
         BEGIN
@@ -58,6 +59,30 @@ AS
                         AND AP.[IdProveedor] = @IdProveedor
                         AND AD.[IdDocumento] IS NOT NULL
                         AND AD.Activo = 1
+			/*TABLA DE DOCUMENTO FIELD TICKET*/
+			SELECT  D.IdDocumento, 
+					D.NombreDocumento /*+ '  -  Cargado Por ' +  US.Nombre + ' el ' + CAST(D.CreadoEl AS nvarchar)*/ AS NombreDocumento, 
+					'FIELDTICKET' AS Comentario,
+					'' AS Nombre,
+					D.CreadoEl
+					--D.IdDocumentoTabla 
+			 FROM  S_Documento_S3 D  
+			 LEFT JOIN S_Usuario AS US ON D.IdUsuario = US.IdUsuario
+			 WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
+			 AND D.Activo=1 
+			 AND D.IdTipoDocumento = @IdDocumentoFieldTicket
+			 /*TABLA DE DOCUMENTO PROFORMA*/
+			SELECT  D.IdDocumento, 
+					D.NombreDocumento /*+ '  -  Cargado Por ' +  US.Nombre + ' el ' + CAST(D.CreadoEl AS nvarchar)*/ AS NombreDocumento, 
+					'PROFORMA' AS Comentario,
+					'' AS Nombre,
+					D.CreadoEl
+					--D.IdDocumentoTabla 
+			 FROM  S_Documento_S3 D  
+			 LEFT JOIN S_Usuario AS US ON D.IdUsuario = US.IdUsuario
+			 WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
+			 AND D.Activo=1 
+			 AND D.IdTipoDocumento = @IdDocumentoProforma
         END
     IF @Accion = 'DESCARGA'
         BEGIN
@@ -98,10 +123,9 @@ AS
 						t1.Mime
 			from		#tmp				t1
 			left join	#tmpAdinco			t2
-			on			t2.NombreArchivo	=	t1.NombreDocumento	COLLATE Modern_Spanish_CI_AS
+			on			t1.NombreDocumento	COLLATE Modern_Spanish_CI_AS = t2.NombreArchivo	
 			and			t1.Identificador	=	t2.UUIDAmazon
 			where		t1.IdDocumento		=	@IdDocumento
 
         END
 END
-
