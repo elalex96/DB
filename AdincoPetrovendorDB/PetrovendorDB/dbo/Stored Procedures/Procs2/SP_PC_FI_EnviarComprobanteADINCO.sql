@@ -1,4 +1,18 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_FI_EnviarComprobanteADINCO'
+)
+    DROP PROCEDURE SP_PC_FI_EnviarComprobanteADINCO;
+	GO
+/****** Object:  StoredProcedure [dbo].[SP_PC_FI_EnviarComprobanteADINCO]    Script Date: 19/06/2022 11:41:01 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 06/06/2020
@@ -8,6 +22,11 @@
 -- Author:		DANIEL AC
 -- Create date: 11-02-21
 -- Description:	VALIDACION DE NO ENVIAR DOBLE PEDIMENTO
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 20-06-2021
+-- Description:	Se agrega validacion para ver si se envia o no el PCN 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_FI_EnviarComprobanteADINCO]
     -- Add the parameters for the stored procedure here
@@ -21,6 +40,7 @@ BEGIN
         DECLARE @ID_PEDIMENTOCOMPROBANTE_ADINCO INT
         DECLARE @IdUsuarioAdinco INT = 0;
 		DECLARE @IdPedimentoComprobanteAdinco INT = 0;
+		DECLARE @IdPedidoGral INT=0, @IdAceptacionPedido INT =0
         SELECT @IdUsuarioAdinco = IdUsuarioADINCO
         FROM dbo.S_Usuario
         WHERE IdUsuario = @IdUsuario;
@@ -32,22 +52,28 @@ BEGIN
 		DECLARE @IdSubcontratistaExportadorADINCO INT  
 		DECLARE @IdSubcontratistaiMPORTARDADINCO INT  
 
-		 DECLARE @IdSubcontratistaImportador INT
+		DECLARE @IdSubcontratistaImportador INT
+		DECLARE @IncluyePCN BIT = 1
+	
 	    
 	    /*OBTENER EL PROVEEDOR IMPORTADOR EN ADINCO*/
 	     
          SELECT @IdSubcontratistaImportador = CC.IdProveedor
          FROM Adinco.dbo.CO_Contrato C
-              JOIN Adinco.dbo.CO_Contratista CC ON C.IdContratista = CC.IdContratista
-			  LEFT JOIN Petrovendor.dbo.FI_PedimentoComprobante PC ON PC.IdContrato=C.IdContrato
+              JOIN Adinco.dbo.CO_Contratista CC 
+				ON C.IdContratista = CC.IdContratista
+			  LEFT JOIN Petrovendor.dbo.FI_PedimentoComprobante PC 
+				ON C.IdContrato = PC.IdContrato
          WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante
 
 		 /*OBTENER EL SUBCONTRATISTA EXPORTADOR DE PETROVENDOR EN ADINCO */
 		SET @EXISTE_SUBCONTRATISTA =(			
 			SELECT  COUNT (s.IdSubcontratista)
 			FROM Petrovendor.dbo.FI_PedimentoComprobante pc
-			INNER JOIN Petrovendor.dbo.S_Proveedor p ON p.IdProveedor=pc.IdSubcontratistaExportador
-			INNER JOIN  Adinco.dbo.PV_Subcontratista s ON  ISNULL(s.RFC,'') COLLATE SQL_Latin1_General_CP1_CI_AS = p.RFC 
+			JOIN Petrovendor.dbo.S_Proveedor p 
+				ON pc.IdSubcontratistaExportador = p.IdProveedor
+			JOIN  Adinco.dbo.PV_Subcontratista s 
+				ON  p.RFC  = ISNULL(s.RFC,'') COLLATE SQL_Latin1_General_CP1_CI_AS 
 			WHERE pc.IdPedimentoComprobante=@IdPedimentoComprobante
 		)
 
@@ -56,8 +82,10 @@ BEGIN
 			---OBTENER EL IDSUBCONTRATISTA ADINCO
 				SELECT @IdSubcontratistaExportadorADINCO = S.IdSubcontratista
 				FROM Petrovendor.dbo.FI_PedimentoComprobante pc
-				INNER JOIN Petrovendor.dbo.S_Proveedor p ON p.IdProveedor=pc.IdSubcontratistaExportador
-				INNER JOIN  Adinco.dbo.PV_Subcontratista s ON  ISNULL(s.RFC,'') COLLATE SQL_Latin1_General_CP1_CI_AS = p.RFC 
+				JOIN Petrovendor.dbo.S_Proveedor p 
+					ON pc.IdSubcontratistaExportador = p.IdProveedor
+				JOIN  Adinco.dbo.PV_Subcontratista s 
+					ON p.RFC  =  ISNULL(s.RFC,'') COLLATE SQL_Latin1_General_CP1_CI_AS 
 				WHERE pc.IdPedimentoComprobante=@IdPedimentoComprobante
 			END
 		ELSE 
@@ -129,7 +157,8 @@ BEGIN
 			p.IsEliminado,
 			P.IdProveedor
 			FROM Petrovendor.dbo.FI_PedimentoComprobante pc
-			INNER JOIN Petrovendor.dbo.S_Proveedor p ON p.IdProveedor=pc.IdSubcontratistaExportador
+			JOIN Petrovendor.dbo.S_Proveedor p 
+				ON pc.IdSubcontratistaExportador = p.IdProveedor
 			WHERE pc.IdPedimentoComprobante=@IdPedimentoComprobante		
 
 			SET @IdSubcontratistaExportadorADINCO = (SELECT SCOPE_IDENTITY())
@@ -289,11 +318,17 @@ BEGIN
 
 		-----------------REGISTRO DEL GASTO---------------------
 
-		DECLARE @IdPedidoGral INT = (SELECT ISNULL(IdPedido,0) 
+		
+		SELECT @IdPedidoGral =IdPedido,
+		@IdAceptacionPedido = IdAceptacionPedido
 		FROM dbo.FI_AceptacionPedido_PedimentoComprobante 
-		WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
+		WHERE IdPedimentoComprobante = @IdPedimentoComprobante
 
-		IF(@IdPedidoGral > 0)
+		SELECT @IncluyePCN=PedirCarta
+		FROM RelacionCartaCNPedido 
+		WHERE IdAceptacionPedido=@IdAceptacionPedido
+
+		IF(ISNULL(@IdPedidoGral,0) > 0)
 		BEGIN
 			--Si el comprobante es de mercadeo
 		    INSERT INTO dbo.CO_Registro
@@ -338,20 +373,34 @@ BEGIN
 				APDI.IdLineaPresupuesto,
 				0,
 				apd.ClasificacionCN,
-				apd.PCN,
+				CASE WHEN ISNULL(@IncluyePCN,0)=1 THEN 
+					apd.PCN
+				ELSE 
+					NULL
+				END,
 				vp.IdCatalogoHidrocarburos,
 				apd.IdAceptacionPedidoDetalle
 			FROM dbo.FI_PedimentoComprobante pc
-			INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante apc ON apc.IdPedimentoComprobante = pc.IdPedimentoComprobante
-			INNER JOIN dbo.MM_AceptacionPedidoDetalle apd ON apd.IdAceptacionPedido = apc.IdAceptacionPedido
-			INNER JOIN dbo.MM_PedidoDetalle pd ON pd.IdPedidoDetalle = apd.IdPedidoDetalle
-			INNER JOIN dbo.MM_PeticionOfertaDetalle pod ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle
-			INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdlp ON spdlp.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle 
-			INNER JOIN dbo.MM_Pedido p ON p.IdPedido = pd.IdPedido
-			INNER JOIN dbo.MM_AceptacionPedido ap ON ap.IdAceptacionPedido = apd.IdAceptacionPedido
-			LEFT JOIN dbo.MM_AceptacionPedidoDetalleInstalacion AS APDI ON  APDI.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
-			INNER JOIN Adinco.dbo.CO_Instalacion i ON i.IdInstalacion = APDI.IdInstalacion
-			LEFT JOIN MM_PCN_ValoresPesos vp ON vp.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
+			JOIN dbo.FI_AceptacionPedido_PedimentoComprobante apc 
+				ON pc.IdPedimentoComprobante = apc.IdPedimentoComprobante 
+			JOIN dbo.MM_AceptacionPedidoDetalle apd 
+				ON apc.IdAceptacionPedido = apd.IdAceptacionPedido  
+			JOIN dbo.MM_PedidoDetalle pd 
+				ON apd.IdPedidoDetalle = pd.IdPedidoDetalle 
+			JOIN dbo.MM_PeticionOfertaDetalle pod 
+				ON pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle 
+			JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdlp 
+				ON pod.IdSolicitudPedidoDetalle = spdlp.IdSolicitudPedidoDetalle 
+			JOIN dbo.MM_Pedido p 
+				ON  pd.IdPedido = p.IdPedido 
+			JOIN dbo.MM_AceptacionPedido ap 
+				ON apd.IdAceptacionPedido = ap.IdAceptacionPedido 
+			LEFT JOIN dbo.MM_AceptacionPedidoDetalleInstalacion AS APDI 
+				ON  apd.IdAceptacionPedidoDetalle = APDI.IdAceptacionPedidoDetalle 
+			INNER JOIN Adinco.dbo.CO_Instalacion i 
+				ON  APDI.IdInstalacion = i.IdInstalacion 
+			LEFT JOIN MM_PCN_ValoresPesos vp 
+				ON  apd.IdAceptacionPedidoDetalle = vp.IdAceptacionPedidoDetalle 
 			WHERE pc.IdPedimentoComprobante = @IdPedimentoComprobante;
 		END
 		ELSE
@@ -404,7 +453,8 @@ BEGIN
 				NULL,
 				pcd.IdAceptacionPedidoDetalle
 			FROM dbo.FI_PedimentoComprobante pc
-			INNER JOIN dbo.FI_PedimentoComprobanteDetalle pcd ON pcd.IdPedimentoComprobante = pc.IdPedimentoComprobante
+			JOIN dbo.FI_PedimentoComprobanteDetalle pcd 
+				ON pc.IdPedimentoComprobante = pcd.IdPedimentoComprobante 
 			WHERE pc.IdPedimentoComprobante = @IdPedimentoComprobante
 		END
 
@@ -460,7 +510,8 @@ BEGIN
 			r.IdCBSISH,
 			r.IdAceptacionPedidoDetalle
 		FROM dbo.CO_Registro r
-		LEFT JOIN dbo.S_Usuario u ON u.IdUsuario = r.CreadoPor
+		LEFT JOIN dbo.S_Usuario u 
+			ON  r.CreadoPor = u.IdUsuario 
 		WHERE r.IdPedimentoComprobante = @IdPedimentoComprobante
 		
 		--Se agrega la relacion de comprobante Petrovendor/Adinco
