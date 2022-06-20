@@ -1,6 +1,19 @@
-﻿USE PETROVENDOR
+﻿USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SP_PC_ActualizarEstatusAceptacionPedimentoComprobante
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_ActualizarEstatusAceptacionPedimentoComprobante'
+)
+    DROP PROCEDURE SP_PC_ActualizarEstatusAceptacionPedimentoComprobante;
+	GO
+
+
+/****** Object:  StoredProcedure [dbo].[SP_PC_ActualizarEstatusAceptacionPedimentoComprobante]    Script Date: 20/06/2022 12:58:59 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Daniel Cruz
@@ -10,6 +23,11 @@ GO
 -- Author:		Luis David
 -- Create date: 06-06-22
 -- Description:	Se optimiza el sp y se retorna el estatus en inglés
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 20-06-2022
+-- Description:	Se valida que la tarea este activa y se remueve que usuario este activo 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_ActualizarEstatusAceptacionPedimentoComprobante]
     -- Add the parameters for the stored procedure here
@@ -45,6 +63,7 @@ BEGIN
         FROM TA_Tarea AS T
         WHERE IdAprobador = @IdUsuario
               AND T.IdOperacion = @IdOperacion
+			  AND  T.Activo=1
     );
 
 	SET @FECHA_CAMBIO_ESTATUS = GETDATE()
@@ -86,12 +105,11 @@ BEGIN
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
                     ON TAO.IdOperacion = T.IdOperacion
-				INNER JOIN S_Usuario (NOLOCK) AS US
-					ON T.IdAprobador = US.IdUsuario
-					AND US.Activo = 0
-					AND US.IsEliminado = 0
+				INNER JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario				
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus <> 7
+				  AND T.Activo=1
         );
 
         --- T.IdEstatus <> 7 ---> Es Cancelado por Reasignación ---
@@ -102,12 +120,11 @@ BEGIN
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
                     ON TAO.IdOperacion = T.IdOperacion
-				INNER JOIN S_Usuario (NOLOCK) AS US
-					ON T.IdAprobador = US.IdUsuario
-					AND US.Activo = 0
-					AND US.IsEliminado = 0
+				INNER JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario					
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 1
+				  AND T.Activo=1
         );
 		--- CONTAR NUMERO DE APROBADORES QUE YA APROBARON 
         SET @CountEstApr =
@@ -116,12 +133,11 @@ BEGIN
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
                     ON TAO.IdOperacion = T.IdOperacion
-				INNER JOIN S_Usuario (NOLOCK) AS US
-					ON T.IdAprobador = US.IdUsuario
-					AND US.Activo = 0
-					AND US.IsEliminado = 0
+				INNER JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario					
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 2
+				  AND T.Activo=1
         );
 
 		--- CONTAR NUMERO DE APROBADORES QUE RECHAZARON 
@@ -131,12 +147,11 @@ BEGIN
             FROM TA_Operacion TAO
                 INNER JOIN TA_Tarea AS T
                     ON TAO.IdOperacion = T.IdOperacion
-				INNER JOIN S_Usuario (NOLOCK) AS US
-					ON T.IdAprobador = US.IdUsuario
-					AND US.Activo = 0
-					AND US.IsEliminado = 0
+				INNER JOIN S_Usuario AS US
+					ON T.IdAprobador = US.IdUsuario					
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 3
+				   AND T.Activo=1
         );
 
 

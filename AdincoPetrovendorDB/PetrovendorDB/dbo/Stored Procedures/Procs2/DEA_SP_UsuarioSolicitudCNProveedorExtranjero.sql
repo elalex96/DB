@@ -26,16 +26,7 @@ BEGIN
 		SELECT C.IdContrato, CONCAT(C.NumeroContrato, ISNULL(' - '+ AC.NombreAreaContractual,'')) AS Contrato
 		FROM Adinco..CO_Contrato C
 		JOIN Adinco..CO_AreaContractual AC
-		ON C.IdAreaContractual = AC.IdAreaContractual
-		WHERE C.IdContrato IN (
-		    3,   --> MEXICO PRUEBAS
-			10038, --> CNH-A4.OGARRIO/2018
-			10044, --> CNH-R03-L01-G-TMV-02/2018
-			10045, --> CNH-R03-L01-G-TMV-03/2018
-			10046, --> CNH-R03-L01-AS-CS-14/2018
-			10144, --> CNH-DEMMA
-			10145 --> CNH-WD ADMIN
-		)	
+		ON C.IdAreaContractual = AC.IdAreaContractual		
 		ORDER BY C.NumeroContrato ASC 
 
 	END 
