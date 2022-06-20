@@ -1,5 +1,4 @@
-﻿
-USE PETROVENDOR
+﻿USE PETROVENDOR
 GO
 DROP PROCEDURE IF EXISTS SP_PC_ActualizarEstatusAceptacionPedimentoComprobante
 GO
