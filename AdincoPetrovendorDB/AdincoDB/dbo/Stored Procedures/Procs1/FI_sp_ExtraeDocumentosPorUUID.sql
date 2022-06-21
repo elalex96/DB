@@ -67,7 +67,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 			SELECT  
 				UF.CFDIAdincoId AS CFDIId,
 				FIAX.ArchivoXml AS xml,
-				UF.UUID AS NombreArchivo
+				'XML_'+UF.UUID AS NombreArchivo
 			  FROM 
 					#Temp_UUIDFacturas UF
 			JOIN
@@ -78,7 +78,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 			SELECT  
 				UF.CFDIPetrovendorId AS CFDIId,
 				FIAX.ArchivoXml AS xml,
-				UF.UUID AS NombreArchivo
+				'XML_'+UF.UUID AS NombreArchivo
 			  FROM 
 					#Temp_UUIDFacturas UF
 			JOIN
@@ -90,7 +90,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 		BEGIN
 			SELECT UF.CFDIAdincoId AS CFDIId,
 				   Documento=D.DocumentoByte,
-				   UF.UUID AS NombreArchivo
+				   'PDF_'+UF.UUID AS NombreArchivo
 			FROM 
 				#Temp_UUIDFacturas UF
 			JOIN 
@@ -123,7 +123,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
          /**/
 		 INSERT INTO #Temp_CartasPDF(CFDIId,UUID,Identificador,Carpeta,Ruta,Cubeta,NombreDocumento,IdDocumento)
                  SELECT AF.IdFactura,
-					    FP.UUID,
+					    'CN_'+FP.UUID,
 						D.Identificador , 
                         D.Carpeta , 
                         CONCAT(D.Carpeta, D.Identificador), 
@@ -158,7 +158,7 @@ CREATE PROCEDURE FI_sp_ExtraeDocumentosPorUUID
 		 INSERT INTO #Temp_CartasPDF(CFDIId,UUID,Identificador,Carpeta,Ruta,Cubeta,NombreDocumento,IdDocumento)
             SELECT 
 				F.IdFactura, 
-                F.UUID,
+                'CN_'+F.UUID,
 				UPPER(D.UUIDAmazon) , 
                 CASE WHEN CHARINDEX('/',D.Folder ) > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END, 
                 CONCAT(CASE WHEN CHARINDEX('/',D.Folder) > 0 THEN D.Folder ELSE CONCAT(D.Folder, '/') END, D.UUIDAmazon), 
