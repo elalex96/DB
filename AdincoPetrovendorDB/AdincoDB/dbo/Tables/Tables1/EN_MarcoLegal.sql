@@ -9,6 +9,7 @@
     [Activo]           BIT            NULL,
     [BitJOA]           BIT            NULL,
     [MarcoLegalIngles] VARCHAR (8000) NULL,
+    [Alias] VARCHAR(1000) NULL, 
     CONSTRAINT [PK_EN_MarcoLegal] PRIMARY KEY CLUSTERED ([IdMarcoLegal] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [fk_MarcoLegal_CreadoPor] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [fk_MarcoLegal_ModificadoPor] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
