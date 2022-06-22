@@ -1,9 +1,20 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_GuardaProcesos]    Script Date: 21/06/2022 03:01:28 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Guarda Procesos
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_EN_GuardaProcesos] --10045,10061,'Manifiesto de impacto ambiental','Manifiesto de impacto ambiental',0
+-- Author:		Alexander Gomez
+-- Create date: 21/06/2022
+-- Description:	Agregado del campo de la etapa
+-- =============================================
+ALTER PROCEDURE [dbo].[sp_EN_GuardaProcesos] --10045,10061,'Manifiesto de impacto ambiental','Manifiesto de impacto ambiental',0
     @idContrato INT,
     @idUsuario INT,
     @NombreProceso VARCHAR(1000),
@@ -13,7 +24,8 @@ CREATE PROCEDURE [dbo].[sp_EN_GuardaProcesos] --10045,10061,'Manifiesto de impac
     @IdInstalacion INT,
     --@IdContratoCb INT
     @IsProcesoEvento INT,
-	@isSerie int
+	@isSerie int,
+	@EtapaPozoId INT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -63,7 +75,8 @@ BEGIN
                                          idTipoProceso,
                                          IdInstalacion,
                                          IsProcesoEvento,
-										 IsSerie)
+										 IsSerie,
+										 EtapaPozoId)
             VALUES (@NombreProceso, -- NombreProceso - nvarchar(150)
                     @Descripcion, -- Descripcion - nvarchar(500)
                     @idUsuario, -- CreadoPor - int
@@ -71,7 +84,7 @@ BEGIN
                     @idUsuario, -- ModificadoPor - int
                     GETDATE(), -- ModificadoEl - datetime
                     1, -- Activo - bit
-                    @idTipoProceso, @IdInstalacion, @IsProcesoEvento,@IsSerie);
+                    @idTipoProceso, @IdInstalacion, @IsProcesoEvento,@IsSerie,@EtapaPozoId);
 
             SELECT @IdProceso = @@IDENTITY; --El que acaba de insertar
 
@@ -114,4 +127,3 @@ BEGIN
     END;
 
 END;
-
