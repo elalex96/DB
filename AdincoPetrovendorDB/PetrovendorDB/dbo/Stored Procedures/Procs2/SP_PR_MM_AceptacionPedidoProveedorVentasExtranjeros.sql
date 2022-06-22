@@ -1,4 +1,14 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_AceptacionPedidoProveedorVentasExtranjeros'
+)
+    DROP PROCEDURE SP_PR_MM_AceptacionPedidoProveedorVentasExtranjeros;
+GO
+-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 23-03-18
 -- Description:	Consulta Aceptaciones de pedido de extranjeros proveedor de ventas para pedimento o comprobante
@@ -20,6 +30,28 @@ BEGIN
 
     -- Insert statements for procedure here
 
+	 CREATE TABLE #AceptacionesPedidoExtranjeros(  
+	 IdAceptacionPedido INT null,  
+	 Pedido NVARCHAR(max) null,  
+	 IdPedido INT null,  
+	 Creado DATETIME null,  
+	 NombreUsuarioEntrega NVARCHAR(max) null,  
+	 Cliente NVARCHAR(max) null,  
+	 IdPedidoGeneral INT null,  
+	 IdAceptacionCartaPCN INT null,  
+	 IdTipoPedido INT null,  
+	 EstatusAprobacion NVARCHAR(100) NULL,  
+	 span NVARCHAR(500) NULL  
+	);  
+
+   
+   -- OBTENER LAS ACEPTACIONES DE PEDIDO QUE SON DE PROVEEDORES EXTRANJERAS Y QUE SE LES ESTA SOLICITANDO CARTA Y AUN NO ESTAN APROBADAS
+	IF (@Estatus =0 OR @Estatus =4)
+	BEGIN 
+		 INSERT INTO #AceptacionesPedidoExtranjeros 
+		 EXEC [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros] 4,@IdProveedor
+	END 
+
     IF @Estatus = 0
     BEGIN
 
@@ -35,24 +67,28 @@ BEGIN
         TP.TipoPedido  
 		FROM
 		 dbo.MM_AceptacionPedido AP 
-		 INNER JOIN dbo.MM_Pedido P 
-			ON P.IdPedido = AP.IdPedido
-		 INNER JOIN MM_Pedidos AS PG
+		 JOIN dbo.MM_Pedido P 
+			ON AP.IdPedido = P.IdPedido 
+		 JOIN MM_Pedidos AS PG
              ON P.IdPedido = PG.IdIdentificador
-                   AND PG.IdProveedorCliente = P.IdProveedorCompras
-		 INNER JOIN dbo.MM_TipoPedido AS TP
-                ON TP.IdTipoPedido = PG.IdTipoPedido
-		 INNER JOIN dbo.S_Proveedor PR 
-				ON PR.IdProveedor= P.IdProveedorCompras 
+             AND P.IdProveedorCompras = PG.IdProveedorCliente 		
+			 AND PG.IdTipoPedido in (2,4,6) --> CTE PEDIDOS
+		 JOIN dbo.MM_TipoPedido AS TP
+             ON  PG.IdTipoPedido = TP.IdTipoPedido
+		 JOIN dbo.S_Proveedor PR 
+			ON P.IdProveedorCompras  = PR.IdProveedor
 		 LEFT JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC 
-			ON APC.IdAceptacionPedido=AP.IdAceptacionPedido
+			ON AP.IdAceptacionPedido = APC.IdAceptacionPedido
 		 LEFT JOIN dbo.FI_PedimentoComprobante PC 
-			ON PC.IdPedimentoComprobante=APC.IdPedimentoComprobante
-		 LEFT JOIN dbo.TA_Operacion O ON O.IdDocumento=PC.IdPedimentoComprobante AND O.IdTipoOperacion=16 		 -->APROBACIÓN DE COMPROBANTE EXTRANJERO
-		 WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> NACIONALIDAD EXTRANJERA		
+			ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante
+		 LEFT JOIN dbo.TA_Operacion O 
+			ON PC.IdPedimentoComprobante = O.IdDocumento
+			AND O.IdTipoOperacion=16 		 -->CTE APROBACIÓN DE COMPROBANTE EXTRANJERO
+		 WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> CTE NACIONALIDAD EXTRANJERA		
 		 AND P.IdSubcontratista=@IdProveedor
 		 AND O.IdOperacion IS NULL
 		 AND ISNULL(AP.IdEstatusEliminado,0)<>1 --> NO MOSTRAR SOLICITUD DE COMPROBANTES CON ESTATUS ELIMINADO
+		 AND AP.IdAceptacionPedido NOT IN (SELECT IdAceptacionPedido FROM #AceptacionesPedidoExtranjeros WHERE EstatusAprobacion <>'Aprobada')
 		 GROUP BY AP.IdAceptacionPedido,
                  AP.IdPedido,
                  AP.Creado,
@@ -89,25 +125,28 @@ BEGIN
         TP.TipoPedido  
 		FROM
 		 dbo.MM_AceptacionPedido AP 
-		 INNER JOIN dbo.MM_Pedido P 
-			ON P.IdPedido = AP.IdPedido
-		 INNER JOIN MM_Pedidos AS PG
+		 JOIN dbo.MM_Pedido P 
+			ON AP.IdPedido = P.IdPedido 
+		 JOIN MM_Pedidos AS PG
              ON P.IdPedido = PG.IdIdentificador
-                   AND PG.IdProveedorCliente = P.IdProveedorCompras
-		 INNER JOIN dbo.MM_TipoPedido AS TP
-                ON TP.IdTipoPedido = PG.IdTipoPedido
-		 INNER JOIN dbo.S_Proveedor PR 
-				ON PR.IdProveedor= P.IdProveedorCompras 
+                AND P.IdProveedorCompras = PG.IdProveedorCliente
+				AND PG.IdTipoPedido in (2,4,6) --> CTE PEDIDOS
+		 JOIN dbo.MM_TipoPedido AS TP
+                ON  PG.IdTipoPedido = TP.IdTipoPedido
+		 JOIN dbo.S_Proveedor PR 
+				ON  P.IdProveedorCompras  = PR.IdProveedor
 		 LEFT JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC 
-			ON APC.IdAceptacionPedido=AP.IdAceptacionPedido
+			ON AP.IdAceptacionPedido = APC.IdAceptacionPedido
 		 LEFT JOIN dbo.FI_PedimentoComprobante PC 
-			ON PC.IdPedimentoComprobante=APC.IdPedimentoComprobante
-		 LEFT JOIN dbo.TA_Operacion O ON O.IdDocumento=PC.IdPedimentoComprobante AND O.IdTipoOperacion=16 		 -->APROBACIÓN DE COMPROBANTE EXTRANJERO
-		 WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> NACIONALIDAD EXTRANJERA		
+			ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante
+		 LEFT JOIN dbo.TA_Operacion O 
+			ON PC.IdPedimentoComprobante = O.IdDocumento
+			AND O.IdTipoOperacion=16 		 -->CTE APROBACIÓN DE COMPROBANTE EXTRANJERO
+		 WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> CTE NACIONALIDAD EXTRANJERA		
 		 AND P.IdSubcontratista=@IdProveedor
 		 AND O.IdOperacion IS NOT NULL
 		 AND O.IdEstatusOperacion=@Estatus
-		 AND ISNULL(PC.IdEstatusEliminado,0)<>1  --> NO MOSTRAR COMPROBANTES CON ESTATUS ELIMINADO
+		 AND ISNULL(PC.IdEstatusEliminado,0)<>1  --> CTE NO MOSTRAR COMPROBANTES CON ESTATUS ELIMINADO
 		 GROUP BY AP.IdAceptacionPedido,
                  AP.IdPedido,
                  AP.Creado,
@@ -145,25 +184,30 @@ BEGIN
         END AS Estatus
 		FROM
 		 dbo.MM_AceptacionPedido AP 
-		 INNER JOIN dbo.MM_Pedido P 
-			ON P.IdPedido = AP.IdPedido AND ISNULL(AP.IdEstatusEliminado,0)<>1 --> ACEPTACIÓN PEDIDO NO ESTE ELIMINADO
-		 INNER JOIN MM_Pedidos AS PG
+		 JOIN dbo.MM_Pedido P 
+			ON AP.IdPedido  = P.IdPedido 
+			AND ISNULL(AP.IdEstatusEliminado,0)<>1 --> CTE ACEPTACIÓN PEDIDO NO ESTE ELIMINADO
+		 JOIN MM_Pedidos AS PG
              ON P.IdPedido = PG.IdIdentificador
-                   AND PG.IdProveedorCliente = P.IdProveedorCompras
-		 INNER JOIN dbo.MM_TipoPedido AS TP
-                ON TP.IdTipoPedido = PG.IdTipoPedido
-		 INNER JOIN dbo.S_Proveedor PR 
-				ON PR.IdProveedor= P.IdProveedorCompras 
+             AND P.IdProveedorCompras = PG.IdProveedorCliente
+			  AND PG.IdTipoPedido in (2,4,6) --> CTE PEDIDOS
+		 JOIN dbo.MM_TipoPedido AS TP
+                ON PG.IdTipoPedido = TP.IdTipoPedido 
+		 JOIN dbo.S_Proveedor PR 
+				ON  P.IdProveedorCompras = PR.IdProveedor 
 		 LEFT JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC 
-			ON APC.IdAceptacionPedido=AP.IdAceptacionPedido
+			ON AP.IdAceptacionPedido = APC.IdAceptacionPedido
 		 LEFT JOIN dbo.FI_PedimentoComprobante PC 
-			ON PC.IdPedimentoComprobante=APC.IdPedimentoComprobante AND ISNULL(PC.IdEstatusEliminado,0)<>1 --> PEDIMENTO COMPROBANTE NO ESTE ELIMINADO
+			ON APC.IdPedimentoComprobante  = PC.IdPedimentoComprobante
+			AND ISNULL(PC.IdEstatusEliminado,0)<>1 --> PEDIMENTO COMPROBANTE NO ESTE ELIMINADO
 		 LEFT JOIN dbo.TA_Operacion O 
-			ON O.IdDocumento=PC.IdPedimentoComprobante AND O.IdTipoOperacion=16 -->APROBACIÓN DE COMPROBANTE EXTRANJERO
+			ON PC.IdPedimentoComprobante  = O.IdDocumento
+			AND O.IdTipoOperacion=16 -->CTE APROBACIÓN DE COMPROBANTE EXTRANJERO
 		 LEFT JOIN dbo.TA_Estatus AS E
-                ON E.IdEstatus = O.IdEstatusOperacion		 		 
+                ON O.IdEstatusOperacion = E.IdEstatus 		 		 
 		 WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> NACIONALIDAD EXTRANJERA		
 		 AND P.IdSubcontratista=@IdProveedor		 		 
+		 AND AP.IdAceptacionPedido NOT IN (SELECT IdAceptacionPedido FROM #AceptacionesPedidoExtranjeros WHERE EstatusAprobacion <>'Aprobada')
 		 GROUP BY AP.IdAceptacionPedido,
                  AP.IdPedido,
                  AP.Creado,
@@ -183,5 +227,4 @@ BEGIN
     END;
 
 END;
-
 
