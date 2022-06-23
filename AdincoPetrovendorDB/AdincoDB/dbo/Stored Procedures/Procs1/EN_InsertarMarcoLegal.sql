@@ -1,17 +1,28 @@
-﻿DROP PROCEDURE IF EXISTS EN_InsertarMarcoLegal
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[EN_InsertarMarcoLegal]    Script Date: 20/06/2022 05:25:27 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =================================================================
 -- Author:	Luis David
 -- Create date: 27/09/2019
 -- Description:	se agrega el bitjoa y nombreeningles para el issue 419
 -- =================================================================
-CREATE PROCEDURE [dbo].[EN_InsertarMarcoLegal]
+-- =================================================================
+-- Author: Alexander Gomez
+-- Create date: 20/06/2022
+-- Description:	se agrega el Alias
+-- =================================================================
+ALTER PROCEDURE [dbo].[EN_InsertarMarcoLegal]
     @MarcoLegal VARCHAR(MAX),
     @idUsuario INT,
     @idContrato INT,
 	@activo bit,
 	@MarcoLegalIngles VARCHAR(MAX) = null,
-	@BitJoa bit = null
+	@BitJoa bit = null,
+	@Alias VARCHAR(1000)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -26,10 +37,10 @@ BEGIN
         INSERT INTO EN_MarcoLegal 
 				(MarcoLegal,		MarcoLegalIngles,	IsInterno, 
 				CreadoPor,			CreadoEn,			Activo, 
-				BITJOA)
+				BITJOA, Alias)
         VALUES 
 				(@MarcoLegal,		@MarcoLegalIngles,	0, 
 				@idUsuario,			GETDATE(),			@activo, 
-				@BitJoa);
+				@BitJoa,@Alias);
     END;
 END;
