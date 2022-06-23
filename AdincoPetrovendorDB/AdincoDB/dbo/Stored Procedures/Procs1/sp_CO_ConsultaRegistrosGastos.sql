@@ -1,4 +1,15 @@
-﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastos]
+﻿use Adinco
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_CO_ConsultaRegistrosGastos'
+)
+    DROP PROCEDURE sp_CO_ConsultaRegistrosGastos;
+	GO
+
+go
+CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastos]
 -- ============================================= 
 -- sp_CO_ConsultaRegistrosGastos 3
 @IdPresupuesto INT
@@ -16,6 +27,11 @@ AS
 		 -- Author:		 Marcos Garcia
          -- Alter date:	 01-09-2021
          -- Description: Add Cat Mano de Obra
+         -- =============================================
+		   -- =============================================
+		 -- Author:		 Daniel AC
+         -- Alter date:	 20-06-2002
+         -- Description: Add indicador de carta de CN para comprobantes extranjeros de procura
          -- =============================================
          SET NOCOUNT ON;
          SET LANGUAGE spanish;
@@ -110,6 +126,46 @@ AS
                 AND			FP.Activa							=	1
                 AND			ISNULL(FP.IsEliminado, 0)			<>	1--*******
 
+
+
+
+		/*ADECUACIÓN PARA MOSTRAR INDICADOR DE CN DE COMPROBANTES EXTRANJEROS*/
+         INSERT INTO #CartasProcura
+         (IdFacutraP, 
+          UUID, 
+          IdFactura
+         )
+		  select 
+		  PC.IdPedimentoComprobante,
+		  '',
+		  ADPC.IdPedimentoComprobante
+		   FROM Petrovendor..FI_PedimentoComprobante PC
+		  JOIN Petrovendor..FI_AceptacionPedido_PedimentoComprobante APC 
+			 ON PC.IdPedimentoComprobante = apc.IdPedimentoComprobante 
+		  JOIN Petrovendor..FI_RelacionComprobanteAdinco RC
+			ON PC.IdPedimentoComprobante = RC.IdComprobantePetrovendor 
+		  JOIN Petrovendor.dbo.MM_AceptacionPedido AS AP 
+			ON  APC.IdAceptacionPedido = AP.IdAceptacionPedido
+		  JOIN Petrovendor.dbo.MM_Pedido P
+			ON AP.IdPedido = P.IdPedido
+			AND  P.IdContrato = @Contrato
+		  JOIN Petrovendor..RelacionCartaCNPedido RSC 
+			ON AP.IdAceptacionPedido = RSC.IdAceptacionPedido
+		    AND RSC.PedirCarta= 1 -- CTE DEBE ESTAR ACTIVO 
+		  JOIN Petrovendor.dbo.MM_AceptacionCartaPCN AS AC
+			ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
+          JOIN Petrovendor.dbo.S_Documento_S3 AS D 
+			ON AC.IdDocumento = D.IdDocumento 
+		  JOIN Petrovendor.dbo.S_TipoValidacionDoc AS TD 
+			ON AC.IdEstatus = TD.IdTipoValidacionDoc
+		  JOIN Adinco..FI_PedimentoComprobante ADPC
+			ON RC.IdComprobanteAdinco=ADPC.IdPedimentoComprobante
+		  WHERE AC.IdEstatus = 2 --> CTE APROBADA
+		   AND ISNULL(AC.IdEstatusEliminado, 0) <> 1 --> CTE NO ESTE ELIMINADA
+		   AND ADPC.Activo=1 --> ESTE ACTIVO
+		   AND PC.IsActivo=1  --> ESTE ACTIVO
+		  GROUP BY  PC.IdPedimentoComprobante,		  
+		  ADPC.IdPedimentoComprobante
 
 				--select * from #CartasProcura
          /**/
@@ -419,6 +475,15 @@ AS
 		ON		D.Identificador =	CP.IdFactura
         WHERE	D.Identificador =	CP.IdFactura
 		AND		D.TipoDocumento =	'CF';
+
+		/*ADECUACIÓN PARA MOSTRAR INDICADOR DE CN DE COMPROBANTES EXTRANJEROS*/
+		UPDATE	#Datos--D
+        SET		#Datos.CCN		=	'SI'
+        FROM	#Datos			D
+		JOIN	#CartasProcura	CP 
+		ON		D.Identificador =	CP.IdFactura
+        WHERE	D.Identificador =	CP.IdFactura
+		AND		D.TipoDocumento =	'PE';
 
 
 		--select top 10 * from Petrovendor..CN_ArchivoCartaCompraDirecta
