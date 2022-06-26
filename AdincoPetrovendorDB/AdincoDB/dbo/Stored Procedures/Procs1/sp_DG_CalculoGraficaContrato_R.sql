@@ -4,7 +4,7 @@
 -- Description:	Graficas
 --=============================================
 
-create PROCEDURE [dbo].[sp_DG_CalculoGraficaContrato_R] 
+CREATE PROCEDURE [dbo].[sp_DG_CalculoGraficaContrato_R] 
 @IdContrato INT,
 @Language   INT,
 @IdUsuario  INT=0
@@ -468,7 +468,7 @@ AS
 				 --||||||||||||||||||||||||||||||||||||||||||||
                      UPDATE t1
                        SET
-                           t1.SerieValues5 = t2.acumulado
+                           t1.SerieValues5 = isnull(t2.acumulado, 0)
                      FROM #VolumenGas t1
                           JOIN #ProduccionGas t2 ON t1.MesReporte = t2.MesReporte;
                      INSERT INTO DG_DatosGrafica
