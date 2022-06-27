@@ -584,7 +584,7 @@ BEGIN
 
     --||||||||||||||||||||||||||||||||||||||||||||
     UPDATE t1
-    SET t1.SerieValues5 = t2.acumulado
+    SET t1.SerieValues5 = ISNULL(t2.acumulado, 0)
     FROM #VolumenGas t1
         JOIN #ProduccionGas t2
             ON t1.MesReporte = t2.MesReporte;
