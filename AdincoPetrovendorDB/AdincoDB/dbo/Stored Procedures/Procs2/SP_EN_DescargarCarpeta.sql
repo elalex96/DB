@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 03/06/2022 03:22:38 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 29/06/2022 05:27:38 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -15,7 +15,12 @@ GO
 -- Create date: <25/03/2022>
 -- Description: <Se agrego función para acortar rutas de los archivos de las carpetas del visor>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/CONAGUA (Comisión Nacional del Agua)/Ley de Aguas Nacionales /Trimestral/2021-10/CONAGUA - Water Discharge (Quarterly)/',10106,1000
+-- =============================================
+-- Author:      Alexander Gomez
+-- Create date: <28/06/2022>
+-- Description: <se reemplaza el marco legal por el alias en las carpetas de descarga>
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/ASEA (Agencia de Seguridad, Energía y Ambiente)/Programa de implementación HéctorV/Evento Único/',3,1000
     -- Add the parameters for the stored procedure here
     @Ruta VARCHAR(MAX),
     @IdContrato     int,
@@ -29,9 +34,14 @@ BEGIN
     DECLARE @maxNivel int, @i int, @query varchar(max), @maxIds int,@size int=20, @NuevaRuta VARCHAR(MAX) = ''
     
 	INSERT INTO #tabla(dato)
-    SELECT splitdata as Ruta
+    SELECT 
+	splitdata as Ruta
     FROM [dbo].[fnSplitString](@Ruta,'/')
-    SELECT @NuevaRuta = @NuevaRuta + substring(LTRIM(RTRIM(dato)),0,20) + '/'
+    SELECT 
+		@NuevaRuta = @NuevaRuta + CASE
+									WHEN CHARINDEX('- (',dato,1) > 0 THEN SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)) + '/'
+									ELSE substring(LTRIM(RTRIM(dato)),0,20) + '/'
+								END
     FROM #tabla;
 
     -- Insert statements for procedure here
@@ -110,7 +120,7 @@ BEGIN
     insert into #tmpResultadoVisor(Id,Ruta,RutaCompleta,Titulo)
     SELECT
         (IdElemento + @maxIds) AS Id,
-        [dbo].[fn_ent_RutaArchivo](Ruta,@size),
+        [dbo].[fn_ent_RutaArchivo_CF](Ruta,@size),
         Ruta,
         Nombre
     FROM EN_CarpetasArchivosVisor (NOLOCK)
@@ -153,7 +163,7 @@ BEGIN
     UNION ALL
     SELECT
         (V.IdElemento + @maxIds) AS Id,
-        REPLACE(RV.Ruta,'//','/') AS Ruta,
+        REPLACE(REPLACE(RV.Ruta,'//','/'),'///','/') AS Ruta,
         V.Nombre AS Titulo,
         V.IdElemento as DocumentoEntregableId,
         0 AS idContratoEntregable,
@@ -171,9 +181,7 @@ BEGIN
     JOIN #tmpResultadoVisor RV
         ON(V.IdElemento + @maxIds) = RV.Id
     WHERE V.IdContrato = @IdContrato
-    AND RV.RutaCompleta LIKE '%' + @Ruta + '%'
+    AND REPLACE(REPLACE(RV.Ruta,'//','/'),'///','/') LIKE '%' + @NuevaRuta + '%'
     AND V.Activo = 1
-
-	---SELECT @NuevaRuta
 
 END
