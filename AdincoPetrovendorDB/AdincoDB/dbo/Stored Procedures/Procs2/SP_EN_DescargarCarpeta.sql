@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 29/06/2022 05:27:38 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 30/06/2022 03:19:25 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -20,7 +20,7 @@ GO
 -- Create date: <28/06/2022>
 -- Description: <se reemplaza el marco legal por el alias en las carpetas de descarga>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/ASEA (Agencia de Seguridad, Energía y Ambiente)/Programa de implementación HéctorV/Evento Único/',3,1000
+ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/ASEA (Agencia de Seguridad, Energía y Ambiente)/Informes Trimestrales Ares REMASTIERIZADO - (Prueba Alias Editado 3)/Trimestral/2018-06/Informes Trimestrales ARES/',3,1000
     -- Add the parameters for the stored procedure here
     @Ruta VARCHAR(MAX),
     @IdContrato     int,
@@ -39,10 +39,12 @@ BEGIN
     FROM [dbo].[fnSplitString](@Ruta,'/')
     SELECT 
 		@NuevaRuta = @NuevaRuta + CASE
-									WHEN CHARINDEX('- (',dato,1) > 0 THEN SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)) + '/'
+									WHEN CHARINDEX('- (',dato,1) > 0 THEN substring(LTRIM(RTRIM(SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)))),0,20) + '/'
 									ELSE substring(LTRIM(RTRIM(dato)),0,20) + '/'
 								END
     FROM #tabla;
+
+	SET @NuevaRuta = REPLACE(@NuevaRuta,':','');
 
     -- Insert statements for procedure here
     create table #Rutas
@@ -107,8 +109,8 @@ BEGIN
     while(@i < @maxNivel)
     begin
         update      #tmpResultado   
-        set         #tmpResultado.Ruta      =   substring(RTRIM(LTRIM(r.Titulo)),0,@size)+'/'+tr.Ruta,
-                    #tmpResultado.RutaCompleta      =   RTRIM(LTRIM(r.Titulo))+'/'+tr.Ruta,
+        set         #tmpResultado.Ruta      =   CONCAT(substring(RTRIM(LTRIM(r.Titulo)),0,@size),'/',tr.Ruta),
+                    #tmpResultado.RutaCompleta      =  CONCAT(RTRIM(LTRIM(r.Titulo)),'/',tr.Ruta),
                     #tmpResultado.IdPadre   =   r.IdPadre
         from        #tmpResultado   tr
         inner join  #Rutas          r
@@ -127,20 +129,21 @@ BEGIN
     WHERE IdContrato = @IdContrato
     AND Ruta IS NOT NULL
     AND Activo = 1;
+
     --TODAS LAS RUTAS
     select  Id,
-            Ruta,
+            REPLACE(Ruta,':','') AS Ruta,
             Titulo
     from    #tmpResultado 
     where   DocumentoEntregableId is not null
     UNION ALL
     select Id,
-    Ruta,
+    REPLACE(Ruta,':',''),
     Titulo
     from #tmpResultadoVisor
     --RUTAS DE LA CARPETA QUE SE DESEA DESCARGAR
     select  R.Id,
-            R.Ruta,
+            REPLACE(Ruta,':','') AS Ruta,
             R.Titulo,
             DE.DocumentoEntregableId,
             idContratoEntregable,
@@ -158,7 +161,7 @@ BEGIN
     JOIN EN_EntregableDocumento AS DE (NOLOCK)
         ON R.DocumentoEntregableId = DE.DocumentoEntregableId
     where   R.DocumentoEntregableId is not null
-        AND R.RutaCompleta LIKE '%' + @NuevaRuta + '%'
+        AND REPLACE(R.RutaCompleta,':','') LIKE '%' + @NuevaRuta + '%'
         AND Activo = 1
     UNION ALL
     SELECT
@@ -182,6 +185,6 @@ BEGIN
         ON(V.IdElemento + @maxIds) = RV.Id
     WHERE V.IdContrato = @IdContrato
     AND REPLACE(REPLACE(RV.Ruta,'//','/'),'///','/') LIKE '%' + @NuevaRuta + '%'
-    AND V.Activo = 1
+    AND V.Activo = 1;
 
 END
