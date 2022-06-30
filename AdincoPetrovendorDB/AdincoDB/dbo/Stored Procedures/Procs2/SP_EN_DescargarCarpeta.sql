@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 03/06/2022 03:22:38 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 30/06/2022 09:28:45 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -15,7 +15,12 @@ GO
 -- Create date: <25/03/2022>
 -- Description: <Se agrego función para acortar rutas de los archivos de las carpetas del visor>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --SP_EN_DescargarCarpeta 'Exploración/CONAGUA (Comisión Nacional del Agua)/Ley de Aguas Nacionales /Trimestral/2021-10/CONAGUA - Water Discharge (Quarterly)/',10106,1000
+-- =============================================
+-- Author:      Alexander Gomez
+-- Create date: <28/06/2022>
+-- Description: <se reemplaza el marco legal por el alias en las carpetas de descarga>
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/SENER (Secretaría de Energía)/(Resolutivo EvIS) Oficio 117.-DGAEISyCP.4237-18 referente a la Evaluación de Impacto Social/',10103,1000
     -- Add the parameters for the stored procedure here
     @Ruta VARCHAR(MAX),
     @IdContrato     int,
@@ -29,10 +34,17 @@ BEGIN
     DECLARE @maxNivel int, @i int, @query varchar(max), @maxIds int,@size int=20, @NuevaRuta VARCHAR(MAX) = ''
     
 	INSERT INTO #tabla(dato)
-    SELECT splitdata as Ruta
+    SELECT 
+	splitdata as Ruta
     FROM [dbo].[fnSplitString](@Ruta,'/')
-    SELECT @NuevaRuta = @NuevaRuta + substring(LTRIM(RTRIM(dato)),0,20) + '/'
+    SELECT 
+		@NuevaRuta = @NuevaRuta + CASE
+									WHEN CHARINDEX('- (',dato,1) > 0 THEN SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)) + '/'
+									ELSE substring(LTRIM(RTRIM(dato)),0,20) + '/'
+								END
     FROM #tabla;
+
+	SET @NuevaRuta = REPLACE(@NuevaRuta,':','');
 
     -- Insert statements for procedure here
     create table #Rutas
@@ -97,8 +109,8 @@ BEGIN
     while(@i < @maxNivel)
     begin
         update      #tmpResultado   
-        set         #tmpResultado.Ruta      =   substring(RTRIM(LTRIM(r.Titulo)),0,@size)+'/'+tr.Ruta,
-                    #tmpResultado.RutaCompleta      =   RTRIM(LTRIM(r.Titulo))+'/'+tr.Ruta,
+        set         #tmpResultado.Ruta      =   CONCAT(substring(RTRIM(LTRIM(r.Titulo)),0,@size),'/',tr.Ruta),
+                    #tmpResultado.RutaCompleta      =  CONCAT(RTRIM(LTRIM(r.Titulo)),'/',tr.Ruta),
                     #tmpResultado.IdPadre   =   r.IdPadre
         from        #tmpResultado   tr
         inner join  #Rutas          r
@@ -110,27 +122,28 @@ BEGIN
     insert into #tmpResultadoVisor(Id,Ruta,RutaCompleta,Titulo)
     SELECT
         (IdElemento + @maxIds) AS Id,
-        [dbo].[fn_ent_RutaArchivo](Ruta,@size),
+        [dbo].[fn_ent_RutaArchivo_CF](Ruta,@size),
         Ruta,
         Nombre
     FROM EN_CarpetasArchivosVisor (NOLOCK)
     WHERE IdContrato = @IdContrato
     AND Ruta IS NOT NULL
     AND Activo = 1;
+
     --TODAS LAS RUTAS
     select  Id,
-            Ruta,
+            REPLACE(Ruta,':',''),
             Titulo
     from    #tmpResultado 
     where   DocumentoEntregableId is not null
     UNION ALL
     select Id,
-    Ruta,
+    REPLACE(Ruta,':',''),
     Titulo
     from #tmpResultadoVisor
     --RUTAS DE LA CARPETA QUE SE DESEA DESCARGAR
     select  R.Id,
-            R.Ruta,
+            REPLACE(Ruta,':',''),
             R.Titulo,
             DE.DocumentoEntregableId,
             idContratoEntregable,
@@ -148,12 +161,12 @@ BEGIN
     JOIN EN_EntregableDocumento AS DE (NOLOCK)
         ON R.DocumentoEntregableId = DE.DocumentoEntregableId
     where   R.DocumentoEntregableId is not null
-        AND R.RutaCompleta LIKE '%' + @NuevaRuta + '%'
+        AND REPLACE(R.RutaCompleta,':','') LIKE '%' + @NuevaRuta + '%'
         AND Activo = 1
     UNION ALL
     SELECT
         (V.IdElemento + @maxIds) AS Id,
-        REPLACE(RV.Ruta,'//','/') AS Ruta,
+        REPLACE(REPLACE(RV.Ruta,'//','/'),'///','/') AS Ruta,
         V.Nombre AS Titulo,
         V.IdElemento as DocumentoEntregableId,
         0 AS idContratoEntregable,
@@ -171,9 +184,7 @@ BEGIN
     JOIN #tmpResultadoVisor RV
         ON(V.IdElemento + @maxIds) = RV.Id
     WHERE V.IdContrato = @IdContrato
-    AND RV.RutaCompleta LIKE '%' + @Ruta + '%'
-    AND V.Activo = 1
-
-	---SELECT @NuevaRuta
+    AND REPLACE(REPLACE(RV.Ruta,'//','/'),'///','/') LIKE '%' + @NuevaRuta + '%'
+    AND V.Activo = 1;
 
 END

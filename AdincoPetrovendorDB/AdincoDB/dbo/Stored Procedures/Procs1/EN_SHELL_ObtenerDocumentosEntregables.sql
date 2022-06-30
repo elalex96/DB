@@ -1,11 +1,11 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 01/06/2022 03:23:37 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 30/06/2022 02:56:51 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables] --EN_SHELL_ObtenerDocumentosEntregables 3,10150
+ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables] --EN_SHELL_ObtenerDocumentosEntregables 10103,10150
     @ContratoId INT,
     @UsuarioId INT   
 AS
@@ -435,7 +435,7 @@ SET NOCOUNT ON
 		    EtapaId					=	LD.EtapaId, 
 		    ReceptorEntregableId	=	LD.ReceptorEntregableId,
 			MarcoLegalId			=	ML.IdMarcoLegal,
-		    Titulo					=	REPLACE(ML.MarcoLegal,'/','-'),		    
+		    Titulo					=	ISNULL(REPLACE(ML.Alias,'/','-'),ML.MarcoLegaL),		    
 		    Nivel					=	3,
 		    Detalle					=	'Marco Legal',
 		    CantidadArchivos		=	COUNT(D.DocumentoEntregableId),
@@ -455,6 +455,7 @@ SET NOCOUNT ON
 		    LD.EtapaId, 
 		    LD.ReceptorEntregableId,
 		    ML.MarcoLegal,
+			ML.Alias,
 		    ML.IdMarcoLegal
 		    ORDER BY ML.MarcoLegal ASC
 
