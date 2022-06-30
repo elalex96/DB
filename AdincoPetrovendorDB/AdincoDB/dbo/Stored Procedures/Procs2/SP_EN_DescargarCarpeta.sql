@@ -1,5 +1,6 @@
 USE [Adinco]
 GO
+
 /****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 30/06/2022 09:28:45 a. m. ******/
 SET ANSI_NULLS ON
 GO
@@ -21,6 +22,7 @@ GO
 -- Description: <se reemplaza el marco legal por el alias en las carpetas de descarga>
 -- =============================================
 ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/SENER (Secretaría de Energía)/(Resolutivo EvIS) Oficio 117.-DGAEISyCP.4237-18 referente a la Evaluación de Impacto Social/',10103,1000
+
     -- Add the parameters for the stored procedure here
     @Ruta VARCHAR(MAX),
     @IdContrato     int,
@@ -39,7 +41,7 @@ BEGIN
     FROM [dbo].[fnSplitString](@Ruta,'/')
     SELECT 
 		@NuevaRuta = @NuevaRuta + CASE
-									WHEN CHARINDEX('- (',dato,1) > 0 THEN SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)) + '/'
+									WHEN CHARINDEX('- (',dato,1) > 0 THEN substring(LTRIM(RTRIM(SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)))),0,20) + '/'
 									ELSE substring(LTRIM(RTRIM(dato)),0,20) + '/'
 								END
     FROM #tabla;
@@ -132,7 +134,7 @@ BEGIN
 
     --TODAS LAS RUTAS
     select  Id,
-            REPLACE(Ruta,':',''),
+            REPLACE(Ruta,':','') AS Ruta,
             Titulo
     from    #tmpResultado 
     where   DocumentoEntregableId is not null
@@ -143,7 +145,7 @@ BEGIN
     from #tmpResultadoVisor
     --RUTAS DE LA CARPETA QUE SE DESEA DESCARGAR
     select  R.Id,
-            REPLACE(Ruta,':',''),
+            REPLACE(Ruta,':','') AS Ruta,
             R.Titulo,
             DE.DocumentoEntregableId,
             idContratoEntregable,
