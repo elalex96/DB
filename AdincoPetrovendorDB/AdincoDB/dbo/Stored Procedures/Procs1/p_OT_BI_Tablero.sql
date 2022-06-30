@@ -25,9 +25,7 @@ AS
         IF OBJECT_ID('tempdb..#tmpResultado5', 'U') IS NOT NULL  
             DROP TABLE #tmpResultado5 ;  
         IF OBJECT_ID('tempdb..#DATOSACEPTACIONES', 'U') IS NOT NULL  
-            DROP TABLE #DATOSACEPTACIONES ;  
-        IF OBJECT_ID('tempdb..#tmpResumenAbiertaCerrada', 'U') IS NOT NULL  
-            DROP TABLE #tmpResumenAbiertaCerrada ;  
+            DROP TABLE #DATOSACEPTACIONES ;    
         IF OBJECT_ID('tempdb..#tmpResultaFinalRep', 'U') IS NOT NULL  
             DROP TABLE #tmpResultaFinalRep ;  
 		IF OBJECT_ID('tempdb..#tmpAF', 'U') IS NOT NULL  
