@@ -38,9 +38,9 @@ AS
                 2 AS [RC27_08]
          FROM dbo.FI_EstudioPreciosTransfer EPT
               JOIN dbo.FI_Factura F ON F.IdEstudioPrecioTransfer = EPT.IdEstudioPrecioTransfer
-              JOIN dbo.CO_Contrato C ON C.IdContrato = EPT.IdContrato
+              JOIN dbo.CO_Contrato C ON C.IdContrato = EPT.IdContrato AND  C.IdContrato = @Contrato
               JOIN dbo.CO_Contratista CC ON CC.IdContratista = C.IdContratista
-              JOIN dbo.CO_Registro R ON R.IdFactura = F.IdFactura
+              JOIN dbo.CO_Registro R ON R.IdFactura = F.IdFactura AND R.IdEstado = 10004 AND R.CvTipoDocFacturacion = 1
               JOIN dbo.CO_LineaPresupuestoMes L ON L.IdLineaPresupuestoMes = R.IdPrograma
               JOIN dbo.CO_Presupuesto P ON P.IdPresupuesto = L.IdPresupuesto
               JOIN dbo.FI_TransferFactura TF ON TF.IdFactura = F.IdFactura
@@ -77,9 +77,9 @@ AS
                 2 AS [RC27_08]
          FROM dbo.FI_EstudioPreciosTransfer EPT
               JOIN dbo.FI_PedimentoComprobante PC ON PC.IdEstudioPrecioTransfer = EPT.IdEstudioPrecioTransfer
-              JOIN dbo.CO_Contrato C ON C.IdContrato = EPT.IdContrato
+              JOIN dbo.CO_Contrato C ON C.IdContrato = EPT.IdContrato AND  C.IdContrato = @Contrato
               JOIN dbo.CO_Contratista CC ON CC.IdContratista = C.IdContratista
-              JOIN dbo.CO_Registro R ON R.IdPedimentoComprobante = PC.IdPedimentoComprobante
+              JOIN dbo.CO_Registro R ON R.IdPedimentoComprobante = PC.IdPedimentoComprobante AND R.IdEstado = 10004 AND R.CvTipoDocFacturacion IN(2, 3)
               JOIN dbo.CO_LineaPresupuestoMes L ON L.IdLineaPresupuestoMes = R.IdPrograma
               JOIN dbo.CO_Presupuesto P ON P.IdPresupuesto = L.IdPresupuesto
               JOIN dbo.FI_TransferFactura TF ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante
@@ -120,9 +120,9 @@ AS
              JOIN dbo.FI_ComplementoDePago CP ON CP.IdFactura = F.IdFactura
              JOIN dbo.FI_CPDocRelacionado DR ON CP.IdComplementoDePago = DR.IdComplementoDePago
              JOIN dbo.FI_Factura FDR ON FDR.UUID = DR.IdDocumento
-             JOIN dbo.CO_Contrato C ON C.IdContrato = EPT.IdContrato
+             JOIN dbo.CO_Contrato C ON C.IdContrato = EPT.IdContrato	AND  C.IdContrato = @Contrato
              JOIN dbo.CO_Contratista CC ON CC.IdContratista = C.IdContratista
-             JOIN dbo.CO_Registro R ON R.IdFactura = FDR.IdFactura
+             JOIN dbo.CO_Registro R ON R.IdFactura = FDR.IdFactura AND R.IdEstado = 10004 AND R.CvTipoDocFacturacion = 1
              JOIN dbo.CO_LineaPresupuestoMes L ON L.IdLineaPresupuestoMes = R.IdPrograma
              JOIN dbo.CO_Presupuesto P ON P.IdPresupuesto = L.IdPresupuesto
              JOIN dbo.FI_TransferFactura TF ON TF.IdFactura = F.IdFactura
