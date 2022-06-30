@@ -13303,6 +13303,7 @@
     </Build>
     <Build Include="dbo\Stored Procedures\Procs2\SP_EN_ValidarAliasMarcoLegal.sql" />
     <Build Include="dbo\Functions\fn_ent_RutaArchivo_CF.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_ActualizacionPerfil.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
