@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta]    Script Date: 27/04/2022 03:32:05 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta]    Script Date: 29/06/2022 11:16:23 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -22,7 +22,10 @@ ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta]
 	@Nivel INT,
 	@IdUsuario INT,
 	@IdContrato INT,
-	@Limitador INT
+	@Limitador INT,
+	@Etapa INT, 
+	@IdReceptorEntregable INT, 
+	@IsPozo BIT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -49,7 +52,10 @@ BEGIN
 			Nivel,
 			Activo,
 			IdContrato,
-			Limitador
+			Limitador,
+			Etapa,
+			IdReceptorEntregable,
+			IsPozo
 		)
 		VALUES
 		(
@@ -62,7 +68,10 @@ BEGIN
 			@Nivel,
 			1,
 			@IdContrato,
-			@LIMITADOR_GUARDADO
+			@LIMITADOR_GUARDADO,
+			@Etapa,
+			@IdReceptorEntregable,
+			@IsPozo
 		);
 
 		SELECT SCOPE_IDENTITY() AS IDCARPETA,'SUCCESS';
