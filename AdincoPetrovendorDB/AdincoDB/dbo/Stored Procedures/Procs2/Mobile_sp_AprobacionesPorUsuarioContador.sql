@@ -1,6 +1,5 @@
 USE [Adinco]
 GO
-GO
 IF EXISTS
 (
     SELECT 1
@@ -8,14 +7,18 @@ IF EXISTS
     WHERE name = 'Mobile_sp_AprobacionesPorUsuarioContador'
 )
     DROP PROCEDURE Mobile_sp_AprobacionesPorUsuarioContador;
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuarioContador]    Script Date: 18/04/2022 05:17:36 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuarioContador]    Script Date: 30/06/2022 01:05:31 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-
-CREATE PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuarioContador] --Mobile_sp_AprobacionesPorUsuarioContador 10019 10
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 30-06-2022
+-- Description:	Se agrega el filtro de tipo de pedidos 2,4,6 
+-- =============================================
+CREATE PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuarioContador] --Mobile_sp_AprobacionesPorUsuarioContador 10109 10
 @IdUsuario INT
 as
 begin 
@@ -119,12 +122,18 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 				TF.IdFlujoTarea AS TipoFlujo, 
 				NULL AS IdPedido
 				FROM Petrovendor.dbo.TA_Operacion AS O 
-				INNER JOIN Petrovendor.dbo.TA_TipoOperacion AS OT ON O.IdTipoOperacion = OT.IdTipoOperacion
-				INNER JOIN Petrovendor.dbo.TA_Estatus AS E ON O.IdEstatusOperacion = E.IdEstatus 
-				INNER JOIN Petrovendor.dbo.TA_TareaOperacion AS TTO ON O.IdOperacion = TTO.IdOperacion 
-				INNER JOIN Petrovendor.dbo.TA_Tarea AS T ON TTO.IdTarea = T.IdTarea 
-				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP ON O.IdDocumento = SP.IdSolicitudPedido 
-				INNER JOIN Petrovendor.dbo.TA_FlujoTarea AS TF ON O.IdFlujoTarea = TF.IdFlujoTarea 
+				INNER JOIN Petrovendor.dbo.TA_TipoOperacion AS OT 
+					ON O.IdTipoOperacion = OT.IdTipoOperacion
+				INNER JOIN Petrovendor.dbo.TA_Estatus AS E 
+					ON O.IdEstatusOperacion = E.IdEstatus 
+				INNER JOIN Petrovendor.dbo.TA_TareaOperacion AS TTO 
+					ON O.IdOperacion = TTO.IdOperacion 
+				INNER JOIN Petrovendor.dbo.TA_Tarea AS T 
+					ON TTO.IdTarea = T.IdTarea 
+				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP 
+					ON O.IdDocumento = SP.IdSolicitudPedido 
+				INNER JOIN Petrovendor.dbo.TA_FlujoTarea AS TF 
+					ON O.IdFlujoTarea = TF.IdFlujoTarea 
 				WHERE T.IdAprobador = @IdUsuarioP
 				AND O.IdTipoOperacion = 2  --> CTE APROBACIÓN DE SOLICITUD DE PEDIDO
 				AND t.IdEstatus = 1 --> EN APROBACIÓN
@@ -184,9 +193,9 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 		SELECT O.IdOperacion
 		FROM Petrovendor.dbo.TA_Operacion O
 			INNER JOIN @FlujoSerial f
-				ON f.IdOperacion = O.IdOperacion
+				ON O.IdOperacion = f.IdOperacion 
 			INNER JOIN Petrovendor.dbo.TA_Tarea T
-				ON T.IdOperacion = O.IdOperacion
+				ON O.IdOperacion = T.IdOperacion 
 				   AND T.NoSecuencia = (f.NoSecuencia - 1)
 		WHERE O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
 			  AND T.IdEstatus <> 2; --> CTE QUE NO ESTE APROBADA
@@ -217,16 +226,26 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			P2.IdPedido,
 			P2.IdPedido
 		FROM Petrovendor.dbo.TA_Operacion AS O
-			LEFT JOIN Petrovendor.dbo.MM_Pedido AS P ON O.IdDocumento = P.IdSolicitudPedido
-			INNER JOIN    Petrovendor.dbo.MM_Pedidos P2 ON P.IdPedido = P2.IdIdentificador
-			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
-			LEFT JOIN Petrovendor.dbo.TA_Estatus AS E ON O.IdEstatusOperacion = E.IdEstatus
-			LEFT JOIN Petrovendor.dbo.TA_Tarea AS T ON O.IdOperacion = T.IdOperacion
-			LEFT JOIN Petrovendor.dbo.S_Usuario U ON T.IdAprobador = U.IdUsuario
-			LEFT JOIN Petrovendor.dbo.S_UsuarioProveedor UP ON U.IdUsuario = UP.IdUsuario
-												   AND SP.IdContrato = UP.IdContrato
-												   AND O.IdProveedor = UP.IdProveedor
-			LEFT JOIN Petrovendor.dbo.S_Proveedor prov ON P.IdSubcontratista = prov.IdProveedor
+			JOIN Petrovendor.dbo.MM_Pedido AS P 
+				ON O.IdDocumento = P.IdSolicitudPedido
+			JOIN    Petrovendor.dbo.MM_Pedidos P2 
+				ON P.IdPedido = P2.IdIdentificador
+				AND P.IdProveedorCompras = P2.IdProveedorCliente 
+				AND P2.IdTipoPedido IN (2,4,6) --> CTES TIPOS DE PEDIDO 				
+			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP 
+				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
+			LEFT JOIN Petrovendor.dbo.TA_Estatus AS E 
+				ON O.IdEstatusOperacion = E.IdEstatus
+			LEFT JOIN Petrovendor.dbo.TA_Tarea AS T 
+				ON O.IdOperacion = T.IdOperacion
+			LEFT JOIN Petrovendor.dbo.S_Usuario U 
+				ON T.IdAprobador = U.IdUsuario
+			LEFT JOIN Petrovendor.dbo.S_UsuarioProveedor UP 
+				ON U.IdUsuario = UP.IdUsuario
+				AND SP.IdContrato = UP.IdContrato
+				AND O.IdProveedor = UP.IdProveedor
+			LEFT JOIN Petrovendor.dbo.S_Proveedor prov 
+				ON P.IdSubcontratista = prov.IdProveedor
 		WHERE T.IdAprobador = @IdUsuarioP
 			  AND O.IdProveedor = @IdProveedorCursorPedido
 			  AND O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
@@ -299,7 +318,7 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 		LEFT JOIN Petrovendor..MM_Pedidos PG
 				ON O.IdDocumento = PG.IdIdentificador 
 			   AND O.IdProveedor = PG.IdProveedorCliente
-			   AND PG.IdTipoPedido = 1 --> CTE  TOPO DE PEDIDO COMPRA DIRECTA
+			   AND PG.IdTipoPedido = 1 --> CTE  TIPO DE PEDIDO COMPRA DIRECTA
 		LEFT JOIN Petrovendor..FI_Factura fac
 				ON O.IdDocumento = fac.IdFactura       
 		LEFT JOIN Petrovendor..CO_Registro reg
@@ -355,7 +374,7 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 				FROM Petrovendor..FI_AceptacionPedido_PedimentoComprobante AS APC
 					JOIN Petrovendor..TA_Operacion AS OP
 						ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento 
-						AND OP.IdTipoOperacion = 19
+						AND OP.IdTipoOperacion = 19 --> CTE DE COMPROBANTES/PEDIMENTOS DIRECTOS
 						AND APC.IdProveedor = OP.IdProveedor 
 					JOIN Petrovendor..FI_PedimentoComprobante AS PC
 						ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante 
@@ -372,7 +391,7 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 					APC.IdProveedor = @IdProveedorCursorPedimentoComprobante
 					AND 
 					APC.Activo = 1
-					AND T.IdEstatus = 1
+					AND T.IdEstatus = 1 --> CTE EN APROBACIÓN
 					AND T.IdAprobador = @IdUsuarioP
 					AND OP.IdTipoOperacion = 19 --> CTE APROBACIÓN DE COMPROBANTES/PEDIMENTOS 
 ------------------------------------------------------------------------------------

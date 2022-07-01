@@ -1,5 +1,16 @@
-﻿USE adinco
-DROP PROCEDURE IF EXISTS Mobile_sp_AprobacionesPorUsuario
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Mobile_sp_AprobacionesPorUsuario'
+)
+    DROP PROCEDURE Mobile_sp_AprobacionesPorUsuario;
+/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 30/06/2022 12:44:41 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Luis David De La Cruz
@@ -14,7 +25,12 @@ GO
 -- Create date: 23-03-2022
 -- Description:	Se agrega el filtro de proveedores activos
 -- =============================================
-CREATE  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10019,9,-1,-1,-1
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 30-06-2022
+-- Description:	Se agrega el filtro de tipo de pedidos 2,4,6 
+-- =============================================
+CREATE  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10109,9,-1,-1,-1
 	@IdUsuario		INT,
 	@IdTipo			INT,
 	@IdOperacion	int		=	-1,
@@ -127,10 +143,14 @@ BEGIN
 				TF.IdFlujoTarea AS TipoFlujo, 
 				NULL AS IdPedido
 				FROM Petrovendor.dbo.TA_Operacion AS O 
-				INNER JOIN Petrovendor.dbo.TA_TareaOperacion AS TTO ON O.IdOperacion = TTO.IdOperacion 
-				INNER JOIN Petrovendor.dbo.TA_Tarea AS T ON TTO.IdTarea = T.IdTarea 
-				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP ON O.IdDocumento = SP.IdSolicitudPedido 
-				INNER JOIN Petrovendor.dbo.TA_FlujoTarea AS TF ON O.IdFlujoTarea = TF.IdFlujoTarea 
+				INNER JOIN Petrovendor.dbo.TA_TareaOperacion AS TTO 
+					ON O.IdOperacion = TTO.IdOperacion 
+				INNER JOIN Petrovendor.dbo.TA_Tarea AS T 
+					ON TTO.IdTarea = T.IdTarea 
+				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP 
+					ON O.IdDocumento = SP.IdSolicitudPedido 
+				INNER JOIN Petrovendor.dbo.TA_FlujoTarea AS TF 
+					ON O.IdFlujoTarea = TF.IdFlujoTarea 
 				WHERE T.IdAprobador = @IdUsuarioP
 				AND O.IdTipoOperacion = @IdTipo
 				AND t.IdEstatus = 1
@@ -187,12 +207,13 @@ BEGIN
 		SELECT O.IdOperacion
 		FROM Petrovendor.dbo.TA_Operacion O
 			INNER JOIN @FlujoSerial f
-				ON f.IdOperacion = O.IdOperacion
+				ON O.IdOperacion = f.IdOperacion 
 			INNER JOIN Petrovendor.dbo.TA_Tarea T
-				ON T.IdOperacion = O.IdOperacion
+				ON O.IdOperacion = T.IdOperacion 
 				   AND T.NoSecuencia = (f.NoSecuencia - 1)
 		WHERE O.IdTipoOperacion = @IdTipo
 			  AND T.IdEstatus <> 2;
+
 		INSERT INTO #TM_Aprobacion
 	(
 		IdOperacion,
@@ -221,15 +242,21 @@ BEGIN
 			P2.IdPedido,
 			P2.IdPedido
 		FROM Petrovendor.dbo.TA_Operacion AS O
-			LEFT JOIN Petrovendor.dbo.MM_Pedido AS P ON O.IdDocumento = P.IdSolicitudPedido
-			INNER JOIN    Petrovendor.dbo.MM_Pedidos P2 ON P.IdPedido = P2.IdIdentificador
-			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
-			LEFT JOIN Petrovendor.dbo.TA_Tarea AS T ON O.IdOperacion = T.IdOperacion
+			JOIN Petrovendor.dbo.MM_Pedido AS P 
+				ON O.IdDocumento = P.IdSolicitudPedido
+			JOIN    Petrovendor.dbo.MM_Pedidos P2 
+				ON P.IdPedido = P2.IdIdentificador 
+				AND P.IdProveedorCompras = P2.IdProveedorCliente 
+				AND P2.IdTipoPedido IN (2,4,6) --> CTES TIPOS DE PEDIDO 				
+			JOIN Petrovendor.dbo.TA_Tarea AS T 
+				ON O.IdOperacion = T.IdOperacion
+			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP 
+				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 			 
 		WHERE T.IdAprobador = @IdUsuarioP
 			  AND O.IdProveedor = @IdProveedorCursorPedido
 			  AND O.IdTipoOperacion = @IdTipo
 			  AND P.Version = O.NoVersion
-			  AND t.IdEstatus = 1
+			  AND t.IdEstatus = 1 --> CTE EN APROBACION
 			  AND ISNULL(O.IdEstatusEliminado, 0) <> 1 -->APROBACIÓN NO ESTE ELIMINADO
 			  AND ISNULL(p.IdEstatusEliminado, 0) <> 1 -->Pedido no eliminado
 			  AND O.IdOperacion NOT IN (
@@ -296,7 +323,7 @@ BEGIN
 		LEFT JOIN Petrovendor..MM_Pedidos PG
 				ON O.IdDocumento = PG.IdIdentificador 
 			   AND O.IdProveedor = PG.IdProveedorCliente
-			   AND PG.IdTipoPedido = 1 
+			   AND PG.IdTipoPedido = 1 ---> CTE COMPRA DE COMPRA
 		LEFT JOIN Petrovendor..FI_Factura fac
 				ON O.IdDocumento = fac.IdFactura       
 		LEFT JOIN Petrovendor..CO_Registro reg
@@ -309,9 +336,9 @@ BEGIN
 			ON fac.IdContrato = C.IdContrato    
 		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
 			ON C.IdAreaContractual = AC.IdAreaContractual
-	WHERE O.IdEstatusOperacion = 1
-		AND O.IdTipoOperacion = 14
-		AND TA.IdEstatus = 1
+	WHERE O.IdEstatusOperacion = 1 ---> CTE EN APROBACIÓN
+		AND O.IdTipoOperacion = 14 ---> CTE COMPRA DE COMPRA
+		AND TA.IdEstatus = 1 ---> CTE TAREA EN APROBACIÓN
 		AND S_Usuario.IdUsuario = @IdUsuarioP
 		AND UP.IdProveedor = @IdProveedorCursorComprasDirecta
 		AND fac.IdContrato = UP.idContrato
@@ -363,7 +390,7 @@ BEGIN
 				FROM Petrovendor..FI_AceptacionPedido_PedimentoComprobante AS APC
 					JOIN Petrovendor..TA_Operacion AS OP
 						ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento 
-							AND OP.IdTipoOperacion = 19
+							AND OP.IdTipoOperacion = 19 --> CTE PEDIMENTOS/COMPROBANTES DIRECTOS
 							AND APC.IdProveedor = OP.IdProveedor 					
 					LEFT JOIN Petrovendor.dbo.TA_Tarea AS T 
 						ON OP.IdOperacion = T.IdOperacion 
@@ -371,9 +398,9 @@ BEGIN
 					APC.IdProveedor = @IdProveedorCursorPedimentoComprobante
 					AND 
 					APC.Activo = 1
-					AND T.IdEstatus = 1
+					AND T.IdEstatus = 1 --> CTE EN APROBACIÓN
 					AND T.IdAprobador = @IdUsuarioP
-					AND OP.IdTipoOperacion = 19
+					AND OP.IdTipoOperacion = 19  --> CTE PEDIMENTOS/COMPROBANTES DIRECTOS
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------
 ------------------------------------------------------------
@@ -409,7 +436,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 			TA.IdAprobador  
 			 FROM Petrovendor..TA_Tarea AS TA  
 			 WHERE TA.IdOperacion = @IdOperacionCursor  
-			  AND TA.IdEstatus <> 7  
+			  AND TA.IdEstatus <> 7  --> CTE ELIMINADO POR REASIGNACION
 			  AND TA.Activo = 1  
 			  AND TA.FechaCambioEstatus IS NULL  
 			 ORDER BY TA.NoSecuencia ASC);
@@ -420,7 +447,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 			  TA.IdAprobador  
 			 FROM Petrovendor..TA_Tarea AS TA  
 			 WHERE TA.IdOperacion = @IdOperacionCursor  
-			  AND TA.IdEstatus <> 7  
+			  AND TA.IdEstatus <> 7  --> CTE ELIMINADO POR REASIGNACION
 			  AND TA.Activo = 1  
 			  AND TA.FechaCambioEstatus IS NULL  
 			  AND TA.IdAprobador = @IdUsuarioP)
@@ -557,3 +584,4 @@ FROM #TM_Aprobacion AS t
 ------------------------------------------------------
 --select * from #IdOperaciones
 end
+
