@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 03/06/2022 11:25:05 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 29/06/2022 05:30:25 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -70,7 +70,8 @@ BEGIN
 		Etapa INT,
 		AnioMes VARCHAR(10),
 		Limitador INT,
-		IdEntregable INT
+		IdEntregable INT,
+		Alias NVARCHAR(100)
 	);
 
 
@@ -487,10 +488,13 @@ BEGIN
 		ELSE
 		BEGIN
 			
-			INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior,IdReceptorEntregable)
-			SELECT DISTINCT
+			INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior,IdReceptorEntregable,Alias)
+			SELECT
 				3,
-				ML.MarcoLegal,
+				CASE 
+					WHEN ISNULL(ML.Alias,'') <> '' THEN ML.MarcoLegal + ' - (' + ML.Alias + ')'
+					ELSE ML.MarcoLegal
+				END,
 				ML.IdMarcoLegal,
 				NULL,
 				'Carpeta',
@@ -504,7 +508,8 @@ BEGIN
 				SC.IsCarpetaUsuarioAnterior,
 				SC.Ruta,
 				SC.RutaAnterior,
-				D.IdReceptorEntregable
+				D.IdReceptorEntregable,
+				ML.Alias
 			FROM #Documentos D    
 				JOIN EN_MarcoLegal ML
 					ON  D.IdMarcoLegal =   ML.IdMarcoLegal AND
@@ -523,7 +528,8 @@ BEGIN
 				SC.IsCarpetaUsuarioAnterior,
 				SC.Ruta,
 				SC.RutaAnterior,
-				D.IdReceptorEntregable
+				D.IdReceptorEntregable,
+				ML.Alias
 			ORDER BY ML.MarcoLegal ASC;
 
 		END
@@ -1597,7 +1603,8 @@ BEGIN
 		ISNULL((SELECT TOP 1 IdReceptorEntregable FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),0) AS IdReceptorAnterior,
 		ISNULL((SELECT TOP 1 AnioMes FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),'') AS AnioMesAnterior,
 		ISNULL(Limitador,0) AS Limitador,
-		ISNULL(IdEntregable,0) AS IdEntregable
+		ISNULL(IdEntregable,0) AS IdEntregable,
+		ISNULL(Alias,Nombre) AS Alias
 	FROM @CONTRACT_FILES AS CF
 	WHERE Nombre IS NOT NULL
 	ORDER BY IdRow ASC;
@@ -1606,5 +1613,4 @@ BEGIN
 
 
 END
-
 
