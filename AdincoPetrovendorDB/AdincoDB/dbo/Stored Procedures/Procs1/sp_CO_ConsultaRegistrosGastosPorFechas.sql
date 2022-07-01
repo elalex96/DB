@@ -5,7 +5,7 @@ CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastosPorFechas]
 @IdContrato INT,
 @IdUsuario INT
 AS
-     BEGIN
+        BEGIN
 	 DECLARE @FechaInicio DATETIME,@FechaFin  DATETIME;
          -- =============================================
          -- Author:		Miguel
@@ -513,5 +513,3 @@ AS
 
 		
      END;
-
-

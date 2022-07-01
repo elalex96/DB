@@ -168,7 +168,7 @@ AS
 		  SELECT 
 			  PC.IdPedimentoComprobante,
 			  '',
-			  ADPC.IdPedimentoComprobante
+			  ADPC.IdPedimentoComprobante	
 		  FROM 
 				Petrovendor..FI_PedimentoComprobante	PC	(NOLOCK)
 		  JOIN 
@@ -528,7 +528,7 @@ AS
          /**/
         UPDATE	#Datos
         SET		#Datos.CCN		=	'SI'
-        FROM	#Datos			D
+        FROM	#Datos			D	(NOLOCK)
 		JOIN	#CartasProcura	CP (NOLOCK)
 		ON		D.Identificador =	CP.IdFactura
         WHERE	D.Identificador =	CP.IdFactura
@@ -537,7 +537,7 @@ AS
 		/*ADECUACIÓN PARA MOSTRAR INDICADOR DE CN DE COMPROBANTES EXTRANJEROS*/
 		UPDATE	#Datos
         SET		#Datos.CCN		=	'SI'
-        FROM	#Datos			D
+        FROM	#Datos			D	(NOLOCK)
 		JOIN	#CartasProcura	CP	(NOLOCK)
 		ON		D.Identificador =	CP.IdFactura
         WHERE	D.Identificador =	CP.IdFactura

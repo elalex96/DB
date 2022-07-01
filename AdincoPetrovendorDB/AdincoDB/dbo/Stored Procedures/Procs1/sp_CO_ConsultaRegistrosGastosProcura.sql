@@ -408,7 +408,7 @@ AS
          UPDATE D
            SET 
                D.CCN = 'SI'
-         FROM #Datos D
+         FROM #Datos D	(NOLOCK)
               JOIN #CartasProcura CP (NOLOCK)  
 			  ON D.Identificador = CP.IdFacutraA
          WHERE D.Identificador = CP.IdFacutraA
@@ -453,3 +453,4 @@ AS
 			 isnull( Requision,0) as Requision
          FROM #Datos;
      END;
+

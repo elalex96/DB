@@ -135,7 +135,7 @@ AS
                        CO_Presupuesto.IdPresupuesto, 
                        CO_Presupuesto.Nombre+'['+CO_Presupuesto.IdPresupuestoCNH+']' AS Nombre
                 FROM 
-					CO_ProgramaActividad
+					CO_ProgramaActividad	(NOLOCK)
 				INNER JOIN 
 					CO_PeriodoContrato	(NOLOCK)
 					ON CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
@@ -298,7 +298,7 @@ AS
                        R.IdEstado,
 					    F.UUID
                 FROM 
-						#TPresuspuestos TPre
+						#TPresuspuestos TPre	(NOLOCK)
 				INNER JOIN	
 						dbo.CO_LineaPresupuestoMes LPM		(NOLOCK)	
 						ON TPre.IdPresupuesto = LPM.IdPresupuesto			 					 
@@ -494,7 +494,7 @@ AS
                        FP.UUID, 
                        FA.IdFactura
                 FROM 
-					#Datos datos
+					#Datos datos	(NOLOCK)
 				JOIN 
 					Petrovendor.dbo.FI_Factura FP	(NOLOCK)
 					ON FP.UUID = datos.UUID COLLATE DATABASE_DEFAULT	 AND
@@ -538,7 +538,7 @@ AS
          UPDATE D
            SET 
                D.CCN = 'SI'
-         FROM #Datos D
+         FROM #Datos D	(NOLOCK)
               JOIN 
 				#CartasProcura CP	(NOLOCK)
 				ON D.Identificador = CP.IdFacutraA
