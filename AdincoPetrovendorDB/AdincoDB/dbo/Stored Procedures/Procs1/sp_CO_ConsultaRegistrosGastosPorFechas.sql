@@ -24,25 +24,21 @@ AS
          -- Alter date:	 26-04-2022
          -- Description: Se agrega validación del día 06 del mes siguiente
          -- =============================================
+		 -- Author:		Reyna O.
+         -- Create date: 30-06-2022
+         -- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 
+		 -- de la tabla al inicio de procedure, se eliminan algunos Left y Joins innecesarios
+		 -- =============================================
          SET NOCOUNT ON;
          SET LANGUAGE spanish;
 
          /**/
 		 DECLARE @DiaActual DATE = GETDATE();
      
-	 /*    DECLARE @Contrato INT;
-         SELECT @Contrato = PC.IdContrato
-         FROM dbo.CO_Presupuesto P
-              JOIN dbo.CO_ProgramaActividad PA ON PA.IdProgramaActividad = P.IdProgramaActividad
-              JOIN dbo.CO_PeriodoContrato PC ON PC.IdPeriodo = PA.IdPeriodoContrato
-         WHERE ((P.IdPresupuesto = @IdPresupuesto) or @IdPresupuesto = -1)
-		 --select @Contrato
-         /**/
-		 */
          CREATE TABLE	#CartasProcura
          (
 			IdFacutraP		int, 
-			UUID			nvarchar(100), 
+			UUID			varchar(100), 
 			IdFactura		int
          );
 
@@ -58,40 +54,40 @@ AS
 
          CREATE TABLE #Datos
          (IdRegistro               INT, 
-          Servicio                 NVARCHAR(MAX), 
-          InstalacionPresupuestada NVARCHAR(MAX), 
+          Servicio                 VARCHAR(1000), 
+          InstalacionPresupuestada VARCHAR(1000), 
           FechaInicio              DATE, 
           FechaFin                 DATE, 
-          TipoDocumento            NVARCHAR(MAX), 
-          Numero                   NVARCHAR(MAX), 
+          TipoDocumento            VARCHAR(100), 
+          Numero                   VARCHAR(500), 
           FechaDocumento           DATETIME, 
           MontoUSD                 FLOAT, 
-          Subcontratista           NVARCHAR(MAX), 
-          InstalacionRegistro      NVARCHAR(MAX), 
+          Subcontratista           VARCHAR(1000), 
+          InstalacionRegistro      VARCHAR(500), 
           InicioEjecucion          DATE, 
           FinEjecucion             DATE, 
-          CreadoPor                NVARCHAR(MAX), 
+          CreadoPor                VARCHAR(500), 
           MontoRegistro            FLOAT, 
-          Moneda                   NVARCHAR(MAX), 
+          Moneda                   VARCHAR(50), 
           MesPresentacion          DATE, 
           Anio                     INT, 
-          Mes                      NVARCHAR(MAX), 
-          TipoDeServicio           NVARCHAR(MAX), 
-          Actividad                NVARCHAR(MAX), 
-          SubActividad             NVARCHAR(MAX), 
-          EstadoValidacion         NVARCHAR(MAX), 
-          Area                     NVARCHAR(MAX), 
-          Comentarios              NVARCHAR(MAX), 
-          Anexo4                   NVARCHAR(MAX), 
+          Mes                      VARCHAR(500), 
+          TipoDeServicio           VARCHAR(500), 
+          Actividad                VARCHAR(1000), 
+          SubActividad             VARCHAR(1000), 
+          EstadoValidacion         VARCHAR(500), 
+          Area                     VARCHAR(500), 
+          Comentarios              VARCHAR(5000), 
+          Anexo4                   VARCHAR(500), 
           Identificador            INT, 
           LineaPresupuesto         INT, 
-          Presupuesto              NVARCHAR(MAX), 
-          Rubro                    NVARCHAR(MAX), 
-		  CatManoObra			   NVARCHAR(MAX), 
+          Presupuesto              VARCHAR(1000), 
+          Rubro                    VARCHAR(500), 
+		  CatManoObra			   VARCHAR(500), 
           PCN                      FLOAT, 
-          CAA                      NVARCHAR(MAX), 
-          CCN                      NVARCHAR(MAX), 
-          ModificadoPor            NVARCHAR(MAX)
+          CAA                      VARCHAR(500), 
+          CCN                      VARCHAR(500), 
+          ModificadoPor            VARCHAR(500)
          );
 		  /**/
 
@@ -108,13 +104,11 @@ AS
                        FP.UUID, 
                        FA.IdFactura
                 FROM		Petrovendor.dbo.MM_AceptacionCartaPCN	AS AC(NOLOCK)
-                Inner JOIN	Petrovendor.dbo.S_Documento_S3			AS D(NOLOCK)  ON D.IdDocumento			= AC.IdDocumento
                 Inner JOIN	Petrovendor.dbo.MM_AceptacionPedido		AS AP(NOLOCK) ON AP.IdAceptacionPedido	= AC.IdAceptacionPedido
-                Inner JOIN	Petrovendor.dbo.MM_Pedido				AS P (NOLOCK) ON P.IdPedido				= AP.IdPedido
-                Inner JOIN	Petrovendor.dbo.S_Proveedor				AS PR(NOLOCK) ON PR.IdProveedor			= P.IdSubcontratista
-                Inner JOIN	Petrovendor.dbo.S_TipoValidacionDoc		AS TD(NOLOCK) ON TD.IdTipoValidacionDoc = AC.IdEstatus
-                Inner JOIN	Petrovendor.dbo.MM_Pedidos				AS PG(NOLOCK) ON P.IdPedido				= PG.IdIdentificador
-                LEFT JOIN	Petrovendor.dbo.MM_TipoPedido			AS TP(NOLOCK) ON TP.IdTipoPedido		= PG.IdTipoPedido
+                Inner JOIN	Petrovendor.dbo.MM_Pedido				AS P (NOLOCK) ON P.IdPedido				= AP.IdPedido	
+																					AND	P.IdContrato	=	@IdContrato
+																					AND	AC.IdEstatus	=	2 
+																					AND ISNULL(AC.IdEstatusEliminado, 0)	<>	1
                 LEFT JOIN	Petrovendor.dbo.MM_AceptacionFactura	as AF(NOLOCK) ON AF.IdAceptacionPedido	= AP.IdAceptacionPedido
                 LEFT JOIN	Petrovendor.dbo.FI_Factura				as FP(NOLOCK) ON FP.IdFactura			= AF.IdFactura
                 LEFT JOIN	Adinco.dbo.FI_Factura					as FA(NOLOCK) ON FP.UUID				= FA.UUID COLLATE DATABASE_DEFAULT
@@ -123,13 +117,13 @@ AS
                 AND			P.IdContrato						=	@IdContrato
                 AND			FP.UUID								IS	NOT NULL
                 AND			FP.Activa							=	1
-                AND			ISNULL(FP.IsEliminado, 0)			<>	1--*******
+                AND			ISNULL(FP.IsEliminado, 0)			<>	1
 
          /**/
 		 -- NUEVA VALIDACIÓN PARA QUE PEMEX NO VEA LOS GASTOS UN NO APROBADOS HASTA EL SIGUIENTE MES DÍA 6 (ISSUE 1891)
 		INSERT INTO #MesesAnio(PrimerDiaMes,UltimoDiaMes)
 		 SELECT DISTINCT PrimerDiaMes, UltimoDiaMes  -- se buscan el primer día y el ultimo día del mes seleccionado, ya que se encontraron gastos con día del mes presentación mayor a 1
-		 FROM AP_Calendario 
+		 FROM AP_Calendario (NOLOCK) 
 		 WHERE IdFecha = @FechaMes
 		 ORDER BY UltimoDiaMes	DESC;
 
@@ -284,63 +278,117 @@ AS
                            THEN 'NO'
                            WHEN WA.IdDocAwsDocAdinco IS NULL
                                 AND R.CvTipoDocFacturacion IN(2, 3)
-                           THEN 'NA'
+								THEN 'NA'
                            ELSE 'SI'
                        END AS CCN, 
                        UM.Nombre AS ModificadoPor
                 FROM  
-					dbo.CO_PeriodoContrato PEC
-					LEFT JOIN 
-						dbo.CO_ProgramaActividad PA
-						 ON PEC.IdPeriodo = PA.IdPeriodoContrato
-						 AND PEC.IdContrato = @IdContrato
-				    LEFT JOIN 
-						dbo.CO_Presupuesto P(NOLOCK)
-						ON PA.IdProgramaActividad = P.IdProgramaActividad
-					LEFT JOIN 
-						dbo.CO_LineaPresupuestoMes LPM(NOLOCK)
-						ON P.IdPresupuesto =	LPM.IdPresupuesto 
-					 LEFT JOIN dbo.CO_Servicio S(NOLOCK) ON LPM.IdServicio = S.IdServicio
-                     LEFT JOIN dbo.CO_Instalacion I(NOLOCK) ON LPM.IdInstalacion = I.IdInstalacion
-                     LEFT JOIN dbo.CO_Registro R(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-                     LEFT JOIN dbo.CO_GastosRubro rubro(NOLOCK) ON rubro.IdGastoRubro = R.IdGastoRubro
-					 LEFT JOIN dbo.CO_CAT_ManoDeObra catmo(NOLOCK) ON catmo.Id = R.IdCatManoObra
-                     LEFT JOIN dbo.FI_Factura F(NOLOCK) ON F.IdFactura = R.IdFactura
-                     LEFT JOIN dbo.FI_PedimentoComprobante PC(NOLOCK) ON PC.IdPedimentoComprobante = R.IdPedimentoComprobante
-                     LEFT JOIN dbo.PV_Subcontratista SF(NOLOCK) ON F.IdSubcontratista = SF.IdSubcontratista
-					 LEFT JOIN dbo.PV_Subcontratista SPC(NOLOCK) ON SPC.IdSubcontratista = PC.IdSubcontratistaExportador
-					 LEFT JOIN dbo.CO_Instalacion IR(NOLOCK) ON R.IdInstalacion = IR.IdInstalacion
-                     LEFT JOIN dbo.AP_Usuario U(NOLOCK) ON R.IdUsuarioCreadoPor = U.UsuarioID
-                     LEFT JOIN dbo.CO_TipoServicio TS(NOLOCK) ON LPM.IdTipoServicio = TS.IdTipoServicio
-                     LEFT JOIN dbo.CO_ActividadCIEP ACIEP(NOLOCK) ON LPM.IdActividad = ACIEP.IdActividad
-                     LEFT JOIN dbo.CO_SubactividadCIEP SCIEP(NOLOCK) ON LPM.IdSubactividad = SCIEP.IdSubactividad
-                     LEFT JOIN dbo.CO_EstadoRegistro ER(NOLOCK) ON R.IdEstado = ER.IdEstadoRegistro
-                     LEFT JOIN dbo.CO_Area A(NOLOCK) ON A.IdArea = LPM.IdArea
-                     LEFT JOIN dbo.PV_TipoMoneda TMF(NOLOCK) ON TMF.IdMoneda = F.IdMoneda
-                     LEFT JOIN dbo.CO_TipoCambioDiario TCDF(NOLOCK) ON TCDF.IdMoneda = TMF.IdMoneda
-                                                                       AND DAY(TCDF.Fecha) = DAY(F.Fecha)
-                                                                       AND MONTH(TCDF.Fecha) = MONTH(F.Fecha)
-                                                                       AND YEAR(TCDF.Fecha) = YEAR(F.Fecha)
-                     LEFT JOIN dbo.PV_TipoMoneda TMPC(NOLOCK) ON TMPC.IdMoneda = PC.IdMoneda
-                     LEFT JOIN dbo.CO_TipoCambioDiario TCDPC(NOLOCK) ON TCDPC.IdMoneda = TMPC.IdMoneda
-                                                                        AND DAY(TCDPC.Fecha) = DAY(PC.FechaPago)
-                                                                        AND MONTH(TCDPC.Fecha) = MONTH(PC.FechaPago)
-                                                                        AND YEAR(TCDPC.Fecha) = YEAR(PC.FechaPago)
-                     LEFT JOIN dbo.CO_ClasificacionAnexo4 CA(NOLOCK) ON LPM.IdAnexo4 = CA.IdAnexo4
+					dbo.CO_PeriodoContrato	PEC	(NOLOCK)
+				LEFT JOIN 
+					dbo.CO_ProgramaActividad	PA	(NOLOCK)
+					ON	PEC.IdPeriodo	=	PA.IdPeriodoContrato
+					AND	PEC.IdContrato	=	@IdContrato
+				LEFT JOIN 
+					dbo.CO_Presupuesto	P	(NOLOCK)
+					ON	PA.IdProgramaActividad	=	P.IdProgramaActividad
+				LEFT JOIN 
+					dbo.CO_LineaPresupuestoMes	LPM	(NOLOCK)
+					ON	P.IdPresupuesto =	LPM.IdPresupuesto 
+				LEFT JOIN 
+					dbo.CO_Servicio S	(NOLOCK) 
+					ON	LPM.IdServicio	=	S.IdServicio
+				LEFT JOIN 
+					dbo.CO_Instalacion	I	(NOLOCK) 
+					ON	LPM.IdInstalacion	=	I.IdInstalacion
+				LEFT JOIN 
+					dbo.CO_Registro	R	(NOLOCK) 
+					ON	R.IdPrograma	=	LPM.IdLineaPresupuestoMes
+				LEFT JOIN 
+					dbo.CO_GastosRubro	rubro	(NOLOCK) 
+					ON	rubro.IdGastoRubro	=	R.IdGastoRubro
+				LEFT JOIN 
+					dbo.CO_CAT_ManoDeObra	catmo	(NOLOCK) 
+					ON	catmo.Id	=	R.IdCatManoObra
+				LEFT JOIN 
+					dbo.FI_Factura	F	(NOLOCK) 
+					ON	F.IdFactura	=	R.IdFactura
+				LEFT JOIN 
+					dbo.FI_PedimentoComprobante	PC	(NOLOCK) 
+					ON	PC.IdPedimentoComprobante	=	R.IdPedimentoComprobante
+				LEFT JOIN 
+					dbo.PV_Subcontratista	SF	(NOLOCK) 
+					ON	F.IdSubcontratista	=	SF.IdSubcontratista
+				LEFT JOIN 
+					dbo.PV_Subcontratista	SPC	(NOLOCK) 
+					ON	SPC.IdSubcontratista	=	PC.IdSubcontratistaExportador
+				LEFT JOIN 
+					dbo.CO_Instalacion	IR	(NOLOCK) 
+					ON	R.IdInstalacion	=	IR.IdInstalacion
+				LEFT JOIN 
+					dbo.AP_Usuario	U	(NOLOCK) 
+					ON	R.IdUsuarioCreadoPor	=	U.UsuarioID
+				LEFT JOIN 
+					dbo.CO_TipoServicio	TS	(NOLOCK) 
+					ON	LPM.IdTipoServicio	=	TS.IdTipoServicio
+				LEFT JOIN 
+					dbo.CO_ActividadCIEP	ACIEP	(NOLOCK) 
+					ON	LPM.IdActividad	=	ACIEP.IdActividad
+				LEFT JOIN 
+					dbo.CO_SubactividadCIEP	SCIEP	(NOLOCK) 
+					ON	LPM.IdSubactividad	=	SCIEP.IdSubactividad
+				LEFT JOIN 
+					dbo.CO_EstadoRegistro	ER	(NOLOCK) 
+					ON	R.IdEstado	=	ER.IdEstadoRegistro
+				LEFT JOIN 
+					dbo.CO_Area	A	(NOLOCK) 
+					ON	A.IdArea	=	LPM.IdArea
+				LEFT JOIN 
+					dbo.PV_TipoMoneda	TMF	(NOLOCK) 
+					ON	TMF.IdMoneda	=	F.IdMoneda
+				LEFT JOIN 
+						dbo.CO_TipoCambioDiario	TCDF	(NOLOCK) 
+						ON	TCDF.IdMoneda = TMF.IdMoneda
+						AND	DAY(TCDF.Fecha)	=		DAY(F.Fecha)
+						AND	MONTH(TCDF.Fecha)	=	MONTH(F.Fecha)
+						AND	YEAR(TCDF.Fecha)	=	YEAR(F.Fecha)
+				LEFT JOIN 
+						dbo.PV_TipoMoneda	TMPC	(NOLOCK) 
+						ON	TMPC.IdMoneda	=	PC.IdMoneda
+				LEFT JOIN
+						dbo.CO_TipoCambioDiario	TCDPC	(NOLOCK) 
+						ON	TCDPC.IdMoneda	=	TMPC.IdMoneda
+						AND	DAY(TCDPC.Fecha)	=	DAY(PC.FechaPago)
+						AND	MONTH(TCDPC.Fecha)	=	MONTH(PC.FechaPago)
+						AND	YEAR(TCDPC.Fecha)	=	YEAR(PC.FechaPago)
+				LEFT JOIN 
+						dbo.CO_ClasificacionAnexo4	CA	(NOLOCK) 
+						ON	LPM.IdAnexo4	=	CA.IdAnexo4
                    
-                     LEFT JOIN dbo.CO_ActividadPetroleraCNH ACNH(NOLOCK) ON LPM.IdActividadPetrolera = ACNH.IdActividadPetrolera
-                     LEFT JOIN dbo.CO_SubactividadPetrolera SAP(NOLOCK) ON LPM.IdSubactividadPetrolera = SAP.IdSubactividadPetrolera
-                     LEFT JOIN dbo.CO_RubroInterno RI(NOLOCK) ON LPM.IdRubroInterno = RI.IdRubroInterno
-     LEFT JOIN dbo.CO_TareaPetrolera TP(NOLOCK) ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera
-                     LEFT JOIN dbo.AWS_DocAwsDocAdinco WA(NOLOCK) ON F.IdFactura = WA.IdDocAdinco
-                     LEFT JOIN dbo.AP_Usuario UM(NOLOCK) ON R.IdUsuarioModPor = UM.UsuarioID
-                WHERE 
+				LEFT JOIN 
+						dbo.CO_ActividadPetroleraCNH	ACNH	(NOLOCK) 
+						ON	LPM.IdActividadPetrolera	=	ACNH.IdActividadPetrolera
+				LEFT JOIN 
+						dbo.CO_SubactividadPetrolera	SAP	(NOLOCK) 
+						ON	LPM.IdSubactividadPetrolera	=	SAP.IdSubactividadPetrolera
+				LEFT JOIN 
+						dbo.CO_RubroInterno	RI	(NOLOCK) 
+						ON	LPM.IdRubroInterno	=	RI.IdRubroInterno
+				LEFT JOIN 
+						dbo.CO_TareaPetrolera	TP	(NOLOCK) 
+						ON	LPM.IdTareaPetrolera	=	TP.IdTareaPetrolera
+				LEFT JOIN 
+						dbo.AWS_DocAwsDocAdinco	WA	(NOLOCK) 
+						ON	F.IdFactura	=	WA.IdDocAdinco
+				LEFT JOIN 
+						dbo.AP_Usuario	UM	(NOLOCK) 
+						ON	R.IdUsuarioModPor	=	UM.UsuarioID
+				WHERE 
 					(PEC.IdContrato = @IdContrato)
                 AND (R.IdRegistro IS NOT NULL)
 				AND (R.MesPresentacion BETWEEN CAST(@FechaInicio AS DATE) AND  CAST(@FechaFin AS DATE))
                 GROUP BY PC.NumeroPedimento, 
                          S.NombreServicio, 
-                         F.UUID, --I.NombreInstalacion, 
+                         F.UUID, 
                          LPM.AC_FEC_INI, 
                          LPM.AC_FEC_FIN, 
                          F.Fecha, 
@@ -353,12 +401,12 @@ AS
                          U.Nombre, 
                          R.MontoRegistro, 
                          TMF.TipoMonedaCorto, 
-       YEAR(R.MesPresentacion), 
+						 YEAR(R.MesPresentacion), 
                          CONCAT(RIGHT('00'+CAST(MONTH(R.MesPresentacion) AS VARCHAR(2)), 2), ' ', DATENAME(MONTH, R.MesPresentacion)), 
-             R.MesPresentacion,
+						R.MesPresentacion,
                          CASE
                              WHEN P.CIEP = 1
-          THEN TS.NombreTipoServicio
+							 THEN TS.NombreTipoServicio
                              ELSE ACNH.DescripcionActividadPetrolera
                          END,
                          CASE
@@ -411,19 +459,22 @@ AS
                 ORDER BY R.IdRegistro DESC;
 
          
-			UPDATE	#Datos--D
+			UPDATE	#Datos
 			SET		#Datos.CCN		=	'SI'
-			FROM	#Datos			D
-			JOIN	#CartasProcura	CP 
-			ON		D.Identificador =	CP.IdFactura
-			WHERE	D.Identificador =	CP.IdFactura
-			AND		D.TipoDocumento =	'CF';
+			FROM	
+				#Datos			D 
+			JOIN	
+				#CartasProcura	CP 
+				ON	D.Identificador	=	CP.IdFactura
+			WHERE	
+				D.Identificador	=	CP.IdFactura
+				AND	D.TipoDocumento	=	'CF';
 		
 		
 		END
 
-         SELECT		--top 30
-					d.IdRegistro, --',',
+         SELECT		
+					d.IdRegistro,
 					d.Servicio, 
 					d.InstalacionPresupuestada, 
 					d.FechaInicio, 
@@ -462,5 +513,3 @@ AS
 
 		
      END;
-
-
