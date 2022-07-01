@@ -5,7 +5,7 @@ CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastosPorFechas]
 @IdContrato INT,
 @IdUsuario INT
 AS
-        BEGIN
+     BEGIN
 	 DECLARE @FechaInicio DATETIME,@FechaFin  DATETIME;
          -- =============================================
          -- Author:		Miguel
@@ -123,7 +123,7 @@ AS
 		 -- NUEVA VALIDACIÓN PARA QUE PEMEX NO VEA LOS GASTOS UN NO APROBADOS HASTA EL SIGUIENTE MES DÍA 6 (ISSUE 1891)
 		INSERT INTO #MesesAnio(PrimerDiaMes,UltimoDiaMes)
 		 SELECT DISTINCT PrimerDiaMes, UltimoDiaMes  -- se buscan el primer día y el ultimo día del mes seleccionado, ya que se encontraron gastos con día del mes presentación mayor a 1
-		 FROM AP_Calendario 
+		 FROM AP_Calendario (NOLOCK) 
 		 WHERE IdFecha = @FechaMes
 		 ORDER BY UltimoDiaMes	DESC;
 
@@ -462,9 +462,9 @@ AS
 			UPDATE	#Datos
 			SET		#Datos.CCN		=	'SI'
 			FROM	
-				#Datos			D (NOLOCK) 
+				#Datos			D 
 			JOIN	
-				#CartasProcura	CP (NOLOCK) 
+				#CartasProcura	CP 
 				ON	D.Identificador	=	CP.IdFactura
 			WHERE	
 				D.Identificador	=	CP.IdFactura

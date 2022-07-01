@@ -408,8 +408,8 @@ AS
          UPDATE D
            SET 
                D.CCN = 'SI'
-         FROM #Datos D	(NOLOCK)
-              JOIN #CartasProcura CP (NOLOCK)  
+         FROM #Datos D	
+              JOIN #CartasProcura CP 
 			  ON D.Identificador = CP.IdFacutraA
          WHERE D.Identificador = CP.IdFacutraA
                AND D.TipoDocumento = 'CF';

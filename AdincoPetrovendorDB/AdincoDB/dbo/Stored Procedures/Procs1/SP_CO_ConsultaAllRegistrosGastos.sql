@@ -298,7 +298,7 @@ AS
                        R.IdEstado,
 					    F.UUID
                 FROM 
-						#TPresuspuestos TPre	(NOLOCK)
+						#TPresuspuestos TPre	
 				INNER JOIN	
 						dbo.CO_LineaPresupuestoMes LPM		(NOLOCK)	
 						ON TPre.IdPresupuesto = LPM.IdPresupuesto			 					 
@@ -494,7 +494,7 @@ AS
                        FP.UUID, 
                        FA.IdFactura
                 FROM 
-					#Datos datos	(NOLOCK)
+					#Datos datos	
 				JOIN 
 					Petrovendor.dbo.FI_Factura FP	(NOLOCK)
 					ON FP.UUID = datos.UUID COLLATE DATABASE_DEFAULT	 AND
@@ -538,9 +538,9 @@ AS
          UPDATE D
            SET 
                D.CCN = 'SI'
-         FROM #Datos D	(NOLOCK)
+         FROM #Datos D	
               JOIN 
-				#CartasProcura CP	(NOLOCK)
+				#CartasProcura CP	
 				ON D.Identificador = CP.IdFacutraA
          WHERE D.Identificador = CP.IdFacutraA
                AND D.TipoDocumento = 'CF';

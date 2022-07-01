@@ -528,8 +528,8 @@ AS
          /**/
         UPDATE	#Datos
         SET		#Datos.CCN		=	'SI'
-        FROM	#Datos			D	(NOLOCK)
-		JOIN	#CartasProcura	CP (NOLOCK)
+        FROM	#Datos			D	
+		JOIN	#CartasProcura	CP 
 		ON		D.Identificador =	CP.IdFactura
         WHERE	D.Identificador =	CP.IdFactura
 		AND		D.TipoDocumento =	'CF';
@@ -537,8 +537,8 @@ AS
 		/*ADECUACIÓN PARA MOSTRAR INDICADOR DE CN DE COMPROBANTES EXTRANJEROS*/
 		UPDATE	#Datos
         SET		#Datos.CCN		=	'SI'
-        FROM	#Datos			D	(NOLOCK)
-		JOIN	#CartasProcura	CP	(NOLOCK)
+        FROM	#Datos			D	
+		JOIN	#CartasProcura	CP	
 		ON		D.Identificador =	CP.IdFactura
         WHERE	D.Identificador =	CP.IdFactura
 		AND		D.TipoDocumento =	'PE';
