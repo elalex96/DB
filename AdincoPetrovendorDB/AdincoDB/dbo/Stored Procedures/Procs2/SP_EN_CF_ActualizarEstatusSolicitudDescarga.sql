@@ -88,7 +88,7 @@ BEGIN
 		0,
 		GETDATE(),
 		GETDATE(),
-		'notificaciones@adinco.mx',
+		(SELECT CuentaRegistro FROM dbo.TA_CorreoServidor WHERE IdServidor = 1),
 		3
 	);
 
