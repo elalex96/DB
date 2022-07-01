@@ -1,6 +1,7 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 30/06/2022 03:19:25 p. m. ******/
+
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 30/06/2022 09:28:45 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -20,7 +21,8 @@ GO
 -- Create date: <28/06/2022>
 -- Description: <se reemplaza el marco legal por el alias en las carpetas de descarga>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/ASEA (Agencia de Seguridad, Energía y Ambiente)/Informes Trimestrales Ares REMASTIERIZADO - (Prueba Alias Editado 3)/Trimestral/2018-06/Informes Trimestrales ARES/',3,1000
+ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/SENER (Secretaría de Energía)/(Resolutivo EvIS) Oficio 117.-DGAEISyCP.4237-18 referente a la Evaluación de Impacto Social/',10103,1000
+
     -- Add the parameters for the stored procedure here
     @Ruta VARCHAR(MAX),
     @IdContrato     int,
