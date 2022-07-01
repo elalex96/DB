@@ -1124,6 +1124,15 @@ BEGIN
 				AND D.FrecuenciaEntregableID = @Frecuencia
 				AND D.IdReceptorEntregable = @IdReceptorEntregable
 				AND D.IdMarcoLegal = @IdCarpeta
+				AND SC.AnioMes = @AnioMes
+			GROUP BY D.Entregable,
+				D.IdMarcoLegal,
+				SC.Ruta,
+				SC.RutaAnterior,
+				SC.Frecuencia,
+				D.IdReceptorEntregable,
+				SC.AnioMes,
+				D.IdEntregable
 			ORDER BY D.Entregable ASC;
 
 		END
@@ -1566,7 +1575,7 @@ BEGIN
 			WHEN LEN(Nombre) > 20 THEN '<marquee behavior="scroll" direction="left" style="width: 70%;">' + REPLACE(Nombre,'"','') + '</marquee>'
 			ELSE REPLACE(Nombre,'"','')
 		END AS NombreLabel,
-		REPLACE(Nombre,'"','') AS Nombre,
+		REPLACE(REPLACE(Nombre,'"',''),'/','-') AS Nombre,
 		CF.IdCarpeta,
 		IdDocumento,
 		Tipo,
