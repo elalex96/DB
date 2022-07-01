@@ -1,6 +1,6 @@
 ﻿USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CF_ActualizarEstatusSolicitudDescarga]    Script Date: 30/05/2022 08:18:13 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_CF_ActualizarEstatusSolicitudDescarga]    Script Date: 30/06/2022 08:24:05 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: <26/05/2022>
 -- Description:	<Actualizar estatus de procesamiento del archivo>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_CF_ActualizarEstatusSolicitudDescarga]
+ALTER PROCEDURE [dbo].[SP_EN_CF_ActualizarEstatusSolicitudDescarga]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitud INT,
 	@IdContrato INT,
@@ -25,7 +25,7 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 	DECLARE @IdNotificacion INT;
-	DECLARE @HTML NVARCHAR(MAX) = (SELECT HTML FROM Petrovendor.dbo.TA_Correo WHERE Asunto = 'ADINCO SERVER MONITOR');
+	DECLARE @HTML NVARCHAR(MAX) = (SELECT HTML FROM Petrovendor.dbo.TA_Correo WHERE Asunto = 'MENSAJE GENERAL');
 	DECLARE @NOMBRE_USUARIO NVARCHAR(1000) = (SELECT
 													US.Nombre 
 												FROM AP_Usuario AS US
@@ -45,7 +45,7 @@ BEGIN
 											JOIN CO_AreaContractual AS A
 												ON C.IdAreaContractual = A.IdAreaContractual
 										WHERE C.IdContrato = @IdContrato);
-	DECLARE @MENSAJE NVARCHAR(MAX) = 'Estimado(a) ' + @NOMBRE_USUARIO + '<br><br> Se ha procesado su solicitud de descarga de la ruta "' + @RUTA + '", en el contrato ' + @CONTRATO + '. <br><br>Por lo cual ya es posible descargarlo desde el módulo de Contract Files(https://adinco.mx/2/Entregables/ArchivosEntregables_V2.aspx).'
+	DECLARE @MENSAJE NVARCHAR(MAX) = 'Estimado(a) ' + @NOMBRE_USUARIO + '<br><br> Se ha procesado su solicitud de descarga de la ruta "' + @RUTA + '", en el contrato ' + @CONTRATO + '. <br><br>Por lo cual ya es posible descargarlo desde el modulo de Contract Files(https://adinco.mx/2/Entregables/ArchivosEntregables_V2.aspx).'
 
 	SET @HTML = (REPLACE(@HTML,'##MENSAJE_GENERAL##',ISNULL(@MENSAJE,'')));
 	SET @HTML = (REPLACE(@HTML,'##ANIO_ACTUAL##',YEAR(GETDATE())));
@@ -88,7 +88,7 @@ BEGIN
 		0,
 		GETDATE(),
 		GETDATE(),
-		'notificaciones@adinco.mx',
+		(SELECT CuentaRegistro FROM dbo.TA_CorreoServidor WHERE IdServidor = 1),
 		3
 	);
 
