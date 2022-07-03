@@ -5,12 +5,15 @@ CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosNivelActividadRenglon]-- 2
 @Mes           INT = 0,    
 @IdPresupuesto INT = 0    
 AS    
---exec sp_CO_ReporteIntegracionGastosNivelActividadRenglon 2016,7,10000    
     -- =============================================    
     -- Author:  Miguel    
     -- Create date: Domingo 1 Diciembre 2016 12:59 p.m.    
-    -- Description: Reporte de Integración de Gastos a Nivel Actividad    
+    -- Description: Reporte de Integraci�n de Gastos a Nivel Actividad    
     -- =============================================    
+	-- Author:  Reyna Olvera    
+    -- Create date: 1 junio 2022    
+    -- Description: se toma el cuenta el markup en los totales de mes actual y mes anterior    
+    -- =============================================  
          BEGIN    
 SET NOCOUNT ON;    
 CREATE TABLE #Reporte    
@@ -95,7 +98,7 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual)
                     FROM CO_LineaPresupuestoMes L    
                     JOIN CO_ActividadCIEP A ON A.IdActividad = L.IDActividad    
                          JOIN CO_TipoServicio TS ON TS.IdTipoServicio = L.IdTipoServicio    
-                         JOIN CO_Servicio S ON S.IdServicio = L.IdServicio  
+   JOIN CO_Servicio S ON S.IdServicio = L.IdServicio  
                     WHERE L.IdPresupuesto = @IdPresupuesto    
                           AND MONTH(L.[AC_PRESUP_MES]) = @Mes    
                           AND YEAR(L.[AC_PRESUP_MES]) = @Anio    
@@ -109,7 +112,7 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual)
 						   CASE    
 							   WHEN CO_Registro.CvTipoDocFacturacion = 1    
 							   AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0    
-									   THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
+									   THEN ISNULL((ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto)+ ISNULL(rm.MontoEquivalente,0)), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio)  --+ ISNULL(rm.MontoEquivalente,0) SE AGREGGO ESTA PARTE
 							   WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)    
 							   AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
 									   THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio) 
@@ -146,7 +149,7 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual)
                            SUM(CASE    
                                    WHEN CO_Registro.CvTipoDocFacturacion = 1    
 							   AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0    
-									   THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
+									   THEN ISNULL((ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto)+ ISNULL(rm.MontoEquivalente,0)), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) --+ ISNULL(rm.MontoEquivalente,0) SE AGREGGO ESTA PARTE
                                    WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)    
                            AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
                                    THEN ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio)
@@ -259,16 +262,13 @@ INSERT INTO dbo.TempReporteIntegracionGastosNivelActividadRenglon
                            DisplayActividad,    
                            Servicio,    
                            Actividad,    
-         Programa,    
-                           --ISNULL((Gastos * 1.07),0),    
-          ISNULL((Gastos ),0),    
-        -- ISNULL(((GastoHastaMesAnterior * 1.07) + (Gastos * 1.07)),0) AS Acumulado,    
+         Programa,     
+          ISNULL((Gastos ),0),       
          ISNULL(((GastoHastaMesAnterior ) + (Gastos )),0) AS Acumulado,    
                            Saldo,    
                            NoServicio,    
          DesServicio,    
-                           DATEFROMPARTS(@Anio, @Mes, 1),    
-                           --ISNULL((GastoHastaMesAnterior * 1.07),0),    
+                           DATEFROMPARTS(@Anio, @Mes, 1),        
          ISNULL((GastoHastaMesAnterior ),0),    
                            Presupuesto,    
                            TS.orden,  
@@ -305,4 +305,3 @@ INSERT INTO dbo.TempReporteIntegracionGastosNivelActividadRenglon
      'Saldo Remanente ' + isnull(@nombrePresupuesto, '') + ' ($USD)' as Etiqueta1  
              FROM TempReporteIntegracionGastosNivelActividadRenglon GNAR;    
          END;
-

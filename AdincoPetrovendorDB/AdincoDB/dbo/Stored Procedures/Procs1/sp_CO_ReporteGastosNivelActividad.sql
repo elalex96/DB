@@ -9,7 +9,11 @@ AS
 -- Author:        Miguel  
 -- Create date: Domingo 1 Diciembre 2017 12:59 p.m.  
 -- Description:    Reporte de Integración de Gastos a Nivel Actividad  
--- =============================================  
+-- =============================================
+-- Author:  Reyna Olvera    
+-- Create date: 1 junio 2022    
+-- Description: se toma el cuenta el markup en los totales de mes actual y mes anterior    
+-- ============================================= 
              SET NOCOUNT ON;  
              CREATE TABLE #Reporte  
 (Servicio              INT,  
@@ -87,19 +91,7 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
                           AND YEAR(L.[AC_PRESUP_MES]) = @Anio  
                     GROUP BY L.IdTipoServicio,  
                              L.IdActividad;   
-    --------INSERT INTO [#Reporte]  
-    --------SELECT CO_ServicioActividad.IdTipoServicio , CO_ServicioActividad.IdActividad ,   
-    --------SUM(ISNULL(CO_LineaPresupuestoMes.Monto  , 0)) AS Expr1, 0 AS Expr2, 0 AS Expr3, 0 AS Expr4, '' AS Expr5,   
-    --------'' AS Expr6, 0 AS Expr7  
-    --------FROM CO_ServicioActividad   
-    --------LEFT JOIN CO_LineaPresupuestoMes ON CO_LineaPresupuestoMes.IdActividad = CO_ServicioActividad.IdActividad   
-    --------and CO_LineaPresupuestoMes.IdTipoServicio = CO_ServicioActividad.IdTipoServicio       
-    --------WHERE CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto and year(CO_LineaPresupuestoMes.AC_FEC_FIN)= @Anio   
- --------GROUP BY CO_ServicioActividad.IdTipoServicio , CO_ServicioActividad.IdActividad   
-    --------Insert statements for procedure here  
-    --------insert into #Gastos     select    Servicio.TipoServicio, Servicio.Actividad,      sum(  CASE WHEN TipoDeCambio  =1 THEN  ISNULL(Registro.Monto,0)    
-    --------WHEN TipoDeCambio =186  and ISNULL(Registro.Monto,0)>0  THEN   ISNULL(Registro.Monto,0)/ dsrf_TipoCambioMes.Valor  else 0 END  ) as Gastos  
-/**/  
+   
              INSERT INTO #Gastos  
                     SELECT CO_LineaPresupuestoMes.IdTipoServicio,  
                            CO_LineaPresupuestoMes.IdActividad,  
@@ -107,11 +99,10 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
                                     WHEN CO_Registro.CvTipoDocFacturacion = 1  
                                        AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0  
                                    
-										THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
+										THEN ISNULL((ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto)+ ISNULL(rm.MontoEquivalente,0)), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) --+ ISNULL(rm.MontoEquivalente,0) SE AGREGGO ESTA PARTE
                                    WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)  
-                           AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0  
-                                   --THEN ISNULL(CO_Registro.MontoRegistro, 0) / TCDPC.TipoCambio  
-            THEN ISNULL(RM.MontoGasto+ rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio)
+							AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0    
+							THEN ISNULL(RM.MontoGasto+ rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio)
                                    ELSE 0  
                                END) AS Gastos  
                     FROM CO_LineaPresupuestoMes  
@@ -127,84 +118,10 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
                                                                               AND TCDPC.IdMes = MONTH(PC.FechaPago)  
                      LEFT JOIN CO_RegistroMarkup RM ON RM.GastoId= CO_Registro.IdRegistro  
                     WHERE(MONTH(CO_Registro.MesPresentacion) = @MesGE  
-                          AND (YEAR(CO_Registro.MesPresentacion) = @Anio)) --  AND CO_Registro.IdEstado = 10002  
+                          AND (YEAR(CO_Registro.MesPresentacion) = @Anio)) 
                          AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto  
                     GROUP BY CO_LineaPresupuestoMes.IdTipoServicio,  
                              CO_LineaPresupuestoMes.IdActividad;  
-/**/  
--- INSERT INTO #Acumulado  
--- SELECT   
---     CO_LineaPresupuestoMes.IdTipoServicio,   
---     CO_LineaPresupuestoMes.IdActividad,   
---     SUM(  
---         CASE WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0 THEN ISNULL(CO_Registro.MontoRegistro, 0) / CO_TipoCambioMensual.TipoCambio ELSE 0 END  
---     ) AS Gastos   
--- FROM   
---     CO_LineaPresupuestoMes   
---     LEFT JOIN CO_Registro ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes   
---     LEFT JOIN CO_Servicio ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio   
---     LEFT JOIN FI_Factura ON FI_Factura.IdFactura = CO_Registro.IdFactura   
---     LEFT JOIN CO_TipoCambioMensual ON CO_TipoCambioMensual.IdMoneda = FI_Factura.IdMoneda   
---     AND CO_TipoCambioMensual.IdMes = MONTH(CO_Registro.MesPresentacion)   
---     AND CO_TipoCambioMensual.Anio = YEAR(CO_Registro.MesPresentacion)   
--- WHERE   
---     (  
---         (  
---             MONTH(CO_Registro.MesPresentacion) <= @MesGE   
---             AND (  
---                 YEAR(CO_Registro.MesPresentacion) = @Anio  
---   )  
---         ) --AND CO_Registro.IdEstado = 10002  
---         AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto  
---     )   
---     OR (  
---         (  
---             (  
---                 YEAR(CO_Registro.MesPresentacion) < @Anio  
---             )  
---         ) --AND CO_Registro.IdEstado = 10002  
---         AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto  
---     )   
--- GROUP BY   
---     CO_LineaPresupuestoMes.IdTipoServicio,   
---     CO_LineaPresupuestoMes.IdActividad;  
-/**/  
---INSERT INTO #AcumuladoHastaMesAnterior  
--- SELECT   
---     CO_LineaPresupuestoMes.IdTipoServicio,   
---     CO_LineaPresupuestoMes.IdActividad,   
---     SUM(  
---         CASE WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0 THEN ISNULL(CO_Registro.MontoRegistro, 0) / CO_TipoCambioMensual.TipoCambio ELSE 0 END  
---     ) AS Gastos   
--- FROM   
---     CO_LineaPresupuestoMes   
---     LEFT JOIN CO_Registro ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes   
---     LEFT JOIN CO_Servicio ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio   
---     LEFT JOIN FI_Factura ON FI_Factura.IdFactura = CO_Registro.IdFactura   
---     LEFT JOIN CO_TipoCambioMensual ON CO_TipoCambioMensual.IdMoneda = FI_Factura.IdMoneda   
---     AND CO_TipoCambioMensual.IdMes = MONTH(CO_Registro.MesPresentacion)   
---     AND CO_TipoCambioMensual.Anio = YEAR(CO_Registro.MesPresentacion)   
--- WHERE   
---     (  
---         (  
---             MONTH(CO_Registro.MesPresentacion) <= @MesGE -1   
---             AND (  
---                 YEAR(CO_Registro.MesPresentacion) = @Anio  
---)  
---         ) --AND CO_Registro.IdEstado = 10002  
---         AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto  
---     )   
---     OR (  
---         (  
---             (  
---                 YEAR(CO_Registro.MesPresentacion) < @Anio  
---             )  
---         ) --AND CO_Registro.IdEstado = 10002  
---         AND CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto  
---     )   
--- GROUP BY   
---     CO_LineaPresupuestoMes.IdTipoServicio,   
---     CO_LineaPresupuestoMes.IdActividad;   
 /**/  
  -- gasto aculumado mes anterior  
              INSERT INTO #AcumuladoHastaMesAnterior    
@@ -214,9 +131,9 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
                                     WHEN CO_Registro.CvTipoDocFacturacion = 1  
                                        AND ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) <> 0  
                                    
-										THEN ISNULL(ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) 
+										THEN ISNULL((ISNULL(CO_Registro.MontoRegistro,RM.MontoGasto)+ ISNULL(rm.MontoEquivalente,0)), 0) / ISNULL (RM.TipoCambio, CO_TipoCambioMensual.TipoCambio) --+ ISNULL(rm.MontoEquivalente,0) SE AGREGGO ESTA PARTE
                                    WHEN CO_Registro.CvTipoDocFacturacion IN(2, 3)  
-                           AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0  
+									AND ISNULL(CO_Registro.MontoRegistro, 0) <> 0  
                                    THEN ISNULL(RM.MontoGasto+ rm.MontoEquivalente, 0) / ISNULL (RM.TipoCambio, TCDPC.TipoCambio)
                                    ELSE 0  
                                END) AS Gastos  
@@ -252,31 +169,13 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
              FROM #Gastos  
              WHERE #Reporte.Actividad = #Gastos.Actividad  
                    AND #Reporte.Servicio = #Gastos.Servicio;  
-   UPDATE #Reporte    
+			UPDATE #Reporte    
             SET    
                 GastoHastaMesAnterior = #AcumuladoHastaMesAnterior.Gastos    
             FROM #AcumuladoHastaMesAnterior    
             WHERE   
-    #Reporte.Actividad = #AcumuladoHastaMesAnterior.Actividad    
+			#Reporte.Actividad = #AcumuladoHastaMesAnterior.Actividad    
                 AND #Reporte.Servicio = #AcumuladoHastaMesAnterior.Servicio    
--- UPDATE   
---     #Reporte  
--- SET   
---     Acumulado = #Acumulado.Gastos  
--- FROM   
---     #Acumulado  
--- WHERE   
---     #Reporte.Actividad = #Acumulado.Actividad  
---     AND #Reporte.Servicio = #Acumulado.Servicio;  
--- UPDATE   
---     #Reporte  
--- SET   
---     GastoHastaMesAnterior = #AcumuladoHastaMesAnterior.Gastos  
--- FROM   
---     #AcumuladoHastaMesAnterior  
--- WHERE   
---     #Reporte.Actividad = #AcumuladoHastaMesAnterior.Actividad  
---     AND #Reporte.Servicio = #AcumuladoHastaMesAnterior.Servicio;  
              --  
              UPDATE #Reporte  
                SET  
@@ -306,13 +205,8 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
              --  
              UPDATE #Reporte  
                SET  
-                   Saldo = 0; -- Programa - Acumulado;  
-    --delete from #reporte where programa = 0  
-    --||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||  
-    --Para reportes  
-    --||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||  
-    --update #Reporte set Gastos  = #Programa .Gastos   from #Programa  where #Reporte.Actividad   = #Programa.Actividad and #Reporte.Servicio = #Programa.Servicio    
-/**/  
+                   Saldo = 0; 
+ 
              DELETE FROM dbo.TempReporteGastosNivelActividad;  
 /**/  
              INSERT INTO [dbo].[TempReporteGastosNivelActividad]  
@@ -333,14 +227,11 @@ DECLARE @MesAnterior datetime = DATEADD(MONTH,-1,@MesActual);
                            Actividad,  
                            DisplayServicio,  
                            DisplayActividad,  
-                           Programa,  
-                           --ISNULL((GastoHastaMesAnterior * 1.07),0),  
+							Programa,   
                            ISNULL((GastoHastaMesAnterior ),0),  
-         Presupuesto,  
-         --ISNULL((Gastos * 1.07),0),    
-         ISNULL((Gastos),0),    
-         --ISNULL(((GastoHastaMesAnterior * 1.07) + (Gastos * 1.07)),0) AS Acumulado,  
-          ISNULL(((GastoHastaMesAnterior ) + (Gastos )),0) AS Acumulado,  
+							Presupuesto,   
+							ISNULL((Gastos),0),
+							ISNULL(((GastoHastaMesAnterior ) + (Gastos )),0) AS Acumulado,  
                            Saldo,  
                            DATEFROMPARTS(@anio, @mesge, 1),  
                            R.orden  
@@ -363,12 +254,8 @@ select @NombrePresupuesto = nombre from co_presupuesto where idPresupuesto = @Id
                     Fecha,  
                     Orden,  
                     RGNA.IdReporteGastosNivelActividad,  
-     @MesAnterior  AS FechaMesAnterior,  
-     'PRESUPUESTO ' + UPPER(ISNULL(@NombrePresupuesto, '')) + ' AREA CONTRACTUAL' as NombrePresupuesto,  
-     'Reporte de Integración  de Gastos Elegibles ' + ISNULL(@NombrePresupuesto, '') as Etiqueta1  
-             FROM TempReporteGastosNivelActividad RGNA;  
-                  --JOIN dbo.CO_TipoServicio TS ON RGNA.Servicio = TS.ID_TIPOSER  
-             --ORDER BY TS.Orden  
+					@MesAnterior  AS FechaMesAnterior,  
+					 'PRESUPUESTO ' + UPPER(ISNULL(@NombrePresupuesto, '')) + ' AREA CONTRACTUAL' as NombrePresupuesto,  
+					 'Reporte de Integración  de Gastos Elegibles ' + ISNULL(@NombrePresupuesto, '') as Etiqueta1  
+					FROM TempReporteGastosNivelActividad RGNA;   
          END;  
-     --[sp_CO_ReporteGastosNivelActividad] 10000,6,2015
-
