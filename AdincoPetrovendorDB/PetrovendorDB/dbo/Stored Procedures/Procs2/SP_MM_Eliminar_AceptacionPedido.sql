@@ -1,4 +1,11 @@
-﻿
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_Eliminar_AceptacionPedido]    Script Date: 04/07/2022 07:26:49 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:	DANIEL AC
 -- Create date: 08/03/2018
@@ -8,8 +15,12 @@
 -- Create date: 01/02/2019
 -- Description: Se agrego la tabla de FI_CFDIConceptoImpuesto, PR_FI_ArchivoXml para la eliminacion de la factura
 -- =============================================
+-- Author:	Alexander Gomez
+-- Create date: 05/07/2022
+-- Description: correccion al eliminar factura
+-- =============================================
 
-CREATE PROCEDURE [dbo].[SP_MM_Eliminar_AceptacionPedido]
+ALTER PROCEDURE [dbo].[SP_MM_Eliminar_AceptacionPedido]
     @IDACEPTACIONPEDIDO INT,
     @IDPROVEEDOR INT,
     @IDCONTRATO INT,
@@ -123,31 +134,31 @@ BEGIN
                    AF.IdAceptacionFactura
             FROM MM_AceptacionFactura AS AF
                 INNER JOIN TA_Operacion AS O
-                    ON O.IdDocumento = AF.IdAceptacionFactura
+                    ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10
                 INNER JOIN TA_Estatus AS E
                     ON E.IdEstatus = O.IdEstatusOperacion
                 INNER JOIN MM_AceptacionPedido AS AP
                     ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
                 INNER JOIN MM_Pedido AS P
                     ON P.IdPedido = AP.IdPedido
-                INNER JOIN MM_AceptacionCartaPCN AS AC
+                LEFT JOIN MM_AceptacionCartaPCN AS AC
                     ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-                INNER JOIN S_Documento_S3 AS D
+                LEFT JOIN S_Documento_S3 AS D
                     ON D.IdDocumento = AC.IdDocumento
-                INNER JOIN S_TipoValidacionDoc AS TD
+                LEFT JOIN S_TipoValidacionDoc AS TD
                     ON TD.IdTipoValidacionDoc = AC.IdEstatus
                 INNER JOIN S_Proveedor AS PV
                     ON PV.IdProveedor = P.IdSubcontratista
                 INNER JOIN MM_Pedidos AS PG
                     ON P.IdPedido = PG.IdIdentificador
                        AND PG.IdProveedorCliente = @IDPROVEEDOR
-                INNER JOIN #PROCESO AS TEM_CN
+                LEFT JOIN #PROCESO AS TEM_CN
                     ON TEM_CN.ID_PROCESO = AC.IdAceptacionCartaPCN
                 LEFT JOIN MM_TipoPedido AS TP
                     ON TP.IdTipoPedido = PG.IdTipoPedido
-            WHERE TEM_CN.CLAVE_PROCESO = 'aceptacioncn'
-                  AND AP.IdAceptacionPedido = @IDACEPTACIONPEDIDO
-                  AND TEM_CN.IDESTATUS = 2 --> CN APROBADA
+            WHERE AP.IdAceptacionPedido = @IDACEPTACIONPEDIDO
+                  --AND TEM_CN.CLAVE_PROCESO = 'aceptacioncn'
+                  --AND TEM_CN.IDESTATUS = 2 --> CN APROBADA
                   AND ISNULL(AF.IdEstatusEliminado, 0) <> 1; --> QUE NO SE ENCUENTREN ELIMINADAS 
 
             /*COMPROBANTE EXTRANJERO*/
