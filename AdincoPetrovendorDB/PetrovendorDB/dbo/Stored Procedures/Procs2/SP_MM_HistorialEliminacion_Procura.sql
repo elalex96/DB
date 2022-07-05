@@ -1,11 +1,22 @@
-﻿
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_HistorialEliminacion_Procura]    Script Date: 04/07/2022 08:10:19 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:	DANIEL AC
 -- Create date: 08/03/2018
 -- Description: ELIMINACIÓN DE PEDIDO HISTORIAL DE PROCURA
 -- =============================================
+-- Author:	Alexander Gomez
+-- Create date: 05/07/2022
+-- Description: correccion al eliminar factura
+-- =============================================
 
-create  PROCEDURE [dbo].[SP_MM_HistorialEliminacion_Procura]  
+ALTER  PROCEDURE [dbo].[SP_MM_HistorialEliminacion_Procura]  
 
  @IDPROVEEDOR INT,
  @IDCONTRATO INT,
@@ -110,8 +121,8 @@ BEGIN
 
 			INSERT INTO #PROCESO(ID_PADRE,PROCESO,ESTATUS,IDESTATUS,CLASS,CLAVE_PROCESO, ACCION_EJECUTAR,ID_PROCESO)
 			SELECT 	
-			TEM_CN.ID,
-			CONCAT('Recepción de factura No.',AP.IdAceptacionPedido),
+			TEM_AP.ID,
+			CONCAT('Recepción de factura No.',AF.IdAceptacionPedido),
 			'<i class="fa fa-tag text-warning"></i>' +' '+E.Nombre,
 			O.IdEstatusOperacion,
 			'',
@@ -119,21 +130,27 @@ BEGIN
 			'',
 			AF.IdAceptacionFactura
 			FROM MM_AceptacionFactura AS AF
-			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura 	
+			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.	
 			INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion			
 			INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 			INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
-			INNER JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
-			INNER JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
-			INNER JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
+			LEFT JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
+			LEFT JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
+			LEFT JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
 			INNER JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
 			INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IDPROVEEDOR	
-			INNER JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
+			LEFT JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
+			LEFT JOIN #PROCESO AS TEM_AP ON TEM_AP.ID_PROCESO=AF.IdAceptacionPedido
 			LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
-			WHERE 	
-		  TEM_CN.CLAVE_PROCESO='aceptacioncn'
-		  AND AF.IdEliminado=@IDELIMINADO
-		  AND TEM_CN.IdEstatus=2 --> CN APROBADA
+			WHERE AF.IdEliminado=@IDELIMINADO
+			GROUP BY AP.IdAceptacionPedido,
+			E.Nombre,
+			O.IdEstatusOperacion,
+			AF.IdAceptacionFactura,
+			AF.IdAceptacionPedido,
+			TEM_AP.ID;
+		  --AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
+		  --AND TEM_CN.IdEstatus=2 --> CN APROBADA
 
 		  /*RECUPERAR APROBACIONES DE FACTURA ELIMINADAS CON */
 
@@ -155,15 +172,15 @@ BEGIN
 			INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
 			INNER JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
 			INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IDPROVEEDOR	 
-			LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
-			LEFT JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC 
+			INNER JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
+			INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC 
 					ON APC.IdAceptacionPedido=AP.IdAceptacionPedido
-			LEFT JOIN dbo.FI_PedimentoComprobante PC 
+			INNER JOIN dbo.FI_PedimentoComprobante PC 
 					ON PC.IdPedimentoComprobante=APC.IdPedimentoComprobante
-			LEFT JOIN dbo.TA_Operacion O 
+			INNER JOIN dbo.TA_Operacion O 
 					ON O.IdDocumento=PC.IdPedimentoComprobante AND O.IdTipoOperacion=16 -->APROBACIÓN DE COMPROBANTE EXTRANJERO
 			INNER JOIN #PROCESO PAP ON PAP.ID_PROCESO=AP.IdAceptacionPedido
-			LEFT JOIN dbo.TA_Estatus AS E
+			INNER JOIN dbo.TA_Estatus AS E
 						ON E.IdEstatus = O.IdEstatusOperacion	
 			AND PC.IdEliminado=@IDELIMINADO
 			AND PAP.CLAVE_PROCESO='aceptacionpedido'
