@@ -130,7 +130,7 @@ BEGIN
 			'',
 			AF.IdAceptacionFactura
 			FROM MM_AceptacionFactura AS AF
-			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.	
+			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10	
 			INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion			
 			INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 			INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
@@ -149,8 +149,6 @@ BEGIN
 			AF.IdAceptacionFactura,
 			AF.IdAceptacionPedido,
 			TEM_AP.ID;
-		  --AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
-		  --AND TEM_CN.IdEstatus=2 --> CN APROBADA
 
 		  /*RECUPERAR APROBACIONES DE FACTURA ELIMINADAS CON */
 
@@ -321,7 +319,7 @@ BEGIN
 			'',
 			AF.IdAceptacionFactura
 			FROM MM_AceptacionFactura AS AF
-			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura 	
+			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10 	
 			INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion			
 			INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 			INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
@@ -632,7 +630,7 @@ BEGIN
 			AF.IdAceptacionFactura,
 			AP.IdAceptacionPedido
 			FROM MM_AceptacionFactura AS AF
-			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura 	
+			INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10 	
 			INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion			
 			INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 			INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
@@ -969,7 +967,7 @@ BEGIN
 		AF.IdEliminado,
 		RE.FechaRegistro
 		FROM MM_AceptacionFactura AS AF
-		INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura 	
+		INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10 	
 		INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion 
 		INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 		INNER JOIN dbo.MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedido=AP.IdAceptacionPedido
