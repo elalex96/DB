@@ -32,6 +32,10 @@ AS
 -- Create date: 13/06/2022
 -- Description:	Se retorna la tabla de documentos de Field Ticket y Proforma
 -- =============================================
+-- Author:		Luis David
+-- Create date: 04/07/2022
+-- Description:	Cuando sea null se obtendrán las 4 ultimas del nombre (para la extensión)
+-- =============================================
 DECLARE @IdDocumentoFieldTicket INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'FIELD TICKET'),
 		@IdDocumentoProforma INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'PROFORMA');
 DECLARE @IdPedido INT = (SELECT TOP 1 AP.IdPedido
@@ -88,7 +92,7 @@ DECLARE @IdSolicitudAceptacionPedido INT = (SELECT IdSolicitudAceptacionPedido
         BEGIN
 
 			/*CONSULTA EL DOCUMENTO EN LA TABLA DE DOCUMENTOS DE PETROVENDOR*/
-            SELECT      AD.[IdDocumento], AD.[NombreDocumento], '' AS Documento, D.[Carpeta], D.[Extension] ,
+            SELECT      AD.[IdDocumento], AD.[NombreDocumento], '' AS Documento, D.[Carpeta], ISNULL(D.[Extension],RIGHT(AD.[NombreDocumento], 4)) AS 'Extension' ,
                         D.Identificador, d.Bucket AS Bucket, D.Mime
 			into		#tmp
             FROM        [dbo].[MM_AceptacionDocumento]	AS AD (NOLOCK)
