@@ -1,12 +1,22 @@
-﻿
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaProcesoProcura]    Script Date: 04/07/2022 05:18:52 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:	DANIEL AC
 -- Create date: 08/03/2018
 -- Description: CONSULTAR PROCESO DE PROCURA PARA POSIBLE ELIMINACIÓN
 -- =============================================
+-- Author:	Alexander Gomez
+-- Create date: 05/07/2022
+-- Description: correccion al eliminar factura
+-- =============================================
 
-
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaProcesoProcura] 
+ALTER PROCEDURE [dbo].[SP_MM_ConsultaProcesoProcura] --[SP_MM_ConsultaProcesoProcura] 
 
  @IdSolicitudPedido INT,
  @IdProveedor INT, 
@@ -268,11 +278,13 @@ BEGIN
 				INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
 				INNER JOIN #PROCESO AS TEM_AP ON TEM_AP.ID_PROCESO=AP.IdAceptacionPedido 
 				LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
+				LEFT JOIN RelacionCartaCNPedido AS RCN ON AP.IdAceptacionPedido = RCN.IdAceptacionPedido
 				WHERE 
 				 P.IdSolicitudPedido = @IdSolicitudPedido  	
 				 AND TEM_AP.CLAVE_PROCESO='aceptacionpedido'
 				 AND ISNULL(AC.IdEstatusEliminado,0)<>1
 				 AND ISNULL(AP.IdNacionalidadProveedor, 0) <> 2 --> DIFERENTE DE NACIONALIDAD EXTRANJERO  
+				 AND ISNULL(RCN.PedirCarta,0) = 1
 				GROUP BY 
 				AC.IdAceptacionCartaPCN	,
 				TD.TipoValidacion,
@@ -292,23 +304,23 @@ BEGIN
 				AF.IdAceptacionFactura,
 				AP.IdAceptacionPedido
 				FROM MM_AceptacionFactura AS AF
-				INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura 	
+				INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10 	
 				INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion			
 				INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 				INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
-				INNER JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
-				INNER JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
-				INNER JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-				INNER JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
+				LEFT JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
+				LEFT JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
+				LEFT JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
+				LEFT JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
 				INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
 				INNER JOIN #PROCESO AS TEM_AP ON TEM_AP.ID_PROCESO=AP.IdAceptacionPedido 
-				INNER JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
+				LEFT JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
 				LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
 				WHERE 
 				 P.IdSolicitudPedido = @IdSolicitudPedido  	
 				 AND TEM_AP.CLAVE_PROCESO='aceptacionpedido'
-				 AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
-				 AND AC.IdEstatus=2 --> QUE LA APROBACIÓN DE CARTA CONTENIDO NACIONAL ESTE APROBADA
+				 --AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
+				 --AND AC.IdEstatus=2 --> QUE LA APROBACIÓN DE CARTA CONTENIDO NACIONAL ESTE APROBADA
 
 				/*COMPROBANTE EXTRANJERO*/
 				INSERT INTO #PROCESO(ID_PADRE,PROCESO,ESTATUS,CLASS,CLAVE_PROCESO, ACCION_EJECUTAR,ID_PROCESO,ID_PROCESO_PUBLICO)
@@ -519,11 +531,13 @@ BEGIN
 				INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
 				INNER JOIN #PROCESO AS TEM_AP ON TEM_AP.ID_PROCESO=AP.IdAceptacionPedido 
 				LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
+				LEFT JOIN RelacionCartaCNPedido AS RCN ON AP.IdAceptacionPedido = RCN.IdAceptacionPedido
 				WHERE 
 				 P.IdSolicitudPedido = @IdSolicitudPedido  	
 				 AND TEM_AP.CLAVE_PROCESO='aceptacionpedido'
 				 AND ISNULL(AC.IdEstatusEliminado,0)<>1
 				 AND ISNULL(AP.IdNacionalidadProveedor, 0) <> 2 --> DIFERENTE DE NACIONALIDAD EXTRANJERO  
+				 AND ISNULL(RCN.PedirCarta,0) = 1
 				GROUP BY 
 				AC.IdAceptacionCartaPCN	,
 				TD.TipoValidacion,
@@ -543,23 +557,23 @@ BEGIN
 				AF.IdAceptacionFactura,
 				AP.IdAceptacionPedido
 				FROM MM_AceptacionFactura AS AF
-				INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura 	
+				INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10 	
 				INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion			
 				INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 				INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
-				INNER JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
-				INNER JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
-				INNER JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-				INNER JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
+				LEFT JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
+				LEFT JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
+				LEFT JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
+				LEFT JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
 				INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
 				INNER JOIN #PROCESO AS TEM_AP ON TEM_AP.ID_PROCESO=AP.IdAceptacionPedido 
-				INNER JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
+				LEFT JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
 				LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
 				WHERE 
 				 P.IdSolicitudPedido = @IdSolicitudPedido  	
 				 AND TEM_AP.CLAVE_PROCESO='aceptacionpedido'
-				 AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
-				 AND AC.IdEstatus=2 --> QUE LA APROBACIÓN DE CARTA CONTENIDO NACIONAL ESTE APROBADA
+				 --AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
+				 --AND AC.IdEstatus=2 --> QUE LA APROBACIÓN DE CARTA CONTENIDO NACIONAL ESTE APROBADA
 
 				/*COMPROBANTE EXTRANJERO*/
 				INSERT INTO #PROCESO(ID_PADRE,PROCESO,ESTATUS,CLASS,CLAVE_PROCESO, ACCION_EJECUTAR,ID_PROCESO,ID_PROCESO_PUBLICO)
@@ -696,11 +710,13 @@ BEGIN
 				INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
 				INNER JOIN #PROCESO AS TEM_AP ON TEM_AP.ID_PROCESO=AP.IdAceptacionPedido 
 				LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
+				LEFT JOIN RelacionCartaCNPedido AS RCN ON AP.IdAceptacionPedido = RCN.IdAceptacionPedido
 				WHERE 
 				 P.IdSolicitudPedido = @IdSolicitudPedido  	
 				 AND TEM_AP.CLAVE_PROCESO='aceptacionpedido'
 				 AND ISNULL(AC.IdEstatusEliminado,0)<>1
-				 AND ISNULL(AP.IdNacionalidadProveedor, 0) <> 2 --> DIFERENTE DE NACIONALIDAD EXTRANJERO  
+				 AND ISNULL(AP.IdNacionalidadProveedor, 0) <> 2 --> DIFERENTE DE NACIONALIDAD EXTRANJERO 
+				 AND ISNULL(RCN.PedirCarta,0) = 1
 				GROUP BY 
 				AC.IdAceptacionCartaPCN	,
 				TD.TipoValidacion,
@@ -711,7 +727,7 @@ BEGIN
 				/*RECEPCIÓN DE FACTURA*/
 				INSERT INTO #PROCESO(ID_PADRE,PROCESO,ESTATUS,CLASS,CLAVE_PROCESO, ACCION_EJECUTAR,ID_PROCESO,ID_PROCESO_PUBLICO)
 				SELECT 	
-				TEM_CN.ID,
+				TEM_AP.ID,
 				CONCAT('Recepción de factura No.',AP.IdAceptacionPedido),
 				'<i class="fa fa-tag text-warning"></i>' +' '+E.Nombre,
 				'',
@@ -720,23 +736,28 @@ BEGIN
 				AF.IdAceptacionFactura,
 				AP.IdAceptacionPedido
 				FROM MM_AceptacionFactura AS AF
-				INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura 	
+				INNER JOIN  TA_Operacion AS O ON O.IdDocumento = AF.IdAceptacionFactura AND O.IdTipoOperacion = 10
 				INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion			
 				INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
 				INNER JOIN MM_Pedido AS P ON  P.IdPedido = AP.IdPedido	
-				INNER JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
-				INNER JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
-				INNER JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
-				INNER JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
+				LEFT JOIN MM_AceptacionCartaPCN AS AC ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
+				LEFT JOIN S_Documento_S3 AS D ON D.IdDocumento = AC.IdDocumento
+				LEFT JOIN S_TipoValidacionDoc AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
+				LEFT JOIN S_Proveedor AS PV ON PV.IdProveedor = P.IdSubcontratista	
 				INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
 				INNER JOIN #PROCESO AS TEM_AP ON TEM_AP.ID_PROCESO=AP.IdAceptacionPedido 
-				INNER JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
+				LEFT JOIN #PROCESO AS TEM_CN ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
 				LEFT JOIN  MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
 				WHERE 
 				 P.IdSolicitudPedido = @IdSolicitudPedido  	
 				 AND TEM_AP.CLAVE_PROCESO='aceptacionpedido'
-				 AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
-				 AND AC.IdEstatus=2 --> QUE LA APROBACIÓN DE CARTA CONTENIDO NACIONAL ESTE APROBADA
+				 GROUP BY TEM_AP.ID,
+				AP.IdAceptacionPedido,
+				E.Nombre,
+				AF.IdAceptacionFactura,
+				AP.IdAceptacionPedido;
+				 --AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
+				 --AND AC.IdEstatus=2 --> QUE LA APROBACIÓN DE CARTA CONTENIDO NACIONAL ESTE APROBADA
 
 				/*COMPROBANTE EXTRANJERO*/
 				INSERT INTO #PROCESO(ID_PADRE,PROCESO,ESTATUS,CLASS,CLAVE_PROCESO, ACCION_EJECUTAR,ID_PROCESO,ID_PROCESO_PUBLICO)
