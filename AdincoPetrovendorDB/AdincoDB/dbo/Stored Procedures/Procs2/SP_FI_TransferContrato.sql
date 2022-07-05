@@ -8,14 +8,16 @@
 -- Description:	Agregar Columnas Año y Mes 
 --				agregar SET LANGUAGE spanish
 -- =============================================
+-- Author:		Reyna O.
+-- Create date: 04-07-2022
+-- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 
+-- de la tabla al inicio de procedure
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_TransferContrato] 
--- Add the parameters for the stored procedure here
 @IdContrato INT, 
 @IdUsuario  INT
 AS
      BEGIN
-         -- SET NOCOUNT ON added to prevent extra result sets from
-         -- interfering with SELECT statements.
          SET NOCOUNT ON;
          SET LANGUAGE spanish;
          --===========================================
@@ -24,21 +26,31 @@ AS
          --===========================================
          CREATE TABLE #Facturas
          (IdFactura       INT, 
-          Serie           NVARCHAR(MAX), 
+          Serie           VARCHAR(500), 
           NumeroContrato  NVARCHAR(50), 
-          Folio           NVARCHAR(MAX), 
+          Folio           VARCHAR(500), 
           Fecha           DATETIME, 
-          FormaPago       NVARCHAR(MAX), 
+          FormaPago       VARCHAR(500), 
           SubTotal        MONEY, 
-          Moneda          NVARCHAR(MAX), 
+          Moneda          VARCHAR(500), 
           MontoConIva     MONEY, 
-          TipoComprobante NVARCHAR(MAX), 
-          MetodoPago      NVARCHAR(MAX), 
-          LugarExpedicion NVARCHAR(MAX), 
+          TipoComprobante VARCHAR(500), 
+          MetodoPago      VARCHAR(500), 
+          LugarExpedicion VARCHAR(1000), 
           UUID            VARCHAR(500), 
           FechaRecepcion  DATETIME, 
-          RazonSocial     VARCHAR(MAX), 
-          Emisor          NVARCHAR(MAX)
+          RazonSocial     VARCHAR(1000), 
+          Emisor          VARCHAR(1000)
+         );
+
+         CREATE TABLE #UUIDS
+         (IdTransfer INT, 
+          UUID       VARCHAR(500)
+         );
+
+         CREATE TABLE #TransferenciaUUIDS
+         (IdTransfer INT, 
+          UUIDS      VARCHAR(8000)
          );
          --===========================================
          INSERT INTO #Facturas
@@ -104,37 +116,39 @@ AS
                        F.FechaRecepcion, 
                        S.RazonSocial, 
                        F.Emisor
-                FROM dbo.FI_Factura AS F
-                     JOIN dbo.PV_Subcontratista S ON F.IdSubcontratista = S.IdSubcontratista
-                     JOIN dbo.CO_Contrato C ON F.IdContrato = C.IdContrato
-                WHERE C.IdContrato = @IdContrato;
+                FROM dbo.FI_Factura	AS F	(NOLOCK)
+                JOIN 
+					dbo.PV_Subcontratista S	(NOLOCK) 
+					ON F.IdSubcontratista = S.IdSubcontratista
+					AND	F.IdContrato = @IdContrato
+                 JOIN 
+					dbo.CO_Contrato C	(NOLOCK)
+					ON F.IdContrato = C.IdContrato
+                WHERE 
+					C.IdContrato = @IdContrato;
 
          /**/
-
-         CREATE TABLE #UUIDS
-         (IdTransfer INT, 
-          UUID       VARCHAR(500)
-         );
-         CREATE TABLE #TransferenciaUUIDS
-         (IdTransfer INT, 
-          UUIDS      VARCHAR(8000)
-         );
-
-         /**/
-
          INSERT INTO #UUIDS
          (#UUIDS.IdTransfer, 
           #UUIDS.UUID
          )
                 SELECT t.IdTransferencia, 
                        concat(ff.TipoComprobante, '-', SUBSTRING(LTRIM(RTRIM(ff.UUID)), 1, 500))
-                FROM dbo.FI_Transfer AS T
-                     LEFT JOIN dbo.FI_TransferFactura TF ON TF.IdTransfer = T.IdTransferencia
-                     LEFT JOIN dbo.FI_Factura ff ON tf.IdFactura = ff.IdFactura
-                WHERE T.IdContrato = @IdContrato
-                      AND TF.IdTransfer IS NOT NULL
-                GROUP BY t.IdTransferencia, 
-                         concat(ff.TipoComprobante, '-', SUBSTRING(LTRIM(RTRIM(ff.UUID)), 1, 500));
+                FROM 
+					dbo.FI_Transfer	AS T	(NOLOCK)
+				LEFT JOIN 
+					dbo.FI_TransferFactura TF	(NOLOCK)
+					ON TF.IdTransfer = T.IdTransferencia
+					AND	T.IdContrato = @IdContrato
+                LEFT JOIN 
+					dbo.FI_Factura ff	(NOLOCK)
+					ON tf.IdFactura = ff.IdFactura
+                WHERE 
+					T.IdContrato = @IdContrato
+                    AND TF.IdTransfer IS NOT NULL
+                GROUP BY 
+					t.IdTransferencia, 
+                    concat(ff.TipoComprobante, '-', SUBSTRING(LTRIM(RTRIM(ff.UUID)), 1, 500));
 
          /**/
 
@@ -144,15 +158,27 @@ AS
          )
                 SELECT t.IdTransferencia, 
                        concat('I-', SUBSTRING(LTRIM(RTRIM(fcr.IdDocumento)), 1, 500))
-                FROM dbo.FI_Transfer AS T
-                     LEFT JOIN dbo.FI_TransferFactura TF ON TF.IdTransfer = T.IdTransferencia
-                     LEFT JOIN dbo.FI_Factura ff ON tf.IdFactura = ff.IdFactura
-                     JOIN dbo.FI_ComplementoDePago cp ON cp.IdFactura = ff.IdFactura
-                     JOIN dbo.FI_CPDocRelacionado fcr ON fcr.IdComplementoDePago = cp.IdComplementoDePago
-                WHERE T.IdContrato = @IdContrato
-                      AND TF.IdTransfer IS NOT NULL
-                GROUP BY t.IdTransferencia, 
-                         concat('I-', SUBSTRING(LTRIM(RTRIM(fcr.IdDocumento)), 1, 500));
+                FROM 
+					dbo.FI_Transfer AS T (NOLOCK)
+                LEFT JOIN 
+					dbo.FI_TransferFactura TF	(NOLOCK)
+					ON TF.IdTransfer = T.IdTransferencia
+					AND	T.IdContrato = @IdContrato
+                LEFT JOIN 
+					dbo.FI_Factura ff	(NOLOCK)
+					ON tf.IdFactura = ff.IdFactura
+                JOIN 
+					dbo.FI_ComplementoDePago cp	(NOLOCK)
+					ON cp.IdFactura = ff.IdFactura
+                JOIN 
+					dbo.FI_CPDocRelacionado fcr	(NOLOCK)
+					ON fcr.IdComplementoDePago = cp.IdComplementoDePago
+                WHERE 
+					T.IdContrato = @IdContrato
+                    AND TF.IdTransfer IS NOT NULL
+                GROUP BY 
+					t.IdTransferencia, 
+                    concat('I-', SUBSTRING(LTRIM(RTRIM(fcr.IdDocumento)), 1, 500));
 
          /**/
 
@@ -189,12 +215,6 @@ AS
                 TM.TipoMonedaCorto AS TipoMoneda, 
                 concat(T.Concepto, ' - UUID ', UPPER(isnull(tu.UUIDS, ''))) AS Concepto, 
                 T.NumeroPolizaContable,
-                --CASE
-                --    WHEN T.PDF LIKE ''
-                --         OR T.PDF IS NULL
-                --    THEN '¡PDF NO CARGADO!'
-                --    ELSE 'Pdf Cargado'
-                --END AS 'Comprobante de Pago', 
                 CASE
                     WHEN T.AWSPDFId IS NULL
                     THEN '¡PDF NO CARGADO!'
@@ -225,18 +245,42 @@ AS
                     THEN 'CF PPD Pendiente de Complemento de Pago'
                     ELSE 'NA'
                 END AS TipoDoc
-         FROM dbo.FI_Transfer AS T
-              JOIN dbo.PV_CuentaBancaria AS CBD ON CBD.DatoBancarioID = T.IdCuentaDestino
-              JOIN dbo.PV_CuentaBancaria AS CBO ON CBO.DatoBancarioID = T.IdCuentaOrigen
-              JOIN dbo.PV_Subcontratista AS S ON CBD.IdProveedor = S.IdSubcontratista
-              JOIN dbo.PV_TipoMoneda AS TM ON T.IdMoneda = TM.IdMoneda
-              JOIN dbo.PV_MetodoPago AS MP ON T.IdMetodoPago = MP.idMetodoPago
-              LEFT JOIN dbo.AP_Usuario AS U ON T.CreadoPor = U.UsuarioID
-              LEFT JOIN dbo.AP_Usuario AS UM ON T.ModificadoPor = UM.UsuarioID
-              LEFT JOIN dbo.FI_TransferFactura TF ON TF.IdTransfer = T.IdTransferencia
-              LEFT JOIN #TransferenciaUUIDS tu ON tu.IdTransfer = t.IdTransferencia
-              LEFT JOIN #Facturas AS FT ON FT.IdFactura = TF.IdFactura
-         WHERE T.IdContrato = @IdContrato
-               AND TF.IdTransfer IS NOT NULL
-         ORDER BY T.IdTransferencia DESC;
+         FROM 
+			dbo.FI_Transfer AS T	(NOLOCK)
+        JOIN 
+			dbo.PV_CuentaBancaria AS CBD	(NOLOCK)
+			ON CBD.DatoBancarioID = T.IdCuentaDestino
+			AND	T.IdContrato = @IdContrato
+        JOIN 
+			dbo.PV_CuentaBancaria AS CBO	(NOLOCK)
+			ON CBO.DatoBancarioID = T.IdCuentaOrigen
+        JOIN 
+			dbo.PV_Subcontratista AS S	(NOLOCK)
+			ON CBD.IdProveedor = S.IdSubcontratista
+        JOIN 
+			dbo.PV_TipoMoneda AS TM	(NOLOCK)
+			ON T.IdMoneda = TM.IdMoneda
+        JOIN 
+			dbo.PV_MetodoPago AS MP	(NOLOCK)
+			ON T.IdMetodoPago = MP.idMetodoPago
+        LEFT JOIN 
+			dbo.AP_Usuario AS U	(NOLOCK)
+			ON T.CreadoPor = U.UsuarioID
+        LEFT JOIN 
+			dbo.AP_Usuario AS UM	(NOLOCK)
+			ON T.ModificadoPor = UM.UsuarioID
+        LEFT JOIN 
+			dbo.FI_TransferFactura TF	(NOLOCK)
+			ON TF.IdTransfer = T.IdTransferencia
+        LEFT JOIN 
+			#TransferenciaUUIDS tu	(NOLOCK)
+			ON tu.IdTransfer = t.IdTransferencia
+        LEFT JOIN 
+			#Facturas AS FT 
+			ON FT.IdFactura = TF.IdFactura
+         WHERE 
+			T.IdContrato = @IdContrato
+            AND TF.IdTransfer IS NOT NULL
+         ORDER BY 
+			T.IdTransferencia DESC;
      END;
