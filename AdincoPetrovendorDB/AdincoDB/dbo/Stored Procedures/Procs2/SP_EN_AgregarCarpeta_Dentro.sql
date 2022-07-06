@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 29/06/2022 11:15:48 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 06/07/2022 03:59:19 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -104,7 +104,7 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-		SELECT 'ERROR CARPETA EXISTENTE',0,0,0,0,0,0,0,0;
+		SELECT 'ERROR CARPETA EXISTENTE',0,0,0,0,0,0,0,0,0;
 	END
     
 
