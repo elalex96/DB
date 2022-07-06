@@ -1,6 +1,9 @@
-﻿USE Petrovendor
+USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS MM_SP_ConsultaSolicitudPedido
+/****** Object:  StoredProcedure [dbo].[MM_SP_ConsultaSolicitudPedido]    Script Date: 06/07/2022 12:05:52 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Pedro, Acuña
@@ -11,8 +14,12 @@ GO
 -- Create date: 06/02/2018
 -- Description:	se agrega un bit para saber si existen las bases para mostrar o no el boton de descarga de bases
 -- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 06/07/2022
+-- Description:	se obtienen los datos de presupuesto y periodo de la linea de presupuesto
+-- =============================================
 
-CREATE PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido] --26352
+ALTER PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido] --26352
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT
 AS
@@ -30,6 +37,15 @@ AS
 											ON SPD.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
 											WHERE SPC.IdSolicitudPedido = @IdSolicitudPedido
 											GROUP BY SPLP.IdLineaPresupuesto);
+
+		DECLARE @IdPresupuesto INT = (SELECT TOP 1 IdPresupuesto FROM Adinco.dbo.CO_LineaPresupuestoMes WHERE IdLineaPresupuestoMes = @IdLineaPresupuesto);
+
+		DECLARE @IdPeriodo INT = (select TOP 1 PC.IdPeriodo
+									from Adinco.dbo.CO_LineaPresupuestoMes LPM
+										join Adinco.dbo.CO_Presupuesto P on LPM.IdPresupuesto = P.IdPresupuesto
+										join Adinco.dbo.CO_ProgramaActividad PA on P.IdProgramaActividad = PA.IdProgramaActividad
+										join Adinco.dbo.CO_PeriodoContrato PC on PA.IdPeriodoContrato = PC.IdPeriodo
+											WHERE LPM.IdLineaPresupuestoMes = @IdLineaPresupuesto);
 
 		SELECT		@ExistenBases = CASE WHEN F.IdDocBases IS NULL THEN 0 ELSE 1 END
 		FROM		TA_DocBasesOperacion F
@@ -63,8 +79,8 @@ AS
 					CC.CentroCosto ,
 					ISNULL ( TC.Termino, 'No aplica' ) AS Termino, 
 					SP.IdContrato, 
-					SP.IdPeriodo, 
-					SP.IdPresupuesto ,
+					@IdPeriodo AS IdPeriodo, 
+					@IdPresupuesto AS IdPresupuesto ,
 					@IdLineaPresupuesto, 
 					TG.TipoGasto, 
 					ISNULL ( SP.Fianza, 'false' ), 
