@@ -1,17 +1,68 @@
-﻿-- p_COSAP_Transferencia_Gen 1
-create proc p_COSAP_Transferencia_Gen
+﻿USE ADINCO;
+GO
+-- =============================================
+-- Author:		Reyna O.
+-- Create date: 05-07-2022
+-- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 
+-- de la tabla al inicio de procedure
+-- =============================================
+CREATE PROCEDURE p_COSAP_Transferencia_Gen
 @pCreadoPor int
 as
+	CREATE TABLE #tmpCuentas
+	(
+		Vendor VARCHAR(50) null,
+		Cuenta VARCHAR(50),
+		EsOrigen BIT
+	)
+	CREATE TABLE #tmpTransfer
+	(
+			ID INT identity(1,1),
+			IdContrato	INT,
+			SourceAccount	VARCHAR(500),
+			FinalAccount	VARCHAR(500),
+			PaymentReference	VARCHAR(500),
+			PaymentForm	VARCHAR(500),
+			PaymentDate	VARCHAR(500),
+			PaidAmount	FLOAT,
+			Currency	VARCHAR(50),
+			Concepto	VARCHAR(1000),
+			NumeroPolizaContable	VARCHAR(500),
+			PDF	VARCHAR(500),
+			Interest FLOAT,
+			NamePayee	VARCHAR(1000),
+			SAPVendorId	VARCHAR(1000),
+			VendorBankName	VARCHAR(1000),
+			IdTransferencia	INT
+	)
 
-	
-	declare @IdMoneda int,
-			@IdMetodoPago int,
-			@IdTransferencia int,
+	DECLARE @IdMoneda INT,
+			@IdMetodoPago INT,
+			@IdTransferencia INT,
 			@pCurrency	varchar(5),
-			@IdTransferencia_last int=0
+			@IdTransferencia_last INT=0;
 
+	DECLARE @id INT=0;
 
-	select 	ID = identity(int,1,1),
+	INSERT INTO #tmpTransfer(
+			IdContrato,
+			SourceAccount,
+			FinalAccount,
+			PaymentReference,
+			PaymentForm,
+			PaymentDate,
+			PaidAmount,
+			Currency,
+			Concepto,
+			NumeroPolizaContable,
+			PDF,
+			Interest,
+			NamePayee,
+			SAPVendorId,
+			VendorBankName,
+			IdTransferencia) 
+	
+	SELECT
 			IdContrato,
 			SourceAccount,
 			FinalAccount,
@@ -28,108 +79,139 @@ as
 			SAPVendorId,
 			VendorBankName,
 			IdTransferencia 
-	into #tmpTransfer
-	from CO_SAPPaymentData
-	where IdTransferencia is null
-	order by PaymentDate	
+	FROM 
+		CO_SAPPaymentData	(NOLOCK)
+	WHERE 
+		IdTransferencia is null
+	ORDER BY 
+		PaymentDate;	
 
-	create table #tmpCuentas
-	(
-		Vendor varchar(50) null,
-		Cuenta varchar(50),
-		EsOrigen bit
-	)
+	SELECT @id = MIN(ID)
+	FROM 
+		#tmpTransfer;
+
+	WHILE @id is not null
+	BEGIN
+
+		SET @IdTransferencia = 0
+
+		SELECT 
+			@pCurrency = Currency
+		FROM 
+			#tmpTransfer
+		WHERE 
+			id = @id;
 
 
-	declare @id int
+		SELECT 
+			@IdMoneda = IdMoneda
+		FROM 
+			PV_TipoMoneda	(NOLOCK)
+		WHERE 
+			TipoMOnedaCorto = @pCurrency;
 
-	select @id = min(ID)
-	from #tmpTransfer
-
-	while @id is not null
-	begin
-
-		set @IdTransferencia = 0
-
-		select @pCurrency = Currency
-		from #tmpTransfer
-		where id = @id
-
-		select @IdMoneda = IdMoneda
-		from PV_TipoMoneda
-		where TipoMOnedaCorto = @pCurrency
-
-		select @IdMetodoPago = IdMetodoPagoAdinco
-		from  #tmpTransfer t
-		inner join [CO_SAPTaxMinistry_detalle] t2 on t2.SAPPayType = t.PaymentForm and
-						t2.IdContrato = t.IdCOntrato
-		where t.id = @id
+		SELECT 
+			@IdMetodoPago = IdMetodoPagoAdinco
+		FROM
+			#tmpTransfer	t
+		JOIN 
+			[CO_SAPTaxMinistry_detalle]	t2	(NOLOCK)
+			ON	t2.SAPPayType	=	t.PaymentForm 
+			AND	t2.IdContrato	=	t.IdCOntrato
+		WHERE	t.id	=	@id;
 
 
 		/**************SI NO EXISTE CUENTA DESTINO. GENERARLA AUTOMÁTICAMENTE**********************/
-		if not exists (
-			select * from #tmpTransfer t
-			inner join CO_SAPVendor v on v.VendorIDSAP = t.SAPVendorId
-			INNER JOIN PV_Subcontratista sub on sub.RFC = v.TAXID
-			inner join Petrovendor..S_Proveedor prov on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
-			INNER JOIN PV_CuentaBancaria cb ON (cb.NumeroCuenta = t.FinalAccount	OR cb.CuentaClave = t.FinalAccount) and
-											cb.IdProveedor = sub.IdSubcontratista
-			where   t.id = @id and			
-			v.IdCOntrato = t.IdContrato
+		IF NOT EXISTS (
+			SELECT * 
+			FROM 
+				#tmpTransfer t
+			JOIN 
+				CO_SAPVendor	v	(NOLOCK)
+				ON v.VendorIDSAP = t.SAPVendorId
+				AND	t.id	=	@id
+				AND	v.IdCOntrato	=	t.IdContrato
+			JOIN 
+				PV_Subcontratista	sub	(NOLOCK)
+				ON sub.RFC = v.TAXID
+			JOIN 
+				Petrovendor..S_Proveedor	prov	(NOLOCK)
+				ON prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
+			JOIN 
+				PV_CuentaBancaria	cb	(NOLOCK)
+				ON (cb.NumeroCuenta = t.FinalAccount	OR	cb.CuentaClave = t.FinalAccount) 
+				AND	cb.IdProveedor = sub.IdSubcontratista
+			WHERE   
+				t.id = @id			
+				AND	v.IdCOntrato = t.IdContrato
 		)
-		begin
-			insert into PV_CuentaBancaria(
+		BEGIN
+			INSERT INTO PV_CuentaBancaria(
 				/*DatoBancarioID,*/		BancoID,		Titular,		Sucursal,		NumeroCuenta,
 				CuentaClave,		NumeroTarjeta,	TipoMonedaID,	IdProveedor,	Predeterminado,
 				IdTipoCuenta,		TipoCuentaTemp,	Codigo,			claveBanco,		RFC,
 				IdContratista,		Activa,			CreadoPor,		CreadoEn,		Eliminada,
 				Alias
 			)	
-			select					null,	prov.RazonSocial,			null,		t.FinalAccount,
+			SELECT					null,	prov.RazonSocial,			null,		t.FinalAccount,
 			t.FinalAccount,			null,		@IdMoneda,				sub.IdSubcontratista,1,
 			1,						null,			null,			null,			sub.RFC,
 			null,					1,				@pCreadoPor,	getdate(),		0,
 			null
-			from #tmpTransfer t
-			inner join CO_SAPVendor v on v.VendorIDSAP = t.SAPVendorId
-			INNER JOIN PV_Subcontratista sub on sub.RFC = v.TAXID
-			inner join Petrovendor..S_Proveedor prov on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS						
-			where   t.id = @id and			
-			v.IdCOntrato = t.IdContrato
-		end
-
-
-
+			FROM 
+				#tmpTransfer t
+			JOIN 
+				CO_SAPVendor	v	(NOLOCK) 
+				ON v.VendorIDSAP = t.SAPVendorId
+				AND	t.id	=	@id			
+				AND	v.IdCOntrato	=	t.IdContrato
+			JOIN 
+				PV_Subcontratista	sub	(NOLOCK)
+				ON	sub.RFC	=	v.TAXID
+			JOIN 
+				Petrovendor..S_Proveedor	prov	(NOLOCK)
+				ON	prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS						
+			WHERE
+				t.id = @id			
+				AND	v.IdCOntrato = t.IdContrato;
+		END
 
 		/******************************************************************************************/
 		
-		begin tran
+		BEGIN TRAN
 
-			SELECT @IdTransferencia =  tr.IdTransferencia
-			from 	#tmpTransfer t
-			inner join [PV_CuentaBancaria] cOrig on (
-														rtrim(cOrig.NumeroCuenta) = rtrim(t.SourceAccount) OR
-														rtrim(cOrig.CuentaClave) = rtrim(t.SourceAccount)														
-													)
-			inner join [PV_CuentaBancaria] cDest on (
-														rtrim(cDest.NumeroCuenta) = rtrim(t.FinalAccount) OR
-														rtrim(cDest.CuentaClave) = rtrim(t.FinalAccount) 
-													)
+			SELECT 
+				@IdTransferencia =  tr.IdTransferencia
+			FROM 	
+				#tmpTransfer t
+			JOIN 
+				[PV_CuentaBancaria]	cOrig	(NOLOCK)
+				ON	(
+							rtrim(cOrig.NumeroCuenta) = rtrim(t.SourceAccount) OR
+							rtrim(cOrig.CuentaClave) = rtrim(t.SourceAccount)														
+					)
+			JOIN 
+				[PV_CuentaBancaria]	cDest	(NOLOCK)
+				ON	(
+						rtrim(cDest.NumeroCuenta) = rtrim(t.FinalAccount) OR
+						rtrim(cDest.CuentaClave) = rtrim(t.FinalAccount) 
+					)
 					
-			inner join FI_Transfer tr on 
-										tr.ReferenciaBancaria = t.PaymentReference and
-										tr.IdCuentaOrigen = cOrig.DatoBancarioID and
-										tr.IdCuentaDestino = cDest.DatoBancarioID and
-										tr.MontoPagado = t.PaidAmount  and
-										convert(varchar,tr.FechaPago,112) = convert(varchar,t.PaymentDate,112)  AND
-										TR.ReferenciaBancaria = T.PaymentReference
+			JOIN 
+				FI_Transfer	tr	(NOLOCK)
+				ON	tr.ReferenciaBancaria = t.PaymentReference 
+					AND	tr.IdCuentaOrigen = cOrig.DatoBancarioID 
+					AND	tr.IdCuentaDestino = cDest.DatoBancarioID 
+					AND	tr.MontoPagado = t.PaidAmount  
+					AND	convert(varchar,tr.FechaPago,112) = convert(varchar,t.PaymentDate,112)
+					AND	TR.ReferenciaBancaria = T.PaymentReference
+			WHERE 
+				t.id = @id; 
 
-			where t.id = @id 
+			IF(ISNULL(@IdTransferencia,0) = 0)
+			BEGIN
 
-			if(isnull(@IdTransferencia,0) = 0)
-			begin
-
-				insert into FI_Transfer(
+				INSERT INTO FI_Transfer(
 					/*IdTransferencia,*/		IdContrato,		IdComprobantePago,		NombreExtencionArchivo,
 					ReferenciaBancaria,		FechaPago,		IdCuentaOrigen,			IdCuentaDestino,
 					MontoPagado,			IdMoneda,		IdClasificacionDocumento,Concepto,
@@ -137,80 +219,76 @@ as
 					PDF,					CreadoPor,		CreadoEn,				ModificadoPor,
 					ModificadoEn,			HashSHA256,		IdFacturaPago,			AWSPDFId)
 				
-				select						t.IdContrato,			t.PaymentReference,		null,
+				SELECT						t.IdContrato,			t.PaymentReference,		null,
 					t.PaymentReference,		t.PaymentDate,	cOrig.DatoBancarioID,	cDest.DatoBancarioID,
 					t.PaidAmount,			@IdMoneda,		1,						t.Concepto	,
 					@IdMetodoPago,			0,				t.NumeroPolizaContable,	0,
 					null,					@pCreadoPor,	getdate()	,			null,
 					null,					null,			null,					null		
 						
-				from #tmpTransfer t
-				inner join [PV_CuentaBancaria] cOrig on (
-															rtrim(cOrig.NumeroCuenta) = rtrim(t.SourceAccount) OR
-															rtrim(cOrig.CuentaClave) = rtrim(t.SourceAccount)														
-														)
-				inner join [PV_CuentaBancaria] cDest on (
-															rtrim(cDest.NumeroCuenta) = rtrim(t.FinalAccount) OR
-															rtrim(cDest.CuentaClave) = rtrim(t.FinalAccount) 
-														)									
-				where t.id = @id 	
+				FROM 
+					#tmpTransfer t
+				JOIN 
+					[PV_CuentaBancaria]	cOrig	(NOLOCK)
+					ON	(
+							rtrim(cOrig.NumeroCuenta) = rtrim(t.SourceAccount) OR
+							rtrim(cOrig.CuentaClave) = rtrim(t.SourceAccount)														
+						)
+				JOIN 
+					[PV_CuentaBancaria]	cDest	(NOLOCK)
+					ON	(
+							rtrim(cDest.NumeroCuenta) = rtrim(t.FinalAccount) OR
+							rtrim(cDest.CuentaClave) = rtrim(t.FinalAccount) 
+						)									
+				WHERE 
+					t.id = @id;
 			
-				if @@error <> 0
-				begin
+				IF @@error <> 0
+				BEGIN
 					rollback tran
 					goto fin
-				end		
+				END		
 
-			end
+			END
 
-			
+			IF(@IdTransferencia_last <> @IdTransferencia)
+			BEGIN
+				SET @IdTransferencia_last = @IdTransferencia;
 
-			if(@IdTransferencia_last <> @IdTransferencia)
-			begin
-				set @IdTransferencia_last = @IdTransferencia
+				IF(ISNULL(@IdTransferencia,0) > 0)
+				BEGIN
+					UPDATE 
+						[CO_SAPPaymentData]
+					SET 
+						IdTransferencia = @IdTransferencia
+					FROM 
+						CO_SAPPaymentData pd	(NOLOCK)
+					JOIN 
+						#tmpTransfer t 
+						ON t.Id = @id
+					WHERE 			
+						pd.IdContrato = t.IdContrato
+						AND	pd.SourceAccount = t.SourceAccount
+						AND	pd.FinalAccount = t.FinalAccount
+						AND	pd.PaymentReference = t.PaymentReference
+						AND	pd.PaidAmount = t.PaidAmount
+						AND	pd.PaymentDate = t.PaymentDate;
+				END
 
-
-				if(isnull(@IdTransferencia,0) > 0)
-				begin
-
-					update [CO_SAPPaymentData]
-					set IdTransferencia = @IdTransferencia
-					from CO_SAPPaymentData pd
-					inner join #tmpTransfer t on t.Id = @id
-					where 			
-					pd.IdContrato = t.IdContrato and
-					pd.SourceAccount = t.SourceAccount and
-					pd.FinalAccount = t.FinalAccount and
-					pd.PaymentReference = t.PaymentReference and
-					pd.PaidAmount = t.PaidAmount and
-					pd.PaymentDate = t.PaymentDate
-
-				end
-
-				if @@error <> 0
-				begin
+				IF @@error <> 0
+				BEGIN
 					rollback tran
 					goto fin
-				end
-			end
-
-			
-		
-	
-			
-
+				END
+			END
 			commit tran
 
 		fin:
 
-		select @id = min(ID)
-		from #tmpTransfer
-		where id > @id
-		
-	end
-
-	
-
-
-	
-
+		SELECT 
+			@id = min(ID)
+		FROM 
+			#tmpTransfer
+		WHERE 
+			id > @id;
+	END

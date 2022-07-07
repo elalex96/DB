@@ -1,4 +1,11 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral]    Script Date: 06/07/2022 06:00:08 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Update date: 28-10-2019
 -- Description:	Se agrega personalizaci�n de d�as de cr�dito por partida
@@ -7,7 +14,7 @@
 -- Update date: 20/01/2021
 -- Description:	Se optimiza el script para el issue 920
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral] --420, 1343
+ALTER PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral] --420, 1343
 	-- Add the parameters for the stored procedure here
 	---execute  SP_TA_ConsultarEncabezadoPrePedidoGral 420, 1343
 	@IdProveedor int, 
@@ -18,6 +25,21 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
+
+	DECLARE @IdLineaPresupuesto int = (SELECT  
+										TOP 1
+										SPLP.IdLineaPresupuesto FROM 
+										dbo.MM_SolicitudPedido AS SPC
+											LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD 
+												ON SPC.IdSolicitudPedido = SPD.IdSolicitudPedido
+											LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPLP
+												ON SPD.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
+											LEFT JOIN MM_Pedido AS P ON SPC.IdSolicitudPedido = P.IdSolicitudPedido
+												WHERE P.IdPedido = @IdPedido
+										GROUP BY SPLP.IdLineaPresupuesto);
+
+	DECLARE @IdPresupuesto INT = (SELECT TOP 1 IdPresupuesto FROM Adinco.dbo.CO_LineaPresupuestoMes WHERE IdLineaPresupuestoMes = @IdLineaPresupuesto);
+
 	DECLARE @texto varchar(max) = '',
 						@ContTabla INT,
 						@Cont INT,
@@ -93,11 +115,9 @@ BEGIN
 	TP.IdTipoPedido,
 	CONCAT('Dias Credito: ',ISNULL (P.DiasCredito,0)) AS DiasCredito,	
 	ISNULL(p.Cerrado, 0),
-	CONCAT('Presupuesto: ', (SELECT  TOP 1(cop.Nombre) FROM adinco.dbo.CO_Presupuesto AS cop
-								LEFT JOIN dbo.MM_SolicitudPedido AS sp 
-								ON cop.IdPresupuesto = sp.IdPresupuesto
-								WHERE sp.IdSolicitudPedido = p.IdSolicitudPedido
-								) COLLATE Modern_Spanish_CI_AS,
+	CONCAT('Presupuesto: ', (SELECT  TOP 1(cop.Nombre) 
+								FROM adinco.dbo.CO_Presupuesto AS cop
+								WHERE cop.IdPresupuesto = @IdPresupuesto) COLLATE Modern_Spanish_CI_AS,
 			' - | Linea de Presuspuesto: ',@texto, 
 			'- | Objeto del pedido (Justificaci�n): ', sp.MotivoUrgencia) AS DetallePresupuesto,
 	CASE WHEN P.UnicaCondicionPago = 1 THEN 
