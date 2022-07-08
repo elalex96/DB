@@ -13305,6 +13305,7 @@
     <Build Include="dbo\Functions\fn_ent_RutaArchivo_CF.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_ActualizacionPerfil.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\Mobile_sp_AprobacionesPorUsuario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\CNH_ReporteSubactividad.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
