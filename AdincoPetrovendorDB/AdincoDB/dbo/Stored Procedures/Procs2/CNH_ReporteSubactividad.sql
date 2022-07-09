@@ -86,7 +86,7 @@ GROUP BY FI_PedimentoComprobante.IdPedimentoComprobante,		FI_PedimentoComprobant
 
 --OBTENER PAGOS POR COMPLEMENTOS CFDI
 INSERT INTO #TMPTransferenciasFactura_Pagos(IdFactura,ImporteTotal,FechaPago,EsComplemento,IdMoneda,ImporteOriginal)
-SELECT #TMP_Facturas.IdFactura, 
+ SELECT  #TMP_Facturas.IdFactura, 
 SUM(
 			CASE WHEN PV_TipoMoneda.TipoMonedaCorto = 'USD' THEN FI_ComplementoDePago.Monto * CO_TipoCambioDiario.TipoCambio ELSE FI_ComplementoDePago.Monto END				
 		)
@@ -94,15 +94,15 @@ SUM(
 MAX(FI_ComplementoDePago.FechaDePago),1,
 Max(#TMP_Facturas.IdMoneda),
 SUM(FI_ComplementoDePago.Monto)
-FROM [dbo].[FI_CFDIRelacionados]
-INNER JOIN FI_ComplementoDePago ON FI_ComplementoDePago.IdFactura = [FI_CFDIRelacionados].CFDIId
-INNER JOIN #TMP_Facturas ON #TMP_Facturas.UUID = [FI_CFDIRelacionados].UUID
-INNER JOIN FI_Factura ON FI_Factura.IdFactura = #TMP_Facturas.IdFactura
-INNER JOIN PV_TipoMoneda ON PV_TipoMoneda.IdMoneda = FI_Factura.IdMoneda
-LEFT JOIN CO_TipoCambioDiario ON CO_TipoCambioDiario.IdMoneda = 1 AND--MXN
+ FROM dbo.FI_CPDocRelacionado
+ INNER  JOIN dbo.FI_ComplementoDePago  ON FI_CPDocRelacionado.IdComplementoDePago = FI_ComplementoDePago.IdComplementoDePago
+ INNER JOIN  #TMP_Facturas  ON FI_CPDocRelacionado.IdDocumento = #TMP_Facturas.UUID
+ INNER JOIN PV_TipoMoneda ON PV_TipoMoneda.IdMoneda = #TMP_Facturas.IdMoneda
+ LEFT JOIN CO_TipoCambioDiario ON CO_TipoCambioDiario.IdMoneda = 1 AND--MXN
 								CO_TipoCambioDiario.Activo = 1 AND
-								CONVERT(VARCHAR,CO_TipoCambioDiario.Fecha,112) = CONVERT(VARCHAR,FI_Factura.Fecha,112)
+								CONVERT(VARCHAR,CO_TipoCambioDiario.Fecha,112) = CONVERT(VARCHAR,#TMP_Facturas.Fecha,112)
 GROUP BY #TMP_Facturas.IdFactura
+
 
 -- OBTENER PAGOS POR TRANSFERENCIAS PARA FACTURAS
 INSERT INTO #TMPTransferenciasFactura_Pagos(IdFactura,ImporteTotal,FechaPago,EsComplemento,IdMoneda,ImporteOriginal)
@@ -238,6 +238,7 @@ LEFT JOIN CO_TipoCambioDiario TCFactura ON TCFactura.IdMoneda = #TMP_Facturas.Id
 LEFT JOIN CO_TipoCambioDiario TCPedimiento ON TCPedimiento.IdMoneda = #TMPPedimentos.IdMoneda AND--MXN
 								TCPedimiento.Activo = 1 AND
 								CONVERT(VARCHAR,TCPedimiento.Fecha,112) = CONVERT(VARCHAR,#TMPPedimentos.Fecha,112)
+
 
 
 	
