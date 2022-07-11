@@ -34,7 +34,8 @@ SELECT
         WHEN R.CvTipoDocFacturacion IN(2, 3) THEN PC.FolioComprobante  
         ELSE ''
     END AS NumeroFactura,      
-    R.Comentarios,  
+    CASE WHEN R.MontoRegistro < 0 then 
+	R.Comentarios else NULL end as 'Comentarios',  
     CASE  
         WHEN R.CvTipoDocFacturacion = 1 THEN F.Fecha  
         WHEN R.CvTipoDocFacturacion IN(2, 3) THEN PC.FechaPago  
@@ -98,30 +99,30 @@ SELECT
 		WHEN FP.IdMoneda = 1 THEN Petrovendor.dbo.ObtieneValorUnitario(FP.IdFactura)  
         ELSE NULL
     END AS PUMXN,  
-    CONCAT('$',cast(cast(SUM(CASE  
+    convert(varchar(50), CAST(cast(cast(SUM(CASE  
             WHEN R.CvTipoDocFacturacion = 1 THEN F.SubTotal  
             ELSE PCD.PrecioUnitario  
-        END) as decimal(10, 2)) as varchar(255))) AS ImporteFA,     
-     CONCAT('$',cast(cast(ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto) + ISNULL(rm.MontoEquivalente,0),0) as decimal(10, 2)) as varchar(255))) AS ImporteFaCMarckup, 
+        END) as decimal(10, 2)) as varchar(255)) as money), -1) AS ImporteFA,     
+     convert(varchar(50), CAST(cast(cast(ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto) + ISNULL(rm.MontoEquivalente,0),0) as decimal(10, 2)) as varchar(255)) as money), -1) AS ImporteFaCMarckup, 
     CASE  
         WHEN F.IdMoneda = 1 THEN 'MXN'
         ELSE 'USD'
     END AS Moneda,  
-    CONCAT('$',cast(cast(SUM(CASE WHEN R.CvTipoDocFacturacion = 1 AND ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto), 0) <> 0 
+    convert(varchar(50), CAST(cast(cast(SUM(CASE WHEN R.CvTipoDocFacturacion = 1 AND ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto), 0) <> 0 
 				THEN ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, TCM.TipoCambio)
             WHEN R.CvTipoDocFacturacion IN(2, 3) AND ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto), 0) <> 0 
 				THEN ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto), 0) / ISNULL (RM.TipoCambio, TCMPC.TipoCambio)
             ELSE 0
         END  
-    ) as decimal(10, 2)) as varchar(255))) AS ImprteUSDMxnUsd,   
+    ) as decimal(10, 2)) as varchar(255)) as money), -1) AS ImprteUSDMxnUsd,   
     ISNULL(rm.MontoEquivalente, 0) AS MarkUp,  
-    concat('$',cast(cast(ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto) + ISNULL(rm.MontoEquivalente,0), 0) / (  
+    convert(varchar(50), CAST(cast(cast(ISNULL(ISNULL(R.MontoRegistro,RM.MontoGasto) + ISNULL(rm.MontoEquivalente,0), 0) / (  
         CASE  
             WHEN R.CvTipoDocFacturacion = 1 THEN TCM.TipoCambio  
             WHEN R.CvTipoDocFacturacion IN(2, 3) THEN TCMPC.TipoCambio  
             ELSE 0
         END  
-    ) as decimal(10, 2)) as varchar(255))) AS ImporteEstimadoUSD,        
+    ) as decimal(10, 2)) as varchar(255)) as money), -1) AS ImporteEstimadoUSD,        
     R.MesCertificadoCIEP,  
     Rub.NombreRubro AS SubActividad,  
     '' AS AplicacionEspecifica,  
