@@ -859,9 +859,8 @@ BEGIN
 						ON  AF.IdFactura = F.IdFactura
 					LEFT JOIN dbo.S_Usuario AS US
 						ON F.CreadoPor = US.IdUsuario 
-					WHERE AF.IdAceptacionPedido = @IdAceptacionPedido
-					AND AF.IdEstatusXML <> 1
-					AND AF.IdEstatusEliminado IS NULL;
+					WHERE AF.IdAceptacionPedido = @IdAceptacionPedido				
+					
 
 					INSERT INTO @HISTORIALSEC
 				(
@@ -1123,7 +1122,7 @@ BEGIN
 		@AprobacionCNActual = IdDocumento
 		FROM @HISTORIAL
 		WHERE Etapa IN	('CN','CN-EXTRANJERO')
-	
+			
 		IF @EstadoEtapa = 'SIN_INICIAR'
 		BEGIN 
 					  INSERT INTO @HISTORIALSEC
@@ -1162,7 +1161,7 @@ BEGIN
 
 		END 
 
-		IF @EstadoEtapa = 'EN_PROCESO'
+		IF @EstadoEtapa = 'EN_PROCESO' AND @EstatusValidar ='Sin iniciar aprobación' 
 		BEGIN 
 					  INSERT INTO @HISTORIALSEC
 						(
@@ -1199,8 +1198,8 @@ BEGIN
 						'SIN_INICIAR'				
 
 		END 
-
-		IF @EstadoEtapa <> 'SIN_INICIAR'
+				
+		IF @EstadoEtapa <> 'SIN_INICIAR' AND @EstatusValidar <>'Sin iniciar aprobación' 
 		BEGIN
 			--> LOG DE REGISTROS DE CN
 			INSERT INTO @HISTORIALSEC
@@ -1242,9 +1241,9 @@ BEGIN
 			SELECT
 				ACN.IdAceptacionCartaPCN,
 				CASE
-					WHEN ACN.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó la Carta de Contenido Nacional' 
-					WHEN ACN.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazó la Carta de Contenido Nacional' 
-					WHEN ACN.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' aprueba la Carta de Contenido Nacional'
+					WHEN ACN.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó la CN' 
+					WHEN ACN.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazó la CN' 
+					WHEN ACN.IdEstatus = 1 THEN ISNULL(US.Nombre,'') + ' tiene en aprobación la CN'
 				END,
 				FORMAT(ACN.FechaEvaluacion,'dd/MM/yy HH:mm'),
 				@Etapa,
@@ -1261,6 +1260,25 @@ BEGIN
 				AND ACN.IdEstatus <> 1
 				AND ACN.IdEstatusEliminado IS NULL;
 		END
+		
+		IF @EstadoEtapa = 'EN_PROCESO' AND @EstatusValidar ='En Aprobación' 
+		begin 
+
+						INSERT INTO @HISTORIALSEC
+						(
+							IdDocumento,
+							Descripcion,
+							Fecha,
+							Etapa,
+							EstadoHistorial
+						)
+						SELECT
+						0,
+						'El usuario OBS aprueba la CN',
+						null,
+						@Etapa,
+						'EN_PROCESO'	
+		end 
 
 
 		IF @EstadoEtapa = 'DETENIDA'
@@ -1412,7 +1430,7 @@ BEGIN
 						)
 						SELECT
 						P.IdPedido,
-						CONCAT('El usuario ',ISNULL(USAP.Nombre,'-'),' del proveedor ',ISNULL(PR.RazonSocial,'') , ' registró SAS'),
+						CONCAT('El usuario ',ISNULL(USAP.Nombre,'-'),' del proveedor ',ISNULL(PR.RazonSocial,'') , ' registró la SAS'),
 						null,
 						@Etapa,
 						'FINALIZADA'
