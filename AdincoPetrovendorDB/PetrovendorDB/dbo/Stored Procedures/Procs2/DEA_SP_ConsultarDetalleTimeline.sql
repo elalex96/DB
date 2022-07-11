@@ -570,19 +570,20 @@ BEGIN
 					Etapa		=	'FACTURA',
 					tieneHistorial	=	1,
 					IsEncriptado	=	0,
-					Estado	=	E.Nombre
+					Estado	=	ISNULL(E.Nombre,'Sin iniciar aprobación')
         FROM MM_AceptacionPedido AS AP  (NOLOCK)               
             LEFT JOIN dbo.MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
                    AND (APC.IdAceptacionCartaPCN IS NOT NULL) --SI NO SE SOLICITA UNA CN, SE MUESTRA UNA ACEPTACION DE SERVICIO     
                    AND ISNULL(APC.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTEN ELIMINADAS  
             LEFT JOIN dbo.MM_AceptacionFactura AS AF  (NOLOCK)
-                ON AF.IdAceptacionPedido = AP.IdAceptacionPedido  
+                ON AP.IdAceptacionPedido   = AF.IdAceptacionPedido 
                    AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTEN ELIMINADAS     
             LEFT JOIN dbo.TA_Operacion AS O  (NOLOCK)
                 ON O.IdDocumento = AF.IdAceptacionFactura 
+				AND O.IdTipoOperacion = 10  --> CTE FACTURA - APROBACIÓN
             LEFT JOIN dbo.TA_Estatus AS E  (NOLOCK)
-                ON E.IdEstatus = O.IdEstatusOperacion  
+                ON E.IdEstatus = O.IdEstatusOperacion
             LEFT JOIN dbo.FI_Factura F  (NOLOCK)
                 ON F.IdFactura = AF.IdFactura  
             LEFT JOIN dbo.RelacionCartaCNPedido rel  (NOLOCK)
@@ -593,12 +594,7 @@ BEGIN
               (  
                   APC.IdEstatus = 2  
                   OR rel.PedirCarta = 0  
-              )  
-              AND  
-              (  
-                  O.IdOperacion IS NULL  
-                  OR O.IdTipoOperacion = 10  
-              )  
+              )               
               AND  
               (  
                   APC.FechaEvaluacion IS NOT NULL  
@@ -611,7 +607,8 @@ BEGIN
                  E.IdEstatus,  
 				 AF.IdAceptacionFactura,
 				 O.FechaRegistro,
-				 F.UUID
+				 F.UUID			             
+     
 		END 
 		
 		SELECT @HayProceso= COUNT(1) 
@@ -744,47 +741,53 @@ BEGIN
 		FROM @HISTORIAL
 		WHERE Etapa IN	('COMPROBANTE_EXTRANJERO','FACTURA')
 	
+	 --  SELECT  @EstadoEtapa,	
+		--@EstatusValidar ,
+		--@Etapa
+
 		IF @Etapa ='FACTURA'
 		BEGIN 
-			IF(@EstadoEtapa='SIN_INICIAR' OR @EstatusValidar = 'Sin iniciar aprobación')
-				BEGIN 
-			
-				--> OBTENER EL FLUJO DE APROBACIÓN DE LA FACTURA SI NO HA INICIADO EL FLUJO DE APROBACIÓN
-				IF EXISTS (SELECT 1 FROM DEA_Proveedor WHERE IdProveedor = @ID_OPERADORA)
-				BEGIN -- CONSULTAMOS EL FLUJO DE APROBACION DE FATURA RELACIONADO CON EL CENTRO DE COSTO DE LA REQUISICION
+		    
+			--> OBTENER EL FLUJO DE APROBACIÓN DE LA FACTURA SI NO HA INICIADO EL FLUJO DE APROBACIÓN
+			IF EXISTS (SELECT 1 FROM DEA_Proveedor WHERE IdProveedor = @ID_OPERADORA)
+			BEGIN -- CONSULTAMOS EL FLUJO DE APROBACION DE FATURA RELACIONADO CON EL CENTRO DE COSTO DE LA REQUISICION
 				
-				SET @ID_FLUJO_APROBACION = (SELECT TOP 1 
-												RCFA.IdFlujoFactura 
-											FROM MM_SolicitudPedido SP
-											LEFT JOIN MM_Pedido P 
-												ON SP.IdSolicitudPedido	 = P.IdSolicitudPedido 								
-											LEFT JOIN MM_SolicitudPedidoDetalle SPD
-												ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido 
-											LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL
-												ON SPD.IdSolicitudPedidoDetalle = SPDL.IdSolicitudPedidoDetalle  
-											LEFT JOIN dbo.RelacionCentroCostoFlujoAprob RCFA 
-												ON SPDL.IdCentroCosto = RCFA.IdCentroCosto
-											WHERE P.IdPedido = @IdPedido 
-												AND RCFA.IdFlujoFactura IS NOT NULL
-												AND RCFA.Activo = 1
-											GROUP BY RCFA.IdFlujoFactura,RCFA.IdCentroCosto);
+			SET @ID_FLUJO_APROBACION = (SELECT TOP 1 
+											RCFA.IdFlujoFactura 
+										FROM MM_SolicitudPedido SP
+										LEFT JOIN MM_Pedido P 
+											ON SP.IdSolicitudPedido	 = P.IdSolicitudPedido 								
+										LEFT JOIN MM_SolicitudPedidoDetalle SPD
+											ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido 
+										LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL
+											ON SPD.IdSolicitudPedidoDetalle = SPDL.IdSolicitudPedidoDetalle  
+										LEFT JOIN dbo.RelacionCentroCostoFlujoAprob RCFA 
+											ON SPDL.IdCentroCosto = RCFA.IdCentroCosto
+										WHERE P.IdPedido = @IdPedido 
+											AND RCFA.IdFlujoFactura IS NOT NULL
+											AND RCFA.Activo = 1
+										GROUP BY RCFA.IdFlujoFactura,RCFA.IdCentroCosto);
 		   
-				END
-				ELSE
-				BEGIN
-						--CONSULTAMOS EL FLUJO DE APROBACION DE FACTURA PRETERMINADO DE LA OPERADORA
-	    				SET @ID_FLUJO_APROBACION = (SELECT TOP 1 
-														FT.IdFlujoTarea
-														FROM MM_Pedido   AS P 
-														JOIN S_Proveedor AS PR 
-														ON  P.IdProveedorCompras = PR.IdProveedor
-														JOIN TA_FlujoTarea AS FT 
-														ON P.IdProveedorCompras = FT.IdProveedor 
-														WHERE P.IdPedido = @IdPedido 
-															AND FT.IdTipoOperacion = 10 --> APROBACIÓN DE FACTURA
-															AND FT.Activo=1 
-															AND FT.Predeterminado=1);
-				END;
+			END
+			ELSE
+			BEGIN
+					--CONSULTAMOS EL FLUJO DE APROBACION DE FACTURA PRETERMINADO DE LA OPERADORA
+	    			SET @ID_FLUJO_APROBACION = (SELECT TOP 1 
+													FT.IdFlujoTarea
+													FROM MM_Pedido   AS P 
+													JOIN S_Proveedor AS PR 
+													ON  P.IdProveedorCompras = PR.IdProveedor
+													JOIN TA_FlujoTarea AS FT 
+													ON P.IdProveedorCompras = FT.IdProveedor 
+													WHERE P.IdPedido = @IdPedido 
+														AND FT.IdTipoOperacion = 10 --> APROBACIÓN DE FACTURA
+														AND FT.Activo=1 
+														AND FT.Predeterminado=1);
+			END;
+
+			IF @EstadoEtapa='SIN_INICIAR' 
+			BEGIN 		
+				
 
 				INSERT INTO @HISTORIALSEC
 				(
@@ -828,6 +831,50 @@ BEGIN
 
 		END 
 		
+			IF(@EstadoEtapa='EN_PROCESO' AND @EstatusValidar = 'Sin iniciar aprobación')
+			BEGIN 
+
+				INSERT INTO @HISTORIALSEC
+				(
+					IdDocumento,
+					Descripcion,
+					Fecha,
+					Etapa,
+					EstadoHistorial
+				)
+				SELECT 
+				IdDocumento = 0,
+				Descripcion= 'El proveedor registra la Factura',
+				Fecha= NULL,
+				Etapa=@Etapa,
+				EstadoHistorial='EN_PROCESO'
+
+				INSERT INTO @HISTORIALSEC
+				(
+					IdDocumento,
+					Descripcion,
+					Fecha,
+					Etapa,
+					EstadoHistorial
+				)
+				SELECT
+					US.IdUsuario,			
+					CONCAT('El usuario ',ISNULL(US.Nombre,'-'),' realiza aprobación de factura'),
+					NULL,
+					@Etapa,
+					'SIN_INICIAR'
+				FROM TA_Aprobador AS APR
+					JOIN dbo.S_Usuario AS US 
+						ON US.IdUsuario = APR.IdUsuario
+						AND US.Activo = 1
+				WHERE APR.IdFlujoTarea = @ID_FLUJO_APROBACION
+				GROUP BY US.IdUsuario,
+						 APR.NoSecuencia,
+						 US.Nombre,
+						 US.Correo
+				ORDER BY APR.NoSecuencia ASC;	
+			END 
+					   
 			IF(@EstadoEtapa<>'SIN_INICIAR' AND @EstatusValidar <> 'Sin iniciar aprobación')
 				BEGIN 		
 			
@@ -841,7 +888,7 @@ BEGIN
 					)
 					SELECT
 					AF.IdAceptacionFactura,
-					CONCAT(ISNULL(US.Nombre + ' de ','') , ISNULL(PR.RazonSocial,''), ' registro factura'),
+					CONCAT(ISNULL(US.Nombre + ' de ','') , ISNULL(PR.RazonSocial,''), ' registró la factura'),
 					FORMAT(OP.FechaRegistro,'dd/MM/yyyy HH:mm'),
 					'FACTURA',
 					'FINALIZADA'
@@ -1029,7 +1076,7 @@ BEGIN
 				)
 				SELECT 
 				IdDocumento = PC.IdPedimentoComprobante,
-				Descripcion= CONCAT(ISNULL(UC.Nombre,'-'),' de ',ISNULL(PR.RazonSocial,''),' registra el Comprobante Extranjero'),
+				Descripcion= CONCAT(ISNULL(UC.Nombre,'-'),' de ',ISNULL(PR.RazonSocial,''),' registró el Comprobante Extranjero'),
 				Fecha=  FORMAT(O.FechaRegistro,'dd/MM/yyyy HH:mm'),
 				Etapa=@Etapa,
 				EstadoHistorial='FINALIZADA'
@@ -1070,7 +1117,14 @@ BEGIN
 				END,
 				Fecha=  FORMAT(O.FechaRegistro,'dd/MM/yyyy HH:mm'),
 				Etapa=@Etapa,
-				EstadoHistorial='FINALIZADA'
+				EstadoHistorial=CASE 
+									WHEN T.IdEstatus = 1 THEN 'EN_PROCESO' 
+									WHEN T.IdEstatus = 2 THEN 'FINALIZADA' 
+									WHEN T.IdEstatus = 3 THEN 'DETENIDA' 
+									WHEN T.IdEstatus = 4 THEN 'DETENIDA' 
+									WHEN T.IdEstatus = 6 THEN 'DETENIDA' 
+									WHEN T.IdEstatus = 7 THEN 'DETENIDA'
+								END
 			  FROM FI_AceptacionPedido_PedimentoComprobante AS AP_PC 		
 			  JOIN FI_PedimentoComprobante PC 
 				ON AP_PC.IdPedimentoComprobante = PC.IdPedimentoComprobante
@@ -1135,7 +1189,7 @@ BEGIN
 						)
 						SELECT
 						P.IdPedido,
-						'El proveedor ' + ISNULL(PR.RazonSocial,'') + ' registra carga de CN',
+						'El proveedor ' + ISNULL(PR.RazonSocial,'') + ' registra carga de carta de CN',
 						null,
 						@Etapa,
 						'SIN_INICIAR'
@@ -1173,7 +1227,7 @@ BEGIN
 						)
 						SELECT
 						P.IdPedido,
-						'El proveedor ' + ISNULL(PR.RazonSocial,'') + ' registra carga de CN',
+						'El proveedor ' + ISNULL(PR.RazonSocial,'') + ' registra carga de carta de CN',
 						null,
 						@Etapa,
 						'EN_PROCESO'
@@ -1192,7 +1246,7 @@ BEGIN
 						)
 						SELECT
 						0,
-						'El usuario OBS aprueba la CN',
+						'El usuario OBS aprueba la carta de CN',
 						null,
 						@Etapa,
 						'SIN_INICIAR'				
@@ -1212,7 +1266,7 @@ BEGIN
 						)
 			SELECT
 				ACN.IdAceptacionCartaPCN,
-				ISNULL(US.Nombre + ' de ','') + ISNULL(PR.RazonSocial,'') + ' registra la CN',
+				ISNULL(US.Nombre + ' de ','') + ISNULL(PR.RazonSocial,'') + ' registró la carta de CN',
 				FORMAT(ACN.CreadoEl,'dd/MM/yy HH:mm'),
 				@Etapa,
 				'FINALIZADA'			
@@ -1241,9 +1295,9 @@ BEGIN
 			SELECT
 				ACN.IdAceptacionCartaPCN,
 				CASE
-					WHEN ACN.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó la CN' 
-					WHEN ACN.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazó la CN' 
-					WHEN ACN.IdEstatus = 1 THEN ISNULL(US.Nombre,'') + ' tiene en aprobación la CN'
+					WHEN ACN.IdEstatus = 2 THEN ISNULL(US.Nombre,'') + ' aprobó la carta de CN' 
+					WHEN ACN.IdEstatus = 3 THEN ISNULL(US.Nombre,'') + ' rechazó la carta de CN' 
+					WHEN ACN.IdEstatus = 1 THEN ISNULL(US.Nombre,'') + ' tiene en aprobación la carta de CN'
 				END,
 				FORMAT(ACN.FechaEvaluacion,'dd/MM/yy HH:mm'),
 				@Etapa,
@@ -1274,7 +1328,7 @@ BEGIN
 						)
 						SELECT
 						0,
-						'El usuario OBS aprueba la CN',
+						'El usuario OBS aprueba la carta de CN',
 						null,
 						@Etapa,
 						'EN_PROCESO'	
@@ -1293,7 +1347,7 @@ BEGIN
 						)
 						SELECT
 						P.IdPedido,
-						'El proveedor ' + ISNULL(PR.RazonSocial,'') + ' debe cargar Carta CN Petrovendor',
+						'El proveedor ' + ISNULL(PR.RazonSocial,'') + ' debe cargar Carta de CN Petrovendor',
 						null,
 						@Etapa,
 						'EN_PROCESO'
@@ -1318,7 +1372,7 @@ BEGIN
 
 			SELECT
 				SECN.IdAprobacionExclucionCN,
-				ISNULL(US.Nombre,'-') + ' solicitó excluir la Carta de Contenido Nacional',
+				ISNULL(US.Nombre,'-') + ' solicitó excluir la Carta de CN',
 				FORMAT(SECN.FechaSolicitud,'dd/MM/yy HH:mm'),
 				@Etapa,
 				'FINALIZADA'
@@ -1339,7 +1393,7 @@ BEGIN
 
 			SELECT
 				SECN.IdAprobacionExclucionCN,
-				ISNULL(US.Nombre,'-') +' '+E.Nombre +' la exclusión de la Carta de Contenido Nacional',
+				ISNULL(US.Nombre,'-') +' '+E.Nombre +' la exclusión de la Carta de CN',
 				FORMAT(SECN.FechaSolicitud,'dd/MM/yy HH:mm'),
 				@Etapa,
 				'FINALIZADA'
@@ -1653,7 +1707,7 @@ BEGIN
 		
 			SELECT 
 				IdDocumento=OP.IdOperacion,
-							Descripcion=CONCAT(US.Nombre,' registro el pedido para que sea evaluada'),
+							Descripcion=CONCAT(US.Nombre,' registró el pedido para que sea evaluado'),
 							Fecha=FORMAT(OP.FechaRegistro,'dd/MM/yy HH:mm'),
 							Etapa=@Etapa,
 							EstadoHistorial='FINALIZADA'
@@ -1719,8 +1773,8 @@ BEGIN
 			IdDocumento = P.IdPedido,
 			Descripcion= CONCAT('El proveedor ',ISNULL(PR.RazonSocial,''),CASE
 														   WHEN TOA.IdEstatusOperacion NOT IN (2) THEN ' ha confirmado el pedido'
-														   WHEN TOA.IdEstatusOperacion = 2 AND P.RecepcionServicio = 1 THEN ' ha confirmado el pedido'
-														   WHEN TOA.IdEstatusOperacion = 2 AND P.RecepcionServicio = 0 THEN ' ha rechazado el pedido'
+														   WHEN TOA.IdEstatusOperacion = 2 AND P.RecepcionServicio = 1 THEN ' confirmó el pedido'
+														   WHEN TOA.IdEstatusOperacion = 2 AND P.RecepcionServicio = 0 THEN ' rechazó el pedido'
 														   WHEN TOA.IdEstatusOperacion = 2 AND P.RecepcionServicio IS NULL AND (DATEDIFF(MINUTE, HV.FechaVigencia, GETDATE())) >= 0 THEN  ' tiene la confirmación vencida del pedido'
 														   WHEN TOA.IdEstatusOperacion = 2 AND P.RecepcionServicio IS NULL AND (DATEDIFF(MINUTE, HV.FechaVigencia, GETDATE())) <= 0 THEN   ' tiene pendiente la confirmación del pedido'
 														   ELSE ' ha confirmado el pedido'												
