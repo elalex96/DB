@@ -1,13 +1,6 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Mobile_sp_AprobacionesPorUsuario'
-)
-    DROP PROCEDURE Mobile_sp_AprobacionesPorUsuario;
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 30/06/2022 12:44:41 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 12/07/2022 10:14:31 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -30,7 +23,11 @@ GO
 -- Create date: 30-06-2022
 -- Description:	Se agrega el filtro de tipo de pedidos 2,4,6 
 -- =============================================
-CREATE  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10109,9,-1,-1,-1
+-- Author:		Alexander Gomez
+-- Create date: 12-07-2022
+-- Description:	se agrega la justificacion correcta en los pedidos
+-- =============================================
+ALTER  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10109,9,-1,-1,-1
 	@IdUsuario		INT,
 	@IdTipo			INT,
 	@IdOperacion	int		=	-1,
@@ -236,7 +233,11 @@ BEGIN
 			p.IdContrato,
 			O.FechaRegistro AS [FechaCreacion],
 			O.IdDocumento,
-			P.Comentarios AS ComentarioDocumento, 
+			CASE 
+				WHEN sp.IdTipoProceso = 2 THEN ISNULL(SP.JustificacionSolOferta,'')
+				WHEN sp.IdTipoProceso = 4 THEN ISNULL(PO.JustificacionAdjDirecta,'')
+				ELSE ''
+		    END AS ComentarioDocumento, 
 			o.Descripcion AS ComentarioAprobacion,
 			P.Version AS 'NoVersion',
 			P2.IdPedido,
@@ -251,7 +252,10 @@ BEGIN
 			JOIN Petrovendor.dbo.TA_Tarea AS T 
 				ON O.IdOperacion = T.IdOperacion
 			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP 
-				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 			 
+				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
+			LEFT JOIN Petrovendor.dbo.MM_PeticionOferta AS PO
+				ON SP.IdSolicitudPedido = PO.IdSolicitudPedido 
+			AND PO.JustificacionAdjDirecta IS NOT NULL
 		WHERE T.IdAprobador = @IdUsuarioP
 			  AND O.IdProveedor = @IdProveedorCursorPedido
 			  AND O.IdTipoOperacion = @IdTipo
@@ -534,7 +538,6 @@ SELECT 	IdOperacion,
 		t.ComentarioDocumento AS 'ComentarioDoc',
 		t.ComentarioAprobacion AS 'ComentarioApr',
 		e.Status AS 'Estatus',
-		
 		t.IdStatusAprobacionM AS 'IdStatusAprobacionM',
 		t.IdTareaOrigen AS 'IdTareaOrigen',
 		t.NoVersion AS 'NoVersion',
