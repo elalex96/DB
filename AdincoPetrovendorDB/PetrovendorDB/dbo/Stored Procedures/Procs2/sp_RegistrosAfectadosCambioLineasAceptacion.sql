@@ -1,10 +1,17 @@
-﻿-- =============================================
--- Author:		Pedro Acu�a
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_RegistrosAfectadosCambioLineasAceptacion]    Script Date: 12/07/2022 12:28:23 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Pedro Acuña
 -- Create date: 18-Feb-2020
 -- Description:	Carga los registros que van a ser afectados
 -- =============================================
 
-CREATE PROCEDURE sp_RegistrosAfectadosCambioLineasAceptacion @IdSolicitudPedido INT
+ALTER PROCEDURE [dbo].[sp_RegistrosAfectadosCambioLineasAceptacion] @IdSolicitudPedido INT
 AS
 BEGIN
     SELECT apdi.IdAceptacionPedido,
@@ -29,6 +36,6 @@ BEGIN
             ON rel.IdRegistroAdinco = ar.IdRegistro
     WHERE p.IdSolicitudPedido = @IdSolicitudPedido
           AND ISNULL(p.IdEstatusEliminado, 0) = 0
-
+		  ----EDITANDO
 END
 
