@@ -46,7 +46,7 @@ AS
               JOIN CO_PeriodoContrato 
 				ON CO_ProgramaActividad.IdPeriodoContrato  = CO_PeriodoContrato.IdPeriodo 
               JOIN CO_Presupuesto 
-				ON CO_ProgramaActividad.IdPeriodoContrato  = CO_Presupuesto.IdProgramaActividad 
+				ON CO_ProgramaActividad.IdProgramaActividad  = CO_Presupuesto.IdProgramaActividad 
          WHERE(CO_PeriodoContrato.IdPeriodo = @IdPeriodo)
               AND (CO_Presupuesto.Actual = 1);
      END;
