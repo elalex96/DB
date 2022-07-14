@@ -1,7 +1,15 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_MM_InsertarMaterialImportado
+GO
+-- =============================================
 -- Author:		<Author,,Name>
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <12/07/2022>
+-- Description:	<Se eliminan los espacios en blanco>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_InsertarMaterialImportado] 
 	-- Add the parameters for the stored procedure here
@@ -82,15 +90,15 @@ BEGIN
 	(   
 	    @IdProveedor,               -- IdProveedor - int
 	    @IdUnidadPredeterminada,    -- IdUnidad - int
-	    @DescripcionCorta,          -- DescripcionCorta - nvarchar(max)
-	    @DescripcionLarga,          -- DescripcionLarga - nvarchar(max)
-	    @Modelo,                    -- Modelo - nvarchar(max)
-	    @NumeroParte,               -- NumeroParte - nvarchar(max)
-	    @Presentacion,              -- Presentacion - nvarchar(max)
+	    LTRIM(RTRIM(@DescripcionCorta)),          -- DescripcionCorta - nvarchar(max)
+	    LTRIM(RTRIM(@DescripcionLarga)),          -- DescripcionLarga - nvarchar(max)
+	    LTRIM(RTRIM(@Modelo)),                    -- Modelo - nvarchar(max)
+	    LTRIM(RTRIM(@NumeroParte)),               -- NumeroParte - nvarchar(max)
+	    LTRIM(RTRIM(@Presentacion)),              -- Presentacion - nvarchar(max)
 	    @Consumible,                -- Consumible - bit
 	    @Inventariable,             -- Inventariable - bit
 	    @TiempoEntregaEstimado,     -- TiempoEntregaEstimadoDias - int
-	    @Marca,                     -- Marca - nvarchar(200)
+	    LTRIM(RTRIM(@Marca)),                     -- Marca - nvarchar(200)
 	    0,                          -- IsPublico - bit
 	    GETDATE(),                  -- FechaAlta - datetime
 	    1,                          -- Activo - bit
