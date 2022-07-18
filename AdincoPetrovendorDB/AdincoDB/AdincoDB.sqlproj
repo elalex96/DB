@@ -13306,6 +13306,11 @@
     <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_ActualizacionPerfil.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\Mobile_sp_AprobacionesPorUsuario.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\CNH_ReporteSubactividad.sql" />
+    <Build Include="dbo\Tables\Tables2\EPT_ImportacionLayoutDetallePresupuestos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_Registro_EPT_ImportacionLayoutDetallePresupuestos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_PresupuestosRelacionadosEPTDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_ActivarPresupuestoRelacionadoEPTDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_DesActivarPresupuestoRelacionadoEPTDetalle.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
