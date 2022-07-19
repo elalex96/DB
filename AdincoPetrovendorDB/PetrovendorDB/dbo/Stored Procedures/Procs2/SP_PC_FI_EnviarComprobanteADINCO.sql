@@ -1,14 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PC_FI_EnviarComprobanteADINCO'
-)
-    DROP PROCEDURE SP_PC_FI_EnviarComprobanteADINCO;
-	GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_FI_EnviarComprobanteADINCO]    Script Date: 19/06/2022 11:41:01 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_PC_FI_EnviarComprobanteADINCO]    Script Date: 19/07/2022 03:17:12 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -28,7 +20,7 @@ GO
 -- Create date: 20-06-2021
 -- Description:	Se agrega validacion para ver si se envia o no el PCN 
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PC_FI_EnviarComprobanteADINCO]
+ALTER PROCEDURE [dbo].[SP_PC_FI_EnviarComprobanteADINCO]
     -- Add the parameters for the stored procedure here
 
     @IdPedimentoComprobante INT,   
@@ -279,17 +271,18 @@ BEGIN
         )
         SELECT @ID_PEDIMENTOCOMPROBANTE_ADINCO,
                @NID_UNIDADADINCO,
-               PCD.NumeroSerieMercancia,
-               PCD.DescripcionMercancia,
-               PCD.ClaseBienServicio,
-               PCD.PrecioUnitario,
-               PCD.Cantidad,
-               PCD.ImporteTotal,
+               '-',
+               '-',
+               '-',
+               SUM(PCD.PrecioUnitario),
+               SUM(PCD.Cantidad),
+               SUM(PCD.ImporteTotal),
                @IdUsuarioAdinco,
                GETDATE()
         FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
         WHERE IdPedimentoComprobante = @IdPedimentoComprobante
-              AND IsActivo = 1;
+              AND IsActivo = 1
+		GROUP BY IdPedimentoComprobante;
 
 
 	    /*AGREGAR DOCUMENTO PEDIMENTO*/

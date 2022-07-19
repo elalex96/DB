@@ -1,4 +1,11 @@
-﻿
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PC_FI_EnviarPedimentoADINCO]    Script Date: 19/07/2022 01:41:14 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		DANIEL AC
 -- Create date: 28-03-18
@@ -15,7 +22,7 @@
 -- Description:	<se agrego la bitacora de envio adinco>
 -- =============================================
 
-CREATE  PROCEDURE [dbo].[SP_PC_FI_EnviarPedimentoADINCO]
+ALTER  PROCEDURE [dbo].[SP_PC_FI_EnviarPedimentoADINCO]
     -- Add the parameters for the stored procedure here
     @IdPedimentoComprobante INT,   
     @IdProveedor INT,
@@ -210,18 +217,19 @@ BEGIN
             CreadoEn
         )
         SELECT @ID_PEDIMENTOCOMPROBANTE_ADINCO,
-               PCD.IdUnidadMedida,
-               PCD.NumeroSerieMercancia,
-               PCD.DescripcionMercancia,
-               PCD.ClaseBienServicio,
-               PCD.PrecioUnitario,
-               PCD.Cantidad,
-               PCD.ImporteTotal,
+               (SELECT TOP 1 IdUnidadMedida FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle WHERE IdPedimentoComprobante = @IdPedimentoComprobante),
+               '-',
+               '-',
+               '-',
+               SUM(PCD.PrecioUnitario),
+               SUM(PCD.Cantidad),
+               SUM(PCD.ImporteTotal),
                @IdUsuarioAdinco,
                GETDATE()
         FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
         WHERE IdPedimentoComprobante = @IdPedimentoComprobante
-              AND IsActivo = 1;
+              AND IsActivo = 1
+		GROUP BY IdPedimentoComprobante;
 
 	    /*AGREGAR DOCUMENTO PEDIMENTO*/
         INSERT INTO Adinco.dbo.FI_Documento

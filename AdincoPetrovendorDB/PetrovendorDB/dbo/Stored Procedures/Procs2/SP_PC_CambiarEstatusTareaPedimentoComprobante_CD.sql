@@ -1,14 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PC_CambiarEstatusTareaPedimentoComprobante_CD'
-)
-    DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]    Script Date: 03/06/2022 10:15:22 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]    Script Date: 19/07/2022 01:37:28 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,12 +10,7 @@ GO
 -- Create date: <01/09/2020>
 -- Description:	<Cambio de estatus de de la tarea de la aprobacion de comprobante extranjero>
 -- =============================================
--- =============================================
--- Author:		DANIEL AC
--- Create date: 03/06/2022
--- Description:	Se obtiene correo de notificaciones directamente desde la tabla 
--- =============================================
-CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
+ALTER PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
 	@IdOperacion INT,
@@ -40,7 +27,6 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @ID_DOCUMENTO_FI INT;
 	DECLARE @TOTAL_APROBADORES INT;
 	DECLARE @TOTAL_APROBADOS INT;
@@ -58,15 +44,15 @@ BEGIN
 														PVS.RazonSocial
 													FROM dbo.FI_PedimentoComprobante AS PC
 														JOIN Adinco.dbo.PV_Subcontratista AS PVS
-															ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista 
+															ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
 													WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante);
 	SET @TIPOFLUJO = (SELECT TOP 1
 									TFT.IdTipoFlujoTarea
 								FROM dbo.TA_Operacion AS OP
 									JOIN dbo.TA_FlujoTarea AS FT
-										ON OP.IdFlujoTarea = FT.IdFlujoTarea 
+										ON FT.IdFlujoTarea = OP.IdFlujoTarea
 									JOIN dbo.TA_TipoFlujoTarea AS TFT
-										ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
+										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
 								WHERE OP.IdOperacion = @IdOperacion);
 	SET @IDSIGAPROBADOR = (SELECT TOP 1
 										IdAprobador
@@ -165,12 +151,6 @@ BEGIN
 
 				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
-				SET @CorreoNotificaciones = (SELECT TOP 1 CuentaRegistro
-											FROM TA_Correo AS C
-												INNER JOIN TA_CorreoServidor AS S
-													ON C.IdServidor = S.IdServidor
-											WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo) -- CORREO DE PETICION OFERTA
-
 				INSERT INTO Adinco.dbo.S_Notificacion
 				(
 				    IdNotificacion,
@@ -199,7 +179,7 @@ BEGIN
 				    GETDATE(), -- CreadoEl - datetime
 				    NULL,         -- ModificadoPor - int
 				    NULL, -- ModificadoEl - datetime
-				    @CorreoNotificaciones,        -- De - varchar(100)
+				    'procura@adinco.mx',        -- De - varchar(100)
 				    NULL       -- EN_MsjEnviado - bit
 				    );
 
@@ -311,7 +291,7 @@ BEGIN
 					PC.RazonSocialP,
 					PC.CuentaBancaria
 				FROM Petrovendor.dbo.FI_PedimentoComprobante AS PC
-				LEFT JOIN dbo.S_Usuario AS US ON PC.CreadoPor = US.IdUsuario 
+				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PC.CreadoPor
 				WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				SET @IdPedimentoComprobante_ADINCO = SCOPE_IDENTITY();
@@ -328,15 +308,17 @@ BEGIN
 				)
 				SELECT
 					@IdPedimentoComprobante_ADINCO,
-					PCD.DescripcionMercancia,
-					PCD.ClaseBienServicio,
-					PCD.PrecioUnitario,
+					'-',
+					'-',
+					SUM(PCD.PrecioUnitario),
 					US.IdUsuarioADINCO,
-					PCD.CreadoEn,
-					PCD.ImporteTotal
+					GETDATE(),
+					SUM(PCD.ImporteTotal)
 				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
-				LEFT JOIN dbo.S_Usuario AS US ON PCD.CreadoPor = US.IdUsuario 
-				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante;
+				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor
+				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante
+				GROUP BY IdPedimentoComprobante,
+						US.IdUsuarioADINCO;
 
 				INSERT INTO Adinco.dbo.FI_Documento
 				(
@@ -357,7 +339,7 @@ BEGIN
 					FID.IsEliminado,
 					FID.DocumentoByte
 				FROM Petrovendor.dbo.FI_Documento AS FID
-				LEFT JOIN dbo.S_Usuario AS US ON FID.IdUsuario = US.IdUsuario
+				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = FID.IdUsuario
 				WHERE FID.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				INSERT INTO dbo.FI_RelacionAdincoPedimentoComprobante
