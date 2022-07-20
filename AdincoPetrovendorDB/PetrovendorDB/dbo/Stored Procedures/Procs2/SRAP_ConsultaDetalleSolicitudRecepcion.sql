@@ -1,16 +1,17 @@
-USE [Petrovendor]
+USE Petrovendor
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]    Script Date: 22/04/2022 05:18:00 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SRAP_ConsultaDetalleSolicitudRecepcion
 GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
 -- Description:	Consultar detalle de solicitud de recepción de pedido
 -- =============================================
-ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]  
+-- Author:		Luis David
+-- Create date: 20/07/2022
+-- Description:	Se agrega el comentario de aprobación y rechazo para issue #1933(Petrovendor)
+-- =============================================
+CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdPedido    INT,
@@ -22,7 +23,19 @@ AS
          SET NOCOUNT ON;
 		DECLARE @TipoOperacionId INT = (SELECT IdTipoOperacion FROM TA_TipoOperacion WHERE NombreOperacion='Aprobación de solicitud de aceptación de pedido'),
 		@IdDocumentoFieldTicket INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'FIELD TICKET'),
-		@IdDocumentoProforma INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'PROFORMA')
+		@IdDocumentoProforma INT = (SELECT IdTipoDocumento FROM S_TipoDocumento WHERE NombreTipoDocumento = 'PROFORMA'),
+		@ComentariosRechazo VARCHAR(8000);
+		SELECT 
+		 @ComentariosRechazo = COALESCE(@ComentariosRechazo + ', ', '') + T.Comentario
+		 FROM TA_Operacion O
+		 JOIN TA_Tarea T 
+			ON O.IdOperacion = T.IdOperacion
+		 JOIN TA_Estatus E
+			ON T.IdEstatus = E.IdEstatus
+		WHERE O.IdDocumento=@IdSolicitudAceptacionPedido
+		AND O.IdTipoOperacion=@TipoOperacionId
+		AND T.IdEstatus IN (3) --> RECHAZADO
+		AND T.Activo=1
 
     -- Insert statements for procedure here
 	    	
@@ -46,7 +59,8 @@ AS
 		 FORMAT(ISNULL(SAP.CreadoEl, GETDATE()),'dd/MM/yyyy') AS SolitudCreadaEl  ,
 		 UE.Nombre AS CreadoPor,
 		 P.IdSubcontratista	    ,
-		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'SIN PO RELACIONADO') AS NoPO
+		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'SIN PO RELACIONADO') AS NoPO,
+		 ISNULL(@ComentariosRechazo, '') AS ComentariosRechazo
 		 FROM MM_SolicitudAceptacionPedido SAP
 		 JOIN TA_Operacion O 
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
