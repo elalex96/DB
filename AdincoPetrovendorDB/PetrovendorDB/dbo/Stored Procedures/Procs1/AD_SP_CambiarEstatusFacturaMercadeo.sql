@@ -1,24 +1,16 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'AD_SP_CambiarEstatusFacturaMercadeo'
-)
-    DROP PROCEDURE AD_SP_CambiarEstatusFacturaMercadeo;
-GO 
-/****** Object:  StoredProcedure [dbo].[AD_SP_ObtenerFlujosAprobacion]    Script Date: 10/03/2021 05:58:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿use Petrovendor
+go
+drop procedure if exists AD_SP_CambiarEstatusFacturaMercadeo
+go
 -- =============================================  
 -- Author: Daniel AC  
 -- Create date: 08-04-2021  
 -- Description: Actualizar estatus de aprobación de factura de mercadeo
 -- =============================================  
-
+-- Author: Luis David
+-- Create date: 19/07/2022
+-- Description: Cuando la factura sea de carso se elimnina la transferencia de AX_Pago Issue #1936 (Petrovendor)
+-- =============================================  
 CREATE  PROCEDURE [dbo].[AD_SP_CambiarEstatusFacturaMercadeo] 
 @IdProveedor INT,  
 @IdAceptacionPedido INT,
@@ -30,7 +22,7 @@ CREATE  PROCEDURE [dbo].[AD_SP_CambiarEstatusFacturaMercadeo]
 AS  
  BEGIN  
   SET NOCOUNT ON  
-
+  DECLARE @ReceptorFactura varchar(300), @IdAsiento varchar(300), @UUIDPrincipal varchar(300);
   DECLARE @IdFacturaAdinco INT 
   DECLARE @FechaModificacion DATETIME  = GETDATE()  
   DECLARE @TotalAprobadores INT 
@@ -43,7 +35,7 @@ AS
   DECLARE @NoSecuenciaTareaId INT
   DECLARE @TipoFlujoAprobacion INT
   CREATE TABLE #APROBADORES(IdTarea INT)  
-
+  
    --BUSCAR SI EXISTE FACTURA RELACIONA EN ADINCO
     SELECT 
 	@IdFacturaAdinco = ISNULL(FA.IdFactura,0) 
@@ -252,9 +244,42 @@ AS
 		SET 
 		Activo = 0
 		WHERE IdFacturaPetrovendor = @IdFactura;
+		--> Si la factura es de Carso se elimina la transferencia de Ax_Pago para poder hacer el envio correcto por el ws
+
+		SELECT top 1
+			@ReceptorFactura = f.Receptor,
+			@IdAsiento = pl.RECID,
+			@UUIDPrincipal = pl.UUIDFacturaPagada
+		FROM Petrovendor..AX_Pagos pl
+		join FI_Factura as f on pl.UUIDFacturaPagada = f.UUID
+		join S_Proveedor as p on f.Receptor = p.RFC
+		left join adinco..FI_Factura as fa on f.UUID collate SQL_Latin1_General_CP1_CI_AS = fa.UUID collate SQL_Latin1_General_CP1_CI_AS
+		where f.IdFactura = @IdFactura
+		IF	@ReceptorFactura = 'OBD1708213QA'
+		BEGIN
+			UPDATE AX_Pagos
+			SET IdTransferencia = NULL
+			WHERE recid = @IdAsiento
+			
+			insert into Ax_BitacoraCarso (
+			ErrorMotivo,
+			Lugar,
+			RecId, 
+			Accion,
+			FechaRegistro,
+			UUID_Principal,
+			IdAsientoPago) values (
+			concat('Se elimina la transferencia por Reversa de Factura, Comentario: ',@Comentario,' Aceptación: ',@IdAceptacionPedido),
+			'AD_SP_CambiarEstatusFacturaMercadeo',
+			@IdAsiento,
+			'Reversa Factura',
+			GETDATE(),
+			@UUIDPrincipal,
+			@IdAsiento)
+
+		END
 	END 
 	SELECT 'SUCCESS'
 	 
   
  END
-
