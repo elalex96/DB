@@ -31,7 +31,11 @@ SELECT c.IdOperacionComercializacion,
 		Nombre	AS [PuntoEntrega],
 		CASE WHEN ISNULL(fac.Serie,'')  = '' then isnull(fac.Folio,'')
 			eLSE  ISNULl(fac.Serie,'') +''+ isnull(fac.Folio,0)
-		END		AS [Factura]
+		END		AS [Factura],
+c.CreadoPor,
+c.CreadoEl,
+c.ModificadoPor,
+c.ModificadoEl
 FROM
 	[COM_OperacionComercializacion] c
 left JOIN
@@ -44,4 +48,3 @@ left JOIN
 	c.FechaTransaccion DESC 
 
  END
-
