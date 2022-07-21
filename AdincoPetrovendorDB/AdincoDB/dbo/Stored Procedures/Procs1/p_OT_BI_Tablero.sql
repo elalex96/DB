@@ -31,6 +31,15 @@ BEGIN
     IF OBJECT_ID('tempdb..#tmpAF', 'U') IS NOT NULL
         DROP TABLE #tmpAF;
 
+	IF OBJECT_ID('tempdb..#TEMPAceptacionPedido', 'U') IS NOT NULL
+    DROP TABLE #TEMPAceptacionPedido;
+	IF OBJECT_ID('tempdb..#TEMPFechaEvaluacionCN', 'U') IS NOT NULL
+    DROP TABLE #TEMPFechaEvaluacionCN;
+	IF OBJECT_ID('tempdb..#TEMPFechaRecepcionCNEnMaxCN', 'U') IS NOT NULL
+    DROP TABLE #TEMPFechaRecepcionCNEnMaxCN;
+	IF OBJECT_ID('tempdb..#TEMPEstatusCartaCN', 'U') IS NOT NULL
+    DROP TABLE #TEMPEstatusCartaCN;
+
     CREATE TABLE #tmpOTManagerNot
     (
         IdOTSolicitud INT,
@@ -174,7 +183,6 @@ BEGIN
         DiasRegistroPR_CargaAvance	FLOAT,
         IdOTEstimacion	INT
     );
-
     --AGRUPACION 2   
     CREATE TABLE #tmpResultado3
     (
@@ -321,6 +329,10 @@ BEGIN
         IdOTSolicitud	INT,
         AVANCE_FINANCIERO	DECIMAL(20, 2)
     );
+	CREATE TABLE #TEMPAceptacionPedido(IdAceptacionPedido INT);
+	CREATE TABLE #TEMPFechaEvaluacionCN(IdAceptacionPedido INT, FechaEvaluacionCN DATETIME);
+	CREATE TABLE #TEMPFechaRecepcionCNEnMaxCN(IdAceptacionPedido INT, CreadoEl DATETIME);
+	CREATE TABLE #TEMPEstatusCartaCN(IdAceptacionPedido INT, Estatus varchar(100), UsuarioEvaluaCN varchar(100));
 
     CREATE NONCLUSTERED INDEX IX_Temp1
     ON [#tmpAprobador1]
@@ -1327,7 +1339,9 @@ BEGIN
              #tmpResultado3.IdSolicitudPedido,
              OT_Estimacion.IdPedidoGeneral;
 
-    SELECT @IdAceptacionPedidoTop	=	MM_AceptacionPedido.IdAceptacionPedido
+	INSERT INTO #TEMPAceptacionPedido(IdAceptacionPedido)
+    SELECT 	
+		MM_AceptacionPedido.IdAceptacionPedido
     FROM 
 		Petrovendor.dbo.MM_AceptacionPedido (NOLOCK)
 	INNER JOIN 
@@ -1340,43 +1354,43 @@ BEGIN
 		Petrovendor.dbo.DEA_Relacion_PR_PO (NOLOCK)
 		ON DEA_Relacion_PR_PO.IdPedido = MM_Pedido.IdPedido;
 
-		SELECT  TOP 1 @FechaRecepcionCN =
-            CreadoEl
-        FROM 
-			Petrovendor.dbo.MM_AceptacionCartaPCN
-        WHERE IdAceptacionPedido = @IdAceptacionPedidoTop 
-        ORDER BY CreadoEl DESC;
-          
-        SELECT TOP 1	@FechaEvaluacionCN	=
-            FechaEvaluacion 
-        FROM 
-			Petrovendor.dbo.MM_AceptacionCartaPCN	(NOLOCK)
-        WHERE 
-			IdAceptacionPedido = @IdAceptacionPedidoTop
-        ORDER BY CreadoEl DESC;
-           
-        SELECT TOP 1 @EstatusCartaCN	=
-            EST.Nombre
-        FROM 
-			Petrovendor.dbo.MM_AceptacionCartaPCN AS APC	(NOLOCK)
-        LEFT JOIN 
-			Petrovendor.dbo.TA_Estatus AS EST	(NOLOCK)
-            ON EST.IdEstatus = APC.IdEstatus
-        WHERE 
-			APC.IdAceptacionPedido = @IdAceptacionPedidoTop
-        ORDER BY APC.CreadoEl DESC;
-           
-        SELECT TOP 1 @UsuarioEvaluaCN	=
-            US.Nombre
-        FROM 
-			Petrovendor.dbo.MM_AceptacionCartaPCN AS APC	(NOLOCK)
-        LEFT JOIN 
-			Petrovendor.dbo.S_Usuario AS US	(NOLOCK)
-            ON US.IdUsuario = APC.IdUsuarioEvaluador
-        WHERE 
-			APC.IdAceptacionPedido = @IdAceptacionPedidoTop
-        ORDER BY APC.CreadoEl DESC;
-           
+	INSERT INTO #TEMPFechaRecepcionCNEnMaxCN(CreadoEl,IdAceptacionPedido)
+	SELECT 
+        MAX(ACPCN.CreadoEl), PT.IdAceptacionPedido
+    FROM 
+		#TEMPAceptacionPedido PT
+	JOIN
+		Petrovendor.dbo.MM_AceptacionCartaPCN AS ACPCN
+		ON PT.IdAceptacionPedido   = ACPCN.IdAceptacionPedido
+	GROUP BY PT.IdAceptacionPedido
+    ORDER BY PT.IdAceptacionPedido;
+		
+	INSERT INTO #TEMPFechaEvaluacionCN(FechaEvaluacionCN,IdAceptacionPedido)
+		SELECT 
+        MAX(ACPCN.FechaEvaluacion), PT.IdAceptacionPedido
+    FROM 
+		#TEMPAceptacionPedido PT
+	JOIN
+		Petrovendor.dbo.MM_AceptacionCartaPCN AS ACPCN
+		ON PT.IdAceptacionPedido   = ACPCN.IdAceptacionPedido
+	GROUP BY PT.IdAceptacionPedido
+    ORDER BY PT.IdAceptacionPedido;
+
+	INSERT INTO #TEMPEstatusCartaCN(IdAceptacionPedido,Estatus,UsuarioEvaluaCN)
+	SELECT ESPT.IdAceptacionPedido,EST.Nombre, us.Nombre
+	FROM 
+		#TEMPFechaRecepcionCNEnMaxCN ESPT
+	JOIN
+		Petrovendor.dbo.MM_AceptacionCartaPCN AS APC	(NOLOCK)
+		ON	ESPT.IdAceptacionPedido	=APC.IdAceptacionPedido
+		AND ESPT.CreadoEl	=	APC.CreadoEl
+    LEFT JOIN 
+		Petrovendor.dbo.TA_Estatus AS EST	(NOLOCK)
+        ON EST.IdEstatus = APC.IdEstatus
+		LEFT JOIN 
+		Petrovendor.dbo.S_Usuario AS US	(NOLOCK)
+        ON US.IdUsuario = APC.IdUsuarioEvaluador;
+			
     INSERT INTO #ACEPTACIONESCN
     (
         IdAceptacionPedido,
@@ -1385,8 +1399,20 @@ BEGIN
         EstatusCartaCN,
         UsuarioEvaluaCN
     )
-	SELECT @IdAceptacionPedidoTop, @FechaRecepcionCN,@FechaEvaluacionCN,@EstatusCartaCN,@UsuarioEvaluaCN;
-   
+	SELECT AP.IdAceptacionPedido,FR.CreadoEl,FE.FechaEvaluacionCN,ECN.Estatus,ECN.UsuarioEvaluaCN
+	FROM
+		#TEMPAceptacionPedido	AP
+	LEFT JOIN
+		#TEMPFechaRecepcionCNEnMaxCN FR
+		ON	AP.IdAceptacionPedido	=	FR.IdAceptacionPedido
+	LEFT JOIN
+		#TEMPFechaEvaluacionCN	FE
+		ON	AP.IdAceptacionPedido	=	FE.IdAceptacionPedido
+	LEFT JOIN
+		#TEMPEstatusCartaCN	ECN
+		ON	AP.IdAceptacionPedido	=	ECN.IdAceptacionPedido
+ORDER BY  AP.IdAceptacionPedido;
+
     INSERT INTO #DATOSACEPTACIONES
     (
         IdPedido,
