@@ -1,6 +1,7 @@
 ﻿-----------------------------------------------------------------------------------------------------------------------------------
 -- Modificado por Pedro Acuna 29-Jun-2022 por el issue 2088 Adinco
 -- Modificado por Neri del Angel 20 de Julio del 2022 en Issue 2088 (Se quito el Max en NVARCHAR, se elimina subquery y los left join se eliminan completamente)
+
 CREATE PROC p_OT_ConsultaSolicitudProgramaCaptura
     @pIdOTSolicitud INT,
     @pSemana VARCHAR(21),
@@ -90,9 +91,9 @@ BEGIN
         SELECT CONVERT(VARCHAR, OT_SolicitudProgramaCaptura.Fecha, 112)
         FROM OT_Solicitud (NOLOCK)
             INNER JOIN [dbo].[OT_SolicitudMaterial] (NOLOCK)
-                ON OT_SolicitudMaterial.IdOTSolicitud = OT_Solicitud.idOTSolicitud
+                ON OT_Solicitud.idOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud 
             INNER JOIN [dbo].[OT_SolicitudProgramaCaptura] (NOLOCK)
-                ON OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
+                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial 
         WHERE OT_Solicitud.IdOTSolicitud = @pIdOTSolicitud
         GROUP BY CONVERT(VARCHAR, OT_SolicitudProgramaCaptura.Fecha, 112)
     END
@@ -115,7 +116,7 @@ BEGIN
            Disponible = 0
     FROM dbo.OT_SolicitudPrograma (NOLOCK)
         INNER JOIN dbo.OT_SolicitudMaterial (NOLOCK)
-            ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudPrograma.IdOTSolicitudMaterial
+            ON OT_SolicitudPrograma.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
     WHERE OT_SolicitudMaterial.IdOTSolicitud = @pIdOTSolicitud
     GROUP BY OT_SolicitudPrograma.IdOTSolicitudMaterial,
              OT_SolicitudMaterial.IdOTSolicitud
@@ -141,12 +142,12 @@ BEGIN
                  )
     FROM #tmpDisponibles
         INNER JOIN dbo.OT_SolicitudMaterial (NOLOCK)
-            ON OT_SolicitudMaterial.IdOTSolicitudMaterial = #tmpDisponibles.IdOTSolicitudMaterial
+            ON #tmpDisponibles.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
         INNER JOIN dbo.OT_SolicitudProgramaCaptura (NOLOCK)
-            ON OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial = #tmpDisponibles.IdOTSolicitudMaterial
+            ON #tmpDisponibles.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
         INNER JOIN [dbo].[OT_ProgramaSemanaCerrada] (NOLOCK)
             ON OT_ProgramaSemanaCerrada.IdOTSolicitud = @pIdOTSolicitud
-               AND OT_ProgramaSemanaCerrada.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+               AND  OT_SolicitudMaterial.IdOTSolicitud = OT_ProgramaSemanaCerrada.IdOTSolicitud
                AND OT_SolicitudProgramaCaptura.Fecha
                BETWEEN OT_ProgramaSemanaCerrada.FechaSemanaIni AND OT_ProgramaSemanaCerrada.FechaSemanaFin
                AND OT_ProgramaSemanaCerrada.isActivo = 1
@@ -258,12 +259,12 @@ BEGIN
            Disponible = 0
     FROM dbo.OT_SolicitudMaterial (NOLOCK)
         INNER JOIN dbo.SC_Materiales (NOLOCK)
-            ON SC_Materiales.IdSCMaterial = OT_SolicitudMaterial.IdSCMaterial
+            ON OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial 
                AND ISNULL(OT_SolicitudMaterial.Cantidad, 0) > 0
         INNER JOIN Petrovendor.dbo.MM_Material (NOLOCK)
-            ON MM_Material.IdMaterial = SC_Materiales.IdMaestro
+            ON SC_Materiales.IdMaestro = Petrovendor.dbo.MM_Material.IdMaterial
         INNER JOIN dbo.OT_Solicitud (NOLOCK)
-            ON OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+            ON OT_SolicitudMaterial.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
     WHERE OT_Solicitud.IdOTSolicitud = @pIdOTSolicitud
     GROUP BY OT_SolicitudMaterial.IdOTSolicitudMaterial,
              OT_Solicitud.IdOTSolicitud,
@@ -275,7 +276,7 @@ BEGIN
     SET #tmpResult.IdEstatus = ISNULL(OT_SolicitudPrograma.IdEstatus, 0)
     FROM #tmpResult
         INNER JOIN dbo.OT_SolicitudPrograma (NOLOCK)
-            ON OT_SolicitudPrograma.IdOTSolicitudMaterial = #tmpResult.IdOTSolicitudMaterial
+            ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudPrograma.IdOTSolicitudMaterial
 
     UPDATE #tmpResult
     SET #tmpResult.LunesCaptura = Datos.LunesCaptura,
@@ -474,7 +475,7 @@ BEGIN
                                 END
         FROM #tmpResult (NOLOCK)
             INNER JOIN dbo.OT_SolicitudProgramaCaptura (NOLOCK)
-                ON OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial = #tmpResult.IdOTSolicitudMaterial
+                ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial 
                    AND OT_SolicitudProgramaCaptura.Fecha
                    BETWEEN @fechaIniFiltro AND @fechaFinFiltro
                    AND (
@@ -490,7 +491,7 @@ BEGIN
                  OT_SolicitudProgramaCaptura.Fecha
     ) Datos
         INNER JOIN #tmpResult
-            ON #tmpResult.IdOTSolicitudMaterial = Datos.IdOTSolicitudMaterial
+            ON Datos.IdOTSolicitudMaterial = #tmpResult.IdOTSolicitudMaterial 
 
     UPDATE #tmpResult
     SET #tmpResult.Disponible = ISNULL(#tmpDisponibles.Disponible, 0)
