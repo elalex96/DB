@@ -1068,9 +1068,9 @@ BEGIN
     FROM 
 		#tmpResultado2
         INNER JOIN 
-			OT_ProgramaSemanaCerrada
+			OT_ProgramaSemanaCerrada	(NOLOCK)
             ON #tmpResultado2.IdOTSolicitud	=	OT_ProgramaSemanaCerrada.IdOTSolicitud
-        LEFT JOIN AP_Usuario
+        LEFT JOIN AP_Usuario	(NOLOCK)
             ON AP_Usuario.Usuario LIKE '%' + RTRIM(ISNULL(OT_ProgramaSemanaCerrada.CreadoPor, '')) + '%'
                OR CAST(AP_Usuario.UsuarioID AS VARCHAR) = OT_ProgramaSemanaCerrada.CreadoPor
     WHERE (
@@ -1350,7 +1350,7 @@ BEGIN
         SELECT TOP 1	@FechaEvaluacionCN	=
             FechaEvaluacion 
         FROM 
-			Petrovendor.dbo.MM_AceptacionCartaPCN
+			Petrovendor.dbo.MM_AceptacionCartaPCN	(NOLOCK)
         WHERE 
 			IdAceptacionPedido = @IdAceptacionPedidoTop
         ORDER BY CreadoEl DESC;
@@ -1358,9 +1358,9 @@ BEGIN
         SELECT TOP 1 @EstatusCartaCN	=
             EST.Nombre
         FROM 
-			Petrovendor.dbo.MM_AceptacionCartaPCN AS APC
+			Petrovendor.dbo.MM_AceptacionCartaPCN AS APC	(NOLOCK)
         LEFT JOIN 
-			Petrovendor.dbo.TA_Estatus AS EST
+			Petrovendor.dbo.TA_Estatus AS EST	(NOLOCK)
             ON EST.IdEstatus = APC.IdEstatus
         WHERE 
 			APC.IdAceptacionPedido = @IdAceptacionPedidoTop
@@ -1369,9 +1369,9 @@ BEGIN
         SELECT TOP 1 @UsuarioEvaluaCN	=
             US.Nombre
         FROM 
-			Petrovendor.dbo.MM_AceptacionCartaPCN AS APC
+			Petrovendor.dbo.MM_AceptacionCartaPCN AS APC	(NOLOCK)
         LEFT JOIN 
-			Petrovendor.dbo.S_Usuario AS US
+			Petrovendor.dbo.S_Usuario AS US	(NOLOCK)
             ON US.IdUsuario = APC.IdUsuarioEvaluador
         WHERE 
 			APC.IdAceptacionPedido = @IdAceptacionPedidoTop
