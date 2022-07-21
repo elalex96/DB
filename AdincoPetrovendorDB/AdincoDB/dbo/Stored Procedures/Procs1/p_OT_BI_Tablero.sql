@@ -1506,12 +1506,6 @@ ORDER BY  AP.IdAceptacionPedido;
 		Petrovendor.dbo.DEA_Relacion_PR_PO (NOLOCK)
 		ON DEA_Relacion_PR_PO.IdPedido = MM_Pedido.IdPedido
 	LEFT JOIN 
-		Petrovendor.dbo.S_Usuario (NOLOCK)
-		ON S_Usuario.IdUsuario = MM_AceptacionPedido.CreadorPor
-	LEFT JOIN 
-		Petrovendor.dbo.DEA_AdjuntoPO	(NOLOCK)
-		ON	DEA_AdjuntoPO.IdAdjuntoPO	=	DEA_Relacion_PR_PO.IdAdjuntoPO
-	LEFT JOIN 
 		Petrovendor.dbo.TA_Tarea	(NOLOCK)
 		ON	TA_Tarea.IdOperacion	=	TA_Operacion.IdOperacion
 			AND	TA_Tarea.NoSecuencia	=	1
@@ -1537,9 +1531,6 @@ ORDER BY  AP.IdAceptacionPedido;
 		Petrovendor.dbo.TA_Operacion	(NOLOCK)	AS OPSP
 		ON	OPSP.IdDocumento	=	MM_SolicitudPedido.IdSolicitudPedido
 			AND OPSP.IdTipoOperacion = 2
-	LEFT JOIN 
-		OT_Estimacion	(NOLOCK)
-		ON	OT_Estimacion.IdSolicitudPedido	=	MM_SolicitudPedido.IdSolicitudPedido
 	LEFT JOIN 
 		Petrovendor.dbo.RelacionCartaCNPedido (NOLOCK)
 		ON RelacionCartaCNPedido.IdAceptacionPedido = MM_AceptacionPedido.IdAceptacionPedido
