@@ -561,7 +561,7 @@ BEGIN
             ON #tmpResult.IdOTSolicitudMaterial = #tmpDisponibles.IdOTSolicitudMaterial
 
     UPDATE #tmpResult
-    SET #tmpResult.Disponible = CASE
+    SET #tmpResult.TieneArchivos = CASE
                                     WHEN #tmpArchivos.IdOTSolicitudMaterial > 0 THEN
                                         CAST(1 AS BIT)
                                     ELSE
