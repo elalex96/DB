@@ -2,7 +2,7 @@
 -- Modificado por Pedro Acuna 29-Jun-2022 por el issue 2088 Adinco
 -- Modificado por Neri del Angel 20 de Julio del 2022 en Issue 2088 (Se quito el Max en NVARCHAR, se elimina subquery y los left join se eliminan completamente)
 
-CREATE PROC p_OT_ConsultaSolicitudProgramaCaptura
+ALTER PROC p_OT_ConsultaSolicitudProgramaCaptura
     @pIdOTSolicitud INT,
     @pSemana VARCHAR(21),
     @pSoloVoBo BIT = 0
@@ -53,6 +53,39 @@ BEGIN
         Disponible DECIMAL(14, 5)
     )
 
+    CREATE TABLE #tmpDatos
+    (
+        IdOTSolicitudMaterial INT,
+        LunesCaptura DECIMAL(14, 5),
+        MartesCaptura DECIMAL(14, 5),
+        MiercolesCaptura DECIMAL(14, 5),
+        JuevesCaptura DECIMAL(14, 5),
+        ViernesCaptura DECIMAL(14, 5),
+        SabadoCaptura DECIMAL(14, 5),
+        DomingoCaptura DECIMAL(14, 5),
+        LunesVoBoC BIT,
+        MartesVoBoC BIT,
+        MiercolesVoBoC BIT,
+        JuevesVoBoC BIT,
+        ViernesVoBoC BIT,
+        SabadoVoBoC BIT,
+        DomingoVoBoC BIT,
+        LunesVoBoSC BIT,
+        MartesVoBoSC BIT,
+        MiercolesVoBoSC BIT,
+        JuevesVoBoSC BIT,
+        ViernesVoBoSC BIT,
+        SabadoVoBoSC BIT,
+        DomingoVoBoSC BIT,
+        LunesCerrado BIT,
+        MartesCerrado BIT,
+        MiercolesCerrado BIT,
+        JuevesCerrado BIT,
+        ViernesCerrado BIT,
+        SabadoCerrado BIT,
+        DomingoCerrado BIT
+    )
+
     CREATE TABLE #tmpSemana (Fecha VARCHAR(10))
 
     CREATE TABLE #tmpArchivos
@@ -91,9 +124,9 @@ BEGIN
         SELECT CONVERT(VARCHAR, OT_SolicitudProgramaCaptura.Fecha, 112)
         FROM OT_Solicitud (NOLOCK)
             INNER JOIN [dbo].[OT_SolicitudMaterial] (NOLOCK)
-                ON OT_Solicitud.idOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud 
+                ON OT_Solicitud.idOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
             INNER JOIN [dbo].[OT_SolicitudProgramaCaptura] (NOLOCK)
-                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial 
+                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
         WHERE OT_Solicitud.IdOTSolicitud = @pIdOTSolicitud
         GROUP BY CONVERT(VARCHAR, OT_SolicitudProgramaCaptura.Fecha, 112)
     END
@@ -147,7 +180,7 @@ BEGIN
             ON #tmpDisponibles.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
         INNER JOIN [dbo].[OT_ProgramaSemanaCerrada] (NOLOCK)
             ON OT_ProgramaSemanaCerrada.IdOTSolicitud = @pIdOTSolicitud
-               AND  OT_SolicitudMaterial.IdOTSolicitud = OT_ProgramaSemanaCerrada.IdOTSolicitud
+               AND OT_SolicitudMaterial.IdOTSolicitud = OT_ProgramaSemanaCerrada.IdOTSolicitud
                AND OT_SolicitudProgramaCaptura.Fecha
                BETWEEN OT_ProgramaSemanaCerrada.FechaSemanaIni AND OT_ProgramaSemanaCerrada.FechaSemanaFin
                AND OT_ProgramaSemanaCerrada.isActivo = 1
@@ -259,7 +292,7 @@ BEGIN
            Disponible = 0
     FROM dbo.OT_SolicitudMaterial (NOLOCK)
         INNER JOIN dbo.SC_Materiales (NOLOCK)
-            ON OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial 
+            ON OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
                AND ISNULL(OT_SolicitudMaterial.Cantidad, 0) > 0
         INNER JOIN Petrovendor.dbo.MM_Material (NOLOCK)
             ON SC_Materiales.IdMaestro = Petrovendor.dbo.MM_Material.IdMaterial
@@ -278,220 +311,248 @@ BEGIN
         INNER JOIN dbo.OT_SolicitudPrograma (NOLOCK)
             ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudPrograma.IdOTSolicitudMaterial
 
-    UPDATE #tmpResult
-    SET #tmpResult.LunesCaptura = Datos.LunesCaptura,
-        #tmpResult.MartesCaptura = Datos.MartesCaptura,
-        #tmpResult.MiercolesCaptura = Datos.MiercolesCaptura,
-        #tmpResult.JuevesCaptura = Datos.JuevesCaptura,
-        #tmpResult.ViernesCaptura = Datos.ViernesCaptura,
-        #tmpResult.SabadoCaptura = Datos.SabadoCaptura,
-        #tmpResult.DomingoCaptura = Datos.DomingoCaptura,
-        -----------------------------  
-        #tmpResult.LunesVoBoC = Datos.LunesVoBoC,
-        #tmpResult.MartesVoBoC = Datos.MartesVoBoC,
-        #tmpResult.MiercolesVoBoC = Datos.MiercolesVoBoC,
-        #tmpResult.JuevesVoBoC = Datos.JuevesVoBoC,
-        #tmpResult.ViernesVoBoC = Datos.ViernesVoBoC,
-        #tmpResult.SabadoVoBoC = Datos.SabadoVoBoC,
-        #tmpResult.DomingoVoBoC = Datos.DomingoVoBoC,
-        ---------------------------------  
-        #tmpResult.LunesVoBoSC = Datos.LunesVoBoSC,
-        #tmpResult.MartesVoBoSC = Datos.MartesVoBoSC,
-        #tmpResult.MiercolesVoBoSC = Datos.MiercolesVoBoSC,
-        #tmpResult.JuevesVoBoSC = Datos.JuevesVoBoSC,
-        #tmpResult.ViernesVoBoSC = Datos.ViernesVoBoSC,
-        #tmpResult.SabadoVoBoSC = Datos.SabadoVoBoSC,
-        #tmpResult.DomingoVoBoSC = Datos.DomingoVoBoSC,
-        ----------------------------------  
-        #tmpResult.LunesCerrado = Datos.LunesCerrado,
-        #tmpResult.MartesCerrado = Datos.MartesCerrado,
-        #tmpResult.MiercolesCerrado = Datos.MiercolesCerrado,
-        #tmpResult.JuevesCerrado = Datos.JuevesCerrado,
-        #tmpResult.ViernesCerrado = Datos.ViernesCerrado,
-        #tmpResult.SabadoCerrado = Datos.SabadoCerrado,
-        #tmpResult.DomingoCerrado = Datos.DomingoCerrado
-    FROM
+    INSERT INTO #tmpDatos
     (
-        SELECT IdOTSolicitudMaterial = #tmpResult.IdOTSolicitudMaterial,
-               LunesCaptura = CASE
-                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+        IdOTSolicitudMaterial,
+        LunesCaptura,
+        MartesCaptura,
+        MiercolesCaptura,
+        JuevesCaptura,
+        ViernesCaptura,
+        SabadoCaptura,
+        DomingoCaptura,
+        LunesVoBoC,
+        MartesVoBoC,
+        MiercolesVoBoC,
+        JuevesVoBoC,
+        ViernesVoBoC,
+        SabadoVoBoC,
+        DomingoVoBoC,
+        LunesVoBoSC,
+        MartesVoBoSC,
+        MiercolesVoBoSC,
+        JuevesVoBoSC,
+        ViernesVoBoSC,
+        SabadoVoBoSC,
+        DomingoVoBoSC,
+        LunesCerrado,
+        MartesCerrado,
+        MiercolesCerrado,
+        JuevesCerrado,
+        ViernesCerrado,
+        SabadoCerrado,
+        DomingoCerrado
+    )
+    SELECT IdOTSolicitudMaterial = #tmpResult.IdOTSolicitudMaterial,
+           LunesCaptura = CASE
+                              WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+                                  OT_SolicitudProgramaCaptura.Captura
+                          END,
+           MartesCaptura = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
+                                   OT_SolicitudProgramaCaptura.Captura
+                           END,
+           MiercolesCaptura = CASE
+                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
                                       OT_SolicitudProgramaCaptura.Captura
                               END,
-               MartesCaptura = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
-                                       OT_SolicitudProgramaCaptura.Captura
-                               END,
-               MiercolesCaptura = CASE
-                                      WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
-                                          OT_SolicitudProgramaCaptura.Captura
-                                  END,
-               JuevesCaptura = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
-                                       OT_SolicitudProgramaCaptura.Captura
-                               END,
-               ViernesCaptura = CASE
-                                    WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
-                                        OT_SolicitudProgramaCaptura.Captura
-                                END,
-               SabadoCaptura = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
-                                       OT_SolicitudProgramaCaptura.Captura
-                               END,
-               DomingoCaptura = CASE
-                                    WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
-                                        OT_SolicitudProgramaCaptura.Captura
-                                END,
-               -----------------------------  
-               LunesVoBoC = CASE
-                                WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+           JuevesCaptura = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
+                                   OT_SolicitudProgramaCaptura.Captura
+                           END,
+           ViernesCaptura = CASE
+                                WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
+                                    OT_SolicitudProgramaCaptura.Captura
+                            END,
+           SabadoCaptura = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
+                                   OT_SolicitudProgramaCaptura.Captura
+                           END,
+           DomingoCaptura = CASE
+                                WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
+                                    OT_SolicitudProgramaCaptura.Captura
+                            END,
+           -----------------------------  
+           LunesVoBoC = CASE
+                            WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+                                CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
+                            ELSE
+                                0
+                        END,
+           MartesVoBoC = CASE
+                             WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
+                                 CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
+                             ELSE
+                                 0
+                         END,
+           MiercolesVoBoC = CASE
+                                WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
                                     CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
                                 ELSE
                                     0
                             END,
-               MartesVoBoC = CASE
-                                 WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
-                                     CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
-                                 ELSE
-                                     0
-                             END,
-               MiercolesVoBoC = CASE
-                                    WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
-                                        CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
-                                    ELSE
-                                        0
-                                END,
-               JuevesVoBoC = CASE
-                                 WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
-                                     CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
-                                 ELSE
-                                     0
-                             END,
-               ViernesVoBoC = CASE
-                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
-                                      CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
-                                  ELSE
-                                      0
-                              END,
-               SabadoVoBoC = CASE
-                                 WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
-                                     CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
-                                 ELSE
-                                     0
-                             END,
-               DomingoVoBoC = CASE
-                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
-                                      CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
-                                  ELSE
-                                      0
-                              END,
-               ---------------------------------  
-               LunesVoBoSC = CASE
-                                 WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+           JuevesVoBoC = CASE
+                             WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
+                                 CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
+                             ELSE
+                                 0
+                         END,
+           ViernesVoBoC = CASE
+                              WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
+                                  CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
+                              ELSE
+                                  0
+                          END,
+           SabadoVoBoC = CASE
+                             WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
+                                 CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
+                             ELSE
+                                 0
+                         END,
+           DomingoVoBoC = CASE
+                              WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
+                                  CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoContratista AS INT)), 0) AS BIT)
+                              ELSE
+                                  0
+                          END,
+           ---------------------------------  
+           LunesVoBoSC = CASE
+                             WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+                                 CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
+                             ELSE
+                                 0
+                         END,
+           MartesVoBoSC = CASE
+                              WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
+                                  CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
+                              ELSE
+                                  0
+                          END,
+           MiercolesVoBoSC = CASE
+                                 WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
                                      CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
                                  ELSE
                                      0
                              END,
-               MartesVoBoSC = CASE
-                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
-                                      CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
-                                  ELSE
-                                      0
-                              END,
-               MiercolesVoBoSC = CASE
-                                     WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
-                                         CAST(ISNULL(
-                                                        MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)),
-                                                        0
-                                                    ) AS BIT)
-                                     ELSE
-                                         0
-                                 END,
-               JuevesVoBoSC = CASE
-                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
-                                      CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
-                                  ELSE
-                                      0
-                              END,
-               ViernesVoBoSC = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
-                                       CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
-                                   ELSE
-                                       0
-                               END,
-               SabadoVoBoSC = CASE
-                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
-                                      CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
-                                  ELSE
-                                      0
-                              END,
-               DomingoVoBoSC = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
-                                       CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
-                                   ELSE
-                                       0
-                               END,
-               ----------------------------------  
-               LunesCerrado = CASE
-                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+           JuevesVoBoSC = CASE
+                              WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
+                                  CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
+                              ELSE
+                                  0
+                          END,
+           ViernesVoBoSC = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
+                                   CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
+                               ELSE
+                                   0
+                           END,
+           SabadoVoBoSC = CASE
+                              WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
+                                  CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
+                              ELSE
+                                  0
+                          END,
+           DomingoVoBoSC = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
+                                   CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.VoBoSubcontratista AS INT)), 0) AS BIT)
+                               ELSE
+                                   0
+                           END,
+           ----------------------------------  
+           LunesCerrado = CASE
+                              WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 2 THEN
+                                  CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
+                              ELSE
+                                  0
+                          END,
+           MartesCerrado = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
+                                   CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
+                               ELSE
+                                   0
+                           END,
+           MiercolesCerrado = CASE
+                                  WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
                                       CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
                                   ELSE
                                       0
                               END,
-               MartesCerrado = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 3 THEN
-                                       CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
-                                   ELSE
-                                       0
-                               END,
-               MiercolesCerrado = CASE
-                                      WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 4 THEN
-                                          CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
-                                      ELSE
-                                          0
-                                  END,
-               JuevesCerrado = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
-                                       CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
-                                   ELSE
-                                       0
-                               END,
-               ViernesCerrado = CASE
-                                    WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
-                                        CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
-                                    ELSE
-                                        0
-                                END,
-               SabadoCerrado = CASE
-                                   WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
-                                       CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
-                                   ELSE
-                                       0
-                               END,
-               DomingoCerrado = CASE
-                                    WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
-                                        CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
-                                    ELSE
-                                        0
-                                END
-        FROM #tmpResult (NOLOCK)
-            INNER JOIN dbo.OT_SolicitudProgramaCaptura (NOLOCK)
-                ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial 
-                   AND OT_SolicitudProgramaCaptura.Fecha
-                   BETWEEN @fechaIniFiltro AND @fechaFinFiltro
-                   AND (
-                           (
-                               @pSoloVoBo = 1
-                               AND OT_SolicitudProgramaCaptura.VoBoSubcontratista = 1
-                               AND OT_SolicitudProgramaCaptura.VoBoContratista = 1
-                           )
-                           OR @pSoloVoBo = 0
+           JuevesCerrado = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 5 THEN
+                                   CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
+                               ELSE
+                                   0
+                           END,
+           ViernesCerrado = CASE
+                                WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 6 THEN
+                                    CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
+                                ELSE
+                                    0
+                            END,
+           SabadoCerrado = CASE
+                               WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 7 THEN
+                                   CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
+                               ELSE
+                                   0
+                           END,
+           DomingoCerrado = CASE
+                                WHEN DATEPART(WEEKDAY, OT_SolicitudProgramaCaptura.Fecha) = 1 THEN
+                                    CAST(ISNULL(MAX(CAST(OT_SolicitudProgramaCaptura.Cerrado AS INT)), 0) AS BIT)
+                                ELSE
+                                    0
+                            END
+    FROM #tmpResult (NOLOCK)
+        INNER JOIN dbo.OT_SolicitudProgramaCaptura (NOLOCK)
+            ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
+               AND OT_SolicitudProgramaCaptura.Fecha
+               BETWEEN @fechaIniFiltro AND @fechaFinFiltro
+               AND (
+                       (
+                           @pSoloVoBo = 1
+                           AND OT_SolicitudProgramaCaptura.VoBoSubcontratista = 1
+                           AND OT_SolicitudProgramaCaptura.VoBoContratista = 1
                        )
-        GROUP BY #tmpResult.IdOTSolicitudMaterial,
-                 OT_SolicitudProgramaCaptura.Captura,
-                 OT_SolicitudProgramaCaptura.Fecha
-    ) Datos
-        INNER JOIN #tmpResult
-            ON Datos.IdOTSolicitudMaterial = #tmpResult.IdOTSolicitudMaterial 
+                       OR @pSoloVoBo = 0
+                   )
+    GROUP BY #tmpResult.IdOTSolicitudMaterial,
+             OT_SolicitudProgramaCaptura.Captura,
+             OT_SolicitudProgramaCaptura.Fecha
+
+    UPDATE #tmpResult
+    SET #tmpResult.LunesCaptura = #tmpDatos.LunesCaptura,
+        #tmpResult.MartesCaptura = #tmpDatos.MartesCaptura,
+        #tmpResult.MiercolesCaptura = #tmpDatos.MiercolesCaptura,
+        #tmpResult.JuevesCaptura = #tmpDatos.JuevesCaptura,
+        #tmpResult.ViernesCaptura = #tmpDatos.ViernesCaptura,
+        #tmpResult.SabadoCaptura = #tmpDatos.SabadoCaptura,
+        #tmpResult.DomingoCaptura = #tmpDatos.DomingoCaptura,
+        -----------------------------  
+        #tmpResult.LunesVoBoC = #tmpDatos.LunesVoBoC,
+        #tmpResult.MartesVoBoC = #tmpDatos.MartesVoBoC,
+        #tmpResult.MiercolesVoBoC = #tmpDatos.MiercolesVoBoC,
+        #tmpResult.JuevesVoBoC = #tmpDatos.JuevesVoBoC,
+        #tmpResult.ViernesVoBoC = #tmpDatos.ViernesVoBoC,
+        #tmpResult.SabadoVoBoC = #tmpDatos.SabadoVoBoC,
+        #tmpResult.DomingoVoBoC = #tmpDatos.DomingoVoBoC,
+        ---------------------------------  
+        #tmpResult.LunesVoBoSC = #tmpDatos.LunesVoBoSC,
+        #tmpResult.MartesVoBoSC = #tmpDatos.MartesVoBoSC,
+        #tmpResult.MiercolesVoBoSC = #tmpDatos.MiercolesVoBoSC,
+        #tmpResult.JuevesVoBoSC = #tmpDatos.JuevesVoBoSC,
+        #tmpResult.ViernesVoBoSC = #tmpDatos.ViernesVoBoSC,
+        #tmpResult.SabadoVoBoSC = #tmpDatos.SabadoVoBoSC,
+        #tmpResult.DomingoVoBoSC = #tmpDatos.DomingoVoBoSC,
+        ----------------------------------  
+        #tmpResult.LunesCerrado = #tmpDatos.LunesCerrado,
+        #tmpResult.MartesCerrado = #tmpDatos.MartesCerrado,
+        #tmpResult.MiercolesCerrado = #tmpDatos.MiercolesCerrado,
+        #tmpResult.JuevesCerrado = #tmpDatos.JuevesCerrado,
+        #tmpResult.ViernesCerrado = #tmpDatos.ViernesCerrado,
+        #tmpResult.SabadoCerrado = #tmpDatos.SabadoCerrado,
+        #tmpResult.DomingoCerrado = #tmpDatos.DomingoCerrado
+    FROM #tmpResult
+        INNER JOIN #tmpDatos
+            ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial
 
     UPDATE #tmpResult
     SET #tmpResult.Disponible = ISNULL(#tmpDisponibles.Disponible, 0)
