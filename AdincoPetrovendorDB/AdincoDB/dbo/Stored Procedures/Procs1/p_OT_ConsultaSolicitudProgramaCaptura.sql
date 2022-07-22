@@ -2,7 +2,7 @@
 -- Modificado por Pedro Acuna 29-Jun-2022 por el issue 2088 Adinco
 -- Modificado por Neri del Angel 20 de Julio del 2022 en Issue 2088 (Se quito el Max en NVARCHAR, se elimina subquery y los left join se eliminan completamente)
 
-ALTER PROC p_OT_ConsultaSolicitudProgramaCaptura
+CREATE PROC p_OT_ConsultaSolicitudProgramaCaptura
     @pIdOTSolicitud INT,
     @pSemana VARCHAR(21),
     @pSoloVoBo BIT = 0
@@ -562,11 +562,11 @@ BEGIN
 
     UPDATE #tmpResult
     SET #tmpResult.TieneArchivos = CASE
-                                    WHEN #tmpArchivos.IdOTSolicitudMaterial > 0 THEN
-                                        CAST(1 AS BIT)
-                                    ELSE
-                                        CAST(0 AS BIT)
-                                END
+                                       WHEN #tmpArchivos.IdOTSolicitudMaterial > 0 THEN
+                                           CAST(1 AS BIT)
+                                       ELSE
+                                           CAST(0 AS BIT)
+                                   END
     FROM #tmpResult
         INNER JOIN #tmpArchivos
             ON #tmpResult.IdOTSolicitudMaterial = #tmpArchivos.IdOTSolicitudMaterial
@@ -583,10 +583,10 @@ BEGIN
            ViernesCaptura = MAX(#tmpResult.ViernesCaptura),
            SabadoCaptura = MAX(#tmpResult.SabadoCaptura),
            DomingoCaptura = MAX(#tmpResult.DomingoCaptura),
-           TotalSemana = MAX(#tmpResult.LunesCaptura) + MAX(#tmpResult.MartesCaptura)
-                         + MAX(#tmpResult.MiercolesCaptura) + MAX(#tmpResult.JuevesCaptura)
-                         + MAX(#tmpResult.ViernesCaptura) + MAX(#tmpResult.SabadoCaptura)
-                         + MAX(#tmpResult.DomingoCaptura),
+           TotalSemana = ISNULL(MAX(#tmpResult.LunesCaptura), 0) + ISNULL(MAX(#tmpResult.MartesCaptura), 0)
+                         + ISNULL(MAX(#tmpResult.MiercolesCaptura), 0) + ISNULL(MAX(#tmpResult.JuevesCaptura), 0)
+                         + ISNULL(MAX(#tmpResult.ViernesCaptura), 0) + ISNULL(MAX(#tmpResult.SabadoCaptura), 0)
+                         + ISNULL(MAX(#tmpResult.DomingoCaptura), 0),
            IdEstatus = #tmpResult.IdEstatus,
            #tmpResult.LunesVoBoC,
            #tmpResult.MartesVoBoC,
