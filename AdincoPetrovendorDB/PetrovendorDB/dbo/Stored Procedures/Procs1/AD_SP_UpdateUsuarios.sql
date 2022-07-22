@@ -24,23 +24,13 @@ BEGIN
 			Nombre = @Nombre,
 			IdTipoUsuario = @IdTipoUsuario,
 			IdUsuarioADINCO = @IdUsuarioADINCO,
-			CorreoVerificado = @CorreoVerificado
+			CorreoVerificado = @CorreoVerificado,
+			IsEliminado = CASE 
+					WHEN @Activo = 1 THEN 0
+                            		ELSE 1
+                        	      END
 		WHERE IdUsuario = @IdUsuario
 
-	IF @Activo = 0
-	BEGIN
-		
-		UPDATE dbo.S_Usuario
-		SET IsEliminado = 1
-		WHERE IdUsuario = @IdUsuario
-		
-	END
-	ELSE
-	BEGIN
-		UPDATE dbo.S_Usuario
-		SET IsEliminado = 0
-		WHERE IdUsuario = @IdUsuario
-	END
 	
 
 END
