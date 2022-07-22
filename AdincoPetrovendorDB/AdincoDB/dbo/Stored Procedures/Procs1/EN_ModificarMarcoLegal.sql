@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_ModificarMarcoLegal]    Script Date: 30/06/2022 11:45:21 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_ModificarMarcoLegal]    Script Date: 20/07/2022 01:02:53 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -29,7 +29,7 @@ GO
 -- Create date: 30/06/2022
 -- Description:	se agregan validaciones al editar el alias del marco legal para contract files
 -- =================================================================
-ALTER PROCEDURE [dbo].[EN_ModificarMarcoLegal]
+ALTER PROCEDURE [dbo].[EN_ModificarMarcoLegal] --[EN_ModificarMarcoLegal] 'SASISOPA Programa de Desarrollo 2019-2021',10137,10536,3,1,'',0,'PRUEBA2'
 	@MarcoLegal VARCHAR(MAX),
 	@IdMarcoLegal INT,
     @idUsuario INT,
@@ -49,17 +49,20 @@ BEGIN
 	DECLARE @ML_NUEVO VARCHAR(MAX);
 
 	--VALIDACION PARA EL ARMADO DE LA RUTA ANTERIOR
-	IF ISNULL(@ALIAS_ANTERIOR,'') <> ''
+	IF ISNULL(@ALIAS_ANTERIOR_IN,'') <> ''
 	BEGIN
 		
 		SET @ML_ANTERIOR = @ML_ANTERIOR + ' - (' + @ALIAS_ANTERIOR + ')';
+		SET @ML_ANTERIOR = REPLACE(@ML_ANTERIOR,'/','-')
+		SET @ALIAS_ANTERIOR = @ML_ANTERIOR;
 
 	END
 	BEGIN
 		
 		SET @ALIAS_ANTERIOR = @ML_ANTERIOR;
-
+		SET @ALIAS_ANTERIOR = REPLACE(@ALIAS_ANTERIOR,'/','-')
 	END
+
 
 	--VALIDACION PARA EL CAMBIO DE RUTAS
 	IF @Alias <> '' OR @ALIAS_ANTERIOR_IN <> @ALIAS_ANTERIOR OR @MarcoLegal <> @ML_ANTERIOR
@@ -69,9 +72,24 @@ BEGIN
 		BEGIN
 
 			SET @ML_NUEVO = @MarcoLegal + ' - (' + @Alias + ')';
+			SET @ML_NUEVO = REPLACE(@ML_NUEVO,'/','-');
 
 		END
 	END
+
+	--ACTUALIZACION DE RUTA EN LOS ARCHIVOS CARGADOS DEL MARCO LEGAL
+	UPDATE EN_CarpetasArchivosVisor
+	SET Ruta = REPLACE(Ruta,@ALIAS_ANTERIOR,@ML_NUEVO)--SE REMPLAZA EL MARCO LEGAL ANTERIOR EN LA RUTA
+	WHERE Ruta LIKE '%' + @ALIAS_ANTERIOR + '%';
+
+	--ACTUALIZACION DE LAS SOLICITUDES DE DESCARGA
+	UPDATE EN_CF_SolicitUDescargaCarpetas
+	SET RutaDescargada = REPLACE(RutaDescargada,@ALIAS_ANTERIOR_IN,@Alias)--SE REMPLAZA EL MARCO LEGAL ANTERIOR EN LA RUTA
+	WHERE RutaDescargada LIKE '%' + @ALIAS_ANTERIOR_IN + '%'
+	AND ISNULL(Procesado,0) = 0;
+
+	--ELIMINADO DE LAS SECUENCIAS YA QUE AL CAMBIAR DE MARCO LEGAL CAMBIAN LA RUTA
+	DELETE FROM EN_SecuenciaCarpetas
 
 	UPDATE EN_MarcoLegal
 	SET MarcoLegal = @MarcoLegal,
@@ -81,26 +99,6 @@ BEGIN
 	ModificadoPor = @idUsuario,
 	ModificadoEn = GETDATE(),
 	Alias = @Alias
-	WHERE IdMarcoLegal = @IdMarcoLegal
-
-	--ACTUALIZACION DE RUTA EN LOS ARCHIVOS CARGADOS DEL MARCO LEGAL
-	UPDATE EN_CarpetasArchivosVisor
-	SET Ruta = REPLACE(Ruta,@ML_ANTERIOR,@ML_NUEVO)--SE REMPLAZA EL MARCO LEGAL ANTERIOR EN LA RUTA
-	WHERE Ruta LIKE '%' + @ML_ANTERIOR + '%';
-
-	--ACTUALIZACION DE LAS SOLICITUDES DE DESCARGA
-	UPDATE EN_CF_SolicitUDescargaCarpetas
-	SET RutaDescargada = REPLACE(RutaDescargada,@ALIAS_ANTERIOR,@Alias)--SE REMPLAZA EL MARCO LEGAL ANTERIOR EN LA RUTA
-	WHERE RutaDescargada LIKE '%' + @ALIAS_ANTERIOR + '%'
-	AND ISNULL(Procesado,0) = 0;
-
-	--ACTUALIZACION DE LAS RUTAS DE SECUENCIA
-	UPDATE EN_SecuenciaCarpetas
-	SET Ruta = REPLACE(Ruta,@ML_ANTERIOR,@ML_NUEVO)--SE REMPLAZA EL MARCO LEGAL ANTERIOR EN LA RUTA
-	WHERE Ruta LIKE '%' + @ML_ANTERIOR + '%';
-
-	UPDATE EN_SecuenciaCarpetas
-	SET RutaAnterior = REPLACE(Ruta,@ML_ANTERIOR,@ML_NUEVO)--SE REMPLAZA EL MARCO LEGAL ANTERIOR EN LA RUTA
-	WHERE RutaAnterior LIKE '%' + @ML_ANTERIOR + '%';
-
+	WHERE IdMarcoLegal = @IdMarcoLegal;
+	
 END
