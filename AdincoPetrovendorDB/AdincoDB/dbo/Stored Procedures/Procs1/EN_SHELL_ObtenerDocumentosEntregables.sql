@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 30/06/2022 02:56:51 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables]    Script Date: 20/07/2022 01:14:23 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -435,7 +435,7 @@ SET NOCOUNT ON
 		    EtapaId					=	LD.EtapaId, 
 		    ReceptorEntregableId	=	LD.ReceptorEntregableId,
 			MarcoLegalId			=	ML.IdMarcoLegal,
-		    Titulo					=	ISNULL(REPLACE(ML.Alias,'/','-'),ML.MarcoLegaL),		    
+		    Titulo					=	REPLACE(ISNULL(ML.Alias,ML.MarcoLegaL),'/','-'),		    
 		    Nivel					=	3,
 		    Detalle					=	'Marco Legal',
 		    CantidadArchivos		=	COUNT(D.DocumentoEntregableId),
@@ -569,7 +569,7 @@ SET NOCOUNT ON
 		    PozoInstalacionId		=	LD.PozoInstalacionId,
 			EtapaPozoId				=	LD.EtapaPozoId,	
 			MarcoLegalId			=	D.IdMarcoLegal,	    	
-			Titulo					=	REPLACE(ML.MarcoLegal,'/','-'),
+			Titulo					=	REPLACE(ISNULL(ML.Alias,ML.MarcoLegal),'/','-'),
 		    Nivel					=	4,
 		    Detalle					=	'Marco Legal',
 		    CantidadArchivos		=	COUNT(D.DocumentoEntregableId),
@@ -590,7 +590,8 @@ SET NOCOUNT ON
 		    LD.PozoInstalacionId,
 			LD.EtapaPozoId,		    
 			D.IdMarcoLegal,	
-		    ML.MarcoLegal  
+		    ML.MarcoLegal,
+			ML.Alias
 		    ORDER BY ML.MarcoLegal ASC
 
 			--NIVEL 5-A CARPETA DE LA FECHA DE ENTREGA DEL ENTREGABLE AÑO-MES  

@@ -255,7 +255,7 @@ AS
 		join S_Proveedor as p on f.Receptor = p.RFC
 		left join adinco..FI_Factura as fa on f.UUID collate SQL_Latin1_General_CP1_CI_AS = fa.UUID collate SQL_Latin1_General_CP1_CI_AS
 		where f.IdFactura = @IdFactura
-		IF	@ReceptorFactura = 'OBD1708213QA'
+		IF	@ReceptorFactura = 'OBD1708213QA' OR @ReceptorFactura = 'OBT1708213V6'
 		BEGIN
 			UPDATE AX_Pagos
 			SET IdTransferencia = NULL
