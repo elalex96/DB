@@ -335,7 +335,7 @@ AS
           IdMoneda
          )
                 SELECT R.IdRegistro, 
-                       ISNULL(F.UUID, 'N�MERO NO REGISTRADO') AS UUID, 
+                       ISNULL(F.UUID, 'NÚMERO NO REGISTRADO') AS UUID, 
                        F.IdFactura, 
                        R.MontoRegistro,
                        CASE
@@ -348,7 +348,7 @@ AS
                            WHEN(F.TipoComprobante) LIKE '%traslado%'
                                OR F.TipoComprobante LIKE 'T%'
                            THEN 'T'
-                           WHEN(F.TipoComprobante) LIKE '%n�mina%'
+                           WHEN(F.TipoComprobante) LIKE '%nómina%'
                                OR F.TipoComprobante LIKE 'N%'
                            THEN 'N'
                            WHEN(F.TipoComprobante) LIKE '%pago%'
@@ -396,7 +396,7 @@ AS
                       AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
                       AND S.NombreServicio NOT LIKE '%No elegibles%'
                 GROUP BY R.IdRegistro, 
-                         ISNULL(F.UUID, 'N�MERO NO REGISTRADO'), 
+                         ISNULL(F.UUID, 'NÚMERO NO REGISTRADO'), 
                          F.IdFactura, 
                          R.MontoRegistro,
                          CASE
@@ -409,7 +409,7 @@ AS
                              WHEN(F.TipoComprobante) LIKE '%traslado%'
                                  OR F.TipoComprobante LIKE 'T%'
                              THEN 'T'
-                             WHEN(F.TipoComprobante) LIKE '%n�mina%'
+                             WHEN(F.TipoComprobante) LIKE '%nómina%'
                                  OR F.TipoComprobante LIKE 'N%'
                              THEN 'N'
                              WHEN(F.TipoComprobante) LIKE '%pago%'
@@ -793,7 +793,7 @@ WHERE MCF.MetodoPago = 'PUE'
                            SUBSTRING(F.IdDocFacturacionSIPAC, 1, 2) AS [RC21_04],
                            CASE
                                WHEN R.CvTipoDocFacturacion = 1
-                               THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')
+                               THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')
                                ELSE 'NA'
                            END AS [RC21_05], 
                            'NA' AS [RC21_06], 
@@ -898,7 +898,7 @@ WHERE MCF.MetodoPago = 'PUE'
                              SUBSTRING(F.IdDocFacturacionSIPAC, 1, 2),
                              CASE
                                  WHEN R.CvTipoDocFacturacion = 1
-                                 THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')
+                                 THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')
                                  ELSE 'NA'
                              END, 
                              LTRIM(RTRIM(APCNH.id_Actividad)), 
@@ -973,7 +973,7 @@ WHERE MCF.MetodoPago = 'PUE'
                            SUBSTRING(FCP.IdDocFacturacionSIPAC, 1, 2) AS [RC21_04],
                            CASE
                                WHEN R.CvTipoDocFacturacion = 1
-                               THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')
+                               THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')
                                ELSE 'NA'
                            END AS [RC21_05], 
                            'NA' AS [RC21_06], 
@@ -1077,7 +1077,7 @@ WHERE MCF.MetodoPago = 'PUE'
                              SUBSTRING(FCP.IdDocFacturacionSIPAC, 1, 2),
                              CASE
                                  WHEN R.CvTipoDocFacturacion = 1
-                                 THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')
+                                 THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')
                                  ELSE 'NA'
                              END, 
                              LTRIM(RTRIM(APCNH.id_Actividad)), 
@@ -1411,7 +1411,7 @@ WHERE MCF.MetodoPago = 'PUE'
                             SUBSTRING(F.IdDocFacturacionSIPAC, 1, 2) AS [RC21_04],
                             CASE
                                 WHEN R.CvTipoDocFacturacion = 1
-                                THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')
+                                THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')
                                 ELSE 'NA'
                             END AS [RC21_05], 
                             'NA' AS [RC21_06], 
@@ -1513,7 +1513,7 @@ WHERE MCF.MetodoPago = 'PUE'
                               SUBSTRING(F.IdDocFacturacionSIPAC, 1, 2),
                               CASE
                                   WHEN R.CvTipoDocFacturacion = 1
-                                  THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')
+                                  THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')
                                   ELSE 'NA'
                               END, 
                               LTRIM(RTRIM(APCNH.id_Actividad)), 
@@ -1576,7 +1576,7 @@ WHERE MCF.MetodoPago = 'PUE'
                             SUBSTRING(FCP.IdDocFacturacionSIPAC, 1, 2) AS [RC21_04],
                             CASE
                                 WHEN R.CvTipoDocFacturacion = 1
-                                THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')
+                                THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')
                                 ELSE 'NA'
                             END AS [RC21_05], 
                             'NA' AS [RC21_06], 
@@ -1694,7 +1694,7 @@ WHERE MCF.MetodoPago = 'PUE'
                               SUBSTRING(FCP.IdDocFacturacionSIPAC, 1, 2),
                               CASE
                                   WHEN R.CvTipoDocFacturacion = 1
-                                  THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')
+                                  THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')
                                   ELSE 'NA'
                               END, 
                               LTRIM(RTRIM(APCNH.id_Actividad)), 
@@ -2357,7 +2357,7 @@ BEGIN
                             SUBSTRING(F.IdDocFacturacionSIPAC, 1, 2) AS [RC21_04],
                             CASE
                                 WHEN R.CvTipoDocFacturacion = 1
-                                THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')
+                                THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')
                                 ELSE 'NA'
                        END AS [RC21_05], 
                             'NA' AS [RC21_06], 
@@ -2459,7 +2459,7 @@ BEGIN
                               SUBSTRING(F.IdDocFacturacionSIPAC, 1, 2),
                               CASE
                                   WHEN R.CvTipoDocFacturacion = 1
-                                  THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')
+                                  THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')
                                   ELSE 'NA'
                               END, 
                               LTRIM(RTRIM(APCNH.id_Actividad)), 
@@ -2522,7 +2522,7 @@ BEGIN
                             SUBSTRING(FCP.IdDocFacturacionSIPAC, 1, 2) AS [RC21_04],
                             CASE
                                 WHEN R.CvTipoDocFacturacion = 1
-                                THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')
+                                THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')
                                 ELSE 'NA'
                             END AS [RC21_05], 
                             'NA' AS [RC21_06], 
@@ -2640,7 +2640,7 @@ BEGIN
                               SUBSTRING(FCP.IdDocFacturacionSIPAC, 1, 2),
                               CASE
                                   WHEN R.CvTipoDocFacturacion = 1
-                                  THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')
+                                  THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')
                                   ELSE 'NA'
                               END, 
                               LTRIM(RTRIM(APCNH.id_Actividad)), 
