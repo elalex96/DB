@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 19/04/2022 01:48:56 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 26/07/2022 09:48:27 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -22,7 +22,11 @@ GO
 -- Create date: 19/04/2022
 -- Description:	Se agrega a la consulta el dato del No.PO
 -- =============================================
-CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
+-- Author:		Alexander Gomez
+-- Create date: 26/07/2022
+-- Description:	Se agrega el subtotal por partida, moneda y total de la solicitud
+-- =============================================
+ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario INT,
@@ -36,6 +40,28 @@ AS
 		IdPedidoDetalle		int,
 		Cantidad			float
 	)
+
+	CREATE TABLE #TMPDETALLE_PARTIDAS(
+		IdPedidoDetalle INT,
+		IdMaterialVendedor INT,
+		Descripcioncorta VARCHAR(MAX),
+		DescripcionLarga VARCHAR(MAX),
+		CantidadPedido FLOAT,
+		PrecioUnitario FLOAT,
+		SubtotalPedido FLOAT, 
+		CantidadProcesada FLOAT, 		
+		TipoMonedaCorto VARCHAR(10),		
+		Recepcionservicio BIT,		
+		RecepcionPedido BIT,
+		Unidad VARCHAR(100),
+		CantidadRecibida FLOAT,
+		CantidadValida VARCHAR(MAX),
+		Color VARCHAR(100),
+		Subtotal FLOAT
+	);
+
+	DECLARE @TOTAL_SAS FLOAT = 0;
+	DECLARE @MONEDA_SAS VARCHAR(10);
 
      BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -58,7 +84,69 @@ AS
 	   FROM MM_Pedido 
 	   WHERE IdPedido= @IdPedido
     -- Insert statements for procedure here
-	    	
+	    
+		/*PRODUCTOS A ENTREGAR*/
+
+		insert into #tmpCantidadesRecibidad
+		select		apd.IdPedidoDetalle,
+					sum(apd.Cantidad)
+		from		MM_PedidoDetalle			pd
+		inner join	MM_AceptacionPedidoDetalle	apd
+		on			pd.IdPedidoDetalle			=	apd.IdPedidoDetalle
+		inner join	MM_AceptacionPedido			ap
+		on			ap.IdAceptacionPedido		=	apd.IdAceptacionPedido
+		and			ap.IdEliminado				is	null
+		and			apd.IdEliminado				is	null
+		where		pd.IdPedido					=	@IdPedido
+		group by	apd.IdPedidoDetalle
+
+		insert into #TMPDETALLE_PARTIDAS
+		SELECT 		PD.IdPedidoDetalle,
+					PD.IdMaterialVendedor,
+					M.Descripcioncorta,
+					M.DescripcionLarga,
+					PD.Cantidad,
+					PD.PrecioUnitario,
+					PD.Subtotal, 
+					SAPD.Cantidad, 		
+					TM.TipoMonedaCorto,		
+					ISNULL(PD.RecepcionPedido,'false'),		
+					PD.RecepcionPedido,
+					POD.UnidadProveedor,
+					ISNULL(t1.Cantidad,0),
+					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
+					then '' else 'La cantidad solicitada excede el límite del pedido.'
+					end,
+					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
+					then '' else 'bgcolor="#ff685d"'
+					end,
+					(PD.PrecioUnitario * SAPD.Cantidad)
+		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		(NOLOCK)
+		JOIN		MM_PedidoDetalle					PD (NOLOCK)
+		ON			SAPD.IdPedidoDetalle				=	PD.IdPedidoDetalle
+		JOIN		MM_Pedido							P	(NOLOCK)
+		ON			PD.IdPedido							=	P.IdPedido
+		JOIN		MM_Material							M (NOLOCK)
+		ON			PD.IdMaterialVendedor				=	M.IdMaterial 
+		JOIN		MM_PeticionOferta					PO (NOLOCK)
+		ON			PO.IdPeticionOFerta					=	P.IdPeticionOferta		
+		JOIN		MM_PeticionOfertaDetalle			POD (NOLOCK)
+		ON			PO.IdPeticionOferta					=	POD.IdPeticionOferta 
+		AND			POD.IdMaterial						=	PD.IdMaterial
+		AND			PD.IdPeticionOfertaDetalle		=	POD.IdPeticionOfertaDetalle
+		JOIN		MM_SolicitudPedidoDetalle			SPD (NOLOCK)
+		ON			SPD.IdSolicitudPedidoDetalle		=	POD.IdSolicitudPedidoDetalle		
+		JOIN		PV_TipoMoneda						TM (NOLOCK)
+		ON			TM.IdMoneda							=	PD.IdMoneda
+		LEFT join	#tmpCantidadesRecibidad				t1
+		on			t1.IdPedidoDetalle					=	PD.IdPedidoDetalle		
+		WHERE		P.IdProveedorCompras				=	@IdProveedor 		
+		AND			P.IdPedido							=	@IdPedido
+		AND			SAPD.IdSolicitudAceptacionPedido	=	@IdSolicitudAceptacionPedido
+		ORDER BY	M.Descripcioncorta ASC
+
+		SET @TOTAL_SAS = (SELECT SUM(Subtotal) FROM #TMPDETALLE_PARTIDAS);
+		SET @MONEDA_SAS = (SELECT TOP 1 TipoMonedaCorto FROM #TMPDETALLE_PARTIDAS);
 						
 	   /*TABLA 1 ENCABEZADO*/
 	   BEGIN       
@@ -83,7 +171,9 @@ AS
 		 ISNULL(SAP.IdAceptacionPedido,0) AS IdAceptacionPedido ,
 		 SR.Nombre AS  SolicitanteRequisicion,
 		 PG.IdTipoPedido,
-		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,PO.PO),'SIN PO RELACIONADO') AS NoPO
+		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,PO.PO),'SIN PO RELACIONADO') AS NoPO,
+		 @TOTAL_SAS AS TOTAL_SAS,
+		 @MONEDA_SAS AS MONEDA_SAS
 		 FROM MM_SolicitudAceptacionPedido SAP
 		 JOIN TA_Operacion O 
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
@@ -140,64 +230,8 @@ AS
 	  
 	  /*TABLA 2 PRODUCTOS*/
 	   BEGIN     
-	    /*PRODUCTOS A ENTREGAR*/
 
-		insert into #tmpCantidadesRecibidad
-		select		apd.IdPedidoDetalle,
-					sum(apd.Cantidad)
-		from		MM_PedidoDetalle			pd
-		inner join	MM_AceptacionPedidoDetalle	apd
-		on			pd.IdPedidoDetalle			=	apd.IdPedidoDetalle
-		inner join	MM_AceptacionPedido			ap
-		on			ap.IdAceptacionPedido		=	apd.IdAceptacionPedido
-		and			ap.IdEliminado				is	null
-		and			apd.IdEliminado				is	null
-		where		pd.IdPedido					=	@IdPedido
-		group by	apd.IdPedidoDetalle
-
-		SELECT 		PD.IdPedidoDetalle,
-					PD.IdMaterialVendedor,
-					Descripcioncorta					=	M.Descripcioncorta,
-					M.DescripcionLarga,
-					CantidadPedido						=	PD.Cantidad,
-					PD.PrecioUnitario,
-					PD.Subtotal, 
-					CantidadProcesada					=	SAPD.Cantidad, 		
-					TM.TipoMonedaCorto,		
-					Recepcionservicio					=	ISNULL(PD.RecepcionPedido,'false'),		
-					PD.RecepcionPedido,
-					Unidad								=	POD.UnidadProveedor,
-					CantidadRecibida					=	ISNULL(t1.Cantidad,0),
-					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
-					then '' else 'La cantidad solicitada excede el límite del pedido.'
-					end as 
-					CantidadValida,
-					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
-					then '' else 'bgcolor="#ff685d"'
-					end as Color
-		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		(NOLOCK)
-		JOIN		MM_PedidoDetalle					PD (NOLOCK)
-		ON			SAPD.IdPedidoDetalle				=	PD.IdPedidoDetalle
-		JOIN		MM_Pedido							P	(NOLOCK)
-		ON			PD.IdPedido							=	P.IdPedido
-		JOIN		MM_Material							M (NOLOCK)
-		ON			PD.IdMaterialVendedor				=	M.IdMaterial 
-		JOIN		MM_PeticionOferta					PO (NOLOCK)
-		ON			PO.IdPeticionOFerta					=	P.IdPeticionOferta		
-		JOIN		MM_PeticionOfertaDetalle			POD (NOLOCK)
-		ON			PO.IdPeticionOferta					=	POD.IdPeticionOferta 
-		AND			POD.IdMaterial						=	PD.IdMaterial
-		AND			PD.IdPeticionOfertaDetalle		=	POD.IdPeticionOfertaDetalle
-		JOIN		MM_SolicitudPedidoDetalle			SPD (NOLOCK)
-		ON			SPD.IdSolicitudPedidoDetalle		=	POD.IdSolicitudPedidoDetalle		
-		JOIN		PV_TipoMoneda						TM (NOLOCK)
-		ON			TM.IdMoneda							=	PD.IdMoneda
-		LEFT join	#tmpCantidadesRecibidad				t1
-		on			t1.IdPedidoDetalle					=	PD.IdPedidoDetalle		
-		WHERE		P.IdProveedorCompras				=	@IdProveedor 		
-		AND			P.IdPedido							=	@IdPedido
-		AND			SAPD.IdSolicitudAceptacionPedido	=	@IdSolicitudAceptacionPedido
-		ORDER BY	M.Descripcioncorta ASC
+		SELECT * FROM #TMPDETALLE_PARTIDAS;
 
 		
 	  END 
@@ -447,4 +481,6 @@ AS
          WHERE  D.IdDocumentoTabla=@IdSolicitudAceptacionPedido
 		 AND D.Activo=1 
 		 AND D.IdTipoDocumento = @IdDocumentoProforma
+
+		 
 END
