@@ -12,6 +12,9 @@
 -- Modificado:	Manuel Cruz
 -- Create date: 2021-09-21
 -- Description:	Ajuste para contratos de carso (10047-CS04,10048-CS05), reporte para mostrar los gastos pagados en el mes del reporte sin considerar el complemento de pago
+-- Modificado:	Manuel Cruz
+-- Create date: 2021-10-19
+-- Description:	Agregar delete a tablas temporales entre la consulta general y la consulta para carso
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_CNH_FormatoPlanes_Inversion_2019]
 --exec[SP_CNH_FormatoPlanes_Inversion_2019] 10036,1,'2019-12-01',10058
@@ -87,7 +90,7 @@ AS
          --MOExt                   FLOAT, 
          --BiNac                   FLOAT, 
          --BiExt                   FLOAT, 
-         --SerNac                  FLOAT, 
+ --SerNac                  FLOAT, 
          --SerExt                  FLOAT, 
          --CapNac                  FLOAT, 
          --CapExt                  FLOAT, 
@@ -458,7 +461,7 @@ BEGIN
                        CP.FormaDePagoP AS FormaPagoCP, 
                        SUM(CPDR.ImpPagado) AS MontoCP, 
                        TCD.TipoCambio AS TipoCambioCP, 
-                       CP.MonedaP AS MonedaCP, 
+             CP.MonedaP AS MonedaCP, 
                        CAST(SUM(CPDR.ImpPagado) AS DECIMAL(15, 2)) AS MontoPesos, 
                        CAST(SUM(CASE
                                     WHEN TM.IdMoneda = 1
@@ -586,7 +589,11 @@ BEGIN
 							F.TipoComprobante, 
 							CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2)), 
 							#Facturas.IdRegistro;
-         --PUE
+      --PUE
+
+IF OBJECT_ID('tempdb..#SumaDePagosDolares', 'U') IS NOT NULL
+DROP TABLE #SumaDePagosDolares;
+
          SELECT Con.UUID, 
                 Con.Idfactura, 
                 Con.TipoComprobante, 
@@ -660,7 +667,7 @@ BEGIN
                                                                         AND DAY(TCD.Fecha) = DAY(T.FechaPago)
                                                                         AND MONTH(TCD.Fecha) = MONTH(T.FechaPago)
                                                                         AND YEAR(TCD.Fecha) = YEAR(T.FechaPago)
-             WHERE MCF.MetodoPago = 'PUE'
+WHERE MCF.MetodoPago = 'PUE'
                    AND TCD.IdMoneda <> F.IdMoneda
          ) AS Con
          GROUP BY Con.UUID, 
@@ -746,7 +753,7 @@ BEGIN
                        [RC21_00], 
                        [RC21_01], 
                        [RC21_02], 
-                       ROW_NUMBER() OVER(ORDER BY [RC21_11] ASC) AS [RC21_03], 
+          ROW_NUMBER() OVER(ORDER BY [RC21_11] ASC) AS [RC21_03], 
                        [RC21_04], 
                        [RC21_05], 
                        [RC21_06], 
@@ -827,7 +834,7 @@ BEGIN
                                THEN 2
                                ELSE 2
                            END AS [RC21_21],
-                           CASE
+                  CASE
                                WHEN ISNULL(TTF.MontoRegistro, 0) <> 0
                                     AND TTF.TipoComprobante IN('I', 'N', 'P')
                                THEN TTF.RC2122
@@ -1026,7 +1033,7 @@ BEGIN
                                THEN 1
                                ELSE 2
                            END AS [RC21_26], 
-                           S.IdServicio, 
+              S.IdServicio, 
                            P.IdProgramaActividad, 
                            AC.Inicio, 
                            R.MesPresentacion
@@ -1352,7 +1359,7 @@ BEGIN
                      JOIN dbo.CO_ProgramaActividad PA WITH(NOLOCK) ON H21.IdProgramaActividad = PA.IdProgramaActividad
                      JOIN dbo.CO_TipoProgramaActividad TPA WITH(NOLOCK) ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad
                      JOIN dbo.CO_ActSubTareaPetroleraCNH ASTP WITH(NOLOCK) ON AP.IdActividadPetrolera = ASTP.IdActividadPetrolera
-                                                                              AND SAP.IdSubactividadPetrolera = ASTP.IdSubactividadPetrolera
+                                                                            AND SAP.IdSubactividadPetrolera = ASTP.IdSubactividadPetrolera
                                                                               AND TP.IdTareaPetrolera = ASTP.IdTareaPetrolera;
 
          /*HOJA 21 CGI para que den el mismo resultado a partir de Diciembre 2019*/
@@ -1555,7 +1562,7 @@ BEGIN
                              S.IdServicio, 
                              P.IdProgramaActividad, 
                              AC.Inicio, 
-                             R.MesPresentacion
+     R.MesPresentacion
                     --
                     UNION
                     --
@@ -1625,7 +1632,7 @@ BEGIN
                             CASE WHEN TTF.TipoCambioCP = 1
 								 THEN 'USD'
 								 ELSE 'MXN'
-						    END AS [RC21_24], --TM.TipoMonedaCorto AS [RC21_24], 
+						   END AS [RC21_24], --TM.TipoMonedaCorto AS [RC21_24], 
                             TTF.TipoCambioCP AS [RC21_25],
                             CASE
                                 WHEN ISNULL(RE.IdRelacionada, 2) <> 2
@@ -1677,7 +1684,7 @@ BEGIN
                          FROM dbo.FI_ControlPPDComplementos ControlF
                          WHERE ControlF.IdContrato = @IdContrato
                      )
-                          AND P.IdProgramaActividad = @IdProgramaActividad
+                   AND P.IdProgramaActividad = @IdProgramaActividad
                      GROUP BY LTRIM(RTRIM(CON.IDSIPAC)), 
                               LTRIM(RTRIM(C.IDRegFiducidiario)), 
                               C.NumeroContrato, 
@@ -1825,7 +1832,7 @@ BEGIN
                     FROM dbo.FI_Transfer TR WITH(NOLOCK)
                          JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TR.IdTransferencia = TF.IdTransfer
                          JOIN dbo.FI_PedimentoComprobante PC WITH(NOLOCK) ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante
-                                                                             AND PC.IdContrato = TR.IdContrato
+     AND PC.IdContrato = TR.IdContrato
                          JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdPedimentoComprobante = PC.IdPedimentoComprobante
                          JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
                          JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
@@ -1874,7 +1881,7 @@ BEGIN
                                  WHEN R.CvTipoDocFacturacion = 2
                                  THEN 'NA'
                                  WHEN R.CvTipoDocFacturacion = 3
-                                 THEN PC.IdDocFacturacionSIPAC
+   THEN PC.IdDocFacturacionSIPAC
                              END, 
                              LTRIM(RTRIM(APCNH.id_Actividad)), 
                              LTRIM(RTRIM(SP.[id_Sub-actividad])), 
@@ -1959,13 +1966,29 @@ BEGIN
                      JOIN dbo.CO_ActSubTareaPetroleraCNH ASTP WITH(NOLOCK) ON AP.IdActividadPetrolera = ASTP.IdActividadPetrolera
                                                                               AND SAP.IdSubactividadPetrolera = ASTP.IdSubactividadPetrolera
                                                                               AND TP.IdTareaPetrolera = ASTP.IdTareaPetrolera;
+
 END
 /*
 Termina reporte general
 Comienza ajuste para Carso
 */
+
 IF(@IdContrato = 10047 OR @IdContrato = 10048)
 BEGIN
+
+           --Se eliminan datos de las tablas temporales
+             DELETE #DATOS;
+             DELETE #PIVOT;
+             DELETE #RESULTADO;
+             --DELETE #uuidNoReportar;
+             --DELETE #Facturas;
+             DELETE #MontosTotalTransferenciaPPD;
+             DELETE #MontosTotalTransferenciaPUE;
+             DELETE #MontosConvertidosPedimentosCom;
+             --DELETE #CGIantes;
+             --DELETE #CGIdespues;
+             --DELETE #CGICarso;
+
          /*Facturas Con Tipo de Cambio de Transferencia*/
 		 --PPD
          INSERT INTO #MontosTotalTransferenciaPPD
@@ -2122,6 +2145,10 @@ BEGIN
 							#Facturas.IdRegistro,
 							T.FechaPago
          --PUE normales y PPD directo sin complemento de pago
+
+         IF OBJECT_ID('tempdb..#SumaDePagosDolaresCarso', 'U') IS NOT NULL
+             DROP TABLE #SumaDePagosDolaresCarso;
+
          SELECT Con.UUID, 
                 Con.Idfactura, 
                 Con.TipoComprobante, 
@@ -2163,7 +2190,7 @@ BEGIN
              --
              UNION
              --
-             SELECT DISTINCT 
+           SELECT DISTINCT 
                     MCF.UUID, 
                     MCF.Idfactura, 
                     MCF.TipoComprobante,
@@ -2256,7 +2283,7 @@ BEGIN
                                THEN CAST(ROUND((ISNULL(R.MontoRegistro, 0) / TCDP.TipoCambio), 2) AS DECIMAL(15, 2))
                                ELSE 0
                            END) AS [RC21_22], 
-                       TCDP.TipoCambio,
+    TCDP.TipoCambio,
 					   T.FechaPago
                 FROM dbo.CO_Registro R WITH(NOLOCK)
                      JOIN dbo.FI_PedimentoComprobante P WITH(NOLOCK) ON P.IdPedimentoComprobante = R.IdPedimentoComprobante
@@ -2332,7 +2359,7 @@ BEGIN
                                 WHEN R.CvTipoDocFacturacion = 1
                                 THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')
                                 ELSE 'NA'
-                            END AS [RC21_05], 
+                       END AS [RC21_05], 
                             'NA' AS [RC21_06], 
                             'NA' AS [RC21_07], 
                             TTF.TipoComprobante AS [RC21_08], 
@@ -2581,7 +2608,7 @@ BEGIN
                          JOIN dbo.CO_Servicio S WITH(NOLOCK) ON S.IdServicio = LPM.IdServicio
                                                                 AND C.IdContrato = S.IdContrato
                          LEFT JOIN dbo.PD_Campo CPO WITH(NOLOCK) ON I.IdCampo = CPO.IdCampo
-                         LEFT JOIN dbo.CO_Yacimiento Y WITH(NOLOCK) ON CPO.IdYacimiento = Y.IdYacimiento
+                       LEFT JOIN dbo.CO_Yacimiento Y WITH(NOLOCK) ON CPO.IdYacimiento = Y.IdYacimiento
                          LEFT JOIN dbo.CO_CatalogoCuentaSH CC WITH(NOLOCK) ON CC.IdCatalogoCuentasSH = R.IdCatalogoCuentasSH
                          LEFT JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON F.IdMoneda = TM.IdMoneda
                          LEFT JOIN dbo.CO_RelacionEmpresas RE WITH(NOLOCK) ON RE.IdContratista = CON.IdContratista
@@ -2649,7 +2676,7 @@ BEGIN
                               CASE
                                   WHEN ISNULL(RE.IdRelacionada, 2) <> 2
                                   THEN 1
-                                  ELSE 2
+                        ELSE 2
                               END, 
                               FCP.TipoComprobante,
                               CC.Nivel3, 
@@ -2775,7 +2802,7 @@ BEGIN
                           AND R.IdEstado = 10004
                           AND R.CvTipoDocFacturacion IN(2, 3)
                          AND ISNULL(CONVERT(INT, PC.ProcesadoSIPAC), 0) = 0
-                         AND S.NombreServicio NOT LIKE '%No elegibles%'
+               AND S.NombreServicio NOT LIKE '%No elegibles%'
                          AND P.IdProgramaActividad = @IdProgramaActividad
                     GROUP BY LTRIM(RTRIM(CON.IDSIPAC)), 
                              LTRIM(RTRIM(C.IDRegFiducidiario)), 
@@ -2950,7 +2977,7 @@ Termina ajuste para Carso
          INSERT INTO #RESULTADO
                 SELECT IdTipoProgramaActividad, 
                        IdActividadPetrolera, 
-                       IdSubactividadPetrolera, 
+           IdSubactividadPetrolera, 
                        IdTareaPetrolera, 
                        IdServicio, 
                        SUM(ISNULL([1], 0)), 
@@ -3022,6 +3049,8 @@ Termina ajuste para Carso
                          IdServicio;
 
          /*SUMA DEL TOTAL ACUMULADO*/
+         IF OBJECT_ID('tempdb..#tmpResultFinal', 'U') IS NOT NULL
+             DROP TABLE #tmpResultFinal;
 
          SELECT UPPER(dbo.RemoverAcentos(TPA.TipoPrograma)) AS TipoPrograma, 
                 UPPER(dbo.RemoverAcentos(LTRIM(AP.id_Actividad)+' '+LTRIM(AP.DescripcionActividadPetrolera))) AS DescripcionActividadPetrolera, 
@@ -3053,7 +3082,8 @@ Termina ajuste para Carso
                 R.MONAC23, 
                 R.MONAC24, 
                 R.MONAC25, 
-                FORMAT((R.MONAC01 + R.MONAC02 + R.MONAC03 + R.MONAC04 + R.MONAC05 + R.MONAC06 + R.MONAC07 + R.MONAC08 + R.MONAC09 + R.MONAC10 + R.MONAC11 + R.MONAC12 + R.MONAC13 + R.MONAC14 + R.MONAC15 + R.MONAC16 + R.MONAC17 + R.MONAC18 + R.MONAC19 + R.MONAC20 + R.MONAC21 + R.MONAC22 + R.MONAC23 + R.MONAC24 + R.MONAC25), '#,#0.0000') AS Total, 
+                FORMAT((R.MONAC01 + R.MONAC02 + R.MONAC03 + R.MONAC04 + R.MONAC05 + R.MONAC06 + R.MONAC07 + R.MONAC08 + R.MONAC09 + R.MONAC10 + R.MONAC11 + R.MONAC12 + R.MONAC13 + R.MONAC14 + R.MONAC15 + R.MONAC16 + R.MONAC17 + R.MONAC18 + R.MONAC19 + R.
+MONAC20 + R.MONAC21 + R.MONAC22 + R.MONAC23 + R.MONAC24 + R.MONAC25), '#,#0.0000') AS Total, 
                 TPA.IdTipoProgramaActividad, 
                 AP.IdActividadPetrolera, 
                 SAP.IdSubactividadPetrolera, 
@@ -3116,7 +3146,8 @@ Termina ajuste para Carso
          ORDER BY TipoPrograma, 
                   DescripcionActividadPetrolera, 
                   SubactividadPetrolera, 
-                  TareaPetrolera;
+                  TareaPetrolera,
+				  NombreServicio
 
 		-- RETORNA LOS MESES EN FORMA DE LISTA DESDE LA FECHA INICIO HASTA LA FECHA FIN
 	SET Language 'Spanish';
@@ -3134,6 +3165,6 @@ Termina ajuste para Carso
 	from months
 	where DATEADD(month, 1, date) < @end
 	)
-	select     CONCAT(DATENAME(mm, date), '-' , DATEPART(yy, date)) as Meses
+	select     CONCAT(UPPER(DATENAME(mm, date)), '-' , DATEPART(yy, date)) as Meses
 	from months
 END;
