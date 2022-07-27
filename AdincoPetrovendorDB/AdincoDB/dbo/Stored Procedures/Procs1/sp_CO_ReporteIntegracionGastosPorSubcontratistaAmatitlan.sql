@@ -1,13 +1,4 @@
-﻿USE Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan'
-)
-    DROP PROCEDURE sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan
-GO
-CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan]      
+﻿CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan]      
     @Anio INT = 0,
     @Mes INT = 0,
     @IdPresupuesto INT = 0
