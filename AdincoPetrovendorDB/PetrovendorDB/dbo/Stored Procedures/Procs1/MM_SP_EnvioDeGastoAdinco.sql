@@ -1,6 +1,9 @@
-﻿USE Petrovendor
+USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS MM_SP_EnvioDeGastoAdinco
+/****** Object:  StoredProcedure [dbo].[MM_SP_EnvioDeGastoAdinco]    Script Date: 28/07/2022 04:06:10 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- Author:  <DANIEL AC>  
 -- Create date: 01/10/2019  
@@ -22,7 +25,11 @@ GO
 -- Create date: <15/06/2022>
 -- Description:	<Se valida si la factura es de Murphy para así agregar la linea presupuesto 241612 (Issue #1865 Petrovendor)>
 -- =============================================
-CREATE PROCEDURE [dbo].[MM_SP_EnvioDeGastoAdinco]
+-- Author:		<Alexander Gomez>
+-- Create date: <28/07/2022>
+-- Description:	<Se agrega la cuenta de sector de hidrocarburos para amatitlan (Issue#1954)>
+-- =============================================
+ALTER PROCEDURE [dbo].[MM_SP_EnvioDeGastoAdinco]
 @idFacturaP INT,
 @IdFacturaAdinco INT,
 /*--------------------parametros contrato  --------------------*/
@@ -39,7 +46,9 @@ BEGIN
             @Cuenta INT,
             @XMLAdinco INT,
             @XMLPetrovendor INT,
-            @EstatusAprobacionFactura INT;
+            @EstatusAprobacionFactura INT,
+			@IdCatalogoCuentasSH_Amatitlan INT;
+
 	DECLARE @RFC VARCHAR(300) = (SELECT TOP 1 CTA.RFC FROM Adinco..CO_CONTRATO AS CTO
 									JOIN ADINCO..CO_CONTRATISTA AS CTA
 										ON CTO.IDCONTRATISTA = CTA.IDCONTRATISTA 
@@ -96,6 +105,16 @@ BEGIN
 			--SE COMPARA EL RFC(AMATITLÁN) PARA CLASIFICAR SU GASTO EN EL MES PRESENTACIÓN CORRIENTE
 			IF @RFC = 'PAM140722DK6'
 			BEGIN
+
+				SET @IdCatalogoCuentasSH_Amatitlan = (SELECT TOP 1
+															IdCatalogoCuentasSH
+														FROM Adinco..CO_CatalogoCuentaSH AS CCH
+															JOIN Adinco..CO_VersionCatalogoCuentasSH AS VCCH
+																ON CCH.IdVersion = VCCH.IdVersion
+														WHERE VCCH.Activo = 1	
+															AND CCH.Descripcion = 'Gastos pre operativos' 
+															AND CCH.Nivel2 = '1302.001');
+
 				INSERT INTO Adinco.dbo.CO_Registro
 				(
 					IdPrograma,
@@ -135,7 +154,7 @@ BEGIN
 					   @IdUsuario,
 					   GETDATE(),
 					   pr.IdInstalacion,
-					   pr.IdCatalogoCuentasSH,
+					   @IdCatalogoCuentasSH_Amatitlan,
 					   1,
 					   1,
 					   pr.CostosAtribuiblesAdministracion,
@@ -156,6 +175,9 @@ BEGIN
 			END
 			ELSE
 			BEGIN -- SI NO ES AMATITLAN SIGUE SU CURSO NORMAL
+
+				
+
 				INSERT INTO Adinco.dbo.CO_Registro
 				(
 					IdPrograma,
