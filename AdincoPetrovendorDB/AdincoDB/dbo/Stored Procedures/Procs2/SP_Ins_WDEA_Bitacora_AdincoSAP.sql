@@ -1,22 +1,11 @@
-﻿USE PETROVENDOR
+﻿USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
+/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 26/07/2022 02:16:05 p. m. ******/
+SET ANSI_NULLS ON
 GO
--- Author:		<Ramón Portales>
--- Create date: <>
--- Description:	<>
--- =============================================
--- Author:		<Luis David>
--- Create date: <08/11/2021>
--- Description:	<Se agrega el tipo de idcatalogomaestro 3 (Bien)>
--- =============================================
--- Author:		<Luis David>
--- Create date: <01/03/2022>
--- Description:	<Se cambia la lógica de obtención de IdProveedor mediante el Supplyer plant Issue#1650(Petro)>
--- =============================================
-DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
+SET QUOTED_IDENTIFIER ON
 GO
-create proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]
+ALTER proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
 (
 	@IdBitacoraLectura		int
 )
@@ -56,7 +45,7 @@ begin
 			Order_Price_Unit		nvarchar(5)		NULL,
 			Net_Order_Value			float			NULL,
 			Requisitioner			nvarchar(100)	NULL,
-			Terminos_Pago			float			NULL,
+			Terminos_Pago			VARCHAR(30)			NULL,
 			Justificacion			nvarchar(max)	NULL,
 			Pais					nvarchar(5)		null,
 			Contrato				nvarchar(5)		null,
@@ -198,7 +187,7 @@ begin
 				Order_Price_Unit,
 				Net_Order_Value			=	case when isnumeric(Net_Order_Value) = 1 then cast(replace(Net_Order_Value,',','') as float) else null end  ,--case when len(Net_Order_Value)			= 0 then cast(replace(Net_Order_Value,',','') as float)	end,
 				Requisitioner			=	case when len(Requisitioner)			= 0 then null else Requisitioner									end,
-				Terminos_Pago			=	case when len(Terminos_Pago)			> 0 then (case when isnumeric(Terminos_Pago) =1 then cast(Terminos_Pago as float) else null end )								end,
+				Terminos_Pago			=	CAST(Terminos_Pago AS varchar),
 				Justificacion			=	case when len(Justificacion)			= 0 then null else Justificacion									end,
 				Pais					=	substring(WBS_Element,0,3),
 				Contrato				=	substring(WBS_Element,4,3),
@@ -425,8 +414,8 @@ begin
 
 			--select * from #tmpData
 
-			insert into #tmpErrores
-			select Id, 'V', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontraron términos de pago en la Celda V, fila '+cast(Id as varchar(10))+'.',1  from #tmpData where len(Terminos_Pago) = 0 or (len(Terminos_Pago) > 0 and CAST(Terminos_Pago as VARCHAR(10)) LIKE '%.%' ) order by Id
+			--insert into #tmpErrores
+			--select Id, 'V', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontraron términos de pago en la Celda V, fila '+cast(Id as varchar(10))+'.',1  from #tmpData where len(Terminos_Pago) = 0 or (len(Terminos_Pago) > 0 and CAST(Terminos_Pago as VARCHAR(10)) LIKE '%.%' ) order by Id
 
 			/*Justificacion*/
 			insert into #tmpErrores 
@@ -538,7 +527,7 @@ begin
 						NET_ORDER_VALUE,	REQUISITIONER,		IDUSUARIOSOLICITANTE,	TERMINOS_DE_PAGO,	JUSTIFICACION, IdBitacora)
 		select   @IdBitacoraLectura, Item,    Purch_Organization,  PO.IdContrato, CC.idcentrocosto, T1.WBS_Element, lpm.IdLineaPresupuestoMes, OUTLINE_AGREEMENT,   Short_Text,  mat.IdMaterial,   Validity_Per_Start, Validity_Period_End,Deletion_Indicador,  
 		Plant,    Order_Quantity,  Order_Unit,    u.IdUnidad,   Net_Price,  Currency,  IdMoneda,     Vendor_Supplying_Plant,  p.IdProveedor, Purchasing_Document, Release_State,  Name_of_Vendor,  Order_Price_Unit,   
-		Net_Order_Value, Requisitioner,  re.IdUsuario,   Terminos_Pago,  Justificacion, @IdBitacoraLectura  
+		Net_Order_Value, Requisitioner,  re.IdUsuario,   ISNULL(TCC.DiasCredito,0),  Justificacion, @IdBitacoraLectura  
 		from		#tmpData						t1
 		inner join	PurchaseOrganization			po
 		on			t1.Contrato						=		po.siglas COLLATE SQL_Latin1_General_CP1_CI_AS
@@ -566,6 +555,8 @@ begin
 	    JOIN		CC_CentroCosto					CC 
 	    ON			WDCC.IdCentroCostosADINCO		=			CC.IdCentroCosto 
 	    AND			WDCC.Activo						=			1
+		LEFT JOIN   WDEA_SAP_TerminosCondiciones	TCC
+		ON			t1.Terminos_Pago COLLATE SQL_Latin1_General_CP1_CI_AS = TCC.Clabe
 		WHERE		t2.RowId						is	null
 		and			t3.OC							is	null
 		and			isnull(p.IsEliminado,0)					=	0
@@ -573,6 +564,7 @@ begin
 		and			t1.Short_Text					is not null
 		and			t1.Order_Unit					is not null
 		and			p.Activo						= 1
+		and			t1.Terminos_Pago				IS NOT NULL
 		INSERT INTO PendientesProcesarProcura_WSDEA
 		(
 			IdBitacora

@@ -10647,6 +10647,12 @@
     <Build Include="dbo\Stored Procedures\Procs2\DEA_SP_ConsultaSASxPedidoId.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\DEA_SP_ConsultarDetalleTimeline.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\DEA_SP_ConsultaPedidos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_CotizacionAutomatico_WDEA.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevoPedidoAutomatico_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_ProcesamientoSAP_Procura.sql" />
+    <Build Include="dbo\Tables\WDEA_SAP_TerminosCondiciones.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
