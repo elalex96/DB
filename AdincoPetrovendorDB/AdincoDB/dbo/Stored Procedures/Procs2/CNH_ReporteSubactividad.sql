@@ -1,5 +1,4 @@
-﻿-- CNH_ReporteSubactividad 10038,'20210101','20211231'
-CREATE PROC CNH_ReporteSubactividad
+﻿CREATE PROC [dbo].[CNH_ReporteSubactividad]
 @pIdContrato INT,
 @pDel DATETIME,
 @pAl DATETIME
@@ -24,6 +23,12 @@ CREATE TABLE #TMPPedimentos(IdPedimientoComprobante INT,		ImporteTotalMXN decima
 
 CREATE TABLE #TMPTransferenciasFactura_Pagos(IdFactura INT,ImporteTotal decimal(14,3),FechaPago DATETIME NULL,EsComplemento BIT,IdPedimento INT NULL,IdMoneda INT , ImporteOriginal decimal(14,3))
 
+CREATE TABLE #TRANSFERENCIA
+         (IdTransfer INT, 
+          UUID       VARCHAR(500),
+		  MetodoPago VARCHAR(500)
+         );
+
 --UNIVERSO DE GASTOS A CONSIDERAR EN LA CONSULTA
 INSERT INTO #TMP_Gastos(IdGasto,IdPedimento,IdFactura)
 SELECT IdRegistro,CO_Registro.IdPedimentoComprobante,CO_Registro.IdFactura
@@ -42,7 +47,7 @@ INSERT INTO #TMP_Facturas(IdFactura,		IdSubcontratista,		MontoConIVAMXN,			UUID,
 						Moneda)
 SELECT 	FI_Factura.IdFactura,			FI_Factura.IdSubcontratista,		
 		CASE WHEN PV_TipoMoneda.TipoMonedaCorto = 'USD' THEN FI_Factura.MontoConIva * CO_TipoCambioDiario.TipoCambio ELSE FI_Factura.MontoConIva END,				
-		FI_Factura.UUID,				[FI_CFDIMetodoPago].Concepto,	FI_Factura.MetodoPago,		COUNT(distinct FI_ComplementoDePago.IdFactura),	
+		FI_Factura.UUID, NULL,	FI_Factura.MetodoPago,		COUNT(distinct FI_ComplementoDePago.IdFactura),	
 		MAX([FI_CFDIRelacionados].NoParcialidad),			MAX(FC.UUID),	FI_Factura.IdMoneda,	FI_Factura.Fecha,	FI_Factura.MontoConIva,
 		PV_TipoMoneda.TipoMonedaCorto
 FROM #TMP_Gastos
@@ -58,7 +63,9 @@ LEFT JOIN CO_TipoCambioDiario ON CO_TipoCambioDiario.IdMoneda = 1 AND--MXN
 group by FI_Factura.IdFactura,			FI_Factura.IdSubcontratista,		FI_Factura.MontoConIva,
 		FI_Factura.UUID,				[FI_CFDIMetodoPago].Concepto,		FI_Factura.MetodoPago,					
 		CO_TipoCambioDiario.TipoCambio,	PV_TipoMoneda.TipoMonedaCorto,		FI_Factura.IdMoneda,		
-		FI_Factura.Fecha				
+		FI_Factura.Fecha			
+
+
 
 
 --OBTENER INFORMACIÓN PRINCIPAL DE PEDIMENTOS
@@ -145,7 +152,63 @@ LEFT JOIN CO_TipoCambioDiario ON CO_TipoCambioDiario.IdMoneda = 1 AND--MXN
 GROUP BY FI_TransferFactura.IdPedimentoComprobante
 
 
+		INSERT INTO #TRANSFERENCIA
+         (IdTransfer, 
+          UUID,
+		  MetodoPago
+         )
+                SELECT FI_Transfer.IdTransferencia, 
+                        SUBSTRING(LTRIM(RTRIM(ff.UUID)), 1, 500),
+						PV_MetodoPago.MetodoPago
+                FROM 
+					dbo.FI_Transfer	(NOLOCK)
+				LEFT JOIN 
+					dbo.FI_TransferFactura TF	(NOLOCK)
+					ON TF.IdTransfer = FI_Transfer.IdTransferencia
+					AND	FI_Transfer.IdContrato = @pIdContrato
+                LEFT JOIN 
+					dbo.FI_Factura ff	(NOLOCK)
+					ON tf.IdFactura = ff.IdFactura
+				LEFT JOIN PV_MetodoPago ON PV_MetodoPago.idMetodoPago = FI_Transfer.IdMetodoPago
+                WHERE 
+					FI_Transfer.IdContrato = @pIdContrato
+                    AND TF.IdTransfer IS NOT NULL
+                GROUP BY 
+					FI_Transfer.IdTransferencia, 
+                    SUBSTRING(LTRIM(RTRIM(ff.UUID)), 1, 500),
+					PV_MetodoPago.MetodoPago
 
+		INSERT INTO #TRANSFERENCIA
+         (IdTransfer, 
+          UUID,
+		  MetodoPago
+         )
+                SELECT FI_Transfer.IdTransferencia, 
+                       SUBSTRING(LTRIM(RTRIM(fcr.IdDocumento)), 1, 500),
+					   PV_MetodoPago.MetodoPago
+                FROM 
+					dbo.FI_Transfer (NOLOCK)
+                LEFT JOIN 
+					dbo.FI_TransferFactura TF	(NOLOCK)
+					ON TF.IdTransfer = FI_Transfer.IdTransferencia
+					AND	FI_Transfer.IdContrato = @pIdContrato
+                LEFT JOIN 
+					dbo.FI_Factura ff	(NOLOCK)
+					ON tf.IdFactura = ff.IdFactura
+                JOIN 
+					dbo.FI_ComplementoDePago cp	(NOLOCK)
+					ON cp.IdFactura = ff.IdFactura
+                JOIN 
+					dbo.FI_CPDocRelacionado fcr	(NOLOCK)
+					ON fcr.IdComplementoDePago = cp.IdComplementoDePago
+				LEFT JOIN PV_MetodoPago ON PV_MetodoPago.idMetodoPago = FI_Transfer.IdMetodoPago
+                WHERE 
+					FI_Transfer.IdContrato = @pIdContrato
+                    AND TF.IdTransfer IS NOT NULL
+                GROUP BY 
+					FI_Transfer.IdTransferencia, 
+                    SUBSTRING(LTRIM(RTRIM(fcr.IdDocumento)), 1, 500),
+					PV_MetodoPago.MetodoPago
 
 --RESULTADO FINAL
 SELECT 
@@ -159,7 +222,7 @@ Concepto  = CO_Registro.Comentarios,
 RFCEmisor = CASE WHEN #TMPPedimentos.IdSubcontratista IS NOT NULL THEN PV_Subcontratista_Pedimento.RazonSocial 
 				ELSE ISNULL(PV_Subcontratista.RFC,PV_Subcontratista.RazonSocial) 
 			END,
-NaturalezaEmisor = 'Misma empresa',
+NaturalezaEmisor = 'Tercero',
 ArchivoEPT= '',
 ArchivoCFDI='',
 ArchivoXML = '',
@@ -184,25 +247,22 @@ EstatusPago = CASE WHEN #TMPTransferenciasFactura_Pagos.importeOriginal >= #TMP_
 				  WHEN #TMPTransferenciasFactura_Pagos.importeOriginal = 0 THEN 'PENDIENTE DE PAGO'
 				  ELSE 'PENDIENTE DE PAGO'
 			END,
-FormaPagoID = ISNULL(#TMP_Facturas.FormaPago,#TMPPedimentos.FormaPago),
+FormaPagoID = CASE WHEN #TMPTransferenciasFactura_Pagos.importeOriginal >= #TMP_Facturas.MontoOriginal THEN ISNULL(#TRANSFERENCIA.MetodoPago, '')
+					WHEN #TMPTransferenciasFactura_Pagos.importeOriginal < #TMP_Facturas.MontoOriginal  AND #TMPTransferenciasFactura_Pagos.importeOriginal > 0 THEN ISNULL(#TRANSFERENCIA.MetodoPago, '')
+				  WHEN #TMPTransferenciasFactura_Pagos.importeOriginal = 0 THEN ''
+				  ELSE ''
+			END,
 FechaPago = #TMPTransferenciasFactura_Pagos.FechaPago,
 ComprobantePago = '',
-ParcialidadesPagadas = CASE WHEN ISNULL(#TMP_Facturas.NumPagos,0) > 0 THEN   #TMP_Facturas.NumPagos 
-							WHEN CAST(ISNULL(#TMP_Facturas.UltimaPArcialidad,0) AS  INT) > 0 THEN ISNULL(#TMP_Facturas.UltimaPArcialidad,0) 
-							ELSE ''
+ParcialidadesPagadas =  CASE WHEN #TMPTransferenciasFactura_Pagos.importeOriginal >= #TMP_Facturas.MontoOriginal THEN 1
+							WHEN #TMPTransferenciasFactura_Pagos.importeOriginal < #TMP_Facturas.MontoOriginal  AND #TMPTransferenciasFactura_Pagos.importeOriginal > 0 THEN 1
+							WHEN #TMPTransferenciasFactura_Pagos.importeOriginal = 0 THEN 0
+							ELSE 0
 						END,
-ParcialidadesPendientes = CASE WHEN #TMPTransferenciasFactura_Pagos.ImporteTotal >= #TMP_Facturas.MontoConIVAMXN THEN 0
-							   WHEN #TMPTransferenciasFactura_Pagos.ImporteTotal < #TMP_Facturas.MontoConIVAMXN  AND #TMPTransferenciasFactura_Pagos.ImporteTotal > 0 THEN 0
-							   WHEN #TMPTransferenciasFactura_Pagos.ImporteTotal = 0 THEN 
-															CASE WHEN ISNULL(#TMP_Facturas.NumPagos,0) > 0 THEN   #TMP_Facturas.NumPagos 
-																WHEN CAST(ISNULL(#TMP_Facturas.UltimaPArcialidad,0) AS  INT) > 0 THEN ISNULL(#TMP_Facturas.UltimaPArcialidad,0) 
-																ELSE ''
-															END
-							  ELSE 
-									CASE WHEN ISNULL(#TMP_Facturas.NumPagos,0) > 0 THEN   #TMP_Facturas.NumPagos 
-										WHEN CAST(ISNULL(#TMP_Facturas.UltimaPArcialidad,0) AS  INT) > 0 THEN ISNULL(#TMP_Facturas.UltimaPArcialidad,0) 
-										ELSE ''
-									END
+ParcialidadesPendientes = CASE WHEN #TMPTransferenciasFactura_Pagos.importeOriginal >= #TMP_Facturas.MontoOriginal THEN 0
+								WHEN #TMPTransferenciasFactura_Pagos.importeOriginal < #TMP_Facturas.MontoOriginal  AND #TMPTransferenciasFactura_Pagos.importeOriginal > 0 THEN 1
+								WHEN #TMPTransferenciasFactura_Pagos.importeOriginal = 0 THEN 1
+								ELSE 1
 						END,
 FolioFiscalAsociado = #TMP_Facturas.FolioFiscalAsociado,
 Tipo = 'Elegible',
@@ -238,6 +298,8 @@ LEFT JOIN CO_TipoCambioDiario TCFactura ON TCFactura.IdMoneda = #TMP_Facturas.Id
 LEFT JOIN CO_TipoCambioDiario TCPedimiento ON TCPedimiento.IdMoneda = #TMPPedimentos.IdMoneda AND--MXN
 								TCPedimiento.Activo = 1 AND
 								CONVERT(VARCHAR,TCPedimiento.Fecha,112) = CONVERT(VARCHAR,#TMPPedimentos.Fecha,112)
+LEFT JOIN #TRANSFERENCIA ON #TMP_Facturas.UUID = #TRANSFERENCIA.UUID 
+
 
 
 
@@ -246,3 +308,4 @@ IF OBJECT_ID('tempdb.dbo.#TMP_Gastos') IS NOT NULL DROP TABLE #TMP_Gastos
 IF OBJECT_ID('tempdb.dbo.#TMPPedimentos') IS NOT NULL DROP TABLE #TMPPedimentos
 IF OBJECT_ID('tempdb.dbo.#TMP_Facturas') IS NOT NULL DROP TABLE #TMP_Facturas
 IF OBJECT_ID('tempdb.dbo.#TMPTransferenciasFactura_Pagos') IS NOT NULL DROP TABLE #TMPTransferenciasFactura_Pagos
+
