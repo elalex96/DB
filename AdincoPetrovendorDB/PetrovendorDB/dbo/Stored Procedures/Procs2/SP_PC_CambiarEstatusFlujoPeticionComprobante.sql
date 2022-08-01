@@ -1,6 +1,15 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_CambiarEstatusFlujoPeticionComprobante]    Script Date: 16/05/2022 11:30:12 p. m. ******/
+  IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_CambiarEstatusFlujoPeticionComprobante'
+)
+    DROP PROCEDURE SP_PC_CambiarEstatusFlujoPeticionComprobante;   
+	
+	GO
+/****** Object:  StoredProcedure [dbo].[SP_PC_CambiarEstatusFlujoPeticionComprobante]    Script Date: 01/08/2022 03:23:54 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -8,14 +17,14 @@ GO
 
 -- =============================================
 -- Author:		Daniel A Cruz
--- Create date: 28-03-17
--- Description:	 Actualiza el Estatus de de la operacion
+-- Create date: 01/08/2022
+-- Description:	 Actualiza el Estatus de de la operacion, SE REMUEVE RELACION DE TAREA_OPERACION 
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 16/05/2022
 -- Description:	 Se descartan en la aprobacion los usuarios eliminados
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PC_CambiarEstatusFlujoPeticionComprobante] 
+CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusFlujoPeticionComprobante] 
 	-- Add the parameters for the stored procedure here
 	@IdOperacion INT,
 	@IdAceptacionPedido INT 
@@ -48,63 +57,74 @@ BEGIN
 
     SET @CountTarea =  (SELECT	COUNT(IdEstatus) AS TOTAL
 						FROM TA_Operacion TAO
-						INNER JOIN TA_Tarea AS T 
-							ON T.IdOperacion = TAO.IdOperacion
+						JOIN TA_Tarea AS T 
+							ON TAO.IdOperacion = T.IdOperacion 
 						INNER JOIN S_Usuario AS US
-							ON US.IdUsuario = T.IdAprobador
+							ON T.IdAprobador= US.IdUsuario 
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
 						WHERE TAO.IdOperacion = @IdOperacion 
-						AND T.IdEstatus <> 7)
+						AND T.IdEstatus <> 7 -->CTE Cancelado por Reasignacion (TA_Estatus)
+						)
 
 	--- T.IdEstatus <> 7 ---> Es Cancelado por Reasignación ---
 
 	SET @CountEstPen = (SELECT	COUNT(IdEstatus) AS TOTAL
 						FROM TA_Operacion TAO
 						INNER JOIN TA_Tarea AS T 
-							ON T.IdOperacion = TAO.IdOperacion 
+							ON TAO.IdOperacion  =T.IdOperacion 
 						INNER JOIN S_Usuario AS US
-							ON US.IdUsuario = T.IdAprobador
+							ON T.IdAprobador = US.IdUsuario 
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
 						WHERE TAO.IdOperacion = @IdOperacion  
-						AND T.IdEstatus = 1)
+						AND T.IdEstatus = 1 -->CTE En Aprobación (TA_Estatus)
+						)
 	
 	SET @CountEstApr = (SELECT	COUNT(IdEstatus) AS TOTAL
 						FROM TA_Operacion TAO
 						INNER JOIN TA_Tarea AS T 
-							ON T.IdOperacion = TAO.IdOperacion
+							ON TAO.IdOperacion = T.IdOperacion 
 						INNER JOIN S_Usuario AS US
-							ON US.IdUsuario = T.IdAprobador
+							ON T.IdAprobador = US.IdUsuario 
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
 						WHERE TAO.IdOperacion = @IdOperacion  
-						AND T.IdEstatus = 2)
+						AND T.IdEstatus = 2 -->CTE Aprobada (TA_Estatus)
+						)
 
 
 	SET @CountEstRech = (SELECT	COUNT(IdEstatus) AS TOTAL
 						FROM TA_Operacion TAO
 						INNER JOIN TA_Tarea AS T 
-							ON T.IdOperacion = TAO.IdOperacion
+							ON TAO.IdOperacion = T.IdOperacion 
 						INNER JOIN S_Usuario AS US
-							ON US.IdUsuario = T.IdAprobador
+							ON T.IdAprobador= US.IdUsuario 
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
 						WHERE TAO.IdOperacion = @IdOperacion  
-						AND T.IdEstatus = 3)
+						AND T.IdEstatus = 3-->CTE Rechazada (TA_Estatus)
+						)
 
 		
 	BEGIN
 		IF (@CountEstRech > 0)
 			BEGIN
-			--- Actualizar el Estatus de la Operacion ---> Se cancela la Tarea 
-			UPDATE TA_Operacion SET IdEstatusOperacion = 3, IdEstadoFlujo = 4,  @Resultado = 3, FechaModificacion= GETDATE() WHERE IdOperacion = @IdOperacion
-			---Actualizar los estatus que aun no a sido aprobados(Pendientes) ---> Se cancelan por cancelación las tareas no evaluadas
-			UPDATE TA_TAREA SET IdEstatus= 4 
+			--- ACTUALIZAR EL ESTATUS DE LA OPERACION ---> SE CANCELA LA TAREA 
+			UPDATE TA_Operacion 
+			SET IdEstatusOperacion = 3, --> CTE Rechazada (TA_Estatus)
+			IdEstadoFlujo = 4,  --> CTE Tarea Rechazada (TA_EstadoFlujoTarea)
+			@Resultado = 3,--> CTE Rechazada (TA_Estatus)
+			FechaModificacion= GETDATE()
+			WHERE IdOperacion = @IdOperacion
+
+			---ACTUALIZAR LOS ESTATUS QUE AUN NO A SIDO APROBADOS(PENDIENTES) ---> SE CANCELAN POR CANCELACIÓN LAS TAREAS NO EVALUADAS
+			UPDATE TA_TAREA SET IdEstatus= 4 -->CTE Cancelado por Rechazo (TA_Estatus)
 			WHERE IdTarea IN (SELECT T.IdTarea 
-							  FROM TA_Tarea AS T
-							  INNER JOIN TA_TareaOperacion AS TAO ON TAO.IdTarea = T.IdTarea
-							  WHERE TAO.IdOperacion = @IdOperacion AND T.IdEstatus= 1)
+							  FROM TA_Tarea AS T							
+							  WHERE T.IdOperacion = @IdOperacion 
+							  AND T.IdEstatus= 1 -->CTE En Aprobación (TA_Estatus)
+							  )
 
 			SET @DescripcionH = 'Se ha Finalizado la aprobación del Pedimento/Comprobante Extranjero  '
 
@@ -118,25 +138,34 @@ BEGIN
 		ELSE
 			IF (@CountEstApr = @CountTarea)
 			BEGIN
-				--Actualizar el Estatus de la Operacion y el Estado del Flujo ---> Tarea Aprobada
+				--ACTUALIZAR EL ESTATUS DE LA OPERACION Y EL ESTADO DEL FLUJO ---> TAREA APROBADA
 
-				UPDATE TA_Operacion SET IdEstatusOperacion = 2,IdEstadoFlujo = 3, @Resultado = 2,  FechaModificacion= GETDATE() WHERE IdOperacion = @IdOperacion
+				UPDATE TA_Operacion 
+				SET IdEstatusOperacion = 2, -->CTE Aprobada (TA_Estatus)
+				IdEstadoFlujo = 3, --> CTE Tarea Aprobada (TA_EstadoFlujoTarea)
+				@Resultado = 2,  --> CTE Rechazada (TA_Estatus)
+				FechaModificacion= GETDATE() 
+				WHERE IdOperacion = @IdOperacion
 				
 				SET @DescripcionH = 'Se ha Finalizado la aprobación  del Pedimento/Comprobante Extranjero  '
 
 				INSERT INTO TA_HistorialFlujoTarea(IdOperacion,Fecha,Descripcion,IdEstadoFlujo)
-				VALUES(@IdOperacion,GETDATE(),@DescripcionH,7)
+				VALUES(@IdOperacion,GETDATE(),@DescripcionH,7) -->  CTE Tarea Finalizada (TA_EstadoFlujoTarea)
 
 				
 
 			END 
 			ELSE
-			UPDATE TA_Operacion SET IdEstatusOperacion = 1,IdEstadoFlujo = 2, @Resultado = 1, FechaModificacion= GETDATE() WHERE IdOperacion = @IdOperacion
+			UPDATE TA_Operacion 
+			SET IdEstatusOperacion = 1,-->CTE En Aprobación  (TA_Estatus)
+			IdEstadoFlujo = 2, --> CTE Tarea En Aprobacion (TA_EstadoFlujoTarea)
+			@Resultado = 1, -->CTE En Aprobación (TA_Estatus)
+			FechaModificacion= GETDATE()
+			WHERE IdOperacion = @IdOperacion
 	
 			
 	END
 	
-	----SELECT @Resultado AS EstadoFlujo
 
  END
 
