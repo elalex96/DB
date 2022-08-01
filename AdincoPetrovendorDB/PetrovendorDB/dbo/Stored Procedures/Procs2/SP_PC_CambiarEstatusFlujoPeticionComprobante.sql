@@ -119,12 +119,10 @@ BEGIN
 			WHERE IdOperacion = @IdOperacion
 
 			---ACTUALIZAR LOS ESTATUS QUE AUN NO A SIDO APROBADOS(PENDIENTES) ---> SE CANCELAN POR CANCELACIÓN LAS TAREAS NO EVALUADAS
-			UPDATE TA_TAREA SET IdEstatus= 4 -->CTE Cancelado por Rechazo (TA_Estatus)
-			WHERE IdTarea IN (SELECT T.IdTarea 
-							  FROM TA_Tarea AS T							
-							  WHERE T.IdOperacion = @IdOperacion 
-							  AND T.IdEstatus= 1 -->CTE En Aprobación (TA_Estatus)
-							  )
+			UPDATE TA_TAREA 
+			SET IdEstatus= 4 -->CTE Cancelado por Rechazo (TA_Estatus)
+			WHERE  IdOperacion = @IdOperacion 
+			AND IdEstatus= 1 -->CTE En Aprobación (TA_Estatus)			
 
 			SET @DescripcionH = 'Se ha Finalizado la aprobación del Pedimento/Comprobante Extranjero  '
 
