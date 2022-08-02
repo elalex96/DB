@@ -1,13 +1,15 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
+  IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
     WHERE name = 'DEA_SP_ConsultarDetalleTimeline'
 )
-    DROP PROCEDURE DEA_SP_ConsultarDetalleTimeline;
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosCliente]    Script Date: 05/07/2022 02:12:13 p. m. ******/
+    DROP PROCEDURE DEA_SP_ConsultarDetalleTimeline;   
+	
+	GO
+/****** Object:  StoredProcedure [dbo].[DEA_SP_ConsultarDetalleTimeline]    Script Date: 01/08/2022 05:13:30 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -741,9 +743,6 @@ BEGIN
 		FROM @HISTORIAL
 		WHERE Etapa IN	('COMPROBANTE_EXTRANJERO','FACTURA')
 	
-	 --  SELECT  @EstadoEtapa,	
-		--@EstatusValidar ,
-		--@Etapa
 
 		IF @Etapa ='FACTURA'
 		BEGIN 
@@ -1115,7 +1114,7 @@ BEGIN
 					WHEN T.IdEstatus = 6 THEN ISNULL(US.Nombre,'')  + '(Asignador) cancelo la aprobación del comprobante extranjero' 
 					WHEN T.IdEstatus = 7 THEN ISNULL(US.Nombre,'')  + ' reasignó la aprobación del comprobante extranjero'
 				END,
-				Fecha=  FORMAT(O.FechaRegistro,'dd/MM/yyyy HH:mm'),
+				Fecha=  FORMAT(T.FechaCambioEstatus,'dd/MM/yyyy HH:mm'),
 				Etapa=@Etapa,
 				EstadoHistorial=CASE 
 									WHEN T.IdEstatus = 1 THEN 'EN_PROCESO' 
