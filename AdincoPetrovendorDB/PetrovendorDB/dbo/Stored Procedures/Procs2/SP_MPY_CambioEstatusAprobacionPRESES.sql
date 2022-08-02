@@ -1,106 +1,44 @@
-﻿CREATE PROCEDURE [dbo].[SP_MPY_CambioEstatusAprobacionPRESES]
-	-- Add the parameters for the stored procedure here
-	@IdPRESES INT,
-	@IdEstatus INT,
-	@IdUsuario INT,
-	@Justificacion NVARCHAR(MAX)
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
+﻿-- p_MPY_AprobacionesPRESES_GR
+CREATE proc [dbo].[p_MPY_AprobacionesPRESES_GR] 
+as
+begin
 
-	declare @matDocGR varchar(20),
-			@ReferenceNumber	varchar(20),
-			@GRNumber			varchar(20),
-			@PO					varchar(100),
-			@IdEstatusSAP INT
+	select		--cp.IdContratista,
+				ses.IdContrato,
+				GRNumber							=	ses.MatDocN,
+				PO									=	ses.PO_SAPNumber,
+				Fecha								=	max(ses.CreadoEl),
+				ReferenceNumber						=	ses.GRReferenceNumber,
+				VendorName,
+				IdEstatus = 0,
+				ses.MatDocN
 
-	--use adinco
-	select	@ReferenceNumber		=	SAPSESNumber, 
-			@GRNumber				=	MatDocN ,
-			@PO						= SAPPONumber,
-			@IdEstatusSAP = IdEstatus
-	from	adinco..CO_SAPPRESES 
-	where	IdPreses				=	@IdPRESES
-
+	from		CO_SAPGR							ses
+	inner join	CO_SAPPO							po 
+	on			po.SAPPONumber						=	ses.PO_SAPNumber 
+	and			po.Plant							=	ses.Plant
+	and			ISNULL(SES.GRReferenceNumber,'')				<> ''
+	inner join	[dbo].[CO_SAPContratista_Planta]	cp 	
+	on			cp.Planta							=	ses.Plant
+	inner join	CO_SAPVendor						ven 
+	on			ven.VendorIDSAP						=	po.SAPVendorNumber	
+	inner join	CO_SAPPRESES PRO					ON  PRO.SAPPONumber = ses.PO_SAPNumber AND
+												PRO.SAPSESNumber = SES.GRReferenceNumber AND
+												PRO.IdEstatus = 1
+	WHERE 
 	
-
-	--Verificar si la proforma está aprobada
-	IF EXISTS (
+	
+	EXISTS (
 		SELECT 1
-		FROM Adinco..CO_SAPSES
-		WHERE PO_SAPNumer = RTRIM(LTRIM(@PO)) AND
-		SESReferenceNumber = RTRIM(LTRIM(@ReferenceNumber))
+		FROM CO_SAPPRESES PRO2
+		WHERE PRO2.SAPPONumber = ses.PO_SAPNumber AND
+		PRO2.IdEstatus		= 1
+		
 	)
-	OR EXISTS (
-		SELECT 1
-		FROM Adinco..CO_SAPGR
-		WHERE PO_SAPNumber =  RTRIM(LTRIM(@PO)) AND
-		GRReferenceNumber = RTRIM(LTRIM(@ReferenceNumber))
-	)
-	BEGIN
-	
-			select @matDocGR = gr.MatDocN
-			from Adinco..CO_SAPGR gr
-			inner join Adinco..CO_SAPPRESES  pr on pr.SAPPONumber = gr.PO_SAPNumber 									
-			where pr.IdPRESES		= @IdPRESES and
-			gr.GRReferenceNumber = pr.SAPSESNumber
+	group by 	ses.IdContrato,
+				ses.MatDocN,
+				ses.PO_SAPNumber,		
+				ses.GRReferenceNumber,
+				VendorName
 
-
-			-- Insert statements for procedure here
-			UPDATE Adinco.dbo.CO_SAPPRESES 
-			SET		IdEstatus		= @IdEstatus,
-					Justificacion	= @Justificacion,
-					ModificadoPor	= @IdUsuario,
-					ModificadoEl	= GETDATE(),
-					MatDocN = @matDocGR
-			FROM Adinco.dbo.CO_SAPPRESES PRO 
-			WHERE	IdPRESES		= @IdPRESES
-
-			SELECT 'SUCCESS'	
-
-				--use adinco
-			select	@ReferenceNumber		=	SAPPONumber, 
-					@GRNumber				=	MatDocN 
-			from	adinco..CO_SAPPRESES 
-			where	IdPreses				=	@IdPRESES
-
-			exec adinco..p_MPY_CO_SAPPRESES_Bitacora_Ins 
-				@ReferenceNumber,
-				@GRNumber,
-				@IdUsuario,
-				@IdPreses,
-				@IdEstatus,
-				@Justificacion
-
-	END
-	ELSE
-	BEGIN
-		-- SI ESTA EN APROBACION Y ES UN RECHAZO EL CAMBIO DE ESTATUS
-		IF(@IdEstatusSAP = 1 AND @IdEstatus = 3)
-		BEGIN
-			UPDATE Adinco.dbo.CO_SAPPRESES 
-			SET		IdEstatus		= @IdEstatus,
-					Justificacion	= @Justificacion,
-					ModificadoPor	= @IdUsuario,
-					ModificadoEl	= GETDATE()
-			FROM Adinco.dbo.CO_SAPPRESES PRO 
-			WHERE	IdPRESES		= @IdPRESES
-
-			SELECT 'SUCCESS'	
-
-			exec adinco..p_MPY_CO_SAPPRESES_Bitacora_Ins 
-				@ReferenceNumber,
-				@GRNumber,
-				@IdUsuario,
-				@IdPreses,
-				@IdEstatus,
-				@Justificacion
-		END
-	END
-	
-END
-
-
-
+end
