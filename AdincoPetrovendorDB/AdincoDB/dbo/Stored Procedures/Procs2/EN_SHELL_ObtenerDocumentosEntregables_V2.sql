@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 29/06/2022 05:30:25 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 02/08/2022 09:59:01 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -491,10 +491,7 @@ BEGIN
 			INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior,IdReceptorEntregable,Alias)
 			SELECT
 				3,
-				CASE 
-					WHEN ISNULL(ML.Alias,'') <> '' THEN ML.MarcoLegal + ' - (' + ML.Alias + ')'
-					ELSE ML.MarcoLegal
-				END,
+				ISNULL(ML.Alias,ML.MarcoLegal),
 				ML.IdMarcoLegal,
 				NULL,
 				'Carpeta',
@@ -1124,15 +1121,6 @@ BEGIN
 				AND D.FrecuenciaEntregableID = @Frecuencia
 				AND D.IdReceptorEntregable = @IdReceptorEntregable
 				AND D.IdMarcoLegal = @IdCarpeta
-				AND SC.AnioMes = @AnioMes
-			GROUP BY D.Entregable,
-				D.IdMarcoLegal,
-				SC.Ruta,
-				SC.RutaAnterior,
-				SC.Frecuencia,
-				D.IdReceptorEntregable,
-				SC.AnioMes,
-				D.IdEntregable
 			ORDER BY D.Entregable ASC;
 
 		END
@@ -1571,11 +1559,12 @@ BEGIN
 	SELECT DISTINCT
 		IdRow,
 		CF.Nivel,
+		--REPLACE(Nombre,'"','') AS NombreLabel,
 		CASE 
 			WHEN LEN(Nombre) > 20 THEN '<marquee behavior="scroll" direction="left" style="width: 70%;">' + REPLACE(Nombre,'"','') + '</marquee>'
 			ELSE REPLACE(Nombre,'"','')
 		END AS NombreLabel,
-		REPLACE(REPLACE(Nombre,'"',''),'/','-') AS Nombre,
+		REPLACE(Nombre,'"','') AS Nombre,
 		CF.IdCarpeta,
 		IdDocumento,
 		Tipo,
