@@ -193,7 +193,7 @@ BEGIN
 					@IdRegistroAdinco,
 					0,
 					0,
-					PD.Subtotal,
+					(PD.PrecioUnitario * APD.Cantidad),
 					1,
 					ISNULL(@IdUsuarioADINCO,1),
 					GETDATE(),
