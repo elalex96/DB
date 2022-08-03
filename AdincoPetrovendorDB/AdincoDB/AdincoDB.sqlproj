@@ -13311,6 +13311,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_PresupuestosRelacionadosEPTDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_ActivarPresupuestoRelacionadoEPTDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_DesActivarPresupuestoRelacionadoEPTDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_ObtenAprobacionPorOperacionId.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
