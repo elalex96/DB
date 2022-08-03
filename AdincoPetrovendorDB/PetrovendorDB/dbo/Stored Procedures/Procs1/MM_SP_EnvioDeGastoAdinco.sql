@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_EnvioDeGastoAdinco]    Script Date: 28/07/2022 04:06:10 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[MM_SP_EnvioDeGastoAdinco]    Script Date: 02/08/2022 08:15:55 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -47,7 +47,8 @@ BEGIN
             @XMLAdinco INT,
             @XMLPetrovendor INT,
             @EstatusAprobacionFactura INT,
-			@IdCatalogoCuentasSH_Amatitlan INT;
+			@IdCatalogoCuentasSH_Amatitlan INT,
+			@IdUsuarioADINCO INT;
 
 	DECLARE @RFC VARCHAR(300) = (SELECT TOP 1 CTA.RFC FROM Adinco..CO_CONTRATO AS CTO
 									JOIN ADINCO..CO_CONTRATISTA AS CTA
@@ -62,6 +63,9 @@ BEGIN
 						WHERE vcc.IdVersion = 10002
 						and Nivel3 like '5003.001.000')
 	DECLARE @Tabla TABLE (Id INT IDENTITY, idRegistro INT);
+
+	SET @IdUsuarioADINCO = (SELECT IdUsuarioADINCO FROM S_Usuario WHERE IdUsuario = @IdUsuario);
+
     ---ESTATUS DE APROBACION DE LA FACTURA
 	
     SELECT TOP 1
@@ -166,12 +170,42 @@ BEGIN
 				JOIN FI_Factura f 
 					ON pr.IdFactura = f.IdFactura
 				WHERE pr.IdRegistro = @IdRegistro;
+
 				SELECT @IdRegistroAdinco = SCOPE_IDENTITY();
+
 				INSERT INTO dbo.CO_RelacionRegistroAdinco (IdRegistroPetrovendor, IdRegistroAdinco)
 				VALUES
 				(   @IdRegistro,      -- IdRegistroPetrovendor - int  
 					@IdRegistroAdinco -- IdRegistroAdinco - int  
 				);
+
+				INSERT INTO Adinco..CO_RegistroMarkup(
+					GastoId,
+					Porcentaje,
+					MontoEquivalente,
+					MontoGasto,
+					Activo,
+					CreadoPor,
+					CreadoEn,
+					ContratoId
+				)
+				SELECT
+					@IdRegistroAdinco,
+					0,
+					0,
+					(PD.PrecioUnitario * APD.Cantidad),
+					1,
+					ISNULL(@IdUsuarioADINCO,1),
+					GETDATE(),
+					10007--CONTRATO AMATITLAN
+				FROM Petrovendor..MM_AceptacionPedidoDetalle AS APD
+					JOIN Petrovendor..MM_AceptacionFactura AS AF
+						ON APD.IdAceptacionPedido = AF.IdAceptacionPedido
+					JOIN Petrovendor..MM_PedidoDetalle AS PD
+						ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
+				WHERE AF.IdFactura = @idFacturaP;
+				
+
 			END
 			ELSE
 			BEGIN -- SI NO ES AMATITLAN SIGUE SU CURSO NORMAL
