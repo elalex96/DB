@@ -6,9 +6,9 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
--- Author:		<Jose Roman>
--- Create date: <15-08-2018>
--- Description:	<Funcion que consulta los flujos de aprobacion >
+-- Author:	Daniel AC
+-- Create date: 03/08/2022
+-- Description:	<Funcion que consulta las operaciones que son seriales y les toca aprobar al usuario actual >
 -- =============================================
 CREATE FUNCTION [dbo].[FN_FlujoSerialNoAprobados]
 ( 
