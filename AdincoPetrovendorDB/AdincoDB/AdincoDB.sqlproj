@@ -13312,6 +13312,10 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_ActivarPresupuestoRelacionadoEPTDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_EPT_DesActivarPresupuestoRelacionadoEPTDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\Mobile_sp_ObtenAprobacionPorOperacionId.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\WDEAGuardarCuotaPatronal.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\WDEAGuardarCuotaPatronalDetalle.sql" />
+    <Build Include="dbo\Tables\Tables1\CuotaPatronal.sql" />
+    <Build Include="dbo\Tables\Tables1\CuotaPatronalDetalle.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
