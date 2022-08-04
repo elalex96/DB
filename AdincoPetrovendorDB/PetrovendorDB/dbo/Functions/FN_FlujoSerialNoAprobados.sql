@@ -1,9 +1,16 @@
-﻿-- =============================================
--- Author:		<Jose Roman>
--- Create date: <15-08-2018>
--- Description:	<Funcion que consulta los flujos de aprobacion >
+﻿USE [Petrovendor]
+GO
+/****** Object:  UserDefinedFunction [dbo].[FN_FlujoSerialNoAprobados]    Script Date: 02/08/2022 02:58:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
-create FUNCTION FN_FlujoSerialNoAprobados
+-- Author:	Daniel AC
+-- Create date: 03/08/2022
+-- Description:	<Funcion que consulta las operaciones que son seriales y les toca aprobar al usuario actual >
+-- =============================================
+CREATE FUNCTION [dbo].[FN_FlujoSerialNoAprobados]
 ( 
     @IdUsuario INT, 
     @IdProveedor INT,
@@ -21,10 +28,11 @@ BEGIN
 		IdOperacion, NoSecuencia
 	)
 	SELECT O.IdOperacion, t.NoSecuencia
-	FROM dbo.TA_Operacion o
-		INNER JOIN dbo.TA_FlujoTarea ft ON ft.IdFlujoTarea = o.IdFlujoTarea
-		INNER JOIN TA_TareaOperacion AS TAO ON TAO.IdOperacion = o.IdOperacion
-		INNER JOIN dbo.TA_Tarea t ON t.IdTarea = tao.IdTarea
+	FROM TA_Operacion o
+		JOIN dbo.TA_FlujoTarea ft 
+			ON o.IdFlujoTarea = ft.IdFlujoTarea  		
+		JOIN dbo.TA_Tarea t 
+			ON o.IdOperacion = t.IdOperacion 
 	WHERE t.IdAprobador = @IdUsuario 
 		AND O.IdTipoOperacion = @IdTipoOperacion 
 		AND O.IdProveedor = @IdProveedor 
@@ -40,10 +48,14 @@ BEGIN
 	)
 	SELECT o.IdOperacion
 	FROM dbo.TA_Operacion o
-		INNER JOIN dbo.TA_FlujoTarea ft ON ft.IdFlujoTarea = o.IdFlujoTarea
-		INNER JOIN TA_TareaOperacion AS TAO ON TAO.IdOperacion = o.IdOperacion
-		INNER JOIN dbo.TA_Tarea t ON t.IdTarea = tao.IdTarea
-		INNER JOIN @FlujoSerial tb ON tb.IdOperacion = o.IdOperacion AND t.NoSecuencia = (tb.NoSecuencia - 1)
+		JOIN dbo.TA_FlujoTarea ft 
+			ON o.IdFlujoTarea=ft.IdFlujoTarea 
+		JOIN dbo.TA_Tarea t 
+			ON O.IdOperacion  = t.IdOperacion 
+			AND t.Activo = 1	-- Que esten activos
+		JOIN @FlujoSerial tb 
+			ON o.IdOperacion  = tb.IdOperacion 
+			AND t.NoSecuencia = (tb.NoSecuencia - 1)
 	WHERE t.IdAprobador <> @IdUsuario -- Se excluye el usuario aprobador actual
 		AND t.IdEstatus <> 2 
 
