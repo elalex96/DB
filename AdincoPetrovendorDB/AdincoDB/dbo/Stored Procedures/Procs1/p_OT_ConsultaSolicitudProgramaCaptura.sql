@@ -110,7 +110,6 @@ BEGIN
 
 	CREATE TABLE #tmpVoBos
     (
-        IdOTSolicitudMaterial INT,
         LunesVoBoC BIT,
         MartesVoBoC BIT,
         MiercolesVoBoC BIT,
@@ -211,13 +210,13 @@ BEGIN
     SET #tmpDisponibles.Disponible = Cantidad - #tmpCaptura.Captura
     FROM #tmpDisponibles
         INNER JOIN #tmpCaptura
-            ON #tmpDisponibles.IdOTSolicitudMaterial = #tmpCaptura.IdOTSolicitudMaterial
+            ON #tmpDisponibles.IdOTSolicitudMaterial = #tmpCaptura.IdOTSolicitudMaterial;
 
     SELECT @semanaCerrada = 1
     FROM OT_ProgramaSemanaCerrada (NOLOCK)
     WHERE IdOTSolicitud = @pIdOTSolicitud
           AND SemanaID = @pSemana
-          AND isactivo = 1
+          AND isactivo = 1;
 
     INSERT INTO #tmpArchivos
     (
@@ -324,13 +323,13 @@ BEGIN
              OT_Solicitud.IdOTSolicitud,
              OT_Solicitud.Folio,
              SC_Materiales.Concepto,
-             SC_Materiales.Descripcion
+             SC_Materiales.Descripcion;
 
     UPDATE #tmpResult
     SET #tmpResult.IdEstatus = ISNULL(OT_SolicitudPrograma.IdEstatus, 0)
     FROM #tmpResult
         INNER JOIN dbo.OT_SolicitudPrograma (NOLOCK)
-            ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudPrograma.IdOTSolicitudMaterial
+            ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudPrograma.IdOTSolicitudMaterial;
 
     INSERT INTO #tmpDatos
     (
@@ -540,9 +539,7 @@ BEGIN
              OT_SolicitudProgramaCaptura.Fecha
 
 	INSERT INTO #tmpVoBos
-    (
-        IdOTSolicitudMaterial,
-        LunesVoBoC,
+    (   LunesVoBoC,
         MartesVoBoC,
         MiercolesVoBoC,
         JuevesVoBoC,
@@ -558,7 +555,6 @@ BEGIN
         DomingoVoBoSC
 		)
 	SELECT 
-		#tmpDatos.IdOTSolicitudMaterial,
 		CAST(ISNULL(MAX(CAST(#tmpDatos.LunesVoBoC as int)),0) AS bit),
 		CAST(ISNULL(MAX(CAST(#tmpDatos.MartesVoBoC as int)),0) AS bit),
 		CAST(ISNULL(MAX(CAST(#tmpDatos.MiercolesVoBoC as int)),0) AS bit),
@@ -578,8 +574,8 @@ BEGIN
         INNER JOIN #tmpDatos
         ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial
 	GROUP BY #tmpDatos.IdOTSolicitudMaterial;
-
-    UPDATE #tmpResult
+	
+	UPDATE #tmpResult
     SET #tmpResult.LunesCaptura = #tmpDatos.LunesCaptura,
         #tmpResult.MartesCaptura = #tmpDatos.MartesCaptura,
         #tmpResult.MiercolesCaptura = #tmpDatos.MiercolesCaptura,
@@ -587,7 +583,20 @@ BEGIN
         #tmpResult.ViernesCaptura = #tmpDatos.ViernesCaptura,
         #tmpResult.SabadoCaptura = #tmpDatos.SabadoCaptura,
         #tmpResult.DomingoCaptura = #tmpDatos.DomingoCaptura,
-        -----------------------------  
+        ----------------------------------  
+        #tmpResult.LunesCerrado = #tmpDatos.LunesCerrado,
+        #tmpResult.MartesCerrado = #tmpDatos.MartesCerrado,
+        #tmpResult.MiercolesCerrado = #tmpDatos.MiercolesCerrado,
+        #tmpResult.JuevesCerrado = #tmpDatos.JuevesCerrado,
+        #tmpResult.ViernesCerrado = #tmpDatos.ViernesCerrado,
+        #tmpResult.SabadoCerrado = #tmpDatos.SabadoCerrado,
+        #tmpResult.DomingoCerrado = #tmpDatos.DomingoCerrado
+    FROM #tmpResult
+        INNER JOIN #tmpDatos
+            ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial;
+
+	UPDATE #tmpResult
+    SET 
         #tmpResult.LunesVoBoC = #tmpVoBos.LunesVoBoC,
         #tmpResult.MartesVoBoC = #tmpVoBos.MartesVoBoC,
         #tmpResult.MiercolesVoBoC = #tmpVoBos.MiercolesVoBoC,
@@ -602,27 +611,16 @@ BEGIN
         #tmpResult.JuevesVoBoSC = #tmpVoBos.JuevesVoBoSC,
         #tmpResult.ViernesVoBoSC = #tmpVoBos.ViernesVoBoSC,
         #tmpResult.SabadoVoBoSC = #tmpVoBos.SabadoVoBoSC,
-        #tmpResult.DomingoVoBoSC = #tmpVoBos.DomingoVoBoSC,
-        ----------------------------------  
-        #tmpResult.LunesCerrado = #tmpDatos.LunesCerrado,
-        #tmpResult.MartesCerrado = #tmpDatos.MartesCerrado,
-        #tmpResult.MiercolesCerrado = #tmpDatos.MiercolesCerrado,
-        #tmpResult.JuevesCerrado = #tmpDatos.JuevesCerrado,
-        #tmpResult.ViernesCerrado = #tmpDatos.ViernesCerrado,
-        #tmpResult.SabadoCerrado = #tmpDatos.SabadoCerrado,
-        #tmpResult.DomingoCerrado = #tmpDatos.DomingoCerrado
+        #tmpResult.DomingoVoBoSC = #tmpVoBos.DomingoVoBoSC
     FROM #tmpResult
-        INNER JOIN #tmpDatos
-            ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial
-		INNER JOIN
-			#tmpVoBos
-			ON	#tmpDatos.IdOTSolicitudMaterial = #tmpVoBos.IdOTSolicitudMaterial;
+        CROSS JOIN
+			#tmpVoBos;
 
     UPDATE #tmpResult
     SET #tmpResult.Disponible = ISNULL(#tmpDisponibles.Disponible, 0)
     FROM #tmpResult
         INNER JOIN #tmpDisponibles
-            ON #tmpResult.IdOTSolicitudMaterial = #tmpDisponibles.IdOTSolicitudMaterial
+            ON #tmpResult.IdOTSolicitudMaterial = #tmpDisponibles.IdOTSolicitudMaterial;
 
     UPDATE #tmpResult
     SET #tmpResult.TieneArchivos = CASE
@@ -633,7 +631,7 @@ BEGIN
                                    END
     FROM #tmpResult
         INNER JOIN #tmpArchivos
-            ON #tmpResult.IdOTSolicitudMaterial = #tmpArchivos.IdOTSolicitudMaterial
+            ON #tmpResult.IdOTSolicitudMaterial = #tmpArchivos.IdOTSolicitudMaterial;
 
     SELECT #tmpResult.IdOTSolicitudMaterial,
            #tmpResult.Material,
