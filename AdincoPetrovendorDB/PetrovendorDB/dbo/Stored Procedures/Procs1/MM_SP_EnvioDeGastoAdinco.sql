@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_EnvioDeGastoAdinco]    Script Date: 02/08/2022 08:15:55 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[MM_SP_EnvioDeGastoAdinco]    Script Date: 05/08/2022 05:19:58 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -48,6 +48,7 @@ BEGIN
             @XMLPetrovendor INT,
             @EstatusAprobacionFactura INT,
 			@IdCatalogoCuentasSH_Amatitlan INT,
+			@MontoRegistro FLOAT,
 			@IdUsuarioADINCO INT;
 
 	DECLARE @RFC VARCHAR(300) = (SELECT TOP 1 CTA.RFC FROM Adinco..CO_CONTRATO AS CTO
@@ -173,6 +174,8 @@ BEGIN
 
 				SELECT @IdRegistroAdinco = SCOPE_IDENTITY();
 
+				SET @MontoRegistro = (SELECT TOP 1 MontoRegistro FROM Adinco.dbo.CO_Registro WHERE IdRegistro = @IdRegistroAdinco);
+
 				INSERT INTO dbo.CO_RelacionRegistroAdinco (IdRegistroPetrovendor, IdRegistroAdinco)
 				VALUES
 				(   @IdRegistro,      -- IdRegistroPetrovendor - int  
@@ -189,21 +192,18 @@ BEGIN
 					CreadoEn,
 					ContratoId
 				)
-				SELECT
+				VALUES
+				(
 					@IdRegistroAdinco,
 					0,
 					0,
-					(PD.PrecioUnitario * APD.Cantidad),
+					@MontoRegistro,
 					1,
 					ISNULL(@IdUsuarioADINCO,1),
 					GETDATE(),
-					10007--CONTRATO AMATITLAN
-				FROM Petrovendor..MM_AceptacionPedidoDetalle AS APD
-					JOIN Petrovendor..MM_AceptacionFactura AS AF
-						ON APD.IdAceptacionPedido = AF.IdAceptacionPedido
-					JOIN Petrovendor..MM_PedidoDetalle AS PD
-						ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
-				WHERE AF.IdFactura = @idFacturaP;
+					10007--CONTRATO AMATITLAN;
+				);
+					
 				
 
 			END
