@@ -1,19 +1,24 @@
-﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaPeriodosContratoGastos] 
-	-- Add the parameters for the stored procedure here
-	@IdContrato int = 0
+﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaPeriodosContratoGastos] @IdContrato int = 0
 AS
 BEGIN
--- =============================================
--- Author:		Miguel Gomez
--- Create date: 4-01-2017
--- Description:	Consulta los periodos de un contrato
--- =============================================
-	SET NOCOUNT ON;
-
-    -- Insert statements for procedure here
-    SELECT        IdPeriodo,  NombrePeriodo  as NombreParaMostrar
-    FROM            CO_PeriodoContrato
-    WHERE        (IdContrato = @IdContrato)   
-    and CO_PeriodoContrato.activo= 1
-    ORDER BY inicio, fin
+	--╔════════════════════════════════════════════╗
+	--║Uso de SP en Sistema de ADINCO y PETROVENDOR║
+	--╚════════════════════════════════════════════╝
+    -- =============================================
+    -- Author:		Miguel Gomez
+    -- Create date: 4-01-2017
+    -- Description:	Consulta los periodos de un contrato
+    -- =============================================
+	-- Modificado Por:			Neri del Angel
+	-- Fecha de Modificación:	10 de Agosto del 2022
+	-- Descripción:				Se agregan NOLOCK 
+	-- =============================================
+    SET NOCOUNT ON;
+    SELECT IdPeriodo,
+           NombrePeriodo as NombreParaMostrar
+    FROM CO_PeriodoContrato (NOLOCK)
+    WHERE (IdContrato = @IdContrato)
+          and CO_PeriodoContrato.activo = 1
+    ORDER BY inicio,
+             fin
 END
