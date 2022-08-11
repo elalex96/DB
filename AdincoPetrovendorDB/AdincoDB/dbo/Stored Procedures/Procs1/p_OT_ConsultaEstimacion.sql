@@ -1,5 +1,5 @@
 ﻿-- p_OT_ConsultaEstimacion 1
-create proc p_OT_ConsultaEstimacion
+create proc [dbo].[p_OT_ConsultaEstimacion]
 @pIdOTSolicitud int
 as
 
@@ -16,7 +16,7 @@ as
 			Subcontratista,
 			Total = Sum(vw.Importe),
 			Moneda = vw.Moneda
-	from [dbo].[vwOTEstimacion] vw
+	from [dbo].[vwOTEstimacion] vw (NOLOCK)
 	where IdOTSolicitud = @pIdOTSolicitud
 	group by IdOTSolicitud,
 			IdOTEstimacion,
@@ -31,3 +31,6 @@ as
 			Subcontratista,
 			vw.Moneda
 			
+GO
+
+
