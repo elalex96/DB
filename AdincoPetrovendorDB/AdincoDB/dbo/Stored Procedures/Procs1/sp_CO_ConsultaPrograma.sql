@@ -41,22 +41,22 @@ BEGIN
         AC_PRESUP_MES DATE,
         IdPresupuesto INT,
         --
-        id_Actividad VARCHAR(10),
-        DescripcionActividadPetrolera VARCHAR(10),
+        id_Actividad VARCHAR(50),
+        DescripcionActividadPetrolera VARCHAR(50),
         --
-        [id_Sub-actividad] VARCHAR(10),
+        [id_Sub-actividad] VARCHAR(50),
         SubactividadPetrolera VARCHAR(50),
         --
-        id_Tarea VARCHAR(10),
+        id_Tarea VARCHAR(50),
         TareaPetrolera VARCHAR(150),
         --
-        ID_CATACTIV VARCHAR(10),
+        ID_CATACTIV VARCHAR(50),
         NombreActividad VARCHAR(50),
         --
         ID_TIPOSER INT,
         NombreTipoServicio VARCHAR(50),
         --
-        ID_CATSUBACTIV VARCHAR(10),
+        ID_CATSUBACTIV VARCHAR(50),
         --
         NombreServicio VARCHAR(1000),
         --
@@ -204,7 +204,7 @@ BEGIN
            NULL,
            --
            NULL
-    FROM CO_LineaPresupuestoMes
+    FROM CO_LineaPresupuestoMes (NOLOCK)
         INNER JOIN CO_ActividadPetroleraCNH (NOLOCK)
             ON CO_LineaPresupuestoMes.IdLineaPresupuestoMes = @IdPrograma
                AND CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
@@ -241,46 +241,46 @@ BEGIN
     SET #TablaPrograma.ID_CATACTIV = CO_ActividadCIEP.ID_CATACTIV,
         #TablaPrograma.NombreActividad = CO_ActividadCIEP.NombreActividad
     FROM #TablaPrograma
-        JOIN CO_ActividadCIEP
+        JOIN CO_ActividadCIEP (NOLOCK)
             ON #TablaPrograma.IdActividad = CO_ActividadCIEP.IdActividad
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.ID_TIPOSER = CO_TipoServicio.ID_TIPOSER,
         #TablaPrograma.NombreTipoServicio = CO_TipoServicio.NombreTipoServicio
     FROM #TablaPrograma
-        JOIN CO_TipoServicio
+        JOIN CO_TipoServicio (NOLOCK)
             ON #TablaPrograma.IdTipoServicio = CO_TipoServicio.ID_TIPOSER
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.ID_CATSUBACTIV = CO_SubactividadCIEP.ID_CATSUBACTIV
     FROM #TablaPrograma
-        JOIN CO_SubactividadCIEP
+        JOIN CO_SubactividadCIEP (NOLOCK)
             ON #TablaPrograma.IdSubactividad = CO_SubactividadCIEP.IdSubactividad
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.NombreServicio = CO_Servicio.NombreServicio
     FROM #TablaPrograma
-        JOIN CO_Servicio
+        JOIN CO_Servicio (NOLOCK)
             ON #TablaPrograma.IdServicio = CO_Servicio.IdServicio
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.NombreArea = CO_Area.NombreArea
     FROM #TablaPrograma
-        JOIN CO_Area
+        JOIN CO_Area (NOLOCK)
             ON #TablaPrograma.IdArea = CO_Area.IdArea
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.NombreInstalacion = CO_Instalacion.NombreInstalacion,
         #TablaPrograma.IdInstalacionPemex = CO_Instalacion.IdInstalacionPemex
     FROM #TablaPrograma
-        JOIN CO_Instalacion
+        JOIN CO_Instalacion (NOLOCK)
             ON #TablaPrograma.IdInstalacion = CO_Instalacion.IdInstalacion
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.IdFactura = CO_Registro.IdFactura,
         #TablaPrograma.MesPresentacion = CO_Registro.MesPresentacion
     FROM #TablaPrograma
-        JOIN CO_Registro
+        JOIN CO_Registro (NOLOCK)
             ON #TablaPrograma.IdLineaPresupuestoMes = CO_Registro.IdPrograma
 
     INSERT INTO #TablaProgramaMontos
@@ -291,7 +291,7 @@ BEGIN
     SELECT #TablaPrograma.IdLineaPresupuestoMes,
            SUM(CO_Registro.MontoRegistro)
     FROM #TablaPrograma
-        JOIN CO_Registro
+        JOIN CO_Registro (NOLOCK)
             ON #TablaPrograma.IdLineaPresupuestoMes = CO_Registro.IdPrograma
     GROUP BY CO_Registro.MontoRegistro,
              #TablaPrograma.IdLineaPresupuestoMes
@@ -299,25 +299,25 @@ BEGIN
     UPDATE #TablaPrograma
     SET #TablaPrograma.ClasificacionAnexo4 = CO_ClasificacionAnexo4.ClasificacionAnexo4
     FROM #TablaPrograma
-        JOIN CO_ClasificacionAnexo4
+        JOIN CO_ClasificacionAnexo4 (NOLOCK)
             ON #TablaPrograma.IdAnexo4 = CO_ClasificacionAnexo4.IdAnexo4
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.IdMoneda = FI_Factura.IdMoneda
     FROM #TablaPrograma
-        JOIN FI_Factura
+        JOIN FI_Factura (NOLOCK)
             ON #TablaPrograma.IdFactura = FI_Factura.IdFactura
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.NombreRubro = CO_RubroInterno.NombreRubro
     FROM #TablaPrograma
-        JOIN CO_RubroInterno
+        JOIN CO_RubroInterno (NOLOCK)
             ON #TablaPrograma.IdRubroInterno = CO_RubroInterno.IdRubroInterno
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.CIEP = CO_Presupuesto.CIEP
     FROM #TablaPrograma
-        JOIN CO_Presupuesto
+        JOIN CO_Presupuesto (NOLOCK)
             ON #TablaPrograma.IdPresupuesto = CO_Presupuesto.IdPresupuesto
 
     SELECT #TablaPrograma.IdLineaPresupuestoMes,
@@ -400,9 +400,9 @@ BEGIN
            #TablaPrograma.id_Tarea,
            #TablaPrograma.TareaPetrolera
     FROM #TablaPrograma
-        LEFT JOIN #TablaProgramaMontos
+        LEFT JOIN #TablaProgramaMontos (NOLOCK)
             ON #TablaPrograma.IdLineaPresupuestoMes = #TablaProgramaMontos.IdLineaPresupuestoMes
-        LEFT JOIN CO_TipoCambioMensual
+        LEFT JOIN CO_TipoCambioMensual (NOLOCK)
             ON #TablaPrograma.IdMoneda = CO_TipoCambioMensual.IdMoneda
                AND CO_TipoCambioMensual.IdMes = MONTH(#TablaPrograma.MesPresentacion)
                AND CO_TipoCambioMensual.Anio = YEAR(#TablaPrograma.MesPresentacion)
