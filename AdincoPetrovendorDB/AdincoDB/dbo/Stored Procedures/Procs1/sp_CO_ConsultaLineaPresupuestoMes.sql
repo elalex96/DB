@@ -1,5 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaLineaPresupuestoMes] 
-	@presupuesto INT
+﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaLineaPresupuestoMes] @presupuesto INT
 AS
 BEGIN
     --╔════════════════════════════════════════════╗
@@ -74,13 +73,15 @@ BEGIN
         --
         IdMoneda INT,
         --
-        IdMes INT,
-        Anio INT,
-        TipoCambio DECIMAL(12, 2),
-        --
         NombreRubro VARCHAR(50),
         --
         CIEP BIT
+    )
+
+    CREATE TABLE #TablaLineaPresupuestoMesMontos
+    (
+        IdLineaPresupuestoMes INT,
+        Monto DECIMAL(18, 4)
     )
 
     INSERT INTO #TablaLineaPresupuestoMes
@@ -137,10 +138,6 @@ BEGIN
         ClasificacionAnexo4,
         --
         IdMoneda,
-        --
-        IdMes,
-        Anio,
-        TipoCambio,
         --
         NombreRubro,
         --
@@ -202,10 +199,6 @@ BEGIN
            --
            NULL,
            --
-           NULL,
-           --
-           NULL,
-           NULL,
            NULL,
            --
            NULL,
@@ -294,11 +287,23 @@ BEGIN
 
     UPDATE #TablaLineaPresupuestoMes
     SET #TablaLineaPresupuestoMes.IdFactura = CO_Registro.IdFactura,
-        #TablaLineaPresupuestoMes.MesPresentacion = CO_Registro.MesPresentacion,
-        #TablaLineaPresupuestoMes.MontoRegistro = CO_Registro.MontoRegistro
+        #TablaLineaPresupuestoMes.MesPresentacion = CO_Registro.MesPresentacion
     FROM #TablaLineaPresupuestoMes
         JOIN CO_Registro
             ON #TablaLineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+
+    INSERT INTO #TablaLineaPresupuestoMesMontos
+    (
+        IdLineaPresupuestoMes,
+        Monto
+    )
+    SELECT #TablaLineaPresupuestoMes.IdLineaPresupuestoMes,
+           SUM(CO_Registro.MontoRegistro)
+    FROM #TablaLineaPresupuestoMes
+        JOIN CO_Registro
+            ON #TablaLineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+    GROUP BY CO_Registro.MontoRegistro,
+             #TablaLineaPresupuestoMes.IdLineaPresupuestoMes
 
     UPDATE #TablaLineaPresupuestoMes
     SET #TablaLineaPresupuestoMes.ClasificacionAnexo4 = CO_ClasificacionAnexo4.ClasificacionAnexo4
@@ -312,15 +317,6 @@ BEGIN
         JOIN FI_Factura
             ON #TablaLineaPresupuestoMes.IdFactura = FI_Factura.IdFactura
 
-    UPDATE #TablaLineaPresupuestoMes
-    SET #TablaLineaPresupuestoMes.IdMes = CO_TipoCambioMensual.IdMes,
-        #TablaLineaPresupuestoMes.Anio = CO_TipoCambioMensual.Anio,
-        #TablaLineaPresupuestoMes.TipoCambio = CO_TipoCambioMensual.TipoCambio
-    FROM #TablaLineaPresupuestoMes
-        JOIN CO_TipoCambioMensual
-            ON #TablaLineaPresupuestoMes.IdMoneda = CO_TipoCambioMensual.IdMoneda
-               AND CO_TipoCambioMensual.IdMes = MONTH(#TablaLineaPresupuestoMes.MesPresentacion)
-               AND CO_TipoCambioMensual.Anio = YEAR(#TablaLineaPresupuestoMes.MesPresentacion)
     UPDATE #TablaLineaPresupuestoMes
     SET #TablaLineaPresupuestoMes.NombreRubro = CO_RubroInterno.NombreRubro
     FROM #TablaLineaPresupuestoMes
@@ -385,18 +381,16 @@ BEGIN
            #TablaLineaPresupuestoMes.IdInstalacionPemex AS ID_PEMEX,
            #TablaLineaPresupuestoMes.[Presupuesto (USD)] AS [Presupuesto (USD)],
            SUM(   CASE
-                      WHEN ISNULL(#TablaLineaPresupuestoMes.MontoRegistro, 0) <> 0 THEN
-                          CAST(ISNULL(#TablaLineaPresupuestoMes.MontoRegistro, 0)
-                               / #TablaLineaPresupuestoMes.TipoCambio AS FLOAT)
+                      WHEN ISNULL(#TablaLineaPresupuestoMesMontos.Monto, 0) <> 0 THEN
+                          CAST(ISNULL(#TablaLineaPresupuestoMesMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio AS FLOAT)
                       ELSE
                           0
                   END
               ) AS [Registrado (USD)],
            #TablaLineaPresupuestoMes.Monto
            - SUM(   CASE
-                        WHEN ISNULL(#TablaLineaPresupuestoMes.MontoRegistro, 0) <> 0 THEN
-                            CAST(ISNULL(#TablaLineaPresupuestoMes.MontoRegistro, 0)
-                                 / #TablaLineaPresupuestoMes.TipoCambio AS FLOAT)
+                        WHEN ISNULL(#TablaLineaPresupuestoMesMontos.Monto, 0) <> 0 THEN
+                            CAST(ISNULL(#TablaLineaPresupuestoMesMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio AS FLOAT)
                         ELSE
                             0
                     END
@@ -412,6 +406,12 @@ BEGIN
            #TablaLineaPresupuestoMes.id_Tarea,
            #TablaLineaPresupuestoMes.TareaPetrolera
     FROM #TablaLineaPresupuestoMes
+        LEFT JOIN #TablaLineaPresupuestoMesMontos
+            ON #TablaLineaPresupuestoMes.IdLineaPresupuestoMes = #TablaLineaPresupuestoMesMontos.IdLineaPresupuestoMes
+        LEFT JOIN CO_TipoCambioMensual
+            ON #TablaLineaPresupuestoMes.IdMoneda = CO_TipoCambioMensual.IdMoneda
+               AND CO_TipoCambioMensual.IdMes = MONTH(#TablaLineaPresupuestoMes.MesPresentacion)
+               AND CO_TipoCambioMensual.Anio = YEAR(#TablaLineaPresupuestoMes.MesPresentacion)
     GROUP BY #TablaLineaPresupuestoMes.IdLineaPresupuestoMes,
              #TablaLineaPresupuestoMes.AC_PRESUP_MES,
              #TablaLineaPresupuestoMes.NombreArea,

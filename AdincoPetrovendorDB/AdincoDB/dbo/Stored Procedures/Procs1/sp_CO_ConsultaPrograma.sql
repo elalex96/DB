@@ -10,8 +10,7 @@
 -- Fecha de Modificación:	10 de Agosto del 2022
 -- Descripción:				Se agregan NOLOCK y eliminacion de codigo comentado, ajustes de lefts (se eliminan)
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_CO_ConsultaPrograma]
-	@IdPrograma int = 0
+CREATE PROCEDURE [dbo].[sp_CO_ConsultaPrograma] @IdPrograma int = 0
 AS
 BEGIN
     -- =============================================
@@ -74,13 +73,15 @@ BEGIN
         --
         IdMoneda INT,
         --
-        IdMes INT,
-        Anio INT,
-        TipoCambio DECIMAL(12, 2),
-        --
         NombreRubro VARCHAR(50),
         --
         CIEP BIT
+    )
+
+    CREATE TABLE #TablaProgramaMontos
+    (
+        IdLineaPresupuestoMes INT,
+        Monto DECIMAL(18, 4)
     )
 
     INSERT INTO #TablaPrograma
@@ -137,10 +138,6 @@ BEGIN
         ClasificacionAnexo4,
         --
         IdMoneda,
-        --
-        IdMes,
-        Anio,
-        TipoCambio,
         --
         NombreRubro,
         --
@@ -205,10 +202,6 @@ BEGIN
            NULL,
            --
            NULL,
-           NULL,
-           NULL,
-           --
-           NULL,
            --
            NULL
     FROM CO_LineaPresupuestoMes
@@ -243,13 +236,6 @@ BEGIN
              dbo.CO_SubactividadPetrolera.SubactividadPetrolera,
              dbo.CO_TareaPetrolera.id_Tarea,
              dbo.CO_TareaPetrolera.TareaPetrolera
-
-
-
-
-
-
-
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.ID_CATACTIV = CO_ActividadCIEP.ID_CATACTIV,
@@ -292,11 +278,23 @@ BEGIN
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.IdFactura = CO_Registro.IdFactura,
-        #TablaPrograma.MesPresentacion = CO_Registro.MesPresentacion,
-        #TablaPrograma.MontoRegistro = CO_Registro.MontoRegistro
+        #TablaPrograma.MesPresentacion = CO_Registro.MesPresentacion
     FROM #TablaPrograma
         JOIN CO_Registro
             ON #TablaPrograma.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+
+    INSERT INTO #TablaProgramaMontos
+    (
+        IdLineaPresupuestoMes,
+        Monto
+    )
+    SELECT #TablaPrograma.IdLineaPresupuestoMes,
+           SUM(CO_Registro.MontoRegistro)
+    FROM #TablaPrograma
+        JOIN CO_Registro
+            ON #TablaPrograma.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+    GROUP BY CO_Registro.MontoRegistro,
+             #TablaPrograma.IdLineaPresupuestoMes
 
     UPDATE #TablaPrograma
     SET #TablaPrograma.ClasificacionAnexo4 = CO_ClasificacionAnexo4.ClasificacionAnexo4
@@ -310,15 +308,6 @@ BEGIN
         JOIN FI_Factura
             ON #TablaPrograma.IdFactura = FI_Factura.IdFactura
 
-    UPDATE #TablaPrograma
-    SET #TablaPrograma.IdMes = CO_TipoCambioMensual.IdMes,
-        #TablaPrograma.Anio = CO_TipoCambioMensual.Anio,
-        #TablaPrograma.TipoCambio = CO_TipoCambioMensual.TipoCambio
-    FROM #TablaPrograma
-        JOIN CO_TipoCambioMensual
-            ON #TablaPrograma.IdMoneda = CO_TipoCambioMensual.IdMoneda
-               AND CO_TipoCambioMensual.IdMes = MONTH(#TablaPrograma.MesPresentacion)
-               AND CO_TipoCambioMensual.Anio = YEAR(#TablaPrograma.MesPresentacion)
     UPDATE #TablaPrograma
     SET #TablaPrograma.NombreRubro = CO_RubroInterno.NombreRubro
     FROM #TablaPrograma
@@ -353,50 +342,51 @@ BEGIN
            #TablaPrograma.IdInstalacionPemex AS ID_PEMEX,
            #TablaPrograma.[Presupuesto (USD)] AS [Presupuesto (USD)],
            SUM(   CASE
-                      WHEN ISNULL(#TablaPrograma.MontoRegistro, 0) <> 0 THEN
-                          ISNULL(#TablaPrograma.MontoRegistro, 0) / #TablaPrograma.TipoCambio
+                      WHEN ISNULL(#TablaProgramaMontos.Monto, 0) <> 0 THEN
+                          ISNULL(#TablaProgramaMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio
                       ELSE
                           0
                   END
               ) AS [Registrado (USD)],
-           #TablaPrograma.Monto - SUM(   CASE
-                                             WHEN ISNULL(#TablaPrograma.MontoRegistro, 0) <> 0 THEN
-                                                 ISNULL(#TablaPrograma.MontoRegistro, 0) / #TablaPrograma.TipoCambio
-                                             ELSE
-                                                 0
-                                         END
-                                     ) AS [Saldo (USD)],
+           #TablaPrograma.Monto
+           - SUM(   CASE
+                        WHEN ISNULL(#TablaProgramaMontos.Monto, 0) <> 0 THEN
+                            ISNULL(#TablaProgramaMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio
+                        ELSE
+                            0
+                    END
+                ) AS [Saldo (USD)],
            SUM(   CASE
-                      WHEN ISNULL(#TablaPrograma.MontoRegistro, 0) <> 0 THEN
-                          ISNULL(#TablaPrograma.MontoRegistro, 0) / #TablaPrograma.TipoCambio
+                      WHEN ISNULL(#TablaProgramaMontos.Monto, 0) <> 0 THEN
+                          ISNULL(#TablaProgramaMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio
                       ELSE
                           0
                   END
               ) / #TablaPrograma.Monto * 100 AS Porcentaje,
            SUM(   CASE
-                      WHEN ISNULL(#TablaPrograma.MontoRegistro, 0) <> 0 THEN
-                          ISNULL(#TablaPrograma.MontoRegistro, 0) / #TablaPrograma.TipoCambio
+                      WHEN ISNULL(#TablaProgramaMontos.Monto, 0) <> 0 THEN
+                          ISNULL(#TablaProgramaMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio
                       ELSE
                           0
                   END
               ) / #TablaPrograma.Monto * 100 AS Progreso100,
            CASE
                WHEN ((SUM(   CASE
-                                 WHEN ISNULL(#TablaPrograma.MontoRegistro, 0) <> 0 THEN
-                                     ISNULL(#TablaPrograma.MontoRegistro, 0) / #TablaPrograma.TipoCambio
+                                 WHEN ISNULL(#TablaProgramaMontos.Monto, 0) <> 0 THEN
+                                     ISNULL(#TablaProgramaMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio
                                  ELSE
                                      0
                              END
-                         ) / monto
+                         ) / #TablaPrograma.Monto
                      ) * 100
                     ) > 100 THEN
            ((SUM(   CASE
-                        WHEN ISNULL(#TablaPrograma.MontoRegistro, 0) <> 0 THEN
-                            ISNULL(#TablaPrograma.MontoRegistro, 0) / #TablaPrograma.TipoCambio
+                        WHEN ISNULL(#TablaProgramaMontos.Monto, 0) <> 0 THEN
+                            ISNULL(#TablaProgramaMontos.Monto, 0) / CO_TipoCambioMensual.TipoCambio
                         ELSE
                             0
                     END
-                ) / monto
+                ) / #TablaPrograma.Monto
             ) * 100
            ) - 100
                ELSE
@@ -410,6 +400,12 @@ BEGIN
            #TablaPrograma.id_Tarea,
            #TablaPrograma.TareaPetrolera
     FROM #TablaPrograma
+        LEFT JOIN #TablaProgramaMontos
+            ON #TablaPrograma.IdLineaPresupuestoMes = #TablaProgramaMontos.IdLineaPresupuestoMes
+        LEFT JOIN CO_TipoCambioMensual
+            ON #TablaPrograma.IdMoneda = CO_TipoCambioMensual.IdMoneda
+               AND CO_TipoCambioMensual.IdMes = MONTH(#TablaPrograma.MesPresentacion)
+               AND CO_TipoCambioMensual.Anio = YEAR(#TablaPrograma.MesPresentacion)
     GROUP BY #TablaPrograma.IdLineaPresupuestoMes,
              #TablaPrograma.AC_PRESUP_MES,
              #TablaPrograma.NombreArea,
