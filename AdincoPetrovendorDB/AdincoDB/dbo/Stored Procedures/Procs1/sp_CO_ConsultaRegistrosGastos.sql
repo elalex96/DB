@@ -9,8 +9,9 @@ IF EXISTS
 	GO
 
 go
+USE ADINCO;
+GO
 CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastos]
--- ============================================= 
 @IdPresupuesto INT
 AS
       BEGIN
@@ -114,25 +115,25 @@ AS
                        FA.IdFactura
                 FROM
 					Petrovendor.dbo.MM_AceptacionCartaPCN	AS	AC	(NOLOCK)
-                Inner JOIN
+				JOIN
 					Petrovendor.dbo.S_Documento_S3			AS	D	(NOLOCK)  
 					ON	D.IdDocumento	=	AC.IdDocumento
 					AND	AC.IdEstatus = 2
 					AND	ISNULL(AC.IdEstatusEliminado, 0)	<>	1
-                Inner JOIN
+                JOIN
 					Petrovendor.dbo.MM_AceptacionPedido		AS	AP	(NOLOCK) 
 					ON	AP.IdAceptacionPedido	=	AC.IdAceptacionPedido
-                Inner JOIN
+                JOIN
 					Petrovendor.dbo.MM_Pedido				AS	P	(NOLOCK) 
 					ON	P.IdPedido	=	AP.IdPedido
 					AND	P.IdContrato	=	@Contrato
-                Inner JOIN
+               JOIN
 					Petrovendor.dbo.S_Proveedor				AS	PR	(NOLOCK) 
 					ON	PR.IdProveedor	=	P.IdSubcontratista
-                Inner JOIN
+                JOIN
 					Petrovendor.dbo.S_TipoValidacionDoc		AS	TD	(NOLOCK) 
 					ON	TD.IdTipoValidacionDoc	=	AC.IdEstatus
-                Inner JOIN
+                JOIN
 					Petrovendor.dbo.MM_Pedidos				AS	PG	(NOLOCK) 
 					ON	P.IdPedido	=	PG.IdIdentificador
                 LEFT JOIN
@@ -235,7 +236,7 @@ AS
           Actividad, 
           SubActividad, 
           EstadoValidacion, 
-          Area, 
+       Area, 
           Comentarios, 
           Anexo4, 
           Identificador, 
@@ -511,7 +512,7 @@ AS
                          CASE
                              WHEN R.CostosAtribuiblesAdministracion = 1
                              THEN 'SI'
-                             ELSE 'NO'
+                     ELSE 'NO'
                          END,
                          CASE
                              WHEN WA.IdDocAwsDocAdinco IS NULL
@@ -583,3 +584,4 @@ AS
          FROM		#Datos	d
 		
      END;
+
