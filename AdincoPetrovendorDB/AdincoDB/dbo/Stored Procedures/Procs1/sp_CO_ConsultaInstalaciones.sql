@@ -3,27 +3,27 @@
 -- Create date: 
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_CO_ConsultaInstalaciones] 
--- Add the parameters for the stored procedure here
-@IdContrato INT = 0
+-- Modificado Por:			Neri del Angel
+-- Fecha de Modificación:	09 de Agosto del 2022
+-- Descripción:				Se agregan NOLOCK y la llamada de columnas con nombre especifico de la tabla durante su llamado.
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_CO_ConsultaInstalaciones]
+    @IdContrato INT = 0
 AS
-     BEGIN
-         -- SET NOCOUNT ON added to prevent extra result sets from
-         -- interfering with SELECT statements.
-         SET NOCOUNT ON;
-         DECLARE @IdAreacontractual AS INT;
-         SELECT @IdAreacontractual = IdAreaContractual
-         FROM dbo.CO_Contrato
-         WHERE idcontrato = @IdContrato;
-
-         /**/
-
-         SELECT I.IdInstalacion, 
-                I.NombreInstalacion, 
-                I.IdInstalacionPemex, 
-                ACIEP.NombreActividad
-         FROM dbo.CO_Instalacion I
-              INNER JOIN dbo.CO_ActividadCIEP ACIEP ON I.IdActividad = ACIEP.IdActividad
-         WHERE--(I.EsBolsa = 0) AND 
-         I.IdAreaContractual = @IdAreaContractual;
-     END;
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @IdAreacontractual AS INT;
+    --
+    SELECT @IdAreacontractual = dbo.CO_Contrato.IdAreaContractual
+    FROM dbo.CO_Contrato (NOLOCK)
+    WHERE dbo.CO_Contrato.idcontrato = @IdContrato;
+    --
+    SELECT dbo.CO_Instalacion.IdInstalacion,
+           dbo.CO_Instalacion.NombreInstalacion,
+           dbo.CO_Instalacion.IdInstalacionPemex,
+           dbo.CO_ActividadCIEP.NombreActividad
+    FROM dbo.CO_Instalacion (NOLOCK)
+        INNER JOIN dbo.CO_ActividadCIEP (NOLOCK)
+            ON dbo.CO_Instalacion.IdAreaContractual = @IdAreaContractual
+               AND dbo.CO_Instalacion.IdActividad = dbo.CO_ActividadCIEP.IdActividad
+END;
