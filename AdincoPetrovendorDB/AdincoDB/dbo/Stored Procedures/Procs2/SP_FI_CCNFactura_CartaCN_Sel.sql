@@ -18,7 +18,7 @@ SELECT DISTINCT
     Petrovendor.dbo.FI_Factura.UUID COLLATE SQL_Latin1_General_CP1_CI_AS,
     S_Documento_S3.IdDocumento
 FROM Petrovendor.dbo.MM_AceptacionCartaPCN (NOLOCK)
-    JOIN Adinco.dbo.FI_Factura FI_Factura_Adinco
+    JOIN Adinco.dbo.FI_Factura FI_Factura_Adinco (NOLOCK)
         ON FI_Factura_Adinco.IdFactura = @IdFactura
     JOIN Petrovendor.dbo.S_Documento_S3 (NOLOCK)
         ON Petrovendor.dbo.MM_AceptacionCartaPCN.IdDocumento = S_Documento_S3.IdDocumento
