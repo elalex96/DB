@@ -7,17 +7,16 @@
 -- Alter date:  04/02/2020
 -- Description:	AgregarCapoConcat Serie/Folio
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ConsultaDetallesFactura]
---[SP_FI_ConsultaDetallesFactura] 56744
-	-- Add the parameters for the stored procedure here
+-- Author:		Reyna Olvera
+-- Alter date:  09/08/2022
+-- Description:	SE ELIMINA 1 LEFY JOIN, AGREGADO DE NOLOCK, MODIFICACIÓN DE LEFT JOINS (TABLAS EN EL ON DERECHA IZQUIERDA)
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_ConsultaDetallesFactura]--56744
 	@IdFactura INT
 AS
 BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
-    -- Insert statements for procedure here
 	SELECT 
 		FAC.IdFactura, 
 		FAC.Serie, 
@@ -43,12 +42,26 @@ BEGIN
 		FAC.UsoCFDI,
 		FAC.VersionCFDI,
 		LTRIM(CONCAT('Serie: ',ISNULL(FAC.Serie,'-'),' | Folio: ',ISNULL(FAC.Folio,'-'))) AS SerieFolio
-	FROM dbo.FI_Factura AS FAC
-	LEFT JOIN dbo.FI_AprobacionFactura AS AFAC ON AFAC.IdFactura = FAC.IdFactura
-	LEFT JOIN dbo.FI_Estatus AS EFAC ON EFAC.IdEstatus = AFAC.IdEstatus
-	LEFT JOIN dbo.AP_Usuario AS US ON US.UsuarioID = AFAC.IdUsuarioAprobador
-	LEFT JOIN dbo.FI_Documento AS FDOC ON FDOC.IdFactura = FAC.IdFactura
-	LEFT JOIN dbo.PV_Subcontratista AS PSB ON PSB.IdSubcontratista = FAC.IdSubcontratista
-	WHERE FAC.IdFactura = @IdFactura
+	FROM 
+		dbo.FI_Factura AS FAC	(NOLOCK)
+	JOIN 
+		dbo.PV_Subcontratista AS PSB	(NOLOCK)
+		ON	FAC.IdSubcontratista	=	 PSB.IdSubcontratista
+	LEFT JOIN 
+		dbo.FI_AprobacionFactura AS AFAC	(NOLOCK)
+		ON	FAC.IdFactura = @IdFactura
+		AND	FAC.IdFactura	=	AFAC.IdFactura
+	LEFT JOIN 
+		dbo.FI_Estatus AS EFAC	(NOLOCK)
+		ON AFAC.IdEstatus	=	 EFAC.IdEstatus
+	LEFT JOIN 
+		dbo.AP_Usuario AS US	(NOLOCK)
+		ON AFAC.IdUsuarioAprobador	=	US.UsuarioID
+	LEFT JOIN 
+		dbo.FI_Documento AS FDOC	(NOLOCK)
+		ON  FAC.IdFactura	=	FDOC.IdFactura
+	WHERE 
+		FAC.IdFactura = @IdFactura
 	ORDER BY FAC.Fecha DESC
 END
+
