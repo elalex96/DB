@@ -1,8 +1,10 @@
-﻿
+﻿--************************************************************
+--ESTE SP TAMBIEN SE UTILIZA DENTRO DE p_OT_ActualizarProgramaCaptura EN ADINCO
+--************************************************************
 -- Modificado por Pedro Acuna 29-Jun-2022 por el issue 2088 Adinco
 -- Modificado por Neri del Angel 20 de Julio del 2022 en Issue 2088 (Se quito el Max en NVARCHAR, se elimina subquery y los left join se eliminan completamente)
--- Modificado por Reyna Olvera 5 Agosto del 2022 en Issue 2158 
--- (Se modificaron algunos join por left joins, ya que en petrovendor algunas semanas no contienen programas capturados y se tiene que colocar lo estimado y los voBos de proveedor y contratista)
+-- Modificado por Reyna Olvera 5 Agosto del 2022 en Issue #2158 
+-- #2158 (Se modificaron algunos join por left joins, ya que en petrovendor algunas semanas no contienen programas capturados y se tiene que colocar lo estimado y los voBos de proveedor y contratista)
 
 CREATE PROC p_OT_ConsultaSolicitudProgramaCaptura
     @pIdOTSolicitud INT,
@@ -108,7 +110,7 @@ BEGIN
         Captura DECIMAL(14, 5)
     )
 
-	CREATE TABLE #tmpVoBos
+    CREATE TABLE #tmpVoBos
     (
         LunesVoBoC BIT,
         MartesVoBoC BIT,
@@ -149,7 +151,7 @@ BEGIN
                 ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
         WHERE OT_Solicitud.IdOTSolicitud = @pIdOTSolicitud
         GROUP BY CONVERT(VARCHAR, OT_SolicitudProgramaCaptura.Fecha, 112)
- END
+    END
 
     IF EXISTS (SELECT 1 FROM #tmpSemana)
     BEGIN
@@ -198,7 +200,7 @@ BEGIN
             ON #tmpDisponibles.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
         LEFT JOIN dbo.OT_SolicitudProgramaCaptura (NOLOCK)
             ON #tmpDisponibles.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
-        LEFT JOIN [dbo].[OT_ProgramaSemanaCerrada] (NOLOCK)
+        LEFT JOIN dbo.OT_ProgramaSemanaCerrada (NOLOCK)
             ON OT_ProgramaSemanaCerrada.IdOTSolicitud = @pIdOTSolicitud
                AND OT_SolicitudMaterial.IdOTSolicitud = OT_ProgramaSemanaCerrada.IdOTSolicitud
                AND OT_SolicitudProgramaCaptura.Fecha
@@ -225,8 +227,8 @@ BEGIN
     )
     SELECT OT_ProgramaAdjuntoSemana.ID,
            OT_ProgramaAdjuntoSemana.IdOTSolicitudMaterial
-    FROM OT_ProgramaAdjuntoSemana
-        INNER JOIN AWS_Documentos
+    FROM OT_ProgramaAdjuntoSemana (NOLOCK)
+        INNER JOIN AWS_Documentos (NOLOCK)
             ON OT_ProgramaAdjuntoSemana.AWSDocumentoId = AWS_Documentos.AWSDocumentoId
     WHERE CONVERT(varchar, FechaInicioSemana, 112) = CONVERT(VARCHAR, substring(@pSemana, 0, 9), 112)
           AND CONVERT(VARCHAR, FechaFinSemana, 112) = CONVERT(VARCHAR, substring(@pSemana, 10, 16), 112)
@@ -253,7 +255,7 @@ BEGIN
         SabadoVoBoC,
         DomingoVoBoC,
         LunesVoBoSC,
-   MartesVoBoSC,
+        MartesVoBoSC,
         MiercolesVoBoSC,
         JuevesVoBoSC,
         ViernesVoBoSC,
@@ -538,8 +540,9 @@ BEGIN
              OT_SolicitudProgramaCaptura.Captura,
              OT_SolicitudProgramaCaptura.Fecha
 
-	INSERT INTO #tmpVoBos
-    (   LunesVoBoC,
+    INSERT INTO #tmpVoBos
+    (
+        LunesVoBoC,
         MartesVoBoC,
         MiercolesVoBoC,
         JuevesVoBoC,
@@ -553,29 +556,29 @@ BEGIN
         ViernesVoBoSC,
         SabadoVoBoSC,
         DomingoVoBoSC
-		)
-	SELECT 
-		CAST(ISNULL(MAX(CAST(#tmpDatos.LunesVoBoC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.MartesVoBoC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.MiercolesVoBoC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.JuevesVoBoC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.ViernesVoBoC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.SabadoVoBoC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.DomingoVoBoC as int)),0) AS bit),
-		---------------------------------  
-		CAST(ISNULL(MAX(CAST(#tmpDatos.LunesVoBoSC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.MartesVoBoSC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.MiercolesVoBoSC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.JuevesVoBoSC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.ViernesVoBoSC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.SabadoVoBoSC as int)),0) AS bit),
-		CAST(ISNULL(MAX(CAST(#tmpDatos.DomingoVoBoSC as int)),0) AS bit)
+    )
+    SELECT TOP 1
+        CAST(ISNULL(MAX(CAST(#tmpDatos.LunesVoBoC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.MartesVoBoC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.MiercolesVoBoC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.JuevesVoBoC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.ViernesVoBoC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.SabadoVoBoC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.DomingoVoBoC as int)), 0) AS bit),
+        ---------------------------------  
+        CAST(ISNULL(MAX(CAST(#tmpDatos.LunesVoBoSC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.MartesVoBoSC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.MiercolesVoBoSC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.JuevesVoBoSC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.ViernesVoBoSC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.SabadoVoBoSC as int)), 0) AS bit),
+        CAST(ISNULL(MAX(CAST(#tmpDatos.DomingoVoBoSC as int)), 0) AS bit)
     FROM #tmpResult
         INNER JOIN #tmpDatos
-        ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial
-	GROUP BY #tmpDatos.IdOTSolicitudMaterial;
-	
-	UPDATE #tmpResult
+            ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial;
+    -- GROUP BY #tmpDatos.IdOTSolicitudMaterial;
+
+    UPDATE #tmpResult
     SET #tmpResult.LunesCaptura = #tmpDatos.LunesCaptura,
         #tmpResult.MartesCaptura = #tmpDatos.MartesCaptura,
         #tmpResult.MiercolesCaptura = #tmpDatos.MiercolesCaptura,
@@ -595,9 +598,8 @@ BEGIN
         INNER JOIN #tmpDatos
             ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial;
 
-	UPDATE #tmpResult
-    SET 
-        #tmpResult.LunesVoBoC = #tmpVoBos.LunesVoBoC,
+    UPDATE #tmpResult
+    SET #tmpResult.LunesVoBoC = #tmpVoBos.LunesVoBoC,
         #tmpResult.MartesVoBoC = #tmpVoBos.MartesVoBoC,
         #tmpResult.MiercolesVoBoC = #tmpVoBos.MiercolesVoBoC,
         #tmpResult.JuevesVoBoC = #tmpVoBos.JuevesVoBoC,
@@ -613,8 +615,7 @@ BEGIN
         #tmpResult.SabadoVoBoSC = #tmpVoBos.SabadoVoBoSC,
         #tmpResult.DomingoVoBoSC = #tmpVoBos.DomingoVoBoSC
     FROM #tmpResult
-        CROSS JOIN
-			#tmpVoBos;
+        CROSS JOIN #tmpVoBos;
 
     UPDATE #tmpResult
     SET #tmpResult.Disponible = ISNULL(#tmpDisponibles.Disponible, 0)
