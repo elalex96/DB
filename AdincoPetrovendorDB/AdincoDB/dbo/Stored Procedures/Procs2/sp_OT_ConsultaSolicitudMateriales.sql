@@ -1,173 +1,205 @@
-﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿--***********************************
+-- ESTE SP SE ENCUENTRA TANTO EN PETROVENDOR COMO EN ADINCO, PERO TIENEN LOGICA DIFERENTE
+--***********************************
 -- sp_OT_ConsultaSolicitudMateriales 57,1
-CREATE Proc sp_OT_ConsultaSolicitudMateriales
-@pIdOTSolicitud INT,
-@pTipoUsuario INT = 1 -- 1.Contratista 2.SubContratista
+CREATE Proc [dbo].[sp_OT_ConsultaSolicitudMateriales]
+    @pIdOTSolicitud INT,
+    @pTipoUsuario INT = 1 -- 1.Contratista 2.SubContratista
 As
+BEGIN
+    declare @IdSubcontrato int
 
-	declare @IdSubcontrato int
 
-	
 
-	select @idSubcontrato = IdSubcontrato
-	from OT_Solicitud
-	where IdOTSolicitud = @pIdOTSolicitud
- 
+    select @idSubcontrato = IdSubcontrato
+    from OT_Solicitud
+    where IdOTSolicitud = @pIdOTSolicitud
 
-	create table  #tmpCantidades (
+
+    create table #tmpCantidades
+    (
         IdSubcontrato int,
         IdSCMaterial int,
-		IdOTSM int,
-		CantidadSC float,
-		CantidadOT float
+        IdOTSM int,
+        CantidadSC float,
+        CantidadOT float
     )
-	create table  #tmpCantidades2 (
+    create table #tmpCantidades2
+    (
         IdSubcontrato int,
         IdSCMaterial int,
-		--IdOTSM int,
-		CantidadSC float,
-		CantidadOT float
+        --IdOTSM int,
+        CantidadSC float,
+        CantidadOT float
     )
 
-	insert into #tmpCantidades
-	select 
-                sMat.idSubcontrato,
-                sMat.IdSCMaterial,  
-				otMat2.IdOTSolicitudMATERIAL,
-				CantidadSC = max(sMat.Cantidad),
-                CantidadOT = sum(otMat2.Cantidad)
-        from  SC_Materiales sMat 
-        inner join [OT_SolicitudMaterial] otMat2 on otMat2.IdSCMaterial = SmAT.IdSCMaterial 
-        inner join OT_Solicitud ot2 on ot2.IdOTSolicitud = otMat2.IdOTSolicitud and
-                                ot2.IdOTEstatus NOT in (7,8,12) and                                
-                                isnull(ot2.IsActivo,0) = 1			
-		
-		
-       where sMat.IdSubcontrato = @idSubcontrato 
-	    group by 
-			sMat.idSubcontrato,
-                sMat.IdSCMaterial,
-				otMat2.IdOTSolicitudMATERIAL
-
-	insert into #tmpCantidades 
-	select 
-                sMat.idSubcontrato,
-                sMat.IdSCMaterial,  
-				SPC.IdOTSolicitudMATERIAL,
-				CantidadSC = max(sMat.Cantidad),
-                CantidadOT = sum(spc.Captura)
-        from  SC_Materiales sMat 
-        inner join [OT_SolicitudMaterial] otMat2 on otMat2.IdSCMaterial = SmAT.IdSCMaterial 
-        inner join OT_Solicitud ot2 on ot2.IdOTSolicitud = otMat2.IdOTSolicitud and
-                                ot2.IdOTEstatus  in (12) and                                
-                                isnull(ot2.IsActivo,0) = 1	 and ot2.IsEliminado = 0		
-		inner join OT_SolicitudProgramaCaptura spc on spc.VoBoContratista = 1 and
-												spc.IdOTSolicitudMaterial = otMat2.IdOTSolicitudMaterial
-		
-       where sMat.IdSubcontrato = @idSubcontrato
-      
-        group by 
-			sMat.idSubcontrato,
-                sMat.IdSCMaterial,
-				SPC.IdOTSolicitudMATERIAL
+    insert into #tmpCantidades
+    (
+        IdSubcontrato,
+        IdSCMaterial,
+        IdOTSM,
+        CantidadSC,
+        CantidadOT
+    )
+    select SC_Materiales.idSubcontrato,
+           SC_Materiales.IdSCMaterial,
+           OT_SolicitudMaterial.IdOTSolicitudMATERIAL,
+           CantidadSC = max(SC_Materiales.Cantidad),
+           CantidadOT = sum(OT_SolicitudMaterial.Cantidad)
+    from SC_Materiales (NOLOCK)
+        inner join OT_SolicitudMaterial (NOLOCK)
+            on OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
+        inner join OT_Solicitud (NOLOCK)
+            on OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+               and OT_Solicitud.IdOTEstatus NOT in ( 7, 8, 12 )
+               and isnull(OT_Solicitud.IsActivo, 0) = 1
+    where SC_Materiales.IdSubcontrato = @idSubcontrato
+    group by SC_Materiales.idSubcontrato,
+             SC_Materiales.IdSCMaterial,
+             OT_SolicitudMaterial.IdOTSolicitudMATERIAL
 
 
-	insert into #tmpCantidades2
-	select  IdSubcontrato ,
-        IdSCMaterial ,		
-		max(CantidadSC) ,
-		sum(CantidadOT ) 
-	from #tmpCantidades
-	group by IdSubcontrato,IdSCMaterial
+    insert into #tmpCantidades
+    (
+        IdSubcontrato,
+        IdSCMaterial,
+        IdOTSM,
+        CantidadSC,
+        CantidadOT
+    )
+    select SC_Materiales.idSubcontrato,
+           SC_Materiales.IdSCMaterial,
+           OT_SolicitudProgramaCaptura.IdOTSolicitudMATERIAL,
+           CantidadSC = max(SC_Materiales.Cantidad),
+           CantidadOT = sum(OT_SolicitudProgramaCaptura.Captura)
+    from SC_Materiales (NOLOCK)
+        inner join OT_SolicitudMaterial (NOLOCK)
+            on OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
+        inner join OT_Solicitud (NOLOCK)
+            on OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+               and OT_Solicitud.IdOTEstatus = 12
+               and isnull(OT_Solicitud.IsActivo, 0) = 1
+               and OT_Solicitud.IsEliminado = 0
+        inner join OT_SolicitudProgramaCaptura (NOLOCK)
+            on OT_SolicitudProgramaCaptura.VoBoContratista = 1
+               and OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
+    where SC_Materiales.IdSubcontrato = @idSubcontrato
+    group by SC_Materiales.idSubcontrato,
+             SC_Materiales.IdSCMaterial,
+             OT_SolicitudProgramaCaptura.IdOTSolicitudMATERIAL
 
-	
 
-	select 
-			Id = ROW_NUMBER() OVER(ORDER BY sm.IdOTSolicitudMaterial ASC),
-			sm.IdOTSolicitudMaterial,
-			sm.IdOTSolicitud,
-			sc.IdSCMaterial,
-			sc.Concepto,
-			NombreMaterial = sc.Descripcion,
-			sm.IdServicio,
-			sc.IdUnidad,
-			NombreUnidad = Unidad,
-			Cantidad = ISNULL(sm.Cantidad,0),
-			CantidadDisponible = 
-							 case when isnull(max(tmp2.CantidadSC),0) - isnull(max(tmp2.CantidadOT),0)  < 0 then 0
-									else isnull(max(tmp2.CantidadSC),0) - isnull(max(tmp2.CantidadOT),0)
-							end
-								,
-			PrecioUnitario = sc.PrecioUnitario,
-			Importe = cast(isnull(sm.Cantidad,0) * isnull(sc.PrecioUnitario,0) as  money),
-			sm.FechaProgramaInicio,
-			sm.FechaProgramaFin,
-			sm.CreadoPor,
-			sm.CreadoEl,
-			sm.ModificadoPor,
-			sm.ModificadoEl,
-			ModificadaPorContratista = cast(CASE WHEN bita.IdOTSolicitudMaterial IS NOT NULL THEN 1 ELSE 0 END AS bit),			
-			Moneda = isnull(TipoMonedaCorto,'NO DEFINIDO')	,		
-			sm.Comentarios
-	from dbo.SC_Materiales sc	
-	inner join petrovendor..MM_Material mmm on mmm.IdMaterial = sc.IdMaestro
-	--inner join petrovendor..MM_Maestro mae on mae.IdMaestro = mmm.IdMaestro
-	inner join OT_Solicitud sol on sol.IdSubContrato = sc.IdSubContrato
-	inner join sc_subcontrato sc2 on sc2.idsubcontrato = sol.idsubcontrato
-	inner join #tmpCantidades2 tmp2 on tmp2.IdSCMaterial = sc.IdSCMaterial
-	left join Petrovendor.dbo.MM_Pedido ped on ped.IdPedido = sc2.idPedido
-	left join Petrovendor.dbo.PV_TipoMoneda moneda on moneda.idMoneda = isnull(ped.idMoneda,sol.IdMoneda)
-	left JOIN OT_SolicitudMaterial sm on sol.IdOTSolicitud = sm.IdOTSolicitud AND
-										sm.IdSCMaterial = sc.IdSCMaterial
-	
-	left JOIN Petrovendor.dbo.PV_MM_MaterialUnidad uni ON uni.IdUnidad = SC.IdUnidad
-	LEFT JOIN dbo.OT_SolicitudMaterialBitacora bita ON bita.IdOTSolicitudMaterial = sm.IdOTSolicitudMaterial AND
-												bita.IdTipoUsuario = 1
-	
-											
-	
-	where sol.IdOTSolicitud = @pIdOTSolicitud
-	AND (
-		
-		(sol.IdOTEstatus in(5,6) AND sm.Cantidad > 0 AND @pTipoUsuario = 1)
-		OR
-		(sol.IdOTEstatus not in (5,6)  AND @pTipoUsuario = 1)
-		OR @pTipoUsuario = 2
-	)
-	-- Si se activa la captura manual, solo mostrar items con relación entre contrato y materiales de OT
-	AND (
-		isnull(CapturaManual,0) = 0 
-		OR
-		(
-			isnull(CapturaManual,0) = 1 and isnull(sm.Cantidad,0) > 0
-		)
-	)
-	group by sm.IdOTSolicitudMaterial,
-			sm.IdOTSolicitud,
-			sc.IdSCMaterial,
-			 sc.Descripcion,
-			sm.IdServicio,
-			sc.IdUnidad,
-			sm.Cantidad,
-			 sc.Cantidad,
-			 sc.PrecioUnitario,
-			sm.Cantidad,sc.PrecioUnitario,
-			sm.FechaProgramaInicio,
-			sm.FechaProgramaFin,
-			sm.CreadoPor,
-			sm.CreadoEl,
-			sm.ModificadoPor,
-			sm.ModificadoEl, sol.IdSubContrato,
-			Unidad,
-			bita.IdOTSolicitudMaterial,
-			TipoMonedaCorto,
-			sm.Comentarios,sc.Concepto,tmp2.IdSCMaterial
-	order by sm.Cantidad desc,sc.Concepto
+    insert into #tmpCantidades2
+    select IdSubcontrato,
+           IdSCMaterial,
+           max(CantidadSC),
+           sum(CantidadOT)
+    from #tmpCantidades
+    group by IdSubcontrato,
+             IdSCMaterial
 
 
 
+    select Id = ROW_NUMBER() OVER (ORDER BY OT_SolicitudMaterial.IdOTSolicitudMaterial ASC),
+           OT_SolicitudMaterial.IdOTSolicitudMaterial,
+           OT_SolicitudMaterial.IdOTSolicitud,
+           SC_Materiales.IdSCMaterial,
+           SC_Materiales.Concepto,
+           NombreMaterial = SC_Materiales.Descripcion,
+           OT_SolicitudMaterial.IdServicio,
+           SC_Materiales.IdUnidad,
+           NombreUnidad = PV_MM_MaterialUnidad.Unidad,
+           Cantidad = ISNULL(OT_SolicitudMaterial.Cantidad, 0),
+           CantidadDisponible = case
+                                    when isnull(max(tmp2.CantidadSC), 0) - isnull(max(tmp2.CantidadOT), 0) < 0 then
+                                        0
+                                    else
+                                        isnull(max(tmp2.CantidadSC), 0) - isnull(max(tmp2.CantidadOT), 0)
+                                end,
+           PrecioUnitario = SC_Materiales.PrecioUnitario,
+           Importe = cast(isnull(OT_SolicitudMaterial.Cantidad, 0) * isnull(SC_Materiales.PrecioUnitario, 0) as money),
+           OT_SolicitudMaterial.FechaProgramaInicio,
+           OT_SolicitudMaterial.FechaProgramaFin,
+           OT_SolicitudMaterial.CreadoPor,
+           OT_SolicitudMaterial.CreadoEl,
+           OT_SolicitudMaterial.ModificadoPor,
+           OT_SolicitudMaterial.ModificadoEl,
+           ModificadaPorContratista = cast(CASE
+                                               WHEN OT_SolicitudMaterialBitacora.IdOTSolicitudMaterial IS NOT NULL THEN
+                                                   1
+                                               ELSE
+                                                   0
+                                           END AS bit),
+           Moneda = isnull(PV_TipoMoneda.TipoMonedaCorto, 'NO DEFINIDO'),
+           OT_SolicitudMaterial.Comentarios
+    from dbo.SC_Materiales (NOLOCK)
+        --inner join petrovendor..MM_Material 				(NOLOCK) on MM_Material.IdMaterial = SC_Materiales.IdMaestro
+        inner join OT_Solicitud (NOLOCK)
+            on OT_Solicitud.IdSubContrato = SC_Materiales.IdSubContrato
+        inner join sc_subcontrato (NOLOCK)
+            on sc_subcontrato.idsubcontrato = OT_Solicitud.idsubcontrato
+        inner join #tmpCantidades2 tmp2 (NOLOCK)
+            on tmp2.IdSCMaterial = SC_Materiales.IdSCMaterial
+        left join Petrovendor.dbo.MM_Pedido (NOLOCK)
+            on MM_Pedido.IdPedido = sc_subcontrato.idPedido
+        left join Petrovendor.dbo.PV_TipoMoneda (NOLOCK)
+            on PV_TipoMoneda.idMoneda = isnull(MM_Pedido.idMoneda, OT_Solicitud.IdMoneda)
+        left JOIN OT_SolicitudMaterial (NOLOCK)
+            on OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+               AND OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
+        left JOIN Petrovendor.dbo.PV_MM_MaterialUnidad (NOLOCK)
+            ON PV_MM_MaterialUnidad.IdUnidad = SC_Materiales.IdUnidad
+        LEFT JOIN dbo.OT_SolicitudMaterialBitacora (NOLOCK)
+            ON OT_SolicitudMaterialBitacora.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
+               AND OT_SolicitudMaterialBitacora.IdTipoUsuario = 1
+    where OT_Solicitud.IdOTSolicitud = @pIdOTSolicitud
+          AND (
+                  (
+                      OT_Solicitud.IdOTEstatus in ( 5, 6 )
+                      AND OT_SolicitudMaterial.Cantidad > 0
+                      AND @pTipoUsuario = 1
+                  )
+                  OR (
+                         OT_Solicitud.IdOTEstatus not in ( 5, 6 )
+                         AND @pTipoUsuario = 1
+                     )
+                  OR @pTipoUsuario = 2
+              )
+          -- Si se activa la captura manual, solo mostrar items con relación entre contrato y materiales de OT
+          AND (
+                  isnull(CapturaManual, 0) = 0
+                  OR (
+                         isnull(CapturaManual, 0) = 1
+                         and isnull(OT_SolicitudMaterial.Cantidad, 0) > 0
+                     )
+              )
+    group by OT_SolicitudMaterial.IdOTSolicitudMaterial,
+             OT_SolicitudMaterial.IdOTSolicitud,
+             SC_Materiales.IdSCMaterial,
+             SC_Materiales.Descripcion,
+             OT_SolicitudMaterial.IdServicio,
+             SC_Materiales.IdUnidad,
+             OT_SolicitudMaterial.Cantidad,
+             SC_Materiales.Cantidad,
+             SC_Materiales.PrecioUnitario,
+             OT_SolicitudMaterial.Cantidad,
+             SC_Materiales.PrecioUnitario,
+             OT_SolicitudMaterial.FechaProgramaInicio,
+             OT_SolicitudMaterial.FechaProgramaFin,
+             OT_SolicitudMaterial.CreadoPor,
+             OT_SolicitudMaterial.CreadoEl,
+             OT_SolicitudMaterial.ModificadoPor,
+             OT_SolicitudMaterial.ModificadoEl,
+             OT_Solicitud.IdSubContrato,
+             PV_MM_MaterialUnidad.Unidad,
+             OT_SolicitudMaterialBitacora.IdOTSolicitudMaterial,
+             PV_TipoMoneda.TipoMonedaCorto,
+             OT_SolicitudMaterial.Comentarios,
+             SC_Materiales.Concepto,
+             tmp2.IdSCMaterial
+    order by OT_SolicitudMaterial.Cantidad desc,
+             SC_Materiales.Concepto
 
-
-
+END
 
 
