@@ -3,45 +3,48 @@
 -- Create date: 17-05-2018
 -- Description:	
 -- =============================================
+-- Modificado Por: Neri Garcia
+-- Fecha: 11 de Agosto del 2022
+-- Detalles: Agregado de NOLOCK, Nombrado de Tablas en select, eliminado de codigo comentado 
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ComprobanteReciboPago] 
--- Add the parameters for the stored procedure here
-@IdsCompReciboPago VARCHAR(MAX), 
-@IdContrato        INT, 
-@IdUsuario         INT
+    @IdsCompReciboPago VARCHAR(MAX),
+    @IdContrato INT,
+    @IdUsuario INT
 AS
-     BEGIN
-         -- SET NOCOUNT ON added to prevent extra result sets from
-         -- interfering with SELECT statements.
-         SET NOCOUNT ON;
-         -- Insert statements for procedure here
-         DECLARE @UUIDSFaltantes NVARCHAR(MAX);
-         --
-         SELECT @UUIDSFaltantes = SUBSTRING(
-         (
-             SELECT ','+CPDR.IdDocumento AS 'data()'
-             FROM dbo.FI_CPDocRelacionado AS CPDR
-                  LEFT JOIN dbo.FI_ComplementoDePago CP ON CPDR.IdComplementoDePago = CP.IdComplementoDePago --AND CP.IdFactura IN (52391)
-                  LEFT JOIN dbo.FI_Factura F ON CPDR.IdDocumento = F.UUID --AND F.IdFactura IS NULL 
-
-             WHERE CP.IdFactura IN
-             (
-                 SELECT *
-                 FROM [fn_FI_StringList2Table](@IdsCompReciboPago)
-             )
-                  AND F.IdFactura IS NULL FOR XML PATH('')
-         ), 2, 9999);
-         --
-
-         SELECT MAX(CAST(CP.FechaDePago AS DATE)) AS FechaP, 
-                ISNULL(SUM(CP.Monto), 0) AS Monto, 
-                ISNULL(MP.IdMetodoPago, 0) AS IdMetodoPago, 
-                @UUIDSFaltantes AS UUIDSFaltantes
-         FROM dbo.FI_ComplementoDePago CP
-              LEFT JOIN dbo.PV_MetodoPago MP ON CP.FormaDePagoP = MP.C_FormaPago
-         WHERE CP.IdFactura IN
-         (
-             SELECT *
-             FROM [fn_FI_StringList2Table](@IdsCompReciboPago)
-         )
-         GROUP BY ISNULL(MP.IdMetodoPago, 0);
-     END;
+BEGIN
+    SET NOCOUNT ON;
+    -- 
+    DECLARE @UUIDSFaltantes NVARCHAR(MAX);
+    --
+    SELECT @UUIDSFaltantes
+        = SUBSTRING(
+          (
+              SELECT ',' + dbo.FI_CPDocRelacionado.IdDocumento AS 'data()'
+              FROM dbo.FI_CPDocRelacionado (NOLOCK)
+                  LEFT JOIN dbo.FI_ComplementoDePago (NOLOCK)
+                      ON dbo.FI_CPDocRelacionado.IdComplementoDePago = dbo.FI_ComplementoDePago.IdComplementoDePago
+                  LEFT JOIN dbo.FI_Factura (NOLOCK)
+                      ON dbo.FI_CPDocRelacionado.IdDocumento = dbo.FI_Factura.UUID
+              WHERE dbo.FI_ComplementoDePago.IdFactura IN (
+                                                              SELECT * FROM [fn_FI_StringList2Table](@IdsCompReciboPago)
+                                                          )
+                    AND dbo.FI_Factura.IdFactura IS NULL
+              FOR XML PATH('')
+          ),
+          2,
+          9999
+                   );
+    --
+    SELECT MAX(CAST(dbo.FI_ComplementoDePago.FechaDePago AS DATE)) AS FechaP,
+           ISNULL(SUM(dbo.FI_ComplementoDePago.Monto), 0) AS Monto,
+           ISNULL(dbo.PV_MetodoPago.IdMetodoPago, 0) AS IdMetodoPago,
+           @UUIDSFaltantes AS UUIDSFaltantes
+    FROM dbo.FI_ComplementoDePago (NOLOCK)
+        LEFT JOIN dbo.PV_MetodoPago (NOLOCK)
+            ON dbo.FI_ComplementoDePago.FormaDePagoP = dbo.PV_MetodoPago.C_FormaPago
+    WHERE dbo.FI_ComplementoDePago.IdFactura IN (
+                                                    SELECT * FROM [fn_FI_StringList2Table](@IdsCompReciboPago)
+                                                )
+    GROUP BY ISNULL(dbo.PV_MetodoPago.IdMetodoPago, 0);
+END;

@@ -1,33 +1,32 @@
-﻿-- =============================================
+﻿--╔════════════════════════════════════════════╗
+--║Uso de SP en Sistema de ADINCO y PETROVENDOR║
+--╚════════════════════════════════════════════╝
+-- =============================================
 -- Author:		Manuel CD
 -- ALTER date: 24-08-17
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ProveedoresPorContrato] 
-	-- Add the parameters for the stored procedure here
-@IdContrato INT
+-- Modificado Por: Neri Garcia
+-- Fecha: 11 de Agosto del 2022
+-- Detalles: Agregado de NOLOCK y Nombrado de Tablas en select
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_ProveedoresPorContrato] @IdContrato INT
 AS
-         BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-             SET NOCOUNT ON;
-
-    -- Insert statements for procedure here
-             SELECT DISTINCT
-                    S.IdSubcontratista,
-                    UPPER(S.RazonSocial) AS RazonSocial,
-                    S.RFC
-             FROM PV_Subcontratista AS S
-         --FROM CO_Contrato C
-         --LEFT OUTER JOIN FI_Factura F ON C.IdContrato = f.IdContrato
-         --JOIN PV_Subcontratista AS S ON S.IdSubcontratista = F.IdSubcontratista
-             WHERE S.RazonSocial <> ''
-                   AND S.RazonSocial <> '-'
-                   AND S.RFC IS NOT NULL
-                   AND S.RFC <> '-'
-                   AND S.RFC <> ''
-				   AND ISNULL(S.IsEliminado,0) = 0
-				   AND S.IsActivo = 1
-             ORDER BY UPPER(S.RazonSocial);
-         END;
+BEGIN
+    SET NOCOUNT ON;
+    --
+    SELECT DISTINCT
+        PV_Subcontratista.IdSubcontratista,
+        UPPER(PV_Subcontratista.RazonSocial) AS RazonSocial,
+        PV_Subcontratista.RFC
+    FROM PV_Subcontratista (NOLOCK)
+    WHERE PV_Subcontratista.RazonSocial <> ''
+          AND PV_Subcontratista.RazonSocial <> '-'
+          AND PV_Subcontratista.RFC IS NOT NULL
+          AND PV_Subcontratista.RFC <> '-'
+          AND PV_Subcontratista.RFC <> ''
+          AND ISNULL(PV_Subcontratista.IsEliminado, 0) = 0
+          AND PV_Subcontratista.IsActivo = 1
+    ORDER BY UPPER(PV_Subcontratista.RazonSocial);
+END;
 

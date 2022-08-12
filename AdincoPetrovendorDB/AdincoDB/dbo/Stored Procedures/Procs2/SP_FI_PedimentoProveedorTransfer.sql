@@ -6,77 +6,75 @@
 --20180731: Reyna Olvera
 --Modificado para mostrar los montos de dicha transferencia correctamente
 -- =============================================
-
-CREATE PROCEDURE [dbo].[SP_FI_PedimentoProveedorTransfer] 
--- Add the parameters for the stored procedure here
-@IdContrato       INT, 
-@IdSubcontratista INT, 
-@IdUsuario        INT,
-@IdTransfer INT
+-- Modificado Por: Neri Garcia
+-- Fecha: 11 de Agosto del 2022
+-- Detalles: Agregado de NOLOCK, Nombrado de Tablas en select, ajustes de join en orden de llamado de tablas,
+--			 eliminación de left join sin uso y eliminación de codigo comentado
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_PedimentoProveedorTransfer]
+    @IdContrato INT,
+    @IdSubcontratista INT,
+    @IdUsuario INT,
+    @IdTransfer INT
 AS
-     BEGIN
-         -- SET NOCOUNT ON added to prevent extra result sets from
-         -- interfering with SELECT statements.
-         SET NOCOUNT ON;
-
-/*DECLARE @IdContratista INT;
-
-	    SELECT @IdContratista = C.IdContratista FROM CO_Contrato C
-	    JOIN CO_Contratista CC ON C.IdContratista = CC.IdContratista
-	    WHERE IdContrato = @IdContrato*/
-
-         --SELECT @IdContratista
-         -- Insert statements for procedure here
-
-         SELECT PC.IdPedimentoComprobante AS IdPedimento, 
-                PC.NumeroPedimento, 
-                CP.Clave AS ClavePedimento, 
-                PC.FolioComprobante, 
-                PC.FechaPago, 
-                PC.Regimen, 
-                SI.RazonSocial AS Importador, 
-                PC.AduanaES, 
-                SE.RazonSocial AS Exportador, 
-                PC.AcuseElectronico, 
-                PCD.DescripcionMercancia, 
-                TM.TipoMonedaCorto, 
-                PCD.PrecioUnitario, 
-                PCD.Cantidad, 
-                UC.Nombre AS CreadoPor, 
-                PC.CreadoEn, 
-                TR.MontoPagado AS MontoPagado
-         FROM FI_PedimentoComprobante AS PC
-              LEFT JOIN FI_PedimentoComprobanteDetalle AS PCD ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
-              LEFT JOIN dbo.PV_Subcontratista SI ON PC.IdSubcontratistaImportador = SI.IdSubcontratista
-              LEFT JOIN dbo.PV_Subcontratista SE ON PC.IdSubcontratistaExportador = SE.IdSubcontratista
-              LEFT JOIN dbo.PV_TipoMoneda TM ON PC.IdMoneda = TM.IdMoneda
-              LEFT JOIN dbo.AP_Usuario UC ON PC.CreadoPor = UC.UsuarioID
-              LEFT JOIN dbo.AP_Usuario UM ON PC.ModificadoPor = UM.UsuarioID
-              LEFT JOIN dbo.FI_Documento D ON PC.IdPedimentoComprobante = D.IdPedimentoComprobante
-              LEFT JOIN dbo.FI_ClavesPedimento CP ON PC.ClavePedimento = CP.IdPedimento
-              LEFT JOIN dbo.CO_Contrato C ON PC.IdContrato = C.IdContrato
-              LEFT JOIN dbo.FI_TransferFactura TR ON TR.IdPedimentoComprobante = PC.IdPedimentoComprobante AND (TR.IdTransferFactura IS NULL OR TR.IdTransfer=@IdTransfer)
-         WHERE PC.CvTipoDocFacturacion = 2
-               AND C.IdContrato = @IdContrato --@IdContratista
-               AND PC.IdSubcontratistaExportador = @IdSubcontratista
-         GROUP BY PC.IdPedimentoComprobante, 
-                  PC.NumeroPedimento, 
-                  CP.Clave, 
-                  PC.FolioComprobante, 
-                  PC.FechaPago, 
-                  PC.Regimen, 
-                  SI.RazonSocial, 
-                  PC.AduanaES, 
-                  SE.RazonSocial, 
-                  PC.AcuseElectronico, 
-                  PCD.DescripcionMercancia, 
-                  TM.TipoMonedaCorto, 
-                  PCD.PrecioUnitario, 
-                  PCD.Cantidad, 
-                  UC.Nombre, 
-                  PC.CreadoEn, 
-                  TR.MontoPagado
-         ORDER BY IdPedimento DESC;
-         --SP_FI_PedimentoProveedorTransfer 3,10058,1
-         --SP_FI_PedimentoProveedorTransfer 10003,10802,1
-     END;
+BEGIN
+    SET NOCOUNT ON;
+    --
+    SELECT FI_PedimentoComprobante.IdPedimentoComprobante AS IdPedimento,
+           FI_PedimentoComprobante.NumeroPedimento,
+           FI_ClavesPedimento.Clave AS ClavePedimento,
+           FI_PedimentoComprobante.FolioComprobante,
+           FI_PedimentoComprobante.FechaPago,
+           FI_PedimentoComprobante.Regimen,
+           PV_Subcontratista.RazonSocial AS Importador,
+           FI_PedimentoComprobante.AduanaES,
+           PV_Subcontratista_SubcontratistaExportador.RazonSocial AS Exportador,
+           FI_PedimentoComprobante.AcuseElectronico,
+           FI_PedimentoComprobanteDetalle.DescripcionMercancia,
+           PV_TipoMoneda.TipoMonedaCorto,
+           FI_PedimentoComprobanteDetalle.PrecioUnitario,
+           FI_PedimentoComprobanteDetalle.Cantidad,
+           AP_Usuario.Nombre AS CreadoPor,
+           FI_PedimentoComprobante.CreadoEn,
+           FI_TransferFactura.MontoPagado AS MontoPagado
+    FROM FI_PedimentoComprobante
+        LEFT JOIN FI_PedimentoComprobanteDetalle
+            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
+        LEFT JOIN PV_Subcontratista
+            ON FI_PedimentoComprobante.IdSubcontratistaImportador = PV_Subcontratista.IdSubcontratista
+        LEFT JOIN PV_Subcontratista PV_Subcontratista_SubcontratistaExportador
+            ON FI_PedimentoComprobante.IdSubcontratistaExportador = PV_Subcontratista_SubcontratistaExportador.IdSubcontratista
+        LEFT JOIN PV_TipoMoneda
+            ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
+        LEFT JOIN AP_Usuario
+            ON FI_PedimentoComprobante.CreadoPor = AP_Usuario.UsuarioID
+        LEFT JOIN FI_ClavesPedimento
+            ON FI_PedimentoComprobante.ClavePedimento = FI_ClavesPedimento.IdPedimento
+        LEFT JOIN FI_TransferFactura
+            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante
+               AND (
+                       FI_TransferFactura.IdTransferFactura IS NULL
+                       OR FI_TransferFactura.IdTransfer = @IdTransfer
+                   )
+    WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = 2
+          AND FI_PedimentoComprobante.IdContrato = @IdContrato
+          AND FI_PedimentoComprobante.IdSubcontratistaExportador = @IdSubcontratista
+    GROUP BY FI_PedimentoComprobante.IdPedimentoComprobante,
+             FI_PedimentoComprobante.NumeroPedimento,
+             FI_ClavesPedimento.Clave,
+             FI_PedimentoComprobante.FolioComprobante,
+             FI_PedimentoComprobante.FechaPago,
+             FI_PedimentoComprobante.Regimen,
+             PV_Subcontratista.RazonSocial,
+             FI_PedimentoComprobante.AduanaES,
+             PV_Subcontratista_SubcontratistaExportador.RazonSocial,
+             FI_PedimentoComprobante.AcuseElectronico,
+             FI_PedimentoComprobanteDetalle.DescripcionMercancia,
+             PV_TipoMoneda.TipoMonedaCorto,
+             FI_PedimentoComprobanteDetalle.PrecioUnitario,
+             FI_PedimentoComprobanteDetalle.Cantidad,
+             AP_Usuario.Nombre,
+             FI_PedimentoComprobante.CreadoEn,
+             FI_TransferFactura.MontoPagado
+    ORDER BY IdPedimento DESC;
+END;

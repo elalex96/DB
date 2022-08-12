@@ -1,30 +1,78 @@
-﻿-- =============================================
--- Author:		Manuel CD
--- Create date: 25-08-17
--- Description:	
+﻿-- =============================================  
+-- Author:  Manuel CD  
+-- Create date: 25-08-17  
+-- Description:   
+-- =============================================  
+--20/07/201 Solo muestre las cuentas activas
+-- ============================================= 
+-- Modificado Por: Neri Garcia
+-- Fecha: 11 de Agosto del 2022
+-- Detalles: Agregado de NOLOCK, Nombrado de Tablas en select, ajustes de lefts joins y eliminación de codigo comentado
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_CuentaProveedorDestino] 
-	-- Add the parameters for the stored procedure here
-@IdSubcontratista INT
+CREATE PROCEDURE [dbo].[SP_FI_CuentaProveedorDestino] @IdSubcontratista INT
 AS
-     BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-         SET NOCOUNT ON;
+BEGIN
+    SET NOCOUNT ON;
+    --
+    CREATE TABLE #TablaCuentaProveedorDestino
+    (
+        DatoBancarioID INT,
+        RazonSocial VARCHAR(200),
+        NumeroCuenta VARCHAR(200),
+        CuentaClave VARCHAR(200),
+        TipoMonedaCorto VARCHAR(200),
+        Predeterminado BIT,
+        TipoMonedaID INT,
+        NombreComercial VARCHAR(200),
+        IdProveedor INT
+    )
+    INSERT INTO #TablaCuentaProveedorDestino
+    (
+        DatoBancarioID,
+        RazonSocial,
+        NumeroCuenta,
+        CuentaClave,
+        TipoMonedaCorto,
+        Predeterminado,
+        TipoMonedaID,
+        NombreComercial,
+        IdProveedor
+    )
+    SELECT PV_CuentaBancaria.DatoBancarioID,
+           PV_Banco.RazonSocial,
+           PV_CuentaBancaria.NumeroCuenta,
+           PV_CuentaBancaria.CuentaClave,
+           PV_TipoMoneda.TipoMonedaCorto,
+           PV_CuentaBancaria.Predeterminado,
+           PV_CuentaBancaria.TipoMonedaID,
+           'S/N',
+           PV_CuentaBancaria.IdProveedor
+    FROM PV_CuentaBancaria (NOLOCK)
+        INNER JOIN PV_Banco (NOLOCK)
+            ON PV_CuentaBancaria.BancoID = PV_Banco.BancoID
+        JOIN PV_TipoMoneda (NOLOCK)
+            ON PV_CuentaBancaria.TipoMonedaID = PV_TipoMoneda.idmoneda
+    WHERE PV_CuentaBancaria.Activa = 1
+          AND PV_CuentaBancaria.IdProveedor = @IdSubcontratista
 
-    -- Insert statements for procedure here
+    UPDATE #TablaCuentaProveedorDestino
+    SET #TablaCuentaProveedorDestino.NombreComercial = ISNULL(PV_Subcontratista.NombreComercial, 'S/N')
+    FROM #TablaCuentaProveedorDestino
+        JOIN PV_Subcontratista (NOLOCK)
+            ON #TablaCuentaProveedorDestino.IdProveedor = PV_Subcontratista.IdSubcontratista
 
-         SELECT CB.DatoBancarioID,
-                concat(C.RazonSocial, ' (', Isnull(S.NombreComercial, 'S/N'), ') ', ' - ', Isnull(CB.NumeroCuenta, CB.CuentaClave), ' - ', TM.TipoMonedaCorto) AS Cuenta,
-                CB.Predeterminado,
-                CB.TipoMonedaID
-         FROM PV_CuentaBancaria CB
-              LEFT JOIN PV_Subcontratista S ON CB.IdProveedor = S.IdSubcontratista
-              INNER JOIN PV_Banco C ON CB.BancoID = C.BancoID
-              JOIN PV_TipoMoneda TM ON CB.TipoMonedaID = tm.idmoneda
-         WHERE S.IdSubcontratista = @IdSubcontratista;
-
-	    --SP_FI_CuentaProveedorDestino 10042
-	    --SP_FI_CuentaProveedorDestino 10080
-     END;
-
+    SELECT #TablaCuentaProveedorDestino.DatoBancarioID,
+           CONCAT(
+                     #TablaCuentaProveedorDestino.RazonSocial,
+                     ' (',
+                     ISNULL(#TablaCuentaProveedorDestino.NombreComercial, 'S/N'),
+                     ') ',
+                     ' - ',
+                     ISNULL(#TablaCuentaProveedorDestino.NumeroCuenta, #TablaCuentaProveedorDestino.CuentaClave),
+                     ' - ',
+                     #TablaCuentaProveedorDestino.TipoMonedaCorto
+                 ) AS Cuenta,
+           #TablaCuentaProveedorDestino.Predeterminado,
+           #TablaCuentaProveedorDestino.TipoMonedaID
+    FROM #TablaCuentaProveedorDestino
+END;
