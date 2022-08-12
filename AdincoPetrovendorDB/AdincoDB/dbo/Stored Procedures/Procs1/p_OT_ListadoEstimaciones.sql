@@ -1,36 +1,29 @@
-﻿
-CREATE PROCEDURE p_OT_ListadoEstimaciones
+﻿CREATE PROCEDURE [dbo].[p_OT_ListadoEstimaciones]
 	@pIdUsuario int ,
 	@pIdContrato int = 0,
 	@pIdCentroCostos int = 0
 as
 begin
-	select		ots.Folio,
-				ote.FechaCorteInicio,
-				ote.FechaCorteFin,
-				ote.CreadoEl,
-				ote.Total,
-				tm.TipoMonedaCorto,
-				ote.IdPedidoGeneral as IdPedido,
-				pv.RazonSocial,
-				ote.IdOTEstimacion
-	from		Adinco..OT_Estimacion ote
-	inner join	OT_Solicitud				ots on ote.IdOTSolicitud	= ots.IdOTSolicitud
-	inner join	PV_TipoMoneda				tm	on ots.IdMoneda			= tm.IdMoneda
-	inner join	SC_Subcontrato				sc	on sc.IdSubContrato		= ots.IdSubcontrato	
-	inner join	PV_Subcontratista			pv	on pv.IdSubcontratista	= sc.IdSubcontratista	
-	inner join	Petrovendor..CC_CentroCosto cc	on ots.IdCentroCosto	= cc.IdCentroCosto
-	inner join	AP_UsuarioCentroCosto		ucc on cc.IdCentroCosto		= ucc.IdCentroCosto and ucc.IdUsuario = @pIdUsuario
-	where		ote.Cancelada				=	0
-	or			ote.Cancelada				is null
+	select		OT_Solicitud.Folio,
+				OT_Estimacion.FechaCorteInicio,
+				OT_Estimacion.FechaCorteFin,
+				OT_Estimacion.CreadoEl,
+				OT_Estimacion.Total,
+				PV_TipoMoneda.TipoMonedaCorto,
+				OT_Estimacion.IdPedidoGeneral as IdPedido,
+				PV_Subcontratista.RazonSocial,
+				OT_Estimacion.IdOTEstimacion
+	from		Adinco..OT_Estimacion			(NOLOCK)
+	inner join	OT_Solicitud					(NOLOCK) on OT_Estimacion.IdOTSolicitud	= OT_Solicitud.IdOTSolicitud
+	inner join	PV_TipoMoneda					(NOLOCK) on OT_Solicitud.IdMoneda			= PV_TipoMoneda.IdMoneda
+	inner join	SC_Subcontrato					(NOLOCK) on SC_Subcontrato.IdSubContrato		= OT_Solicitud.IdSubcontrato	
+	inner join	PV_Subcontratista				(NOLOCK) on PV_Subcontratista.IdSubcontratista	= SC_Subcontrato.IdSubcontratista	
+	inner join	Petrovendor..CC_CentroCosto 	(NOLOCK) on OT_Solicitud.IdCentroCosto	= CC_CentroCosto.IdCentroCosto
+	inner join	AP_UsuarioCentroCosto			(NOLOCK) on CC_CentroCosto.IdCentroCosto		= AP_UsuarioCentroCosto.IdCentroCosto 
+																and AP_UsuarioCentroCosto.IdUsuario = @pIdUsuario
+	where ISNULL(OT_Estimacion.Cancelada, 0) =	0
+
 end
-	-- select * from Adinco..OT_Estimacion
-
-	-- select * from OT_Solicitud
 
 
-	-- select * from SC_Subcontrato
 
-	-- select * from AP_UsuarioCentroCosto	
-
-	-- select * from Petrovendor..CC_CentroCosto
