@@ -45,7 +45,7 @@ BEGIN
           AND CO_Registro.IdRegistro <> @pIdRegistro
 
     SELECT @totalFactura = ISNULL(Fi_Factura.SubTotal, 0)
-    FROM Fi_Factura
+    FROM Fi_Factura (NOLOCK)
     WHERE Fi_Factura.IdFactura = @pIdFactura
 
     IF @numReg > 0
