@@ -3,18 +3,19 @@
 -- ALTER date: 28-08-17
 -- Description:	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_TipoMoneda] 
-	-- Add the parameters for the stored procedure here
-	@DatoBancarioID INT
+-- Modificado Por: Neri Garcia
+-- Fecha: 11 de Agosto del 2022
+-- Detalles: Agregado de NOLOCK y Nombrado de Tablas en select
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_TipoMoneda] @DatoBancarioID INT
 AS
 BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
-
-    -- Insert statements for procedure here
-	SELECT TM.IdMoneda,TM.TipoMonedaCorto FROM PV_CuentaBancaria CB
-	JOIN PV_TipoMoneda TM ON CB.TipoMonedaID = TM.IdMoneda
-	WHERE DatoBancarioID = @DatoBancarioID
+    SET NOCOUNT ON;
+    --
+    SELECT PV_TipoMoneda.IdMoneda,
+           PV_TipoMoneda.TipoMonedaCorto
+    FROM PV_CuentaBancaria (NOLOCK)
+        JOIN PV_TipoMoneda
+            ON PV_CuentaBancaria.TipoMonedaID = PV_TipoMoneda.IdMoneda
+    WHERE PV_CuentaBancaria.DatoBancarioID = @DatoBancarioID
 END
---EXEC SP_FI_TipoMoneda 1222
