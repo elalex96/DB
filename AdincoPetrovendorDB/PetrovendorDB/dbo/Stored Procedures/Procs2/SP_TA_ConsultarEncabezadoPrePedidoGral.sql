@@ -1,20 +1,21 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral]    Script Date: 06/07/2022 06:00:08 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use petrovendor
+go
+drop procedure if exists SP_TA_ConsultarEncabezadoPrePedidoGral
+go
 -- =============================================
 -- Author:		Daniel AC
 -- Update date: 28-10-2019
--- Description:	Se agrega personalizaci�n de d�as de cr�dito por partida
+-- Description:	Se agrega personalización de días de crédito por partida
 -- =============================================
 -- Author:		Luis David de la cruz Bautista
 -- Update date: 20/01/2021
 -- Description:	Se optimiza el script para el issue 920
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral] --420, 1343
+-- Author:		Luis David de la cruz Bautista
+-- Update date: 15/08/2022
+-- Description:	Se corrigen los errore ortográficos del detalle del pedido para issue #1963 (Petrovendor)
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral] --420, 1343
 	-- Add the parameters for the stored procedure here
 	---execute  SP_TA_ConsultarEncabezadoPrePedidoGral 420, 1343
 	@IdProveedor int, 
@@ -84,12 +85,13 @@ BEGIN
 				END
 	SELECT 
 	@CondionesPago=CASE WHEN pd.IdCondicionPago = 1 THEN --> CREDITO
-	CONCAT(pd.DiasCredito, CASE WHEN PD.DiasCredito=1 THEN ' d�as' ELSE ' d�as' END,' de ',cp.CondicionPago)
+	CONCAT(pd.DiasCredito, CASE WHEN PD.DiasCredito=1 THEN ' días' ELSE ' días' END,' de ',cp.CondicionPago)
 	ELSE 
 	CONCAT(cp.CondicionPago,'')
 	END 
 	FROM dbo.MM_PedidoDetalle pd
-	LEFT JOIN dbo.MM_CondicionPago cp ON cp.IdCondicionPago = pd.IdCondicionPago
+	LEFT JOIN dbo.MM_CondicionPago cp 
+	ON pd.IdCondicionPago = cp.IdCondicionPago
 	WHERE IdPedido =@IdPedido
 
 
@@ -113,54 +115,60 @@ BEGIN
 	PG.IdPedido AS IdPedidoGeneral,
 	TP.TipoPedido,
 	TP.IdTipoPedido,
-	CONCAT('Dias Credito: ',ISNULL (P.DiasCredito,0)) AS DiasCredito,	
+	CONCAT('Días Crédito: ',ISNULL (P.DiasCredito,0)) AS DiasCredito,	
 	ISNULL(p.Cerrado, 0),
 	CONCAT('Presupuesto: ', (SELECT  TOP 1(cop.Nombre) 
 								FROM adinco.dbo.CO_Presupuesto AS cop
 								WHERE cop.IdPresupuesto = @IdPresupuesto) COLLATE Modern_Spanish_CI_AS,
-			' - | Linea de Presuspuesto: ',@texto, 
-			'- | Objeto del pedido (Justificaci�n): ', sp.MotivoUrgencia) AS DetallePresupuesto,
+			' - | Línea de Presupuesto: ',@texto, 
+			'- | Objeto del pedido (Justificación): ', sp.MotivoUrgencia) AS DetallePresupuesto,
 	CASE WHEN P.UnicaCondicionPago = 1 THEN 
 	CONCAT(@CondionesPago,'')
 	ELSE 
 	'Diferidas para las partidas de la orden de compra'
 	END  AS CondicionesPago,
-	CONCAT('Tipo de aprobaci�n: ',TFT.Nombre) AS TipoFlujoAprobacion,
+	CONCAT('Tipo de aprobación: ',TFT.Nombre) AS TipoFlujoAprobacion,
 	TAOF.Descripcion AS ComentariosComprador
 	FROM dbo.MM_Pedido AS P
 	INNER JOIN dbo.MM_PedidoDetalle AS PD 
 	ON P.IdPedido = PD.IdPedido
 	INNER JOIN dbo.MM_PeticionOferta AS PO 
 	ON P.IdPeticionOferta = PO.IdPeticionOFerta
-	INNER JOIN dbo.S_Proveedor AS PV
+	INNER JOIN dbo.S_Proveedor (NOLOCK) AS PV
 	ON P.IdSubcontratista=PV.IdProveedor 
 	INNER JOIN dbo.TA_Operacion AS O 
 	ON P.IdSolicitudPedido=O.IdDocumento
-	INNER JOIN dbo.S_Usuario AS U  
+	INNER JOIN dbo.S_Usuario (NOLOCK) AS U  
 	ON O.IdAsignador = U.IdUsuario 
-	INNER JOIN dbo.TA_Prioridad AS PR 
+	INNER JOIN dbo.TA_Prioridad (NOLOCK) AS PR 
 	ON O.IdPrioridad = PR.IdPrioridad 
 	INNER JOIN dbo.TA_Vencimiento AS V
 	ON O.IdVigencia = V.IdVencimiento
-	INNER JOIN dbo.TA_TipoOperacion AS TTO 
+	INNER JOIN dbo.TA_TipoOperacion (NOLOCK) AS TTO 
 	ON O.IdTipoOperacion = TTO.IdTipoOperacion
-	INNER JOIN dbo.TA_Estatus AS E
+	INNER JOIN dbo.TA_Estatus (NOLOCK) AS E
 	ON O.IdEstatusOperacion = E.IdEstatus 
 	INNER JOIN dbo.MM_HorasVigenciaPedido AS H
 	ON P.IdPedido = H.IdPedido
 	INNER JOIN dbo.MM_Pedidos AS PG 
-	ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor AND PG.IdTipoPedido IN (2, 4, 6) ---(Mer, AD, OT)
-	LEFT  JOIN dbo.MM_TipoPedido AS TP 
+	ON P.IdPedido = PG.IdIdentificador 
+	AND PG.IdProveedorCliente = @IdProveedor 
+	AND PG.IdTipoPedido IN (2, 4, 6) ---(Mer, AD, OT)
+	LEFT  JOIN dbo.MM_TipoPedido (NOLOCK) AS TP 
 	ON PG.IdTipoPedido = TP.IdTipoPedido
 	LEFT JOIN dbo.MM_SolicitudPedido sp 
 	ON P.IdSolicitudPedido = sp.IdSolicitudPedido 
-	LEFT JOIN dbo.TA_FlujoTarea FT 
+	LEFT JOIN dbo.TA_FlujoTarea (NOLOCK) FT 
 	ON O.IdFlujoTarea = FT.IdFlujoTarea
 	LEFT JOIN dbo.TA_TipoFlujoTarea TFT
 	ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
 	LEFT JOIN dbo.TA_Operacion AS TAOF
-	ON TAOF.IdDocumento = P.IdSolicitudPedido and TAOF.IdTipoOperacion = 6
-	WHERE O.IdTipoOperacion = 9 AND O.IdProveedor = @IdProveedor   AND P.IdPedido = @IdPedido AND p.Version=o.NoVersion
+	ON P.IdSolicitudPedido  = TAOF.IdDocumento
+	and TAOF.IdTipoOperacion = 6
+	WHERE O.IdTipoOperacion = 9 
+	AND O.IdProveedor = @IdProveedor   
+	AND P.IdPedido = @IdPedido 
+	AND p.Version=o.NoVersion
 	GROUP BY 
 	P.IdPedido, 
 	P.IdSolicitudPedido,
@@ -187,5 +195,4 @@ BEGIN
 	P.UnicaCondicionPago,
 	TFT.Nombre,
 	TAOF.Descripcion
-  ---AND O.IdEstatusOperacion = 2
 END
