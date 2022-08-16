@@ -1,16 +1,17 @@
-﻿USE [Petrovendor]
+﻿USE Petrovendor
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]    Script Date: 26/07/2022 03:51:23 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP
 GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Generacion automatiza de solicitud oferta
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]
+-- Author:		Luis David
+-- Create date: 15/08/2022
+-- Description:	Se corrigen los errores ortográficos para issue #1963 (Petrovendor)
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@Purchasing NVARCHAR(100),
@@ -144,7 +145,7 @@ BEGIN
 			@IdOperadora, 
 			@Solicitante, 
 			GETDATE(), 
-			'COTIZACIÓN AUTOMATICA',
+			'COTIZACIÓN AUTOMÁTICA',
 			1,
 			1
 		 );
@@ -161,7 +162,7 @@ BEGIN
     --ACTUALIZAR ENVIO DE LA PETICION
     UPDATE [dbo].[MM_SolicitudPedido]
     SET [PeticionEnviada] = 1,
-        JustificacionSolOferta = 'COTIZACIÓN AUTOMATICA'
+        JustificacionSolOferta = 'COTIZACIÓN AUTOMÁTICA'
     WHERE [IdSolicitudPedido] = @IdSolicitudPedido;
 
 	INSERT INTO dbo.TA_TerminosCondicionesOperacion (IdOperacion, IdTerminosYCondiciones, TerminosCondicionesTexto)
@@ -193,7 +194,7 @@ BEGIN
 	BEGIN 
 			
 			--SE GAURDO EXITOSAMENTE LA SOLPED
-		SET @MENSAJEFINAL = 'PURCHASING_DOCUMENT ' + @Purchasing + ' PROCESADO EN PROCURA CON LA PETICION OFERA DE LA SOLICITUD DE PEDIDO #' + CAST(@IdSolicitudPedido AS NVARCHAR) + ' CORRECTAMENTE';
+		SET @MENSAJEFINAL = 'PURCHASING_DOCUMENT ' + @Purchasing + ' PROCESADO EN PROCURA CON LA PETICIÓN OFERA DE LA SOLICITUD DE PEDIDO #' + CAST(@IdSolicitudPedido AS NVARCHAR) + ' CORRECTAMENTE';
 
 		INSERT INTO WDEA_Bitacora_AdincoSAP
 		(
@@ -223,7 +224,7 @@ BEGIN
 	BEGIN 
 
 		--OCURRIO ALGUN ERROR EN LA INCERSION
-		SET @MENSAJEFINAL = 'ERROR AL PROCESAR EL PURCHASING_DOCUMENT ' + @Purchasing + ' EN LA PETICION OFERTA DE PROCURA, FALTO DE PROCESAR LA COTIZACION Y EL PEDIDO.';
+		SET @MENSAJEFINAL = 'ERROR AL PROCESAR EL PURCHASING_DOCUMENT ' + @Purchasing + ' EN LA PETICIÓN OFERTA DE PROCURA, FALTÓ DE PROCESAR LA COTIZACIÓN Y EL PEDIDO.';
 
 		IF @RESPUESTAPETICIONOFERTA = 0
 		BEGIN
