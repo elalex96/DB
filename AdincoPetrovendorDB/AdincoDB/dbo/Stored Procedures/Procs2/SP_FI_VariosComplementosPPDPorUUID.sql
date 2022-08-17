@@ -3,24 +3,25 @@
 -- Create date: 26-05-2020
 -- Description:	Complementos de Pago
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_VariosComplementosPPDPorUUID] 
--- ============================================= 
---[SP_FI_VariosComplementosPPDPorUUID] 
--- ============================================= 
-@IdContrato INT, 
-@IdUsuario  INT, 
-@UUID       NVARCHAR(MAX)
+-- Modificado Por:	Neri Garcia
+-- Fecha:			17 de Agosto del 2022
+-- Descripción:		Agregado de (NOLOCK), ajustado de orden en los join, renombrado de las tablas
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_VariosComplementosPPDPorUUID]
+    @IdContrato INT,
+    @IdUsuario INT,
+    @UUID VARCHAR(100)
 AS
-     BEGIN
-         -- =============================================  
-         SELECT CDP.IdFactura, 
-                F.UUID
-         FROM dbo.FI_ComplementoDePago AS CDP
-              JOIN dbo.FI_CPDocRelacionado AS CDPR ON CDPR.IdComplementoDePago = CDP.IdComplementoDePago
-              JOIN dbo.FI_Factura AS F ON F.IdFactura = CDP.IdFactura
-         WHERE CDPR.IdDocumento = @UUID
-         GROUP BY CDP.IdFactura, 
-                  F.UUID
-         ORDER BY CDP.IdFactura DESC;   
-         -- =============================================
-     END;
+BEGIN
+    SELECT FI_ComplementoDePago.IdFactura,
+           FI_Factura.UUID
+    FROM FI_ComplementoDePago (NOLOCK)
+        JOIN FI_CPDocRelacionado (NOLOCK)
+            ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
+        JOIN FI_Factura (NOLOCK)
+            ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
+    WHERE FI_CPDocRelacionado.IdDocumento = @UUID
+    GROUP BY FI_ComplementoDePago.IdFactura,
+             FI_Factura.UUID
+    ORDER BY FI_ComplementoDePago.IdFactura DESC;
+END;

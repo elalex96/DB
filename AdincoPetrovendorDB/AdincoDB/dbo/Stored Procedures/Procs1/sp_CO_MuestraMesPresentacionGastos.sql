@@ -3,32 +3,37 @@
 -- Create date: 20190108
 -- Description:	<Description,,>
 -- =============================================
-CREATE PROCEDURE sp_CO_MuestraMesPresentacionGastos-- 3,10061,1113
+-- Modificado Por:	Neri Garcia
+-- Fecha:			17 de Agosto del 2022
+-- Descripción:		Agregado de (NOLOCK)
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_CO_MuestraMesPresentacionGastos] 
     @IdContrato INT,
     @IdUsuario INT,
     @IdRegistro INT
 AS
 BEGIN
-
     SET NOCOUNT ON;
-	  SET LANGUAGE Spanish;
+    SET LANGUAGE Spanish;
+    /**/
     IF (@IdRegistro <> 0)
     BEGIN
         SELECT 1 AS registrado,
-               MesPresentacion,
-			  'Este gasto se encuentra guardado con el periodo reporte de '  + DATENAME(MONTH, MesPresentacion)+ '-'
-          + CONVERT(VARCHAR(4), YEAR(MesPresentacion)) AS titulo
-        FROM dbo.CO_Registro
-        WHERE IdRegistro = @IdRegistro;
+               CO_Registro.MesPresentacion,
+               'Este gasto se encuentra guardado con el periodo reporte de '
+               + DATENAME(MONTH, CO_Registro.MesPresentacion) + '-'
+               + CONVERT(VARCHAR(4), YEAR(CO_Registro.MesPresentacion)) AS titulo
+        FROM CO_Registro (NOLOCK)
+        WHERE CO_Registro.IdRegistro = @IdRegistro;
     END;
+	/**/
     ELSE
     BEGIN
         SELECT 0 AS registrado,
-               MesPresentacionCGI,
-			   'Este gasto será guardado con el periodo reporte de '  +DATENAME(MONTH, MesPresentacionCGI) + '-'
-          + CONVERT(VARCHAR(4), YEAR(MesPresentacionCGI)) AS titulo
-        FROM dbo.CO_Contrato
-        WHERE IdContrato = @IdContrato;
+               CO_Contrato.MesPresentacionCGI,
+               'Este gasto será guardado con el periodo reporte de ' + DATENAME(MONTH, CO_Contrato.MesPresentacionCGI)
+               + '-' + CONVERT(VARCHAR(4), YEAR(CO_Contrato.MesPresentacionCGI)) AS titulo
+        FROM CO_Contrato (NOLOCK)
+        WHERE CO_Contrato.IdContrato = @IdContrato;
     END;
-
 END;
