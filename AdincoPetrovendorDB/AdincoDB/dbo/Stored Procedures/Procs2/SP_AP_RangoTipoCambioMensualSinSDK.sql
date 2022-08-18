@@ -5,7 +5,7 @@ GO
 --  date: 17/08/2022
 -- Description:	detecta los meses faltantes de verificar por SDK
 -- =============================================
-CREATE PROCEDURE [dbo].SP_AP_RangoTipoCambioMensualSinSDK 
+create PROCEDURE [dbo].SP_AP_RangoTipoCambioMensualSinSDK --1,1,1
 	@IdContrato INT, 
 	@IdUsuario  INT,
 	@IdMoneda INT
@@ -30,9 +30,9 @@ BEGIN
 	INSERT INTO #AnioMes(Anio, IdMes) -- meses y años que no estan  en la tabla de tipo cambio mensual
 	SELECT YEAR( AP_Calendario.PrimerDiaMes),MONTH( AP_Calendario.PrimerDiaMes)
 	FROM 
-		AP_Calendario
+		AP_Calendario (NOLOCK)
 	LEFT JOIN 
-		CO_TipoCambioMensual
+		CO_TipoCambioMensual (NOLOCK)
 	ON	AP_Calendario.PrimerDiaMes	=	
 		DATEFROMPARTS(CO_TipoCambioMensual.Anio, CO_TipoCambioMensual.IdMes,1)
 		AND CO_TipoCambioMensual.IdMoneda = @IdMoneda
@@ -47,3 +47,5 @@ BEGIN
 		FROM #AnioMes
 	END
 END ;
+
+GO
