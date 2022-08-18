@@ -3,61 +3,81 @@
 -- Create date: 24/05/2017
 -- Description:     Listado de cuentas bancarias para llenar combobox
 -- =============================================
+-- Modificado Por: Neri Garcia
+-- Fecha: 11 de Agosto del 2022
+-- Detalles: Agregado de NOLOCK, Nombrado de Tablas en select, ajustes de lefts joins y eliminación de codigo comentado
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FICuentasBancarias] 
-       -- Add the parameters for the stored procedure here
-@IdContrato INT
+    @IdContrato INT
 AS
-     BEGIN
-       -- SET NOCOUNT ON added to prevent extra result sets from
-       -- interfering with SELECT statements.
-         SET NOCOUNT ON;
-         DECLARE @CONTRATISTA INT;--= 10000;
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @CONTRATISTA INT;
+    --	
+    CREATE TABLE #TablaCuentasBancarias
+    (
+        DatoBancarioID INT,
+        Alias VARCHAR(200),
+        RazonSocial VARCHAR(200),
+        NumeroCuenta VARCHAR(200),
+        CuentaClave VARCHAR(200),
+        TipoMonedaCorto VARCHAR(200),
+        NombreComercial VARCHAR(200),
+        IdProveedor INT
+    )
     --
+    SELECT @CONTRATISTA = CO_Contratista.IdContratista
+    FROM CO_Contrato (NOLOCK)
+        JOIN CO_Contratista (NOLOCK)
+            ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+    WHERE CO_Contrato.IdContrato = @IdContrato;
 
-         SELECT @CONTRATISTA = Ca.IdContratista
-         FROM CO_Contrato Co
-              JOIN CO_Contratista Ca ON Co.IdContratista = Ca.IdContratista
-         WHERE Co.IdContrato = @IdContrato;
-           
-    -- Insert statements for procedure here
+    INSERT INTO #TablaCuentasBancarias
+    (
+        DatoBancarioID,
+        Alias,
+        RazonSocial,
+        NumeroCuenta,
+        CuentaClave,
+        TipoMonedaCorto,
+        NombreComercial,
+        IdProveedor
+    )
+    SELECT PV_CuentaBancaria.DatoBancarioID,
+           ISNULL(PV_CuentaBancaria.alias, ''),
+           PV_Banco.RazonSocial,
+           PV_CuentaBancaria.NumeroCuenta,
+           PV_CuentaBancaria.CuentaClave,
+           PV_TipoMoneda.TipoMonedaCorto,
+           'S/N',
+           PV_CuentaBancaria.IdProveedor
+    FROM PV_CuentaBancaria (NOLOCK)
+        INNER JOIN PV_Banco (NOLOCK)
+            ON PV_CuentaBancaria.BancoID = PV_Banco.BancoID
+        JOIN PV_TipoMoneda (NOLOCK)
+            ON PV_CuentaBancaria.TipoMonedaID = PV_TipoMoneda.idmoneda
+    WHERE PV_CuentaBancaria.IdContratista = @CONTRATISTA
+    ORDER BY PV_CuentaBancaria.DatoBancarioID DESC;
 
-         --IF @CONTRATISTA = 10000
-         --    BEGIN
+    UPDATE #TablaCuentasBancarias
+    SET #TablaCuentasBancarias.NombreComercial = ISNULL(PV_Subcontratista.NombreComercial, 'S/N')
+    FROM #TablaCuentasBancarias
+        JOIN PV_Subcontratista (NOLOCK)
+            ON #TablaCuentasBancarias.IdProveedor = PV_Subcontratista.IdSubcontratista
 
-         SELECT B.DatoBancarioID,
-                concat( isnull(B.alias,'')  , ' ', C.RazonSocial, ' (', Isnull(A.NombreComercial, 'S/N'), ') ', ' - ', Isnull(B.NumeroCuenta, B.CuentaClave), ' - ', tm.TipoMonedaCorto) AS Cuenta
-         FROM PV_CuentaBancaria B
-              LEFT JOIN PV_Subcontratista A ON B.IdProveedor = A.IdSubcontratista
-              INNER JOIN PV_Banco C ON B.BancoID = C.BancoID
-              JOIN PV_TipoMoneda tm ON b.TipoMonedaID = tm.idmoneda
-         WHERE B.IdContratista = @CONTRATISTA
-         ORDER BY B.DatoBancarioID DESC;
-         --END;
-         --    ELSE
-         --    BEGIN
-         --        SELECT B.DatoBancarioID,
-         --               concat(C.RazonSocial, ' (', Isnull(A.NombreComercial, 'S/N'), ') ', ' - ', Isnull(B.NumeroCuenta, B.CuentaClave), ' - ', tm.TipoMonedaCorto) AS Cuenta
-         --        FROM PV_CuentaBancaria B
-         --             LEFT JOIN PV_Subcontratista A ON B.IdProveedor = A.IdSubcontratista
-         --             INNER JOIN PV_Banco C ON B.BancoID = C.BancoID
-         --             JOIN PV_TipoMoneda tm ON b.TipoMonedaID = tm.idmoneda
-         --        ORDER BY B.DatoBancarioID DESC;
-         --END;
-
-           /*
-           ---FILTRADO POR REGISTRO DE IDPROVEEDOR DEL CONTRATISTA
-
-         SELECT B.DatoBancarioID,
-                concat(C.RazonSocial, ' (', Isnull(A.NombreComercial, 'S/N'), ') ', ' - ', Isnull(B.NumeroCuenta, B.CuentaClave), ' - ', tm.TipoMonedaCorto) AS Cuenta
-         FROM PV_CuentaBancaria B
-              JOIN PV_Subcontratista A ON B.IdProveedor = A.IdSubcontratista
-              JOIN PV_Banco C ON B.BancoID = C.BancoID
-              JOIN PV_TipoMoneda tm ON b.TipoMonedaID = tm.idmoneda
-              JOIN CO_Contratista CC ON A.IdSubcontratista = CC.IdProveedor
-              JOIN CO_Contrato CN ON CN.IdContratista = CC.IdContratista
-         WHERE CN.IdContrato = @IdContrato
-         ORDER BY B.DatoBancarioID DESC;
-           */
-
---exec SP_FICuentasBancarias 10005
-     END;
+    SELECT #TablaCuentasBancarias.DatoBancarioID,
+           CONCAT(
+                     ISNULL(#TablaCuentasBancarias.alias, ''),
+                     ' ',
+                     #TablaCuentasBancarias.RazonSocial,
+                     ' (',
+                     ISNULL(#TablaCuentasBancarias.NombreComercial, 'S/N'),
+                     ') ',
+                     ' - ',
+                     ISNULL(#TablaCuentasBancarias.NumeroCuenta, #TablaCuentasBancarias.CuentaClave),
+                     ' - ',
+                     #TablaCuentasBancarias.TipoMonedaCorto
+                 ) AS Cuenta
+    FROM #TablaCuentasBancarias
+    ORDER BY #TablaCuentasBancarias.DatoBancarioID DESC;
+END;

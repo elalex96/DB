@@ -19,669 +19,662 @@
 --Agregar Numero de Contrato
 --Agregar UNION para las facturas que estan en FI_FacturaContrato se muestren al estar en una Transferencia
 -- =============================================
-
+-- Modificado Por: Neri Garcia
+-- Fecha: 11 de Agosto del 2022
+-- Detalles: Verificacion de NOLOCK, Nombrado de Tablas en select, ajustes de join en orden de llamado de tablas,
+--			 eliminación de codigo comentado
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_FacturasProveedorTransfer]
---[SP_FI_FacturasProveedorTransfer] 10016,11634
---[SP_FI_FacturasProveedorTransfer] 10094,3,1,0,0 
---[SP_FI_FacturasProveedorTransfer] 10094,3,1,963,1
---[SP_FI_FacturasProveedorTransfer] 10094,3,1,0,1
---[SP_FI_FacturasProveedorTransfer] 10058,3,1,0,0 
---[SP_FI_FacturasProveedorTransfer] 10058,3,1,948,1
---[SP_FI_FacturasProveedorTransfer] 10049,3,10002,1050,1
--- Add the parameters for the stored procedure here
-@IdSubcontratista INT, 
-@IdContrato       INT, 
-@IdUsuario        INT, 
-@IdTransfer       INT, 
-@Accion           INT
+    @IdSubcontratista INT,
+    @IdContrato INT,
+    @IdUsuario INT,
+    @IdTransfer INT,
+    @Accion INT
 AS
-     BEGIN
-         -- SET NOCOUNT ON added to prevent extra result sets from
-         -- interfering with SELECT statements.
-         SET NOCOUNT ON;
-         SET LANGUAGE spanish;
-         --PUE = 1
-         --PPD = 2
-         IF(@IdTransfer = 0
-            AND @Accion = 0)
-             BEGIN
-                 SELECT F.IdFactura, 
-                        F.Serie, 
-                        C.NumeroContrato, 
-                        F.Folio, 
-                        F.Fecha,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                            THEN F.FormaPago
-                            WHEN F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN F.MetodoPago
-                        END AS FormaPago, 
-                        F.NoCertificado, 
-                        F.CondicionesDePago, 
-                        F.SubTotal, 
-                        F.Moneda, 
-                        F.MontoConIva, 
-                        F.TipoComprobante,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                                 OR F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN 'PUE'
-                            WHEN F.MetodoPago LIKE '%parcia%'
-                                 OR F.MetodoPago LIKE '%dife%'
-                                 OR F.MetodoPago LIKE '%PPD%'
-                                 OR F.FormaPago LIKE '%parcia%'
-                                 OR F.FormaPago LIKE '%dife%'
-                                 OR F.FormaPago LIKE '%PPD%'
-                            THEN 'PPD'
-                        END AS MetodoPago, 
-                        SUBSTRING(F.LugarExpedicion, 0, 15) AS LugarExpedicion, 
-                        F.UUID, 
-                        F.FechaTimbrado, 
-                        F.FechaRecepcion, 
-                        S.RazonSocial, 
-                        F.Emisor, 
-                        TF.MontoPagado AS MontoPagado, 
-                        TCD.TipoCambio AS TCD
-                 FROM dbo.CO_Contrato AS C (NOLOCK)
-				 JOIN dbo.FI_Factura AS F (NOLOCK)
-					   ON C.IdContrato = F.IdContrato
-							  AND C.IdContrato = @IdContrato
-							  AND F.TipoComprobante <> 'P'
-				 JOIN dbo.PV_Subcontratista AS S (NOLOCK)
-						   ON F.IdSubcontratista = S.IdSubcontratista
-							  AND S.IdSubcontratista = @IdSubcontratista
-                 LEFT JOIN dbo.FI_TransferFactura TF (NOLOCK)
-						   ON TF.IdFactura = F.IdFactura
-                 LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-						   ON CONVERT(DATE, F.Fecha) = TCD.Fecha
-                              AND TCD.IdMoneda = 1
-                 WHERE --S.IdSubcontratista = @IdSubcontratista
-                 --      AND C.IdContrato = @IdContrato
-                 --      AND F.TipoComprobante <> 'P'
-                       (F.MetodoPago LIKE '%exhibi%'
-                            OR F.MetodoPago LIKE '%PUE%'
-                            OR F.FormaPago LIKE '%exhibi%'
-                            OR F.FormaPago LIKE '%PUE%')
-                       AND TF.IdTransferFactura IS NULL
-                 GROUP BY F.IdFactura, 
-                          F.Serie, 
-                          C.NumeroContrato, 
-                          F.Folio, 
-                          F.Fecha,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                              THEN F.FormaPago
-                              WHEN F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN F.MetodoPago
-                          END, 
-                          F.NoCertificado, 
-                          F.CondicionesDePago, 
-                          F.SubTotal, 
-                          F.Moneda, 
-                          F.MontoConIva, 
-                          F.TipoComprobante,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                                   OR F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN 'PUE'
-                              WHEN F.MetodoPago LIKE '%parcia%'
-                                   OR F.MetodoPago LIKE '%dife%'
-                                   OR F.MetodoPago LIKE '%PPD%'
-                                   OR F.FormaPago LIKE '%parcia%'
-                                   OR F.FormaPago LIKE '%dife%'
-                                   OR F.FormaPago LIKE '%PPD%'
-                              THEN 'PPD'
-                          END, 
-                          F.LugarExpedicion, 
-                          F.UUID, 
-                          F.FechaTimbrado, 
-                          F.FechaRecepcion, 
-                          S.RazonSocial, 
-                          F.Emisor, 
-                          TF.MontoPagado, 
-                          TCD.TipoCambio
-                 UNION
-                 SELECT F.IdFactura, 
-                        F.Serie, 
-                        C.NumeroContrato, 
-                        F.Folio, 
-                        F.Fecha,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                            THEN F.FormaPago
-                            WHEN F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN F.MetodoPago
-                        END AS FormaPago, 
-                        F.NoCertificado, 
-                        F.CondicionesDePago, 
-                        F.SubTotal, 
-                        F.Moneda, 
-                        F.MontoConIva, 
-                        F.TipoComprobante,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                                 OR F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN 'PUE'
-                            WHEN F.MetodoPago LIKE '%parcia%'
-                                 OR F.MetodoPago LIKE '%dife%'
-                                 OR F.MetodoPago LIKE '%PPD%'
-                                 OR F.FormaPago LIKE '%parcia%'
-                                 OR F.FormaPago LIKE '%dife%'
-                                 OR F.FormaPago LIKE '%PPD%'
-                            THEN 'PPD'
-                        END AS MetodoPago, 
-                        SUBSTRING(F.LugarExpedicion, 0, 15) AS LugarExpedicion, 
-                        F.UUID, 
-                        F.FechaTimbrado, 
-                        F.FechaRecepcion, 
-                        S.RazonSocial, 
-                        F.Emisor, 
-                        TF.MontoPagado AS MontoPagado, 
-                        TCD.TipoCambio AS TCD
-                 FROM dbo.FI_Factura AS F	(NOLOCK)
-                   JOIN dbo.FI_FacturaContrato FC (NOLOCK)
-						ON F.IdFactura = FC.IdFactura
-						AND FC.IdContrato = @IdContrato
-						AND F.TipoComprobante <> 'P'
-                   JOIN dbo.PV_Subcontratista AS S(NOLOCK)
-						ON F.IdSubcontratista = S.IdSubcontratista
-						AND S.IdSubcontratista = @IdSubcontratista
-                   JOIN dbo.CO_Contrato AS C (NOLOCK)
-						ON F.IdContrato = C.IdContrato
-                   LEFT JOIN dbo.FI_TransferFactura TF (NOLOCK)
-						ON TF.IdFactura = F.IdFactura
-                   LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-						ON CONVERT(DATE, F.Fecha) = TCD.Fecha
-                          AND TCD.IdMoneda = 1
-                 WHERE --S.IdSubcontratista = @IdSubcontratista
-                       --AND FC.IdContrato = @IdContrato
-                       --AND F.TipoComprobante <> 'P'
-                        (F.MetodoPago LIKE '%exhibi%'
-                            OR F.MetodoPago LIKE '%PUE%'
-                            OR F.FormaPago LIKE '%exhibi%'
-                            OR F.FormaPago LIKE '%PUE%')
-                       AND TF.IdTransferFactura IS NULL
-                 GROUP BY F.IdFactura, 
-                          F.Serie, 
-                          C.NumeroContrato, 
-                          F.Folio, 
-                          F.Fecha,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                              THEN F.FormaPago
-                              WHEN F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN F.MetodoPago
-                          END, 
-                          F.NoCertificado, 
-                          F.CondicionesDePago, 
-                          F.SubTotal, 
-                          F.Moneda, 
-                          F.MontoConIva, 
-                          F.TipoComprobante,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                                   OR F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN 'PUE'
-                              WHEN F.MetodoPago LIKE '%parcia%'
-                                   OR F.MetodoPago LIKE '%dife%'
-                                   OR F.MetodoPago LIKE '%PPD%'
-                                   OR F.FormaPago LIKE '%parcia%'
-                                   OR F.FormaPago LIKE '%dife%'
-                                   OR F.FormaPago LIKE '%PPD%'
-                              THEN 'PPD'
-                          END, 
-                          F.LugarExpedicion, 
-                          F.UUID, 
-                          F.FechaTimbrado, 
-                          F.FechaRecepcion, 
-                          S.RazonSocial, 
-                          F.Emisor, 
-                          TF.MontoPagado, 
-                          TCD.TipoCambio
-                 ORDER BY F.IdFactura DESC;
-             END;
-         IF(@IdTransfer <> 0
-            AND @Accion <> 0)
-             BEGIN
-                SELECT F.IdFactura, 
-                        F.Serie, 
-                        C.NumeroContrato, 
-                        F.Folio, 
-                        F.Fecha,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                            THEN F.FormaPago
-                            WHEN F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN F.MetodoPago
-                        END AS FormaPago, 
-                        F.NoCertificado, 
-                        F.CondicionesDePago, 
-                        F.SubTotal, 
-                        F.Moneda, 
-                        F.MontoConIva, 
-                        F.TipoComprobante,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                                 OR F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN 'PUE'
-                            WHEN F.MetodoPago LIKE '%parcia%'
-                                 OR F.MetodoPago LIKE '%dife%'
-                                 OR F.MetodoPago LIKE '%PPD%'
-                                 OR F.FormaPago LIKE '%parcia%'
-                                 OR F.FormaPago LIKE '%dife%'
-                                 OR F.FormaPago LIKE '%PPD%'
-                            THEN 'PPD'
-                        END AS MetodoPago, 
-                        SUBSTRING(F.LugarExpedicion, 0, 15) AS LugarExpedicion, 
-                        F.UUID, 
-                        F.FechaTimbrado, 
-                        F.FechaRecepcion, 
-                        S.RazonSocial, 
-                        F.Emisor, 
-                        TF.MontoPagado AS MontoPagado, 
-                        TCD.TipoCambio AS TCD
-                 FROM dbo.CO_Contrato AS C (NOLOCK)
-					  JOIN dbo.FI_Factura AS F (NOLOCK)
-						   ON C.IdContrato = F.IdContrato
-							  AND C.IdContrato = @IdContrato
-							  AND F.TipoComprobante <> 'P'
-                      JOIN dbo.PV_Subcontratista AS S (NOLOCK)
-						   ON F.IdSubcontratista = S.IdSubcontratista	 
-                      LEFT JOIN dbo.FI_TransferFactura TF (NOLOCK)
-						   ON TF.IdFactura = F.IdFactura
-                      LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-						   ON CONVERT(DATE, F.Fecha) = TCD.Fecha
-                              AND TCD.IdMoneda = 1
-                 WHERE S.IdSubcontratista = @IdSubcontratista
-                       AND C.IdContrato = @IdContrato
-                       AND F.TipoComprobante <> 'P'
-                       AND (F.MetodoPago LIKE '%exhibi%'
-                            OR F.MetodoPago LIKE '%PUE%'
-                            OR F.FormaPago LIKE '%exhibi%'
-                            OR F.FormaPago LIKE '%PUE%')
-                       AND TF.IdTransferFactura IS NULL
-                 --AND tf.IdTransfer = @IdTransfer
-                 GROUP BY F.IdFactura, 
-                          F.Serie, 
-                          C.NumeroContrato, 
-                          F.Folio, 
-                          F.Fecha,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                              THEN F.FormaPago
-                              WHEN F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN F.MetodoPago
-                          END, 
-                          F.NoCertificado, 
-                          F.CondicionesDePago, 
-                          F.SubTotal, 
-                          F.Moneda, 
-                          F.MontoConIva, 
-                          F.TipoComprobante,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                                   OR F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN 'PUE'
-                              WHEN F.MetodoPago LIKE '%parcia%'
-                                   OR F.MetodoPago LIKE '%dife%'
-                                   OR F.MetodoPago LIKE '%PPD%'
-                                   OR F.FormaPago LIKE '%parcia%'
-                                   OR F.FormaPago LIKE '%dife%'
-                                   OR F.FormaPago LIKE '%PPD%'
-                              THEN 'PPD'
-                          END, 
-                          F.LugarExpedicion, 
-                          F.UUID, 
-                          F.FechaTimbrado, 
-                          F.FechaRecepcion, 
-                          S.RazonSocial, 
-                          F.Emisor, 
-                          TF.MontoPagado, 
-                          TCD.TipoCambio
-                 UNION
-                 SELECT F.IdFactura, 
-                        F.Serie, 
-                        C.NumeroContrato, 
-                        F.Folio, 
-                        F.Fecha,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                            THEN F.FormaPago
-                            WHEN F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN F.MetodoPago
-                        END AS FormaPago, 
-                        F.NoCertificado, 
-                        F.CondicionesDePago, 
-                        F.SubTotal, 
-                        F.Moneda, 
-                        F.MontoConIva, 
-                        F.TipoComprobante,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                                 OR F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN 'PUE'
-                            WHEN F.MetodoPago LIKE '%parcia%'
-                                 OR F.MetodoPago LIKE '%dife%'
-                                 OR F.MetodoPago LIKE '%PPD%'
-                                 OR F.FormaPago LIKE '%parcia%'
-                                 OR F.FormaPago LIKE '%dife%'
-                                 OR F.FormaPago LIKE '%PPD%'
-                            THEN 'PPD'
-                        END AS MetodoPago, 
-                        SUBSTRING(F.LugarExpedicion, 0, 15) AS LugarExpedicion, 
-                        F.UUID, 
-                        F.FechaTimbrado, 
-                        F.FechaRecepcion, 
-                        S.RazonSocial, 
-                        F.Emisor, 
-                        TF.MontoPagado AS MontoPagado, 
-                        TCD.TipoCambio AS TCD
-                 FROM dbo.FI_Factura AS F	(NOLOCK)
-                    JOIN dbo.FI_FacturaContrato FC (NOLOCK)
-						ON F.IdFactura = FC.IdFactura
-						AND FC.IdContrato = @IdContrato
-						AND F.TipoComprobante <> 'P'
-                    JOIN dbo.PV_Subcontratista AS S (NOLOCK)
-						ON F.IdSubcontratista = S.IdSubcontratista
-						AND S.IdSubcontratista = @IdSubcontratista
-                    JOIN dbo.CO_Contrato AS C (NOLOCK)
-						ON F.IdContrato = C.IdContrato
-                    LEFT JOIN dbo.FI_TransferFactura TF	(NOLOCK)
-						ON TF.IdFactura = F.IdFactura
-                    LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-						ON CONVERT(DATE, F.Fecha) = TCD.Fecha
-                          AND TCD.IdMoneda = 1
-                 WHERE S.IdSubcontratista = @IdSubcontratista
-                       AND FC.IdContrato = @IdContrato
-                       AND F.TipoComprobante <> 'P'
-                       AND (F.MetodoPago LIKE '%exhibi%'
-                            OR F.MetodoPago LIKE '%PUE%'
-                            OR F.FormaPago LIKE '%exhibi%'
-                            OR F.FormaPago LIKE '%PUE%')
-                       AND TF.IdTransferFactura IS NULL
-                 --AND tf.IdTransfer = @IdTransfer
-                 GROUP BY F.IdFactura, 
-                          F.Serie, 
-                          C.NumeroContrato, 
-                          F.Folio, 
-                          F.Fecha,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                              THEN F.FormaPago
-                              WHEN F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN F.MetodoPago
-                          END, 
-                          F.NoCertificado, 
-                          F.CondicionesDePago, 
-                          F.SubTotal, 
-                          F.Moneda, 
-                          F.MontoConIva, 
-                          F.TipoComprobante,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                                   OR F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN 'PUE'
-                              WHEN F.MetodoPago LIKE '%parcia%'
-                                   OR F.MetodoPago LIKE '%dife%'
-                                   OR F.MetodoPago LIKE '%PPD%'
-                                   OR F.FormaPago LIKE '%parcia%'
-                                   OR F.FormaPago LIKE '%dife%'
-                                   OR F.FormaPago LIKE '%PPD%'
-                              THEN 'PPD'
-                          END, 
-                          F.LugarExpedicion, 
-                          F.UUID, 
-                          F.FechaTimbrado, 
-                          F.FechaRecepcion, 
-                          S.RazonSocial, 
-                          F.Emisor, 
-                          TF.MontoPagado, 
-                          TCD.TipoCambio
-                 UNION
-                 SELECT F.IdFactura, 
-                        F.Serie, 
-                        C.NumeroContrato, 
-                        F.Folio, 
-                        F.Fecha,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                            THEN F.FormaPago
-                            WHEN F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN F.MetodoPago
-                        END AS FormaPago, 
-                        F.NoCertificado, 
-                        F.CondicionesDePago, 
-                        F.SubTotal, 
-                        F.Moneda, 
-                        F.MontoConIva, 
-                        F.TipoComprobante,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                                 OR F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN 'PUE'
-                            WHEN F.MetodoPago LIKE '%parcia%'
-                                 OR F.MetodoPago LIKE '%dife%'
-                                 OR F.MetodoPago LIKE '%PPD%'
-                                 OR F.FormaPago LIKE '%parcia%'
-                                 OR F.FormaPago LIKE '%dife%'
-                                 OR F.FormaPago LIKE '%PPD%'
-                            THEN 'PPD'
-                        END AS MetodoPago, 
-        SUBSTRING(F.LugarExpedicion, 0, 15) AS LugarExpedicion, 
-                        F.UUID, 
-                        F.FechaTimbrado, 
-                        F.FechaRecepcion, 
-                        S.RazonSocial, 
-                        F.Emisor, 
-                        TF.MontoPagado AS MontoPagado, 
-                        TCD.TipoCambio AS TCD
-                 FROM dbo.FI_Factura AS F	(NOLOCK)
-					JOIN dbo.FI_FacturaContrato FC (NOLOCK)
-						ON F.IdFactura = FC.IdFactura
-						AND FC.IdContrato = @IdContrato
-						AND F.TipoComprobante <> 'P'
-					JOIN dbo.PV_Subcontratista AS S		(NOLOCK)
-						ON F.IdSubcontratista = S.IdSubcontratista
-						AND S.IdSubcontratista = @IdSubcontratista
-					JOIN dbo.CO_Contrato AS C	(NOLOCK)
-						ON F.IdContrato = C.IdContrato
-					LEFT JOIN dbo.FI_TransferFactura TF (NOLOCK)
-						ON TF.IdFactura = F.IdFactura
-					LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-						ON CONVERT(DATE, F.Fecha) = TCD.Fecha
-					AND TCD.IdMoneda = 1
-                 WHERE S.IdSubcontratista = @IdSubcontratista
-                       AND FC.IdContrato = @IdContrato
-                       AND F.TipoComprobante <> 'P'
-                       AND (F.MetodoPago LIKE '%exhibi%'
-                            OR F.MetodoPago LIKE '%PUE%'
-                            OR F.FormaPago LIKE '%exhibi%'
-                            OR F.FormaPago LIKE '%PUE%')
-                       -- AND TF.IdTransferFactura IS NULL
-                       AND tf.IdTransfer = @IdTransfer
-                 GROUP BY F.IdFactura, 
-                          F.Serie, 
-                          C.NumeroContrato, 
-                          F.Folio, 
-                          F.Fecha,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                              THEN F.FormaPago
-                              WHEN F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN F.MetodoPago
-                          END, 
-                          F.NoCertificado, 
-                          F.CondicionesDePago, 
-                          F.SubTotal, 
-                          F.Moneda, 
-                          F.MontoConIva, 
-                          F.TipoComprobante,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                                   OR F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN 'PUE'
-                              WHEN F.MetodoPago LIKE '%parcia%'
-                                   OR F.MetodoPago LIKE '%dife%'
-                                   OR F.MetodoPago LIKE '%PPD%'
-                                   OR F.FormaPago LIKE '%parcia%'
-                                   OR F.FormaPago LIKE '%dife%'
-                                   OR F.FormaPago LIKE '%PPD%'
-                              THEN 'PPD'
-                          END, 
-                          F.LugarExpedicion, 
-                          F.UUID, 
-                          F.FechaTimbrado, 
-                          F.FechaRecepcion, 
-                          S.RazonSocial, 
-                          F.Emisor, 
-                          TF.MontoPagado, 
-                          TCD.TipoCambio
-                 UNION
-                 SELECT F.IdFactura, 
-                        F.Serie, 
-                        C.NumeroContrato, 
-                        F.Folio, 
-                        F.Fecha,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                            THEN F.FormaPago
-                            WHEN F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN F.MetodoPago
-                        END AS FormaPago, 
-                        F.NoCertificado, 
-                        F.CondicionesDePago, 
-                        F.SubTotal, 
-                        F.Moneda, 
-                        F.MontoConIva, 
-                        F.TipoComprobante,
-                        CASE
-                            WHEN F.MetodoPago LIKE '%exhibi%'
-                                 OR F.MetodoPago LIKE '%PUE%'
-                                 OR F.FormaPago LIKE '%exhibi%'
-                                 OR F.FormaPago LIKE '%PUE%'
-                            THEN 'PUE'
-                            WHEN F.MetodoPago LIKE '%parcia%'
-                                 OR F.MetodoPago LIKE '%dife%'
-                                 OR F.MetodoPago LIKE '%PPD%'
-                                 OR F.FormaPago LIKE '%parcia%'
-                                 OR F.FormaPago LIKE '%dife%'
-                                 OR F.FormaPago LIKE '%PPD%'
-                            THEN 'PPD'
-                        END AS MetodoPago, 
-                        SUBSTRING(F.LugarExpedicion, 0, 15) AS LugarExpedicion, 
-                        F.UUID, 
-                        F.FechaTimbrado, 
-                        F.FechaRecepcion, 
-                        S.RazonSocial, 
-                        F.Emisor, 
-                        TF.MontoPagado AS MontoPagado, 
-                        TCD.TipoCambio AS TCD
-                 FROM dbo.CO_Contrato AS C (NOLOCK)
-				      JOIN dbo.FI_Factura AS F (NOLOCK)
-					       ON C.IdContrato = F.IdContrato
-							  AND C.IdContrato = @IdContrato
-					          AND F.TipoComprobante <> 'P'
-                      JOIN dbo.PV_Subcontratista AS S (NOLOCK)
-					       ON F.IdSubcontratista = S.IdSubcontratista
-							  AND S.IdSubcontratista = @IdSubcontratista
-                      JOIN dbo.FI_TransferFactura TF (NOLOCK)
-					       ON TF.IdFactura = F.IdFactura
-                      LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK)
-					       ON CONVERT(DATE, F.Fecha) = TCD.Fecha
-                              AND TCD.IdMoneda = 1
-                 WHERE S.IdSubcontratista = @IdSubcontratista
-                       AND C.IdContrato = @IdContrato
-                       AND F.TipoComprobante <> 'P'
-                       AND (F.MetodoPago LIKE '%exhibi%'
-                            OR F.MetodoPago LIKE '%PUE%'
-                            OR F.FormaPago LIKE '%exhibi%'
-                            OR F.FormaPago LIKE '%PUE%')
-                       AND TF.IdTransfer = @IdTransfer
-                 GROUP BY F.IdFactura, 
-                          F.Serie, 
-                          C.NumeroContrato, 
-                          F.Folio, 
-                          F.Fecha,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                              THEN F.FormaPago
-                              WHEN F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN F.MetodoPago
-                          END, 
-                          F.NoCertificado, 
-                          F.CondicionesDePago, 
-                          F.SubTotal, 
-                          F.Moneda, 
-                          F.MontoConIva, 
-                          F.TipoComprobante,
-                          CASE
-                              WHEN F.MetodoPago LIKE '%exhibi%'
-                                   OR F.MetodoPago LIKE '%PUE%'
-                                   OR F.FormaPago LIKE '%exhibi%'
-                                   OR F.FormaPago LIKE '%PUE%'
-                              THEN 'PUE'
-                              WHEN F.MetodoPago LIKE '%parcia%'
-                                   OR F.MetodoPago LIKE '%dife%'
-                                   OR F.MetodoPago LIKE '%PPD%'
-                                   OR F.FormaPago LIKE '%parcia%'
-                                   OR F.FormaPago LIKE '%dife%'
-                                   OR F.FormaPago LIKE '%PPD%'
-                              THEN 'PPD'
-                          END, 
-                          F.LugarExpedicion, 
-                          F.UUID, 
-                          F.FechaTimbrado, 
-                          F.FechaRecepcion, 
-                          S.RazonSocial, 
-                          F.Emisor, 
-                          TF.MontoPagado, 
-                          TCD.TipoCambio
-                 ORDER BY F.IdFactura DESC;
-
-                 --EXEC SP_FI_FacturasProveedorTransfer 3, 10080,2,0
-             END;
-     END;
+BEGIN
+    SET NOCOUNT ON;
+    SET LANGUAGE spanish;
+    --
+    IF (@IdTransfer = 0 AND @Accion = 0)
+    BEGIN
+        SELECT dbo.FI_Factura.IdFactura,
+               dbo.FI_Factura.Serie,
+               dbo.CO_Contrato.NumeroContrato,
+               dbo.FI_Factura.Folio,
+               dbo.FI_Factura.Fecha,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.FormaPago
+                   WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.MetodoPago
+               END AS FormaPago,
+               dbo.FI_Factura.NoCertificado,
+               dbo.FI_Factura.CondicionesDePago,
+               dbo.FI_Factura.SubTotal,
+               dbo.FI_Factura.Moneda,
+               dbo.FI_Factura.MontoConIva,
+               dbo.FI_Factura.TipoComprobante,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       'PUE'
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                       'PPD'
+               END AS MetodoPago,
+               SUBSTRING(dbo.FI_Factura.LugarExpedicion, 0, 15) AS LugarExpedicion,
+               dbo.FI_Factura.UUID,
+               dbo.FI_Factura.FechaTimbrado,
+               dbo.FI_Factura.FechaRecepcion,
+               dbo.PV_Subcontratista.RazonSocial,
+               dbo.FI_Factura.Emisor,
+               dbo.FI_TransferFactura.MontoPagado AS MontoPagado,
+               dbo.CO_TipoCambioDiario.TipoCambio AS TCD
+        FROM dbo.CO_Contrato (NOLOCK)
+            JOIN dbo.FI_Factura (NOLOCK)
+                ON dbo.CO_Contrato.IdContrato = dbo.FI_Factura.IdContrato
+                   AND dbo.CO_Contrato.IdContrato = @IdContrato
+                   AND dbo.FI_Factura.TipoComprobante <> 'P'
+            JOIN dbo.PV_Subcontratista (NOLOCK)
+                ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
+                   AND dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+            LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+            LEFT JOIN dbo.CO_TipoCambioDiario (NOLOCK)
+                ON CONVERT(DATE, dbo.FI_Factura.Fecha) = dbo.CO_TipoCambioDiario.Fecha
+                   AND dbo.CO_TipoCambioDiario.IdMoneda = 1
+        WHERE (
+                  dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                  OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                  OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                  OR dbo.FI_Factura.FormaPago LIKE '%PUE%'
+              )
+              AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+        GROUP BY dbo.FI_Factura.IdFactura,
+                 dbo.FI_Factura.Serie,
+                 dbo.CO_Contrato.NumeroContrato,
+                 dbo.FI_Factura.Folio,
+                 dbo.FI_Factura.Fecha,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.FormaPago
+                     WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.MetodoPago
+                 END,
+                 dbo.FI_Factura.NoCertificado,
+                 dbo.FI_Factura.CondicionesDePago,
+                 dbo.FI_Factura.SubTotal,
+                 dbo.FI_Factura.Moneda,
+                 dbo.FI_Factura.MontoConIva,
+                 dbo.FI_Factura.TipoComprobante,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         'PUE'
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                         'PPD'
+                 END,
+                 dbo.FI_Factura.LugarExpedicion,
+                 dbo.FI_Factura.UUID,
+                 dbo.FI_Factura.FechaTimbrado,
+                 dbo.FI_Factura.FechaRecepcion,
+                 dbo.PV_Subcontratista.RazonSocial,
+                 dbo.FI_Factura.Emisor,
+                 dbo.FI_TransferFactura.MontoPagado,
+                 dbo.CO_TipoCambioDiario.TipoCambio
+        UNION
+        SELECT dbo.FI_Factura.IdFactura,
+               dbo.FI_Factura.Serie,
+               dbo.CO_Contrato.NumeroContrato,
+               dbo.FI_Factura.Folio,
+               dbo.FI_Factura.Fecha,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.FormaPago
+                   WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.MetodoPago
+               END AS FormaPago,
+               dbo.FI_Factura.NoCertificado,
+               dbo.FI_Factura.CondicionesDePago,
+               dbo.FI_Factura.SubTotal,
+               dbo.FI_Factura.Moneda,
+               dbo.FI_Factura.MontoConIva,
+               dbo.FI_Factura.TipoComprobante,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       'PUE'
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                       'PPD'
+               END AS MetodoPago,
+               SUBSTRING(dbo.FI_Factura.LugarExpedicion, 0, 15) AS LugarExpedicion,
+               dbo.FI_Factura.UUID,
+               dbo.FI_Factura.FechaTimbrado,
+               dbo.FI_Factura.FechaRecepcion,
+               dbo.PV_Subcontratista.RazonSocial,
+               dbo.FI_Factura.Emisor,
+               dbo.FI_TransferFactura.MontoPagado AS MontoPagado,
+               dbo.CO_TipoCambioDiario.TipoCambio AS TCD
+        FROM dbo.FI_Factura (NOLOCK)
+            JOIN dbo.FI_FacturaContrato (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_FacturaContrato.IdFactura
+                   AND dbo.FI_Factura.TipoComprobante <> 'P'
+                   AND dbo.FI_FacturaContrato.IdContrato = @IdContrato
+            JOIN dbo.PV_Subcontratista (NOLOCK)
+                ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
+                   AND dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+            JOIN dbo.CO_Contrato (NOLOCK)
+                ON dbo.FI_Factura.IdContrato = dbo.CO_Contrato.IdContrato
+            LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+            LEFT JOIN dbo.CO_TipoCambioDiario (NOLOCK)
+                ON CONVERT(DATE, dbo.FI_Factura.Fecha) = dbo.CO_TipoCambioDiario.Fecha
+                   AND dbo.CO_TipoCambioDiario.IdMoneda = 1
+        WHERE (
+                  dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                  OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                  OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                  OR dbo.FI_Factura.FormaPago LIKE '%PUE%'
+              )
+              AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+        GROUP BY dbo.FI_Factura.IdFactura,
+                 dbo.FI_Factura.Serie,
+                 dbo.CO_Contrato.NumeroContrato,
+                 dbo.FI_Factura.Folio,
+                 dbo.FI_Factura.Fecha,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.FormaPago
+                     WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.MetodoPago
+                 END,
+                 dbo.FI_Factura.NoCertificado,
+                 dbo.FI_Factura.CondicionesDePago,
+                 dbo.FI_Factura.SubTotal,
+                 dbo.FI_Factura.Moneda,
+                 dbo.FI_Factura.MontoConIva,
+                 dbo.FI_Factura.TipoComprobante,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         'PUE'
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                         'PPD'
+                 END,
+                 dbo.FI_Factura.LugarExpedicion,
+                 dbo.FI_Factura.UUID,
+                 dbo.FI_Factura.FechaTimbrado,
+                 dbo.FI_Factura.FechaRecepcion,
+                 dbo.PV_Subcontratista.RazonSocial,
+                 dbo.FI_Factura.Emisor,
+                 dbo.FI_TransferFactura.MontoPagado,
+                 dbo.CO_TipoCambioDiario.TipoCambio
+        ORDER BY dbo.FI_Factura.IdFactura DESC;
+    END;
+    IF (@IdTransfer <> 0 AND @Accion <> 0)
+    BEGIN
+        SELECT dbo.FI_Factura.IdFactura,
+               dbo.FI_Factura.Serie,
+               dbo.CO_Contrato.NumeroContrato,
+               dbo.FI_Factura.Folio,
+               dbo.FI_Factura.Fecha,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.FormaPago
+                   WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.MetodoPago
+               END AS FormaPago,
+               dbo.FI_Factura.NoCertificado,
+               dbo.FI_Factura.CondicionesDePago,
+               dbo.FI_Factura.SubTotal,
+               dbo.FI_Factura.Moneda,
+               dbo.FI_Factura.MontoConIva,
+               dbo.FI_Factura.TipoComprobante,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       'PUE'
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                       'PPD'
+               END AS MetodoPago,
+               SUBSTRING(dbo.FI_Factura.LugarExpedicion, 0, 15) AS LugarExpedicion,
+               dbo.FI_Factura.UUID,
+               dbo.FI_Factura.FechaTimbrado,
+               dbo.FI_Factura.FechaRecepcion,
+               dbo.PV_Subcontratista.RazonSocial,
+               dbo.FI_Factura.Emisor,
+               dbo.FI_TransferFactura.MontoPagado AS MontoPagado,
+               dbo.CO_TipoCambioDiario.TipoCambio AS TCD
+        FROM dbo.CO_Contrato (NOLOCK)
+            JOIN dbo.FI_Factura (NOLOCK)
+                ON dbo.CO_Contrato.IdContrato = dbo.FI_Factura.IdContrato
+                   AND dbo.CO_Contrato.IdContrato = @IdContrato
+                   AND dbo.FI_Factura.TipoComprobante <> 'P'
+            JOIN dbo.PV_Subcontratista (NOLOCK)
+                ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
+            LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+            LEFT JOIN dbo.CO_TipoCambioDiario (NOLOCK)
+                ON CONVERT(DATE, dbo.FI_Factura.Fecha) = dbo.CO_TipoCambioDiario.Fecha
+                   AND dbo.CO_TipoCambioDiario.IdMoneda = 1
+        WHERE dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+              AND dbo.CO_Contrato.IdContrato = @IdContrato
+              AND dbo.FI_Factura.TipoComprobante <> 'P'
+              AND (
+                      dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%PUE%'
+                  )
+              AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+        GROUP BY dbo.FI_Factura.IdFactura,
+                 dbo.FI_Factura.Serie,
+                 dbo.CO_Contrato.NumeroContrato,
+                 dbo.FI_Factura.Folio,
+                 dbo.FI_Factura.Fecha,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.FormaPago
+                     WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.MetodoPago
+                 END,
+                 dbo.FI_Factura.NoCertificado,
+                 dbo.FI_Factura.CondicionesDePago,
+                 dbo.FI_Factura.SubTotal,
+                 dbo.FI_Factura.Moneda,
+                 dbo.FI_Factura.MontoConIva,
+                 dbo.FI_Factura.TipoComprobante,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         'PUE'
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                         'PPD'
+                 END,
+                 dbo.FI_Factura.LugarExpedicion,
+                 dbo.FI_Factura.UUID,
+                 dbo.FI_Factura.FechaTimbrado,
+                 dbo.FI_Factura.FechaRecepcion,
+                 dbo.PV_Subcontratista.RazonSocial,
+                 dbo.FI_Factura.Emisor,
+                 dbo.FI_TransferFactura.MontoPagado,
+                 dbo.CO_TipoCambioDiario.TipoCambio
+        UNION
+        SELECT dbo.FI_Factura.IdFactura,
+               dbo.FI_Factura.Serie,
+               dbo.CO_Contrato.NumeroContrato,
+               dbo.FI_Factura.Folio,
+               dbo.FI_Factura.Fecha,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.FormaPago
+                   WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.MetodoPago
+               END AS FormaPago,
+               dbo.FI_Factura.NoCertificado,
+               dbo.FI_Factura.CondicionesDePago,
+               dbo.FI_Factura.SubTotal,
+               dbo.FI_Factura.Moneda,
+               dbo.FI_Factura.MontoConIva,
+               dbo.FI_Factura.TipoComprobante,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       'PUE'
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                       'PPD'
+               END AS MetodoPago,
+               SUBSTRING(dbo.FI_Factura.LugarExpedicion, 0, 15) AS LugarExpedicion,
+               dbo.FI_Factura.UUID,
+               dbo.FI_Factura.FechaTimbrado,
+               dbo.FI_Factura.FechaRecepcion,
+               dbo.PV_Subcontratista.RazonSocial,
+               dbo.FI_Factura.Emisor,
+               dbo.FI_TransferFactura.MontoPagado AS MontoPagado,
+               dbo.CO_TipoCambioDiario.TipoCambio AS TCD
+        FROM dbo.FI_Factura (NOLOCK)
+            JOIN dbo.FI_FacturaContrato (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_FacturaContrato.IdFactura
+                   AND dbo.FI_Factura.TipoComprobante <> 'P'
+                   AND dbo.FI_FacturaContrato.IdContrato = @IdContrato
+            JOIN dbo.PV_Subcontratista (NOLOCK)
+                ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
+                   AND dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+            JOIN dbo.CO_Contrato (NOLOCK)
+                ON dbo.FI_Factura.IdContrato = dbo.CO_Contrato.IdContrato
+            LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+            LEFT JOIN dbo.CO_TipoCambioDiario (NOLOCK)
+                ON CONVERT(DATE, dbo.FI_Factura.Fecha) = dbo.CO_TipoCambioDiario.Fecha
+                   AND dbo.CO_TipoCambioDiario.IdMoneda = 1
+        WHERE dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+              AND dbo.FI_FacturaContrato.IdContrato = @IdContrato
+              AND dbo.FI_Factura.TipoComprobante <> 'P'
+              AND (
+                      dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%PUE%'
+                  )
+              AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+        GROUP BY dbo.FI_Factura.IdFactura,
+                 dbo.FI_Factura.Serie,
+                 dbo.CO_Contrato.NumeroContrato,
+                 dbo.FI_Factura.Folio,
+                 dbo.FI_Factura.Fecha,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.FormaPago
+                     WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.MetodoPago
+                 END,
+                 dbo.FI_Factura.NoCertificado,
+                 dbo.FI_Factura.CondicionesDePago,
+                 dbo.FI_Factura.SubTotal,
+                 dbo.FI_Factura.Moneda,
+                 dbo.FI_Factura.MontoConIva,
+                 dbo.FI_Factura.TipoComprobante,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         'PUE'
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                         'PPD'
+                 END,
+                 dbo.FI_Factura.LugarExpedicion,
+                 dbo.FI_Factura.UUID,
+                 dbo.FI_Factura.FechaTimbrado,
+                 dbo.FI_Factura.FechaRecepcion,
+                 dbo.PV_Subcontratista.RazonSocial,
+                 dbo.FI_Factura.Emisor,
+                 dbo.FI_TransferFactura.MontoPagado,
+                 dbo.CO_TipoCambioDiario.TipoCambio
+        UNION
+        SELECT dbo.FI_Factura.IdFactura,
+               dbo.FI_Factura.Serie,
+               dbo.CO_Contrato.NumeroContrato,
+               dbo.FI_Factura.Folio,
+               dbo.FI_Factura.Fecha,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.FormaPago
+                   WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.MetodoPago
+               END AS FormaPago,
+               dbo.FI_Factura.NoCertificado,
+               dbo.FI_Factura.CondicionesDePago,
+               dbo.FI_Factura.SubTotal,
+               dbo.FI_Factura.Moneda,
+               dbo.FI_Factura.MontoConIva,
+               dbo.FI_Factura.TipoComprobante,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       'PUE'
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                       'PPD'
+               END AS MetodoPago,
+               SUBSTRING(dbo.FI_Factura.LugarExpedicion, 0, 15) AS LugarExpedicion,
+               dbo.FI_Factura.UUID,
+               dbo.FI_Factura.FechaTimbrado,
+               dbo.FI_Factura.FechaRecepcion,
+               dbo.PV_Subcontratista.RazonSocial,
+               dbo.FI_Factura.Emisor,
+               dbo.FI_TransferFactura.MontoPagado AS MontoPagado,
+               dbo.CO_TipoCambioDiario.TipoCambio AS TCD
+        FROM dbo.FI_Factura (NOLOCK)
+            JOIN dbo.FI_FacturaContrato (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_FacturaContrato.IdFactura
+                   AND dbo.FI_Factura.TipoComprobante <> 'P'
+                   AND dbo.FI_FacturaContrato.IdContrato = @IdContrato
+            JOIN dbo.PV_Subcontratista (NOLOCK)
+                ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
+                   AND dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+            JOIN dbo.CO_Contrato (NOLOCK)
+                ON dbo.FI_Factura.IdContrato = dbo.CO_Contrato.IdContrato
+            LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+            LEFT JOIN dbo.CO_TipoCambioDiario (NOLOCK)
+                ON CONVERT(DATE, dbo.FI_Factura.Fecha) = dbo.CO_TipoCambioDiario.Fecha
+                   AND dbo.CO_TipoCambioDiario.IdMoneda = 1
+        WHERE dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+              AND dbo.FI_FacturaContrato.IdContrato = @IdContrato
+              AND dbo.FI_Factura.TipoComprobante <> 'P'
+              AND (
+                      dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%PUE%'
+                  )
+              -- AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+              AND dbo.FI_TransferFactura.IdTransfer = @IdTransfer
+        GROUP BY dbo.FI_Factura.IdFactura,
+                 dbo.FI_Factura.Serie,
+                 dbo.CO_Contrato.NumeroContrato,
+                 dbo.FI_Factura.Folio,
+                 dbo.FI_Factura.Fecha,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.FormaPago
+                     WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.MetodoPago
+                 END,
+                 dbo.FI_Factura.NoCertificado,
+                 dbo.FI_Factura.CondicionesDePago,
+                 dbo.FI_Factura.SubTotal,
+                 dbo.FI_Factura.Moneda,
+                 dbo.FI_Factura.MontoConIva,
+                 dbo.FI_Factura.TipoComprobante,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         'PUE'
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                         'PPD'
+                 END,
+                 dbo.FI_Factura.LugarExpedicion,
+                 dbo.FI_Factura.UUID,
+                 dbo.FI_Factura.FechaTimbrado,
+                 dbo.FI_Factura.FechaRecepcion,
+                 dbo.PV_Subcontratista.RazonSocial,
+                 dbo.FI_Factura.Emisor,
+                 dbo.FI_TransferFactura.MontoPagado,
+                 dbo.CO_TipoCambioDiario.TipoCambio
+        UNION
+        SELECT dbo.FI_Factura.IdFactura,
+               dbo.FI_Factura.Serie,
+               dbo.CO_Contrato.NumeroContrato,
+               dbo.FI_Factura.Folio,
+               dbo.FI_Factura.Fecha,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.FormaPago
+                   WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       dbo.FI_Factura.MetodoPago
+               END AS FormaPago,
+               dbo.FI_Factura.NoCertificado,
+               dbo.FI_Factura.CondicionesDePago,
+               dbo.FI_Factura.SubTotal,
+               dbo.FI_Factura.Moneda,
+               dbo.FI_Factura.MontoConIva,
+               dbo.FI_Factura.TipoComprobante,
+               CASE
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                       'PUE'
+                   WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                        OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                        OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                       'PPD'
+               END AS MetodoPago,
+               SUBSTRING(dbo.FI_Factura.LugarExpedicion, 0, 15) AS LugarExpedicion,
+               dbo.FI_Factura.UUID,
+               dbo.FI_Factura.FechaTimbrado,
+               dbo.FI_Factura.FechaRecepcion,
+               dbo.PV_Subcontratista.RazonSocial,
+               dbo.FI_Factura.Emisor,
+               dbo.FI_TransferFactura.MontoPagado AS MontoPagado,
+               dbo.CO_TipoCambioDiario.TipoCambio AS TCD
+        FROM dbo.CO_Contrato (NOLOCK)
+            JOIN dbo.FI_Factura (NOLOCK)
+                ON dbo.CO_Contrato.IdContrato = dbo.FI_Factura.IdContrato
+                   AND dbo.FI_Factura.TipoComprobante <> 'P'
+                   AND dbo.CO_Contrato.IdContrato = @IdContrato
+            JOIN dbo.PV_Subcontratista (NOLOCK)
+                ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
+                   AND dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+            JOIN dbo.FI_TransferFactura (NOLOCK)
+                ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+            LEFT JOIN dbo.CO_TipoCambioDiario (NOLOCK)
+                ON CONVERT(DATE, dbo.FI_Factura.Fecha) = dbo.CO_TipoCambioDiario.Fecha
+                   AND dbo.CO_TipoCambioDiario.IdMoneda = 1
+        WHERE dbo.PV_Subcontratista.IdSubcontratista = @IdSubcontratista
+              AND dbo.CO_Contrato.IdContrato = @IdContrato
+              AND dbo.FI_Factura.TipoComprobante <> 'P'
+              AND (
+                      dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                      OR dbo.FI_Factura.FormaPago LIKE '%PUE%'
+                  )
+              AND dbo.FI_TransferFactura.IdTransfer = @IdTransfer
+        GROUP BY dbo.FI_Factura.IdFactura,
+                 dbo.FI_Factura.Serie,
+                 dbo.CO_Contrato.NumeroContrato,
+                 dbo.FI_Factura.Folio,
+                 dbo.FI_Factura.Fecha,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.FormaPago
+                     WHEN dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         dbo.FI_Factura.MetodoPago
+                 END,
+                 dbo.FI_Factura.NoCertificado,
+                 dbo.FI_Factura.CondicionesDePago,
+                 dbo.FI_Factura.SubTotal,
+                 dbo.FI_Factura.Moneda,
+                 dbo.FI_Factura.MontoConIva,
+                 dbo.FI_Factura.TipoComprobante,
+                 CASE
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PUE%' THEN
+                         'PUE'
+                     WHEN dbo.FI_Factura.MetodoPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
+                          OR dbo.FI_Factura.MetodoPago LIKE '%PPD%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%parcia%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%dife%'
+                          OR dbo.FI_Factura.FormaPago LIKE '%PPD%' THEN
+                         'PPD'
+                 END,
+                 dbo.FI_Factura.LugarExpedicion,
+                 dbo.FI_Factura.UUID,
+                 dbo.FI_Factura.FechaTimbrado,
+                 dbo.FI_Factura.FechaRecepcion,
+                 dbo.PV_Subcontratista.RazonSocial,
+                 dbo.FI_Factura.Emisor,
+                 dbo.FI_TransferFactura.MontoPagado,
+                 dbo.CO_TipoCambioDiario.TipoCambio
+        ORDER BY dbo.FI_Factura.IdFactura DESC;
+    END;
+END;
