@@ -37,7 +37,7 @@ BEGIN
 		ELSE
 		BEGIN
 			UPDATE CO_TipoCambioMensual SET Activo = 1, TipoCambio = @PromedioTipoCambio
-			WHERE IdMoneda = 1 AND IdMes = MONTH(@FechaActual) AND Anio = YEAR(@FechaActual)
+			WHERE IdMoneda = 1 AND IdMes = MONTH(@FechaActual) AND Anio = YEAR(@FechaActual) AND ObtenidoSDK = 0
 		END
 	END
 	ELSE
@@ -68,7 +68,7 @@ BEGIN
 		ELSE
 		BEGIN
 			UPDATE CO_TipoCambioMensual SET Activo = 1, TipoCambio = @PromedioTipoCambioAnterior
-			WHERE IdMoneda = 1 AND IdMes = MONTH(@FechaMesAnterior) AND Anio = YEAR(@FechaMesAnterior)
+			WHERE IdMoneda = 1 AND IdMes = MONTH(@FechaMesAnterior) AND Anio = YEAR(@FechaMesAnterior)  AND ObtenidoSDK = 0
 		END
 	END
 END
