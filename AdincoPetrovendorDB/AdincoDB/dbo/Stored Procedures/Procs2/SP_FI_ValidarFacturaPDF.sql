@@ -10,14 +10,14 @@
 -- [dbo].[SP_FI_ValidarFacturaPDF] 'carpeta/carpeta1/7DEAE730-A66C-45D1-A0FE-958F09F4CF4207.PDF',0,0
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ValidarFacturaPDF]
-    @fileName VARCHAR(MAX),
+    @fileName VARCHAR(1000),
     @IdContrato INT,
     @IdUsuario INT
 AS
 BEGIN
     SET NOCOUNT ON;
     /**/
-    DECLARE @UUID VARCHAR(1000);
+    DECLARE @UUID VARCHAR(500);
     DECLARE @Texto VARCHAR(1000);
     /**/
     IF CHARINDEX('/', @fileName) >= 1

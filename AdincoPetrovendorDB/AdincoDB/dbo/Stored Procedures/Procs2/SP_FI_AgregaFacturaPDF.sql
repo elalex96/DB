@@ -23,7 +23,7 @@ BEGIN
     SET NOCOUNT ON;
     /**/
     DECLARE @ID_DOCUMENTO INT = 0;
-    DECLARE @NOMBRE_EXTENSION NVARCHAR(MAX);
+    DECLARE @NOMBRE_EXTENSION VARCHAR(250);
     /*VALIDAR SI YA EXISTE FACTURA REEMPLAZAR SI NO AGREGAR NUEVA FACTURA*/
     SET @ID_DOCUMENTO = ISNULL(
                         (
@@ -36,7 +36,7 @@ BEGIN
                         0
                               );
     /**/
-    SET @NOMBRE_EXTENSION = 'FI_' + CAST(@IdFactura AS NVARCHAR(200)) + '.pdf';
+    SET @NOMBRE_EXTENSION = 'FI_' + CAST(@IdFactura AS VARCHAR(200)) + '.pdf';
     /**/
     IF (@ID_DOCUMENTO <> 0)
     BEGIN

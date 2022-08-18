@@ -20,8 +20,8 @@ BEGIN
     CREATE TABLE #TemporalCDP
     (
         IdFacturaComplementoDePago INT,
-        UUIDComplementoDePago NVARCHAR(MAX),
-        UUIDDocRelacionado NVARCHAR(MAX),
+        UUIDComplementoDePago VARCHAR(150),
+        UUIDDocRelacionado VARCHAR(150),
         IdFacturaDoCRelacionado INT
     );
     --===================================== 
@@ -53,10 +53,10 @@ BEGIN
     SELECT #TemporalCDP.UUIDDocRelacionado AS UUID,
            CASE
                WHEN #TemporalCDP.IdFacturaDoCRelacionado IS NULL THEN
-                   'UUID de Factura: [' + CONVERT(NVARCHAR(MAX), #TemporalCDP.UUIDDocRelacionado) + ']'
+                   'UUID de Factura: [' + CONVERT(VARCHAR(150), #TemporalCDP.UUIDDocRelacionado) + ']'
                ELSE
-                   'Id Factura: ' + CONVERT(NVARCHAR(MAX), #TemporalCDP.IdFacturaDoCRelacionado) + ', UUID: ['
-                   + CONVERT(NVARCHAR(MAX), UPPER(#TemporalCDP.UUIDDocRelacionado)) + ']'
+                   'Id Factura: ' + CONVERT(VARCHAR(150), #TemporalCDP.IdFacturaDoCRelacionado) + ', UUID: ['
+                   + CONVERT(VARCHAR(150), UPPER(#TemporalCDP.UUIDDocRelacionado)) + ']'
            END AS PPD
     FROM #TemporalCDP
     GROUP BY #TemporalCDP.UUIDDocRelacionado,
