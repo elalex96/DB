@@ -19,7 +19,7 @@ GO
 -- Fecha Modificado: 2022-08-18
 -- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
 -- =============================================
-ALTER PROCEDURE [dbo].[SIPAC_RC_CONT_24_M] 
+CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_24_M] 
     @Contrato      INT,
     @Mes           DATE,
     @IdPresupuesto INT          = 0,
