@@ -3,26 +3,30 @@
 -- Create date: 26-05-2020
 -- Description:	Validar Dominio de Corrreo
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ValidarDominioCorreo] 
+-- Modificado Por:	Neri Garcia
+-- Fecha:			17 de Agosto del 2022
+-- Descripción:		Agregado de (NOLOCK)
 -- ============================================= 
 --[SP_FI_ValidarDominioCorreo] 3,10047
 -- ============================================= 
-@IdContrato INT, 
-@IdUsuario  INT
+CREATE PROCEDURE [dbo].[SP_FI_ValidarDominioCorreo]
+    @IdContrato INT,
+    @IdUsuario INT
 AS
-     BEGIN
-         IF EXISTS
-         (
-             SELECT *
-             FROM dbo.AP_Usuario
-             WHERE UsuarioID = @IdUsuario
-                   AND Usuario LIKE '%@pemex.com%'
-         )
-             BEGIN
-                 SELECT 'true' AS Resultado;
-             END;
-             ELSE
-             BEGIN
-                 SELECT 'false' AS Resultado;
-             END;
-     END;
+BEGIN
+    IF EXISTS
+    (
+        SELECT AP_Usuario.UsuarioID
+        FROM AP_Usuario (NOLOCK)
+        WHERE AP_Usuario.UsuarioID = @IdUsuario
+              AND AP_Usuario.Usuario LIKE '%@pemex.com%'
+    )
+    BEGIN
+        SELECT 'true' AS Resultado;
+    END;
+    /**/
+    ELSE
+    BEGIN
+        SELECT 'false' AS Resultado;
+    END;
+END;
