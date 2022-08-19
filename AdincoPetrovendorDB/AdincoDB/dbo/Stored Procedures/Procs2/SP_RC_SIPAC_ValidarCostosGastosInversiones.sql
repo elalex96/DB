@@ -28,7 +28,7 @@ CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]
 @IdPresupuesto INT,
 @Plantilla VARCHAR(150)  = ''
 AS
-     BEGIN
+         BEGIN
          SET NOCOUNT ON;
 
          --________________________________________ Verificacion de Tablas Temporales ________________________________________--
@@ -493,6 +493,7 @@ AS
                                                            AND R.IdEstado = 10004
                                                            AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
                                                            AND R.CvTipoDocFacturacion = 1
+														   AND F.IdContrato = @Contrato
                      JOIN dbo.CO_Contrato C WITH(NOLOCK) ON F.IdContrato = C.IdContrato
                                                             AND F.IdContrato = @Contrato
                      JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
@@ -516,6 +517,7 @@ AS
                      JOIN dbo.FI_CPDocRelacionado DR WITH(NOLOCK) ON CP.IdComplementoDePago = DR.IdComplementoDePago
                      JOIN dbo.FI_Factura F WITH(NOLOCK) ON DR.IdDocumento = F.UUID
                                                            AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
+														   AND F.IdContrato = @Contrato
                      JOIN dbo.CO_Registro R WITH(NOLOCK) ON F.IdFactura = R.IdFactura
                                                             AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
                                                             AND R.IdEstado = 10004
