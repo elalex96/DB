@@ -73,8 +73,8 @@ BEGIN
                                  'PPD'
                          END,
            @MesPresentacionCGI = CO_Contrato.MesPresentacionCGI
-    FROM FI_Factura
-        JOIN CO_Contrato
+    FROM FI_Factura (NOLOCK)
+        JOIN CO_Contrato (NOLOCK)
             ON FI_Factura.IdContrato = CO_Contrato.IdContrato
     WHERE FI_Factura.IdFactura = @idFactura
           AND FI_Factura.IdContrato = @idContrato;
@@ -110,10 +110,10 @@ BEGIN
                FI_Factura.UUID,
                FI_ComplementoDePago.IdFactura,
                DATEFROMPARTS(YEAR(FI_ComplementoDePago.FechaDePago), MONTH(FI_ComplementoDePago.FechaDePago), 1)
-        FROM FI_ComplementoDePago
-            JOIN FI_CPDocRelacionado
+        FROM FI_ComplementoDePago (NOLOCK)
+            JOIN FI_CPDocRelacionado (NOLOCK)
                 ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
-            JOIN FI_Factura
+            JOIN FI_Factura (NOLOCK)
                 ON FI_CPDocRelacionado.IdDocumento = FI_Factura.UUID
         WHERE FI_ComplementoDePago.IdFactura = @idFactura;
         /*Identificar las transferencias relacionadas directamente con las facturas PPD de la tabla anterior, 
@@ -137,7 +137,7 @@ BEGIN
                FI_TransferFactura.CreadoEn,
                @idUsuario,
                GETDATE()
-        FROM FI_TransferFactura
+        FROM FI_TransferFactura (NOLOCK)
             JOIN #FacturasPrincipales
                 ON FI_TransferFactura.IdFactura = #FacturasPrincipales.IdFacturaPPD;
         /*Eliminar relacion existente entre la factura principal PPD y la transferencia*/
@@ -147,19 +147,19 @@ BEGIN
         )
         SELECT DISTINCT
             FI_TransferFacturaPPD.IdTransfer
-        FROM FI_TransferFacturaPPD
-            JOIN #FacturasPrincipales
+        FROM FI_TransferFacturaPPD (NOLOCK)
+            JOIN #FacturasPrincipales 
                 ON FI_TransferFacturaPPD.IdFactura = #FacturasPrincipales.IdFacturaPPD
         WHERE #FacturasPrincipales.IdFacturaCP = @idFactura;
         /*Eliminar*/
         DELETE FI_TransferFactura
-        FROM FI_TransferFactura
-            JOIN #TransferenciaCP
+        FROM FI_TransferFactura (NOLOCK)
+            JOIN #TransferenciaCP 
                 ON FI_TransferFactura.IdTransfer = #TransferenciaCP.IdTransfer
         /*Actualizar en FI_Transfer IdFormaPago = 2 ya que indica que el metodo de pago es PPD*/
         UPDATE FI_Transfer
         SET FI_Transfer.IdFormaPago = 2
-        FROM FI_Transfer
+        FROM FI_Transfer (NOLOCK)
             JOIN #TransferenciaCP
                 ON FI_Transfer.IdTransferencia = #TransferenciaCP.IdTransfer
         /*Insertar la nueva relacion del complemento de pago con la transferencia.*/
@@ -180,13 +180,13 @@ BEGIN
             @idUsuario,
             GETDATE()
         FROM #FacturasPrincipales
-            JOIN FI_TransferFacturaPPD
+            JOIN FI_TransferFacturaPPD (NOLOCK)
                 ON #FacturasPrincipales.IdFacturaPPD = FI_TransferFacturaPPD.IdFactura
         WHERE #FacturasPrincipales.IdFacturaCP = @idFactura;
         /*Actualizar mes presentación de los gastos asociados a las facturas principales del complemento*/
         UPDATE CO_Registro
         SET CO_Registro.MesPresentacion = #FacturasPrincipales.MesDePago
-        FROM CO_Registro
+        FROM CO_Registro (NOLOCK)
             JOIN #FacturasPrincipales
                 ON CO_Registro.IdFactura = #FacturasPrincipales.IdFacturaPPD
         WHERE CO_Registro.IdFactura = #FacturasPrincipales.IdFacturaPPD
