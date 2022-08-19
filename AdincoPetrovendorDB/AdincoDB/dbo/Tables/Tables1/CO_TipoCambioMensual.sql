@@ -7,6 +7,8 @@
     [IdUsuario]           INT             NULL,
     [FecMovto]            INT             NULL,
     [Activo]              BIT             NULL,
-    [CreadoPor]           INT             NULL
+    [CreadoPor]           INT             NULL,
+    [ObtenidoSDK] BIT NULL,
+    [TipoCambioBanxico] DECIMAL(12,4) NULL
 );
 

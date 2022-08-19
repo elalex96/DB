@@ -13321,6 +13321,25 @@
     <Build Include="dbo\Stored Procedures\Procs1\WDEA_ImportarGastos.sql" />
     <Build Include="dbo\Tables\Tables1\DEA_ImportarGastos.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_ReporteTableroOT.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\RangoTipoCambioMensualSinSDK.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\SP_AP_ModificaTipoCambioMensualConSDK.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\WS_SP_ConsultadeURLPorDescripcion.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AP_RangoTipoCambioMensualSinSDK.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AP_ModificaTipoCambioMensualConSDK.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\WS_SP_ConsultadeURLPorDescripcion.sql" />
+    <Build Include="dbo\Tables\Tables1\AP_SeriesTipoCambio.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
