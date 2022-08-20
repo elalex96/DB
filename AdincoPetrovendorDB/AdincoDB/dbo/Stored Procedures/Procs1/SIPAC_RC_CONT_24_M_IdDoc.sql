@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author: Manuel Cruz
 -- Create date: 07-04-17
 -- Description:  
@@ -112,7 +113,7 @@ AS
             IdDocFacturacionSIPAC = 'PI-' + LTRIM(REPLICATE('0', 2 - LEN(MONTH(@Mes)))) + LTRIM(MONTH(@Mes))
                                     + LTRIM(YEAR(@Mes)) + '-' + RIGHT('000000' + CAST(#PedimentoComprobante.SIPAC AS VARCHAR(6)), 6)
         FROM
-            FI_PedimentoComprobante   
+            FI_PedimentoComprobante   (NOLOCK)
             JOIN
                 #PedimentoComprobante 
                     ON FI_PedimentoComprobante.IdPedimentoComprobante = #PedimentoComprobante.IdPedimentoComprobante
