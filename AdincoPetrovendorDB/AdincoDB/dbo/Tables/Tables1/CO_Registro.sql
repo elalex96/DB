@@ -31,6 +31,8 @@
     [MesGasto]                        DATE            CONSTRAINT [DF_CO_Registro_MesGasto] DEFAULT (NULL) NULL,
     [ModificadoEn]                    DATE            NULL,
     [IdCatManoObra]                   INT             NULL,
+    RegistroConAjuste BIT NULL,
+    AsociadoIncrementoPMT BIT NULL
     CONSTRAINT [PK_Registros] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Registro_CO_CatalogoCuentaSH] FOREIGN KEY ([IdCatalogoCuentasSH]) REFERENCES [dbo].[CO_CatalogoCuentaSH] ([IdCatalogoCuentasSH]),
     CONSTRAINT [FK_CO_Registro_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante]),

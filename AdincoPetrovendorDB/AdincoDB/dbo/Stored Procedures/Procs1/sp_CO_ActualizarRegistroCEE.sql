@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_CO_ActualizarRegistroCEE]    Script Date: 01/10/2021 12:51:49 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  Miguel Gomez  
 -- Create date: Diciembre 2014  
 -- Description: Inserta un nuevo registro  
@@ -14,8 +7,11 @@ GO
 -- Create date: 2021-08-31
 -- Description: Se agrega campo IdCatManoObra
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_CO_ActualizarRegistroCEE]  
-    -- Add the parameters for the stored procedure here  
+-- Author Alter: Reyna Olvera
+-- Create date: 17/08/2022
+-- Description: Se agrega campo RegistroConAjuste y AsociadoIncrementoPMT
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_CO_ActualizarRegistroCEE]   
     @IdRegistro INT,  
     @IdPrograma INT,  
     @IdFactura INT,  
@@ -39,19 +35,18 @@ CREATE PROCEDURE [dbo].[sp_CO_ActualizarRegistroCEE]
     @PCN FLOAT,
 	@IdCatManoObra INT,
 	@CapexOpex int  ,
-	@PorcentajeMarkup FLOAT = 0
+	@PorcentajeMarkup FLOAT = 0,
+	@RegistroConAjuste BIT = NULL,  
+	@AsociadoIncrementoPMT BIT  = NULL
 AS  
 BEGIN  
-    -- SET NOCOUNT ON added to prevent extra result sets from  
-    -- interfering with SELECT statements.  
-  
-    -- Insert statements for procedure here  
     /*Seleccionar el mes de presentación del gasto*/  
-  
+	DECLARE @RegistroConAjusteActual BIT  = 0;
     SELECT @MesPresentacion = MesPresentacionCGI  
     FROM dbo.CO_Contrato  
     WHERE IdContrato = @IdContrato;  
   
+	SELECT @RegistroConAjusteActual = ISNULL(RegistroConAjuste,0) FROM CO_Registro WHERE IdRegistro = @IdRegistro;
     /**/  
   
     UPDATE CO_Registro  
@@ -90,7 +85,9 @@ BEGIN
                        END,  
         [PCN] = @PCN,
 		[IdCatManoObra] = @IdCatManoObra,
-		CapexOpexEdicion = case when @CapexOpex = 1 then 1 else 0 end  
+		CapexOpexEdicion = case when @CapexOpex = 1 then 1 else 0 end,
+		RegistroConAjuste = CASE WHEN @RegistroConAjusteActual = 0 THEN ISNULL(@RegistroConAjuste,0) ELSE @RegistroConAjusteActual END,
+		AsociadoIncrementoPMT	=	ISNULL(@AsociadoIncrementoPMT,0)
     WHERE IdRegistro = @IdRegistro; 
 	
 	
