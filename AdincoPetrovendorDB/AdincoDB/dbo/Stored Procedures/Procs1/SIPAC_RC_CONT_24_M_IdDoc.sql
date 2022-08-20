@@ -59,14 +59,14 @@ AS
                         dbo.FI_Transfer                         WITH (NOLOCK)
                         JOIN
                             dbo.FI_TransferFactura              WITH (NOLOCK)
-                                ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
+                                ON  FI_Transfer.IdTransferencia	=	FI_TransferFactura.IdTransfer
                         JOIN
                             dbo.FI_PedimentoComprobante         WITH (NOLOCK)
                                 ON FI_TransferFactura.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
 								AND FI_PedimentoComprobante.IdContrato = @Contrato
                         JOIN
                             dbo.CO_Registro                    WITH (NOLOCK)
-                                ON CO_Registro.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
+                                ON  FI_PedimentoComprobante.IdPedimentoComprobante	=	CO_Registro.IdPedimentoComprobante
 								AND   CO_Registro.CvTipoDocFacturacion = 2
 								AND CO_Registro.IdEstado = 10004
                         JOIN
@@ -74,10 +74,10 @@ AS
                                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
                         JOIN
                             dbo.CO_Presupuesto                  WITH (NOLOCK)
-                                ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+                                ON  CO_LineaPresupuestoMes.IdPresupuesto	=	CO_Presupuesto.IdPresupuesto
                         JOIN
                             dbo.CO_AnioContractual              WITH (NOLOCK)
-                                ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+                                ON  CO_Presupuesto.IdAnioContractual	=	CO_AnioContractual.IdAnioContractual
                         JOIN
                             dbo.CO_Contrato                    WITH (NOLOCK)
                                 ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
@@ -86,7 +86,7 @@ AS
                                 ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
                         JOIN
                             dbo.CO_Servicio                    SER WITH (NOLOCK)
-                                ON SER.IdServicio = CO_LineaPresupuestoMes.IdServicio
+                                ON  CO_LineaPresupuestoMes.IdServicio	=	SER.IdServicio
                     WHERE
                         CO_Registro.CvTipoDocFacturacion = 2
                         AND FI_PedimentoComprobante.IdContrato = @Contrato
