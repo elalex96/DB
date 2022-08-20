@@ -1,4 +1,10 @@
-﻿
+﻿USE [Adinco]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:Yazmin Glez.
 -- Create date:2017-11-28
@@ -14,175 +20,299 @@
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
 -- =============================================
-
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-08-18
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACI´N, SE QUITAN ALGUNOS ALIAS
+-- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_23_M]
--- [SIPAC_RC_CONT_23_M] 10011,'2019-06-01',1
--- Add the parameters for the stored procedure here
-@Contrato      INT, 
-@Mes           DATE, 
-@IdPresupuesto INT  = 0
+    @Contrato      INT,
+    @Mes           DATE,
+    @IdPresupuesto INT          = 0,
+    @Plantilla     VARCHAR(150) = ''
 AS
-     BEGIN
-         SET NOCOUNT ON;
-         IF OBJECT_ID('tempdb..#uuidNoReportar', 'U') IS NOT NULL
-             DROP TABLE #uuidNoReportar;
+    BEGIN
+        SET NOCOUNT ON;
 
-         /*Omitir facturas en la hoja 21*/
+        IF OBJECT_ID('tempdb..#uuidNoReportar', 'U') IS NOT NULL
+            DROP TABLE #uuidNoReportar;
 
-         CREATE TABLE #uuidNoReportar
-         (UUID VARCHAR(500)
-         );
-         IF(@Mes = '20190801')
-             BEGIN
-                 INSERT INTO #uuidNoReportar(UUID)
-             VALUES('091A3242-EF0F-444A-A5C1-3D7D50247D3B'), ('775E782A-9493-3D40-9B24-E1604A865A0F'), ('78BB3869-8091-B049-98B4-1238E15E7BDA'), ('A6344C73-4C5A-EA4A-B2F8-3378CDA24C17');
-             END;
-         IF(@Mes <> '20190901')
-             BEGIN
-                 INSERT INTO #uuidNoReportar(UUID)
-             VALUES('9A159442-52BC-1E49-8190-D020953CE967');
-             END;
-         IF(@Mes <> '20200101')
-             BEGIN
-                 INSERT INTO #uuidNoReportar(UUID)
-             VALUES('78CA2E37-22C0-408C-8E94-105C7388A704'), ('30EFEC90-471E-434A-87CF-EFFEEE7C48C1');
-             END;
-         IF(@Mes = '20200501')
-             BEGIN
-                 INSERT INTO #uuidNoReportar(UUID)
-             VALUES('D515F4A9-244C-422E-A2B1-11B234039715'), ('1091E714-CC8E-46B8-8421-37470C285BAC'), ('95AB6B55-C312-4CAF-9A9E-BD7E7A2124AB'), ('10FDC8FB-DEBB-4BD5-8C10-6B51E61B5FE6');
-             END;
+        /*Omitir facturas en la hoja 21*/
 
-         /**/
+        CREATE TABLE #uuidNoReportar (UUID VARCHAR(500));
+        IF (@Mes = '20190801')
+            BEGIN
+                INSERT INTO #uuidNoReportar
+                    (
+                        UUID
+                    )
+                VALUES
+                    (
+                        '091A3242-EF0F-444A-A5C1-3D7D50247D3B'
+                    ),
+                    (
+                        '775E782A-9493-3D40-9B24-E1604A865A0F'
+                    ),
+                    (
+                        '78BB3869-8091-B049-98B4-1238E15E7BDA'
+                    ),
+                    (
+                        'A6344C73-4C5A-EA4A-B2F8-3378CDA24C17'
+                    );
+            END;
+        IF (@Mes <> '20190901')
+            BEGIN
+                INSERT INTO #uuidNoReportar
+                    (
+                        UUID
+                    )
+                VALUES
+                    (
+                        '9A159442-52BC-1E49-8190-D020953CE967'
+                    );
+            END;
+        IF (@Mes <> '20200101')
+            BEGIN
+                INSERT INTO #uuidNoReportar
+                    (
+                        UUID
+                    )
+                VALUES
+                    (
+                        '78CA2E37-22C0-408C-8E94-105C7388A704'
+                    ),
+                    (
+                        '30EFEC90-471E-434A-87CF-EFFEEE7C48C1'
+                    );
+            END;
+        IF (@Mes = '20200501')
+            BEGIN
+                INSERT INTO #uuidNoReportar
+                    (
+                        UUID
+                    )
+                VALUES
+                    (
+                        'D515F4A9-244C-422E-A2B1-11B234039715'
+                    ),
+                    (
+                        '1091E714-CC8E-46B8-8421-37470C285BAC'
+                    ),
+                    (
+                        '95AB6B55-C312-4CAF-9A9E-BD7E7A2124AB'
+                    ),
+                    (
+                        '10FDC8FB-DEBB-4BD5-8C10-6B51E61B5FE6'
+                    );
+            END;
 
-         SELECT LTRIM(RTRIM(CON.IDSIPAC)) AS [RF_00], 
-                LTRIM(RTRIM(C.IDRegFiducidiario)) AS [RI_00], 
-                C.NumeroContrato AS [RF01_01], 
-                MONTH(R.MesPresentacion) AS [RC23_00], 
-                YEAR(R.MesPresentacion) AS [RC23_01], 
-                F.UUID AS [RC23_02], 
-                FR.UUID AS [RC23_03], 
-                FR.TipoRelacion AS [RC23_04], 
-                ISNULL(FR.NoParcialidad, 0) AS [RC23_05]
-         FROM dbo.FI_Transfer TR WITH(NOLOCK)
-              JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TR.IdTransferencia = TF.IdTransfer
-              JOIN dbo.FI_Factura F WITH(NOLOCK) ON TF.IdFactura = F.IdFactura
-              JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdFactura = F.IdFactura
-              JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-              JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
-              JOIN dbo.CO_AnioContractual AC WITH(NOLOCK) ON AC.IdAnioContractual = P.IdAnioContractual
-              JOIN dbo.CO_Contrato C WITH(NOLOCK) ON AC.IdContrato = C.IdContrato
-              JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
-              LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = F.IdMoneda
-                                                                    AND DAY(TCD.Fecha) = DAY(TR.FechaPago)
-                                                                    AND MONTH(TCD.Fecha) = MONTH(TR.FechaPago)
-                                                                    AND YEAR(TCD.Fecha) = YEAR(TR.FechaPago)
-              LEFT JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
-                                                            AND SER.IdContrato = C.IdContrato
-              JOIN dbo.FI_CFDIRelacionados FR WITH(NOLOCK) ON FR.CFDIId = F.IdFactura
-         WHERE C.IdContrato = @Contrato
-               AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
-               AND R.IdEstado = 10004
-               AND R.CvTipoDocFacturacion = 1
-               AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
-               AND FR.TipoRelacion IN(01, 02, 07)
-              AND SER.NombreServicio NOT LIKE '%No elegibles%'
-              AND (F.TipoComprobante LIKE '%egreso%'
-                   OR F.TipoComprobante LIKE 'E%')
-              AND F.UUID NOT IN
-         (
-             SELECT RPT.UUID
-             FROM #uuidNoReportar RPT
-         )
-              AND F.UUID NOT IN
-         (
-             SELECT ControlF.UUID
-             FROM dbo.FI_ControlPPDComplementos ControlF WITH(NOLOCK)
-             WHERE ControlF.IdContrato = @Contrato
-         )
-              AND P.IdPresupuesto = CASE
-                                        WHEN @IdPresupuesto = 0
-                                        THEN LPM.IdPresupuesto
-                                        ELSE @IdPresupuesto
-                                    END
-         GROUP BY LTRIM(RTRIM(CON.IDSIPAC)), 
-                  LTRIM(RTRIM(C.IDRegFiducidiario)), 
-                  MONTH(R.MesPresentacion), 
-                  YEAR(R.MesPresentacion), 
-                  ISNULL(FR.NoParcialidad, 0), 
-                  C.NumeroContrato, 
-                  F.UUID, 
-                  FR.UUID, 
-                  FR.TipoRelacion
-         --
-         UNION
-         --
-         SELECT LTRIM(RTRIM(CON.IDSIPAC)) AS [RF_00], 
-                LTRIM(RTRIM(C.IDRegFiducidiario)) AS [RI_00], 
-                C.NumeroContrato AS [RF01_01], 
-                MONTH(R.MesPresentacion) AS [RC23_00], 
-                YEAR(R.MesPresentacion) AS [RC23_01], 
-                FCP.UUID AS [RC23_02],
-                CASE
-                    WHEN FCP.TipoComprobante = 'P'
+        /**/
+
+        SELECT
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))         AS [RF_00],
+            LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))  AS [RI_00],
+            CO_Contrato.NumeroContrato                   AS [RF01_01],
+            MONTH(CO_Registro.MesPresentacion)           AS [RC23_00],
+            YEAR(CO_Registro.MesPresentacion)            AS [RC23_01],
+            FI_Factura.UUID                              AS [RC23_02],
+            FI_CFDIRelacionados.UUID                     AS [RC23_03],
+            FI_CFDIRelacionados.TipoRelacion             AS [RC23_04],
+            ISNULL(FI_CFDIRelacionados.NoParcialidad, 0) AS [RC23_05]
+        FROM
+            dbo.FI_Transfer WITH (NOLOCK)
+            JOIN
+                dbo.FI_TransferFactura WITH (NOLOCK)
+                    ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+            JOIN
+                dbo.FI_Factura WITH (NOLOCK)
+                    ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura
+            JOIN
+                dbo.FI_CFDIRelacionados WITH (NOLOCK)
+                    ON FI_CFDIRelacionados.CFDIId = FI_Factura.IdFactura
+            JOIN
+                dbo.CO_Registro WITH (NOLOCK)
+                    ON CO_Registro.IdFactura = FI_Factura.IdFactura
+                       AND CO_Registro.IdEstado = 10004
+                       AND CO_Registro.CvTipoDocFacturacion = 1
+            JOIN
+                dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                    ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+            JOIN
+                dbo.CO_Presupuesto WITH (NOLOCK)
+                    ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+            JOIN
+                dbo.CO_AnioContractual WITH (NOLOCK)
+                    ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+            JOIN
+                dbo.CO_Contrato WITH (NOLOCK)
+                    ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+                       AND CO_Contrato.IdContrato = @Contrato
+            JOIN
+                dbo.CO_Contratista WITH (NOLOCK)
+                    ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+            LEFT JOIN
+                dbo.CO_TipoCambioDiario WITH (NOLOCK)
+                    ON CO_TipoCambioDiario.IdMoneda = FI_Factura.IdMoneda
+                       AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
+                       AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
+                       AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
+            LEFT JOIN
+                dbo.CO_Servicio WITH (NOLOCK)
+                    ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio
+                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato
+        WHERE
+            CO_Contrato.IdContrato = @Contrato
+            AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
+            AND CO_Registro.IdEstado = 10004
+            AND CO_Registro.CvTipoDocFacturacion = 1
+            AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
+            AND FI_CFDIRelacionados.TipoRelacion IN (
+                                                        01, 02, 07
+                                                    )
+            AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
+            AND (
+                    FI_Factura.TipoComprobante LIKE '%egreso%'
+                    OR FI_Factura.TipoComprobante LIKE 'E%'
+                )
+            AND FI_Factura.UUID NOT IN (
+                                           SELECT
+                                               RPT.UUID
+                                           FROM
+                                               #uuidNoReportar RPT
+                                       )
+            AND FI_Factura.UUID NOT IN (
+                                           SELECT
+                                               ControlF.UUID
+                                           FROM
+                                               dbo.FI_ControlPPDComplementos ControlF WITH (NOLOCK)
+                                           WHERE
+                                               ControlF.IdContrato = @Contrato
+                                       )
+            AND CO_Presupuesto.IdPresupuesto = CASE
+                                                   WHEN @IdPresupuesto = 0
+                                                       THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                   ELSE
+                                                       @IdPresupuesto
+                                               END
+        GROUP BY
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+            LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
+            MONTH(CO_Registro.MesPresentacion),
+            YEAR(CO_Registro.MesPresentacion),
+            ISNULL(FI_CFDIRelacionados.NoParcialidad, 0),
+            CO_Contrato.NumeroContrato,
+            FI_Factura.UUID,
+            FI_CFDIRelacionados.UUID,
+            FI_CFDIRelacionados.TipoRelacion
+        --
+        UNION
+        --
+        SELECT
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))        AS [RF_00],
+            LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)) AS [RI_00],
+            CO_Contrato.NumeroContrato                  AS [RF01_01],
+            MONTH(CO_Registro.MesPresentacion)          AS [RC23_00],
+            YEAR(CO_Registro.MesPresentacion)           AS [RC23_01],
+            FCP.UUID                                    AS [RC23_02],
+            CASE
+                WHEN FCP.TipoComprobante = 'P'
                     THEN FCPDR.UUID
-                    ELSE FCP.UUID
-                END AS [RC23_03], 
-                '07' AS [RC23_04], 
-                MAX(CASE
-                        WHEN FCP.TipoComprobante = 'P'
-                        THEN CPDR.NumParcialidad
-                        ELSE 0
-                    END) AS [RC23_05]
-         FROM dbo.FI_Transfer TR WITH(NOLOCK)
-              JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TR.IdTransferencia = TF.IdTransfer
-              JOIN dbo.FI_ComplementoDePago CP WITH(NOLOCK) ON CP.IdFactura = TF.IdFactura
-              JOIN dbo.FI_CPDocRelacionado CPDR WITH(NOLOCK) ON CPDR.IdComplementoDePago = CP.IdComplementoDePago
-              JOIN dbo.FI_Factura FCP WITH(NOLOCK) ON TF.IdFactura = FCP.IdFactura
-              JOIN dbo.FI_Factura FCPDR WITH(NOLOCK) ON CPDR.IdDocumento = FCPDR.UUID
-              JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdFactura = FCPDR.IdFactura
-              JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-              JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
-              JOIN dbo.CO_AnioContractual AC WITH(NOLOCK) ON AC.IdAnioContractual = P.IdAnioContractual
-              JOIN dbo.CO_Contrato C WITH(NOLOCK) ON AC.IdContrato = C.IdContrato
-              JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
-              LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = FCPDR.IdMoneda
-                                                                    AND DAY(TCD.Fecha) = DAY(TR.FechaPago)
-                                                                    AND MONTH(TCD.Fecha) = MONTH(TR.FechaPago)
-                                                                    AND YEAR(TCD.Fecha) = YEAR(TR.FechaPago)
-              LEFT JOIN dbo.CO_Servicio SER ON SER.IdServicio = LPM.IdServicio
-                                               AND SER.IdContrato = C.IdContrato
-         WHERE C.IdContrato = @Contrato
-               AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
-               AND R.IdEstado = 10004
-               AND R.CvTipoDocFacturacion = 1
-               AND ISNULL(CONVERT(INT, FCP.ProcesadoSIPAC), 0) = 0
-               AND SER.NombreServicio NOT LIKE '%No elegibles%'
-               AND FCP.UUID NOT IN
-         (
-             SELECT RPT.UUID
-             FROM #uuidNoReportar RPT
-         )
-               AND FCP.UUID NOT IN
-         (
-             SELECT ControlF.UUID
-             FROM dbo.FI_ControlPPDComplementos ControlF
-             WHERE ControlF.IdContrato = @Contrato
-         )
-               AND P.IdPresupuesto = CASE
-                                         WHEN @IdPresupuesto = 0
-                                         THEN LPM.IdPresupuesto
-                                         ELSE @IdPresupuesto
-                                     END
-         GROUP BY LTRIM(RTRIM(CON.IDSIPAC)), 
-                  LTRIM(RTRIM(C.IDRegFiducidiario)), 
-                  MONTH(R.MesPresentacion), 
-                  YEAR(R.MesPresentacion),
-                  CASE
-                      WHEN FCP.TipoComprobante = 'P'
-                      THEN FCPDR.UUID
-                      ELSE FCP.UUID
-                  END, 
-                  C.NumeroContrato, 
-                  FCP.UUID;
-     END;
+                ELSE
+                    FCP.UUID
+            END                                         AS [RC23_03],
+            '07'                                        AS [RC23_04],
+            MAX(   CASE
+                       WHEN FCP.TipoComprobante = 'P'
+                           THEN FI_CPDocRelacionado.NumParcialidad
+                       ELSE
+                           0
+                   END
+               )                                        AS [RC23_05]
+        FROM
+            dbo.FI_Transfer WITH (NOLOCK)
+            JOIN
+                dbo.FI_TransferFactura WITH (NOLOCK)
+                    ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+            JOIN
+                dbo.FI_ComplementoDePago WITH (NOLOCK)
+                    ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
+            JOIN
+                dbo.FI_CPDocRelacionado WITH (NOLOCK)
+                    ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
+            JOIN
+                dbo.FI_Factura FCP WITH (NOLOCK)
+                    ON FI_TransferFactura.IdFactura = FCP.IdFactura
+            JOIN
+                dbo.FI_Factura FCPDR WITH (NOLOCK)
+                    ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
+            JOIN
+                dbo.CO_Registro WITH (NOLOCK)
+                    ON FCPDR.IdFactura = CO_Registro.IdFactura
+                       AND CO_Registro.IdEstado = 10004
+                       AND CO_Registro.CvTipoDocFacturacion = 1
+            JOIN
+                dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                    ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+            JOIN
+                dbo.CO_Presupuesto WITH (NOLOCK)
+                    ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
+            JOIN
+                dbo.CO_AnioContractual WITH (NOLOCK)
+                    ON CO_Presupuesto.IdAnioContractual = CO_AnioContractual.IdAnioContractual
+            JOIN
+                dbo.CO_Contrato WITH (NOLOCK)
+                    ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+                       AND CO_Contrato.IdContrato = @Contrato
+            JOIN
+                dbo.CO_Contratista WITH (NOLOCK)
+                    ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+            LEFT JOIN
+                dbo.CO_TipoCambioDiario WITH (NOLOCK)
+                    ON CO_TipoCambioDiario.IdMoneda = FCPDR.IdMoneda
+                       AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
+                       AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
+                       AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
+            LEFT JOIN
+                dbo.CO_Servicio
+                    ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio
+                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato
+        WHERE
+            CO_Contrato.IdContrato = @Contrato
+            AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
+            AND CO_Registro.IdEstado = 10004
+            AND CO_Registro.CvTipoDocFacturacion = 1
+            AND ISNULL(CONVERT(INT, FCP.ProcesadoSIPAC), 0) = 0
+            AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
+            AND FCP.UUID NOT IN (
+                                    SELECT
+                                        RPT.UUID
+                                    FROM
+                                        #uuidNoReportar RPT
+                                )
+            AND FCP.UUID NOT IN (
+                                    SELECT
+                                        ControlF.UUID
+                                    FROM
+                                        dbo.FI_ControlPPDComplementos ControlF
+                                    WHERE
+                                        ControlF.IdContrato = @Contrato
+                                )
+            AND CO_Presupuesto.IdPresupuesto = CASE
+                                                   WHEN @IdPresupuesto = 0
+                                                       THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                   ELSE
+                                                       @IdPresupuesto
+                                               END
+        GROUP BY
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+            LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
+            MONTH(CO_Registro.MesPresentacion),
+            YEAR(CO_Registro.MesPresentacion),
+            CASE
+                WHEN FCP.TipoComprobante = 'P'
+                    THEN FCPDR.UUID
+                ELSE
+                    FCP.UUID
+            END,
+            CO_Contrato.NumeroContrato,
+            FCP.UUID;
+    END;

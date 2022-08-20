@@ -1,4 +1,10 @@
-﻿
+﻿USE [Adinco]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:                            Yazmin Glez
 -- Create date:  2017-11-29
@@ -9,118 +15,182 @@
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
 -- =============================================
-CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_24_M]
--- Add the parameters for the stored procedure here
-@Contrato      INT, 
-@Mes           DATE, 
-@IdPresupuesto INT  = 0
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-08-18
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
+-- =============================================
+CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_24_M] 
+    @Contrato      INT,
+    @Mes           DATE,
+    @IdPresupuesto INT          = 0,
+    @Plantilla     VARCHAR(150) = ''
 AS
-     BEGIN
-         SET NOCOUNT ON;
+    BEGIN
+        SET NOCOUNT ON;
 
-         /*Generar nombre de archivos*/
 
-         EXEC [SIPAC_RC_CONT_24_M_IdDoc] 
-              @Contrato, 
-              @Mes, 
-              @IdPresupuesto;
+        /*Generar nombre de archivos*/
 
-         /**/
+        EXEC [SIPAC_RC_CONT_24_M_IdDoc]
+            @Contrato,
+            @Mes,
+            @IdPresupuesto;
 
-         SELECT LTRIM(RTRIM(CON.IDSIPAC)) AS [RF_00], 
-                LTRIM(RTRIM(C.IDRegFiducidiario)) AS [RI_00], 
-                C.NumeroContrato AS [RF01_01], 
-                MONTH(R.MesPresentacion) AS [RC24_00], --LTRIM(REPLICATE('0', 2-LEN(MONTH(R.MesPresentacion))))+LTRIM(MONTH(R.MesPresentacion)) AS [RC24_00],
+        /**/
 
-                YEAR(R.MesPresentacion) AS [RC24_01], 
-                CONCAT(REPLACE(PC.IdDocFacturacionSIPAC, '-', '_'), '.pdf') AS [RC24_02], 
-                PC.HashSHA256 AS [RC24_03], 
-                LTRIM(RTRIM(SUBSTRING(PC.NumeroPedimento, 0, 20))) AS [RC24_04], 
-                LTRIM(RTRIM(SUBSTRING(PC.AcuseElectronico, 0, 12))) AS [RC24_05],
-                CASE
-                    WHEN ISNULL(PCD.ImporteTotal, 0) <> 0
-                    THEN CAST(ROUND((ISNULL(PCD.ImporteTotal, 0) / TCD.TipoCambio), 2) AS DECIMAL(15, 2))
-                    ELSE 0
-                END AS [RC24_06], 
-                PCD.ImporteTotal AS [RC24_07], 
-                LTRIM(RTRIM(SUBSTRING(CV.Clave, 0, 16))) AS [RC24_08], 
-                CDIM.Clave AS [RC24_09], 
-                TR.FechaPago AS [RC24_10], 
-                PC.Regimen AS [RC24_11], 
-                LTRIM(RTRIM(SUBSTRING(SUBI.RFC, 0, 13))) AS [RC24_12], 
-                PC.AduanaES AS [RC24_13], 
-                LTRIM(RTRIM(SUBE.RFC)) AS [RC24_14], 
-                LTRIM(RTRIM(SUBE.RazonSocial)) AS [RC24_15], 
-                LTRIM(RTRIM(PC.FolioComprobante)) AS [RC24_16], 
-                PC.FechaPago AS [RC24_17], 
-                PCD.ImporteTotal AS [RC24_18],
-                CASE
-                    WHEN ISNULL(PCD.ImporteTotal, 0) <> 0
-                    THEN CAST(ROUND((ISNULL(PCD.ImporteTotal, 0) / TCD.TipoCambio), 2) AS DECIMAL(15, 2))
-                    ELSE 0
-                END AS [RC24_19], 
-                2 AS [RC24_20]
-         FROM dbo.FI_Transfer TR WITH(NOLOCK)
-              JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TF.IdTransfer = TR.IdTransferencia
-              JOIN dbo.FI_PedimentoComprobante PC WITH(NOLOCK) ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante
-              JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdPedimentoComprobante = PC.IdPedimentoComprobante
-              JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-              JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
-              JOIN dbo.CO_AnioContractual AC WITH(NOLOCK) ON AC.IdAnioContractual = P.IdAnioContractual
-              JOIN dbo.CO_Contrato C WITH(NOLOCK) ON AC.IdContrato = C.IdContrato
-              JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
-              JOIN dbo.FI_PedimentoComprobanteDetalle PCD WITH(NOLOCK) ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
-              JOIN dbo.PV_Subcontratista SUBI WITH(NOLOCK) ON PC.IdSubcontratistaImportador = SUBI.IdSubcontratista
-              JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON PC.IdMoneda = TM.IdMoneda
-              JOIN dbo.FI_CFDIMetodoPago CDIM WITH(NOLOCK) ON CDIM.IdCFDIMetodoPago = TR.IdMetodoPago
-              JOIN dbo.PV_Subcontratista SUBE WITH(NOLOCK) ON PC.IdSubcontratistaExportador = SUBE.IdSubcontratista
-              JOIN dbo.FI_ClavesPedimento CV WITH(NOLOCK) ON PC.ClavePedimento = CV.IdPedimento
-              JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
-              LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TM.IdMoneda
-                                                                    AND DAY(TCD.Fecha) = DAY(PC.FechaPago)
-                                                                    AND MONTH(TCD.Fecha) = MONTH(PC.FechaPago)
-                                                                    AND YEAR(TCD.Fecha) = YEAR(PC.FechaPago)
-         WHERE R.CvTipoDocFacturacion = 2
-               AND C.IdContrato = @Contrato
-               AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
-               AND R.IdEstado = 10004
-               AND ISNULL(CONVERT(INT, PC.ProcesadoSIPAC), 0) = 0
-               AND SER.NombreServicio NOT LIKE '%No elegibles%'
-               AND P.IdPresupuesto = CASE
-                                         WHEN @IdPresupuesto = 0
-                                         THEN LPM.IdPresupuesto
-                                         ELSE @IdPresupuesto
-                                     END
-         GROUP BY LTRIM(RTRIM(CON.IDSIPAC)), 
-                  LTRIM(RTRIM(C.IDRegFiducidiario)), 
-                  C.NumeroContrato, 
-                  MONTH(R.MesPresentacion), --LTRIM(REPLICATE('0', 2-LEN(MONTH(R.MesPresentacion))))+LTRIM(MONTH(R.MesPresentacion)),
+        SELECT
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))                                             AS [RF_00],
+            LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))                                      AS [RI_00],
+            CO_Contrato.NumeroContrato                                                       AS [RF01_01],
+            MONTH(CO_Registro.MesPresentacion)                                               AS [RC24_00], --LTRIM(REPLICATE('0', 2-LEN(MONTH(R.MesPresentacion))))+LTRIM(MONTH(R.MesPresentacion)) AS [RC24_00],
 
-                  YEAR(R.MesPresentacion), 
-                  CONCAT(REPLACE(PC.IdDocFacturacionSIPAC, '-', '_'), '.pdf'), 
-                  PC.HashSHA256, 
-                  LTRIM(RTRIM(SUBSTRING(PC.NumeroPedimento, 0, 20))), 
-                  LTRIM(RTRIM(SUBSTRING(PC.AcuseElectronico, 0, 12))),
-                  CASE
-                      WHEN ISNULL(PCD.ImporteTotal, 0) <> 0
-                      THEN CAST(ROUND((ISNULL(PCD.ImporteTotal, 0) / TCD.TipoCambio), 2) AS DECIMAL(15, 2))
-                      ELSE 0
-                  END, 
-                  PCD.ImporteTotal, 
-                  LTRIM(RTRIM(SUBSTRING(CV.Clave, 0, 16))), 
-                  CDIM.Clave, 
-                  TR.FechaPago, 
-                  PC.Regimen, 
-                  LTRIM(RTRIM(SUBSTRING(SUBI.RFC, 0, 13))), 
-                  PC.AduanaES, 
-                  LTRIM(RTRIM(SUBE.RFC)), 
-                  LTRIM(RTRIM(SUBE.RazonSocial)), 
-                  LTRIM(RTRIM(PC.FolioComprobante)), 
-                  PC.FechaPago, 
-                  PCD.ImporteTotal,
-                  CASE
-                      WHEN ISNULL(PCD.ImporteTotal, 0) <> 0
-                      THEN CAST(ROUND((ISNULL(PCD.ImporteTotal, 0) / TCD.TipoCambio), 2) AS DECIMAL(15, 2))
-                      ELSE 0
-                  END;
-     END;
+            YEAR(CO_Registro.MesPresentacion)                                                AS [RC24_01],
+            CONCAT(REPLACE(FI_PedimentoComprobante.IdDocFacturacionSIPAC, '-', '_'), '.pdf') AS [RC24_02],
+            FI_PedimentoComprobante.HashSHA256                                               AS [RC24_03],
+            LTRIM(RTRIM(SUBSTRING(FI_PedimentoComprobante.NumeroPedimento, 0, 20)))          AS [RC24_04],
+            LTRIM(RTRIM(SUBSTRING(FI_PedimentoComprobante.AcuseElectronico, 0, 12)))         AS [RC24_05],
+            CASE
+                WHEN ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0) <> 0
+                    THEN CAST(ROUND(
+                                       (ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0)
+                                        / CO_TipoCambioDiario.TipoCambio
+                                       ), 2
+                                   ) AS DECIMAL(15, 2))
+                ELSE
+                    0
+            END                                                                              AS [RC24_06],
+            FI_PedimentoComprobanteDetalle.ImporteTotal                                      AS [RC24_07],
+            LTRIM(RTRIM(SUBSTRING(FI_ClavesPedimento.Clave, 0, 16)))                         AS [RC24_08],
+            FI_CFDIMetodoPago.Clave                                                          AS [RC24_09],
+            FI_Transfer.FechaPago                                                            AS [RC24_10],
+            FI_PedimentoComprobante.Regimen                                                  AS [RC24_11],
+            LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RFC, 0, 13)))                            AS [RC24_12],
+            FI_PedimentoComprobante.AduanaES                                                 AS [RC24_13],
+            LTRIM(RTRIM(SUBE.RFC))                                                           AS [RC24_14],
+            LTRIM(RTRIM(SUBE.RazonSocial))                                                   AS [RC24_15],
+            LTRIM(RTRIM(FI_PedimentoComprobante.FolioComprobante))                           AS [RC24_16],
+            FI_PedimentoComprobante.FechaPago                                                AS [RC24_17],
+            FI_PedimentoComprobanteDetalle.ImporteTotal                                      AS [RC24_18],
+            CASE
+                WHEN ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0) <> 0
+                    THEN CAST(ROUND(
+                                       (ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0)
+                                        / CO_TipoCambioDiario.TipoCambio
+                                       ), 2
+                                   ) AS DECIMAL(15, 2))
+                ELSE
+                    0
+            END                                                                              AS [RC24_19],
+            2                                                                                AS [RC24_20]
+        FROM
+            dbo.FI_Transfer WITH (NOLOCK)
+            JOIN
+                dbo.FI_TransferFactura WITH (NOLOCK)
+                    ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+            JOIN
+                dbo.FI_PedimentoComprobante WITH (NOLOCK)
+                    ON FI_TransferFactura.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
+            JOIN
+                dbo.CO_Registro WITH (NOLOCK)
+                    ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
+                       AND CO_Registro.CvTipoDocFacturacion = 2
+                       AND CO_Registro.IdEstado = 10004
+            JOIN
+                dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                    ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+            JOIN
+                dbo.CO_Presupuesto WITH (NOLOCK)
+                    ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
+            JOIN
+                dbo.CO_AnioContractual WITH (NOLOCK)
+                    ON CO_Presupuesto.IdAnioContractual = CO_AnioContractual.IdAnioContractual
+            JOIN
+                dbo.CO_Contrato WITH (NOLOCK)
+                    ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+                       AND CO_Contrato.IdContrato = @Contrato
+            JOIN
+                dbo.CO_Contratista WITH (NOLOCK)
+                    ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+            JOIN
+                dbo.FI_PedimentoComprobanteDetalle WITH (NOLOCK)
+                    ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
+            JOIN
+                dbo.PV_Subcontratista WITH (NOLOCK)
+                    ON FI_PedimentoComprobante.IdSubcontratistaImportador = PV_Subcontratista.IdSubcontratista
+            JOIN
+                dbo.PV_TipoMoneda WITH (NOLOCK)
+                    ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
+            JOIN
+                dbo.FI_CFDIMetodoPago WITH (NOLOCK)
+                    ON FI_Transfer.IdMetodoPago = FI_CFDIMetodoPago.IdCFDIMetodoPago
+            JOIN
+                dbo.PV_Subcontratista SUBE WITH (NOLOCK)
+                    ON FI_PedimentoComprobante.IdSubcontratistaExportador = SUBE.IdSubcontratista
+            JOIN
+                dbo.FI_ClavesPedimento WITH (NOLOCK)
+                    ON FI_PedimentoComprobante.ClavePedimento = FI_ClavesPedimento.IdPedimento
+            JOIN
+                dbo.CO_Servicio WITH (NOLOCK)
+                    ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
+            LEFT JOIN
+                dbo.CO_TipoCambioDiario WITH (NOLOCK)
+                    ON CO_TipoCambioDiario.IdMoneda = PV_TipoMoneda.IdMoneda
+                       AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_PedimentoComprobante.FechaPago)
+                       AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_PedimentoComprobante.FechaPago)
+                       AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_PedimentoComprobante.FechaPago)
+        WHERE
+            CO_Registro.CvTipoDocFacturacion = 2
+            AND CO_Contrato.IdContrato = @Contrato
+            AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
+            AND CO_Registro.IdEstado = 10004
+            AND ISNULL(CONVERT(INT, FI_PedimentoComprobante.ProcesadoSIPAC), 0) = 0
+            AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
+            AND CO_Presupuesto.IdPresupuesto = CASE
+                                                   WHEN @IdPresupuesto = 0
+                                                       THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                   ELSE
+                                                       @IdPresupuesto
+                                               END
+        GROUP BY
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+            LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
+            CO_Contrato.NumeroContrato,
+            MONTH(CO_Registro.MesPresentacion),
+            YEAR(CO_Registro.MesPresentacion),
+            CONCAT(REPLACE(FI_PedimentoComprobante.IdDocFacturacionSIPAC, '-', '_'), '.pdf'),
+            FI_PedimentoComprobante.HashSHA256,
+            LTRIM(RTRIM(SUBSTRING(FI_PedimentoComprobante.NumeroPedimento, 0, 20))),
+            LTRIM(RTRIM(SUBSTRING(FI_PedimentoComprobante.AcuseElectronico, 0, 12))),
+            CASE
+                WHEN ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0) <> 0
+                    THEN CAST(ROUND(
+                                       (ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0)
+                                        / CO_TipoCambioDiario.TipoCambio
+                                       ), 2
+                                   ) AS DECIMAL(15, 2))
+                ELSE
+                    0
+            END,
+            FI_PedimentoComprobanteDetalle.ImporteTotal,
+            LTRIM(RTRIM(SUBSTRING(FI_ClavesPedimento.Clave, 0, 16))),
+            FI_CFDIMetodoPago.Clave,
+            FI_Transfer.FechaPago,
+            FI_PedimentoComprobante.Regimen,
+            LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RFC, 0, 13))),
+            FI_PedimentoComprobante.AduanaES,
+            LTRIM(RTRIM(SUBE.RFC)),
+            LTRIM(RTRIM(SUBE.RazonSocial)),
+            LTRIM(RTRIM(FI_PedimentoComprobante.FolioComprobante)),
+            FI_PedimentoComprobante.FechaPago,
+            FI_PedimentoComprobanteDetalle.ImporteTotal,
+            CASE
+                WHEN ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0) <> 0
+                    THEN CAST(ROUND(
+                                       (ISNULL(FI_PedimentoComprobanteDetalle.ImporteTotal, 0)
+                                        / CO_TipoCambioDiario.TipoCambio
+                                       ), 2
+                                   ) AS DECIMAL(15, 2))
+                ELSE
+                    0
+            END;
+    END;

@@ -9,98 +9,115 @@
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
 -- =============================================
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-08-18
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
+-- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_24_M_IdDoc]
--- Add the parameters for the stored procedure here
-@Contrato      INT, 
-@Mes           DATE, 
-@IdPresupuesto INT  = 0
+    @Contrato      INT,
+    @Mes           DATE,
+    @IdPresupuesto INT = 0
 AS
-     BEGIN
-         SET NOCOUNT ON;
+    BEGIN
+        SET NOCOUNT ON;
+        /*Verificar día de consulta*/
+       
+   IF OBJECT_ID('tempdb..#PedimentoComprobante', 'U') IS NOT NULL
+            DROP TABLE #PedimentoComprobante;
 
-         -- Insert statements for procedure here
+        CREATE TABLE #PedimentoComprobante
+            (
+                IdPedimentoComprobante INT,
+                IdContrato             INT,
+                CvTipoDocFacturacion   INT,
+                SIPAC                  INT
+            );
 
-         /*Verificar día de consulta*/
+        DECLARE @DiaReporte INT;
+        DECLARE @DiaActual INT;
 
-         DECLARE @DiaReporte INT;
-         DECLARE @DiaActual INT;
+        SELECT
+            @DiaReporte = Dia
+        FROM
+            dbo.AP_Calendario WITH (NOLOCK)
+        WHERE
+            YEAR(@Mes) = Anio
+            AND MONTH(@Mes) = Mes
+            AND Descripcion = 'Recepción de Información para el cálculo de contraprestaciones';
+        --
+        SELECT
+            @DiaActual = DAY(GETDATE());
 
-         --
+        INSERT INTO #PedimentoComprobante(IdPedimentoComprobante,IdContrato, CvTipoDocFacturacion, SIPAC)
+                    SELECT
+                        FI_PedimentoComprobante.IdPedimentoComprobante,
+                        FI_PedimentoComprobante.IdContrato,
+                        FI_PedimentoComprobante.CvTipoDocFacturacion,
+                        ROW_NUMBER() OVER (ORDER BY
+                                               FI_PedimentoComprobante.FechaPago
+                                          ) AS SIPAC
+                    FROM
+                        dbo.FI_Transfer                         WITH (NOLOCK)
+                        JOIN
+                            dbo.FI_TransferFactura              WITH (NOLOCK)
+                                ON  FI_Transfer.IdTransferencia	=	FI_TransferFactura.IdTransfer
+                        JOIN
+                            dbo.FI_PedimentoComprobante         WITH (NOLOCK)
+                                ON FI_TransferFactura.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
+								AND FI_PedimentoComprobante.IdContrato = @Contrato
+                        JOIN
+                            dbo.CO_Registro                    WITH (NOLOCK)
+                                ON  FI_PedimentoComprobante.IdPedimentoComprobante	=	CO_Registro.IdPedimentoComprobante
+								AND   CO_Registro.CvTipoDocFacturacion = 2
+								AND CO_Registro.IdEstado = 10004
+                        JOIN
+                            dbo.CO_LineaPresupuestoMes          WITH (NOLOCK)
+                                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+                        JOIN
+                            dbo.CO_Presupuesto                  WITH (NOLOCK)
+                                ON  CO_LineaPresupuestoMes.IdPresupuesto	=	CO_Presupuesto.IdPresupuesto
+                        JOIN
+                            dbo.CO_AnioContractual              WITH (NOLOCK)
+                                ON  CO_Presupuesto.IdAnioContractual	=	CO_AnioContractual.IdAnioContractual
+                        JOIN
+                            dbo.CO_Contrato                    WITH (NOLOCK)
+                                ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+                        JOIN
+                            dbo.FI_PedimentoComprobanteDetalle  WITH (NOLOCK)
+                                ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
+                        JOIN
+                            dbo.CO_Servicio                    SER WITH (NOLOCK)
+                                ON  CO_LineaPresupuestoMes.IdServicio	=	SER.IdServicio
+                    WHERE
+                        CO_Registro.CvTipoDocFacturacion = 2
+                        AND FI_PedimentoComprobante.IdContrato = @Contrato
+                        AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
+                        AND CO_Registro.IdEstado = 10004
+                        AND ISNULL(CONVERT(INT, FI_PedimentoComprobante.ProcesadoSIPAC), 0) = 0
+                        AND SER.NombreServicio NOT LIKE '%No elegibles%'
+                        AND CO_Presupuesto.IdPresupuesto = CASE
+                                                  WHEN @IdPresupuesto = 0
+                                                      THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                  ELSE
+                                                      @IdPresupuesto
+                                              END
+                    GROUP BY
+                        FI_PedimentoComprobante.IdPedimentoComprobante,
+                        FI_PedimentoComprobante.IdContrato,
+                        FI_PedimentoComprobante.CvTipoDocFacturacion,
+                        FI_PedimentoComprobante.FechaPago;
 
-         SELECT @DiaReporte = Dia
-         FROM dbo.AP_Calendario WITH(NOLOCK)
-         WHERE YEAR(@Mes) = Anio
-               AND MONTH(@Mes) = Mes
-               AND Descripcion = 'Recepción de Información para el cálculo de contraprestaciones';
+        UPDATE
+            dbo.FI_PedimentoComprobante
+        SET
+            IdDocFacturacionSIPAC = 'PI-' + LTRIM(REPLICATE('0', 2 - LEN(MONTH(@Mes)))) + LTRIM(MONTH(@Mes))
+                                    + LTRIM(YEAR(@Mes)) + '-' + RIGHT('000000' + CAST(#PedimentoComprobante.SIPAC AS VARCHAR(6)), 6)
+        FROM
+            FI_PedimentoComprobante   (NOLOCK)
+            JOIN
+                #PedimentoComprobante 
+                    ON FI_PedimentoComprobante.IdPedimentoComprobante = #PedimentoComprobante.IdPedimentoComprobante
+        WHERE
+            FI_PedimentoComprobante.IdPedimentoComprobante = #PedimentoComprobante.IdPedimentoComprobante;
 
-         --
-
-         SELECT @DiaActual = DAY(GETDATE());
-
-         /*Actualizar o no nombre archivos*/
-
-         --IF(@DiaActual <= @DiaReporte)
-         --BEGIN
-         -- PRIMERO CREAR LA TABLA TEMPORAL
-
-         IF OBJECT_ID('tempdb..#PedimentoComprobante', 'U') IS NOT NULL
-             DROP TABLE #PedimentoComprobante;
-         CREATE TABLE #PedimentoComprobante
-         (IdPedimentoComprobante INT, 
-          IdContrato             INT, 
-          CvTipoDocFacturacion   INT, 
-          SIPAC                  INT
-         );
-         INSERT INTO #PedimentoComprobante
-                SELECT PC.IdPedimentoComprobante, 
-                       PC.IdContrato, 
-                       PC.CvTipoDocFacturacion, 
-                       ROW_NUMBER() OVER(ORDER BY PC.FechaPago) AS SIPAC
-                FROM dbo.FI_Transfer TR WITH(NOLOCK)
-                     JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TF.IdTransfer = TR.IdTransferencia
-                     JOIN dbo.FI_PedimentoComprobante PC WITH(NOLOCK) ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante
-                     JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdPedimentoComprobante = PC.IdPedimentoComprobante
-                     JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-                     JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
-                     JOIN dbo.CO_AnioContractual AC WITH(NOLOCK) ON AC.IdAnioContractual = P.IdAnioContractual
-                     JOIN dbo.CO_Contrato C WITH(NOLOCK) ON AC.IdContrato = C.IdContrato
-                     JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
-                     JOIN dbo.FI_PedimentoComprobanteDetalle PCD WITH(NOLOCK) ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
-                     JOIN dbo.PV_Subcontratista SUBI WITH(NOLOCK) ON PC.IdSubcontratistaImportador = SUBI.IdSubcontratista
-                     JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON PC.IdMoneda = TM.IdMoneda
-                     JOIN dbo.FI_CFDIMetodoPago CDIM WITH(NOLOCK) ON CDIM.IdCFDIMetodoPago = TR.IdMetodoPago
-                     JOIN dbo.PV_Subcontratista SUBE WITH(NOLOCK) ON PC.IdSubcontratistaExportador = SUBE.IdSubcontratista
-                     JOIN dbo.FI_ClavesPedimento CV WITH(NOLOCK) ON PC.ClavePedimento = CV.IdPedimento
-                     JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
-                     LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TM.IdMoneda
-                                                                           AND DAY(TCD.Fecha) = DAY(PC.FechaPago)
-                                                                           AND MONTH(TCD.Fecha) = MONTH(PC.FechaPago)
-                                                                           AND YEAR(TCD.Fecha) = YEAR(PC.FechaPago)
-                WHERE R.CvTipoDocFacturacion = 2
-                      AND PC.IdContrato = @Contrato
-                      AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes
-                      AND R.IdEstado = 10004
-                      AND ISNULL(CONVERT(INT, PC.ProcesadoSIPAC), 0) = 0
-                      AND SER.NombreServicio NOT LIKE '%No elegibles%'
-                      AND P.IdPresupuesto = CASE
-                                                WHEN @IdPresupuesto = 0
-                                                THEN LPM.IdPresupuesto
-                                                ELSE @IdPresupuesto
-                                            END
-                GROUP BY PC.IdPedimentoComprobante, 
-                         PC.IdContrato, 
-                         PC.CvTipoDocFacturacion, 
-                         PC.FechaPago;
-
-         --
-
-         UPDATE dbo.FI_PedimentoComprobante
-           SET 
-               IdDocFacturacionSIPAC = 'PI-'+LTRIM(REPLICATE('0', 2-LEN(MONTH(@Mes))))+LTRIM(MONTH(@Mes))+LTRIM(YEAR(@Mes))+'-'+RIGHT('000000'+CAST(PCT.SIPAC AS VARCHAR(6)), 6)
-         FROM FI_PedimentoComprobante PC
-              JOIN #PedimentoComprobante PCT ON PC.IdPedimentoComprobante = PCT.IdPedimentoComprobante
-         WHERE PC.IdPedimentoComprobante = PCT.IdPedimentoComprobante;
-
-         --END;
-
-     END;
+    END;

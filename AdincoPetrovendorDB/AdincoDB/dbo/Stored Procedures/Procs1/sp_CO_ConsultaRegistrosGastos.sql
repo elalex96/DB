@@ -1,17 +1,4 @@
-﻿use Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'sp_CO_ConsultaRegistrosGastos'
-)
-    DROP PROCEDURE sp_CO_ConsultaRegistrosGastos;
-	GO
-
-go
-USE ADINCO;
-GO
-CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastos]
+﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastos]
 @IdPresupuesto INT
 AS
       BEGIN
@@ -38,6 +25,10 @@ AS
          -- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 
 		 -- de la tabla al inicio de procedure
 		 -- =============================================
+		 -- Author Alter: Reyna Olvera
+		-- Create date: 17/08/2022
+		-- Description: Se agrega campo RegistroConAjuste y AsociadoIncrementoPMT
+		-- =============================================
          SET NOCOUNT ON;
          SET LANGUAGE spanish;
 		       /**/
@@ -85,7 +76,9 @@ AS
           PCN                      FLOAT, 
           CAA                      VARCHAR(500), 
           CCN                      VARCHAR(500),
-          ModificadoPor            VARCHAR(500)
+          ModificadoPor            VARCHAR(500),
+		RegistroConAjuste BIT  NULL,  
+		AsociadoIncrementoPMT BIT  NULL
          );
 
          /**/
@@ -115,25 +108,25 @@ AS
                        FA.IdFactura
                 FROM
 					Petrovendor.dbo.MM_AceptacionCartaPCN	AS	AC	(NOLOCK)
-				JOIN
+                Inner JOIN
 					Petrovendor.dbo.S_Documento_S3			AS	D	(NOLOCK)  
 					ON	D.IdDocumento	=	AC.IdDocumento
 					AND	AC.IdEstatus = 2
 					AND	ISNULL(AC.IdEstatusEliminado, 0)	<>	1
-                JOIN
+                Inner JOIN
 					Petrovendor.dbo.MM_AceptacionPedido		AS	AP	(NOLOCK) 
 					ON	AP.IdAceptacionPedido	=	AC.IdAceptacionPedido
-                JOIN
+                Inner JOIN
 					Petrovendor.dbo.MM_Pedido				AS	P	(NOLOCK) 
 					ON	P.IdPedido	=	AP.IdPedido
 					AND	P.IdContrato	=	@Contrato
-               JOIN
+                Inner JOIN
 					Petrovendor.dbo.S_Proveedor				AS	PR	(NOLOCK) 
 					ON	PR.IdProveedor	=	P.IdSubcontratista
-                JOIN
+                Inner JOIN
 					Petrovendor.dbo.S_TipoValidacionDoc		AS	TD	(NOLOCK) 
 					ON	TD.IdTipoValidacionDoc	=	AC.IdEstatus
-                JOIN
+                Inner JOIN
 					Petrovendor.dbo.MM_Pedidos				AS	PG	(NOLOCK) 
 					ON	P.IdPedido	=	PG.IdIdentificador
                 LEFT JOIN
@@ -247,7 +240,9 @@ AS
           PCN, 
           CAA, 
           CCN, 
-          ModificadoPor
+          ModificadoPor,
+		  RegistroConAjuste ,  
+		  AsociadoIncrementoPMT
          )
                 SELECT R.IdRegistro, 
                        S.NombreServicio AS Servicio, 
@@ -354,7 +349,9 @@ AS
                            THEN 'NA'
                            ELSE 'SI'
                        END AS CCN, 
-                       UM.Nombre AS ModificadoPor
+                       UM.Nombre AS ModificadoPor,
+					    ISNULL(R.RegistroConAjuste,0),  
+						ISNULL(R.AsociadoIncrementoPMT,0)
                 FROM 
 					dbo.CO_LineaPresupuestoMes	LPM	(NOLOCK)
                 LEFT JOIN 
@@ -523,7 +520,9 @@ AS
                              THEN 'NA'
                              ELSE 'SI'
                          END, 
-                         UM.Nombre
+                         UM.Nombre,
+						ISNULL(R.RegistroConAjuste,0),  
+						ISNULL(R.AsociadoIncrementoPMT,0) 
                 ORDER BY R.IdRegistro DESC;
 
          /**/
@@ -580,8 +579,9 @@ AS
 					d.PCN, 
 					d.CAA, 
 					d.CCN, 
-					d.ModificadoPor
+					d.ModificadoPor,
+					d.RegistroConAjuste,  
+					d.AsociadoIncrementoPMT
          FROM		#Datos	d
 		
      END;
-

@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_CO_InsertaRegistroCEE]    Script Date: 01/10/2021 12:52:29 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Miguel Gomez
 -- Create date: Diciembre 2014
 -- Description:	Inserta un nuevo registro
@@ -14,8 +7,11 @@ GO
 -- Create date: 2021-08-31
 -- Description: Se agrega campo IdCatManoObra
 -- =============================================
+-- Author Alter: Reyna Olvera
+-- Create date: 2022-08-18
+-- Description: Se agrega campo cambios de edición con ajuste y de asociado al pmt
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_CO_InsertaRegistroCEE]
-    -- Add the parameters for the stored procedure here
     @IdPrograma INT,
     @IdFactura INT,
     @MontoRegistro DECIMAL(18, 4),
@@ -37,7 +33,9 @@ CREATE PROCEDURE [dbo].[sp_CO_InsertaRegistroCEE]
     @IdGastoRubro INT,
     @PCN FLOAT,
 	@IdCatManoObra INT,
-	@PorcentajeMarkup FLOAT = 0
+	@PorcentajeMarkup FLOAT = 0,
+	@RegistroConAjuste BIT  NULL, 
+	@AsociadoIncrementoPMT BIT  = NULL
 AS
 BEGIN
     SET @IdFactura = CASE
@@ -52,8 +50,7 @@ BEGIN
                                       ELSE
                                           @IdPedimentoComprobante
                                   END;
-    -- SET NOCOUNT ON added to prevent extra result sets from
-    -- interfering with SELECT statements.
+  
     SET NOCOUNT ON;
     DECLARE @insertado INT;
 
@@ -65,8 +62,7 @@ BEGIN
 
     /**/
 
-    -- Insert statements for procedure here
-
+    
     INSERT INTO CO_Registro
     (
         [IdPrograma],
@@ -88,14 +84,14 @@ BEGIN
         [CostosAtribuiblesAdministracion],
         [IdGastoRubro],
         [PCN],
-		[IdCatManoObra]
+		[IdCatManoObra],
+		[AsociadoIncrementoPMT]
     )
     VALUES
     (   @IdPrograma, @IdFactura, @MontoRegistro, @InicioEjecucion, @FinEjecucion, @Comentarios, @MesPresentacion,
         10004, @IdUsuarioCreadoPor,
-        --@IdUsuarioModPor,
         CURRENT_TIMESTAMP, @IdInstalacion, @IdCuentaCSH, @Poliza, @IdPedimentoComprobante, @CvTipoDoc, @CostoAtrib,
-        @IdGastoRubro, @PCN, @IdCatManoObra);
+        @IdGastoRubro, @PCN, @IdCatManoObra,@AsociadoIncrementoPMT);
     SELECT @insertado = @@IDENTITY;
 
 	EXEC [SP_GuardaPorcentajePorRegistroId] @IdContrato,@IdUsuarioCreadoPor,@insertado,@PorcentajeMarkup,@MontoRegistro;
@@ -103,4 +99,3 @@ BEGIN
     SELECT @insertado AS INSERTADO,
            CONCAT('El registro se ha guardado exitosamente con el id ', @insertado) AS MSG;
 END;
---SELECT * FROM dbo.CO_Registro WHERE IdRegistro = 9490
