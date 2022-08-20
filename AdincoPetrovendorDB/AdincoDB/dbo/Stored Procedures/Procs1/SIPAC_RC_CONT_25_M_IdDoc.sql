@@ -9,10 +9,6 @@
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
 -- =============================================
--- Modificado:       Reyna Olvera
--- Fecha Modificado: 2022-08-18
--- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
--- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_25_M_IdDoc]
     @Contrato      INT,
     @Mes           DATE,
@@ -133,18 +129,5 @@ AS
                     ON FI_PedimentoComprobante.IdPedimentoComprobante = #PedimentoComprobante.IdPedimentoComprobante
         WHERE
             FI_PedimentoComprobante.IdPedimentoComprobante = #PedimentoComprobante.IdPedimentoComprobante;
-
-        SELECT
-            IdDocFacturacionSIPAC = 'PE-' + LTRIM(REPLICATE('0', 2 - LEN(MONTH(@Mes)))) + LTRIM(MONTH(@Mes))
-                                    + LTRIM(YEAR(@Mes)) + '-'
-                                    + RIGHT('000000' + CAST(#PedimentoComprobante.SIPAC AS VARCHAR(6)), 6)
-        FROM
-            FI_PedimentoComprobante PC
-            JOIN
-                #PedimentoComprobante
-                    ON PC.IdPedimentoComprobante = #PedimentoComprobante.IdPedimentoComprobante
-        WHERE
-            PC.IdPedimentoComprobante = #PedimentoComprobante.IdPedimentoComprobante;
-
 
     END;
