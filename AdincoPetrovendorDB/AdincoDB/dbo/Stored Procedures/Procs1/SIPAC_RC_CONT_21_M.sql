@@ -27,7 +27,7 @@ GO
 -- Description:      Se ajusta la consulta de la hoja 21 para poder retornar la snuevas columnas de la plantilla  2022 EPT y ajuste de gasto
 -- Se agrega mejoras de deuda tecnica
 -- =============================================
-ALTER PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]
+CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]
     @Contrato INT,
     @Mes DATE,
     @IdPresupuesto INT = 0,

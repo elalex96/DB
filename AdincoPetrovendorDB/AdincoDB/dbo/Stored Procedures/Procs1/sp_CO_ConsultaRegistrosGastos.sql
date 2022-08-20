@@ -1,4 +1,4 @@
-﻿ALTER PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastos]
+﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastos]
 @IdPresupuesto INT
 AS
       BEGIN
