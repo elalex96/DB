@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 12/07/2022 10:14:31 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 23/08/2022 02:22:50 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -483,8 +483,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 					PC.IdContrato as IdContrato,
 					APC.CreadoEl as FechaCreacion,
 					PC.IdPedimentoComprobante as IdDocumento,
-					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' |  Proveedor:'
-, APC.IdProveedor) as ComentarioDocumento,
+					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' | Importador:', PRPC.RazonSocial) as ComentarioDocumento,
 					CONCAT('Cargado Por: ', US.Nombre, 'Flujo tipo' ,@TIPOFLUJO) as ComentarioAprobacion,
 					0 as NoVersion,
 					OP.IdOperacion as TipoFlujo,
@@ -505,6 +504,8 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 				JOIN	Petrovendor..TA_Estatus AS ET
 				ON		OP.IdEstatusOperacion = ET.IdEstatus
 				LEFT JOIN Petrovendor.dbo.TA_Tarea AS T ON OP.IdOperacion = T.IdOperacion 
+				LEFT JOIN Petrovendor.dbo.S_Proveedor AS PRPC
+				ON		APC.IdProveedor = PRPC.IdProveedor
 				WHERE 
 					OP.IdOperacion = @IdOperacionCursor
 					AND 
@@ -587,4 +588,3 @@ FROM #TM_Aprobacion AS t
 ------------------------------------------------------
 --select * from #IdOperaciones
 end
-
