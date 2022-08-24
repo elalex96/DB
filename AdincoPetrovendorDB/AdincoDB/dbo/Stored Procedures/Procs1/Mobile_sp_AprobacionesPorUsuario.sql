@@ -483,7 +483,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 					PC.IdContrato as IdContrato,
 					APC.CreadoEl as FechaCreacion,
 					PC.IdPedimentoComprobante as IdDocumento,
-					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' | Importador:', PRPC.RazonSocial) as ComentarioDocumento,
+					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' | Importador: ', PRPC.RazonSocial) as ComentarioDocumento,
 					CONCAT('Cargado Por: ', US.Nombre, 'Flujo tipo' ,@TIPOFLUJO) as ComentarioAprobacion,
 					0 as NoVersion,
 					OP.IdOperacion as TipoFlujo,
