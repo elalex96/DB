@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 23/08/2022 02:22:50 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 24/08/2022 10:32:17 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -27,6 +27,8 @@ GO
 -- Create date: 12-07-2022
 -- Description:	se agrega la justificacion correcta en los pedidos
 -- =============================================
+
+--[dbo].[Mobile_sp_AprobacionesPorUsuario]10109,9,-1,-1,-1
 ALTER  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10109,9,-1,-1,-1
 	@IdUsuario		INT,
 	@IdTipo			INT,
@@ -483,7 +485,8 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 					PC.IdContrato as IdContrato,
 					APC.CreadoEl as FechaCreacion,
 					PC.IdPedimentoComprobante as IdDocumento,
-					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' | Importador: ', PRPC.RazonSocial) as ComentarioDocumento,
+					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' , CONVERT(varchar,PC.FechaPago,103) ,' | ','Moneda: ', TM.TipoMoneda collate Modern_Spanish_CI_AS, '(' , TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,') | ', 'Número de Factura: ',PC.NumFacturaC,' | Proveedor: ',
+ PRPC.RazonSocial) as ComentarioDocumento,
 					CONCAT('Cargado Por: ', US.Nombre, 'Flujo tipo' ,@TIPOFLUJO) as ComentarioAprobacion,
 					0 as NoVersion,
 					OP.IdOperacion as TipoFlujo,
