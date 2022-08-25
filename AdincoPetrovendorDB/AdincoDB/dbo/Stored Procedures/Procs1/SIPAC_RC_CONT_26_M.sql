@@ -60,11 +60,11 @@ IF OBJECT_ID('tempdb..#MontosTotalTransferenciaPUE', 'U') IS NOT NULL
 IF OBJECT_ID('tempdb..#MontosTotalTransferenciaPPD', 'U') IS NOT NULL
     DROP TABLE #MontosTotalTransferenciaPPD;
 --
-CREATE TABLE #uuidNoReportar (UUID VARCHAR(500));
+CREATE TABLE #uuidNoReportar (UUID VARCHAR(2000));
 CREATE TABLE #Facturas
     (
         IdFactura       INT,
-        UUID            VARCHAR(500),
+        UUID            VARCHAR(2000),
         TipoComprobante VARCHAR(50),
         MetodoPago      VARCHAR(50),
         IdMoneda        INT
@@ -72,7 +72,7 @@ CREATE TABLE #Facturas
 CREATE TABLE #MontosTotalTransferenciaPPD
     (
         IdFacturaCP  INT,
-        UUIDCP       VARCHAR(500),
+        UUIDCP       VARCHAR(2000),
         FormaPagoCP  VARCHAR(50),
         TipoCambioCP FLOAT,
         MonedaCP     VARCHAR(50),
@@ -84,7 +84,7 @@ CREATE TABLE #MontosTotalTransferenciaPPD
 CREATE TABLE #MontosTotalTransferenciaPUE
     (
         IdFacturaPUE   INT,
-        UUIDPUE        VARCHAR(500),
+        UUIDPUE        VARCHAR(2000),
         FormaPagoPUE   VARCHAR(50),
         TipoCambio     FLOAT,
         MonedaTransfer VARCHAR(50),

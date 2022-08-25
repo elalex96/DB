@@ -28,7 +28,7 @@ AS
         IF OBJECT_ID('tempdb..#FI_Transfer', 'U') IS NOT NULL
             DROP TABLE #FI_Transfer;
 
-        CREATE TABLE #uuidNoReportar (UUID VARCHAR(500));
+        CREATE TABLE #uuidNoReportar (UUID VARCHAR(2000));
         CREATE TABLE #FI_Transfer
             (
                 [IdTransferencia] INT,

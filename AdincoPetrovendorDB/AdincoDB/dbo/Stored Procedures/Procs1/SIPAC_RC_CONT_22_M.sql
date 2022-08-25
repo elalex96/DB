@@ -51,7 +51,7 @@ AS
         CREATE TABLE #Facturas
             (
                 IdFactura       INT,
-                UUID            VARCHAR(500),
+                UUID            VARCHAR(2000),
                 TipoComprobante VARCHAR(50),
                 MetodoPago      VARCHAR(50)
             );
@@ -60,7 +60,7 @@ AS
         CREATE TABLE #MontosTotalTransferencia
             (
                 IdFactura        INT,
-                UUID             VARCHAR(500),
+                UUID             VARCHAR(2000),
                 FormaPago        NVARCHAR(50),
                 IdMonedaFactura  INT,
                 MetodoPago       NVARCHAR(50),
@@ -70,7 +70,7 @@ AS
                 NoParcialidad    INT
             );
 
-        CREATE TABLE #uuidNoReportar (UUID VARCHAR(500));
+        CREATE TABLE #uuidNoReportar (UUID VARCHAR(2000));
 
         INSERT INTO #Facturas
             (
