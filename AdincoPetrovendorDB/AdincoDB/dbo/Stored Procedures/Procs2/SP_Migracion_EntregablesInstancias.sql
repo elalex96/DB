@@ -187,7 +187,18 @@ BEGIN
 		  LEFT JOIN EN_FrecuenciaEntregable RR
 			ON ET.IdFrecuenciaEntregable = RR.IdFrecuenciaEntregable
 
-		  SELECT * FROM #Entregables
+		  SELECT EntregableId, 
+		  Consecutivo,
+		  TotalEntregables, 
+		  TotalElaboracion, 
+		  TotalAprobacion, 
+		  TotalRevision, 
+		  InstanciasElaboracion, 
+		  InstanciasAprobacion, 
+		  InstanciasRevision, 
+		  Recurrencia, 
+		  NombreEntregable
+		  FROM #Entregables
 	 END
 	 ELSE IF @EntregableIdentificador = 'OBTENER-DETALLE-ENTREGABLES-POR-CONTRATO'
 	 BEGIN 
@@ -294,3 +305,6 @@ BEGIN
 	 END 
 
 END;
+
+
+
