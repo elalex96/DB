@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultarDocumentoSolicitudPedidoDetalle'
+)
+DROP PROCEDURE SP_MM_ConsultarDocumentoSolicitudPedidoDetalle;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarDocumentoSolicitudPedidoDetalle]    Script Date: 26/08/2022 03:46:26 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -8,7 +23,11 @@
 -- Update date: 27/04/18
 -- Description: Consulta de documento de pedido detalle con retorno de campos de las propiedades del documento
 -- =============================================
-
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultarDocumentoSolicitudPedidoDetalle]
 	-- Add the parameters for the stored procedure here
 	@IdDocumento INT
@@ -21,10 +40,10 @@ AS
 		-- Insert statements for procedure here	
 		SELECT		IdSolPedMaterialDocumentoAdj, ISNULL ( [NombreArchivoAdjunto], 'Documento.' ), ArchivoAdjuntoMaterial ,
 					DSPD.Carpeta, DSPD.Identificador, DSPD.Extension, DSPD.Mime
-		FROM		MM_SolPedArchivoAdjuntoMaterial AS DSPD
-		INNER JOIN	MM_SolicitudPedidoDetalle AS SPD
-			ON SPD.IdSolicitudPedidoDetalle = DSPD.IdSolPedDetalle
+		FROM		MM_SolPedArchivoAdjuntoMaterial AS DSPD (NOLOCK)
+		JOIN	MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+			ON DSPD.IdSolPedDetalle = SPD.IdSolicitudPedidoDetalle 
 		WHERE
-					IdSolPedMaterialDocumentoAdj = @IdDocumento
+					DSPD.IdSolPedMaterialDocumentoAdj = @IdDocumento
 					AND DSPD.Activo = 1
 	END

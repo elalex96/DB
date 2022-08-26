@@ -1,11 +1,31 @@
-﻿DROP PROCEDURE IF EXISTS SP_ObtenerListaDocumentosMinimos
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ObtenerListaDocumentosMinimos'
+)
+DROP PROCEDURE SP_ObtenerListaDocumentosMinimos;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ObtenerListaDocumentosMinimos]    Script Date: 25/08/2022 05:59:20 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		<Luis David>
 -- Create date: <01/11/2021>
 -- Description:	<Reacomodo de tablas para optimización>
 -- =============================================
-CREATE PROCEDURE SP_ObtenerListaDocumentosMinimos @IdSolPed INT, @IdOferta INT
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_ObtenerListaDocumentosMinimos] 
+@IdSolPed INT, 
+@IdOferta INT
 AS
 	BEGIN
 		DECLARE @tablaAux TABLE
@@ -14,35 +34,35 @@ AS
 		DECLARE @IdTipoRegimen INT
 
 		SELECT		@IdTipoRegimen = prov.IdTipoRegimen
-		FROM		dbo.MM_PeticionOferta PO
-		INNER JOIN	dbo.S_Proveedor prov
+		FROM		dbo.MM_PeticionOferta PO (NOLOCK)
+		JOIN	dbo.S_Proveedor prov (NOLOCK)
 			ON PO.IdSubcontratista = prov.IdProveedor
 		WHERE
-					PO.IdPeticionOferta = @IdOferta
-					AND PO.IdSolicitudPedido = @IdSolPed
+		PO.IdPeticionOferta = @IdOferta
+		AND PO.IdSolicitudPedido = @IdSolPed
 
-		--se guardan en la tabla los documentos que ya tiene cargados el proveedor y 
-		--se le realcionan con los que la operadora esta solicitando para saber cuales no tiene
+		--SE GUARDAN EN LA TABLA LOS DOCUMENTOS QUE YA TIENE CARGADOS EL PROVEEDOR Y 
+		--SE LE RELACIONAN CON LOS QUE LA OPERADORA ESTA SOLICITANDO PARA SABER CUALES NO TIENE
 		INSERT INTO @tablaAux
 			( IdTipoDocumento )
 		SELECT		docS3.IdTipoDocumento
-		FROM		dbo.MM_PeticionOferta PO
-		INNER JOIN	dbo.S_Proveedor prov
+		FROM		dbo.MM_PeticionOferta PO (NOLOCK)
+		JOIN	dbo.S_Proveedor prov (NOLOCK)
 			ON PO.IdSubcontratista = prov.IdProveedor
-		INNER JOIN	dbo.S_TipoDocumentoTipoPersona relTipoDoc
+		JOIN	dbo.S_TipoDocumentoTipoPersona relTipoDoc (NOLOCK)
 			ON prov.IdTipoRegimen = relTipoDoc.IdTipoRegimen
-		INNER JOIN	dbo.S_Documento_S3 docS3
+		JOIN	dbo.S_Documento_S3 docS3 (NOLOCK)
 			ON prov.IdProveedor = docS3.IdProveedor
 			   AND	relTipoDoc.IdTipoDocumento = docS3.IdTipoDocumento
 		WHERE
-					IdPeticionOferta = @IdOferta
+					PO.IdPeticionOferta = @IdOferta
 					AND PO.IdSolicitudPedido = @IdSolPed
 					AND docS3.Activo = 1
 		GROUP BY docS3 .IdTipoDocumento
 
 		SELECT		td.NombreTipoDocumento, rn.IdTipoDocumento, aux.IdTipoDocumento
-		FROM		RN_DocumentosMinimosProveedor rn
-		INNER JOIN	S_TipoDocumento td
+		FROM		RN_DocumentosMinimosProveedor rn (NOLOCK)
+		JOIN	S_TipoDocumento td (NOLOCK)
 			ON rn.IdTipoDocumento = td.IdTipoDocumento
 		LEFT JOIN	@tablaAux aux
 			ON rn.IdTipoDocumento = aux.IdTipoDocumento

@@ -1,4 +1,17 @@
-﻿DROP PROCEDURE IF EXISTS SP_CO_ValidarSolicitudAmpliacionCotizacion
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_CO_ValidarSolicitudAmpliacionCotizacion'
+)
+DROP PROCEDURE SP_CO_ValidarSolicitudAmpliacionCotizacion;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_CO_ValidarSolicitudAmpliacionCotizacion]    Script Date: 26/08/2022 03:03:55 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Alexander Gomez
@@ -11,27 +24,27 @@ GO
 -- Description:	<se modifica el store para que tenga en cuenta la operacion eliminada>
 -- =============================================
 -- =============================================
--- Author:		<Luis David>
--- Create date: <01/11/2021>
--- Description:	<Reacomodo de tablas para optimización>
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_CO_ValidarSolicitudAmpliacionCotizacion]
 	-- Add the parameters for the stored procedure here
 	@IdProvedor INT, @IdPeticionOferta INT ,
+	@IdContrato INT = NULL, 
+	@IdUsuario INT = NULL, 
+	@FechaRegistro DATETIME = NULL
 
-	/*--------------------
-    parametros contrato
-  --------------------*/
-	@IdContrato INT = NULL, @IdUsuario INT = NULL, @FechaRegistro DATETIME = NULL
-/*--------------------
-  --------------------*/
 AS
 	BEGIN
 		-- SET NOCOUNT ON added to prevent extra result sets from
 		-- interfering with SELECT statements.
 		SET NOCOUNT ON ;
+		DECLARE @response NVARCHAR(20) = '' ;
+		DECLARE @DISPONIBILIDAD NVARCHAR(MAX)  = '' ;
+		DECLARE @ESTATUSCOTIZACION NVARCHAR(MAX)  = '' ;
 
-		DECLARE @ESTATUSCOTIZACION NVARCHAR(MAX) =
+		SET @ESTATUSCOTIZACION  =
 					(	SELECT		CASE WHEN PO.Cotizado = 1 THEN
 											 'Cotizada'
 									WHEN PO.Cotizado = 0 THEN
@@ -44,19 +57,19 @@ AS
 										 AND DATEDIFF ( MINUTE, O.FechaFinalizacion, GETDATE ()) >= 0 THEN
 										'Vencida'
 									END AS EstatusCotizacion
-						FROM		MM_PeticionOferta AS PO
-						INNER JOIN	MM_SolicitudPedido AS SP
-							ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
-						INNER JOIN	TA_Operacion AS O
+						FROM	MM_PeticionOferta AS PO
+						JOIN	MM_SolicitudPedido AS SP (NOLOCK)
+							ON PO.IdSolicitudPedido = SP.IdSolicitudPedido  
+						JOIN	TA_Operacion AS O (NOLOCK)
 							ON PO.IdSolicitudPedido = O.IdDocumento
 						WHERE
 									PO.IdPeticionOferta = @IdPeticionOferta
-									AND O.IdTipoOperacion = 6
+									AND O.IdTipoOperacion = 6 -->CTE
 									AND O.FechaFinalizacion IS NOT NULL
 									AND ISNULL ( PO.Visible, 1 ) = 1
 									AND ISNULL ( O.IdEstatusEliminado, 0 ) = 0 )
 
-		DECLARE @DISPONIBILIDAD NVARCHAR(MAX) =
+		SET @DISPONIBILIDAD  =
 					(	SELECT		TOP 1
 									CASE WHEN PED.IdPedido IS NULL THEN
 											 'Cotización Abierta'
@@ -64,23 +77,23 @@ AS
 										'Cotización Cerrada'
 									END AS Disponibilidad
 						FROM		MM_PeticionOferta AS PO
-						INNER JOIN	MM_SolicitudPedido AS SP
+						JOIN	MM_SolicitudPedido AS SP (NOLOCK)
 							ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-						INNER JOIN	TA_Operacion AS O
+						JOIN	TA_Operacion AS O (NOLOCK)
 							ON PO.IdSolicitudPedido =O.IdDocumento
-						LEFT JOIN	dbo.MM_Pedido AS PED
+						LEFT JOIN	dbo.MM_Pedido AS PED (NOLOCK)
 							ON PO.IdSolicitudPedido = PED.IdSolicitudPedido
-						LEFT JOIN	dbo.MM_Pedido AS PEDD
+						LEFT JOIN	dbo.MM_Pedido AS PEDD (NOLOCK)
 							ON PO.IdPeticionOferta = PEDD.IdPeticionOferta
 						WHERE
 									PO.IdPeticionOferta = @IdPeticionOferta
-									AND O.IdTipoOperacion = 6
+									AND O.IdTipoOperacion = 6 --> CTE
 									AND O.FechaFinalizacion IS NOT NULL
 									AND ISNULL ( PO.Visible, 1 ) = 1
 									AND ISNULL ( O.IdEstatusEliminado, 0 ) = 0
 						ORDER BY	PED.FechaEnvioPedido ASC )
 
-		DECLARE @response NVARCHAR(20) = '' ;
+		
 
 		IF @ESTATUSCOTIZACION = 'Vencida'
 		   AND	@DISPONIBILIDAD = 'Cotización Abierta'

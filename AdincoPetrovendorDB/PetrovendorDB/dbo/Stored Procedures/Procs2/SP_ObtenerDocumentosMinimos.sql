@@ -1,4 +1,17 @@
-﻿DROP PROCEDURE IF EXISTS SP_ObtenerDocumentosMinimos
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ObtenerDocumentosMinimos'
+)
+DROP PROCEDURE SP_ObtenerDocumentosMinimos;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ObtenerDocumentosMinimos]    Script Date: 25/08/2022 05:49:09 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Pedro Acuña
@@ -7,11 +20,13 @@ GO
 -- el proveedor no debe poder cotizar
 -- =============================================
 -- =============================================
--- Author:		<Luis David>
--- Create date: <01/11/2021>
--- Description:	<Reacomodo de tablas para optimización>
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
 -- =============================================
-CREATE PROCEDURE SP_ObtenerDocumentosMinimos @IdSolPed INT, @IdOferta INT
+CREATE PROCEDURE [dbo].[SP_ObtenerDocumentosMinimos]
+@IdSolPed INT, 
+@IdOferta INT
 AS
 	BEGIN
 		-- Se retorna los nombres de los documentos faltantes
@@ -21,18 +36,18 @@ AS
 
 		SELECT		@FechaFinzalizacion = TAO.FechaFinalizacion
 		FROM		dbo.MM_SolicitudPedido solPed
-		INNER JOIN	dbo.TA_Operacion TAO
+		JOIN	dbo.TA_Operacion TAO (NOLOCK)
 			ON solPed.IdSolicitudPedido = TAO.IdDocumento
-		INNER JOIN	dbo.MM_PeticionOferta PO
+		JOIN	dbo.MM_PeticionOferta PO   (NOLOCK)
 			ON solPed.IdSolicitudPedido = PO.IdSolicitudPedido
 		WHERE
 					solPed.IdSolicitudPedido = @IdSolPed
 					AND PO.IdPeticionOferta = @IdOferta
-					AND TAO.IdTipoOperacion = 6
+					AND TAO.IdTipoOperacion = 6 -->CTE 
 
 		SELECT		@IdTipoRegimen = prov.IdTipoRegimen
-		FROM		dbo.MM_PeticionOferta PO
-		INNER JOIN	dbo.S_Proveedor prov
+		FROM		dbo.MM_PeticionOferta PO   (NOLOCK)
+		JOIN	dbo.S_Proveedor prov  (NOLOCK)
 			ON PO.IdSubcontratista = prov.IdProveedor
 		WHERE
 					PO.IdPeticionOferta = @IdOferta
@@ -42,22 +57,22 @@ AS
 			BEGIN
 				SELECT	STUFF (
 							(	SELECT		CAST(', ' AS VARCHAR(MAX)) + td.NombreTipoDocumento
-								FROM		RN_DocumentosMinimosProveedor rn
-								INNER JOIN	S_TipoDocumento td
-									ON td.IdTipoDocumento = rn.IdTipoDocumento
+								FROM		RN_DocumentosMinimosProveedor rn  (NOLOCK)
+								JOIN	S_TipoDocumento td  (NOLOCK)
+									ON  rn.IdTipoDocumento = td.IdTipoDocumento 
 								WHERE
 											rn.IdTipoDocumento NOT IN
 												(	SELECT		docS3.IdTipoDocumento --Son los documentos que tiene carga el proveedor
-													FROM		dbo.MM_PeticionOferta PO
-													INNER JOIN	dbo.S_Proveedor prov
+													FROM		dbo.MM_PeticionOferta PO (NOLOCK)
+													JOIN	dbo.S_Proveedor prov (NOLOCK)
 														ON PO.IdSubcontratista = prov.IdProveedor
-													INNER JOIN	dbo.S_TipoDocumentoTipoPersona relTipoDoc
+													JOIN	dbo.S_TipoDocumentoTipoPersona relTipoDoc (NOLOCK)
 														ON prov.IdTipoRegimen = relTipoDoc.IdTipoRegimen
-													INNER JOIN	dbo.S_Documento_S3 docS3
+													JOIN	dbo.S_Documento_S3 docS3 (NOLOCK)
 														ON prov.IdProveedor = docS3.IdProveedor
 														   AND	relTipoDoc.IdTipoDocumento =docS3.IdTipoDocumento
 													WHERE
-																IdPeticionOferta = @IdOferta
+																PO.IdPeticionOferta = @IdOferta
 																AND PO.IdSolicitudPedido = @IdSolPed
 																AND docS3.Activo = 1 )
 											AND rn.IdSolicitudPedido = @IdSolPed

@@ -1,20 +1,27 @@
-﻿USE Petrovendor
+﻿USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS sp_JAConsultaComentarios
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_JAConsultaComentarios'
+)
+DROP PROCEDURE sp_JAConsultaComentarios;
 GO
--- ============================================= 
--- Modified: DANIEL AC 
--- Updated date: 08/01/2017 
--- Description: Agregue parametro de imagen de proveedor 
--- =============================================
--- ============================================= 
--- Modified: DANIEL AC 
--- Updated date: 16/01/2017  1:40PM
--- Description: Agregue CONDICION DE QUE EL USUARIO SEA DEL PROVEEDOR DEL COMENTARIO
+/****** Object:  StoredProcedure [dbo].[sp_JAConsultaComentarios]    Script Date: 25/08/2022 02:36:57 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Modified: Luis David
 -- Updated date: 18/04/2022
 -- Description: Se agrupan las cotizaciones para que no se repitan dependiendo los contratos (Issue#1727)
+-- =============================================
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_JAConsultaComentarios]  
 (
@@ -51,20 +58,21 @@ BEGIN
     )
     SELECT base.IdComentarioBase,
            base.Comentario,
-           0,---dbo.fn_Ja_ObtenerPrimeraImagenSesion(base.IdPerfil, uProv.IdProveedor),
+           0,
            base.IdSolPed,
            base.FechaCreado,
            usuario.Nombre,
            base.IdUsuario,
 		   ISNULL(base.IdProveedor,0),
 		   IP.IdImagen		   
-    FROM dbo.JA_ComentarioBase base
-        INNER JOIN dbo.S_Usuario usuario
-            ON usuario.IdUsuario = base.IdUsuario
-        INNER JOIN dbo.S_UsuarioProveedor uProv
-            ON uProv.IdUsuario = usuario.IdUsuario AND uProv.IdProveedor = base.IdProveedor
-		LEFT JOIN dbo.S_ImagenPerfil AS IP ON 
-		IP.IdProveedor = base.IdProveedor
+    FROM dbo.JA_ComentarioBase base  (NOLOCK)
+        JOIN dbo.S_Usuario usuario (NOLOCK)
+            ON  base.IdUsuario = usuario.IdUsuario
+        JOIN dbo.S_UsuarioProveedor uProv   (NOLOCK)
+            ON usuario.IdUsuario  = uProv.IdUsuario 
+			AND base.IdProveedor = uProv.IdProveedor 
+		LEFT JOIN dbo.S_ImagenPerfil AS IP (NOLOCK) 
+		ON base.IdProveedor = IP.IdProveedor  
     WHERE base.IdSolPed = @IdSolPed
 	GROUP BY base.IdComentarioBase,
            base.Comentario,
@@ -102,10 +110,12 @@ BEGIN
 		CASE WHEN DATALENGTH(IP.ImagenProveedorThumb)>0 THEN
 		   IP.ImagenProveedorThumb
 		   ELSE 
-		   (SELECT ImagenThumb FROM dbo.PV_ImagenPredeterminada WHERE IdImagenPredeterminada=2)
+		    IPD.ImagenThumb 
 		   END AS ImageProveedor		   
     FROM @tablaAux AS TA
-	LEFT JOIN dbo.S_ImagenPerfil AS IP ON 
+	LEFT JOIN dbo.S_ImagenPerfil AS IP (NOLOCK) ON 
 		TA.IdImagen = IP.IdImagen 
+	LEFT JOIN dbo.PV_ImagenPredeterminada IPD  (NOLOCK)
+			ON IPD.IdImagenPredeterminada=2 --> CTE
 	ORDER BY FechaCreado DESC 
 END

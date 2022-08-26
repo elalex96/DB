@@ -1,34 +1,29 @@
-DROP PROCEDURE IF EXISTS SP_MM_ConsultarPeticionOfertaDetalle_MV1_5
+USE [Petrovendor]
 GO
--- =============================================
--- Author:   Daniel AC
--- Create date: 18/12/2017
--- Description: Consulta detalle de la petición de oferta - Cotización del lado del proveedor  venta
--- =============================================
--- Author:		<Jose Roman>
--- Create date: <10/04/2018>
--- Description:	<Se agrega ultima columna con el estatus de cotizacion del material>
--- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <25/03/2019>
--- Description:	<Se agrego el isnull en la unidad cuando no se cotiza,ya que editar la cotizacion aparecia sin unidad>
--- =============================================
--- =============================================
--- Author:           Daniel AC
--- Create date: 13-08-2019
--- Description: Add Marca, Modelo, No Parte a Descripción material 
--- =============================================
--- =============================================
--- Modified:      <Luis David>									
--- Updated date: <01/11/2021>									
--- Description: <Reacomodo de tablas para optimización>	
--- =============================================
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultarPeticionOfertaDetalle_MV1_5'
+)
+DROP PROCEDURE SP_MM_ConsultarPeticionOfertaDetalle_MV1_5;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarPeticionOfertaDetalle_MV1_5]    Script Date: 25/08/2022 01:05:08 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Modified:      <Luis David>									
 -- Updated date: <26/11/2021>									
 -- Description: <Se contemplan los nulls con el método isnull>	
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultarPeticionOfertaDetalle_MV1_5] --2822,44
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_ConsultarPeticionOfertaDetalle_MV1_5]
 	-- Add the parameters for the stored procedure here
 	@IdPeticionOferta INT, 
 	@IdProveedorVenta INT ,
@@ -48,8 +43,7 @@ AS
 				CONCAT (MM.DescripcionCorta,
 				 ' Marca: ', CASE WHEN ISNULL(LEN(MM.Marca),0)>0 THEN MM.Marca ELSE ' S/M' END,
 				 ' Modelo: ', CASE WHEN ISNULL(LEN(MM.Modelo),0)>0 THEN MM.Modelo ELSE ' S/M' END,
-				 ' No. Parte: ',CASE WHEN ISNULL(LEN(MM.NumeroParte),0)>0 THEN MM.NumeroParte  ELSE ' S/NP' END ) AS MaterialSolitadoTextC,
-				--MM.DescripcionCorta AS MaterialSolitadoTextC ,
+				 ' No. Parte: ',CASE WHEN ISNULL(LEN(MM.NumeroParte),0)>0 THEN MM.NumeroParte  ELSE ' S/NP' END ) AS MaterialSolitadoTextC,				
 				POD.ComentariosComprador, POD.NoMaterialesRequeridos, 
 				ISNULL(U.Unidad,UN.Unidad) AS Unidad,
 				CASE
@@ -115,30 +109,29 @@ AS
 					POD.DiasCredito 
 				END AS DiasCredito,
 				POD.IdPeticionOferta
-		  FROM	
-				 MM_PeticionOferta AS PO
-				INNER JOIN MM_PeticionOfertaDetalle AS POD
+		  FROM	MM_PeticionOferta AS PO
+				JOIN MM_PeticionOfertaDetalle AS POD
 						   ON PO.IdPeticionOferta = POD.IdPeticionOferta 
 						   AND PO.IdSubcontratista = @IdProveedorVenta  
 						   AND PO.IdPeticionOferta = @IdPeticionOferta
-				INNER JOIN MM_SolicitudPedido AS SP
+				JOIN MM_SolicitudPedido AS SP (NOLOCK)
 						   ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-				INNER JOIN MM_SolicitudPedidoDetalle AS SPD
+				JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
 						   ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido
 							  AND	POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
-				INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS spdlp
+				JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS spdlp (NOLOCK)
 						   ON SPD.IdSolicitudPedidoDetalle = spdlp.IdSolicitudPedidoDetalle
-				LEFT JOIN Adinco.dbo.CO_Instalacion i
+				LEFT JOIN Adinco.dbo.CO_Instalacion i (NOLOCK)
 						  ON spdlp.IdInstalacion = i.IdInstalacion
-				LEFT JOIN dbo.MM_Material AS MM
+				LEFT JOIN MM_Material AS MM (NOLOCK)
 						  ON POD.IdMaterial = MM.IdMaterial
-				LEFT JOIN PV_MM_MaterialUnidad AS U
+				LEFT JOIN PV_MM_MaterialUnidad AS U (NOLOCK)
 						  ON POD.IdUnidad = U.IdUnidad
-				LEFT JOIN PV_MM_MaterialUnidad AS UP
+				LEFT JOIN PV_MM_MaterialUnidad AS UP (NOLOCK)
 						  ON POD.IdUnidadProveedor = UP.IdUnidad
-				LEFT JOIN DG_Domicilio AS D
+				LEFT JOIN DG_Domicilio AS D (NOLOCK)
 						  ON SPD.IdDomicilioEntrega = D.IdDomicilio
-				LEFT JOIN PV_MM_MaterialUnidad AS UN
+				LEFT JOIN PV_MM_MaterialUnidad AS UN (NOLOCK)
 						  ON SPD.IdUnidad = UN.IdUnidad
 		 GROUP BY POD.IdPeticionOfertaDetalle, POD.IdMaterial, MM.DescripcionCorta, POD.ComentariosComprador ,
 				  NoMaterialesRequeridos , U.Unidad, POD.IdMaterialVendedor, POD.PrecioUnitario, POD.IdMoneda ,
