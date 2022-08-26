@@ -6,9 +6,9 @@ IF EXISTS
     FROM dbo.sysobjects
     WHERE name = 'SP_CO_ActualizarDetallePeticionMaterial_MV1_5'
 )
-    DROP PROCEDURE SP_CO_ActualizarDetallePeticionMaterial_MV1_5;
+DROP PROCEDURE SP_CO_ActualizarDetallePeticionMaterial_MV1_5;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]    Script Date: 27/05/2022 01:09:49 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]    Script Date: 25/08/2022 01:13:24 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,9 +19,9 @@ GO
 -- Description: Agregue validación que si es un Proveedor de CARSO no agregar Marca, Modelo, No Parte a Descripción material  cotizado
 -- =============================================
 -- =============================================
--- Author:           Daniel AC
--- Create date: 27-05-2022
--- Description: Agregue calculo del subtotal cuando se actualiza un material y tambien se cambio el concatenado de los cambios realizados en la edición de la cotización del material 
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]
     -- Add the parameters for the stored procedure here
@@ -68,8 +68,9 @@ AS
         FROM #ProveedoresCARSO 
         WHERE IdProveedor IN (
                 SELECT  SP.IdProveedor
-                FROM dbo.MM_PeticionOferta PO
-                INNER JOIN dbo.MM_SolicitudPedido SP ON SP.IdSolicitudPedido=PO.IdSolicitudPedido 
+                FROM MM_PeticionOferta PO  (NOLOCK)
+                JOIN MM_SolicitudPedido SP  (NOLOCK)
+					ON SP.IdSolicitudPedido=PO.IdSolicitudPedido 
                 WHERE IdPeticionOferta=@IdPeticionOferta)
 
         --FIN VALIDACIÓN CARSO --
@@ -98,7 +99,7 @@ AS
                 --ES PROVEEDOR CARSO
                 SET @MaterialCotizadoTextC = (   SELECT 
                                                  DescripcionCorta                                               
-                                                 FROM dbo.MM_Material
+                                                 FROM MM_Material  (NOLOCK)
                                                  WHERE IdMaterial = @IdMaterialVendedor )
                 END 
                 ELSE 
@@ -108,17 +109,16 @@ AS
                                                  CONCAT (DescripcionCorta,
                                                  ' Marca: ', CASE WHEN ISNULL(LEN(Marca),0)>0 THEN Marca ELSE ' S/M' END,
                                                  ' Modelo: ', CASE WHEN ISNULL(LEN(Modelo),0)>0 THEN Modelo ELSE ' S/M' END,
-                                                 ' No. Parte: ',CASE WHEN ISNULL(LEN(NumeroParte),0)>0 THEN NumeroParte  ELSE ' S/NP' END)
-                                                 --DescripcionCorta
-                                                   FROM dbo.MM_Material
+                                                 ' No. Parte: ',CASE WHEN ISNULL(LEN(NumeroParte),0)>0 THEN NumeroParte  ELSE ' S/NP' END)                                                 
+                                                   FROM MM_Material  (NOLOCK)
                                                   WHERE IdMaterial = @IdMaterialVendedor )
                 END 
                 SET @MaterialCotizadoTextL = (   SELECT DescripcionLarga
-                                                   FROM dbo.MM_Material
+                                                   FROM MM_Material  (NOLOCK)
                                                   WHERE IdMaterial = @IdMaterialVendedor )
 
                 SET @UnidadCotizada = (   SELECT    Unidad
-                                            FROM    dbo.PV_MM_MaterialUnidad
+                                            FROM    dbo.PV_MM_MaterialUnidad  (NOLOCK)
                                            WHERE    IdUnidad = @IdUnidadVendedor )
 
                 UPDATE  [dbo].[MM_PeticionOfertaDetalle]
@@ -178,7 +178,7 @@ AS
             BEGIN
 
                 SET @NoCotizar_Actual = (   SELECT  NoCotizar
-                                              FROM  dbo.MM_PeticionOfertaDetalle
+                                             FROM  dbo.MM_PeticionOfertaDetalle
                                              WHERE  IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle ) ;
             -----------------------------------------------------------------------------------------------------
                 IF @EsProveedorDeCARSO > 0
@@ -186,7 +186,7 @@ AS
                 --ES PROVEEDOR CARSO
                 SET @MaterialCotizadoTextC = (   SELECT 
                                                  DescripcionCorta                                               
-                                                 FROM dbo.MM_Material
+                                                 FROM dbo.MM_Material  (NOLOCK)
                                                  WHERE IdMaterial = @IdMaterialVendedor )
                 END 
                 ELSE 
@@ -196,15 +196,15 @@ AS
                                                             ' Marca: ', CASE WHEN ISNULL(LEN(Marca),0)>0 THEN Marca ELSE ' S/M' END,
                                                             ' Modelo: ', CASE WHEN ISNULL(LEN(Modelo),0)>0 THEN Modelo ELSE ' S/M' END,
                                                             ' No. Parte: ',CASE WHEN ISNULL(LEN(NumeroParte),0)>0 THEN NumeroParte  ELSE ' S/NP' END )                                                            
-                                                           FROM dbo.MM_Material
+                                                           FROM dbo.MM_Material  (NOLOCK)
                                                           WHERE IdMaterial = @IdMaterialVendedor )
                 END 
 
                 SET @MaterialCotizadoTextL = (   SELECT DescripcionLarga
-                                                    FROM dbo.MM_Material
+                                                    FROM dbo.MM_Material  (NOLOCK)
                                                     WHERE IdMaterial = @IdMaterialVendedor )
                 SET @UnidadCotizada = (   SELECT    Unidad
-                                            FROM    dbo.PV_MM_MaterialUnidad
+                                            FROM    dbo.PV_MM_MaterialUnidad  (NOLOCK)
                                             WHERE    IdUnidad = @IdUnidadVendedor )
 
          -----------------------------------------------------------------------------------------------------
@@ -249,7 +249,7 @@ AS
 
                         SET @Detalle =
                         CONCAT(@Detalle ,' *Condición de pago: '
-                            ,@CondicionPago , CASE WHEN @IdCondicionPago=1 THEN CONCAT(' ',CAST(@DiasCredito AS nvarchar(MAX)), ' día(s) de crédito') ELSE '' END)
+                            ,@CondicionPago , CASE WHEN @IdCondicionPago=1 THEN CONCAT(CAST(@DiasCredito AS nvarchar(MAX)), ' día(s) de crédito') ELSE '' END)
 
 						SET @Subtotal = @PrecioUnitario * @DisponibilidadNEW;
 
@@ -308,14 +308,14 @@ AS
                                                  ' Marca: ', CASE WHEN ISNULL(LEN(Marca),0)>0 THEN Marca ELSE ' S/M' END,
                                                  ' Modelo: ', CASE WHEN ISNULL(LEN(Modelo),0)>0 THEN Modelo ELSE ' S/M' END,
                                                  ' No. Parte: ',CASE WHEN ISNULL(LEN(NumeroParte),0)>0 THEN NumeroParte  ELSE ' S/NP' END )                                                
-                                                FROM    dbo.MM_Material
+                                                FROM    dbo.MM_Material  (NOLOCK)
                                                WHERE    IdMaterial = 0 ) ,' a: '
                                         , CAST(ISNULL ( @IdMaterialVendedor, 0 ) AS NVARCHAR (MAX)) + ' - '
                                         , (   SELECT    CONCAT (DescripcionCorta,
                                                  ' Marca: ', CASE WHEN ISNULL(LEN(Marca),0)>0 THEN Marca ELSE ' S/M' END,
                                                  ' Modelo: ', CASE WHEN ISNULL(LEN(Modelo),0)>0 THEN Modelo ELSE ' S/M' END,
                                                  ' No. Parte: ',CASE WHEN ISNULL(LEN(NumeroParte),0)>0 THEN NumeroParte  ELSE ' S/NP' END )                                                
-                                                FROM    dbo.MM_Material
+                                                FROM    dbo.MM_Material  (NOLOCK)
                                                WHERE    IdMaterial = @IdMaterialVendedor )) ;
                             END ;
 
@@ -337,7 +337,7 @@ AS
                         IF ISNULL ( @IdMoneda_Actual, 0 ) <> @IdMoneda
                             BEGIN
                                 SET @MONEDA_ACTUAL = (   SELECT TipoMonedaCorto
-                                                           FROM dbo.PV_TipoMoneda
+                                                           FROM dbo.PV_TipoMoneda  (NOLOCK)
                                                           WHERE IdMoneda = @IdMoneda_Actual ) ;
 
                                 SET @MONEDA = ( SELECT TipoMonedaCorto FROM  dbo.PV_TipoMoneda WHERE
@@ -375,8 +375,8 @@ AS
                         BEGIN 
                             SET @Detalle
                                     = CONCAT( @Detalle , ' *Cambio condicion de pago de: '
-                                        , CAST(ISNULL ((SELECT CondicionPago FROM dbo.MM_CondicionPago WHERE IdCondicionPago=ISNULL(@IdCondicionDePago_Actual,0)), '' ) AS NVARCHAR (MAX)) , ' a: '
-                                        , CAST(ISNULL ( (SELECT CondicionPago FROM dbo.MM_CondicionPago WHERE IdCondicionPago=ISNULL(@IdCondicionPago,0)), '' ) AS NVARCHAR (MAX)) , ' ' ) ;
+                                        , CAST(ISNULL ((SELECT CondicionPago FROM dbo.MM_CondicionPago  (NOLOCK) WHERE IdCondicionPago=ISNULL(@IdCondicionDePago_Actual,0)), '' ) AS NVARCHAR (MAX)) , ' a: '
+                                        , CAST(ISNULL ( (SELECT CondicionPago FROM dbo.MM_CondicionPago  (NOLOCK) WHERE IdCondicionPago=ISNULL(@IdCondicionPago,0)), '' ) AS NVARCHAR (MAX)) , ' ' ) ;
                         END 
 
                         IF ISNULL(@DiasCredito_Actual,0) <>  @DiasCredito
@@ -395,7 +395,7 @@ AS
                 --ES PROVEEDOR CARSO
                 SET @MaterialCotizadoTextC = (   SELECT 
                                                  DescripcionCorta                                               
-                                                 FROM dbo.MM_Material
+                                                 FROM dbo.MM_Material  (NOLOCK)
                                                  WHERE IdMaterial = @IdMaterialVendedor )
                 END 
                 ELSE 
@@ -405,16 +405,16 @@ AS
                                                             ' Marca: ', CASE WHEN ISNULL(LEN(Marca),0)>0 THEN Marca ELSE ' S/M' END,
                                                             ' Modelo: ', CASE WHEN ISNULL(LEN(Modelo),0)>0 THEN Modelo ELSE ' S/M' END,
                                                             ' No. Parte: ',CASE WHEN ISNULL(LEN(NumeroParte),0)>0 THEN NumeroParte  ELSE ' S/NP' END )                                                            
-                                                           FROM dbo.MM_Material
+                                                           FROM dbo.MM_Material  (NOLOCK)
                                                           WHERE IdMaterial = @IdMaterialVendedor )
                 END 
 
                 SET @MaterialCotizadoTextL = (   SELECT DescripcionLarga
-                                                    FROM dbo.MM_Material
+                                                    FROM dbo.MM_Material  (NOLOCK)
                                                     WHERE IdMaterial = @IdMaterialVendedor )
 
                 SET @UnidadCotizada = (   SELECT    Unidad
-                                            FROM    dbo.PV_MM_MaterialUnidad
+                                            FROM    dbo.PV_MM_MaterialUnidad  (NOLOCK)
                                             WHERE    IdUnidad = @IdUnidadVendedor )
 						
 
@@ -485,7 +485,7 @@ AS
                                                  ' Marca: ', CASE WHEN ISNULL(LEN(Marca),0)>0 THEN Marca ELSE ' S/M' END,
                                                  ' Modelo: ', CASE WHEN ISNULL(LEN(Modelo),0)>0 THEN Modelo ELSE ' S/M' END,
                                                  ' No. Parte: ',CASE WHEN ISNULL(LEN(NumeroParte),0)>0 THEN NumeroParte  ELSE ' S/NP' END )                                                
-                                        FROM    dbo.MM_Material
+                                        FROM    dbo.MM_Material  (NOLOCK)
                                        WHERE    IdMaterial = @IdMaterialVendedor_Actual )) ;
 
                         SET @Detalle
@@ -497,7 +497,7 @@ AS
                                 , CAST(ISNULL ( @Disponibilidad_Actual, 0 ) AS NVARCHAR (MAX)) ,' ' ) ;
 
                         SET @MONEDA_ACTUAL = (   SELECT TipoMonedaCorto
-                                                   FROM dbo.PV_TipoMoneda
+                                                   FROM dbo.PV_TipoMoneda  (NOLOCK)
                                                   WHERE IdMoneda = @IdMoneda_Actual ) ;
 
                         SET @Detalle = CONCAT( @Detalle , ' *Moneda de: ' + ISNULL ( @MONEDA_ACTUAL, '' ) , ' ' ) ;
@@ -515,7 +515,7 @@ AS
 
                         SET @Detalle
                             = CONCAT( @Detalle , ' *Condiciones de pago '
-                                , (ISNULL((SELECT CondicionPago FROM dbo.MM_CondicionPago WHERE IdCondicionPago=ISNULL(@IdCondicionDePago_Actual,0)),'')) , ' ' ) ;
+                                , (ISNULL((SELECT CondicionPago FROM dbo.MM_CondicionPago  (NOLOCK) WHERE IdCondicionPago=ISNULL(@IdCondicionDePago_Actual,0)),'')) , ' ' ) ;
 
                         SET @Detalle
                             = CONCAT( @Detalle + ' *Días de crédito '

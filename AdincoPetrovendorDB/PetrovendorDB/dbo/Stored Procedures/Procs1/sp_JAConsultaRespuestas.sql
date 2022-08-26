@@ -1,7 +1,22 @@
-﻿-- ============================================= 
--- Modified: DANIEL AC 
--- Updated date: 08/01/2017 
--- Description: Agregue parametro de imagen de proveedor 
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_JAConsultaRespuestas'
+)
+DROP PROCEDURE sp_JAConsultaRespuestas;
+GO
+/****** Object:  StoredProcedure [dbo].[sp_JAConsultaRespuestas]    Script Date: 25/08/2022 02:40:55 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_JAConsultaRespuestas] (
 @IdComentarioBase INT,
@@ -19,7 +34,7 @@ BEGIN
 		IdProveedor INT,
 		ImagenProveedor IMAGE
     )
-
+	
 	INSERT INTO @tablaAux
 	(
 	    IdComentarioRespuesta,
@@ -33,7 +48,7 @@ BEGIN
 	)
     SELECT relacion.IdComentarioRespuesta,
            respuesta.Respuesta,
-           0,---respuesta.IdPerfil, Se comenta para no generar conflictos de imagen del proveedor 
+           0,
            respuesta.FechaCreado,
            usuario.Nombre,
 		   respuesta.IdUsuario,
@@ -41,23 +56,26 @@ BEGIN
 		   CASE WHEN DATALENGTH(IP.ImagenProveedorThumb)>0 THEN
 		   IP.ImagenProveedorThumb
 		   ELSE 
-		   (SELECT ImagenThumb FROM dbo.PV_ImagenPredeterminada WHERE IdImagenPredeterminada=2)
+		   IPD.ImagenThumb 
 		   END AS ImageProveedor
-    FROM dbo.JA_ComentarioRelacion relacion
-        INNER JOIN dbo.JA_ComentarioRespuesta respuesta
-            ON respuesta.IdComentarioRespuesta = relacion.IdComentarioRespuesta
-        INNER JOIN dbo.S_Usuario usuario
-            ON usuario.IdUsuario = respuesta.IdUsuario
-		LEFT JOIN dbo.S_ImagenPerfil AS IP ON 
-		IP.IdProveedor = respuesta.IdProveedor
-    WHERE relacion.IdComentarioBase = @IdComentarioBase ORDER BY relacion.IdComentarioBase DESC
+    FROM dbo.JA_ComentarioRelacion relacion (NOLOCK)
+        JOIN dbo.JA_ComentarioRespuesta respuesta (NOLOCK)
+            ON relacion.IdComentarioRespuesta = respuesta.IdComentarioRespuesta 
+        JOIN dbo.S_Usuario usuario (NOLOCK)
+            ON respuesta.IdUsuario = usuario.IdUsuario 
+		LEFT JOIN dbo.S_ImagenPerfil AS IP  (NOLOCK)
+			ON respuesta.IdProveedor = IP.IdProveedor
+		LEFT JOIN dbo.PV_ImagenPredeterminada IPD  (NOLOCK)
+			ON IPD.IdImagenPredeterminada=2 --> CTE
+    WHERE relacion.IdComentarioBase = @IdComentarioBase 
+	ORDER BY relacion.IdComentarioBase DESC
 
 	--Cambiar el estatus de los mensajes pendientes de notificacion
     UPDATE mensajes
     SET Visto = 1,
         Enviado = 1,
         FechaEnviado = GETDATE()
-    FROM Ja_MensajesPendientesComentarios mensajes
+    FROM Ja_MensajesPendientesComentarios mensajes  
     WHERE IdPrimario IN (
                             SELECT IdComentarioRespuesta FROM @tablaAux
                         )
@@ -66,5 +84,6 @@ BEGIN
 		  AND IdProveedor = @IdProveedor
 
 	--Retorno a la vista
-    SELECT * FROM @tablaAux ORDER BY FechaCreado DESC
+    SELECT * FROM @tablaAux 
+	ORDER BY FechaCreado DESC
 END

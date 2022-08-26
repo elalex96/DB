@@ -1,7 +1,22 @@
-﻿-- =============================================
--- Author:		Daniel AC
--- Create date: 08/08/2017
--- Description:	 Comente la actualización automatica de la petición de oferta 
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_CO_HistorialCambiosCotizacion'
+)
+DROP PROCEDURE SP_CO_HistorialCambiosCotizacion;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_CO_HistorialCambiosCotizacion]    Script Date: 25/08/2022 02:54:24 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_CO_HistorialCambiosCotizacion] 
 	-- Add the parameters for the stored procedure here
@@ -19,20 +34,27 @@ BEGIN
 	 SELECT HEC.IdHistorial,
 	 CASE WHEN  M.TextoCorto IS NOT NULL
 	 THEN 		
-		('Modificación del material: ('+CAST(POD.IdMaterial AS NVARCHAR(MAX))+'-'+M.TextoCorto +') en:'+ HEC.Descripcion)		 
+		('Modificación del material: ('+CAST(POD.IdMaterial AS NVARCHAR(MAX))+'-'+ISNULL(M.TextoCorto,'') +') en:'+ ISNULL(HEC.Descripcion,''))		 
 	 ELSE 
 		HEC.Descripcion
 	 END
 	 AS Descripcion,
 	 HEC.Fecha,  
 	 U.Nombre
-	 FROM MM_HistorialEdicionCotizacion AS HEC
-	 INNER JOIN MM_EdicionCotizacion AS EC ON EC.IdEdicionCotizacion = HEC.IdEdicionCotizacion
-	 INNER JOIN dbo.MM_PeticionOferta AS PO ON PO.IdPeticionOferta = EC.IdPeticionOferta
-	 LEFT JOIN MM_PeticionOfertaDetalle AS POD ON POD.IdPeticionOferta=PO.IdPeticionOferta AND POD.IdPeticionOfertaDetalle=HEC.IdPeticionOfertaDetalle
-	 LEFT JOIN MM_Maestro AS M ON M.IdMaestro = POD.IdMaterial
-	 INNER JOIN dbo.S_Usuario AS U ON U.IdUsuario = HEC.IdUsuario
-	 WHERE PO.IdSubcontratista = @IdProveedor  AND EC.IdPeticionOferta=@IdPeticionOferta 
+	 FROM MM_HistorialEdicionCotizacion AS HEC  (NOLOCK)
+	 JOIN MM_EdicionCotizacion AS EC  (NOLOCK)
+		ON HEC.IdEdicionCotizacion =EC.IdEdicionCotizacion 
+	 JOIN dbo.MM_PeticionOferta AS PO  (NOLOCK)
+		ON EC.IdPeticionOferta = PO.IdPeticionOferta  
+		 AND EC.IdPeticionOferta=@IdPeticionOferta 
+	 JOIN dbo.S_Usuario AS U  (NOLOCK)
+		ON HEC.IdUsuario = U.IdUsuario 
+	 LEFT JOIN MM_PeticionOfertaDetalle AS POD  (NOLOCK)
+		ON PO.IdPeticionOferta  = POD.IdPeticionOferta
+		AND HEC.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
+	 LEFT JOIN MM_Maestro AS M  (NOLOCK)
+		ON POD.IdMaterial	 = M.IdMaestro 
+	 WHERE PO.IdSubcontratista = @IdProveedor  
 	 ORDER BY HEC.Fecha DESC
  
 END
