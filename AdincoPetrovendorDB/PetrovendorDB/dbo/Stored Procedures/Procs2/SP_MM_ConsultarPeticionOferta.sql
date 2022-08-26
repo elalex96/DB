@@ -1,53 +1,41 @@
-﻿DROP PROCEDURE IF EXISTS SP_MM_ConsultarPeticionOferta
+﻿USE [Petrovendor]
 GO
--- =============================================
--- Author:		<Pedro Acuña>
--- Create date: <17-09-2018>
--- Description:	<Se agrega el bit de activo>
--- =============================================
--- =============================================
--- Author:		Daniel AC
--- Create date: 14-04-17
--- Description:	Consultar detalle de la cotización del lado de procura
--- Author:		Daniel AC
--- Create date: 14-04-17
--- Description:	Agregue left join para obtener el registro de Edición de cotización, cambie comparación de horas por minutos en validación de vencimiento de cotización
--- =============================================
---**************************************************************
--- Modified:      <Jose Roman>									
--- Updated date: <09/01/2018>									
--- Description: <Se agrega la consulta de terminos y condiciones y verificable tambien se agregan parametros de contrato>			
---**************************************************************
---**************************************************************
--- Modified:      <Pedro Acuña>									
--- Updated date: <02/07/2018>									
--- Description: <se agrega al retorno el idsolicitudpedido (num de requisicion)>			
---**************************************************************
---**************************************************************
--- Modified:      <Alexander Gomez>									
--- Updated date: <26/07/2019>									
--- Description: <se modifico el envio de terminos y condiciones>			
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultarPeticionOferta'
+)
+DROP PROCEDURE SP_MM_ConsultarPeticionOferta;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarPeticionOferta]    Script Date: 25/08/2022 06:02:31 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO		
 --**************************************************************
 -- Modified:      <Luis David>									
 -- Updated date: <01/11/2021>									
 -- Description: <Reacomodo de tablas para optimización>			
 --**************************************************************
-CREATE PROCEDURE [dbo].[SP_MM_ConsultarPeticionOferta] @IdPeticionOferta INT, 
-                                                      @IdProveedorVenta INT,
-
-                                                      /*--------------------parametros contrato  --------------------*/
-
-                                                      @IdContrato       INT      = NULL, 
-                                                      @IdUsuario        INT      = NULL, 
-                                                      @FechaRegistro    DATETIME = NULL
-
-/*---------------------------------------------------------------*/
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_ConsultarPeticionOferta] 
+@IdPeticionOferta INT, 
+@IdProveedorVenta INT, 
+@IdContrato       INT      = NULL, 
+@IdUsuario        INT      = NULL, 
+@FechaRegistro    DATETIME = NULL
 
 AS
     BEGIN
         -- SET NOCOUNT ON added to prevent extra result sets from
         -- interfering with SELECT statements.
         SET NOCOUNT ON;
+
         SELECT 1 AS Oferta, 
                ISNULL(PO.IdEstatus, 1) AS EstatusPO, 
                PO.IdPeticionOferta, 
@@ -63,8 +51,8 @@ AS
                OPT.FechaRegistro, 
                OPT.Descripcion, 
                TP.Nombre, 
-               (P.RazonSocial + ' ' + P.RegimenCapital) AS RazonSocial, 
-               (P.Municipio + ' ' + P.Entidad) AS Ubicacion, 
+               CONCAT(ISNULL(P.RazonSocial,'') ,ISNULL(' '+ P.RegimenCapital,'')) AS RazonSocial, 
+               CONCAT(ISNULL(P.Municipio,''),ISNULL(' ' + P.Entidad,'')) AS Ubicacion, 
                ISNULL(OPT.FechaFinalizacion, GETDATE()) AS FechaVencimiento, 
                OPT.IdOperacion, 
                ISNULL(PO.Cotizado, 'false') AS PeticionCotizada, 
@@ -84,31 +72,30 @@ AS
                ISNULL(po.Verificable, 0), 
                ISNULL(SP.IdSolicitudPedido, 0), 
                ISNULL(PO.CotizacionRestringida, 0)
-        FROM MM_PeticionOferta AS PO
-             INNER JOIN MM_SolicitudPedido AS SP 
-			 ON SP.IdSolicitudPedido = PO.IdSolicitudPedido  
-			 AND PO.IdPeticionOferta = @IdPeticionOferta 
-			 AND PO.IdSubcontratista = @IdProveedorVenta
-             --INNER JOIN dbo.MM_TipoSolicitudPedido AS ts ON sp.IdTipoSolicitudPedido = ts.IdTipoSolicitudPedido
-             INNER JOIN TA_Operacion OPT 
-			 ON PO.IdSolicitudPedido = OPT.IdDocumento 
-			 AND OPT.IdTipoOperacion = 6
-             INNER JOIN TA_Estatus AS TE 
-			 ON OPT.IdEstatusOperacion = TE.IdEstatus
-             INNER JOIN MM_PrioridadSolicitudPedido AS PSP 
-			 ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
-             INNER JOIN TA_Prioridad AS TP 
-			 ON OPT.IdPrioridad = TP.IdPrioridad
-             INNER JOIN TA_Vencimiento AS V 
-			 ON OPT.IdVigencia = V.IdVencimiento
-             INNER JOIN S_Proveedor AS P 
-			 ON SP.IdProveedor = P.IdProveedor
-             LEFT JOIN TA_TerminosCondicionesOperacion AS TYC 
-			 ON OPT.IdOperacion = TYC.IdOperacion
-             LEFT JOIN TA_DocFianzaOperacion AS DFO 
-			 ON OPT.IdOperacion = DFO.IdOperacion
-             AND DFO.Activo = 1
-             LEFT JOIN dbo.MM_EdicionCotizacion AS EC 
-			 ON PO.IdPeticionOferta = EC.IdPeticionOferta
-        --#Donde OPT.IdTipoOperacion = 6 Es tipo de operación de Cotización 
+        FROM MM_PeticionOferta AS PO 
+             JOIN MM_SolicitudPedido AS SP  (NOLOCK)
+				ON PO.IdSolicitudPedido  = SP.IdSolicitudPedido  
+				AND PO.IdPeticionOferta = @IdPeticionOferta 
+				AND PO.IdSubcontratista = @IdProveedorVenta            
+             JOIN TA_Operacion OPT  (NOLOCK)
+				ON PO.IdSolicitudPedido = OPT.IdDocumento 
+				AND OPT.IdTipoOperacion = 6 --> CTE 6 Es tipo de operación de Cotización 
+             JOIN TA_Estatus AS TE (NOLOCK)
+				ON OPT.IdEstatusOperacion = TE.IdEstatus
+             JOIN MM_PrioridadSolicitudPedido AS PSP (NOLOCK)
+				ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
+             JOIN TA_Prioridad AS TP  (NOLOCK)
+				ON OPT.IdPrioridad = TP.IdPrioridad
+             JOIN TA_Vencimiento AS V  (NOLOCK)
+				ON OPT.IdVigencia = V.IdVencimiento
+             JOIN S_Proveedor AS P (NOLOCK)
+				ON SP.IdProveedor = P.IdProveedor
+             LEFT JOIN TA_TerminosCondicionesOperacion AS TYC  (NOLOCK)
+				ON OPT.IdOperacion = TYC.IdOperacion
+             LEFT JOIN TA_DocFianzaOperacion AS DFO  (NOLOCK)
+				ON OPT.IdOperacion = DFO.IdOperacion
+				AND DFO.Activo = 1
+             LEFT JOIN dbo.MM_EdicionCotizacion AS EC  (NOLOCK)
+				ON PO.IdPeticionOferta = EC.IdPeticionOferta
+        
     END;

@@ -1,21 +1,38 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'MM_SP_ConsultarDocAnexoPeticionOferta'
+)
+DROP PROCEDURE MM_SP_ConsultarDocAnexoPeticionOferta;
+GO
+/****** Object:  StoredProcedure [dbo].[MM_SP_ConsultarDocAnexoPeticionOferta]    Script Date: 25/08/2022 02:31:24 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
+-- =============================================
 -- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <05-04-2018>
 -- Description:	<Consulta de documentos anexos a la peticion oferta por IdPeticionOferta>
 -- =============================================
 
-CREATE procedure MM_SP_ConsultarDocAnexoPeticionOferta
-	@IdPeticionOferta INT,
-	/*--------------------parametros contrato  --------------------*/
+CREATE procedure [dbo].[MM_SP_ConsultarDocAnexoPeticionOferta]
+	@IdPeticionOferta INT,	
     @IdContrato    INT = null,
     @IdUsuario     INT = null,
     @FechaRegistro DATETIME = null
-	/*-------------------------------------------------------------*/
 AS
 BEGIN
 	SELECT IdDocAnexoPeticionOferta, NomDocumento
-	FROM dbo.MM_DocAnexosPeticionOferta
+	FROM dbo.MM_DocAnexosPeticionOferta  (NOLOCK)
 	WHERE IdPeticionOferta = @IdPeticionOferta
-		AND Eliminado = 0
+	AND Eliminado = 0
 END

@@ -1,22 +1,36 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultarMaterialesVentaxProveedor_MV1_5'
+)
+DROP PROCEDURE SP_MM_ConsultarMaterialesVentaxProveedor_MV1_5;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarMaterialesVentaxProveedor_MV1_5]    Script Date: 25/08/2022 02:22:20 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		DANIEL CRUZ
 -- Create date: 18/12/2017
 -- Description:	 Consutar los materiales de venta de un proveedor  
 -- =============================================
+-- =============================================
+-- Author:	Daniel AC
+-- Create date: <25/08/2022>
+-- Description:	Optimización de sp
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultarMaterialesVentaxProveedor_MV1_5] 
 	-- Add the parameters for the stored procedure here
-
 	@IdProveedor INT, 
 	@CotizacionRestringida BIT = NULL,
 	@IdPeticionOferta INT = NULL,
-   /*--------------------
-	 parametros contrato 
-   --------------------*/
 	@IdContrato    INT,
 	@IdUsuario     INT,
 	@FechaRegistro DATETIME = NULL 
-   /*--------------------
-   --------------------*/
 
 AS
 BEGIN
@@ -39,11 +53,11 @@ BEGIN
 			CASE WHEN U2.Unidad IS NOT NULL THEN ', '+ U2.Unidad END , 
 			CASE WHEN U3.Unidad IS NOT NULL THEN ', '+  U3.Unidad END
 			) AS UnidadesDisponibles
-		FROM MM_Material AS M
-			INNER JOIN dbo.PV_MM_MaterialUnidad AS U ON U.IdUnidad = M.IdUnidad
-			LEFT JOIN dbo.PV_MM_MaterialUnidad AS U1 ON U1.IdUnidad = M.IdUnidad_1
-			LEFT JOIN dbo.PV_MM_MaterialUnidad AS U2 ON U2.IdUnidad = M.IdUnidad_2
-			LEFT JOIN dbo.PV_MM_MaterialUnidad AS U3 ON U3.IdUnidad = M.IdUnidad_3
+		FROM MM_Material AS M (NOLOCK)
+			JOIN dbo.PV_MM_MaterialUnidad AS U (NOLOCK) ON U.IdUnidad = M.IdUnidad
+			LEFT JOIN dbo.PV_MM_MaterialUnidad (NOLOCK) AS U1 ON U1.IdUnidad = M.IdUnidad_1
+			LEFT JOIN dbo.PV_MM_MaterialUnidad (NOLOCK) AS U2 ON U2.IdUnidad = M.IdUnidad_2
+			LEFT JOIN dbo.PV_MM_MaterialUnidad (NOLOCK) AS U3 ON U3.IdUnidad = M.IdUnidad_3
 		WHERE M.IdProveedor = @IdProveedor 
 			AND ISNULL(M.IsEliminado,0) = 0 
 			AND M.Activo = 1 
@@ -58,11 +72,15 @@ BEGIN
 			M.DescripcionCorta, 
 			M.DescripcionLarga,  
 			UN.Unidad AS UnidadesDisponibles
-		FROM dbo.MM_PeticionOferta AS PO
-			LEFT JOIN dbo.MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
-			LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido
-			LEFT JOIN dbo.MM_Material AS M ON M.IdMaterial = SPD.IdMaterial
-			LEFT JOIN dbo.PV_MM_MaterialUnidad AS UN ON UN.IdUnidad = SPD.IdUnidad
+		FROM dbo.MM_PeticionOferta AS PO (NOLOCK)
+			JOIN dbo.MM_SolicitudPedido AS SP  (NOLOCK)  
+				ON PO.IdSolicitudPedido = SP.IdSolicitudPedido 
+			JOIN dbo.MM_SolicitudPedidoDetalle AS SPD  (NOLOCK) 
+				ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido 
+			JOIN dbo.MM_Material AS M  (NOLOCK) 
+				ON SPD.IdMaterial = M.IdMaterial 
+			LEFT JOIN dbo.PV_MM_MaterialUnidad AS UN  (NOLOCK) 
+				ON SPD.IdUnidad = UN.IdUnidad
 		WHERE PO.IdPeticionOferta = @IdPeticionOferta
 		GROUP BY M.IdMaterial,
                  M.DescripcionCorta,
