@@ -38,7 +38,7 @@ AS
 
         /*Omitir facturas en la hoja 21*/
 
-        CREATE TABLE #uuidNoReportar (UUID VARCHAR(500));
+        CREATE TABLE #uuidNoReportar (UUID VARCHAR(2000));
         IF (@Mes = '20190801')
             BEGIN
                 INSERT INTO #uuidNoReportar

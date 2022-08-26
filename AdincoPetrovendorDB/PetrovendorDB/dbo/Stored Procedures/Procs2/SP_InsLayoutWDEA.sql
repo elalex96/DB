@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 06/04/2022 11:24:40 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 23/08/2022 10:16:09 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -113,7 +113,10 @@ BEGIN
 	  ,[GL_Account]
 	  ,[Purchasing_Group]
 	  ,[Material_Group]
-	  ,[Created_On]
+	  ,CASE
+			WHEN [Created_On] = '0' OR [Created_On] = '' OR [Created_On] = '00/00/0000' THEN CONVERT(varchar,GETDATE(),103)
+			ELSE [Created_On]
+		END
 	  ,[Mecanismo_de_Contratacion]
       ,GETDATE()
 	  ,CAST(RowN AS INT)

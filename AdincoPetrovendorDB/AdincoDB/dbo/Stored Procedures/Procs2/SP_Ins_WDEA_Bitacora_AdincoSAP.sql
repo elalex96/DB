@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 26/07/2022 02:16:05 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 23/08/2022 10:16:34 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -368,10 +368,10 @@ begin
 			/*******************/
 
 			/*Release_State*/
-			insert into #tmpErrores	select Id, 'Q', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La columna Q - Fila '+cast(Id as varchar(10))+'. Release State contienevalores nulos',1			from #tmpData where Release_State is null order by Id
+			--insert into #tmpErrores	select Id, 'Q', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La columna Q - Fila '+cast(Id as varchar(10))+'. Release State contienevalores nulos',1			from #tmpData where Release_State is null order by Id
 			/*******************/
 
-			insert into #tmpErrores	select Id, 'Q', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La columna Q - Fila '+cast(Id as varchar(10))+'. Release State contiene valores diferentes a XX',1	from #tmpData where Release_State <> 'XX' order by Id
+			--insert into #tmpErrores	select Id, 'Q', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La columna Q - Fila '+cast(Id as varchar(10))+'. Release State contiene valores diferentes a XX',1	from #tmpData where Release_State <> 'XX' order by Id
 			/*******************/
 
 			/*Net_Order_Value*/
@@ -400,7 +400,7 @@ begin
 			
 			--Se insertan en la tabla de errores aquellos registros que no se encuentren en la tabla DEA_UsuarioSolicitanteSAP
 			insert into #tmpErrores
-			select		t1.ID,	'U', 'La orden de compra '+cast(isnull(t1.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El usuario requisitor de la celda U, Fila '+cast(isnull(t1.Id,'') as varchar(10))+' No existe en ADINCO.',1
+			select		t1.ID,	'U', 'La orden de compra '+cast(isnull(t1.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El usuario requisitor ' + t1.Requisitioner + ' (celda U, Fila '+cast(isnull(t1.Id,'') as varchar(10))+') No existe en ADINCO.',1
 			from		#tmpData					t1
 			left join	#tmpRequisitioner			t2
 			on			t1.ID						=	t2.ID
@@ -564,7 +564,8 @@ begin
 		and			t1.Short_Text					is not null
 		and			t1.Order_Unit					is not null
 		and			p.Activo						= 1
-		and			t1.Terminos_Pago				IS NOT NULL
+		and			t1.Terminos_Pago				IS NOT NULL;
+
 		INSERT INTO PendientesProcesarProcura_WSDEA
 		(
 			IdBitacora
