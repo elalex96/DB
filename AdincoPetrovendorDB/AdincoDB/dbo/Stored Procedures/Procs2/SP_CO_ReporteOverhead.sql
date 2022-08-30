@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_ReporteOverhead]  
+﻿CREATE PROCEDURE [dbo].[SP_CO_ReporteOverhead] 
     @ContratoId INT,
     @UsuarioId INT,
     @MesInicio DATE,
@@ -60,8 +60,7 @@ BEGIN
         RC2903 FLOAT,
         MetodoPago VARCHAR(50),
         Fecha DATETIME,
-        IdMoneda INT,
-        MesPresentacion DATE
+        IdMoneda INT
     );
     CREATE TABLE #MontosTotalTransferenciaPPD
     (
@@ -120,8 +119,7 @@ BEGIN
         RC2903,
         MetodoPago,
         Fecha,
-        IdMoneda,
-        MesPresentacion
+        IdMoneda
     )
     SELECT CO_Registro.IdRegistro,
            ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO') AS UUID,
@@ -170,8 +168,7 @@ BEGIN
                    'PPD'
            END AS MetodoPago,
            FI_Factura.Fecha,
-           FI_Factura.IdMoneda,
-           CO_Registro.MesPresentacion
+           FI_Factura.IdMoneda
     FROM CO_Registro (NOLOCK)
         JOIN FI_Factura (NOLOCK)
             ON CO_Registro.IdFactura = FI_Factura.IdFactura
@@ -189,7 +186,11 @@ BEGIN
                AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Factura.Fecha)
                AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Factura.Fecha)
     WHERE CO_Contrato.IdContrato = @ContratoId
-          AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
+          AND DATEFROMPARTS(
+                               YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                               MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                               1
+                           )
           BETWEEN @MesInicio AND @MesFin
           AND CO_Registro.IdEstado = 10004
           AND CO_Registro.CvTipoDocFacturacion = 1
@@ -235,8 +236,7 @@ BEGIN
                      'PPD'
              END,
              FI_Factura.Fecha,
-             FI_Factura.IdMoneda,
-             CO_Registro.MesPresentacion;
+             FI_Factura.IdMoneda
     /*Facturas Con Tipo de Cambio de Transferencia*/
     INSERT INTO #MontosTotalTransferenciaPPD
     (
@@ -362,7 +362,7 @@ BEGIN
              FI_Factura.TipoComprobante,
              CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2)),
              #Facturas.IdRegistro
-	--
+    --
     UNION
     --Se agrego para los casos donde el complemento es igual a la moneda de la transferencia (USD = USD) 
     --y la factura ppd es igual a la moneada del documento relacionado (MXN = MXN) 
@@ -571,7 +571,11 @@ BEGIN
                AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
                AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
     WHERE CO_Contrato.IdContrato = @ContratoId
-          AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
+          AND DATEFROMPARTS(
+                               YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                               MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                               1
+                           )
           BETWEEN @MesInicio AND @MesFin
           AND CO_Registro.IdEstado = 10004
           AND CO_Registro.CvTipoDocFacturacion IN ( 2, 3 )
@@ -610,8 +614,8 @@ BEGIN
         SELECT LTRIM(RTRIM(CO_Contratista.IDSIPAC)) AS [RF_00],
                LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)) AS [RI_00],
                CO_Contrato.NumeroContrato AS [RF01_01],
-               MONTH(CO_Registro.MesPresentacion) AS [RC29_00],
-               YEAR(CO_Registro.MesPresentacion) AS [RC29_01],
+               MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)) AS [RC29_00],
+               YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)) AS [RC29_01],
                SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10) AS [RC21_02],
                SUM(   CASE
                           WHEN ISNULL(#MontosTotalTransferenciaPUE.MontoRegistro, 0) <> 0
@@ -657,7 +661,11 @@ BEGIN
                 ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
                    AND CO_Contrato.IdContrato = CO_Servicio.IdContrato
         WHERE CO_Contrato.IdContrato = @ContratoId
-              AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
+              AND DATEFROMPARTS(
+                                   YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                                   MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                                   1
+                               )
               BETWEEN @MesInicio AND @MesFin
               AND CO_Registro.IdEstado = 10004
               AND CO_Registro.CvTipoDocFacturacion = 1
@@ -668,18 +676,18 @@ BEGIN
         GROUP BY LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
                  LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
                  CO_Contrato.NumeroContrato,
-                 MONTH(CO_Registro.MesPresentacion),
-                 YEAR(CO_Registro.MesPresentacion),
+                 MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                 YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
                  SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10),
                  ISNULL(CO_Presupuesto.IdPresupuesto, 0)
         -- 
-		UNION
+        UNION
         -- 
         SELECT LTRIM(RTRIM(CO_Contratista.IDSIPAC)) AS [RF_00],
                LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)) AS [RI_00],
                CO_Contrato.NumeroContrato AS [RF01_01],
-               MONTH(CO_Registro.MesPresentacion) AS [RC29_00],
-               YEAR(CO_Registro.MesPresentacion) AS [RC29_01],
+               MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)) AS [RC29_00],
+               YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)) AS [RC29_01],
                SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10) AS [RC21_02],
                SUM(   CASE
                           WHEN ISNULL(#MontosTotalTransferenciaPPD.MontoRegistro, 0) <> 0
@@ -731,7 +739,11 @@ BEGIN
                 ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
                    AND CO_Contrato.IdContrato = CO_Servicio.IdContrato
         WHERE CO_Contrato.IdContrato = @ContratoId
-              AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
+              AND DATEFROMPARTS(
+                                   YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                                   MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                                   1
+                               )
               BETWEEN @MesInicio AND @MesFin
               AND CO_Registro.IdEstado = 10004
               AND CO_Registro.CvTipoDocFacturacion = 1
@@ -746,18 +758,18 @@ BEGIN
         GROUP BY LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
                  LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
                  CO_Contrato.NumeroContrato,
-                 MONTH(CO_Registro.MesPresentacion),
-                 YEAR(CO_Registro.MesPresentacion),
+                 MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                 YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
                  SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10),
                  ISNULL(CO_Presupuesto.IdPresupuesto, 0)
         -- 
-		UNION
+        UNION
         -- 
         SELECT LTRIM(RTRIM(CO_Contratista.IDSIPAC)) AS [RF_00],
                LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)) AS [RI_00],
                CO_Contrato.NumeroContrato AS [RF01_01],
-               MONTH(CO_Registro.MesPresentacion) AS [RC29_00],
-               YEAR(CO_Registro.MesPresentacion) AS [RC29_01],
+               MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)) AS [RC29_00],
+               YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)) AS [RC29_01],
                SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10) AS [RC29_02],
                SUM(   CASE
                           WHEN ISNULL(#MontosConvertidosPedimentosCom.MontoRegistro, 0) <> 0 THEN
@@ -803,7 +815,11 @@ BEGIN
                 ON #MontosConvertidosPedimentosCom.IdRegistro = CO_Registro.IdRegistro
                    AND #MontosConvertidosPedimentosCom.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
         WHERE CO_Contrato.IdContrato = @ContratoId
-              AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
+              AND DATEFROMPARTS(
+                                   YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                                   MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                                   1
+                               )
               BETWEEN @MesInicio AND @MesFin
               AND CO_Registro.IdEstado = 10004
               AND CO_Registro.CvTipoDocFacturacion IN ( 2, 3 )
@@ -814,11 +830,12 @@ BEGIN
         GROUP BY LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
                  LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
                  CO_Contrato.NumeroContrato,
-                 MONTH(CO_Registro.MesPresentacion),
-                 YEAR(CO_Registro.MesPresentacion),
+                 MONTH(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
+                 YEAR(ISNULL(CO_Registro.FinEjecucion, CO_Registro.InicioEjecucion)),
                  SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10),
-                 ISNULL(CO_Presupuesto.IdPresupuesto, 0)
-				 SELECT [RF_00],
+                 ISNULL(CO_Presupuesto.IdPresupuesto, 0)        
+    END;
+	SELECT [RF_00],
                [RI_00],
                [RF01_01],
                [RC29_00],
@@ -836,6 +853,4 @@ BEGIN
         ORDER BY [RC29_01] ASC,
                  [RC29_00] ASC,
                  [RC29_02] ASC
-    END;
-	
 END;
