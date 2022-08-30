@@ -10653,6 +10653,9 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_NuevoPedidoAutomatico_SAP.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_ProcesamientoSAP_Procura.sql" />
     <Build Include="dbo\Tables\WDEA_SAP_TerminosCondiciones.sql" />
+    <Build Include="dbo\Views\DEA_ReporteTransacciones.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\APP_GenerarReporteTransacciones.sql" />
+    <Build Include="dbo\Tables\APP_TransaccionesProcura.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
