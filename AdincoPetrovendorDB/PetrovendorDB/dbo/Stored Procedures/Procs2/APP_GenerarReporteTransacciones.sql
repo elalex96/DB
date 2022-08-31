@@ -20,7 +20,7 @@ SET NOCOUNT ON;
 BEGIN TRY
 
 CREATE TABLE #Contratos(
-ContratoId INT
+ContratoId INT  PRIMARY KEY
 )
 CREATE NONCLUSTERED INDEX ix_tempContratos ON #Contratos (ContratoId);
 
@@ -35,13 +35,15 @@ DetalleAprobador1 VARCHAR(200),
 DetalleAprobador2 VARCHAR(200),
 DetalleComprador VARCHAR(200),
 CentroCosto VARCHAR(300))
-CREATE NONCLUSTERED INDEX ix_tempSolicitudPedidos ON #SolicitudPedidos (IdSolicitudPedido,IdOperacion);
+CREATE NONCLUSTERED INDEX ix_tempSolicitudPedidosIdSolicitudPedido ON #SolicitudPedidos (IdSolicitudPedido);
+CREATE NONCLUSTERED INDEX ix_tempSolicitudPedidosIdOperacion ON #SolicitudPedidos (IdOperacion);
+
 
 CREATE TABLE #Cotizaciones(
 SolicitudPedidoId INT, 
 EnvioCotizacion VARCHAR(200),
 FinalizacionCotizacion VARCHAR(200))
-CREATE NONCLUSTERED INDEX ix_tempCotizaciones ON #Cotizaciones (SolicitudPedidoId);
+CREATE NONCLUSTERED INDEX ix_tempCotizacionesSolicitudPedidoId ON #Cotizaciones (SolicitudPedidoId);
 
 CREATE TABLE #Pedidos(
 IdPedido INT, 
@@ -58,7 +60,10 @@ FechaRegistro DATETIME,
 DetalleAprobador1 VARCHAR(200),
 DetalleAprobador2 VARCHAR(200),
 Proveedor VARCHAR(150))
-CREATE NONCLUSTERED INDEX ix_tempPedidos ON #Pedidos (IdSolicitudPedido,IdPedido,IdOperacion);
+CREATE NONCLUSTERED INDEX ix_tempPedidosIdSolicitudPedido ON #Pedidos (IdSolicitudPedido);
+CREATE NONCLUSTERED INDEX ix_tempPedidosIdPedido ON #Pedidos (IdPedido);
+CREATE NONCLUSTERED INDEX ix_tempPedidosIdOperacion ON #Pedidos (IdOperacion);
+
 
 CREATE TABLE #AceptacionPedidos(
 PedidoId INT, 
@@ -67,7 +72,8 @@ PedirCarta BIT,
 FechaPedirCarta DATETIME,
 FechaRegistro DATETIME
 )
-CREATE NONCLUSTERED INDEX ix_tempAceptacionPedidos ON #AceptacionPedidos(PedidoId,AceptacionPedidoId);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionPedidosPedidoId ON #AceptacionPedidos(PedidoId);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionPedidosAceptacionPedidoId ON #AceptacionPedidos(AceptacionPedidoId);
 
 CREATE TABLE #SAS(
 SolicitudAceptacionPedidoId INT, 
@@ -81,7 +87,10 @@ EstatusSolitante VARCHAR(100),
 AprobadorOBS VARCHAR(150),
 EstatusOBS VARCHAR(100),
 )
-CREATE NONCLUSTERED INDEX ix_tempSAS ON #SAS (SolicitudAceptacionPedidoId,PedidoId,IdOperacion);
+CREATE NONCLUSTERED INDEX ix_tempSAS ON #SAS (SolicitudAceptacionPedidoId);
+CREATE NONCLUSTERED INDEX ix_tempSASPedidoId ON #SAS (PedidoId);
+CREATE NONCLUSTERED INDEX ix_tempSASIdOperacion ON #SAS (IdOperacion);
+
 
 CREATE TABLE #AceptacionCartaCN (
 IdAceptacionCartaCN INT, 
@@ -93,7 +102,10 @@ IdUsuarioEvaluador INT,
 FechaEvaluacion DATETIME,
 Estatus  VARCHAR(100),
 UsuarioEvaluador VARCHAR(150))
-CREATE NONCLUSTERED INDEX ix_tempAceptacionCartaCN ON #AceptacionCartaCN (IdAceptacionCartaCN,IdAceptacionPedido,IdEstatus);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionCartaCNIdAceptacionCartaCN ON #AceptacionCartaCN (IdAceptacionCartaCN);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionCartaCNIdAceptacionPedido ON #AceptacionCartaCN (IdAceptacionPedido);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionCartaCNIdEstatus ON #AceptacionCartaCN (IdEstatus);
+
 
 CREATE TABLE #AceptacionFactura(
 AceptacionPedidoId INT, 
@@ -107,7 +119,10 @@ DetalleAprobador1 VARCHAR(150),
 DetalleAprobador2 VARCHAR(150),
 EstatusAprobador1 VARCHAR(150),
 EstatusAprobador2 VARCHAR(150))
-CREATE NONCLUSTERED INDEX ix_tempAceptacionFactura ON #AceptacionFactura (AceptacionPedidoId,AceptacionFacturaId,IdOperacion,EstatusId);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionFacturaAceptacionPedidoId ON #AceptacionFactura (AceptacionPedidoId);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionFacturaAceptacionFacturaId ON #AceptacionFactura (AceptacionFacturaId);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionFacturaIdOperacion ON #AceptacionFactura (IdOperacion);
+CREATE NONCLUSTERED INDEX ix_tempAceptacionFacturaEstatusId ON #AceptacionFactura (EstatusId);
 
 -- CONTRATOS WDEA
 INSERT INTO #Contratos(ContratoId)
@@ -115,7 +130,7 @@ VALUES (10038), --> CNH-A4.OGARRIO/2018
     (10044), --> CNH-R03-L01-G-TMV-02/2018
     (10045), --> CNH-R03-L01-G-TMV-03/2018
     (10046), --> CNH-R03-L01-AS-CS-14/2018
-    (10144) --> CNH-DEMMA
+    (10145) -->  CNH-WD ADMIN
 
 -- BUSCAR SAS
 INSERT INTO #SAS(
@@ -137,15 +152,13 @@ JOIN Adinco..CO_Contrato CO  (NOLOCK)
 	ON C.ContratoId = CO.IdContrato 
 JOIN MM_Pedido P  (NOLOCK)
 	ON C.ContratoId =  P.IdContrato
-JOIN S_Proveedor PC  (NOLOCK)
-	ON P.IdProveedorCompras = PC.IdProveedor
-	AND PC.RFC='DDE151002QY9'  --> CTE Wintershall Dea Mexico S. de R.L. de C.V.
-JOIN MM_SolicitudPedido AS SP (NOLOCK)
-	ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
-	AND  CAST(SP.FechaAlta AS DATE) >=CAST('2022-04-26 00:00:00.000' AS DATE) --OBTENER LOS REGISTROS A PARTIR DE MARZO 2022  CAST('2022-03-01 00:00:00.000' AS DATE) 
 JOIN MM_SolicitudAceptacionPedido SAS (NOLOCK)
 	ON  P.IdPedido  = SAS.IdPedido  
 	AND SAS.Activo =  1 --> CTE SAS ACTIVA
+	AND CAST(SAS.CreadoEl AS DATE) >= CAST('2022-04-26 00:00:00.000' AS DATE)
+JOIN S_Proveedor PC  (NOLOCK)
+	ON P.IdProveedorCompras = PC.IdProveedor
+	AND PC.RFC='DDE151002QY9'  --> CTE Wintershall Dea Mexico S. de R.L. de C.V.
 JOIN TA_Operacion TAO (NOLOCK)
 	ON SAS.IdSolicitudAceptacionPedido = TAO.IdDocumento
 	AND TAO.IdTipoOperacion = 20 --> CTE APROBACIÓN SAS
@@ -441,7 +454,6 @@ JOIN CC_CentroCosto AS CC  (NOLOCK)
 	ON SPDLP.IdCentroCosto = CC.IdCentroCosto
 
 TRUNCATE TABLE APP_TransaccionesProcura
-
 INSERT INTO APP_TransaccionesProcura
            ([Bloque]
            ,[IdSolicitudPedido]
@@ -566,8 +578,6 @@ SELECT
 	LEFT JOIN #AceptacionFactura AS AF (NOLOCK)
 		ON AP.AceptacionPedidoId = AF.AceptacionPedidoId		
 
-		
-	
 END TRY
 BEGIN CATCH	
 	SELECT 'ERROR  ['+ ERROR_MESSAGE() + '] LINEA ['+ CAST(ERROR_LINE() AS VARCHAR)+']';	
