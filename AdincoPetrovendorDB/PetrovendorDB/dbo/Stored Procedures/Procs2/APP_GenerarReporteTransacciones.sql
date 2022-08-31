@@ -152,13 +152,13 @@ JOIN Adinco..CO_Contrato CO  (NOLOCK)
 	ON C.ContratoId = CO.IdContrato 
 JOIN MM_Pedido P  (NOLOCK)
 	ON C.ContratoId =  P.IdContrato
+JOIN S_Proveedor PC  (NOLOCK)
+	ON P.IdProveedorCompras = PC.IdProveedor
+	AND PC.RFC='DDE151002QY9'  --> CTE Wintershall Dea Mexico S. de R.L. de C.V.
 JOIN MM_SolicitudAceptacionPedido SAS (NOLOCK)
 	ON  P.IdPedido  = SAS.IdPedido  
 	AND SAS.Activo =  1 --> CTE SAS ACTIVA
 	AND CAST(SAS.CreadoEl AS DATE) >= CAST('2022-04-26 00:00:00.000' AS DATE)
-JOIN S_Proveedor PC  (NOLOCK)
-	ON P.IdProveedorCompras = PC.IdProveedor
-	AND PC.RFC='DDE151002QY9'  --> CTE Wintershall Dea Mexico S. de R.L. de C.V.
 JOIN TA_Operacion TAO (NOLOCK)
 	ON SAS.IdSolicitudAceptacionPedido = TAO.IdDocumento
 	AND TAO.IdTipoOperacion = 20 --> CTE APROBACIÓN SAS
