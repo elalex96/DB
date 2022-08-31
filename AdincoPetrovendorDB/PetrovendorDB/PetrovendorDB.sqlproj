@@ -10656,6 +10656,7 @@
     <Build Include="dbo\Views\DEA_ReporteTransacciones.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\APP_GenerarReporteTransacciones.sql" />
     <Build Include="dbo\Tables\APP_TransaccionesProcura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AX_ConsultaBitacorasSoporte.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
