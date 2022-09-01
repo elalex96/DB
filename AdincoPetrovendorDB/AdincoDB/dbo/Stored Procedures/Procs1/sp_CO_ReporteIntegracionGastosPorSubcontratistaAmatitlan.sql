@@ -1,9 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan]      
-    @Anio INT = 0,
-    @Mes INT = 0,
-    @IdPresupuesto INT = 0
-AS
-BEGIN
+﻿USE [Adinco]
+GO
     -- =============================================      
     -- Author:   Miguel      
     -- Create date: Domingo 1 Diciembre 2016 19:49 p.m.      
@@ -15,9 +11,27 @@ BEGIN
     -- =============================================  
     -- Author: Neri 20220727 Issue 2146 
     -- Se ajusta columna R.Comentarios a R.Comentarios AS DescripcionPartidaServicio para que se pinte correctamente en el reporte.
-    -- =============================================      
+    -- =============================================  
+	-- Author:  Reyna Olvera    
+	-- Create date: 1 Septiembre 2022    
+	-- Description: Se agrega ajuste, cuando el gasto se encuentre relacionado a una nota de credito, se colocará como negativo
+	-- ============================================= 
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan]      
+    @Anio INT = 0,
+    @Mes INT = 0,
+    @IdPresupuesto INT = 0
+AS
+BEGIN
+    
     SET LANGUAGE spanish;
-    SELECT UPPER(CONCAT(DATENAME(MONTH, R.MesPresentacion), ' ', YEAR(R.MesPresentacion))) AS FechaReporte,
+     SELECT UPPER(CONCAT(DATENAME(MONTH, R.MesPresentacion), ' ', YEAR(R.MesPresentacion))) AS FechaReporte,
            CASE
                WHEN R.CvTipoDocFacturacion = 1 THEN
                    ISNULL(F.Serie, '') + ' ' + ISNULL(F.Folio, '')
@@ -119,7 +133,21 @@ BEGIN
                           PCD.PrecioUnitario
                   END
               ) AS ImporteFA,
-           ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) AS ImporteFaCMarckup,
+			   CASE
+                      WHEN R.CvTipoDocFacturacion = 1 
+					  THEN
+						(CASE
+										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
+										THEN 
+											ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0))*-1),0)
+										ELSE
+											ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+						END)
+					
+				ELSE
+                       ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+				END
+		   AS ImporteFaCMarckup,
            CASE
                WHEN F.IdMoneda = 1 THEN
                    'MXN'
@@ -127,9 +155,19 @@ BEGIN
                    'USD'
            END AS Moneda,
            SUM(   CASE
-                      WHEN R.CvTipoDocFacturacion = 1
-                           AND ISNULL(R.MontoRegistro, 0) <> 0 THEN
-                          ISNULL(R.MontoRegistro, 0) / ISNULL(RM.TipoCambio, TCM.TipoCambio)
+                      WHEN R.CvTipoDocFacturacion = 1 AND ISNULL(R.MontoRegistro, 0) <> 0 
+					  THEN
+                          
+						  (
+							CASE
+										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
+										THEN 
+											ISNULL((ABS(ISNULL(RM.MontoGasto, 0))*-1),0) / ISNULL(RM.TipoCambio, TCM.TipoCambio)
+										ELSE
+											ISNULL(R.MontoRegistro, 0) / ISNULL(RM.TipoCambio, TCM.TipoCambio)
+							END
+						)
+
                       WHEN R.CvTipoDocFacturacion IN ( 2, 3 )
                            AND ISNULL(R.MontoRegistro, 0) <> 0 THEN
                           ISNULL(R.MontoRegistro, 0) / ISNULL(RM.TipoCambio, TCMPC.TipoCambio)
@@ -137,16 +175,45 @@ BEGIN
                           0
                   END
               ) AS ImprteUSDMxnUsd,
-           ISNULL(rm.MontoEquivalente, 0) AS MarkUp,
-           ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0) / (CASE
-                                                                 WHEN R.CvTipoDocFacturacion = 1 THEN
-                                                                     TCM.TipoCambio
-                                                                 WHEN R.CvTipoDocFacturacion IN ( 2, 3 ) THEN
-                                                                     TCMPC.TipoCambio
-                                                                 ELSE
-                                                                     0
-                                                             END
-                                                            ) AS ImporteEstimadoUSD,
+		    CASE
+                      WHEN R.CvTipoDocFacturacion = 1 
+					  THEN
+						(CASE
+										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
+										THEN 
+											ISNULL((ABS(ISNULL(rm.MontoEquivalente, 0))*-1),0)
+										ELSE
+											 ISNULL(rm.MontoEquivalente, 0)
+						END)
+					
+				ELSE
+                        ISNULL(rm.MontoEquivalente, 0)
+				END AS MarkUp,
+		   (
+				CASE
+						WHEN R.CvTipoDocFacturacion = 1 
+						THEN
+						(CASE
+										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
+										THEN 
+											ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0))*-1),0)
+										ELSE
+											ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+						END)
+					
+				ELSE
+						ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+				END
+			)
+		   / (CASE
+					WHEN R.CvTipoDocFacturacion = 1 THEN
+						TCM.TipoCambio
+					WHEN R.CvTipoDocFacturacion IN ( 2, 3 ) THEN
+						TCMPC.TipoCambio
+					ELSE
+						0
+				END
+			) AS ImporteEstimadoUSD,
            R.MesCertificadoCIEP,
            Rub.NombreRubro AS SubActividad,
            '' AS AplicacionEspecifica,
@@ -161,9 +228,7 @@ BEGIN
                    'OVERHEAD'
            END AS CAPEXOPEX,
            'Facturado relacionada' AS Estatus,
-           R.IdRegistro --  ,
-    -- RRF.MesPresentacion,
-    --  R.MesPresentacion
+           R.IdRegistro 
     FROM dbo.CO_Registro AS R
         JOIN dbo.CO_LineaPresupuestoMes AS C
             ON R.IdPrograma = C.IdLineaPresupuestoMes
@@ -224,8 +289,7 @@ BEGIN
                      PC.FolioComprobante
                  ELSE
                      ''
-             END,
-             --'' AS Receptor,       
+             END,      
              R.Comentarios,
              CASE
                  WHEN R.CvTipoDocFacturacion = 1 THEN
@@ -243,8 +307,34 @@ BEGIN
                  ELSE
                      ''
              END,
-             ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0),
-             ISNULL(rm.MontoEquivalente, 0),
+			    CASE
+                      WHEN R.CvTipoDocFacturacion = 1 
+					  THEN
+						(CASE
+										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
+										THEN 
+											ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0))*-1),0)
+										ELSE
+											ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+						END)
+					
+				ELSE
+                       ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+				END,
+			 CASE
+                      WHEN R.CvTipoDocFacturacion = 1 
+					  THEN
+						(CASE
+										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
+										THEN 
+											ISNULL((ABS(ISNULL(rm.MontoEquivalente, 0))*-1),0)
+										ELSE
+											 ISNULL(rm.MontoEquivalente, 0)
+						END)
+					
+				ELSE
+                        ISNULL(rm.MontoEquivalente, 0)
+				END,
              CASE
                  WHEN R.CvTipoDocFacturacion = 1 THEN
                      TCM.TipoCambio
@@ -343,3 +433,6 @@ BEGIN
              Actividad,
              Proveedor;
 END;
+GO
+
+
