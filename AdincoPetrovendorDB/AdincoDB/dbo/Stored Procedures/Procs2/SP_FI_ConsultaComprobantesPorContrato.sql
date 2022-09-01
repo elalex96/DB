@@ -15,6 +15,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
+    DECLARE @NombreAreaContractual VARCHAR(100) = '';
     --
     CREATE TABLE #TablaComprobantesPorContrato
     (
@@ -33,7 +34,8 @@ BEGIN
         IdUnidadMedida INT,
         IdSubcontratistaExportador INT,
         IdMoneda INT,
-        IdFormaPago INT
+        IdFormaPago INT,
+        EsDePetrovendor BIT
     )
     CREATE TABLE #TablaComprobantesPorContratoDetalles
     (
@@ -42,6 +44,14 @@ BEGIN
         Cantidad NUMERIC(15, 0),
         ImporteTotal MONEY
     )
+
+    SELECt TOP 1
+        @NombreAreaContractual = ISNULL(CO_AreaContractual.NombreAreaContractual, '')
+    FROM CO_Contrato
+        JOIN CO_AreaContractual
+            ON CO_Contrato.IdContrato = @IdContrato
+               AND CO_Contrato.IdAreaContractual = CO_AreaContractual.IdAreaContractual
+
     INSERT INTO #TablaComprobantesPorContrato
     (
         IdComprobante,
@@ -59,7 +69,8 @@ BEGIN
         IdUnidadMedida,
         IdSubcontratistaExportador,
         IdMoneda,
-        IdFormaPago
+        IdFormaPago,
+        EsDePetrovendor
     )
     SELECT FI_PedimentoComprobante.IdPedimentoComprobante AS IdComprobante,
            FI_PedimentoComprobante.FolioComprobante,
@@ -76,7 +87,13 @@ BEGIN
            NULL,
            FI_PedimentoComprobante.IdSubcontratistaExportador,
            FI_PedimentoComprobante.IdMoneda,
-           FI_PedimentoComprobante.IdFormaPago
+           FI_PedimentoComprobante.IdFormaPago,
+           EsDePetrovendor = CAST(CASE
+                                      WHEN FI_PedimentoComprobante.IdPedimentoComprobantePetrovendor IS NULL THEN
+                                          0
+                                      ELSE
+                                          1
+                                  END AS BIT)
     FROM FI_PedimentoComprobante (NOLOCK)
     WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = 3
           AND FI_PedimentoComprobante.IdContrato = @IdContrato
@@ -85,7 +102,8 @@ BEGIN
              FI_PedimentoComprobante.FechaPago,
              FI_PedimentoComprobante.IdSubcontratistaExportador,
              FI_PedimentoComprobante.IdMoneda,
-             FI_PedimentoComprobante.IdFormaPago
+             FI_PedimentoComprobante.IdFormaPago,
+             FI_PedimentoComprobante.IdPedimentoComprobantePetrovendor
     ORDER BY IdComprobante DESC;
 
     INSERT INTO #TablaComprobantesPorContratoDetalles
@@ -188,7 +206,13 @@ BEGIN
            PrecioUnitario,
            Cantidad,
            ImporteTotal,
-           FormaDePago
+           FormaDePago,
+           CAST(CASE
+                    WHEN @NombreAreaContractual = 'Amatitlán' THEN
+                        ISNULL(EsDePetrovendor, 0)
+                    ELSE
+                        1
+                END AS BIT) AS EsDePetrovendor
     FROM #TablaComprobantesPorContrato
     ORDER BY IdComprobante DESC
 END;

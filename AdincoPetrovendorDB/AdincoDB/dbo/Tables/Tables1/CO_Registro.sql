@@ -32,12 +32,19 @@
     [ModificadoEn]                    DATE            NULL,
     [IdCatManoObra]                   INT             NULL,
     RegistroConAjuste BIT NULL,
-    AsociadoIncrementoPMT BIT NULL
+    AsociadoIncrementoPMT BIT NULL,
+    Ajuste VARCHAR(2000) NULL, 
+    DescripcionPartidaServicio VARCHAR(2000) NULL,
+    OrdenServicioOrdenCompra VARCHAR(2000) NULL,
+    Partida VARCHAR(2000) NULL,
+    UnidadMedidaId INT NULL,
+    PrecioUnitario DECIMAL(18,4) NULL,
+    CantidadReal FLOAT NULL,
     CONSTRAINT [PK_Registros] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Registro_CO_CatalogoCuentaSH] FOREIGN KEY ([IdCatalogoCuentasSH]) REFERENCES [dbo].[CO_CatalogoCuentaSH] ([IdCatalogoCuentasSH]),
     CONSTRAINT [FK_CO_Registro_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante]),
     CONSTRAINT [FK_Registros_Facturas] FOREIGN KEY ([IdFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura]),
     CONSTRAINT [FK_Registros_Instalaciones] FOREIGN KEY ([IdInstalacion]) REFERENCES [dbo].[CO_Instalacion] ([IdInstalacion]),
-    CONSTRAINT [FK_Registros_Programas] FOREIGN KEY ([IdPrograma]) REFERENCES [dbo].[CO_LineaPresupuestoMes] ([IdLineaPresupuestoMes])
+    CONSTRAINT [FK_Registros_Programas] FOREIGN KEY ([IdPrograma]) REFERENCES [dbo].[CO_LineaPresupuestoMes] ([IdLineaPresupuestoMes]),
+    CONSTRAINT [FK_Registros_UnidadMedida] FOREIGN KEY (UnidadMedidaId) REFERENCES PV_MM_MaterialUnidad(IdUnidad)
 );
-

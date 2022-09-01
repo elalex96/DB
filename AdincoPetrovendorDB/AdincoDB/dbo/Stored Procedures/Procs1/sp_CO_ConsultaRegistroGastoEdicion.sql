@@ -1,6 +1,4 @@
-﻿USE ADINCO;
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      Miguel Gomez
 -- Create date: 2017-01-01
 -- Description: Consulta Registro de Gasto para Edicion
@@ -20,6 +18,11 @@ GO
 -- Author Alter: Reyna Olvera
 -- Create date: 17/08/2022
 -- Description: Se agrega campo RegistroConAjuste y AsociadoIncrementoPMT
+-- =============================================
+-- Modificado Por:			Neri del Angel
+-- Fecha de Modificación:	30 de Agosto del 2022
+-- Descripción:				Se agregan los campos de Ajuste,DescripcionPartidaServicio,OrdenServicioOrdenCompra,Partida,
+--							UnidadMedidaId,PrecioUnitario,CantidadReal
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistroGastoEdicion]
     @IdRegistro INT = 0,
@@ -64,8 +67,16 @@ BEGIN
         PorcentajeMarkup FLOAT,
         FechaFactura DATETIME,
         IdContrato INT,
-		RegistroConAjuste BIT  NULL,  
-		AsociadoIncrementoPMT BIT  NULL
+        RegistroConAjuste BIT NULL,
+        AsociadoIncrementoPMT BIT NULL,
+        Ajuste VARCHAR(2000) NULL,
+        DescripcionPartidaServicio VARCHAR(2000) NULL,
+        OrdenServicioOrdenCompra VARCHAR(2000) NULL,
+        Partida VARCHAR(2000) NULL,
+        UnidadMedidaId INT,
+        PrecioUnitario DECIMAL(18, 4) NULL,
+        CantidadReal FLOAT NULL,
+        UnidadMedida VARCHAR(100)
     )
 
     INSERT INTO #TableRegistroGastoEdicion
@@ -102,8 +113,15 @@ BEGIN
         PorcentajeMarkup,
         FechaFactura,
         IdContrato,
-		RegistroConAjuste,  
-		AsociadoIncrementoPMT
+        RegistroConAjuste,
+        AsociadoIncrementoPMT,
+        Ajuste,
+        DescripcionPartidaServicio,
+        OrdenServicioOrdenCompra,
+        Partida,
+        UnidadMedidaId,
+        PrecioUnitario,
+        CantidadReal
     )
     SELECT CO_Registro.IdRegistro,
            CO_Registro.IdPrograma,
@@ -137,8 +155,15 @@ BEGIN
            NULL,
            NULL,
            CO_PeriodoContrato.IdContrato,
-		   ISNULL(CO_Registro.RegistroConAjuste,0),  
-		   ISNULL(CO_Registro.AsociadoIncrementoPMT,0)
+           ISNULL(CO_Registro.RegistroConAjuste, 0),
+           ISNULL(CO_Registro.AsociadoIncrementoPMT, 0),
+           CO_Registro.Ajuste,
+           CO_Registro.DescripcionPartidaServicio,
+           CO_Registro.OrdenServicioOrdenCompra,
+           CO_Registro.Partida,
+           CO_Registro.UnidadMedidaId,
+           CO_Registro.PrecioUnitario,
+           CO_Registro.CantidadReal
     FROM CO_Registro (NOLOCK)
         INNER JOIN CO_LineaPresupuestoMes (NOLOCK)
             ON CO_Registro.IdRegistro = @IdRegistro
@@ -198,6 +223,17 @@ BEGIN
         JOIN CO_RegistroMarkup
             ON #TableRegistroGastoEdicion.IdRegistro = CO_RegistroMarkup.GastoId;
 
+
+    UPDATE #TableRegistroGastoEdicion
+    SET UnidadMedida = '';
+
+    UPDATE #TableRegistroGastoEdicion
+    SET UnidadMedida = ISNULL(PV_MM_MaterialUnidad.Unidad, '')
+    FROM #TableRegistroGastoEdicion
+        JOIN PV_MM_MaterialUnidad (NOLOCK)
+            ON #TableRegistroGastoEdicion.UnidadMedidaId = PV_MM_MaterialUnidad.IdUnidad
+
+
     SELECT IdRegistro,
            IdPrograma,
            IdFactura,
@@ -222,16 +258,22 @@ BEGIN
            IdLineaPresupuestoMes,
            IdGastoRubro,
            IdCatManoObra,
-           ISNULL(SoloLectura, 0),
+           ISNULL(SoloLectura, 0) AS SoloLectura,
            PCN,
            CAA,
            InstalacionName,
            CapexOpexEdicion,
            PorcentajeMarkup,
            FechaFactura,
-		   RegistroConAjuste,  
-		   AsociadoIncrementoPMT
+           RegistroConAjuste,
+           AsociadoIncrementoPMT,
+           Ajuste,
+           DescripcionPartidaServicio,
+           OrdenServicioOrdenCompra,
+           Partida,
+           UnidadMedidaId,
+           PrecioUnitario,
+           CantidadReal,
+           UnidadMedida
     FROM #TableRegistroGastoEdicion
 END;
-
-
