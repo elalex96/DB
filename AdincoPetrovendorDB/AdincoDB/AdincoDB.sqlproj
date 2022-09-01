@@ -13342,6 +13342,10 @@
     </Build>
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_ReporteOverhead.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_EsDocumentoFacturacionDePetrovendor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\sp_FI_ObtenFacturaPorId.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
