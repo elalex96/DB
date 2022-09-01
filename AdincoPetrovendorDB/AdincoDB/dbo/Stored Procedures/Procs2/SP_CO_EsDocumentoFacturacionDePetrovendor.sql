@@ -9,6 +9,7 @@ BEGIN
     SET LANGUAGE spanish;
 
     DECLARE @EsDePetrovendor BIT = 0;
+    DECLARE @UUID VARCHAR(100) = '';
 
     IF (@EsFactura = 1)
     BEGIN
@@ -16,7 +17,16 @@ BEGIN
         FROM FI_FacturaAdincoPetrovendor
         WHERE FI_FacturaAdincoPetrovendor.Activo = 1
               AND FI_FacturaAdincoPetrovendor.IdFacturaAdinco = @Id
-
+        IF (@EsDePetrovendor = 0)
+        BEGIN
+            SELECT @UUID = UUID
+            FROM FI_Factura
+            WHERE IdFactura = @Id
+            IF EXISTS (SELECT UUID FROM Petrovendor.dbo.FI_Factura WHERE UUID = @UUID)
+            BEGIN
+                SET @EsDePetrovendor = 1;
+            END
+        END
     END;
     ELSE
     BEGIN
@@ -25,6 +35,5 @@ BEGIN
         WHERE FI_PedimentoComprobante.IdPedimentoComprobantePetrovendor IS NOT NULL
               AND FI_PedimentoComprobante.IdPedimentoComprobante = @Id
     END;
-
     SELECT @EsDePetrovendor
 END;

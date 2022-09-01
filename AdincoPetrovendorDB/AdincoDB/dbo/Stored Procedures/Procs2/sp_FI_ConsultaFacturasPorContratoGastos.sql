@@ -461,6 +461,22 @@ BEGIN
     FROM #Facturas
         JOIN FI_FacturaAdincoPetrovendor
             ON #Facturas.IdFactura = FI_FacturaAdincoPetrovendor.IdFacturaAdinco
+
+    IF EXISTS
+    (
+        SELECT #Facturas.*
+        FROM #Facturas
+            JOIN FI_Factura
+                ON #Facturas.IdFactura = FI_Factura.IdFactura
+            JOIN Petrovendor.dbo.FI_Factura FI_Factura_Petrovendor
+                ON FI_Factura.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = FI_Factura_Petrovendor.UUID COLLATE SQL_Latin1_General_CP1_CI_AS
+        WHERE #Facturas.IdFactura = FI_Factura.IdFactura
+    )
+    BEGIN
+        UPDATE #Facturas
+        SET EsDePetrovendor = 1
+        FROM #Facturas
+    END
     /**/
 
     SELECT F.IdFactura,
