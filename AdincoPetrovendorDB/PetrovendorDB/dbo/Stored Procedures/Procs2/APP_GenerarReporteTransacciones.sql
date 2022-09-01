@@ -174,6 +174,7 @@ SAS.CreadoEl,
 SAS.IdAceptacionPedido,
 CO.NumeroContrato
 
+
 -- APROBADOR SOLICITANTE DE LA SAS
 UPDATE  SAS
 SET SAS.AprobadorSolitante = CONCAT('SAS: ',SAS.SolicitudAceptacionPedidoId , ' ', U.Nombre, ' ', TA.FechaCambioEstatus, ' ', EST.Nombre) ,
@@ -373,9 +374,8 @@ JOIN RelacionCartaCNPedido AS RCN (NOLOCK)
 	ON AP.IdAceptacionPedido=RCN.IdAceptacionPedido
 WHERE AP.Activo = 1
 
-
 -- DETALLE DE LA CARTA DE CN -- OBTENER PRIMERO LA CN MAS RECIENTE POR ACEPTACION DE PEDIDO
-INSERT INTO #AceptacionCartaCN (IdAceptacionCartaCN, IdAceptacionPedido)
+INSERT INTO #AceptacionCartaCN (IdAceptacionPedido,IdAceptacionCartaCN)
 SELECT AP.AceptacionPedidoId,
        MAX(ACN.IdAceptacionCartaPCN)
 FROM #AceptacionPedidos AP
@@ -411,7 +411,7 @@ JOIN TA_Operacion AS AFO (NOLOCK)
 	ON AF.IdAceptacionFactura = AFO.IdDocumento 
 	AND AFO.IdTipoOperacion = 10 --> CTE APROBACIÓN FACTURA
 	AND ISNULL(AFO.IdEstatusEliminado, 0) <> 1 
-
+	
 -- PRIMER APROBADOR DE FACTURA
 UPDATE 	AF
 SET AF.DetalleAprobador1 = CONCAT(US.Nombre, ' ',T.FechaCambioEstatus),
@@ -563,7 +563,7 @@ SELECT
 		WHEN AF.EstatusId = 2 THEN 'COMPLETADO'
 		ELSE 'PENDIENTE'
 	END AS 'Status',
-	DATEDIFF(DAY,SP.FechaAlta,GETDATE()) AS 'Periodo en ADINCO'	
+	DATEDIFF(DAY,SP.FechaAlta,GETDATE()) AS 'Periodo en ADINCO'		
 	FROM #SAS SAS  	
 	JOIN #Pedidos P
 		ON  SAS.PedidoId =  P.IdPedido 	
@@ -576,7 +576,8 @@ SELECT
 	LEFT JOIN  #AceptacionCartaCN AS CN 
 		ON AP.AceptacionPedidoId = CN.IdAceptacionPedido
 	LEFT JOIN #AceptacionFactura AS AF (NOLOCK)
-		ON AP.AceptacionPedidoId = AF.AceptacionPedidoId		
+		ON AP.AceptacionPedidoId = AF.AceptacionPedidoId	
+		
 
 END TRY
 BEGIN CATCH	
