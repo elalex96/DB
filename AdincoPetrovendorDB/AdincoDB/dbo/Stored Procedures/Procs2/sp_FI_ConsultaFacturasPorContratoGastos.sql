@@ -4,6 +4,7 @@
     --[sp_FI_ConsultaFacturasPorContratoGastos] 10016,1
     --[sp_FI_ConsultaFacturasPorContratoGastos] 10018,1
     --[sp_FI_ConsultaFacturasPorContratoGastos] 10007,1
+    --[dbo].[sp_FI_ConsultaFacturasPorContratoGastos] 10007,1,'20210801','20220901'
     @IdContrato INT = 0,
     @IdUsuario INT = 0,
     @Del DateTime = NULL,
@@ -424,9 +425,7 @@ BEGIN
                   )
         ORDER BY F.IdFactura DESC;
     END;
-
     /**/
-
     UPDATE #Facturas
     SET CCN = 0
 
@@ -460,7 +459,7 @@ BEGIN
     SET EsDePetrovendor = 1
     FROM #Facturas
         JOIN FI_FacturaAdincoPetrovendor
-            ON #Facturas.IdFactura = FI_FacturaAdincoPetrovendor.IdFacturaAdinco
+            ON #Facturas.IdFactura = FI_FacturaAdincoPetrovendor.IdFacturaAdinco;
 
     IF EXISTS
     (
@@ -471,11 +470,18 @@ BEGIN
             JOIN Petrovendor.dbo.FI_Factura FI_Factura_Petrovendor
                 ON FI_Factura.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = FI_Factura_Petrovendor.UUID COLLATE SQL_Latin1_General_CP1_CI_AS
         WHERE #Facturas.IdFactura = FI_Factura.IdFactura
+              AND ISNULL(FI_Factura.UUID, '') <> ''
     )
     BEGIN
         UPDATE #Facturas
         SET EsDePetrovendor = 1
         FROM #Facturas
+            JOIN FI_Factura
+                ON #Facturas.IdFactura = FI_Factura.IdFactura
+            JOIN Petrovendor.dbo.FI_Factura FI_Factura_Petrovendor
+                ON FI_Factura.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = FI_Factura_Petrovendor.UUID COLLATE SQL_Latin1_General_CP1_CI_AS
+        WHERE #Facturas.IdFactura = FI_Factura.IdFactura
+              AND ISNULL(FI_Factura.UUID, '') <> ''
     END
     /**/
 
