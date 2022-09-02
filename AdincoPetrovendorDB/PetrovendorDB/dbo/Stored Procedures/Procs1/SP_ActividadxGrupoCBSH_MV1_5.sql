@@ -1,4 +1,8 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_ActividadxGrupoCBSH_MV1_5
+GO
+-- =============================================
 -- Author:		<Alexander G>
 -- Create date: <27/07/2017>
 -- Description:	<Procedimiento para crear tabla para obtener las actividades correspondientes a un grupo especifico>
@@ -11,7 +15,10 @@
 -- Create date: <22/05/2019>
 -- Description:	<Se agrego la agrupacion de campos para evitar duplicacion>
 -- =============================================
-
+-- Author:		Luis David
+-- Create date: <02/09/2022>
+-- Description:	<Se optimiza para el Issue #1986>
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ActividadxGrupoCBSH_MV1_5]
     --@IdGrupoCBSH INT
     /*--------------------
@@ -30,9 +37,9 @@ BEGIN
            A.Nombre AS TipoActividad,
            G.Nombre AS Grupo,
 		   A.Codigo
-    FROM dbo.MM_BS_Actividad A
-        INNER JOIN dbo.MM_BS_Grupo G
-            ON G.IdGrupo = A.IdGrupo
+    FROM dbo.MM_BS_Actividad (NOLOCK) A
+        INNER JOIN dbo.MM_BS_Grupo (NOLOCK) G
+            ON A.IdGrupo = G.IdGrupo
 	GROUP BY A.IdActividad,
              A.Nombre,
              G.Nombre,
