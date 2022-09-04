@@ -1,3 +1,7 @@
+USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_PCN_AceptacionCPNProveedorVentas_Cabecera
+GO
 -- =============================================  
 -- Author:  Daniel Cruz  
 -- Create date: 05-02-18  
@@ -8,7 +12,11 @@
 -- Create date: 19-02-21 
 -- Description: Validacion para verificar la reclasifiacion de aceptacion
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_PCN_AceptacionCPNProveedorVentas_Cabecera]   
+-- Author:		Luis David
+-- Create date: <02/09/2022>
+-- Description:	<Se optimiza para el Issue #1986>
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PCN_AceptacionCPNProveedorVentas_Cabecera]   
  -- Add the parameters for the stored procedure here  
 @IdProveedor        INT,  
 @IdAceptacionPedido INT  
@@ -95,19 +103,20 @@ AS
                  ) AS Direccion,        
     ISNULL(@IdEstatusUltimoAprobacionCN,0) AS Estatus,  
     PG.IdPedido AS IdPedidoGeneral,  
-    TP.IdTipoPedido,  
-    ISNULL(@Editado,0),  
+    PG.IdTipoPedido,  
+ ISNULL(@Editado,0),  
     PR.IdProveedor AS ProveedorCliente      ,
 	@RECLASIFICADO AS AceptacionReclasificada
     FROM MM_AceptacionPedido AS AP  
-    INNER JOIN DG_Domicilio AS DG ON DG.IdDomicilio = AP.IdDomicilioEntrega  
-    LEFT JOIN PV_PaisRepublica AS PS ON PS.id = DG.IdPais  
-    INNER JOIN MM_Pedido AS P ON P.IdPedido = AP.IdPedido  
-    INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = P.IdProveedorCompras  AND PG.IdTipoPedido in (2,4, 6)
-    INNER JOIN S_Proveedor AS PR ON PR.IdProveedor = P.IdProveedorCompras  
-    LEFT JOIN MM_AceptacionCartaPCN AS AC_PCN ON AC_PCN.IdAceptacionPedido = AP.IdAceptacionPedido   
-    LEFT  JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido  
+    INNER JOIN DG_Domicilio AS DG 
+		ON AP.IdDomicilioEntrega = DG.IdDomicilio
+    INNER JOIN MM_Pedido AS P 
+		ON AP.IdPedido = P.IdPedido  
+    INNER JOIN MM_Pedidos AS PG 
+		ON P.IdPedido = PG.IdIdentificador 
+		AND P.IdProveedorCompras = PG.IdProveedorCliente
+		AND PG.IdTipoPedido in (2,4, 6)
+    INNER JOIN S_Proveedor AS PR 
+		ON P.IdProveedorCompras = PR.IdProveedor
     WHERE P.IdSubcontratista =@IdProveedor  AND AP.IdAceptacionPedido =@IdAceptacionPedido   
-  
-         
-     END;   
+END; 
