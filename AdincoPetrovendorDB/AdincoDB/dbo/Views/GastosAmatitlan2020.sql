@@ -176,6 +176,8 @@ SELECT R.IdRegistro,
        CASE
            WHEN RM.MesEstadoPemex IS NULL THEN
                ''
+           WHEN CAST(MONTH(RM.MesEstadoPemex) AS INT) < 10 THEN
+               CAST(YEAR(RM.MesEstadoPemex) AS VARCHAR(10)) + ' - 0' + CAST(MONTH(RM.MesEstadoPemex) AS VARCHAR(10))
            ELSE
                CAST(YEAR(RM.MesEstadoPemex) AS VARCHAR(10)) + ' - ' + CAST(MONTH(RM.MesEstadoPemex) AS VARCHAR(10))
        END AS [CGE Aprobado Pemex]
@@ -317,6 +319,8 @@ GROUP BY PC.NumeroPedimento,
          CASE
              WHEN RM.MesEstadoPemex IS NULL THEN
                  ''
+             WHEN CAST(MONTH(RM.MesEstadoPemex) AS INT) < 10 THEN
+                 CAST(YEAR(RM.MesEstadoPemex) AS VARCHAR(10)) + ' - 0' + CAST(MONTH(RM.MesEstadoPemex) AS VARCHAR(10))
              ELSE
                  CAST(YEAR(RM.MesEstadoPemex) AS VARCHAR(10)) + ' - ' + CAST(MONTH(RM.MesEstadoPemex) AS VARCHAR(10))
          END
