@@ -202,22 +202,35 @@ begin
 			select Id, 'D', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró WBS Element en la celda D, Fila '+cast(Id as varchar(10))+'.',1												
 			from #tmpData where WBS_Element is null order by Id
 			
-			--==================================================			
-			insert into #tmpErrores
-			select		DWL.ID,	'D',  'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, posiblemente a lo siguiente : El WBS no existe, La linea de presupuesto no está relacionada a un WBS o estas están desactivadas en ADINCO. Celda D  , Fila '	+	cast(DWL.Id as varchar(10))	+	' .',1
+			--==================================================	
+			
+			if (select		COUNT(1)
 			from		#tmpData DWL
 			LEFT JOIN WDEA_WBS WBS (NOLOCK)
 				ON RTRIM(LTRIM(dwl.WBS_Element)) = RTRIM(LTRIM(WBS.WBS)) COLLATE SQL_Latin1_General_CP1_CI_AS	
 			LEFT JOIN WDEA_WBSLineaPresupuesto WLP (NOLOCK)
 				ON WBS.Id = WLP.IdWBS
 			where 
-			WBS.Id Is null
-			or 
-			WBS.Activo = 0
-			or
-			WLP.Id is null
-			or 
-			WLP.Activo = 0
+			WBS.Activo = 1
+			and
+			WLP.Activo = 1) < 1
+			BEGIN
+				insert into #tmpErrores
+				select		DWL.ID,	'D',  'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, posiblemente a lo siguiente : El WBS no existe o no esta relacionado a una línea de presupuesto en ADINCO. Celda D  , Fila '	+	cast(DWL.Id as varchar(10))	+	' .',1
+				from		#tmpData DWL
+				LEFT JOIN WDEA_WBS WBS (NOLOCK)
+					ON RTRIM(LTRIM(dwl.WBS_Element)) = RTRIM(LTRIM(WBS.WBS)) COLLATE SQL_Latin1_General_CP1_CI_AS	
+				LEFT JOIN WDEA_WBSLineaPresupuesto WLP (NOLOCK)
+					ON WBS.Id = WLP.IdWBS
+				where 
+				WBS.Id Is null
+				or 
+				WBS.Activo = 0
+				or
+				WLP.Id is null
+				or 
+				WLP.Activo = 0
+			END
 			
 			/*******************/
 	
