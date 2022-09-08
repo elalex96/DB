@@ -41,7 +41,7 @@ BEGIN
             JOIN CO_EstadoRegistro_V2
                 ON CO_EstadoRegistroTransicion.IdEstadoOrigen = CO_EstadoRegistro_V2.IdClvEstado
             JOIN CO_EstadoRegistro_V2 CO_EstadoRegistro_V2_Destino
-                ON CO_EstadoRegistroTransicion.IdEstadoDestino = CO_EstadoRegistro_V2_Destino.IdClvEstado
+                ON CO_EstadoRegistro_V2_Destino.Activo = 1 AND CO_EstadoRegistroTransicion.IdEstadoDestino = CO_EstadoRegistro_V2_Destino.IdClvEstado
             JOIN CO_RegistroMarkup
                 ON CO_EstadoRegistroTransicion.IdEstadoOrigen = CO_RegistroMarkup.IdEstadoPemex
         WHERE CO_EstadoRegistroUsuario.IdUsuario = @IdUsuario
