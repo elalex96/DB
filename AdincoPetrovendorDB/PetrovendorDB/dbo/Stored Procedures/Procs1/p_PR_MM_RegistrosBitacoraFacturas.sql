@@ -1,15 +1,11 @@
-﻿use Petrovendor
-
-go
-
-if exists (select * from sys.procedures where name = 'p_PR_MM_RegistrosBitacoraFacturas')
-begin
-	drop proc p_PR_MM_RegistrosBitacoraFacturas
-end
-
-go
-
-CREATE PROCEDURE p_PR_MM_RegistrosBitacoraFacturas
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[p_PR_MM_RegistrosBitacoraFacturas]    Script Date: 08/09/2022 05:40:16 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[p_PR_MM_RegistrosBitacoraFacturas]
 	@IdProveedor int,
 	@Estatus int ,	
     @IdContrato    INT = null,
@@ -19,16 +15,16 @@ as
 begin
 	SET NOCOUNT ON;
 
+	DECLARE @IDCONTRATO2	INT,
+			@PLANT			NVARCHAR(10),
+			@PROVEDORRFC	NVARCHAR(20),
+			@IDCONTRATISTA	NVARCHAR(50);
+
 	create table #FlujoSerial
     (
         IdOperacion INT,
         NoSecuencia INT
-    )
-
-	--create table #OperacionNoAprobadas
-	--(
-	--	IdOperacion INT
-	--)
+    );
 
 	CREATE TABLE #AceptacionesPedido
 	(
@@ -45,38 +41,24 @@ begin
 		RFC					NVARCHAR(100)	null,
 		IdSolicitudPedido	NVARCHAR(100)	NULL,
 		span				NVARCHAR(100)	NULL
-	)
-
-	DECLARE @IDCONTRATO2	INT,
-			@PLANT			NVARCHAR(10),
-			@PROVEDORRFC	NVARCHAR(20),
-			@IDCONTRATISTA	NVARCHAR(50)
-
+	);
 
 	 select	@IDCONTRATO2	=	(SELECT TOP 1
 								C.IdContrato
-								FROM Adinco.dbo.CO_Contrato AS C
-								LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista  = C.IdContratista
-								LEFT JOIN dbo.S_Proveedor AS PR ON PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+								FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
+								LEFT JOIN Adinco.dbo.CO_Contratista AS CON (NOLOCK) ON CON.IdContratista  = C.IdContratista
+								LEFT JOIN dbo.S_Proveedor AS PR (NOLOCK) ON PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
 								WHERE PR.IdProveedor = @IdProveedor)
 
 	select @PLANT			= (SELECT TOP 1
 										P.Planta
-										FROM Adinco.dbo.CO_Contrato AS C
-										LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS P ON P.IdContratista = C.IdContratista
-										WHERE C.IdContrato = @IDCONTRATO2)
-	--select @IdContrato, @IDCONTRATO2
-	--IF(ISNULL(@IdContrato,0) = 0)
-	--BEGIN
-	--	SET @IdContrato = 10039;
-	--END
+										FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
+										LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS P (NOLOCK) ON P.IdContratista = C.IdContratista
+										WHERE C.IdContrato = @IDCONTRATO2);
 
 	select	@PROVEDORRFC  = (SELECT RFC FROM dbo.S_Proveedor WHERE IdProveedor = @IdProveedor);
 
-	select	@IDCONTRATISTA = (SELECT IdContratista FROM Adinco.dbo.CO_Contratista WHERE RFC = @PROVEDORRFC);
-
-	
-    
+	select	@IDCONTRATISTA = (SELECT IdContratista FROM Adinco.dbo.CO_Contratista (NOLOCK) WHERE RFC = @PROVEDORRFC);
 
     INSERT INTO #FlujoSerial
     (
@@ -85,35 +67,19 @@ begin
     )
     SELECT O.IdOperacion,
            t.NoSecuencia
-    FROM dbo.TA_Operacion O
-		INNER JOIN dbo.MM_AceptacionFactura af ON af.IdAceptacionFactura = o.IdDocumento
-		INNER JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-		INNER JOIN MM_Pedido AS PE ON PE.IdPedido = AP.IdPedido 
-        INNER JOIN dbo.TA_Tarea t
+    FROM dbo.TA_Operacion O (NOLOCK)
+		INNER JOIN dbo.MM_AceptacionFactura af (NOLOCK) ON af.IdAceptacionFactura = o.IdDocumento
+		AND O.IdTipoOperacion = 10
+		AND ISNULL(O.IdEstatusEliminado, 0) <> 1
+		INNER JOIN MM_AceptacionPedido AS AP (NOLOCK) ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+		INNER JOIN MM_Pedido AS PE (NOLOCK) ON PE.IdPedido = AP.IdPedido 
+        INNER JOIN dbo.TA_Tarea t (NOLOCK)
             ON t.IdOperacion = O.IdOperacion
     WHERE O.IdTipoOperacion = 10
           AND ISNULL(O.IdEstatusEliminado, 0) <> 1
           AND t.IdAprobador = @IdUsuario
           AND t.NoSecuencia > 1
 		  AND PE.IdProveedorCompras = @IdProveedor
-
-    --INSERT INTO #OperacionNoAprobadas
-    --(
-    --    IdOperacion
-    --)
-    --SELECT O.IdOperacion
-    --FROM dbo.TA_Operacion O
-    --    INNER JOIN #FlujoSerial f
-    --        ON f.IdOperacion = O.IdOperacion
-    --    INNER JOIN dbo.TA_Tarea T
-    --        ON T.IdOperacion = O.IdOperacion
-    --           AND T.NoSecuencia = (f.NoSecuencia - 1)
-    --WHERE O.IdTipoOperacion = 10
-    --      AND T.IdEstatus <> 2;
-
-	
-	 IF @Estatus=0  --TODAS
-	 BEGIN
 	
 		INSERT INTO #AceptacionesPedido
 		SELECT 
@@ -138,21 +104,20 @@ begin
 			WHEN E.IdEstatus = 3 THEN 'label label-danger'
 			WHEN E.IdEstatus IS NULL THEN 'label label-default'
 		END
-		FROM MPY_MM_AceptacionFactura AS AF
-		inner join MPY_MM_AceptacionFactura_Bitacora afb on afb.IdAceptacionFactura = af.IdAceptacionFactura
-				LEFT JOIN TA_Estatus AS E ON E.IdEstatus = AFB.IdEstatus
-				LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-				LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
-				LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APCN ON APCN.IdAceptacionPedido = AP.IdAceptacionPedido AND APCN.IdEstatus = 2
-				LEFT JOIN S_Proveedor AS PR ON PR.RFC = AP.IdSubContratista AND PR.Activo = 1
-				LEFT JOIN Adinco.dbo.CO_SAPVendor AS SV ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS
-				LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-				LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber AND SES.SESNumber = PSES.SESN
-				LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
-				LEFT JOIN dbo.FI_Factura AS F ON F.IdFactura = AF.IdFactura
+		FROM MPY_MM_AceptacionFactura AS AF (NOLOCK)
+		INNER JOIN MPY_MM_AceptacionFactura_Bitacora afb (NOLOCK) on afb.IdAceptacionFactura = af.IdAceptacionFactura
+				LEFT JOIN TA_Estatus AS E (NOLOCK) ON E.IdEstatus = AFB.IdEstatus
+				LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+				LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD (NOLOCK) ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
+				LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APCN (NOLOCK) ON APCN.IdAceptacionPedido = AP.IdAceptacionPedido AND APCN.IdEstatus = 2
+				LEFT JOIN S_Proveedor AS PR (NOLOCK) ON PR.RFC = AP.IdSubContratista AND PR.Activo = 1
+				LEFT JOIN Adinco.dbo.CO_SAPVendor AS SV (NOLOCK) ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS
+				LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK) ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+				LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK) ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber AND SES.SESNumber = PSES.SESN
+				LEFT JOIN Adinco.dbo.CO_SAPPO AS PO (NOLOCK) ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
+				LEFT JOIN dbo.FI_Factura AS F (NOLOCK) ON F.IdFactura = AF.IdFactura
 		WHERE 
 		pO.Plant = @PLANT
-		
 	    GROUP BY AF.IdAceptacionPedido,
 			AP.IdPedido,
 			PR.RazonSocial,
@@ -174,7 +139,6 @@ begin
 			F.FechaTimbrado,
 			F.FechaTimbrado
 		ORDER BY AF.IdAceptacionPedido DESC
-     END 
 
 	 IF exists (SELECT 1 FROM #AceptacionesPedido)
 	 begin
@@ -185,7 +149,3 @@ begin
 		SELECT 0 AS 'RESULT'
 	 END
 end
-
-go
-
---exec p_PR_MM_RegistrosBitacoraFacturas @IdProveedor=516,@Estatus=0,@IdContrato=3,@IdUsuario=2572
