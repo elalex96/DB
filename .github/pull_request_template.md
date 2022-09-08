@@ -13,6 +13,7 @@
 - [ ] La estructura del código fuente permite un fácil mantenimiento del mismo?
 - [ ] La rama que se desea integrar se encuentra actualizada con la rama default?
 - [ ] La(s) evidencia(s) es(son) lo suficientemente legibles?
+- [ ] En caso de aplicarse, ¿se encuentra asignado el Milestone correspondiente en el Pull Request?
 
 ## Informacion Adicional
 ### Propuesta relacionada
