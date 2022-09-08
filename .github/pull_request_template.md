@@ -1,4 +1,4 @@
-## Lista de verificación para la revisión por pares
+### Lista de verificación para la revisión por pares
 - [ ] El código fuente es preciso y completo con respecto al diseño.
 - [ ] La documentación del código: es clara y precisa.
 - [ ] Los errores inesperados se encuentran controlados.
@@ -12,7 +12,7 @@
 - [ ] El código fuente generado es Reutilizable?
 - [ ] La estructura del código fuente permite un fácil mantenimiento del mismo?
 - [ ] La rama que se desea integrar se encuentra actualizada con la rama default?
-- [ ] La(s) evidencia(s) es(son) lo suficientemente legibles?
+- [ ] En caso de aplicarse, ¿se encuentra asignado el Milestone correspondiente en el Pull Request?
 
 ## Informacion Adicional
 ### Propuesta relacionada
