@@ -21,7 +21,6 @@
     [DocPostingDate]     VARCHAR (15)  NULL,
     [Plant]              VARCHAR (15)  NULL,
     [GRReferenceNumber]  VARCHAR (20)  NULL,
-    CONSTRAINT [PK_CO_MapeoInterfazMaterialGR] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [PO_SAPNumber] ASC, [POLineNumber] ASC, [DocumentDate] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_MapeoInterfazMaterialGR_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_MapeoInterfazMaterialGR_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );

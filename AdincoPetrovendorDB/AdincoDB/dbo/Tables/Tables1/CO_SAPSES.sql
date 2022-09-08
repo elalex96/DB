@@ -19,8 +19,7 @@
     [SESServiceStart]    VARCHAR (15)  NULL,
     [SESServiceEnd]      VARCHAR (15)  NULL,
     [Plant]              VARCHAR (15)  NULL,
-    [SESReferenceNumber] VARCHAR (20)  NULL,
-    CONSTRAINT [PK_CO_MapeoInterfazApprovedSES_1] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [SESNumber] ASC, [SESLine] ASC, [PO_SAPNumer] ASC, [POLineNumber] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [SESReferenceNumber] VARCHAR (20)  NULL,   
     CONSTRAINT [FK_CO_MapeoInterfazApprovedSES_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_MapeoInterfazApprovedSES_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
