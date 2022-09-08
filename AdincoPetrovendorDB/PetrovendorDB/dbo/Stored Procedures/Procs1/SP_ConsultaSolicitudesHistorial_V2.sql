@@ -1,8 +1,16 @@
-﻿-- =============================================
+use petrovendor
+go
+drop procedure if exists SP_ConsultaSolicitudesHistorial_V2
+go
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <09/03/2020>
 -- Description:	<Consultar solicitudes de pedido par visualizar el historial>
 -- =============================================
+-- Author: Luis David
+-- Create date: 06/09/2022
+-- Description: Modificación de optimización Issue #1985 (Petrovendor)
+--==============================================
 create PROCEDURE [dbo].[SP_ConsultaSolicitudesHistorial_V2] --364,3,2205,1,'4500097817'
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
@@ -20,13 +28,13 @@ BEGIN
     -- Insert statements for procedure here
 	DECLARE @PLANT NVARCHAR(10) = (SELECT TOP 1 CP.Planta
 									FROM Adinco.dbo.CO_SAPContratista_Planta AS CP
-									JOIN Adinco.dbo.CO_Contratista AS C ON C.IdContratista = CP.IdContratista
-									JOIN Petrovendor.dbo.S_Proveedor AS PR ON PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = C.RFC
+									JOIN Adinco.dbo.CO_Contratista AS C ON CP.IdContratista = C.IdContratista
+									JOIN Petrovendor.dbo.S_Proveedor AS PR ON C.RFC = PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
 									WHERE PR.IdProveedor = @IdProveedor)
 
 	DECLARE @SAPVENDOR NVARCHAR(50) = (SELECT TOP 1 VendorIDSAP 
 										FROM Adinco.dbo.CO_SAPVendor AS SV
-										LEFT JOIN dbo.S_Proveedor AS PR ON PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = SV.TaxID COLLATE SQL_Latin1_General_CP1_CI_AS
+										LEFT JOIN dbo.S_Proveedor AS PR ON SV.TaxID COLLATE SQL_Latin1_General_CP1_CI_AS = PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
 										WHERE PR.IdProveedor = @IdProveedor AND
 											SV.Activo = 1);
 
@@ -41,12 +49,10 @@ BEGIN
 		COUNT(P.IdSolicitudPedido)
 	FROM dbo.MM_SolicitudPedido AS SP
 		LEFT JOIN dbo.MM_Pedido AS P
-			ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+			ON SP.IdSolicitudPedido = P.IdSolicitudPedido
 		LEFT JOIN dbo.MM_Pedidos AS PS
-			ON PS.IdIdentificador = P.IdPedido
-				AND PS.IdProveedorCliente = P.IdProveedorCompras
-		LEFT JOIN dbo.S_Proveedor AS PR
-			ON PR.IdProveedor = P.IdSubcontratista
+			ON P.IdPedido = PS.IdIdentificador
+				AND P.IdProveedorCompras = PS.IdProveedorCliente
 	WHERE SP.IdProveedor = @IdProveedor
 		AND SP.IdContrato = @IdContrato
 		AND ISNULL(SP.IdEstatusEliminado,0) <> 1
@@ -67,8 +73,8 @@ BEGIN
 		COUNT(PRS.IdPRESES)
 	FROM Adinco.dbo.CO_SAPPRESES AS PRS
 		JOIN Adinco.dbo.CO_SAPPO AS PO
-			ON PO.SAPPONumber = PRS.SAPPONumber 
-			AND PO.SAPVendorNumber = PRS.SAPVendorNumber
+			ON PRS.SAPPONumber = PO.SAPPONumber
+			AND PRS.SAPVendorNumber = PO.SAPVendorNumber
 	WHERE PO.Plant = @PLANT
 	AND (
 						CAST(PRS.IdPRESES AS NVARCHAR(10)) LIKE '%' + @Buscar + '%' OR 
@@ -100,12 +106,12 @@ BEGIN
 			(ROW_NUMBER() OVER(ORDER BY PRS.CreadoEl DESC) - 1)/ @RecordsByPage AS _Page
 		FROM Adinco.dbo.CO_SAPPRESES AS PRS
 			JOIN Adinco.dbo.CO_SAPPO AS PO
-				ON PO.SAPPONumber = PRS.SAPPONumber 
-				AND PO.SAPVendorNumber = PRS.SAPVendorNumber
+				ON PRS.SAPPONumber = PO.SAPPONumber
+				AND PRS.SAPVendorNumber = PO.SAPVendorNumber
 			LEFT JOIN Adinco.dbo.CO_SAPSES AS SES 
-				ON SES.PO_SAPNumer = PRS.SAPPONumber AND 
-					SES.SESReferenceNumber = PRS.SAPSESNumber AND 
-					SES.SESNumber = PRS.SESN  
+				ON PRS.SAPPONumber = SES.PO_SAPNumer AND 
+					PRS.SAPSESNumber = SES.SESReferenceNumber AND 
+					PRS.SESN = SES.SESNumber
 		WHERE PO.Plant = @PLANT
 			AND (
 						CAST(PRS.IdPRESES AS NVARCHAR(10)) LIKE '%' + @Buscar + '%' OR 
@@ -150,11 +156,11 @@ BEGIN
 			(ROW_NUMBER() OVER(ORDER BY SP.FechaAlta DESC) - 1)/ @RecordsByPage AS _Page
 		FROM dbo.MM_SolicitudPedido AS SP
 			LEFT JOIN dbo.MM_Pedido AS P
-				ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+				ON SP.IdSolicitudPedido = P.IdSolicitudPedido
 			LEFT JOIN dbo.MM_Pedidos AS PS
-				ON PS.IdIdentificador = P.IdPedido
-					AND PS.IdProveedorCliente = P.IdProveedorCompras
-			LEFT JOIN dbo.S_Proveedor AS PR
+				ON P.IdPedido = PS.IdIdentificador
+					AND P.IdProveedorCompras = PS.IdProveedorCliente
+			LEFT JOIN dbo.S_Proveedor AS PR (NOLOCK)
 				ON PR.IdProveedor = P.IdSubcontratista
 		WHERE SP.IdProveedor = @IdProveedor
 			AND SP.IdContrato = @IdContrato
@@ -178,14 +184,4 @@ BEGIN
 			R._Page = (@Page - 1)
 		ORDER BY R.FechaAlta DESC
 	END
-	--SELECT
-	--	IdSolicitudPedido,
-	--	IdDocumento,
-	--	Fecha,
-	--	Proceso,
-	--	Descripcion,
-	--	URL,
-	--	PARAMETROS
-	--FROM @DATOS;
-
 END

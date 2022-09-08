@@ -1,8 +1,16 @@
-﻿-- =============================================
+USE PETROVENDOR 
+GO
+DROP PROCEDURE IF EXISTS SP_ConsultarSolicitudes_V2
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 08/09/2020
 -- Description: Se removio las tareas seriales que todavia no se deben mostrar al usuario actual, por que el aprobador anterior todavia no realiza la aprobación
 -- =============================================
+-- Author: Luis David
+-- Create date: 06/09/2022
+-- Description: Modificación de optimización Issue #1985 (Petrovendor)
+--===============================================
 CREATE PROCEDURE [dbo].[SP_ConsultarSolicitudes_V2] 
 	@idProveedor INT, 
 	@IdContrato INT, 
@@ -59,7 +67,7 @@ BEGIN
 			PRS.CreadoEl
 		FROM Adinco.dbo.CO_SAPPRESES AS PRS (NOLOCK)
 			LEFT JOIN dbo.S_Usuario AS US (NOLOCK)
-				ON US.IdUsuario = PRS.CreadoPor
+				ON PRS.CreadoPor = US.IdUsuario
 		WHERE PRS.IdEstatus = 1
 			AND PRS.Plant = @PLANT
 			AND (SELECT TOP 1 IdTipoUsuario FROM dbo.S_Usuario WHERE IdUsuario = @IdUsuario) IN (3,5,6)
@@ -80,17 +88,15 @@ BEGIN
 			AC.CreadoEl
 		FROM Adinco.dbo.CO_SAPPRESES AS PRS  (NOLOCK)
 			LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK)
-				ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PRS.SAPPONumber
-				AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PRS.SAPSESNumber
+				ON PRS.SAPPONumber = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
+				AND PRS.SAPSESNumber = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
 			LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK)
-				ON SES.PO_SAPNumer = PRS.SAPPONumber
-				AND SES.SESReferenceNumber = PRS.SAPSESNumber
-				AND SES.SESNumber = PRS.SESN
+				ON PRS.SAPPONumber = SES.PO_SAPNumer
+				AND PRS.SAPSESNumber = SES.SESReferenceNumber
+				AND PRS.SESN = SES.SESNumber
 			LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC (NOLOCK)
-				ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+				ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
 				AND ISNULL(AC.IdEstatusEliminado,0) <> 1
-			LEFT JOIN dbo.S_Usuario AS US (NOLOCK)
-				ON US.IdUsuario = AC.CreadoPor
 		WHERE AC.IdAceptacionCartaPCN IS NOT NULL
 			AND PRS.Plant = @PLANT
 			AND AC.IdEstatus = 1
@@ -113,16 +119,13 @@ BEGIN
 			F.CreadoPor,
 			AF.CreadoEl
 		FROM MPY_MM_AceptacionFactura AS AF  (NOLOCK)
-	   LEFT JOIN TA_Estatus AS E (NOLOCK) ON E.IdEstatus = AF.IdEstatus    
-	   LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) ON AP.IdAceptacionPedido = AF.IdAceptacionPedido  
-	   LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD (NOLOCK) ON APD.IdAceptacionPedido = AP.IdAceptacionPedido  
-	   LEFT JOIN Adinco.dbo.CO_SAPVendor AS SV (NOLOCK) ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS  
-	   LEFT JOIN S_Proveedor AS PR (NOLOCK) ON PR.RFC = AP.IdSubContratista AND PR.Activo = 1   
-		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK) ON PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS AND PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS  
-		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK) ON SES.PO_SAPNumer = PSES.SAPPONumber AND SES.SESReferenceNumber = PSES.SAPSESNumber AND SES.SESNumber = PSES.SESN  
-		LEFT JOIN Adinco.dbo.CO_SAPPO AS PO (NOLOCK) ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
-		LEFT JOIN dbo.FI_Factura AS F (NOLOCK) ON F.IdFactura = AF.IdFactura 
-		LEFT JOIN dbo.RelacionCartaCNPedido RC (NOLOCK) ON RC.IdAceptacionPedido = AP.IdAceptacionPedido 
+	   LEFT JOIN TA_Estatus AS E (NOLOCK) ON AF.IdEstatus = E.IdEstatus
+	   LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+	   LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD (NOLOCK) ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
+	   LEFT JOIN S_Proveedor AS PR (NOLOCK) ON AP.IdSubContratista = PR.RFC AND 1 = PR.Activo
+		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK) ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS  = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
+		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK) ON PSES.SAPPONumber = SES.PO_SAPNumer AND PSES.SAPSESNumber = SES.SESReferenceNumber AND PSES.SESN = SES.SESNumber
+		LEFT JOIN dbo.FI_Factura AS F (NOLOCK) ON AF.IdFactura = F.IdFactura
 		WHERE AF.IdEstatus = 1 
 		AND PSES.Plant = @PLANT
 		AND AF.IdAceptacionFactura IS NOT NULL
@@ -184,38 +187,38 @@ BEGIN
 			(ROW_NUMBER() OVER(ORDER BY PRS.CreadoEl DESC) - 1)/ @RecordsByPage AS _Page
 		FROM @TAREASMURPHY AS TM
 			LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PRS (NOLOCK)
-				ON PRS.IdPRESES = TM.IdDocumento
+				ON TM.IdDocumento = PRS.IdPRESES
 				AND TM.IdTipoTarea = 10
 			LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC (NOLOCK)
-				ON AC.IdAceptacionCartaPCN = TM.IdDocumento
+				ON TM.IdDocumento = AC.IdAceptacionCartaPCN
 				AND TM.IdTipoTarea = 11
 			LEFT JOIN dbo.MPY_MM_AceptacionPedido AS APAC (NOLOCK)
-				ON APAC.IdAceptacionPedido = AC.IdAceptacionPedido	
+				ON AC.IdAceptacionPedido = APAC.IdAceptacionPedido
 			LEFT JOIN dbo.MPY_MM_AceptacionPedido AS APF (NOLOCK)
-				ON APF.IdAceptacionPedido = TM.IdDocumento
-				AND TM.IdTipoTarea = 12
+				ON TM.IdDocumento = APF.IdAceptacionPedido
+				AND 12 = TM.IdTipoTarea
 			LEFT JOIN dbo.MPY_MM_AceptacionFactura AS AF (NOLOCK)
-				ON AF.IdAceptacionPedido = APF.IdAceptacionPedido
+				ON APF.IdAceptacionPedido = AF.IdAceptacionPedido
 			LEFT JOIN dbo.S_Usuario AS US (NOLOCK)
-				ON US.IdUsuario = TM.IdAsignador
+				ON TM.IdAsignador = US.IdUsuario
 			LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PRS2 (NOLOCK)
-				ON PRS2.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = APAC.IdPedido
-				AND PRS2.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = APAC.ReferenceNumber
+				ON APAC.IdPedido = PRS2.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS 
+				AND APAC.ReferenceNumber = PRS2.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
 			LEFT JOIN Adinco.dbo.CO_SAPSES AS SES  (NOLOCK)
-				ON SES.PO_SAPNumer = PRS.SAPPONumber AND 
-					SES.SESReferenceNumber = PRS.SAPSESNumber AND 
-					SES.SESNumber = PRS.SESN 
+				ON PRS.SAPPONumber = SES.PO_SAPNumer AND 
+					PRS.SAPSESNumber = SES.SESReferenceNumber AND 
+					PRS.SESN = SES.SESNumber
 			LEFT JOIN Adinco.dbo.CO_SAPSES AS SES2  (NOLOCK)
-				ON SES2.PO_SAPNumer = PRS2.SAPPONumber AND 
-					SES2.SESReferenceNumber = PRS2.SAPSESNumber AND 
-					SES2.SESNumber = PRS2.SESN 
+				ON PRS2.SAPPONumber = SES2.PO_SAPNumer AND 
+					PRS2.SAPSESNumber = SES2.SESReferenceNumber AND 
+					PRS2.SESN = SES2.SESNumber
 			LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PRS3 (NOLOCK)
-				ON PRS3.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = APF.IdPedido
-				AND PRS3.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS = APF.ReferenceNumber
+				ON APF.IdPedido = PRS3.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
+				AND APF.ReferenceNumber = PRS3.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS
 			LEFT JOIN Adinco.dbo.CO_SAPSES AS SES3 (NOLOCK)
-				ON SES3.PO_SAPNumer = PRS3.SAPPONumber AND 
-					SES3.SESReferenceNumber = PRS3.SAPSESNumber AND 
-					SES3.SESNumber = PRS3.SESN 
+				ON PRS3.SAPPONumber = SES3.PO_SAPNumer AND 
+					PRS3.SAPSESNumber = SES3.SESReferenceNumber AND 
+					PRS3.SESN = SES3.SESNumber 
 			GROUP BY PRS.CreadoEl,
                      TM.IdTipoTarea,
 					 PRS.SAPPONumber,
@@ -260,7 +263,7 @@ BEGIN
 	FROM dbo.TA_Operacion O (NOLOCK)	
 	INNER JOIN dbo.TA_FlujoTarea FT (NOLOCK) ON 
 		O.IdFlujoTarea=FT.IdFlujoTarea	 
-		AND FT.IdTipoFlujo= 1 --> FLUJO DE APROBACIÓN SERIAL 
+		AND 1 = FT.IdTipoFlujo --> FLUJO DE APROBACIÓN SERIAL 
 	INNER JOIN	dbo.TA_Tarea t (NOLOCK)
 			ON  O.IdOperacion=t.IdOperacion 	
 	WHERE O.IdTipoOperacion IN(2,9,14) --> APROBACIÓN DE SOLICITUD DE PEDIDO, DE PEDIDO, DE COMPRA DIRECTA 
@@ -282,7 +285,7 @@ BEGIN
 			ON  O.IdOperacion =f.IdOperacion 
 		INNER JOIN	dbo.TA_Tarea T (NOLOCK)
 			ON O.IdOperacion=T.IdOperacion 
-			   AND T.NoSecuencia = ( f.NoSecuencia - 1 )
+			   AND ( f.NoSecuencia - 1 ) = T.NoSecuencia
 	WHERE O.IdTipoOperacion IN(2,9,14) --> APROBACIÓN DE SOLICITUD DE PEDIDO, DE PEDIDO, DE COMPRA DIRECTA 
 		AND T.IdEstatus <> 2 --> ESTATUS APROBADO
 	GROUP BY O.IdOperacion
@@ -300,8 +303,6 @@ BEGIN
 			AND O.IdProveedor = @idProveedor			
 		INNER JOIN	dbo.TA_Tarea tarea (NOLOCK)
 			ON O.IdOperacion=tarea.IdOperacion 
-		INNER JOIN	dbo.TA_Estatus TE (NOLOCK)
-			ON  O.IdEstatusOperacion = TE.IdEstatus	
 	WHERE tarea.IdEstatus = 1 --> ESTATUS EN APROBACIÓN			
 		AND tarea.IdAprobador = @IdUsuario
 		AND ISNULL ( O.IdEstatusEliminado, 0 ) <> 1 --> QUE NO ESTE ELIMINADA
@@ -322,15 +323,11 @@ BEGIN
 		LEFT JOIN	dbo.MM_Pedidos R
 			ON O.IdDocumento=R.IdIdentificador 
 			AND	R.IdProveedorCliente =@idProveedor 
-		INNER JOIN	dbo.TA_TipoOperacion TTO (NOLOCK)
-			ON O.IdTipoOperacion = TTO.IdTipoOperacion 
 		INNER JOIN	dbo.TA_Tarea tarea (NOLOCK)
 			ON O.IdOperacion =tarea.IdOperacion 
-		INNER JOIN	dbo.TA_Estatus TE (NOLOCK)
-			ON O.IdEstatusOperacion = TE.IdEstatus
 	WHERE tarea.IdEstatus = 1 --> ESTATUS EN APROBACIÓN 
 			AND O.IdProveedor = @idProveedor
-			AND TTO.IdTipoOperacion = 14  --> APROBACIÓN DE COMPRA DIRECTA 
+			AND O.IdTipoOperacion = 14  --> APROBACIÓN DE COMPRA DIRECTA 
 			AND tarea.IdAprobador = @IdUsuario
 			AND O.IdOperacion NOT IN (SELECT IdOperacion FROM @OperacionNoAprobadas)
 			AND (
@@ -346,18 +343,13 @@ BEGIN
 		O.IdDocumento,
 		O.IdOperacion
 	FROM dbo.TA_Operacion O (NOLOCK)
-		INNER JOIN	dbo.TA_TipoOperacion TTO (NOLOCK)
-			ON O.IdTipoOperacion=TTO.IdTipoOperacion 
 		INNER JOIN	dbo.TA_Tarea tarea (NOLOCK)
 			ON O.IdOperacion=tarea.IdOperacion 
-		INNER JOIN	dbo.MM_Pedido P (NOLOCK)
-			ON O.NoVersion = P.Version
-			AND O.IdDocumento=P.IdSolicitudPedido
 		INNER JOIN	dbo.TA_Estatus TE (NOLOCK)
 			ON O.IdEstatusOperacion = TE.IdEstatus
 	WHERE tarea.IdEstatus = 1
 			AND O.IdProveedor = @idProveedor
-			AND TTO.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+			AND O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
 			AND O.NoVersion IS NOT NULL
 			AND tarea.IdAprobador =@IdUsuario
 			AND ISNULL ( O.IdEstatusEliminado, 0 ) <> 1 --> QUE NO ESTE ELIMINADA
@@ -399,18 +391,15 @@ BEGIN
 		CASE
 			WHEN OP.IdTipoOperacion = 2 THEN 'solped=|' + CAST(OP.IdDocumento AS NVARCHAR(10)) + ',&num_user=|' + CAST(@IdUsuario AS NVARCHAR(10)) + ',&origin=t&tp_user=|1'
 			WHEN OP.IdTipoOperacion = 9 THEN 'num_ped=|' + CAST(OP.IdDocumento AS NVARCHAR(10)) + ',&num_user=|' + CAST(@IdUsuario AS NVARCHAR(10)) + ',&tp_user=|1' + ',&version=|' + CAST(OP.NoVersion AS NVARCHAR(10))
-			WHEN OP.IdTipoOperacion = 14 THEN 'num_operacion=|' + CAST(OP.IdOperacion AS NVARCHAR(10)) + ',&compra=|' + CAST(OP.IdDocumento AS NVARCHAR(10)) + ',&creado=|' + CAST(OP.IdAsignador AS NVARCHAR(10)) + ',&num_user=|' + CAST(@IdUsuario AS NVARCHAR(10)) + ',&tp_user=|1,&origin=t'
+			WHEN OP.IdTipoOperacion = 14 THEN 'num_operacion=|' + CAST(OP.IdOperacion AS NVARCHAR(10)) + ',&compra=|' + CAST(OP.IdDocumento AS NVARCHAR(10)) + ',&creado=|' + CAST(OP.IdAsignador AS NVARCHAR(10)) + ',&num_user=|' + CAST(@IdUsuario AS NVARCHAR(10)) +
+ ',&tp_user=|1,&origin=t'
 		END AS PARAMETROS,
 		(ROW_NUMBER() OVER(ORDER BY OP.FechaRegistro DESC) - 1)/ @RecordsByPage AS _Page
 	FROM @TAREAS AS TAO
 		INNER JOIN dbo.TA_Operacion AS OP (NOLOCK)
-			ON OP.IdOperacion = TAO.IdOperacion
+			ON TAO.IdOperacion = OP.IdOperacion
 		LEFT JOIN dbo.TA_TipoOperacion AS TTO (NOLOCK)
 			ON OP.IdTipoOperacion = TTO.IdTipoOperacion
-		LEFT JOIN dbo.TA_Tarea AS TAR (NOLOCK)
-			ON  TAO.IdOperacion= TAR.IdOperacion
-		LEFT JOIN dbo.TA_Estatus AS TE (NOLOCK)
-			ON OP.IdEstatusOperacion=TE.IdEstatus 
 		LEFT JOIN dbo.S_Usuario AS US (NOLOCK)
 			ON OP.IdAsignador = US.IdUsuario 
 		LEFT JOIN dbo.MM_Pedidos AS PS (NOLOCK)
@@ -439,5 +428,3 @@ BEGIN
 	END
 
 END
-
-
