@@ -1,9 +1,21 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFactura]    Script Date: 08/09/2022 12:48:50 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Daniel AC>
 -- Create date: <02-08-19>
 -- Description:	<Consulta usuarios con rol de aprobación de factura>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFactura]  
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 08/09/2022
+-- Description:	Issue #1987  Optimizacion pantallas se ordena y revisa joins 
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFactura]  
 @IdProveedor INT,
 @IdUsuario INT,
 @IdAceptacionFactura INT, 
@@ -20,13 +32,13 @@ BEGIN
 
 	  DECLARE @IdESTATUSACTUAL INT 
 
-	 SELECT @IdESTATUSACTUAL= IdEstatusOperacion FROM dbo.TA_Operacion WHERE IdOperacion=@IdOperacion
+	 SELECT @IdESTATUSACTUAL= IdEstatusOperacion FROM dbo.TA_Operacion (NOLOCK) WHERE IdOperacion=@IdOperacion
 	 IF ISNULL(@IdESTATUSACTUAL,0) = 1 --APROBACIÓN TIENE QUE ESTAR EN APROBACIÓN
 	 BEGIN 
 		CREATE TABLE #OLD_APROBADORES(IdTarea INT, IdAprobador INT, IdOperacion INT, NoSecuencia INT)
 
 		INSERT INTO #OLD_APROBADORES
-		SELECT IdTarea,IdAprobador, IdOperacion, NoSecuencia FROM TA_Tarea WHERE IdOperacion= @IdOperacion AND Activo=1
+		SELECT IdTarea,IdAprobador, IdOperacion, NoSecuencia FROM TA_Tarea (NOLOCK) WHERE IdOperacion= @IdOperacion AND Activo=1
 
 		
 		-- AGREGAR AL HISTORIAL LOS APROBADORES ELIMINADOS
@@ -36,9 +48,9 @@ BEGIN
 		@IdOperacion,
 		@FECHAMODIFICACION,
 		10--> ESTATUS DE ELIMINACIÓN DE  SELECT * FROM dbo.TA_EstadoFlujoTarea WHERE Idestado=10
-		FROM dbo.TA_Tarea  T
-		LEFT JOIN dbo.S_Usuario UA ON UA.IdUsuario=T.IdAprobador
-		LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
+		FROM dbo.TA_Tarea (NOLOCK)  T
+		LEFT JOIN dbo.S_Usuario (NOLOCK) UA ON UA.IdUsuario=T.IdAprobador
+		LEFT JOIN dbo.S_Usuario (NOLOCK) UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
 		WHERE T.Activo=1
 		AND T.IdOperacion=@IdOperacion 
 
@@ -60,7 +72,7 @@ BEGIN
 		--AGREGAR NUEVOS APROBADORES 
 		INSERT INTO dbo.TA_Tarea(NombreTarea,FechaRegistro,IdEstatus,Activo, Visto,IdAprobador,NoSecuencia,IdOperacion, AsignadoPor,MensajeAsignacion)	
 		SELECT 'Aprobación de Factura',@FECHAMODIFICACION, 1, 1,0, IdUsuario, NoSecuencia,@IdOperacion, @IdUsuario, @MensajeAsignacion
-		FROM dbo.TA_Aprobador 
+		FROM dbo.TA_Aprobador (NOLOCK)
 		WHERE IdFlujoTarea=@IdNuevoFlujoAprobacion
 
 		---AGREGAR AL HISTORIAL LOS NUEVOS APROBADORES 
@@ -70,9 +82,9 @@ BEGIN
 		@IdOperacion,
 		@FECHAMODIFICACION,
 		8--> REASIGNACIÓN DE TAREA 
-		FROM dbo.TA_Aprobador A
-		LEFT JOIN dbo.S_Usuario UA ON UA.IdUsuario=A.IdUsuario
-		LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
+		FROM dbo.TA_Aprobador (NOLOCK) A
+		LEFT JOIN dbo.S_Usuario (NOLOCK) UA ON UA.IdUsuario=A.IdUsuario
+		LEFT JOIN dbo.S_Usuario (NOLOCK) UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
 		WHERE A.IdFlujoTarea=@IdNuevoFlujoAprobacion
 				
 		SELECT 'SUCCESS'
@@ -102,27 +114,27 @@ BEGIN
 				'' AS Comentario,		--20	
 				T.MensajeAsignacion, --21
 				ISNULL(UE.Nombre,' Usuario no identificado')
-			FROM dbo.TA_Tarea AS T
+			FROM dbo.TA_Tarea (NOLOCK) AS T
 				INNER JOIN #OLD_APROBADORES OA 
 					ON OA.IdTarea = T.IdTarea
-				INNER JOIN TA_Operacion AS TOO
+				INNER JOIN TA_Operacion (NOLOCK) AS TOO
 					ON TOO.IdOperacion = T.IdOperacion
-				INNER JOIN TA_FlujoTarea AS FT
+				INNER JOIN TA_FlujoTarea (NOLOCK) AS FT
 					ON FT.IdFlujoTarea = TOO.IdFlujoTarea
-				INNER JOIN S_Usuario AS U
+				INNER JOIN S_Usuario (NOLOCK) AS U
 					ON U.IdUsuario = T.IdAprobador
-				INNER JOIN TA_TipoOperacion AS TTO
+				INNER JOIN TA_TipoOperacion (NOLOCK) AS TTO
 					ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
-				INNER JOIN TA_Estatus AS TAE
+				INNER JOIN TA_Estatus (NOLOCK) AS TAE
 					ON TAE.IdEstatus = TOO.IdEstatusOperacion
-				LEFT JOIN dbo.MM_AceptacionFactura AF 
+				JOIN dbo.MM_AceptacionFactura (NOLOCK) AF 
 					ON AF.IdAceptacionFactura=TOO.IdDocumento
-				LEFT JOIN dbo.MM_AceptacionPedido AP 
+				JOIN dbo.MM_AceptacionPedido (NOLOCK) AP 
 					ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-				LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-				LEFT JOIN dbo.MM_Pedidos PG ON PG.IdIdentificador=P.IdPedido
+				JOIN dbo.MM_Pedido (NOLOCK) P ON P.IdPedido = AP.IdPedido
+				JOIN dbo.MM_Pedidos (NOLOCK) PG ON PG.IdIdentificador=P.IdPedido
 				AND PG.IdProveedorCliente=P.IdProveedorCompras
-				LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
+				LEFT JOIN dbo.S_Usuario (NOLOCK) UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
 			WHERE T.IdOperacion = @IdOperacion			
 			GROUP BY
 			 U.IdUsuario,--0
@@ -173,25 +185,25 @@ BEGIN
 				'' AS Comentario,		--20	
 				T.MensajeAsignacion, --21
 				ISNULL(UE.Nombre,' Usuario no identificado')
-			FROM dbo.TA_Tarea AS T				
-				INNER JOIN TA_Operacion AS TOO
+			FROM dbo.TA_Tarea (NOLOCK) AS T				
+				 JOIN TA_Operacion (NOLOCK) AS TOO
 					ON TOO.IdOperacion = T.IdOperacion
-				INNER JOIN TA_FlujoTarea AS FT
+				INNER JOIN TA_FlujoTarea (NOLOCK) AS FT
 					ON FT.IdFlujoTarea = TOO.IdFlujoTarea
-				INNER JOIN S_Usuario AS U
+				INNER JOIN S_Usuario (NOLOCK) AS U
 					ON U.IdUsuario = T.IdAprobador
-				INNER JOIN TA_TipoOperacion AS TTO
+				INNER JOIN TA_TipoOperacion (NOLOCK) AS TTO
 					ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
-				INNER JOIN TA_Estatus AS TAE
+				INNER JOIN TA_Estatus (NOLOCK) AS TAE
 					ON TAE.IdEstatus = TOO.IdEstatusOperacion
-				LEFT JOIN dbo.MM_AceptacionFactura AF 
+				JOIN dbo.MM_AceptacionFactura (NOLOCK) AF 
 					ON AF.IdAceptacionFactura=TOO.IdDocumento
-				LEFT JOIN dbo.MM_AceptacionPedido AP 
+				JOIN dbo.MM_AceptacionPedido (NOLOCK) AP 
 					ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-				LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-				LEFT JOIN dbo.MM_Pedidos PG ON PG.IdIdentificador=P.IdPedido
+				JOIN dbo.MM_Pedido (NOLOCK) P ON P.IdPedido = AP.IdPedido
+				JOIN dbo.MM_Pedidos (NOLOCK) PG ON PG.IdIdentificador=P.IdPedido
 				AND PG.IdProveedorCliente=P.IdProveedorCompras
-				LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
+				LEFT JOIN dbo.S_Usuario (NOLOCK) UE ON UE.IdUsuario=@IdUsuario --> USUARIO ACTUAL
 			WHERE T.IdOperacion = @IdOperacion	
 			AND T.Activo=1--> SOLO APROBADORES ACTIVOS		
 			GROUP BY

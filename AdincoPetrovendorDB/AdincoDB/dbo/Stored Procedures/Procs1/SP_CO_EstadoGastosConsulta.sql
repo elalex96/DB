@@ -3,18 +3,19 @@
 -- Create date: 27-09-17
 -- Description:	
 -- =============================================
+-- Modificado Por:		Neri del Angel
+-- Fecha Modificación:	07 de Septiembre del 2022
+-- Descripción:			Se agrega el join de la tabla CO_RegistroMarkup
+--						para obtener las fechas de MesEstadoPemex 
+--						el cual sirve para pre llenar el mes selecionado en alguna otra edicion
+-- ========================================================================
 CREATE PROCEDURE [dbo].[SP_CO_EstadoGastosConsulta]
-    -- Add the parameters for the stored procedure here
     @EstadoRegistroID INT,
     @IdContrato INT
 AS
 BEGIN
-    -- SET NOCOUNT ON added to prevent extra result sets from
-    -- interfering with SELECT statements.
     SET NOCOUNT ON;
-
-    -- Insert statements for procedure here
-
+    SET LANGUAGE spanish;
     SELECT R.IdRegistro,
            CASE
                WHEN R.CvTipoDocFacturacion = 1 THEN
@@ -31,7 +32,10 @@ BEGIN
            ER.NombreEstado AS Estado,
            I.NombreInstalacion,
            UC.Nombre AS CreadoPor,
-           UM.Nombre AS ModificadoPor
+           UM.Nombre AS ModificadoPor,
+           CO_RegistroMarkup.MesEstadoPemex,
+           CAST(CO_RegistroMarkup.MesEstadoPemex AS DATE) AS IdFecha,
+           CONCAT(datename(month, CO_RegistroMarkup.MesEstadoPemex), ' ', YEAR(CO_RegistroMarkup.MesEstadoPemex)) AS Fecha
     FROM CO_Registro AS R
         LEFT JOIN CO_LineaPresupuestoMes AS LPM
             ON R.IdPrograma = LPM.IdLineaPresupuestoMes
@@ -43,8 +47,8 @@ BEGIN
             ON R.IdUsuarioCreadoPor = UC.UsuarioID
         LEFT JOIN AP_Usuario UM
             ON R.IdUsuarioModPor = UM.UsuarioID
+        LEFT JOIN CO_RegistroMarkup
+            ON R.IdRegistro = CO_RegistroMarkup.GastoId
     WHERE R.IdRegistro = @EstadoRegistroID
           AND ER.IdContrato = @IdContrato;
 END;
---SP_CO_EstadoGastosConsulta 11284,10007
-

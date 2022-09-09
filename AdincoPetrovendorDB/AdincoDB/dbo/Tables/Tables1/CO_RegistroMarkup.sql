@@ -11,6 +11,8 @@
     [ModificadoPor] INT                 NULL,
     [ModificadoEn]  DATETIME            NULL,
 	[ContratoId] INT NULL, 
+	[IdEstadoPemex] INT NULL,
+    [MesEstadoPemex] DATE NULL,
     CONSTRAINT [PK_CO_RegistroMarkup] PRIMARY KEY CLUSTERED ([Id] ASC),
 	CONSTRAINT [FK_CO_RegistroMarkup_CO_Registro] FOREIGN KEY ([GastoId]) REFERENCES [CO_Registro](IdRegistro),
 	CONSTRAINT [FK_CO_RegistroMarkup_APP_Usuarios_Crear] FOREIGN KEY ([CreadoPor]) REFERENCES [AP_Usuario]([UsuarioID]),
