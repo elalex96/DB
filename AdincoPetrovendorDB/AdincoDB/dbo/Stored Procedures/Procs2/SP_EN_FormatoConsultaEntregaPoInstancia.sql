@@ -1,11 +1,8 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia]    Script Date: 25/01/2022 04:57:42 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia] -- 100261,3,10061
+use adinco
+go
+drop procedure if exists SP_EN_FormatoConsultaEntregaPoInstancia
+go
+CREATE PROCEDURE [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia] -- 100261,3,10061
     @Idinstancia INT,
     @idContrato INT,
     @idUsuario INT
@@ -20,18 +17,12 @@ BEGIN
 
 	--OBTENER LAS ULTIMAS URLS ACTIVAS
 	SELECT TOP 1
-			@URLRepositorioMax	=	
-			CASE 
-				ContieneURLRepositorio
-			WHEN
-				1
-			THEN
-			URLRepositorio
-			ELSE
-				''
-			END
+			@URLRepositorioMax	= CASE  ContieneURLRepositorio 
+									WHEN 1 THEN URLRepositorio
+									ELSE ''
+								END
 	FROM 
-		EN_HistorialAprobacionesLineaTiempo
+		EN_HistorialAprobacionesLineaTiempo (NOLOCK)
 	WHERE 
 		idInstanciaEntregable	=	@Idinstancia
 		AND	idTipoOperacion	=	2
@@ -40,24 +31,18 @@ BEGIN
 	GROUP BY 
 		Comentario,
 		IdHistorialAprobacionesVersion,
-		CASE 
-				ContieneURLRepositorio
-			WHEN
-				1
-			THEN
-			URLRepositorio
-			ELSE
-				''
-			END
-	ORDER BY 
-		IdHistorialAprobacionesVersion	DESC;
+		CASE ContieneURLRepositorio 
+			WHEN 1 THEN URLRepositorio
+			ELSE ''
+		END
+	ORDER BY  IdHistorialAprobacionesVersion DESC;
 
 	--OBTENER LOS ULTIMOS COMENTARIOS
 	SELECT TOP 1
 			@idMax	=	MAX(IdLineaTiempo),
 			@comentarioElaborador	=	Comentario
 	FROM 
-		EN_HistorialAprobacionesLineaTiempo
+		EN_HistorialAprobacionesLineaTiempo (NOLOCK)
 	WHERE 
 		idInstanciaEntregable	=	@Idinstancia
 		AND	idTipoOperacion	=	2
@@ -69,7 +54,7 @@ BEGIN
 
 	SELECT @URLRepositorioAcuseMax = URLRepositorio
 			FROM 
-		EN_HistorialAprobacionesLineaTiempo
+		EN_HistorialAprobacionesLineaTiempo (NOLOCK)
 	WHERE 
 		idInstanciaEntregable	=	@Idinstancia
 		AND	idTipoOperacion	=	7
@@ -80,7 +65,7 @@ BEGIN
     SELECT E.IdEntregable,
            IE.idInstanciaEntregable,
            DocumentoEntregable,
-           ISNULL(MarcoLegal, '') AS MarcoLegal,
+           ISNULL(ML.MarcoLegal, '') AS MarcoLegal,
            ISNULL(TituloAnexo, '') AS TituloAnexo,
            ISNULL(Capitulo, '') AS Capitulo,
            Descripcion,
@@ -101,17 +86,15 @@ BEGIN
 		EN_ContratoEntregable CE 
 		ON IE.IdContratoEntregable = CE.IdContratoEntregable
     JOIN 
-		EN_Entregable E 
+		EN_Entregable E (NOLOCK)
 		ON CE.IdEntregable = E.IdEntregable
     LEFT JOIN 
-		EN_MarcoLegal ML 
+		EN_MarcoLegal ML (NOLOCK) 
 		ON E.IdMarcoLegal = ML.IdMarcoLegal
     LEFT JOIN 
-		dbo.EN_FrecuenciaEntregable f 
+		dbo.EN_FrecuenciaEntregable f (NOLOCK)
 		ON E.IdFrecuenciaEntregable = f.IdFrecuenciaEntregable
     LEFT JOIN 
-		dbo.CO_Regulador R ON E.IdRegulador = R.IdRegulador
+		dbo.CO_Regulador R (NOLOCK) ON E.IdRegulador = R.IdRegulador
     WHERE IE.idInstanciaEntregable = @Idinstancia;
 END;
-
-

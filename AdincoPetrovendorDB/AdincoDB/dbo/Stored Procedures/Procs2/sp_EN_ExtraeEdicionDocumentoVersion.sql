@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS sp_EN_ExtraeEdicionDocumentoVersion
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20/05/28
 -- Description:	Extrae los documentos que fueron enviados de acuerdo a la version
@@ -23,15 +27,15 @@ BEGIN
 		DV.IdInstanciaEntregable,
 		DV.Activo
 	FROM 
-		EN_DocumentoVersion	DV
+		EN_DocumentoVersion	DV (NOLOCK)
 	JOIN 
-		EN_EntregableDocumento	ED 
+		EN_EntregableDocumento	ED
 		ON	Dv.DocumentoEntregableId	=	ED.DocumentoEntregableId
 	JOIN 
-		EN_TipoArchivo	T 
+		EN_TipoArchivo	T (NOLOCK)
 		ON	ED.idTipoArchivo	=	T.idTipoArchivo
 	JOIN 
-		AP_Usuario	u 
+		AP_Usuario	u (NOLOCK)
 		ON	ed.CreadoPor	=	u.UsuarioID
 	WHERE 
 		DV.idInstanciaEntregable	=	@InstanciaEntregableId 
@@ -39,7 +43,3 @@ BEGIN
 		AND	N_version	=	@IdLineaTiempo
 
 END
-
-
-
-
