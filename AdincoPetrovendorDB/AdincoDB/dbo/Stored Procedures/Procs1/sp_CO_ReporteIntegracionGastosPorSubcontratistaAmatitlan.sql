@@ -1,21 +1,26 @@
 ﻿USE [Adinco]
 GO
-    -- =============================================      
-    -- Author:   Miguel      
-    -- Create date: Domingo 1 Diciembre 2016 19:49 p.m.      
-    -- Description: Reporte de Integración de Gastos a Nivel Actividad      
-    -- =============================================
-    -- Author:   Reyna 20211208 Issue 1663 
-    -- Se borra la linea de AND RRF.MesPresentacion = R.MesPresentacion  del JOIN FI_RelacionRefacturas Ya que no se mostraban las LUMS y se agrego nuevamente los JOINS 
-    -- para los comprobantes en el extranjero se muestran como LUMS
-    -- =============================================  
-    -- Author: Neri 20220727 Issue 2146 
-    -- Se ajusta columna R.Comentarios a R.Comentarios AS DescripcionPartidaServicio para que se pinte correctamente en el reporte.
-    -- =============================================  
-	-- Author:  Reyna Olvera    
-	-- Create date: 1 Septiembre 2022    
-	-- Description: Se agrega ajuste, cuando el gasto se encuentre relacionado a una nota de credito, se colocará como negativo
-	-- ============================================= 
+-- =============================================      
+-- Author:   Miguel      
+-- Create date: Domingo 1 Diciembre 2016 19:49 p.m.      
+-- Description: Reporte de Integración de Gastos a Nivel Actividad      
+-- =============================================
+-- Author:   Reyna 20211208 Issue 1663 
+-- Se borra la linea de AND RRF.MesPresentacion = R.MesPresentacion  del JOIN FI_RelacionRefacturas Ya que no se mostraban las LUMS y se agrego nuevamente los JOINS 
+-- para los comprobantes en el extranjero se muestran como LUMS
+-- =============================================  
+-- Author: Neri 20220727 Issue 2146 
+-- Se ajusta columna R.Comentarios a R.Comentarios AS DescripcionPartidaServicio para que se pinte correctamente en el reporte.
+-- =============================================  
+-- Author:  Reyna Olvera    
+-- Create date: 1 Septiembre 2022    
+-- Description: Se agrega ajuste, cuando el gasto se encuentre relacionado a una nota de credito, se colocará como negativo
+-- ============================================= 
+-- Author:  Reyna Olvera    
+-- Create date: 8 Septiembre 2022    
+-- Description: Issue 2218 - Se agrega ajuste de mostrar las columnas solicitadas que realizan extracción de petrovendor con adinco [Ajuste
+-- ,Descripción de la Partida ó servicio, Orden de Servicio/Orden Compra,Partida,Unidad,P.U. USD, P.U. MXN, Cantidad Real]
+-- ============================================= 
 
 SET ANSI_NULLS ON
 GO
@@ -23,15 +28,15 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan]      
+CREATE PROCEDURE [dbo].[sp_CO_ReporteIntegracionGastosPorSubcontratistaAmatitlan]
     @Anio INT = 0,
     @Mes INT = 0,
     @IdPresupuesto INT = 0
 AS
 BEGIN
-    
+
     SET LANGUAGE spanish;
-     SELECT UPPER(CONCAT(DATENAME(MONTH, R.MesPresentacion), ' ', YEAR(R.MesPresentacion))) AS FechaReporte,
+    SELECT UPPER(CONCAT(DATENAME(MONTH, R.MesPresentacion), ' ', YEAR(R.MesPresentacion))) AS FechaReporte,
            CASE
                WHEN R.CvTipoDocFacturacion = 1 THEN
                    ISNULL(F.Serie, '') + ' ' + ISNULL(F.Folio, '')
@@ -40,8 +45,30 @@ BEGIN
                ELSE
                    ''
            END AS NumeroFactura,
-           '' AS Comentarios,
-           R.Comentarios AS DescripcionPartidaServicio,
+           CASE
+               WHEN R.CvTipoDocFacturacion = 1 THEN
+           (CASE
+                WHEN (F.TipoComprobante) LIKE '%egreso%'
+                     OR F.TipoComprobante LIKE 'E%' THEN
+                    CASE
+                        WHEN ISNULL(R.Ajuste, '') = '' THEN
+                            R.Comentarios
+                        ELSE
+                            R.Ajuste
+                    END
+                ELSE
+                    ''
+            END
+           )
+               ELSE
+                   ''
+           END AS Comentarios,
+           CASE
+               WHEN ISNULL(MM.DescripcionLarga, '') = '' THEN
+                   ISNULL(R.DescripcionPartidaServicio, '') COLLATE Modern_Spanish_CI_AS
+               ELSE
+                   ISNULL(MM.DescripcionLarga, '') COLLATE Modern_Spanish_CI_AS
+           END AS DescripcionPartidaServicio,
            CASE
                WHEN R.CvTipoDocFacturacion = 1 THEN
                    F.Fecha
@@ -109,22 +136,37 @@ BEGIN
                    ''
            END AS FechaFacLum,
            I.NombreInstalacion AS Instalacion,
-                        --instalacion del gasto      
+           --instalacion del gasto      
            R.InicioEjecucion AS FechaI,
            R.FinEjecucion AS FechaF,
-           '' AS OrdenSC,
-           '' AS Partida,
            CASE
-               WHEN FRRF.IdMoneda = 2 THEN
-                   dbo.ObtieneValorUnitario(FRRF.IdFactura)
+               WHEN ISNULL(RTRIM(PPS.IdPedido), '') = '' THEN
+                   ISNULL(R.OrdenServicioOrdenCompra, '')
                ELSE
-                   NULL
+                   RTRIM(PPS.IdPedido)
+           END AS OrdenSC,
+           ISNULL(R.Partida, '') AS Partida,
+           CASE
+               WHEN FP.IdMoneda = 2 THEN
+                   Petrovendor.dbo.ObtieneValorUnitario(FP.IdFactura)
+               ELSE
+                   CASE
+                       WHEN FRRF.IdMoneda = 2 THEN
+                           dbo.ObtieneValorUnitario(FRRF.IdFactura)
+                       ELSE
+                           NULL
+                   END
            END AS PUUSD,
            CASE
-               WHEN FRRF.IdMoneda = 1 THEN
-                   dbo.ObtieneValorUnitario(FRRF.IdFactura)
+               WHEN FP.IdMoneda = 1 THEN
+                   Petrovendor.dbo.ObtieneValorUnitario(FP.IdFactura)
                ELSE
-                   NULL
+                   CASE
+                       WHEN FRRF.IdMoneda = 1 THEN
+                           dbo.ObtieneValorUnitario(FRRF.IdFactura)
+                       ELSE
+                           NULL
+                   END
            END AS PUMXN,
            SUM(   CASE
                       WHEN R.CvTipoDocFacturacion = 1 THEN
@@ -133,21 +175,19 @@ BEGIN
                           PCD.PrecioUnitario
                   END
               ) AS ImporteFA,
-			   CASE
-                      WHEN R.CvTipoDocFacturacion = 1 
-					  THEN
-						(CASE
-										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
-										THEN 
-											ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0))*-1),0)
-										ELSE
-											ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
-						END)
-					
-				ELSE
-                       ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
-				END
-		   AS ImporteFaCMarckup,
+           CASE
+               WHEN R.CvTipoDocFacturacion = 1 THEN
+           (CASE
+                WHEN (F.TipoComprobante) LIKE '%egreso%'
+                     OR F.TipoComprobante LIKE 'E%' THEN
+                    ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0)) * -1), 0)
+                ELSE
+                    ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+            END
+           )
+               ELSE
+                   ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+           END AS ImporteFaCMarckup,
            CASE
                WHEN F.IdMoneda = 1 THEN
                    'MXN'
@@ -155,19 +195,16 @@ BEGIN
                    'USD'
            END AS Moneda,
            SUM(   CASE
-                      WHEN R.CvTipoDocFacturacion = 1 AND ISNULL(R.MontoRegistro, 0) <> 0 
-					  THEN
-                          
-						  (
-							CASE
-										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
-										THEN 
-											ISNULL((ABS(ISNULL(RM.MontoGasto, 0))*-1),0) / ISNULL(RM.TipoCambio, TCM.TipoCambio)
-										ELSE
-											ISNULL(R.MontoRegistro, 0) / ISNULL(RM.TipoCambio, TCM.TipoCambio)
-							END
-						)
-
+                      WHEN R.CvTipoDocFacturacion = 1
+                           AND ISNULL(R.MontoRegistro, 0) <> 0 THEN
+                  (CASE
+                       WHEN (F.TipoComprobante) LIKE '%egreso%'
+                            OR F.TipoComprobante LIKE 'E%' THEN
+                           ISNULL((ABS(ISNULL(RM.MontoGasto, 0)) * -1), 0) / ISNULL(RM.TipoCambio, TCM.TipoCambio)
+                       ELSE
+                           ISNULL(R.MontoRegistro, 0) / ISNULL(RM.TipoCambio, TCM.TipoCambio)
+                   END
+                  )
                       WHEN R.CvTipoDocFacturacion IN ( 2, 3 )
                            AND ISNULL(R.MontoRegistro, 0) <> 0 THEN
                           ISNULL(R.MontoRegistro, 0) / ISNULL(RM.TipoCambio, TCMPC.TipoCambio)
@@ -175,45 +212,41 @@ BEGIN
                           0
                   END
               ) AS ImprteUSDMxnUsd,
-		    CASE
-                      WHEN R.CvTipoDocFacturacion = 1 
-					  THEN
-						(CASE
-										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
-										THEN 
-											ISNULL((ABS(ISNULL(rm.MontoEquivalente, 0))*-1),0)
-										ELSE
-											 ISNULL(rm.MontoEquivalente, 0)
-						END)
-					
-				ELSE
-                        ISNULL(rm.MontoEquivalente, 0)
-				END AS MarkUp,
-		   (
-				CASE
-						WHEN R.CvTipoDocFacturacion = 1 
-						THEN
-						(CASE
-										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
-										THEN 
-											ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0))*-1),0)
-										ELSE
-											ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
-						END)
-					
-				ELSE
-						ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
-				END
-			)
-		   / (CASE
-					WHEN R.CvTipoDocFacturacion = 1 THEN
-						TCM.TipoCambio
-					WHEN R.CvTipoDocFacturacion IN ( 2, 3 ) THEN
-						TCMPC.TipoCambio
-					ELSE
-						0
-				END
-			) AS ImporteEstimadoUSD,
+           CASE
+               WHEN R.CvTipoDocFacturacion = 1 THEN
+           (CASE
+                WHEN (F.TipoComprobante) LIKE '%egreso%'
+                     OR F.TipoComprobante LIKE 'E%' THEN
+                    ISNULL((ABS(ISNULL(rm.MontoEquivalente, 0)) * -1), 0)
+                ELSE
+                    ISNULL(rm.MontoEquivalente, 0)
+            END
+           )
+               ELSE
+                   ISNULL(rm.MontoEquivalente, 0)
+           END AS MarkUp,
+           (CASE
+                WHEN R.CvTipoDocFacturacion = 1 THEN
+           (CASE
+                WHEN (F.TipoComprobante) LIKE '%egreso%'
+                     OR F.TipoComprobante LIKE 'E%' THEN
+                    ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0)) * -1), 0)
+                ELSE
+                    ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+            END
+           )
+                ELSE
+                    ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+            END
+           ) / (CASE
+                    WHEN R.CvTipoDocFacturacion = 1 THEN
+                        TCM.TipoCambio
+                    WHEN R.CvTipoDocFacturacion IN ( 2, 3 ) THEN
+                        TCMPC.TipoCambio
+                    ELSE
+                        0
+                END
+               ) AS ImporteEstimadoUSD,
            R.MesCertificadoCIEP,
            Rub.NombreRubro AS SubActividad,
            '' AS AplicacionEspecifica,
@@ -228,7 +261,19 @@ BEGIN
                    'OVERHEAD'
            END AS CAPEXOPEX,
            'Facturado relacionada' AS Estatus,
-           R.IdRegistro 
+           R.IdRegistro,
+           CASE
+               WHEN ISNULL(U.Unidad, '') = '' THEN
+                   ISNULL(UM.Unidad, '') COLLATE Modern_Spanish_CI_AS
+               ELSE
+                   ISNULL(U.Unidad, '') COLLATE Modern_Spanish_CI_AS
+           END AS Unidad,
+           CASE
+               WHEN ISNULL(APD.Cantidad, 0) = 0 THEN
+                   ISNULL(RTRIM(R.CantidadReal), '')
+               ELSE
+                   ISNULL(RTRIM(APD.Cantidad), '')
+           END AS Cantidad
     FROM dbo.CO_Registro AS R
         JOIN dbo.CO_LineaPresupuestoMes AS C
             ON R.IdPrograma = C.IdLineaPresupuestoMes
@@ -276,6 +321,41 @@ BEGIN
             ON RRP.idFacturaPadre = RPRF.IdFactura
         LEFT JOIN dbo.PV_Subcontratista AS RPRSub
             ON RPRF.IdSubcontratista = RPRSub.IdSubcontratista
+        LEFT JOIN PV_MM_MaterialUnidad UM
+            ON R.UnidadMedidaId = UM.IdUnidad
+        /*cambios petro*/
+        LEFT JOIN Petrovendor..MM_AceptacionPedidoDetalle as APD
+            on R.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle
+        LEFT JOIN Petrovendor..MM_AceptacionPedido AS AP
+            ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
+        LEFT JOIN PETROVENDOR..MM_AceptacionFactura AS AFF
+            ON AP.IdAceptacionPedido = AFF.IdAceptacionPedido
+        LEFT JOIN petrovendor..mm_pedido as PP
+            on AP.IdPedido = PP.IdPedido
+        LEFT JOIN petrovendor..mm_pedidos as PPS
+            on PP.IdPedido = PPS.IdIdentificador
+               AND PPS.IdTipoPedido IN ( 2, 4, 6 ) -- MERCADEO, ADJ DIRECTA Y COMPRA DIRECTA 
+               AND PPS.IdProveedorCliente = PP.IdProveedorCompras
+        LEFT JOIN Petrovendor..MM_PedidoDetalle PPD
+            ON PP.IdPedido = PPD.IdPedido
+               AND APD.IdPedidoDetalle = ppd.IdPedidoDetalle
+        LEFT JOIN Petrovendor..MM_PeticionOferta PPO
+            ON PP.IdPeticionOferta = PPO.IdPeticionOferta
+        LEFT JOIN Petrovendor..MM_PeticionOfertaDetalle PPOD
+            ON PPO.IdPeticionOferta = PPOD.IdPeticionOferta
+               AND PPD.IdPeticionOfertaDetalle = PPOD.IdPeticionOfertaDetalle
+        LEFT JOIN petrovendor..MM_SolicitudPedidoDetalle as SPD
+            on PP.IdSolicitudPedido = SPD.IdSolicitudPedido
+               AND PPOD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle --Producto cotizados en el pedidoy que estan solo en la aceptación
+        LEFT JOIN petrovendor..MM_Material as MM
+            on SPD.IdMaterial = MM.IdMaterial
+        LEFT JOIN petrovendor..PV_MM_MaterialUnidad as U
+            on SPD.IdUnidad = U.IdUnidad
+        LEFT JOIN Petrovendor..CO_Registro as PR
+            on APD.IdAceptacionPedidoDetalle = PR.IdAceptacionPedidoDetalle
+        LEFT JOIN petrovendor..FI_Factura as FP
+            on PR.IdFactura = FP.IdFactura
+               AND AFF.IdFactura IS NOT NULL
     WHERE (
               YEAR(R.MesPresentacion) = @Anio
               AND MONTH(R.MesPresentacion) = @Mes
@@ -289,8 +369,31 @@ BEGIN
                      PC.FolioComprobante
                  ELSE
                      ''
-             END,      
-             R.Comentarios,
+             END,
+             CASE
+                 WHEN R.CvTipoDocFacturacion = 1 THEN
+             (CASE
+                  WHEN (F.TipoComprobante) LIKE '%egreso%'
+                       OR F.TipoComprobante LIKE 'E%' THEN
+                      CASE
+                          WHEN ISNULL(R.Ajuste, '') = '' THEN
+                              R.Comentarios
+                          ELSE
+                              R.Ajuste
+                      END
+                  ELSE
+                      ''
+              END
+             )
+                 ELSE
+                     ''
+             END,
+             CASE
+                 WHEN ISNULL(MM.DescripcionLarga, '') = '' THEN
+                     ISNULL(R.DescripcionPartidaServicio, '') COLLATE Modern_Spanish_CI_AS
+                 ELSE
+                     ISNULL(MM.DescripcionLarga, '') COLLATE Modern_Spanish_CI_AS
+             END,
              CASE
                  WHEN R.CvTipoDocFacturacion = 1 THEN
                      F.Fecha
@@ -307,34 +410,32 @@ BEGIN
                  ELSE
                      ''
              END,
-			    CASE
-                      WHEN R.CvTipoDocFacturacion = 1 
-					  THEN
-						(CASE
-										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
-										THEN 
-											ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0))*-1),0)
-										ELSE
-											ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
-						END)
-					
-				ELSE
-                       ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
-				END,
-			 CASE
-                      WHEN R.CvTipoDocFacturacion = 1 
-					  THEN
-						(CASE
-										WHEN (F.TipoComprobante) LIKE '%egreso%' OR F.TipoComprobante LIKE 'E%'
-										THEN 
-											ISNULL((ABS(ISNULL(rm.MontoEquivalente, 0))*-1),0)
-										ELSE
-											 ISNULL(rm.MontoEquivalente, 0)
-						END)
-					
-				ELSE
-                        ISNULL(rm.MontoEquivalente, 0)
-				END,
+             CASE
+                 WHEN R.CvTipoDocFacturacion = 1 THEN
+             (CASE
+                  WHEN (F.TipoComprobante) LIKE '%egreso%'
+                       OR F.TipoComprobante LIKE 'E%' THEN
+                      ISNULL((ABS(ISNULL(ABS(RM.MontoGasto) + ABS(rm.MontoEquivalente), 0)) * -1), 0)
+                  ELSE
+                      ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+              END
+             )
+                 ELSE
+                     ISNULL(RM.MontoGasto + rm.MontoEquivalente, 0)
+             END,
+             CASE
+                 WHEN R.CvTipoDocFacturacion = 1 THEN
+             (CASE
+                  WHEN (F.TipoComprobante) LIKE '%egreso%'
+                       OR F.TipoComprobante LIKE 'E%' THEN
+                      ISNULL((ABS(ISNULL(rm.MontoEquivalente, 0)) * -1), 0)
+                  ELSE
+                      ISNULL(rm.MontoEquivalente, 0)
+              END
+             )
+                 ELSE
+                     ISNULL(rm.MontoEquivalente, 0)
+             END,
              CASE
                  WHEN R.CvTipoDocFacturacion = 1 THEN
                      TCM.TipoCambio
@@ -389,16 +490,33 @@ BEGIN
              R.InicioEjecucion,
              R.FinEjecucion,
              CASE
-                 WHEN FRRF.IdMoneda = 2 THEN
-                     dbo.ObtieneValorUnitario(FRRF.IdFactura)
+                 WHEN ISNULL(RTRIM(PPS.IdPedido), '') = '' THEN
+                     ISNULL(R.OrdenServicioOrdenCompra, '')
                  ELSE
-                     NULL
+                     RTRIM(PPS.IdPedido)
+             END,
+             ISNULL(R.Partida, ''),
+             CASE
+                 WHEN FP.IdMoneda = 2 THEN
+                     Petrovendor.dbo.ObtieneValorUnitario(FP.IdFactura)
+                 ELSE
+                     CASE
+                         WHEN FRRF.IdMoneda = 2 THEN
+                             dbo.ObtieneValorUnitario(FRRF.IdFactura)
+                         ELSE
+                             NULL
+                     END
              END,
              CASE
-                 WHEN FRRF.IdMoneda = 1 THEN
-                     dbo.ObtieneValorUnitario(FRRF.IdFactura)
+                 WHEN FP.IdMoneda = 1 THEN
+                     Petrovendor.dbo.ObtieneValorUnitario(FP.IdFactura)
                  ELSE
-                     NULL
+                     CASE
+                         WHEN FRRF.IdMoneda = 1 THEN
+                             dbo.ObtieneValorUnitario(FRRF.IdFactura)
+                         ELSE
+                             NULL
+                     END
              END,
              CASE
                  WHEN R.CvTipoDocFacturacion = 1 THEN
@@ -426,7 +544,19 @@ BEGIN
                      'OVERHEAD'
              END,
              R.IdRegistro,
-             RRF.MesPresentacion
+             RRF.MesPresentacion,
+             CASE
+                 WHEN ISNULL(U.Unidad, '') = '' THEN
+                     ISNULL(UM.Unidad, '') COLLATE Modern_Spanish_CI_AS
+                 ELSE
+                     ISNULL(U.Unidad, '') COLLATE Modern_Spanish_CI_AS
+             END,
+             CASE
+                 WHEN ISNULL(APD.Cantidad, 0) = 0 THEN
+                     ISNULL(RTRIM(R.CantidadReal), '')
+                 ELSE
+                     ISNULL(RTRIM(APD.Cantidad), '')
+             END
     ORDER BY R.IdRegistro,
              IdFactura,
              TS.NombreTipoServicio,
