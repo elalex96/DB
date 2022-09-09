@@ -92,11 +92,11 @@ BEGIN
            PresupuestoNombre = p.Nombre
     FROM dbo.CO_LineaPresupuestoMes (NOLOCK)
         inner join CO_Presupuesto p (NOLOCK)
-            on p.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+            on CO_LineaPresupuestoMes.IdPresupuesto = p.IdPresupuesto 
         inner join #tmpResult tmp
             on tmp.IdPresupuesto = dbo.CO_LineaPresupuestoMes.IdPresupuesto
         LEFT OUTER JOIN CO_ActividadPetroleraCNH (NOLOCK)
-            ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
+            ON CO_ActividadPetroleraCNH.IdActividadPetrolera = CO_LineaPresupuestoMes.IdActividadPetrolera  
         LEFT OUTER JOIN CO_SubactividadPetrolera (NOLOCK)
             ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
         LEFT OUTER JOIN CO_TareaPetrolera (NOLOCK)
@@ -118,15 +118,15 @@ BEGIN
         LEFT OUTER JOIN CO_ClasificacionAnexo4 (NOLOCK)
             ON dbo.CO_LineaPresupuestoMes.IdAnexo4 = CO_ClasificacionAnexo4.IdAnexo4
         LEFT OUTER JOIN FI_Factura (NOLOCK)
-            ON FI_Factura.IdFactura = CO_Registro.IdFactura
+            ON CO_Registro.IdFactura = FI_Factura.IdFactura  
         LEFT OUTER JOIN CO_TipoCambioMensual (NOLOCK)
-            ON CO_TipoCambioMensual.IdMoneda = FI_Factura.IdMoneda
-               AND CO_TipoCambioMensual.IdMes = MONTH(CO_Registro.MesPresentacion)
-               AND CO_TipoCambioMensual.Anio = YEAR(CO_Registro.MesPresentacion)
+            ON FI_Factura.IdMoneda = CO_TipoCambioMensual.IdMoneda 
+               AND MONTH(CO_Registro.MesPresentacion) = CO_TipoCambioMensual.IdMes 
+               AND YEAR(CO_Registro.MesPresentacion) = CO_TipoCambioMensual.Anio 
         LEFT OUTER JOIN CO_RubroInterno (NOLOCK)
             ON dbo.CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
         LEFT JOIN CO_Presupuesto (NOLOCK)
-            ON CO_Presupuesto.idpresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+            ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.idpresupuesto 
     GROUP BY dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
              dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES,
              CO_Area.NombreArea,

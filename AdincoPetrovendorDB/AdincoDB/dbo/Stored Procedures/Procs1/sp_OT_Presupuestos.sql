@@ -13,14 +13,14 @@ As
 into #tmpResult
 from CO_Presupuesto p (NOLOCK)
     inner join [dbo].[CO_ProgramaActividad] pa (NOLOCK)
-        on pa.[IdProgramaActividad] = p.[IdProgramaActividad]
+        on p.[IdProgramaActividad] = pa.[IdProgramaActividad] 
     inner join [dbo].[CO_PeriodoContrato] pc (NOLOCK)
-        on pc.IdPeriodo = pa.IdPeriodoContrato
+        on pa.IdPeriodoContrato = pc.IdPeriodo 
     inner join CO_Contrato con (NOLOCK)
-        on con.IdContrato = pc.IdContrato
+        on pc.IdContrato = con.IdContrato 
             and con.IdContratista = @pIdContratista
     inner join SC_Presupuesto scp (NOLOCK)
-        on scp.IdPresupuesto = p.IdPresupuesto
+        on p.IdPresupuesto = scp.IdPresupuesto
            and scp.IdSubContrato = @pIdSubContrato
 where p.Actual = 1
       and (
@@ -52,13 +52,13 @@ begin
             on sc.IdSubContrato = @pIdSubContrato
 				and @pIdSubContrato > 0
         inner join [dbo].[CO_ProgramaActividad] pa (NOLOCK)
-            on pa.[IdProgramaActividad] = p.[IdProgramaActividad]
+            on p.[IdProgramaActividad] = pa.[IdProgramaActividad] 
         inner join [dbo].[CO_PeriodoContrato] pc (NOLOCK)
-            on pc.IdPeriodo = pa.IdPeriodoContrato
+            on pa.IdPeriodoContrato = pc.IdPeriodo  
         inner join CO_Contrato con (NOLOCK)
             on con.IdContratista = @pIdContratista
-				and con.IdContrato = pc.IdContrato
-				and con.IdContrato = sc.IdContrato
+				and pc.IdContrato = con.IdContrato  
+				and sc.IdContrato = con.IdContrato  
     where p.Actual = 1
     group by p.IdPresupuesto,
              p.Nombre,
