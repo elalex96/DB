@@ -1,5 +1,12 @@
-﻿-- p_MPY_GRAceptacion 3,'4500092975',80,'20190305',0
-CREATE Proc [dbo].[p_MPY_GRAceptacion]
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[p_MPY_GRAceptacion]    Script Date: 09/09/2022 11:24:15 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- p_MPY_GRAceptacion 3,'4500092975',80,'20190305',0
+ALTER Proc [dbo].[p_MPY_GRAceptacion]
 @pIdContrato int,
 @pPO_SAPNumber varchar(50),
 @pPOLineNumber varchar(50),
@@ -96,7 +103,7 @@ as
 			PaisSAP =ven.Country,				ShortText = po.ShortText,
 			ParentLineUOM=po.ParentLineUOM,		ServiceShortText=po.ServiceShortText,		
 			ServicesUOM=po.ServicesUOM,
-			ReferenceNumber = case when aprov.ReferenceNumber COLLATE Modern_Spanish_CI_AS is null then ses.GRReferenceNumber COLLATE Modern_Spanish_CI_AS  else aprov.ReferenceNumber COLLATE Modern_Spanish_CI_AS end
+			ReferenceNumber = case when aprov.ReferenceNumber COLLATE Modern_Spanish_CI_AS is null or aprov.ReferenceNumber = '' then ses.GRReferenceNumber COLLATE Modern_Spanish_CI_AS  else aprov.ReferenceNumber COLLATE Modern_Spanish_CI_AS end
 		from MPY_MM_AceptacionPedido aprov
 		inner join Adinco..CO_SAPGR ses on ses.PO_SAPNumber = @pPO_SAPNumber --And
 											--ses.POLineNumber = @pPOLineNumber 
@@ -165,11 +172,5 @@ as
 			st1.Cantidad = ses.Quantity
 			
 		)
-	
-
-
-
-
-
 
 	set @pIdAceptacionPedido = isnull(@pIdAceptacionPedido,0)
