@@ -1,5 +1,4 @@
-﻿USE [Adinco]
-GO
+﻿
     -- =============================================      
     -- Author:   Miguel      
     -- Create date: Domingo 1 Diciembre 2016 19:49 p.m.      
@@ -202,7 +201,7 @@ SELECT
                     ELSE
                         PCD.PrecioUnitario
                 END
-            ) AS DECIMAL(15, 2))                                                    AS ImporteFA,
+            ) AS DECIMAL(15, 2))                                                    AS ImporteFA,--**************************************************
     CAST(CASE
              WHEN R.CvTipoDocFacturacion = 1
                  THEN (CASE
@@ -242,7 +241,7 @@ SELECT
                     ELSE
                         0
                 END
-            ) AS DECIMAL(15, 2))                                                    AS ImprteUSDMxnUsd,
+            ) AS DECIMAL(15, 2))                                                    AS ImprteUSDMxnUsd, --**************************************************
     CAST(CASE
              WHEN R.CvTipoDocFacturacion = 1
                  THEN (CASE
@@ -427,11 +426,13 @@ FROM
         petrovendor..FI_Factura                 as FP
             on PR.IdFactura = FP.IdFactura
                AND AFF.IdFactura IS NOT NULL
+			   AND FP.Activa = 1
 
     /*cambios petro compra directa*/
     LEFT JOIN
         petrovendor..FI_Factura                 AS FPCO
             ON F.UUID = FPCO.UUID COLLATE Modern_Spanish_CI_AS
+			AND FPCO.Activa = 1
     LEFT JOIN
         Petrovendor..CO_Registro                AS RPCD
             ON FPCO.IdFactura = RPCD.IdFactura
@@ -445,9 +446,6 @@ FROM
             ON PG.IdIdentificador = FPCO.IdFactura
                AND PG.IdTipoPedido = 1 --> cte compra directa
                AND TAO.IdProveedor = PG.IdProveedorCliente
-    LEFT JOIN
-        dbo.FI_CFDIConcepto                     ConP
-            ON FPCO.IdFactura = ConP.IdFactura
 WHERE
     (
         YEAR(R.MesPresentacion) = @Anio
