@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_CotizacionAutomatico_WDEA]    Script Date: 26/07/2022 03:09:28 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_CotizacionAutomatico_WDEA]    Script Date: 14/09/2022 10:55:12 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,7 @@ GO
 -- Create date: 09/09/2021
 -- Description:	Creacion automatica de pedidos
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_CotizacionAutomatico_WDEA] --26383,18030,'4500564101',907,10038,1318
+ALTER PROCEDURE [dbo].[SP_MM_WDEA_CotizacionAutomatico_WDEA]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdPeticionOferta INT,
@@ -40,7 +40,6 @@ BEGIN
 		@IdEstatusEdicionCotizacion INT ,
 		@IdUnidadVendedor INT, 
 		@FechaEntrega DATETIME = (SELECT FechaEntregaRequerida FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido),
-		--@IdContrato INT = (SELECT IdContrato FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido), 
 		@IdUsuario INT = (SELECT TOP 1 IDUSUARIOSOLICITANTE FROM dbo.WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato), 
 		@FechaRegistro DATETIME,
 		@IdCondicionPago INT,
@@ -147,7 +146,7 @@ BEGIN
 	BEGIN
 
 		--SE GAURDO EXITOSAMENTE LA COTIZACION
-		SET @MENSAJEFINAL = 'PURCHASING_DOCUMENT ' + @Purchasing + ' PROCESADO EN PROCURA CON LA COTIZACION DE LA SOLICITUD DE PEDIDO #' + CAST(@IdSolicitudPedido AS NVARCHAR) + ' CORRECTAMENTE';
+		SET @MENSAJEFINAL = 'PURCHASING_DOCUMENT ' + @Purchasing + ' PROCESADO EN PROCURA CON LA COTIZACIÓN DE LA SOLICITUD DE PEDIDO #' + CAST(@IdSolicitudPedido AS NVARCHAR) + ' CORRECTAMENTE';
 
 		INSERT INTO WDEA_Bitacora_AdincoSAP
 		(

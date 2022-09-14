@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]    Script Date: 26/07/2022 02:29:37 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]    Script Date: 14/09/2022 10:45:32 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -27,7 +27,6 @@ BEGIN
 			@CONTTOTAL INT,
 			@PURCHASING NVARCHAR(100),
 			@CONTRATO INT,
-			--@IDBITACORA INT,
 			@CONT_PROCESADOS INT,
 			@MENSAJE_ERORRES NVARCHAR(MAX) = '',
 			@MENSAJE_EXITOSOS NVARCHAR(MAX) = '',
@@ -158,7 +157,7 @@ BEGIN
 		--SE CONCATENAN TODOS LOS PEDIDOS PROCESADOS EXITOSAMENTE
 		SET @MENSAJE_EXITOSOS = '<ul><li>' +
 								(SELECT STUFF(
-									(SELECT 'LX '  + 'Se Genero el Pedido #' +  
+									(SELECT 'LX '  + 'Se Generó el Pedido #' +  
 													CAST(P.IdPedidoADINCO AS NVARCHAR) + 
 													' correspondiente al Purchasing #' + 
 													P.PURCHASING_DOCUMENT + ' PXP'
@@ -173,15 +172,15 @@ BEGIN
 	END;
 
 	--MENSAJE RESUMEN
-	SET @MENSAJE_FINAL = ('<br><br>Se Proceso el Archivo ' + 
+	SET @MENSAJE_FINAL = ('<br><br>Se Procesó el Archivo ' + 
 							@FileName + 
 							' con el asunto ' + 
 							@Asunto + 
 							' enviado por ' + 
-							@Destinatario + ' el ' + CONVERT(VARCHAR,GETDATE(),9) + ' con el Numero de Procesamiento Interno #' + CAST(@IDBITACORA AS nvarchar) +'. <br><br>' +
+							@Destinatario + ' el ' + CONVERT(VARCHAR,GETDATE(),9) + ' con el Número de Procesamiento Interno #' + CAST(@IDBITACORA AS nvarchar) +'. <br><br>' +
 							'Se detectaron ' + CAST(ISNULL(@CONTTOTAL,0) AS nvarchar) + ' Purchasing Document(s) Correctos' +
 							' de ' + CAST(ISNULL(@REGISTROSGUARDADOS,0) as nvarchar) + ' Purchasing Document(s) en el Documento en total,' + 
-							'de los cuales se genero ' + CAST(ISNULL(@CONT_PROCESADOS,0) AS nvarchar) + ' Pedido(s) en ADINCO.');
+							'de los cuales se generó ' + CAST(ISNULL(@CONT_PROCESADOS,0) AS nvarchar) + ' Pedido(s) en ADINCO.');
 
 
 	SET @HTML = (SELECT HTML FROM dbo.TA_Correo WHERE Asunto = 'Notificación de Resumen de Lectura de WDEA');
