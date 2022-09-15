@@ -70,6 +70,8 @@ BEGIN
         EsDePetrovendor BIT
     );
 
+	CREATE TABLE #COMPRA_DIRECTA(UUID NVARCHAR(250))
+
     SELECt TOP 1
         @NombreAreaContractual = ISNULL(CO_AreaContractual.NombreAreaContractual, '')
     FROM CO_Contrato
@@ -483,7 +485,25 @@ BEGIN
         WHERE #Facturas.IdFactura = FI_Factura.IdFactura
               AND ISNULL(FI_Factura.UUID, '') <> ''
     END
-    /**/
+    --
+	-- Si es compra directa entonces se debe de mostrar los controles en la edicion
+	--
+	INSERT INTO #COMPRA_DIRECTA(UUID)
+	SELECT	FI_Factura.UUID
+		FROM Petrovendor.dbo.FI_Factura 
+        INNER JOIN Petrovendor.dbo.TA_Operacion
+            ON FI_Factura.IdContrato = @IdContrato
+			AND TA_Operacion.IdTipoOperacion = 14
+			AND	FI_Factura.IdFactura = TA_Operacion.IdDocumento 
+	WHERE CONVERT(VARCHAR, FI_Factura.Fecha, 112) BETWEEN CONVERT(VARCHAR, @Del, 112) AND CONVERT(VARCHAR, @Al, 112) 
+
+	-- Se pone el bit de esPEtrovendor en Falso para que cuando sea una factura de compra directa se muestren los controles en la edicion del gasto
+	UPDATE #Facturas 
+	SET #Facturas.EsDePetrovendor = 0
+	FROM #Facturas
+	INNER JOIN #COMPRA_DIRECTA
+		ON #Facturas.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = #COMPRA_DIRECTA.UUID COLLATE SQL_Latin1_General_CP1_CI_AS
+
 
     SELECT F.IdFactura,
            F.NombreEmisor AS NombreEmisor,
