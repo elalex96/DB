@@ -16,8 +16,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-	INSERT INTO CO_RegistroMarkupBitacora(IdRegistro, IdEstadoAnterior, MesEstadoPemexAnterior, CreadoPor, CreadoEn )
-	SELECT @IdRegistro, IdEstadoPemex, MesEstadoPemex, @IdUsuario, GETDATE()
+	INSERT INTO CO_RegistroMarkupBitacora(IdRegistro, IdEstadoAnterior,IdEstadoActual, MesEstadoPemexAnterior, CreadoPor, CreadoEn )
+	SELECT @IdRegistro, IdEstadoPemex, @IdEstado, MesEstadoPemex, @IdUsuario, GETDATE()
 	FROM CO_RegistroMarkup 
 	WHERE GastoId = @IdRegistro
 
