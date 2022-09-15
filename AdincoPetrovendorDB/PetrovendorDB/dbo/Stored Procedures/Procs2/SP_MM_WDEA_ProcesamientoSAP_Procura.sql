@@ -210,7 +210,7 @@ BEGIN
 	SELECT
 			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
 			Destinatario, 
-			CAST(CAST(GETDATE() AS DATE) AS nvarchar) + ' Reporte de interfase ADINCO SAP' + ' Envio ' + CAST(@ENVIO as nvarchar) + '/2',
+			CAST(CAST(GETDATE() AS DATE) AS nvarchar) + ' Reporte de interfase ADINCO SAP' + ' Envió ' + CAST(@ENVIO as nvarchar) + '/2',
 			REPLACE(@HTML,'##NOMBRE_USUARIO##',ISNULL(Nombre,'Usuario de ADINCO')), 
 			DATEADD(MINUTE, 1, GETDATE()), 
 			0, 
@@ -233,7 +233,7 @@ BEGIN
 		SELECT
 			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
 			110, 
-			'Notificacion Lectura WDEA',
+			'Notificación Lectura WDEA',
 			NULL, 
 			GETDATE()
 		FROM dbo.WDEA_CorreosResumenProcesamiento;
@@ -253,7 +253,7 @@ BEGIN
         )
 		SELECT
 			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
-			'Notificacion Lectura WDEA', 
+			'Notificación Lectura WDEA', 
 			Destinatario,
 			1,                                            -- Enviado - bit
             GETDATE(),                                    -- FechaEnvio - datetime
