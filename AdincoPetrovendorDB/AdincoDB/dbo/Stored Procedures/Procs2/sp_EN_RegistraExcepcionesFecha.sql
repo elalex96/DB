@@ -1,6 +1,6 @@
 ﻿USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_RegistraExcepcionesFecha]    Script Date: 23/11/2021 05:24:31 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[sp_EN_RegistraExcepcionesFecha]    Script Date: 13/09/2022 02:03:36 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -11,6 +11,11 @@ GO
 -- Description:Crea excepciones para los responsables de una instancia
 -- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 14/09/2022
+-- Description:correccion en el idtipooperacion de bitacora
 -- =============================================
 ALTER PROCEDURE [dbo].[sp_EN_RegistraExcepcionesFecha] --3,10061,249263,'20190910','20190913'
     @idContrato INT,
@@ -23,6 +28,23 @@ ALTER PROCEDURE [dbo].[sp_EN_RegistraExcepcionesFecha] --3,10061,249263,'2019091
 AS
 BEGIN
 	set nocount on
+
+	DECLARE @IdContratoEntregable INT,
+            @Frecuencia INT,
+            @idEntregable INT,
+            @DiasAprobacion INT,
+            @DiasRevision INT,
+            @DiasAlerta INT,
+            @DiasElaboracion INT,
+            @CountFF INT,
+            @C INT = 1,
+            @CantidadDias INT,
+            @FechaInicialSig DATE,
+            @CountDias INT,
+            @EstadoId INT,
+			@ExisteCountFechaLimiteAprob INT = 0,
+			@ExisteCountFechaLimiteReg	INT = 0;
+    ----------------------------------------------------------------------
 
     IF OBJECT_ID('tempdb..#DiasCE', 'U') IS NOT NULL
         DROP TABLE #DiasCE;
@@ -71,27 +93,9 @@ BEGIN
         IdFecha DATE
     );
 
-
-    DECLARE @IdContratoEntregable INT,
-            @Frecuencia INT,
-            @idEntregable INT,
-            @DiasAprobacion INT,
-            @DiasRevision INT,
-            @DiasAlerta INT,
-            @DiasElaboracion INT,
-            @CountFF INT,
-            @C INT = 1,
-            @CantidadDias INT,
-            @FechaInicialSig DATE,
-            @CountDias INT,
-            @EstadoId INT,
-			@ExisteCountFechaLimiteAprob INT = 0,
-			@ExisteCountFechaLimiteReg	INT = 0;
-    ----------------------------------------------------------------------
-
     SELECT @EstadoId = A.EstadoID
-    FROM dbo.EN_InstanciasEntregable IE --10003       Aprobado Internamente  
-    JOIN dbo.EN_Actividad A ON IE.ActividadID = A.ActividadID
+    FROM dbo.EN_InstanciasEntregable IE (NOLOCK)--10003       Aprobado Internamente  
+    JOIN dbo.EN_Actividad A (NOLOCK) ON IE.ActividadID = A.ActividadID
     WHERE IE.idInstanciaEntregable = @idInstanciaentregable;
 
     IF (@Activo = 1)
@@ -109,8 +113,8 @@ BEGIN
                @DiasElaboracion = CE.DiasElaboracion
         FROM dbo.EN_InstanciasEntregable IE (NOLOCK)
         JOIN dbo.EN_ContratoEntregable CE (NOLOCK) ON IE.IdContratoEntregable = CE.IdContratoEntregable
-        JOIN dbo.EN_Entregable E (NOLOCK) ON CE.IdEntregable = E.IdEntregable
-        WHERE idInstanciaEntregable = @idInstanciaentregable;
+			AND IE.idInstanciaEntregable = @idInstanciaentregable
+        JOIN dbo.EN_Entregable E (NOLOCK) ON CE.IdEntregable = E.IdEntregable;
 
         INSERT INTO #DiasHabilesFrecuencia (IdFecha)
         EXEC [SP_EN_GeneraInstanciasFechasLimite] @FechaLimiteint,
@@ -153,7 +157,7 @@ BEGIN
                         @idContrato,            -- idContrato - int
                         @MotivoDesactivar,      -- Comentario - nvarchar(250)
                         0,                      -- Rechazado - bit
-                        6,                      -- idTipoOperacion - int
+                        11,                      -- idTipoOperacion - int
                         @idUsuario,             -- CreadoPor - int
                         GETDATE(),              -- CreadoEn - datetime
                         @idUsuario,             -- ModificadoPor - int
@@ -169,23 +173,11 @@ BEGIN
 		select		@IdProceso									=			IPF.IdProceso 
 		from 		EN_InstanciasEntregable						IE (NOLOCK)  
 		inner JOIN	EN_InstanciasEntregables_InstanciaActividad IEIA (NOLOCK)		ON						IE.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
+					AND IE.IdInstanciaEntregable					=			@idInstanciaentregable
+					AND IE.IdContratoEntregable						=			@IdContratoEntregable
 		inner JOIN	EN_InstanciasActividades					IA (NOLOCK)			ON						IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
 		inner JOIN	EN_InstanciasProcesosFecha					IPF (NOLOCK)		ON						IA.IdInstanciasProcesos		=	IPF.IdInstanciasProcesos
-		where		IE.IdInstanciaEntregable					=			@idInstanciaentregable
-		and			IE.IdContratoEntregable						=			@IdContratoEntregable
-		and			IPF.IdProceso								is not null
-		
-		--select @IdProceso
-		--select * from #DiasHabilesFrecuencia
-		--SELECT		IPF.IdProceso
-		--		FROM		EN_InstanciasEntregable						IE
-		--		JOIN		#DiasHabilesFrecuencia						FLA		ON			IE.IdContratoEntregable						=		@IdContratoEntregable
-		--																		AND			IE.FechasLimiteAprobacion					=		FLA.IdFecha
-		--																		AND			IE.idInstanciaEntregable					<>		@idInstanciaentregable
-		--		inner join	EN_InstanciasEntregables_InstanciaActividad IEIA	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
-		--		inner JOIN	EN_InstanciasActividades					IA		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
-		--		inner JOIN	EN_InstanciasProcesosFecha					IPF		ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
-		--		where		IPF.IdProceso								=		@IdProceso
+					AND	IPF.IdProceso is not null;
 
 		if (/*Verificamos que el registro tenga un proceso ligado*/
 					@IdProceso is not null		)
@@ -199,26 +191,20 @@ BEGIN
 				inner join	EN_InstanciasEntregables_InstanciaActividad IEIA (NOLOCK)	ON			IE.idInstanciaEntregable					=		IEIA.idInstanciaEntregable
 				inner JOIN	EN_InstanciasActividades					IA (NOLOCK)		ON			IEIA.idInstanciaActividad					=		IA.idInstanciaActividad
 				inner JOIN	EN_InstanciasProcesosFecha					IPF	(NOLOCK)	ON			IA.IdInstanciasProcesos						=		IPF.IdInstanciasProcesos
-				where		IPF.IdProceso								=		@IdProceso
+					AND IPF.IdProceso								=		@IdProceso
 			)
 			begin	/*De ser asi, le asignamos un 0 a las variales para permitirle guardar*/
 					select	@ExisteCountFechaLimiteAprob	=	0,
 							@ExisteCountFechaLimiteReg		=	0
 			end
-			--else
-			--begin	/*De lo contrario indicamos que almenos existe un registro para posteriormente no dejarlo guardar*/
-					
-			--		select @ExisteCountFechaLimiteAprob		=	1,
-			--				@ExisteCountFechaLimiteReg		=	1
-			--end
+
 		end
 		else
 		begin
 			/*Si no, hacemos la validación actual*/
-			--select [@IdProceso] = @IdProceso
 
 			SELECT	@ExisteCountFechaLimiteAprob	=	COUNT(1)	
-			FROM	EN_InstanciasEntregable	IE
+			FROM	EN_InstanciasEntregable	IE (NOLOCK)
 		
 			JOIN	
 				#DiasHabilesFrecuencia	FLA
@@ -228,7 +214,7 @@ BEGIN
 		
 
 			SELECT	@ExisteCountFechaLimiteReg	=	COUNT(1)	
-			FROM	EN_InstanciasEntregable	IE
+			FROM	EN_InstanciasEntregable	IE (NOLOCK)
 		
 			JOIN	
 				#FechasCalcEntregaRegulador	FLR
@@ -243,7 +229,6 @@ BEGIN
         INSERT INTO #DiasCE (dias, tipo)
         VALUES (@DiasAprobacion, 'Aprobacion'),
                (@DiasRevision, 'revision'),
-               --(@DiasElaboracion, 'Elaboracion'),
                (@DiasAlerta, 'Alerta');
 
         SELECT @CountFF = COUNT(*)
@@ -319,9 +304,9 @@ BEGIN
                 LEFT JOIN #DiasHabiles DH ON @FechaInicialSig >= DH.IdFecha
                                              AND CE.dias = DH.Id
                 LEFT JOIN dbo.AP_Calendario C2 ON @FechaInicialSig >= C2.IdFecha
-                 AND C2.IdFecha > DATEADD(YEAR, -1, @FechaInicialSig)
-        AND C2.FinDeSemana = 0
-                                                  AND C2.DiaLaborable = 1
+                AND C2.IdFecha > DATEADD(YEAR, -1, @FechaInicialSig)
+				AND C2.FinDeSemana = 0
+                AND C2.DiaLaborable = 1
                 WHERE TIE.Id = @C;
 
                 IF ((SELECT tipo FROM #DiasCE WHERE id = @CantidadDias) = 'Alerta')
@@ -341,10 +326,10 @@ BEGIN
 
                 SELECT @FechaInicialSig = DH.IdFecha
                 FROM #TEMP_InstanciasEntregable TIE
-               LEFT JOIN #DiasCE CE ON CE.id = @CantidadDias
+				LEFT JOIN #DiasCE CE ON CE.id = @CantidadDias
                 LEFT JOIN #DiasHabiles DH ON @FechaInicialSig >= DH.IdFecha
                                              AND CE.dias = DH.Id
-                LEFT JOIN dbo.AP_Calendario C2 ON @FechaInicialSig >= C2.IdFecha
+                LEFT JOIN dbo.AP_Calendario C2 (NOLOCK) ON @FechaInicialSig >= C2.IdFecha
                                                   AND C2.IdFecha > DATEADD(YEAR, -1, @FechaInicialSig)
                                                   AND C2.FinDeSemana = 0
                                                   AND C2.DiaLaborable = 1
@@ -409,7 +394,7 @@ BEGIN
 
                
                 SELECT @idVersion = (ISNULL(MAX(IdLineaTiempo), 0) + 1)
-                FROM dbo.EN_HistorialAprobacionesLineaTiempo;
+                FROM dbo.EN_HistorialAprobacionesLineaTiempo (NOLOCK);
 
                 INSERT INTO dbo.EN_HistorialAprobacionesLineaTiempo (IdLineaTiempo,
                                                                      idInstanciaEntregable,
