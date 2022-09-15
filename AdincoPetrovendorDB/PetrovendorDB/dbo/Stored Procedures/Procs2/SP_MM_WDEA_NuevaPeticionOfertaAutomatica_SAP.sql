@@ -1,6 +1,9 @@
-﻿USE Petrovendor
+﻿USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]    Script Date: 14/09/2022 10:47:38 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Alexander Gomez
@@ -11,7 +14,7 @@ GO
 -- Create date: 15/08/2022
 -- Description:	Se corrigen los errores ortográficos para issue #1963 (Petrovendor)
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]
+ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@Purchasing NVARCHAR(100),
@@ -194,7 +197,7 @@ BEGIN
 	BEGIN 
 			
 			--SE GAURDO EXITOSAMENTE LA SOLPED
-		SET @MENSAJEFINAL = 'PURCHASING_DOCUMENT ' + @Purchasing + ' PROCESADO EN PROCURA CON LA PETICIÓN OFERA DE LA SOLICITUD DE PEDIDO #' + CAST(@IdSolicitudPedido AS NVARCHAR) + ' CORRECTAMENTE';
+		SET @MENSAJEFINAL = 'PURCHASING_DOCUMENT ' + @Purchasing + ' PROCESADO EN PROCURA CON LA PETICIÓN OFERTA DE LA SOLICITUD DE PEDIDO #' + CAST(@IdSolicitudPedido AS NVARCHAR) + ' CORRECTAMENTE';
 
 		INSERT INTO WDEA_Bitacora_AdincoSAP
 		(

@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[EN_ExtraeHistorialInstanciasEntregable]-- 10061,3,211785	
+﻿USE [Adinco]
+GO
+/****** Object:  StoredProcedure [dbo].[EN_ExtraeHistorialInstanciasEntregable]    Script Date: 13/09/2022 02:31:55 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[EN_ExtraeHistorialInstanciasEntregable]-- 10061,3,211785	
     @idUsuario INT,
     @idContrato INT = 0,
     @idInstanciaEntregable INT --" manda a elaboración, 3 Revisión, 4 Aprobación, 5 reinicio de flujo
@@ -8,6 +15,11 @@ BEGIN
 -- Author:		Reyna Olvera
 -- Create date: 25/02/2019
 -- Description:
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 14/09/2022
+-- Description: Descarte de los registros en bitacora como historial del entregable
 -- =============================================
 
 	SET NOCOUNT ON;
@@ -132,6 +144,9 @@ BEGIN
     JOIN 
 		dbo.EN_InstanciasEntregable	IE 
 		ON	H.idInstanciaEntregable	=	IE.idInstanciaEntregable
+		AND IE.idInstanciaEntregable	=	@idInstanciaEntregable
+		AND	H.Activo	=	1
+		AND H.idTipoOperacion <> 11--BITACORA
 	JOIN 
 		EN_ContratoEntregable	CE
 		ON	IE.IdContratoEntregable	=	CE.IdContratoEntregable
@@ -160,7 +175,7 @@ BEGIN
     LEFT JOIN 
 		EN_Transicion	T 
 		ON	IE.ActividadID	=	T.ActividadInicialID
-		AND	AccionID	IN	( 10000, 10001 )
+		AND	T.AccionID	IN	( 10000, 10001 )
 
     LEFT JOIN 
 		dbo.EN_Actividad	ESA 
@@ -187,15 +202,10 @@ BEGIN
     LEFT JOIN 
 		dbo.AP_Usuario	UXPS 
 		ON	EXAS.idUsuario	=	UXPS.UsuarioID
-    
     LEFT JOIN 
 		dbo.EN_DocumentoVersion	DV 
 		ON	IE.idInstanciaEntregable	=	DV.idInstanciaEntregable
 		AND	H.IdLineaTiempo	=	DV.N_version
-
-    WHERE 
-		IE.idInstanciaEntregable	=	@idInstanciaEntregable
-        AND	H.Activo	=	1
     GROUP BY 
 			 H.IdHistorialAprobacionesVersion,
              H.IdLineaTiempo,
