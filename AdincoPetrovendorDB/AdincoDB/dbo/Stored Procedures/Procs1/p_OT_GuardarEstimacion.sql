@@ -75,12 +75,12 @@ BEGIN
     )
 
     select @consecutivo = isnull(max(Consecutivo), 0) + 1
-    from OT_Estimacion
+    from OT_Estimacion (NOLOCK)
     where IdOTSolicitud = @pIdOTSolicitud
 
     select @folioEstimacion = isnull(Folio, '') + '-E' + cast(@consecutivo as varchar),
            @IdSubcontrato = IdSubContrato
-    from OT_Solicitud
+    from OT_Solicitud (NOLOCK)
     where IdOTSolicitud = @pIdOTSolicitud
 
     if (isnull(@pTotalEstimacion, 0) = 0)
@@ -115,13 +115,13 @@ BEGIN
         from #tmpEstimacionDetalle
 
         select @pIdOTEstimacion = isnull(max(IdOTEstimacion), 0) + 1
-        from OT_Estimacion
+        from OT_Estimacion (NOLOCK)
 
         /****Asegurarse de no duplicar estimacion******/
         IF exists
         (
             select 1
-            from OT_Estimacion
+            from OT_Estimacion (NOLOCK)
             where IdOTSolicitud = @pIdOTSolicitud
                   and (
                           (
@@ -175,7 +175,7 @@ BEGIN
         end
 
         select @IdOTEstimacionDetalle = isnull(max(IdOTEstimacionDetalle), 0) + 1
-        from OT_EstimacionDetalle
+        from OT_EstimacionDetalle (NOLOCK)
 
         insert into OT_EstimacionDetalle
         (
@@ -215,41 +215,41 @@ BEGIN
                    @IdActividad = 5,
                    @nombreActividad = act.NombreActividad,
                    @IdCentroCosto = ot.IdCentroCosto
-            from OT_Solicitud ot
-                inner join SC_Subcontrato sc
+            from OT_Solicitud ot (NOLOCK)
+                inner join SC_Subcontrato sc  (NOLOCK)
                     on ot.IdSubcontrato = sc.IdSubcontrato
-                inner join OT_LineaPresupuesto lp
+                inner join OT_LineaPresupuesto lp (NOLOCK)
                     on ot.IdOTSolicitud = lp.IdOTSolicitud
-                inner join CO_Contratista ctista
+                inner join CO_Contratista ctista (NOLOCK)
                     on sc.IdContratista = ctista.IdContratista
-                inner join petrovendor..S_Proveedor ptista
+                inner join petrovendor..S_Proveedor ptista (NOLOCK)
                     on ctista.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = ptista.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
-                inner join OT_Configurador conf
+                inner join OT_Configurador conf (NOLOCK)
                     on sc.IdContrato = conf.IdContrato
-                inner join [dbo].[CO_LineaPresupuestoMes] lpm
+                inner join [dbo].[CO_LineaPresupuestoMes] lpm (NOLOCK)
                     on lp.IdLineaPresupuestoMes = lpm.IdLineaPresupuestoMes
-                inner join CO_Presupuesto p
+                inner join CO_Presupuesto p (NOLOCK)
                     on lpm.IdPresupuesto = p.IdPresupuesto
-                inner join [dbo].[CO_ProgramaActividad] pa
+                inner join [dbo].[CO_ProgramaActividad] pa (NOLOCK)
                     on p.IdProgramaActividad = pa.IdProgramaActividad
-                inner join PV_Subcontratista subcon
+                inner join PV_Subcontratista subcon (NOLOCK)
                     on sc.IdSubContratista = subcon.IdSubcontratista
-                inner join Petrovendor.dbo.S_Proveedor prov
+                inner join Petrovendor.dbo.S_Proveedor prov (NOLOCK)
                     on subcon.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
-                inner join [dbo].[CO_ActividadCIEP] ACT
+                inner join [dbo].[CO_ActividadCIEP] ACT (NOLOCK)
                     ON lpm.IdActividad = ACT.IdActividad
-                inner join [dbo].[AP_UsuarioCentroCosto] ucc
+                inner join [dbo].[AP_UsuarioCentroCosto] ucc (NOLOCK)
                     on ucc.IdCentroCosto in ( ot.IdCentroCosto )
-                inner join [dbo].[AP_FlujoAprobacionEstatusUsuarios] ue
+                inner join [dbo].[AP_FlujoAprobacionEstatusUsuarios] ue (NOLOCK)
                     on ucc.IdUsuario = ue.UsuarioId
                        and ue.FlujoAprobacionEstatusId = 4
-                left join [dbo].[OT_SolicitudInstalacion] si
+                left join [dbo].[OT_SolicitudInstalacion] si (NOLOCK)
                     on ot.IdOTSolicitud = si.IdOTSolicitud
             where ot.IdOTSolicitud = @pIdOTSolicitud
         set @MotivoUrgenciaSolPed = 'Estimación Completa para OT:' + @FolioOT
 
         select @precioUnitario = Total
-        from OT_Estimacion
+        from OT_Estimacion (NOLOCK)
         where IdOTEstimacion = @pIdOTEstimacion
 
         if isnull(@IdUsuarioSolicitante, 0) = 0
@@ -272,7 +272,7 @@ BEGIN
         if (isnull(@IdInstalacion, 0) = 0)
         begin
             select @IdInstalacion = IdInstalacion
-            from co_instalacion
+            from co_instalacion (NOLOCK)
             where idactividad = @IdActividad
         end
 
@@ -285,12 +285,12 @@ BEGIN
         end
 
         select @IdDomiclioEntrega = min(spd.IdDomicilioEntrega)
-        from OT_Solicitud ot
-            inner join SC_Subcontrato sc
+        from OT_Solicitud ot (NOLOCK)
+            inner join SC_Subcontrato sc (NOLOCK)
                 on ot.IdSubContrato = sc.IdSubcontrato
-            inner join Petrovendor..MM_Pedido ped
+            inner join Petrovendor..MM_Pedido ped (NOLOCK)
                 on sc.IdPedido = ped.IdPedido
-            inner join Petrovendor..[MM_SolicitudPedidoDetalle] spd
+            inner join Petrovendor..[MM_SolicitudPedidoDetalle] spd (NOLOCK)
                 on ped.IdSolicitudPedido = spd.IdSolicitudPedido
         where ot.IdOTSolicitud = @pIdOTSolicitud
 

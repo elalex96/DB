@@ -21,8 +21,8 @@ begin
            AWS_Documentos.CreadoEl,
            SemanaDel = null,
            SemanaAl = null
-    from OT_ProgramaAdjunto
-        inner join AWS_Documentos
+    from OT_ProgramaAdjunto (NOLOCK)
+        inner join AWS_Documentos (NOLOCK)
             on OT_ProgramaAdjunto.AWSDocumentoId = AWS_Documentos.AWSDocumentoId
     where OT_ProgramaAdjunto.IdOTSolicitud = @pIdOt
     union
@@ -35,10 +35,10 @@ begin
            AWS_Documentos.CreadoEl,
            SemanaDel = OT_ProgramaAdjuntoSemana.FechaInicioSemana,
            SemanaAl = OT_ProgramaAdjuntoSemana.FechaFinSemana
-    from OT_ProgramaAdjuntoSemana
-        inner join OT_SolicitudMaterial
+    from OT_ProgramaAdjuntoSemana (NOLOCK)
+        inner join OT_SolicitudMaterial (NOLOCK)
             on OT_ProgramaAdjuntoSemana.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
-        inner join AWS_Documentos
+        inner join AWS_Documentos (NOLOCK)
             on OT_ProgramaAdjuntoSemana.AWSDocumentoId = AWS_Documentos.AWSDocumentoId
     where OT_SolicitudMaterial.IdOTSolicitud = @pIdOt
           and (

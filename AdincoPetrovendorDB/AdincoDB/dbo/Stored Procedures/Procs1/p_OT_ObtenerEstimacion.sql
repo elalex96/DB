@@ -53,12 +53,12 @@ select om.IdOTSolicitud,
        FechaInicioSubcontratista = Min(spc.Fecha),
        FechaFinSubcontratista = Max(spc.Fecha),
        om.IdOTSolicitudMaterial
-from [dbo].[OT_SolicitudProgramaCaptura] spc
-    inner join OT_SolicitudMaterial om
+from [dbo].[OT_SolicitudProgramaCaptura] spc (NOLOCK)
+    inner join OT_SolicitudMaterial om (NOLOCK)
         on spc.IdOTSolicitudMaterial = om.IdOTSolicitudMaterial
-    inner join SC_Materiales scm
+    inner join SC_Materiales scm (NOLOCK)
         on om.IdSCMaterial = scm.IdSCMaterial
-    inner join Petrovendor.dbo.[PV_MM_MaterialUnidad] u
+    inner join Petrovendor.dbo.[PV_MM_MaterialUnidad] u (NOLOCK)
         on scm.IdUnidad = u.IdUnidad
 where om.IdOTSolicitud = @pIdOTSolicitud
       and VoBoContratista = 1
@@ -83,18 +83,18 @@ group by om.IdOTSolicitud,
 if (isnull(@pIdOTEstimacion, 0) > 0)
 begin
     select *
-    from vwOTEstimacion
+    from vwOTEstimacion (NOLOCK)
     where IdOTEstimacion = @pIdOTEstimacion
 end
 Else
 begin
 
     select @consecutivo = isnull(max(Consecutivo), 0) + 1
-    from OT_Estimacion
+    from OT_Estimacion (NOLOCK)
     where IdOTSolicitud = @pIdOTSolicitud
 
     select @fechaIniCorte = dateadd(dd, 1, max(FechaCorteFin))
-    from OT_Estimacion
+    from OT_Estimacion (NOLOCK)
     where IdOTSolicitud = @pIdOTSolicitud
           and isnull(cancelada, 0) = 0
 
@@ -102,8 +102,8 @@ begin
     begin
 
         select @fechaIniCorte = min(Fecha)
-        from [dbo].[OT_SolicitudProgramaCaptura] spc
-            inner join [dbo].OT_SolicitudMaterial sp
+        from [dbo].[OT_SolicitudProgramaCaptura] spc (NOLOCK)
+            inner join [dbo].OT_SolicitudMaterial sp (NOLOCK)
                 on spc.IdOTSolicitudMaterial = sp.IdOTSolicitudMaterial
         where sp.IdOTSolicitud = @pIdOTSolicitud
     end
@@ -133,31 +133,31 @@ begin
            tmp.IdOTSolicitudMaterial,
            Moneda = isnull(mon.TipoMonedaCorto, ''),
            IdMoneda = ot.IdMOneda
-    from OT_Solicitud ot
-        inner join SC_Subcontrato sc
+    from OT_Solicitud ot (NOLOCK)
+        inner join SC_Subcontrato sc (NOLOCK)
             on ot.IdOTSolicitud = @pIdOTSolicitud
                and ot.IdSubContrato = sc.IdSubcontrato
-        INNER JOIN PV_Subcontratista subc
+        INNER JOIN PV_Subcontratista subc (NOLOCK)
             on sc.IdSubContratista = subc.IdSubcontratista
-        inner join OT_LineaPresupuesto OTlp
+        inner join OT_LineaPresupuesto OTlp (NOLOCK)
             on ot.IdOTSolicitud = OTlp.IdOTSolicitud
-        inner join CO_LineaPresupuestoMes lp
+        inner join CO_LineaPresupuestoMes lp (NOLOCK)
             on OTlp.IdLineaPresupuestoMes = lp.[IdLineaPresupuestoMes]
-        inner join CO_Presupuesto pre
+        inner join CO_Presupuesto pre (NOLOCK)
             on lp.IdPresupuesto = pre.IdPresupuesto
-        inner join [dbo].[CO_Contratista] cont
+        inner join [dbo].[CO_Contratista] cont (NOLOCK)
             on sc.IdContratista = cont.IdContratista
-        inner join #tmpInfoPrograma tmp
+        inner join #tmpInfoPrograma tmp 
             on ot.IdOTSolicitud = tmp.IdOTSolicitud
-        left join Petrovendor.dbo.MM_Pedido ped
+        left join Petrovendor.dbo.MM_Pedido ped (NOLOCK)
             on sc.IdPedido = ped.IdPedido
-        left JOIN Petrovendor.dbo.PV_TipoMoneda mon
+        left JOIN Petrovendor.dbo.PV_TipoMoneda mon (NOLOCK)
             on ot.IdMOneda = mon.idMoneda
-        left join OT_SolicitudInstalacion OTins
+        left join OT_SolicitudInstalacion OTins (NOLOCK)
             on ot.IdOTSolicitud = OTins.idOTSolicitud
-        left join CO_Instalacion ins
+        left join CO_Instalacion ins (NOLOCK)
             on OTins.IdInstalacion = ins.IdInstalacion
-        left join CO_ActividadCIEP act
+        left join CO_ActividadCIEP act (NOLOCK)
             on ins.IdActividad = act.IdActividad
     where ot.IdOTSolicitud = @pIdOTSolicitud
     group by ot.IdOTSolicitud,

@@ -2,7 +2,7 @@
 -- Modificador: Neri del Angel
 -- Fecha: 13 de Septiembre del 2022
 -- Detalle: Se elimina codigo comentado, se ajusta orden de joins y en los ON de los joins
-----=======================================
+--=======================================
 CREATE proc [dbo].[p_OT_ValidarEstimacion]
     @pIdOTEstimacion int,
     @pIdOTSolicitud int,
@@ -21,7 +21,7 @@ begin
         if not exists
         (
             select 1
-            from [dbo].[OT_ProgramaSemanaCerrada]
+            from [dbo].[OT_ProgramaSemanaCerrada] (NOLOCK)
             where IdOTSolicitud = @pIdOTSolicitud
                   and @fechaAux
                   between FechaSemanaIni and FechaSemanaFin
@@ -43,7 +43,7 @@ begin
     if exists
     (
         select 1
-        from OT_Estimacion
+        from OT_Estimacion (NOLOCK)
         where IdOTSolicitud = @pIdOTSolicitud
               and (
                       convert(varchar, FechaCorteInicio, 112)
@@ -62,8 +62,8 @@ begin
     if
     (
         select ISNULL(SUM(Captura), 0)
-        from [dbo].[OT_SolicitudProgramaCaptura] pc
-            inner join OT_SolicitudMaterial sm
+        from [dbo].[OT_SolicitudProgramaCaptura] pc (NOLOCK)
+            inner join OT_SolicitudMaterial sm (NOLOCK)
                 on PC.IdOTSolicitudMaterial = sm.IdOTSolicitudMaterial
         where SM.IdOTSolicitud = @pIdOTSolicitud
               and (convert(varchar, Fecha, 112)
