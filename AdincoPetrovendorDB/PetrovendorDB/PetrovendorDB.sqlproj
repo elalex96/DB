@@ -10658,6 +10658,9 @@
     <Build Include="dbo\Tables\APP_TransaccionesProcura.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AX_ConsultaBitacorasSoporte.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_ConsultaReportesEvaluacionPorFechasContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\APP_AdministrarNotificacionDefault.sql" />
+    <Build Include="dbo\Tables\APP_NotificacionesDefault.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\APP_ConsultarNotificacionDefault.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
