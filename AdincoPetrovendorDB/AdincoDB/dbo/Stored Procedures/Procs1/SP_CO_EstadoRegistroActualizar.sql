@@ -15,6 +15,12 @@ CREATE PROCEDURE [dbo].[SP_CO_EstadoRegistroActualizar]
 AS
 BEGIN
     SET NOCOUNT ON;
+
+	INSERT INTO CO_RegistroMarkupBitacora(IdRegistro, IdEstadoAnterior, MesEstadoPemexAnterior, CreadoPor, CreadoEn )
+	SELECT @IdRegistro, IdEstadoPemex, MesEstadoPemex, @IdUsuario, GETDATE()
+	FROM CO_RegistroMarkup 
+	WHERE GastoId = @IdRegistro
+
     UPDATE CO_RegistroMarkup
     SET IdEstadoPemex = @IdEstado,
         MesEstadoPemex = @MesEstadoPemex
