@@ -2,17 +2,15 @@
 -- ESTE SP SE ENCUENTRA TANTO EN PETROVENDOR COMO EN ADINCO, PERO TIENEN LOGICA DIFERENTE
 --***********************************
 -- sp_OT_ConsultaSolicitudMateriales 57,1
-CREATE Proc [dbo].[sp_OT_ConsultaSolicitudMateriales]
+create Proc [dbo].[sp_OT_ConsultaSolicitudMateriales]
     @pIdOTSolicitud INT,
     @pTipoUsuario INT = 1 -- 1.Contratista 2.SubContratista
 As
 BEGIN
     declare @IdSubcontrato int
 
-
-
     select @idSubcontrato = IdSubcontrato
-    from OT_Solicitud
+    from OT_Solicitud (NOLOCK)
     where IdOTSolicitud = @pIdOTSolicitud
 
 
@@ -48,9 +46,9 @@ BEGIN
            CantidadOT = sum(OT_SolicitudMaterial.Cantidad)
     from SC_Materiales (NOLOCK)
         inner join OT_SolicitudMaterial (NOLOCK)
-            on OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
+            on SC_Materiales.IdSCMaterial = OT_SolicitudMaterial.IdSCMaterial  
         inner join OT_Solicitud (NOLOCK)
-            on OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+            on OT_SolicitudMaterial.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
                and OT_Solicitud.IdOTEstatus NOT in ( 7, 8, 12 )
                and isnull(OT_Solicitud.IsActivo, 0) = 1
     where SC_Materiales.IdSubcontrato = @idSubcontrato
@@ -74,15 +72,15 @@ BEGIN
            CantidadOT = sum(OT_SolicitudProgramaCaptura.Captura)
     from SC_Materiales (NOLOCK)
         inner join OT_SolicitudMaterial (NOLOCK)
-            on OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
+            on SC_Materiales.IdSCMaterial = OT_SolicitudMaterial.IdSCMaterial 
         inner join OT_Solicitud (NOLOCK)
-            on OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+            on OT_SolicitudMaterial.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
                and OT_Solicitud.IdOTEstatus = 12
                and isnull(OT_Solicitud.IsActivo, 0) = 1
                and OT_Solicitud.IsEliminado = 0
         inner join OT_SolicitudProgramaCaptura (NOLOCK)
             on OT_SolicitudProgramaCaptura.VoBoContratista = 1
-               and OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
+               and OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial 
     where SC_Materiales.IdSubcontrato = @idSubcontrato
     group by SC_Materiales.idSubcontrato,
              SC_Materiales.IdSCMaterial,
@@ -133,24 +131,23 @@ BEGIN
            Moneda = isnull(PV_TipoMoneda.TipoMonedaCorto, 'NO DEFINIDO'),
            OT_SolicitudMaterial.Comentarios
     from dbo.SC_Materiales (NOLOCK)
-        --inner join petrovendor..MM_Material 				(NOLOCK) on MM_Material.IdMaterial = SC_Materiales.IdMaestro
         inner join OT_Solicitud (NOLOCK)
-            on OT_Solicitud.IdSubContrato = SC_Materiales.IdSubContrato
+            on SC_Materiales.IdSubContrato = OT_Solicitud.IdSubContrato 
         inner join sc_subcontrato (NOLOCK)
-            on sc_subcontrato.idsubcontrato = OT_Solicitud.idsubcontrato
+            on OT_Solicitud.idsubcontrato = sc_subcontrato.idsubcontrato  
         inner join #tmpCantidades2 tmp2 (NOLOCK)
             on tmp2.IdSCMaterial = SC_Materiales.IdSCMaterial
         left join Petrovendor.dbo.MM_Pedido (NOLOCK)
-            on MM_Pedido.IdPedido = sc_subcontrato.idPedido
+            on sc_subcontrato.idPedido = MM_Pedido.IdPedido 
         left join Petrovendor.dbo.PV_TipoMoneda (NOLOCK)
-            on PV_TipoMoneda.idMoneda = isnull(MM_Pedido.idMoneda, OT_Solicitud.IdMoneda)
+            on isnull(MM_Pedido.idMoneda, OT_Solicitud.IdMoneda) = PV_TipoMoneda.idMoneda 
         left JOIN OT_SolicitudMaterial (NOLOCK)
             on OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
-               AND OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
+               AND SC_Materiales.IdSCMaterial = OT_SolicitudMaterial.IdSCMaterial
         left JOIN Petrovendor.dbo.PV_MM_MaterialUnidad (NOLOCK)
-            ON PV_MM_MaterialUnidad.IdUnidad = SC_Materiales.IdUnidad
+            ON SC_Materiales.IdUnidad = PV_MM_MaterialUnidad.IdUnidad 
         LEFT JOIN dbo.OT_SolicitudMaterialBitacora (NOLOCK)
-            ON OT_SolicitudMaterialBitacora.IdOTSolicitudMaterial = OT_SolicitudMaterial.IdOTSolicitudMaterial
+            ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudMaterialBitacora.IdOTSolicitudMaterial 
                AND OT_SolicitudMaterialBitacora.IdTipoUsuario = 1
     where OT_Solicitud.IdOTSolicitud = @pIdOTSolicitud
           AND (
@@ -201,5 +198,8 @@ BEGIN
              SC_Materiales.Concepto
 
 END
+
+
+GO
 
 

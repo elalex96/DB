@@ -1,15 +1,17 @@
 ﻿-- p_OT_LineasPresupuesto 9
-Create Proc p_OT_LineasPresupuesto
+create Proc [dbo].[p_OT_LineasPresupuesto]
 @pIdOTSolicitud int
 as
 
-	select olp.IdLineaPresupuestoMes, 
-		lp.IdInstalacion,
-		i.NombreInstalacion,
-		ac.NombreActividad
-	from [OT_LineaPresupuesto] olp
-	inner join [dbo].[CO_LineaPresupuestoMes] lp on lp.IdLineaPresupuestomes = olp.IdLineaPresupuestoMes
-	left join CO_Instalacion i on i.IdInstalacion = lp.IdInstalacion
-	LEFT JOIN CO_ActividadCIEP ac on ac.IdActividad = lp.IdActividad
-	
-	where olp.IdOTSolicitud = @pIdOTSolicitud
+	select OT_LineaPresupuesto.IdLineaPresupuestoMes, 
+		CO_LineaPresupuestoMes.IdInstalacion,
+		CO_Instalacion.NombreInstalacion,
+		CO_ActividadCIEP.NombreActividad
+	from OT_LineaPresupuesto (NOLOCK)
+	inner join CO_LineaPresupuestoMes (NOLOCK) on OT_LineaPresupuesto.IdLineaPresupuestoMes = CO_LineaPresupuestoMes.IdLineaPresupuestomes 
+	left join CO_Instalacion (NOLOCK) on CO_LineaPresupuestoMes.IdInstalacion = CO_Instalacion.IdInstalacion 
+	LEFT JOIN CO_ActividadCIEP (NOLOCK) on CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad  	
+	where OT_LineaPresupuesto.IdOTSolicitud = @pIdOTSolicitud
+GO
+
+
