@@ -3,6 +3,13 @@ create Proc [dbo].[sp_OT_ConsultaSolicitudPrograma]
 @pIdOTSolicitud int
 As
 
+	create table #tmpMeses
+	(
+		mes int,
+		nombreMes varchar(30),
+		anio int,
+		anioMes int
+	)
 
 	declare @anioIni int,
 			@anioFin int
@@ -11,15 +18,6 @@ As
 			@anioFin= max(datepart(yy,FechaProgramaFin))
 	from OT_SolicitudMaterial (NOLOCK)
 	where IdOTSolicitud= @pIdOTSolicitud
-
-
-	create table #tmpMeses
-	(
-		mes int,
-		nombreMes varchar(30),
-		anio int,
-		anioMes int
-	)
 
 	
 	

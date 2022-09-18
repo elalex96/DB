@@ -12,7 +12,9 @@ As
 		CantidadOT float
     )
 
-	insert into #tmpCantidades
+	CREATE TABLE #tmpContrato(IdSCMaterial INT, IdSubContrato INT, Concepto VARCHAR(MAX), IdMaestro INT, IdSubFamilia INT, IdUnidad INT, IdServicio INT, NombreUnidad NVARCHAR(100),  Cantidad DECIMAL(14, 5), PrecioUnitario MONEY, Importe MONEY,  Descripcion VARCHAR(MAX),  DescripcionCorta VARCHAR(MAX), CreadoPor INT, CreadoEl DATETIME, ModificadoPor INT, ModificadoEl DATETIME, CantidadEnOTPendAut FLOAT, Moneda VARCHAR(50), COnvenio INT )
+
+	insert into #tmpCantidades(idSubcontrato, IdSCMaterial, IdOTSM, CantidadSC, CantidadOT)
 	select 
                 SC_Materiales.idSubcontrato,
                 SC_Materiales.IdSCMaterial,  
@@ -23,15 +25,14 @@ As
         inner join OT_SolicitudMaterial (NOLOCK) on SC_Materiales.IdSCMaterial = OT_SolicitudMaterial.IdSCMaterial  
         inner join OT_Solicitud (NOLOCK) on OT_SolicitudMaterial.IdOTSolicitud = OT_Solicitud.IdOTSolicitud  and
                                 OT_Solicitud.IdOTEstatus NOT in (7,8,12) and                                
-                                isnull(OT_Solicitud.IsActivo,0) = 1			
-			
+                                isnull(OT_Solicitud.IsActivo,0) = 1					
        where SC_Materiales.IdSubcontrato = @pIdSubContrato 
 	    group by 
 			SC_Materiales.idSubcontrato,
             SC_Materiales.IdSCMaterial,
 			OT_SolicitudMaterial.IdOTSolicitudMATERIAL
 
-	insert into #tmpCantidades 
+	insert into #tmpCantidades (idSubcontrato, IdSCMaterial, IdOTSM, CantidadSC, CantidadOT)
 	select 
                 SC_Materiales.idSubcontrato,
                 SC_Materiales.IdSCMaterial,  
@@ -52,7 +53,9 @@ As
             SC_Materiales.IdSCMaterial,
 			OT_SolicitudProgramaCaptura.IdOTSolicitudMATERIAL
 
+	
 
+	INSERT INTO #tmpContrato(IdSCMaterial, IdSubContrato, Concepto, IdMaestro, IdSubFamilia, IdUnidad, IdServicio, NombreUnidad,  Cantidad, PrecioUnitario, Importe,  Descripcion,  DescripcionCorta, CreadoPor, CreadoEl, ModificadoPor, ModificadoEl, CantidadEnOTPendAut, Moneda, COnvenio )
 	select 
 		SC_Materiales.IdSCMaterial,
 		SC_SubContrato.IdSubContrato,
@@ -72,11 +75,10 @@ As
 		SC_Materiales.ModificadoPor,
 		SC_Materiales.ModificadoEl,
 		CantidadEnOTPendAut = isnull(
-									isnull(sum(CantidadOT),0)/* - isnull(max(cant.CantidadSC),0) */
+									isnull(sum(cant.CantidadOT),0)/* - isnull(max(cant.CantidadSC),0) */
 									,0),
 	Moneda = isnull(TipoMonedaCorto,'NO DEFINIDA'),
 	COnvenio = 0
-	into #tmpContrato
 	from SC_SubContrato (NOLOCK)
 	inner join CO_Contratista (NOLOCK) on SC_SubContrato.IdContratista = CO_Contratista.IdContratista 
 	inner join PV_Subcontratista (NOLOCK) on SC_SubContrato.IdSubContratista = PV_Subcontratista.IdSubContratista

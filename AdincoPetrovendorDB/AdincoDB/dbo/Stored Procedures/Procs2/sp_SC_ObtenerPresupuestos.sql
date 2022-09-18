@@ -4,15 +4,17 @@ create Proc [dbo].[sp_SC_ObtenerPresupuestos]
 @pIdSubContrato int,
 @pSoloSeleccionados bit=0
 As
+	
+	CREATE TABLE #tmpResult(IdSubContratoPresupuesto INT, IdPresupuesto INT, NombrePresupuesto NVARCHAR(MAX), Comentario NVARCHAR(MAX), FechaAprobacionPEP DATE)
 
-	select 
+	INSERT INTO #tmpResult(IdSubContratoPresupuesto, IdPresupuesto, NombrePresupuesto, Comentario, FechaAprobacionPEP)
+	SELECT 
 			SC_Presupuesto.IdSubContratoPresupuesto,
 			CO_Presupuesto.IdPresupuesto,
 			NombrePresupuesto = CO_Presupuesto.Nombre,
 			CO_Presupuesto.Comentario,
 			CO_Presupuesto.FechaAprobacionPEP
-	into #tmpResult
-	from CO_Presupuesto (NOLOCK)	
+	FROM CO_Presupuesto (NOLOCK)	
 	inner join CO_ProgramaActividad (NOLOCK) on CO_Presupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad 
 	inner join CO_PeriodoContrato (NOLOCK) on CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo 
 	inner join CO_Contrato (NOLOCK) on CO_PeriodoContrato.IdContrato = CO_Contrato.IdContrato 
@@ -33,14 +35,13 @@ As
 	)
 	begin 
 
-		insert into #tmpResult
+		insert into #tmpResult#tmpResult(IdSubContratoPresupuesto, IdPresupuesto, NombrePresupuesto, Comentario, FechaAprobacionPEP)
 		select 
 			IdSubContratoPresupuesto = 0,
 			CO_Presupuesto.IdPresupuesto,
 			NombrePresupuesto = CO_Presupuesto.Nombre,
 			CO_Presupuesto.Comentario,
-			CO_Presupuesto.FechaAprobacionPEP
-		
+			CO_Presupuesto.FechaAprobacionPEP	
 		from CO_Presupuesto (NOLOCK)	
 		inner join CO_ProgramaActividad (NOLOCK) on CO_Presupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad 
 		inner join CO_PeriodoContrato (NOLOCK) on CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo 
