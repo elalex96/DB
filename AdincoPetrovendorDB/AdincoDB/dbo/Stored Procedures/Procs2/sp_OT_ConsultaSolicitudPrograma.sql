@@ -1,18 +1,7 @@
-﻿
--- sp_OT_ConsultaSolicitudPrograma 24
-CREATE Proc sp_OT_ConsultaSolicitudPrograma
+﻿-- sp_OT_ConsultaSolicitudPrograma 24
+create Proc [dbo].[sp_OT_ConsultaSolicitudPrograma]
 @pIdOTSolicitud int
 As
-
-
-	declare @anioIni int,
-			@anioFin int
-
-	select @anioIni = min(datepart(yy,FechaProgramaInicio)),
-			@anioFin= max(datepart(yy,FechaProgramaFin))
-	from OT_SolicitudMaterial t1
-	where IdOTSolicitud= @pIdOTSolicitud
-
 
 	create table #tmpMeses
 	(
@@ -20,8 +9,15 @@ As
 		nombreMes varchar(30),
 		anio int,
 		anioMes int
-
 	)
+
+	declare @anioIni int,
+			@anioFin int
+
+	select @anioIni = min(datepart(yy,FechaProgramaInicio)),
+			@anioFin= max(datepart(yy,FechaProgramaFin))
+	from OT_SolicitudMaterial (NOLOCK)
+	where IdOTSolicitud= @pIdOTSolicitud
 
 	
 	
@@ -70,12 +66,10 @@ As
 			CantidadMes = isnull(sp.Cantidad,0),
 			Descripcion = isnull(sc.Concepto,sc.IdMaestro) +cast(sc.Descripcion as varchar(150)),
 			IdOTSolicitudPrograma= isnull(sp.IdOTSolicitudPrograma,0),
-			CantidadOT = sm.Cantidad
-			
-	from OT_SolicitudMaterial sm
-	inner join SC_Materiales sc on sc.IdSCMaterial  = sm.IdSCMaterial
-	
-	inner join #tmpMeses meses on 			
+			CantidadOT = sm.Cantidad		
+	from OT_SolicitudMaterial sm (NOLOCK)
+	inner join SC_Materiales sc (NOLOCK) on sm.IdSCMaterial = sc.IdSCMaterial  
+	inner join #tmpMeses meses (NOLOCK) on 			
 								meses.aniomes   >= cast(cast((datepart(yy,sm.FechaProgramaInicio)) as varchar) +  
 														cast(
 															
@@ -120,7 +114,7 @@ As
 															as varchar) 
 														
 														as int)
-	LEFT JOIN OT_SolicitudPrograma sp on sp.IdOTSolicitudMaterial = sm.IdOTSolicitudMaterial and
+	LEFT JOIN OT_SolicitudPrograma sp (NOLOCK) on sm.IdOTSolicitudMaterial = sp.IdOTSolicitudMaterial  and
 										meses.anio = sp.anio and
 										meses.mes = sp.mes 
 	where IdOTSolicitud = @pIdOTSolicitud 
@@ -140,5 +134,8 @@ As
 			meses.mes
 
 
+
+
+GO
 
 

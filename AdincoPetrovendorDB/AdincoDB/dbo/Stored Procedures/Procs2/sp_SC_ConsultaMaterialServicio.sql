@@ -3,11 +3,14 @@ create proc [dbo].[sp_SC_ConsultaMaterialServicio]
 @pIdSubContrato int
 As
 
-	select serv.IdServicio,
-		serv.NombreServicio
-	from SC_Materiales mat
-	inner join CO_Servicio serv on serv.IdServicio = mat.IdServicio
-	where mat.IdSubContrato = @pIdSubContrato
-	group by serv.IdServicio,
-		serv.NombreServicio
+	select CO_Servicio.IdServicio,
+		CO_Servicio.NombreServicio
+	from SC_Materiales (NOLOCK)
+	inner join CO_Servicio (NOLOCK) on SC_Materiales.IdServicio = CO_Servicio.IdServicio 
+	where SC_Materiales.IdSubContrato = @pIdSubContrato
+	group by CO_Servicio.IdServicio,
+		CO_Servicio.NombreServicio
+
+GO
+
 
