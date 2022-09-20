@@ -1,13 +1,3 @@
-USE Adinco
-
-IF EXISTS
-(
-    SELECT 1
-    FROM sysobjects
-    WHERE name = 'VolumenesProduccionMensual'
-)
-    DROP PROCEDURE VolumenesProduccionMensual
-GO
 CREATE PROCEDURE VolumenesProduccionMensual
     @IdReporteVolumenesProduccionPetroleo INT = 0,
     @Accion NVARCHAR(50),
