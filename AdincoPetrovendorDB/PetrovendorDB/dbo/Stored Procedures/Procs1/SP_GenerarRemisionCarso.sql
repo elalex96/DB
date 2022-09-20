@@ -127,7 +127,7 @@ BEGIN --EMPIEZA STORE
             ON sp.IdSolicitudPedido = p.IdSolicitudPedido 
                AND  O.NoVersion = p.Version 
                AND  pod.IdPeticionOferta = p.IdPeticionOferta
-			   AND P.IdPedido= R.IdPedido
+			   AND  R.IdPedido = P.IdPedido
     WHERE UPPER(r.RECID) = UPPER(@RecId)
           AND r.IdPedido = @IdPedido
           AND UPPER(r.IdOC) = UPPER(@IdOC)
