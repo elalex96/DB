@@ -1,0 +1,4 @@
+use adinco
+
+CREATE TABLE PR_VolumenMensualProduccionPetroleoBitacora(IdReporteVolumenesProduccionPetroleo INT, Accion NVARCHAR(50), IdContrato INT, MesReporte DATE , VolumenPetroleoPuntoMedicion FLOAT, GradosAPI FLOAT, ContenidoAzufre FLOAT, VolumenPetroleoAutoconsumo FLOAT, MetanoC1 FLOAT, EtanoC2 FLOAT, PropanoC3 FLOAT, ButanoC4 FLOAT, MetanoC1Autoconsumo FLOAT, EtanoC2Autoconsumo FLOAT, PropanoC3Autoconsumo FLOAT, ButanoC4Autoconsumo FLOAT, VolumenCondensadoPuntoMedicion FLOAT, VolumenCondensadoAutoconsumo FLOAT, VolumenCondensablePuntoMedicion FLOAT, VolumenCondensableAutoconsumo FLOAT, CreadoEl Datetime, CreadoPor INT,
+FOREIGN KEY (CreadoPor) REFERENCES AP_Usuario(UsuarioID))
