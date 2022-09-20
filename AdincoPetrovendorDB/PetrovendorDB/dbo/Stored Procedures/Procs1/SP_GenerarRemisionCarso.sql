@@ -195,11 +195,14 @@ BEGIN --EMPIEZA STORE
             INNER JOIN dbo.MM_Pedido p
                 ON sp.IdSolicitudPedido = p.IdSolicitudPedido 
                    AND O.NoVersion = p.Version 
+				   AND  R.IdPedido = P.IdPedido
         WHERE UPPER(r.RECID) = UPPER(@RecId)
               AND r.IdPedido = @IdPedido
               AND UPPER(r.IdOC) = UPPER(@IdOC)
               AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
-              AND UPPER(r.Asiento) = UPPER(@Asiento))
+              AND UPPER(r.Asiento) = UPPER(@Asiento)
+			  AND ISNULL(p.IdEstatusEliminado, 0) <> 1)
+			  
     BEGIN
         
         SELECT @Retorno
