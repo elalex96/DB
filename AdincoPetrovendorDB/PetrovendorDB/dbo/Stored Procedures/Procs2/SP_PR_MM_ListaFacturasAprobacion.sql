@@ -49,11 +49,11 @@ BEGIN
 	CREATE TABLE #AceptacionesPedido 
 	(
 		IdAceptacionPedido	int				NULL,
-		Pedido				nvarchar(max)	NULL,
+		Pedido				varchar(150)	NULL,
 		IdPedido			int				NULL,
 		FechaRegistro		datetime		NULL,
-		Proveedor			nvarchar(350)	NULL,
-		Nombre				nvarchar(100)	NULL,
+		Proveedor			varchar(400)	NULL,
+		Nombre				varchar(200)	NULL,
 		TotalPedido			money			NULL,
 		Moneda				nvarchar(100)	NULL,
 		RFC					nvarchar(100)	NULL,
