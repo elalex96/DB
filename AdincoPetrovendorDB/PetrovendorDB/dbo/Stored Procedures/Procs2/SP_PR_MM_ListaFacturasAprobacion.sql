@@ -359,7 +359,22 @@ BEGIN
 IF EXISTS (SELECT COUNT(1) FROM #PLANT)  
 BEGIN
 
-	INSERT INTO #AceptacionesPedido       
+	INSERT INTO #AceptacionesPedido     
+		(IdAceptacionPedido,
+		Pedido,
+		IdPedido,
+		FechaRegistro,
+		Proveedor,
+		Nombre,
+		TotalPedido,
+		Moneda,
+		RFC,
+		IdSolicitudPedido,
+		span,
+		PedirCarta,
+		IdOperacion,
+		Contrato,
+		PO)
 		SELECT 
 			AF.IdAceptacionPedido,
           CONCAT('PO Number:', AP.IdPedido COLLATE Modern_Spanish_CI_AS, ' ', '- SES Number: ', SES.SESNumber COLLATE Modern_Spanish_CI_AS, ' - Proforma Number:', CAST(PSES.IdPRESES AS nvarchar(100)) COLLATE Modern_Spanish_CI_AS),
