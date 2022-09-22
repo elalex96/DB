@@ -1,4 +1,11 @@
-﻿/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarOperacion]    Script Date: 29/09/2020 13:06:19 ******/
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarOperacion]    Script Date: 22/09/2022 11:04:21 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarOperacion]    Script Date: 29/09/2020 13:06:19 ******/
 -- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 24/Marzo/2017
@@ -8,12 +15,7 @@
 -- Create date: 24/10/2019
 -- Description:	se valida que no exista la operacion con los datos(evita duplicidad en las operaciones)
 -- =============================================
--- =============================================
--- Author:		Abel Rivera
--- Create date: 19/12/2019
--- Description:	se agrega una nueva notificacion al agregar una nueva operacion
--- =============================================
-CREATE  PROCEDURE  [dbo].[SP_TA_AgregarOperacion] 
+ALTER  PROCEDURE  [dbo].[SP_TA_AgregarOperacion] 
 	-- Add the parameters for the stored procedure here
 		
 	@IdDocumento int,
@@ -46,13 +48,7 @@ BEGIN
 						FROM dbo.TA_Operacion 
 						WHERE IdDocumento = @IdDocumento 
 							AND IdTipoOperacion = @IdTipoOperacion
-							--AND IdFlujoTarea = @IdFlujoTarea
-							--AND IdEstatusOperacion = @IdEstatusOperacion
-							--AND IdEstadoFlujo = @IdEstadoFlujo
 							AND IdProveedor = @IdProveedor
-							--AND IdAsignador = @IdAsignador
-							--AND IdVigencia = @IdVigencia
-							--AND IdPrioridad = @IdPrioridad
 							);
 
 			IF ISNULL(@IdOperacion,0) = 0
@@ -63,19 +59,6 @@ BEGIN
 
 				SET @IdOperacion = (SCOPE_IDENTITY());
 
-				IF @IdTipoOperacion <> 6 -- evita que se agrege notifacion para la operacion de solicitud de oferta
-				BEGIN
-				    	-- agrega una nueva notificacion interna dependiendo del tipo de operacion
-						EXEC dbo.SP_N_AgregarNuevaNotificacion  @IdTipoOperacion = @IdTipoOperacion,    -- int
-																@IdFlujoTarea = @IdFlujoTarea,       -- int
-																@IdProveedor = @IdProveedor,        -- int
-																@IdEstatusOperacion = @IdEstatusOperacion, -- int
-																@IdOperacion = @IdOperacion        -- int
-				END
-
-
-
-				--SET @IdOperacion = (SCOPE_IDENTITY())
 			END
 			
 		END 
@@ -87,11 +70,7 @@ BEGIN
 						FROM dbo.TA_Operacion 
 						WHERE IdDocumento = @IdDocumento 
 							AND IdTipoOperacion = @IdTipoOperacion
-							--AND IdEstatusOperacion = @IdEstatusOperacion
 							AND IdProveedor = @IdProveedor
-							--AND IdAsignador = @IdAsignador
-							--AND IdVigencia = @IdVigencia
-							--AND IdPrioridad = @IdPrioridad
 							);
 
 			IF ISNULL(@IdOperacion,0) = 0
@@ -101,18 +80,6 @@ BEGIN
 				VALUES(@IdDocumento,@IdTipoOperacion,@IdEstatusOperacion,@IdProveedor,@IdAsignador,GETDATE(), @Descripcion,@IdVigencia,@IdPrioridad)
 
 				SET @IdOperacion = (SCOPE_IDENTITY())
-
-					IF @IdTipoOperacion <> 6 -- evita que se agrege notifacion para la operacion de solicitud de oferta
-					BEGIN
-					-- agrega una nueva notificacion interna dependiendo del tipo de operacion
-							EXEC dbo.SP_N_AgregarNuevaNotificacion @IdTipoOperacion = @IdTipoOperacion,    -- int
-													@IdFlujoTarea = @IdFlujoTarea,       -- int
-													@IdProveedor = @IdProveedor,        -- int
-													@IdEstatusOperacion = @IdEstatusOperacion, -- int
-													@IdOperacion = @IdOperacion        -- int
-
-							--SET @IdOperacion = (SCOPE_IDENTITY())
-					END
 			END
 
 			

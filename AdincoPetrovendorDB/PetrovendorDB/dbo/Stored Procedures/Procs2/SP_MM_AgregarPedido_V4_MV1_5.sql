@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarPedido_V4_MV1_5]    Script Date: 22/09/2022 11:01:46 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 09/07/2018
 -- Description:	ahora la aprobacion es por cada pedido y no una aprobacion para todos los pedidos generados
@@ -13,13 +20,8 @@
 -- Create date: 25-10-2019
 -- Description:	Se agrega personalización de días de crédito por detalle 
 -- =============================================
--- =============================================
--- Author:	Abel Rivera
--- Create date: 20-12-2019
--- Description:	Se agrego la funcionalidad para insertar la notificacion interna
--- =============================================
 
-CREATE PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5]
+ALTER PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5]
     @IdSolicitudPedido INT,
     @Mensaje NVARCHAR(MAX),
     @IdPrioridad INT,
@@ -41,28 +43,15 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @COUNT_PROVEEDORES INT,
-    @INCREMENTO INT = 1,
-    @IdPedidoActual INT,
-    @IdFlujo INT = 0,
-    @IdOperacionActual INT,
-    @IdTipoOperacion INT = 9, ---Aprobación de pedido
-    @TotalSumaPedidos FLOAT,
-    @VERSION INT,
-    @IdMonedaDLS INT = 2,
-	@suma FLOAT,
-	@IdPeticionOfertaActual INT,
-	@ID_MONEDA_ACTUAL INT,
-	@SumaPedidoProveedor FLOAT ,
-	@FECHA_TIPO_CONVERSION_ACTUAL DATETIME,
-	@TipoCambio FLOAT,
-	@ValorDivision FLOAT,
-	@ID_PROVEEDOR_VENTAS INT,
-	@TIPO_CAMBIO_ACTUAL DECIMAL(12, 4),
-	@IdPedidoGeneral INT,
-	@FECHA_ACTUAL DATETIME,
-	@DescripcionH NVARCHAR(MAX),
-    @sumacadena NVARCHAR(MAX);
+    DECLARE @COUNT_PROVEEDORES INT;
+    DECLARE @INCREMENTO INT = 1;
+    DECLARE @IdPedidoActual INT;
+    DECLARE @IdFlujo INT = 0;
+    DECLARE @IdOperacionActual INT;
+    DECLARE @IdTipoOperacion INT = 9; ---Aprobación de pedido
+    DECLARE @TotalSumaPedidos FLOAT;
+    DECLARE @VERSION INT;
+    DECLARE @IdMonedaDLS INT = 2;
 
     DECLARE @tablaFlujos TABLE
     (
@@ -128,12 +117,12 @@ BEGIN
            POD.IdMoneda,
            POD.IdPeticionOferta
     FROM MM_PeticionOferta AS PO
-        INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
-            ON PO.IdPeticionOferta = POD.IdPeticionOferta
-        INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-            ON PO.IdSolicitudPedido = SP.IdSolicitudPedido 
-        INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
-            ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+        INNER JOIN MM_PeticionOfertaDetalle AS POD
+            ON POD.IdPeticionOferta = PO.IdPeticionOferta
+        INNER JOIN MM_SolicitudPedido AS SP
+            ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+        INNER JOIN MM_SolicitudPedidoDetalle AS SPD
+            ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
     WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
           AND POD.AddValidado = 1
           AND POD.Cotizado = 1
@@ -149,6 +138,9 @@ BEGIN
     );
 
     --variables donde se lleva el total de cada pedido 
+    DECLARE @suma FLOAT;
+    DECLARE @sumacadena NVARCHAR(MAX);
+
     SET @INCREMENTO = 1;
 
     WHILE @COUNT_PROVEEDORES >= @INCREMENTO
@@ -168,18 +160,20 @@ BEGIN
 
         --#Obtener el IdMoneda la peticion oferta, el total del pedido del proveedor actual 
 
-        SET @IdPeticionOfertaActual
+        DECLARE @IdPeticionOfertaActual INT
             =   (
                     SELECT idPeticionOferta FROM #TABLA_PROVEEDORES WHERE idrow = @INCREMENTO
                 );
 
-        SET @ID_MONEDA_ACTUAL = (
+        DECLARE @ID_MONEDA_ACTUAL INT = (
                                             SELECT idTipoMoneda FROM #TABLA_PROVEEDORES WHERE idrow = @INCREMENTO
                                         );
 
-        SET @SumaPedidoProveedor = (
+        DECLARE @SumaPedidoProveedor FLOAT = (
                                                  SELECT sumaPedido FROM #TABLA_PROVEEDORES WHERE idrow = @INCREMENTO
                                              );
+
+        DECLARE @FECHA_TIPO_CONVERSION_ACTUAL DATETIME;
 
         DELETE #TIPO_CAMBIO;
 
@@ -187,7 +181,7 @@ BEGIN
         SELECT *
         FROM dbo.GetTipoCambioActual(@ID_MONEDA_ACTUAL, GETDATE());
 
-        SET @TipoCambio = (
+        DECLARE @TipoCambio FLOAT = (
                                         SELECT TC.TipoCambio
                                         FROM #TABLA_PROVEEDORES AS TP
                                             LEFT JOIN #TIPO_CAMBIO AS TC
@@ -195,7 +189,7 @@ BEGIN
                                         WHERE idrow = @INCREMENTO
                                     );
 
-        SET @ValorDivision = (
+        DECLARE @ValorDivision FLOAT = (
                                            SELECT TP.sumaPedido
                                            FROM #TABLA_PROVEEDORES AS TP
                                                LEFT JOIN #TIPO_CAMBIO AS TC
@@ -219,7 +213,9 @@ BEGIN
 
         SET @TotalSumaPedidos = ISNULL(@TotalSumaPedidos, 0) + @suma;
 
-        SET @ID_PROVEEDOR_VENTAS = (SELECT idProveedor FROM #TABLA_PROVEEDORES WHERE idrow = @INCREMENTO);
+        DECLARE @ID_PROVEEDOR_VENTAS INT = (
+                                               SELECT idProveedor FROM #TABLA_PROVEEDORES WHERE idrow = @INCREMENTO
+                                           );
 
         --#AGREGAR  Al pedido 
         INSERT INTO MM_Pedido
@@ -253,13 +249,13 @@ BEGIN
 			   @NoCartaCN,
 			   @UnicaCondicionPago,
 			   @FechaEntregaPedido
-        FROM MM_PeticionOferta AS PO (NOLOCK)
-            INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
-                ON PO.IdPeticionOferta = POD.IdPeticionOferta
-            INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
-                ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+        FROM MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOfertaDetalle AS POD
+                ON POD.IdPeticionOferta = PO.IdPeticionOferta
+            INNER JOIN MM_SolicitudPedido AS SP
+                ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+            INNER JOIN MM_SolicitudPedidoDetalle AS SPD
+                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND PO.IdSubcontratista = @ID_PROVEEDOR_VENTAS
               AND POD.AddValidado = 1
@@ -330,13 +326,13 @@ BEGIN
 				ELSE 
 				POD.DiasCreditoTemp
 				END 
-        FROM MM_PeticionOferta AS PO (NOLOCK)
-            INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
-                ON PO.IdPeticionOferta = POD.IdPeticionOferta
-            INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
-                ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+        FROM MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOfertaDetalle AS POD
+                ON POD.IdPeticionOferta = PO.IdPeticionOferta
+            INNER JOIN MM_SolicitudPedido AS SP
+                ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+            INNER JOIN MM_SolicitudPedidoDetalle AS SPD
+                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND PO.IdSubcontratista = @ID_PROVEEDOR_VENTAS
               AND POD.AddValidado = 1
@@ -352,7 +348,9 @@ BEGIN
             SELECT Fecha FROM #TIPO_CAMBIO
         );
 		
-        SET @TIPO_CAMBIO_ACTUAL = (SELECT TipoCambio FROM #TIPO_CAMBIO);
+        DECLARE @TIPO_CAMBIO_ACTUAL DECIMAL(12, 4) = (
+                                                         SELECT TipoCambio FROM #TIPO_CAMBIO
+                                                     );
 
         INSERT INTO dbo.MM_PedidoTipoCambio
         (
@@ -369,7 +367,8 @@ BEGIN
         );
 
         --#Generar el IdPedidoGeneral   
-        SET @FECHA_ACTUAL = (
+        DECLARE @IdPedidoGeneral INT;
+        DECLARE @FECHA_ACTUAL DATETIME = (
                                              SELECT GETDATE()
                                          );
 		
@@ -425,12 +424,8 @@ BEGIN
 
         SELECT @IdOperacionActual = SCOPE_IDENTITY();
 
-		-- agrega una nueva notificacion interna dependiendo del tipo de operacion
-		EXEC dbo.SP_N_AgregarNuevaNotificacion @IdTipoOperacion = @IdTipoOperacion,    -- int
-	                            @IdFlujoTarea = @IdFlujo,       -- int
-	                            @IdProveedor = @IdProveedorCompras,        -- int
-	                            @IdEstatusOperacion = 1, -- int
-	                            @IdOperacion = @IdOperacionActual        -- int
+
+        DECLARE @DescripcionH NVARCHAR(MAX);
 
         SET @DescripcionH
             = N'El Usuario ' +
@@ -474,10 +469,10 @@ BEGIN
                A.NoSecuencia,
                @IdOperacionActual AS IdOperacion
         FROM TA_Aprobador AS A
-            INNER JOIN TA_FlujoTarea AS FT (NOLOCK)
-                ON A.IdFlujoTarea = FT.IdFlujoTarea
-            INNER JOIN S_Usuario AS U (NOLOCK)
-                ON A.IdUsuario = U.IdUsuario
+            INNER JOIN TA_FlujoTarea AS FT
+                ON FT.IdFlujoTarea = A.IdFlujoTarea
+            INNER JOIN S_Usuario AS U
+                ON U.IdUsuario = A.IdUsuario
         WHERE A.IdFlujoTarea = @IdFlujo
         ORDER BY NoSecuencia ASC;
 	
@@ -522,11 +517,11 @@ BEGIN
                @TipoCambio,
                @ValorDivision,
                ISNULL(U.Telefono, '')
-        FROM TA_Aprobador AS A (NOLOCK)
-            INNER JOIN TA_FlujoTarea AS FT (NOLOCK)
-                ON A.IdFlujoTarea = FT.IdFlujoTarea
-            INNER JOIN S_Usuario AS U (NOLOCK)
-                ON A.IdUsuario = U.IdUsuario
+        FROM TA_Aprobador AS A
+            INNER JOIN TA_FlujoTarea AS FT
+                ON FT.IdFlujoTarea = A.IdFlujoTarea
+            INNER JOIN S_Usuario AS U
+                ON U.IdUsuario = A.IdUsuario
         WHERE A.IdFlujoTarea = @IdFlujo
         GROUP BY A.IdUsuario,
                  U.Nombre,
@@ -546,13 +541,13 @@ BEGIN
             POD.AddPedidoFinal = 0,
 			POD.IdCondicionPagoTemp= NULL, -->NUEVO DIAS DE CREDITO
 			POD.DiasCreditoTemp=NULL -->NUEVO DIAS DE CREDITO
-        FROM MM_PeticionOfertaDetalle AS POD (NOLOCK)
-            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
+        FROM MM_PeticionOfertaDetalle AS POD
+            INNER JOIN MM_PeticionOferta AS PO
                 ON POD.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
+            INNER JOIN MM_SolicitudPedido AS SP
                 ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
-            INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
-                ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+            INNER JOIN MM_SolicitudPedidoDetalle AS SPD
+                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND POD.AddValidado = 1
               AND POD.Cotizado = 1
@@ -592,3 +587,6 @@ BEGIN
     FROM #APROBADORES_PEDIDOS
     ORDER BY row_group_pedido ASC;
 END;
+
+
+
