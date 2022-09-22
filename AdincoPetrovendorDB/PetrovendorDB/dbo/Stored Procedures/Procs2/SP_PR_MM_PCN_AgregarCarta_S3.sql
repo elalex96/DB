@@ -1,13 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_PCN_AgregarCarta_S3'
-)
-    DROP PROCEDURE SP_PR_MM_PCN_AgregarCarta_S3;
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]    Script Date: 26/07/2021 05:26:45 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]    Script Date: 22/09/2022 11:02:54 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -21,7 +14,7 @@ GO
 -- Create date:	  26-07-21
 -- Description:   Se agrega columna de Bucket
 -- ============================================= 
-CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]
+ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]
 -- Add the parameters for the stored procedure here
 @IdProveedor        INT, 
 @IdUsuario          INT, 
@@ -118,12 +111,6 @@ AS
             FROM dbo.MM_AceptacionPedido
             WHERE IdAceptacionPedido = @IdAceptacionPedido
         );
-        EXEC dbo.SP_N_AgregarNuevaNotificacion 
-             @IdTipoOperacion = NULL, -- int
-             @IdFlujoTarea = 0, -- int
-             @IdProveedor = @IdProveedorOperadora, -- int
-             @IdEstatusOperacion = 1, -- int
-             @IdOperacion = @IdAceptacionPedido;  -- en este caso es la aceptacion de pedido
 
         DECLARE @CANTIDAD_APROBADORES INT=
         (
