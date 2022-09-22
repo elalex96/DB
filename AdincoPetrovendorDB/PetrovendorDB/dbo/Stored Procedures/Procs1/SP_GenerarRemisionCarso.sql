@@ -1,8 +1,14 @@
-﻿USE [Petrovendor]
+﻿
+USE Petrovendor
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_GenerarRemisionCarso'
+)
+    DROP PROCEDURE SP_GenerarRemisionCarso;
 GO
-DROP PROCEDURE IF EXISTS SP_GenerarRemisionCarso
-GO
-/****** Object:  StoredProcedure [dbo].[SP_GenerarRemisionCarso]    Script Date: 12/05/2022 07:45:12 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_GenerarRemisionCarso]    Script Date: 20/09/2022 03:40:18 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -121,6 +127,7 @@ BEGIN --EMPIEZA STORE
             ON sp.IdSolicitudPedido = p.IdSolicitudPedido 
                AND  O.NoVersion = p.Version 
                AND  pod.IdPeticionOferta = p.IdPeticionOferta
+			   AND  R.IdPedido = P.IdPedido
     WHERE UPPER(r.RECID) = UPPER(@RecId)
           AND r.IdPedido = @IdPedido
           AND UPPER(r.IdOC) = UPPER(@IdOC)
@@ -188,11 +195,14 @@ BEGIN --EMPIEZA STORE
             INNER JOIN dbo.MM_Pedido p
                 ON sp.IdSolicitudPedido = p.IdSolicitudPedido 
                    AND O.NoVersion = p.Version 
+				   AND  R.IdPedido = P.IdPedido
         WHERE UPPER(r.RECID) = UPPER(@RecId)
               AND r.IdPedido = @IdPedido
               AND UPPER(r.IdOC) = UPPER(@IdOC)
               AND UPPER(r.DataAreaId) = UPPER(@DataAreaId)
-              AND UPPER(r.Asiento) = UPPER(@Asiento))
+              AND UPPER(r.Asiento) = UPPER(@Asiento)
+			  AND ISNULL(p.IdEstatusEliminado, 0) <> 1)
+			  
     BEGIN
         
         SELECT @Retorno
