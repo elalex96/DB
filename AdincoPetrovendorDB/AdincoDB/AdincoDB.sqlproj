@@ -13346,6 +13346,14 @@
     <Build Include="dbo\Tables\Tables1\CO_RegistroMarkupBitacora.sql" />
     <Build Include="dbo\Tables\Tables2\PR_VolumenMensualProduccionPetroleoBitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\VolumenesProduccionMensual.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalObjetados_InformeRevisionGastos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalAprobados_InformeRevisionGastos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevisionGastosElegiblesNoProcedentes_InformeRevisionGastos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevisionGastosElegiblesObjetados_InformeRevisionGastos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevisionGastosElegibles_InformeRevisionGastos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalAprobados_CertificadoGastosElegibles.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalRevisados_InformeRevisionGastos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalNoProcedentes_InformeRevisionGastos.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
