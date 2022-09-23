@@ -1,11 +1,16 @@
-USE [Adinco]
+USE Adinco
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'EN_EntregablesDesactivados'
+)
+    DROP PROCEDURE EN_EntregablesDesactivados;
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 30/11/2021 03:40:27 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 23/09/2022 01:16:21 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
-GO
-DROP PROCEDURE IF EXISTS EN_EntregablesDesactivados
 GO
 CREATE PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
     @idUsuario INT,
@@ -29,13 +34,15 @@ BEGIN
 
     DECLARE @HoyMasTresAnios DATE;
     SET @HoyMasTresAnios = DATEADD(YEAR, 2, GETDATE());
-
+	
     CREATE TABLE #InstanciasEntregable
     (
         ID INT IDENTITY(1, 1),
         idInstanciaEntregable INT,
         IdContratoEntregable INT
     );
+	CREATE NONCLUSTERED INDEX ix_tempInstanciasEntregableidInstanciaEntregable ON #InstanciasEntregable (idInstanciaEntregable);
+	CREATE NONCLUSTERED INDEX ix_tempInstanciasEntregableIdContratoEntregable ON #InstanciasEntregable (IdContratoEntregable);
 
     CREATE TABLE #ResponsablesInstancias
     (
@@ -46,6 +53,8 @@ BEGIN
         Revisores NVARCHAR(250),
         Aprobadores NVARCHAR(250)
     );
+	CREATE NONCLUSTERED INDEX ix_tempResponsablesInstanciasidInstanciaEntregable ON #ResponsablesInstancias (idInstanciaEntregable);
+	CREATE NONCLUSTERED INDEX ix_tempResponsablesInstanciasidInstanciaIdContratoEntregable ON #ResponsablesInstancias (IdContratoEntregable);
 
     CREATE TABLE #Areas
     (
@@ -53,23 +62,35 @@ BEGIN
         Area NVARCHAR(150)
     );
 
-    INSERT INTO #InstanciasEntregable (idInstanciaEntregable, IdContratoEntregable)
+	CREATE TABLE #Usuarios 
+    (  
+        ID INT IDENTITY(1, 1),  
+        idInstanciaEntregable INT, 
+        Usuario NVARCHAR(250)       
+    );  
+	CREATE NONCLUSTERED INDEX ix_tempResponsablesInstanciasidInstanciaEntregable ON #Usuarios (idInstanciaEntregable);
+
+
+    INSERT INTO #InstanciasEntregable (
+	idInstanciaEntregable, 
+	IdContratoEntregable)
     SELECT I.idInstanciaEntregable,
            I.IdContratoEntregable
-    FROM EN_InstanciasEntregable I
-    JOIN EN_ContratoEntregable CE ON I.IdContratoEntregable = CE.IdContratoEntregable
-                                     AND CE.IdContrato =@idContrato
-    WHERE IdContrato = @idContrato
+    FROM EN_InstanciasEntregable I  (NOLOCK)
+    JOIN EN_ContratoEntregable CE  (NOLOCK)
+		ON I.IdContratoEntregable = CE.IdContratoEntregable       
+    WHERE CE.IdContrato = @idContrato
           AND CE.Activo = 1
           AND I.Activo = 0
-		  AND ISNULL(CE.BitNA,0) <> 1
-    ORDER BY FechasLimiteAprobacion ASC;
+		  AND ISNULL(CE.BitNA,0) <> 1   
 
-    INSERT INTO #ResponsablesInstancias (idInstanciaEntregable,
-                                         IdContratoEntregable,
-                                         Elaborador,
-                                         Revisores,
-                                         Aprobadores)
+
+    INSERT INTO #ResponsablesInstancias (
+	idInstanciaEntregable,
+    IdContratoEntregable,
+    Elaborador,
+    Revisores,
+    Aprobadores)
     SELECT TI.idInstanciaEntregable,
            TI.IdContratoEntregable,
            CASE ISNULL(EXAE.idUsuario, '')
@@ -78,76 +99,99 @@ BEGIN
                ELSE
                    UXE.Nombre
            END AS Elaborador,
-           STUFF(
-           (
-               SELECT REPLACE(REPLACE(REPLACE(   ', ' + CASE ISNULL(EXAR.idUsuario, '')
-                                                            WHEN '' THEN
-                                                                UR.Nombre
-                                                            ELSE
-                                                                UXR.Nombre
-                                                        END,
-                                                 '</revisores>',
-                                                 ''
-                                             ),
-                                      'revisores>',
-                                      ''
-                                     ),
-                              '<revisores>',
-                              ''
-                             ) AS revisores
-               FROM #InstanciasEntregable TIR
-               JOIN dbo.EN_Actividad AR ON TIR.IdContratoEntregable = AR.IdContratoEntregable
-                                           AND AR.EstadoID = 10001
-               JOIN dbo.AP_Usuario UR ON AR.idUsuario = UR.UsuarioID
-               LEFT JOIN dbo.EN_ExcepcionesActividad EXAR ON AR.ActividadID = EXAR.ActividadIDExcepcion
-                                                             AND TIR.idInstanciaEntregable = EXAR.IdInstanciasEntregables
-               LEFT JOIN dbo.AP_Usuario UXR ON EXAR.idUsuario = UXR.UsuarioID
-               WHERE TI.idInstanciaEntregable = TIR.idInstanciaEntregable
-               FOR XML PATH('')
-           ),
-        1,
-           1,
- ''
-                ) Nombres,
+          '' Nombres,
            CASE ISNULL(EXAP.idUsuario, '')
                WHEN '' THEN
                    UP.Nombre
                ELSE    UXP.Nombre
            END AS aprobadores
-    FROM #InstanciasEntregable TI
-    JOIN dbo.EN_Actividad AE ON TI.IdContratoEntregable = AE.IdContratoEntregable
-                                AND AE.EstadoID = 10000
-    JOIN dbo.AP_Usuario UE ON AE.idUsuario = UE.UsuarioID
-    JOIN dbo.EN_Actividad AR ON TI.IdContratoEntregable = AR.IdContratoEntregable
-                                AND AR.EstadoID = 10001
-    JOIN dbo.AP_Usuario UR ON AR.idUsuario = UR.UsuarioID
-    JOIN dbo.EN_Actividad AP ON TI.IdContratoEntregable = AP.IdContratoEntregable
-                                AND AP.EstadoID = 10002
-    JOIN dbo.AP_Usuario UP ON AP.idUsuario = UP.UsuarioID
-    LEFT JOIN dbo.EN_ExcepcionesActividad EXAE ON AE.ActividadID = EXAE.ActividadIDExcepcion
-                                                  AND TI.idInstanciaEntregable = EXAE.IdInstanciasEntregables
-    LEFT JOIN dbo.AP_Usuario UXE ON EXAE.idUsuario = UXE.UsuarioID
-    LEFT JOIN dbo.EN_ExcepcionesActividad EXAR ON AR.ActividadID = EXAR.ActividadIDExcepcion
-                                                  AND TI.idInstanciaEntregable = EXAR.IdInstanciasEntregables
-    LEFT JOIN dbo.AP_Usuario UXR ON EXAR.idUsuario = UXR.UsuarioID
-    LEFT JOIN dbo.EN_ExcepcionesActividad EXAP ON AP.ActividadID = EXAP.ActividadIDExcepcion
-                                                  AND TI.idInstanciaEntregable = EXAP.IdInstanciasEntregables
-    LEFT JOIN dbo.AP_Usuario UXP ON EXAP.idUsuario = UXP.UsuarioID
+    FROM #InstanciasEntregable TI  (NOLOCK)
+    JOIN 
+		dbo.EN_Actividad AE  (NOLOCK) 
+		ON TI.IdContratoEntregable = AE.IdContratoEntregable
+           AND AE.EstadoID = 10000
+    JOIN 
+		dbo.AP_Usuario UE  (NOLOCK) 
+		ON AE.idUsuario = UE.UsuarioID 
+    JOIN 
+	dbo.EN_Actividad AP  (NOLOCK) 
+		ON TI.IdContratoEntregable = AP.IdContratoEntregable
+		AND AP.EstadoID = 10002
+    JOIN dbo.AP_Usuario UP  (NOLOCK) 
+		ON AP.idUsuario = UP.UsuarioID
+    LEFT JOIN 
+		dbo.EN_ExcepcionesActividad EXAE  (NOLOCK) 
+		ON AE.ActividadID = EXAE.ActividadIDExcepcion
+		AND TI.idInstanciaEntregable = EXAE.IdInstanciasEntregables
+    LEFT JOIN 
+		dbo.AP_Usuario UXE  (NOLOCK) 
+		ON EXAE.idUsuario = UXE.UsuarioID    
+    LEFT JOIN 
+		dbo.EN_ExcepcionesActividad EXAP  (NOLOCK) 
+		ON AP.ActividadID = EXAP.ActividadIDExcepcion
+		 AND TI.idInstanciaEntregable = EXAP.IdInstanciasEntregables
+    LEFT JOIN 
+		dbo.AP_Usuario UXP  (NOLOCK) 
+		ON EXAP.idUsuario = UXP.UsuarioID
     GROUP BY TI.idInstanciaEntregable,
              TI.IdContratoEntregable,
-             CASE ISNULL(EXAE.idUsuario, '')
-                 WHEN '' THEN
-                     UE.Nombre
-                 ELSE
-                     UXE.Nombre
-             END,
-             CASE ISNULL(EXAP.idUsuario, '')
-                 WHEN '' THEN
-                     UP.Nombre
-                 ELSE
-                     UXP.Nombre
-             END
-    ORDER BY TI.idInstanciaEntregable;
+             EXAE.idUsuario, 
+			 UE.Nombre,
+			 UXE.Nombre,
+            EXAP.idUsuario,
+			UP.Nombre,
+			UXP.Nombre
+            
+   
+   -- OBTENER REVISORES
+   INSERT INTO #Usuarios(idInstanciaEntregable,Usuario)
+   SELECT 
+   RI.idInstanciaEntregable,
+    CASE ISNULL(EXAR.idUsuario, '')  
+	WHEN '' THEN  
+		UR.Nombre  
+	ELSE  
+		UXR.Nombre
+	END
+  FROM #ResponsablesInstancias RI  (NOLOCK)
+  JOIN dbo.EN_Actividad AR  (NOLOCK)
+	ON RI.IdContratoEntregable = AR.IdContratoEntregable
+	AND AR.EstadoID = 10001 
+  JOIN 	dbo.AP_Usuario	UR  (NOLOCK)
+		ON AR.idUsuario	=	UR.UsuarioID				
+  LEFT  JOIN 
+		dbo.EN_ExcepcionesActividad	EXAR  (NOLOCK)
+		ON AR.ActividadID	=	EXAR.ActividadIDExcepcion  
+		AND	RI.idInstanciaEntregable = EXAR.IdInstanciasEntregables 
+  LEFT	JOIN 
+		dbo.AP_Usuario	UXR  (NOLOCK)
+		ON	EXAR.idUsuario	=	UXR.UsuarioID  
+
+	 --> GUARDAR REVISORES
+  UPDATE RI
+  SET RI.Revisores= STUFF(  
+	(  
+	SELECT REPLACE(REPLACE(REPLACE(', ' + U.Usuario,  
+                                    '</revisores>',  
+                                    ''  
+                                ),  
+                        'revisores>',  
+                        ''  
+                        ),  
+                '<revisores>',  
+                ''  
+                ) AS revisores  
+			FROM #Usuarios U 
+			WHERE	U.idInstanciaEntregable=RI.idInstanciaEntregable			 
+            FOR XML PATH('')  
+        ),  
+        1,  
+        1,  
+        '') 
+  FROM #ResponsablesInstancias RI
+
+
+
 
     IF (@BitPantallaArea = 0)
     BEGIN
@@ -252,59 +296,69 @@ BEGIN
 			E.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
 			E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
 			E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion' 
-        FROM #ResponsablesInstancias TI
-        JOIN EN_InstanciasEntregable I ON TI.idInstanciaEntregable = I.idInstanciaEntregable
-        JOIN EN_Actividad A ON I.ActividadID = A.ActividadID
-        JOIN EN_ContratoEntregable CE ON I.IdContratoEntregable = CE.IdContratoEntregable
-       INNER JOIN EN_Entregable E ON CE.IdEntregable = E.IdEntregable
+        FROM #ResponsablesInstancias TI  (NOLOCK)
+        JOIN EN_InstanciasEntregable I   (NOLOCK)
+			ON TI.idInstanciaEntregable = I.idInstanciaEntregable
+        JOIN EN_Actividad A  (NOLOCK) 
+			ON I.ActividadID = A.ActividadID
+        JOIN EN_ContratoEntregable CE  (NOLOCK) 
+			ON I.IdContratoEntregable = CE.IdContratoEntregable
+			 AND CE.Activo = 1
+			 AND ISNULL(CE.BitNA,0) <> 1
+        JOIN EN_Entregable E   (NOLOCK)
+			ON CE.IdEntregable = E.IdEntregable
 			AND E.BitJOA	=	0
-        JOIN dbo.EN_Estado Es ON A.EstadoID = Es.EstadoID
-        LEFT JOIN EN_FrecuenciaEntregable ON E.IdFrecuenciaEntregable = EN_FrecuenciaEntregable.IdFrecuenciaEntregable
-        LEFT JOIN EN_MarcoLegal AS ML ON E.IdMarcoLegal = ML.IdMarcoLegal
-        --LEFT JOIN CO_Regulador ON E.IdRegulador = CO_Regulador.IdRegulador
-		LEFT JOIN EN_ReceptorEntregable	RE
-		ON E.IdReceptorEntregable	= RE.IdReceptorEntregable
-        LEFT JOIN dbo.EN_Etapa ET ON E.IdEtapa = ET.IdEtapa
-        LEFT JOIN dbo.EN_Area are ON CE.IdArea = are.idArea
+        JOIN dbo.EN_Estado Es  (NOLOCK) 
+			ON A.EstadoID = Es.EstadoID
+        LEFT JOIN EN_FrecuenciaEntregable  (NOLOCK) 
+			ON E.IdFrecuenciaEntregable = EN_FrecuenciaEntregable.IdFrecuenciaEntregable
+        LEFT JOIN EN_MarcoLegal AS ML  (NOLOCK) 
+			ON E.IdMarcoLegal = ML.IdMarcoLegal       
+		LEFT JOIN EN_ReceptorEntregable	RE  (NOLOCK)
+			ON E.IdReceptorEntregable	= RE.IdReceptorEntregable
+        LEFT JOIN dbo.EN_Etapa ET   (NOLOCK)
+			ON E.IdEtapa = ET.IdEtapa
+        LEFT JOIN dbo.EN_Area are   (NOLOCK)
+			ON CE.IdArea = are.idArea
 		LEFT JOIN
-				AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
+				AP_USUARIO FP  (NOLOCK)	-- OBTENER NOMBRE DEL FOCAL POINT
 				ON	CE.FocalPoint	=	FP.Usuario
-			LEFT JOIN
-				AP_USUARIO AC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
+		LEFT JOIN
+				AP_USUARIO AC  (NOLOCK)		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
 				ON	CE.AccountableCompliance	=	AC.Usuario
-			LEFT JOIN
-				AP_USUARIO ACC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
+		LEFT JOIN
+				AP_USUARIO ACC  (NOLOCK)		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
 				ON	CE.Accountable	=	ACC.Usuario
 		LEFT	JOIN
-			EN_InstanciasEntregables_InstanciaActividad IEIA
+			EN_InstanciasEntregables_InstanciaActividad IEIA  (NOLOCK)
 			ON I.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
 		LEFT	JOIN
-				EN_InstanciasActividades	IA
+				EN_InstanciasActividades	IA  (NOLOCK)
 				ON	IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
 		LEFT JOIN 
-				EN_InstanciasProcesosFecha	IPF
+				EN_InstanciasProcesosFecha	IPF  (NOLOCK)
 				ON	IA.IdInstanciasProcesos	=	IPF.IdInstanciasProcesos
 		LEFT JOIN 
-				EN_Procesos	P
+				EN_Procesos	P  (NOLOCK)
 				ON	IPF.IdProceso	=	P.IdProceso
-		LEFT JOIN dbo.EN_ResponsableGenerador AS RG
+		LEFT JOIN dbo.EN_ResponsableGenerador AS RG  (NOLOCK)
 					ON E.IdResponsableGenerador = RG.IdResponsableGenerador
-		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	
+		LEFT JOIN dbo.EN_ReceptorEntregable AS REE  (NOLOCK)	
 			ON E.IdReceptorEntregable = REE.IdReceptorEntregable
 		LEFT JOIN   
-			EN_ENTREGABLE_CONFIGADICIONAL ECA  
+			EN_ENTREGABLE_CONFIGADICIONAL ECA   (NOLOCK) 
 			ON CE.IdEntregable = ECA.IdEntregable
-        WHERE CE.IdContrato = @idContrato
-              AND CE.Activo = 1
-			  AND ISNULL(CE.BitNA,0) <> 1
+        WHERE CE.IdContrato = @idContrato             
         ORDER BY FechasLimiteAprobacion ASC;
     END;
     ELSE
     BEGIN
+
         INSERT INTO #Areas (Area)
         SELECT REPLACE(P.NombrePermiso, 'Acceso a Entregables de ', '')
-        FROM dbo.AP_PermisosUsuarios PU
-        JOIN dbo.AP_Permiso P ON PU.IdPermiso = P.IdPermiso
+        FROM dbo.AP_PermisosUsuarios PU (NOLOCK)
+        JOIN dbo.AP_Permiso P (NOLOCK)
+			ON PU.IdPermiso = P.IdPermiso
         WHERE UsuarioID = @idUsuario
               AND idContrato = @idContrato
               AND P.BitActivo = 1
@@ -324,8 +378,7 @@ BEGIN
                Elaborador,
                REPLACE(REPLACE(REPLACE(Revisores, '</revisores>', ''), '<revisores>', ''), 'revisores>,', '') AS revisores,
                Aprobadores AS Aprobador,
-				ISNULL(EN_FrecuenciaEntregable.FrecuenciaEntregable, '') AS FrecuenciaEntregable,
---				ISNULL(CO_Regulador.Regulador, '') AS Regulador,
+				ISNULL(FE.FrecuenciaEntregable, '') AS FrecuenciaEntregable,
 				ISNULL(RE.ReceptorEntregable,'') AS Regulador,
                Es.NombreEstado AS Estatus,
                DATENAME(MONTH, FechaInicioElaboracion) AS mes,
@@ -382,13 +435,13 @@ BEGIN
 			    I.Activo as ActivoInstancias,
 				ISNULL(CE.Subfuncion,'') AS Subfuncion,
 				CASE WHEN FP.Nombre IS NULL THEN ISNULL(CE.FocalPoint,'')
-					ELSE ISNULL(FP.Nombre,'') --+ ' (' + CE.FocalPoint + ')'
+					ELSE ISNULL(FP.Nombre,'') 
 				END		AS FocalPoint,
 				CASE WHEN AC.Nombre IS NULL THEN ISNULL(CE.AccountableCompliance,'')
-					ELSE ISNULL(AC.Nombre,'') --+ ' (' + CE.AccountableCompliance + ')'
+					ELSE ISNULL(AC.Nombre,'') 
 				END		AS AccountableCompliance,
 				CASE WHEN ACC.Nombre IS NULL THEN ISNULL(CE.Accountable,'')
-					ELSE ISNULL(ACC.Nombre,'') --+ ' (' + CE.Accountable + ')'
+					ELSE ISNULL(ACC.Nombre,'') 
 				END		AS Accountable,
 				ISNULL(P.NombreProceso+' - '+IPF .Descripcion,'')	AS  NombreProgramacionProcesos,
 				CASE 
@@ -397,51 +450,55 @@ BEGIN
 			END AS TipoJOA,
 			REE.ReceptorEntregable,
 			RG.ResponsableGenerador 
-        FROM #ResponsablesInstancias TI
-        JOIN EN_InstanciasEntregable I ON TI.idInstanciaEntregable = I.idInstanciaEntregable
-        JOIN EN_ContratoEntregable CE ON I.IdContratoEntregable = CE.IdContratoEntregable
-                                         AND CE.IdContrato = @idContrato
-       INNER JOIN EN_Entregable E ON CE.IdEntregable = E.IdEntregable
+        FROM #ResponsablesInstancias TI (NOLOCK)
+        JOIN EN_InstanciasEntregable I  (NOLOCK)
+			ON TI.idInstanciaEntregable = I.idInstanciaEntregable
+        JOIN EN_ContratoEntregable CE  (NOLOCK)
+			ON I.IdContratoEntregable = CE.IdContratoEntregable
+			 AND CE.Activo = 1
+			 AND ISNULL(CE.BitNA,0) <> 1
+       JOIN EN_Entregable E  (NOLOCK)
+			ON CE.IdEntregable = E.IdEntregable
 			AND E.BitJOA	=	0
-        JOIN EN_Actividad A ON I.ActividadID = A.ActividadID
-        JOIN dbo.EN_Area are ON CE.IdArea = are.idArea
-                                AND are.idContrato = @idContrato
-        JOIN #Areas TAR ON are.NombreArea = TAR.Area
-        JOIN dbo.EN_Estado Es ON A.EstadoID = Es.EstadoID
-        LEFT JOIN EN_FrecuenciaEntregable ON E.IdFrecuenciaEntregable = EN_FrecuenciaEntregable.IdFrecuenciaEntregable
-        LEFT JOIN EN_MarcoLegal AS ML ON E.IdMarcoLegal = ML.IdMarcoLegal
-        --LEFT JOIN CO_Regulador ON E.IdRegulador = CO_Regulador.IdRegulador
-		LEFT JOIN EN_ReceptorEntregable RE
+        JOIN EN_Actividad A  (NOLOCK)
+			ON I.ActividadID = A.ActividadID
+        JOIN dbo.EN_Area are  (NOLOCK)
+			ON CE.IdArea = are.idArea
+            AND are.idContrato = @idContrato
+        JOIN #Areas TAR (NOLOCK) 
+			ON are.NombreArea = TAR.Area
+        JOIN dbo.EN_Estado Es  (NOLOCK)
+			ON A.EstadoID = Es.EstadoID
+        LEFT JOIN EN_FrecuenciaEntregable  FE(NOLOCK)
+			ON E.IdFrecuenciaEntregable = FE.IdFrecuenciaEntregable
+        LEFT JOIN EN_MarcoLegal AS ML  (NOLOCK)
+			ON E.IdMarcoLegal = ML.IdMarcoLegal      
+		LEFT JOIN EN_ReceptorEntregable RE (NOLOCK)
 			ON E.IdReceptorEntregable = RE.IdReceptorEntregable
-        LEFT JOIN dbo.EN_Etapa ET ON E.IdEtapa = ET.IdEtapa
-		LEFT JOIN
-				AP_USUARIO FP		-- OBTENER NOMBRE DEL FOCAL POINT
-				ON	CE.FocalPoint	=	FP.Usuario
-			LEFT JOIN
-				AP_USUARIO AC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
-				ON	CE.AccountableCompliance	=	AC.Usuario
-			LEFT JOIN
-				AP_USUARIO ACC		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
-				ON	CE.Accountable	=	ACC.Usuario
-		LEFT	JOIN
-			EN_InstanciasEntregables_InstanciaActividad IEIA
+        LEFT JOIN dbo.EN_Etapa ET  (NOLOCK)
+			ON E.IdEtapa = ET.IdEtapa
+		LEFT JOIN AP_USUARIO FP (NOLOCK)	-- OBTENER NOMBRE DEL FOCAL POINT
+			ON	CE.FocalPoint	=	FP.Usuario
+		LEFT JOIN AP_USUARIO AC (NOLOCK)		-- OBTENER EL NOMBRE DEL ACCOUNTABLE COMPLIANCE
+			ON	CE.AccountableCompliance	=	AC.Usuario
+		LEFT JOIN AP_USUARIO ACC (NOLOCK)		-- OBTENER EL NOMBRE DEL ACCOUNTABLE
+			ON	CE.Accountable	=	ACC.Usuario
+		LEFT JOIN EN_InstanciasEntregables_InstanciaActividad IEIA (NOLOCK)
 			ON I.idInstanciaEntregable	=	IEIA.idInstanciaEntregable
-		LEFT	JOIN
-				EN_InstanciasActividades	IA
+		LEFT JOIN
+				EN_InstanciasActividades	IA (NOLOCK)
 				ON	IEIA.idInstanciaActividad	=	IA.idInstanciaActividad
 		LEFT JOIN 
-				EN_InstanciasProcesosFecha	IPF
+				EN_InstanciasProcesosFecha	IPF (NOLOCK)
 				ON	IA.IdInstanciasProcesos	=	IPF.IdInstanciasProcesos
 		LEFT JOIN 
-				EN_Procesos	P
+				EN_Procesos	P (NOLOCK)
 				ON	IPF.IdProceso	=	P.IdProceso
-		LEFT JOIN dbo.EN_ResponsableGenerador AS RG
-					ON E.IdResponsableGenerador = RG.IdResponsableGenerador
-		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	
+		LEFT JOIN dbo.EN_ResponsableGenerador AS RG (NOLOCK)
+				ON E.IdResponsableGenerador = RG.IdResponsableGenerador
+		LEFT JOIN dbo.EN_ReceptorEntregable AS REE	 (NOLOCK)
 			ON E.IdReceptorEntregable = REE.IdReceptorEntregable
-        WHERE CE.IdContrato = @idContrato
-              AND CE.Activo = 1
-			  AND ISNULL(CE.BitNA,0) <> 1
+        WHERE CE.IdContrato = @idContrato             
         ORDER BY FechasLimiteAprobacion ASC;
 
     END;
