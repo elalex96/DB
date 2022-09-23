@@ -1,4 +1,18 @@
-﻿CREATE PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]--3,10061
+﻿USE Adinco
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_EN_MuestraColumnasExtraContratos'
+)
+    DROP PROCEDURE sp_EN_MuestraColumnasExtraContratos;
+GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_MuestraColumnasExtraContratos]    Script Date: 22/09/2022 06:20:53 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]--3,10061
 @idContrato INT,
 @idUsuario  INT
 AS
@@ -71,9 +85,9 @@ SET NOCOUNT ON
 			ELSE   0
 		END AS	MostrarFechaRealEvidencia
     FROM
-        dbo.CO_Contratista  CC
+        dbo.CO_Contratista  CC (NOLOCK)
     JOIN
-        dbo.CO_Contrato C
+        dbo.CO_Contrato C  (NOLOCK)
         ON  CC.IdContratista    =   C.IdContratista
     WHERE
         C.IdContrato    = @idContrato
