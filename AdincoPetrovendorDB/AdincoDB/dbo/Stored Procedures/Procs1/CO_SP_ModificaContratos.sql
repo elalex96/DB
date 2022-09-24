@@ -1,22 +1,60 @@
-﻿-- =============================================
--- Author:		Reyna Olvera
--- Create date: 10/10/2017
--- Description:	Para AppMovil extrae DescripcionAprobacion
--- =============================================
-CREATE PROCEDURE AM_ExtraeDescripcion
-	-- Add the parameters for the stored procedure here
-	@idUser int,
-	@idEstatus int,
-	@idTipoAprobacion int
+﻿CREATE PROCEDURE [dbo].[CO_SP_ModificaContratos]
+	@IdContrato INT,
+	@NumeroContrato VARCHAR(300),
+	@DescripcionContrato VARCHAR(500),
+	@IdContratista INT,
+	@IdAreaContractual INT,
+	@Activo bit,
+	@IDRegFiducidiario VARCHAR(300),
+	@Duracion INT,
+	@FechaFirma DATE,
+	@InicioVigencia DATE ,
+	@FinVigencia DATE,
+	@IdTipoContrato INT,
+	@ValorRegaliaAdicional FLOAT,
+	@IncrementoProgramaMinimo FLOAT, 
+	@CreadoPor INT,
+	@UsaProcura BIT,
+	@PorcentajeRecuperacion FLOAT,
+	@GasNoAsociado bit,
+	@IdUbicacionGeografica int,
+	@MesPresentacionCGI date,
+	@IdRonda INT,
+	@IsPC int,
+	@IsConsorcio bit,
+	@ParticipacionEstado varchar(500),
+	@FechaArranqueEntregables date,
+	@ContratoFicticio bit
 AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
+    BEGIN
 
-    -- Insert statements for procedure here
+	UPDATE	[CO_Contrato] 
+		SET	[NumeroContrato] = @NumeroContrato, 
+			[DescripcionContrato] = @DescripcionContrato, 
+			[IdContratista] = @IdContratista, 
+			[IdAreaContractual] = @IdAreaContractual, 
+			[Activo] = @Activo, 
+			[IDRegFiducidiario] = @IDRegFiducidiario, 
+			[Duracion] = @Duracion, 
+			[FechaFirma] = @FechaFirma, 
+			[InicioVigencia] = @InicioVigencia, 
+			[FinVigencia] = @FinVigencia,
+			[IdTipoContrato] = @IdTipoContrato, 
+			[ValorRegaliaAdicional] = @ValorRegaliaAdicional, 
+			[IncrementoProgramaMinimo] =@IncrementoProgramaMinimo, 
+			[ModificadoPor] = @CreadoPor,
+			[UsaProcura] = @UsaProcura,
+			[PorcentajeRecuperacion] = @PorcentajeRecuperacion,
+			[GasNoAsociado] = @GasNoAsociado,
+			[IdUbicacionGeografica] = @IdUbicacionGeografica,
+			[MesPresentacionCGI] = @MesPresentacionCGI,
+			[IdRonda] = @IdRonda,
+			[IsPC] = @IsPC,
+			[IsConsorcio] = @IsConsorcio,
+			[ParticipacionEstado] = @ParticipacionEstado,
+			[FechaArranqueEntregables] = @FechaArranqueEntregables,
+			[ContratoFicticio]= @ContratoFicticio,
+			[ModificadoEl]=GETDATE()
+	WHERE IdContrato = @IdContrato;
 
- Select descripcion from AM_Aprobacion
-  where idUsuario =@idUser and IdStatusAprobacionM = @idEstatus and idtipoAprobacion=@idTipoAprobacion
-END
-
+END;

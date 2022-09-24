@@ -12053,6 +12053,10 @@
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
+    <Build Include="dbo\Stored Procedures\Procs2\SP_PR_MM_ListaFacturasAprobacion.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
     <Build Include="dbo\Stored Procedures\Procs2\sp_PR_ModificaPRPozo.sql">
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
@@ -13342,18 +13346,14 @@
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
-    <Build Include="dbo\Stored Procedures\Procs1\SP_FI_PedimentoComprobanteHASHNoProcesado.sql" />
-    <Build Include="dbo\Tables\Tables1\CO_RegistroMarkupBitacora.sql" />
-    <Build Include="dbo\Tables\Tables2\PR_VolumenMensualProduccionPetroleoBitacora.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\VolumenesProduccionMensual.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalObjetados_InformeRevisionGastos.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalAprobados_InformeRevisionGastos.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevisionGastosElegiblesNoProcedentes_InformeRevisionGastos.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevisionGastosElegiblesObjetados_InformeRevisionGastos.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevisionGastosElegibles_InformeRevisionGastos.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalAprobados_CertificadoGastosElegibles.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalRevisados_InformeRevisionGastos.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_InformeRevGast_TotalNoProcedentes_InformeRevisionGastos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_AgregaContratos.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_ModificaContratos.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

@@ -1,22 +1,85 @@
-﻿-- =============================================
--- Author:		Reyna Olvera
--- Create date: 10/10/2017
--- Description:	Para AppMovil extrae DescripcionAprobacion
--- =============================================
-CREATE PROCEDURE AM_ExtraeDescripcion
-	-- Add the parameters for the stored procedure here
-	@idUser int,
-	@idEstatus int,
-	@idTipoAprobacion int
+﻿GO
+CREATE PROCEDURE [dbo].[CO_SP_AgregaContratos]
+	@NumeroContrato VARCHAR(300),
+	@DescripcionContrato VARCHAR(500),
+	@IdContratista INT,
+	@IdAreaContractual INT,
+	@Activo bit,
+	@IDRegFiducidiario VARCHAR(300),
+	@Duracion INT,
+	@FechaFirma DATE,
+	@InicioVigencia DATE ,
+	@FinVigencia DATE,
+	@IdTipoContrato INT,
+	@ValorRegaliaAdicional FLOAT,
+	@IncrementoProgramaMinimo FLOAT, 
+	@CreadoPor INT,
+	@UsaProcura BIT,
+	@PorcentajeRecuperacion FLOAT,
+	@GasNoAsociado bit,
+	@IdUbicacionGeografica int,
+	@MesPresentacionCGI date,
+	@IdRonda INT,
+	@IsPC int,
+	@IsConsorcio bit,
+	@ParticipacionEstado varchar(500),
+	@FechaArranqueEntregables date,
+	@ContratoFicticio bit
 AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
+    BEGIN
 
-    -- Insert statements for procedure here
+	INSERT INTO [CO_Contrato] 
+	([NumeroContrato], 
+	[DescripcionContrato], 
+	[IdContratista], 
+	[IdAreaContractual], 
+	[Activo], 
+	[IDRegFiducidiario], 
+	[Duracion], 
+	[FechaFirma], 
+	[InicioVigencia], 
+	[FinVigencia],
+	[IdTipoContrato], 
+	[ValorRegaliaAdicional], 
+	[IncrementoProgramaMinimo], 
+	[CreadoPor],
+	[CreadoEl],
+	[UsaProcura],
+	[PorcentajeRecuperacion],
+	[GasNoAsociado],
+	[IdUbicacionGeografica],
+	[MesPresentacionCGI],
+	[IdRonda],
+	[IsPC],
+	[IsConsorcio],
+	[ParticipacionEstado],
+	[FechaArranqueEntregables],
+	[ContratoFicticio]) VALUES 
+	(@NumeroContrato, 
+	@DescripcionContrato,
+	@IdContratista, 
+	@IdAreaContractual, 
+	@Activo, 
+	@IDRegFiducidiario, 
+	@Duracion, 
+	@FechaFirma, 
+	@InicioVigencia,
+	@FinVigencia, 
+	@IdTipoContrato, 
+	@ValorRegaliaAdicional, 
+	@IncrementoProgramaMinimo, 
+	@CreadoPor,
+	GETDATE(),
+	@UsaProcura,
+	@PorcentajeRecuperacion,
+	@GasNoAsociado,
+	@IdUbicacionGeografica,
+	@MesPresentacionCGI,
+	@IdRonda,
+	@IsPC,
+	@IsConsorcio,
+	@ParticipacionEstado,
+	@FechaArranqueEntregables,
+	@ContratoFicticio)
 
- Select descripcion from AM_Aprobacion
-  where idUsuario =@idUser and IdStatusAprobacionM = @idEstatus and idtipoAprobacion=@idTipoAprobacion
-END
-
+END;
