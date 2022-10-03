@@ -13354,6 +13354,22 @@
       <AnsiNulls>On</AnsiNulls>
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\PR_SP_InsertBitacoraSistemaMedicion.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Stored Procedures\Procs1\PR_SP_InsertBitacoraCalibracion.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Tables\Tables2\PR_CalibracionSistemasBitacora.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
+    <Build Include="dbo\Tables\Tables2\PR_SistemasMedicionBitacora.sql">
+      <AnsiNulls>On</AnsiNulls>
+      <QuotedIdentifier>On</QuotedIdentifier>
+    </Build>
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

@@ -1,0 +1,23 @@
+﻿CREATE TABLE [dbo].[PR_CalibracionSistemasBitacora](
+	[Id] INT IDENTITY(1,1) primary KEY,
+	[Accion] [varchar](300) NULL,
+	[CreadoPor] [int] NULL,
+	[CreadoEl] [datetime] NULL,
+	[IdCalibracion] [int] ,
+	[IdContrato] [int] NULL,
+	[IdSistema] [int] NULL,
+	[Certificado] [varchar](250) NULL,
+	[Fecha] [datetime] NULL,
+	[FechaProxima] [datetime] NULL,
+	[IntervaloCalibracion] [varchar](250) NULL,
+	[InvervaloVerificacion] [varchar](250) NULL,
+	[IncertidumbreMagnitud] [varchar](250) NULL,
+	[Laboratorio] [varchar](250) NULL,
+	[EsAcreditado] [bit] NULL,
+	[PuertoDisponible] [varchar](250) NULL,
+	[ConfiguracionPuerto] [varchar](250) NULL,
+	[ProtocoloComunicacion] [varchar](250) NULL,
+	[AreaRestringida] [bit] NULL,
+	[Observaciones] [varchar](2000) NULL,
+	[Vigente] [bit] NOT NULL);
+
