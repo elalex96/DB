@@ -7,7 +7,8 @@
 @pNoSerie	varchar(300),
 @pTAG	varchar(300),
 @pActivo	bit,
-@pTipoMedidor	varchar(300)
+@pTipoMedidor	varchar(300),
+@UsuarioId INT
 as
 
 	
@@ -20,16 +21,18 @@ as
 		insert into PR_SistemasMedicion(
 					IdTipoSistema,		Marca,		Modelo,
 			NoSerie,		TAG,				Activo,		TipoMedidor,
-			IdContrato
+			IdContrato,CreadoPor ,CreadoEl
 		)
 		values(		@pIdTipoSistema,		@pMarca,		@pModelo,
 			@pNoSerie,		@pTAG,				@pActivo,		@pTipoMedidor,
-			@pIdContrato) 
+			@pIdContrato, @UsuarioId, getdate()) 
 
 		select @pIdSistema = scope_identity()
 	end
 	Else
 	Begin
+	EXECUTE PR_SP_InsertBitacoraSistemaMedicion @pIdSistema,@UsuarioId,'Modificación';
+
 		update PR_SistemasMedicion
 		set IdTipoSistema = @pIdTipoSistema,
 			Marca = @pMarca,
@@ -37,7 +40,7 @@ as
 			NoSerie = @pNoSerie,
 			TAG = @pTAG,
 			Activo = @pActivo,
-			TipoMedidor=@pTipoMedidor
+			TipoMedidor=@pTipoMedidor,ModificadoPor=@UsuarioId ,ModificadoEl= getdate()
 		where IdSistema = @pIdSistema and
 		IdContrato = @pIdContrato
 	End

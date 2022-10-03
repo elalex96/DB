@@ -19,8 +19,6 @@
 @pCreadoPor	int
 as
 
-
-
 	if not exists (
 		select 1
 		from PR_CalibracionSistemas
@@ -46,6 +44,9 @@ as
 	End
 	Else
 	Begin
+
+	EXECUTE PR_SP_InsertBitacoraCalibracion @pIdCalibracion,@pCreadoPor,'Modificación';
+
 		update PR_CalibracionSistemas
 		set 			
 			IdSistema=@pIdSistema,
@@ -65,7 +66,7 @@ as
 			Vigente = @pVigente,
 			ModificadoPor = @pCreadoPor,
 			ModificadoEl = getdate()
-		Where IdCalibracion = @pIdCalibracion
-
+		Where IdCalibracion = @pIdCalibracion;
 	End
 
+	
