@@ -1,5 +1,5 @@
 ﻿-- p_OT_SolicitudTareas_Grd 10038,10,0,1,1445
-CREATE PROC [dbo].[p_OT_SolicitudTareas_Grd]
+CREATE PROC [p_OT_SolicitudTareas_Grd]
     @pIdContrato INT,
     @pUsuarioAdincoId INT,
     @pUsuarioPetroId INT,
@@ -52,6 +52,7 @@ BEGIN
     (
         IdOTSolicitud INT,
         IdOTSolicitudMaterial INT,
+        Fecha DATETIME,
         SemanaID VARCHAR(21)
     );
     CREATE TABLE #tmpAceptacionesPend
@@ -83,7 +84,7 @@ BEGIN
         FlujoAprobacionEstatusId INT,
         IdOTSolicitud INT
     );
-	/*Obtencion Valores*/
+    /*Obtencion Valores*/
     IF @pPend_Comp = 1
     BEGIN
         /*SEMANAS QUE FALTAN CERRAR*/
@@ -105,33 +106,34 @@ BEGIN
             INNER JOIN SC_Subcontrato sc (NOLOCK)
                 ON sc.IdSubcontrato = ot.IdSubcontrato
                    AND SC.IDContrato = @pIdContrato
-            INNER JOIN [dbo].[OT_SolicitudProgramaCaptura] spc (NOLOCK)
+            INNER JOIN [OT_SolicitudProgramaCaptura] spc (NOLOCK)
                 ON spc.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial
                    AND spc.VoBoSubcontratista = 1
         WHERE ot.IsActivo = 1
               AND SC.IDContrato = @pIdContrato
-              AND NOT EXISTS
-        (
-            SELECT 1
-            FROM [dbo].OT_ProgramaSemanaCerrada e
-            WHERE e.IdOTSolicitud = ot.IdOTSolicitud
-                  AND spc.Fecha
-                  BETWEEN e.FechaSemanaIni AND e.FechaSemanaFin
-                  AND e.isActivo = 1
-        )
         GROUP BY ot.IdOTSolicitud,
                  otm.IdOTSolicitudMaterial,
                  spc.Fecha,
                  spc.IdOTSolicitudProgramaCaptura
+        /*Se saca subquery que manejaba not exists*/
+        DELETE #tmpCerrarSemanas
+        FROM #tmpCerrarSemanas
+            INNER JOIN OT_ProgramaSemanaCerrada e
+                ON e.IdOTSolicitud = #tmpCerrarSemanas.IdOTSolicitud
+                   AND #tmpCerrarSemanas.Fecha
+                   BETWEEN e.FechaSemanaIni AND e.FechaSemanaFin
+                   AND e.isActivo = 1
         /*SEMANAS QUE FALTAN ESTIMAR*/
         INSERT INTO #tmpEstimacionPend
         (
             IdOTSolicitud,
             IdOTSolicitudMaterial,
+            Fecha,
             SemanaID
         )
         SELECT ot.IdOTSolicitud,
                otm.IdOTSolicitudMaterial,
+               spc.Fecha,
                e.SemanaID
         FROM OT_Solicitud OT (NOLOCK)
             INNER JOIN OT_SolicitudMaterial otm (NOLOCK)
@@ -139,7 +141,7 @@ BEGIN
                    AND ot.IsActivo = 1
             INNER JOIN SC_Subcontrato sc (NOLOCK)
                 ON sc.IdSubcontrato = ot.IdSubcontrato
-            INNER JOIN [dbo].[OT_SolicitudProgramaCaptura] spc (NOLOCK)
+            INNER JOIN [OT_SolicitudProgramaCaptura] spc (NOLOCK)
                 ON spc.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial
                    AND spc.VoBoSubcontratista = 1
                    AND SPC.VoBoContratista = 1
@@ -150,18 +152,18 @@ BEGIN
                    AND e.isActivo = 1
         WHERE ot.IsActivo = 1
               AND SC.IDContrato = @pIdContrato
-              AND NOT EXISTS
-        (
-            SELECT 1
-            FROM [dbo].OT_Estimacion e
-            WHERE e.IdOTSolicitud = ot.IdOTSolicitud
-                  AND spc.Fecha
-                  BETWEEN e.FechaCorteInicio AND e.FechaCorteFin
-                  AND ISNULL(e.Cancelada, 0) = 0
-        )
         GROUP BY ot.IdOTSolicitud,
                  otm.IdOTSolicitudMaterial,
+                 spc.Fecha,
                  e.SemanaID
+        /*Se saca subquery que manejaba not exists*/
+        DELETE #tmpEstimacionPend
+        FROM #tmpEstimacionPend
+            INNER JOIN OT_Estimacion e
+                ON e.IdOTSolicitud = #tmpEstimacionPend.IdOTSolicitud
+                   AND #tmpEstimacionPend.Fecha
+                   BETWEEN e.FechaCorteInicio AND e.FechaCorteFin
+                   AND ISNULL(e.Cancelada, 0) = 0
         /*Estimaciones sin aceptacion*/
         INSERT INTO #tmpAceptacionesPend
         (
@@ -180,17 +182,16 @@ BEGIN
             INNER JOIN SC_Subcontrato sc (NOLOCK)
                 ON sc.IdSubcontrato = ot.IdSubcontrato
         WHERE sc.IdContrato = @pIdContrato
-              AND NOT EXISTS
-        (
-            SELECT 1
-            FROM Petrovendor..MM_AceptacionPedido p
-            WHERE p.IdPedido = e.IdPedido
-        )
               AND ISNULL(e.cancelada, 0) = 0
         GROUP BY e.IdOTEstimacion,
                  e.IdPedido,
                  e.IdPedidoGeneral,
                  e.IdOTSolicitud
+        /*Se saca subquery que manejaba not exists*/
+        DELETE #tmpAceptacionesPend
+        FROM #tmpAceptacionesPend
+            INNER JOIN Petrovendor..MM_AceptacionPedido p
+                ON p.IdPedido = #tmpAceptacionesPend.IdPedido
         /*Aceptaciones sin reclasificacion*/
         INSERT INTO #tmpAceptacionesSinRec
         (
@@ -215,24 +216,22 @@ BEGIN
                 ON ap.IdPedido = e.IdPedido
                    AND ap.ModificadoPor IS NULL
         WHERE sc.IdContrato = @pIdContrato
-              AND NOT EXISTS
-        (
-            SELECT 1
-            FROM petrovendor..[MM_AceptacionPedidoDetalleEliminada] sae
-            WHERE sae.IdAceptacionPedido = ap.idAceptacionPedido
-        )
-              AND NOT EXISTS
-        (
-            SELECT 1
-            FROM petrovendor..MM_AceptacionFactura saf
-            WHERE saf.IdAceptacionPedido = ap.idAceptacionPedido
-        )
               AND ISNULL(e.Cancelada, 0) = 0
         GROUP BY e.IdOTEstimacion,
                  e.IdPedido,
                  e.IdPedidoGeneral,
                  e.IdOTSolicitud,
                  ap.idAceptacionPedido
+        /*Se saca subquery que manejaba not exists*/
+        DELETE #tmpAceptacionesSinRec
+        FROM #tmpAceptacionesSinRec
+            INNER JOIN petrovendor..[MM_AceptacionPedidoDetalleEliminada] sae
+                ON sae.IdAceptacionPedido = #tmpAceptacionesSinRec.idAceptacionPedido
+
+        DELETE #tmpAceptacionesSinRec
+        FROM #tmpAceptacionesSinRec
+            INNER JOIN petrovendor..MM_AceptacionFactura saf
+                ON saf.IdAceptacionPedido = #tmpAceptacionesSinRec.idAceptacionPedido
         /*ISSUE 1018. Generar info de Estimaciones sin PO*/
         INSERT INTO #tmpEstimacionSinPO
         (
@@ -261,7 +260,7 @@ BEGIN
                  e.IdPedidoGeneral,
                  e.CreadoEl
         /*usuarios OT*/
-		INSERT INTO #tmpOTUsuarios
+        INSERT INTO #tmpOTUsuarios
         (
             UsuarioID,
             Usuario,
