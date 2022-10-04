@@ -75,7 +75,8 @@ BEGIN
         IdOTSolicitud INT,
         IdOTEstimacion INT,
         IdPedidoGeneral INT,
-        CreadoEl DATETIME
+        CreadoEl DATETIME,
+        IdPedido INT
     );
     CREATE TABLE #tmpOTUsuarios
     (
@@ -84,7 +85,34 @@ BEGIN
         FlujoAprobacionEstatusId INT,
         IdOTSolicitud INT
     );
+    CREATE TABLE #tmpOTEstatusPermitidos (IdOTEstatus INT);
     /*Obtencion Valores*/
+    INSERT INTO #tmpOTEstatusPermitidos
+    (
+        IdOTEstatus
+    )
+    SELECT IdOTEstatus
+    FROM OT_Solicitud
+    GROUP BY IdOTEstatus
+
+    IF (@pUsuarioAdincoId > 0)
+    BEGIN
+        DELETE #tmpOTEstatusPermitidos
+        WHERE IdOTEstatus IN ( 7, 8, 12 )
+    END
+
+    IF (@pUsuarioPetroId > 0)
+    BEGIN
+        DELETE #tmpOTEstatusPermitidos
+        WHERE IdOTEstatus IN ( 7, 8, 12 )
+    END
+
+    IF (ISNULL(@pUsuarioAdincoId, 0) = 0)
+    BEGIN
+        DELETE #tmpOTEstatusPermitidos
+        WHERE IdOTEstatus IN ( 1, 7, 8, 12 )
+    END
+
     IF @pPend_Comp = 1
     BEGIN
         /*SEMANAS QUE FALTAN CERRAR*/
@@ -101,13 +129,13 @@ BEGIN
                spc.IdOTSolicitudProgramaCaptura
         FROM OT_Solicitud OT (NOLOCK)
             INNER JOIN OT_SolicitudMaterial otm (NOLOCK)
-                ON otm.IdOTSolicitud = ot.IdOTSolicitud
+                ON ot.IdOTSolicitud = otm.IdOTSolicitud
                    AND ot.IsActivo = 1
             INNER JOIN SC_Subcontrato sc (NOLOCK)
-                ON sc.IdSubcontrato = ot.IdSubcontrato
+                ON ot.IdSubcontrato = sc.IdSubcontrato
                    AND SC.IDContrato = @pIdContrato
             INNER JOIN [OT_SolicitudProgramaCaptura] spc (NOLOCK)
-                ON spc.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial
+                ON otm.IdOTSolicitudMaterial = spc.IdOTSolicitudMaterial
                    AND spc.VoBoSubcontratista = 1
         WHERE ot.IsActivo = 1
               AND SC.IDContrato = @pIdContrato
@@ -115,11 +143,11 @@ BEGIN
                  otm.IdOTSolicitudMaterial,
                  spc.Fecha,
                  spc.IdOTSolicitudProgramaCaptura
-        /*Se saca subquery que manejaba not exists*/
+        /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpCerrarSemanas
         FROM #tmpCerrarSemanas
             INNER JOIN OT_ProgramaSemanaCerrada e
-                ON e.IdOTSolicitud = #tmpCerrarSemanas.IdOTSolicitud
+                ON #tmpCerrarSemanas.IdOTSolicitud = e.IdOTSolicitud
                    AND #tmpCerrarSemanas.Fecha
                    BETWEEN e.FechaSemanaIni AND e.FechaSemanaFin
                    AND e.isActivo = 1
@@ -137,16 +165,16 @@ BEGIN
                e.SemanaID
         FROM OT_Solicitud OT (NOLOCK)
             INNER JOIN OT_SolicitudMaterial otm (NOLOCK)
-                ON otm.IdOTSolicitud = ot.IdOTSolicitud
+                ON ot.IdOTSolicitud = otm.IdOTSolicitud
                    AND ot.IsActivo = 1
             INNER JOIN SC_Subcontrato sc (NOLOCK)
-                ON sc.IdSubcontrato = ot.IdSubcontrato
+                ON ot.IdSubcontrato = sc.IdSubcontrato
             INNER JOIN [OT_SolicitudProgramaCaptura] spc (NOLOCK)
-                ON spc.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial
+                ON otm.IdOTSolicitudMaterial = spc.IdOTSolicitudMaterial
                    AND spc.VoBoSubcontratista = 1
                    AND SPC.VoBoContratista = 1
             INNER JOIN OT_ProgramaSemanaCerrada e (NOLOCK)
-                ON e.IdOTSolicitud = ot.IdOTSolicitud
+                ON ot.IdOTSolicitud = e.IdOTSolicitud
                    AND spc.Fecha
                    BETWEEN e.FechaSemanaIni AND e.FechaSemanaFin
                    AND e.isActivo = 1
@@ -156,11 +184,11 @@ BEGIN
                  otm.IdOTSolicitudMaterial,
                  spc.Fecha,
                  e.SemanaID
-        /*Se saca subquery que manejaba not exists*/
+        /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpEstimacionPend
         FROM #tmpEstimacionPend
             INNER JOIN OT_Estimacion e
-                ON e.IdOTSolicitud = #tmpEstimacionPend.IdOTSolicitud
+                ON #tmpEstimacionPend.IdOTSolicitud = e.IdOTSolicitud
                    AND #tmpEstimacionPend.Fecha
                    BETWEEN e.FechaCorteInicio AND e.FechaCorteFin
                    AND ISNULL(e.Cancelada, 0) = 0
@@ -178,20 +206,21 @@ BEGIN
                idPedidoGen = e.IdPedidoGeneral
         FROM OT_Estimacion e (NOLOCK)
             INNER JOIN OT_Solicitud ot (NOLOCK)
-                ON ot.IdOTSolicitud = e.IdOTSolicitud
+                ON ISNULL(e.cancelada, 0) = 0
+                   AND e.IdOTSolicitud = ot.IdOTSolicitud
             INNER JOIN SC_Subcontrato sc (NOLOCK)
-                ON sc.IdSubcontrato = ot.IdSubcontrato
+                ON ot.IdSubcontrato = sc.IdSubcontrato
         WHERE sc.IdContrato = @pIdContrato
               AND ISNULL(e.cancelada, 0) = 0
         GROUP BY e.IdOTEstimacion,
                  e.IdPedido,
                  e.IdPedidoGeneral,
                  e.IdOTSolicitud
-        /*Se saca subquery que manejaba not exists*/
+        /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpAceptacionesPend
         FROM #tmpAceptacionesPend
             INNER JOIN Petrovendor..MM_AceptacionPedido p
-                ON p.IdPedido = #tmpAceptacionesPend.IdPedido
+                ON #tmpAceptacionesPend.IdPedido = p.IdPedido
         /*Aceptaciones sin reclasificacion*/
         INSERT INTO #tmpAceptacionesSinRec
         (
@@ -208,12 +237,13 @@ BEGIN
                ap.idAceptacionPedido
         FROM OT_Estimacion e (NOLOCK)
             INNER JOIN OT_Solicitud ot (NOLOCK)
-                ON ot.IdOTSolicitud = e.IdOTSolicitud
+                ON ISNULL(e.Cancelada, 0) = 0
+                   AND e.IdOTSolicitud = ot.IdOTSolicitud
             INNER JOIN SC_Subcontrato sc (NOLOCK)
-                ON sc.IdSubcontrato = ot.IdSubcontrato
+                ON ot.IdSubcontrato = sc.IdSubcontrato
                    AND sc.IdContrato = @pIdContrato
             INNER JOIN petrovendor..MM_AceptacionPedido ap (NOLOCK)
-                ON ap.IdPedido = e.IdPedido
+                ON e.IdPedido = ap.IdPedido
                    AND ap.ModificadoPor IS NULL
         WHERE sc.IdContrato = @pIdContrato
               AND ISNULL(e.Cancelada, 0) = 0
@@ -222,43 +252,48 @@ BEGIN
                  e.IdPedidoGeneral,
                  e.IdOTSolicitud,
                  ap.idAceptacionPedido
-        /*Se saca subquery que manejaba not exists*/
+        /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpAceptacionesSinRec
         FROM #tmpAceptacionesSinRec
             INNER JOIN petrovendor..[MM_AceptacionPedidoDetalleEliminada] sae
-                ON sae.IdAceptacionPedido = #tmpAceptacionesSinRec.idAceptacionPedido
+                ON #tmpAceptacionesSinRec.idAceptacionPedido = sae.IdAceptacionPedido
 
         DELETE #tmpAceptacionesSinRec
         FROM #tmpAceptacionesSinRec
             INNER JOIN petrovendor..MM_AceptacionFactura saf
-                ON saf.IdAceptacionPedido = #tmpAceptacionesSinRec.idAceptacionPedido
+                ON #tmpAceptacionesSinRec.idAceptacionPedido = saf.IdAceptacionPedido
         /*ISSUE 1018. Generar info de Estimaciones sin PO*/
         INSERT INTO #tmpEstimacionSinPO
         (
             IdOTSolicitud,
             IdOTEstimacion,
             IdPedidoGeneral,
-            CreadoEl
+            CreadoEl,
+            IdPedido
         )
         SELECT e.IdOTSolicitud,
                e.IdOTEstimacion,
                e.IdPedidoGeneral,
-               e.CreadoEl
+               e.CreadoEl,
+               e.IdPedido
         FROM OT_Estimacion e (NOLOCK)
             INNER JOIN OT_Solicitud ot (NOLOCK)
-                ON ot.IdOTSolicitud = E.IdOTSolicitud
+                ON E.IdOTSolicitud = ot.IdOTSolicitud
                    AND ISNULL(e.Cancelada, 0) = 0
             INNER JOIN SC_SubContrato sc (NOLOCK)
-                ON sc.IdSubContrato = ot.IdSubContrato
+                ON ot.IdSubContrato = sc.IdSubContrato
                    AND sc.IdContrato = @pIdContrato
-            LEFT JOIN petrovendor..DEA_Relacion_PR_PO po (NOLOCK)
-                ON po.IdPedido = e.IdPedido
         WHERE ISNULL(e.Cancelada, 0) = 0
-              AND po.IdPedido IS NULL
         GROUP BY e.IdOTSolicitud,
                  e.IdOTEstimacion,
                  e.IdPedidoGeneral,
-                 e.CreadoEl
+                 e.CreadoEl,
+                 e.IdPedido
+        /*Se saca left join*/
+        DELETE #tmpEstimacionSinPO
+        FROm #tmpEstimacionSinPO
+            INNER JOIN petrovendor..DEA_Relacion_PR_PO
+                ON #tmpEstimacionSinPO.IdPedido = petrovendor..DEA_Relacion_PR_PO.IdPedido
         /*usuarios OT*/
         INSERT INTO #tmpOTUsuarios
         (
@@ -273,11 +308,11 @@ BEGIN
                ot.IdOTSolicitud
         FROM OT_Solicitud ot (NOLOCK)
             INNER JOIN [dbo].[AP_UsuarioCentroCosto] ucc (NOLOCK)
-                ON ucc.IdCentroCosto = ot.IdCentroCosto
+                ON ot.IdCentroCosto = ucc.IdCentroCosto
             INNER JOIN AP_Usuario u (NOLOCK)
-                ON u.usuarioId = ucc.IdUsuario
+                ON ucc.IdUsuario = u.usuarioId
             INNER JOIN [dbo].[AP_FlujoAprobacionEstatusUsuarios] fu (NOLOCK)
-                ON fu.UsuarioId = u.usuarioId
+                ON u.usuarioId = fu.UsuarioId
         GROUP BY u.UsuarioID,
                  u.Usuario,
                  fu.FlujoAprobacionEstatusId,
@@ -316,7 +351,7 @@ BEGIN
                    WHEN ot.IdOTEstatus IN ( 5, 6 ) THEN
                        CASE
                            WHEN aPendRec.IdOTSolicitud IS NOT NULL THEN
-                               'Operadora - Reclasificar Aceptación ' + cast(aPendRec.idAceptacionPedido AS VARCHAR)
+                               'Operadora - Reclasificar Aceptación ' + CAST(aPendRec.idAceptacionPedido AS VARCHAR)
                                + ' en Procura '
                            WHEN aPend.IdOTSolicitud IS NOT NULL THEN
                                'Operadora - Generar Aceptación en Procura '
@@ -329,7 +364,7 @@ BEGIN
                            WHEN tmp2.Fecha IS NOT NULL
                                 AND ePend.IdOTSolicitud IS NULL
                                 AND aPend.IdOTSolicitud IS NULL THEN
-                               'Operadora - Revisar y cerrar semana para fecha:' + convert(VARCHAR, tmp2.Fecha, 103)
+                               'Operadora - Revisar y cerrar semana para fecha:' + CONVERT(VARCHAR, tmp2.Fecha, 103)
                        END
                    WHEN ot.IdOTEstatus IN ( 9 ) THEN
                        'Operadora - Revisar convenio en Procura'
@@ -341,38 +376,38 @@ BEGIN
                CASE
                    WHEN ot.IdOTEstatus = 1 THEN
                        @dominioAdinco + '/2/OrdenTrabajo/RegistrarOTSolicitudUpd.aspx?id='
-                       + cast(ot.IdOTSolicitud AS VARCHAR)
+                       + CAST(ot.IdOTSolicitud AS VARCHAR)
                    WHEN ot.IdOTEstatus IN ( 2, 4 ) THEN
                        @dominioPetrovendor + '/02Proveedores/RegistrarOTSolicitudProv.aspx?id='
-                       + cast(ot.IdOTSolicitud AS VARCHAR)
+                       + CAST(ot.IdOTSolicitud AS VARCHAR)
                    WHEN ot.IdOTEstatus IN ( 5, 6 ) THEN
                        CASE
                            WHEN aPendRec.IdOTSolicitud IS NOT NULL THEN
                                @dominioProcura + '/01Proveedores/APListaReclasificacion.aspx'
                            WHEN aPend.IdOTSolicitud IS NOT NULL THEN
                                @dominioProcura + '/02Proveedores/AceptacionPedido.aspx?ped='
-                               + cast(aPend.IdPedido AS VARCHAR) + '&pedgral=' + cast(aPend.IdPedidoGen AS VARCHAR)
+                               + CAST(aPend.IdPedido AS VARCHAR) + '&pedgral=' + CAST(aPend.IdPedidoGen AS VARCHAR)
                                + '&ori=pedido'
                            WHEN ePend.IdOTSolicitud IS NOT NULL THEN
                                @dominioAdinco + '/2/OrdenTrabajo/GenerarEstimacionOT.aspx?id1='
-                               + cast(ot.IdOTSolicitud AS VARCHAR)
+                               + CAST(ot.IdOTSolicitud AS VARCHAR)
                            WHEN tmp2.Fecha IS NULL
                                 AND ePend.IdOTSolicitud IS NULL
                                 AND aPend.IdOTSolicitud IS NULL THEN
                                @dominioPetrovendor + '/02Proveedores/CapturaProgramaOT.aspx?id='
-                               + cast(ot.IdOTSolicitud AS VARCHAR)
+                               + CAST(ot.IdOTSolicitud AS VARCHAR)
                            WHEN tmp2.Fecha IS NOT NULL
                                 AND ePend.IdOTSolicitud IS NULL
                                 AND aPend.IdOTSolicitud IS NULL THEN
                                @dominioAdinco + '/2/OrdenTrabajo/CapturaProgramaOT.aspx?id='
-                               + cast(ot.IdOTSolicitud AS VARCHAR)
+                               + CAST(ot.IdOTSolicitud AS VARCHAR)
                        END
                    WHEN ot.IdOTEstatus IN ( 9 ) THEN
                        @dominioProcura + '/02Proveedores/ActualizarSCOTConvenio.aspx?id='
-                       + cast(ot.IdSubcontrato AS VARCHAR) + '&id2=' + cast(ot.IdOTSolicitud AS VARCHAR)
+                       + CAST(ot.IdSubcontrato AS VARCHAR) + '&id2=' + CAST(ot.IdOTSolicitud AS VARCHAR)
                    WHEN ot.IdOTEstatus IN ( 3, 11 ) THEN
                        @dominioAdinco + '/2/OrdenTrabajo/RegistrarOTSolicitudUpd.aspx?id='
-                       + cast(ot.IdOTSolicitud AS VARCHAR)
+                       + CAST(ot.IdOTSolicitud AS VARCHAR)
                END,
                /**********Url Text*************/
                CASE
@@ -447,7 +482,7 @@ BEGIN
                                ''
                        END
                END,
-               getdate(),
+               GETDATE(),
                0,
                /*************USUARIO ASIGNADO***************/
                CASE
@@ -480,27 +515,15 @@ BEGIN
                cc.CentroCosto
         FROM OT_Solicitud ot (NOLOCK)
             INNER JOIN petrovendor..CC_CentroCosto cc (NOLOCK)
-                ON cc.IdCentroCosto = ot.IdCentroCosto
+                ON ot.IdCentroCosto = cc.IdCentroCosto
+            INNER JOIN #tmpOTEstatusPermitidos
+                ON ot.IdOTEstatus = #tmpOTEstatusPermitidos.IdOTEstatus
             INNER JOIN AP_Usuario uot (NOLOCK)
-                ON uot.UsuarioId = ot.CreadoPor
+                ON ot.CreadoPor = uot.UsuarioId
                    AND ot.IsActivo = 1
                    AND @pPend_Comp = 1
-                   AND (
-                           (
-                               ot.IdOTEstatus not IN ( 7, 8, 12 )
-                               AND @pUsuarioAdincoId > 0
-                           )
-                           OR (
-                                  ot.IdOTEstatus not IN ( 1, 7, 8, 12 )
-                                  AND ISNULL(@pUsuarioAdincoId, 0) = 0
-                              )
-                           OR (
-                                  ot.IdOTEstatus not IN ( 7, 8, 12 )
-                                  AND @pUsuarioPetroId > 0
-                              )
-                       )
             INNER JOIN OT_SolicitudMaterial otm (NOLOCK)
-                ON otm.IdOTSolicitud = ot.IdOTSolicitud
+                ON ot.IdOTSolicitud = otm.IdOTSolicitud
             INNER JOIN [dbo].[AP_UsuarioCentroCosto] ucc
                 ON (
                        @pUsuarioAdincoId IN ( ucc.IdUsuario, 9999999 )
@@ -508,22 +531,20 @@ BEGIN
                    )
                    AND ucc.IdCentroCosto IN ( ot.IdCentroCosto )
             INNER JOIN SC_Subcontrato sc (NOLOCK)
-                ON sc.IdSubcontrato = ot.IdSubcontrato
+                ON ot.IdSubcontrato = sc.IdSubcontrato
             INNER JOIN PV_Subcontratista pv (NOLOCK)
-                ON pv.IdSubcontratista = sc.IdSubcontratista
+                ON sc.IdSubcontratista = pv.IdSubcontratista
             INNER JOIN petrovendor..S_Proveedor prov (NOLOCK)
-                ON prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = pv.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+                ON pv.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
                    AND @pIdProveedor IN ( 0, prov.IdProveedor )
-            LEFT JOIN #tmpOTUsuarios u
-                ON u.IdOTSolicitud = ot.IdOTSolicitud
             LEFT JOIN #tmpCerrarSemanas tmp2
-                ON tmp2.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial
+                ON otm.IdOTSolicitudMaterial = tmp2.IdOTSolicitudMaterial
             LEFT JOIN #tmpEstimacionPend ePend
-                ON ePend.IdOTSolicitud = ot.IdOTSolicitud
+                ON ot.IdOTSolicitud = ePend.IdOTSolicitud
             LEFT JOIN #tmpAceptacionesPend aPend
-                ON aPend.IdOTSolicitud = ot.IdOTSolicitud
+                ON  ot.IdOTSolicitud = aPend.IdOTSolicitud
             LEFT JOIN #tmpAceptacionesSinRec aPendRec
-                ON aPendRec.IdOTSolicitud = ot.IdOTSolicitud
+                ON ot.IdOTSolicitud = aPendRec.IdOTSolicitud
         WHERE @pIdContrato IN ( sc.IdContrato, 0 )
         GROUP BY ot.Folio,
                  ot.IdOTSolicitud,
@@ -564,7 +585,7 @@ BEGIN
                ot.Folio,
                ot.IdOTSolicitud,
                e.CreadoEl,
-               'Operadora - Relacionar Pedido:' + cast(e.IdPedidoGeneral AS VARCHAR) + ' con PO en Procura',
+               'Operadora - Relacionar Pedido:' + CAST(e.IdPedidoGeneral AS VARCHAR) + ' con PO en Procura',
                'Pendiente',
                @dominioProcura + '/DEA/Relacion_PR_PO.aspx',
                'Completar',
@@ -574,9 +595,9 @@ BEGIN
                cc.CentroCosto
         FROM #tmpEstimacionSinPO e
             INNER JOIN OT_Solicitud ot
-                ON ot.IdOTSolicitud = e.IdOTSolicitud
+                ON e.IdOTSolicitud = ot.IdOTSolicitud
             INNER JOIN petrovendor..CC_CentroCosto cc
-                ON cc.IdCentroCosto = ot.IdCentroCosto
+                ON ot.IdCentroCosto = cc.IdCentroCosto
         --ORDER BY ot.CreadoEl DESC
         IF @pUsuarioAdincoId > 0
         BEGIN
@@ -628,27 +649,27 @@ BEGIN
            cc.CentroCosto
     FROM OT_Solicitud ot (NOLOCK)
         INNER JOIN petrovendor..CC_CentroCosto cc (NOLOCK)
-            ON cc.IdCentroCosto = ot.IdCentroCosto
+            ON ot.IdCentroCosto = cc.IdCentroCosto
         INNER JOIN OT_SolicitudMaterial otm (NOLOCK)
-            ON otm.IdOTSolicitud = ot.IdOTSolicitud
+            ON ot.IdOTSolicitud = otm.IdOTSolicitud
                AND @pPend_Comp = 2
         INNER JOIN [dbo].[AP_UsuarioCentroCosto] ucc (NOLOCK)
             ON (@pUsuarioAdincoId IN ( ucc.IdUsuario, 0 ))
                AND ucc.IdCentroCosto IN ( ot.IdCentroCosto, 0 )
         INNER JOIN SC_Subcontrato sc (NOLOCK)
-            ON sc.IdSubcontrato = ot.IdSubcontrato
+            ON ot.IdSubcontrato = sc.IdSubcontrato
         INNER JOIN PV_Subcontratista pv (NOLOCK)
-            ON pv.IdSubcontratista = sc.IdSubcontratista
+            ON sc.IdSubcontratista = pv.IdSubcontratista
         INNER JOIN petrovendor..S_Proveedor prov (NOLOCK)
-            ON prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = pv.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+            ON pv.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
                AND @pIdProveedor IN ( 0, prov.IdProveedor )
         INNER JOIN OT_SolicitudBitacora sb (NOLOCK)
-            ON sb.IdOTSolicitud = ot.IdOTSolicitud
-               AND sb.CreadoEl >= dateadd(day, -15, getdate())
+            ON ot.IdOTSolicitud = sb.IdOTSolicitud
+               AND sb.CreadoEl >= DATEADD(DAY, -15, GETDATE())
         LEFT JOIN AP_Usuario u (NOLOCK)
-            ON u.UsuarioId = sb.UsuarioAdincoId
+            ON sb.UsuarioAdincoId = u.UsuarioId
         LEFT JOIN [AP_FlujoAprobacion_Tareas] t
-            ON t.FlujoAprobacionTareaId = sb.FlujoAprobacionTareaId
+            ON sb.FlujoAprobacionTareaId = t.FlujoAprobacionTareaId
     WHERE @pIdContrato IN ( sc.IdContrato, 0 )
           AND ot.IsActivo = 1
     GROUP BY sb.UsuarioAdincoId,
