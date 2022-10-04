@@ -67,6 +67,7 @@ BEGIN
 			ModificadoPor=@IdUsuario
 			WHERE 
 			IdContrato = @IdContrato
+			AND IdWBS=@IdWBS
 			AND IdLineaPresupuesto = @IdLineaPresupuesto
 
 		SET @MENSAJE = 'La información se guardó exitosamente'
