@@ -1,8 +1,12 @@
-﻿Create Proc p_EliminarEquiposAutoconsumo
+﻿Create PROCEDURE p_EliminarEquiposAutoconsumo
 @pIdContrato	int,
-@pIdEquipo	int
+@pIdEquipo	int,
+@UsuarioId INT
 as
+	EXECUTE PR_SP_InsertBitacoraEquiposAutoconsumo @pIdContrato,@pIdEquipo,@UsuarioId,'Eliminación';
 
-	delete [PR_EquiposAutoconsumo]
-	where IdContrato = @pIdContrato and
+	UPDATE [PR_EquiposAutoconsumo]
+	SET Activo=0
+	WHERE 
+		IdContrato = @pIdContrato AND
 		IdEquipo = @pIdEquipo
