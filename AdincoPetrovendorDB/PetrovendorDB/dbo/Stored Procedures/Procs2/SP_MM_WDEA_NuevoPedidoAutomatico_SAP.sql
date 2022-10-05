@@ -33,9 +33,9 @@ BEGIN
     -- Insert statements for procedure here
 	DECLARE @IdProveedor INT = (SELECT TOP 1 IDPROVEEDOR FROM dbo.WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato),
 		--@IdContrato INT = (SELECT IdContrato FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido), 
-		@idTipoPedido int = (SELECT TOP 1 ISNULL(TP.IdTipoPedido,2) FROM 
+		@idTipoPedidoP int = (SELECT TOP 1 ISNULL(TP.IdTipoPedido,2) FROM 
 								dbo.WDEA_PurchasingDocumentsImportados PDI
-								INNER JOIN MM_TipoPedido TP
+								LEFT JOIN MM_TipoPedido TP
 								on LTRIM(RTRIM(PDI.MECANISMO_CONTRATACION)) = LTRIM(RTRIM(TP.PrefijoSAP))
 								WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND PDI.IDCONTRATO = @IdContrato),
 		@IdUsuario INT = (SELECT TOP 1 IDUSUARIOSOLICITANTE FROM dbo.WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato),
@@ -363,7 +363,8 @@ SELECT
         --#Generar el IdPedidoGeneral   
         SET @FECHA_ACTUAL = (SELECT GETDATE());
 		
-        EXEC dbo.SP_MM_GenerarIdPedidoGeneral @IdTipoPedido = @idTipoPedido,                        -- int 2 = MERCADEO
+		SET @idTipoPedidoP = ISNULL(@idTipoPedidoP,2);
+        EXEC dbo.SP_MM_GenerarIdPedidoGeneral @IdTipoPedido = @idTipoPedidoP,                        -- int 2 = MERCADEO
                                               @IdPrimaryKey = @IdPedidoActual,          -- int
                                               @CreadoPor = @IdUsuario,           -- int
                                               @CreadoEl = @FECHA_ACTUAL,                -- datetime
