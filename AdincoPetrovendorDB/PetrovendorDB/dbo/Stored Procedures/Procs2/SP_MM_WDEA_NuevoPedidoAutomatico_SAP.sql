@@ -1,16 +1,22 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 /****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 27/07/2022 12:26:55 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevoPedidoAutomatico_SAP
+GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Creacion de pedido automatica
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
+-- Author:		Luis David
+-- Create date: 04/10/2022
+-- Description:	Se obtiene el tipo de pedido a partir de la columna PrefijoSAP
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdPeticionOferta INT,
@@ -27,6 +33,11 @@ BEGIN
     -- Insert statements for procedure here
 	DECLARE @IdProveedor INT = (SELECT TOP 1 IDPROVEEDOR FROM dbo.WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato),
 		--@IdContrato INT = (SELECT IdContrato FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido), 
+		@idTipoPedidoP int = (SELECT TOP 1 ISNULL(TP.IdTipoPedido,2) FROM 
+								dbo.WDEA_PurchasingDocumentsImportados PDI
+								LEFT JOIN MM_TipoPedido TP
+								on LTRIM(RTRIM(PDI.MECANISMO_CONTRATACION)) = LTRIM(RTRIM(TP.PrefijoSAP))
+								WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND PDI.IDCONTRATO = @IdContrato),
 		@IdUsuario INT = (SELECT TOP 1 IDUSUARIOSOLICITANTE FROM dbo.WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato),
 		@FechaEntrega DATETIME = (SELECT FechaEntregaRequerida FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido),
 		@COUNT_PROVEEDORES INT,
@@ -352,7 +363,8 @@ SELECT
         --#Generar el IdPedidoGeneral   
         SET @FECHA_ACTUAL = (SELECT GETDATE());
 		
-        EXEC dbo.SP_MM_GenerarIdPedidoGeneral @IdTipoPedido = 2,                        -- int 2 = MERCADEO
+		SET @idTipoPedidoP = ISNULL(@idTipoPedidoP,2);
+        EXEC dbo.SP_MM_GenerarIdPedidoGeneral @IdTipoPedido = @idTipoPedidoP,                        -- int 2 = MERCADEO
                                               @IdPrimaryKey = @IdPedidoActual,          -- int
                                               @CreadoPor = @IdUsuario,           -- int
                                               @CreadoEl = @FECHA_ACTUAL,                -- datetime

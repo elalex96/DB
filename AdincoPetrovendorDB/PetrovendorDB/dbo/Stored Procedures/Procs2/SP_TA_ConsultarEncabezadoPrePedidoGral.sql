@@ -1,7 +1,8 @@
-use petrovendor
-go
-drop procedure if exists SP_TA_ConsultarEncabezadoPrePedidoGral
-go
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_TA_ConsultarEncabezadoPrePedidoGral
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:		Daniel AC
 -- Update date: 28-10-2019
@@ -14,6 +15,10 @@ go
 -- Author:		Luis David de la cruz Bautista
 -- Update date: 15/08/2022
 -- Description:	Se corrigen los errore ortográficos del detalle del pedido para issue #1963 (Petrovendor)
+-- =============================================
+-- Author:		Luis David de la cruz Bautista
+-- Update date: 04/10/2022
+-- Description:	Se agrega el tipo licitación a la consulta ya que se agregó para en el catalogo con prefijo SAP
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral] --420, 1343
 	-- Add the parameters for the stored procedure here
@@ -49,7 +54,7 @@ BEGIN
     -- Insert statements for procedure here
 	
 	----- IdTipoOperacion = 9--> Aprobaci�n de pedido
-	
+				drop table if exists #TEMP_PRESUPUESTOS
 				 CREATE TABLE #TEMP_PRESUPUESTOS --CREAMOS UNA TABLA TEMPORAL
 				( IdRow INT IDENTITY(1,1),Nombre VARCHAR(max));
 
@@ -153,7 +158,7 @@ BEGIN
 	INNER JOIN dbo.MM_Pedidos AS PG 
 	ON P.IdPedido = PG.IdIdentificador 
 	AND PG.IdProveedorCliente = @IdProveedor 
-	AND PG.IdTipoPedido IN (2, 4, 6) ---(Mer, AD, OT)
+	AND PG.IdTipoPedido IN (2,3, 4, 6) ---(Mer,LICI, AD, OT)
 	LEFT  JOIN dbo.MM_TipoPedido (NOLOCK) AS TP 
 	ON PG.IdTipoPedido = TP.IdTipoPedido
 	LEFT JOIN dbo.MM_SolicitudPedido sp 

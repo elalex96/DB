@@ -5,10 +5,15 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <25/08/2021>  
 -- Description: <guardado de datos de servicio de lectura de correos para WDEA>  
+-- =============================================  
+-- Author:  <Luis David>  
+-- Create date: <05/10/2022>  
+-- Description: <Se agregan los trims para wbs y mecanismo oferta>  
 -- =============================================  
 ALTER PROCEDURE [dbo].[SP_InsLayoutWDEA] 
 @LayoutWDEA dbo.WDEA_Layout_T_V4 READONLY,
@@ -90,7 +95,7 @@ BEGIN
     SELECT [Item]
       ,[Purch_Organization]
       ,[Cost_Center]
-      ,[WBS_Element]
+      ,LTRIM(RTRIM([WBS_Element]))
       ,[Outline_Agreegement]
       ,[Short_Text]
       ,[Validity_Per_Start]
@@ -117,7 +122,7 @@ BEGIN
 			WHEN [Created_On] = '0' OR [Created_On] = '' OR [Created_On] = '00/00/0000' THEN CONVERT(varchar,GETDATE(),103)
 			ELSE [Created_On]
 		END
-	  ,[Mecanismo_de_Contratacion]
+	  ,LTRIM(RTRIM([Mecanismo_de_Contratacion]))
       ,GETDATE()
 	  ,CAST(RowN AS INT)
 	  ,@IDBITACORA
