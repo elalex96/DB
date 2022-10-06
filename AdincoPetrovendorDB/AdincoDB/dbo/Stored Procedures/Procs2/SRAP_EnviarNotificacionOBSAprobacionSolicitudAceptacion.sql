@@ -1,13 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion'
-)
-    DROP PROCEDURE SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion;
-GO
+DROP PROCEDURE IF EXISTS SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion;
 /****** Object:  StoredProcedure [dbo].[SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion]    Script Date: 03/06/2022 10:06:54 a. m. ******/
 SET ANSI_NULLS ON
 GO
@@ -22,6 +15,11 @@ GO
 -- Author:		DANIEL AC
 -- Create date: 03/06/2022
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla 
+-- =============================================
+-- =============================================
+-- Author:		Luis David
+-- Create date: 05/10/2022
+-- Description:	Optimización
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion] --10038,12185,27250,1081,'4500000002',2653
 	-- Add the parameters for the stored procedure hePut your HTML text herere
@@ -38,25 +36,25 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
-	DECLARE @HTML NVARCHAR(MAX);
-	DECLARE @ASUNTO NVARCHAR(1000);
-	DECLARE @DESTINATARIO NVARCHAR(500);
-	DECLARE @DESTINATARIO_NOMBRE NVARCHAR(500);
-	DECLARE @ID_NOTIFICACION INT;
-	DECLARE @CONT_TOTAL INT;
-	DECLARE @ROW INT = 1;
-	DECLARE @NUMERO_CONTRATO NVARCHAR(500)= (SELECT TOP 1
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX),
+	@HTML NVARCHAR(MAX),
+	@ASUNTO NVARCHAR(1000),
+	@DESTINATARIO NVARCHAR(500),
+	@DESTINATARIO_NOMBRE NVARCHAR(500),
+	@ID_NOTIFICACION INT,
+	@CONT_TOTAL INT,
+	@ROW INT = 1,
+	@NUMERO_CONTRATO NVARCHAR(500)= (SELECT TOP 1
 													C.NumeroContrato + ' - ' + AC.NombreAreaContractual
-												FROM Adinco.dbo.CO_Contrato AS C
-												JOIN Adinco.dbo.CO_AreaContractual AS AC
+												FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
+												JOIN Adinco.dbo.CO_AreaContractual AS AC (NOLOCK)
 													ON C.IdAreaContractual = AC.IdAreaContractual
-												WHERE C.IdContrato = @ContratoId);
+												WHERE C.IdContrato = @ContratoId),
 	--SE OBTIENE EL NOMBRE DEL SUBCONTRATISTA
-	DECLARE @PROVEEDOR NVARCHAR(500) = (SELECT TOP 1
+	@PROVEEDOR NVARCHAR(500) = (SELECT TOP 1
 											PR.RazonSocial 
-										FROM MM_Pedido AS P
-										JOIN S_Proveedor AS PR ON
+										FROM MM_Pedido AS P (NOLOCK)
+										JOIN S_Proveedor AS PR (NOLOCK) ON
 											P.IdSubcontratista = PR.IdProveedor
 										WHERE P.IdPedido = @IdPedido);
 	DECLARE @USUARIOS_OBS TABLE (R INT IDENTITY(1,1) PRIMARY KEY,
@@ -74,11 +72,11 @@ BEGIN
 		U.IdUsuario,
 		U.Nombre,
 		U.Correo
-	FROM DEA_UsuarioOBS UOBS
-		JOIN S_Usuario U
-	ON UOBS.IdUsuario=U.IdUsuario				
-	WHERE UOBS.Activo = 1	
-		AND UOBS.IdContrato = @ContratoId		
+	FROM DEA_UsuarioOBS UOBS (NOLOCK)
+		JOIN S_Usuario U (NOLOCK)
+	ON UOBS.IdUsuario = U.IdUsuario				
+	WHERE 1 = UOBS.Activo
+		AND @ContratoId = UOBS.IdContrato		
 	GROUP BY U.IdUsuario,
 		U.Nombre,
 		U.Correo;
@@ -86,8 +84,8 @@ BEGIN
 	--SE OBTIENE EL TOTAL DE APROBADORES
 	SET @CONT_TOTAL = (SELECT COUNT(1) FROM @USUARIOS_OBS);
 	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-								FROM TA_Correo AS C
-									INNER JOIN TA_CorreoServidor AS S
+								FROM TA_Correo AS C (NOLOCK)
+									INNER JOIN TA_CorreoServidor AS S (NOLOCK)
 										ON  C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 109) --> CTE NUMERO CORREO (TA_Correo)
 
