@@ -1,4 +1,4 @@
-﻿Create Proc p_InsUpdEquiposAutoconsumo
+﻿Create PROCEDURE p_InsUpdEquiposAutoconsumo
 @pIdContrato	int,
 @pIdEquipo	int,
 @pFecha	datetime,
@@ -12,12 +12,9 @@
 @pConsumoReal	float,
 @pConsumoEnergetico	float,
 @pDispositivoInyeccion	varchar(1000),
-@pObervaciones	varchar(1000)
+@pObervaciones	varchar(1000),
+@pCreadoPor INT
 as
-
-
-
-
 	if not exists (
 		select 1
 		from [PR_EquiposAutoconsumo]
@@ -33,16 +30,20 @@ as
 		insert into [PR_EquiposAutoconsumo](
 			IdContrato,		/*IdEquipo,*/			Fecha,					UTMX,				UTMY,
 			Producto,		TipoEquipo,			TAG,					FluidoDesplazado,	ConsumoTeorico,
-			ConsumoReal,	ConsumoEnergetico,	DispositivoInyeccion,	Obervaciones
+			ConsumoReal,	ConsumoEnergetico,	DispositivoInyeccion,	Obervaciones,CreadoPor,CreadoEl, Activo
 		)
 		values(
 			@pIdContrato,		/*@pIdEquipo,*/			@pFecha,				@pUTMX,				@pUTMY,
 			@pProducto,		@pTipoEquipo,			@pTAG,					@pFluidoDesplazado,	@pConsumoTeorico,
-			@pConsumoReal,	@pConsumoEnergetico,	@pDispositivoInyeccion,	@pObervaciones
+			@pConsumoReal,	@pConsumoEnergetico,	@pDispositivoInyeccion,	@pObervaciones, @pCreadoPor, GETDATE(),
+			1
 		)
 	end
 	Else
 	Begin
+
+		EXECUTE PR_SP_InsertBitacoraEquiposAutoconsumo @pIdContrato,@pIdEquipo,@pCreadoPor,'Modificación';
+
 		update [PR_EquiposAutoconsumo]
 		set 	Fecha = @pFecha,
 				UTMX = @pUTMX,
@@ -55,8 +56,10 @@ as
 				ConsumoReal =@pConsumoReal ,
 				ConsumoEnergetico = @pConsumoEnergetico,
 				DispositivoInyeccion = @pDispositivoInyeccion,
-				Obervaciones = @pObervaciones
+				Obervaciones = @pObervaciones,
+				ModificadoPor= @pCreadoPor, 
+				ModificadoEl = GETDATE()
 		where  IdContrato = @pIdContrato and
-		IdEquipo = @pIdEquipo
+		IdEquipo = @pIdEquipo 
 	End
 

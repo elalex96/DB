@@ -1,6 +1,6 @@
 ﻿
 
-CREATE  proc p_InsUpdTanque
+CREATE  PROCEDURE p_InsUpdTanque
 @pId	int out,
 @pClave	varchar(20),
 @pNombre	varchar(200),
@@ -20,11 +20,10 @@ CREATE  proc p_InsUpdTanque
 @pProductoAlmacenado	varchar(250),
 @pIdTipoTanque	int,
 @pMedicionManual	bit,
-@pPuntoEntregaID int
+@pPuntoEntregaID int,
+@pCreadoPor INT
 
 as
-
-	
 
 	set @pEstacion = case when @pEstacion = 0 then  null else @pEstacion end
 
@@ -41,7 +40,7 @@ as
 			Diametro,		Altura,					Constante,	PctNoBombeable,
 			VolNoBombeable,	PctMaximo,				VolMaximo,	PorcentajeAgua,
 			/*[timestamp],*/		ProductoAlmacenado,		IdTipoTanque,	MedicionManual,
-			PuntoEntregaID
+			PuntoEntregaID, CreadoPor,CreadoEl,Activo
 		)
 		select
 							@pClave,					@pNombre,		@pDescripcion,
@@ -49,12 +48,13 @@ as
 			@pDiametro,		@pAltura,					@pConstante,	@pPctNoBombeable,
 			@pVolNoBombeable,	@pPctMaximo,				@pVolMaximo,	@pPorcentajeAgua,
 			/*@ptimestamp,*/		@pProductoAlmacenado,		@pIdTipoTanque,	@pMedicionManual,
-			@pPuntoEntregaID
+			@pPuntoEntregaID,@pCreadoPor,GETDATE(),1
 
 	End
 	Else
 	Begin
-		
+		EXECUTE PR_SP_InsertBitacoraTanque @pId,@pCreadoPor,'Modificación';
+
 		update PR_Tanque
 		set Clave = @pClave,
 			Nombre = @pNombre,
@@ -74,10 +74,9 @@ as
 			ProductoAlmacenado =@pProductoAlmacenado,
 			IdTipoTanque = @pIdTipoTanque,
 			MedicionManual = @pMedicionManual,
-			PuntoEntregaID = @pPuntoEntregaID
+			PuntoEntregaID = @pPuntoEntregaID,
+			ModificadoPor = @pCreadoPor,
+			ModificadoEl= GETDATE()
 		where Id = @pId
 
 	End
-	
-
-

@@ -1,6 +1,10 @@
-﻿create proc p_EliminarTanque
-@pId	int
+﻿create PROCEDURE p_EliminarTanque
+@pId	int,
+@UsuarioId INT
 as
+	EXECUTE PR_SP_InsertBitacoraTanque @pId,@UsuarioId,'Eliminación';
 
-	delete PR_Tanque
-	where Id  = @pId
+	UPDATE PR_Tanque
+	SET		Activo = 0
+	where 
+		Id  = @pId
