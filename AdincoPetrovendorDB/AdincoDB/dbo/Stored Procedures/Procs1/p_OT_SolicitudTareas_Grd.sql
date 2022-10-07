@@ -22,17 +22,22 @@ BEGIN
     /*PRODUCCIÓN
     DECLARE @dominioAdinco VARCHAR(100)='https://adinco.mx',
     		@dominioPetrovendor VARCHAR(100)='https://petrovendor.com.mx',
-    		@dominioProcura VARCHAR(100)='https://procura.adinco.mx/'
+    		@dominioProcura VARCHAR(100)='https://procura.adinco.mx'
 	*/
     /*QA
 	DECLARE @dominioAdinco VARCHAR(100)='http://mpyadinco.adinco.mx',
 			@dominioPetrovendor VARCHAR(100)='http://mpypetrovendor.adinco.mx',
 			@dominioProcura VARCHAR(100)= 'https://MPYprocura.adinco.mx'
 	*/
-    /*DEV*/
-    DECLARE @dominioAdinco VARCHAR(100) = 'http://localhost:52692/',      --https://adinco.mx
-            @dominioPetrovendor VARCHAR(100) = 'http://localhost:58935/', --https://petrovendor.com.mx
-            @dominioProcura VARCHAR(100) = 'http://localhost:58936/'      --https://procura.adinco.mx
+	 /*DESARROLLO*/
+	DECLARE @dominioAdinco VARCHAR(100)='http://desarrollo.adinco.mx',
+			@dominioPetrovendor VARCHAR(100)='http://desarrollo.petrovendor.com.mx',
+			@dominioProcura VARCHAR(100)= 'http://desarrolloprocura.adinco.mx'	
+    /*DEV
+    DECLARE @dominioAdinco VARCHAR(100) = 'http://localhost:52692',      --https://adinco.mx
+            @dominioPetrovendor VARCHAR(100) = 'http://localhost:58935', --https://petrovendor.com.mx
+            @dominioProcura VARCHAR(100) = 'http://localhost:58936'      --https://procura.adinco.mx
+	*/
     /*Tablas Temporales*/
     CREATE TABLE #tmpTareas
     (
