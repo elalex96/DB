@@ -1,434 +1,1046 @@
-﻿-- p_OT_SolicitudTareas_Grd 10038,10,0,1,1445
-CREATE Proc [dbo].[p_OT_SolicitudTareas_Grd]
-@pIdContrato int,
-@pUsuarioAdincoId int,
-@pUsuarioPetroId int,
-@pPend_Comp int, --0 ambas, 1 pendientes, 2 completadas
-@pIdProveedor int=0
-as
+﻿--╔══════════════════════════════════════════╗
+--║Uso de SP en Sistema de ADINCO            ║
+--║Uso de SP en Sistema de PETROVENDOR       ║
+--╚══════════════════════════════════════════╝
+-- =============================================   
+-- Modificado Por:	Neri Garcia
+-- Fecha:			06 de Octubre del 2022
+-- Descripción:		Eliminación de código comentado, agregado de (NOLOCK), eliminación de subquerys,
+--					se ajustan las tablas declaradas que se encuentran dispersas,
+--					se eliminan tablas que no se encuentran en uso, se ajustan algunos left joins, 
+--					se quita el uso de funciones, ajuste de orden de llamado en los joins (ON)
+-- =============================================
+CREATE PROC [p_OT_SolicitudTareas_Grd]
+    @pIdContrato INT,
+    @pUsuarioAdincoId INT,
+    @pUsuarioPetroId INT,
+    @pPend_Comp INT, --0 ambas, 1 pendientes, 2 completadas
+    @pIdProveedor INT = 0
+AS
 BEGIN
+    DECLARE @emailUsuario VARCHAR(50)
+    /*PRODUCCIÓN
+    DECLARE @dominioAdinco VARCHAR(100)='https://adinco.mx',
+    		@dominioPetrovendor VARCHAR(100)='https://petrovendor.com.mx',
+    		@dominioProcura VARCHAR(100)='https://procura.adinco.mx'
+	*/
+    /*QA
+	DECLARE @dominioAdinco VARCHAR(100)='http://mpyadinco.adinco.mx',
+			@dominioPetrovendor VARCHAR(100)='http://mpypetrovendor.adinco.mx',
+			@dominioProcura VARCHAR(100)= 'https://MPYprocura.adinco.mx'
+	*/
+	 /*DESARROLLO*/
+	DECLARE @dominioAdinco VARCHAR(100)='http://desarrollo.adinco.mx',
+			@dominioPetrovendor VARCHAR(100)='http://desarrollo.petrovendor.com.mx',
+			@dominioProcura VARCHAR(100)= 'http://desarrolloprocura.adinco.mx'	
+    /*DEV
+    DECLARE @dominioAdinco VARCHAR(100) = 'http://localhost:52692',      --https://adinco.mx
+            @dominioPetrovendor VARCHAR(100) = 'http://localhost:58935', --https://petrovendor.com.mx
+            @dominioProcura VARCHAR(100) = 'http://localhost:58936'      --https://procura.adinco.mx
+	*/
+    /*Tablas Temporales*/
+    CREATE TABLE #tmpTareas
+    (
+        IdOTTarea INT,
+        Folio VARCHAR(250),
+        IdOTSolicitud INT,
+        FechaRegistro DATETIME,
+        Tarea VARCHAR(300),
+        Estatus VARCHAR(50),
+        Url VARCHAR(500),
+        UrlText VARCHAR(100),
+        FechaCompletada DATETIME,
+        Completada BIT,
+        UsuarioAsignado VARCHAR(5000),
+        CentroCosto VARCHAR(250)
+    );
+    CREATE TABLE #tmpTareasPendientesDeAprobar
+    (
+        IdOTTarea INT,
+        Folio VARCHAR(250),
+        IdOTSolicitud INT,
+        FechaRegistro DATETIME,
+        Tarea VARCHAR(300),
+        Estatus VARCHAR(50),
+        Url VARCHAR(500),
+        UrlText VARCHAR(100),
+        FechaCompletada DATETIME,
+        Completada BIT,
+        UsuarioAsignado VARCHAR(5000),
+        CentroCosto VARCHAR(250),
+        IdOTEstatus INT,
+        tmpAceptacionesSinRecIdOTSolicitud INT,
+        tmpAceptacionesSinRecidAceptacionPedido INT,
+        tmpAceptacionesPendIdOTSolicitud INT,
+        tmpEstimacionPendIdOTSolicitud INT,
+        tmpEstimacionPendSemanaID VARCHAR(21),
+        tmpCerrarSemanasFecha DATETIME,
+        tmpAceptacionesPendIdPedido INT,
+        tmpAceptacionesPendIdPedidoGen INT,
+        Actualizado BIT
+    );
+    CREATE TABLE #tmpTareasPendientesDeAprobarUsuarios
+    (
+        IdOTSolicitud INT,
+        UsuarioAsignado VARCHAR(1000),
+        FlujoAprobacionEstatusId INT
+    );
+    CREATE TABLE #tmpTareasPendientesDeAprobarUsuariosMenbers
+    (
+        IdOTSolicitud INT,
+        FlujoAprobacionEstatusId INT,
+        UsuarioAsignado VARCHAR(5000)
+    );
+    CREATE TABLE #tmpTareasSinRelacionPedido
+    (
+        IdOTTarea INT,
+        Folio VARCHAR(250),
+        IdOTSolicitud INT,
+        FechaRegistro DATETIME,
+        Tarea VARCHAR(300),
+        Estatus VARCHAR(50),
+        Url VARCHAR(500),
+        UrlText VARCHAR(100),
+        FechaCompletada DATETIME,
+        Completada BIT,
+        UsuarioAsignado VARCHAR(5000),
+        CentroCosto VARCHAR(250)
+    );
+    CREATE TABLE #tmpTareasCompletadas
+    (
+        IdOTTarea INT,
+        Folio VARCHAR(250),
+        IdOTSolicitud INT,
+        FechaRegistro DATETIME,
+        Tarea VARCHAR(300),
+        Estatus VARCHAR(50),
+        Url VARCHAR(500),
+        UrlText VARCHAR(100),
+        FechaCompletada DATETIME,
+        Completada BIT,
+        UsuarioAsignado VARCHAR(5000),
+        CentroCosto VARCHAR(250),
+        UsuarioAdincoId INT,
+        FlujoAprobacionTareaId INT
+    );
+    CREATE TABLE #tmpCerrarSemanas
+    (
+        IdOTSolicitud INT,
+        IdOTSolicitudMaterial INT,
+        Fecha DATETIME,
+        IdOTSolicitudProgramaCaptura INT
+    );
+    CREATE TABLE #tmpEstimacionPend
+    (
+        IdOTSolicitud INT,
+        IdOTSolicitudMaterial INT,
+        Fecha DATETIME,
+        SemanaID VARCHAR(21)
+    );
+    CREATE TABLE #tmpAceptacionesPend
+    (
+        IdOTEstimacion INT,
+        IdOTSolicitud INT,
+        IdPedido INT,
+        IdPedidoGen INT
+    );
+    CREATE TABLE #tmpAceptacionesSinRec
+    (
+        IdOTEstimacion INT,
+        IdOTSolicitud INT,
+        IdPedido INT,
+        idPedidoGen INT,
+        IdAceptacionPedido INT
+    );
+    CREATE TABLE #tmpEstimacionSinPO
+    (
+        IdOTSolicitud INT,
+        IdOTEstimacion INT,
+        IdPedidoGeneral INT,
+        CreadoEl DATETIME,
+        IdPedido INT
+    );
+    CREATE TABLE #tmpOTEstatusPermitidos (IdOTEstatus INT);
+    /*Obtencion Valores*/
+    INSERT INTO #tmpOTEstatusPermitidos
+    (
+        IdOTEstatus
+    )
+    SELECT IdOTEstatus
+    FROM OT_Solicitud
+    GROUP BY IdOTEstatus
 
-	declare @emailUsuario varchar(50)
+    IF (@pUsuarioAdincoId > 0)
+    BEGIN
+        DELETE #tmpOTEstatusPermitidos
+        WHERE IdOTEstatus IN ( 7, 8, 12 )
+    END
 
-	create table #tmpTareas
-	(
-		IdOTTarea int,
-		Folio varchar(250),
-		IdOTSolicitud int,
-		FechaRegistro datetime,
-		Tarea varchar(300),
-		Estatus varchar(50),
-		Url varchar(500),
-		UrlText varchar(100),
-		FechaCompletada DateTime,
-		Completada bit,
-		UsuarioAsignado varchar(5000),
-		CentroCosto varchar(250)
+    IF (@pUsuarioPetroId > 0)
+    BEGIN
+        DELETE #tmpOTEstatusPermitidos
+        WHERE IdOTEstatus IN ( 7, 8, 12 )
+    END
 
-	)
+    IF (ISNULL(@pUsuarioAdincoId, 0) = 0)
+    BEGIN
+        DELETE #tmpOTEstatusPermitidos
+        WHERE IdOTEstatus IN ( 1, 7, 8, 12 )
+    END
 
-	/*PRODUCCIÓN*/
-	--declare @dominioAdinco varchar(100)='https://adinco.mx',
-	--		@dominioPetrovendor varchar(100)='https://petrovendor.com.mx',
-	--		@dominioProcura varchar(100)='https://procura.adinco.mx/'
+    IF @pPend_Comp = 1
+    BEGIN
+        /*SEMANAS QUE FALTAN CERRAR*/
+        INSERT INTO #tmpCerrarSemanas
+        (
+            IdOTSolicitud,
+            IdOTSolicitudMaterial,
+            Fecha,
+            IdOTSolicitudProgramaCaptura
+        )
+        SELECT OT_Solicitud.IdOTSolicitud,
+               OT_SolicitudMaterial.IdOTSolicitudMaterial,
+               OT_SolicitudProgramaCaptura.Fecha,
+               OT_SolicitudProgramaCaptura.IdOTSolicitudProgramaCaptura
+        FROM OT_Solicitud (NOLOCK)
+            INNER JOIN OT_SolicitudMaterial (NOLOCK)
+                ON OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+                   AND OT_Solicitud.IsActivo = 1
+            INNER JOIN SC_SubContrato (NOLOCK)
+                ON OT_Solicitud.IdSubcontrato = SC_SubContrato.IdSubcontrato
+                   AND SC_SubContrato.IDContrato = @pIdContrato
+            INNER JOIN OT_SolicitudProgramaCaptura (NOLOCK)
+                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
+                   AND OT_SolicitudProgramaCaptura.VoBoSubcontratista = 1
+        WHERE OT_Solicitud.IsActivo = 1
+              AND SC_SubContrato.IDContrato = @pIdContrato
+        GROUP BY OT_Solicitud.IdOTSolicitud,
+                 OT_SolicitudMaterial.IdOTSolicitudMaterial,
+                 OT_SolicitudProgramaCaptura.Fecha,
+                 OT_SolicitudProgramaCaptura.IdOTSolicitudProgramaCaptura
+        /*Se saca subquery que manejaba NOT exists*/
+        DELETE #tmpCerrarSemanas
+        FROM #tmpCerrarSemanas
+            INNER JOIN OT_ProgramaSemanaCerrada (NOLOCK)
+                ON #tmpCerrarSemanas.IdOTSolicitud = OT_ProgramaSemanaCerrada.IdOTSolicitud
+                   AND #tmpCerrarSemanas.Fecha
+                   BETWEEN OT_ProgramaSemanaCerrada.FechaSemanaIni AND OT_ProgramaSemanaCerrada.FechaSemanaFin
+                   AND OT_ProgramaSemanaCerrada.isActivo = 1
+        /*SEMANAS QUE FALTAN ESTIMAR*/
+        INSERT INTO #tmpEstimacionPend
+        (
+            IdOTSolicitud,
+            IdOTSolicitudMaterial,
+            Fecha,
+            SemanaID
+        )
+        SELECT OT_Solicitud.IdOTSolicitud,
+               OT_SolicitudMaterial.IdOTSolicitudMaterial,
+               OT_SolicitudProgramaCaptura.Fecha,
+               OT_ProgramaSemanaCerrada.SemanaID
+        FROM OT_Solicitud (NOLOCK)
+            INNER JOIN OT_SolicitudMaterial (NOLOCK)
+                ON OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+                   AND OT_Solicitud.IsActivo = 1
+            INNER JOIN SC_SubContrato (NOLOCK)
+                ON OT_Solicitud.IdSubcontrato = SC_SubContrato.IdSubcontrato
+            INNER JOIN OT_SolicitudProgramaCaptura (NOLOCK)
+                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
+                   AND OT_SolicitudProgramaCaptura.VoBoSubcontratista = 1
+                   AND OT_SolicitudProgramaCaptura.VoBoContratista = 1
+            INNER JOIN OT_ProgramaSemanaCerrada (NOLOCK)
+                ON OT_Solicitud.IdOTSolicitud = OT_ProgramaSemanaCerrada.IdOTSolicitud
+                   AND OT_SolicitudProgramaCaptura.Fecha
+                   BETWEEN OT_ProgramaSemanaCerrada.FechaSemanaIni AND OT_ProgramaSemanaCerrada.FechaSemanaFin
+                   AND OT_ProgramaSemanaCerrada.isActivo = 1
+        WHERE OT_Solicitud.IsActivo = 1
+              AND SC_SubContrato.IDContrato = @pIdContrato
+        GROUP BY OT_Solicitud.IdOTSolicitud,
+                 OT_SolicitudMaterial.IdOTSolicitudMaterial,
+                 OT_SolicitudProgramaCaptura.Fecha,
+                 OT_ProgramaSemanaCerrada.SemanaID
+        /*Se saca subquery que manejaba NOT exists*/
+        DELETE #tmpEstimacionPend
+        FROM #tmpEstimacionPend
+            INNER JOIN OT_Estimacion (NOLOCK)
+                ON #tmpEstimacionPend.IdOTSolicitud = OT_Estimacion.IdOTSolicitud
+                   AND #tmpEstimacionPend.Fecha
+                   BETWEEN OT_Estimacion.FechaCorteInicio AND OT_Estimacion.FechaCorteFin
+                   AND ISNULL(OT_Estimacion.Cancelada, 0) = 0
+        /*Estimaciones sin aceptacion*/
+        INSERT INTO #tmpAceptacionesPend
+        (
+            IdOTEstimacion,
+            IdOTSolicitud,
+            IdPedido,
+            IdPedidoGen
+        )
+        SELECT OT_Estimacion.IdOTEstimacion,
+               OT_Estimacion.IdOTSolicitud,
+               idPedido = OT_Estimacion.IdPedido,
+               idPedidoGen = OT_Estimacion.IdPedidoGeneral
+        FROM OT_Estimacion (NOLOCK)
+            INNER JOIN OT_Solicitud (NOLOCK)
+                ON ISNULL(OT_Estimacion.cancelada, 0) = 0
+                   AND OT_Estimacion.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
+            INNER JOIN SC_SubContrato (NOLOCK)
+                ON OT_Solicitud.IdSubcontrato = SC_SubContrato.IdSubcontrato
+        WHERE SC_SubContrato.IdContrato = @pIdContrato
+              AND ISNULL(OT_Estimacion.cancelada, 0) = 0
+        GROUP BY OT_Estimacion.IdOTEstimacion,
+                 OT_Estimacion.IdPedido,
+                 OT_Estimacion.IdPedidoGeneral,
+                 OT_Estimacion.IdOTSolicitud
+        /*Se saca subquery que manejaba NOT exists*/
+        DELETE #tmpAceptacionesPend
+        FROM #tmpAceptacionesPend
+            INNER JOIN Petrovendor..MM_AceptacionPedido (NOLOCK)
+                ON #tmpAceptacionesPend.IdPedido = #tmpAceptacionesPend.IdPedido
+        /*Aceptaciones sin reclasificacion*/
+        INSERT INTO #tmpAceptacionesSinRec
+        (
+            IdOTEstimacion,
+            IdOTSolicitud,
+            IdPedido,
+            idPedidoGen,
+            IdAceptacionPedido
+        )
+        SELECT OT_Estimacion.IdOTEstimacion,
+               OT_Estimacion.IdOTSolicitud,
+               idPedido = OT_Estimacion.IdPedido,
+               idPedidoGen = OT_Estimacion.IdPedidoGeneral,
+               petrovendor..MM_AceptacionPedido.idAceptacionPedido
+        FROM OT_Estimacion (NOLOCK)
+            INNER JOIN OT_Solicitud (NOLOCK)
+                ON ISNULL(OT_Estimacion.Cancelada, 0) = 0
+                   AND OT_Estimacion.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
+            INNER JOIN SC_SubContrato (NOLOCK)
+                ON OT_Solicitud.IdSubcontrato = SC_SubContrato.IdSubcontrato
+                   AND SC_SubContrato.IdContrato = @pIdContrato
+            INNER JOIN petrovendor..MM_AceptacionPedido (NOLOCK)
+                ON OT_Estimacion.IdPedido = petrovendor..MM_AceptacionPedido.IdPedido
+                   AND petrovendor..MM_AceptacionPedido.ModificadoPor IS NULL
+        WHERE SC_SubContrato.IdContrato = @pIdContrato
+              AND ISNULL(OT_Estimacion.Cancelada, 0) = 0
+        GROUP BY OT_Estimacion.IdOTEstimacion,
+                 OT_Estimacion.IdPedido,
+                 OT_Estimacion.IdPedidoGeneral,
+                 OT_Estimacion.IdOTSolicitud,
+                 petrovendor..MM_AceptacionPedido.idAceptacionPedido
+        /*Se saca subquery que manejaba NOT exists*/
+        DELETE #tmpAceptacionesSinRec
+        FROM #tmpAceptacionesSinRec
+            INNER JOIN petrovendor..MM_AceptacionPedidoDetalleEliminada (NOLOCK)
+                ON #tmpAceptacionesSinRec.idAceptacionPedido = petrovendor..MM_AceptacionPedidoDetalleEliminada.IdAceptacionPedido
+
+        DELETE #tmpAceptacionesSinRec
+        FROM #tmpAceptacionesSinRec
+            INNER JOIN petrovendor..MM_AceptacionFactura (NOLOCK)
+                ON #tmpAceptacionesSinRec.idAceptacionPedido = petrovendor..MM_AceptacionFactura.IdAceptacionPedido
+        /*ISSUE 1018. Generar info de Estimaciones sin PO*/
+        INSERT INTO #tmpEstimacionSinPO
+        (
+            IdOTSolicitud,
+            IdOTEstimacion,
+            IdPedidoGeneral,
+            CreadoEl,
+            IdPedido
+        )
+        SELECT OT_Estimacion.IdOTSolicitud,
+               OT_Estimacion.IdOTEstimacion,
+               OT_Estimacion.IdPedidoGeneral,
+               OT_Estimacion.CreadoEl,
+               OT_Estimacion.IdPedido
+        FROM OT_Estimacion (NOLOCK)
+            INNER JOIN OT_Solicitud (NOLOCK)
+                ON OT_Estimacion.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
+                   AND ISNULL(OT_Estimacion.Cancelada, 0) = 0
+            INNER JOIN SC_SubContrato (NOLOCK)
+                ON OT_Solicitud.IdSubContrato = SC_SubContrato.IdSubContrato
+                   AND SC_SubContrato.IdContrato = @pIdContrato
+        WHERE ISNULL(OT_Estimacion.Cancelada, 0) = 0
+        GROUP BY OT_Estimacion.IdOTSolicitud,
+                 OT_Estimacion.IdOTEstimacion,
+                 OT_Estimacion.IdPedidoGeneral,
+                 OT_Estimacion.CreadoEl,
+                 OT_Estimacion.IdPedido
+        /*Se saca left join*/
+        DELETE #tmpEstimacionSinPO
+        FROm #tmpEstimacionSinPO
+            INNER JOIN petrovendor..DEA_Relacion_PR_PO (NOLOCK)
+                ON #tmpEstimacionSinPO.IdPedido = petrovendor..DEA_Relacion_PR_PO.IdPedido        
+        /*OT's pendientes de aprobar*/
+        INSERT INTO #tmpTareasPendientesDeAprobar
+        (
+            IdOTTarea,
+            Folio,
+            IdOTSolicitud,
+            FechaRegistro,
+            Tarea,
+            Estatus,
+            Url,
+            UrlText,
+            FechaCompletada,
+            Completada,
+            UsuarioAsignado,
+            CentroCosto,
+            IdOTEstatus,
+            tmpAceptacionesSinRecIdOTSolicitud,
+            tmpAceptacionesSinRecidAceptacionPedido,
+            tmpAceptacionesPendIdOTSolicitud,
+            tmpEstimacionPendIdOTSolicitud,
+            tmpEstimacionPendSemanaID,
+            tmpCerrarSemanasFecha,
+            tmpAceptacionesPendIdPedido,
+            tmpAceptacionesPendIdPedidoGen,
+            Actualizado
+        )
+        SELECT 1,
+               OT_Solicitud.Folio,
+               OT_Solicitud.IdOTSolicitud,
+               OT_Solicitud.CreadoEl,
+               /*********ESTATUS TAREA***************/
+               CASE
+                   WHEN OT_Solicitud.IdOTEstatus = 1 THEN
+                       CASE
+                           WHEN OT_Solicitud.ProgIniPorProveedor = 0 THEN
+                               'Operadora - Pendiente de Enviar a Manager'
+                           WHEN OT_Solicitud.ProgIniPorProveedor = 1 THEN
+                               'Operadora - Pendiente de Enviar a Proveedor'
+                       END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 2, 4 ) THEN
+                       'Proveedor - Revisión de OT'
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
+                       CASE
+                           WHEN #tmpAceptacionesSinRec.IdOTSolicitud IS NOT NULL THEN
+                               'Operadora - Reclasificar Aceptación '
+                               + CAST(#tmpAceptacionesSinRec.idAceptacionPedido AS VARCHAR) + ' en Procura '
+                           WHEN #tmpAceptacionesPend.IdOTSolicitud IS NOT NULL THEN
+                               'Operadora - Generar Aceptación en Procura '
+                           WHEN #tmpEstimacionPend.IdOTSolicitud IS NOT NULL THEN
+                               'Operadora - Generar Estimación para semana ' + #tmpEstimacionPend.SemanaID
+                           WHEN #tmpCerrarSemanas.Fecha IS NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               'Proveedor - Capturar Avance '
+                           WHEN #tmpCerrarSemanas.Fecha IS NOT NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               'Operadora - Revisar y cerrar semana para fecha:'
+                               + convert(varchar, #tmpCerrarSemanas.Fecha, 103)
+                       END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 9 ) THEN
+                       'Operadora - Revisar convenio en Procura'
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 3, 11 ) THEN
+                       'Operadora - Aprobar OT por Manager'
+               END,
+               'Pendiente',
+               /************URL ACCIÓN**********/
+               CASE
+                   WHEN OT_Solicitud.IdOTEstatus = 1 THEN
+                       @dominioAdinco + '/2/OrdenTrabajo/RegistrarOTSolicitudUpd.aspx?id='
+                       + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 2, 4 ) THEN
+                       @dominioPetrovendor + '/02Proveedores/RegistrarOTSolicitudpetrovendor..S_Proveedor.aspx?id='
+                       + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
+                       CASE
+                           WHEN #tmpAceptacionesSinRec.IdOTSolicitud IS NOT NULL THEN
+                               @dominioProcura + '/01Proveedores/APListaReclasificacion.aspx'
+                           WHEN #tmpAceptacionesPend.IdOTSolicitud IS NOT NULL THEN
+                               @dominioProcura + '/02Proveedores/AceptacionPedido.aspx?ped='
+                               + CAST(#tmpAceptacionesPend.IdPedido AS VARCHAR) + '&pedgral='
+                               + CAST(#tmpAceptacionesPend.IdPedidoGen AS VARCHAR) + '&ori=pedido'
+                           WHEN #tmpEstimacionPend.IdOTSolicitud IS NOT NULL THEN
+                               @dominioAdinco + '/2/OrdenTrabajo/GenerarEstimacionOT.aspx?id1='
+                               + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                           WHEN #tmpCerrarSemanas.Fecha IS NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               @dominioPetrovendor + '/02Proveedores/CapturaProgramaOT.aspx?id='
+                               + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                           WHEN #tmpCerrarSemanas.Fecha IS NOT NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               @dominioAdinco + '/2/OrdenTrabajo/CapturaProgramaOT.aspx?id='
+                               + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                       END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 9 ) THEN
+                       @dominioProcura + '/02Proveedores/ActualizarSCOTConvenio.aspx?id='
+                       + CAST(OT_Solicitud.IdSubcontrato AS VARCHAR) + '&id2='
+                       + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 3, 11 ) THEN
+                       @dominioAdinco + '/2/OrdenTrabajo/RegistrarOTSolicitudUpd.aspx?id='
+                       + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+               END,
+               /**********Url Text*************/
+               CASE
+                   WHEN OT_Solicitud.IdOTEstatus = 1 THEN
+                       CASE
+                           WHEN @pUsuarioAdincoId > 0 THEN
+                               'Completar'
+                           ELSE
+                               ''
+                       END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 2, 4 ) THEN
+                       CASE
+                           WHEN ISNULL(@pUsuarioAdincoId, 0) = 0 THEN
+                               'Completar'
+                           ELSE
+                               ''
+                       END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
+                       CASE
+                           WHEN #tmpAceptacionesSinRec.IdOTSolicitud IS NOT NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpAceptacionesPend.IdOTSolicitud IS NOT NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpEstimacionPend.IdOTSolicitud IS NOT NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpCerrarSemanas.Fecha IS NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) = 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpCerrarSemanas.Fecha IS NOT NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                       END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 9 ) THEN
+                       CASE
+                           WHEN ISNULL(@pUsuarioAdincoId, 0) > 0 THEN
+                               'Completar'
+                           ELSE
+                               ''
+                       END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 3, 11 ) THEN
+                       CASE
+                           WHEN ISNULL(@pUsuarioAdincoId, 0) > 0 THEN
+                               'Completar'
+                           ELSE
+                               ''
+                       END
+               END,
+               GETDATE(),
+               0,
+               /*************USUARIO ASIGNADO***************/
+               CASE
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 1, 3, 9, 11 ) THEN
+                       ''
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 2, 4 ) THEN
+                       PV_Subcontratista.RazonSocial
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
+                       PV_Subcontratista.RazonSocial
+               END,
+               petrovendor..CC_CentroCosto.CentroCosto,
+               OT_Solicitud.IdOTEstatus,
+               #tmpAceptacionesSinRec.IdOTSolicitud,
+               #tmpAceptacionesSinRec.idAceptacionPedido,
+               #tmpAceptacionesPend.IdOTSolicitud,
+               #tmpEstimacionPend.IdOTSolicitud,
+               #tmpEstimacionPend.SemanaID,
+               #tmpCerrarSemanas.Fecha,
+               #tmpAceptacionesPend.IdPedido,
+               #tmpAceptacionesPend.IdPedidoGen,
+               0
+        FROM OT_Solicitud (NOLOCK)
+            INNER JOIN petrovendor..CC_CentroCosto (NOLOCK)
+                ON OT_Solicitud.IdCentroCosto = petrovendor..CC_CentroCosto.IdCentroCosto
+            INNER JOIN #tmpOTEstatusPermitidos
+                ON OT_Solicitud.IdOTEstatus = #tmpOTEstatusPermitidos.IdOTEstatus
+            INNER JOIN AP_Usuario (NOLOCK)
+                ON OT_Solicitud.CreadoPor = AP_Usuario.UsuarioId
+                   AND OT_Solicitud.IsActivo = 1
+                   AND @pPend_Comp = 1
+            INNER JOIN OT_SolicitudMaterial (NOLOCK)
+                ON OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+            INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
+                ON (
+                       @pUsuarioAdincoId IN ( AP_UsuarioCentroCosto.IdUsuario, 9999999 )
+                       OR @pUsuarioPetroId > 0
+                   )
+                   AND AP_UsuarioCentroCosto.IdCentroCosto IN ( OT_Solicitud.IdCentroCosto )
+            INNER JOIN SC_SubContrato (NOLOCK)
+                ON OT_Solicitud.IdSubcontrato = SC_SubContrato.IdSubcontrato
+            INNER JOIN PV_Subcontratista (NOLOCK)
+                ON SC_SubContrato.IdSubcontratista = PV_Subcontratista.IdSubcontratista
+            INNER JOIN petrovendor..S_Proveedor (NOLOCK)
+                ON PV_Subcontratista.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = petrovendor..S_Proveedor.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+                   AND @pIdProveedor IN ( 0, petrovendor..S_Proveedor.IdProveedor )
+            LEFT JOIN #tmpCerrarSemanas
+                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = #tmpCerrarSemanas.IdOTSolicitudMaterial
+            LEFT JOIN #tmpEstimacionPend
+                ON OT_Solicitud.IdOTSolicitud = #tmpEstimacionPend.IdOTSolicitud
+            LEFT JOIN #tmpAceptacionesPend
+                ON OT_Solicitud.IdOTSolicitud = #tmpAceptacionesPend.IdOTSolicitud
+            LEFT JOIN #tmpAceptacionesSinRec
+                ON OT_Solicitud.IdOTSolicitud = #tmpAceptacionesSinRec.IdOTSolicitud
+        WHERE @pIdContrato IN ( SC_SubContrato.IdContrato, 0 )
+        GROUP BY OT_Solicitud.Folio,
+                 OT_Solicitud.IdOTSolicitud,
+                 OT_Solicitud.IdOTEstatus,
+                 #tmpCerrarSemanas.Fecha,
+                 OT_Solicitud.ProgIniPorProveedor,
+                 AP_Usuario.Usuario,
+                 PV_Subcontratista.RazonSocial,
+                 #tmpEstimacionPend.IdOTSolicitud,
+                 #tmpEstimacionPend.SemanaID,
+                 #tmpAceptacionesPend.IdOTSolicitud,
+                 #tmpAceptacionesPend.IdPedido,
+                 #tmpAceptacionesPend.IdPedidoGen,
+                 OT_Solicitud.IdSubcontrato,
+                 #tmpAceptacionesSinRec.idPedidoGen,
+                 #tmpAceptacionesSinRec.idOTSolicitud,
+                 OT_Solicitud.CreadoEl,
+                 petrovendor..CC_CentroCosto.CentroCosto,
+                 #tmpAceptacionesSinRec.idAceptacionPedido
+
+        INSERT INTO #tmpTareasPendientesDeAprobarUsuarios
+        (
+            IdOTSolicitud,
+            UsuarioAsignado,
+            FlujoAprobacionEstatusId
+        )
+        SELECT #tmpTareasPendientesDeAprobar.IdOTSolicitud,
+               ISNULL(AP_Usuario.Usuario, ''),
+               FlujoAprobacionEstatusId
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN OT_Solicitud OT_Solicitud_STUFF (NOLOCK)
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
+            INNER JOIN AP_FlujoAprobacion (NOLOCK)
+                ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
+            INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios (NOLOCK)
+                ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId IN ( 1, 2, 3, 4, 5, 6 )
+            INNER JOIN AP_Usuario (NOLOCK)
+                ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
+                   AND AP_Usuario.IsActivo = 1
+            INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
+                ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
+                   AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
+        WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
+              AND ISNULL(AP_Usuario.Usuario, '') <> ''
+        GROUP BY #tmpTareasPendientesDeAprobar.IdOTSolicitud,
+                 AP_Usuario.Usuario,
+                 FlujoAprobacionEstatusId
+
+        INSERT INTO #tmpTareasPendientesDeAprobarUsuariosMenbers
+        (
+            IdOTSolicitud,
+            FlujoAprobacionEstatusId,
+            UsuarioAsignado
+        )
+        SELECT IdOTsolicitud,
+               FlujoAprobacionEstatusId,
+               STUFF(
+               (
+                   SELECT ', ' + UsuarioAsignado
+                   FROM #tmpTareasPendientesDeAprobarUsuarios A
+                   WHERE B.IdOTsolicitud = A.IdOTsolicitud
+                         AND B.FlujoAprobacionEstatusId = A.FlujoAprobacionEstatusId
+                   FOR XML PATH('')
+               ),
+               1,
+               1,
+               ''
+                    ) Members
+        FROM #tmpTareasPendientesDeAprobarUsuarios B
+        GROUP BY FlujoAprobacionEstatusId,
+                 IdOTsolicitud
+
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus = 1
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 1
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
 
-	/*QA
-	declare @dominioAdinco varchar(100)='http://mpyadinco.adinco.mx',
-			@dominioPetrovendor varchar(100)='http://mpypetrovendor.adinco.mx',
-			@dominioProcura varchar(100)= 'https://MPYprocura.adinco.mx'
-*/
-			
 
-	/*DEV*/
-	declare @dominioAdinco varchar(100)='http://localhost:52692/', -- https://adinco.mx
-			@dominioPetrovendor varchar(100)='http://localhost:58935/', --https://petrovendor.com.mx
-			@dominioProcura varchar(100)='http://localhost:58936/' -- https://procura.adinco.mx
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus = 9
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 6
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
-
-	if @pPend_Comp = 1
-	Begin
-	
-	create table #tmpCerrarSemanas(IdOTSolicitud int,IdOTSolicitudMaterial INT, Fecha datetime, IdOTSolicitudProgramaCaptura int)
-
-	--SEMANAS QUE FALTAN CERRAR
-	INSERT INTO #tmpCerrarSemanas(IdOTSolicitud, IdOTSolicitudMaterial, Fecha, IdOTSolicitudProgramaCaptura)
-	select ot.IdOTSolicitud,otm.IdOTSolicitudMaterial, spc.Fecha,spc.IdOTSolicitudProgramaCaptura
-	from OT_Solicitud OT	(NOLOCK)
-	inner join OT_SolicitudMaterial otm (NOLOCK)
-		on otm.IdOTSolicitud = ot.IdOTSolicitud	
-		AND ot.IsActivo = 1
-	inner join SC_Subcontrato sc (NOLOCK)
-		on sc.IdSubcontrato = ot.IdSubcontrato
-		AND SC.IDContrato = @pIdContrato
-	inner join [dbo].[OT_SolicitudProgramaCaptura] spc 	(NOLOCK)
-	on spc.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial and
-												spc.VoBoSubcontratista = 1 
-	where ot.IsActivo = 1 AND
-	SC.IDContrato = @pIdContrato and
-	not exists (
-		select 1
-		from [dbo].OT_ProgramaSemanaCerrada e
-		where e.IdOTSolicitud = ot.IdOTSolicitud and
-		spc.Fecha between e.FechaSemanaIni and e.FechaSemanaFin and e.isActivo = 1
-	)
-	group by  ot.IdOTSolicitud,otm.IdOTSolicitudMaterial, spc.Fecha,spc.IdOTSolicitudProgramaCaptura
-
-	
-
-	--SEMANAS QUE FALTAN ESTIMAR
-	CREATE TABLE #tmpEstimacionPend(IdOTSolicitud INT,IdOTSolicitudMaterial INT, SemanaID VARCHAR(21)  )
-
-	INSERT INTO #tmpEstimacionPend(IdOTSolicitud, IdOTSolicitudMaterial, SemanaID)
-	select ot.IdOTSolicitud,otm.IdOTSolicitudMaterial, e.SemanaID
-	from OT_Solicitud OT	(NOLOCK)
-	inner join OT_SolicitudMaterial otm (NOLOCK)
-		on otm.IdOTSolicitud = ot.IdOTSolicitud
-		AND ot.IsActivo = 1
-	inner join SC_Subcontrato sc (NOLOCK)
-		on sc.IdSubcontrato = ot.IdSubcontrato	
-	inner join [dbo].[OT_SolicitudProgramaCaptura] spc (NOLOCK)
-		on spc.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial and
-												spc.VoBoSubcontratista = 1 AND SPC.VoBoContratista = 1
-	inner join OT_ProgramaSemanaCerrada e (NOLOCK)
-		on  e.IdOTSolicitud = ot.IdOTSolicitud and
-												spc.Fecha between e.FechaSemanaIni and e.FechaSemanaFin and e.isActivo = 1
-	where ot.IsActivo = 1 AND
-	SC.IDContrato = @pIdContrato and
-	not exists (
-		select 1
-		from [dbo].OT_Estimacion e
-		where e.IdOTSolicitud = ot.IdOTSolicitud and
-		spc.Fecha between e.FechaCorteInicio and e.FechaCorteFin and
-		isnull(e.Cancelada,0) = 0
-	)
-	group by  ot.IdOTSolicitud,otm.IdOTSolicitudMaterial, e.SemanaID
-
-	
-
-	--Estimaciones sin aceptacion
-	CREATE TABLE #tmpAceptacionesPend(IdOTEstimacion INT, IdOTSolicitud INT, IdPedido INT, IdPedidoGen INT)
-	
-	INSERT INTO #tmpAceptacionesPend(IdOTEstimacion, IdOTSolicitud, IdPedido, IdPedidoGen)
-	select e.IdOTEstimacion,
-		e.IdOTSolicitud,
-		idPedido = e.IdPedido,
-		idPedidoGen = e.IdPedidoGeneral
-	from OT_Estimacion e	(NOLOCK)
-	inner join OT_Solicitud ot (NOLOCK)
-		on ot.IdOTSolicitud = e.IdOTSolicitud
-	inner join SC_Subcontrato sc (NOLOCK)
-		on sc.IdSubcontrato = ot.IdSubcontrato
-	where sc.IdContrato = @pIdContrato and
-	not exists (
-		select 1
-		from Petrovendor..MM_AceptacionPedido p 
-		where p.IdPedido = e.IdPedido
-	) and
-	isnull(e.cancelada,0) = 0
-	group by e.IdOTEstimacion,
-		 e.IdPedido,
-		e.IdPedidoGeneral,e.IdOTSolicitud
-
-	--Aceptaciones sin reclasificacion
-	CREATE TABLE #tmpAceptacionesSinRec(IdOTEstimacion INT,IdOTSolicitud INT, IdPedido INT, idPedidoGen INT, IdAceptacionPedido INT)
-
-	INSERT INTO #tmpAceptacionesSinRec(IdOTEstimacion,IdOTSolicitud , IdPedido , idPedidoGen , IdAceptacionPedido )
-	select e.IdOTEstimacion,
-		e.IdOTSolicitud,
-		idPedido = e.IdPedido,
-		idPedidoGen = e.IdPedidoGeneral,
-		ap.idAceptacionPedido
-	from OT_Estimacion e	(NOLOCK)
-	inner join OT_Solicitud ot (NOLOCK)
-		on ot.IdOTSolicitud = e.IdOTSolicitud
-	inner join SC_Subcontrato sc (NOLOCK)
-		on sc.IdSubcontrato = ot.IdSubcontrato
-		AND	sc.IdContrato = @pIdContrato
-	inner join petrovendor..MM_AceptacionPedido ap (NOLOCK)
-		on ap.IdPedido = e.IdPedido and
-										ap.ModificadoPor is null
-	where sc.IdContrato = @pIdContrato and not exists (
-		select 1
-		from petrovendor..[MM_AceptacionPedidoDetalleEliminada] sae
-		where sae.IdAceptacionPedido = ap.idAceptacionPedido
-	)
-	and not exists (
-		select 1
-		from petrovendor..MM_AceptacionFactura saf
-		where saf.IdAceptacionPedido = ap.idAceptacionPedido
-	)
-	and isnull(e.Cancelada,0) = 0
-	group by e.IdOTEstimacion,
-		 e.IdPedido,
-		e.IdPedidoGeneral,e.IdOTSolicitud,
-		ap.idAceptacionPedido
-
-	--ISSUE 1018. Generar info de Estimaciones sin PO
-	CREATE TABLE #tmpEstimacionSinPO(IdOTSolicitud INT, IdOTEstimacion INT, IdPedidoGeneral INT, CreadoEl DATETIME)
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 3, 11 )
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 2
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
 
-	INSERT INTO #tmpEstimacionSinPO(IdOTSolicitud, IdOTEstimacion, IdPedidoGeneral, CreadoEl)
-	select e.IdOTSolicitud,e.IdOTEstimacion,e.IdPedidoGeneral,e.CreadoEl
-	from OT_Estimacion e	(NOLOCK)
-	inner join OT_Solicitud ot (NOLOCK)
-		on ot.IdOTSolicitud = E.IdOTSolicitud
-		AND isnull(e.Cancelada,0) = 0
-	INNER JOIN SC_SubContrato sc (NOLOCK)
-		on sc.IdSubContrato = ot.IdSubContrato and
-							sc.IdContrato = @pIdContrato
-	left join petrovendor..DEA_Relacion_PR_PO po (NOLOCK)
-		on po.IdPedido = e.IdPedido
-	where isnull(e.Cancelada,0) = 0 and
-	po.IdPedido is null
-	group by e.IdOTSolicitud,e.IdOTEstimacion,e.IdPedidoGeneral,e.CreadoEl
-	
-
-	--usuarios OT
-	CREATE TABLE #tmpOTUsuarios(UsuarioID INT, Usuario VARCHAR(500), FlujoAprobacionEstatusId INT, IdOTSolicitud INT)
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpAceptacionesSinRecIdOTSolicitud IS NOT NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 5
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
 
-	INSERT INTO #tmpOTUsuarios(UsuarioID, Usuario, FlujoAprobacionEstatusId, IdOTSolicitud)
-	select u.UsuarioID,u.Usuario,fu.FlujoAprobacionEstatusId,ot.IdOTSolicitud
-	from OT_Solicitud ot	(NOLOCK)
-	inner join [dbo].[AP_UsuarioCentroCosto] ucc (NOLOCK)
-		on ucc.IdCentroCosto = ot.IdCentroCosto
-	inner join AP_Usuario u (NOLOCK)
-		on u.usuarioId = ucc.IdUsuario
-	inner join [dbo].[AP_FlujoAprobacionEstatusUsuarios] fu (NOLOCK)
-		on fu.UsuarioId = u.usuarioId
-	group by u.UsuarioID,u.Usuario,fu.FlujoAprobacionEstatusId,ot.IdOTSolicitud
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpAceptacionesPendIdOTSolicitud IS NOT NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 5
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
-	--OT's pendientes de aprobar
-	insert into #tmpTareas(
-	IdOTTarea,		Folio,		IdOTSolicitud,	FechaRegistro,
-	Tarea,			Estatus,	Url,			UrlText,
-	FechaCompletada,Completada, UsuarioAsignado,	CentroCosto)
-	select 
-		1,			ot.Folio,	ot.IdOTSolicitud,	ot.CreadoEl,
-		/*********ESTATUS TAREA***************/
-		case 
-				when ot.IdOTEstatus = 1 then 
-								case	
-										when ot.ProgIniPorProveedor = 0 then 'Operadora - Pendiente de Enviar a Manager' 
-										when ot.ProgIniPorProveedor = 1 then 'Operadora - Pendiente de Enviar a Proveedor' 
-								end
-				when ot.IdOTEstatus in( 2,4) then 'Proveedor - Revisión de OT'
-				when ot.IdOTEstatus in (5,6) then
-						case
-							 when  aPendRec.IdOTSolicitud is not null then 'Operadora - Reclasificar Aceptación '+cast(aPendRec.idAceptacionPedido as varchar)+' en Procura '
-							 when  aPend.IdOTSolicitud is not null then 'Operadora - Generar Aceptación en Procura '
-							 when  ePend.IdOTSolicitud is not null then 'Operadora - Generar Estimación para semana '+ ePend.SemanaID
-							when tmp2.Fecha is null and ePend.IdOTSolicitud is null and aPend.IdOTSolicitud is null  then 'Proveedor - Capturar Avance '							
-							when tmp2.Fecha is not null and ePend.IdOTSolicitud is null  and aPend.IdOTSolicitud is null then 'Operadora - Revisar y cerrar semana para fecha:'+ convert(varchar,tmp2.Fecha,103)
-							
-							
-							
-						end
-				when ot.IdOTEstatus IN(9) then 'Operadora - Revisar convenio en Procura' 
-				when ot.IdOTEstatus IN(3, 11) then 'Operadora - Aprobar OT por Manager' 
-				
-		end,		'Pendiente', 
-		/************URL ACCIÓN**********/
-		case 
-				when ot.IdOTEstatus = 1 then @dominioAdinco+'/2/OrdenTrabajo/RegistrarOTSolicitudUpd.aspx?id=' +cast( ot.IdOTSolicitud as varchar)
-				when ot.IdOTEstatus in( 2,4) then @dominioPetrovendor+'/02Proveedores/RegistrarOTSolicitudProv.aspx?id=' +cast( ot.IdOTSolicitud as varchar)
-				when ot.IdOTEstatus in (5,6) then
-						case 
-							when  aPendRec.IdOTSolicitud is not null then @dominioProcura+'/01Proveedores/APListaReclasificacion.aspx'
-							when  aPend.IdOTSolicitud is not null then @dominioProcura+'/02Proveedores/AceptacionPedido.aspx?ped='+cast(aPend.IdPedido as varchar)+'&pedgral='+cast(aPend.IdPedidoGen as varchar)+'&ori=pedido'
-							when  ePend.IdOTSolicitud is not null then @dominioAdinco+'/2/OrdenTrabajo/GenerarEstimacionOT.aspx?id1='+cast( ot.IdOTSolicitud as varchar)
-						
-							when tmp2.Fecha is null and ePend.IdOTSolicitud is null and aPend.IdOTSolicitud is null then @dominioPetrovendor+'/02Proveedores/CapturaProgramaOT.aspx?id=' +cast( ot.IdOTSolicitud as varchar)
-							when tmp2.Fecha is not null and ePend.IdOTSolicitud is null and aPend.IdOTSolicitud is null then @dominioAdinco+'/2/OrdenTrabajo/CapturaProgramaOT.aspx?id='+cast( ot.IdOTSolicitud as varchar)
-									end
-				when ot.IdOTEstatus IN(9) then @dominioProcura + '/02Proveedores/ActualizarSCOTConvenio.aspx?id='+cast(ot.IdSubcontrato as varchar)+'&id2='+cast(ot.IdOTSolicitud as varchar)
-				when ot.IdOTEstatus IN ( 3,11) then @dominioAdinco+'/2/OrdenTrabajo/RegistrarOTSolicitudUpd.aspx?id=' +cast( ot.IdOTSolicitud as varchar)
-				
-		end,	
-		/**********Url Text*************/		
-		case 
-				when ot.IdOTEstatus = 1 then case when @pUsuarioAdincoId > 0 then 'Completar' else '' end 
-				when ot.IdOTEstatus in( 2,4) then case when isnull(@pUsuarioAdincoId,0) =0 then 'Completar' else '' end 
-				when ot.IdOTEstatus in (5,6) then
-						case
-							 when  aPendRec.IdOTSolicitud is not null then case when isnull(@pUsuarioAdincoId,0) >0 then 'Completar' else '' end 
-							 when  aPend.IdOTSolicitud is not null then case when isnull(@pUsuarioAdincoId,0) >0 then 'Completar' else '' end 
-							 when  ePend.IdOTSolicitud is not null then case when isnull(@pUsuarioAdincoId,0) >0 then 'Completar' else '' end 
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpEstimacionPendIdOTSolicitud IS NOT NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 4
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
-							when tmp2.Fecha is null  and ePend.IdOTSolicitud is null and aPend.IdOTSolicitud is null then case when isnull(@pUsuarioAdincoId,0) =0 then 'Completar' else '' end 						
-							when tmp2.Fecha is not null and ePend.IdOTSolicitud is null and aPend.IdOTSolicitud is null  then case when isnull(@pUsuarioAdincoId,0) >0 then 'Completar' else '' end 
-							
-							
-							
-						end
-				when ot.IdOTEstatus IN( 9) then case when isnull(@pUsuarioAdincoId,0)>0 then 'Completar' else '' end  
-				when ot.IdOTEstatus IN( 3,11) then case when isnull(@pUsuarioAdincoId,0)>0 then 'Completar' else '' end  
-				
-							
-		end,
-	getdate(),		0,
-	/*************USUARIO ASIGNADO***************/
-	case 
-				when ot.IdOTEstatus = 1 
-						then 
-										 [dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,1,0)
-							
-								
-				when ot.IdOTEstatus in( 2,4) then pv.RazonSocial
-				when ot.IdOTEstatus in (5,6) then
-						case
-							 when  aPendRec.IdOTSolicitud is not null then [dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,5,0)
-							 when  aPend.IdOTSolicitud is not null then [dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,5,0)
-							 when  ePend.IdOTSolicitud is not null then [dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,4,0)
-							when tmp2.Fecha is null and ePend.IdOTSolicitud is null  and aPend.IdOTSolicitud is null then pv.RazonSocial							
-							when tmp2.Fecha is not null and ePend.IdOTSolicitud is null and aPend.IdOTSolicitud is null then [dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,3,0)
-													
-							
-						end
-				when ot.IdOTEstatus IN( 9) then [dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,6,0)
-				when ot.IdOTEstatus IN( 3,11) then [dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,2,0)
-				
-		end,
-	cc.CentroCosto
-	from OT_Solicitud ot	(NOLOCK)
-	inner join petrovendor..CC_CentroCosto cc (NOLOCK)
-		on cc.IdCentroCosto = ot.IdCentroCosto
-	inner join AP_Usuario uot (NOLOCK)
-		on uot.UsuarioId = ot.CreadoPor and
-									ot.IsActivo = 1 	aND @pPend_Comp = 1 and
-									(
-										(ot.IdOTEstatus not in (7,8,12) and @pUsuarioAdincoId > 0)
-										OR
-										(ot.IdOTEstatus not in (1,7,8,12) and isnull(@pUsuarioAdincoId,0) = 0)
-										OR
-										(ot.IdOTEstatus not in (7,8,12) and @pUsuarioPetroId > 0)
-									)
-	inner join OT_SolicitudMaterial otm (NOLOCK)
-		on otm.IdOTSolicitud = ot.IdOTSolicitud	
-	inner join [dbo].[AP_UsuarioCentroCosto] ucc on 
-									(
-										@pUsuarioAdincoId in (ucc.IdUsuario,9999999)
-										OR
-										@pUsuarioPetroId > 0
-									)
-									and
-									ucc.IdCentroCosto in( ot.IdCentroCosto)
-	inner join SC_Subcontrato sc (NOLOCK)
-		on sc.IdSubcontrato = ot.IdSubcontrato	
-	inner join PV_Subcontratista pv (NOLOCK)
-		on pv.IdSubcontratista = sc.IdSubcontratista
-	inner join petrovendor..S_Proveedor prov (NOLOCK)
-		on prov.RFC collate SQL_Latin1_General_CP1_CI_AS= pv.RFC collate SQL_Latin1_General_CP1_CI_AS and
-										@pIdProveedor in (0,prov.IdProveedor)
-	left join  #tmpOTUsuarios u on u.IdOTSolicitud = ot.IdOTSolicitud
-	left join #tmpCerrarSemanas tmp2 on tmp2.IdOTSolicitudMaterial = otm.IdOTSolicitudMaterial
-	left join #tmpEstimacionPend ePend on ePend.IdOTSolicitud = ot.IdOTSolicitud
-	left join #tmpAceptacionesPend aPend on aPend.IdOTSolicitud = ot.IdOTSolicitud
-	left join #tmpAceptacionesSinRec aPendRec on aPendRec.IdOTSolicitud = ot.IdOTSolicitud	
-	where @pIdContrato in (sc.IdContrato,0) 
-	group by 
-		
-		ot.Folio,
-		ot.IdOTSolicitud,
-		ot.IdOTEstatus,				
-		tmp2.Fecha,
-		ot.ProgIniPorProveedor,
-		uot.Usuario,
-		pv.RazonSocial,
-		ePend.IdOTSolicitud,
-		ePend.SemanaID,
-		aPend.IdOTSolicitud,
-		aPend.IdPedido,
-		aPend.IdPedidoGen,
-		ot.IdSubcontrato	,
-		ot.CreadoEl		,
-		aPendRec.idPedidoGen,
-		aPendRec.idOTSolicitud,
-		cc.CentroCosto		,
-		aPendRec.idAceptacionPedido	
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(#tmpTareasPendientesDeAprobar.UsuarioAsignado, '')
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpCerrarSemanasFecha IS NULL
+                   AND tmpEstimacionPendIdOTSolicitud IS NULL
+                   AND tmpAceptacionesPendIdOTSolicitud IS NULL
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
+        UPDATE #tmpTareasPendientesDeAprobar
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpCerrarSemanasFecha IS NOT NULL
+                   AND tmpEstimacionPendIdOTSolicitud IS NULL
+                   AND tmpAceptacionesPendIdOTSolicitud IS NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 3
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
-	--ISSUE 1018 OT's sin relación Pedido - PO. Se agrega tarea para Relacionar Pedido-PO
-	insert into #tmpTareas(
-	IdOTTarea,		Folio,		IdOTSolicitud,	FechaRegistro,
-	Tarea,			Estatus,	Url,			UrlText,
-	FechaCompletada,Completada, UsuarioAsignado,	CentroCosto)
-	select 1,ot.Folio,ot.IdOTSolicitud, e.CreadoEl,
-	'Operadora - Relacionar Pedido:'+cast(e.IdPedidoGeneral as varchar) + ' con PO en Procura','Pendiente', @dominioProcura + '/DEA/Relacion_PR_PO.aspx','Completar',
-	null,			0,			[dbo].[fn_OT_GetMailUsuariosEstatus](ot.IdOTSolicitud,0,6,0), cc.CentroCosto
-	from #tmpEstimacionSinPO e
-	inner join OT_Solicitud ot on ot.IdOTSolicitud = e.IdOTSolicitud
-	inner join petrovendor..CC_CentroCosto cc on cc.IdCentroCosto = ot.IdCentroCosto
+        INSERT INTO #tmpTareas
+        (
+            IdOTTarea,
+            Folio,
+            IdOTSolicitud,
+            FechaRegistro,
+            Tarea,
+            Estatus,
+            Url,
+            UrlText,
+            FechaCompletada,
+            Completada,
+            UsuarioAsignado,
+            CentroCosto
+        )
+        SELECT IdOTTarea,
+               Folio,
+               IdOTSolicitud,
+               FechaRegistro,
+               Tarea,
+               Estatus,
+               Url,
+               UrlText,
+               FechaCompletada,
+               Completada,
+               UsuarioAsignado,
+               CentroCosto
+        FROM #tmpTareasPendientesDeAprobar
 
-	--order by ot.CreadoEl desc
+        /*ISSUE 1018 OT's sin relación Pedido - PO. Se agrega tarea para Relacionar Pedido-PO*/
+        INSERT INTO #tmpTareasSinRelacionPedido
+        (
+            IdOTTarea,
+            Folio,
+            IdOTSolicitud,
+            FechaRegistro,
+            Tarea,
+            Estatus,
+            Url,
+            UrlText,
+            FechaCompletada,
+            Completada,
+            UsuarioAsignado,
+            CentroCosto
+        )
+        SELECT 1,
+               OT_Solicitud.Folio,
+               OT_Solicitud.IdOTSolicitud,
+               #tmpEstimacionSinPO.CreadoEl,
+               'Operadora - Relacionar Pedido:' + CAST(#tmpEstimacionSinPO.IdPedidoGeneral AS VARCHAR)
+               + ' con PO en Procura',
+               'Pendiente',
+               @dominioProcura + '/DEA/Relacion_PR_PO.aspx',
+               'Completar',
+               NULL,
+               0,
+               '',
+               petrovendor..CC_CentroCosto.CentroCosto
+        FROM #tmpEstimacionSinPO
+            INNER JOIN OT_Solicitud (NOLOCK)
+                ON #tmpEstimacionSinPO.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
+            INNER JOIN petrovendor..CC_CentroCosto (NOLOCK)
+                ON OT_Solicitud.IdCentroCosto = petrovendor..CC_CentroCosto.IdCentroCosto
 
-	if @pUsuarioAdincoId > 0
-	begin
-		select @emailusuario= isnull(Usuario,'')
-		from ap_usuario
-		where usuarioid = @pUsuarioAdincoId
+        UPDATE #tmpTareasSinRelacionPedido
+        SET #tmpTareasSinRelacionPedido.UsuarioAsignado = ISNULL(
+                                                                    STUFF(
+                                                                    (
+                                                                        SELECT '; ' + ISNULL(AP_Usuario.Usuario, '')
+                                                                        FROM OT_Solicitud OT_Solicitud_STUFF (NOLOCK)
+                                                                            INNER JOIN AP_FlujoAprobacion (NOLOCK)
+                                                                                ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
+                                                                            INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios (NOLOCK)
+                                                                                ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 6
+                                                                            INNER JOIN AP_Usuario (NOLOCK)
+                                                                                ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
+                                                                                   AND AP_Usuario.Usuario IS NOT NULL
+                                                                                   AND AP_Usuario.IsActivo = 1
+                                                                            INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
+                                                                                ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
+                                                                                   AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
+                                                                        WHERE #tmpTareasSinRelacionPedido.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
+                                                                        GROUP BY AP_Usuario.Usuario
+                                                                        FOR XML PATH('')
+                                                                    ),
+                                                                    1,
+                                                                    2,
+                                                                    ''
+                                                                         ),
+                                                                    ''
+                                                                )
+        FROM #tmpTareasSinRelacionPedido
 
-		update #tmpTareas
-		set UrlText = ''
-		where UsuarioAsignado not like '%'+isnull(@emailusuario,'')+'%'
+        INSERT INTO #tmpTareas
+        (
+            IdOTTarea,
+            Folio,
+            IdOTSolicitud,
+            FechaRegistro,
+            Tarea,
+            Estatus,
+            Url,
+            UrlText,
+            FechaCompletada,
+            Completada,
+            UsuarioAsignado,
+            CentroCosto
+        )
+        SELECT IdOTTarea,
+               Folio,
+               IdOTSolicitud,
+               FechaRegistro,
+               Tarea,
+               Estatus,
+               Url,
+               UrlText,
+               FechaCompletada,
+               Completada,
+               UsuarioAsignado,
+               CentroCosto
+        FROM #tmpTareasSinRelacionPedido
 
-	end
-	End
+        IF @pUsuarioAdincoId > 0
+        BEGIN
+            SELECT @emailusuario = ISNULL(Usuario, '')
+            FROM ap_usuario (NOLOCK)
+            WHERE usuarioid = @pUsuarioAdincoId
+            UPDATE #tmpTareas
+            SET UrlText = ''
+            WHERE UsuarioAsignado NOT LIKE '%' + ISNULL(@emailusuario, '') + '%'
+        END
+    END
+    /*OT's tareas completadas*/
+    INSERT INTO #tmpTareasCompletadas
+    (
+        IdOTTarea,
+        Folio,
+        IdOTSolicitud,
+        FechaRegistro,
+        Tarea,
+        Estatus,
+        Url,
+        UrlText,
+        FechaCompletada,
+        Completada,
+        UsuarioAsignado,
+        CentroCosto,
+        UsuarioAdincoId,
+        FlujoAprobacionTareaId
+    )
+    SELECT OT_SolicitudBitacora.IdOTBitacora,
+           OT_Solicitud.Folio,
+           OT_Solicitud.IdOTSolicitud,
+           OT_Solicitud.CreadoEl,
+           CASE
+               WHEN ISNULL(OT_SolicitudBitacora.Descripcion, '') = '' THEN
+                   ''
+               ELSE
+                   ISNULL(OT_SolicitudBitacora.Descripcion, '')
+           END,
+           'Completada',
+           '',
+           '',
+           OT_SolicitudBitacora.CreadoEl,
+           1,
+           CASE
+               WHEN ISNULL(OT_SolicitudBitacora.UsuarioAdincoId, 0) > 0 THEN
+                   ''
+               ELSE
+                   PV_Subcontratista.RazonSocial
+           END,
+           petrovendor..CC_CentroCosto.CentroCosto,
+           ISNULL(OT_SolicitudBitacora.UsuarioAdincoId, 0),
+           ISNULL(OT_SolicitudBitacora.FlujoAprobacionTareaId, 0)
+    FROM OT_Solicitud (NOLOCK)
+        INNER JOIN petrovendor..CC_CentroCosto (NOLOCK)
+            ON OT_Solicitud.IdCentroCosto = petrovendor..CC_CentroCosto.IdCentroCosto
+        INNER JOIN OT_SolicitudMaterial (NOLOCK)
+            ON OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
+               AND @pPend_Comp = 2
+        INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
+            ON (@pUsuarioAdincoId IN ( AP_UsuarioCentroCosto.IdUsuario, 0 ))
+               AND AP_UsuarioCentroCosto.IdCentroCosto IN ( OT_Solicitud.IdCentroCosto, 0 )
+        INNER JOIN SC_SubContrato (NOLOCK)
+            ON OT_Solicitud.IdSubcontrato = SC_SubContrato.IdSubcontrato
+        INNER JOIN PV_Subcontratista (NOLOCK)
+            ON SC_SubContrato.IdSubcontratista = PV_Subcontratista.IdSubcontratista
+        INNER JOIN petrovendor..S_Proveedor (NOLOCK)
+            ON PV_Subcontratista.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = petrovendor..S_Proveedor.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+               AND @pIdProveedor IN ( 0, petrovendor..S_Proveedor.IdProveedor )
+        INNER JOIN OT_SolicitudBitacora (NOLOCK)
+            ON OT_Solicitud.IdOTSolicitud = OT_SolicitudBitacora.IdOTSolicitud
+               AND OT_SolicitudBitacora.CreadoEl >= DATEADD(DAY, -15, GETDATE())
+    WHERE @pIdContrato IN ( SC_SubContrato.IdContrato, 0 )
+          AND OT_Solicitud.IsActivo = 1
+    GROUP BY OT_SolicitudBitacora.UsuarioAdincoId,
+             PV_Subcontratista.RazonSocial,
+             OT_Solicitud.Folio,
+             OT_Solicitud.IdOTSolicitud,
+             OT_Solicitud.CreadoEl,
+             OT_SolicitudBitacora.Descripcion,
+             OT_SolicitudBitacora.CreadoEl,
+             OT_SolicitudBitacora.IdOTBitacora,
+             petrovendor..CC_CentroCosto.CentroCosto,
+             ISNULL(OT_SolicitudBitacora.UsuarioAdincoId, 0),
+             ISNULL(OT_SolicitudBitacora.FlujoAprobacionTareaId, 0)
+    ORDER BY OT_SolicitudBitacora.CreadoEl DESC
+    /*Se sacaron los left joins*/
+    UPDATE #tmpTareasCompletadas
+    SET #tmpTareasCompletadas.UsuarioAsignado = AP_Usuario.Usuario
+    FROM #tmpTareasCompletadas
+        INNER JOIN AP_Usuario (NOLOCK)
+            ON ISNULL(#tmpTareasCompletadas.UsuarioAdincoId, 0) > 0
+               AND #tmpTareasCompletadas.UsuarioAdincoId = AP_Usuario.UsuarioId
 
-	--OT's tareas completadas
-	insert into #tmpTareas(
-	IdOTTarea,		Folio,		IdOTSolicitud,	FechaRegistro,
-	Tarea,			Estatus,	Url,			UrlText,
-	FechaCompletada,Completada, UsuarioAsignado, CentroCosto)
-	select sb.IdOTBitacora,		ot.Folio,	ot.IdOTSolicitud,ot.CreadoEl,
-	case when isnull(sb.Descripcion,'') = '' then t.Descripcion else isnull(sb.Descripcion,'') end
-	,	'Completada','',			'',
-	sb.CreadoEl,	1,			CASE WHEN isnull(sb.UsuarioAdincoId,0) >0 then u.Usuario		
-									else pv.RazonSocial
-								end,
-	cc.CentroCosto
-	from OT_Solicitud ot (NOLOCK)
-	inner join petrovendor..CC_CentroCosto cc (NOLOCK)
-		on cc.IdCentroCosto = ot.IdCentroCosto
-	inner join OT_SolicitudMaterial otm (NOLOCK)
-		on otm.IdOTSolicitud = ot.IdOTSolicitud	aND @pPend_Comp = 2
-	inner join [dbo].[AP_UsuarioCentroCosto] ucc (NOLOCK)
-		on 
-									(
-										@pUsuarioAdincoId in (ucc.IdUsuario,0)
-									)
-									and
-									ucc.IdCentroCosto in( ot.IdCentroCosto,0)
-	inner join SC_Subcontrato sc (NOLOCK)
-		on sc.IdSubcontrato = ot.IdSubcontrato	
-	inner join PV_Subcontratista pv (NOLOCK)
-		on pv.IdSubcontratista = sc.IdSubcontratista
-	inner join petrovendor..S_Proveedor prov (NOLOCK)
-		on prov.RFC collate SQL_Latin1_General_CP1_CI_AS= pv.RFC collate SQL_Latin1_General_CP1_CI_AS and
-										@pIdProveedor in (0,prov.IdProveedor)	
-	inner join OT_SolicitudBitacora sb (NOLOCK)
-		on sb.IdOTSolicitud = ot.IdOTSolicitud and sb.CreadoEl >= dateadd(day,-15,getdate())
-	left join AP_Usuario u (NOLOCK)
-		on u.UsuarioId = sb.UsuarioAdincoId
-	left join [AP_FlujoAprobacion_Tareas] t on t.FlujoAprobacionTareaId = sb.FlujoAprobacionTareaId
-	where @pIdContrato in (sc.IdContrato,0) and
-	ot.IsActivo = 1 	 
-	
-	group by sb.UsuarioAdincoId,pv.RazonSocial,
-	ot.Folio,	ot.IdOTSolicitud,ot.CreadoEl,
-	sb.Descripcion,	sb.CreadoEl,	
-	u.Usuario,
-	t.Descripcion	, sb.IdOTBitacora,
-	cc.CentroCosto
-	order by sb.CreadoEl desc	
-	
-	--update #tmpTareas
-	--set UsuarioAsignado = replace(replace(replace(UsuarioAsignado,'daniel.moreno@adinco.mx',''),'juventino.sanchez@wintershalldea.com',''),'yazmin.gonzalez@ogss.com.mx','')
-		
-
-	select * from #tmpTareas
-	order by  UrlText desc,FechaRegistro desc, FechaCompletada desc,Folio
-
+    UPDATE #tmpTareasCompletadas
+    SET #tmpTareasCompletadas.Tarea = AP_FlujoAprobacion_Tareas.Descripcion
+    FROM #tmpTareasCompletadas
+        INNER JOIN AP_FlujoAprobacion_Tareas (NOLOCK)
+            ON ISNULL(#tmpTareasCompletadas.FlujoAprobacionTareaId, 0) > 0
+               AND #tmpTareasCompletadas.Tarea = ''
+               AND #tmpTareasCompletadas.FlujoAprobacionTareaId = AP_FlujoAprobacion_Tareas.FlujoAprobacionTareaId
+    /*Inserción directa a la tabla temporal final #tmpTareas*/
+    INSERT INTO #tmpTareas
+    (
+        IdOTTarea,
+        Folio,
+        IdOTSolicitud,
+        FechaRegistro,
+        Tarea,
+        Estatus,
+        Url,
+        UrlText,
+        FechaCompletada,
+        Completada,
+        UsuarioAsignado,
+        CentroCosto
+    )
+    SELECT IdOTTarea,
+           Folio,
+           IdOTSolicitud,
+           FechaRegistro,
+           Tarea,
+           Estatus,
+           Url,
+           UrlText,
+           FechaCompletada,
+           Completada,
+           UsuarioAsignado,
+           CentroCosto
+    FROM #tmpTareasCompletadas
+    --UPDATE #tmpTareas
+    --SET UsuarioAsignado = replace(replace(replace(UsuarioAsignado,'daniel.moreno@adinco.mx',''),'juventino.sanchez@wINTershalldea.com',''),'yazmin.gonzalez@ogss.com.mx','')
+    SELECT *
+    FROM #tmpTareas
+    ORDER BY UrlText DESC,
+             FechaRegistro DESC,
+             FechaCompletada DESC,
+             Folio
 END
-
-
