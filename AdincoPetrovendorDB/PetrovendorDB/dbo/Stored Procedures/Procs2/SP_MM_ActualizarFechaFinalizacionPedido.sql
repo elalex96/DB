@@ -1,5 +1,4 @@
 ﻿USE [Petrovendor]
-GO
 IF EXISTS
 (
     SELECT 1
@@ -8,7 +7,7 @@ IF EXISTS
 )
     DROP PROCEDURE SP_MM_ActualizarFechaFinalizacionPedido;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ActualizarFechaFinalizacionPedido]    Script Date: 25/03/2022 06:34:48 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_ActualizarFechaFinalizacionPedido]    Script Date: 06/10/2022 02:31:34 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -206,6 +205,7 @@ BEGIN
 					ON U.IdUsuario = UP.IdUsuario 	
 				WHERE (U.IdTipoUsuario = 4 --> CTE ROL ADMIN DE PETROVENDOR
 				OR U.IdTipoUsuario = 3) --> CTE ROL VENTAS DE PETROVENDOR
+				AND U.Activo = 1 --> CTE Usuario Activo
 				AND P.IdPedido = @IdPedido
 
 	

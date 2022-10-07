@@ -1,1 +1,41 @@
-﻿CREATE PROCEDURE [dbo].[SP_ConsultarDatosEvaluador]	@IdOperacion INT,	/*--------------------parametros contrato  --------------------*/    @IdContrato    INT = null,    @IdUsuario     INT = null,    @FechaRegistro DATETIME = null	/*-------------------------------------------------------------*/ ASBEGIN		SELECT U.Correo, u.IdUsuario, AP.IdProveedor	FROM dbo.MM_AceptacionFactura AF	INNER JOIN dbo.MM_AceptacionPedido AP ON AP.IdAceptacionPedido = AF.IdAceptacionPedido	INNER JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido	INNER JOIN dbo.TA_Operacion TAO ON TAO.IdDocumento = AF.IdAceptacionFactura	INNER JOIN dbo.S_Usuario U ON U.IdUsuario = P.CreadoPor	--INNER JOIN dbo.S_UsuarioProveedor up ON up.IdUsuario = U.IdUsuario	WHERE  TAO.IdOperacion = @IdOperacionEND
+﻿USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ConsultarDatosEvaluador'
+)
+    DROP PROCEDURE SP_ConsultarDatosEvaluador;
+GO
+
+/****** Object:  StoredProcedure [dbo].[SP_ConsultarDatosEvaluador]    Script Date: 06/10/2022 03:16:03 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[SP_ConsultarDatosEvaluador]
+	@IdOperacion INT,	
+    @IdContrato    INT = null,
+    @IdUsuario     INT = null,
+    @FechaRegistro DATETIME = null	
+AS
+BEGIN	
+
+	SELECT U.Correo, u.IdUsuario, AP.IdProveedor
+	FROM dbo.MM_AceptacionFactura AF
+	JOIN dbo.MM_AceptacionPedido AP 
+		ON  AF.IdAceptacionPedido =AP.IdAceptacionPedido
+	JOIN dbo.MM_Pedido P 
+		ON AP.IdPedido = P.IdPedido 
+	JOIN dbo.TA_Operacion TAO 
+		ON AF.IdAceptacionFactura = TAO.IdDocumento 
+		AND IdTipoOperacion= 10 --> CTE Aprobación Factura 
+	JOIN dbo.S_Usuario U 
+		ON  P.CreadoPor	 = U.IdUsuario 
+	WHERE  TAO.IdOperacion = @IdOperacion
+	AND U.Activo =1 --> CTE Debe estar activo
+	GROUP BY U.Correo, u.IdUsuario, AP.IdProveedor
+
+END
+
