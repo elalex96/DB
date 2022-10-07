@@ -1,4 +1,15 @@
-﻿-- p_OT_SolicitudTareas_Grd 10038,10,0,1,1445
+﻿--╔══════════════════════════════════════════╗
+--║Uso de SP en Sistema de ADINCO            ║
+--║Uso de SP en Sistema de PETROVENDOR       ║
+--╚══════════════════════════════════════════╝
+-- =============================================   
+-- Modificado Por:	Neri Garcia
+-- Fecha:			06 de Octubre del 2022
+-- Descripción:		Eliminación de código comentado, agregado de (NOLOCK), eliminación de subquerys,
+--					se ajustan las tablas declaradas que se encuentran dispersas,
+--					se eliminan tablas que no se encuentran en uso, se ajustan algunos left joins, 
+--					se quita el uso de funciones, ajuste de orden de llamado en los joins (ON)
+-- =============================================
 CREATE PROC [p_OT_SolicitudTareas_Grd]
     @pIdContrato INT,
     @pUsuarioAdincoId INT,
@@ -61,12 +72,19 @@ BEGIN
         tmpCerrarSemanasFecha DATETIME,
         tmpAceptacionesPendIdPedido INT,
         tmpAceptacionesPendIdPedidoGen INT,
-        OT_GetMailUsuariosEstatus1 VARCHAR(5000),
-        OT_GetMailUsuariosEstatus2 VARCHAR(5000),
-        OT_GetMailUsuariosEstatus3 VARCHAR(5000),
-        OT_GetMailUsuariosEstatus4 VARCHAR(5000),
-        OT_GetMailUsuariosEstatus5 VARCHAR(5000),
-        OT_GetMailUsuariosEstatus6 VARCHAR(5000)
+        Actualizado BIT
+    );
+    CREATE TABLE #tmpTareasPendientesDeAprobarUsuarios
+    (
+        IdOTSolicitud INT,
+        UsuarioAsignado VARCHAR(1000),
+        FlujoAprobacionEstatusId INT
+    );
+    CREATE TABLE #tmpTareasPendientesDeAprobarUsuariosMenbers
+    (
+        IdOTSolicitud INT,
+        FlujoAprobacionEstatusId INT,
+        UsuarioAsignado VARCHAR(5000)
     );
     CREATE TABLE #tmpTareasSinRelacionPedido
     (
@@ -137,13 +155,6 @@ BEGIN
         CreadoEl DATETIME,
         IdPedido INT
     );
-    CREATE TABLE #tmpOTUsuarios
-    (
-        UsuarioID INT,
-        Usuario VARCHAR(500),
-        FlujoAprobacionEstatusId INT,
-        IdOTSolicitud INT
-    );
     CREATE TABLE #tmpOTEstatusPermitidos (IdOTEstatus INT);
     /*Obtencion Valores*/
     INSERT INTO #tmpOTEstatusPermitidos
@@ -205,11 +216,11 @@ BEGIN
         /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpCerrarSemanas
         FROM #tmpCerrarSemanas
-            INNER JOIN OT_ProgramaSemanaCerrada e
-                ON #tmpCerrarSemanas.IdOTSolicitud = e.IdOTSolicitud
+            INNER JOIN OT_ProgramaSemanaCerrada (NOLOCK)
+                ON #tmpCerrarSemanas.IdOTSolicitud = OT_ProgramaSemanaCerrada.IdOTSolicitud
                    AND #tmpCerrarSemanas.Fecha
-                   BETWEEN e.FechaSemanaIni AND e.FechaSemanaFin
-                   AND e.isActivo = 1
+                   BETWEEN OT_ProgramaSemanaCerrada.FechaSemanaIni AND OT_ProgramaSemanaCerrada.FechaSemanaFin
+                   AND OT_ProgramaSemanaCerrada.isActivo = 1
         /*SEMANAS QUE FALTAN ESTIMAR*/
         INSERT INTO #tmpEstimacionPend
         (
@@ -246,7 +257,7 @@ BEGIN
         /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpEstimacionPend
         FROM #tmpEstimacionPend
-            INNER JOIN OT_Estimacion
+            INNER JOIN OT_Estimacion (NOLOCK)
                 ON #tmpEstimacionPend.IdOTSolicitud = OT_Estimacion.IdOTSolicitud
                    AND #tmpEstimacionPend.Fecha
                    BETWEEN OT_Estimacion.FechaCorteInicio AND OT_Estimacion.FechaCorteFin
@@ -278,8 +289,8 @@ BEGIN
         /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpAceptacionesPend
         FROM #tmpAceptacionesPend
-            INNER JOIN Petrovendor..MM_AceptacionPedido p
-                ON #tmpAceptacionesPend.IdPedido = p.IdPedido
+            INNER JOIN Petrovendor..MM_AceptacionPedido (NOLOCK)
+                ON #tmpAceptacionesPend.IdPedido = #tmpAceptacionesPend.IdPedido
         /*Aceptaciones sin reclasificacion*/
         INSERT INTO #tmpAceptacionesSinRec
         (
@@ -314,13 +325,13 @@ BEGIN
         /*Se saca subquery que manejaba NOT exists*/
         DELETE #tmpAceptacionesSinRec
         FROM #tmpAceptacionesSinRec
-            INNER JOIN petrovendor..MM_AceptacionPedidoDetalleEliminada
+            INNER JOIN petrovendor..MM_AceptacionPedidoDetalleEliminada (NOLOCK)
                 ON #tmpAceptacionesSinRec.idAceptacionPedido = petrovendor..MM_AceptacionPedidoDetalleEliminada.IdAceptacionPedido
 
         DELETE #tmpAceptacionesSinRec
         FROM #tmpAceptacionesSinRec
-            INNER JOIN petrovendor..MM_AceptacionFactura saf
-                ON #tmpAceptacionesSinRec.idAceptacionPedido = saf.IdAceptacionPedido
+            INNER JOIN petrovendor..MM_AceptacionFactura (NOLOCK)
+                ON #tmpAceptacionesSinRec.idAceptacionPedido = petrovendor..MM_AceptacionFactura.IdAceptacionPedido
         /*ISSUE 1018. Generar info de Estimaciones sin PO*/
         INSERT INTO #tmpEstimacionSinPO
         (
@@ -351,31 +362,8 @@ BEGIN
         /*Se saca left join*/
         DELETE #tmpEstimacionSinPO
         FROm #tmpEstimacionSinPO
-            INNER JOIN petrovendor..DEA_Relacion_PR_PO
-                ON #tmpEstimacionSinPO.IdPedido = petrovendor..DEA_Relacion_PR_PO.IdPedido
-        /*usuarios OT*/
-        INSERT INTO #tmpOTUsuarios
-        (
-            UsuarioID,
-            Usuario,
-            FlujoAprobacionEstatusId,
-            IdOTSolicitud
-        )
-        SELECT AP_Usuario.UsuarioID,
-               AP_Usuario.Usuario,
-               AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId,
-               OT_Solicitud.IdOTSolicitud
-        FROM OT_Solicitud (NOLOCK)
-            INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
-                ON OT_Solicitud.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
-            INNER JOIN AP_Usuario (NOLOCK)
-                ON AP_UsuarioCentroCosto.IdUsuario = AP_Usuario.usuarioId
-            INNER JOIN AP_FlujoAprobacionEstatusUsuarios (NOLOCK)
-                ON AP_Usuario.usuarioId = AP_FlujoAprobacionEstatusUsuarios.UsuarioId
-        GROUP BY AP_Usuario.UsuarioID,
-                 AP_Usuario.Usuario,
-                 AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId,
-                 OT_Solicitud.IdOTSolicitud
+            INNER JOIN petrovendor..DEA_Relacion_PR_PO (NOLOCK)
+                ON #tmpEstimacionSinPO.IdPedido = petrovendor..DEA_Relacion_PR_PO.IdPedido        
         /*OT's pendientes de aprobar*/
         INSERT INTO #tmpTareasPendientesDeAprobar
         (
@@ -399,7 +387,8 @@ BEGIN
             tmpEstimacionPendSemanaID,
             tmpCerrarSemanasFecha,
             tmpAceptacionesPendIdPedido,
-            tmpAceptacionesPendIdPedidoGen
+            tmpAceptacionesPendIdPedidoGen,
+            Actualizado
         )
         SELECT 1,
                OT_Solicitud.Folio,
@@ -416,6 +405,25 @@ BEGIN
                        END
                    WHEN OT_Solicitud.IdOTEstatus IN ( 2, 4 ) THEN
                        'Proveedor - Revisión de OT'
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
+                       CASE
+                           WHEN #tmpAceptacionesSinRec.IdOTSolicitud IS NOT NULL THEN
+                               'Operadora - Reclasificar Aceptación '
+                               + CAST(#tmpAceptacionesSinRec.idAceptacionPedido AS VARCHAR) + ' en Procura '
+                           WHEN #tmpAceptacionesPend.IdOTSolicitud IS NOT NULL THEN
+                               'Operadora - Generar Aceptación en Procura '
+                           WHEN #tmpEstimacionPend.IdOTSolicitud IS NOT NULL THEN
+                               'Operadora - Generar Estimación para semana ' + #tmpEstimacionPend.SemanaID
+                           WHEN #tmpCerrarSemanas.Fecha IS NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               'Proveedor - Capturar Avance '
+                           WHEN #tmpCerrarSemanas.Fecha IS NOT NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               'Operadora - Revisar y cerrar semana para fecha:'
+                               + convert(varchar, #tmpCerrarSemanas.Fecha, 103)
+                       END
                    WHEN OT_Solicitud.IdOTEstatus IN ( 9 ) THEN
                        'Operadora - Revisar convenio en Procura'
                    WHEN OT_Solicitud.IdOTEstatus IN ( 3, 11 ) THEN
@@ -430,6 +438,28 @@ BEGIN
                    WHEN OT_Solicitud.IdOTEstatus IN ( 2, 4 ) THEN
                        @dominioPetrovendor + '/02Proveedores/RegistrarOTSolicitudpetrovendor..S_Proveedor.aspx?id='
                        + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
+                       CASE
+                           WHEN #tmpAceptacionesSinRec.IdOTSolicitud IS NOT NULL THEN
+                               @dominioProcura + '/01Proveedores/APListaReclasificacion.aspx'
+                           WHEN #tmpAceptacionesPend.IdOTSolicitud IS NOT NULL THEN
+                               @dominioProcura + '/02Proveedores/AceptacionPedido.aspx?ped='
+                               + CAST(#tmpAceptacionesPend.IdPedido AS VARCHAR) + '&pedgral='
+                               + CAST(#tmpAceptacionesPend.IdPedidoGen AS VARCHAR) + '&ori=pedido'
+                           WHEN #tmpEstimacionPend.IdOTSolicitud IS NOT NULL THEN
+                               @dominioAdinco + '/2/OrdenTrabajo/GenerarEstimacionOT.aspx?id1='
+                               + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                           WHEN #tmpCerrarSemanas.Fecha IS NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               @dominioPetrovendor + '/02Proveedores/CapturaProgramaOT.aspx?id='
+                               + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                           WHEN #tmpCerrarSemanas.Fecha IS NOT NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               @dominioAdinco + '/2/OrdenTrabajo/CapturaProgramaOT.aspx?id='
+                               + CAST(OT_Solicitud.IdOTSolicitud AS VARCHAR)
+                       END
                    WHEN OT_Solicitud.IdOTEstatus IN ( 9 ) THEN
                        @dominioProcura + '/02Proveedores/ActualizarSCOTConvenio.aspx?id='
                        + CAST(OT_Solicitud.IdSubcontrato AS VARCHAR) + '&id2='
@@ -454,6 +484,48 @@ BEGIN
                            ELSE
                                ''
                        END
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
+                       CASE
+                           WHEN #tmpAceptacionesSinRec.IdOTSolicitud IS NOT NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpAceptacionesPend.IdOTSolicitud IS NOT NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpEstimacionPend.IdOTSolicitud IS NOT NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpCerrarSemanas.Fecha IS NULL
+                                AND #tmpEstimacionPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) = 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                           WHEN #tmpCerrarSemanas.Fecha IS NOT NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL
+                                AND #tmpAceptacionesPend.IdOTSolicitud IS NULL THEN
+                               CASE
+                                   WHEN isnull(@pUsuarioAdincoId, 0) > 0 THEN
+                                       'Completar'
+                                   ELSE
+                                       ''
+                               END
+                       END
                    WHEN OT_Solicitud.IdOTEstatus IN ( 9 ) THEN
                        CASE
                            WHEN ISNULL(@pUsuarioAdincoId, 0) > 0 THEN
@@ -473,6 +545,8 @@ BEGIN
                0,
                /*************USUARIO ASIGNADO***************/
                CASE
+                   WHEN OT_Solicitud.IdOTEstatus IN ( 1, 3, 9, 11 ) THEN
+                       ''
                    WHEN OT_Solicitud.IdOTEstatus IN ( 2, 4 ) THEN
                        PV_Subcontratista.RazonSocial
                    WHEN OT_Solicitud.IdOTEstatus IN ( 5, 6 ) THEN
@@ -480,14 +554,15 @@ BEGIN
                END,
                petrovendor..CC_CentroCosto.CentroCosto,
                OT_Solicitud.IdOTEstatus,
-               NULL,
-               NULL,
-               NULL,
-               NULL,
-               NULL,
-               NULL,
-               NULL,
-               NULL
+               #tmpAceptacionesSinRec.IdOTSolicitud,
+               #tmpAceptacionesSinRec.idAceptacionPedido,
+               #tmpAceptacionesPend.IdOTSolicitud,
+               #tmpEstimacionPend.IdOTSolicitud,
+               #tmpEstimacionPend.SemanaID,
+               #tmpCerrarSemanas.Fecha,
+               #tmpAceptacionesPend.IdPedido,
+               #tmpAceptacionesPend.IdPedidoGen,
+               0
         FROM OT_Solicitud (NOLOCK)
             INNER JOIN petrovendor..CC_CentroCosto (NOLOCK)
                 ON OT_Solicitud.IdCentroCosto = petrovendor..CC_CentroCosto.IdCentroCosto
@@ -499,7 +574,7 @@ BEGIN
                    AND @pPend_Comp = 1
             INNER JOIN OT_SolicitudMaterial (NOLOCK)
                 ON OT_Solicitud.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
-            INNER JOIN AP_UsuarioCentroCosto
+            INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
                 ON (
                        @pUsuarioAdincoId IN ( AP_UsuarioCentroCosto.IdUsuario, 9999999 )
                        OR @pUsuarioPetroId > 0
@@ -512,405 +587,197 @@ BEGIN
             INNER JOIN petrovendor..S_Proveedor (NOLOCK)
                 ON PV_Subcontratista.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = petrovendor..S_Proveedor.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
                    AND @pIdProveedor IN ( 0, petrovendor..S_Proveedor.IdProveedor )
+            LEFT JOIN #tmpCerrarSemanas
+                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = #tmpCerrarSemanas.IdOTSolicitudMaterial
+            LEFT JOIN #tmpEstimacionPend
+                ON OT_Solicitud.IdOTSolicitud = #tmpEstimacionPend.IdOTSolicitud
+            LEFT JOIN #tmpAceptacionesPend
+                ON OT_Solicitud.IdOTSolicitud = #tmpAceptacionesPend.IdOTSolicitud
+            LEFT JOIN #tmpAceptacionesSinRec
+                ON OT_Solicitud.IdOTSolicitud = #tmpAceptacionesSinRec.IdOTSolicitud
         WHERE @pIdContrato IN ( SC_SubContrato.IdContrato, 0 )
         GROUP BY OT_Solicitud.Folio,
                  OT_Solicitud.IdOTSolicitud,
                  OT_Solicitud.IdOTEstatus,
+                 #tmpCerrarSemanas.Fecha,
                  OT_Solicitud.ProgIniPorProveedor,
                  AP_Usuario.Usuario,
                  PV_Subcontratista.RazonSocial,
+                 #tmpEstimacionPend.IdOTSolicitud,
+                 #tmpEstimacionPend.SemanaID,
+                 #tmpAceptacionesPend.IdOTSolicitud,
+                 #tmpAceptacionesPend.IdPedido,
+                 #tmpAceptacionesPend.IdPedidoGen,
                  OT_Solicitud.IdSubcontrato,
+                 #tmpAceptacionesSinRec.idPedidoGen,
+                 #tmpAceptacionesSinRec.idOTSolicitud,
                  OT_Solicitud.CreadoEl,
-                 petrovendor..CC_CentroCosto.CentroCosto
+                 petrovendor..CC_CentroCosto.CentroCosto,
+                 #tmpAceptacionesSinRec.idAceptacionPedido
+
+        INSERT INTO #tmpTareasPendientesDeAprobarUsuarios
+        (
+            IdOTSolicitud,
+            UsuarioAsignado,
+            FlujoAprobacionEstatusId
+        )
+        SELECT #tmpTareasPendientesDeAprobar.IdOTSolicitud,
+               ISNULL(AP_Usuario.Usuario, ''),
+               FlujoAprobacionEstatusId
+        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN OT_Solicitud OT_Solicitud_STUFF (NOLOCK)
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
+            INNER JOIN AP_FlujoAprobacion (NOLOCK)
+                ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
+            INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios (NOLOCK)
+                ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId IN ( 1, 2, 3, 4, 5, 6 )
+            INNER JOIN AP_Usuario (NOLOCK)
+                ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
+                   AND AP_Usuario.IsActivo = 1
+            INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
+                ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
+                   AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
+        WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
+              AND ISNULL(AP_Usuario.Usuario, '') <> ''
+        GROUP BY #tmpTareasPendientesDeAprobar.IdOTSolicitud,
+                 AP_Usuario.Usuario,
+                 FlujoAprobacionEstatusId
+
+        INSERT INTO #tmpTareasPendientesDeAprobarUsuariosMenbers
+        (
+            IdOTSolicitud,
+            FlujoAprobacionEstatusId,
+            UsuarioAsignado
+        )
+        SELECT IdOTsolicitud,
+               FlujoAprobacionEstatusId,
+               STUFF(
+               (
+                   SELECT ', ' + UsuarioAsignado
+                   FROM #tmpTareasPendientesDeAprobarUsuarios A
+                   WHERE B.IdOTsolicitud = A.IdOTsolicitud
+                         AND B.FlujoAprobacionEstatusId = A.FlujoAprobacionEstatusId
+                   FOR XML PATH('')
+               ),
+               1,
+               1,
+               ''
+                    ) Members
+        FROM #tmpTareasPendientesDeAprobarUsuarios B
+        GROUP BY FlujoAprobacionEstatusId,
+                 IdOTsolicitud
 
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.tmpAceptacionesSinRecIdOTSolicitud = #tmpAceptacionesSinRec.IdOTSolicitud,
-            #tmpTareasPendientesDeAprobar.tmpAceptacionesSinRecidAceptacionPedido = #tmpAceptacionesSinRec.idAceptacionPedido
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
         FROM #tmpTareasPendientesDeAprobar
-            INNER JOIN #tmpAceptacionesSinRec
-                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpAceptacionesSinRec.IdOTSolicitud
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus = 1
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 1
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
+
+
 
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.tmpAceptacionesPendIdOTSolicitud = #tmpAceptacionesPend.IdOTSolicitud,
-            #tmpTareasPendientesDeAprobar.tmpAceptacionesPendIdPedido = #tmpAceptacionesPend.IdPedido,
-            #tmpTareasPendientesDeAprobar.tmpAceptacionesPendIdPedidoGen = #tmpAceptacionesPend.IdPedidoGen
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
         FROM #tmpTareasPendientesDeAprobar
-            INNER JOIN #tmpAceptacionesPend
-                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpAceptacionesPend.IdOTSolicitud
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus = 9
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 6
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.tmpEstimacionPendIdOTSolicitud = #tmpEstimacionPend.IdOTSolicitud,
-            #tmpTareasPendientesDeAprobar.tmpEstimacionPendSemanaID = #tmpEstimacionPend.SemanaID
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
         FROM #tmpTareasPendientesDeAprobar
-            INNER JOIN #tmpEstimacionPend
-                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpEstimacionPend.IdOTSolicitud
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 3, 11 )
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 2
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
+
 
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.tmpCerrarSemanasFecha = #tmpCerrarSemanas.Fecha
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
         FROM #tmpTareasPendientesDeAprobar
-            INNER JOIN OT_SolicitudMaterial (NOLOCK)
-                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_SolicitudMaterial.IdOTSolicitud
-            INNER JOIN #tmpCerrarSemanas
-                ON OT_SolicitudMaterial.IdOTSolicitudMaterial = #tmpCerrarSemanas.IdOTSolicitudMaterial
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpAceptacionesSinRecIdOTSolicitud IS NOT NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 5
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
+
 
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus1 = ISNULL(
-                                                                                 STUFF(
-                                                                                 (
-                                                                                     SELECT '; '
-                                                                                            + ISNULL(
-                                                                                                        AP_Usuario.Usuario,
-                                                                                                        ''
-                                                                                                    )
-                                                                                     FROM OT_Solicitud OT_Solicitud_STUFF
-                                                                                         INNER JOIN AP_FlujoAprobacion
-                                                                                             ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
-                                                                                         INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 1
-                                                                                         INNER JOIN AP_Usuario
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
-                                                                                                AND AP_Usuario.Usuario IS NOT NULL
-                                                                                                AND AP_Usuario.IsActivo = 1
-                                                                                         INNER JOIN AP_UsuarioCentroCosto
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
-                                                                                                AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
-                                                                                     WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
-                                                                                     GROUP BY AP_Usuario.Usuario
-                                                                                     FOR XML PATH('')
-                                                                                 ),
-                                                                                 1,
-                                                                                 2,
-                                                                                 ''
-                                                                                      ),
-                                                                                 ''
-                                                                             )
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
         FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpAceptacionesPendIdOTSolicitud IS NOT NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 5
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus2 = ISNULL(
-                                                                                 STUFF(
-                                                                                 (
-                                                                                     SELECT '; '
-                                                                                            + ISNULL(
-                                                                                                        AP_Usuario.Usuario,
-                                                                                                        ''
-                                                                                                    )
-                                                                                     FROM OT_Solicitud OT_Solicitud_STUFF
-                                                                                         INNER JOIN AP_FlujoAprobacion
-                                                                                             ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
-                                                                                         INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 2
-                                                                                         INNER JOIN AP_Usuario
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
-                                                                                                AND AP_Usuario.Usuario IS NOT NULL
-                                                                                                AND AP_Usuario.IsActivo = 1
-                                                                                         INNER JOIN AP_UsuarioCentroCosto
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
-                                                                                                AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
-                                                                                     WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
-                                                                                     GROUP BY AP_Usuario.Usuario
-                                                                                     FOR XML PATH('')
-                                                                                 ),
-                                                                                 1,
-                                                                                 2,
-                                                                                 ''
-                                                                                      ),
-                                                                                 ''
-                                                                             )
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
         FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpEstimacionPendIdOTSolicitud IS NOT NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 4
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus3 = ISNULL(
-                                                                                 STUFF(
-                                                                                 (
-                                                                                     SELECT '; '
-                                                                                            + ISNULL(
-                                                                                                        AP_Usuario.Usuario,
-                                                                                                        ''
-                                                                                                    )
-                                                                                     FROM OT_Solicitud OT_Solicitud_STUFF
-                                                                                         INNER JOIN AP_FlujoAprobacion
-                                                                                             ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
-                                                                                         INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 3
-                                                                                         INNER JOIN AP_Usuario
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
-                                                                                                AND AP_Usuario.Usuario IS NOT NULL
-                                                                                                AND AP_Usuario.IsActivo = 1
-                                                                                         INNER JOIN AP_UsuarioCentroCosto
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
-                                                                                                AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
-                                                                                     WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
-                                                                                     GROUP BY AP_Usuario.Usuario
-                                                                                     FOR XML PATH('')
-                                                                                 ),
-                                                                                 1,
-                                                                                 2,
-                                                                                 ''
-                                                                                      ),
-                                                                                 ''
-                                                                             )
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(#tmpTareasPendientesDeAprobar.UsuarioAsignado, '')
         FROM #tmpTareasPendientesDeAprobar
-
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpCerrarSemanasFecha IS NULL
+                   AND tmpEstimacionPendIdOTSolicitud IS NULL
+                   AND tmpAceptacionesPendIdOTSolicitud IS NULL
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
         UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus4 = ISNULL(
-                                                                                 STUFF(
-                                                                                 (
-                                                                                     SELECT '; '
-                                                                                            + ISNULL(
-                                                                                                        AP_Usuario.Usuario,
-                                                                                                        ''
-                                                                                                    )
-                                                                                     FROM OT_Solicitud OT_Solicitud_STUFF
-                                                                                         INNER JOIN AP_FlujoAprobacion
-                                                                                             ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
-                                                                                         INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 4
-                                                                                         INNER JOIN AP_Usuario
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
-                                                                                                AND AP_Usuario.Usuario IS NOT NULL
-                                                                                                AND AP_Usuario.IsActivo = 1
-                                                                                         INNER JOIN AP_UsuarioCentroCosto
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
-                                                                                                AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
-                                                                                     WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
-                                                                                     GROUP BY AP_Usuario.Usuario
-                                                                                     FOR XML PATH('')
-                                                                                 ),
-                                                                                 1,
-                                                                                 2,
-                                                                                 ''
-                                                                                      ),
-                                                                                 ''
-                                                                             )
+        SET #tmpTareasPendientesDeAprobar.Actualizado = 1,
+            #tmpTareasPendientesDeAprobar.UsuarioAsignado = ISNULL(
+                                                                      #tmpTareasPendientesDeAprobarUsuariosMenbers.UsuarioAsignado,
+                                                                      ''
+                                                                  )
         FROM #tmpTareasPendientesDeAprobar
-
-        UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus5 = ISNULL(
-                                                                                 STUFF(
-                                                                                 (
-                                                                                     SELECT '; '
-                                                                                            + ISNULL(
-                                                                                                        AP_Usuario.Usuario,
-                                                                                                        ''
-                                                                                                    )
-                                                                                     FROM OT_Solicitud OT_Solicitud_STUFF
-                                                                                         INNER JOIN AP_FlujoAprobacion
-                                                                                             ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
-                                                                                         INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 5
-                                                                                         INNER JOIN AP_Usuario
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
-                                                                                                AND AP_Usuario.Usuario IS NOT NULL
-                                                                                                AND AP_Usuario.IsActivo = 1
-                                                                                         INNER JOIN AP_UsuarioCentroCosto
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
-                                                                                                AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
-                                                                                     WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
-                                                                                     GROUP BY AP_Usuario.Usuario
-                                                                                     FOR XML PATH('')
-                                                                                 ),
-                                                                                 1,
-                                                                                 2,
-                                                                                 ''
-                                                                                      ),
-                                                                                 ''
-                                                                             )
-        FROM #tmpTareasPendientesDeAprobar
-
-        UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus6 = ISNULL(
-                                                                                 STUFF(
-                                                                                 (
-                                                                                     SELECT '; '
-                                                                                            + ISNULL(
-                                                                                                        AP_Usuario.Usuario,
-                                                                                                        ''
-                                                                                                    )
-                                                                                     FROM OT_Solicitud OT_Solicitud_STUFF
-                                                                                         INNER JOIN AP_FlujoAprobacion
-                                                                                             ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
-                                                                                         INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 6
-                                                                                         INNER JOIN AP_Usuario
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
-                                                                                                AND AP_Usuario.Usuario IS NOT NULL
-                                                                                                AND AP_Usuario.IsActivo = 1
-                                                                                         INNER JOIN AP_UsuarioCentroCosto
-                                                                                             ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
-                                                                                                AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
-                                                                                     WHERE #tmpTareasPendientesDeAprobar.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
-                                                                                     GROUP BY AP_Usuario.Usuario
-                                                                                     FOR XML PATH('')
-                                                                                 ),
-                                                                                 1,
-                                                                                 2,
-                                                                                 ''
-                                                                                      ),
-                                                                                 ''
-                                                                             )
-        FROM #tmpTareasPendientesDeAprobar
-        /*Tarea*/
-        UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.Tarea = (CASE
-                                                       WHEN tmpAceptacionesSinRecIdOTSolicitud IS NOT NULL THEN
-                                                           'Operadora - Reclasificar Aceptación '
-                                                           + CAST(tmpAceptacionesSinRecidAceptacionPedido AS VARCHAR)
-                                                           + ' en Procura '
-                                                       WHEN tmpAceptacionesPendIdOTSolicitud IS NOT NULL THEN
-                                                           'Operadora - Generar Aceptación en Procura '
-                                                       WHEN tmpEstimacionPendIdOTSolicitud IS NOT NULL THEN
-                                                           'Operadora - Generar Estimación para semana '
-                                                           + tmpEstimacionPendSemanaID
-                                                       WHEN tmpCerrarSemanasFecha IS NULL
-                                                            AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                            AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                           'Proveedor - Capturar Avance '
-                                                       WHEN tmpCerrarSemanasFecha IS NOT NULL
-                                                            AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                            AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                           'Operadora - Revisar y cerrar semana para fecha:'
-                                                           + CONVERT(VARCHAR, tmpCerrarSemanasFecha, 103)
-                                                   END
-                                                  )
-        FROM #tmpTareasPendientesDeAprobar
-        WHERE #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
-        /*URL*/
-        UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.Url = (CASE
-                                                     WHEN tmpAceptacionesSinRecIdOTSolicitud IS NOT NULL THEN
-                                                         @dominioProcura + '/01Proveedores/APListaReclasificacion.aspx'
-                                                     WHEN tmpAceptacionesPendIdOTSolicitud IS NOT NULL THEN
-                                                         @dominioProcura + '/02Proveedores/AceptacionPedido.aspx?ped='
-                                                         + CAST(tmpAceptacionesPendIdPedido AS VARCHAR) + '&pedgral='
-                                                         + CAST(tmpAceptacionesPendIdPedidoGen AS VARCHAR)
-                                                         + '&ori=pedido'
-                                                     WHEN tmpEstimacionPendIdOTSolicitud IS NOT NULL THEN
-                                                         @dominioAdinco
-                                                         + '/2/OrdenTrabajo/GenerarEstimacionOT_Solicitud.aspx?id1='
-                                                         + CAST(#tmpTareasPendientesDeAprobar.IdOTSolicitud AS VARCHAR)
-                                                     WHEN tmpCerrarSemanasFecha IS NULL
-                                                          AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                          AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                         @dominioPetrovendor
-                                                         + '/02Proveedores/CapturaProgramaOT_Solicitud.aspx?id='
-                                                         + CAST(#tmpTareasPendientesDeAprobar.IdOTSolicitud AS VARCHAR)
-                                                     WHEN tmpCerrarSemanasFecha IS NOT NULL
-                                                          AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                          AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                         @dominioAdinco
-                                                         + '/2/OrdenTrabajo/CapturaProgramaOT_Solicitud.aspx?id='
-                                                         + CAST(#tmpTareasPendientesDeAprobar.IdOTSolicitud AS VARCHAR)
-                                                 END
-                                                )
-        FROM #tmpTareasPendientesDeAprobar
-        WHERE #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
-
-        /*URL Text*/
-        UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.UrlText = (CASE
-                                                         WHEN tmpAceptacionesSinRecIdOTSolicitud IS NOT NULL THEN
-                                                             CASE
-                                                                 WHEN ISNULL(@pUsuarioAdincoId, 0) > 0 THEN
-                                                                     'Completar'
-                                                                 ELSE
-                                                                     ''
-                                                             END
-                                                         WHEN tmpAceptacionesPendIdOTSolicitud IS NOT NULL THEN
-                                                             CASE
-                                                                 WHEN ISNULL(@pUsuarioAdincoId, 0) > 0 THEN
-                                                                     'Completar'
-                                                                 ELSE
-                                                                     ''
-                                                             END
-                                                         WHEN tmpEstimacionPendIdOTSolicitud IS NOT NULL THEN
-                                                             CASE
-                                                                 WHEN ISNULL(@pUsuarioAdincoId, 0) > 0 THEN
-                                                                     'Completar'
-                                                                 ELSE
-                                                                     ''
-                                                             END
-                                                         WHEN tmpCerrarSemanasFecha IS NULL
-                                                              AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                              AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                             CASE
-                                                                 WHEN ISNULL(@pUsuarioAdincoId, 0) = 0 THEN
-                                                                     'Completar'
-                                                                 ELSE
-                                                                     ''
-                                                             END
-                                                         WHEN tmpCerrarSemanasFecha IS NOT NULL
-                                                              AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                              AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                             CASE
-                                                                 WHEN ISNULL(@pUsuarioAdincoId, 0) > 0 THEN
-                                                                     'Completar'
-                                                                 ELSE
-                                                                     ''
-                                                             END
-                                                     END
-                                                    )
-        FROM #tmpTareasPendientesDeAprobar
-        WHERE #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
-
-        /*USUARIO ASIGNADO*/
-        UPDATE #tmpTareasPendientesDeAprobar
-        SET #tmpTareasPendientesDeAprobar.UsuarioAsignado = (CASE
-                                                                 WHEN #tmpTareasPendientesDeAprobar.IdOTEstatus = 1 THEN
-                                                                     ISNULL(
-                                                                               #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus1,
-                                                                               ''
-                                                                           )
-                                                                 WHEN #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 2,
-                                                                                                                     4
-                                                                                                                   ) THEN
-                                                                     #tmpTareasPendientesDeAprobar.UsuarioAsignado
-                                                                 WHEN #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5,
-                                                                                                                     6
-                                                                                                                   ) THEN
-                                                                     CASE
-                                                                         WHEN tmpAceptacionesSinRecIdOTSolicitud IS NOT NULL THEN
-                                                                             ISNULL(
-                                                                                       #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus5,
-                                                                                       ''
-                                                                                   )
-                                                                         WHEN tmpAceptacionesPendIdOTSolicitud IS NOT NULL THEN
-                                                                             ISNULL(
-                                                                                       #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus5,
-                                                                                       ''
-                                                                                   )
-                                                                         WHEN tmpEstimacionPendIdOTSolicitud IS NOT NULL THEN
-                                                                             ISNULL(
-                                                                                       #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus4,
-                                                                                       ''
-                                                                                   )
-                                                                         WHEN tmpCerrarSemanasFecha IS NULL
-                                                                              AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                                              AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                                             #tmpTareasPendientesDeAprobar.UsuarioAsignado
-                                                                         WHEN tmpCerrarSemanasFecha IS NOT NULL
-                                                                              AND tmpEstimacionPendIdOTSolicitud IS NULL
-                                                                              AND tmpAceptacionesPendIdOTSolicitud IS NULL THEN
-                                                                             ISNULL(
-                                                                                       #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus3,
-                                                                                       ''
-                                                                                   )
-                                                                     END
-                                                                 WHEN #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 9 ) THEN
-                                                                     ISNULL(
-                                                                               #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus6,
-                                                                               ''
-                                                                           )
-                                                                 WHEN #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 3,
-                                                                                                                     11
-                                                                                                                   ) THEN
-                                                                     ISNULL(
-                                                                               #tmpTareasPendientesDeAprobar.OT_GetMailUsuariosEstatus2,
-                                                                               ''
-                                                                           )
-                                                             END
-                                                            )
-        FROM #tmpTareasPendientesDeAprobar
+            INNER JOIN #tmpTareasPendientesDeAprobarUsuariosMenbers
+                ON #tmpTareasPendientesDeAprobar.IdOTSolicitud = #tmpTareasPendientesDeAprobarUsuariosMenbers.IdOTSolicitud
+                   AND #tmpTareasPendientesDeAprobar.IdOTEstatus IN ( 5, 6 )
+                   AND tmpCerrarSemanasFecha IS NOT NULL
+                   AND tmpEstimacionPendIdOTSolicitud IS NULL
+                   AND tmpAceptacionesPendIdOTSolicitud IS NULL
+                   AND #tmpTareasPendientesDeAprobarUsuariosMenbers.FlujoAprobacionEstatusId = 3
+                   AND #tmpTareasPendientesDeAprobar.Actualizado = 0
 
         INSERT INTO #tmpTareas
         (
@@ -971,9 +838,9 @@ BEGIN
                '',
                petrovendor..CC_CentroCosto.CentroCosto
         FROM #tmpEstimacionSinPO
-            INNER JOIN OT_Solicitud
+            INNER JOIN OT_Solicitud (NOLOCK)
                 ON #tmpEstimacionSinPO.IdOTSolicitud = OT_Solicitud.IdOTSolicitud
-            INNER JOIN petrovendor..CC_CentroCosto
+            INNER JOIN petrovendor..CC_CentroCosto (NOLOCK)
                 ON OT_Solicitud.IdCentroCosto = petrovendor..CC_CentroCosto.IdCentroCosto
 
         UPDATE #tmpTareasSinRelacionPedido
@@ -981,16 +848,16 @@ BEGIN
                                                                     STUFF(
                                                                     (
                                                                         SELECT '; ' + ISNULL(AP_Usuario.Usuario, '')
-                                                                        FROM OT_Solicitud OT_Solicitud_STUFF
-                                                                            INNER JOIN AP_FlujoAprobacion
+                                                                        FROM OT_Solicitud OT_Solicitud_STUFF (NOLOCK)
+                                                                            INNER JOIN AP_FlujoAprobacion (NOLOCK)
                                                                                 ON AP_FlujoAprobacion.TipoFlujoAprobacionId = 1 -- Control de Obra             
-                                                                            INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios
+                                                                            INNER JOIN AP_FlujoAprobacionEstatusUsuarios AP_FlujoAprobacionEstatusUsuarios (NOLOCK)
                                                                                 ON AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId = 6
-                                                                            INNER JOIN AP_Usuario
+                                                                            INNER JOIN AP_Usuario (NOLOCK)
                                                                                 ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_Usuario.UsuarioID
                                                                                    AND AP_Usuario.Usuario IS NOT NULL
                                                                                    AND AP_Usuario.IsActivo = 1
-                                                                            INNER JOIN AP_UsuarioCentroCosto
+                                                                            INNER JOIN AP_UsuarioCentroCosto (NOLOCK)
                                                                                 ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario
                                                                                    AND OT_Solicitud_STUFF.IdCentroCosto = AP_UsuarioCentroCosto.IdCentroCosto
                                                                         WHERE #tmpTareasSinRelacionPedido.IdOTSolicitud = OT_Solicitud_STUFF.IdOTSolicitud
@@ -1037,7 +904,7 @@ BEGIN
         IF @pUsuarioAdincoId > 0
         BEGIN
             SELECT @emailusuario = ISNULL(Usuario, '')
-            FROM ap_usuario
+            FROM ap_usuario (NOLOCK)
             WHERE usuarioid = @pUsuarioAdincoId
             UPDATE #tmpTareas
             SET UrlText = ''
