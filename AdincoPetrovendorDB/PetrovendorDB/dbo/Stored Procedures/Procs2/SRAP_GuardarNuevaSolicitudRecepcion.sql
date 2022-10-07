@@ -1,16 +1,8 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_GuardarNuevaSolicitudRecepcion]    Script Date: 08/06/2022 02:48:56 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_GuardarNuevaSolicitudRecepcion]    Script Date: 02/05/2022 07:09:47 p. m. ******/
 SET ANSI_NULLS ON
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SRAP_GuardarNuevaSolicitudRecepcion'
-)
-    DROP PROCEDURE SRAP_GuardarNuevaSolicitudRecepcion;
-	GO
 SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
@@ -28,7 +20,12 @@ GO
 -- Create date: 08-06-2022
 -- Description:	Se revierte Eliminado temporal de la primera aprobacion de aceptacion de pedido
 -- =============================================
-CREATE PROCEDURE [dbo].[SRAP_GuardarNuevaSolicitudRecepcion] 
+-- =============================================
+-- Author:		Luis David 
+-- Create date: 005/09/2022
+-- Description:	Eliminado temporal de la primera aprobacion de aceptacion de pedido
+-- =============================================
+ALTER PROCEDURE [dbo].[SRAP_GuardarNuevaSolicitudRecepcion] 
 	-- Add the parameters for the stored procedure here
 @IdPedido    INT,
 @IdProveedor INT,
@@ -90,7 +87,7 @@ AS
 		CantidadRestante =0,
 		ValidacionExitosa = 0
 		FROM MM_Pedido AS P
-		JOIN MM_PedidoDetalle AS PD ON PD.IdPedido = P.IdPedido
+		JOIN MM_PedidoDetalle AS PD ON P.IdPedido = PD.IdPedido 
 		JOIN @tbPedidoDetalleAceptacion AS tbAP
 			ON PD.IdPedidoDetalle = tbAP.IdPedidoDetalle
 		WHERE 		
@@ -114,16 +111,16 @@ AS
 		 PD.IdPedidoDetalle, 
 		 CantidadEnAprobacion = SUM(SAPD.Cantidad)
 		FROM @tbPedidoDetalle PD
-		JOIN MM_SolicitudAceptacionPedidoDetalle SAPD
+		JOIN MM_SolicitudAceptacionPedidoDetalle SAPD (NOLOCK)
 			ON PD.IdPedidoDetalle = SAPD.IdPedidoDetalle
 		JOIN MM_SolicitudAceptacionPedido SAP
 			ON SAPD.IdSolicitudAceptacionPedido = SAP.IdSolicitudAceptacionPedido
-			AND SAP.Activo = 1
-		JOIN TA_Operacion O 
+			AND 1 = SAP.Activo
+		JOIN TA_Operacion O (NOLOCK)
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
-			AND O.IdTipoOperacion = @TipoOperacionId --> Aprobación de solicitud de aceptación de pedido
-			AND O.IdEstatusOperacion = 1 --> EN APROBACIÓN 
-			AND ISNULL(O.IdEstatusEliminado,0) = 0
+			AND @TipoOperacionId = O.IdTipoOperacion --> Aprobación de solicitud de aceptación de pedido
+			AND 1 = O.IdEstatusOperacion --> EN APROBACIÓN 
+			AND 0 = ISNULL(O.IdEstatusEliminado,0)
 		 WHERE SAP.IdPedido = @IdPedido
 		 GROUP BY PD.IdPedidoDetalle
 
@@ -140,12 +137,12 @@ AS
 		 PD.IdPedidoDetalle,
 		 CantidadAceptada = SUM(APD.Cantidad)
 		 FROM  @tbPedidoDetalle PD
-		 JOIN MM_AceptacionPedidoDetalle APD
+		 JOIN MM_AceptacionPedidoDetalle APD (NOLOCK)
 			ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-		 JOIN MM_AceptacionPedido AP 
+		 JOIN MM_AceptacionPedido AP (NOLOCK)
 			ON APD.IdAceptacionPedido	= AP.IdAceptacionPedido
-				AND AP.Activo= 1
-				AND ISNULL(AP.IdEstatusEliminado,0) =0 
+				AND 1 = AP.Activo
+				AND 0 = ISNULL(AP.IdEstatusEliminado,0)
 		 WHERE AP.IdPedido=@IdPedido
 		GROUP BY PD.IdPedidoDetalle
 
@@ -173,7 +170,7 @@ AS
 
 			SELECT PD.IdMaterial, POD.MaterialCotizadoTextoC, TPD.*
 			FROM @tbPedidoDetalle TPD
-			JOIN MM_PedidoDetalle PD
+			JOIN MM_PedidoDetalle PD (NOLOCK)
 				ON TPD.IdPedidoDetalle = PD.IdPedidoDetalle
 			JOIN MM_PeticionOfertaDetalle POD 
 				ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
@@ -207,23 +204,23 @@ AS
 	   /*OBTENER EL ID DEL SOLICITANTE DEL REQUISITOR DE LA SOLICITUD DE PEDIDO*/
 	   SELECT @IdSolicitanteRequisicion = ISNULL(SP.Solicitante,SP.IdUsuarioSolicitante)
 	   FROM MM_Pedido P
-	   JOIN MM_SolicitudPedido SP
+	   JOIN MM_SolicitudPedido SP (NOLOCK)
 			ON P.IdSolicitudPedido = SP.IdSolicitudPedido
 		WHERE P.IdPedido=@IdPedido
 
-		
+		--NO  ELIMINAR EL SIGUIENTE CODIGO COMENTADO ESTO FUE COMENTADO TEMPORALMENTE PARA EL ISSUE 1765
 		/*AGREGAR AL APROBADOR --> 
 		-->NUMERO DE SECUENCIA DEFAULT EN 1 POR QUE SOLO ES UN APROBADOR*/
-	   INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion)
-	   VALUES ('Solicitud Aceptación pedido', @IdSolicitanteRequisicion,@IdEstatusEnAprobacion,0,'','',GETDATE(),1,1,@IdOperacion)
+	  -- INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion)
+	  -- VALUES ('Solicitud Aceptación pedido', @IdSolicitanteRequisicion,@IdEstatusEnAprobacion,0,'','',GETDATE(),1,1,@IdOperacion)
 	  
 
-	  SET @Descripcion_historial = CONCAT('El Usuario',
-									(SELECT Nombre FROM S_USuario WHERE IdUsuario = @UsuarioId), 
-									' ha registrado la ', (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = @TipoOperacionId))
+	  --SET @Descripcion_historial = CONCAT('El Usuario',
+			--						(SELECT Nombre FROM S_USuario WHERE IdUsuario = @UsuarioId), 
+			--						' ha registrado la ', (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = @TipoOperacionId))
 
-	   INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
-	   VALUES (@Descripcion_historial,@IdOperacion,GETDATE(),1)
+	  -- INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
+	  -- VALUES (@Descripcion_historial,@IdOperacion,GETDATE(),1)
 
 	   END 
 
@@ -239,25 +236,36 @@ AS
 			ON P.IdPedido = PG.IdIdentificador 
 			AND PG.IdProveedorCliente = P.IdProveedorCompras 
 			AND PG.IdTipoPedido in (2,4,6) 
-			LEFT JOIN Adinco..CO_Contrato C
+			LEFT JOIN Adinco..CO_Contrato C (NOLOCK)
 				ON P.IdContrato = C.IdContrato
-			LEFT JOIN Adinco..CO_AreaContractual AC 
+			LEFT JOIN Adinco..CO_AreaContractual AC (NOLOCK) 
 				 ON C.IdAreaContractual = AC.IdAreaContractual  
-			LEFT JOIN TA_Operacion AS O
+			LEFT JOIN TA_Operacion AS O (NOLOCK)
 				ON P.IdSolicitudPedido  = O.IdDocumento
-				AND O.IdEstatusOperacion = 2 --> CTE APROBADO
-				AND O.IdTipoOperacion = 9  --> CTE PEDIDO
+				AND 2 = O.IdEstatusOperacion --> CTE APROBADO
+				AND 9 = O.IdTipoOperacion --> CTE PEDIDO
 			AND P.Version = O.NoVersion    		 
-		    LEFT JOIN S_Proveedor AS PV 
+		    LEFT JOIN S_Proveedor AS PV (NOLOCK)
 				ON P.IdSubcontratista = PV.IdProveedor
-		    LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI
+		    LEFT JOIN WDEA_PurchasingDocumentsImportados AS WPI (NOLOCK)
 				ON P.IdPedido = WPI.IdPedidoADINCO
-		    LEFT JOIN DEA_Relacion_PR_PO AS POW
+		    LEFT JOIN DEA_Relacion_PR_PO AS POW (NOLOCK)
 				ON P.IdPedido = POW.IdPedido
 			WHERE P.IdPedido = @IdPedido
 
 	   END 
-	  
+
+	   --ENVIO DE NOTIFICACIONES TEMPORAL A OBS PARA ISSUE 1765
+	   BEGIN
+
+			EXEC SRAP_EnviarNotificacionOBSAprobacionSolicitudAceptacion @ContratoId = @IdContrato,
+																			@NumeroPedidoGral = @IdPedidoGeneral,
+																			@IdPedido = @IdPedido,
+																			@NoSolicitudRecepcionPedido = @IdSolicitudAceptacionPedido,
+																			@PO = @PO,
+																			@IdUsuario = @UsuarioId;
+
+	   END
 
 	  /*RETORNAR TABLA 1 DETALLE*/
 	  SELECT Response = 'SUCCESS',
@@ -272,10 +280,10 @@ AS
 	  T.IdTarea,
 	  U.Correo,
 	  U.Activo
-	  FROM TA_Tarea T
+	  FROM TA_Tarea T (NOLOCK)
 	  JOIN TA_Operacion O 
 		ON T.IdOperacion = O.IdOperacion
-	  JOIN S_Usuario U
+	  JOIN S_Usuario U (NOLOCK)
 		ON T.IdAprobador = U.IdUsuario
 	  WHERE O.IdOperacion = @IdOperacion
 	  AND T.Activo = 1
