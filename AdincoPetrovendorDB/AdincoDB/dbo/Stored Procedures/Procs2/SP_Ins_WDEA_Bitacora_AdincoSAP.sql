@@ -1,4 +1,9 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 01/10/2022 09:29:54 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
 GO
@@ -11,11 +16,27 @@ CREATE proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
 -- creado el: 05/09/2022
 -- modificado: utilizar la tabla WDEA_WBS para obtener la línea presupuesto Issue #2012(Petrovendor)
 --===============================================
+-- creado por: Luis David
+-- creado el: 04/10/2022
+-- modificado: Se cambia por 3 0's cuando el Purch Org sea MOG
+--===============================================
 AS
 begin
+
+BEGIN TRY
+
 		declare @maxNoConsecutivo int, 
 		@IdProveedorWDEA int = (SELECT TOP 1 idproveedor FROM S_Proveedor WHERE rfc = 'DDE151002QY9'), 
-		@IdUsuarioAdministradorAdinco int = (SELECT TOP 1 IdUsuario FROM S_Usuario WHERE Correo like '%administrador@smps-adinco.com%');
+		@IdUsuarioAdministradorAdinco int = (SELECT TOP 1 IdUsuario FROM S_Usuario WHERE Correo like '%administrador@smps-adinco.com%'),
+		@IDLINAPRESUPUESTO_WDEAADMIN INT = (SELECT TOP 1
+												LP.IdLineaPresupuestoMes
+											FROM Adinco..CO_PeriodoContrato AS PC
+												JOIN Adinco..CO_ProgramaActividad AS PA ON PC.IdPeriodo = PA.IdPeriodoContrato
+												JOIN Adinco..CO_Presupuesto AS P ON PA.IdProgramaActividad = P.IdProgramaActividad
+												JOIN Adinco..CO_LineaPresupuestoMes AS LP ON P.IdPresupuesto = LP.IdPresupuesto
+												WHERE PC.IdContrato = 10145
+											ORDER BY P.CreadoEl, LP.IdLineaPresupuestoMes DESC);-- OBTENER LA ULTIMA LINEA DE PRESUPUESTO REGISTRADA PARA CONTRATO WDEA-ADMIN
+		
 		--Tabla para cachar los errores y posteriormente excluir de la busqueda final esos registros
 		DROP TABLE IF EXISTS #tmpErrores
 		create table #tmpErrores
@@ -99,7 +120,8 @@ begin
 			ConsecutivoPozo			nvarchar(5)		null,
 			TareaPresupuesto		int				null,
 			SubTareaPresupuesto		nvarchar(5)		null,
-			X						nvarchar(5)		null
+			X						nvarchar(5)		null,
+			MecanismoContratacion	nvarchar(5)		null
 		) 
 		--============================================================
 		-- Se inserta la unidad 
@@ -140,12 +162,15 @@ begin
 		--============================================================
 		--Convertimos los tipos de Dato
 		insert	into	#tmpData
-		select	--top 1
-				Id						=	RowN ,--ROW_NUMBER() OVER( ORDER BY RowN),
+		select	
+				Id						=	RowN ,
 				Item					=	case when len(Item)						= 0 then null else item						end,
 				Purch_Organization		=	case when len(Purch_Organization)		= 0 then null else Purch_Organization		end,
 				Cost_Center				=	case when len(Cost_Center)				= 0 then null else Cost_Center				end,
-				WBS_Element				=	case when len(WBS_Element)				= 0 then null else WBS_Element				end,
+				WBS_Element				=	case 
+											when len(WBS_Element)				= 0 then null 
+											when Purch_Organization = 'MOG'	then STUFF(WBS_Element,12,3, '000')
+											else WBS_Element	end,
 				Short_Text,
 				Outline_Agreegement,
 				Validity_Per_Start		=	case when len(rtrim(ltrim(Validity_Per_Start)))>6 then cast(substring(Validity_Per_Start,7,4)+'-'+ substring(Validity_Per_Start,4,2)+'-'+substring(Validity_Per_Start,0,3)		as date) else null end,
@@ -172,7 +197,8 @@ begin
 				ConsecutivoPozo			=	substring(WBS_Element,12,3),
 				TareaPresupuesto		=	cast(replace(substring(WBS_Element,15,3),'.','') as int),  --MX-OGA-OP-000132.B000NO
 				SubTareaPresupuesto		=	substring(WBS_Element,19,1),
-				x						=	substring(WBS_Element,20,10)
+				x						=	substring(WBS_Element,20,10),
+				MecanismoContratacion = LTRIM(RTRIM(Mecanismo_de_Contratacion))
 		from	WDEA_Layout_T
 		where	IdBitacoraLectura	=	@IdBitacoraLectura	--CreadoEL	< @fecha --'2021-09-06'
 	
@@ -186,51 +212,44 @@ begin
 			insert into #tmpErrores	select Id, 'B', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el contrato en la celda B, Fila '+cast(Id as varchar(10))+'.',1						
 			from #tmpData where Purch_Organization is null order by Id
 
-			insert into #tmpErrores	select Id, 'B', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el contrato en la celda B, Fila '+cast(Id as varchar(10))+'.',1						
-			from #tmpData where Purch_Organization not in ('MOG','MCY','M30','M16','M17') order by Id
+			insert into #tmpErrores	select TD.Id, 'B', 'La orden de compra '+cast(isnull(TD.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el contrato en la celda B, Fila '+cast(TD.Id as varchar(10))+'.',1						
+			from #tmpData AS TD
+			LEFT JOIN PurchaseOrganization AS P ON TD.Purch_Organization COLLATE SQL_Latin1_General_CP1_CI_AS = P.Siglas
+			where P.Siglas IS NULL
+			order by Id
 			/*******************/
+
 			/*WBS_Element*/
 			insert into #tmpErrores	
 			SELECT t.Id, 'C', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró un centro de costos relacionado al WBS_Element en la celda C, Fila '+cast(t.Id as varchar(10))+'.',1
 			FROM #tmpData AS t
 			LEFT JOIN WDEA_SAP_CentroCostos WDCC (NOLOCK)
-				ON dbo.WDEA_CC_SplitString(t.WBS_Element,'-') = WDCC.AcronimoSAP
+				ON dbo.WDEA_CC_SplitString(t.WBS_Element,'-',t.Purch_Organization) = WDCC.AcronimoSAP
 				AND WDCC.Activo = 1
 			where AcronimoSAP is null or WDCC.Activo = 0
 	
 			insert into #tmpErrores
 			select Id, 'D', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró WBS Element en la celda D, Fila '+cast(Id as varchar(10))+'.',1												
-			from #tmpData where WBS_Element is null order by Id
+			from #tmpData where WBS_Element is null AND Purch_Organization != 'MCY'  order by Id
 			
 			--==================================================	
-			
-			if (select		COUNT(1)
-			from		#tmpData DWL
-			LEFT JOIN WDEA_WBS WBS (NOLOCK)
-				ON RTRIM(LTRIM(dwl.WBS_Element)) = RTRIM(LTRIM(WBS.WBS)) COLLATE SQL_Latin1_General_CP1_CI_AS	
-			LEFT JOIN WDEA_WBSLineaPresupuesto WLP (NOLOCK)
-				ON WBS.Id = WLP.IdWBS
-			where 
-			WBS.Activo = 1
-			and
-			WLP.Activo = 1) < 1
-			BEGIN
+
 				insert into #tmpErrores
-				select		DWL.ID,	'D',  'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, posiblemente a lo siguiente : El WBS no existe o no esta relacionado a una línea de presupuesto en ADINCO. Celda D  , Fila '	+	cast(DWL.Id as varchar(10))	+	' .',1
+				select		DWL.ID,	'D',  'La orden de compra '+cast(isnull(DWL.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, posiblemente a lo siguiente : El WBS no existe o no esta relacionado a una línea de presupuesto en ADINCO. Celda D  , Fila '	+	cast(DWL.ID as varchar(10))	+	' .',1
 				from		#tmpData DWL
+				LEFT JOIN PurchaseOrganization AS PO 
+					ON DWL.Purch_Organization COLLATE SQL_Latin1_General_CP1_CI_AS = PO.Siglas
 				LEFT JOIN WDEA_WBS WBS (NOLOCK)
-					ON RTRIM(LTRIM(dwl.WBS_Element)) = RTRIM(LTRIM(WBS.WBS)) COLLATE SQL_Latin1_General_CP1_CI_AS	
+					ON RTRIM(LTRIM(dwl.WBS_Element)) = RTRIM(LTRIM(WBS.WBS)) COLLATE SQL_Latin1_General_CP1_CI_AS AND WBS.Activo = 1
 				LEFT JOIN WDEA_WBSLineaPresupuesto WLP (NOLOCK)
-					ON WBS.Id = WLP.IdWBS
-				where 
-				WBS.Id Is null
-				or 
-				WBS.Activo = 0
-				or
-				WLP.Id is null
-				or 
-				WLP.Activo = 0
-			END
+					ON WBS.Id = WLP.IdWBS AND WLP.Activo = 1
+					AND PO.IdContrato = WLP.IdContrato
+				WHERE 
+				DWL.Purch_Organization != 'MCY' 
+				AND WBS.Id Is null
+				OR WLP.Id is null
+				OR PO.IdContrato IS NULL
+				GROUP BY DWL.Purchasing_Document,DWL.ID;
 			
 			/*******************/
 	
@@ -292,6 +311,12 @@ begin
 			/*Currency*/
 			insert into #tmpErrores	select Id, 'N', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la moneda en la celda N, Fila '+cast(Id as varchar(10))+'.',1						
 			from #tmpData where Currency is null order by Id
+
+			insert into #tmpErrores	select TD.Id, 'N', 'La orden de compra '+cast(isnull(TD.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la moneda en el catalogo de ADINCO en la celda N, Fila '+cast(TD.Id as varchar(10))+'.',1						
+			from #tmpData AS TD
+			LEFT JOIN Adinco..PV_TipoMoneda AS M ON TD.Currency COLLATE SQL_Latin1_General_CP1_CI_AS = M.TipoMonedaCorto AND TD.Currency IS NOT NULL
+			where M.TipoMonedaCorto IS NULL
+			order by TD.Id
 			/*******************/
 
 			/*Vendor_Supplying_Plant*/
@@ -341,6 +366,7 @@ begin
 			insert into #tmpErrores
 			select Id, 'U', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el usuario requisitor en la celda U, Fila '+cast(Id as varchar(10))+'.',1	
 			from #tmpData where Requisitioner is null order by Id
+
 			--Se Obtienene los registros que si se encuentran en la tabla DEA_UsuarioSolicitanteSAP
 			insert into	#tmpRequisitioner
 			select		ID,
@@ -357,19 +383,12 @@ begin
 			from		#tmpData					t1
 			left join	#tmpRequisitioner			t2
 			on			t1.ID						=	t2.ID
-			where		t2.ID						is	null
-			order by	1,2
+			where		t2.ID						is	null;
 
-			--select * from #tmpData
 			/*Terminos_Pago*/
 			insert into #tmpErrores
 			select Id, 'V', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontraron términos de pago en la celda V, Fila '+cast(Id as varchar(10))+'.',1										
 			from #tmpData where Terminos_Pago is null order by Id
-
-			--select * from #tmpData
-
-			--insert into #tmpErrores
-			--select Id, 'V', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontraron términos de pago en la Celda V, fila '+cast(Id as varchar(10))+'.',1  from #tmpData where len(Terminos_Pago) = 0 or (len(Terminos_Pago) > 0 and CAST(Terminos_Pago as VARCHAR(10)) LIKE '%.%' ) order by Id
 
 			/*Justificacion*/
 			insert into #tmpErrores 
@@ -391,8 +410,6 @@ begin
 						mat.DescripcionCorta,
 						mat.IdProveedor
 
-
-		--#tmpMaterialesEncontrados
 		/*SE MODIFICA ESTA VALIDACIÓN PARA VALIDAR UNICAMENTE QUE LA UNIDAD, Y EL MATERIAL NO SEAN NULOS*/
 
 			-- No existe el material
@@ -404,8 +421,6 @@ begin
 
 			insert into #tmpIncompletedOCs
 			select LEFT(replace(Error,'La orden de compra ',''), CHARINDEX(' ',replace(Error,'La orden de compra ','')+'')-1)  from #tmpErrores
-
-			--select * from #tmpIncompletedOCs
 
 		/*Obtengo el total de registros por OC*/
 		insert into	#tmpRegistrosPorDocumento
@@ -427,8 +442,6 @@ begin
 		AND			T1.Order_Unit		IS NOT NULL
 		
 		group by	Purchasing_Document
-
-		--select * from #tmpRegistrosValidadosPorDocumento
 
 		/*Inserto en Bitacora un mensaje de registro exitoso por cada OC que si se hayan validado todas sus filas*/
 		/*row columna error*/
@@ -452,8 +465,6 @@ begin
 		insert into WDEA_Bitacora_AdincoSAP
 		select	getdate(), Error , ROW_NUMBER() OVER( ORDER BY esError,RowID), @IdBitacoraLectura, 0 from #tmpErrores where esError = 1 group by esError, RowId, Columna, Error order by RowId
 		
-		--select 22,* from WDEA_Bitacora_AdincoSAP where IdBitacoraLectura = @IdBitacoraLectura
-		
 		/*Se obtiene el consecutivo donde se quedó la bitacora*/
 		select	@maxNoConsecutivo = max(NoConsecutivoProcesamiento) 
 		from	WDEA_Bitacora_AdincoSAP 
@@ -461,6 +472,7 @@ begin
 		insert into WDEA_Bitacora_AdincoSAP
 		select	getdate(), Error , ROW_NUMBER() OVER( ORDER BY esError,RowID)+@maxNoConsecutivo, @IdBitacoraLectura, 1 
 		from #tmpErrores where esError = 0 group by esError, RowId, Columna, Error order by RowId
+		
 		-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		-- INSERSIÓN CORRECTA A LA TABLA WDEA_PurchasingDocumentsImportados
@@ -473,26 +485,26 @@ begin
 		DELETION_INDICATOR,			PLANT,						ORDER_QUANTITY,			ORDER_UNIT,		IDUNIDAD,				NET_PRICE,		
 		CURRENCY,					IDMONEDA,					VENDOR_SUPPLIYING_PLANT,IDPROVEEDOR,	PURCHASING_DOCUMENT,	RELEASE_STATE,		
 		NAME_OF_VENDOR,				ORDER_PRICE_UNIT,			NET_ORDER_VALUE,		REQUISITIONER,	IDUSUARIOSOLICITANTE,	TERMINOS_DE_PAGO,	
-		JUSTIFICACION,				IdBitacora)
+		JUSTIFICACION,				IdBitacora,					MECANISMO_CONTRATACION)
 		select   
 		@IdBitacoraLectura,			Item,						Purch_Organization,		PO.IdContrato,	CC.idcentrocosto,		T1.WBS_Element, 
-		WLP.IdLineaPresupuesto,	OUTLINE_AGREEMENT,			Short_Text,				mat.IdMaterial,	Validity_Per_Start,		Validity_Period_End,
+		WLP.IdLineaPresupuesto,		OUTLINE_AGREEMENT,			Short_Text,				mat.IdMaterial,	Validity_Per_Start,		Validity_Period_End,
 		Deletion_Indicador,			Plant,						Order_Quantity,			Order_Unit,		u.IdUnidad,				Net_Price,  
 		Currency,					IdMoneda,					Vendor_Supplying_Plant, p.IdProveedor,	Purchasing_Document,	Release_State,  
 		Name_of_Vendor,				Order_Price_Unit,			Net_Order_Value,		Requisitioner,  re.IdUsuario,			ISNULL(TCC.DiasCredito,0),  
-		Justificacion,				@IdBitacoraLectura  
+		Justificacion,				@IdBitacoraLectura,			t1.MecanismoContratacion
 		FROM		#tmpData						t1
-		inner join	PurchaseOrganization			po (NOLOCK)
-		ON			t1.Contrato						=		po.siglas COLLATE SQL_Latin1_General_CP1_CI_AS
-		inner join	Adinco..PV_TipoMoneda			mo (NOLOCK)
+		  join	PurchaseOrganization			po (NOLOCK)
+		ON			t1.Purch_Organization	=		po.siglas COLLATE SQL_Latin1_General_CP1_CI_AS
+		 join	Adinco..PV_TipoMoneda			mo (NOLOCK)
 		ON			t1.Currency =					mo.TipoMonedaCorto				
-		inner join	S_Proveedor		p	(NOLOCK)
+		 join	S_Proveedor		p	(NOLOCK)
 		ON			t1.Vendor_Supplying_Plant COLLATE SQL_Latin1_General_CP1_CI_AS = P.RFC
-		inner join	#tmpRequisitioner				re
+		 join	#tmpRequisitioner				re
 		ON			t1.ID =							re.Id
-		inner join	dbo.PV_MM_MaterialUnidad		u (NOLOCK)
+		 join	dbo.PV_MM_MaterialUnidad		u (NOLOCK)
 		ON			t1.Order_Unit COLLATE SQL_Latin1_General_CP1_CI_AS = u.umb
-		inner join	#tmpMateriales					mat (NOLOCK)
+		 join	#tmpMateriales					mat (NOLOCK)
 		ON			t1.Short_Text COLLATE SQL_Latin1_General_CP1_CI_AS = mat.DescripcionCorta
 		and			t1.id =							mat.ID
 		and			@IdProveedorWDEA =				mat.IdProvedor
@@ -502,8 +514,8 @@ begin
 		left join	#tmpIncompletedOCs				t3
 			ON			rtrim(ltrim(Purchasing_Document)) = rtrim(ltrim(t3.OC))
 		LEFT JOIN	WDEA_SAP_CentroCostos			WDCC
-			ON			dbo.WDEA_CC_SplitString(t1.WBS_Element,'-') = WDCC.AcronimoSAP 
-	    JOIN		CC_CentroCosto					CC  (NOLOCK)
+			ON			dbo.WDEA_CC_SplitString(t1.WBS_Element,'-',Purch_Organization) = WDCC.AcronimoSAP 
+	    left JOIN		CC_CentroCosto					CC  (NOLOCK)
 			ON			WDCC.IdCentroCostosADINCO		=			CC.IdCentroCosto 
 			AND			WDCC.Activo						=			1
 		LEFT JOIN   WDEA_SAP_TerminosCondiciones	TCC (NOLOCK)
@@ -515,22 +527,87 @@ begin
 		JOIN WDEA_WBSLineaPresupuesto WLP
 			ON WBS.Id = WLP.IdWBS
 			AND WLP.Activo = 1
-		WHERE		t2.RowId						is	null
+		WHERE		t2.RowId						is	null--QUE NO TENGA ERRORES EL REGISTRO
+		and			t3.OC							is	null
+		and			isnull(p.IsEliminado,0)					=	0
+		and			u.IsEliminado					=	0
+		and			t1.Short_Text					is not null
+		and			t1.Order_Unit					is not null
+		and			p.Activo						= 1;
+
+		--GUARDADO ESPECIFICO DE LOS REGISTROS MCY
+		insert into WDEA_PurchasingDocumentsImportados
+					(	
+		IDLAYOUT,					ITEM,						PURCHASE_ORGANIZATION,	IDCONTRATO,		COST_CENTER,			WBS_ELEMENT,	
+		IDLINEAPRESUPUESTOMES,		OUTLINE_AGREEMENT,			SHORT_TEXT,				IDMATERIAL,		VALIDITY_PER_START,		VALIDITY_PER_END,	
+		DELETION_INDICATOR,			PLANT,						ORDER_QUANTITY,			ORDER_UNIT,		IDUNIDAD,				NET_PRICE,		
+		CURRENCY,					IDMONEDA,					VENDOR_SUPPLIYING_PLANT,IDPROVEEDOR,	PURCHASING_DOCUMENT,	RELEASE_STATE,		
+		NAME_OF_VENDOR,				ORDER_PRICE_UNIT,			NET_ORDER_VALUE,		REQUISITIONER,	IDUSUARIOSOLICITANTE,	TERMINOS_DE_PAGO,	
+		JUSTIFICACION,				IdBitacora,					MECANISMO_CONTRATACION)
+		select   
+		@IdBitacoraLectura,			Item,						Purch_Organization,		10145,	CC.idcentrocosto,		T1.WBS_Element, 
+		@IDLINAPRESUPUESTO_WDEAADMIN,	OUTLINE_AGREEMENT,			Short_Text,				mat.IdMaterial,	Validity_Per_Start,		Validity_Period_End,
+		Deletion_Indicador,			Plant,						Order_Quantity,			Order_Unit,		u.IdUnidad,				Net_Price,  
+		Currency,					IdMoneda,					Vendor_Supplying_Plant, p.IdProveedor,	Purchasing_Document,	Release_State,  
+		Name_of_Vendor,				Order_Price_Unit,			Net_Order_Value,		Requisitioner,  re.IdUsuario,			ISNULL(TCC.DiasCredito,0),  
+		Justificacion,				@IdBitacoraLectura,			t1.MecanismoContratacion
+		FROM		#tmpData						t1
+		left join	PurchaseOrganization			po (NOLOCK)
+		ON			t1.Contrato						=		po.siglas COLLATE SQL_Latin1_General_CP1_CI_AS
+			AND t1.Purch_Organization = 'MCY'
+		left join	Adinco..PV_TipoMoneda			mo (NOLOCK)
+		ON			t1.Currency =					mo.TipoMonedaCorto				
+		left join	S_Proveedor		p	(NOLOCK)
+		ON			t1.Vendor_Supplying_Plant COLLATE SQL_Latin1_General_CP1_CI_AS = P.RFC
+		left join	#tmpRequisitioner				re
+		ON			t1.ID =							re.Id
+		left join	dbo.PV_MM_MaterialUnidad		u (NOLOCK)
+		ON			t1.Order_Unit COLLATE SQL_Latin1_General_CP1_CI_AS = u.umb
+		left join	#tmpMateriales					mat (NOLOCK)
+		ON			t1.Short_Text COLLATE SQL_Latin1_General_CP1_CI_AS = mat.DescripcionCorta
+		and			t1.id =							mat.ID
+		and			@IdProveedorWDEA =				mat.IdProvedor
+		left join	#tmpErrores						t2
+			on			t1.ID =							t2.RowId
+			and			1 =								t2.esError
+		left join	#tmpIncompletedOCs				t3
+			ON			rtrim(ltrim(Purchasing_Document)) = rtrim(ltrim(t3.OC))
+		LEFT JOIN	WDEA_SAP_CentroCostos			WDCC
+			ON			dbo.WDEA_CC_SplitString(t1.WBS_Element,'-',Purch_Organization) = WDCC.AcronimoSAP 
+	    left JOIN		CC_CentroCosto					CC  (NOLOCK)
+			ON			WDCC.IdCentroCostosADINCO		=			CC.IdCentroCosto 
+			AND			WDCC.Activo						=			1
+		LEFT JOIN   WDEA_SAP_TerminosCondiciones	TCC (NOLOCK)
+			ON			t1.Terminos_Pago COLLATE SQL_Latin1_General_CP1_CI_AS = TCC.Clabe
+		WHERE		t2.RowId						is	null--QUE NO TENGA ERRORES EL REGISTRO
 		and			t3.OC							is	null
 		and			isnull(p.IsEliminado,0)					=	0
 		and			u.IsEliminado					=	0
 		and			t1.Short_Text					is not null
 		and			t1.Order_Unit					is not null
 		and			p.Activo						= 1
-		and			t1.Terminos_Pago				IS NOT NULL;
+		AND			t1.Purch_Organization = 'MCY';
 
 		INSERT INTO PendientesProcesarProcura_WSDEA
-		(
+			(
 			IdBitacora
 		)
 		VALUES
 		(
 			@IdBitacoraLectura
 		);
+
+		END TRY
+BEGIN CATCH
+	
+	insert into WDEA_Bitacora_AdincoSAP
+	  SELECT
+		GETDATE(),
+		ERROR_MESSAGE(),
+		ERROR_LINE(),
+		@IdBitacoraLectura,
+		0;
+
+END CATCH;
 
 END
