@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_ConsultarDatosEvaluadorComprobante'
+)
+    DROP PROCEDURE SP_PC_ConsultarDatosEvaluadorComprobante;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PC_ConsultarDatosEvaluadorComprobante]    Script Date: 06/10/2022 03:26:09 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		DANIEL AC 
 -- Create date: 18/04/2018
 -- Description:	CONSULTAR DE INFORMACIÓN DE PERSONA QUE REALIZARA EVALUACIÓN AL PROVEEDOR
@@ -14,12 +28,21 @@ AS
 BEGIN	
 	SELECT U.Correo, u.IdUsuario, AP.IdProveedor
 	FROM dbo.FI_PedimentoComprobante AF
-	INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APPC ON APPC.IdPedimentoComprobante=AF.IdPedimentoComprobante
-	INNER JOIN dbo.MM_AceptacionPedido AP ON AP.IdAceptacionPedido = APPC.IdAceptacionPedido
-	INNER JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-	INNER JOIN dbo.TA_Operacion TAO ON TAO.IdDocumento = AF.IdPedimentoComprobante
-	INNER JOIN dbo.S_Usuario U ON U.IdUsuario = P.CreadoPor	
+	JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APPC 
+		ON AF.IdPedimentoComprobante = APPC.IdPedimentoComprobante
+	JOIN dbo.MM_AceptacionPedido AP 
+		ON APPC.IdAceptacionPedido = AP.IdAceptacionPedido 
+	JOIN dbo.MM_Pedido P 
+		ON AP.IdPedido = P.IdPedido 
+	JOIN dbo.TA_Operacion TAO 
+		ON AF.IdPedimentoComprobante = TAO.IdDocumento 
+		AND IdTipoOperacion= 16 --> CTE Aprobación Pedimento/Comprobante Extranjero
+	JOIN dbo.S_Usuario U 
+		ON  P.CreadoPor	 = U.IdUsuario 
 	WHERE  TAO.IdOperacion =@IdOperacion
+	AND U.Activo=1 --> CTE Debe estar activo
+	GROUP BY U.Correo, u.IdUsuario, AP.IdProveedor
+
 END
 
 

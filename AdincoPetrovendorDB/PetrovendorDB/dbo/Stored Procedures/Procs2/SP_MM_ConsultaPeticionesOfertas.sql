@@ -1,4 +1,5 @@
-USE Petrovendor
+USE [Petrovendor]
+GO
 IF EXISTS
 (
     SELECT 1
@@ -6,8 +7,7 @@ IF EXISTS
     WHERE name = 'SP_MM_ConsultaPeticionesOfertas'
 )
     DROP PROCEDURE SP_MM_ConsultaPeticionesOfertas;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPeticionesOfertas]    Script Date: 21/09/2022 12:37:31 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPeticionesOfertas]    Script Date: 07/10/2022 09:35:35 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -55,7 +55,7 @@ BEGIN
 		IdPrioridadSolicitudPedido INT,
 		IdContrato INT,
 		IdAsignador INT,
-		MotivoUrgencia VARCHAR(2000),
+		MotivoUrgencia VARCHAR(MAX),
 		IdTipoProceso INT,
 		IdEstatusEliminado INT,
 		FechaFinalizacion DATETIME		
