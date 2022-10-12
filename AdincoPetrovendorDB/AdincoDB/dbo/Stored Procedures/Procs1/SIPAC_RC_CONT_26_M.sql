@@ -1,12 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SIPAC_RC_CONT_26_M]    Script Date: 8/18/2022 3:50:48 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
--- =============================================
+﻿-- =============================================
 -- Author: Yazmin Glez.
 -- Create date: 01-11-17
 -- Description: Reporte de CGI - MP Transferencia Electrónica. Plantilla RC_CONT_06_M
@@ -33,6 +25,10 @@ GO
 -- Modificado:       Reyna Olvera
 -- Fecha Modificado: 2022-08-18
 -- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
+-- =============================================
+-- Modificado:       Neri del Angel
+-- Fecha Modificado: 11 de Octubre del 2022
+-- Description:      Se ajusta para que en la columna [RC26_12] se muestre la razón social del Receptor si la factura es de tipo N
 -- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_26_M]
 @Contrato      INT, 
@@ -846,7 +842,13 @@ SELECT
     PV_TipoMoneda.TipoMonedaCorto                                  AS [RC26_08],
     CAST(MTT.MontoDolares AS DECIMAL(15, 2))                       AS [RC26_09],
     CAST(MTT.TipoCambio AS DECIMAL(15, 4))                         AS [RC26_10],
-    LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119))) AS [RC26_11],
+	CASE
+		WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
+			OR FI_Factura.TipoComprobante LIKE 'N%'
+			THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+        ELSE
+            LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
+    END AS [RC26_11],
     2                                                              AS [RC26_12]
 FROM
     dbo.FI_Transfer WITH (NOLOCK)
@@ -891,6 +893,9 @@ FROM
     JOIN
         dbo.PV_TipoMoneda WITH (NOLOCK)
             ON MTT.MonedaTransfer = PV_TipoMoneda.IdMoneda
+	LEFT JOIN
+		dbo.PV_Subcontratista PV_SubcontratistaNomina WITH (NOLOCK)
+            ON FI_Factura.Receptor = PV_SubcontratistaNomina.RFC
 WHERE
     CO_Contrato.IdContrato = @Contrato
     AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
@@ -919,7 +924,13 @@ GROUP BY
     END,
     CAST(MTT.MontoPesos AS DECIMAL(15, 2)),
     CAST(MTT.MontoDolares AS DECIMAL(15, 2)),
-    LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119))),
+    CASE
+		WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
+			OR FI_Factura.TipoComprobante LIKE 'N%'
+			THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+        ELSE
+            LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
+    END,
     CO_Contrato.IDRegFiducidiario,
     MTT.FormaPagoPUE,
     FI_Transfer.FechaPago,
@@ -948,7 +959,13 @@ SELECT
     PV_TipoMoneda.TipoMonedaCorto                                  AS [RC26_08],
     CAST(MTT.MontoDolares AS DECIMAL(15, 2))                       AS [RC26_09],
     CAST(MTT.TipoCambioCP AS DECIMAL(15, 4))                       AS [RC26_10],
-    LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119))) AS [RC26_11],
+    CASE
+		WHEN (FCPDR.TipoComprobante) LIKE '%nómina%'
+			OR FCPDR.TipoComprobante LIKE 'N%'
+			THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+        ELSE
+            LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
+    END AS [RC26_11],
     2                                                              AS [RC26_12]
 FROM
     dbo.FI_Transfer WITH (NOLOCK)
@@ -1002,6 +1019,9 @@ FROM
     JOIN
         dbo.PV_TipoMoneda WITH (NOLOCK)
             ON MTT.MonedaCP = PV_TipoMoneda.IdMoneda
+	 LEFT JOIN
+        dbo.PV_Subcontratista PV_SubcontratistaNomina WITH (NOLOCK)
+            ON FCPDR.Receptor = PV_SubcontratistaNomina.RFC
 WHERE
     CO_Contrato.IdContrato = @Contrato
     AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
@@ -1041,7 +1061,13 @@ GROUP BY
     END,
     CAST(MTT.MontoPesos AS DECIMAL(15, 2)),
     CAST(MTT.MontoDolares AS DECIMAL(15, 2)),
-    LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119))),
+    CASE
+		WHEN (FCPDR.TipoComprobante) LIKE '%nómina%'
+			OR FCPDR.TipoComprobante LIKE 'N%'
+			THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+        ELSE
+            LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
+    END,
     CO_Contrato.IDRegFiducidiario,
     MTT.FormaPagoCP,
     FI_Transfer.FechaPago,
