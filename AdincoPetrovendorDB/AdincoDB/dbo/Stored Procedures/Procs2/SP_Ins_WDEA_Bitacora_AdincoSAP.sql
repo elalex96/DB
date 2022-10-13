@@ -240,7 +240,9 @@ BEGIN TRY
 				LEFT JOIN PurchaseOrganization AS PO 
 					ON DWL.Purch_Organization COLLATE SQL_Latin1_General_CP1_CI_AS = PO.Siglas
 				LEFT JOIN WDEA_WBS WBS (NOLOCK)
-					ON RTRIM(LTRIM(dwl.WBS_Element)) = RTRIM(LTRIM(WBS.WBS)) COLLATE SQL_Latin1_General_CP1_CI_AS AND WBS.Activo = 1
+					ON RTRIM(LTRIM(dwl.WBS_Element)) = RTRIM(LTRIM(WBS.WBS)) COLLATE SQL_Latin1_General_CP1_CI_AS 
+					AND WBS.Activo = 1
+					and PO.IdContrato = WBS.IdContrato
 				LEFT JOIN WDEA_WBSLineaPresupuesto WLP (NOLOCK)
 					ON WBS.Id = WLP.IdWBS AND WLP.Activo = 1
 					AND PO.IdContrato = WLP.IdContrato
