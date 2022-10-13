@@ -65,45 +65,46 @@ SELECT R.IdRegistro,
                       END
                   )
        END AS MontoUSD,
-       CASE
-           WHEN R.CvTipoDocFacturacion = 1 THEN
-               SUM(   CASE
-                          WHEN ISNULL(R.MontoRegistro + RM.MontoEquivalente, 0) <> 0 THEN
-                      (CASE
-                           WHEN (F.TipoComprobante) LIKE '%egreso%'
-                                OR F.TipoComprobante LIKE 'E%' THEN
-                               ROUND(
-                                        ISNULL(
-                                                  (ABS(ISNULL(ABS(R.MontoRegistro) + ABS(RM.MontoEquivalente), 0)) * -1),
-                                                  0
-                                              ) / ISNULL(RM.TipoCambio, TCDF.TipoCambio),
-                                        2
-                                    )
-                           ELSE
-                               ROUND(
-                                        ISNULL(R.MontoRegistro + RM.MontoEquivalente, 0)
-                                        / ISNULL(RM.TipoCambio, TCDF.TipoCambio),
-                                        2
-                                    )
-                       END
-                      )
-                          ELSE --***********
-                              0
-                      END
+        SUM(   CAST((CASE
+                            WHEN R.CvTipoDocFacturacion = 1 THEN
+                  (CASE
+                       WHEN (F.TipoComprobante) LIKE '%egreso%'
+                            OR F.TipoComprobante LIKE 'E%' THEN
+                           ISNULL(
+                                     (ABS(ISNULL(
+                                                    ABS(ISNULL(RM.MontoGasto, R.MontoRegistro))
+                                                    + ABS(ISNULL(RM.MontoEquivalente, 0)),
+                                                    0
+                                                )
+                                         ) * -1
+                                     ),
+                                     0
+                                 )
+                       ELSE
+                           ISNULL(
+                                     ISNULL(RM.MontoGasto, R.MontoRegistro)
+                                     + ISNULL(RM.MontoEquivalente, 0),
+                                     0
+                                 )
+                   END
                   )
-           WHEN R.CvTipoDocFacturacion IN ( 2, 3 ) THEN
-               SUM(   CASE
-                          WHEN ISNULL(R.MontoRegistro + RM.MontoEquivalente, 0) <> 0 THEN
-                              ROUND(
-                                       ISNULL(R.MontoRegistro + RM.MontoEquivalente, 0)
-                                       / ISNULL(RM.TipoCambio, TCDPC.TipoCambio),
-                                       2
-                                   )
-                          ELSE
-                              0
-                      END
-                  )
-       END AS MontoUSDConMarkup,
+                            ELSE
+                                ISNULL(
+                                          ISNULL(RM.MontoGasto, R.MontoRegistro)
+                                          + ISNULL(RM.MontoEquivalente, 0),
+                                          0
+                                      )
+                        END
+                       ) / (CASE
+                                WHEN R.CvTipoDocFacturacion = 1 THEN
+                                    ISNULL(RM.TipoCambio, TCDF.TipoCambio)
+                                WHEN R.CvTipoDocFacturacion IN ( 2, 3 ) THEN
+                                    ISNULL(RM.TipoCambio, TCDPC.TipoCambio)
+                                ELSE
+                                    0
+                            END
+                           ) AS DECIMAL(15, 2))
+              ) AS MontoUSDConMarkup,
        CASE
            WHEN R.CvTipoDocFacturacion = 1 THEN
                SF.RazonSocial
