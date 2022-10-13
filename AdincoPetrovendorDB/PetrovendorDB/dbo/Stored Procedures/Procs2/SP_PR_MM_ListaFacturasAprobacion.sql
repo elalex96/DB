@@ -1,13 +1,6 @@
-﻿USE Petrovendor
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_ListaFacturasAprobacion'
-)
-    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion;
+﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion]    Script Date: 19/09/2022 04:42:54 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion]    Script Date: 11/10/2022 11:18:03 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -22,7 +15,12 @@ GO
 -- Create date: 03-05-2022
 -- Description:	se corrige la consulta de murphy para consultar por contrato 
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 11-10-2022
+-- Description:	optimizacion para murphy
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
 @IdProveedor int,
 @Estatus int,
 @IdContrato int = NULL,
@@ -32,19 +30,6 @@ AS
 BEGIN
   SET NOCOUNT ON;
 	DECLARE @PLANT	nvarchar(10) 	
-
-	create table #FlujoSerial 
-	(
-		IdOperacion int,
-		NoSecuencia int
-	)
-	CREATE NONCLUSTERED INDEX ix_tempFlujoSerialIdOperacion  ON #FlujoSerial (IdOperacion);
-
-	CREATE TABLE #OperacionNoAprobadas 
-	(
-		IdOperacion int
-	)
-	CREATE NONCLUSTERED INDEX ix_tempOperacionNoAprobadasIdOperacion ON #OperacionNoAprobadas (IdOperacion);
 
 	CREATE TABLE #AceptacionesPedido 
 	(
@@ -67,6 +52,38 @@ BEGIN
 	CREATE NONCLUSTERED INDEX ix_tempAceptacionesPedidoIdPedido  ON #AceptacionesPedido (IdPedido);
 	CREATE NONCLUSTERED INDEX ix_tempAceptacionesPedidoIdSolicitudPedido  ON #AceptacionesPedido (IdSolicitudPedido);
 	CREATE NONCLUSTERED INDEX ix_tempAceptacionesPedidoIdOperacion  ON #AceptacionesPedido (IdOperacion);
+	
+	CREATE TABLE #PLANT
+	(			
+		PLANT  VARCHAR(10)
+	)
+	CREATE NONCLUSTERED INDEX ix_tempProveedorPLANT  ON #PLANT (PLANT);
+
+	INSERT INTO #PLANT(PLANT)
+	SELECT TOP 1
+			P.Planta
+	FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
+	JOIN Adinco.dbo.CO_SAPContratista_Planta AS P (NOLOCK)
+		ON C.IdContratista = P.IdContratista
+	WHERE C.IdContrato = @IdContrato;
+
+	SET @PLANT = (SELECT TOP 1 PLANT FROM #PLANT);
+
+IF ISNULL(@PLANT,'') = ''
+BEGIN
+	
+	create table #FlujoSerial 
+	(
+		IdOperacion int,
+		NoSecuencia int
+	)
+	CREATE NONCLUSTERED INDEX ix_tempFlujoSerialIdOperacion  ON #FlujoSerial (IdOperacion);
+
+	CREATE TABLE #OperacionNoAprobadas 
+	(
+		IdOperacion int
+	)
+	CREATE NONCLUSTERED INDEX ix_tempOperacionNoAprobadasIdOperacion ON #OperacionNoAprobadas (IdOperacion);
 
 	CREATE TABLE #AceptacionesFactura
 	(	
@@ -119,22 +136,8 @@ BEGIN
 	)
 	CREATE NONCLUSTERED INDEX ix_tempProveedorIdProveedor  ON #Proveedor (IdProveedor);
 
-	CREATE TABLE #PLANT
-	(			
-		PLANT  VARCHAR(10)
-	)
-	CREATE NONCLUSTERED INDEX ix_tempProveedorPLANT  ON #PLANT (PLANT);
-
-	INSERT INTO #PLANT(PLANT)
-	SELECT TOP 1
-			P.Planta
-	FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
-	JOIN Adinco.dbo.CO_SAPContratista_Planta AS P (NOLOCK)
-		ON C.IdContratista = P.IdContratista
-	WHERE C.IdContrato =@IdContrato;
-
-	 INSERT INTO #Proveedor(IdProveedor)
-	 SELECT @IdProveedor
+	INSERT INTO #Proveedor(IdProveedor)
+	SELECT @IdProveedor
 
    -- OBTENER TODAS LAS ACEPTACIONES DE FACTURA DE LA OPERADORA
 	INSERT INTO #AceptacionesFactura
@@ -355,6 +358,8 @@ BEGIN
 	JOIN DEA_Relacion_PR_PO AS RPO	(NOLOCK)
 		ON AP.IdPedido = RPO.IdPedido   	
 
+END
+
 
 IF EXISTS (SELECT COUNT(1) FROM #PLANT)  
 BEGIN
@@ -407,18 +412,27 @@ BEGIN
 			AND AP.IdContrato = @IdContrato
 		JOIN MPY_MM_AceptacionFactura AS AF (NOLOCK)
 			ON AP.IdAceptacionPedido  = AF.IdAceptacionPedido
+			AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
+				AND AF.IdEstatusXML != 4  -->CTE
+				AND AF.IdEstatusXML != 4  -->CTE
+				AND (CASE WHEN @Estatus = 0 AND AF.IdEstatus IN (1,2,3,9)  THEN 1 
+					WHEN @Estatus =1 AND AF.IdEstatus = 1 THEN 1
+					WHEN @Estatus = 2 AND AF.IdEstatus = 2  THEN 1
+					WHEN @Estatus =3 AND AF.IdEstatus = 3  THEN 1
+					WHEN @Estatus =9 AND AF.IdEstatus = 9 THEN 1
+					END = 1)
 		JOIN TA_Estatus AS E (NOLOCK)
 			ON AF.IdEstatus = E.IdEstatus
 		JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
 				  ON AP.IdContrato = C.IdContrato 				  
 		JOIN dbo.FI_Factura AS F (NOLOCK)
 				  ON AF.IdFactura=F.IdFactura 
-		LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD (NOLOCK)
+		JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD (NOLOCK)
 				  ON AP.IdAceptacionPedido= APD.IdAceptacionPedido
 		LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APCN (NOLOCK)
 			ON AP.IdAceptacionPedido=APCN.IdAceptacionPedido 
 			AND APCN.IdEstatus = 2  -->CTE        
-		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SV (NOLOCK)
+		JOIN Adinco.dbo.CO_SAPVendor AS SV (NOLOCK)
 			ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
 		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK)
 			ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
@@ -432,21 +446,6 @@ BEGIN
 		LEFT JOIN S_Proveedor AS PR (NOLOCK)
 			ON AP.IdSubContratista=PR.RFC
 			AND PR.Activo = 1  -->CTE		
-		WHERE ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
-				AND AF.IdEstatusXML != 4  -->CTE
-				AND AF.IdEstatusXML != 4  -->CTE
-				AND (CASE WHEN @Estatus = 0 AND AF.IdEstatus IN (1,2,3,9)  THEN 
-					1 
-					WHEN @Estatus =1 AND AF.IdEstatus = 1 THEN 
-					1
-					WHEN @Estatus = 2 AND AF.IdEstatus = 2  THEN 
-					1
-					WHEN @Estatus =3 AND AF.IdEstatus = 3  THEN 
-					1
-					WHEN @Estatus =9 AND AF.IdEstatus = 9 THEN 
-					1
-					END =1
-					)
 		GROUP BY AF.IdAceptacionPedido,
 				AP.IdPedido,
 				PR.RazonSocial,
@@ -514,4 +513,5 @@ END
            Contrato,
 		   PO
   ORDER BY FechaRegistro DESC;
+
 END;
