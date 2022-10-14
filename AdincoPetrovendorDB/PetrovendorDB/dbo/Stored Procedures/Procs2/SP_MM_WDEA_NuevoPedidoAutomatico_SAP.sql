@@ -485,6 +485,10 @@ SELECT
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
 
+	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
+	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	CreadoEl ) VALUES
+	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,			GETDATE())
+
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
 	(
