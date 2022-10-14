@@ -16,6 +16,10 @@ GO
 -- Create date: 04/10/2022
 -- Description:	Se obtiene el tipo de pedido a partir de la columna PrefijoSAP
 -- =============================================
+-- Author:		Luis David
+-- Create date: 10/10/2022
+-- Description:	Se cambia la aprobación a "Aprobado"
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
@@ -425,7 +429,6 @@ SELECT
 		);
 
 	END
-
 	--CREACION DE LA OPERACION PARA LA APROBACION DE LA SOLPED
 	INSERT INTO TA_Operacion
 	(
@@ -446,7 +449,7 @@ SELECT
 		@IdSolicitudPedido,
 		9,--APROBACION DE SOLICITUD DE PEDIDO
 		@IdFlujoTarea,
-		11,--APROBADA SIN DOCUMENTO
+		2,--APROBADA
 		3,--TAREA APROBADA
 		@IdOperadora,
 		@IdUsuario,
@@ -457,6 +460,10 @@ SELECT
 	);
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
+
+	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
+	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	CreadoEl ) VALUES
+	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,			GETDATE())
 
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
