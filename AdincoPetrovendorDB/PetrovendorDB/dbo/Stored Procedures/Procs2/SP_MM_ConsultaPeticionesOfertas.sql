@@ -7,7 +7,8 @@ IF EXISTS
     WHERE name = 'SP_MM_ConsultaPeticionesOfertas'
 )
     DROP PROCEDURE SP_MM_ConsultaPeticionesOfertas;
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPeticionesOfertas]    Script Date: 07/10/2022 09:35:35 a. m. ******/
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPeticionesOfertas]    Script Date: 10/10/2022 05:09:54 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -449,7 +450,11 @@ BEGIN
 				WHEN ISNULL(SP.PeticionEnviada,0) = 0 THEN 'Pendiente de Enviar'
 			END AS EstatusOferta,--EstatusOferta
 			dbo.Fn_ObtenerInstalacionesPorSolPed ( SP.IdSolicitudPedido ) AS Instalaciones,-- Instalaciones
-			ISNULL(TP.TipoPedido, 'Sin clasificación') AS TipoProceso,--TipoProceso
+			CASE WHEN WPDI.MECANISMO_CONTRATACION ='L' THEN
+						'Licitación'
+			ELSE 
+				ISNULL(TP.TipoPedido, 'Sin clasificación') END
+			AS TipoProceso,--TipoProceso
 			CASE SP.UnaSolaEntregaRequerida
 				WHEN 1 THEN CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 )
 				WHEN 0 THEN CONCAT (CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 ), '|' ,CONVERT ( NVARCHAR, SP.FechaEntregaFinRequerida, 22 ))
@@ -507,7 +512,9 @@ BEGIN
 			LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 				ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 			LEFT JOIN #CompradoresAsignados AS CA	
-				ON SP.IdSolicitudPedido = CA.IdSolicitudPedido				
+				ON SP.IdSolicitudPedido = CA.IdSolicitudPedido		
+			LEFT JOIN WDEA_PurchasingDocumentsImportados WPDI
+				ON PED.IdPedido = WPDI.IdPedidoADINCO
 		GROUP BY	SP.IdSolicitudPedido, 
 					SP.MotivoUrgencia, 
 					TSP.TipoSolicitudPedido, 
@@ -530,7 +537,8 @@ BEGIN
 					PED.IdSolicitudPedido,
 					SP.FechaFinalizacion,					
 					R._Page,						
-					R.R	
+					R.R	,
+					WPDI.MECANISMO_CONTRATACION
 
 			END
 
@@ -656,7 +664,10 @@ BEGIN
 						WHEN ISNULL(SP.PeticionEnviada,0) = 0 THEN 'Pendiente de Enviar'
 					END AS EstatusOferta,--EstatusOferta
 					dbo.Fn_ObtenerInstalacionesPorSolPed ( SP.IdSolicitudPedido ) AS Instalaciones,-- Instalaciones
-					ISNULL(TP.TipoPedido, 'Sin clasificación') AS TipoProceso,--TipoProceso
+					CASE WHEN WPDI.MECANISMO_CONTRATACION ='L' THEN
+						'Licitación'
+					ELSE 
+					ISNULL(TP.TipoPedido, 'Sin clasificación') END AS TipoProceso,--TipoProceso
 					CASE SP.UnaSolaEntregaRequerida
 						WHEN 1 THEN CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 )
 						WHEN 0 THEN CONCAT (CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 ), '|' ,CONVERT ( NVARCHAR, SP.FechaEntregaFinRequerida, 22 ))
@@ -714,7 +725,9 @@ BEGIN
 					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados AS CA	
-					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido			
+					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido		
+					LEFT JOIN WDEA_PurchasingDocumentsImportados WPDI
+						ON PED.IdPedido = WPDI.IdPedidoADINCO
 				GROUP BY	SP.IdSolicitudPedido, 
 							SP.MotivoUrgencia, 
 							TSP.TipoSolicitudPedido, 
@@ -737,7 +750,8 @@ BEGIN
 							PED.IdSolicitudPedido,
 							SP.FechaFinalizacion,							
 							R._Page,						
-							R.R
+							R.R,
+							WPDI.MECANISMO_CONTRATACION
 				 ORDER BY SP.FechaAlta DESC			
 			
 
@@ -872,7 +886,10 @@ BEGIN
 						WHEN ISNULL(SP.PeticionEnviada,0) = 0 THEN 'Pendiente de Enviar'
 					END AS EstatusOferta,--EstatusOferta
 					dbo.Fn_ObtenerInstalacionesPorSolPed ( SP.IdSolicitudPedido ) AS Instalaciones,-- Instalaciones
-					ISNULL(TP.TipoPedido, 'Sin clasificación') AS TipoProceso,--TipoProceso
+					CASE WHEN WPDI.MECANISMO_CONTRATACION ='L' THEN
+						'Licitación'
+					ELSE 
+					ISNULL(TP.TipoPedido, 'Sin clasificación') END AS TipoProceso,--TipoProceso
 					CASE SP.UnaSolaEntregaRequerida
 						WHEN 1 THEN CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 )
 						WHEN 0 THEN CONCAT (CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 ), '|' ,CONVERT ( NVARCHAR, SP.FechaEntregaFinRequerida, 22 ))
@@ -931,6 +948,8 @@ BEGIN
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados (NOLOCK) AS CA	
 						ON SP.IdSolicitudPedido = CA.IdSolicitudPedido
+					LEFT JOIN WDEA_PurchasingDocumentsImportados WPDI
+						ON PED.IdPedido = WPDI.IdPedidoADINCO
 				GROUP BY	SP.IdSolicitudPedido, 
 							SP.MotivoUrgencia, 
 							TSP.TipoSolicitudPedido, 
@@ -953,7 +972,8 @@ BEGIN
 							PED.IdSolicitudPedido,
 							SP.FechaFinalizacion,							
 							R._Page,						
-							R.R
+							R.R,
+							WPDI.MECANISMO_CONTRATACION
 				 ORDER BY SP.FechaAlta DESC
 
 	END
@@ -1117,7 +1137,10 @@ BEGIN
 						WHEN ISNULL(SP.PeticionEnviada,0) = 0 THEN 'Pendiente de Enviar'
 					END AS EstatusOferta,--EstatusOferta
 					dbo.Fn_ObtenerInstalacionesPorSolPed ( SP.IdSolicitudPedido ) AS Instalaciones,-- Instalaciones
-					ISNULL(TP.TipoPedido, 'Sin clasificación') AS TipoProceso,--TipoProceso
+					CASE WHEN WPDI.MECANISMO_CONTRATACION ='L' THEN
+						'Licitación'
+					ELSE 
+					ISNULL(TP.TipoPedido, 'Sin clasificación') END AS TipoProceso,--TipoProceso
 					CASE SP.UnaSolaEntregaRequerida
 						WHEN 1 THEN CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 )
 						WHEN 0 THEN CONCAT (CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 ), '|' ,CONVERT ( NVARCHAR, SP.FechaEntregaFinRequerida, 22 ))
@@ -1175,7 +1198,9 @@ BEGIN
 					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados (NOLOCK) AS CA	
-						ON SP.IdSolicitudPedido = CA.IdSolicitudPedido			
+						ON SP.IdSolicitudPedido = CA.IdSolicitudPedido		
+					LEFT JOIN WDEA_PurchasingDocumentsImportados WPDI
+						ON PED.IdPedido = WPDI.IdPedidoADINCO	
 				GROUP BY	SP.IdSolicitudPedido, 
 							SP.MotivoUrgencia, 
 							TSP.TipoSolicitudPedido, 
@@ -1198,7 +1223,8 @@ BEGIN
 							PED.IdSolicitudPedido,
 							SP.FechaFinalizacion,							
 							R._Page,						
-							R.R
+							R.R,
+							WPDI.MECANISMO_CONTRATACION
 				 ORDER BY SP.FechaAlta DESC		
 
 			END
@@ -1373,7 +1399,10 @@ BEGIN
 						WHEN ISNULL(SP.PeticionEnviada,0) = 0 THEN 'Pendiente de Enviar'
 					END AS EstatusOferta,--EstatusOferta
 					dbo.Fn_ObtenerInstalacionesPorSolPed ( SP.IdSolicitudPedido ) AS Instalaciones,-- Instalaciones
-					ISNULL(TP.TipoPedido, 'Sin clasificación') AS TipoProceso,--TipoProceso
+					CASE WHEN WPDI.MECANISMO_CONTRATACION ='L' THEN
+						'Licitación'
+					ELSE 
+					ISNULL(TP.TipoPedido, 'Sin clasificación') END  AS TipoProceso,--TipoProceso
 					CASE SP.UnaSolaEntregaRequerida
 						WHEN 1 THEN CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 )
 						WHEN 0 THEN CONCAT (CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 ), '|' ,CONVERT ( NVARCHAR, SP.FechaEntregaFinRequerida, 22 ))
@@ -1431,7 +1460,9 @@ BEGIN
 					LEFT JOIN dbo.MM_PrioridadSolicitudPedido (NOLOCK) AS PSP
 						ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
 					LEFT JOIN #CompradoresAsignados (NOLOCK) AS CA	
-						ON SP.IdSolicitudPedido = CA.IdSolicitudPedido				
+						ON SP.IdSolicitudPedido = CA.IdSolicitudPedido	
+					LEFT JOIN WDEA_PurchasingDocumentsImportados WPDI
+						ON PED.IdPedido = WPDI.IdPedidoADINCO
 				GROUP BY	SP.IdSolicitudPedido, 
 							SP.MotivoUrgencia, 
 							TSP.TipoSolicitudPedido, 
@@ -1454,7 +1485,8 @@ BEGIN
 							PED.IdSolicitudPedido,
 							SP.FechaFinalizacion,							
 							R._Page,						
-							R.R
+							R.R,
+							WPDI.MECANISMO_CONTRATACION 
 				 ORDER BY SP.FechaAlta DESC		
 
 			END
@@ -1580,7 +1612,11 @@ BEGIN
 						WHEN ISNULL(SP.PeticionEnviada,0) = 0 THEN 'Pendiente de Enviar'
 					END AS EstatusOferta,--EstatusOferta
 					dbo.Fn_ObtenerInstalacionesPorSolPed ( SP.IdSolicitudPedido ) AS Instalaciones,-- Instalaciones
-					ISNULL(TP.TipoPedido, 'Sin clasificación') AS TipoProceso,--TipoProceso
+					CASE WHEN WPDI.MECANISMO_CONTRATACION ='L' THEN
+						'Licitación'
+					ELSE 
+					ISNULL(TP.TipoPedido, 'Sin clasificación') 
+					END AS TipoProceso,--TipoProceso
 					CASE SP.UnaSolaEntregaRequerida
 						WHEN 1 THEN CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 )
 						WHEN 0 THEN CONCAT (CONVERT ( NVARCHAR, SP.FechaEntregaRequerida, 22 ), '|' ,CONVERT ( NVARCHAR, SP.FechaEntregaFinRequerida, 22 ))
@@ -1635,7 +1671,9 @@ BEGIN
 				LEFT JOIN dbo.MM_TipoPedido (NOLOCK) AS TP
 					ON	SP.IdTipoProceso = TP.IdTipoPedido
 				LEFT JOIN #CompradoresAsignados AS CA	
-					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido				
+					ON SP.IdSolicitudPedido = CA.IdSolicitudPedido	
+				LEFT JOIN WDEA_PurchasingDocumentsImportados WPDI
+					ON PED.IdPedido = WPDI.IdPedidoADINCO
 				GROUP BY SP.IdSolicitudPedido,
 						C.NumeroContrato,
 						U.Nombre,
@@ -1650,7 +1688,8 @@ BEGIN
 						TSP.TipoSolicitudPedido, 
 						TP.IdTipoPedido,
 						CA.Compradores,
-						SP.ComentarioInternoPO,						
+						SP.ComentarioInternoPO,	
+						WPDI.MECANISMO_CONTRATACION,
 						R._Page,						
 						R.R
 				 ORDER BY SP.FechaAlta DESC

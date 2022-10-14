@@ -1,4 +1,18 @@
-
+USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaPedidoDetallePeticionOferta_V2'
+)
+    DROP PROCEDURE SP_MM_ConsultaPedidoDetallePeticionOferta_V2;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidoDetallePeticionOferta_V2]    Script Date: 13/10/2022 06:59:03 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/01/2020>
@@ -35,11 +49,14 @@ BEGIN
 	DECLARE @RFCPROVEEDORACTUAL NVARCHAR(100);
 	DECLARE @IDDOCPCM INT;
 	DECLARE @RFCPCM NVARCHAR(100)= (SELECT TOP 1 RFC FROM dbo.PCM_RFC);
+	DECLARE @WDEA_MecContratacion NVARCHAR(100);
 
 	SET LANGUAGE spanish; 
 
-	SET @IDPROVEEDORACTUAL = (SELECT IdProveedor FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido);
-	SET @RFCPROVEEDORACTUAL = (SELECT TOP 1 RFC FROM dbo.S_Proveedor WHERE IdProveedor = @IDPROVEEDORACTUAL);
+	SET @IDPROVEEDORACTUAL = (SELECT IdProveedor FROM dbo.MM_SolicitudPedido 
+							WHERE IdSolicitudPedido = @IdSolicitudPedido);
+	SET @RFCPROVEEDORACTUAL = (SELECT TOP 1 RFC FROM dbo.S_Proveedor
+								WHERE IdProveedor = @IDPROVEEDORACTUAL);
 	
 	IF @RFCPCM = @RFCPROVEEDORACTUAL
 	BEGIN
@@ -73,6 +90,15 @@ BEGIN
 								AND SP.IdSolicitudPedido = @IdSolicitudPedido
 								AND F.Activo = 1;
 
+	SELECT @WDEA_MecContratacion= RTRIM(LTRIM(UPPER(WPDI.MECANISMO_CONTRATACION)))
+	FROM MM_SolicitudPedido SP (NOLOCK)
+	JOIN MM_Pedido P  (NOLOCK)
+		ON SP.IdSolicitudPedido = P.IdSolicitudPedido
+	JOIN WDEA_PurchasingDocumentsImportados WPDI (NOLOCK)
+		ON P.IdPedido = WPDI.IdPedidoADINCO 
+	WHERE SP.IdSolicitudPedido=@IdSolicitudPedido 
+	GROUP BY WPDI.MECANISMO_CONTRATACION 
+
 	SELECT
 		@IDPERIODO = SP.IdPeriodo, 
 		@IDPRESUPUESTO = SP.IdPresupuesto ,
@@ -83,17 +109,18 @@ BEGIN
 
 	SET @PERIODO = (SELECT Top 1 
 						NombrePeriodo  as NombreParaMostrar
-					FROM Adinco.dbo.CO_PeriodoContrato 
+					FROM Adinco.dbo.CO_PeriodoContrato  (NOLOCK)
 					WHERE (IdContrato = @IdContrato 
 							AND IdPeriodo=@IdPeriodo));
 
 	SET @PRESUPUESTO  = (SELECT ISNULL((SELECT Top 1 CONCAT(P.Nombre, ' [', P.IdPresupuestoCNH, ']')AS Nombre
-							FROM Adinco.dbo.CO_ProgramaActividad AS PA
-								INNER JOIN Adinco.dbo.CO_PeriodoContrato AS PC 
+							FROM Adinco.dbo.CO_ProgramaActividad AS PA  (NOLOCK)
+								JOIN Adinco.dbo.CO_PeriodoContrato AS PC   (NOLOCK)
 									ON PA.IdPeriodoContrato = PC.IdPeriodo
-								INNER JOIN Adinco.dbo.CO_Presupuesto AS P 
+								JOIN Adinco.dbo.CO_Presupuesto AS P  (NOLOCK)
 									ON PA.IdProgramaActividad = P.IdProgramaActividad
-							WHERE(PC.IdPeriodo = @IdPeriodo AND P.IdPresupuesto =@IdPresupuesto )
+							WHERE(PC.IdPeriodo = @IdPeriodo 
+							    AND P.IdPresupuesto =@IdPresupuesto )
 								AND (P.Activo = 1)),'No disponible') AS Presupuesto)
 
 	SET @LINEAPRESUPUESTO =  (SELECT ISNULL(( SELECT Top 1
@@ -102,48 +129,45 @@ BEGIN
 				YEAR(LPM.AC_PRESUP_MES), ' - ', 
 				APCNH.DescripcionActividadPetrolera, '(',
 				SBP.SubactividadPetrolera,')') AS Mes_Presupuestado
-		FROM Adinco.dbo.CO_LineaPresupuestoMes AS LPM
-              LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS APCNH 
-				ON APCNH.IdActividadPetrolera = LPM.IdActividadPetrolera
-              LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera AS SBP 
-				ON LPM.IdSubactividadPetrolera = SBP.IdSubactividadPetrolera
-              LEFT OUTER JOIN Adinco.dbo.CO_TareaPetrolera AS TP 
+		FROM Adinco.dbo.CO_LineaPresupuestoMes AS LPM  (NOLOCK)
+              LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS APCNH  (NOLOCK) 
+				ON  LPM.IdActividadPetrolera = APCNH.IdActividadPetrolera
+              LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera AS SBP   (NOLOCK)
+				ON LPM.IdSubactividadPetrolera = SBP.IdSubactividadPetrolera  
+              LEFT OUTER JOIN Adinco.dbo.CO_TareaPetrolera AS TP   (NOLOCK)
 				ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera
-              LEFT OUTER JOIN Adinco.dbo.CO_ActividadCIEP AS ACIEP 
+              LEFT OUTER JOIN Adinco.dbo.CO_ActividadCIEP AS ACIEP  (NOLOCK)
 				ON LPM.IdActividad = ACIEP.IdActividad
-              LEFT OUTER JOIN Adinco.dbo.CO_TipoServicio AS TS 
+              LEFT OUTER JOIN Adinco.dbo.CO_TipoServicio AS TS  (NOLOCK)
 				ON LPM.IdTipoServicio = TS.ID_TIPOSER
-              LEFT OUTER JOIN Adinco.dbo.CO_SubactividadCIEP AS SACIEP 
+              LEFT OUTER JOIN Adinco.dbo.CO_SubactividadCIEP AS SACIEP  (NOLOCK)
 				ON LPM.IdSubactividad = SACIEP.IdSubactividad
-              LEFT OUTER JOIN Adinco.dbo.CO_Servicio AS S 
+              LEFT OUTER JOIN Adinco.dbo.CO_Servicio AS S  (NOLOCK)
 				ON LPM.IdServicio = S.IdServicio
-              LEFT OUTER JOIN Adinco.dbo.CO_Area AS A 
+              LEFT OUTER JOIN Adinco.dbo.CO_Area AS A  (NOLOCK)
 				ON LPM.IdArea = A.IdArea
-              LEFT OUTER JOIN Adinco.dbo.CO_Instalacion AS I 
+              LEFT OUTER JOIN Adinco.dbo.CO_Instalacion AS I  (NOLOCK)
 				ON LPM.IdInstalacion = I.IdInstalacion
-              LEFT OUTER JOIN Adinco.dbo.CO_Registro AS R 
+              LEFT OUTER JOIN Adinco.dbo.CO_Registro AS R  (NOLOCK)
 				ON LPM.IdLineaPresupuestoMes = R.IdPrograma
-              LEFT OUTER JOIN Adinco.dbo.CO_ClasificacionAnexo4 AS CA4 
+              LEFT OUTER JOIN Adinco.dbo.CO_ClasificacionAnexo4 AS CA4  (NOLOCK)
 				ON LPM.IdAnexo4 = CA4.IdAnexo4
-              LEFT OUTER JOIN Adinco.dbo.FI_Factura AS F 
+              LEFT OUTER JOIN Adinco.dbo.FI_Factura AS F  (NOLOCK)
 				ON F.IdFactura = R.IdFactura
-              LEFT OUTER JOIN Adinco.dbo.CO_TipoCambioMensual AS TCM 
-				ON TCM.IdMoneda = F.IdMoneda
-					AND TCM.IdMes = MONTH(R.MesPresentacion)
-                    AND TCM.Anio = YEAR(R.MesPresentacion)
+              LEFT OUTER JOIN Adinco.dbo.CO_TipoCambioMensual AS TCM  (NOLOCK)
+				ON F.IdMoneda = TCM.IdMoneda 
+					AND  MONTH(R.MesPresentacion) = TCM.IdMes 
+                    AND YEAR(R.MesPresentacion) = TCM.Anio 
               LEFT OUTER JOIN Adinco.dbo.CO_RubroInterno AS RI 
-			  ON LPM.IdRubroInterno = RI.IdRubroInterno
+				ON LPM.IdRubroInterno = RI.IdRubroInterno
          WHERE(LPM.IdPresupuesto =@IdPresupuesto ) 
 			AND  LPM.IdLineaPresupuestoMes=@IdLineaPresupuesto ),'No Disponible') AS LINEA_PRESUPUESTO);
 
 	SELECT
 			SP.IdSolicitudPedido, 
-			SP.MotivoUrgencia, 
-			--TSP.TipoSolicitudPedido, 
+			SP.MotivoUrgencia, 			
 			FORMAT(SP.FechaAlta ,'dd/MM/yyyy HH:mm:ss tt') AS FechaAlta,
-			SP.AdjudicableParcialmente, 
-			--SP.VisitaRequerida, 
-			--SP.JuntaAclaracionesRequerida ,
+			SP.AdjudicableParcialmente, 			
 			SP.UnaSolaEntregaRequerida, 
 			FORMAT(SP.FechaEntregaRequerida,'dd/MM/yyyy HH:mm:ss tt') AS FechaEntregaRequerida,
 			FORMAT(SP.FechaEntregaFinRequerida,'dd/MM/yyyy HH:mm:ss tt') AS FechaEntregaFinRequerida,
@@ -161,8 +185,7 @@ BEGIN
 			SP.IdPresupuesto ,
 			SP.IdLineaPresupuesto, 
 			ISNULL(TG.TipoGasto,'Sin Definir') AS TipoGasto, 
-			ISNULL ( SP.Fianza, 'false' ) AS Fianza, 
-			--ISNULL ( SP.Controlados, 'false' ) AS Controlados,
+			ISNULL ( SP.Fianza, 'false' ) AS Fianza, 			
 			SP.UnicoDomicilioEntrega, 
 			SP.EntregasParciales, 
 			ISNULL ( SP.IdTipoProceso, 0 ) ,
@@ -174,35 +197,39 @@ BEGIN
 			@PRESUPUESTO AS NombrePresupuesto,
 			@LINEAPRESUPUESTO AS NombreLineaPresupuesto,
 			@MOSTRARJUSTIFICIONPCM AS MostrarJustificacionPCM,
-			ISNULL(SP.IdTipoProceso,2) AS IdTipoMetodoCompra
+			ISNULL(SP.IdTipoProceso,2) AS IdTipoMetodoCompra,
+			CASE WHEN ISNULL(@WDEA_MecContratacion,'')='L' THEN 
+				'Licitación'
+			ELSE 
+				'Mercadeo'
+			END AS MecanismoContratacion
 		FROM		MM_SolicitudPedido AS SP WITH (NOLOCK)
-		INNER JOIN	MM_TipoSolicitudPedido AS TSP WITH (NOLOCK)
-			ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-		INNER JOIN	TA_Operacion AS TAO WITH (NOLOCK)
-			ON TAO.IdDocumento = SP.IdSolicitudPedido
-		INNER JOIN	TA_Estatus AS TE WITH (NOLOCK)
-			ON TE.IdEstatus = TAO.IdEstatusOperacion
-		INNER JOIN	MM_PrioridadSolicitudPedido AS PSP WITH (NOLOCK)
-			ON PSP.IdPrioridadSolicitudPedido = SP.IdPrioridadSolicitudPedido
-		INNER JOIN	S_Usuario AS U WITH (NOLOCK)
-			ON U.IdUsuario = TAO.IdAsignador
-		INNER JOIN	TA_TipoOperacion AS TiOp WITH (NOLOCK)
-			ON TiOp.IdTipoOperacion = TAO.IdTipoOperacion
+		JOIN	MM_TipoSolicitudPedido AS TSP WITH (NOLOCK)
+			ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido 
+		JOIN	TA_Operacion AS TAO WITH (NOLOCK)
+			ON  SP.IdSolicitudPedido = TAO.IdDocumento 
+			AND TAO.IdTipoOperacion = 2 --> CTE APROBACION DE PEDIDO
+		JOIN	TA_Estatus AS TE WITH (NOLOCK)
+			ON TAO.IdEstatusOperacion = TE.IdEstatus 
+		JOIN	MM_PrioridadSolicitudPedido AS PSP WITH (NOLOCK)
+			ON  SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido 
+		JOIN	S_Usuario AS U WITH (NOLOCK)
+			ON TAO.IdAsignador = U.IdUsuario 
+		JOIN	TA_TipoOperacion AS TiOp WITH (NOLOCK)
+			ON  TAO.IdTipoOperacion = TiOp.IdTipoOperacion
 		LEFT JOIN	CC_CentroCosto AS CC WITH (NOLOCK)
-			ON CC.IdCentroCosto = SP.IdCentroCosto
+			ON  SP.IdCentroCosto = CC.IdCentroCosto 
 		LEFT JOIN	MM_TerminoComercio AS TC WITH (NOLOCK)
-			ON TC.IdTerminoComercio = SP.IdTerminoInternacionales
+			ON  SP.IdTerminoInternacionales = TC.IdTerminoComercio
 		LEFT JOIN	MM_TipoGastos AS TG WITH (NOLOCK)
-			ON TG.IdTipoGasto = SP.IdTipoGasto
+			ON  SP.IdTipoGasto = TG.IdTipoGasto 
 		LEFT JOIN dbo.S_Proveedor AS PR WITH (NOLOCK)
-			ON PR.IdProveedor = SP.IdProveedor
+			ON SP.IdProveedor = PR.IdProveedor 
 		LEFT JOIN dbo.S_Proveedor AS OPR WITH (NOLOCK)
-			ON SP.IdProveedor = OPR.IdProveedor
-		WHERE
-					TAO.IdTipoOperacion = 2
-					AND SP.IdSolicitudPedido = @IdSolicitudPedido;
+			ON  OPR.IdProveedor = SP.IdProveedor 
+		WHERE SP.IdSolicitudPedido = @IdSolicitudPedido;
 
-	SELECT 
+	    SELECT 
 			SPD.IdSolicitudPedidoDetalle,
 			CONCAT(' Descripción: ', MM.DescripcionCorta,
 					' Marca: ', CASE WHEN ISNULL(LEN(MM.Marca),0)>0 THEN MM.Marca ELSE ' S/M' END,
@@ -221,7 +248,6 @@ BEGIN
 			' (', CAST(TD.TipoDomicilio AS NVARCHAR(MAX)),')') AS IdDomicilioEntrega ,
 			MM.DescripcionLarga AS TextoLargo,
 			ISNULL(SPD.IdUnidad,0) AS IdUnidad,
-		 ---------
 			S.IdSolicitudPedidoDetalleLineaPresupuesto,
 			CC.CentroCosto,
 			I.NombreInstalacion,
@@ -229,72 +255,42 @@ BEGIN
 			ADMS.IdSolPedMaterialDocumentoAdj,
 			ADMS.NombreArchivoAdjunto
 		FROM MM_SolicitudPedidoDetalle AS SPD WITH (NOLOCK)
-			INNER JOIN dbo.MM_Material AS MM WITH (NOLOCK)
-				ON MM.IdMaterial = SPD.IdMaterial		
+			JOIN dbo.MM_Material AS MM WITH (NOLOCK)
+				ON  SPD.IdMaterial = MM.IdMaterial 	
 			LEFT JOIN PV_MM_MaterialUnidad AS U WITH (NOLOCK)
-				ON U.IdUnidad = SPD.IdUnidad
+				ON  SPD.IdUnidad = U.IdUnidad
 			LEFT JOIN DG_Domicilio AS D WITH (NOLOCK)
-				ON D.IdDomicilio=SPD.IdDomicilioEntrega
+				ON SPD.IdDomicilioEntrega = D.IdDomicilio
 			LEFT JOIN dbo.DG_TipoDomicilio TD WITH (NOLOCK)
-				ON TD.IdTipoDomicilio = D.IdTipoDomicilio
+				ON  D.IdTipoDomicilio = TD.IdTipoDomicilio 
 			LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS S WITH (NOLOCK)
-				ON S.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+				ON  SPD.IdSolicitudPedidoDetalle = S.IdSolicitudPedidoDetalle 
 			LEFT JOIN dbo.CC_CentroCosto AS CC WITH (NOLOCK)
-				ON CC.IdCentroCosto = S.IdCentroCosto
+				ON  S.IdCentroCosto = CC.IdCentroCosto 
 			LEFT JOIN Adinco.dbo.CO_Instalacion AS I WITH (NOLOCK)
-				ON I.IdInstalacion = S.IdInstalacion
+				ON S.IdInstalacion = I.IdInstalacion 
 			LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS LP WITH (NOLOCK)
-				ON LP.IdLineaPresupuestoMes = S.IdLineaPresupuesto
+				ON S.IdLineaPresupuesto = LP.IdLineaPresupuestoMes 
 			LEFT JOIN Adinco.dbo.CO_TareaPetrolera AS T WITH (NOLOCK)
-				ON T.IdTareaPetrolera = LP.IdTareaPetrolera
+				ON  LP.IdTareaPetrolera = T.IdTareaPetrolera 
 			LEFT JOIN dbo.MM_SolPedArchivoAdjuntoMaterial AS ADMS WITH (NOLOCK)
-				ON ADMS.IdSolPedDetalle = SPD.IdSolicitudPedidoDetalle
+				ON  SPD.IdSolicitudPedidoDetalle = ADMS.IdSolPedDetalle 
 		WHERE IdSolicitudPedido = @IdSolicitudPedido
-		GROUP BY CONCAT(
-                 ' Descripción: ',
-                 MM.DescripcionCorta,
-                 ' Marca: ',
-                 CASE
-                 WHEN ISNULL(LEN(MM.Marca), 0) > 0 THEN
-                 MM.Marca
-                 ELSE
-                 ' S/M'
-                 END,
-                 ' Modelo: ',
-                 CASE
-                 WHEN ISNULL(LEN(MM.Modelo), 0) > 0 THEN
-                 MM.Modelo
-                 ELSE
-                 ' S/M'
-                 END,
-                 ' No. Parte: ',
-                 CASE
-                 WHEN ISNULL(LEN(MM.NumeroParte), 0) > 0 THEN
-                 MM.NumeroParte
-                 ELSE
-                 ' S/NP'
-                 END
-                 ),
-                 CONCAT(
-                 D.Calle,
-                 ' ',
-                 D.NoExterior,
-                 ' ',
-                 D.NoInterior,
-                 ' ',
-                 D.Colonia,
-                 ' ',
-                 D.Municipio,
-                 ' ',
-                 D.Estado,
-                 ' ',
-                 D.CodigoPostal,
-                 ' (',
-                 CAST(TD.TipoDomicilio AS NVARCHAR(MAX)),
-                 ')'
-                 ),
-                 ISNULL(SPD.IdUnidad, 0),
-                 dbo.Fn_RetornarMesProgramadoActividadConcat(LP.IdLineaPresupuestoMes),
+		GROUP BY 
+                 MM.DescripcionCorta,              
+                 MM.Marca,
+                 MM.Modelo,            
+                 MM.NumeroParte,               
+                 D.Calle,              
+                 D.NoExterior,               
+                 D.NoInterior,              
+                 D.Colonia,              
+                 D.Municipio,               
+                 D.Estado,                 
+                 D.CodigoPostal,                
+                 TD.TipoDomicilio,             
+                 SPD.IdUnidad, 
+                 LP.IdLineaPresupuestoMes,
                  SPD.IdSolicitudPedidoDetalle,
                  MM.IdMaterial,
                  SPD.Cantidad,
@@ -305,7 +301,7 @@ BEGIN
                  CC.CentroCosto,
                  I.NombreInstalacion,
 				 ADMS.IdSolPedMaterialDocumentoAdj,
-				ADMS.NombreArchivoAdjunto;
+				 ADMS.NombreArchivoAdjunto;
 
 		
 
@@ -318,32 +314,12 @@ BEGIN
 			SP.IdSolPed = @IdSolicitudPedido
 				AND Activo = 1;
 
-		--CREATE TABLE #Gasto (IdTipoGasto int,TipoGasto nvarchar(300))
-
-		 --INSERT INTO #Gasto (IdTipoGasto,TipoGasto) values(0, '-- Seleccione un opción ---')
-
-		-- INSERT INTO #Gasto 
-  --       SELECT IdTipoGasto,
-  --              TipoGasto
-		--FROM MM_TipoGastos
-		-- ORDER BY IdTipoGasto ASC 
-
-		-- SELECT
-		--	IdTipoGasto AS id,
-		--	TipoGasto AS text
-		--FROM #Gasto;
 
 		SELECT 
 			IdTerminosYCondiciones AS id, 
 			Nombre AS text
-		FROM dbo.TC_TerminosYCondicionesDocV2
+		FROM dbo.TC_TerminosYCondicionesDocV2  (NOLOCK)
 		WHERE IdProveedor = @IDPROVEEDORACTUAL AND IsActivo = 1
 
-		--SELECT 
-		--	IdPrioridad AS id,
-		--	Nombre AS text
-		--FROM dbo.TA_Prioridad 
-		--ORDER BY Nombre
-
-
+	
 END

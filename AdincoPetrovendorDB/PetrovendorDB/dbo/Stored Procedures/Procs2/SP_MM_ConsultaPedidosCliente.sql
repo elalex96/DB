@@ -1,18 +1,39 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaPedidosCliente'
+)
+    DROP PROCEDURE SP_MM_ConsultaPedidosCliente;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosCliente]    Script Date: 14/10/2022 09:34:17 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Daniel AC
 -- Update: 08-10-2020
 -- Description:	Revisión issue #759/Se agrego filtro pedido (2-Mercadeo, 4-AD, 6-OT)
 -- =============================================
+-- =============================================
+-- Author:		Luis David De La Cruz Bautista
+-- Update:		---01-2021
+-- Description:	Revisión issue #920/ Optimización de sp
+-- =============================================
+-- Author:		Luis David De La Cruz Bautista
+-- Update:		25/01/2021
+-- Description:	Revisión issue #930/ Optimización de sp
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosCliente]
     -- Add the parameters for the stored procedure here
     @IdProveedor INT,
-    @Filtro NVARCHAR(MAX),
+    @Filtro NVARCHAR(100),
     @IdUsuario INT = NULL
 AS
 BEGIN
-    -- SET NOCOUNT ON added to prevent extra result sets from
-    -- interfering with SELECT statements.
     SET NOCOUNT ON;
 
     --PARA OBTENER EL NUMERO DE PEDIDO QUE VISUALIZA EL PROVEEDOR 
@@ -35,13 +56,11 @@ BEGIN
 	  TA_Operacion.NoVersion=MM_PEDIDO.Version=*/
 
 
-    DECLARE @EsAdministradorCompras BIT = 0;
-    DECLARE @EsTipoAdministrador BIT = 0;
-    DECLARE @EsAdministrador BIT = 0;
+    DECLARE @EsAdministradorCompras BIT = 0, @EsTipoAdministrador BIT = 0, @EsAdministrador BIT = 0;
 
     --CONSULTAR SI EL USUARIO ACTUAL ES ADMINISTRADOR DE COMPRAS
     SELECT @EsAdministradorCompras = Activo
-    FROM dbo.CC_AdministradorCompras
+    FROM dbo.CC_AdministradorCompras  (NOLOCK)
     WHERE IdUsuario = @IdUsuario
           AND Activo = 1
           AND IdProveedor = @IdProveedor;
@@ -53,7 +72,7 @@ BEGIN
                                       ELSE
                                           0
                                   END
-    FROM dbo.S_Usuario U
+    FROM dbo.S_Usuario U  (NOLOCK)
     WHERE U.IdTipoUsuario IN ( 3, 4, 6, 7, 8 ) --> CTES Administrador,Ventas,Director General,Root
           AND U.IdUsuario = @IdUsuario;
 
@@ -74,11 +93,11 @@ BEGIN
         IdSolicitudPedido
     )
     SELECT P.IdSolicitudPedido
-    FROM dbo.MM_Pedido P
-        INNER JOIN dbo.MM_SolicitudPedido SP
-            ON SP.IdSolicitudPedido = P.IdSolicitudPedido
-        INNER JOIN dbo.MM_SolicitudPedidoComprador SPC
-            ON SPC.IdSolicitudPedido = P.IdSolicitudPedido
+    FROM dbo.MM_Pedido P (NOLOCK)
+        INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
+            ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+        INNER JOIN dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+            ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
     WHERE SPC.IdAsignadoA = @IdUsuario
           AND ISNULL(SPC.Activo, 0) = 1 -->CTE QUE ESTE ACTIVO
     GROUP BY P.IdSolicitudPedido;
@@ -90,14 +109,17 @@ BEGIN
                P.IdSolicitudPedido,
                P.CreadoEl AS FechaEnvioPedido,
                SUM(PD.Subtotal) AS TotalPedido,
-               ISNULL(PV.RazonSocial, '') + ' ' + ISNULL(PV.RegimenCapital, '') AS Proveedor,
-               --CASE ISNULL(P.RecepcionServicio,0) WHEN 1 THEN 'Confirmado' ELSE 'En Recepción' END AS RecepcionServicio,
+               ISNULL(PV.RazonSocial, '') + ' ' + ISNULL(PV.RegimenCapital, '') AS Proveedor,             
                E.Nombre,
                P.Version,
                P.RecepcionServicio,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -106,7 +128,7 @@ BEGIN
                                      Contrato = c.NumeroContrato
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -118,39 +140,41 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN MM_PedidoDetalle AS PD
+        FROM MM_Pedido AS P (NOLOCK)
+            JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido = PD.IdPedido
-            INNER JOIN dbo.MM_SolicitudPedido SP
+            JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_PeticionOferta AS PO
+            JOIN MM_PeticionOferta AS PO  (NOLOCK)
                 ON P.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            JOIN S_Proveedor AS PV  (NOLOCK)
                 ON P.IdSubcontratista = PV.IdProveedor
-            INNER JOIN TA_Operacion AS O
+            JOIN TA_Operacion AS O  (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-            INNER JOIN TA_Prioridad AS PR
+            JOIN TA_Prioridad AS PR  (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            JOIN TA_Vencimiento AS V  (NOLOCK)
                 ON O.IdVigencia = V.IdVencimiento
-            INNER JOIN TA_TipoOperacion AS TTO
+            JOIN TA_TipoOperacion AS TTO  (NOLOCK)
                 ON O.IdTipoOperacion = TTO.IdTipoOperacion
-            INNER JOIN TA_Estatus AS E
+            JOIN TA_Estatus AS E  (NOLOCK)
                 ON O.IdEstatusOperacion = E.IdEstatus
-            INNER JOIN MM_HorasVigenciaPedido AS HV
+            JOIN MM_HorasVigenciaPedido AS HV  (NOLOCK)
                 ON P.IdPedido = HV.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
-                ON TM.IdMoneda = P.IdMoneda
-            INNER JOIN MM_Pedidos AS PG
+            JOIN PV_TipoMoneda AS TM  (NOLOCK)
+                ON P.IdMoneda = TM.IdMoneda
+            JOIN MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
-                   AND PG.IdProveedorCliente = @IdProveedor
+                   AND @IdProveedor = PG.IdProveedorCliente
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            LEFT JOIN Adinco.dbo.CO_Contrato AS C
+            LEFT JOIN Adinco.dbo.CO_Contrato AS C  (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP  (NOLOCK)
                 ON PG.IdTipoPedido = TP.IdTipoPedido
-            LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
+            LEFT JOIN #MM_SolicitudPedidoCompradorT SPC  (NOLOCK)
                 ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
               AND ISNULL(P.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
               AND ISNULL(P.Cerrado, 0) = 0 --> PEDIDOS NO CERRADOS
@@ -163,7 +187,7 @@ BEGIN
                       WHEN ISNULL(@EsAdministrador, 0) IN ( 0, 1 )
                            AND SPC.IdSolicitudPedido IS NOT NULL THEN --MOSTRAR SOLAMENTE DONDE FUE ASIGNADO
                           1 --> MOSTRAR	  
-                      WHEN ISNULL(@EsAdministrador, 0) = 1 THEN -->MOSTRAR TODAS SIN IMPORTAR SI FUE ASIGNADO O NO YA QUE ES ADMINISTRADOR
+     WHEN ISNULL(@EsAdministrador, 0) = 1 THEN -->MOSTRAR TODAS SIN IMPORTAR SI FUE ASIGNADO O NO YA QUE ES ADMINISTRADOR
                           1 --> MOSTRAR	  
                       WHEN SP.IdUsuarioSolicitante = @IdUsuario THEN
                           1 --> MOSTRAR	  
@@ -182,7 +206,8 @@ BEGIN
                  PG.IdPedido,
                  TP.TipoPedido,
                  TP.IdTipoPedido,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
     END;
 
@@ -192,13 +217,16 @@ BEGIN
                P.IdSolicitudPedido,
                P.FechaEnvioPedido AS FechaEnvioPedido,
                SUM(PD.Subtotal) AS TotalPedido,
-               ISNULL(PV.RazonSocial, '') + ' ' + ISNULL(PV.RegimenCapital, '') AS Proveedor,
-               --CASE ISNULL(P.RecepcionServicio,0) WHEN 1 THEN 'Confirmado' ELSE 'En Recepción' END AS RecepcionServicio,
+               ISNULL(PV.RazonSocial, '') + ' ' + ISNULL(PV.RegimenCapital, '') AS Proveedor,              
                E.Nombre,
                P.Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -206,7 +234,7 @@ BEGIN
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -218,39 +246,41 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P  (NOLOCK)
+            JOIN dbo.MM_SolicitudPedido SP  (NOLOCK)
                 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD  (NOLOCK)
                 ON P.IdPedido = PD.IdPedido
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO  (NOLOCK)
                 ON P.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV  (NOLOCK)
                 ON P.IdSubcontratista = PV.IdProveedor
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O  (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR  (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V  (NOLOCK)
                 ON O.IdVigencia = V.IdVencimiento
-            INNER JOIN TA_TipoOperacion AS TTO
+            INNER JOIN TA_TipoOperacion AS TTO  (NOLOCK)
                 ON O.IdTipoOperacion = TTO.IdTipoOperacion
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E  (NOLOCK)
                 ON O.IdEstatusOperacion = E.IdEstatus
-            INNER JOIN MM_HorasVigenciaPedido AS HV
+            INNER JOIN MM_HorasVigenciaPedido AS HV  (NOLOCK)
                 ON P.IdPedido = HV.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON P.IdMoneda = TM.IdMoneda
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
-                   AND PG.IdProveedorCliente = @IdProveedor
+                   AND @IdProveedor = PG.IdProveedorCliente 
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
                 ON PG.IdTipoPedido = TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
-                ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
+				ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.RecepcionServicio IS NULL ---> CUANDO ES NULL NO TIENE RECEPCIÓN DE SERVICIO CONFIRMADA NI RECHAZADA
@@ -282,7 +312,8 @@ BEGIN
                  PG.IdPedido,
                  TP.TipoPedido,
                  TP.IdTipoPedido,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
     END;
@@ -294,13 +325,16 @@ BEGIN
                P.IdSolicitudPedido,
                P.CreadoEl AS FechaEnvioPedido,
                SUM(PD.Subtotal) AS TotalPedido,
-               ISNULL(PV.RazonSocial, '') + ' ' + ISNULL(PV.RegimenCapital, '') AS Proveedor,
-               --CASE ISNULL(P.RecepcionServicio,0) WHEN 1 THEN 'Confirmado' ELSE 'En Recepción' END AS RecepcionServicio,
+               ISNULL(PV.RazonSocial, '') + ' ' + ISNULL(PV.RegimenCapital, '') AS Proveedor,            
                E.Nombre,
                P.Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -308,7 +342,7 @@ BEGIN
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -320,39 +354,41 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P (NOLOCK)
+            INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido = PD.IdPedido
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
                 ON P.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista = PV.IdProveedor
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V (NOLOCK)
                 ON O.IdVigencia = V.IdVencimiento
-            INNER JOIN TA_TipoOperacion AS TTO
+			INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
                 ON O.IdTipoOperacion = TTO.IdTipoOperacion
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion = E.IdEstatus
-            INNER JOIN MM_HorasVigenciaPedido AS HV
+            INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
                 ON P.IdPedido = HV.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON P.IdMoneda = TM.IdMoneda
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
                    AND PG.IdProveedorCliente = @IdProveedor
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
                 ON PG.IdTipoPedido = TP.IdTipoPedido
-            LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
+            LEFT JOIN #MM_SolicitudPedidoCompradorT SPC 
                 ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.RecepcionServicio IS NULL --> LOS RECHAZADOS NO TIENE RECEPCIÓN ACEPTADA NI RECHAZADA
@@ -383,7 +419,8 @@ BEGIN
                  PG.IdPedido,
                  TP.TipoPedido,
                  TP.IdTipoPedido,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
     END;
@@ -400,7 +437,11 @@ BEGIN
                P.Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -408,7 +449,7 @@ BEGIN
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -420,39 +461,41 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P (NOLOCK)
+            INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido = PD.IdPedido
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
                 ON P.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista = PV.IdProveedor
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V (NOLOCK)
                 ON O.IdVigencia = V.IdVencimiento
-            INNER JOIN TA_TipoOperacion AS TTO
+            INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
                 ON O.IdTipoOperacion = TTO.IdTipoOperacion
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion = E.IdEstatus
-            INNER JOIN MM_HorasVigenciaPedido AS HV
-                ON HV.IdPedido = P.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
+                ON P.IdPedido = HV.IdPedido
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON P.IdMoneda = TM.IdMoneda
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
-                   AND PG.IdProveedorCliente = @IdProveedor
+                   AND @IdProveedor = PG.IdProveedorCliente
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
                 ON PG.IdTipoPedido = TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
-                ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
+                ON P.IdSolicitudPedido = SPC.IdSolicitudPedido			
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.RecepcionServicio IS NULL
@@ -485,7 +528,8 @@ BEGIN
                  PG.IdPedido,
                  TP.TipoPedido,
                  TP.IdTipoPedido,
-                 C.NumeroContrato
+                 C.NumeroContrato,				 
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
     END;
@@ -507,7 +551,11 @@ BEGIN
                P.Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -515,7 +563,7 @@ BEGIN
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -527,39 +575,41 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P (NOLOCK)
+            INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido = PD.IdPedido
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
                 ON P.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista = PV.IdProveedor
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V (NOLOCK)
                 ON O.IdVigencia = V.IdVencimiento
-            INNER JOIN TA_TipoOperacion AS TTO
+            INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
                 ON O.IdTipoOperacion = TTO.IdTipoOperacion
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion = E.IdEstatus
-            INNER JOIN MM_HorasVigenciaPedido AS HV
-                ON P.IdPedido = HV.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
+                ON P.IdPedido = HV.IdPedido 
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON P.IdMoneda = TM.IdMoneda
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
                    AND PG.IdProveedorCliente = @IdProveedor
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
-                ON TP.IdTipoPedido = PG.IdTipoPedido
-            LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
+                ON PG.IdTipoPedido = TP.IdTipoPedido
+            LEFT JOIN #MM_SolicitudPedidoCompradorT SPC (NOLOCK)
                 ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.RecepcionServicio = 1 --> RECEPCIÓN ACEPTADA
@@ -581,7 +631,7 @@ BEGIN
                   END = 1
         GROUP BY P.IdPedido,
                  P.IdSolicitudPedido,
-                 P.FechaEnvioPedido,
+                P.FechaEnvioPedido,
                  PV.RazonSocial,
                  PV.RegimenCapital,
                  P.RecepcionServicio,
@@ -591,7 +641,8 @@ BEGIN
                  PG.IdPedido,
                  TP.TipoPedido,
                  TP.IdTipoPedido,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
     END;
@@ -614,7 +665,11 @@ BEGIN
                P.Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -622,7 +677,7 @@ BEGIN
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -634,45 +689,47 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P  (NOLOCK)
+            INNER JOIN dbo.MM_SolicitudPedido SP  (NOLOCK)
                 ON  P.IdSolicitudPedido=SP.IdSolicitudPedido
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD  (NOLOCK)
                 ON P.IdPedido=PD.IdPedido 
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO  (NOLOCK)
                 ON P.IdPeticionOferta=PO.IdPeticionOferta 
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV  (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O  (NOLOCK)
                 ON P.IdSolicitudPedido=O.IdDocumento 
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR  (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V  (NOLOCK)
                 ON O.IdVigencia=V.IdVencimiento
-            INNER JOIN TA_TipoOperacion AS TTO
+            INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
                 ON O.IdTipoOperacion=TTO.IdTipoOperacion  
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion=E.IdEstatus 
-            INNER JOIN MM_HorasVigenciaPedido AS HV
-                ON P.IdPedido = HV.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
+                ON P.IdPedido = HV.IdPedido 
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON P.IdMoneda=TM.IdMoneda
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
                    AND PG.IdProveedorCliente = @IdProveedor
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
                 ON PG.IdTipoPedido=TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON  P.IdSolicitudPedido=SPC.IdSolicitudPedido
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.RecepcionServicio = 0 --> RECEPCIÓN RECHAZADA
               AND E.IdEstatus = 2 --> ESTATUS APROBADO /PARA ESTAR RECEPCIONADO DEBE ESTAR APROBADO 
-              AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
-              AND P.Version = O.NoVersion --> LA VERSIÓN DE PEDIDO DEBE SER LA MISMA QUE LA DE LA OPERACIÓN
+AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
+   AND P.Version = O.NoVersion --> LA VERSIÓN DE PEDIDO DEBE SER LA MISMA QUE LA DE LA OPERACIÓN
               AND ISNULL(P.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
               AND ISNULL(P.Cerrado, 0) = 0 --> PEDIDOS NO CERRADOS
               AND CASE
@@ -698,7 +755,8 @@ BEGIN
                  PG.IdPedido,
                  TP.TipoPedido,
                  TP.IdTipoPedido,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
     END;
@@ -715,7 +773,11 @@ BEGIN
                P.Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -723,7 +785,7 @@ BEGIN
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -735,39 +797,41 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P (NOLOCK)
+            INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido=SP.IdSolicitudPedido
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido=PD.IdPedido
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
                 ON P.IdPeticionOferta= PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido=O.IdDocumento
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V (NOLOCK)
                 ON O.IdVigencia= V.IdVencimiento 
-            INNER JOIN TA_TipoOperacion AS TTO
+            INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
                 ON O.IdTipoOperacion=TTO.IdTipoOperacion 
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion=E.IdEstatus 
-            INNER JOIN MM_HorasVigenciaPedido AS HV
+            INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
                 ON P.IdPedido = HV.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON P.IdMoneda=TM.IdMoneda 
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
                    AND PG.IdProveedorCliente = @IdProveedor
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
                 ON PG.IdTipoPedido=TP.IdTipoPedido 
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON P.IdSolicitudPedido=SPC.IdSolicitudPedido 
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.RecepcionServicio IS NULL --> NO SE HA REALIZADO RECEPCIÓN
@@ -800,7 +864,8 @@ BEGIN
                  PG.IdPedido,
                  TP.TipoPedido,
                  TP.IdTipoPedido,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
     END;
 
@@ -832,15 +897,19 @@ BEGIN
                CAST(P.Version AS NVARCHAR(200)) AS Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                       FROM dbo.MM_SolicitudPedidoComprador SPC
+                    INNER JOIN dbo.S_Usuario U
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -852,39 +921,41 @@ BEGIN
                                )
                ) AS Asignados,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P (NOLOCK)
+            INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido=SP.IdSolicitudPedido 
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido=PD.IdPedido 
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
                 ON  P.IdPeticionOferta=PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor 
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido=O.IdDocumento 
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V (NOLOCK)
                 ON O.IdVigencia=V.IdVencimiento 
-            INNER JOIN TA_TipoOperacion AS TTO
+            INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
                 ON  O.IdTipoOperacion=TTO.IdTipoOperacion
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion=E.IdEstatus 
-            INNER JOIN MM_HorasVigenciaPedido AS HV
-                ON  HV.IdPedido=P.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
+                ON  P.IdPedido = HV.IdPedido
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON P.IdMoneda=TM.IdMoneda 
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
                    AND PG.IdProveedorCliente = @IdProveedor
                    AND PG.IdTipoPedido IN ( 2, 4, 6 ) -->(Mer, AD, OT)
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
                 ON PG.IdTipoPedido=TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON P.IdSolicitudPedido=SPC.IdSolicitudPedido 
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.Version = O.NoVersion --> LA VERSIÓN DE PEDIDO DEBE SER LA MISMA QUE LA DE LA OPERACIÓN
@@ -917,7 +988,8 @@ BEGIN
                  TP.TipoPedido,
                  TP.IdTipoPedido,
                  P.IdEstatusEliminado,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
     END;
@@ -950,7 +1022,11 @@ BEGIN
                CAST(P.Version AS NVARCHAR(200)) AS Version,
                TM.TipoMonedaCorto AS TipoMoneda,
                PG.IdPedido AS IdPedidoGeneral,
-               TP.TipoPedido,
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido,
                (
                    SELECT STUFF(
@@ -958,7 +1034,7 @@ BEGIN
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
                               FROM dbo.MM_SolicitudPedidoComprador SPC
                                   INNER JOIN dbo.S_Usuario U
-                                      ON U.IdUsuario = SPC.IdAsignadoA
+                                      ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
                               ORDER BY U.Nombre ASC
@@ -971,43 +1047,45 @@ BEGIN
                ) AS Asignados,
                APO.ID_PO,
                Contrato = C.NumeroContrato
-        FROM MM_Pedido AS P
-            INNER JOIN dbo.MM_SolicitudPedido SP
+        FROM MM_Pedido AS P (NOLOCK)
+            INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido=SP.IdSolicitudPedido
-            INNER JOIN MM_PedidoDetalle AS PD
+            INNER JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido=PD.IdPedido 
-            INNER JOIN MM_PeticionOferta AS PO
+            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
                 ON P.IdPeticionOferta=PO.IdPeticionOferta
-            INNER JOIN S_Proveedor AS PV
+            INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor 
-            INNER JOIN TA_Operacion AS O
+            INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON  P.IdSolicitudPedido=O.IdDocumento
-            INNER JOIN TA_Prioridad AS PR
+            INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON  O.IdPrioridad=PR.IdPrioridad
-            INNER JOIN TA_Vencimiento AS V
+            INNER JOIN TA_Vencimiento AS V (NOLOCK)
                 ON  O.IdVigencia=V.IdVencimiento
-            INNER JOIN TA_TipoOperacion AS TTO
+            INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
                 ON O.IdTipoOperacion=TTO.IdTipoOperacion 
-            INNER JOIN TA_Estatus AS E
+            INNER JOIN TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion=E.IdEstatus 
-            INNER JOIN MM_HorasVigenciaPedido AS HV
+            INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
                 ON P.IdPedido = HV.IdPedido
-            INNER JOIN PV_TipoMoneda AS TM
+            INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
                 ON  P.IdMoneda=TM.IdMoneda
-            INNER JOIN MM_Pedidos AS PG
+            INNER JOIN MM_Pedidos AS PG (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador
                    AND PG.IdProveedorCliente = @IdProveedor
                    AND PG.IdTipoPedido IN ( 2, 4, 6 )
-            INNER JOIN Adinco.dbo.CO_Contrato AS C
+            INNER JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
                 ON SP.IdContrato = C.IdContrato
-            LEFT JOIN dbo.MM_TipoPedido AS TP
+            LEFT JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
                 ON PG.IdTipoPedido=TP.IdTipoPedido 
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON P.IdSolicitudPedido=SPC.IdSolicitudPedido 
-            LEFT JOIN dbo.DEA_Relacion_PR_PO RPO
+            LEFT JOIN dbo.DEA_Relacion_PR_PO RPO (NOLOCK)
                 ON P.IdPedido=RPO.IdPedido 
-            LEFT JOIN dbo.DEA_AdjuntoPO APO
+            LEFT JOIN dbo.DEA_AdjuntoPO APO (NOLOCK)
                 ON RPO.IdAdjuntoPO=APO.IdAdjuntoPO
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
               AND P.Version = O.NoVersion --> LA VERSIÓN DE PEDIDO DEBE SER LA MISMA QUE LA DE LA OPERACIÓN
@@ -1040,10 +1118,9 @@ BEGIN
                  TP.IdTipoPedido,
                  P.IdEstatusEliminado,
                  APO.ID_PO,
-                 C.NumeroContrato
+                 C.NumeroContrato,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
     END;
-
-
-END;
+END

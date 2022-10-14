@@ -1,11 +1,17 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 27/07/2022 12:26:55 p. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_WDEA_NuevoPedidoAutomatico_SAP'
+)
+    DROP PROCEDURE SP_MM_WDEA_NuevoPedidoAutomatico_SAP;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 10/10/2022 04:55:13 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
-GO
-DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevoPedidoAutomatico_SAP
 GO
 -- =============================================
 -- Author:		Alexander Gomez
@@ -15,6 +21,10 @@ GO
 -- Author:		Luis David
 -- Create date: 04/10/2022
 -- Description:	Se obtiene el tipo de pedido a partir de la columna PrefijoSAP
+-- =============================================
+-- Author:		Luis David
+-- Create date: 10/10/2022
+-- Description:	Se cambia la aprobación a "Aprobado"
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
 	-- Add the parameters for the stored procedure here
@@ -31,14 +41,31 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @IdProveedor INT = (SELECT TOP 1 IDPROVEEDOR FROM dbo.WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato),
-		--@IdContrato INT = (SELECT IdContrato FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido), 
-		@idTipoPedidoP int = (SELECT TOP 1 ISNULL(TP.IdTipoPedido,2) FROM 
+	DECLARE @IdProveedor INT = (SELECT TOP 1 IDPROVEEDOR 
+								FROM dbo.WDEA_PurchasingDocumentsImportados
+								WHERE PURCHASING_DOCUMENT = @Purchasing 
+								AND IDCONTRATO = @IdContrato
+								AND IdBitacora = @IdBitacoraLectura),		
+		@idTipoPedidoP int = (SELECT TOP 1   
+								CASE WHEN PDI.MECANISMO_CONTRATACION='L' THEN
+										2 --> CTE DEFAUL SE ASIGNA COMO MERCADEO
+									ELSE 
+										ISNULL(TP.IdTipoPedido,2) --> CTE SI ES NULL SE ASIGNA COMO MERCADEO
+									END  
+								FROM 
 								dbo.WDEA_PurchasingDocumentsImportados PDI
 								LEFT JOIN MM_TipoPedido TP
 								on LTRIM(RTRIM(PDI.MECANISMO_CONTRATACION)) = LTRIM(RTRIM(TP.PrefijoSAP))
-								WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND PDI.IDCONTRATO = @IdContrato),
-		@IdUsuario INT = (SELECT TOP 1 IDUSUARIOSOLICITANTE FROM dbo.WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato),
+								WHERE PDI.PURCHASING_DOCUMENT = @Purchasing 
+								AND PDI.IDCONTRATO = @IdContrato
+								AND PDI.IdBitacora = @IdBitacoraLectura
+								),
+		@IdUsuario INT = (SELECT TOP 1 IDUSUARIOSOLICITANTE 
+						FROM dbo.WDEA_PurchasingDocumentsImportados 
+						WHERE 
+						PURCHASING_DOCUMENT = @Purchasing 
+						AND IDCONTRATO = @IdContrato
+						AND IdBitacora = @IdBitacoraLectura),
 		@FechaEntrega DATETIME = (SELECT FechaEntregaRequerida FROM dbo.MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido),
 		@COUNT_PROVEEDORES INT,
 		@IdFlujoTarea INT,
@@ -153,12 +180,12 @@ SELECT
            SUM(POD.PrecioUnitario * POD.AddCantidadTemp),
            POD.IdMoneda,
            POD.IdPeticionOferta
-    FROM MM_PeticionOferta AS PO
-        INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
+    FROM MM_PeticionOferta AS PO (NOLOCK)
+        JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
             ON PO.IdPeticionOferta = POD.IdPeticionOferta
-        INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
+        JOIN MM_SolicitudPedido AS SP (NOLOCK)
             ON PO.IdSolicitudPedido = SP.IdSolicitudPedido 
-        INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+        JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
             ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
     WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
           AND POD.AddValidado = 1
@@ -306,11 +333,11 @@ SELECT
 				END,
 			   POD.DiasCredito 
         FROM MM_PeticionOferta AS PO (NOLOCK)
-            INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
+            JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
                 ON PO.IdPeticionOferta = POD.IdPeticionOferta
-            INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
+            JOIN MM_SolicitudPedido AS SP (NOLOCK)
                 ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-            INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+            JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
                 ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND PO.IdSubcontratista = @IdProveedor
@@ -446,7 +473,7 @@ SELECT
 		@IdSolicitudPedido,
 		9,--APROBACION DE SOLICITUD DE PEDIDO
 		@IdFlujoTarea,
-		11,--APROBADA SIN DOCUMENTO
+		2,--APROBADA
 		3,--TAREA APROBADA
 		@IdOperadora,
 		@IdUsuario,
@@ -457,6 +484,10 @@ SELECT
 	);
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
+
+	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
+	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	CreadoEl ) VALUES
+	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,			GETDATE())
 
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
@@ -538,7 +569,9 @@ SELECT
 
 			UPDATE WDEA_PurchasingDocumentsImportados
 			SET IdPedidoADINCO = @IdPedidoActual
-			WHERE IDCONTRATO = @IdContrato AND PURCHASING_DOCUMENT = @Purchasing;
+			WHERE IDCONTRATO = @IdContrato 
+			AND PURCHASING_DOCUMENT = @Purchasing
+			AND IdPedidoADINCO IS NULL; --> SOLO ACTUALIZA LOS DE LA BITACORA ACTUAL
 
 			UPDATE PendientesProcesarProcura_WSDEA
 			SET Procesado = 1
