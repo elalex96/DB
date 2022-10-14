@@ -1,6 +1,16 @@
-USE PETROVENDOR
+USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ConsultarEncabezadoPrePedidoGral'
+)
+    DROP PROCEDURE SP_TA_ConsultarEncabezadoPrePedidoGral;
 GO
-DROP PROCEDURE IF EXISTS SP_TA_ConsultarEncabezadoPrePedidoGral
+/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral]    Script Date: 14/10/2022 10:05:48 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
@@ -20,9 +30,8 @@ GO
 -- Update date: 04/10/2022
 -- Description:	Se agrega el tipo licitación a la consulta ya que se agregó para en el catalogo con prefijo SAP
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral] --420, 1343
+CREATE PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoPrePedidoGral] 
 	-- Add the parameters for the stored procedure here
-	---execute  SP_TA_ConsultarEncabezadoPrePedidoGral 420, 1343
 	@IdProveedor int, 
 	@IdPedido int
 	
@@ -35,16 +44,18 @@ BEGIN
 	DECLARE @IdLineaPresupuesto int = (SELECT  
 										TOP 1
 										SPLP.IdLineaPresupuesto FROM 
-										dbo.MM_SolicitudPedido AS SPC
-											LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD 
+										dbo.MM_SolicitudPedido AS SPC(NOLOCK)
+											LEFT JOIN dbo.MM_SolicitudPedidoDetalle AS SPD  (NOLOCK)
 												ON SPC.IdSolicitudPedido = SPD.IdSolicitudPedido
-											LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPLP
+											LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS SPLP (NOLOCK)
 												ON SPD.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
-											LEFT JOIN MM_Pedido AS P ON SPC.IdSolicitudPedido = P.IdSolicitudPedido
+											LEFT JOIN MM_Pedido AS P (NOLOCK)
+												ON SPC.IdSolicitudPedido = P.IdSolicitudPedido
 												WHERE P.IdPedido = @IdPedido
 										GROUP BY SPLP.IdLineaPresupuesto);
 
-	DECLARE @IdPresupuesto INT = (SELECT TOP 1 IdPresupuesto FROM Adinco.dbo.CO_LineaPresupuestoMes WHERE IdLineaPresupuestoMes = @IdLineaPresupuesto);
+	DECLARE @IdPresupuesto INT = (SELECT TOP 1 IdPresupuesto FROM Adinco.dbo.CO_LineaPresupuestoMes (NOLOCK)
+									WHERE IdLineaPresupuestoMes = @IdLineaPresupuesto);
 
 	DECLARE @texto varchar(max) = '',
 						@ContTabla INT,
@@ -53,7 +64,7 @@ BEGIN
 						@CondionesPago NVARCHAR(MAX);  
     -- Insert statements for procedure here
 	
-	----- IdTipoOperacion = 9--> Aprobaci�n de pedido
+	----- IdTipoOperacion = 9--> Aprobación de pedido
 				drop table if exists #TEMP_PRESUPUESTOS
 				 CREATE TABLE #TEMP_PRESUPUESTOS --CREAMOS UNA TABLA TEMPORAL
 				( IdRow INT IDENTITY(1,1),Nombre VARCHAR(max));
@@ -62,14 +73,14 @@ BEGIN
 
 				INSERT INTO #TEMP_PRESUPUESTOS
 				SELECT DISTINCT dbo.Fn_RetornarMesProgramadoActividadConcat(clp.IdLineaPresupuestoMes) AS LineaPresupuesto 
-				FROM Petrovendor.dbo.MM_Pedido AS p
-					LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido AS sp 
+				FROM Petrovendor.dbo.MM_Pedido AS p (NOLOCK)
+					LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido AS sp (NOLOCK)
 					ON p.IdSolicitudPedido = sp.IdSolicitudPedido 
-					LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle AS spd 
+					LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle AS spd (NOLOCK)
 					ON sp.IdSolicitudPedido = spd.IdSolicitudPedido 
-					LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS lp 
+					LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto AS lp (NOLOCK)
 					ON spd.IdSolicitudPedidoDetalle = lp.IdSolicitudPedidoDetalle 
-					LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS clp 
+					LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS clp (NOLOCK)
 					ON lp.IdLineaPresupuesto = clp.IdLineaPresupuestoMes
 				WHERE p.IdPedido= @IdPedido
 				GROUP BY clp.IdLineaPresupuestoMes;
@@ -94,8 +105,8 @@ BEGIN
 	ELSE 
 	CONCAT(cp.CondicionPago,'')
 	END 
-	FROM dbo.MM_PedidoDetalle pd
-	LEFT JOIN dbo.MM_CondicionPago cp 
+	FROM dbo.MM_PedidoDetalle pd (NOLOCK)
+	LEFT JOIN dbo.MM_CondicionPago cp  (NOLOCK)
 	ON pd.IdCondicionPago = cp.IdCondicionPago
 	WHERE IdPedido =@IdPedido
 
@@ -118,12 +129,16 @@ BEGIN
 	P.Version,
 	CASE P.RecepcionServicio WHEN 1 THEN 'CONFIRMADA_ACEPTADA' WHEN 0 THEN 'CONFIRMACION_RECHAZADA' ELSE 'EN_RECEPCION' END,
 	PG.IdPedido AS IdPedidoGeneral,
-	TP.TipoPedido,
+	CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+		'Licitación'  --> CTE 
+		ELSE 
+		TP.TipoPedido
+	END AS TipoPedido,
 	TP.IdTipoPedido,
 	CONCAT('Días Crédito: ',ISNULL (P.DiasCredito,0)) AS DiasCredito,	
 	ISNULL(p.Cerrado, 0),
 	CONCAT('Presupuesto: ', (SELECT  TOP 1(cop.Nombre) 
-								FROM adinco.dbo.CO_Presupuesto AS cop
+								FROM adinco.dbo.CO_Presupuesto AS cop (NOLOCK)
 								WHERE cop.IdPresupuesto = @IdPresupuesto) COLLATE Modern_Spanish_CI_AS,
 			' - | Línea de Presupuesto: ',@texto, 
 			'- | Objeto del pedido (Justificación): ', sp.MotivoUrgencia) AS DetallePresupuesto,
@@ -134,42 +149,44 @@ BEGIN
 	END  AS CondicionesPago,
 	CONCAT('Tipo de aprobación: ',TFT.Nombre) AS TipoFlujoAprobacion,
 	TAOF.Descripcion AS ComentariosComprador
-	FROM dbo.MM_Pedido AS P
-	INNER JOIN dbo.MM_PedidoDetalle AS PD 
-	ON P.IdPedido = PD.IdPedido
-	INNER JOIN dbo.MM_PeticionOferta AS PO 
-	ON P.IdPeticionOferta = PO.IdPeticionOFerta
+	FROM dbo.MM_Pedido AS P (NOLOCK)
+	INNER JOIN dbo.MM_PedidoDetalle AS PD  (NOLOCK)
+		ON P.IdPedido = PD.IdPedido
+	INNER JOIN dbo.MM_PeticionOferta AS PO  (NOLOCK)
+		ON P.IdPeticionOferta = PO.IdPeticionOFerta
 	INNER JOIN dbo.S_Proveedor (NOLOCK) AS PV
-	ON P.IdSubcontratista=PV.IdProveedor 
-	INNER JOIN dbo.TA_Operacion AS O 
-	ON P.IdSolicitudPedido=O.IdDocumento
+		ON P.IdSubcontratista=PV.IdProveedor 
+	INNER JOIN dbo.TA_Operacion AS O  (NOLOCK)
+		ON P.IdSolicitudPedido=O.IdDocumento
 	INNER JOIN dbo.S_Usuario (NOLOCK) AS U  
-	ON O.IdAsignador = U.IdUsuario 
+		ON O.IdAsignador = U.IdUsuario 
 	INNER JOIN dbo.TA_Prioridad (NOLOCK) AS PR 
-	ON O.IdPrioridad = PR.IdPrioridad 
-	INNER JOIN dbo.TA_Vencimiento AS V
-	ON O.IdVigencia = V.IdVencimiento
+		ON O.IdPrioridad = PR.IdPrioridad 
+	INNER JOIN dbo.TA_Vencimiento AS V (NOLOCK)
+		ON O.IdVigencia = V.IdVencimiento
 	INNER JOIN dbo.TA_TipoOperacion (NOLOCK) AS TTO 
-	ON O.IdTipoOperacion = TTO.IdTipoOperacion
+		ON O.IdTipoOperacion = TTO.IdTipoOperacion
 	INNER JOIN dbo.TA_Estatus (NOLOCK) AS E
-	ON O.IdEstatusOperacion = E.IdEstatus 
-	INNER JOIN dbo.MM_HorasVigenciaPedido AS H
-	ON P.IdPedido = H.IdPedido
-	INNER JOIN dbo.MM_Pedidos AS PG 
-	ON P.IdPedido = PG.IdIdentificador 
+		ON O.IdEstatusOperacion = E.IdEstatus 
+	INNER JOIN dbo.MM_HorasVigenciaPedido AS H (NOLOCK)
+		ON P.IdPedido = H.IdPedido
+	INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
+		ON P.IdPedido = PG.IdIdentificador 
 	AND PG.IdProveedorCliente = @IdProveedor 
-	AND PG.IdTipoPedido IN (2,3, 4, 6) ---(Mer,LICI, AD, OT)
+		AND PG.IdTipoPedido IN (2,3,4, 6) ---(Mer,LICI, AD, OT)
 	LEFT  JOIN dbo.MM_TipoPedido (NOLOCK) AS TP 
-	ON PG.IdTipoPedido = TP.IdTipoPedido
-	LEFT JOIN dbo.MM_SolicitudPedido sp 
-	ON P.IdSolicitudPedido = sp.IdSolicitudPedido 
+		ON PG.IdTipoPedido = TP.IdTipoPedido
+	LEFT JOIN dbo.MM_SolicitudPedido sp  (NOLOCK)
+		ON P.IdSolicitudPedido = sp.IdSolicitudPedido 
 	LEFT JOIN dbo.TA_FlujoTarea (NOLOCK) FT 
-	ON O.IdFlujoTarea = FT.IdFlujoTarea
-	LEFT JOIN dbo.TA_TipoFlujoTarea TFT
-	ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
-	LEFT JOIN dbo.TA_Operacion AS TAOF
-	ON P.IdSolicitudPedido  = TAOF.IdDocumento
-	and TAOF.IdTipoOperacion = 6
+		ON O.IdFlujoTarea = FT.IdFlujoTarea
+	LEFT JOIN dbo.TA_TipoFlujoTarea TFT  (NOLOCK)
+		ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
+	LEFT JOIN dbo.TA_Operacion AS TAOF  (NOLOCK)
+		ON P.IdSolicitudPedido  = TAOF.IdDocumento
+		and TAOF.IdTipoOperacion = 6
+	LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+		ON  P.IdPedido = PDI.IdPedidoADINCO
 	WHERE O.IdTipoOperacion = 9 
 	AND O.IdProveedor = @IdProveedor   
 	AND P.IdPedido = @IdPedido 
@@ -199,5 +216,6 @@ BEGIN
 	sp.MotivoUrgencia,
 	P.UnicaCondicionPago,
 	TFT.Nombre,
-	TAOF.Descripcion
+	TAOF.Descripcion,
+	PDI.MECANISMO_CONTRATACION
 END
