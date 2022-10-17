@@ -88,6 +88,7 @@ BEGIN
 		@IdCondicionPago INT,
 		@DiasCredito INT,
 		@IdOperacion INT,
+		@IdTarea INT,
 		@FECHA_ACTUAL DATETIME,
 		@FECHA_TIPO_CONVERSION_ACTUAL DATETIME,
 		@TIPO_CAMBIO_ACTUAL DECIMAL(12, 4),
@@ -514,6 +515,16 @@ SELECT
 		'APROBACION AUTOMATICA - PEDIDO',
 		GETDATE()
 	);
+
+	SET @IdTarea = (SCOPE_IDENTITY());
+
+	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
+	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	
+	Purchasing_Document,	IdTarea,		IdPedidoActual,	IdPedidoGeneral,
+	CreadoEl ) VALUES
+	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,
+	RTRIM(LTRIM(@Purchasing)),			@IdTarea,		@IdPedidoActual,@IdPedidoGeneral,
+	GETDATE())
 
 	INSERT INTO TA_TareaOperacion
 	(
