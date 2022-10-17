@@ -1,3 +1,18 @@
+USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_SC_AdquisicionContratacionCNH'
+)
+    DROP PROCEDURE SP_SC_AdquisicionContratacionCNH;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_SC_AdquisicionContratacionCNH]    Script Date: 13/10/2022 11:33:52 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] --3,'2015/09/04' ,'2021/09/04'
 @IdContrato INT, 
 @Fechainicio DATE, 
@@ -12,6 +27,7 @@ BEGIN
 -- 20211203	BAAC	Se agrega tabla temporal para agrupar los datos de la tabla AX_Layout
 --					porque existen muchos registros repetidos y afecta la sumatorio de montos
 -- 20220118	BAAC	Se corrigen format en monto USD y MXN por error en DEA
+-- 20221014 DAC     Se toma en consideración MECANISMO_CONTRATACION para reporte DEA cuando sea L --> Poner default Licitación
 -- =============================================
 SET NOCOUNT ON
    -- SE CREA TABLA PARA QUE NO SE REPITAN LOS DATOS EN LOS MONTOS POR HABER DUPLICADOS EN ESTA TABLA: AX_Layout
@@ -295,8 +311,7 @@ SET NOCOUNT ON
                REPLACE(AXP.FechaRegistroCompra, '/', '-') AS FechaTipoCambio,             --DWONG 20190712       
                dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Comentarios', NombreContratista = UPPER(ctista.RazonSocial),   
                FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                        --DWONG 20190712       
-        FROM Petrovendor.dbo.MM_Pedido AS P   
---         LEFT JOIN Petrovendor.dbo.AX_Layout AXP   
+        FROM Petrovendor.dbo.MM_Pedido AS P 
 			LEFT JOIN #AX_Layout AXP
                 ON CAST(AXP.NoPedidoADINCO AS NVARCHAR(MAX)) = CAST(P.IdPedido AS NVARCHAR(MAX))   
 				AND LTRIM(RTRIM(AXP.Empresa))	=	@Bloque
@@ -338,8 +353,7 @@ SET NOCOUNT ON
             LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
                 ON RE.IdProveedor = solPed.IdProveedor   
                    AND RE.IdSubcontratista = P.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
-                --ON TP.IdTipoPedido = PO.IdTipoProceso   
+            LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP    
 				ON PSS.IdTipoPedido	=	TP.IdTipoPedido
         WHERE O.IdTipoOperacion = 9   
               AND E.IdEstatus = 2   
@@ -720,8 +734,7 @@ SET NOCOUNT ON
     END;   
    
     ---- VALIDA SI EL PROVEEDOR ES DEA   
-    ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060) AND IdContrato = @IdContrato) --DEA  
-	--IF @IdContrato = 3
+    ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060) AND IdContrato = @IdContrato) --DEA 	
     BEGIN      
         INSERT INTO @TablaDEA   
         (   
@@ -750,12 +763,17 @@ SET NOCOUNT ON
 				ELSE 'NO'
 			END AS RelacionOperadoraProveedor,
 			PRO.RazonSocial AS Proveedor,
-			TP.TipoPedido AS MecanismoContratacion,
+			CASE WHEN PDI.MECANISMO_CONTRATACION='L' THEN 
+				'Licitación' --> CTE SE PONE COMO DEFAULT YA QUE LOS PEDIDOS DE LICITACIÓN SE AGREGAN COMO MERCADEO
+			ELSE 
+				TP.TipoPedido 
+			END AS MecanismoContratacion,			
 			SP.MotivoUrgencia AS NombreContratoCP,
 			CASE	
-				WHEN RPRPO.PO IS NOT NULL THEN SUBSTRING(RPRPO.PO,CHARINDEX('45', RPRPO.PO) , 10)--00558104-ASCOP
-				--WHEN RPRPO.PO IS NOT NULL THEN SUBSTRING(SUBSTRING(RPRPO.PO,CHARINDEX('45', RPRPO.PO) , LEN(RPRPO.PO)-CHARINDEX('@', RPRPO.PO)),0,9)--00558104-ASCOP
-				ELSE ISNULL(PDI.PURCHASING_DOCUMENT,PS.IdPedido)
+				WHEN RPRPO.PO IS NOT NULL THEN 
+					SUBSTRING(RPRPO.PO,CHARINDEX('45', RPRPO.PO) , 10)				
+				ELSE 
+					ISNULL(PDI.PURCHASING_DOCUMENT,PS.IdPedido)
 			END AS NoContratoCP,
 			SP.FechaEntregaRequerida AS FechaInicio,
 			ISNULL(SP.FechaEntregaFinRequerida, SP.FechaEntregaRequerida) AS FechaFin,
@@ -794,33 +812,31 @@ SET NOCOUNT ON
 			CONVERT(VARCHAR, CON.FechaFirma, 103) AS FechaEfectiva 
 		FROM Adinco.dbo.CO_Contrato AS CON (NOLOCK)
 			JOIN Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
-				ON P.IdContrato = @IDCONTRATO AND P.IdContrato = CON.IdContrato
+				ON P.IdContrato = @IdContrato 
+				AND P.IdContrato = CON.IdContrato
 			JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD (NOLOCK) 
 				ON P.IdPedido = PD.IdPedido
 			JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP (NOLOCK) 
-				ON P.IdSolicitudPedido = SP.IdSolicitudPedido AND SP.Activo = 1
-			LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP AS PROSAP (NOLOCK)
-				ON P.IdSubContratista = PROSAP.IdProveedor
+				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
+				AND SP.Activo = 1			
 			JOIN Petrovendor.dbo.S_Proveedor AS PRO  (NOLOCK)
-				ON P.IdSubcontratista = PRO.IdProveedor
-				--Posible Error
-			--LEFT 
+				ON P.IdSubcontratista = PRO.IdProveedor				
 			JOIN Petrovendor.dbo.DEA_Relacion_PR_PO AS RPRPO (NOLOCK) 
-				ON P.IdPedido = RPRPO.IdPedido
-			LEFT JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados AS PDI (NOLOCK) 
-				ON P.IdPedido = PDI.IdPedidoADINCO
+				ON P.IdPedido = RPRPO.IdPedido			
 			JOIN Petrovendor.dbo.MM_Pedidos AS PS (NOLOCK)
-				ON P.IdPedido = PS.IdIdentificador AND PS.IdProveedorCliente = P.IdProveedorCompras
+				ON P.IdPedido = PS.IdIdentificador 
+				AND PS.IdProveedorCliente = P.IdProveedorCompras
 			JOIN Petrovendor.dbo.PV_TipoMoneda AS M (NOLOCK)
-				ON P.IdMoneda = M.IdMoneda
-			JOIN Petrovendor.dbo.MM_PeticionOferta AS PO (NOLOCK)
-				ON P.IdPeticionOferta = PO.IdPeticionOferta
+				ON P.IdMoneda = M.IdMoneda			
 			JOIN Petrovendor.dbo.MM_TipoPedido AS TP (NOLOCK)
-				ON PO.IdTipoProceso = TP.IdTipoPedido
-				AND PO.IdTipoProceso = TP.IdTipoPedido 
-				AND PO.IdTipoProceso NOT IN (6)
+				ON PS.IdTipoPedido = TP.IdTipoPedido			
+				AND PS.IdTipoPedido NOT IN (6)			
 			JOIN Adinco.dbo.CO_Contratista AS CT (NOLOCK)
 				ON CON.IdContratista = CT.IdContratista
+			LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP AS PROSAP (NOLOCK)
+				ON P.IdSubContratista = PROSAP.IdProveedor
+			LEFT JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados AS PDI (NOLOCK) 
+				ON P.IdPedido = PDI.IdPedidoADINCO
 		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
 			GROUP BY CON.NumeroContrato,
@@ -843,7 +859,9 @@ SET NOCOUNT ON
 				TP.TipoPedido,
 				CT.RazonSocial,
 				CON.FechaFirma,
-				P.IdPedido;   
+				P.IdPedido,
+				PDI.MECANISMO_CONTRATACION;   
+
   --      SELECT C.NumeroContrato,   
   --             CASE   
   --                 WHEN RE.IdRelacion IS NOT NULL THEN   
@@ -1012,16 +1030,14 @@ SET NOCOUNT ON
 		LEFT JOIN Petrovendor.dbo.S_Proveedor AS PROP (NOLOCK)
 			ON SUB.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = PROP.RFC
 		LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP AS PROSAP (NOLOCK)
-			ON PROP.IdProveedor = PROSAP.IdProveedor
-	
+			ON PROP.IdProveedor = PROSAP.IdProveedor	
 		LEFT JOIN Adinco.dbo.SC_Materiales AS SCM (NOLOCK)
 			ON SC.IdSubContrato = SCM.IdSubContrato
 		JOIN Adinco.dbo.CO_Contratista AS CT (NOLOCK)
 				ON CON.IdContratista = CT.IdContratista
 		WHERE  CONVERT(VARCHAR, SC.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
-			and SC.IsActivo= 1
-			
+			and SC.IsActivo= 1			
 		GROUP BY  CON.NumeroContrato,
 				PROSAP.IdProveedor,
 				SUB.RazonSocial,
@@ -1237,7 +1253,7 @@ SET NOCOUNT ON
         )   
         SELECT C.NumeroContrato,   
                CASE   
- WHEN RE.IdRelacion IS NOT NULL THEN   
+			   WHEN RE.IdRelacion IS NOT NULL THEN   
                        'SI'   
                    ELSE   
                        'NO'   
@@ -1282,15 +1298,8 @@ SET NOCOUNT ON
                        '#,#0.000')   
                    ELSE   
                        FORMAT(fiFact.SubTotal, '#,#0.000')   
-               END AS MontoMXN,   
-   
-               -- Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio,     
-   
-               Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio,   
-   
-   
-               --CONVERT(VARCHAR, fiFact.FechaTimbrado, 103) AS FechaTipoCambio,     
-   
+               END AS MontoMXN,
+               Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio, 
                CONVERT(VARCHAR, fiFact.FechaTimbrado, 103) AS FechaTipoCambio,   
                UPPER(ISNULL(TAO.Descripcion, '')) AS 'Comentarios',   
                UPPER(ctista.RazonSocial) AS NombreContratista,   
@@ -1356,7 +1365,7 @@ SET NOCOUNT ON
         SELECT CONCAT(c.NumeroContrato, '(', periodo.NombrePeriodo, ')'),   
                CASE   
                    WHEN RE.IdRelacion IS NOT NULL THEN   
-    'SI'   
+						'SI'   
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
@@ -1428,7 +1437,7 @@ SET NOCOUNT ON
                 ON TTO.IdTipoOperacion = O.IdTipoOperacion   
             LEFT JOIN Petrovendor.dbo.TA_Estatus AS E   
                 ON E.IdEstatus = O.IdEstatusOperacion   
-LEFT JOIN Adinco.dbo.CO_Contrato c   
+			LEFT JOIN Adinco.dbo.CO_Contrato c   
                 ON c.IdContrato = P.IdContrato   
             INNER JOIN Adinco.dbo.CO_Contratista ctista   
                 ON ctista.IdContratista = c.IdContratista   
@@ -1440,7 +1449,7 @@ LEFT JOIN Adinco.dbo.CO_Contrato c
             LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
 				/*SI ES CÁRDENAS MORA TOMAR IdTipoProceso de MM_SolicitudPedido*/ 
                 ON TP.IdTipoPedido = (CASE WHEN C.IdContratista IN (10010 ) then solPed.IdTipoProceso else  PO.IdTipoProceso END ) 
-   LEFT JOIN Adinco.dbo.CO_PeriodoContrato periodo   
+			LEFT JOIN Adinco.dbo.CO_PeriodoContrato periodo   
                 ON periodo.IdPeriodo = solPed.IdPeriodo   
         WHERE O.IdTipoOperacion = 9   
               AND E.IdEstatus = 2   

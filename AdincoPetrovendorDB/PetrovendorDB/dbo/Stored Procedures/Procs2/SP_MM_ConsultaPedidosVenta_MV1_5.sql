@@ -1,6 +1,13 @@
 ﻿USE [Petrovendor]
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaPedidosVenta_MV1_5'
+)
+    DROP PROCEDURE SP_MM_ConsultaPedidosVenta_MV1_5;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]    Script Date: 19/04/2022 02:13:44 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]    Script Date: 14/10/2022 10:29:23 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -14,18 +21,13 @@ GO
 -- Create date: 19/04/2022
 -- Description:	Se agrega a la consulta el dato del No.PO
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
     -- Add the parameters for the stored procedure here  
     @IdProveedor INT,  
-    @CONSULTA NVARCHAR(300),  
-    /*--------------------  
-    parametros contrato   
-   --------------------*/  
+    @CONSULTA NVARCHAR(300),   
     @IdContrato INT,  
     @IdUsuario INT,  
     @FechaRegistro DATETIME  
-/*--------------------  
-   --------------------*/  
   
 AS  
 BEGIN  
@@ -401,7 +403,11 @@ BEGIN
                         AND P.RecepcionServicio IS NULL THEN  
                        'En confirmación'        
                END AS EstatusRecepcion,  
-               TP.TipoPedido,  
+               CASE WHEN ISNULL(PDI.MECANISMO_CONTRATACION,'')='L' THEN 
+				'Licitación'
+			   ELSE 
+				TP.TipoPedido
+			   END AS TipoPedido,
                TP.IdTipoPedido ,
 			   ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'N/A') AS NoPO
         FROM MM_Pedido AS P  
@@ -436,6 +442,8 @@ BEGIN
 				ON P.IdPedido = WPI.IdPedidoADINCO
 			LEFT JOIN DEA_Relacion_PR_PO AS POW
 				ON P.IdPedido = POW.IdPedido
+			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9  
               AND P.IdSubcontratista = @IdProveedor  
               AND O.IdEstatusOperacion = 2  
@@ -457,7 +465,8 @@ BEGIN
                  TP.IdTipoPedido,  
 				 P.IdEstatusEliminado ,
 				 WPI.PURCHASING_DOCUMENT,
-				 POW.PO 
+				 POW.PO,
+				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;  
   
     END;  

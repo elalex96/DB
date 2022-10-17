@@ -474,7 +474,7 @@ SELECT
 		@IdSolicitudPedido,
 		9,--APROBACION DE SOLICITUD DE PEDIDO
 		@IdFlujoTarea,
-		11,--APROBADA SIN DOCUMENTO
+		2,--APROBADA
 		3,--TAREA APROBADA
 		@IdOperadora,
 		@IdUsuario,
@@ -485,6 +485,10 @@ SELECT
 	);
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
+
+	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
+	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	CreadoEl ) VALUES
+	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,			GETDATE())
 
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
