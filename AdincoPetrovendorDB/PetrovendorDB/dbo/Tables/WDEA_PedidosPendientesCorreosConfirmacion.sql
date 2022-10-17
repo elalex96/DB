@@ -8,6 +8,10 @@ CREATE TABLE WDEA_PedidosPendientesCorreosConfirmacion
 	IdSolicitudPedido int,
 	IdOperacion int,
 	IdAprobador int,
+	Purchasing_Document varchar(300),
+	IdTarea int,
+	IdPedidoActual int,
+	IdPedidoGeneral int,
 	Procesado bit,
 	CreadoEl datetime,
 	ProcesadoEl datetime
