@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 19/10/2022 02:30:16 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 19/10/2022 06:33:39 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -482,6 +482,10 @@ SELECT
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
 
+	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
+	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	CreadoEl ) VALUES
+	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,			GETDATE())
+
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
 	(
@@ -509,14 +513,6 @@ SELECT
 	);
 
 	SET @IdTarea = (SCOPE_IDENTITY());
-
-	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
-	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	
-	Purchasing_Document,	IdTarea,		IdPedidoActual,	IdPedidoGeneral,
-	CreadoEl ) VALUES
-	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,
-	RTRIM(LTRIM(@Purchasing)),			@IdTarea,		@IdPedidoActual,@IdPedidoGeneral,
-	GETDATE())
 
 	INSERT INTO TA_TareaOperacion
 	(
