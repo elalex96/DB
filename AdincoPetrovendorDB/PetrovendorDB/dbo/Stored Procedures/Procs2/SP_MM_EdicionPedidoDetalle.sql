@@ -1,14 +1,6 @@
-﻿-- ================================================
--- Template generated from Template Explorer using:
--- Create Procedure (New Menu).SQL
---
--- Use the Specify Values for Template Parameters 
--- command (Ctrl-Shift-M) to fill in the parameter 
--- values below.
---
--- This block of comments will not be included in
--- the definition of the procedure.
--- ================================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_EdicionPedidoDetalle]    Script Date: 20/10/2022 01:25:15 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,7 +10,7 @@ GO
 -- Create date: 13/10/2022
 -- Description:	actualizacion de los detalles del pedido
 -- =============================================
-ALTER PROCEDURE SP_MM_EdicionPedidoDetalle
+ALTER PROCEDURE [dbo].[SP_MM_EdicionPedidoDetalle]
 	-- Add the parameters for the stored procedure here
 	@IdPedidoDetalle INT,
 	@Cantidad FLOAT,
@@ -34,8 +26,9 @@ BEGIN
 	DECLARE @CANTIDAD_OCUPADA FLOAT = 0;
 	DECLARE @NOMBRE_PARTIDA NVARCHAR(MAX);
 	DECLARE @CANTIDAD_ACTUAL FLOAT;
-	DECLARE @PRECIO_ACTUAL FLOAT;
+	DECLARE @PRECIO_ACTUAL MONEY;
 	DECLARE @MENSAJE_BITACORA NVARCHAR(MAX);
+	DECLARE @ID_PEDIDO INT;
 
 	--ACEPTACIONES REALIZADAS
 	DECLARE @SAS_APROBADAS FLOAT = (SELECT SUM(Cantidad) 
@@ -62,7 +55,8 @@ BEGIN
 	SELECT 
 		@CANTIDAD_ACTUAL = PD.Cantidad,
 		@PRECIO_ACTUAL = PD.PrecioUnitario,
-		@NOMBRE_PARTIDA = POD.MaterialCotizadoTextoC
+		@NOMBRE_PARTIDA = POD.MaterialCotizadoTextoC,
+		@ID_PEDIDO = PD.IdPedido
 	FROM MM_PedidoDetalle AS PD
 		JOIN MM_PeticionOfertaDetalle AS POD
             ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
@@ -78,7 +72,7 @@ BEGIN
 			SET PrecioUnitario = @PrecioUnitario
 			WHERE IdPedidoDetalle = @IdPedidoDetalle;
 
-			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida ' + @NOMBRE_PARTIDA +' de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' al ' + CAST(@PrecioUnitario AS nvarchar)  + '.'; 
+			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida "' + @NOMBRE_PARTIDA +'" de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' al ' + CAST(@PrecioUnitario AS nvarchar)  + '.'; 
 		
 		END
 
@@ -95,14 +89,14 @@ BEGIN
 		IF @PRECIO_ACTUAL <> @PrecioUnitario
 		BEGIN 
 			
-			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida ' + ISNULL(@NOMBRE_PARTIDA,'') +' de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' a $' + CAST(@PrecioUnitario AS nvarchar)  + '.'; 
+			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida "' + ISNULL(@NOMBRE_PARTIDA,'') +'" de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' a $' + CAST(@PrecioUnitario AS nvarchar)  + '.'; 
 		
 		END
 
 		IF @CANTIDAD_ACTUAL <> @CANTIDAD_NUEVA
 		BEGIN 
 			
-			SET @MENSAJE_BITACORA = ISNULL(@MENSAJE_BITACORA,'') + 'Se actualizó la cantidad de la partida ' + ISNULL(@NOMBRE_PARTIDA,'') + ' de ' + CAST(@CANTIDAD_ACTUAL AS nvarchar) + ' a ' + CAST(@CANTIDAD_NUEVA AS nvarchar) + '.';
+			SET @MENSAJE_BITACORA = ISNULL(@MENSAJE_BITACORA,'') + 'Se actualizó la cantidad de la partida "' + ISNULL(@NOMBRE_PARTIDA,'') + '" de ' + CAST(@CANTIDAD_ACTUAL AS nvarchar) + ' a ' + CAST(@CANTIDAD_NUEVA AS nvarchar) + '.';
 
 		END
 
@@ -121,10 +115,9 @@ BEGIN
 	VALUES
 	(
 		@MENSAJE_BITACORA,
-		@IdPedidoDetalle,
+		@ID_PEDIDO,
 		@IdUsuario,
 		@IdContrato,
 		GETDATE()
 	);
 END
-GO
