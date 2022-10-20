@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP]    Script Date: 26/07/2022 02:55:02 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP]    Script Date: 19/10/2022 01:44:34 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +10,11 @@ GO
 -- Create date: 09/09/2021
 -- Description:	Creacion de solicitud de pedido automatica
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP] --'4500564101',17014
+-- Author:		Alexander Gomez
+-- Create date: 19/10/2022
+-- Description:	correcciones en validaciones de lineas de presupuesto
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP] --'4500564101',3315
 	-- Add the parameters for the stored procedure here
 	@Purchasing NVARCHAR(100),
 	@IdContrato INT,
@@ -59,21 +63,40 @@ BEGIN
 		@RESPUESTASOLPEDLINEAPRESUPUESTO INT,
 		@RESPUESTAOPERACION INT,
 		@RESPUESTATAREA INT,
-		@MENSAJEFINAL NVARCHAR(1000);		
+		@MENSAJEFINAL NVARCHAR(1000);	
+		
+IF @IdContrato = 10145
+BEGIN
+	
+	SET @IdInstalacion = (SELECT TOP 1
+								i.IdInstalacion
+							FROM Adinco.dbo.CO_Instalacion AS i (NOLOCK)
+							 JOIN adinco.dbo.CO_Contrato AS c (NOLOCK) ON c.IdAreaContractual = i.IdAreaContractual and c.IdContrato = @IdContrato
+							WHERE ISNULL(i.Activo,0) = 1
+							ORDER BY i.CreadoEn DESC);
 
---SE OBTIENE DEL WBS EL CENTRO DE COSTO DEL CATALOGO
-SET @WBS = (SELECT TOP 1 
-				RIGHT(WBS_ELEMENT, LEN(WBS_ELEMENT) - 11)
-			FROM dbo.WDEA_PurchasingDocumentsImportados
-			WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato);
+END
+ELSE
+BEGIN
 
-SET @WBS = (SELECT LEFT(@WBS, LEN(@WBS) - 10));
+	--SE OBTIENE DEL WBS EL CENTRO DE COSTO DEL CATALOGO
+	SET @WBS = (SELECT TOP 1 
+					RIGHT(WBS_ELEMENT, LEN(WBS_ELEMENT) - 11)
+				FROM dbo.WDEA_PurchasingDocumentsImportados
+				WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato);
 
---SE ASIGNA EL CENTRO DE COSTO
-SET @IdInstalacion = (SELECT TOP 1 
-							IdInstalacionAdinco 
-						FROM PozosSAP 
-						WHERE IdPozoSAP = CAST(@WBS AS INT));
+	SET @WBS = (SELECT LEFT(@WBS, LEN(@WBS) - 10));
+
+	--SE ASIGNA EL CENTRO DE COSTO
+	SET @IdInstalacion = (SELECT TOP 1 
+								IdInstalacionAdinco 
+							FROM PozosSAP 
+							WHERE IdPozoSAP = CAST(@WBS AS INT));
+
+END
+
+
+
 
 --SE ASIGNA LAS VARIABLES NECESARIAS PARA LA CREACION DEL PROCESO DE PROCURA
 SELECT TOP 1
@@ -220,7 +243,13 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 		PDI.NET_PRICE,
 		PDI.TERMINOS_DE_PAGO
 	FROM WDEA_PurchasingDocumentsImportados AS PDI
-	WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato;
+	WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato
+	GROUP BY PDI.IDMATERIAL,
+			PDI.ORDER_QUANTITY,
+			PDI.IDUNIDAD,
+			PDI.IDMONEDA,
+			PDI.NET_PRICE,
+			PDI.TERMINOS_DE_PAGO;
 
 	--CREACION DE LAS LINEAS DE PRESUPUESTO POR DETALLE
 	INSERT INTO dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
@@ -365,7 +394,7 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 	--INSERCION EN MM_SolicitudPedidoDetalle
 	SET @RESPUESTASOLPEDDETALLE = (SELECT COUNT(1) FROM MM_SolicitudPedidoDetalle WHERE IdSolicitudPedido = @IdSolicitudPedido);
 	--INSERCION EN MM_SolicitudPedidoDetalleLineaPresupuesto
-	SET @RESPUESTASOLPEDLINEAPRESUPUESTO = (SELECT COUNT(1) FROM MM_SolicitudPedidoDetalleLineaPresupuesto WHERE IdSolicitudPedidoDetalle IN (SELECT IdSolicitudPedido FROM MM_SolicitudPedidoDetalle WHERE IdSolicitudPedido = @IdSolicitudPedido));
+	SET @RESPUESTASOLPEDLINEAPRESUPUESTO = (SELECT COUNT(1) FROM MM_SolicitudPedidoDetalleLineaPresupuesto WHERE IdSolicitudPedidoDetalle IN (SELECT IdSolicitudPedidoDetalle FROM MM_SolicitudPedidoDetalle WHERE IdSolicitudPedido = @IdSolicitudPedido));
 	--INSERCION EN TA_Operacion
 	SET @RESPUESTAOPERACION = (SELECT COUNT(1) FROM TA_Operacion WHERE IdOperacion = @IdOperacion);
 	--INSERCION EN TA_Tarea
