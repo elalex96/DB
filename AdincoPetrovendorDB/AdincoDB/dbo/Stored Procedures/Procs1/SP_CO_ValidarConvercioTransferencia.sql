@@ -14,12 +14,12 @@ AS
          DECLARE @error VARCHAR(500)= '', @accion INT= 0, @TipoMoneda VARCHAR(50), @TipoMonedaDocumento VARCHAR(50), @Conversion NVARCHAR(MAX), @totalTransferencia MONEY, @IdDocumentoFPC INT;
          DECLARE @IdMonedaPFC INT;
          SELECT @TipoMoneda = TM.TipoMonedaCorto
-         FROM dbo.FI_Transfer T
+         FROM dbo.FI_Transfer T (NOLOCK)
               JOIN dbo.PV_TipoMoneda TM ON TM.IdMoneda = T.IdMoneda
          WHERE T.IdTransferencia = @IdTransfer;
          --==
          SELECT @totalTransferencia = ISNULL(MontoPagado, 0)
-         FROM dbo.FI_Transfer
+         FROM dbo.FI_Transfer (NOLOCK)
          WHERE IdTransferencia = @IdTransfer;
          --==
          IF(@TipoVerificacion = 0)
@@ -36,17 +36,17 @@ AS
                                              AND F.IdMoneda = 1)
                                         THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) * TCD.TipoCambio)), 4)))
                                     END AS Error
-                             FROM dbo.FI_Transfer T
-                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD ON T.FechaPago = TCD.Fecha
+                             FROM dbo.FI_Transfer T (NOLOCK)
+                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
                                                                            AND TCD.IdMoneda = 1
-                                  LEFT JOIN dbo.FI_Factura F ON F.IdFactura = @IdDocumento
+                                  LEFT JOIN dbo.FI_Factura F (NOLOCK) ON F.IdFactura = @IdDocumento
                              WHERE T.IdTransferencia = @IdTransfer
                          );
                          --==                        
                          SELECT @TipoMonedaDocumento = TM.TipoMonedaCorto, 
                                 @IdMonedaPFC = F.IdMoneda
-                         FROM dbo.FI_Factura F
-                              JOIN dbo.PV_TipoMoneda TM ON TM.IdMoneda = F.IdMoneda
+                         FROM dbo.FI_Factura F (NOLOCK)
+                              JOIN dbo.PV_TipoMoneda TM  (NOLOCK) ON TM.IdMoneda = F.IdMoneda
                          WHERE F.IdFactura = @IdDocumento;
                          --==
 
@@ -101,17 +101,17 @@ AS
                                              AND PC.IdMoneda = 1)
                                         THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) * TCD.TipoCambio)), 4)))
                                     END AS Error
-                             FROM dbo.FI_Transfer T
-                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD ON T.FechaPago = TCD.Fecha
+                             FROM dbo.FI_Transfer T (NOLOCK)
+                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
                                                                            AND TCD.IdMoneda = 1
-                                  LEFT JOIN dbo.FI_PedimentoComprobante PC ON PC.IdPedimentoComprobante = @IdDocumento
+                                  LEFT JOIN dbo.FI_PedimentoComprobante PC (NOLOCK) ON PC.IdPedimentoComprobante = @IdDocumento
                              WHERE T.IdTransferencia = @IdTransfer
                          );
                          --==
                          SELECT @TipoMonedaDocumento = TM.TipoMonedaCorto, 
                                 @IdMonedaPFC = PC.IdMoneda
-                         FROM dbo.FI_PedimentoComprobante PC
-                              JOIN dbo.PV_TipoMoneda TM ON TM.IdMoneda = PC.IdMoneda
+                         FROM dbo.FI_PedimentoComprobante PC (NOLOCK)
+                              JOIN dbo.PV_TipoMoneda TM (NOLOCK) ON TM.IdMoneda = PC.IdMoneda
                          WHERE PC.IdPedimentoComprobante = @IdDocumento;
                          --==                        
                          IF(@TipoMoneda <> @TipoMonedaDocumento)
@@ -171,8 +171,8 @@ AS
                          )
                                 SELECT F.IdFactura, 
                                        TM.TipoMonedaCorto
-                                FROM dbo.FI_Factura F
-                                     JOIN dbo.PV_TipoMoneda TM ON TM.IdMoneda = F.IdMoneda
+                                FROM dbo.FI_Factura F (NOLOCK)
+                                     JOIN dbo.PV_TipoMoneda TM (NOLOCK) ON TM.IdMoneda = F.IdMoneda
                                 WHERE F.IdFactura IN
                                 (
                                     SELECT *
@@ -193,7 +193,7 @@ AS
                          SET @IdMonedaPFC =
                          (
                              SELECT TOP 1 IdMoneda
-                             FROM dbo.FI_Factura
+                             FROM dbo.FI_Factura (NOLOCK)
                              WHERE IdFactura IN
                              (
                                  SELECT Id
@@ -213,10 +213,10 @@ AS
                                              AND F.IdMoneda = 1)
                                         THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) * TCD.TipoCambio)), 4)))
                                     END AS Error
-                             FROM dbo.FI_Transfer T
-                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD ON T.FechaPago = TCD.Fecha
+                             FROM dbo.FI_Transfer T (NOLOCK)
+                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
                                                                            AND TCD.IdMoneda = 1
-                                  LEFT JOIN dbo.FI_Factura F ON F.IdFactura = @IdDocumentoFPC
+                                  LEFT JOIN dbo.FI_Factura F (NOLOCK) ON F.IdFactura = @IdDocumentoFPC
                              WHERE T.IdTransferencia = @IdTransfer
                          );
                          --==
@@ -298,8 +298,8 @@ AS
                          )
                                 SELECT PC.IdPedimentoComprobante, 
                                        TM.TipoMonedaCorto
-                                FROM dbo.FI_PedimentoComprobante PC
-                                     JOIN dbo.PV_TipoMoneda TM ON TM.IdMoneda = PC.IdMoneda
+                                FROM dbo.FI_PedimentoComprobante PC (NOLOCK)
+                                     JOIN dbo.PV_TipoMoneda TM (NOLOCK) ON TM.IdMoneda = PC.IdMoneda
                                 WHERE PC.IdPedimentoComprobante IN
                                 (
                                     SELECT *
@@ -319,7 +319,7 @@ AS
                          SET @IdMonedaPFC =
                          (
                              SELECT TOP 1 IdMoneda
-                             FROM dbo.FI_PedimentoComprobante
+                             FROM dbo.FI_PedimentoComprobante (NOLOCK)
                              WHERE IdPedimentoComprobante IN
                              (
                                  SELECT Id
@@ -340,10 +340,10 @@ AS
                                              AND PC.IdMoneda = 1)
                                         THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) * TCD.TipoCambio)), 4)))
                                     END AS Error
-                             FROM dbo.FI_Transfer T
-                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD ON T.FechaPago = TCD.Fecha
+                             FROM dbo.FI_Transfer T (NOLOCK)
+                                  LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
                                                                            AND TCD.IdMoneda = 1
-                                  LEFT JOIN dbo.FI_PedimentoComprobante PC ON PC.IdPedimentoComprobante = @IdDocumentoFPC
+                                  LEFT JOIN dbo.FI_PedimentoComprobante PC (NOLOCK) ON PC.IdPedimentoComprobante = @IdDocumentoFPC
                              WHERE T.IdTransferencia = @IdTransfer
                          );
                          --==
