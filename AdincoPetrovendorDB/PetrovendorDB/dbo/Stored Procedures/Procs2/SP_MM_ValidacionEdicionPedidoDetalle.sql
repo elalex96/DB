@@ -1,14 +1,6 @@
-﻿-- ================================================
--- Template generated from Template Explorer using:
--- Create Procedure (New Menu).SQL
---
--- Use the Specify Values for Template Parameters 
--- command (Ctrl-Shift-M) to fill in the parameter 
--- values below.
---
--- This block of comments will not be included in
--- the definition of the procedure.
--- ================================================
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ValidacionEdicionPedido]    Script Date: 20/10/2022 01:53:12 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -16,15 +8,11 @@ GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 13/10/2022
--- Description:	validacion de los detalles del pedido
+-- Description: Validacion de edicion de pedido
 -- =============================================
-ALTER PROCEDURE SP_MM_ValidacionEdicionPedidoDetalle
+ALTER PROCEDURE [dbo].[SP_MM_ValidacionEdicionPedido]
 	-- Add the parameters for the stored procedure here
-	@IdPedidoDetalle INT,
-	@Cantidad FLOAT,
-	@PrecioUnitario FLOAT,
-	@IdUsuario INT,
-	@IdContrato INT
+	 @IdPedido INT
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -32,58 +20,54 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	DECLARE @CANTIDAD_NUEVA FLOAT = @Cantidad;
-	DECLARE @CANTIDAD_OCUPADA FLOAT = 0;
-	DECLARE @NOMBRE_PARTIDA NVARCHAR(MAX);
-	DECLARE @CANTIDAD_ACTUAL FLOAT;
-	DECLARE @PRECIO_ACTUAL FLOAT;
-	DECLARE @MENSAJE_BITACORA NVARCHAR(MAX);
+	DECLARE @PROCESOS_EN_CURSO INT = 0;
 
-	--ACEPTACIONES REALIZADAS
-	DECLARE @SAS_APROBADAS FLOAT = (SELECT SUM(Cantidad) 
-									FROM MM_AceptacionPedidoDetalle AS APD
-										JOIN MM_AceptacionPedido AS AP
-											ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
-									WHERE APD.IdPedidoDetalle = @IdPedidoDetalle 
-										AND ISNULL(AP.IdEliminado,0) = 0);--SE DESCARTAN LAS ACEPTACIONES ELIMINADAS
+	--SE OBTIENEN LA CANTIDAD DE CARTAS CN RELACIONADAS AL PEDIDO
+	DECLARE @CN INT = (SELECT
+							COUNT(ACN.IdAceptacionCartaPCN)
+						FROM MM_AceptacionCartaPCN AS ACN
+							JOIN MM_AceptacionPedido AS AP
+								ON ACN.IdAceptacionPedido = AP.IdAceptacionPedido
+							JOIN MM_Pedido AS P
+								ON AP.IdPedido = P.IdPedido
+						WHERE P.IdPedido = @IdPedido
+						GROUP BY ACN.IdAceptacionCartaPCN);
 
-	--SOLICTUDES DE ACEPTACION
-	DECLARE @SAS_PENDIENTES FLOAT = (SELECT SUM(SAPD.Cantidad) 
-										FROM MM_SolicitudAceptacionPedidoDetalle as SAPD
-											JOIN MM_SolicitudAceptacionPedido AS SAP
-												ON SAPD.IdSolicitudAceptacionPedido = SAP.IdSolicitudAceptacionPedido
-											JOIN TA_Operacion AS OP
-												ON SAP.IdSolicitudAceptacionPedido = OP.IdDocumento
-												AND OP.IdEstatusOperacion = 1 --PENDIENTES DE APROBACION
-												AND OP.IdTipoOperacion = 20
-												AND SAP.IdProveedorVenta = OP.IdProveedor
-										WHERE IdPedidoDetalle = @IdPedidoDetalle);
+	--SE OBTIENE LA CANTIDAD DE FACTURAS ASOCIADAS AL PEDIDO
+	DECLARE @FACTURAS INT = (SELECT
+								COUNT(AF.IdAceptacionFactura)
+							FROM MM_AceptacionFactura AS AF
+								JOIN MM_AceptacionPedido AS AP
+									ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+								JOIN MM_Pedido AS P
+									ON AP.IdPedido = P.IdPedido
+							WHERE P.IdPedido = @IdPedido
+							GROUP BY AF.IdAceptacionFactura);
 
-	SET @CANTIDAD_OCUPADA = (ISNULL(@SAS_APROBADAS,0) + ISNULL(@SAS_PENDIENTES,0));
+	--SE OBTIENE LA CANTIDAD DE COMPROBANTES EXTRANJEROS
+	DECLARE @COMPROBANTES INT = (SELECT
+								COUNT(AF.IdAceptacionPedidoPedimentoComprobante)
+							FROM FI_AceptacionPedido_PedimentoComprobante AS AF
+								JOIN MM_AceptacionPedido AS AP
+									ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+								JOIN MM_Pedido AS P
+									ON AP.IdPedido = P.IdPedido
+							WHERE P.IdPedido = @IdPedido
+							GROUP BY AF.IdAceptacionPedidoPedimentoComprobante);
 
-	SELECT 
-		@CANTIDAD_ACTUAL = PD.Cantidad,
-		@PRECIO_ACTUAL = PD.PrecioUnitario,
-		@NOMBRE_PARTIDA = POD.MaterialCotizadoTextoC
-	FROM MM_PedidoDetalle AS PD
-		JOIN MM_PeticionOfertaDetalle AS POD
-            ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
-	WHERE PD.IdPedidoDetalle = @IdPedidoDetalle;
+	SET @PROCESOS_EN_CURSO = ISNULL(@CN,0) + ISNULL(@FACTURAS,0) + ISNULL(@COMPROBANTES,0);
 
-
-
-	IF @CANTIDAD_NUEVA < @CANTIDAD_OCUPADA
+	IF @PROCESOS_EN_CURSO > 0
 	BEGIN
 
-		SELECT 'La cantidad que quiere cambiar no es válida, ya que este pedido tiene aceptaciones realizadas o solicitudes pendientes, debe ser mayor o igual a ' + CAST(@CANTIDAD_OCUPADA AS nvarchar) AS Error;
+		SELECT 0 AS EDICION_DISPONIBLE
 
 	END
 	ELSE
 	BEGIN
 
-		SELECT 'EDITADO' AS Error
+		SELECT 1 AS EDICION_DISPONIBLE
 
 	END
 
 END
-GO
