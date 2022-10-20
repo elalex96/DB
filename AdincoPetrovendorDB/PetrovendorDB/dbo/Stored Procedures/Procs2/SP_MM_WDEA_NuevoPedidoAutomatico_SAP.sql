@@ -1,14 +1,6 @@
 USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_WDEA_NuevoPedidoAutomatico_SAP'
-)
-    DROP PROCEDURE SP_MM_WDEA_NuevoPedidoAutomatico_SAP;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 10/10/2022 04:55:13 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 19/10/2022 06:33:39 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -26,7 +18,11 @@ GO
 -- Create date: 10/10/2022
 -- Description:	Se cambia la aprobación a "Aprobado"
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
+-- Author:		Alexander Gomez
+-- Create date: 19/10/2022
+-- Description:	Se cambia la el tiempo de confirmacion de pedido a 270 horas (30 dias)
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdPeticionOferta INT,
@@ -362,7 +358,7 @@ SELECT
         )
         VALUES
         (   @IdPedidoActual, -- IdPedido - int
-            24,  -- HorasVigencia - int
+            720,  -- HorasVigencia - int
             GETDATE()             -- FechaCreacionPedido - smalldatetime
         );
         --#Almacenar historial del tipo de cambio de la modeda actual 
@@ -474,7 +470,7 @@ SELECT
 		@IdSolicitudPedido,
 		9,--APROBACION DE SOLICITUD DE PEDIDO
 		@IdFlujoTarea,
-		2,--APROBADA
+		11,--APROBADA SIN DOCUMENTO
 		3,--TAREA APROBADA
 		@IdOperadora,
 		@IdUsuario,
@@ -485,10 +481,6 @@ SELECT
 	);
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
-
-	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
-	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	CreadoEl ) VALUES
-	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,			GETDATE())
 
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
