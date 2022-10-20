@@ -10645,6 +10645,10 @@
     <Build Include="dbo\Stored Procedures\Procs2\APP_AdministrarNotificacionDefault.sql" />
     <Build Include="dbo\Tables\APP_NotificacionesDefault.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\APP_ConsultarNotificacionDefault.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_EdicionPedidoDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidacionEdicionPedidoDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\TA_HistorialEdicionPedidoDetalle.sql" />
+    <Build Include="dbo\Tables\TA_HistorialEdicionPedidoDetalle.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />

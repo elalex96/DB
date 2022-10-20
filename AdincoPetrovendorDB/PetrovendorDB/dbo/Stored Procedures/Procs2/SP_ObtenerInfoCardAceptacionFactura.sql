@@ -1,13 +1,6 @@
 ﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_ObtenerInfoCardAceptacionFactura'
-)
-    DROP PROCEDURE SP_ObtenerInfoCardAceptacionFactura;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_ObtenerInfoCardAceptacionFactura]    Script Date: 26/04/2022 05:21:17 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_ObtenerInfoCardAceptacionFactura]    Script Date: 20/10/2022 12:16:09 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -34,7 +27,7 @@ GO
 -- Create date: 27-04-2022
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_ObtenerInfoCardAceptacionFactura]
+ALTER PROCEDURE [dbo].[SP_ObtenerInfoCardAceptacionFactura]
 @IdProveedor INT, 
 @IdAceptacionPedido INT
 AS
@@ -105,7 +98,7 @@ AS
 						LE.[Calle], ' ', LE.[NoExterior], ' ', LE.[NoInterior], ' ', LE.[Colonia], ' ', LE.[Municipio] ,
 						' ' , LE.[Estado], ' ', PAIS.Pais ) AS LugarEntrega, TD.TipoDomicilio ,
 					PG.IdPedido AS IdPedidoGeneral, PG.IdTipoPedido, TP.TipoPedido, MP.IdSolicitudPedido ,
-					sp.MotivoUrgencia, SUM ( apd.Cantidad * pd.PrecioUnitario ) AS MontoAceptacion, pd.IdMoneda ,
+					sp.MotivoUrgencia, SUM ( apd.Cantidad * ISNULL(apd.PrecioUnitario,pd.PrecioUnitario) ) AS MontoAceptacion, pd.IdMoneda ,
 					tm.TipoMonedaCorto
 		FROM		MM_AceptacionPedido AS AP (NOLOCK)
 		JOIN	MM_Pedido AS MP (NOLOCK)

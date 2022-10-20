@@ -1,11 +1,18 @@
-﻿
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5]    Script Date: 20/10/2022 12:37:23 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:	Daniel AC
 -- Create date:29-11-2019
 -- Description:	Se agrego detalle de los días de crédito y detalle de la aceptación, Add Linea presupuesto mes
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5] 
+ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5] 
 	-- Add the parameters for the stored procedure here
 @IdProveedor        INT,
 @IdAceptacionPedido INT,
@@ -29,7 +36,7 @@ BEGIN
 				Unidad						=		POD.UnidadProveedor,
 				Cantidad					=		APD.Cantidad,
 				Excedente					=		APD.Excedente, 
-				PrecioUnitario				=		PD.PrecioUnitario,
+				PrecioUnitario				=		ISNULL(APD.PrecioUnitario,PD.PrecioUnitario),
 				PCN							=		APD.PCN,
 				Moneda						=		TM.TipoMonedaCorto,
 				CantidadSolicitada			=		pd.Cantidad,
@@ -46,7 +53,8 @@ BEGIN
 															END,
 				DetalleAPD					=		CONCAT((CASE WHEN LEN(APD.Detalle)>0 THEN CONCAT(APD.Detalle,'| ') ELSE '' END)
 													,ISNULL('Instalación: ' + INS.NombreInstalacion  COLLATE Modern_Spanish_CI_AS,''),
-													ISNULL(' |Linea de presupuesto: '+dbo.Fn_RetornarMesProgramadoActividadConcat(lp.IdLineaPresupuestoMes),''))
+													ISNULL(' | Yacimiento: ' + Y.NombreYacimiento  COLLATE Modern_Spanish_CI_AS,''),
+													ISNULL(' | Linea de presupuesto: '+dbo.Fn_RetornarMesProgramadoActividadConcat(lp.IdLineaPresupuestoMes),''))
 	FROM		MM_AceptacionPedidoDetalle					APD
 	INNER JOIN	MM_AceptacionPedido							A		ON	A.IdAceptacionPedido			=	APD.IdAceptacionPedido
 	INNER JOIN	MM_PedidoDetalle							PD		ON	PD.IdPedidoDetalle				=	APD.IdPedidoDetalle
@@ -59,6 +67,8 @@ BEGIN
 																	AND APDI.IdAceptacionPedidoDetalle	=	APD.IdAceptacionPedidoDetalle
 	LEFT JOIN	Adinco.dbo.CO_Instalacion					INS		ON INS.IdInstalacion				=	APDI.IdInstalacion	
 	LEFT JOIN	Adinco.dbo.CO_LineaPresupuestoMes			lp 		ON lp.IdLineaPresupuestoMes			=	APDI.IdLineaPresupuesto	
+	LEFT JOIN Adinco..CO_Yacimiento							Y       ON INS.IdYacimiento=Y.IdYacimiento
+	--LEFT JOIN MM_SolicitudAceptacionPedidoDetalle AS S
 	WHERE		P.IdProveedorCompras						=		@IdProveedor  
 	AND			A.IdAceptacionPedido						=		@IdAceptacionPedido
 	GROUP BY 
@@ -79,7 +89,9 @@ BEGIN
 	PD.IdCondicionPago,
 	APD.Detalle,
 	INS.NombreInstalacion,
-	lp.IdLineaPresupuestoMes
+	lp.IdLineaPresupuestoMes,
+	Y.NombreYacimiento,
+	APD.PrecioUnitario
 	--order by POD.UnidadProveedor
 
 END;

@@ -1,13 +1,6 @@
 ﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'MM_ValidarCantitadesAP'
-)
-    DROP PROCEDURE MM_ValidarCantitadesAP;
 GO
-/****** Object:  StoredProcedure [dbo].[MM_ValidarCantitadesAP]    Script Date: 27/04/2022 11:52:50 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[MM_ValidarCantitadesAP]    Script Date: 20/10/2022 12:19:36 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -35,7 +28,7 @@ GO
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
 
-CREATE PROCEDURE [dbo].[MM_ValidarCantitadesAP] --10317, 258
+ALTER PROCEDURE [dbo].[MM_ValidarCantitadesAP] --10317, 258
     @IdFactura INT,
     @IdAceptacionPedido INT,
     /*--------------------parametros contrato  --------------------*/
@@ -83,7 +76,7 @@ BEGIN
 		END
 	END
 		
-	SELECT @TotalAceptacion = SUM(ap.Cantidad * pd.PrecioUnitario)
+	SELECT @TotalAceptacion = SUM(ap.Cantidad * ISNULL(AP.PrecioUnitario,pd.PrecioUnitario))
 	FROM dbo.MM_AceptacionPedidoDetalle ap (NOLOCK)
 		JOIN dbo.MM_PedidoDetalle pd (NOLOCK)
 			ON ap.IdPedidoDetalle = pd.IdPedidoDetalle  
