@@ -482,10 +482,6 @@ SELECT
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
 
-	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
-	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	CreadoEl ) VALUES
-	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,			GETDATE())
-
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
 	(
@@ -513,6 +509,14 @@ SELECT
 	);
 
 	SET @IdTarea = (SCOPE_IDENTITY());
+
+	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
+	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	
+	Purchasing_Document,	IdTarea,		IdPedidoActual,	IdPedidoGeneral,
+	CreadoEl ) VALUES
+	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,
+	RTRIM(LTRIM(@Purchasing)),			@IdTarea,		@IdPedidoActual,@IdPedidoGeneral,
+	GETDATE())
 
 	INSERT INTO TA_TareaOperacion
 	(
