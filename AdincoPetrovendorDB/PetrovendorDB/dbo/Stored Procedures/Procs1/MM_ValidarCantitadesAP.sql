@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 /****** Object:  StoredProcedure [dbo].[MM_ValidarCantitadesAP]    Script Date: 20/10/2022 12:19:36 p. m. ******/
 SET ANSI_NULLS ON
