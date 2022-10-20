@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_EdicionPedidoDetalle]    Script Date: 20/10/2022 01:25:15 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_EdicionPedidoDetalle]    Script Date: 20/10/2022 05:20:08 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -27,6 +27,7 @@ BEGIN
 	DECLARE @NOMBRE_PARTIDA NVARCHAR(MAX);
 	DECLARE @CANTIDAD_ACTUAL FLOAT;
 	DECLARE @PRECIO_ACTUAL MONEY;
+	DECLARE @PRECIO_NUEVO MONEY = @PrecioUnitario;
 	DECLARE @MENSAJE_BITACORA NVARCHAR(MAX);
 	DECLARE @ID_PEDIDO INT;
 
@@ -69,10 +70,11 @@ BEGIN
 		BEGIN 
 			
 			UPDATE MM_PedidoDetalle
-			SET PrecioUnitario = @PrecioUnitario
+			SET PrecioUnitario = @PRECIO_NUEVO,
+				Subtotal = (Cantidad * @CANTIDAD_NUEVA)
 			WHERE IdPedidoDetalle = @IdPedidoDetalle;
 
-			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida "' + @NOMBRE_PARTIDA +'" de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' al ' + CAST(@PrecioUnitario AS nvarchar)  + '.'; 
+			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida "' + @NOMBRE_PARTIDA +'" de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' al ' + CAST(@PRECIO_NUEVO AS nvarchar)  + '.'; 
 		
 		END
 
@@ -89,7 +91,7 @@ BEGIN
 		IF @PRECIO_ACTUAL <> @PrecioUnitario
 		BEGIN 
 			
-			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida "' + ISNULL(@NOMBRE_PARTIDA,'') +'" de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' a $' + CAST(@PrecioUnitario AS nvarchar)  + '.'; 
+			SET @MENSAJE_BITACORA = 'Se actualizó el precio unitario de la partida "' + ISNULL(@NOMBRE_PARTIDA,'') +'" de $' + CAST(@PRECIO_ACTUAL AS nvarchar) + ' a $' + CAST(@PRECIO_NUEVO AS nvarchar)  + '.'; 
 		
 		END
 
