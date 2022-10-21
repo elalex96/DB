@@ -6,12 +6,12 @@
 @cvTipoDocumento       INT, 
 @Suma                  MONEY, 
 @TipoVerificacion      INT, 
-@CadenaIdentifacadores VARCHAR(MAX), 
+@CadenaIdentifacadores VARCHAR(5000), 
 @IdContrato            INT, 
 @IdUsuario             INT
 AS
      BEGIN
-         DECLARE @error VARCHAR(500)= '', @accion INT= 0, @TipoMoneda VARCHAR(50), @TipoMonedaDocumento VARCHAR(50), @Conversion NVARCHAR(MAX), @totalTransferencia MONEY, @IdDocumentoFPC INT;
+         DECLARE @error VARCHAR(500)= '', @accion INT= 0, @TipoMoneda VARCHAR(50), @TipoMonedaDocumento VARCHAR(50), @Conversion VARCHAR(5000), @totalTransferencia MONEY, @IdDocumentoFPC INT;
          DECLARE @IdMonedaPFC INT;
          SELECT @TipoMoneda = TM.TipoMonedaCorto
          FROM dbo.FI_Transfer T (NOLOCK)
@@ -31,10 +31,10 @@ AS
                              SELECT CASE
                                         WHEN(T.IdMoneda = 1
                                              AND F.IdMoneda = 2)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) / TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) / TCD.TipoCambio)), 4)))
                                         WHEN(T.IdMoneda = 2
                                              AND F.IdMoneda = 1)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) * TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) * TCD.TipoCambio)), 4)))
                                     END AS Error
                              FROM dbo.FI_Transfer T (NOLOCK)
                                   LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
@@ -96,10 +96,10 @@ AS
                              SELECT CASE
                                         WHEN(T.IdMoneda = 1
                                              AND PC.IdMoneda = 2)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) / TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) / TCD.TipoCambio)), 4)))
                                         WHEN(T.IdMoneda = 2
                                              AND PC.IdMoneda = 1)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) * TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @MontoPagado) * TCD.TipoCambio)), 4)))
                                     END AS Error
                              FROM dbo.FI_Transfer T (NOLOCK)
                                   LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
@@ -160,7 +160,7 @@ AS
                  --==
                  CREATE TABLE #DatosPCF
                  (Id       INT, 
-                  IdMoneda NVARCHAR(MAX)
+                  IdMoneda VARCHAR(5000)
                  );
                  --==
                  IF(@cvTipoDocumento = 1)
@@ -208,10 +208,10 @@ AS
                              SELECT CASE
                                         WHEN(T.IdMoneda = 1
                                              AND F.IdMoneda = 2)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) / TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) / TCD.TipoCambio)), 4)))
                                         WHEN(T.IdMoneda = 2
                                              AND F.IdMoneda = 1)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) * TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) * TCD.TipoCambio)), 4)))
                                     END AS Error
                              FROM dbo.FI_Transfer T (NOLOCK)
                                   LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
@@ -281,7 +281,7 @@ AS
                                          SET @error = @error+CONCAT('No es posible ligar las facturas ', STUFF(
                                          (
                                              SELECT DISTINCT 
-                                                    ', '+CONVERT(NVARCHAR(MAX), tempo.Id)
+                                                    ', '+CONVERT(VARCHAR(5000), tempo.Id)
                                              FROM #DatosPCF tempo FOR XML PATH('')
                                          ), 1, 2, ''), ' ya que el monto total a registrar es de ', @Suma, ' excede el total de la transferencia de ', @totalTransferencia, '.');
                                          SET @Accion = 1;
@@ -335,10 +335,10 @@ AS
                              SELECT CASE
                                         WHEN(T.IdMoneda = 1
                                              AND PC.IdMoneda = 2)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) / TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) / TCD.TipoCambio)), 4)))
                                         WHEN(T.IdMoneda = 2
                                              AND PC.IdMoneda = 1)
-                                        THEN(CONVERT(NVARCHAR(MAX), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) * TCD.TipoCambio)), 4)))
+                                        THEN(CONVERT(VARCHAR(5000), ROUND(CONVERT(DECIMAL(12, 4), (CONVERT(DECIMAL(12, 4), @Suma) * TCD.TipoCambio)), 4)))
                                     END AS Error
                              FROM dbo.FI_Transfer T (NOLOCK)
                                   LEFT JOIN dbo.CO_TipoCambioDiario TCD (NOLOCK) ON T.FechaPago = TCD.Fecha
@@ -408,7 +408,7 @@ AS
                                          SET @error = @error+CONCAT('No es posible ligar los pedimentos o comprobantes ', STUFF(
                                          (
                                              SELECT DISTINCT 
-                                                    ', '+CONVERT(NVARCHAR(MAX), tempo.Id)
+                                                    ', '+CONVERT(VARCHAR(5000), tempo.Id)
                                              FROM #DatosPCF tempo FOR XML PATH('')
                                          ), 1, 2, ''), ' ya que el monto total de estas es de ', @Suma, ' excede el total de la transferencia de ', @totalTransferencia, '.');
                                          SET @Accion = 1;
