@@ -114,7 +114,7 @@ BEGIN
 		IF @PROCESOS_EN_CURSO > 0
 		BEGIN
 
-			SELECT 'Este pedido ya no es editable, recarga la pantalla.'
+			SELECT 'Este pedido ya no es editable, recarga la pantalla.' AS Error
 
 		END
 		ELSE
