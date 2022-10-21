@@ -21,8 +21,8 @@ AS
                 aws.UUIDAmazon, 
                 aws.NombreArchivo, 
                 aws.Meta
-         FROM FI_Transfer T
-              LEFT JOIN AWS_Documentos aws ON aws.AWSDocumentoId = t.AWSPDFId
+         FROM FI_Transfer T (NOLOCK)
+              LEFT JOIN AWS_Documentos aws (NOLOCK) ON aws.AWSDocumentoId = t.AWSPDFId
          WHERE T.IdTransferencia = @IdTran;
 
          --exec SP_FI_ViewPdfTransfer 650
