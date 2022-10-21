@@ -1,7 +1,16 @@
-﻿-- =============================================
+use adinco
+go
+drop procedure if exists sp_GeneraFechasProcesosGuarda
+go
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:    Reyna Olvera
 -- Create date: 20181023
 -- Description:  Guarda Procesos EntregablesIntancias
+-- =============================================
+-- Author:    LUIS DAVID
+-- Create date: 20/10/2022
+-- Description:  Se recibe como parámetro la etapa para crear el proceso
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_GeneraFechasProcesosGuarda] --3,10061,1,'2020-03-27',12778,'CALCULO PROCESO PRUEBA',0,0
 @idContrato int,
@@ -11,7 +20,8 @@ CREATE PROCEDURE [dbo].[sp_GeneraFechasProcesosGuarda] --3,10061,1,'2020-03-27',
 @idProceso int,
 @DescripcionProcesoCalculo nvarchar(150),
 @idInstanciaProcesoExistente int,
-@IdInstalacion int
+@IdInstalacion int,
+@IdEtapa int
 AS  
 BEGIN
   SET NOCOUNT ON;
@@ -142,14 +152,15 @@ BEGIN
       SET	@NombreProceso	=	@NombreProceso	+	'-'	+	@NombreInstalacion;
 
       --SE GUARDA EL PROCESO
-      EXEC	[sp_EN_GuardaProcesos]	@idContrato,
-									@idUsuario,
-									@NombreProceso,
-									@Descripcion,
-									10000,
-									@IdInstalacion,
-									@IsProcesoEvento,
-									@IsSerie;
+      EXEC	[sp_EN_GuardaProcesos]	@idContrato = @idContrato,
+									@idUsuario = @idUsuario,
+									@NombreProceso = @NombreProceso,
+									@Descripcion = @Descripcion,
+									@idTipoProceso = 10000,
+									@IdInstalacion = @IdInstalacion,
+									@IsProcesoEvento = @IsProcesoEvento,
+									@isSerie = @IsSerie,
+									@EtapaPozoId = @IdEtapa;
 
 
       SELECT	@IdProcesoTemp	=	ISNULL(P.IdProceso, 0)
@@ -449,6 +460,7 @@ BEGIN
 
 
             INSERT INTO EN_InstanciasEntregable (FechasLimiteElaboracion,FechasLimiteRevision,FechasLimiteAprobacion,FechaEnvioMensajeAtrasoRevision,idFrecuencua,IdContratoEntregable,ActividadID,CorreoEnviado,CreadoPor,CreadoEn,ModificadoPor,ModificadoEn,
+
 
 Activo,FechaCalculadaEntregaReg,ContieneAjusteFechas,BitContieneAcuse)
               SELECT	NULL,
@@ -911,5 +923,3 @@ Activo,FechaCalculadaEntregaReg,ContieneAjusteFechas,BitContieneAcuse)
   END
 
 END;
-
-
