@@ -37,20 +37,20 @@ BEGIN
            AP_Usuario.Nombre AS CreadoPor,
            FI_PedimentoComprobante.CreadoEn,
            FI_TransferFactura.MontoPagado AS MontoPagado
-    FROM FI_PedimentoComprobante
-        LEFT JOIN FI_PedimentoComprobanteDetalle
+    FROM FI_PedimentoComprobante (NOLOCK)
+        INNER JOIN FI_PedimentoComprobanteDetalle
             ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
-        LEFT JOIN PV_Subcontratista
+        LEFT JOIN PV_Subcontratista(NOLOCK)
             ON FI_PedimentoComprobante.IdSubcontratistaImportador = PV_Subcontratista.IdSubcontratista
-        LEFT JOIN PV_Subcontratista PV_Subcontratista_SubcontratistaExportador
+        LEFT JOIN PV_Subcontratista PV_Subcontratista_SubcontratistaExportador(NOLOCK)
             ON FI_PedimentoComprobante.IdSubcontratistaExportador = PV_Subcontratista_SubcontratistaExportador.IdSubcontratista
-        LEFT JOIN PV_TipoMoneda
+        LEFT JOIN PV_TipoMoneda(NOLOCK)
             ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
-        LEFT JOIN AP_Usuario
+        LEFT JOIN AP_Usuario(NOLOCK)
             ON FI_PedimentoComprobante.CreadoPor = AP_Usuario.UsuarioID
-        LEFT JOIN FI_ClavesPedimento
+        LEFT JOIN FI_ClavesPedimento(NOLOCK)
             ON FI_PedimentoComprobante.ClavePedimento = FI_ClavesPedimento.IdPedimento
-        LEFT JOIN FI_TransferFactura
+        LEFT JOIN FI_TransferFactura(NOLOCK)
             ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante
                AND (
                        FI_TransferFactura.IdTransferFactura IS NULL
