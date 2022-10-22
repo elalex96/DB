@@ -10649,6 +10649,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidacionEdicionPedidoDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\TA_HistorialEdicionPedidoDetalle.sql" />
     <Build Include="dbo\Tables\TA_HistorialEdicionPedidoDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_DEA_ValidarProveedorRol.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Stored Procedures\Procs1\AD_SP_UsuariosRolAprobacionxTipoAprobacion.sql" />
