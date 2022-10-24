@@ -1,13 +1,11 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 01/10/2022 09:29:54 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 24/10/2022 02:39:44 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-DROP PROCEDURE IF EXISTS SP_Ins_WDEA_Bitacora_AdincoSAP
-GO
-CREATE proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
+ALTER proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
 (
 	@IdBitacoraLectura		int
 )
@@ -200,7 +198,7 @@ BEGIN TRY
 				x						=	substring(WBS_Element,20,10),
 				MecanismoContratacion = LTRIM(RTRIM(Mecanismo_de_Contratacion))
 		from	WDEA_Layout_T
-		where	IdBitacoraLectura	=	@IdBitacoraLectura	--CreadoEL	< @fecha --'2021-09-06'
+		where	IdBitacoraLectura	=	@IdBitacoraLectura
 	
 		--	/*Validaciones*/
 
@@ -247,10 +245,10 @@ BEGIN TRY
 					ON WBS.Id = WLP.IdWBS AND WLP.Activo = 1
 					AND PO.IdContrato = WLP.IdContrato
 				WHERE 
-				DWL.Purch_Organization != 'MCY' 
-				AND WBS.Id Is null
+				(WBS.Id Is null
 				OR WLP.Id is null
-				OR PO.IdContrato IS NULL
+				OR PO.IdContrato IS NULL)
+				AND PO.IdContrato != 10145
 				GROUP BY DWL.Purchasing_Document,DWL.ID;
 			
 			/*******************/
