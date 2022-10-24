@@ -1,8 +1,11 @@
-use Petrovendor
-go
-drop procedure if exists SP_ObtenerInfoCardAceptacionComprobanteExtranjero
-go
-CREATE PROC SP_ObtenerInfoCardAceptacionComprobanteExtranjero
+USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ObtenerInfoCardAceptacionComprobanteExtranjero]    Script Date: 20/10/2022 12:21:29 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROC [dbo].[SP_ObtenerInfoCardAceptacionComprobanteExtranjero]
 @IdProveedor INT, 
 @IdAceptacionPedido INT
 AS
@@ -57,9 +60,8 @@ BEGIN
 						LE.[Calle], ' ', LE.[NoExterior], ' ', LE.[NoInterior], ' ', LE.[Colonia], ' ', LE.[Municipio] ,
 						' ' , LE.[Estado], ' ', PAIS.Pais ) AS LugarEntrega, TD.TipoDomicilio ,
 					PG.IdPedido AS IdPedidoGeneral, PG.IdTipoPedido, TP.TipoPedido, MP.IdSolicitudPedido ,
-					sp.MotivoUrgencia, SUM ( apd.Cantidad * pd.PrecioUnitario ) AS MontoAceptacion, pd.IdMoneda ,
-					tm.TipoMonedaCorto, O.IdEstatusOperacion, E.Nombre
-
+					sp.MotivoUrgencia, SUM ( apd.Cantidad * ISNULL(APD.PrecioUnitario,pd.PrecioUnitario) ) AS MontoAceptacion, pd.IdMoneda ,
+					tm.TipoMonedaCorto, T.IdEstatus, E.Nombre
 		FROM		MM_AceptacionPedido AS AP (NOLOCK)
 		JOIN	MM_Pedido AS MP (NOLOCK)
 			ON  AP.IdPedido = MP.IdPedido 

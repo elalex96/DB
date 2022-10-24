@@ -1,6 +1,9 @@
-USE Petrovendor
+USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SRAP_ConsultaDetalleSolicitudRecepcion
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]    Script Date: 20/10/2022 05:13:02 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -11,7 +14,7 @@ GO
 -- Create date: 20/07/2022
 -- Description:	Se agrega el comentario de aprobación y rechazo para issue #1933(Petrovendor)
 -- =============================================
-CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]  
+ALTER PROCEDURE [dbo].[SRAP_ConsultaDetalleSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdPedido    INT,
@@ -146,6 +149,19 @@ AS
 		WHERE P.IdSubcontratista = @IdProveedor 		
 		AND P.IdPedido = @IdPedido
 		AND SAPD.IdSolicitudAceptacionPedido= @IdSolicitudAceptacionPedido
+		GROUP BY PD.IdPedidoDetalle,
+		PD.IdMaterialVendedor,
+		M.Descripcioncorta,
+		M.DescripcionLarga,
+		PD.Cantidad,
+		PD.PrecioUnitario,
+		PD.Subtotal, 
+		SAPD.Cantidad, 		
+		TM.TipoMonedaCorto,		
+		ISNULL(PD.RecepcionPedido,'false'),		
+		PD.RecepcionPedido,
+		POD.UnidadProveedor,
+		ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,POW.PO),'SIN PO RELACIONADO')
 		ORDER BY M.Descripcioncorta ASC
 
 		 /*TABLA DE DOCUMENTOS*/

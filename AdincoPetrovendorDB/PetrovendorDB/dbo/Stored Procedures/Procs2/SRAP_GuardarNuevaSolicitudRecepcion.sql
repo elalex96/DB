@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_GuardarNuevaSolicitudRecepcion]    Script Date: 02/05/2022 07:09:47 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_GuardarNuevaSolicitudRecepcion]    Script Date: 20/10/2022 12:30:32 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -24,6 +24,11 @@ GO
 -- Author:		Luis David 
 -- Create date: 005/09/2022
 -- Description:	Eliminado temporal de la primera aprobacion de aceptacion de pedido
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 12/10/2022
+-- Description:	Se agrega el precio unitario cuando se realiza la solicitud de servicio
 -- =============================================
 ALTER PROCEDURE [dbo].[SRAP_GuardarNuevaSolicitudRecepcion] 
 	-- Add the parameters for the stored procedure here
@@ -55,7 +60,8 @@ AS
 	CantidadAceptada float,
 	CantidadProcesada float,
 	CantidadRestante float,
-	ValidacionExitosa bit)
+	ValidacionExitosa bit,
+	PrecioUnitario FLOAT)
 
 	DECLARE @tbPedidoDetalleEnAprobacion AS TABLE 
 	(IdPedidoDetalle INT,	
@@ -76,7 +82,7 @@ AS
 	DECLARE @NombreContrato NVARCHAR(MAX)
 
 	    /*1. OBTENER LAS REFERENCIAS DE LOS PRODUCTOS A ENTREGAR*/
-		INSERT INTO @tbPedidoDetalle(IdPedidoDetalle,CantidadPedido,CantidadRecepcionar,CantidadAceptada,CantidadEnAprobacion,CantidadProcesada,CantidadRestante,ValidacionExitosa)
+		INSERT INTO @tbPedidoDetalle(IdPedidoDetalle,CantidadPedido,CantidadRecepcionar,CantidadAceptada,CantidadEnAprobacion,CantidadProcesada,CantidadRestante,ValidacionExitosa,PrecioUnitario)
 		SELECT 
 		IdPedidoDetalle = PD.IdPedidoDetalle,		
 		CantidadPedido= PD.Cantidad,
@@ -85,7 +91,8 @@ AS
 		CantidadEnAprobacion= 0,
 		CantidadProcesada= 0,
 		CantidadRestante =0,
-		ValidacionExitosa = 0
+		ValidacionExitosa = 0,
+		PD.PrecioUnitario
 		FROM MM_Pedido AS P
 		JOIN MM_PedidoDetalle AS PD ON P.IdPedido = PD.IdPedido 
 		JOIN @tbPedidoDetalleAceptacion AS tbAP
@@ -187,8 +194,8 @@ AS
 
 	   SET @IdSolicitudAceptacionPedido = (SELECT SCOPE_IDENTITY())
 
-	   INSERT INTO MM_SolicitudAceptacionPedidoDetalle(IdSolicitudAceptacionPedido,IdPedidoDetalle,Cantidad,CreadoPor,CreadoEl)
-	   SELECT @IdSolicitudAceptacionPedido,PD.IdPedidoDetalle, PD.CantidadRecepcionar, @UsuarioId,GETDATE()
+	   INSERT INTO MM_SolicitudAceptacionPedidoDetalle(IdSolicitudAceptacionPedido,IdPedidoDetalle,Cantidad,CreadoPor,CreadoEl,PrecioUnitario)
+	   SELECT @IdSolicitudAceptacionPedido,PD.IdPedidoDetalle, PD.CantidadRecepcionar, @UsuarioId,GETDATE(),PD.PrecioUnitario
 	   FROM @tbPedidoDetalle PD
 	   END
 

@@ -1,13 +1,6 @@
-﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_ConsultaPedidosVenta_MV1_5'
-)
-    DROP PROCEDURE SP_MM_ConsultaPedidosVenta_MV1_5;
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]    Script Date: 14/10/2022 10:29:23 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]    Script Date: 20/10/2022 05:16:25 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -21,7 +14,7 @@ GO
 -- Create date: 19/04/2022
 -- Description:	Se agrega a la consulta el dato del No.PO
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
+ALTER PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
     -- Add the parameters for the stored procedure here  
     @IdProveedor INT,  
     @CONSULTA NVARCHAR(300),   
@@ -36,12 +29,41 @@ BEGIN
     SET NOCOUNT ON;  
   
     -- Insert statements for procedure here  
+	CREATE TABLE #PEDIDOS (
+		IdPedido INT,  
+        FechaPedido DATETIME,  
+        SubTotal MONEY,  
+        Cliente VARCHAR(500),  
+        Version FLOAT,  
+        FechaVigencia DATETIME,  
+        IdProveedorCompras INT,  
+        IdPedidoGeneral INT,  
+        Moneda NVARCHAR(50),  
+        EstatusRecepcion NVARCHAR(200),  
+        TipoPedido NVARCHAR(200),
+        IdTipoPedido INT,
+		NoPO NVARCHAR(100)
+	);
+
   
     IF @CONSULTA = 'CONFIRMACION'  
     BEGIN  
+		INSERT INTO #PEDIDOS (
+			IdPedido,
+			FechaPedido,
+			SubTotal,
+			Cliente,
+			Version,
+			FechaVigencia,
+			IdProveedorCompras,
+			IdPedidoGeneral,
+			Moneda,
+			TipoPedido,
+			IdTipoPedido
+		)
         SELECT P.IdPedido,  
                P.FechaEnvioPedido AS FechaPedido,  
-               SUM(PD.Subtotal) AS TotalPedido,  
+               PD.Subtotal AS TotalPedido,  
                PV.RazonSocial  AS Cliente,  
                Version,  
                [FechaVigencia],  
@@ -100,15 +122,30 @@ BEGIN
                  PG.IdPedido,  
                  TM.TipoMonedaCorto,  
                  TP.TipoPedido,  
-                 TP.IdTipoPedido  
+                 TP.IdTipoPedido,
+				 PD.Subtotal
         ORDER BY PG.IdPedido DESC;  
     END;  
      
     IF @CONSULTA = 'CONFIRMADOS'  
     BEGIN  
+		
+		INSERT INTO #PEDIDOS (
+			IdPedido,
+			FechaPedido,
+			SubTotal,
+			Cliente,
+			Version,
+			FechaVigencia,
+			IdProveedorCompras,
+			IdPedidoGeneral,
+			Moneda,
+			TipoPedido,
+			IdTipoPedido
+		)
         SELECT P.IdPedido,  
                P.FechaEnvioPedido AS FechaPedido,  
-               SUM(PD.Subtotal) AS TotalPedido,  
+               PD.Subtotal AS TotalPedido,  
                RazonSocial  AS Cliente,  
                Version,  
                [FechaVigencia],  
@@ -163,15 +200,30 @@ BEGIN
                  PG.IdPedido,  
                  TM.TipoMonedaCorto,  
                  TP.TipoPedido,  
-                 TP.IdTipoPedido  
+                 TP.IdTipoPedido ,
+				 PD.Subtotal
         ORDER BY PG.IdPedido DESC;  
     END;  
   
     IF @CONSULTA = 'VENCIDOS'  
     BEGIN  
+		
+		INSERT INTO #PEDIDOS (
+			IdPedido,
+			FechaPedido,
+			SubTotal,
+			Cliente,
+			Version,
+			FechaVigencia,
+			IdProveedorCompras,
+			IdPedidoGeneral,
+			Moneda,
+			TipoPedido,
+			IdTipoPedido
+		)
         SELECT P.IdPedido,  
                P.FechaEnvioPedido AS FechaPedido,  
-               SUM(PD.Subtotal) AS TotalPedido,  
+               PD.Subtotal AS TotalPedido,  
                RazonSocial  AS Cliente,  
                Version,  
                [FechaVigencia],  
@@ -228,16 +280,31 @@ BEGIN
                  PG.IdPedido,  
                  TM.TipoMonedaCorto,  
                  TP.TipoPedido,  
-                 TP.IdTipoPedido  
+                 TP.IdTipoPedido  ,
+				 PD.Subtotal
         ORDER BY PG.IdPedido DESC;  
     END;  
   
   
     IF @CONSULTA = 'RECHAZADOS'  
     BEGIN  
+		
+		INSERT INTO #PEDIDOS (
+			IdPedido,
+			FechaPedido,
+			SubTotal,
+			Cliente,
+			Version,
+			FechaVigencia,
+			IdProveedorCompras,
+			IdPedidoGeneral,
+			Moneda,
+			TipoPedido,
+			IdTipoPedido
+		)
         SELECT P.IdPedido,  
                P.FechaEnvioPedido AS FechaPedido,  
-               SUM(PD.Subtotal) AS TotalPedido,  
+               PD.Subtotal AS TotalPedido,  
                RazonSocial  AS Cliente,  
                Version,  
                [FechaVigencia],  
@@ -292,7 +359,8 @@ BEGIN
             PG.IdPedido,  
                  TM.TipoMonedaCorto,  
                  TP.TipoPedido,  
-                 TP.IdTipoPedido  
+                 TP.IdTipoPedido  ,
+				 PD.Subtotal
         ORDER BY PG.IdPedido DESC;  
     END;  
     ---#NOTA ---  
@@ -304,9 +372,24 @@ BEGIN
   
  IF @CONSULTA = 'CERRADOS'  
     BEGIN  
+		
+		INSERT INTO #PEDIDOS (
+			IdPedido,
+			FechaPedido,
+			SubTotal,
+			Cliente,
+			Version,
+			FechaVigencia,
+			IdProveedorCompras,
+			IdPedidoGeneral,
+			Moneda,
+			EstatusRecepcion,
+			TipoPedido,
+			IdTipoPedido
+		)
         SELECT P.IdPedido,  
                P.FechaEnvioPedido AS FechaPedido,  
-               SUM(PD.Subtotal) AS TotalPedido,  
+               PD.Subtotal AS TotalPedido,  
                RazonSocial AS Cliente,  
                Version,  
                [FechaVigencia],  
@@ -375,16 +458,33 @@ BEGIN
                  P.RecepcionServicio,  
                  TP.TipoPedido,  
                  TP.IdTipoPedido,  
-     P.IdEstatusEliminado  
+     P.IdEstatusEliminado  ,
+	 PD.Subtotal
         ORDER BY PG.IdPedido DESC;  
   
     END;  
   
     IF @CONSULTA = 'TODOS'  
     BEGIN  
+
+		INSERT INTO #PEDIDOS (
+			IdPedido,
+			FechaPedido,
+			SubTotal,
+			Cliente,
+			Version,
+			FechaVigencia,
+			IdProveedorCompras,
+			IdPedidoGeneral,
+			Moneda,
+			EstatusRecepcion,
+			TipoPedido,
+			IdTipoPedido,
+			NoPO
+		)
         SELECT P.IdPedido,  
                P.FechaEnvioPedido AS FechaPedido,  
-               SUM(PD.Subtotal) AS TotalPedido,  
+               PD.Subtotal AS TotalPedido,  
                RazonSocial AS Cliente,  
                Version,  
                [FechaVigencia],  
@@ -466,10 +566,39 @@ BEGIN
 				 P.IdEstatusEliminado ,
 				 WPI.PURCHASING_DOCUMENT,
 				 POW.PO,
-				 PDI.MECANISMO_CONTRATACION
+				 PDI.MECANISMO_CONTRATACION,
+				 PD.Subtotal
         ORDER BY PG.IdPedido DESC;  
   
     END;  
+
+	SELECT 
+		IdPedido,
+		FechaPedido,
+		SUM(SubTotal) AS TotalPedido,
+		Cliente,
+		Version,
+		FechaVigencia,
+		IdProveedorCompras,
+		IdPedidoGeneral,
+		Moneda,
+		EstatusRecepcion,
+		TipoPedido,
+		IdTipoPedido,
+		NoPO
+	FROM #PEDIDOS
+	GROUP BY IdPedido,
+		FechaPedido,
+		Cliente,
+		Version,
+		FechaVigencia,
+		IdProveedorCompras,
+		IdPedidoGeneral,
+		Moneda,
+		TipoPedido,
+		EstatusRecepcion,
+		NoPO,
+		IdTipoPedido;
   
 END;  
   

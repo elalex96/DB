@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 18/05/2022 04:53:20 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 20/10/2022 12:23:40 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -27,6 +27,11 @@ GO
 -- Author:  Alexander Gomez  
 -- Create date: 18/05/2022
 -- Description: truncado a 3 digitos sin redondeo del PCN segun la SE Y optimizacion
+-- =============================================
+-- =============================================  
+-- Author:  Alexander Gomez  
+-- Create date: 18/10/2022
+-- Description: se establece que el valor facturado es el valor guardado en la aceptacion, si este monto no existe se toma el del pedido (WDEA)
 -- =============================================
 ALTER PROCEDURE [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]  
 @IdAceptacionPedidoDetalle int
@@ -77,12 +82,12 @@ BEGIN
 						(
 							SELECT TipoCambio FROM dbo.GetTipoCambioActual(@IdMonedaNacional, DATEADD(DAY,-1,GETDATE()))
 						)
-							) * PD.PrecioUnitario
+							) * ISNULL(APD.PrecioUnitario,PD.PrecioUnitario)
 					) * (APD.Cantidad),
 					4
 				)
 			ELSE   
-			 (ISNULL(PD.PrecioUnitario,0)* ISNULL(APD.Cantidad,0))  
+			 (ISNULL(APD.PrecioUnitario,ISNULL(PD.PrecioUnitario,0))* ISNULL(APD.Cantidad,0))  
 			END)
 			FROM dbo.MM_AceptacionPedidoDetalle APD
 				JOIN dbo.MM_PedidoDetalle PD 

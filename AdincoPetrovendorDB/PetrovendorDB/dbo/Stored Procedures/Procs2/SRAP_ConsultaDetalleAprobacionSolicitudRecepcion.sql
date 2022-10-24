@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 26/07/2022 09:48:27 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]    Script Date: 20/10/2022 12:35:19 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -120,7 +120,7 @@ AS
 					case when dbo.fnGetValidacionCantidadMateriales(PD.IdPedidoDetalle,@IdPedido,SAPD.Cantidad) = 'CANTIDAD_VALIDA'
 					then '' else 'bgcolor="#ff685d"'
 					end,
-					(PD.PrecioUnitario * SAPD.Cantidad)
+					(ISNULL(SAPD.PrecioUnitario,PD.PrecioUnitario) * SAPD.Cantidad)
 		FROM		MM_SolicitudAceptacionPedidoDetalle SAPD 		(NOLOCK)
 		JOIN		MM_PedidoDetalle					PD (NOLOCK)
 		ON			SAPD.IdPedidoDetalle				=	PD.IdPedidoDetalle

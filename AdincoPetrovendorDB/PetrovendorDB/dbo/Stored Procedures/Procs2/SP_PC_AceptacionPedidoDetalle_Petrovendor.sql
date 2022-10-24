@@ -1,9 +1,16 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PC_AceptacionPedidoDetalle_Petrovendor]    Script Date: 19/10/2022 11:13:50 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 27-03-18
 -- Description:	Detalle de materiales que fueron aceptado en la aceptación de pedido
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PC_AceptacionPedidoDetalle_Petrovendor] 
+ALTER PROCEDURE [dbo].[SP_PC_AceptacionPedidoDetalle_Petrovendor] 
 	-- Add the parameters for the stored procedure here
 @IdProveedor        INT,
 @IdAceptacionPedido INT,
@@ -26,7 +33,7 @@ AS
 		  POD.UnidadProveedor AS Unidad,
 		  APD.Cantidad,
 		  APD.Excedente, 
-		  PD.PrecioUnitario,	  
+		  ISNULL(APD.PrecioUnitario,PD.PrecioUnitario) AS PrecioUnitario,	  
 		  TM.TipoMonedaCorto AS Moneda
 		  FROM MM_AceptacionPedidoDetalle AS APD
 		  INNER JOIN MM_AceptacionPedido AS A ON A.IdAceptacionPedido = APD.IdAceptacionPedido
@@ -43,8 +50,10 @@ AS
 		  POD.UnidadProveedor,
 		  APD.Cantidad,
 		  APD.Excedente, 
-		  PD.PrecioUnitario,		  
-		  TM.TipoMonedaCorto
+		  PD.PrecioUnitario,	
+		  APD.PrecioUnitario,
+		  TM.TipoMonedaCorto;
+
      END;
 
 
