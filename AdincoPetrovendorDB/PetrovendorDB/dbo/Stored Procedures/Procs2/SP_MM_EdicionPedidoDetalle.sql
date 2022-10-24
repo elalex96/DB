@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_EdicionPedidoDetalle]    Script Date: 20/10/2022 05:20:08 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MM_EdicionPedidoDetalle]    Script Date: 24/10/2022 10:09:25 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -106,20 +106,27 @@ BEGIN
 
 	END
 
-	INSERT INTO TA_HistorialEdicionPedidoDetalle
-	(	
-		Descripcion,
-		IdPedido,
-		IdUsuario,
-		IdContrato,
-		Fecha
-	)
-	VALUES
-	(
-		@MENSAJE_BITACORA,
-		@ID_PEDIDO,
-		@IdUsuario,
-		@IdContrato,
-		GETDATE()
-	);
+	IF ISNULL(@MENSAJE_BITACORA,'') != ''
+	BEGIN
+
+		INSERT INTO TA_HistorialEdicionPedidoDetalle
+		(	
+			Descripcion,
+			IdPedido,
+			IdUsuario,
+			IdContrato,
+			Fecha
+		)
+		VALUES
+		(
+			@MENSAJE_BITACORA,
+			@ID_PEDIDO,
+			@IdUsuario,
+			@IdContrato,
+			GETDATE()
+		);
+
+	END
+
+	
 END
