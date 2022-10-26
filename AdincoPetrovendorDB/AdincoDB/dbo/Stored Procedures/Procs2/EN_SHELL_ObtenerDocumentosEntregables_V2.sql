@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 02/08/2022 09:59:01 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 26/10/2022 02:09:30 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -492,6 +492,10 @@ BEGIN
 			SELECT
 				3,
 				ISNULL(ML.Alias,ML.MarcoLegal),
+				--CASE 
+				--	WHEN ISNULL(ML.Alias,ML.MarcoLegal) <> '' THEN ML.MarcoLegal + ' - (' + ML.Alias + ')'
+				--	ELSE ML.MarcoLegal
+				--END,
 				ML.IdMarcoLegal,
 				NULL,
 				'Carpeta',
@@ -1559,12 +1563,11 @@ BEGIN
 	SELECT DISTINCT
 		IdRow,
 		CF.Nivel,
-		--REPLACE(Nombre,'"','') AS NombreLabel,
 		CASE 
 			WHEN LEN(Nombre) > 20 THEN '<marquee behavior="scroll" direction="left" style="width: 70%;">' + REPLACE(Nombre,'"','') + '</marquee>'
 			ELSE REPLACE(Nombre,'"','')
 		END AS NombreLabel,
-		REPLACE(Nombre,'"','') AS Nombre,
+		REPLACE(REPLACE(Nombre,'"',''),'/','-') AS Nombre,
 		CF.IdCarpeta,
 		IdDocumento,
 		Tipo,
@@ -1602,7 +1605,7 @@ BEGIN
 		ISNULL((SELECT TOP 1 AnioMes FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1),'') AS AnioMesAnterior,
 		ISNULL(Limitador,0) AS Limitador,
 		ISNULL(IdEntregable,0) AS IdEntregable,
-		ISNULL(Alias,Nombre) AS Alias
+		ISNULL(Alias, REPLACE(Nombre,'/','-')) AS Alias
 	FROM @CONTRACT_FILES AS CF
 	WHERE Nombre IS NOT NULL
 	ORDER BY IdRow ASC;
@@ -1611,4 +1614,3 @@ BEGIN
 
 
 END
-
