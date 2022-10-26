@@ -1,9 +1,6 @@
-﻿USE [Petrovendor]
+USE PETROVENDOR
 GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion]    Script Date: 11/10/2022 11:18:03 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SP_PR_MM_ListaFacturasAprobacion
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -20,12 +17,19 @@ GO
 -- Create date: 11-10-2022
 -- Description:	optimizacion para murphy
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 25/10/2022
+-- Description:	Se agrega el filtrado por fechas
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
 @IdProveedor int,
 @Estatus int,
 @IdContrato int = NULL,
 @IdUsuario int = NULL,
-@FechaRegistro datetime = NULL
+@FechaRegistro datetime = NULL,
+@FechaInicio datetime = NULL,
+@FechaFin datetime = NULL
 AS
 BEGIN
   SET NOCOUNT ON;
@@ -473,9 +477,9 @@ BEGIN
 				ORDER BY AF.IdAceptacionPedido DESC;       
   
 END 
-
-  --CONSULTAR TODOS LOS RESULTADOS
-  SELECT
+IF @FechaInicio IS NULL OR @FechaFin IS NULL 
+BEGIN
+	  SELECT
     ROW_NUMBER() OVER (
     ORDER BY FechaRegistro DESC) AS IdRow,
     IdAceptacionPedido,
@@ -483,7 +487,7 @@ END
     IdPedido,
     FechaRegistro,
     Proveedor,
-    Nombre,
+	Nombre,
     TotalPedido,
     Moneda,
     RFC,
@@ -513,5 +517,47 @@ END
            Contrato,
 		   PO
   ORDER BY FechaRegistro DESC;
-
+END
+ELSE
+BEGIN
+	  SELECT
+    ROW_NUMBER() OVER (
+    ORDER BY FechaRegistro DESC) AS IdRow,
+    IdAceptacionPedido,
+    Pedido,
+    IdPedido,
+    FechaRegistro,
+    Proveedor,
+	Nombre,
+    TotalPedido,
+    Moneda,
+    RFC,
+    IdSolicitudPedido,
+    span,
+    CASE
+      WHEN ISNULL(PedirCarta, 0) = 1 THEN 'Si'
+      ELSE 'No'
+    END AS PedirCarta,
+    IdOperacion,
+    Contrato,
+	PO
+  FROM #AceptacionesPedido
+  WHERE FechaRegistro BETWEEN @FechaInicio AND @FechaFin
+  GROUP BY IdAceptacionPedido,
+           Pedido,
+           IdPedido,
+           FechaRegistro,
+           Proveedor,
+           Nombre,
+           TotalPedido,
+           Moneda,
+           RFC,
+           IdSolicitudPedido,
+           span,
+           PedirCarta,
+           IdOperacion,
+           Contrato,
+		   PO
+  ORDER BY FechaRegistro DESC;
+END
 END;
