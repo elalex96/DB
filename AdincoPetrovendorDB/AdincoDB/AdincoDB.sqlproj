@@ -13371,6 +13371,9 @@
       <QuotedIdentifier>On</QuotedIdentifier>
     </Build>
     <Build Include="dbo\Stored Procedures\Procs1\EN_EntregablesHistorialEliminacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_AD_BitacoraPurchasingImportadosWDEA_ADINCO_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_AD_BitacoraWDEA_ADINCO_SAP.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
