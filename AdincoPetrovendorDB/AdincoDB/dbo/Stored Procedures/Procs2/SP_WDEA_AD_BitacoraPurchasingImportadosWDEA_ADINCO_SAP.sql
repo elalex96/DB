@@ -1,16 +1,16 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP]    Script Date: 27/10/2022 10:50:23 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_WDEA_AD_BitacoraPurchasingImportadosWDEA_ADINCO_SAP]    Script Date: 27/10/2022 09:56:40 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Alexander Gomez
--- Create date: 26/10/2022
--- Description:	Consulta del registro de datos
+-- Create date: 27/10/2022
+-- Description:	consulta de datos procesados en WDEA ADINCO-SAP
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP]
+CREATE PROCEDURE [dbo].[SP_WDEA_AD_BitacoraPurchasingImportadosWDEA_ADINCO_SAP]
 	-- Add the parameters for the stored procedure here
 	@FechaInicio DATETIME,
 	@FechaFin DATETIME
@@ -21,10 +21,43 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	SELECT * 
-	FROM WDEA_Layout_T 
-	WHERE len(rtrim(ltrim(Created_On))) > 6 AND cast(substring(Created_On,7,4)+'-'+ substring(Created_On,4,2)+'-'+substring(Created_On,0,3) as date) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date) 
-	ORDER BY RowN,CreadoEL DESC
+	SELECT
+		[IDIMPORTACION]
+      ,[IDLAYOUT]
+      ,[ITEM]
+      ,[PURCHASE_ORGANIZATION]
+      ,[IDCONTRATO]
+      ,[COST_CENTER]
+      ,[WBS_ELEMENT]
+      ,[IDLINEAPRESUPUESTOMES]
+      ,[OUTLINE_AGREEMENT]
+      ,[SHORT_TEXT]
+      ,[IDMATERIAL]
+      ,[VALIDITY_PER_START]
+      ,[VALIDITY_PER_END]
+      ,[DELETION_INDICATOR]
+      ,[PLANT]
+      ,[ORDER_QUANTITY]
+      ,[ORDER_UNIT]
+      ,[IDUNIDAD]
+      ,[NET_PRICE]
+      ,[CURRENCY]
+      ,[IDMONEDA]
+      ,[VENDOR_SUPPLIYING_PLANT]
+      ,[IDPROVEEDOR]
+      ,[PURCHASING_DOCUMENT]
+      ,[RELEASE_STATE]
+      ,[NAME_OF_VENDOR]
+      ,[ORDER_PRICE_UNIT]
+      ,[NET_ORDER_VALUE]
+      ,[REQUISITIONER]
+      ,[IDUSUARIOSOLICITANTE]
+      ,[TERMINOS_DE_PAGO]
+      ,[JUSTIFICACION]
+      ,[IdBitacora]
+      ,[IdPedidoADINCO]
+      ,[MECANISMO_CONTRATACION]
+	FROM WDEA_PurchasingDocumentsImportados (NOLOCK)
+	WHERE VALIDITY_PER_START BETWEEN @FechaInicio AND @FechaFin
 
 END
-
