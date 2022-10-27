@@ -1,16 +1,17 @@
-﻿USE [Petrovendor]
+USE Petrovendor
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]    Script Date: 14/09/2022 10:45:32 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_ProcesamientoSAP_Procura
 GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/092021
 -- Description:	Procesamiento Interfaz SAP-Procura
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura] 
+-- Author:		LUIS DAVID
+-- Create date: 26/10/2022
+-- Description:	Se evita el reprocesamiento de pedidos ya procesados, eliminación de SELECT INTOS... Petrovendor(#2094)
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]
 	-- Add the parameters for the stored procedure here.
 	@FileName NVARCHAR(MAX),
 	@Asunto NVARCHAR(MAX),
@@ -39,6 +40,34 @@ BEGIN
 			@IdPedido INT,
 			@REGISTROSGUARDADOS INT;
 
+
+	DROP TABLE IF EXISTS #PENDIENTES_PROCESAR
+	DROP TABLE IF EXISTS #REGISTROSGUARDADOS
+	DROP TABLE IF EXISTS #PROCESADOS
+	DROP TABLE IF EXISTS #MENSAJES
+	CREATE TABLE #PENDIENTES_PROCESAR
+	(
+		RN INT,
+		PURCHASING_DOCUMENT VARCHAR (300),
+		IDCONTRATO INT
+	);
+	CREATE NONCLUSTERED INDEX ix_tempPurchasingDocument  ON #PENDIENTES_PROCESAR (PURCHASING_DOCUMENT);
+	CREATE NONCLUSTERED INDEX ix_tempIdContrato  ON #PENDIENTES_PROCESAR (IDCONTRATO);
+	CREATE TABLE #REGISTROSGUARDADOS
+	(
+		Purchasing_Document VARCHAR(300)
+	);
+	CREATE INDEX IX_Purchasing_Document ON #REGISTROSGUARDADOS(Purchasing_Document);
+	CREATE TABLE #PROCESADOS(
+		IdPedidoADINCO INT,
+		PURCHASING_DOCUMENT VARCHAR(300),
+		IDCONTRATO INT,
+		IdBitacora INT
+	);
+	CREATE TABLE #MENSAJES
+	(
+		Mensaje VARCHAR(MAX)
+	);
 	IF @HORADIA <= 13
 	BEGIN 
 		SET @ENVIO = 1;
@@ -49,15 +78,19 @@ BEGIN
 	END
 
 	
-
+	
+	INSERT INTO #PENDIENTES_PROCESAR(
+	RN,
+	PURCHASING_DOCUMENT,
+	IDCONTRATO)
 	SELECT 
 		ROW_NUMBER() over( order by PD.PURCHASING_DOCUMENT desc) as RN,
 		PD.PURCHASING_DOCUMENT,
 		PD.IDCONTRATO
-	INTO #PENDIENTES_PROCESAR
 	FROM WDEA_PurchasingDocumentsImportados AS PD
-	JOIN PendientesProcesarProcura_WSDEA AS PP ON PD.IdBitacora = PP.IdBitacora 
-		AND ISNULL(PP.Procesado,0) = 0 --PENDIENTE DE PROCESAR
+	JOIN PendientesProcesarProcura_WSDEA AS PP 
+		ON PD.IdBitacora = PP.IdBitacora 
+		AND 0 = ISNULL(PP.Procesado,0) --PENDIENTE DE PROCESAR
 		AND PD.IdBitacora = @IDBITACORA
 	GROUP BY PD.PURCHASING_DOCUMENT,
 			PD.IDCONTRATO;
@@ -73,31 +106,20 @@ BEGIN
 		FROM #PENDIENTES_PROCESAR
 		WHERE RN = @CONT;
 
-		SET @IDBITACORA = (SELECT TOP 1 IdBitacora FROM WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @PURCHASING AND IDCONTRATO = @CONTRATO);
-
 		EXEC SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP @PURCHASING,
 															@CONTRATO,
 															@IDBITACORA;
 
 		SET @IdPedido = (SELECT TOP 1 IdPedidoADINCO FROM WDEA_PurchasingDocumentsImportados WHERE IdBitacora = @IDBITACORA AND PURCHASING_DOCUMENT = @PURCHASING);
 
-		IF ISNULL(@IdPedido,0) > 0
-		BEGIN
-
-			UPDATE PendientesProcesarProcura_WSDEA
-			SET Procesado = 1,
-				ProcesadoEl = GETDATE()
-			WHERE IdBitacora = @IDBITACORA;
-
-		END
 
 		SET @CONT = @CONT + 1;
 
 	END
 
+	INSERT INTO #REGISTROSGUARDADOS(Purchasing_Document)
 	SELECT
 		Purchasing_Document
-	INTO #REGISTROSGUARDADOS
 	FROM WDEA_Layout_T
 	WHERE IdBitacoraLectura = @IDBITACORA
 	GROUP BY Purchasing_Document;
@@ -105,16 +127,17 @@ BEGIN
 	SET @REGISTROSGUARDADOS = (SELECT COUNT(1) FROM #REGISTROSGUARDADOS);
 
 	--PROCESADOS
+	INSERT INTO #PROCESADOS(IdPedidoADINCO,PURCHASING_DOCUMENT,IDCONTRATO,IdBitacora)
 	SELECT
 		PD.IdPedidoADINCO,
 		PD.PURCHASING_DOCUMENT,
 		PD.IDCONTRATO,
 		PD.IdBitacora
-	INTO #PROCESADOS
 	FROM #PENDIENTES_PROCESAR AS PP
 	JOIN dbo.WDEA_PurchasingDocumentsImportados AS PD
-		ON PP.PURCHASING_DOCUMENT = PD.PURCHASING_DOCUMENT 
+		ON PP.PURCHASING_DOCUMENT = PD.PURCHASING_DOCUMENT COLLATE Modern_Spanish_CI_AS
 		AND PP.IDCONTRATO = PD.IDCONTRATO
+		AND @IDBITACORA = PD.IdBitacora
 	WHERE PD.IdPedidoADINCO IS NOT NULL--YA TIENEN UN PEDIDO EN ADINCO
 	GROUP BY PD.IdPedidoADINCO,
 				PD.PURCHASING_DOCUMENT,
@@ -122,15 +145,21 @@ BEGIN
 				PD.IdBitacora; 
 
 	--BUSCAR LOS MENSAJES EN CASO DE EXISTAN ERRORES
+	INSERT INTO #MENSAJES(Mensaje)
 	SELECT 
 		B.Mensaje
-	INTO #MENSAJES
 	FROM WDEA_Bitacora_AdincoSAP AS B 
 	WHERE ISNULL(B.IsImportacionExitosa,0) = 0--BIT DE IMPORTACION EXITOSA
 	AND B.IdBitacoraLectura = @IDBITACORA;
 
 	SET @CONT_PROCESADOS = (SELECT COUNT(1) FROM #PROCESADOS);
 	SET @CONT_ERRORES = (SELECT COUNT(1) FROM #MENSAJES);
+
+	UPDATE PendientesProcesarProcura_WSDEA
+	SET Procesado = 1,
+	ProcesadoEl = GETDATE()
+	WHERE IdBitacora = @IDBITACORA;
+
 
 	--MENSAJES DE ERRORES
 	IF ISNULL(@CONT_ERRORES,0) > 0
@@ -180,7 +209,7 @@ BEGIN
 							@Destinatario + ' el ' + CONVERT(VARCHAR,GETDATE(),9) + ' con el Número de Procesamiento Interno #' + CAST(@IDBITACORA AS nvarchar) +'. <br><br>' +
 							'Se detectaron ' + CAST(ISNULL(@CONTTOTAL,0) AS nvarchar) + ' Purchasing Document(s) Correctos' +
 							' de ' + CAST(ISNULL(@REGISTROSGUARDADOS,0) as nvarchar) + ' Purchasing Document(s) en el Documento en total,' + 
-							'de los cuales se generó ' + CAST(ISNULL(@CONT_PROCESADOS,0) AS nvarchar) + ' Pedido(s) en ADINCO.');
+							'de los cuales se generaron ' + CAST(ISNULL(@CONT_PROCESADOS,0) AS nvarchar) + ' Pedido(s) en ADINCO.');
 
 
 	SET @HTML = (SELECT HTML FROM dbo.TA_Correo WHERE Asunto = 'Notificación de Resumen de Lectura de WDEA');
@@ -272,7 +301,7 @@ BEGIN
 	VALUES
 	(
 		GETDATE(),
-		'SE PROCESARON ' + CAST((ISNULL(@CONT_PROCESADOS,0) - 1) AS NVARCHAR) + ' PEDIDO(S) DE ' + CAST(@CONT AS nvarchar) + ' PURCHASING.',
+		'SE PROCESARON ' + CAST((ISNULL(@CONT_PROCESADOS,0)) AS NVARCHAR) + ' PEDIDO(S) DE ' + CAST(@CONTTOTAL AS nvarchar) + ' PURCHASING CORRECTOS.',
 		NULL,
 		NULL
 	);
