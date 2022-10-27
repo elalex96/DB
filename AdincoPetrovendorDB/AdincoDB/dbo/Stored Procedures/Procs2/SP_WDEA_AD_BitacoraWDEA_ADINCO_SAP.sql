@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 /****** Object:  StoredProcedure [dbo].[SP_WDEA_AD_BitacoraWDEA_ADINCO_SAP]    Script Date: 27/10/2022 10:25:08 a. m. ******/
 SET ANSI_NULLS ON
@@ -21,8 +21,14 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	SELECT *
-	FROM WDEA_Bitacora_AdincoSAP
+	SELECT
+		[Id]
+      ,[Fecha]
+      ,[Mensaje]
+      ,[NoConsecutivoProcesamiento]
+      ,[IdBitacoraLectura]
+      ,[IsImportacionExitosa]
+	FROM WDEA_Bitacora_AdincoSAP (NOLOCK)
 	WHERE Fecha BETWEEN @FechaInicio AND @FechaFin;
 
 END
