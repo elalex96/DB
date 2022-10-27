@@ -1,6 +1,6 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP]    Script Date: 27/10/2022 10:50:23 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP]    Script Date: 27/10/2022 01:42:00 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -21,8 +21,40 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	SELECT * 
-	FROM WDEA_Layout_T 
+	SELECT
+	   [Item]
+      ,[Purch_Organization]
+      ,[Cost_Center]
+      ,[WBS_Element]
+      ,[Short_Text]
+      ,[Outline_Agreegement]
+      ,[Validity_Per_Start]
+      ,[Validity_Period_End]
+      ,[Deletion_Indicador]
+      ,[Plant]
+      ,[Order_Quantity]
+      ,[Order_Unit]
+      ,[Net_Price]
+      ,[Currency]
+      ,[Vendor_Supplying_Plant]
+      ,[Purchasing_Document]
+      ,[Release_State]
+      ,[Name_of_Vendor]
+      ,[Order_Price_Unit]
+      ,[Net_Order_Value]
+      ,[Requisitioner]
+      ,[Terminos_Pago]
+      ,[Justificacion]
+      ,[CreadoEL]
+      ,[ModificadoEL]
+      ,[RowN]
+      ,[IdBitacoraLectura]
+      ,[GL_Account]
+      ,[Purchasing_Group]
+      ,[Material_Group]
+      ,[Created_On]
+      ,[Mecanismo_de_Contratacion]
+	FROM WDEA_Layout_T (NOLOCK)
 	WHERE len(rtrim(ltrim(Created_On))) > 6 AND cast(substring(Created_On,7,4)+'-'+ substring(Created_On,4,2)+'-'+substring(Created_On,0,3) as date) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date) 
 	ORDER BY RowN,CreadoEL DESC
 
