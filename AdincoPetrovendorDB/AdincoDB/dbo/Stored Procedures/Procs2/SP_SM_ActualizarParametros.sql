@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 /****** Object:  StoredProcedure [dbo].[SP_SM_ActualizarParametros]    Script Date: 27/10/2022 04:17:31 p. m. ******/
 SET ANSI_NULLS ON
@@ -28,14 +28,14 @@ BEGIN
 	IF @MayorA <> @MayorA_Anterior
 	BEGIN
 		
-		SET @MENSAJE = 'Se actualizo el parametro "' + @Indicador + '" de ' + CAST(@MayorA_Anterior AS nvarchar) + '(Anterior) a ' + CAST(@MayorA AS nvarchar) + '(Nuevo).';
+		SET @MENSAJE = 'Se actualizó el parámetro del indicador "' + @Indicador + '" Máximo de ' + CAST(@MayorA_Anterior AS nvarchar) + '(Anterior) a ' + CAST(@MayorA AS nvarchar) + '(Nuevo).';
 
 	END
 
 	IF @MenorA <> @MenorA_Anterior
 	BEGIN
 		
-		SET @MENSAJE = @MENSAJE + 'Se actualizo el parametro "' + @Indicador + '" de ' + CAST(@MenorA_Anterior AS nvarchar) + '(Anterior) a ' +  CAST(@MenorA AS nvarchar) + '(Nuevo).';
+		SET @MENSAJE = @MENSAJE + 'Se actualizó el parámetro del indicador "' + @Indicador + '" Mínimo de ' + CAST(@MenorA_Anterior AS nvarchar) + '(Anterior) a ' +  CAST(@MenorA AS nvarchar) + '(Nuevo).';
 
 	END
 
