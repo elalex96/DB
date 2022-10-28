@@ -13374,6 +13374,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_AD_BitacoraPurchasingImportadosWDEA_ADINCO_SAP.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_WDEA_AD_BitacoraWDEA_ADINCO_SAP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_SM_ActualizarParametros.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
