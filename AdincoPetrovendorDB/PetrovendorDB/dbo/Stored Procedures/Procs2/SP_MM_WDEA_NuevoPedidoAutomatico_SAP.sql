@@ -1,9 +1,6 @@
-USE [Petrovendor]
+USE PETROVENDOR
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP]    Script Date: 19/10/2022 06:33:39 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevoPedidoAutomatico_SAP
 GO
 -- =============================================
 -- Author:		Alexander Gomez
@@ -22,7 +19,7 @@ GO
 -- Create date: 19/10/2022
 -- Description:	Se cambia la el tiempo de confirmacion de pedido a 270 horas (30 dias)
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
+CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevoPedidoAutomatico_SAP] --26383,18030,'4500564101',907,10038,1318
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdPeticionOferta INT,
@@ -352,7 +349,7 @@ SELECT
 
 		INSERT INTO dbo.MM_HorasVigenciaPedido
         (
-            IdPedido,
+  IdPedido,
             HorasVigencia,
             FechaVigencia
         )
@@ -482,6 +479,7 @@ SELECT
 
 	SET @IdOperacion = (SCOPE_IDENTITY());
 
+	
 	--CREACION DE LAS TAREAS
 	INSERT INTO TA_Tarea
 	(
@@ -513,10 +511,10 @@ SELECT
 	INSERT INTO WDEA_PedidosPendientesCorreosConfirmacion
 	(IdSolicitudPedido,		IdOperacion,	IdAprobador,	Procesado,	
 	Purchasing_Document,	IdTarea,		IdPedidoActual,	IdPedidoGeneral,
-	CreadoEl ) VALUES
+	CreadoEl,				IdBitacoraLectura) VALUES
 	(@IdSolicitudPedido,	@IdOperacion,	@IdUsuario,		0,
 	RTRIM(LTRIM(@Purchasing)),			@IdTarea,		@IdPedidoActual,@IdPedidoGeneral,
-	GETDATE())
+	GETDATE(),				@IdBitacoraLectura);
 
 	INSERT INTO TA_TareaOperacion
 	(
