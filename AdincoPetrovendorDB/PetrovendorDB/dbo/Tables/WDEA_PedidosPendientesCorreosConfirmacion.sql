@@ -14,5 +14,6 @@ CREATE TABLE WDEA_PedidosPendientesCorreosConfirmacion
 	IdPedidoGeneral int,
 	Procesado bit,
 	CreadoEl datetime,
-	ProcesadoEl datetime
+	ProcesadoEl datetime,
+	IdBitacoraLectura int
 )
