@@ -1,11 +1,8 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 24/10/2022 02:39:44 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
+use petrovendor
+go
+drop procedure if exists SP_Ins_WDEA_Bitacora_AdincoSAP
+go
+CREATE proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
 (
 	@IdBitacoraLectura		int
 )
@@ -43,7 +40,8 @@ BEGIN TRY
 			RowId	int,
 			Columna	varchar(10),
 			Error	varchar(max),
-			esError	bit
+			esError	bit,
+			Purchasing_Document varchar(300)
 		)
 		DROP TABLE IF EXISTS #tmpVendorSupplyingPlant
 		create table #tmpVendorSupplyingPlant
@@ -203,14 +201,14 @@ BEGIN TRY
 		--	/*Validaciones*/
 
 			/*Item*/
-			insert into #tmpErrores	select Id, 'A', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el número de partida en la celda A, Fila '+cast(Id as varchar(10))+'.',1				
+			insert into #tmpErrores	select Id, 'A', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el número de partida en la celda A, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document				
 			from #tmpData where Item is null order by Id
 			/*******************/
 			/*Purch_Organization*/
-			insert into #tmpErrores	select Id, 'B', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el contrato en la celda B, Fila '+cast(Id as varchar(10))+'.',1						
+			insert into #tmpErrores	select Id, 'B', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el contrato en la celda B, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document						
 			from #tmpData where Purch_Organization is null order by Id
 
-			insert into #tmpErrores	select TD.Id, 'B', 'La orden de compra '+cast(isnull(TD.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el contrato en la celda B, Fila '+cast(TD.Id as varchar(10))+'.',1						
+			insert into #tmpErrores	select TD.Id, 'B', 'La orden de compra '+cast(isnull(TD.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el contrato en la celda B, Fila '+cast(TD.Id as varchar(10))+'.',1,Purchasing_Document						
 			from #tmpData AS TD
 			LEFT JOIN PurchaseOrganization AS P ON TD.Purch_Organization COLLATE SQL_Latin1_General_CP1_CI_AS = P.Siglas
 			where P.Siglas IS NULL
@@ -219,7 +217,8 @@ BEGIN TRY
 
 			/*WBS_Element*/
 			insert into #tmpErrores	
-			SELECT t.Id, 'C', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró un centro de costos relacionado al WBS_Element en la celda C, Fila '+cast(t.Id as varchar(10))+'.',1
+			SELECT t.Id, 'C', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró un centro de costos relacionado al WBS_Element en la celda C, Fila '+cast(t.Id
+ as varchar(10))+'.',1,Purchasing_Document
 			FROM #tmpData AS t
 			LEFT JOIN WDEA_SAP_CentroCostos WDCC (NOLOCK)
 				ON dbo.WDEA_CC_SplitString(t.WBS_Element,'-',t.Purch_Organization) = WDCC.AcronimoSAP
@@ -227,13 +226,14 @@ BEGIN TRY
 			where AcronimoSAP is null or WDCC.Activo = 0
 	
 			insert into #tmpErrores
-			select Id, 'D', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró WBS Element en la celda D, Fila '+cast(Id as varchar(10))+'.',1												
+			select Id, 'D', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró WBS Element en la celda D, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document												
 			from #tmpData where WBS_Element is null AND Purch_Organization != 'MCY'  order by Id
 			
 			--==================================================	
 
 				insert into #tmpErrores
-				select		DWL.ID,	'D',  'La orden de compra '+cast(isnull(DWL.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, posiblemente a lo siguiente : El WBS no existe o no esta relacionado a una línea de presupuesto en ADINCO. Celda D  , Fila '	+	cast(DWL.ID as varchar(10))	+	' .',1
+				select		DWL.ID,	'D',  'La orden de compra '+cast(isnull(DWL.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, posiblemente a lo siguiente : El WBS no existe o no esta relacionado a una línea de presupuesto en ADINCO. Celda D 
+ , Fila '	+	cast(DWL.ID as varchar(10))	+	' .',1,Purchasing_Document
 				from		#tmpData DWL
 				LEFT JOIN PurchaseOrganization AS PO 
 					ON DWL.Purch_Organization COLLATE SQL_Latin1_General_CP1_CI_AS = PO.Siglas
@@ -256,10 +256,10 @@ BEGIN TRY
 	
 			
 			/*Validity_Per_Start*/
-			insert into #tmpErrores	select Id, 'G', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la fecha de inicio en la celda G, Fila '+cast(Id as varchar(10))+'.',1				from #tmpData 
+			insert into #tmpErrores	select Id, 'G', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la fecha de inicio en la celda G, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document				from #tmpData 
 			where Validity_Per_Start is null order by Id
 
-			insert into #tmpErrores	select Id, 'G', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El formato de la fecha de inicio en la celda G, Fila '+cast(Id as varchar(10))+' es incorrecto.',1	from #tmpData 
+			insert into #tmpErrores	select Id, 'G', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El formato de la fecha de inicio en la celda G, Fila '+cast(Id as varchar(10))+' es incorrecto.',1,Purchasing_Document	from #tmpData 
 			where	Validity_Per_Start is not null 
 			and		(year(Validity_Per_Start) < 1900)
 			and		(month(Validity_Per_Start) < 1 or month(Validity_Per_Start)>12)
@@ -268,10 +268,12 @@ BEGIN TRY
 			/*******************/
 	
 			/*Validity_Per_Start*/
-			insert into #tmpErrores	select Id, 'H', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la fecha de fin en la celda H, Fila '+cast(Id as varchar(10))+'.',1				
+			insert into #tmpErrores	select Id, 'H', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la fecha de fin en la celda H, Fila '+cast(Id as varchar
+(10))+'.',1,Purchasing_Document				
 			from #tmpData where Validity_Period_End is null order by Id
 
-			insert into #tmpErrores	select Id, 'H', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El formato de la fecha de fin en la celda H, Fila '+cast(Id as varchar(10))+' es incorrecto.',1	
+			insert into #tmpErrores	select Id, 'H', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El formato de la fecha de fin en la celda H, Fila '+cast(Id as varchar(
+10))+' es incorrecto.',1,Purchasing_Document	
 			from #tmpData 
 			where	Validity_Period_End is not null 
 			and		year(Validity_Period_End) <1900
@@ -281,38 +283,44 @@ BEGIN TRY
 			/*******************/
 
 			/*Plant*/
-			insert into #tmpErrores	select Id, 'J', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la empresa en la celda J, Fila '+cast(Id as varchar(10))+'.',1						
+			insert into #tmpErrores	select Id, 'J', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la empresa en la celda J, Fila '+cast(Id as varchar(10))
++'.',1,Purchasing_Document						
 			from #tmpData where Plant is null order by Id
 			--insert into #tmpErrores select Id, 'J', 'La columna Plant contiene diferente a MX01'														from #tmpData where Plant <> 'MX01' order by Id
 			/*******************/
 
 			/*Order_Quantity*/
-			insert into #tmpErrores	select Id, 'K', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la cantidad de la partida en la celda K, Fila '+cast(Id as varchar(10))+'.',1		
+			insert into #tmpErrores	select Id, 'K', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la cantidad de la partida en la celda K, Fila '+cast(Id 
+as varchar(10))+'.',1,Purchasing_Document		
 			from #tmpData where Order_Quantity is null order by Id
 
 			insert into #tmpErrores	select Id, 'K', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La cantidad de la partida en la celda K, Fila '+cast(Id as varchar(10))
 
-			+' no tiene el formato numérico esperado.',1																								from #tmpData where len( cast(Order_Quantity - cast(Order_Quantity as int) as varchar(10))) >6 order by Id
+
+			+' no tiene el formato numérico esperado.',1,Purchasing_Document																								from #tmpData where len( cast(Order_Quantity - cast(Order_Quantity as int) as varchar(10))) >6 order by Id
 			/*******************/
 
 			/*Order_Unit*/
-			  insert into #tmpErrores select Id, 'L', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la unidad de la partida en la celda L, Fila '+cast(Id as varchar(10))+'.',1   
+			  insert into #tmpErrores select Id, 'L', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la unidad de la partida en la celda L, Fila '+cast(Id 
+as varchar(10))+'.',1,Purchasing_Document   
 			  from #tmpData where Order_Unit is null order by Id  
 			/*******************/
 
 			/*Net_Price*/
-			insert into #tmpErrores	select Id, 'M', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el costo de la partida en la celda M, Fila '+cast(Id as varchar(10))+'.',1			
+			insert into #tmpErrores	select Id, 'M', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el costo de la partida en la celda M, Fila '+cast(Id as 
+varchar(10))+'.',1,Purchasing_Document			
 			from #tmpData where Net_Price is null order by Id
 	
-			insert into #tmpErrores	select Id, 'M', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La cantidad de la partida en la celda M, Fila '+cast(Id as varchar(10))+' no tiene el formato numérico esperado',1																									
+			insert into #tmpErrores	select Id, 'M', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La cantidad de la partida en la celda M, Fila '+cast(Id as varchar(10))
++' no tiene el formato numérico esperado',1,Purchasing_Document																									
 			from #tmpData where Net_Price is null order by Id
 			/*******************/
 
 			/*Currency*/
-			insert into #tmpErrores	select Id, 'N', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la moneda en la celda N, Fila '+cast(Id as varchar(10))+'.',1						
+			insert into #tmpErrores	select Id, 'N', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la moneda en la celda N, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document						
 			from #tmpData where Currency is null order by Id
 
-			insert into #tmpErrores	select TD.Id, 'N', 'La orden de compra '+cast(isnull(TD.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la moneda en el catalogo de ADINCO en la celda N, Fila '+cast(TD.Id as varchar(10))+'.',1						
+			insert into #tmpErrores	select TD.Id, 'N', 'La orden de compra '+cast(isnull(TD.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la moneda en el catalogo de ADINCO en la celda N, Fila '+cast(TD.Id as varchar(10))+'.',1,Purchasing_Document						
 			from #tmpData AS TD
 			LEFT JOIN Adinco..PV_TipoMoneda AS M ON TD.Currency COLLATE SQL_Latin1_General_CP1_CI_AS = M.TipoMonedaCorto AND TD.Currency IS NOT NULL
 			where M.TipoMonedaCorto IS NULL
@@ -320,7 +328,7 @@ BEGIN TRY
 			/*******************/
 
 			/*Vendor_Supplying_Plant*/
-			insert into #tmpErrores	select Id, 'O', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el registro en la celda O, Fila '+cast(Id as varchar(10))+'',1						
+			insert into #tmpErrores	select Id, 'O', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el registro en la celda O, Fila '+cast(Id as varchar(10))+'',1,Purchasing_Document						
 			from #tmpData where Vendor_Supplying_Plant is null order by Id
 			--Se inserta en la temporal #tmpVendorSupplyingPlant registros de aquellos que si estan en el catálogo
 			insert into #tmpVendorSupplyingPlant
@@ -335,7 +343,7 @@ BEGIN TRY
 			
 			--Se insertan en la tabla de errores aquellos registros de #tmpData (tabla principal con todos los registros) que no esten en #tmpVendorSupplyingPlant
 			insert into #tmpErrores
-			select		t1.ID,	'O', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el registro en la celda O, Fila '+cast(t1.Id as varchar(10))+'',1 --,t1.Vendor_Supplying_Plant	, SUBSTRING(t1.Vendor_Supplying_Plant, 1, CHARINDEX(' ', t1.Vendor_Supplying_Plant) - 1)			
+			select		t1.ID,	'O', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el registro en la celda O, Fila '+cast(t1.Id as varchar(10))+'',1,Purchasing_Document
 			from		#tmpData					t1
 			left join	#tmpVendorSupplyingPlant	t2
 			on			t1.ID						=	t2.ID
@@ -348,23 +356,26 @@ BEGIN TRY
 	
 			/*Purchasing_Document*/
 			insert into #tmpErrores
-			select Id, 'P', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el número de orden de compra de SAP en la celda P, Fila '+cast(Id as varchar(10))+'.',1																								
+			select Id, 'P', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el número de orden de compra de SAP en la celda P, Fila '+cast(Id as varchar(10)
+)+'.',1,Purchasing_Document																								
 			from #tmpData where Purchasing_Document is null order by Id
 			/*******************/
 
 			/*Net_Order_Value*/
 			insert into #tmpErrores
-			select Id, 'T', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' No pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el costo de la orden de compra en la celda T, Fila '+cast(Id as varchar(10))+'.',1																
+			select Id, 'T', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' No pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el costo de la orden de compra en la celda T, Fila '+cast(Id as varchar(10))+'.'
+,1,Purchasing_Document															
 			from #tmpData where Net_Order_Value is null order by Id
 
 			insert into #tmpErrores
-			select Id, 'T', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' No pudo ser registrada en ADINCO, debido al siguiente problema : La cantidad de la partida en la celda T, Fila '+cast(Id as varchar(10))+' no tiene el formato numérico esperado',1													
+			select Id, 'T', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' No pudo ser registrada en ADINCO, debido al siguiente problema : La cantidad de la partida en la celda T, Fila '+cast(Id as varchar(10))+' no tiene el formato n
+umérico esperado',1,Purchasing_Document													
 			from #tmpData where len( cast(Net_Order_Value - cast(Net_Order_Value as int) as varchar(10))) >6 order by Id
 			/*******************/	
 	
 			/*Requisitioner*/				
 			insert into #tmpErrores
-			select Id, 'U', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el usuario requisitor en la celda U, Fila '+cast(Id as varchar(10))+'.',1	
+			select Id, 'U', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró el usuario requisitor en la celda U, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document	
 			from #tmpData where Requisitioner is null order by Id
 
 			--Se Obtienene los registros que si se encuentran en la tabla DEA_UsuarioSolicitanteSAP
@@ -379,7 +390,8 @@ BEGIN TRY
 			
 			--Se insertan en la tabla de errores aquellos registros que no se encuentren en la tabla DEA_UsuarioSolicitanteSAP
 			insert into #tmpErrores
-			select		t1.ID,	'U', 'La orden de compra '+cast(isnull(t1.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El usuario requisitor ' + t1.Requisitioner + ' (celda U, Fila '+cast(isnull(t1.Id,'') as varchar(10))+') No existe en ADINCO.',1
+			select		t1.ID,	'U', 'La orden de compra '+cast(isnull(t1.Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : El usuario requisitor ' + t1.Requisitioner + ' (celda U, Fila '+cast(isnull(t1.Id,'') as
+ varchar(10))+') No existe en ADINCO.',1,Purchasing_Document
 			from		#tmpData					t1
 			left join	#tmpRequisitioner			t2
 			on			t1.ID						=	t2.ID
@@ -387,12 +399,16 @@ BEGIN TRY
 
 			/*Terminos_Pago*/
 			insert into #tmpErrores
-			select Id, 'V', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontraron términos de pago en la celda V, Fila '+cast(Id as varchar(10))+'.',1										
+			select Id, 'V', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registra
+da en ADINCO, debido al siguiente problema : No se encontraron términos de pago en la celda V, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document										
 			from #tmpData where Terminos_Pago is null order by Id
 
 			/*Justificacion*/
 			insert into #tmpErrores 
-			select Id, 'W', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la justificación en la celda W, Fila '+cast(Id as varchar(10))+'.',1											
+			select Id, 'W', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la justificación en la celda W, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document											
+
+
+
 			from #tmpData where Justificacion is null order by Id
 			
 			insert into	#tmpMateriales
@@ -414,7 +430,7 @@ BEGIN TRY
 
 			-- No existe el material
 			insert into #tmpErrores 
-			select t1.Id, 'E', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró un Material en la celda E, Fila'+cast(t1.Id as varchar(10))+'.',1											
+			select t1.Id, 'E', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró un Material en la celda E, Fila'+cast(t1.Id as varchar(10))+'.',1,Purchasing_Document											
 			from		#tmpData t1
 			where		T1.Short_Text IS NULL
 
@@ -432,7 +448,7 @@ BEGIN TRY
 
 		/*Obtengo el total de registros que se validaron exitosamente por OC*/
 		insert into	#tmpRegistrosValidadosPorDocumento
-		select		Purchasing_Document, 
+		select		t1.Purchasing_Document, 
 					Total				=	count(*),
 					Id					=	max(t1.ID)
 		from		#tmpData			t1
@@ -441,14 +457,14 @@ BEGIN TRY
 		where		t2.RowId			is	null
 		AND			T1.Order_Unit		IS NOT NULL
 		
-		group by	Purchasing_Document
+		group by	t1.Purchasing_Document
 
 		/*Inserto en Bitacora un mensaje de registro exitoso por cada OC que si se hayan validado todas sus filas*/
 		/*row columna error*/
 		insert into #tmpErrores
 		select		t1.id,
 					'P',
-					'La orden de compra ' + CAST(t1.Purchasing_Document AS varchar(50)) + ' fue registrada exitosamente',0
+					'La orden de compra ' + CAST(t1.Purchasing_Document AS varchar(50)) + ' fue registrada exitosamente',0,t1.Purchasing_Document
 		from		#tmpRegistrosPorDocumento			t1
 		inner join	#tmpRegistrosValidadosPorDocumento	t2
 		on			t1.Purchasing_Document				=	t2.Purchasing_Document
@@ -462,16 +478,29 @@ BEGIN TRY
 
 
 		/*Se guardan todos los errores en la nueva Bitacora*/
-		insert into WDEA_Bitacora_AdincoSAP
-		select	getdate(), Error , ROW_NUMBER() OVER( ORDER BY esError,RowID), @IdBitacoraLectura, 0 from #tmpErrores where esError = 1 group by esError, RowId, Columna, Error order by RowId
+		insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	IdBitacoraLectura,
+		IsImportacionExitosa,	Purchasing_Document)
+		select	
+		getdate(),				Error ,				ROW_NUMBER() OVER( ORDER BY esError,RowID), @IdBitacoraLectura, 
+		0,						Purchasing_Document 
+		from #tmpErrores 
+		where esError = 1 
+		group by esError, RowId, Columna, Error,Purchasing_Document order by RowId
 		
 		/*Se obtiene el consecutivo donde se quedó la bitacora*/
 		select	@maxNoConsecutivo = max(NoConsecutivoProcesamiento) 
 		from	WDEA_Bitacora_AdincoSAP 
 		/*Se guarda un registro de aquellos rows que se procesaron con exito*/
-		insert into WDEA_Bitacora_AdincoSAP
-		select	getdate(), Error , ROW_NUMBER() OVER( ORDER BY esError,RowID)+@maxNoConsecutivo, @IdBitacoraLectura, 1 
-		from #tmpErrores where esError = 0 group by esError, RowId, Columna, Error order by RowId
+		insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	IdBitacoraLectura,
+		IsImportacionExitosa,	Purchasing_Document)
+		select	
+		getdate(),				Error ,				ROW_NUMBER() OVER( ORDER BY esError,RowID)+@maxNoConsecutivo, @IdBitacoraLectura, 
+		1,						Purchasing_Document 
+		from #tmpErrores 
+		where esError = 0 
+		group by esError, RowId, Columna, Error,Purchasing_Document order by RowId
 		
 		-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 		-------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -490,7 +519,7 @@ BEGIN TRY
 		@IdBitacoraLectura,			Item,						Purch_Organization,		PO.IdContrato,	CC.idcentrocosto,		T1.WBS_Element, 
 		WLP.IdLineaPresupuesto,		OUTLINE_AGREEMENT,			Short_Text,				mat.IdMaterial,	Validity_Per_Start,		Validity_Period_End,
 		Deletion_Indicador,			Plant,						Order_Quantity,			Order_Unit,		u.IdUnidad,				Net_Price,  
-		Currency,					IdMoneda,					Vendor_Supplying_Plant, p.IdProveedor,	Purchasing_Document,	Release_State,  
+		Currency,					IdMoneda,					Vendor_Supplying_Plant, p.IdProveedor,	t1.Purchasing_Document,	Release_State,  
 		Name_of_Vendor,				Order_Price_Unit,			Net_Order_Value,		Requisitioner,  re.IdUsuario,			ISNULL(TCC.DiasCredito,0),  
 		Justificacion,				@IdBitacoraLectura,			t1.MecanismoContratacion
 		FROM		#tmpData						t1
@@ -512,7 +541,7 @@ BEGIN TRY
 			on			t1.ID =							t2.RowId
 			and			1 =								t2.esError
 		left join	#tmpIncompletedOCs				t3
-			ON			rtrim(ltrim(Purchasing_Document)) = rtrim(ltrim(t3.OC))
+			ON			rtrim(ltrim(t1.Purchasing_Document)) = rtrim(ltrim(t3.OC))
 		LEFT JOIN	WDEA_SAP_CentroCostos			WDCC
 			ON			dbo.WDEA_CC_SplitString(t1.WBS_Element,'-',Purch_Organization) = WDCC.AcronimoSAP 
 	    left JOIN		CC_CentroCosto					CC  (NOLOCK)
@@ -548,7 +577,7 @@ BEGIN TRY
 		@IdBitacoraLectura,			Item,						Purch_Organization,		10145,	CC.idcentrocosto,		T1.WBS_Element, 
 		@IDLINAPRESUPUESTO_WDEAADMIN,	OUTLINE_AGREEMENT,			Short_Text,				mat.IdMaterial,	Validity_Per_Start,		Validity_Period_End,
 		Deletion_Indicador,			Plant,						Order_Quantity,			Order_Unit,		u.IdUnidad,				Net_Price,  
-		Currency,					IdMoneda,					Vendor_Supplying_Plant, p.IdProveedor,	Purchasing_Document,	Release_State,  
+		Currency,					IdMoneda,					Vendor_Supplying_Plant, p.IdProveedor,	t1.Purchasing_Document,	Release_State,  
 		Name_of_Vendor,				Order_Price_Unit,			Net_Order_Value,		Requisitioner,  re.IdUsuario,			ISNULL(TCC.DiasCredito,0),  
 		Justificacion,				@IdBitacoraLectura,			t1.MecanismoContratacion
 		FROM		#tmpData						t1
@@ -571,7 +600,7 @@ BEGIN TRY
 			on			t1.ID =							t2.RowId
 			and			1 =								t2.esError
 		left join	#tmpIncompletedOCs				t3
-			ON			rtrim(ltrim(Purchasing_Document)) = rtrim(ltrim(t3.OC))
+			ON			rtrim(ltrim(t1.Purchasing_Document)) = rtrim(ltrim(t3.OC))
 		LEFT JOIN	WDEA_SAP_CentroCostos			WDCC
 			ON			dbo.WDEA_CC_SplitString(t1.WBS_Element,'-',Purch_Organization) = WDCC.AcronimoSAP 
 	    left JOIN		CC_CentroCosto					CC  (NOLOCK)
@@ -600,13 +629,12 @@ BEGIN TRY
 		END TRY
 BEGIN CATCH
 	
-	insert into WDEA_Bitacora_AdincoSAP
+	insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	
+		IdBitacoraLectura,		IsImportacionExitosa)
 	  SELECT
-		GETDATE(),
-		ERROR_MESSAGE(),
-		ERROR_LINE(),
-		@IdBitacoraLectura,
-		0;
+		GETDATE(),				ERROR_MESSAGE(),	ERROR_LINE(),
+		@IdBitacoraLectura,		0;
 
 END CATCH;
 
