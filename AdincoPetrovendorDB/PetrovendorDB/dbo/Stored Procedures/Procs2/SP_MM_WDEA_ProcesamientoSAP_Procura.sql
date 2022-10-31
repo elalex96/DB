@@ -32,19 +32,21 @@ BEGIN
 			@MENSAJE_ERORRES NVARCHAR(MAX) = '',
 			@MENSAJE_EXITOSOS NVARCHAR(MAX) = '',
 			@MENSAJE_FINAL NVARCHAR(MAX) = '',
-			@CONT_ERRORES INT,
 			@IdNotificacion INT,
 			@HTML NVARCHAR(MAX),
 			@HORADIA INT = (DATEPART(hour,GETDATE())),
 			@ENVIO INT,
 			@IdPedido INT,
-			@REGISTROSGUARDADOS INT;
+			@REGISTROSGUARDADOS INT,
+			@CatidadFilas Int = (select count(1) from WDEA_Layout_T where IdbitacoraLectura = @IDBITACORA),
+			@POSAPIncorrectos INT,
+			@tableHTML varchar(max);;
 
 
 	DROP TABLE IF EXISTS #PENDIENTES_PROCESAR
 	DROP TABLE IF EXISTS #REGISTROSGUARDADOS
 	DROP TABLE IF EXISTS #PROCESADOS
-	DROP TABLE IF EXISTS #MENSAJES
+	DROP TABLE IF exists #TablaFinal
 	CREATE TABLE #PENDIENTES_PROCESAR
 	(
 		RN INT,
@@ -64,10 +66,14 @@ BEGIN
 		IDCONTRATO INT,
 		IdBitacora INT
 	);
-	CREATE TABLE #MENSAJES
+	CREATE TABLE #TablaFinal
 	(
-		Mensaje VARCHAR(MAX)
-	);
+		POSAP varchar(300),
+		ESTATUS varchar(300),
+		Pedido VARCHAR(300),
+		Contrato varchar(300),
+		Mensaje varchar(max)
+	)
 	IF @HORADIA <= 13
 	BEGIN 
 		SET @ENVIO = 1;
@@ -144,41 +150,13 @@ BEGIN
 				PD.IDCONTRATO,
 				PD.IdBitacora; 
 
-	--BUSCAR LOS MENSAJES EN CASO DE EXISTAN ERRORES
-	INSERT INTO #MENSAJES(Mensaje)
-	SELECT 
-		B.Mensaje
-	FROM WDEA_Bitacora_AdincoSAP AS B 
-	WHERE ISNULL(B.IsImportacionExitosa,0) = 0--BIT DE IMPORTACION EXITOSA
-	AND B.IdBitacoraLectura = @IDBITACORA;
-
 	SET @CONT_PROCESADOS = (SELECT COUNT(1) FROM #PROCESADOS);
-	SET @CONT_ERRORES = (SELECT COUNT(1) FROM #MENSAJES);
 
 	UPDATE PendientesProcesarProcura_WSDEA
 	SET Procesado = 1,
 	ProcesadoEl = GETDATE()
 	WHERE IdBitacora = @IDBITACORA;
 
-
-	--MENSAJES DE ERRORES
-	IF ISNULL(@CONT_ERRORES,0) > 0
-	BEGIN
-		--SE CONCATENAN TODOS LOS MENSAJES DE ERROR
-		SET @MENSAJE_ERORRES = '<ul><li>' +
-								(SELECT STUFF(
-								(SELECT 'LX '  + Mensaje + ' PXP'
-								FROM WDEA_Bitacora_AdincoSAP
-								WHERE IdBitacoraLectura = @IDBITACORA
-								AND ISNULL(IsImportacionExitosa,0) = 0
-								FOR XML PATH('')),
-								1, 2, '') As MENSAJES) +
-								'</ul>';
-
-		SET @MENSAJE_ERORRES = (REPLACE(@MENSAJE_ERORRES,'LX ','<li>'));
-		SET @MENSAJE_ERORRES = (REPLACE(@MENSAJE_ERORRES,' PXP','</li>'));
-
-	END;
 
 	--MENSAJES EXITOSOS
 	IF ISNULL(@CONT_PROCESADOS,0) > 0
@@ -201,22 +179,88 @@ BEGIN
 	END;
 
 	--MENSAJE RESUMEN
-	SET @MENSAJE_FINAL = ('<br><br>Se Procesó el Archivo ' + 
-							@FileName + 
-							' con el asunto ' + 
-							@Asunto + 
-							' enviado por ' + 
-							@Destinatario + ' el ' + CONVERT(VARCHAR,GETDATE(),9) + ' con el Número de Procesamiento Interno #' + CAST(@IDBITACORA AS nvarchar) +'. <br><br>' +
-							'Se detectaron ' + CAST(ISNULL(@CONTTOTAL,0) AS nvarchar) + ' Purchasing Document(s) Correctos' +
-							' de ' + CAST(ISNULL(@REGISTROSGUARDADOS,0) as nvarchar) + ' Purchasing Document(s) en el Documento en total,' + 
-							'de los cuales se generaron ' + CAST(ISNULL(@CONT_PROCESADOS,0) AS nvarchar) + ' Pedido(s) en ADINCO.');
+	SET @POSAPIncorrectos = (@REGISTROSGUARDADOS - @CONT_PROCESADOS);
+	SET @MENSAJE_FINAL = ('<br><br>Se procesó el correo con el asunto <strong>'+ '"'+
+							@Asunto + '</strong>'+ '"'+ ' enviado por <strong>' +
+							@Destinatario +'</strong> en <strong>"' +
+							CONVERT(VARCHAR,GETDATE(),9)+ '"</strong> <br><br>' + 
+							'<em> RESUMEN DE PROCESAMIENTO ('+CAST(@IDBITACORA AS nvarchar)+')</em> <br><br>'+
+							'<div> <ul style="text-align: left">'+
+								'<li> Se procesaron un total de <strong>'+CAST(@CatidadFilas AS nvarchar)+ '</strong> filas del archivo adjunto <strong>'+ @FileName+'</strong> </li>'+
+								'<li> Se identificaron <strong>' + CAST(@REGISTROSGUARDADOS AS nvarchar)+ '</strong> PO de SAP </li>'+
+								'<li style="color:Green"> Se generaron <strong>' + CAST(@CONT_PROCESADOS AS nvarchar)+ '</strong> Pedido(s) en ADINCO </li>'+
+								'<li style="color:Red"> PO SAP con error: <strong>' + CAST(@POSAPIncorrectos AS nvarchar)+ '</strong></li>'+
+							'</ul> </div> <br><br>'
+
+							);
+	
+	INSERT INTO #TablaFinal
+	(POSAP,ESTATUS,Pedido,Contrato,Mensaje)
+	SELECT 
+		BAS.Purchasing_Document AS 'POSAP',
+		CASE WHEN BAS.IsImportacionExitosa = 1
+		THEN 'VERDE'
+		ELSE 'ROJO' end as 'ESTATUS',
+		CASE WHEN BAS.IsImportacionExitosa = 1
+		THEN cast(PPC.IdPedidoGeneral AS varchar)
+		ELSE 'No se generó pedido en ADINCO' end as 'Pedido',
+		CASE WHEN BAS.IsImportacionExitosa = 1
+		THEN AC.NombreAreaContractual
+		ELSE '' end as 'Contrato',
+		CASE WHEN BAS.IsImportacionExitosa = 1
+		THEN 'Pedido generado exitosamente'
+		ELSE Petrovendor.dbo.WDEA_MensajesError_Purchasing(BAS.Purchasing_Document,@IDBITACORA) end as 'Mensaje'
+	FROM WDEA_Bitacora_AdincoSAP as BAS
+	LEFT JOIN WDEA_PedidosPendientesCorreosConfirmacion AS PPC
+		ON BAS.IDBITACORALECTURA = PPC.IDBITACORALECTURA
+		and BAS.Purchasing_Document = PPC.Purchasing_Document
+	LEFT JOIN WDEA_PurchasingDocumentsImportados AS PDI
+		ON BAS.Purchasing_Document = PDI.PURCHASING_DOCUMENT
+		AND @IDBITACORA = PDI.IdBitacora
+	LEFT JOIN Adinco..CO_Contrato AS C
+		ON PDI.IDCONTRATO = C.IdContrato
+	LEFT JOIN  ADINCO..CO_AreaContractual AS AC
+		ON C.IdAreaContractual = AC.IdAreaContractual
+	WHERE 
+		BAS.IDBITACORALECTURA = @IDBITACORA
+		and 
+		BAS.Purchasing_Document is not null
 
 
+	SET @tableHTML =
+	N'<table style="border: 1px solid black">' +
+	N'<tr ><th style="background-color: #376eeb ;color:white">PO SAP</th>
+	<th style="background-color: #376eeb ;color:white;border: 1px solid black">Estado</th>
+	<th style="background-color: #376eeb ;color:white;border: 1px solid black">Pedido ADINCO</th>
+	<th style="background-color: #376eeb ;color:white;border: 1px solid black">Contrato</th>
+	<th style="background-color: #376eeb ;color:white;border: 1px solid black">Mensaje de interface</th>
+	</tr>' +
+	CAST ( (
+	SELECT 
+	'td' = POSAP,'',
+	'td' = ESTATUS,'',
+	'td' = Pedido,'',
+	'td' = Contrato ,'',
+	'td' = Mensaje ,''
+	FROM #TablaFinal
+	group by POSAP,
+	ESTATUS,
+		Pedido,
+		Contrato,
+		Mensaje 
+	FOR XML PATH('tr'), TYPE
+	) AS NVARCHAR(MAX) ) +
+	N'</table>'
+
+
+	SET @tableHTML = (REPLACE(@tableHTML,'<td>VERDE</td>','<td style="background-color:green;border: 1px solid black"> </td>'));
+	SET @tableHTML = (REPLACE(@tableHTML,'<td>ROJO</td>','<td style="background-color:red;border: 1px solid black"> </td>'));
+	SET @tableHTML = (REPLACE(@tableHTML,'<td>No se generó pedido en ADINCO</td>','<td style="color:red;border: 1px solid black">No se generó pedido en ADINCO</td>'));
+	SET @tableHTML = (REPLACE(@tableHTML,'<td>','<td style="border: 1px solid black">'));
 	SET @HTML = (SELECT HTML FROM dbo.TA_Correo WHERE Asunto = 'Notificación de Resumen de Lectura de WDEA');
-
 	SET @HTML = (REPLACE(@HTML,'##MENSAJE_GENERAL##',ISNULL(@MENSAJE_FINAL,'')));
-	SET @HTML = (REPLACE(@HTML,'##MENSAJE_CORRECTOS##',ISNULL(@MENSAJE_EXITOSOS,'')));
-	SET @HTML = (REPLACE(@HTML,'##MENSAJE_ERRORES##',ISNULL(@MENSAJE_ERORRES,'')));
+	SET @HTML = (REPLACE(@HTML,'##MENSAJE_CORRECTOS##',ISNULL('','')));
+	SET @HTML = (REPLACE(@HTML,'##MENSAJE_ERRORES##',ISNULL(@tableHTML,'')));
 	SET @HTML = (REPLACE(@HTML,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
 	SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
