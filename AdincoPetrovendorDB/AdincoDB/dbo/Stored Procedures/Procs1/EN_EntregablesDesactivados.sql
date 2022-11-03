@@ -1,18 +1,11 @@
-USE Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_EntregablesDesactivados'
-)
-    DROP PROCEDURE EN_EntregablesDesactivados;
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 23/09/2022 01:16:21 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 02/11/2022 02:13:16 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
+ALTER PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -295,7 +288,8 @@ BEGIN
 			E.APRehabilitacionCamino as 'InicioActividadesExploracion',
 			E.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
 			E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
-			E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion' 
+			E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion',
+			ISNULL(CE.Radar,0) AS Radar
         FROM #ResponsablesInstancias TI  (NOLOCK)
         JOIN EN_InstanciasEntregable I   (NOLOCK)
 			ON TI.idInstanciaEntregable = I.idInstanciaEntregable
@@ -449,7 +443,8 @@ BEGIN
 				ELSE 'NO'
 			END AS TipoJOA,
 			REE.ReceptorEntregable,
-			RG.ResponsableGenerador 
+			RG.ResponsableGenerador,
+			ISNULL(CE.Radar,0) AS Radar
         FROM #ResponsablesInstancias TI (NOLOCK)
         JOIN EN_InstanciasEntregable I  (NOLOCK)
 			ON TI.idInstanciaEntregable = I.idInstanciaEntregable
