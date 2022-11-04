@@ -1,9 +1,20 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura]    Script Date: 04/11/2022 11:08:22 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/01/2019
 -- Description:	Consultar los usuarios de finanzas de un proveedor poe factura
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura] --236
+-- Author:		Alexander Gomez
+-- Create date: 04/11/2022
+-- Description:	Se validan los usuarios activos
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura] --236
 	-- Add the parameters for the stored procedure here
 	@IdAprobacionPedido INT
 AS
@@ -17,16 +28,18 @@ BEGIN
 		US.IdUsuario,
 		US.Nombre,
 		US.Correo,
-		PR.RazonSocial
-	FROM dbo.MM_Pedido AS P 
-		JOIN dbo.MM_AceptacionPedido AS AP ON
-				AP.IdPedido = P.IdPedido
-		JOIN dbo.S_UsuarioProveedor AS USP ON
-				USP.IdProveedor = P.IdSubcontratista
-		JOIN dbo.S_Usuario AS US ON
-				US.IdUsuario = USP.IdUsuario
-		JOIN dbo.S_Proveedor AS PR ON
-				PR.IdProveedor = P.IdProveedorCompras
+		PR.RazonSocial,
+		US.IdTipoUsuario
+	FROM dbo.MM_Pedido AS P (NOLOCK)
+		 JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK) ON
+				P.IdPedido = AP.IdPedido
+		 JOIN dbo.S_UsuarioProveedor AS USP (NOLOCK) ON
+				P.IdSubcontratista = USP.IdProveedor
+		 JOIN dbo.S_Usuario AS US (NOLOCK) ON
+				USP.IdUsuario = US.IdUsuario
+		 JOIN dbo.S_Proveedor AS PR (NOLOCK) ON
+				P.IdProveedorCompras = PR.IdProveedor
 	WHERE AP.IdAceptacionPedido = @IdAprobacionPedido
 		AND US.IdTipoUsuario = 6 --FINANZAS
+		AND ISNULL(US.Activo,0) = 1
 END
