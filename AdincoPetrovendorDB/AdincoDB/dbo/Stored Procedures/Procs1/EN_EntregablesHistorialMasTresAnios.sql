@@ -1,18 +1,11 @@
-USE Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_EntregablesHistorialMasTresAnios'
-)
-    DROP PROCEDURE EN_EntregablesHistorialMasTresAnios;
+USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 22/09/2022 11:50:30 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 02/11/2022 02:15:42 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
+ALTER PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT
@@ -329,7 +322,8 @@ BEGIN
 			E.APRehabilitacionCamino as 'InicioActividadesExploracion',
 			E.APRehabilitacionLocalizacion as 'InicioActividadesDesarrollo',
 			E.APTomaInformacionSismica as 'InicioActividadesDesarrolloPerfo',
-			E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion' 
+			E.APCorteNucleos as 'InicioActividadesDesarrolloOperacion',
+			ISNULL(CE.Radar,0) AS Radar
         FROM #ResponsablesInstancias TI (NOLOCK)
         JOIN 
 			EN_InstanciasEntregable	I (NOLOCK)
@@ -500,7 +494,8 @@ BEGIN
 				ELSE 'NO'
 			END AS TipoJOA ,
 			REE.ReceptorEntregable,
-			RG.ResponsableGenerador
+			RG.ResponsableGenerador,
+			ISNULL(CE.Radar,0) AS Radar
         FROM #ResponsablesInstancias TI (NOLOCK)
         JOIN
 			EN_InstanciasEntregable	I (NOLOCK)

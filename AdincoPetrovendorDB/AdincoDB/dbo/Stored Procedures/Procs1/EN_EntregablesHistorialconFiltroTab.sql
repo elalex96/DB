@@ -1,13 +1,6 @@
-﻿USE Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_EntregablesHistorialconFiltroTab'
-)
-    DROP PROCEDURE EN_EntregablesHistorialconFiltroTab;
+﻿USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialconFiltroTab]    Script Date: 22/09/2022 12:48:22 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialconFiltroTab]    Script Date: 02/11/2022 02:08:47 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,7 +10,7 @@ GO
 -- Create date: <04/11/2021>
 -- Description:	Filtro para cargar informacion en /2/Entregables/entregablesadministradorcontrato.aspx
 -- =============================================
-CREATE PROCEDURE [dbo].[EN_EntregablesHistorialconFiltroTab]
+ALTER PROCEDURE [dbo].[EN_EntregablesHistorialconFiltroTab]
 	-- Add the parameters for the stored procedure here
 	@idUsuario INT,  
     @idContrato INT,  
