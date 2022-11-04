@@ -1,9 +1,6 @@
-﻿USE [Petrovendor]
+USE PETROVENDOR
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP]    Script Date: 19/10/2022 01:44:34 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP
 GO
 -- =============================================
 -- Author:		Alexander Gomez
@@ -14,7 +11,11 @@ GO
 -- Create date: 19/10/2022
 -- Description:	correcciones en validaciones de lineas de presupuesto
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP] --'4500564101',3315
+-- Author:		LUIS DAVID
+-- Create date: 02/11/2022
+-- Description:	Asignación del centro de costo por la tabla purchasing
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP] --'4500564101',3315
 	-- Add the parameters for the stored procedure here
 	@Purchasing NVARCHAR(100),
 	@IdContrato INT,
@@ -74,12 +75,16 @@ BEGIN
 							 JOIN adinco.dbo.CO_Contrato AS c (NOLOCK) ON c.IdAreaContractual = i.IdAreaContractual and c.IdContrato = @IdContrato
 							WHERE ISNULL(i.Activo,0) = 1
 							ORDER BY i.CreadoEn DESC);
-
+	SET @IdCentroCosto =  (579);
 END
 ELSE
 BEGIN
-
+	
 	--SE OBTIENE DEL WBS EL CENTRO DE COSTO DEL CATALOGO
+	SET @IdCentroCosto = (SELECT COST_CENTER 
+						  FROM WDEA_PurchasingDocumentsImportados 
+						  WHERE purchasing_document = @Purchasing AND IDBITACORA = @IdBitacoraLectura
+						  GROUP BY COST_CENTER);
 	SET @WBS = (SELECT TOP 1 
 					RIGHT(WBS_ELEMENT, LEN(WBS_ELEMENT) - 11)
 				FROM dbo.WDEA_PurchasingDocumentsImportados
@@ -135,7 +140,6 @@ SET @IdOperadora = (SELECT TOP 1
 						JOIN Petrovendor.dbo.S_Proveedor AS PR ON CI.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = PR.RFC
 					WHERE C.IdContrato = @IdContrato AND C.Activo = 1);
 
-SET @IdCentroCosto = (SELECT TOP 1 IdCentroCosto FROM dbo.CC_CentroCosto WHERE IdProveedor = @IdOperadora);
 
 SET @IdDomiclioEntrega = (SELECT TOP 1 IdDomicilio FROM dbo.DG_Domicilio WHERE IdProveedor = @IdOperadora);
 

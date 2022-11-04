@@ -1,6 +1,6 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_DEA_GuardarDocPO]    Script Date: 31/03/2022 11:02:29 a. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_DEA_GuardarDocPO]    Script Date: 01/11/2022 01:53:43 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -100,7 +100,7 @@ BEGIN
 	  SET @ExisteImportado = (SELECT TOP 1 IdPedidoADINCO FROM WDEA_PurchasingDocumentsImportados WHERE PURCHASING_DOCUMENT = @ID_PO);
 	  SET @IdProveedor = (SELECT TOP 1 IdProveedorCompras FROM MM_Pedido WHERE IdPedido = @ExisteImportado);
 
-	  IF ISNULL(@ExisteImportado,0) > 0
+	  IF ISNULL(@ExisteImportado,0) > 0 AND ISNULL(@CargadaManualmente,0) =  0 
 	  BEGIN
 			--VALIDAR SI LA PO NO ESTA RELACIONADA
 			SELECT @ExisteRelacionPO =COUNT(ID_R_PR_PO)
@@ -126,6 +126,7 @@ BEGIN
 					PO,
 					IdPedido,
 					FechaAltaRelacion,
+					--CreadoPor,
 					Activo,
 					IdCreadoProveedor,
 					IdAdjuntoPO
@@ -134,6 +135,7 @@ BEGIN
 				(   @ID_PO,       -- PR - nvarchar(30)
 					@ExisteImportado,       -- PO - nvarchar(30)
 					GETDATE(), -- FechaAltaRelacion - datetime
+					--@IdUsuario,         -- CreadoPor - int
 					1,      -- Activo - bit
 					@IdProveedor,
 					@IDDOCPO
@@ -150,7 +152,7 @@ BEGIN
 		IdDocumento,
 		ISNULL(@ExisteRelacionPO,0) AS Relacion,
 		ISNULL(@ExisteImportado,0) AS Pedido,
-		ID_PO
+		@ID_PO AS PO
 	  FROM dbo.DEA_AdjuntoPO
 	  WHERE IdAdjuntoPO = @IDDOCPO
 		
