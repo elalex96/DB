@@ -1,18 +1,11 @@
-﻿USE Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'sp_EN_MuestraColumnasExtraContratos'
-)
-    DROP PROCEDURE sp_EN_MuestraColumnasExtraContratos;
+﻿USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_MuestraColumnasExtraContratos]    Script Date: 22/09/2022 06:20:53 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[sp_EN_MuestraColumnasExtraContratos]    Script Date: 02/11/2022 11:39:55 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]--3,10061
+ALTER PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]--3,10061
 @idContrato INT,
 @idUsuario  INT
 AS
@@ -21,7 +14,7 @@ SET NOCOUNT ON
 
     SELECT   
 		CASE 
-			WHEN CC.NombreContratista LIKE '%Shell%' 
+			WHEN CC.NombreContratista LIKE '%Shell%'
 				THEN 1
 			WHEN CC.NombreContratista LIKE '%Repsol%' 
 				THEN 2
@@ -83,7 +76,20 @@ SET NOCOUNT ON
 			WHEN CC.NombreContratista LIKE '%Shell%' 
 				THEN 1
 			ELSE   0
-		END AS	MostrarFechaRealEvidencia
+		END AS	MostrarFechaRealEvidencia,
+		CASE 
+			WHEN CC.NombreContratista LIKE '%Shell%' AND C.IdContrato = 10151 --CONTRATO SEGUIMIENTO DE PLANES DE ACCION
+				THEN 1
+			WHEN CC.NombreContratista LIKE '%Repsol%' 
+				THEN 2
+			WHEN CC.NombreContratista LIKE '%BP%' 
+				THEN 2
+			WHEN CC.NombreContratista LIKE '%MURPHY%' 
+				THEN 2
+			WHEN CC.NombreContratista LIKE '%Smart%' 
+				THEN 1
+			ELSE   0
+		END AS MostrarSPA
     FROM
         dbo.CO_Contratista  CC (NOLOCK)
     JOIN
