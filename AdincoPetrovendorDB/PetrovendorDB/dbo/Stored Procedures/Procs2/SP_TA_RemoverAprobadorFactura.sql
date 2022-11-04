@@ -1,6 +1,9 @@
-﻿USE petrovendor
+﻿USE [Petrovendor]
 GO
-DROP PROCEDURE IF EXISTS SP_TA_RemoverAprobadorFactura
+/****** Object:  StoredProcedure [dbo].[SP_TA_RemoverAprobadorFactura]    Script Date: 04/11/2022 11:11:23 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		<Daniel AC>
@@ -10,7 +13,12 @@ GO
 -- Author:		Luis David
 -- Create date: 10-03-2022
 -- Description:	Se agrega el filtro de aprobadores activos
-CREATE PROCEDURE [dbo].[SP_TA_RemoverAprobadorFactura] --420, 2
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <04/11/2022>
+-- Description:	se agrega el filtrado de usuarios inactivos
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_TA_RemoverAprobadorFactura] --420, 2
 @IdProveedor INT,
 @IdUsuario INT,
 @IdAceptacionFactura  INT, 
@@ -80,7 +88,7 @@ BEGIN
 				(IdTarea,NewNoSecuencia)
 			 			
 				SELECT IdTarea, ROW_NUMBER() OVER(ORDER BY NoSecuencia ASC) AS  NewNoSecuencia
-				FROM dbo.TA_Tarea 
+				FROM dbo.TA_Tarea (NOLOCK)
 				WHERE IdOperacion =@IdOperacion ---> 
 				AND Activo=1  --> ESTEN ACTIVOS 
 				ORDER BY NoSecuencia ASC
@@ -98,7 +106,7 @@ BEGIN
 
 			INSERT INTO #TAREAS_APROBADAS(IdTarea, FechaCambioEstatus, Comentantario, IdEstatus)
 			SELECT IdTarea, FechaCambioEstatus, Comentario, IdEstatus
-			FROM dbo.TA_Tarea 
+			FROM dbo.TA_Tarea (NOLOCK)
 			WHERE IdOperacion=@IdOperacion 
 			AND Activo=1 AND IdEstatus=2 --> ESTATUS APROBADO 
 
@@ -114,9 +122,9 @@ BEGIN
 			SELECT CONCAT('Reinicio de aprobación del usuario ', ISNULL(U.Nombre,''), ', Última modificación: ',FORMAT(TA.FechaCambioEstatus,'dd/MM/yyyy hh:mm tt'),' del Estatus Aprobado al Estatus Pendiente.', 'Modificación (Eliminación de un aprobador del flujo 
 de aprobación) realizada por ', ISNULL(UR.Nombre,'')), T.IdOperacion,@FechaMod, 6 --> Tarea Reiniciada
 			FROM #TAREAS_APROBADAS TA
-			INNER JOIN dbo.TA_Tarea T ON T.IdTarea = TA.IdTarea
-			LEFT JOIN dbo.S_Usuario U ON U.IdUsuario=T.IdAprobador
-			LEFT JOIN dbo.S_Usuario UR ON UR.IdUsuario=@IdUsuario
+			INNER JOIN dbo.TA_Tarea T (NOLOCK) ON T.IdTarea = TA.IdTarea
+			LEFT JOIN dbo.S_Usuario U (NOLOCK) ON U.IdUsuario=T.IdAprobador
+			LEFT JOIN dbo.S_Usuario UR (NOLOCK) ON UR.IdUsuario=@IdUsuario
 			AND T.IdOperacion=@IdOperacion
 
 			SELECT 'SUCCESS' AS RESPONSE
@@ -146,27 +154,28 @@ de aprobación) realizada por ', ISNULL(UR.Nombre,'')), T.IdOperacion,@FechaMod,
 				'' AS Comentario,		--20	
 				T.MensajeAsignacion, --21,2
 				ISNULL(UE.Nombre, 'No identificado') AS UsuarioElimino --
-			FROM TA_Tarea AS T
-				INNER JOIN TA_Operacion AS TOO
+			FROM TA_Tarea AS T (NOLOCK)
+				INNER JOIN TA_Operacion AS TOO (NOLOCK)
 					ON T.IdOperacion = TOO.IdOperacion
-				INNER JOIN TA_FlujoTarea AS FT
+				INNER JOIN TA_FlujoTarea AS FT (NOLOCK)
 					ON TOO.IdFlujoTarea = FT.IdFlujoTarea
-				INNER JOIN S_Usuario AS U
+				INNER JOIN S_Usuario AS U (NOLOCK)
 					ON T.IdAprobador = U.IdUsuario
-				INNER JOIN TA_TipoOperacion AS TTO
+				INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
 					ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
-				INNER JOIN TA_Estatus AS TAE
+				INNER JOIN TA_Estatus AS TAE (NOLOCK)
 					ON TOO.IdEstatusOperacion = TAE.IdEstatus
-				LEFT JOIN dbo.MM_AceptacionFactura AF 
+				LEFT JOIN dbo.MM_AceptacionFactura AF (NOLOCK)
 					ON TOO.IdDocumento = AF.IdAceptacionFactura
-				LEFT JOIN dbo.MM_AceptacionPedido AP 
+				LEFT JOIN dbo.MM_AceptacionPedido AP (NOLOCK)
 					ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
-				LEFT JOIN dbo.MM_Pedido P 
+				LEFT JOIN dbo.MM_Pedido P (NOLOCK)
 					ON AP.IdPedido = P.IdPedido
-				LEFT JOIN dbo.MM_Pedidos PG 
+				LEFT JOIN dbo.MM_Pedidos PG (NOLOCK)
 					ON P.IdPedido = PG.IdIdentificador
-				AND PG.IdProveedorCliente=P.IdProveedorCompras
-				LEFT JOIN dbo.S_Usuario UE ON UE.IdUsuario=@IdUsuario ---> usuario elimino al aprobador 
+					AND PG.IdProveedorCliente=P.IdProveedorCompras
+				LEFT JOIN dbo.S_Usuario UE (NOLOCK) 
+					ON UE.IdUsuario=@IdUsuario ---> usuario elimino al aprobador 
 			WHERE T.IdOperacion = @IdOperacion
 			AND T.IdTarea=@IdTarea
 			AND ISNULL(U.Activo,0) = 1
@@ -221,29 +230,29 @@ de aprobación) realizada por ', ISNULL(UR.Nombre,'')), T.IdOperacion,@FechaMod,
 					'' AS Comentario,		--20	
 					T.MensajeAsignacion, --21,2
 					ISNULL(UE.Nombre, 'No identificado') AS UsuarioElimino --
-				FROM TA_Tarea AS T
+				FROM TA_Tarea AS T (NOLOCK)
 				    INNER JOIN #TAREAS_APROBADAS TA 
 						ON T.IdTarea = TA.IdTarea
-					INNER JOIN TA_Operacion AS TOO
+					INNER JOIN TA_Operacion AS TOO (NOLOCK)
 						ON T.IdOperacion = TOO.IdOperacion
-					INNER JOIN TA_FlujoTarea AS FT
+					INNER JOIN TA_FlujoTarea AS FT (NOLOCK)
 						ON TOO.IdFlujoTarea = FT.IdFlujoTarea
-					INNER JOIN S_Usuario AS U
+					INNER JOIN S_Usuario AS U (NOLOCK)
 						ON T.IdAprobador = U.IdUsuario
-					INNER JOIN TA_TipoOperacion AS TTO
+					INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
 						ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
-					INNER JOIN TA_Estatus AS TAE
+					INNER JOIN TA_Estatus AS TAE (NOLOCK)
 						ON TOO.IdEstatusOperacion = TAE.IdEstatus					
-					LEFT JOIN dbo.MM_AceptacionFactura AF 
+					LEFT JOIN dbo.MM_AceptacionFactura AF (NOLOCK)
 						ON TOO.IdDocumento = AF.IdAceptacionFactura
-					LEFT JOIN dbo.MM_AceptacionPedido AP 
+					LEFT JOIN dbo.MM_AceptacionPedido AP (NOLOCK)
 						ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
-					LEFT JOIN dbo.MM_Pedido P 
+					LEFT JOIN dbo.MM_Pedido P (NOLOCK)
 						ON AP.IdPedido = P.IdPedido
-					LEFT JOIN dbo.MM_Pedidos PG 
+					LEFT JOIN dbo.MM_Pedidos PG (NOLOCK)
 						ON P.IdPedido = PG.IdIdentificador
-					AND PG.IdProveedorCliente=P.IdProveedorCompras
-					LEFT JOIN dbo.S_Usuario UE 
+						AND PG.IdProveedorCliente=P.IdProveedorCompras
+					LEFT JOIN dbo.S_Usuario UE (NOLOCK)
 						ON @IdUsuario = UE.IdUsuario---> usuario elimino al aprobador 
 				WHERE T.IdOperacion = @IdOperacion	
 				AND ISNULL(U.Activo,0) = 1
