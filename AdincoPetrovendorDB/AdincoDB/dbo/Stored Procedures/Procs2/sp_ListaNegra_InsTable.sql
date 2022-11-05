@@ -1,5 +1,4 @@
-﻿
-CREATE proc sp_ListaNegra_InsTable
+﻿CREATE proc [dbo].[sp_ListaNegra_InsTable]
 (
 	@tbl	ListaNegraTable readonly
 )
@@ -30,33 +29,26 @@ begin
 						PublicacionDOFSentenciaFavorable
 					)
 	
-		/*if exists (select * from sys.tables where name = 'tmpLista')
-		begin
-			drop table tmpLista
-		end*/
-	
 
-		select		top 10 
+		select
 					t1.RFC,
-					Contribuyente									=	max(t1.Contribuyente),
-					Situacion										=	max(t1.Situacion), 
-					NoFechaOficioGlobalPresuncion					=	max(t1.NoFechaOficioGlobalPresuncion),
-					PublicacionPaginaSATPresuntos					=	max(t1.PublicacionPaginaSATPresuntos),
-					PublicacionDOFpresuntos							=	max(t1.PublicacionDOFpresuntos),
-					PublicacionPaginaSATDesvirtuados				=	max(t1.PublicacionPaginaSATDesvirtuados),
-					NoFechaOficioGlobalContribuyentesDesvirtuaron	=	max(t1.NoFechaOficioGlobalContribuyentesDesvirtuaron),
-					PublicacionDOFDesvirtuados						=	max(t1.PublicacionDOFDesvirtuados),
-					NoFechaOficioGlobalDefinitivos					=	max(t1.NoFechaOficioGlobalDefinitivos),
-					PublicacionPaginaSATDefinitivos					=	max(t1.PublicacionPaginaSATDefinitivos),
-					PublicacionDOFDefinitivos						=	max(t1.PublicacionDOFDefinitivos),
-					NoFechaOficioGlobalSentenciaFavorable			=	max(t1.NoFechaOficioGlobalSentenciaFavorable),
-					PublicacionPaginaSATSentenciaFavorable			=	max(t1.PublicacionPaginaSATSentenciaFavorable),
-					PublicacionDOFSentenciaFavorable				=	max(t1.PublicacionDOFSentenciaFavorable)
-		--into		tmpLista
-
+					Contribuyente									=	t1.Contribuyente,
+					Situacion										=	t1.Situacion, 
+					NoFechaOficioGlobalPresuncion					=	t1.NoFechaOficioGlobalPresuncion,
+					PublicacionPaginaSATPresuntos					=	t1.PublicacionPaginaSATPresuntos,
+					PublicacionDOFpresuntos							=	t1.PublicacionDOFpresuntos,
+					PublicacionPaginaSATDesvirtuados				=	t1.PublicacionPaginaSATDesvirtuados,
+					NoFechaOficioGlobalContribuyentesDesvirtuaron	=	t1.NoFechaOficioGlobalContribuyentesDesvirtuaron,
+					PublicacionDOFDesvirtuados						=	t1.PublicacionDOFDesvirtuados,
+					NoFechaOficioGlobalDefinitivos					=	t1.NoFechaOficioGlobalDefinitivos,
+					PublicacionPaginaSATDefinitivos					=	t1.PublicacionPaginaSATDefinitivos,
+					PublicacionDOFDefinitivos						=	t1.PublicacionDOFDefinitivos,
+					NoFechaOficioGlobalSentenciaFavorable			=	t1.NoFechaOficioGlobalSentenciaFavorable,
+					PublicacionPaginaSATSentenciaFavorable			=	t1.PublicacionPaginaSATSentenciaFavorable,
+					PublicacionDOFSentenciaFavorable				=	t1.PublicacionDOFSentenciaFavorable
 		from		@tbl			t1
 		where		t1.RFC			not like '%XXXX%'
-		group by	t1.RFC
+
 
 		end try
 		begin catch
