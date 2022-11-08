@@ -1,14 +1,9 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SIPAC_RC_CONT_21_M]    Script Date: 28/03/2022 12:53:29 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿
 -- ============================================= 
 -- Author: Manuel Cruz-Yazmin Glez. 
 -- Create date: 2017-11-24 
 -- Description: Reporte de CGI - Registro de costos. Plantilla antes RC_CONT_01_M actual RC_CONT_21_M 
+-- ============================================= 
 -- Modificado: Manuel Cruz 
 -- Fecha Modificado: 2019-06-28 
 -- Description: Cambio de consulta para mostrar los complementos de pago relacionadolos al gasto 
@@ -27,11 +22,15 @@ GO
 -- Description:      Se ajusta la consulta de la hoja 21 para poder retornar la snuevas columnas de la plantilla  2022 EPT y ajuste de gasto
 -- Se agrega mejoras de deuda tecnica
 -- =============================================
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-11-08
+-- Description:      Se ajusta la consulta para mostrar en las columnas 21_27 y 21_28 para cuando no retorna gastos, envie estos campos en 0
+-- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]
-    @Contrato INT,
-    @Mes DATE,
-    @IdPresupuesto INT = 0,
-    @Plantilla VARCHAR(150) = ''
+    @Contrato      INT,
+    @Mes           DATE,
+    @IdPresupuesto INT          = 0,
+    @Plantilla     VARCHAR(150) = ''
 AS
     BEGIN
 
@@ -76,6 +75,7 @@ AS
         IF OBJECT_ID('tempdb..#SumaDePagosDolaresBase', 'U') IS NOT NULL
             DROP TABLE #SumaDePagosDolaresBase;
 
+		
         /*Omitir facturas en la hoja 21*/
         /*CREACIONES DE TABLAS*/
         CREATE TABLE #uuidNoReportar (UUID VARCHAR(2000));
@@ -377,7 +377,7 @@ AS
                             WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
                                  OR FI_Factura.TipoComprobante LIKE 'I%'
                                 THEN 'I'
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
+     WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
                                  OR FI_Factura.TipoComprobante LIKE 'E%'
                                 THEN 'E'
                             WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
@@ -563,7 +563,7 @@ AS
                     --Se agrego para los casos donde el complemento es igual a la moneda de la transferencia (USD = USD) 
                     --y la factura ppd es igual a la moneada del documento relacionado (MXN = MXN) 
                     SELECT
-                        FI_Factura.IdFactura                            AS IdFacturaCP,
+                     FI_Factura.IdFactura                            AS IdFacturaCP,
                         FI_Factura.UUID                                 AS UUIDCP,
                         FI_ComplementoDePago.FormaDePagoP               AS FormaPagoCP,
                         SUM(FI_CPDocRelacionado.ImpPagado)              AS MontoCP,
@@ -708,7 +708,7 @@ AS
                         #Facturas.TipoComprobante,
                         CASE
                             WHEN FI_Transfer.IdMoneda = 1
-                                 AND FI_Factura.IdMoneda = 2
+            AND FI_Factura.IdMoneda = 2
                                 THEN CAST(ROUND(
                                                    (ISNULL(FI_TransferFactura.MontoPagado, 0)
                                                     / CO_TipoCambioDiario.TipoCambio
@@ -986,8 +986,8 @@ AS
                                 NULL                                               AS [RC21_24],
                                 NULL                                               AS [RC21_25],
                                 NULL                                               AS [RC21_26],
-                                NULL                                               AS [RC21_27],
-                                NULL                                               AS [RC21_28]
+                                0                                               AS [RC21_27],
+                                0                                               AS [RC21_28]
                             FROM
                                 dbo.CO_Contrato WITH (NOLOCK)
                                 JOIN
@@ -1003,7 +1003,7 @@ AS
                             WHERE
                                 CO_Contrato.IdContrato = @Contrato
                                 AND SUBSTRING(ISNULL(CO_Presupuesto.IdPresupuestoCNH, ''), 22, 10) <> ''
-                                AND CO_Presupuesto.IdPresupuesto = CASE
+                           AND CO_Presupuesto.IdPresupuesto = CASE
                                                                        WHEN @IdPresupuesto = 0
                                                                            THEN CO_Presupuesto.IdPresupuesto
                                                                        ELSE
@@ -1080,7 +1080,7 @@ AS
                                 END                                        AS [RC21_13],
                                 CASE
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1
-                                        THEN 'NA'
+                             THEN 'NA'
                                     ELSE
                                         LTRIM(RTRIM(ISNULL(CPO.NombreCampo, '-')))
                                 END                                        AS [RC21_14],
@@ -1138,7 +1138,7 @@ AS
                                                    0
                                            END
                                        )
-                                   )                                       AS [RC21_23],
+                                   )                         AS [RC21_23],
                                 TM.TipoMonedaCorto                         AS [RC21_24],
                                 CAST(TTF.TCD AS DECIMAL(15, 4))            AS [RC21_25],
                                 CASE
@@ -1392,7 +1392,7 @@ AS
                                 end                                        AS [RC21_21],
                                 SUM(   CASE
                                            WHEN ISNULL(TTF.MontoRegistro, 0) <> 0
-                                                AND TTF.TipoComprobante IN (
+                                          AND TTF.TipoComprobante IN (
                                                                                'I', 'N', 'P'
                                                                            )
                                                THEN CAST(TTF.MontoRegistro
@@ -1575,7 +1575,7 @@ AS
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1
                                         THEN 'NA'
                                     ELSE
-                                        LTRIM(RTRIM(I.NombreInstalacion))
+                                       LTRIM(RTRIM(I.NombreInstalacion))
                                 END,
                                 case
                                     when CO_Registro.CapexOpexEdicion is not null
@@ -1647,7 +1647,7 @@ AS
                                         THEN 'NA'
                                     WHEN CO_Registro.CvTipoDocFacturacion = 2
                                         THEN PC.NumeroPedimento
-                                END                                        AS [RC21_06],
+                                END AS [RC21_06],
                                 CASE
                                     WHEN CO_Registro.CvTipoDocFacturacion = 1
                                         THEN 'NA'
@@ -1767,7 +1767,7 @@ AS
                                         ON C.IdContratista = CON.IdContratista
                                 JOIN
                                     dbo.CO_ActividadPetroleraCNH    APCNH WITH (NOLOCK)
-                                        ON LPM.IdActividadPetrolera = APCNH.IdActividadPetrolera
+                                  ON LPM.IdActividadPetrolera = APCNH.IdActividadPetrolera
                                 JOIN
                                     dbo.CO_SubactividadPetrolera    SP WITH (NOLOCK)
                                         ON LPM.IdSubactividadPetrolera = SP.IdSubactividadPetrolera
@@ -1823,7 +1823,7 @@ AS
                             GROUP BY
                                 LTRIM(RTRIM(CON.IDSIPAC)),
                                 LTRIM(RTRIM(C.IDRegFiducidiario)),
-                                C.NumeroContrato,
+ C.NumeroContrato,
                                 SUBSTRING(P.IdPresupuestoCNH, 22, 10),
                                 MONTH(CO_Registro.MesPresentacion),
                                 YEAR(CO_Registro.MesPresentacion),
@@ -1992,6 +1992,4 @@ AS
                 FROM
                     #ResultadosGastos;
             END
-
-
     END;
