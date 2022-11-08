@@ -8,7 +8,8 @@ IF EXISTS
 )
     DROP PROCEDURE SP_MM_ConsultaPedidosCliente;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosCliente]    Script Date: 14/10/2022 09:34:17 a. m. ******/
+
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosCliente]    Script Date: 07/11/2022 05:05:58 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -27,7 +28,7 @@ GO
 -- Update:		25/01/2021
 -- Description:	Revisión issue #930/ Optimización de sp
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosCliente]
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosCliente] --907,'TODOS',3296
     -- Add the parameters for the stored procedure here
     @IdProveedor INT,
     @Filtro NVARCHAR(100),
@@ -55,7 +56,11 @@ BEGIN
 	  TA_Operacion.IdDocumento = MM_PEDIDO.IdSolicitudPedido 
 	  TA_Operacion.NoVersion=MM_PEDIDO.Version=*/
 
-
+	CREATE TABLE #WDEA_PurchasingDocumentsImportados
+    (
+        IdPedidoADINCO INT,
+		MECANISMO_CONTRATACION NVARCHAR(MAX)
+    );
     DECLARE @EsAdministradorCompras BIT = 0, @EsTipoAdministrador BIT = 0, @EsAdministrador BIT = 0;
 
     --CONSULTAR SI EL USUARIO ACTUAL ES ADMINISTRADOR DE COMPRAS
@@ -101,6 +106,15 @@ BEGIN
     WHERE SPC.IdAsignadoA = @IdUsuario
           AND ISNULL(SPC.Activo, 0) = 1 -->CTE QUE ESTE ACTIVO
     GROUP BY P.IdSolicitudPedido;
+
+	-- FILTRAR TODOS LOS PEDIDOS DEL PROVEEDOR ACTUAL
+	INSERT INTO #WDEA_PurchasingDocumentsImportados(IdPedidoADINCO,MECANISMO_CONTRATACION)
+	SELECT PDI.IdPedidoADINCO,MAX(PDI.MECANISMO_CONTRATACION)
+	FROM MM_Pedido P
+	JOIN  WDEA_PurchasingDocumentsImportados PDI
+		ON P.IdPedido = PDI.IdPedidoADINCO
+	WHERE P.IdProveedorCompras= @IdProveedor
+	GROUP BY PDI.IdPedidoADINCO
 
     IF @Filtro = 'EN_APROBACION'
     BEGIN
@@ -173,7 +187,7 @@ BEGIN
                 ON PG.IdTipoPedido = TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC  (NOLOCK)
                 ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
               AND ISNULL(P.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
@@ -279,7 +293,7 @@ BEGIN
                 ON PG.IdTipoPedido = TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
 				ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
@@ -387,7 +401,7 @@ BEGIN
                 ON PG.IdTipoPedido = TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC 
                 ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
@@ -494,7 +508,7 @@ BEGIN
                 ON PG.IdTipoPedido = TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON P.IdSolicitudPedido = SPC.IdSolicitudPedido			
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
@@ -608,7 +622,7 @@ BEGIN
                 ON PG.IdTipoPedido = TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC (NOLOCK)
                 ON P.IdSolicitudPedido = SPC.IdSolicitudPedido
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
@@ -722,7 +736,7 @@ BEGIN
                 ON PG.IdTipoPedido=TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON  P.IdSolicitudPedido=SPC.IdSolicitudPedido
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
@@ -830,7 +844,7 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                 ON PG.IdTipoPedido=TP.IdTipoPedido 
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON P.IdSolicitudPedido=SPC.IdSolicitudPedido 
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
@@ -954,7 +968,7 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                 ON PG.IdTipoPedido=TP.IdTipoPedido
             LEFT JOIN #MM_SolicitudPedidoCompradorT SPC
                 ON P.IdSolicitudPedido=SPC.IdSolicitudPedido 
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI  (NOLOCK)
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor
@@ -1084,7 +1098,7 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                 ON P.IdPedido=RPO.IdPedido 
             LEFT JOIN dbo.DEA_AdjuntoPO APO (NOLOCK)
                 ON RPO.IdAdjuntoPO=APO.IdAdjuntoPO
-			LEFT JOIN WDEA_PurchasingDocumentsImportados PDI
+			LEFT JOIN #WDEA_PurchasingDocumentsImportados PDI
 				ON  P.IdPedido = PDI.IdPedidoADINCO
         WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
               AND O.IdProveedor = @IdProveedor

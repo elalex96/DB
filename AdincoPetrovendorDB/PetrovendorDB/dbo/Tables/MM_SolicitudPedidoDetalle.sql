@@ -51,6 +51,7 @@
     [IdEstatusEliminado]               INT            NULL,
     [IdDinamicsAx]                     INT            NULL,
     [FechaModificado]                  DATETIME       NULL,
+    [ID_IMPORTACION_PDI]               INT            NULL 
     CONSTRAINT [PK_MM_SolicitudPedidoDetalle] PRIMARY KEY CLUSTERED ([IdSolicitudPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
 );
 
