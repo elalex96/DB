@@ -1,22 +1,7 @@
-﻿USE [Adinco]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_IAMConsultarUsuario'
-)
-    DROP PROCEDURE SP_IAMConsultarUsuario;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_IAMConsultarUsuario]    Script Date: 09/11/2022 11:00:13 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 02-01-18
--- DAC 09/11/2022 --> Se agrega CTE de DurationPreSignedURL
+-- Description:	
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_IAMConsultarUsuario]
 	-- Add the parameters for the stored procedure here
@@ -33,8 +18,7 @@ AS
                     Nombre,
                     RTRIM(LTRIM(AccessKey)) AS AccessKey,
                     RTRIM(LTRIM(SecretAccessKey)) AS SecretAccessKey,
-                    IdContrato,
-					1 as DurationPreSignedURL --> CTE EN HORAS
+                    IdContrato
              FROM AWS_UserIAM
-			 WHERE IdIAM = 10001 --CTE S3User
+			 WHERE IdIAM = 10001
          END;
