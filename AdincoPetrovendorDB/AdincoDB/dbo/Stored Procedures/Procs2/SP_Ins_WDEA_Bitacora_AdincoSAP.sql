@@ -285,7 +285,7 @@ BEGIN TRY
 			AND WBS.Activo = 1
 			and PO.IdContrato = WBS.IdContrato	
 		WHERE 
-		PO.IdContrato != 10145
+		PO.IdContrato != 10145 --> CTE Bloque WD ADMIN
 		GROUP BY DWL.ID,DWL.WBS_Element,PO.IdContrato,	DWL.Purchasing_Document
 		
 		UPDATE #Instalaciones
