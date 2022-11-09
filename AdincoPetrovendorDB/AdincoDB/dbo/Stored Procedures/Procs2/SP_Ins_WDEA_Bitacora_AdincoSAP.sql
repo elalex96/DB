@@ -1,7 +1,19 @@
-use petrovendor
-go
-drop procedure if exists SP_Ins_WDEA_Bitacora_AdincoSAP
-go
+USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_Ins_WDEA_Bitacora_AdincoSAP'
+)
+    DROP PROCEDURE SP_Ins_WDEA_Bitacora_AdincoSAP;
+GO
+
+/****** Object:  StoredProcedure [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP]    Script Date: 08/11/2022 11:02:32 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
 (
 	@IdBitacoraLectura		int
@@ -14,11 +26,21 @@ CREATE proc [dbo].[SP_Ins_WDEA_Bitacora_AdincoSAP] --16999
 -- creado por: Luis David
 -- creado el: 04/10/2022
 -- modificado: Se cambia por 3 0's cuando el Purch Org sea MOG
+-- DAC Se agrego validación de las instalaciones 09/11/2022
 --===============================================
 AS
 begin
 
 BEGIN TRY
+		
+		DROP TABLE IF EXISTS #Instalaciones
+		CREATE TABLE #Instalaciones (
+		ID INT, 
+		WBS VARCHAR(1000),
+		IdPozoSAP VARCHAR(1000),
+		InstalacionId INT,
+		ContratoId INT,
+		Purchasing_Document VARCHAR(1000))
 
 		declare @maxNoConsecutivo int, 
 		@IdProveedorWDEA int = (SELECT TOP 1 idproveedor FROM S_Proveedor WHERE rfc = 'DDE151002QY9'), 
@@ -252,8 +274,38 @@ BEGIN TRY
 				GROUP BY DWL.Purchasing_Document,DWL.ID;
 			
 			/*******************/
-	
-	
+	    -- VALIDAR LAS INSTALACIONES
+	     INSERT INTO #Instalaciones(ID, WBS,ContratoId,	Purchasing_Document)
+		select	DWL.ID,RTRIM(LTRIM(ISNULL(DWL.WBS_Element,''))),PO.IdContrato,	DWL.Purchasing_Document
+		from #tmpData DWL
+		JOIN PurchaseOrganization AS PO 
+			ON DWL.Purch_Organization COLLATE SQL_Latin1_General_CP1_CI_AS = PO.Siglas
+		JOIN WDEA_WBS WBS (NOLOCK)
+			ON ISNULL(RTRIM(LTRIM(DWL.WBS_Element)),'') = ISNULL(RTRIM(LTRIM(WBS.WBS)),'') COLLATE SQL_Latin1_General_CP1_CI_AS 
+			AND WBS.Activo = 1
+			and PO.IdContrato = WBS.IdContrato	
+		WHERE 
+		PO.IdContrato != 10145
+		GROUP BY DWL.ID,DWL.WBS_Element,PO.IdContrato,	DWL.Purchasing_Document
+		
+		UPDATE #Instalaciones
+		SET IdPozoSAP=CASE WHEN  LEN(WBS)>=11 THEN RIGHT(WBS, LEN(WBS) - 11) ELSE WBS END 
+
+		UPDATE #Instalaciones
+		SET IdPozoSAP=CASE WHEN LEN(IdPozoSAP)>=10 THEN LEFT(IdPozoSAP, LEN(IdPozoSAP) - 10) ELSE WBS END 
+		
+		UPDATE  I
+		SET I.InstalacionId=P.IdInstalacionAdinco
+		FROM #Instalaciones I
+		JOIN PozosSAP P
+			ON ISNULL(I.IdPozoSAP,'') COLLATE SQL_Latin1_General_CP1_CI_AS = CAST(P.IdPozoSAP AS NVARCHAR(MAX)) COLLATE SQL_Latin1_General_CP1_CI_AS
+		AND  P.IdContrato=I.ContratoId;
+
+		---> NOTIFICAR LAS INSTALACIONES QUE NO SE ENCONTRARON
+		insert into #tmpErrores	
+		select		ID,	'D',  'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, El Pozo SAP: '+ISNULL(IdPozoSAP,'-')+' del WBS: '+ISNULL(WBS,'-')+', no existe o no esta relacionado a una instalación en ADINCO. Celda D, Fila '	+	cast(ID as varchar(10))	+	' .',1,Purchasing_Document
+		from		#Instalaciones 	
+		WHERE InstalacionId IS NULL
 			
 			/*Validity_Per_Start*/
 			insert into #tmpErrores	select Id, 'G', 'La orden de compra '+cast(isnull(Purchasing_Document,'') as varchar(50))+' no pudo ser registrada en ADINCO, debido al siguiente problema : No se encontró la fecha de inicio en la celda G, Fila '+cast(Id as varchar(10))+'.',1,Purchasing_Document				from #tmpData 
@@ -469,7 +521,7 @@ da en ADINCO, debido al siguiente problema : No se encontraron términos de pago
 		inner join	#tmpRegistrosValidadosPorDocumento	t2
 		on			t1.Purchasing_Document				=	t2.Purchasing_Document
 		and			t1.Total							=	t2.Total
-
+		
 		
 		delete		#tmpRegistrosValidadosPorDocumento
 		from		#tmpRegistrosValidadosPorDocumento	t1
