@@ -26,13 +26,44 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	CREATE TABLE #TempPedidos
+	(ID_PR VARCHAR(500),
+	IdSolicitudPedido INT,
+	IdPedido INT ,
+	MotivoUrgencia varchar(max),
+	PedidoInterno INT ,
+	TipoSolicitudPedido VARCHAR(max),
+	FechaAltaSolPed DATETIME,
+	Nombre VARCHAR(300),
+	CentroCosto VARCHAR(300),
+	NombreUsuario VARCHAR(500),
+	Descripcion VARCHAR(300),
+	Proveedor VARCHAR(max),
+	AreaContractual VARCHAR(300),
+	TotalPedido FLOAT,
+	IdPedidoInterno INT ,
+	Version INT,
+	IdOperacion INT,
+	FechaEnvioPedido DATETIME,
+	Estatus VARCHAR(300),
+	RecepcionServicio BIT,
+	TipoMoneda VARCHAR(500),
+	TipoPedido VARCHAR(500),
+	IdTipoPedido INT,
+	ID_R_PR_PO INT,
+	PedidoCreadoEl DATETIME,
+	IdDocumento INT,
+	IdAjuntoPr INT,
+	NumeroContrato VARCHAR(max)
+	)
+
+	INSERT INTO #TempPedidos
 	SELECT
 			SPR.ID_PR AS ID_PR,
 			P.IdSolicitudPedido,
 			PG.IdPedido AS IdPedido,
-			SP.MotivoUrgencia, 	
+			SP.MotivoUrgencia as MotivoUrgencia, 	
 			P.IdPedido AS PedidoInterno,
-			ISNULL(PDI.PURCHASING_DOCUMENT, '') as PURCHASING_DOCUMENT,
 			TSP.TipoSolicitudPedido, 
 			SP.FechaAlta AS FechaAltaSolPed,
 			'' AS Nombre,		
@@ -47,7 +78,6 @@ BEGIN
 			O.IdOperacion,
 			P.CreadoEl AS FechaEnvioPedido,	
 			E.Nombre AS Estatus,
-			ISNULL(WDLT.Purchasing_Group,'') AS Purchasing_Group,
 			P.RecepcionServicio,
 			TM.TipoMonedaCorto AS TipoMoneda,			
 			TP.TipoPedido,
@@ -75,8 +105,6 @@ BEGIN
 		LEFT JOIN dbo.DEA_Relacion_PR_PO R ON P.IdPedido  = R.IdPedido AND R.Activo = 1
 		LEFT JOIN Adinco..OT_Estimacion est on p.IdPedido = est.IdPedido 
 		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	SP.IdContrato	=	C.IdContrato 
-		LEFT JOIN Petrovendor..WDEA_PurchasingDocumentsImportados as PDI on P.IdPedido = PDI.IdPedidoADINCO
-		LEFT JOIN Petrovendor..WDEA_Layout_T as WDLT on PDI.PURCHASING_DOCUMENT = WDLT.Purchasing_Document
 		WHERE 
 		O.IdTipoOperacion =9 --> APROBACIÓN DE PEDIDO
 		AND ISNULL(P.IdEstatusEliminado,0)<>1 --> QUE NO ESTE ELIMINADO EL PEDIDO		
@@ -87,7 +115,6 @@ BEGIN
 		GROUP BY 
 		P.IdPedido, 
 		P.IdSolicitudPedido, 
-		P.CreadoEl, 
 		PV.RazonSocial,		
 		SP.MotivoUrgencia,
 		P.RecepcionServicio,  
@@ -106,12 +133,44 @@ BEGIN
 		P.CreadoEl,
 		SPR.ID_PR,
 		DPR.IdDocumento,
-		P.CreadoEl,
 		SPR.IdAjuntoPr,
 		c.IdContrato,
-		c.NumeroContrato,
-		PDI.PURCHASING_DOCUMENT,
-		WDLT.Purchasing_Group
-		ORDER BY  PG.IdPedido DESC 
- 
+		c.NumeroContrato
+		ORDER BY  PG.IdPedido DESC
+		
+
+		select tmp.*,PDI.PURCHASING_DOCUMENT,WDLT.Purchasing_Group from #TempPedidos tmp
+		LEFT JOIN Petrovendor..WDEA_PurchasingDocumentsImportados as PDI on tmp.IdPedidoInterno = PDI.IdPedidoADINCO
+		LEFT JOIN Petrovendor..WDEA_Layout_T as WDLT on PDI.PURCHASING_DOCUMENT = WDLT.Purchasing_Document
+		group by
+		ID_PR,
+		IdSolicitudPedido ,
+		IdPedido ,
+		PedidoInterno ,
+		TipoSolicitudPedido ,
+		FechaAltaSolPed ,
+		Nombre ,
+		MotivoUrgencia,
+		CentroCosto ,
+		NombreUsuario ,
+		Descripcion ,
+		Proveedor ,
+		AreaContractual ,
+		TotalPedido ,
+		IdPedidoInterno ,
+		Version ,
+		IdOperacion ,
+		FechaEnvioPedido ,
+		Estatus ,
+		RecepcionServicio ,
+		TipoMoneda ,
+		TipoPedido ,
+		IdTipoPedido ,
+		ID_R_PR_PO ,
+		PedidoCreadoEl ,
+		IdDocumento,
+		IdAjuntoPr ,
+		NumeroContrato,
+		PDI.PURCHASING_DOCUMENT,WDLT.Purchasing_Group
+		order by tmp.PedidoInterno desc 
 END
