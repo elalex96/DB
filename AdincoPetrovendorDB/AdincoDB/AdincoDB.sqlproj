@@ -13378,6 +13378,8 @@
     <Build Include="dbo\Tables\Tables2\EMP_NotificadoListaNegra.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\EliminarDuplicadosListaNegra.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\EnvioCorreoSiNuevaSituacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\Procedure1.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\EN_SHELL_ObtenerDocumentosEntregablesDescarga.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
