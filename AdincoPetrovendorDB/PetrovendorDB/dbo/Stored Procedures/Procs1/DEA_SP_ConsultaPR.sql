@@ -1,17 +1,7 @@
-USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'DEA_SP_ConsultaPR'
-)
-    DROP PROCEDURE DEA_SP_ConsultaPR;
-	GO
-/****** Object:  StoredProcedure [dbo].[DEA_SP_ConsultaPR]    Script Date: 31/05/2022 04:04:16 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use Petrovendor
+go
+drop procedure if exists DEA_SP_ConsultaPR
+go
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <20/08/2019>
@@ -21,6 +11,10 @@ GO
 -- Author:		Daniel AC
 -- Create date: <31/05/2022>
 -- Description:	<Se ordena llamadas a tablas y filtro por tipos de pedido>
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: <11/11/2022>
+-- Description:	Se agrega el PO y Pyurchasing group al listado de pedidos pendientes de relación issue Petrovendor #2108
 -- =============================================
 create PROCEDURE [dbo].[DEA_SP_ConsultaPR] 
 	-- Add the parameters for the stored procedure here
@@ -32,13 +26,13 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-
-			SELECT 
+	SELECT
 			SPR.ID_PR AS ID_PR,
 			P.IdSolicitudPedido,
 			PG.IdPedido AS IdPedido,
 			SP.MotivoUrgencia, 	
 			P.IdPedido AS PedidoInterno,
+			ISNULL(PDI.PURCHASING_DOCUMENT, '') as PURCHASING_DOCUMENT,
 			TSP.TipoSolicitudPedido, 
 			SP.FechaAlta AS FechaAltaSolPed,
 			'' AS Nombre,		
@@ -52,7 +46,8 @@ BEGIN
 			P.Version,
 			O.IdOperacion,
 			P.CreadoEl AS FechaEnvioPedido,	
-			E.Nombre AS Estatus,			
+			E.Nombre AS Estatus,
+			ISNULL(WDLT.Purchasing_Group,'') AS Purchasing_Group,
 			P.RecepcionServicio,
 			TM.TipoMonedaCorto AS TipoMoneda,			
 			TP.TipoPedido,
@@ -80,14 +75,12 @@ BEGIN
 		LEFT JOIN dbo.DEA_Relacion_PR_PO R ON P.IdPedido  = R.IdPedido AND R.Activo = 1
 		LEFT JOIN Adinco..OT_Estimacion est on p.IdPedido = est.IdPedido 
 		inner JOIN	Adinco.dbo.CO_Contrato	AS	C 	ON	SP.IdContrato	=	C.IdContrato 
+		LEFT JOIN Petrovendor..WDEA_PurchasingDocumentsImportados as PDI on P.IdPedido = PDI.IdPedidoADINCO
+		LEFT JOIN Petrovendor..WDEA_Layout_T as WDLT on PDI.PURCHASING_DOCUMENT = WDLT.Purchasing_Document
 		WHERE 
 		O.IdTipoOperacion =9 --> APROBACIÓN DE PEDIDO
 		AND ISNULL(P.IdEstatusEliminado,0)<>1 --> QUE NO ESTE ELIMINADO EL PEDIDO		
-		AND O.IdProveedor = @IdProveedor 
-		--DMW si tiene recepcion a null o si es un pedido de control de obra
-		--AND (
-		--	P.RecepcionServicio IS NULL OR est.IdPedido > 0
-		--)  
+		AND O.IdProveedor = @IdProveedor
 		AND (O.IdEstatusOperacion = 2 OR O.IdEstatusOperacion=11)  --> EN ESTATUS DE APROBADO O APROBADO SIN DOCUMENTO		
 		AND P.Version=O.NoVersion
 		AND R.ID_R_PR_PO IS NULL ---> QUE NO TENGA RELACION EN LA TABLE DE PEDIDOS 
@@ -116,8 +109,9 @@ BEGIN
 		P.CreadoEl,
 		SPR.IdAjuntoPr,
 		c.IdContrato,
-		c.NumeroContrato
+		c.NumeroContrato,
+		PDI.PURCHASING_DOCUMENT,
+		WDLT.Purchasing_Group
 		ORDER BY  PG.IdPedido DESC 
- 
  
 END
