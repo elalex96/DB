@@ -1,17 +1,7 @@
-USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'DEA_SP_ConsultaPR'
-)
-    DROP PROCEDURE DEA_SP_ConsultaPR;
-	GO
-/****** Object:  StoredProcedure [dbo].[DEA_SP_ConsultaPR]    Script Date: 31/05/2022 04:04:16 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use Petrovendor
+go
+drop procedure if exists DEA_SP_ConsultaPR
+go
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <20/08/2019>
@@ -21,6 +11,10 @@ GO
 -- Author:		Daniel AC
 -- Create date: <31/05/2022>
 -- Description:	<Se ordena llamadas a tablas y filtro por tipos de pedido>
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: <11/11/2022>
+-- Description:	Se agrega el PO y Pyurchasing group al listado de pedidos pendientes de relación issue Petrovendor #2108
 -- =============================================
 create PROCEDURE [dbo].[DEA_SP_ConsultaPR] 
 	-- Add the parameters for the stored procedure here
@@ -32,12 +26,43 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	CREATE TABLE #TempPedidos
+	(ID_PR VARCHAR(500),
+	IdSolicitudPedido INT,
+	IdPedido INT ,
+	MotivoUrgencia varchar(max),
+	PedidoInterno INT ,
+	TipoSolicitudPedido VARCHAR(max),
+	FechaAltaSolPed DATETIME,
+	Nombre VARCHAR(300),
+	CentroCosto VARCHAR(300),
+	NombreUsuario VARCHAR(500),
+	Descripcion VARCHAR(300),
+	Proveedor VARCHAR(max),
+	AreaContractual VARCHAR(300),
+	TotalPedido FLOAT,
+	IdPedidoInterno INT ,
+	Version INT,
+	IdOperacion INT,
+	FechaEnvioPedido DATETIME,
+	Estatus VARCHAR(300),
+	RecepcionServicio BIT,
+	TipoMoneda VARCHAR(500),
+	TipoPedido VARCHAR(500),
+	IdTipoPedido INT,
+	ID_R_PR_PO INT,
+	PedidoCreadoEl DATETIME,
+	IdDocumento INT,
+	IdAjuntoPr INT,
+	NumeroContrato VARCHAR(max)
+	)
 
-			SELECT 
+	INSERT INTO #TempPedidos
+	SELECT
 			SPR.ID_PR AS ID_PR,
 			P.IdSolicitudPedido,
 			PG.IdPedido AS IdPedido,
-			SP.MotivoUrgencia, 	
+			SP.MotivoUrgencia as MotivoUrgencia, 	
 			P.IdPedido AS PedidoInterno,
 			TSP.TipoSolicitudPedido, 
 			SP.FechaAlta AS FechaAltaSolPed,
@@ -52,7 +77,7 @@ BEGIN
 			P.Version,
 			O.IdOperacion,
 			P.CreadoEl AS FechaEnvioPedido,	
-			E.Nombre AS Estatus,			
+			E.Nombre AS Estatus,
 			P.RecepcionServicio,
 			TM.TipoMonedaCorto AS TipoMoneda,			
 			TP.TipoPedido,
@@ -83,18 +108,13 @@ BEGIN
 		WHERE 
 		O.IdTipoOperacion =9 --> APROBACIÓN DE PEDIDO
 		AND ISNULL(P.IdEstatusEliminado,0)<>1 --> QUE NO ESTE ELIMINADO EL PEDIDO		
-		AND O.IdProveedor = @IdProveedor 
-		--DMW si tiene recepcion a null o si es un pedido de control de obra
-		--AND (
-		--	P.RecepcionServicio IS NULL OR est.IdPedido > 0
-		--)  
+		AND O.IdProveedor = @IdProveedor
 		AND (O.IdEstatusOperacion = 2 OR O.IdEstatusOperacion=11)  --> EN ESTATUS DE APROBADO O APROBADO SIN DOCUMENTO		
 		AND P.Version=O.NoVersion
 		AND R.ID_R_PR_PO IS NULL ---> QUE NO TENGA RELACION EN LA TABLE DE PEDIDOS 
 		GROUP BY 
 		P.IdPedido, 
 		P.IdSolicitudPedido, 
-		P.CreadoEl, 
 		PV.RazonSocial,		
 		SP.MotivoUrgencia,
 		P.RecepcionServicio,  
@@ -113,11 +133,44 @@ BEGIN
 		P.CreadoEl,
 		SPR.ID_PR,
 		DPR.IdDocumento,
-		P.CreadoEl,
 		SPR.IdAjuntoPr,
 		c.IdContrato,
 		c.NumeroContrato
-		ORDER BY  PG.IdPedido DESC 
- 
- 
+		ORDER BY  PG.IdPedido DESC
+		
+
+		select tmp.*,PDI.PURCHASING_DOCUMENT,WDLT.Purchasing_Group from #TempPedidos tmp
+		LEFT JOIN Petrovendor..WDEA_PurchasingDocumentsImportados as PDI on tmp.IdPedidoInterno = PDI.IdPedidoADINCO
+		LEFT JOIN Petrovendor..WDEA_Layout_T as WDLT on PDI.PURCHASING_DOCUMENT = WDLT.Purchasing_Document
+		group by
+		ID_PR,
+		IdSolicitudPedido ,
+		IdPedido ,
+		PedidoInterno ,
+		TipoSolicitudPedido ,
+		FechaAltaSolPed ,
+		Nombre ,
+		MotivoUrgencia,
+		CentroCosto ,
+		NombreUsuario ,
+		Descripcion ,
+		Proveedor ,
+		AreaContractual ,
+		TotalPedido ,
+		IdPedidoInterno ,
+		Version ,
+		IdOperacion ,
+		FechaEnvioPedido ,
+		Estatus ,
+		RecepcionServicio ,
+		TipoMoneda ,
+		TipoPedido ,
+		IdTipoPedido ,
+		ID_R_PR_PO ,
+		PedidoCreadoEl ,
+		IdDocumento,
+		IdAjuntoPr ,
+		NumeroContrato,
+		PDI.PURCHASING_DOCUMENT,WDLT.Purchasing_Group
+		order by tmp.PedidoInterno desc 
 END
