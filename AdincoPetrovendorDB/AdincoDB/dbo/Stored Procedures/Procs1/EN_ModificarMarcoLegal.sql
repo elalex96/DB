@@ -85,7 +85,7 @@ BEGIN
 	AND ISNULL(Procesado,0) = 0;
 
 	--ELIMINADO DE LAS SECUENCIAS YA QUE AL CAMBIAR DE MARCO LEGAL CAMBIAN LA RUTA
-	DELETE FROM EN_SecuenciaCarpetas
+	DELETE FROM EN_SecuenciaCarpetas 
 
 	INSERT INTO dbo.AP_BitacoraErrores
 	(HResult,
@@ -97,8 +97,8 @@ BEGIN
 	)
 	VALUES
 	(0, -- HResult - int
-	'Se eliminó la información de la tabla EN_SecuenciaCarpetas y se edito la información de la tabla EN_CarpetasArchivosVisor/EN_CF_SolicitUDescargaCarpetas', -- Mensaje - nvarchar(max)
-	 CONCAT('Marco Legal[',@IdMarcoLegal,'] Antes: ',@ALIAS_ANTERIOR,' Despues: ',@ML_NUEVO), -- StackTrace - nvarchar(max)
+	CONCAT('Se eliminó la información de la tabla EN_SecuenciaCarpetas y se edito la información de la tabla EN_CarpetasArchivosVisor/EN_CF_SolicitUDescargaCarpetas.',' Marco Legal[',@IdMarcoLegal,'] Antes: ',ISNULL(@ALIAS_ANTERIOR,''),' Despues: ',ISNULL(@ML_NUEVO,'')), -- Mensaje - nvarchar(max)
+	 'CONTRACT_FILES', -- StackTrace - nvarchar(max)
 	 @idUsuario, -- IdUsuario - int
 	 @idContrato,
 	 GETDATE()
