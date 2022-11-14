@@ -1,7 +1,16 @@
 USE [Adinco]
 GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_DescargarCarpeta'
+)
+    DROP PROCEDURE SP_EN_DescargarCarpeta;
+GO
 
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 30/06/2022 09:28:45 a. m. ******/
+
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 09/11/2022 08:28:44 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -13,15 +22,15 @@ GO
 -- =============================================
 -- =============================================
 -- Author:      Daniel AC
--- Create date: <25/03/2022>
--- Description: <Se agrego función para acortar rutas de los archivos de las carpetas del visor>
+-- Create date: <10/11/2022>
+-- Description: <Se cambio de sp para no contemplar carpetas de la versión anterior>
 -- =============================================
 -- =============================================
 -- Author:      Alexander Gomez
 -- Create date: <28/06/2022>
 -- Description: <se reemplaza el marco legal por el alias en las carpetas de descarga>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/SENER (Secretaría de Energía)/(Resolutivo EvIS) Oficio 117.-DGAEISyCP.4237-18 referente a la Evaluación de Impacto Social/',10103,1000
+CREATE PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/SENER (Secretaría de Energía)/(Resolutivo EvIS) Oficio 117.-DGAEISyCP.4237-18 referente a la Evaluación de Impacto Social/',10103,1000
 
     -- Add the parameters for the stored procedure here
     @Ruta VARCHAR(MAX),
@@ -102,7 +111,7 @@ BEGIN
         Titulo                  varchar(max)
     )
     insert into #Rutas
-    exec EN_SHELL_ObtenerDocumentosEntregables @IdContrato, @IdUsuario
+    exec EN_SHELL_ObtenerDocumentosEntregablesDescarga @IdContrato, @IdUsuario
     insert
     into    #tmpResultado
     select  Id, IdPadre, Nivel, Titulo, Titulo, DocumentoEntregableId,Titulo
