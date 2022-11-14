@@ -1,6 +1,14 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 26/10/2022 02:09:30 p. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'EN_SHELL_ObtenerDocumentosEntregables_V2'
+)
+    DROP PROCEDURE EN_SHELL_ObtenerDocumentosEntregables_V2;
+GO
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 08/11/2022 01:11:10 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,7 +18,7 @@ GO
 -- Create date: <04/01/2022>
 -- Description:	<Consulta de archivos contract files>
 -- =============================================
-ALTER PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] 
+CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] 
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@IdUsuario INT,
@@ -536,7 +544,7 @@ BEGIN
 		END
 
 		--CONSULTA DE LAS CARPETAS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Limitador)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Limitador,IsPozo)
 		SELECT
 			3,
 			CA.Nombre,
@@ -552,7 +560,8 @@ BEGIN
 			SC.Ruta,
 			SC.RutaAnterior,
 			US.Nombre,
-			ISNULL(CA.Limitador,0)
+			ISNULL(CA.Limitador,0),
+			CA.IsPozo
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -567,7 +576,7 @@ BEGIN
 			AND CA.IdContrato = @ContratoId;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Folder,UUID,Meta,CredoPorUsuario)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Folder,UUID,Meta,CredoPorUsuario,IsPozo)
 		SELECT
 			3,
 			CA.Nombre,
@@ -603,7 +612,8 @@ BEGIN
 			CA.Folder,
 			CA.UUIDAmazon,
 			CA.Meta,
-			1
+			1,
+			CA.IsPozo
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -719,7 +729,7 @@ BEGIN
 		END;
 
 		--CONSULTA DE LAS CARPETAS POR USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Limitador)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,CreadoPor,Limitador,IdReceptorEntregable,IsPozo)
 		SELECT
 			4,
 			CA.Nombre,
@@ -735,7 +745,9 @@ BEGIN
 			SC.Ruta,
 			SC.RutaAnterior,
 			US.Nombre,
-			ISNULL(CA.Limitador,0)
+			ISNULL(CA.Limitador,0),
+			@IdReceptorEntregable,
+			CA.IsPozo
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -1417,7 +1429,7 @@ BEGIN
 	BEGIN
 
 		--BUSCAR LAS CARPETAS DE USUARIO DENTRO DE LAS CARPETAS DE USUARIO
-		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior, CreadoPor,Frecuencia,IdReceptorEntregable,AnioMes,Limitador)
+		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,NivelAnterior,IsCarpetaUsuarioAnterior,Ruta,RutaAnterior, CreadoPor,Frecuencia,IdReceptorEntregable,AnioMes,Limitador,IsPozo)
 		SELECT
 			CA.Nivel,
 			CA.Nombre,
@@ -1438,7 +1450,8 @@ BEGIN
 			SC.Frecuencia,
 			SC.IdReceptorEntregable,
 			SC.AnioMes,
-			ISNULL(CA.Limitador,0)
+			ISNULL(CA.Limitador,0),
+			CA.IsPozo
 		FROM EN_CarpetasArchivosVisor AS CA
 		LEFT JOIN EN_SecuenciaCarpetas AS SC
 				ON SC.IdCarpeta = @IdCarpeta
@@ -1465,7 +1478,8 @@ BEGIN
 			SC.IdReceptorEntregable,
 			SC.AnioMes,
 			CA.Limitador,
-			SC.Nivel;
+			SC.Nivel,
+			CA.IsPozo;
 
 		--CONSULTA DE LOS ARCHIVOS POR USUARIO
 		INSERT INTO @CONTRACT_FILES(Nivel,Nombre,IdCarpeta,IdDocumento,Tipo,CreadoEl,CantidadArchivos, Funcion, FuncionTipo,IsCarpetaUsuario,IdCarpetaAnterior,Ruta,RutaAnterior,IsCarpetaUsuarioAnterior,NivelAnterior, CreadoPor,Folder,UUID,Meta,CredoPorUsuario, Frecuencia)
@@ -1563,6 +1577,7 @@ BEGIN
 	SELECT DISTINCT
 		IdRow,
 		CF.Nivel,
+		--REPLACE(Nombre,'"','') AS NombreLabel,
 		CASE 
 			WHEN LEN(Nombre) > 20 THEN '<marquee behavior="scroll" direction="left" style="width: 70%;">' + REPLACE(Nombre,'"','') + '</marquee>'
 			ELSE REPLACE(Nombre,'"','')
@@ -1614,3 +1629,4 @@ BEGIN
 
 
 END
+

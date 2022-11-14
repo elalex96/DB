@@ -1,35 +1,31 @@
 USE [Adinco]
 GO
-/****** Object:  StoredProcedure [dbo].[EN_ModificarMarcoLegal]    Script Date: 20/07/2022 01:02:53 p. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'EN_ModificarMarcoLegal'
+)
+    DROP PROCEDURE EN_ModificarMarcoLegal;
+GO
+
+/****** Object:  StoredProcedure [dbo].[EN_ModificarMarcoLegal]    Script Date: 11/11/2022 02:29:01 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
--- =================================================================
--- Author:		Valeria Rodríguez
--- Create date: 03/01/2019
--- Description:	Modificación de datos en la tabla EN_MarcoLegal
--- =================================================================
--- =================================================================
--- Author:	Luis David
--- Create date: 27/09/2019
--- Description:	se agrega el bitjoa y nombreeningles para el issue 419
--- =================================================================
--- Author:		Reyna Olvera
--- Create date: 27/09/2019
--- Description: Modifica datos del marco legal
--- =================================================================
--- =================================================================
--- Author: Alexander Gomez
--- Create date: 20/06/2022
--- Description:	se agrega el Alias
--- =================================================================
+
 -- =================================================================
 -- Author:	Alexander Gomez
 -- Create date: 30/06/2022
 -- Description:	se agregan validaciones al editar el alias del marco legal para contract files
 -- =================================================================
-ALTER PROCEDURE [dbo].[EN_ModificarMarcoLegal] --[EN_ModificarMarcoLegal] 'SASISOPA Programa de Desarrollo 2019-2021',10137,10536,3,1,'',0,'PRUEBA2'
+-- =================================================================
+-- Author:	Daniel AC
+-- Create date: 10/11/2022
+-- Description:	Se agrega registro en bitacora el cambio realizado
+-- =================================================================
+CREATE PROCEDURE [dbo].[EN_ModificarMarcoLegal] --[EN_ModificarMarcoLegal] 'SASISOPA Programa de Desarrollo 2019-2021',10137,10536,3,1,'',0,'PRUEBA2'
 	@MarcoLegal VARCHAR(MAX),
 	@IdMarcoLegal INT,
     @idUsuario INT,
@@ -90,6 +86,23 @@ BEGIN
 
 	--ELIMINADO DE LAS SECUENCIAS YA QUE AL CAMBIAR DE MARCO LEGAL CAMBIAN LA RUTA
 	DELETE FROM EN_SecuenciaCarpetas
+
+	INSERT INTO dbo.AP_BitacoraErrores
+	(HResult,
+	 Mensaje,
+	 StackTrace,
+	 IdUsuario,
+	 IdContrato,
+	 FechaRegistro
+	)
+	VALUES
+	(0, -- HResult - int
+	'Se eliminó la información de la tabla EN_SecuenciaCarpetas y se edito la información de la tabla EN_CarpetasArchivosVisor/EN_CF_SolicitUDescargaCarpetas', -- Mensaje - nvarchar(max)
+	 CONCAT('Marco Legal[',@IdMarcoLegal,'] Antes: ',@ALIAS_ANTERIOR,' Despues: ',@ML_NUEVO), -- StackTrace - nvarchar(max)
+	 @idUsuario, -- IdUsuario - int
+	 @idContrato,
+	 GETDATE()
+	);
 
 	UPDATE EN_MarcoLegal
 	SET MarcoLegal = @MarcoLegal,
