@@ -139,7 +139,12 @@ BEGIN
                GETDATE()
         FROM FI_TransferFactura (NOLOCK)
             JOIN #FacturasPrincipales
-                ON FI_TransferFactura.IdFactura = #FacturasPrincipales.IdFacturaPPD;
+                ON FI_TransferFactura.IdFactura = #FacturasPrincipales.IdFacturaPPD
+			JOIN
+				FI_Transfer 
+				ON	FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
+			WHERE FI_TransferFactura.IdTransfer IS NOT NULL;
+
         /*Eliminar relacion existente entre la factura principal PPD y la transferencia*/
         INSERT INTO #TransferenciaCP
         (
@@ -156,12 +161,14 @@ BEGIN
         FROM FI_TransferFactura (NOLOCK)
             JOIN #TransferenciaCP 
                 ON FI_TransferFactura.IdTransfer = #TransferenciaCP.IdTransfer
+
         /*Actualizar en FI_Transfer IdFormaPago = 2 ya que indica que el metodo de pago es PPD*/
         UPDATE FI_Transfer
         SET FI_Transfer.IdFormaPago = 2
         FROM FI_Transfer (NOLOCK)
             JOIN #TransferenciaCP
                 ON FI_Transfer.IdTransferencia = #TransferenciaCP.IdTransfer
+
         /*Insertar la nueva relacion del complemento de pago con la transferencia.*/
         INSERT INTO FI_TransferFactura
         (
@@ -175,14 +182,18 @@ BEGIN
         SELECT DISTINCT
             FI_TransferFacturaPPD.IdTransfer,
             #FacturasPrincipales.IdFacturaCP,
-            0,
+ 0,
             6,
             @idUsuario,
             GETDATE()
         FROM #FacturasPrincipales
             JOIN FI_TransferFacturaPPD (NOLOCK)
                 ON #FacturasPrincipales.IdFacturaPPD = FI_TransferFacturaPPD.IdFactura
-        WHERE #FacturasPrincipales.IdFacturaCP = @idFactura;
+			JOIN
+				FI_Transfer 
+				ON	FI_TransferFacturaPPD.IdTransfer = FI_Transfer.IdTransferencia
+        WHERE #FacturasPrincipales.IdFacturaCP = @idFactura AND FI_Transfer.IdTransferencia IS NOT NULL;
+
         /*Actualizar mes presentación de los gastos asociados a las facturas principales del complemento*/
         UPDATE CO_Registro
         SET CO_Registro.MesPresentacion = #FacturasPrincipales.MesDePago
