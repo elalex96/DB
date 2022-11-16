@@ -141,7 +141,7 @@ BEGIN
             JOIN #FacturasPrincipales
                 ON FI_TransferFactura.IdFactura = #FacturasPrincipales.IdFacturaPPD
 			JOIN
-				FI_Transfer 
+				FI_Transfer (NOLOCK)
 				ON	FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
 			WHERE FI_TransferFactura.IdTransfer IS NOT NULL;
 
@@ -190,7 +190,7 @@ BEGIN
             JOIN FI_TransferFacturaPPD (NOLOCK)
                 ON #FacturasPrincipales.IdFacturaPPD = FI_TransferFacturaPPD.IdFactura
 			JOIN
-				FI_Transfer 
+				FI_Transfer (NOLOCK)
 				ON	FI_TransferFacturaPPD.IdTransfer = FI_Transfer.IdTransferencia
         WHERE #FacturasPrincipales.IdFacturaCP = @idFactura AND FI_Transfer.IdTransferencia IS NOT NULL;
 
