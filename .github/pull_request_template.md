@@ -14,6 +14,7 @@
 - [ ] La rama que se desea integrar se encuentra actualizada con la rama default?
 - [ ] La(s) evidencia(s) es(son) lo suficientemente legibles?
 - [ ] En caso de aplicarse, ¿se encuentra asignado el Milestone correspondiente en el Pull Request?
+- [ ] En caso de aplicarse, ¿se encuentran asignadas las etiquetas corresponientes en el Pull Request? (ej. Task Scheduler, Contiene Scripts)
 
 ## Informacion Adicional
 ### Propuesta relacionada
