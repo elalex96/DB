@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Guarda las facturas PPD o P para realizar la busqueda de los ppd y complementos de pago para el reporte de CGI
@@ -18,6 +19,11 @@
 --					renombrado de las tablas, eñiminación desub querys consultas ajustadas   
 --					ajustes de max varchar, ajustes de nvarchar a varchar, se mueven create table al inicio del sp
 -- =============================================
+-- Modificado Por:	Reyna Olvera
+-- Fecha:			15 de Noviembre del 2022
+-- Descripción:		Se agrega join a la tabla de transferencias, ya que se encontraron transferencias no existentes en la tabla: FI_TransferFacturaPPD
+-- =============================================
+
 CREATE PROCEDURE [dbo].[sp_FI_GuardaFacturaPPDP]
     @idContrato INT,
     @idUsuario INT,
@@ -156,6 +162,7 @@ BEGIN
             JOIN #FacturasPrincipales 
                 ON FI_TransferFacturaPPD.IdFactura = #FacturasPrincipales.IdFacturaPPD
         WHERE #FacturasPrincipales.IdFacturaCP = @idFactura;
+
         /*Eliminar*/
         DELETE FI_TransferFactura
         FROM FI_TransferFactura (NOLOCK)
