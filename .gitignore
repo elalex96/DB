@@ -3,4 +3,6 @@
 ################################################################################
 
 /AdincoPetrovendorDB/AdincoDB/dbo/Stored Procedures/Procs1
-/.vs/adinco-adincopetrodb/v17
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
