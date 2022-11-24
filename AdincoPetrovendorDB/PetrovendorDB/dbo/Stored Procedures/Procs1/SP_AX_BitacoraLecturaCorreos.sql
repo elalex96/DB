@@ -1,6 +1,4 @@
-use Petrovendor
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <06/12/2019>
 -- Description:	<Registro de bitacora de lectura de correos>
@@ -9,7 +7,7 @@ go
 -- Create date: <21/10/2022>
 -- Description:	<Se agrega a bitacora cuando el documento no contenga info>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_AX_BitacoraLecturaCorreos]
+CREATE PROCEDURE [dbo].[SP_AX_BitacoraLecturaCorreos]
 	-- Add the parameters for the stored procedure here
 	@Asunto NVARCHAR(MAX),
 	@CantidadArchvios INT,

@@ -1,4 +1,4 @@
-﻿create proc sp_ProgramaImplementaPolitica_ReOrden --21, 139, 1047, 8353,0,1
+﻿CREATE proc sp_ProgramaImplementaPolitica_ReOrden --21, 139, 1047, 8353,0,1
 (
 	@pIdProgramaImplementa			int,
 	@pIdProgramaImplementaPolitica	int,
@@ -15,4 +15,3 @@ begin
 		@pOrden,				@pOrdenNew
 end
 
-go

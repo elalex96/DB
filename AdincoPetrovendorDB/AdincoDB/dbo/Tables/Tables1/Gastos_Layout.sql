@@ -29,6 +29,6 @@
     [CreadoPor]         INT            NULL,
     [ModificadoPor]     INT            NULL,
     [ModificadoEl]      DATETIME       NULL,
-    PRIMARY KEY CLUSTERED ([IdGastosLayout] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdGastosLayout] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

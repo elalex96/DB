@@ -1,13 +1,6 @@
-﻿USE [Adinco]
-GO
-/****** Object:  UserDefinedFunction [dbo].[fn_ent_RutaArchivo_CF]    Script Date: 29/06/2022 05:27:07 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿
 
-
-ALTER FUNCTION [dbo].[fn_ent_RutaArchivo_CF] 
+CREATE FUNCTION [dbo].[fn_ent_RutaArchivo_CF] 
 ( 
     @string NVARCHAR(MAX), 
     @sizeCarpeta INT

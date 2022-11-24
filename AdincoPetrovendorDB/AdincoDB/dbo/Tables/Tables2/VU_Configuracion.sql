@@ -3,6 +3,6 @@
     [Variable]        NVARCHAR (MAX) NULL,
     [Valor]           NVARCHAR (MAX) NULL,
     [Activo]          BIT            NULL,
-    CONSTRAINT [PK_VU_Configuracion] PRIMARY KEY CLUSTERED ([IdConfiguracion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_VU_Configuracion] PRIMARY KEY CLUSTERED ([IdConfiguracion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

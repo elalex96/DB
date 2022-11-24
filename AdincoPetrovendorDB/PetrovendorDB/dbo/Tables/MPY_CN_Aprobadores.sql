@@ -6,6 +6,6 @@
     [EstatusAprobacion]  INT            NULL,
     [Comentario]         NVARCHAR (MAX) NULL,
     [FechaEvaluacion]    DATETIME       NULL,
-    CONSTRAINT [PK_MPY_CN_Aprobadores] PRIMARY KEY CLUSTERED ([IdAprobador_CN] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MPY_CN_Aprobadores] PRIMARY KEY CLUSTERED ([IdAprobador_CN] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

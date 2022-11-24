@@ -4,6 +4,6 @@
     [IdFacturaAdinco]            INT      NULL,
     [FechaIntercambio]           DATETIME NULL,
     [Activo]                     BIT      NULL,
-    CONSTRAINT [PK_FI_FacturaAdincoPetrovendor] PRIMARY KEY CLUSTERED ([IdFacturaAdincoPetrovendor] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_FacturaAdincoPetrovendor] PRIMARY KEY CLUSTERED ([IdFacturaAdincoPetrovendor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

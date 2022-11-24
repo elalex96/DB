@@ -5,6 +5,6 @@
     [NombreCambioEstado]  NVARCHAR (MAX) NULL,
     [ComentarioRequerido] BIT            NULL,
     [CreadoPor]           INT            NULL,
-    CONSTRAINT [PK_Transicion] PRIMARY KEY CLUSTERED ([IdTransicion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Transicion] PRIMARY KEY CLUSTERED ([IdTransicion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

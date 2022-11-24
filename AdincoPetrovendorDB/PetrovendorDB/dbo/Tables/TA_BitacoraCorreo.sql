@@ -8,6 +8,6 @@
     [IdUsuarioEnvio]    INT            NULL,
     [IdProveedorEnvio]  INT            NULL,
     [IdUsuarioReceptor] INT            NULL,
-    CONSTRAINT [PK_TA_BitacoraCorreo] PRIMARY KEY CLUSTERED ([IdEnvioCorreo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TA_BitacoraCorreo] PRIMARY KEY CLUSTERED ([IdEnvioCorreo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

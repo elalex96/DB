@@ -10,7 +10,7 @@
     [ModificadoPor]            INT        NULL,
     [ModificadoEn]             DATETIME   NULL,
     [AnioInicio]               INT        NULL,
-    CONSTRAINT [PK_CO_PCNPorPeriodos] PRIMARY KEY CLUSTERED ([IdPCNPorPeriodo] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_PCNPorPeriodos] PRIMARY KEY CLUSTERED ([IdPCNPorPeriodo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_PCNPorPeriodos_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_CO_PCNPorPeriodos_CO_TipoProgramaActividad] FOREIGN KEY ([IdTipoPgrogramaActividad]) REFERENCES [dbo].[CO_TipoProgramaActividad] ([IdTipoProgramaActividad])
 );

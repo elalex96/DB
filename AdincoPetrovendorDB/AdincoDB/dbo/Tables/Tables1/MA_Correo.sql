@@ -10,6 +10,6 @@
     [CreadoEl]         DATETIME       NULL,
     [ModificadoPor]    INT            NULL,
     [ModificadoEl]     DATETIME       NULL,
-    CONSTRAINT [PK_MA_Correo] PRIMARY KEY CLUSTERED ([IdCorreo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MA_Correo] PRIMARY KEY CLUSTERED ([IdCorreo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -13,7 +13,7 @@
     [ModificadoEl]             DATETIME   NULL,
     [Activo]                   BIT        NULL,
     [VolumenVendido]           FLOAT (53) NULL,
-    [Temperatura] FLOAT NULL, 
+    [Temperatura]              FLOAT (53) NULL,
     FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     FOREIGN KEY ([idHidrocarburo]) REFERENCES [dbo].[CO_ClasificacionProductoNominacion] ([ProductoNominacionID]),

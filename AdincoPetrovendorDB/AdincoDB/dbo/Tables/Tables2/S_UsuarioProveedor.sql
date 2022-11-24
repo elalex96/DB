@@ -4,6 +4,6 @@
     [IdProveedor]        INT NULL,
     [IdTipoPaquete]      INT NULL,
     [IsAdmin]            BIT NULL,
-    CONSTRAINT [PK_S_UsuarioProveedor] PRIMARY KEY CLUSTERED ([IdUsuarioProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_S_UsuarioProveedor] PRIMARY KEY CLUSTERED ([IdUsuarioProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

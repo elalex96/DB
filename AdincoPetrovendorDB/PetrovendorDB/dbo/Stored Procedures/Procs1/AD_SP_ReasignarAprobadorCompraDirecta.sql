@@ -1,14 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'AD_SP_ReasignarAprobadorCompraDirecta'
-)
-    DROP PROCEDURE AD_SP_ReasignarAprobadorCompraDirecta;
-GO 
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel A Cruz  
 -- Create date: 06-04-2021  
 -- Description:  SP que reasigna una tarea a otra aprobador  

@@ -19,7 +19,7 @@
     [Mol_CO2]        FLOAT (53) NULL,
     [Mol_h2s]        FLOAT (53) NULL,
     [Mol_N2]         FLOAT (53) NULL,
-    PRIMARY KEY CLUSTERED ([idSipacVenta] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([idSipacVenta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([idcontrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

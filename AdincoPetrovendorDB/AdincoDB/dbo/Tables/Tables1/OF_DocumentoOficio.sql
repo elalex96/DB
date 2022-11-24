@@ -18,6 +18,6 @@
     [CreadoPor]          INT              NOT NULL,
     [CreadoEl]           DATETIME         NOT NULL,
     [IdContrato]         INT              NULL,
-    CONSTRAINT [PK_OF_DocumentoOficio] PRIMARY KEY CLUSTERED ([IdDocumentoOficio] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_OF_DocumentoOficio] PRIMARY KEY CLUSTERED ([IdDocumentoOficio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

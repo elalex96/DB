@@ -63,7 +63,7 @@
     [NuevaDistribucionProvisionalContratistaC3]               FLOAT (53)     NULL,
     [NuevaDistribucionProvisionalContratistaC4]               FLOAT (53)     NULL,
     [NuevaDistribucionProvisionalContratistaC5]               FLOAT (53)     NULL,
-    CONSTRAINT [PK_SIPAC_RM_FMP_53_M] PRIMARY KEY CLUSTERED ([IdRMFMP53M] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SIPAC_RM_FMP_53_M] PRIMARY KEY CLUSTERED ([IdRMFMP53M] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SIPAC_RM_FMP_53_M_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

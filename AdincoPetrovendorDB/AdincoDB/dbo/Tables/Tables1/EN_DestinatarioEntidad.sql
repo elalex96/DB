@@ -5,6 +5,6 @@
     [ApellidoMaterno]       VARCHAR (50) NULL,
     [idTitulo]              INT          NULL,
     [Puesto]                VARCHAR (50) NULL,
-    CONSTRAINT [PK__EN_Desti__BA5620FF652151DC] PRIMARY KEY CLUSTERED ([idDestinatarioEntidad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK__EN_Desti__BA5620FF652151DC] PRIMARY KEY CLUSTERED ([idDestinatarioEntidad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

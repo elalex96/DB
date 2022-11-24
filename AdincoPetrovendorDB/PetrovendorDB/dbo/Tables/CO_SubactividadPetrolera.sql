@@ -3,6 +3,6 @@
     [id_Sub-actividad]        NVARCHAR (MAX) NULL,
     [SubactividadPetrolera]   NVARCHAR (MAX) NULL,
     [CreadoPor]               INT            NULL,
-    CONSTRAINT [PK_SubactividadesPetroleras] PRIMARY KEY CLUSTERED ([IdSubactividadPetrolera] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SubactividadesPetroleras] PRIMARY KEY CLUSTERED ([IdSubactividadPetrolera] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

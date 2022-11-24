@@ -12,6 +12,6 @@
     [Saldo]                         MONEY         NULL,
     [Fecha]                         DATE          NULL,
     [Orden]                         INT           NULL,
-    CONSTRAINT [PK_TempReporteGastosNivelActividad] PRIMARY KEY CLUSTERED ([IdReporteGastosNivelActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TempReporteGastosNivelActividad] PRIMARY KEY CLUSTERED ([IdReporteGastosNivelActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

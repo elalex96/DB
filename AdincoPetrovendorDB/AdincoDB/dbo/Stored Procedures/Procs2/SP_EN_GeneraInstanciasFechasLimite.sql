@@ -1,13 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_GeneraInstanciasFechasLimite]    Script Date: 18/11/2021 05:38:35 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-DROP PROCEDURE IF EXISTS SP_EN_GeneraInstanciasFechasLimite
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20/04/2019
 -- Description:	

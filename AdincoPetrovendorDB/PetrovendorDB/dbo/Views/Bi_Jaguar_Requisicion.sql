@@ -1,17 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Bi_Jaguar_Requisicion'
-)
-    DROP VIEW Bi_Jaguar_Requisicion;
-	
-GO
-
+﻿
 CREATE VIEW [dbo].[Bi_Jaguar_Requisicion]
 AS
 	SELECT
@@ -59,6 +46,7 @@ AS
 --EL CENTRO DE COSTO ES POR DETALLE
 --LA TAREA PETROLERA ES POR DETALLE 
 -- APLICANDO EL Distinct SE REDUCE CANTIDAD SOLO POR REQUISICIÓN 
+
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_DiagramPane1', @value = N'[0E232FF0-B466-11cf-A24F-00AA00A3EFFF, 1.00]
 Begin DesignProperties = 

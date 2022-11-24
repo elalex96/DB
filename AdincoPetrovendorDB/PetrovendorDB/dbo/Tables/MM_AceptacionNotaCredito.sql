@@ -10,6 +10,6 @@
     [Activo]                  BIT            NULL,
     [IdEstatusEliminada]      INT            NULL,
     [IdEliminado]             INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdAceptacionNotaCredito] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdAceptacionNotaCredito] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

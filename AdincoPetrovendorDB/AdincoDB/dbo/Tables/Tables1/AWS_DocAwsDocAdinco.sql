@@ -8,7 +8,7 @@
     [CreadoEn]          DATETIME NULL,
     [ModificadoPor]     INT      NULL,
     [ModificadoEn]      DATETIME NULL,
-    CONSTRAINT [PK_AWS_DocAwsDocAdinco] PRIMARY KEY CLUSTERED ([IdDocAwsDocAdinco] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AWS_DocAwsDocAdinco] PRIMARY KEY CLUSTERED ([IdDocAwsDocAdinco] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AWS_DocAwsDocAdinco_AP_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_AWS_DocAwsDocAdinco_AP_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_AWS_DocAwsDocAdinco_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),

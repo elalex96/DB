@@ -4,7 +4,7 @@
     [PerfilID]        INT NOT NULL,
     [CreadoPor]       INT NULL,
     [RandomUpdate]    INT NULL,
-    CONSTRAINT [PK_PerfilUsuario] PRIMARY KEY CLUSTERED ([PerfilUsuarioID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PerfilUsuario] PRIMARY KEY CLUSTERED ([PerfilUsuarioID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AP_PerfilUsuario_AP_Perfil] FOREIGN KEY ([PerfilID]) REFERENCES [dbo].[AP_Perfil] ([IdPerfil]),
     CONSTRAINT [FK_PerfilUsuario_Usuario] FOREIGN KEY ([UsuarioID]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );

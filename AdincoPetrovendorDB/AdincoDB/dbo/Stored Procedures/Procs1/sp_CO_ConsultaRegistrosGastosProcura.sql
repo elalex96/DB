@@ -1,5 +1,5 @@
 ﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastosProcura]
--- =============================================
+-- ============================================= 
 @IdPresupuesto INT
 AS
      BEGIN

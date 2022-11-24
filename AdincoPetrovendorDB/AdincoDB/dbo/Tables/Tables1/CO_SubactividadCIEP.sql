@@ -8,7 +8,7 @@
     [FecMovto]           DATETIME       NULL,
     [Activo]             BIT            NULL,
     [CreadoPor]          INT            NULL,
-    CONSTRAINT [PK_Subactividades] PRIMARY KEY CLUSTERED ([IdSubactividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Subactividades] PRIMARY KEY CLUSTERED ([IdSubactividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Subactividades_Actividades] FOREIGN KEY ([IdActividad]) REFERENCES [dbo].[CO_ActividadCIEP] ([IdActividad]),
     CONSTRAINT [FK_Subactividades_Subactividades] FOREIGN KEY ([IdSubactividad]) REFERENCES [dbo].[CO_SubactividadCIEP] ([IdSubactividad]),
     CONSTRAINT [FK_Subactividades_Usuarios] FOREIGN KEY ([IdUsuario]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])

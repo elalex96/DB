@@ -11,6 +11,6 @@
     [RegistradoEl]      DATETIME       NULL,
     [ModificadoEl]      DATETIME       NULL,
     [Activo]            BIT            NULL,
-    CONSTRAINT [PK_ServiciosGeneradosADINCO] PRIMARY KEY CLUSTERED ([IdServicoGenerado] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ServiciosGeneradosADINCO] PRIMARY KEY CLUSTERED ([IdServicoGenerado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

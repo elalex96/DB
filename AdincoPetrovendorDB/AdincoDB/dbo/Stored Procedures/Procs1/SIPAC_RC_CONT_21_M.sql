@@ -1,5 +1,4 @@
-﻿
--- ============================================= 
+﻿-- ============================================= 
 -- Author: Manuel Cruz-Yazmin Glez. 
 -- Create date: 2017-11-24 
 -- Description: Reporte de CGI - Registro de costos. Plantilla antes RC_CONT_01_M actual RC_CONT_21_M 

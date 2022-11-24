@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF exists p_EN_ObtenerEntregable
-GO
---======================================================
+﻿--======================================================
 -- LUIS DAVID
 -- SE CONTROLA LOS NULOS PARA NO GENERAR ERROR EN LA CONSULTA
 CREATE PROCEDURE [dbo].[p_EN_ObtenerEntregable]

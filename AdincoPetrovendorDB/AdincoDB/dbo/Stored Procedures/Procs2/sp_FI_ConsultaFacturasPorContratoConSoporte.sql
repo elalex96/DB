@@ -8,26 +8,47 @@
 -- Description:			Optimizacion de PROCEDURE por temas de error marcado 
 --						[Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.]
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContratoConSoporte] 
-	@IdContrato INT = 0
+CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContratoConSoporte] @IdContrato INT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
-
+    
     CREATE TABLE #FI_Factura
     (
         IdFactura INT,
         Archivo BIT,
         IdSubcontratista INT,
-        IdSubcontratistaTexto VARCHAR(MAX),
+        IdSubcontratistaTexto VARCHAR(2000),
         IdMoneda INT,
-        IdMonedaTexto VARCHAR(MAX),
+        IdMonedaTexto VARCHAR(500),
         IdReceptor INT,
-        IdReceptorTexto VARCHAR(MAX),
+        IdReceptorTexto VARCHAR(1000),
         TieneSoporte BIT,
-		PRIMARY KEY (IdFactura)
+        Emisor NVARCHAR(1000),
+        Fecha DATETIME,
+        Serie NVARCHAR(1000),
+        Folio NVARCHAR(1000),
+        Subtotal MONEY,
+        Descuento MONEY,
+        TipoCambio MONEY,
+        MontoConIva MONEY,
+        TipoComprobante NVARCHAR(1000),
+        MetodoPago NVARCHAR(1000),
+        LugarExpedicion NVARCHAR(1000),
+        NumCtaPago NVARCHAR(1000),
+        Receptor NVARCHAR(1000),
+        UUID VARCHAR(500),
+        FechaTimbrado DATETIME,
+        SelloCFD NVARCHAR(1000),
+        NoCertificadoSAT NVARCHAR(1000),
+        SelloSAT NVARCHAR(1000),
+        Tipo NVARCHAR(1000),
+        FechaRecepcion DATETIME,
+        PRIMARY KEY (IdFactura)
     )
+
+
     INSERT INTO #FI_Factura
     (
         IdFactura,
@@ -38,7 +59,27 @@ BEGIN
         IdMonedaTexto,
         IdReceptor,
         IdReceptorTexto,
-        TieneSoporte
+        TieneSoporte,
+        Emisor,
+        Fecha,
+        Serie,
+        Folio,
+        Subtotal,
+        Descuento,
+        TipoCambio,
+        MontoConIva,
+        TipoComprobante,
+        MetodoPago,
+        LugarExpedicion,
+        NumCtaPago,
+        Receptor,
+        UUID,
+        FechaTimbrado,
+        SelloCFD,
+        NoCertificadoSAT,
+        SelloSAT,
+        Tipo,
+        FechaRecepcion
     )
     SELECT F.IdFactura,
            0,
@@ -48,13 +89,34 @@ BEGIN
            '',
            F.IdReceptor,
            '',
-           0
+           0,
+           Emisor,
+           Fecha,
+           Serie,
+           Folio,
+           Subtotal,
+           Descuento,
+           TipoCambio,
+           MontoConIva,
+           TipoComprobante,
+           MetodoPago,
+           LugarExpedicion,
+           NumCtaPago,
+           Receptor,
+           UUID,
+           FechaTimbrado,
+           SelloCFD,
+           NoCertificadoSAT,
+           SelloSAT,
+           Tipo,
+           FechaRecepcion
     FROM FI_Factura F (NOLOCK)
-    WHERE F.IdContrato = @IdContrato AND F.Activa = 1
+    WHERE F.IdContrato = @IdContrato
+          AND F.Activa = 1
 
     UPDATE TEMP
     SET Archivo = CASE
-                      WHEN D.DocumentoByte LIKE 0x THEN
+                      WHEN D.DocumentoByte LIKE 0x OR  D.DocumentoByte IS NULL THEN
                           0
                       ELSE
                           1
@@ -65,7 +127,7 @@ BEGIN
                AND D.DocumentoByte IS NOT NULL
                AND D.IdTipoDocumento = 1
                AND ISNULL(D.IsEliminado, 0) = 0
-			   
+
     UPDATE TEMP
     SET TieneSoporte = 1
     FROM #FI_Factura TEMP
@@ -92,37 +154,39 @@ BEGIN
         JOIN PV_Subcontratista R (NOLOCK)
             ON TEMP.IdReceptor = R.IdSubcontratista
 
-    SELECT F.IdFactura,
-           TEMP.IdSubcontratistaTexto AS NombreEmisor,
-           F.Emisor AS RFC_Emisor,
-           F.Fecha,
-           F.Serie,
-           F.Folio,
-           F.SubTotal,
-           F.Descuento,
-           F.TipoCambio,
-           F.MontoConIva AS Total,
-           TEMP.IdMonedaTexto AS Moneda,
-           SUBSTRING(F.TipoComprobante, 1, 1) AS TipoComprobante,
-           F.MetodoPago,
-           F.LugarExpedicion,
-           F.NumCtaPago,
-           F.Receptor,
-           F.UUID,
-           F.FechaTimbrado,
-           F.SelloCFD,
-           F.NoCertificadoSAT,
-           F.SelloSAT,
-           F.Tipo,
-           F.FechaRecepcion,
-           YEAR(f.Fecha) AS Año,
-           CONCAT(RIGHT('00' + CAST(MONTH(f.fecha) AS VARCHAR(2)), 2), ' ', DATENAME(month, f.Fecha)) AS Mes,
-           TEMP.IdReceptorTexto AS Receptor,
-           TieneArchivo = TEMP.Archivo,
-           TieneSoporte = TEMP.TieneSoporte,
-           ISNULL((f.MontoConIva * .16), 0) AS IVA
-    FROM #FI_Factura TEMP
-        JOIN FI_Factura F (NOLOCK)
-            ON TEMP.IdFactura = F.IdFactura
-    ORDER BY F.IdFactura DESC;
+    SELECT #FI_Factura.IdFactura,
+           #FI_Factura.IdSubcontratistaTexto AS NombreEmisor,
+           #FI_Factura.Emisor AS RFC_Emisor,
+           #FI_Factura.Fecha,
+           #FI_Factura.Serie,
+           #FI_Factura.Folio,
+           #FI_Factura.SubTotal,
+           #FI_Factura.Descuento,
+           #FI_Factura.TipoCambio,
+           #FI_Factura.MontoConIva AS Total,
+           #FI_Factura.IdMonedaTexto AS Moneda,
+           SUBSTRING(#FI_Factura.TipoComprobante, 1, 1) AS TipoComprobante,
+           #FI_Factura.MetodoPago,
+           #FI_Factura.LugarExpedicion,
+           #FI_Factura.NumCtaPago,
+           #FI_Factura.Receptor,
+           #FI_Factura.UUID,
+           #FI_Factura.FechaTimbrado,
+           #FI_Factura.SelloCFD,
+           #FI_Factura.NoCertificadoSAT,
+           #FI_Factura.SelloSAT,
+           #FI_Factura.Tipo,
+           #FI_Factura.FechaRecepcion,
+           YEAR(#FI_Factura.Fecha) AS Año,
+           CONCAT(
+                     RIGHT('00' + CAST(MONTH(#FI_Factura.fecha) AS VARCHAR(2)), 2),
+                     ' ',
+                     DATENAME(month, #FI_Factura.Fecha)
+                 ) AS Mes,
+           #FI_Factura.IdReceptorTexto AS Receptor,
+           TieneArchivo = #FI_Factura.Archivo,
+           TieneSoporte = #FI_Factura.TieneSoporte,
+           ISNULL((#FI_Factura.MontoConIva * .16), 0) AS IVA
+    FROM #FI_Factura (NOLOCK)
+    ORDER BY #FI_Factura.IdFactura DESC;
 END;

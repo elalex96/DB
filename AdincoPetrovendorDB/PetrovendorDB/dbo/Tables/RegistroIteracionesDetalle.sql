@@ -7,6 +7,6 @@
     [FechaModificado]    DATETIME       NULL,
     [Modulo]             NVARCHAR (MAX) NULL,
     [IsEliminado]        BIT            NULL,
-    CONSTRAINT [PK_RegistroIteracionesDetalle] PRIMARY KEY CLUSTERED ([IdDetalleIteracion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_RegistroIteracionesDetalle] PRIMARY KEY CLUSTERED ([IdDetalleIteracion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

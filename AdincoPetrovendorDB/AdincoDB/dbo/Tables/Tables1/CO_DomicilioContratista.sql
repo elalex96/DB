@@ -9,7 +9,7 @@
     [EntidadFederativa] NVARCHAR (MAX) NULL,
     [Municipio]         NVARCHAR (MAX) NULL,
     [CreadoPor]         INT            NULL,
-    CONSTRAINT [PK_DomicilioContratista] PRIMARY KEY CLUSTERED ([IdDomicilio] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_DomicilioContratista] PRIMARY KEY CLUSTERED ([IdDomicilio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_DomicilioContratista_CO_Contratista] FOREIGN KEY ([IdContratista]) REFERENCES [dbo].[CO_Contratista] ([IdContratista])
 );
 

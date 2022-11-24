@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_ActividadxGrupoCBSH_MV1_5
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander G>
 -- Create date: <27/07/2017>
 -- Description:	<Procedimiento para crear tabla para obtener las actividades correspondientes a un grupo especifico>

@@ -1,21 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_RPT_OCM_CabeceraOrdenCompra'
-)
-    DROP PROCEDURE SP_RPT_OCM_CabeceraOrdenCompra;
-GO 
-
-/****** Object:  StoredProcedure [dbo].[SP_RPT_OCM_CabeceraOrdenCompra]    Script Date: 16/06/2021 11:44:38 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander G>
 -- Create date: <17/06/2021>
 -- Description:	<SP para consultar los datos del encabezado del proveedor y la operadora deacuerdo a un pedido>
@@ -136,12 +119,3 @@ BEGIN
 		P.IdPedido = @IdPedido
 
 END
-
-
-
-
- 
-
-
-
-

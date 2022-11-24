@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_27_A]
+﻿CREATE  PROCEDURE [dbo].[SIPAC_RC_CONT_27_A]
 @Contrato      INT, 
 @Mes           DATE, 
 @IdPresupuesto INT
@@ -147,3 +147,4 @@ AS
                   EPT.FechaFinVigencia, 
                   EPT.HashSHA256
      END;
+

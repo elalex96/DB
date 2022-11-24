@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]    Script Date: 20/10/2022 05:16:25 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel AC  
 -- Update date: 01/10/19  
 -- Description: Se modificio columna de razón social  
@@ -14,7 +7,7 @@ GO
 -- Create date: 19/04/2022
 -- Description:	Se agrega a la consulta el dato del No.PO
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
     -- Add the parameters for the stored procedure here  
     @IdProveedor INT,  
     @CONSULTA NVARCHAR(300),   

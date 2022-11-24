@@ -1,19 +1,4 @@
-USE Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_EntregablesHistorialEliminacion'
-)
-    DROP PROCEDURE EN_EntregablesHistorialEliminacion;
-GO
-
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialEliminacion]    Script Date: 03/10/2022 05:14:54 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[EN_EntregablesHistorialEliminacion]
+﻿CREATE PROCEDURE [dbo].[EN_EntregablesHistorialEliminacion]
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT

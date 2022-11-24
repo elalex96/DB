@@ -1,20 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_FI_ActualizarArchivoPedimentoComprobante_S3_CD'
-)
-    DROP PROCEDURE SP_FI_ActualizarArchivoPedimentoComprobante_S3_CD;
-
-/****** Object:  StoredProcedure [dbo].[SP_FI_ActualizarArchivoPedimentoComprobante_S3_CD]    Script Date: 20/07/2021 02:21:21 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <07/10/2020>
 -- Description:	<Actualizacion del archivo de Pedimento/Comprobante en el S3>
@@ -126,4 +110,3 @@ BEGIN
 
 	  SELECT SCOPE_IDENTITY() AS IdPedimentoS3
 END
-

@@ -3,6 +3,6 @@
     [NombreEstado]     NVARCHAR (MAX) NULL,
     [Descripción]      NVARCHAR (MAX) NULL,
     [CreadoPor]        INT            NULL,
-    CONSTRAINT [PK_EstadoRegistro] PRIMARY KEY CLUSTERED ([IdEstadoRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EstadoRegistro] PRIMARY KEY CLUSTERED ([IdEstadoRegistro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

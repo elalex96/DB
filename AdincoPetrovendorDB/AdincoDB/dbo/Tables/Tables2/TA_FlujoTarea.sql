@@ -12,6 +12,6 @@
     [Mensaje]         NVARCHAR (MAX) NULL,
     [IdVencimiento]   INT            NULL,
     [IdPrioridad]     INT            NULL,
-    CONSTRAINT [PK_TaFlujoTarea] PRIMARY KEY CLUSTERED ([IdFlujoTarea] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TaFlujoTarea] PRIMARY KEY CLUSTERED ([IdFlujoTarea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

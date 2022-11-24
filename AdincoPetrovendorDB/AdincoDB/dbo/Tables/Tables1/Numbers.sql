@@ -5,5 +5,5 @@
 
 GO
 CREATE UNIQUE CLUSTERED INDEX [n]
-    ON [dbo].[Numbers]([Number] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[Numbers]([Number] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

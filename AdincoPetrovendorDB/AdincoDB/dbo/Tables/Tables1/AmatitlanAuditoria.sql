@@ -19,6 +19,6 @@
     [IdServicio]       INT            NULL,
     [IdPrograma]       INT            NULL,
     [TC]               FLOAT (53)     NULL,
-    CONSTRAINT [PK_AmatitlanAuditoria] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AmatitlanAuditoria] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5]    Script Date: 18/05/2022 04:50:50 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      Daniel AC
 -- Update date: 17-04-18
 -- Description: Actualice IdMaterial a IdMaterialVendedor
@@ -31,7 +24,7 @@ GO
 -- Update date: 19/05/2022
 -- Description: se recorta a 3 digitos sin redondear del PCN segun la SE y se optimiza
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5] 
+CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5] 
     -- Add the parameters for the stored procedure here
     @IdProveedor        INT,
     @IdAceptacionPedido INT,

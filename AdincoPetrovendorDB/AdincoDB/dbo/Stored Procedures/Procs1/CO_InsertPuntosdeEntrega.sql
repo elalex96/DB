@@ -1,10 +1,13 @@
-﻿
-CREATE PROCEDURE [dbo].[CO_InsertPuntosdeEntrega]
+﻿CREATE PROCEDURE [dbo].[CO_InsertPuntosdeEntrega]
 	@Nombre				NVARCHAR(Max),
 	@TagPatinMedicion	NVARCHAR(100),
 	@TipoMedidor		NVARCHAR(100),
 	@TagMedidor			NVARCHAR(100),
 	@Clasificacion		NVARCHAR(100),
+	@IdentificacionResponsable		VARCHAR(150),
+	@Coordenadas		VARCHAR(150),
+	@Latitud		VARCHAR(150),
+	@Longitud  VARCHAR(150),
 	@idUsuario			INT=0,
 	@idContrato			INT =0
 AS
@@ -40,8 +43,9 @@ BEGIN
 	ELSE
 	BEGIN
 		INSERT INTO CO_PuntosdeEntrega
-		(Nombre, TagPatinMedicion, TipoMedidor, TagMedidor, Clasificacion, Activo, CreadoPor, CreadoEl)
-		VALUES (LTRIM(RTRIM(@Nombre)), LTRIM(RTRIM(@TagPatinMedicion)), LTRIM(RTRIM(@TipoMedidor)), LTRIM(RTRIM(@TagMedidor)), LTRIM(RTRIM(@Clasificacion)), 1, @idUsuario, GETDATE())
+		(Nombre, TagPatinMedicion, TipoMedidor, TagMedidor, Clasificacion, Activo, CreadoPor, CreadoEl, IdentificacionResponsable,Coordenadas,Latitud,Longitud  )
+		VALUES (LTRIM(RTRIM(@Nombre)), LTRIM(RTRIM(@TagPatinMedicion)), LTRIM(RTRIM(@TipoMedidor)), LTRIM(RTRIM(@TagMedidor)), LTRIM(RTRIM(@Clasificacion)), 1, @idUsuario, GETDATE(), LTRIM(RTRIM(@IdentificacionResponsable)),LTRIM(RTRIM(@Coordenadas)),LTRIM(RTRIM(@Latitud)),LTRIM(RTRIM(@Longitud)))
 	END
 END
+
 

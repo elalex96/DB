@@ -21,6 +21,6 @@
     [IdTransferencia]     INT            NULL,
     [RFC]                 VARCHAR (MAX)  NULL,
     [Editado]             BIT            NULL,
-    CONSTRAINT [PK_AX_Pagos] PRIMARY KEY CLUSTERED ([IdPago] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AX_Pagos] PRIMARY KEY CLUSTERED ([IdPago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

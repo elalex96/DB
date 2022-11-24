@@ -1,11 +1,11 @@
 ﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 25/09/2019
--- Description:	Lista de Notas de Credito}
+-- Description:	
 -- =============================================
 CREATE PROC [dbo].[SP_DEA_CO_SAP_ObtenerIMAPConfiguracion]
 as
-
+begin
 	select conf.IdServidorIMAP,
 			conf.ServidorIMAP,
 			conf.Email,
@@ -19,4 +19,4 @@ as
 			conf.Password,
 			conf.Puerto,
 			conf.CreadoEl
-
+end

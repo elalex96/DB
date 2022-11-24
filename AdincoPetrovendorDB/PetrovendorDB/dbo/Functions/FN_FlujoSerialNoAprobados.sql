@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  UserDefinedFunction [dbo].[FN_FlujoSerialNoAprobados]    Script Date: 02/08/2022 02:58:22 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:	Daniel AC
 -- Create date: 03/08/2022
 -- Description:	<Funcion que consulta las operaciones que son seriales y les toca aprobar al usuario actual >

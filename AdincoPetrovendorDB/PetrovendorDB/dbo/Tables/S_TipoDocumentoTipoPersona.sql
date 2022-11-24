@@ -3,6 +3,6 @@
     [IdTipoRegimen]        INT NULL,
     [IdTipoDocumento]      INT NULL,
     [Activo]               BIT NULL,
-    CONSTRAINT [PK_S_DocumentoProveedor] PRIMARY KEY CLUSTERED ([IdDocumentoProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_S_DocumentoProveedor] PRIMARY KEY CLUSTERED ([IdDocumentoProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -8,7 +8,7 @@
     [RealPetroleoUSDBl]                  MONEY NULL,
     [RealCondensadoUSDBl]                MONEY NULL,
     [RealGasUSDMPc]                      MONEY NULL,
-    CONSTRAINT [PK_AA_PlanPrecioVentaHidrocarburoAnual] PRIMARY KEY CLUSTERED ([IdPlanPrecioVentaHidrocarburoAnual] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AA_PlanPrecioVentaHidrocarburoAnual] PRIMARY KEY CLUSTERED ([IdPlanPrecioVentaHidrocarburoAnual] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AA_PlanPrecioVentaHidrocarburoAnual_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

@@ -1,6 +1,4 @@
-USE ADINCO;
-GO
-CREATE PROCEDURE [dbo].[SP_SE_TotalFacturadoRubro_MPY] 
+锘緾REATE PROCEDURE [dbo].[SP_SE_TotalFacturadoRubro_MPY] 
 @IdContrato    INT, 
 @IdUsuario     INT, 
 @IdPresupuesto INT, 
@@ -56,7 +54,7 @@ AS
                     ON P.IdAnioContractual = AC.IdAnioContractual
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
-            WHERE P.nombre LIKE '%exploraci髇%'
+            WHERE P.nombre LIKE '%exploraci贸n%'
                   AND C.IdContratista IN ( 10005, 10006 )
         )
         BEGIN
@@ -72,7 +70,7 @@ AS
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
             WHERE C.IdContrato = @IdContrato
-                  AND P.nombre LIKE '%exploraci髇%'
+                  AND P.nombre LIKE '%exploraci贸n%'
                   AND C.IdContratista IN ( 10005, 10006 );
         END;
     END
@@ -87,7 +85,7 @@ AS
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
             WHERE P.IdPresupuesto = @IdPresupuesto
-                  AND P.Nombre LIKE '%exploraci髇%'
+                  AND P.Nombre LIKE '%exploraci贸n%'
                   AND C.IdContratista IN ( 10005, 10006 )
         )
         BEGIN
@@ -102,7 +100,7 @@ AS
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
 					WHERE C.IdContrato = @IdContrato
-                  AND P.Nombre LIKE '%exploraci髇%'
+                  AND P.Nombre LIKE '%exploraci贸n%'
                   AND C.IdContratista IN ( 10005, 10006 );
         END;
         ELSE

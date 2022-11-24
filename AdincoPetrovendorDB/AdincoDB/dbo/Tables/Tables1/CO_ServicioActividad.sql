@@ -4,7 +4,7 @@
     [IdActividad]         INT NULL,
     [Orden]               INT NULL,
     [CreadoPor]           INT NULL,
-    CONSTRAINT [PK_ServicioActividad] PRIMARY KEY CLUSTERED ([IdServicioActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ServicioActividad] PRIMARY KEY CLUSTERED ([IdServicioActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ServicioActividad_Actividades] FOREIGN KEY ([IdActividad]) REFERENCES [dbo].[CO_ActividadCIEP] ([IdActividad]),
     CONSTRAINT [FK_ServicioActividad_TipoServicio] FOREIGN KEY ([IdTipoServicio]) REFERENCES [dbo].[CO_TipoServicio] ([IdTipoServicio])
 );

@@ -7,9 +7,6 @@
 -- Create date: 20/03/2021
 -- Description:	Se optimiza la consulta para la pantalla detalle_pedido del issue 984
 -- =============================================
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_ObtenerJustificacionMercadeo')
-    DROP PROCEDURE SP_ObtenerJustificacionMercadeo
-go
 CREATE PROCEDURE SP_ObtenerJustificacionMercadeo 
 @IdSolicitudPedido INT
 AS

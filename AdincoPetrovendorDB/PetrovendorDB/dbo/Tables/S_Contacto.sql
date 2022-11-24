@@ -8,7 +8,7 @@
     [IsPredeterminado] BIT           NULL,
     [IdProveedor]      INT           NULL,
     [IsEliminado]      BIT           NULL,
-    CONSTRAINT [PK_S_Contacto] PRIMARY KEY CLUSTERED ([IdContacto] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_Contacto] PRIMARY KEY CLUSTERED ([IdContacto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdTipoContacto]) REFERENCES [dbo].[S_TipoContacto] ([IdTipoContacto]),
     FOREIGN KEY ([IdTipoContacto]) REFERENCES [dbo].[S_TipoContacto] ([IdTipoContacto]),
     FOREIGN KEY ([IdTipoContacto]) REFERENCES [dbo].[S_TipoContacto] ([IdTipoContacto]),

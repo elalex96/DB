@@ -4,7 +4,7 @@
     [IdContrato]  INT            NULL,
     [Descripcion] NVARCHAR (MAX) NULL,
     [CreadoPor]   INT            NULL,
-    CONSTRAINT [PK_AP_Perfil] PRIMARY KEY CLUSTERED ([IdPerfil] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AP_Perfil] PRIMARY KEY CLUSTERED ([IdPerfil] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AP_Perfil_AP_Rol] FOREIGN KEY ([IdRol]) REFERENCES [dbo].[AP_Rol] ([IdRol]),
     CONSTRAINT [FK_AP_Perfil_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );

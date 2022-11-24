@@ -14,6 +14,6 @@
     [Correo]                   NVARCHAR (50)  NULL,
     [Nombre]                   NVARCHAR (100) NULL,
     [Telefono]                 NVARCHAR (10)  NULL,
-    CONSTRAINT [PK_PV_DistribuidorAutorizado] PRIMARY KEY CLUSTERED ([IdDistribuidorAutorizado] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_DistribuidorAutorizado] PRIMARY KEY CLUSTERED ([IdDistribuidorAutorizado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

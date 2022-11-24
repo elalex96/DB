@@ -44,7 +44,7 @@
     [cap_info]                         NVARCHAR (MAX) NULL,
     [id_]                              INT            NOT NULL,
     [CreadoPor]                        INT            NULL,
-    CONSTRAINT [PK_MM_SolicitudPedidoDetalle] PRIMARY KEY CLUSTERED ([IdSolicitudPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_SolicitudPedidoDetalle] PRIMARY KEY CLUSTERED ([IdSolicitudPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_SolicitudPedidoDetalle_MM_Material] FOREIGN KEY ([IdMaterial]) REFERENCES [dbo].[MM_Material] ([IdMaterial]),
     CONSTRAINT [FK_MM_SolicitudPedidoDetalle_MM_SolicitudPedido] FOREIGN KEY ([IdSolicitudPedido]) REFERENCES [dbo].[MM_SolicitudPedido] ([IdSolicitudPedido])
 );

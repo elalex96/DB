@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_JOB_CreaVistaPedidosJaguar]    Script Date: 30/09/2021 11:49:01 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[sp_JOB_CreaVistaPedidosJaguar]  
+﻿CREATE PROCEDURE [dbo].[sp_JOB_CreaVistaPedidosJaguar]  
 AS  
 BEGIN  
   
@@ -1901,11 +1894,11 @@ WHERE
  ISNULL(APD.IdEstatusEliminado,0)=0   
 ORDER BY  
  V.IdConsecutivo, V.IdPedido, V.IdAceptacionPedido, I.NombreInstalacion  
- 
+/*  
 EXEC dbo.sp_BI_LlenaTabla_BI_Aprobaciones  
 EXEC sp_BI_LlenaTabla_BI_Facturas  
 EXEC sp_BI_LlenaTabla_BI_Oferta  
 EXEC sp_BI_LlenaTabla_BI_Recepcion  
 EXEC sp_BI_LlenaTabla_BI_Pedido  
- 
+*/  
 END  

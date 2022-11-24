@@ -3,6 +3,6 @@
     [Proceso]  NVARCHAR (50) NULL,
     [Valor]    INT           NULL,
     [Filtro]   NVARCHAR (50) NULL,
-    CONSTRAINT [PK_MM_FiltrosPeticionOferta] PRIMARY KEY CLUSTERED ([IdFiltro] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_FiltrosPeticionOferta] PRIMARY KEY CLUSTERED ([IdFiltro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -1,8 +1,4 @@
-USE PETROVENDOR
-GO
-DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevoPedidoAutomatico_SAP
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Creacion de pedido automatica

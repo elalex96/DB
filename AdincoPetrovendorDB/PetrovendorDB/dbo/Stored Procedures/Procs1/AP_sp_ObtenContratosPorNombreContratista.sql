@@ -12,7 +12,7 @@ select @IdContratista = IdContratista
 FROM Adinco..CO_Contrato 
 WHERE IdContrato = @IdContrato
 
-	IF @IdContratista IN (2, 10005, 10006, 10013)
+	IF @IdContratista IN (2, 10005, 10006, 10013, 10017, 10022, 10060)
 	BEGIN
 		select * from Adinco..CO_Contrato 
 		where 	IdContrato = @IdContrato

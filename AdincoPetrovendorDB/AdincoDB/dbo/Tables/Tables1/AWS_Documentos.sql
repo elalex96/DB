@@ -4,7 +4,7 @@
     [Folder]         VARCHAR (100)    NOT NULL,
     [UUIDAmazon]     UNIQUEIDENTIFIER NOT NULL,
     [NombreArchivo]  VARCHAR (250)    NOT NULL,
-    [Meta]           VARCHAR (200)     NOT NULL,/*No estaba actualizado*/
+    [Meta]           VARCHAR (200)    NULL,
     [CreadoPor]      INT              NOT NULL,
     [CreadoEl]       DATETIME         NOT NULL,
     [ModificadoPor]  INT              NULL,
@@ -12,7 +12,7 @@
     [HashSHA256]     VARCHAR (1000)   NULL,
     [Reemplazado]    BIT              NULL,
     [Peso]           INT              NULL,
-    CONSTRAINT [PK_AWS_Documentos] PRIMARY KEY CLUSTERED ([AWSDocumentoId] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AWS_Documentos] PRIMARY KEY CLUSTERED ([AWSDocumentoId] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AWS_Documentos_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_AWS_Documentos_AP_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );

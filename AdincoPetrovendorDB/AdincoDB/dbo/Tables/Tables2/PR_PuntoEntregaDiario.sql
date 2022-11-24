@@ -11,7 +11,7 @@
     [CreadoEl]       DATETIME        NULL,
     [ModificadoPor]  INT             NULL,
     [ModificadoEl]   DATETIME        NULL,
-    CONSTRAINT [PK_PR_PuntoEntregaDiario] PRIMARY KEY CLUSTERED ([PuntoEntregaID] ASC, [Fecha] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_PuntoEntregaDiario] PRIMARY KEY CLUSTERED ([PuntoEntregaID] ASC, [Fecha] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PR_PuntoEntregaDiario_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_PR_PuntoEntregaDiario_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_PR_PuntoEntregaDiario_CO_PuntosdeEntrega] FOREIGN KEY ([PuntoEntregaID]) REFERENCES [dbo].[CO_PuntosdeEntrega] ([PuntoEntregaID])

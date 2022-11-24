@@ -16,7 +16,7 @@ AS
          -- Description:	  Cambio de consulta para mostrar los complementos de pago relacionadolos al gasto
          -- =============================================
 
-         SET NOCOUNT ON;
+         SET NOCOUNT ON
 
          /*Generar nombre de archivos*/
 
@@ -24,13 +24,13 @@ AS
          /*Calcular montos pagados*/
 
          IF OBJECT_ID('tempdb..#Facturas', 'U') IS NOT NULL
-             DROP TABLE #Facturas;
+             DROP TABLE #Facturas
          IF OBJECT_ID('tempdb..#MontosTotalTransferenciaPPD', 'U') IS NOT NULL
-             DROP TABLE #MontosTotalTransferenciaPPD;
+             DROP TABLE #MontosTotalTransferenciaPPD
          IF OBJECT_ID('tempdb..#MontosTotalTransferenciaPUE', 'U') IS NOT NULL
-             DROP TABLE #MontosTotalTransferenciaPUE;
+             DROP TABLE #MontosTotalTransferenciaPUE
          IF OBJECT_ID('tempdb..#MontosConvertidosPedimentosCom', 'U') IS NOT NULL
-             DROP TABLE #MontosConvertidosPedimentosCom;
+             DROP TABLE #MontosConvertidosPedimentosCom
 
          /**/
 
@@ -44,7 +44,7 @@ AS
           MetodoPago      NVARCHAR(50), 
           Fecha           DATETIME, 
           IdMoneda        INT
-         );
+         )
          --
          INSERT INTO #Facturas
          (IdRegistro, 
@@ -112,7 +112,7 @@ AS
                                                               AND MONTH(TCD.Fecha) = MONTH(F.Fecha)
                                                               AND YEAR(TCD.Fecha) = YEAR(F.Fecha)
                 WHERE C.IdContrato in (10001,10002,10003,10004)
-                      AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) < '20201101'
+                      AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) < '20220701'
                       AND R.IdEstado = 10004
                       AND R.CvTipoDocFacturacion = 1
                       AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
@@ -156,7 +156,7 @@ AS
                              THEN 'PPD'
                          END, 
                          F.Fecha, 
-                         F.IdMoneda;
+                         F.IdMoneda
 
          /*Facturas Con Tipo de Cambio de Transferencia*/
 
@@ -172,7 +172,7 @@ AS
           TipoComprobante VARCHAR(50), 
           MontoRegistro   FLOAT, 
           IdRegistro      INT
-         );
+         )
          --
          INSERT INTO #MontosTotalTransferenciaPPD
          (IdFacturaCP, 
@@ -266,7 +266,7 @@ AS
                          CP.MonedaP, 
                          F.TipoComprobante, 
                          CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2)), 
-                         #Facturas.IdRegistro;
+                         #Facturas.IdRegistro
          --
          CREATE TABLE #MontosTotalTransferenciaPUE
          (IdRegistro      INT, 
@@ -279,7 +279,7 @@ AS
           TCD             FLOAT, 
           FechaTCD        DATE, 
           IdMoneda        INT
-         );
+         )
          --
          INSERT INTO #MontosTotalTransferenciaPUE
          (IdRegistro, 
@@ -323,7 +323,7 @@ AS
                          MCF.MetodoPago, 
                          TCD.TipoCambio, 
                          TCD.Fecha, 
-                         MCF.IdMoneda;
+                         MCF.IdMoneda
 
          /*PEDIMENTO COMPROBANTE*/
 
@@ -333,7 +333,7 @@ AS
           MontoRegistro          FLOAT, 
           RC2122                 FLOAT, 
           TCD                    FLOAT
-         );
+         )
          --
          INSERT INTO #MontosConvertidosPedimentosCom
          (IdRegistro, 
@@ -363,7 +363,7 @@ AS
                                                                AND MONTH(TCDP.Fecha) = MONTH(T.FechaPago)
                                                                AND YEAR(TCDP.Fecha) = YEAR(T.FechaPago)
                 WHERE C.IdContrato  in (1)
-                      AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20201101'
+                      AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20220701'
                       AND R.IdEstado = 10004
                       AND R.CvTipoDocFacturacion IN(2, 3)
                      AND ISNULL(CONVERT(INT, P.ProcesadoSIPAC), 0) = 0
@@ -371,22 +371,22 @@ AS
                 GROUP BY R.IdRegistro, 
                          P.IdPedimentoComprobante, 
                          R.MontoRegistro, 
-                         TCDP.TipoCambio;
+                         TCDP.TipoCambio
 
          /*Determinar si tiene gastos o no en el mes seleccionado. Si no tiene devuelve el registro para reportar en 0*/
 
-         DECLARE @GastosConFacturaPPD INT, @GastosConFacturaPUE INT, @GastosConPedCom INT;
+         DECLARE @GastosConFacturaPPD INT, @GastosConFacturaPUE INT, @GastosConPedCom INT
          --
          SELECT @GastosConFacturaPPD = COUNT(idRegistro)
-         FROM #MontosTotalTransferenciaPPD;
+         FROM #MontosTotalTransferenciaPPD
          --
          SELECT @GastosConFacturaPUE = COUNT(idRegistro)
-         FROM #MontosTotalTransferenciaPUE;
+         FROM #MontosTotalTransferenciaPUE
          --
          SELECT @GastosConPedCom = COUNT(idRegistro)
-         FROM #MontosConvertidosPedimentosCom;
+         FROM #MontosConvertidosPedimentosCom
          --
-         --SELECT @GastosConFactura, @GastosConPedCom;
+         --SELECT @GastosConFactura, @GastosConPedCom
          --
          IF(@GastosConFacturaPPD = 0
             AND @GastosConFacturaPUE = 0
@@ -428,8 +428,8 @@ AS
                       JOIN dbo.CO_AnioContractual AC ON AC.IdContrato = C.IdContrato
                       JOIN dbo.CO_Presupuesto P ON P.IdAnioContractual = AC.IdAnioContractual
                  WHERE C.IdContrato in (10001,10002,10003,10004)
-                       AND SUBSTRING(ISNULL(P.nombre, ''), 22, 10) <> '';
-             END;
+                       AND SUBSTRING(ISNULL(P.nombre, ''), 22, 10) <> ''
+             END
              ELSE
              BEGIN
                  SELECT [RF_00], 
@@ -567,7 +567,7 @@ AS
                                                                   AND F.IdSubcontratista = RE.IdRelacionada
 
                      WHERE C.IdContrato in (10001,10002,10003,10004)
-                           AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20201101'
+                           AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20220701'
                            AND R.IdEstado = 10004
                            AND R.CvTipoDocFacturacion = 1
                            AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
@@ -741,7 +741,7 @@ AS
                           LEFT JOIN dbo.CO_RelacionEmpresas RE ON RE.IdContratista = CON.IdContratista
                                                                   AND F.IdSubcontratista = RE.IdRelacionada
                      WHERE C.IdContrato in (10001,10002,10003,10004)
-                           AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20201101'
+                           AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20220701'
                            AND R.IdEstado = 10004
                            AND R.CvTipoDocFacturacion = 1
                            AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
@@ -922,7 +922,7 @@ AS
                           LEFT JOIN dbo.CO_RelacionEmpresas RE ON RE.IdContratista = CON.IdContratista
                                                                   AND PC.IdSubcontratistaExportador = RE.IdRelacionada
                      WHERE C.IdContrato in (10001,10002,10003,10004)
-                           AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20201101'
+                           AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) <'20220701'
                            AND R.IdEstado = 10004
                            AND R.CvTipoDocFacturacion IN(2, 3)
                           AND ISNULL(CONVERT(INT, PC.ProcesadoSIPAC), 0) = 0
@@ -994,5 +994,5 @@ AS
                                   ELSE 2
                               END
                  ) AS Resultado
-             END;
-     END;
+             END
+     END

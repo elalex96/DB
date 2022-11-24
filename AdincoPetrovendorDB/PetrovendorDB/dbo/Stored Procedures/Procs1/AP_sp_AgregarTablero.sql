@@ -23,5 +23,5 @@ BEGIN
 							@Site,			 @DNS,			@IdUsuario, 
 							GETDATE(),
 							1,				 @HeightPX,		@NombreMostrar,
-							@Parametros,	 'admin',	@MuestraToolbar)
+							@Parametros,	 ISNULL(@UserTableau,'admin'),	@MuestraToolbar)
 END

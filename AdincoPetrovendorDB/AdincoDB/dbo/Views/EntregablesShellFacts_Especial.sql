@@ -39,7 +39,7 @@ SELECT
 	MarcoLegalIngles,
 	Instalacion
 FROM 
-	entregablesshellfacts
+	entregablesshellfacts (NOLOCK)
 UNION
 
 SELECT
@@ -81,7 +81,7 @@ SELECT
 	MarcoLegalIngles,
 	Instalacion
 FROM 
-	entregablesshellfacts
+	entregablesshellfacts	(NOLOCK)
 UNION
 
 SELECT
@@ -123,7 +123,7 @@ SELECT
 	MarcoLegalIngles,
 	Instalacion
 FROM 
-	entregablesshellfacts
+	entregablesshellfacts	(NOLOCK)
 
 UNION
 
@@ -166,4 +166,47 @@ SELECT
 	MarcoLegalIngles,
 	Instalacion
 FROM 
-	entregablesshellfacts
+	entregablesshellfacts	(NOLOCK)
+
+UNION
+-- PARA EL BOARD DE PERMITING
+SELECT
+	Contrato,
+	AreaBOM,
+	NombreEntregable+ '-VIGENCIA',
+	Funcion,
+	Subfuncion,
+	FechaIniProg,
+	FechaFinProg,
+	FechaIniReal,
+	Usuario,
+	CorreoUsuario,
+	Rol,
+	Status,
+	FocalPoint,
+	FocalPointEmail,
+	AccountableCompliance,
+	AccountableComplianceEmail,
+	Accountable,
+	AccountableEmail,
+	DiasElaboracion,
+	DiasRevision,
+	DiasAprobacion,
+	DiasAtraso,
+	DiasP,
+	DiasR,
+	DiasReales,
+	MarcoLegal,
+	FechaRealEntregaRegulador,
+	dbo.FN_EN_SumaDiasHabiles(FechaEstimadaEntregaRegulador,1),
+	ID,
+	Articulo,
+	Actividad,
+	Proceso,
+	ReceptorEntregable,
+	Orden,
+	DeliverableName,
+	MarcoLegalIngles,
+	Instalacion
+FROM 
+	entregablesshellfacts	(NOLOCK)

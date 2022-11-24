@@ -17,7 +17,7 @@
     [IdUnidad_1]            INT            NULL,
     [IdUnidad_2]            INT            NULL,
     [IdUnidad_3]            INT            NULL,
-    CONSTRAINT [PK_MM_Maestro] PRIMARY KEY CLUSTERED ([IdMaestro] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_Maestro] PRIMARY KEY CLUSTERED ([IdMaestro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdUnidad_1]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
     FOREIGN KEY ([IdUnidad_2]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
     FOREIGN KEY ([IdUnidad_3]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),

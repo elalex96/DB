@@ -1,5 +1,4 @@
-﻿
-CREATE PROCEDURE [dbo].[EPT_RegistraImportaLayout]
+﻿CREATE PROCEDURE [dbo].[EPT_RegistraImportaLayout]
 	@IdContrato INT,
 	@IdUsuario INT,
 	@ArchivoImportado VARCHAR(150)
@@ -12,5 +11,3 @@ BEGIN
 	SELECT SCOPE_IDENTITY() AS ImportacionLayoutId
 END;
 
-go
-END;

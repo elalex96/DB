@@ -4,6 +4,6 @@
     [IdFactura]              INT NULL,
     [IdPedimentoComprobante] INT NULL,
     [CvTipoDocFacturacion]   INT NULL,
-    CONSTRAINT [PK_FI_TransferFactura] PRIMARY KEY CLUSTERED ([IdTransferFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_TransferFactura] PRIMARY KEY CLUSTERED ([IdTransferFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

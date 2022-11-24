@@ -1,6 +1,4 @@
-﻿drop procedure if exists MM_SP_DescargarDocAnexoPeticionOferta
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <05-04-2018>
 -- Description:	<Consulta para la descarga documento anexo en la peticion de oferta>

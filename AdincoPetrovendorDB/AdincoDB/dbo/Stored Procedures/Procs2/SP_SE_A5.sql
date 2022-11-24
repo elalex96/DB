@@ -18,7 +18,7 @@
 -- Create date:		28 de Abril del 2022
 -- Description:		Manda a llamar el nuevo sp para contratos de murphy
 -- ============================================
-ALTER PROCEDURE [dbo].[SP_SE_A5]
+CREATE PROCEDURE [dbo].[SP_SE_A5]
     @IdContrato INT,
     @IdUsuario INT,
     @IdPresupuesto INT,
@@ -225,3 +225,5 @@ BEGIN
 				 IdFactura;
 	END
 END;
+
+

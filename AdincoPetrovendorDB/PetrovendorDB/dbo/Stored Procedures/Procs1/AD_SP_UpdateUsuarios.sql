@@ -1,12 +1,5 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[AD_SP_UpdateUsuarios]    Script Date: 21/07/2022 11:00:26 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-ALTER procedure [dbo].[AD_SP_UpdateUsuarios]
+﻿
+CREATE procedure [dbo].[AD_SP_UpdateUsuarios]
 	@IdUsuario INT,
 	@Correo NVARCHAR(max),
 	@Activo BIT,
@@ -34,4 +27,3 @@ BEGIN
 	
 
 END
-

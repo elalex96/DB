@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_EnvioDeGastoAdinco]    Script Date: 05/08/2022 05:19:58 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- Author:  <DANIEL AC>  
+﻿-- Author:  <DANIEL AC>  
 -- Create date: 01/10/2019  
 -- Description: Se  removio insertado de XML en Adinco   
 -- =============================================  
@@ -29,7 +22,7 @@ GO
 -- Create date: <28/07/2022>
 -- Description:	<Se agrega la cuenta de sector de hidrocarburos para amatitlan (Issue#1954)>
 -- =============================================
-ALTER PROCEDURE [dbo].[MM_SP_EnvioDeGastoAdinco]
+CREATE PROCEDURE [dbo].[MM_SP_EnvioDeGastoAdinco]
 @idFacturaP INT,
 @IdFacturaAdinco INT,
 /*--------------------parametros contrato  --------------------*/

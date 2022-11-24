@@ -15,12 +15,10 @@
     [ModificadoEl]          DATETIME        NULL,
     [IdServicio]            INT             NULL,
     [IdMaterialContratista] INT             NULL,
-    CONSTRAINT [PK_SC_Material] PRIMARY KEY CLUSTERED ([IdSCMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SC_Material] PRIMARY KEY CLUSTERED ([IdSCMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__SC_Materi__IdSer__53A3FD5A] FOREIGN KEY ([IdServicio]) REFERENCES [dbo].[CO_Servicio] ([IdServicio]),
     CONSTRAINT [FK_SC_Material_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SC_Material_AP_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SC_Material_SC_SubContrato] FOREIGN KEY ([IdSubContrato]) REFERENCES [dbo].[SC_SubContrato] ([IdSubContrato])
 );
 
-
-GO

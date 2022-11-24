@@ -1,16 +1,9 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialconFiltroTab]    Script Date: 02/11/2022 02:08:47 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:	DANIEL AC
 -- Create date: <04/11/2021>
 -- Description:	Filtro para cargar informacion en /2/Entregables/entregablesadministradorcontrato.aspx
 -- =============================================
-ALTER PROCEDURE [dbo].[EN_EntregablesHistorialconFiltroTab]
+CREATE PROCEDURE [dbo].[EN_EntregablesHistorialconFiltroTab]
 	-- Add the parameters for the stored procedure here
 	@idUsuario INT,  
     @idContrato INT,  

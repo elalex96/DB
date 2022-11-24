@@ -28,6 +28,6 @@
     [AddValidado]              BIT            NULL,
     [PrecioMasIVA]             FLOAT (53)     NULL,
     [CantidadIVa]              FLOAT (53)     NULL,
-    CONSTRAINT [PK_MM_PeticionOfertaDetalle] PRIMARY KEY CLUSTERED ([IdPeticionOfertaDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_PeticionOfertaDetalle] PRIMARY KEY CLUSTERED ([IdPeticionOfertaDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

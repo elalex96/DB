@@ -6,11 +6,11 @@ RETURNS VARCHAR(8000)
 AS
 BEGIN
 --SET LANGUAGE Spanish;
+-- FUNCION HECHA PARA LOS TABLEROS DE EQUINOR
 
 DECLARE @COMENTARIOS VARCHAR(8000) = ''
 
-	SELECT @COMENTARIOS =  @COMENTARIOS + ISNULL(U.Nombre,'') + ' el ' + CONVERT(VARCHAR(16), EI.CreadoEl, 20) +
-	' Comento: '+ ISNULL(EI.Comentario,'') + CHAR(13)
+	SELECT @COMENTARIOS =  @COMENTARIOS + ISNULL(EI.Comentario,'') + ' ' + CHAR(13)
 		FROM EN_EntregableInstanciaComentario EI
 			JOIN dbo.AP_Usuario U
 				ON EI.UsuarioId=U.UsuarioID 

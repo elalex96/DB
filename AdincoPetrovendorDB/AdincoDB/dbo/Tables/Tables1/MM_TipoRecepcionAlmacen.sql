@@ -7,6 +7,6 @@
     [txt_ayuda]        NVARCHAR (MAX) NULL,
     [txt_resumen]      NVARCHAR (MAX) NULL,
     [CreadoPor]        INT            NULL,
-    CONSTRAINT [PK_admin_tiposrecepcion] PRIMARY KEY CLUSTERED ([id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_admin_tiposrecepcion] PRIMARY KEY CLUSTERED ([id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

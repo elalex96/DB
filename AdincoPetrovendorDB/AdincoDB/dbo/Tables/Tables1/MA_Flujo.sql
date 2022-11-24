@@ -13,7 +13,7 @@
     [ModificadoEl]     DATETIME       NULL,
     [IsEliminado]      INT            NULL,
     [IdSubcontratista] INT            NULL,
-    CONSTRAINT [PK_MA_Flujo] PRIMARY KEY CLUSTERED ([IdFlujo] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MA_Flujo] PRIMARY KEY CLUSTERED ([IdFlujo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MA_Flujo_MA_TipoFlujo] FOREIGN KEY ([IdTipoFlujo]) REFERENCES [dbo].[MA_TipoFlujo] ([IdTipoFlujo]),
     CONSTRAINT [FK_MA_Flujo_MA_TipoOperacion] FOREIGN KEY ([IdTipoOperacion]) REFERENCES [dbo].[MA_TipoOperacion] ([IdTipoOperacion])
 );

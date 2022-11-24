@@ -1,6 +1,4 @@
-DROP PROCEDURE IF EXISTS SP_ENI_Pozos
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 14-05-2020
 -- Description:	
@@ -31,6 +29,7 @@ AS
 		SET @AllRecords = (SELECT COUNT(1)
 						 FROM dbo.CO_Instalacion I
 							  JOIN dbo.CO_ActividadCIEP A ON I.IdActividad = A.IdActividad
+							  AND I.Activo = 1
 							  JOIN dbo.CO_EstadoPozos EP ON EP.idEstatus = I.IdEstatus
 							  JOIN dbo.CO_AreaContractual AC ON I.IdAreaContractual = AC.IdAreaContractual
 							  JOIN dbo.CO_Contrato C ON AC.IdAreaContractual = C.IdAreaContractual
@@ -65,6 +64,7 @@ AS
 				(ROW_NUMBER() OVER(ORDER BY I.IdInstalacion DESC) - 1) / @RecordsByPage AS _Page
          FROM dbo.CO_Instalacion I
               JOIN dbo.CO_ActividadCIEP A ON I.IdActividad = A.IdActividad
+			  AND I.Activo = 1
               JOIN dbo.CO_EstadoPozos EP ON EP.idEstatus = I.IdEstatus
               JOIN dbo.CO_AreaContractual AC ON I.IdAreaContractual = AC.IdAreaContractual
               JOIN dbo.CO_Contrato C ON AC.IdAreaContractual = C.IdAreaContractual

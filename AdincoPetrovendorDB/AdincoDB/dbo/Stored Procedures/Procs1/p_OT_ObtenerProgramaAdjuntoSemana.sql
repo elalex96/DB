@@ -1,4 +1,5 @@
-﻿-- p_OT_ObtenerProgramaAdjuntoSemana 1
+﻿
+-- p_OT_ObtenerProgramaAdjuntoSemana 1
 CREATE PROC [dbo].[p_OT_ObtenerProgramaAdjuntoSemana]
 (
     @pID INT = NULL,
@@ -31,6 +32,3 @@ BEGIN
           )
           OR ID = @pID;
 END
-GO
-
-

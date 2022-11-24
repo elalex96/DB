@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE PROCEDURE [dbo].[EN_Visualiza_EntregablesInternos]--0,10061,3,0
+﻿CREATE PROCEDURE [dbo].[EN_Visualiza_EntregablesInternos]--0,10061,3,0
 	@pIdEntregable INT,
     @idUsuario INT,
     @idContrato INT,
@@ -39,7 +39,8 @@ BEGIN
 				ISNULL(E.Actividad,'') AS Actividad,
 				E.IdResponsableGenerador,
 				RG.ResponsableGenerador,
-				R.Regulador
+				R.Regulador,
+				ISNULL(CE.Radar,0) AS Radar
 		FROM	EN_Entregable  E
 
 		JOIN	EN_ContratoEntregable CE
@@ -94,7 +95,8 @@ BEGIN
 			ISNULL(E.Observaciones,'') AS Observaciones,
 			ISNULL(E.TiempoEntrega,'') AS TiempoEntrega,
 			ISNULL(E.Actividad,'') AS Actividad,
-			E.IdResponsableGenerador
+			E.IdResponsableGenerador,
+			ISNULL(CE.Radar,0) AS Radar
 	FROM	EN_Entregable  E
 
 	JOIN	EN_ContratoEntregable CE

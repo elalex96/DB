@@ -5,6 +5,6 @@
     [FecMovto]          DATETIME       NULL,
     [Activo]            BIT            NULL,
     [CreadoPor]         INT            NULL,
-    CONSTRAINT [PK_Responsables] PRIMARY KEY CLUSTERED ([IdResponsable] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Responsables] PRIMARY KEY CLUSTERED ([IdResponsable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

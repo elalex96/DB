@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]    Script Date: 11/11/2021 02:08:53 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]-- 3,10061
+﻿CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion]-- 3,10061
     @IdContrato INT,
     @idUsuario INT
 AS

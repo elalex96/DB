@@ -1,5 +1,4 @@
-﻿-- =============================================
--- Author:		Manuel Cruz
+﻿-- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
 -- =============================================
@@ -195,4 +194,5 @@ BEGIN
 			GROUP BY R.Comentarios;
 	END;
 END;
+
 

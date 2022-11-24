@@ -3,6 +3,10 @@
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
 -- =============================================
+-- Author:		Luis David De La Cruz Bautista
+-- Create date: 20/01/2021
+-- Description:	Optimización para correción de issue 920/ detalle pedido
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ConsultarEstatusPedido]
 @IdPedido INT,
 @IdProveedor INT 
@@ -13,15 +17,19 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
-	DECLARE @IdSolped INT = (SELECT P.IdSolicitudPedido FROM MM_SolicitudPedido SP 
+	DECLARE @IdSolped INT = (SELECT P.IdSolicitudPedido 
+								FROM MM_SolicitudPedido SP 
 	                         INNER JOIN MM_Pedido P ON SP.IdSolicitudPedido = P.IdSolicitudPedido
 							 WHERE P.IdPedido = @IdPedido 
 							 )
 
 
 	SELECT E.Nombre FROM TA_Operacion O
-	INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion
-	WHERE O.IdTipoOperacion = 9 AND O.IdProveedor = @IdProveedor AND O.IdDocumento = @IdSolped 
+			INNER JOIN TA_Estatus AS E 
+			ON O.IdEstatusOperacion = E.IdEstatus
+	WHERE O.IdTipoOperacion = 9 
+	AND O.IdProveedor = @IdProveedor 
+	AND O.IdDocumento = @IdSolped 
 
 
 
@@ -41,4 +49,3 @@ BEGIN
 
 
 END
-

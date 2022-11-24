@@ -5,8 +5,8 @@
 -- =============================================
 -- =============================================
 -- Author:		Daniel AC
--- Create date: 23/05/2018
--- Description:	MODICACIÓN PARA DIAS DE CRÉDITO YA SE LLAMA DIRECTAMENTE DESDE EL GRIDVIEW
+-- Create date: 16/05/2022
+-- Description:	CAMBIO DE DECIMALES A FLOAT
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_Simulacion_AgregarPedido_V4_MV1_5]
     -- Add the parameters for the stored procedure here
@@ -70,7 +70,7 @@ BEGIN
 
     CREATE TABLE #TIPO_CAMBIO
     (
-        TipoCambio DECIMAL(12, 4),
+        TipoCambio FLOAT,
         Fecha DATETIME,
         IdMoneda INT
     );
@@ -103,8 +103,7 @@ BEGIN
     GROUP BY PO.IdSubcontratista,
              POD.IdMoneda,
              POD.IdPeticionOferta;
-
-
+			 
 
     --cuantos pedidos se van a realizar y ta_operaciones a realizar (aprobaciones)
     SET @COUNT_PROVEEDORES =
@@ -142,10 +141,10 @@ BEGIN
         IdMaterial INT,
         IdMaterialVendedor INT,
         IdPeticionOfertaDetalle INT,
-        PrecioUnitario DECIMAL,
-        Cantidad DECIMAL,
+        PrecioUnitario FLOAT,
+        Cantidad FLOAT,
         IdMoneda INT,
-        Subtotal DECIMAL,
+        Subtotal FLOAT,
         Activo BIT,
         ComentariosCompras NVARCHAR(MAX),
         CreadoPor INT,

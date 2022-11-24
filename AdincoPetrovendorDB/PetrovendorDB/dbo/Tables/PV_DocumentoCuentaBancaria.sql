@@ -11,7 +11,7 @@
     [IdTipoDocumento]       INT            NULL,
     [EnviadoPor]            INT            NULL,
     [FileNameDoc]           VARCHAR (100)  NULL,
-    CONSTRAINT [PK_PV_DocumentoCuentaBancaria] PRIMARY KEY CLUSTERED ([IdDocCuentaBancaria] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PV_DocumentoCuentaBancaria] PRIMARY KEY CLUSTERED ([IdDocCuentaBancaria] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PV_DocumentoCuentaBancaria_PV_EstatusAprobacionCtaBancaria] FOREIGN KEY ([EstatusAprobacion]) REFERENCES [dbo].[PV_EstatusAprobacionCtaBancaria] ([IdEstatusCuentaBancaria]),
     CONSTRAINT [FK_PV_DocumentoCuentaBancaria_S_Proveedor] FOREIGN KEY ([EnviadoPor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_PV_DocumentoCuentaBancaria_S_TipoDocumento] FOREIGN KEY ([IdTipoDocumento]) REFERENCES [dbo].[S_TipoDocumento] ([IdTipoDocumento]),

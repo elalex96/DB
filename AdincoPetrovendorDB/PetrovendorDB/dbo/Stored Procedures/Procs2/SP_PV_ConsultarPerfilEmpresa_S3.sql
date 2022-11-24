@@ -1,17 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PV_ConsultarPerfilEmpresa_S3'
-)
-    DROP PROCEDURE SP_PV_ConsultarPerfilEmpresa_S3;
-/****** Object:  StoredProcedure [dbo].[SP_PV_ConsultarPerfilEmpresa_S3]    Script Date: 27/07/2021 01:59:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿
 -- =============================================
 -- Author: DANIEL AC
 -- Create date: 18/08/2017
@@ -120,4 +107,3 @@ BEGIN
 		END 
 END
 
-go

@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_CNH_FormatoPlanes_Inversion_2019_bak21092021]    Script Date: 21/09/2021 07:44:50 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-09-04
 -- Description:	

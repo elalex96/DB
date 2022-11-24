@@ -39,6 +39,6 @@
     [CAPEX_OPEX]                            NVARCHAR (MAX) NULL,
     [Status]                                NVARCHAR (MAX) NULL,
     [FechaExcel]                            DATETIME       NULL,
-    CONSTRAINT [PK_CO_GastosAmatitlan_Mayo2018] PRIMARY KEY CLUSTERED ([IdGasto] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_GastosAmatitlan_Mayo2018] PRIMARY KEY CLUSTERED ([IdGasto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -9,6 +9,6 @@
     [ModificadoPor]    INT      NOT NULL,
     [ModificadoEl]     DATETIME NOT NULL,
     [IdContrato]       INT      NULL,
-    CONSTRAINT [PK_OF_PermisosUsuario] PRIMARY KEY CLUSTERED ([IdPermisoUsuario] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_OF_PermisosUsuario] PRIMARY KEY CLUSTERED ([IdPermisoUsuario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

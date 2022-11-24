@@ -1,4 +1,5 @@
-﻿CREATE FUNCTION [dbo].[fn_OT_GetMailUsuariosEstatus] 
+﻿
+CREATE FUNCTION [dbo].[fn_OT_GetMailUsuariosEstatus] 
 (
 	-- Add the parameters for the function here
 	@pIdOTSolicitud int,	

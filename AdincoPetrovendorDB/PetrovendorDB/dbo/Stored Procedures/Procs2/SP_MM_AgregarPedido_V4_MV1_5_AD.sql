@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 12/07/2018
 -- Description: ahora la aprobacion es por cada pedido y no una aprobacion para todos los pedidos generados

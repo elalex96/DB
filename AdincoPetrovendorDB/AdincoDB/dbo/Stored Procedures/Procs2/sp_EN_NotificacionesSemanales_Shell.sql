@@ -1,4 +1,4 @@
-CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
+﻿CREATE PROCEDURE dbo.sp_EN_NotificacionesSemanales_Shell
 AS
 BEGIN
 -- =============================================

@@ -10,6 +10,6 @@
     [ModificadoEl]  DATETIME       NULL,
     [Activo]        BIT            NULL,
     [IdEliminacion] INT            NOT NULL,
-    PRIMARY KEY CLUSTERED ([IdArchivoXml] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdArchivoXml] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

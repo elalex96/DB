@@ -1,5 +1,4 @@
-﻿
-CREATE PROC [dbo].[p_CO_ConsultaLineaProgramaActividadMesDetalle] 
+﻿CREATE PROC [dbo].[p_CO_ConsultaLineaProgramaActividadMesDetalle] 
 --p_CO_ConsultaLineaProgramaActividadMesDetalle 3,'2018-08-01',10008
 @pidContrato          INT, 
 @pAnioMes             DATETIME, 
@@ -409,7 +408,7 @@ WHERE pc.IdContrato = @pidContrato
 	from months
 	where DATEADD(month, 1, date) < @end
 	)
-	select     CONCAT(DATENAME(mm, date), '-' , DATEPART(yy, date))
+	select     CONCAT(UPPER(DATENAME(mm, date)), '-' , DATEPART(yy, date))
 	from months
 
 END

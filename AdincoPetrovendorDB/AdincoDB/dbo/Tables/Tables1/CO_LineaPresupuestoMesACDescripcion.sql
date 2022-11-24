@@ -40,6 +40,6 @@
     [IdLineaProgramaActividadMes] INT             NULL,
     [CAPEX]                       BIT             NULL,
     [ACDescripcion]               NVARCHAR (50)   NULL,
-    CONSTRAINT [PK_LineaPresupuestoMesACDescripcion] PRIMARY KEY CLUSTERED ([IdLineaPresupuestoMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_LineaPresupuestoMesACDescripcion] PRIMARY KEY CLUSTERED ([IdLineaPresupuestoMes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

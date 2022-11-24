@@ -1,10 +1,4 @@
-﻿if exists (select * from sys.procedures where name = 'SP_AD_S3_TA_DocBasesOperacion')
-begin
-	drop proc SP_AD_S3_TA_DocBasesOperacion
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 
@@ -57,7 +51,7 @@ BEGIN
 			  Extension=@Extension,
 			  Identificador=@IdentificadorS3,
 			  Carpeta=@Carpeta,
-			  AMS3=1
+			  AMS3=1,
 			  Bucket = @bucket
 			  WHERE IdDocBases=@IdDocumento
 

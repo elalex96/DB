@@ -1,4 +1,5 @@
-﻿CREATE PROC [dbo].[p_OT_ConsultarMaterialBitacora]
+﻿
+CREATE PROC [dbo].[p_OT_ConsultarMaterialBitacora]
 @pIdOTSolicitudMaterial INT
 AS
 	SELECT OT_SolicitudMaterialBitacora.Cantidad,
@@ -9,6 +10,3 @@ AS
 	FROM dbo.OT_SolicitudMaterialBitacora (NOLOCK)
 	WHERE OT_SolicitudMaterialBitacora.IdOTSolicitudMaterial = @pIdOTSolicitudMaterial
 	ORDER BY OT_SolicitudMaterialBitacora.CreadoEl DESC
-GO
-
-

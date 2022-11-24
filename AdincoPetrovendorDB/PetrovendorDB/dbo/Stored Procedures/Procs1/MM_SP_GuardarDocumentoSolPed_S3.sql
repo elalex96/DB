@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS MM_SP_GuardarDocumentoSolPed_S3
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 07/04/2018
 -- Description:	Se guarda documento para una SolPed

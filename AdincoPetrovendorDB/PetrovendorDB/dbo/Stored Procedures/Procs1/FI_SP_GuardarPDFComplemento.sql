@@ -1,10 +1,4 @@
-﻿if exists (select * from sys.procedures where name = 'FI_SP_GuardarPDFComplemento')
-begin
-	drop proc FI_SP_GuardarPDFComplemento
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <04-12-2018>
 -- Description:	<Se guarda los datos del archivo PDF del complemento>

@@ -14,6 +14,6 @@
     [IsEliminado]        BIT            NULL,
     [ID_PO]              NVARCHAR (MAX) NULL,
     [CargadaManualmente] BIT            NULL,
-    PRIMARY KEY CLUSTERED ([IdAdjuntoPO] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdAdjuntoPO] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

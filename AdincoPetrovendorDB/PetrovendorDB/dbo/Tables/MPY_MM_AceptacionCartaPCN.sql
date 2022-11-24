@@ -15,6 +15,6 @@
     [IdEliminado]          INT            NULL,
     [Editado]              BIT            NULL,
     [IdProceso]            INT            NULL,
-    CONSTRAINT [PK_MPY_MM_AceptacionCartaPCN] PRIMARY KEY CLUSTERED ([IdAceptacionCartaPCN] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MPY_MM_AceptacionCartaPCN] PRIMARY KEY CLUSTERED ([IdAceptacionCartaPCN] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

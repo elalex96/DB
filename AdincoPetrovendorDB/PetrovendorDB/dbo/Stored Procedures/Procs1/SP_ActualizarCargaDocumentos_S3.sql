@@ -1,10 +1,4 @@
-﻿if exists (select * from sys.procedures where name = 'SP_ActualizarCargaDocumentos_S3')
-begin
-	drop proc SP_ActualizarCargaDocumentos_S3
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:	DANIEL AC
 -- Create date: 26/04/2018
 -- Description:	ACTUALIZAR DOCUMENTO DEL PROVEEDOR,
@@ -14,10 +8,14 @@ go
 -- Create date: <08/03/2019>
 -- Description:	<Se agrega el campo de iddocumento al representante legal ya que ahora puede contener mas de un representante>
 -- =============================================
-
+-- ============================================= 
+-- Author:        Alexander Gomez
+-- Create date:	  09-03-2022
+-- Description:   Se agrega el parametro para la fecha del documento repse
+-- ============================================= 
 CREATE PROCEDURE [dbo].[SP_ActualizarCargaDocumentos_S3] @IdDocumento INT, @IdUsuario INT, @IdTipoDocumento INT ,
 														 @IdTipoVal INT, @IdProveedor INT, @Documento NVARCHAR (MAX) ,
-
+														 @FechaVigenciaREPSE DATETIME = NULL,
 															--- Insertar Acta constitutiva ---
 														 @NoActaConstitutiva NVARCHAR (150) = NULL, @Fecha DATE = NULL ,
 														 @Nombre NVARCHAR (50) = NULL ,
@@ -59,7 +57,7 @@ AS
 		-- SET NOCOUNT ON added to prevent extra result sets from
 		-- interfering with SELECT statements.
 		SET NOCOUNT ON 
-
+		DECLARE @NOMBRETIPODOCUMENTO VARCHAR(1000);
 		-- ENTRA EN ESTE CASO SI SE QUIERE ACTUALIZAR EL ACTA CONSTITUTIVA --
 		IF @IdTipoDocumento = 1
 			BEGIN
@@ -163,7 +161,18 @@ AS
 		INICIO DOCUMENTO NORMAL DE CUALQUIER OTRO TIPO
 	/--------------------------------------------------------------------------*/
 		ELSE
-				 BEGIN
+		BEGIN
+					--ACTUALIZACION DE LA FECHA VIGENCIA REPSE
+					SET @NOMBRETIPODOCUMENTO = (SELECT TOP 1 NombreTipoDocumento FROM S_TipoDocumento WHERE IdTipoDocumento = @IdTipoDocumento);
+					--SE VALIDA SI EL DOCUMENTO ES DE REPSE
+					IF (@NOMBRETIPODOCUMENTO = 'Certificado de aprobación de REPSE')
+					BEGIN
+						--SE ACTUALIZA LA FECHA DE VIGENCIA DEL REPSE
+						UPDATE S_Proveedor
+						SET FechaVigenciaREPSE = @FechaVigenciaREPSE
+						WHERE IdProveedor = @IdProveedor;
+
+					END
 					 -- ENTRA EN ESTE CASO AL ACTUALIZAR UN DOCUMENTO DE CUALQUIER OTRO TIPO QUE NO SEA ACTA NI REPRESENTANTE LEGAL --
 
 					 -- Inactiva el documento cuando es de cualquier otro tipo --
@@ -181,10 +190,9 @@ AS
 
 					 IF @@ERROR <> 0 SELECT 'false' AS msj 
 					 ELSE SELECT 'true'	   AS msj 
-				 END 
+		END 
 
 	/*--------------------------------------------------------------------------/  
 		 FIN DOCUMENTO NORMAL
 	/--------------------------------------------------------------------------*/
-	END 
-
+END

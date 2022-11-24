@@ -6,6 +6,6 @@
     [IdEditadorPor] INT            NULL,
     [CreadoEl]      DATETIME       NULL,
     [EditadoPor]    DATETIME       NULL,
-    CONSTRAINT [PK_MA_DominioCorreo] PRIMARY KEY CLUSTERED ([IdDominio] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MA_DominioCorreo] PRIMARY KEY CLUSTERED ([IdDominio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

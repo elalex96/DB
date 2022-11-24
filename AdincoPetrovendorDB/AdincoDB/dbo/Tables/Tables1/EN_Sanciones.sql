@@ -14,7 +14,7 @@
     [ModificadoPor]  INT            NULL,
     [ModificadoEn]   DATETIME       NULL,
     [Sancion]        VARCHAR (8000) NULL,
-    CONSTRAINT [PK_EN_Sanciones] PRIMARY KEY CLUSTERED ([IdSancion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_Sanciones] PRIMARY KEY CLUSTERED ([IdSancion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_Sanciones_EN_MarcoLegal] FOREIGN KEY ([IdMarcoLegal]) REFERENCES [dbo].[EN_MarcoLegal] ([IdMarcoLegal]),
     CONSTRAINT [FK_EN_Sanciones_EN_Sancionador] FOREIGN KEY ([IdSancionador]) REFERENCES [dbo].[EN_Sancionador] ([IdSancionador])
 );

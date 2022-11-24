@@ -14,7 +14,8 @@
     [CreadoEl]      DATETIME       NULL,
     [ModificadoPor] INT            NULL,
     [ModificadoEl]  DATETIME       NULL,
-    CONSTRAINT [PK_TA_DocFianzaOperacion] PRIMARY KEY CLUSTERED ([IdDocFianza] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [Bucket]        VARCHAR (200)  NULL,
+    CONSTRAINT [PK_TA_DocFianzaOperacion] PRIMARY KEY CLUSTERED ([IdDocFianza] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_TA_DocFianzaOperacion_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_TA_DocFianzaOperacion_TA_Operacion] FOREIGN KEY ([IdOperacion]) REFERENCES [dbo].[TA_Operacion] ([IdOperacion])
 );

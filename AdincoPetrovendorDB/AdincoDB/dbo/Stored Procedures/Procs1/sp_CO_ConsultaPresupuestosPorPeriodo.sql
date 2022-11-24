@@ -8,7 +8,6 @@
 -- Description:	SE AGREGA NOLOCKS,
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_CO_ConsultaPresupuestosPorPeriodo] 
--- Add the parameters for the stored procedure here
 @IdPeriodo INT = 0
 AS
      BEGIN
@@ -34,3 +33,4 @@ AS
         WHERE
 			(CO_PeriodoContrato.IdPeriodo = @IdPeriodo);
      END;
+

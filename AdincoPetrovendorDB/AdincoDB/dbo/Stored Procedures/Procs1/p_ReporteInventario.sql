@@ -1,8 +1,4 @@
-﻿USE adinco
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'p_ReporteInventario')
-    DROP PROCEDURE p_ReporteInventario
-GO
-create Proc [dbo].[p_ReporteInventario]
+﻿CREATE PROCEDURE [dbo].[p_ReporteInventario]
 @pIdContrato int,
 @pIdPresupuesto int
 as
@@ -16,7 +12,8 @@ CREATE TABLE #Facturas
     IdFacturaPetro  INT,
     IdContrato      INT,
     FechaTimbrado   DATETIME,
-    PRIMARY KEY (IdFacturaAdinco, IdFacturaPetro)
+    PRIMARY KEY
+ (IdFacturaAdinco, IdFacturaPetro)
 )
 INSERT INTO #facturas
 (
@@ -57,7 +54,8 @@ FROM
     Adinco.dbo.FI_Factura ff (NOLOCK)
 JOIN  
     Adinco.dbo.FI_TransferFactura TRFAC (NOLOCK)
-    ON FF.IdFactura =  TRFAC.IdFactura
+    
+ON FF.IdFactura =  TRFAC.IdFactura
     AND ff.IdContrato = @pIdContrato
 JOIN  
     Adinco.dbo.FI_FacturaAdincoPetrovendor FAP  (NOLOCK)
@@ -67,8 +65,7 @@ WHERE
     ff.IdContrato = @pIdContrato
 
 
-DELETE
-    F
+DELETE F
 FROM
     #facturas   F
 JOIN
@@ -87,11 +84,12 @@ BEGIN
         ROW_NUMBER() OVER (ORDER BY c.NumeroContrato) AS Consecutivo,
         c.NumeroContrato AS Contrato,
         ac.NombreAreaContractual AS AreaContratual,
-        CASE 
-            WHEN rc.IdRegimenCapital IS NOT NULL 
-            THEN pr.RazonSocial + ', ' + rc.Regimen
-            ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
-        END AS Contratista,
+      --CASE 
+      --      WHEN rc.IdRegimenCapital IS NOT NULL 
+      --      THEN pr.RazonSocial + ', ' + rc.Regimen
+      --      ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
+      --  END AS Contratista,
+	  CC.NombreContratista	AS Contratista,
         pod.MaterialCotizadoTextoC AS NombreDelMaterial,
         CASE WHEN c.IdContrato = 10036--CNH-A3.CÁRDENAS-MORA/2018
             THEN 'PCM' + RIGHT('00000' + CAST(ap.IdAceptacionPedido AS NVARCHAR(5)), 5)
@@ -118,8 +116,7 @@ BEGIN
         END AS MontoCargadoCuentaDLLS,
         Petrovendor.dbo.FN_ValorTipoCambio(F.FechaTimbrado) AS TipoCambioMontoCargadoCuenta,
         CONVERT(NVARCHAR(100), F.FechaTimbrado, 103) AS FechaTipoCambio,
-        CASE 
-            WHEN r.IdRegistro IS NULL
+        CASE  WHEN r.IdRegistro IS NULL
             THEN DATENAME(MONTH, Petrovendor.dbo.FN_ObtenerMesGasto(F.IdFacturaAdinco))
             ELSE DATENAME(MONTH, RA.MesPresentacion)
         END AS MesCargoCuenta
@@ -153,14 +150,14 @@ BEGIN
     GROUP BY
         c.NumeroContrato,
         ac.NombreAreaContractual,
-        CASE 
-            WHEN rc.IdRegimenCapital IS NOT NULL 
-            THEN pr.RazonSocial + ', ' + rc.Regimen
-            ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
-        END,
+        --CASE WHEN rc.IdRegimenCapital IS NOT NULL 
+        --    THEN pr.RazonSocial + ', ' + rc.Regimen
+        --    ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
+        --END,
+		CC.NombreContratista,
         pod.MaterialCotizadoTextoC,
         CASE WHEN  c.IdContrato = 10036
-            THEN 'PCM' + RIGHT('00000' + CAST(ap.IdAceptacionPedido AS NVARCHAR(5)), 5)
+			THEN 'PCM' + RIGHT('00000' + CAST(ap.IdAceptacionPedido AS NVARCHAR(5)), 5)
             ELSE RIGHT('00000' + CAST(ap.IdAceptacionPedido AS NVARCHAR(5)), 5) 
         END,
         apd.Cantidad,
@@ -171,8 +168,7 @@ BEGIN
             ELSE ISNULL(i.NombreInstalacion, 'Sin Instalación') 
         END,
         CONVERT(NVARCHAR(100), ap.Creado, 103),
-        CASE 
-            WHEN p.IdMoneda = 1
+        CASE WHEN p.IdMoneda = 1
             THEN Petrovendor.dbo.FN_PesosDolaresTipoCambio((apd.Cantidad * pod.PrecioUnitario), F.FechaTimbrado)
             ELSE apd.Cantidad * pod.PrecioUnitario
         END,
@@ -193,11 +189,12 @@ BEGIN
         ROW_NUMBER() OVER (ORDER BY c.NumeroContrato) AS Consecutivo,
         c.NumeroContrato AS Contrato,
         ac.NombreAreaContractual AS AreaContratual,
-        CASE 
-            WHEN rc.IdRegimenCapital IS NOT NULL 
-            THEN pr.RazonSocial + ', ' + rc.Regimen
-            ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
-        END AS Contratista,
+        --CASE 
+        --    WHEN rc.IdRegimenCapital IS NOT NULL 
+        --    THEN pr.RazonSocial + ', ' + rc.Regimen
+        --    ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
+        --END AS Contratista,
+		CC.NombreContratista	AS Contratista,
         pod.MaterialCotizadoTextoC AS NombreDelMaterial,
         CASE WHEN c.IdContrato = 10036--CNH-A3.CÁRDENAS-MORA/2018
             THEN 'PCM' + RIGHT('00000' + CAST(ap.IdAceptacionPedido AS NVARCHAR(5)), 5)
@@ -258,25 +255,29 @@ BEGIN
     GROUP BY
         c.NumeroContrato,
         ac.NombreAreaContractual,
-        CASE 
-            WHEN rc.IdRegimenCapital IS NOT NULL 
-            THEN pr.RazonSocial + ', ' + rc.Regimen
-            ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
-        END,
+        --CASE 
+        --    WHEN rc.IdRegimenCapital IS NOT NULL 
+        --    THEN pr.RazonSocial + ', ' + rc.Regimen
+        --    ELSE pr.RazonSocial + ISNULL(pr.RegimenCapital, '')
+        --END,
+		CC.NombreContratista,
         pod.MaterialCotizadoTextoC,
         CASE WHEN c.IdContrato = 10036--CNH-A3.CÁRDENAS-MORA/2018
+
             THEN 'PCM' + RIGHT('00000' + CAST(ap.IdAceptacionPedido AS NVARCHAR(5)), 5)
             ELSE RIGHT('00000' + CAST(ap.IdAceptacionPedido AS NVARCHAR(5)), 5) 
         END,
         apd.Cantidad,
         pod.MaterialCotizadoTextoL,
         CASE
-            WHEN r.IdRegistro IS NULL
+ 
+           WHEN r.IdRegistro IS NULL
             THEN Petrovendor.dbo.FN_ObtenerInstalacionGasto(f.IdFacturaAdinco)
             ELSE ISNULL(i.NombreInstalacion, 'Sin Instalación') 
         END,
         CONVERT(NVARCHAR(100), ap.Creado, 103),
         CASE 
+
             WHEN p.IdMoneda = 1
             THEN Petrovendor.dbo.FN_PesosDolaresTipoCambio((apd.Cantidad * pod.PrecioUnitario), F.FechaTimbrado)
             ELSE apd.Cantidad * pod.PrecioUnitario

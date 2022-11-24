@@ -14,6 +14,6 @@
     [GLAccount]               VARCHAR (20)  NOT NULL,
     [LineAmount]              FLOAT (53)    NOT NULL,
     [CreadoEl]                DATETIME      NOT NULL,
-    CONSTRAINT [PK_CO_SAP_FI_Invoice_1] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [InvoiceNumber] ASC, [InvoiceLine] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_SAP_FI_Invoice_1] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [InvoiceNumber] ASC, [InvoiceLine] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

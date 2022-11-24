@@ -4,6 +4,6 @@
     [Codigo]      NVARCHAR (100) NULL,
     [Activo]      BIT            NULL,
     [IdGrupo]     INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -14,6 +14,6 @@
     [FecMovto]           DATETIME        NULL,
     [IdInstalacion]      INT             NULL,
     [CreadoPor]          INT             NULL,
-    CONSTRAINT [PK_RegistrosLog] PRIMARY KEY CLUSTERED ([IdRegistroLog] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_RegistrosLog] PRIMARY KEY CLUSTERED ([IdRegistroLog] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -9,6 +9,6 @@
     [URL_MODULO]     NVARCHAR (350) NULL,
     [IsEliminado]    BIT            NULL,
     [Aplicacion]     INT            NULL,
-    CONSTRAINT [PK_Modulo] PRIMARY KEY CLUSTERED ([IdModulo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Modulo] PRIMARY KEY CLUSTERED ([IdModulo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

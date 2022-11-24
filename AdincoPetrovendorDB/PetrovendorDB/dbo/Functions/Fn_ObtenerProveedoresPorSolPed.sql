@@ -1,17 +1,4 @@
-﻿USE Petrovendor
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Fn_ObtenerProveedoresPorSolPed'
-)
-    DROP FUNCTION Fn_ObtenerProveedoresPorSolPed;
-/****** Object:  UserDefinedFunction [dbo].[Fn_ObtenerProveedoresPorSolPed]    Script Date: 22/09/2022 03:41:39 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Daniel AC
 -- Create date: 22/09/2022
 -- Description: Obtener proveedores concatenados de una requisición

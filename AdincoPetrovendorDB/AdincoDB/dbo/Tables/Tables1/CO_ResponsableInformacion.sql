@@ -5,7 +5,7 @@
     [Telefono]                 NVARCHAR (MAX) NULL,
     [CorreoElectronico]        NVARCHAR (MAX) NULL,
     [CreadoPor]                INT            NULL,
-    CONSTRAINT [PK_ResponsableInformacion] PRIMARY KEY CLUSTERED ([IdResponsableInformacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ResponsableInformacion] PRIMARY KEY CLUSTERED ([IdResponsableInformacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_ResponsableInformacion_CO_Contratista] FOREIGN KEY ([IdContratista]) REFERENCES [dbo].[CO_Contratista] ([IdContratista])
 );
 

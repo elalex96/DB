@@ -1,4 +1,4 @@
-﻿create PROCEDURE p_EliminarTanque
+﻿CREATE PROCEDURE p_EliminarTanque
 @pId	int,
 @UsuarioId INT
 as

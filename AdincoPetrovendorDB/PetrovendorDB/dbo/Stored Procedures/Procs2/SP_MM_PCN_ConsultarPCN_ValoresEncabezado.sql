@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]    Script Date: 20/10/2022 12:23:40 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14/04/2018
 -- Description:	Agregue nuevos columnas a la consulta TipoMaterial, IdTipoNacionalidad, IdTipoCriterio, IdCatalogoHidrocarburos y si es nueva se calcula el valor factura segun 
@@ -33,7 +26,7 @@ GO
 -- Create date: 18/10/2022
 -- Description: se establece que el valor facturado es el valor guardado en la aceptacion, si este monto no existe se toma el del pedido (WDEA)
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]  
+CREATE PROCEDURE [dbo].[SP_MM_PCN_ConsultarPCN_ValoresEncabezado]  
 @IdAceptacionPedidoDetalle int
 AS
 BEGIN

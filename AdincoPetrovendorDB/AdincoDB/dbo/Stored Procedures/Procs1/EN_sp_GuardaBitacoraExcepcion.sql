@@ -1,11 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS EN_sp_GuardaBitacoraExcepcion
--- =============================================
--- Author:		LUIS DAVID
--- Create date: 27/02/2021
--- Description:	<INSERTA EN LA BITACORA DE EXCEPCIONES>
--- =============================================
-go
-CREATE PROCEDURE EN_sp_GuardaBitacoraExcepcion
+﻿CREATE PROCEDURE EN_sp_GuardaBitacoraExcepcion
 @IdInstanciaEntregable int,
 @FechaCalculadaEntregaRegAnterior date,
 @UsuarioId int,

@@ -17,7 +17,7 @@
     [ActivoProcura]       BIT            NULL,
     [InicioPresupuesto]   DATE           NULL,
     [FinPresupuesto]      DATE           NULL,
-    CONSTRAINT [PK_Presupuestos] PRIMARY KEY CLUSTERED ([IdPresupuesto] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Presupuestos] PRIMARY KEY CLUSTERED ([IdPresupuesto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Presupuesto_CO_ProgramaActividad] FOREIGN KEY ([IdProgramaActividad]) REFERENCES [dbo].[CO_ProgramaActividad] ([IdProgramaActividad]),
     CONSTRAINT [FK_Presupuestos_AniosContractuales] FOREIGN KEY ([IdAnioContractual]) REFERENCES [dbo].[CO_AnioContractual] ([IdAnioContractual])
 );

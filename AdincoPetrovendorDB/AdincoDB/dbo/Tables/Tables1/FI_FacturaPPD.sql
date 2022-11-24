@@ -6,6 +6,6 @@
     [MesPresentacion] DATE         NULL,
     [Presupuesto]     INT          NULL,
     [FechaPago]       DATE         NULL,
-    CONSTRAINT [PK_FI_FacturaPPD] PRIMARY KEY CLUSTERED ([IdFacturaPPD] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_FacturaPPD] PRIMARY KEY CLUSTERED ([IdFacturaPPD] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

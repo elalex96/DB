@@ -1,5 +1,4 @@
-﻿
-create proc sp_CO_ProgramaImplementaElemento_Grd
+﻿create proc sp_CO_ProgramaImplementaElemento_Grd
 (
 	@pIdProgramaImplementaPolitica	int,
 	@pIdProgramaImplementa			int

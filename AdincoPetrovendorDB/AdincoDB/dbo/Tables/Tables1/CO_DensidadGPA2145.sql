@@ -12,6 +12,6 @@
     [H2S]               FLOAT (53) NULL,
     [N2]                FLOAT (53) NULL,
     [idContrato]        INT        NULL,
-    PRIMARY KEY CLUSTERED ([idDensidadGPA2145] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([idDensidadGPA2145] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

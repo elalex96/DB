@@ -10,7 +10,7 @@
     [fecharegistro]   DATETIME      NULL,
     [IdRemisionCARSO] VARCHAR (MAX) NULL,
     [FechaEdicion]    DATETIME      NULL,
-    CONSTRAINT [PK_AX_Remision] PRIMARY KEY CLUSTERED ([IdRemision] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AX_Remision] PRIMARY KEY CLUSTERED ([IdRemision] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AX_Remision_MM_Pedido] FOREIGN KEY ([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido])
 );
 

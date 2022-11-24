@@ -8,6 +8,6 @@
     [IsEliminado]      INT            NULL,
     [IdContrato]       INT            NULL,
     [IdSubcontratista] INT            NULL,
-    CONSTRAINT [PK_TA_TipoEstatus] PRIMARY KEY CLUSTERED ([IdTipoEstatus] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TA_TipoEstatus] PRIMARY KEY CLUSTERED ([IdTipoEstatus] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

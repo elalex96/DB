@@ -9,44 +9,46 @@ BEGIN
 -- Create date: 22/05/18
 -- Description:para la pagina de default muestra los entregables de ese mes
 -- =============================================
+-- =============================================
+-- Author:  Luis David 
+-- Create date: 28/09/22
+-- Description: Se eliminan subconsultas, reacomodo de tablas según su declaración y su cantidad de datos Issue#809(Entregables)
+-- =============================================
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
-    IF OBJECT_ID('tempdb..#TempInstancias') IS NOT NULL
-        DROP TABLE #TempInstancias;
-    IF OBJECT_ID('tempdb..#TempInstanciasRevisa') IS NOT NULL
-        DROP TABLE #TempInstanciasRevisa;
-    IF OBJECT_ID('tempdb..#TempInstanciasAprueba') IS NOT NULL
-        DROP TABLE #TempInstanciasAprueba;
+    DROP TABLE IF EXISTS #TempInstancias;
+    DROP TABLE IF EXISTS #TempInstanciasRevisa;
+    DROP TABLE IF EXISTS #TempInstanciasAprueba;
+	DROP TABLE IF EXISTS #TempInstanciasAprobacion;
     ------------------------------------Create tables------------------------------------------------
-     CREATE TABLE #TempInstancias (id INT PRIMARY KEY IDENTITY(1, 1),
+	CREATE TABLE #TempInstancias (
                                   FechasLimiteElaboracion DATE,
                                   idEntregable INT);
-
-     CREATE TABLE #TempInstanciasRevisa (id INT PRIMARY KEY IDENTITY(1, 1),
+	CREATE NONCLUSTERED INDEX ix_tempTempInstancias ON #TempInstancias (FechasLimiteElaboracion);
+    CREATE TABLE #TempInstanciasRevisa (
                                   FechasLimiteRevision DATE,
                                   idEntregable INT);
-
-	 CREATE TABLE #TempInstanciasAprobación (id INT PRIMARY KEY IDENTITY(1, 1),
+	CREATE NONCLUSTERED INDEX ix_tempTempInstanciasRevisa ON #TempInstanciasRevisa (FechasLimiteRevision);
+	CREATE TABLE #TempInstanciasAprobacion (
                                   FechasLimiteAprobacion DATE,
                                   idEntregable INT);
+	CREATE NONCLUSTERED INDEX ix_tempTempInstanciasAprobacion ON #TempInstanciasAprobacion (FechasLimiteAprobacion);
     ----------------------------------------------------Inserts-----------------------------------------------------------------    
-
     INSERT INTO #TempInstancias (FechasLimiteElaboracion,
                                  idEntregable)
+
     SELECT MIN(IE.FechasLimiteElaboracion),
            CE.IdEntregable
-      FROM EN_InstanciasEntregable IE	(NOLOCK)
-      JOIN EN_ContratoEntregable CE	(NOLOCK)
-        ON IE.IdContratoEntregable   = CE.IdContratoEntregable
-       AND CE.IdContrato             = @IdContrato
+      FROM EN_ContratoEntregable CE (NOLOCK)
+      JOIN EN_InstanciasEntregable IE	(NOLOCK)
+        ON CE.IdContratoEntregable = IE.IdContratoEntregable
+       AND CE.IdContrato = @IdContrato				      
       JOIN dbo.EN_Actividad	(NOLOCK)
-        ON EN_Actividad.ActividadID  = IE.ActividadID
-      LEFT JOIN --********************************
-           dbo.EN_ExcepcionesActividad EXAR --********************************
-        ON EXAR.ActividadIDExcepcion = EN_Actividad.ActividadID --********************************
-       AND IE.idInstanciaEntregable  = EXAR.IdInstanciasEntregables --********************************
-
-     WHERE (   EN_Actividad.idUsuario = @idUsuario --********************************
+        ON IE.ActividadID = EN_Actividad.ActividadID 
+      LEFT JOIN dbo.EN_ExcepcionesActividad EXAR 
+        ON EN_Actividad.ActividadID = EXAR.ActividadIDExcepcion 
+       AND IE.idInstanciaEntregable  = EXAR.IdInstanciasEntregables 
+     WHERE (   EN_Actividad.idUsuario = @idUsuario 
          AND   EXAR.IdInstanciasEntregables IS NULL
          AND   EN_Actividad.EstadoID  = 10000)
         OR --********************************
@@ -60,47 +62,42 @@ BEGIN
                                  idEntregable)
     SELECT MIN(IE.FechasLimiteRevision),
            CE.IdEntregable
-      FROM EN_InstanciasEntregable IE	(NOLOCK)
-      JOIN EN_ContratoEntregable CE	(NOLOCK)
-        ON IE.IdContratoEntregable   = CE.IdContratoEntregable
-       AND CE.IdContrato             = @IdContrato
+      FROM EN_ContratoEntregable CE	(NOLOCK)
+      JOIN EN_InstanciasEntregable IE	(NOLOCK)
+        ON CE.IdContratoEntregable = IE.IdContratoEntregable   
+       AND CE.IdContrato = @IdContrato				 
       JOIN dbo.EN_Actividad A	(NOLOCK)
-        ON A.ActividadID  = IE.ActividadID
-      LEFT JOIN --********************************
-           dbo.EN_ExcepcionesActividad EXAR --********************************
-        ON EXAR.ActividadIDExcepcion = A.ActividadID --********************************
-       AND IE.idInstanciaEntregable  = EXAR.IdInstanciasEntregables --********************************
-
+        ON IE.ActividadID = A.ActividadID 
+      LEFT JOIN dbo.EN_ExcepcionesActividad EXAR 
+        ON A.ActividadID = EXAR.ActividadIDExcepcion 
+       AND IE.idInstanciaEntregable = EXAR.IdInstanciasEntregables 
      WHERE   
 	   (A.idUsuario =@idUsuario --********************************
 	   AND EXAR.IdInstanciasEntregables is null  AND  A.EstadoID = 10001) or--********************************
 	   (EXAR.idUsuario=@idUsuario --********************************
 	   AND EXAR.IdInstanciasEntregables is not null AND  EXAR.EstadoID = 10001)--********************************
-
        AND CE.IdContrato              = @IdContrato
      GROUP BY CE.IdEntregable;
 
-	INSERT INTO #TempInstanciasAprobación(FechasLimiteAprobacion,
+	INSERT INTO #TempInstanciasAprobacion(FechasLimiteAprobacion,
                                  idEntregable)
     SELECT MIN(IE.FechasLimiteAprobacion),
            CE.IdEntregable
-      FROM EN_InstanciasEntregable IE	(NOLOCK)
-      JOIN EN_ContratoEntregable CE	(NOLOCK)
-        ON IE.IdContratoEntregable   = CE.IdContratoEntregable
-       AND CE.IdContrato             = @IdContrato
+      FROM EN_ContratoEntregable CE	(NOLOCK)
+      JOIN EN_InstanciasEntregable IE	(NOLOCK)
+        ON CE.IdContratoEntregable = IE.IdContratoEntregable
+       AND CE.IdContrato = @IdContrato
       JOIN dbo.EN_Actividad A	(NOLOCK)
-        ON A.ActividadID  = IE.ActividadID
-      LEFT JOIN --********************************
-           dbo.EN_ExcepcionesActividad EXAR --********************************
-        ON EXAR.ActividadIDExcepcion = A.ActividadID --********************************
-       AND IE.idInstanciaEntregable  = EXAR.IdInstanciasEntregables --********************************
+        ON IE.ActividadID = A.ActividadID 
+      LEFT JOIN dbo.EN_ExcepcionesActividad EXAR 
+        ON A.ActividadID = EXAR.ActividadIDExcepcion
+		AND IE.idInstanciaEntregable  = EXAR.IdInstanciasEntregables
        WHERE     
-	   (A.idUsuario =@idUsuario --********************************
+	   (A.idUsuario =@idUsuario
 	   AND EXAR.IdInstanciasEntregables is null AND A.EstadoID = 10002) or--********************************
 	  (EXAR.idUsuario=@idUsuario --********************************
 	  AND EXAR.IdInstanciasEntregables is not null AND EXAR.EstadoID=10002 )--********************************
-
-       AND CE.IdContrato              = @IdContrato
+		AND CE.IdContrato              = @IdContrato
      GROUP BY CE.IdEntregable;
 
 	/*-------------------------Elaboración-----------------*/
@@ -138,27 +135,27 @@ BEGIN
       FROM #TempInstancias TI
       JOIN EN_InstanciasEntregable IE	(NOLOCK)
         ON TI.FechasLimiteElaboracion = IE.FechasLimiteElaboracion
+      JOIN dbo.EN_Actividad	(NOLOCK)
+        ON IE.ActividadID             = EN_Actividad.ActividadID
+       AND @idUsuario				  = EN_Actividad.idUsuario     
+       AND 10000					  = EN_Actividad.EstadoID      
+      JOIN dbo.EN_Estado	(NOLOCK)
+        ON EN_Actividad.EstadoID      = EN_Estado.EstadoID
       JOIN EN_ContratoEntregable CE	(NOLOCK)
         ON IE.IdContratoEntregable    = CE.IdContratoEntregable
        AND TI.idEntregable            = CE.IdEntregable
        AND CE.IdContrato              = @IdContrato
-      JOIN dbo.EN_Actividad	(NOLOCK)
-        ON IE.ActividadID             = EN_Actividad.ActividadID
-       AND EN_Actividad.idUsuario     = @idUsuario
-       AND EN_Actividad.EstadoID      = 10000
-      JOIN dbo.EN_Estado	(NOLOCK)
-        ON EN_Actividad.EstadoID      = EN_Estado.EstadoID
       JOIN EN_Entregable EN	(NOLOCK)
         ON CE.IdEntregable            = EN.IdEntregable
-		AND EN.BITJOA = 0
-      JOIN dbo.CO_Regulador R	(NOLOCK)
-        ON R.IdRegulador              = EN.IdRegulador
+		AND 0						  = EN.BITJOA 
+	  JOIN en_etapa Et (NOLOCK)
+		ON EN.IdEtapa=Et.IdEtapa
+	  JOIN dbo.EN_FrecuenciaEntregable f	(NOLOCK)
+        ON EN.IdFrecuenciaEntregable  = f.IdFrecuenciaEntregable
+	  JOIN dbo.CO_Regulador R	(NOLOCK)
+        ON EN.IdRegulador             = R.IdRegulador
       JOIN dbo.EN_MarcoLegal M	(NOLOCK)
-        ON M.IdMarcoLegal             = EN.IdMarcoLegal
-      JOIN dbo.EN_FrecuenciaEntregable f	(NOLOCK)
-        ON f.IdFrecuenciaEntregable   = EN.IdFrecuenciaEntregable
-	  JOIN en_etapa Et	(NOLOCK)
-	  ON EN.IdEtapa=Et.IdEtapa
+        ON EN.IdMarcoLegal			  = M.IdMarcoLegal
 
  -- LAS EXCEPCIONES QUE SE LE ASIGNACION AL USUARIO
 
@@ -197,27 +194,27 @@ BEGIN
       FROM #TempInstancias TI
       JOIN EN_InstanciasEntregable IE	(NOLOCK)
         ON TI.FechasLimiteElaboracion = IE.FechasLimiteElaboracion
-      JOIN EN_ContratoEntregable CE	(NOLOCK)
-        ON CE.IdContratoEntregable    = IE.IdContratoEntregable
-       AND TI.idEntregable            = CE.IdEntregable
-       AND CE.IdContrato              = @IdContrato
       JOIN EN_ExcepcionesActividad EXACT	(NOLOCK)
         ON IE.idInstanciaEntregable   = EXACT.IdInstanciasEntregables
-       AND EXACT.EstadoID             = 10000
-       AND EXACT.idUsuario            = @idUsuario
+       AND 10000					  = EXACT.EstadoID
+       AND @idUsuario				  = EXACT.idUsuario
       JOIN dbo.EN_Estado	(NOLOCK)
         ON EXACT.EstadoID             = EN_Estado.EstadoID
+      JOIN EN_ContratoEntregable CE	(NOLOCK)
+        ON IE.IdContratoEntregable	  = CE.IdContratoEntregable
+       AND TI.idEntregable            = CE.IdEntregable
+       AND @IdContrato				  = CE.IdContrato
       JOIN EN_Entregable EN	(NOLOCK)
         ON CE.IdEntregable            = EN.IdEntregable
+	  JOIN en_etapa Et 
+		ON EN.IdEtapa=Et.IdEtapa
+      JOIN dbo.EN_FrecuenciaEntregable F	(NOLOCK)
+        ON EN.IdFrecuenciaEntregable  = F.IdFrecuenciaEntregable
 		AND EN.BITJOA = 0 
       JOIN dbo.CO_Regulador R	(NOLOCK)
         ON EN.IdRegulador             = R.IdRegulador
       JOIN dbo.EN_MarcoLegal M	(NOLOCK)
         ON EN.IdMarcoLegal            = M.IdMarcoLegal
-      JOIN dbo.EN_FrecuenciaEntregable F	(NOLOCK)
-        ON EN.IdFrecuenciaEntregable  = F.IdFrecuenciaEntregable
-		  JOIN en_etapa Et 
-	  ON EN.IdEtapa=Et.IdEtapa
    
     UNION
 
@@ -241,7 +238,7 @@ BEGIN
                  AND DATEDIFF(DAY, @fechaActual, IE.FechasLimiteRevision) <= 15 THEN 'yellow'
                 ELSE 'green' END AS 'Color',
            CE.IdEntregable AS IdEntregable,
-           CE.IdContratoEntregable AS IdContratoEntregable,
+       CE.IdContratoEntregable AS IdContratoEntregable,
            EN.IdRegulador AS idRegulador,
            '',
            DocumentoEntregable,
@@ -256,27 +253,27 @@ BEGIN
      FROM #TempInstanciasRevisa TI
       JOIN EN_InstanciasEntregable IE	(NOLOCK)
         ON TI.FechasLimiteRevision = IE.FechasLimiteRevision
+      JOIN dbo.EN_Actividad	(NOLOCK)
+        ON IE.ActividadID             = EN_Actividad.ActividadID
+       AND @idUsuario				  = EN_Actividad.idUsuario
+       AND 10001					  = EN_Actividad.EstadoID
+      JOIN dbo.EN_Estado	(NOLOCK)
+        ON EN_Actividad.EstadoID      = EN_Estado.EstadoID
       JOIN EN_ContratoEntregable CE	(NOLOCK)
         ON IE.IdContratoEntregable    = CE.IdContratoEntregable
        AND TI.idEntregable            = CE.IdEntregable
-       AND CE.IdContrato              = @IdContrato
-      JOIN dbo.EN_Actividad	(NOLOCK)
-        ON IE.ActividadID             = EN_Actividad.ActividadID
-       AND EN_Actividad.idUsuario     = @idUsuario
-       AND EN_Actividad.EstadoID      = 10001
-      JOIN dbo.EN_Estado	(NOLOCK)
-        ON EN_Actividad.EstadoID      = EN_Estado.EstadoID
+       AND @IdContrato				  = CE.IdContrato
       JOIN EN_Entregable EN	(NOLOCK)
         ON CE.IdEntregable            = EN.IdEntregable
-		AND EN.BITJOA = 0
-      JOIN dbo.CO_Regulador R	(NOLOCK)
-        ON R.IdRegulador              = EN.IdRegulador
-      JOIN dbo.EN_MarcoLegal M	(NOLOCK)
-        ON M.IdMarcoLegal             = EN.IdMarcoLegal
-      JOIN dbo.EN_FrecuenciaEntregable f	(NOLOCK)
-        ON f.IdFrecuenciaEntregable   = EN.IdFrecuenciaEntregable
 	  JOIN en_etapa Et	(NOLOCK)
 	  ON EN.IdEtapa=Et.IdEtapa
+		AND EN.BITJOA = 0
+      JOIN dbo.EN_FrecuenciaEntregable f	(NOLOCK)
+        ON EN.IdFrecuenciaEntregable = f.IdFrecuenciaEntregable
+      JOIN dbo.CO_Regulador R	(NOLOCK)
+        ON EN.IdRegulador			  = R.IdRegulador
+      JOIN dbo.EN_MarcoLegal M	(NOLOCK)
+        ON EN.IdMarcoLegal			  = M.IdMarcoLegal
 	  UNION
 	   SELECT IE.idInstanciaEntregable AS idInstanciaEntregable,
            CONCAT(
@@ -312,27 +309,27 @@ BEGIN
       FROM #TempInstanciasRevisa TI
       JOIN EN_InstanciasEntregable IE	(NOLOCK)
         ON TI.FechasLimiteRevision = IE.FechasLimiteRevision
-      JOIN EN_ContratoEntregable CE	(NOLOCK)
-        ON CE.IdContratoEntregable    = IE.IdContratoEntregable
-       AND TI.idEntregable            = CE.IdEntregable
-       AND CE.IdContrato              = @IdContrato
       JOIN EN_ExcepcionesActividad EXACT	(NOLOCK)
         ON IE.idInstanciaEntregable   = EXACT.IdInstanciasEntregables
-       AND EXACT.EstadoID             = 10001
-       AND EXACT.idUsuario            = @idUsuario
+       AND 10001					  = EXACT.EstadoID
+       AND @idUsuario				  =	EXACT.idUsuario
       JOIN dbo.EN_Estado	(NOLOCK)
         ON EXACT.EstadoID             = EN_Estado.EstadoID
+      JOIN EN_ContratoEntregable CE	(NOLOCK)
+        ON IE.IdContratoEntregable	  = CE.IdContratoEntregable
+       AND TI.idEntregable            = CE.IdEntregable
+       AND @IdContrato				  = CE.IdContrato
       JOIN EN_Entregable EN	(NOLOCK)
         ON CE.IdEntregable            = EN.IdEntregable
-		AND EN.BITJOA = 0
+		AND 0						  = EN.BITJOA
+	  JOIN en_etapa Et	(NOLOCK)
+		ON EN.IdEtapa=Et.IdEtapa
+      JOIN dbo.EN_FrecuenciaEntregable F	(NOLOCK)
+        ON EN.IdFrecuenciaEntregable  = F.IdFrecuenciaEntregable
       JOIN dbo.CO_Regulador R	(NOLOCK)
         ON EN.IdRegulador             = R.IdRegulador
       JOIN dbo.EN_MarcoLegal M	(NOLOCK)
         ON EN.IdMarcoLegal            = M.IdMarcoLegal
-      JOIN dbo.EN_FrecuenciaEntregable F	(NOLOCK)
-        ON EN.IdFrecuenciaEntregable  = F.IdFrecuenciaEntregable
-		  JOIN en_etapa Et	(NOLOCK)
-	  ON EN.IdEtapa=Et.IdEtapa
 
     UNION
 	/*-------------------------Aprobación-----------------*/
@@ -367,30 +364,30 @@ BEGIN
            f.FrecuenciaEntregable AS FrecuenciaEntregable,
            EN_Estado.NombreEstado,
            '#4d51dc'
-          FROM #TempInstanciasAprobación TI
+          FROM #TempInstanciasAprobacion TI
       JOIN EN_InstanciasEntregable IE	(NOLOCK)
         ON TI.FechasLimiteAprobacion = IE.FechasLimiteAprobacion
+      JOIN dbo.EN_Actividad	(NOLOCK)
+        ON IE.ActividadID             = EN_Actividad.ActividadID
+       AND @idUsuario				  =	EN_Actividad.idUsuario     
+       AND 10002					  = EN_Actividad.EstadoID      
+      JOIN dbo.EN_Estado	(NOLOCK)
+        ON EN_Actividad.EstadoID      = EN_Estado.EstadoID
       JOIN EN_ContratoEntregable CE	(NOLOCK)
         ON IE.IdContratoEntregable    = CE.IdContratoEntregable
        AND TI.idEntregable            = CE.IdEntregable
-       AND CE.IdContrato              = @IdContrato
-      JOIN dbo.EN_Actividad	(NOLOCK)
-        ON IE.ActividadID             = EN_Actividad.ActividadID
-       AND EN_Actividad.idUsuario     = @idUsuario
-       AND EN_Actividad.EstadoID      = 10002
-      JOIN dbo.EN_Estado	(NOLOCK)
-        ON EN_Actividad.EstadoID      = EN_Estado.EstadoID
+       AND @IdContrato				  = CE.IdContrato              
       JOIN EN_Entregable EN	(NOLOCK)
         ON CE.IdEntregable            = EN.IdEntregable
-		AND EN.BITJOA = 0
-      JOIN dbo.CO_Regulador R	(NOLOCK)
-        ON R.IdRegulador              = EN.IdRegulador
-      JOIN dbo.EN_MarcoLegal M	(NOLOCK)
-        ON M.IdMarcoLegal             = EN.IdMarcoLegal
-      JOIN dbo.EN_FrecuenciaEntregable f	(NOLOCK)
-        ON f.IdFrecuenciaEntregable   = EN.IdFrecuenciaEntregable
+		AND 0						  = EN.BITJOA 
 	  JOIN en_etapa Et	(NOLOCK)
-	  ON EN.IdEtapa=Et.IdEtapa
+		ON EN.IdEtapa=Et.IdEtapa
+      JOIN dbo.EN_FrecuenciaEntregable f	(NOLOCK)
+        ON EN.IdFrecuenciaEntregable = f.IdFrecuenciaEntregable   
+      JOIN dbo.CO_Regulador R	(NOLOCK)
+        ON EN.IdRegulador             = R.IdRegulador
+      JOIN dbo.EN_MarcoLegal M	(NOLOCK)
+        ON EN.IdMarcoLegal			  = M.IdMarcoLegal             
 		   UNION
     SELECT IE.idInstanciaEntregable AS idInstanciaEntregable,
            CONCAT(
@@ -410,7 +407,7 @@ BEGIN
                 WHEN DATEDIFF(DAY, @fechaActual, IE.FechasLimiteAprobacion) > 7
                  AND DATEDIFF(DAY, @fechaActual, IE.FechasLimiteAprobacion) <= 15 THEN 'yellow'
                 ELSE 'green' END AS 'Color',
-           CE.IdEntregable AS IdEntregable,
+     CE.IdEntregable AS IdEntregable,
            CE.IdContratoEntregable AS IdContratoEntregable,
            EN.IdRegulador AS idRegulador,
            '',
@@ -423,30 +420,29 @@ BEGIN
            f.FrecuenciaEntregable AS FrecuenciaEntregable,
            EN_Estado.NombreEstado,
            '#4d51dc'
-          FROM #TempInstanciasAprobación TI
+          FROM #TempInstanciasAprobacion TI
       JOIN EN_InstanciasEntregable IE	(NOLOCK)
         ON TI.FechasLimiteAprobacion = IE.FechasLimiteAprobacion
-      JOIN EN_ContratoEntregable CE	(NOLOCK)
-        ON CE.IdContratoEntregable    = IE.IdContratoEntregable
-       AND TI.idEntregable            = CE.IdEntregable
-       AND CE.IdContrato              = @IdContrato
       JOIN EN_ExcepcionesActividad EXACT	(NOLOCK)
         ON IE.idInstanciaEntregable   = EXACT.IdInstanciasEntregables
-       AND EXACT.EstadoID             = 10002
-       AND EXACT.idUsuario            = @idUsuario
+       AND 10002					  = EXACT.EstadoID             
+       AND @idUsuario				  = EXACT.idUsuario            
       JOIN dbo.EN_Estado	(NOLOCK)
         ON EXACT.EstadoID             = EN_Estado.EstadoID
+      JOIN EN_ContratoEntregable CE	(NOLOCK)
+        ON IE.IdContratoEntregable	  = CE.IdContratoEntregable    
+       AND TI.idEntregable            = CE.IdEntregable
+       AND @IdContrato				  = CE.IdContrato              
       JOIN EN_Entregable EN	(NOLOCK)
         ON CE.IdEntregable            = EN.IdEntregable
-		AND EN.BITJOA = 0
+		AND 0						  = EN.BITJOA 
+	  JOIN en_etapa Et (NOLOCK)
+		ON EN.IdEtapa=Et.IdEtapa	
+      JOIN dbo.EN_FrecuenciaEntregable F	(NOLOCK)
+        ON EN.IdFrecuenciaEntregable  = F.IdFrecuenciaEntregable
       JOIN dbo.CO_Regulador R	(NOLOCK)
         ON EN.IdRegulador             = R.IdRegulador
       JOIN dbo.EN_MarcoLegal M	(NOLOCK)
         ON EN.IdMarcoLegal            = M.IdMarcoLegal
-      JOIN dbo.EN_FrecuenciaEntregable F	(NOLOCK)
-        ON EN.IdFrecuenciaEntregable  = F.IdFrecuenciaEntregable
-		  JOIN en_etapa Et (NOLOCK)
-	  ON EN.IdEtapa=Et.IdEtapa	
      ORDER BY IE.FechasLimiteElaboracion ASC;
-
 END;

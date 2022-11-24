@@ -7,6 +7,6 @@
     [UseSsl]            BIT            NULL,
     [UltimoNumeroLeido] INT            NULL,
     [UltimaLectura]     DATETIME       NULL,
-    CONSTRAINT [PK_AdincoMail] PRIMARY KEY CLUSTERED ([IdAdincoMail] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AdincoMail] PRIMARY KEY CLUSTERED ([IdAdincoMail] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

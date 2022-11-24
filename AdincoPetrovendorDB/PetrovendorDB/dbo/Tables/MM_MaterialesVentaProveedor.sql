@@ -6,7 +6,7 @@
     [CreadoEn]                   DATETIME NULL,
     [IsActivo]                   BIT      NULL,
     [IsEliminado]                BIT      NULL,
-    CONSTRAINT [PK_MM_MaterialesVentaProveedor] PRIMARY KEY CLUSTERED ([IdMaterialesVentaProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_MaterialesVentaProveedor] PRIMARY KEY CLUSTERED ([IdMaterialesVentaProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_MaterialesVentaProveedor_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])
 );
 

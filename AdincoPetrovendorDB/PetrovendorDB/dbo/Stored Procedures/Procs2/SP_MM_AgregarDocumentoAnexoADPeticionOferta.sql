@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MM_AgregarDocumentoAnexoADPeticionOferta
-GO
--- Author:	Daniel A Cruz
+﻿-- Author:	Daniel A Cruz
 -- Create date: 11-05-18
 -- Description:	SP que agrega DOCUMENTO DE ADJUDICACIÓN UNICA DE UNA Peticion de Oferta 
 -- =============================================

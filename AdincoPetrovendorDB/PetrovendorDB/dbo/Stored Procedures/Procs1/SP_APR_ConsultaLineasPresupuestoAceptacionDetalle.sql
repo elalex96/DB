@@ -4,7 +4,7 @@
 -- Create date: <15/04/2020>
 -- Description:	<Consulta de lineas de presupuesto por aceptacion detalle>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_APR_ConsultaLineasPresupuestoAceptacionDetalle]
+CREATE PROCEDURE [dbo].[SP_APR_ConsultaLineasPresupuestoAceptacionDetalle] --2950
 	-- Add the parameters for the stored procedure here
 	@IdAceptacionPedidoDetalle INT,
 	@IDPRESUPUESTO INT

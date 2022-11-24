@@ -14,7 +14,7 @@
     [IdUsuarioADINCO]             INT            NULL,
     [CorreoVerificado]            BIT            NULL,
     [NotificacionActualizaciones] BIT            NULL,
-    CONSTRAINT [PK_S_Usuario] PRIMARY KEY CLUSTERED ([IdUsuario] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_Usuario] PRIMARY KEY CLUSTERED ([IdUsuario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__S_Usuario__IdTip__50FB042B] FOREIGN KEY ([IdTipoUsuario]) REFERENCES [dbo].[S_TipoUsuario] ([IdTipoUsuario])
 );
 

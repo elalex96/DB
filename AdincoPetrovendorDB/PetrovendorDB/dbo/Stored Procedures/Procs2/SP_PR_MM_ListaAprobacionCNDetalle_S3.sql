@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaAprobacionCNDetalle_S3]    Script Date: 20/08/2021 02:58:52 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      DANIEL Cruz
 -- Create date: 08-02-18
 -- Description: Consultar detalle de encabezado de aprobación de carta de contenido nacional en procura 
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCNDetalle_S3] --516,12751,2415
+CREATE PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCNDetalle_S3] --516,12751,2415
     -- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdAceptacionCartaPCN INT,

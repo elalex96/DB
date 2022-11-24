@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarOperacion]    Script Date: 22/09/2022 11:04:21 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarOperacion]    Script Date: 29/09/2020 13:06:19 ******/
+﻿/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarOperacion]    Script Date: 29/09/2020 13:06:19 ******/
 -- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 24/Marzo/2017
@@ -15,7 +8,7 @@ GO
 -- Create date: 24/10/2019
 -- Description:	se valida que no exista la operacion con los datos(evita duplicidad en las operaciones)
 -- =============================================
-ALTER  PROCEDURE  [dbo].[SP_TA_AgregarOperacion] 
+CREATE  PROCEDURE  [dbo].[SP_TA_AgregarOperacion] 
 	-- Add the parameters for the stored procedure here
 		
 	@IdDocumento int,

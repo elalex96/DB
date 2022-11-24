@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_DEA_ConsultarDocumentoFactura]    Script Date: 21/09/2022 10:43:04 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27-04-2022
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
@@ -14,7 +7,7 @@ GO
 -- Create date: 21/09/2022
 -- Description:	verificar si lo que se consulta es un comprobante
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_DEA_ConsultarDocumentoFactura]
+CREATE PROCEDURE [dbo].[SP_DEA_ConsultarDocumentoFactura]
 	-- Add the parameters for the stored procedure here
 @IdAceptacionPedido int,
 @IdDocumento int

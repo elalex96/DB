@@ -38,6 +38,11 @@
     [IdLineaPresupuesto]       INT            NULL,
     [Editado]                  BIT            NULL,
     [EnvioCorreo]              BIT            NULL,
-    CONSTRAINT [PK_AX_Comparativa_gral] PRIMARY KEY CLUSTERED ([IdDinamicsAx] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AX_Comparativa_gral] PRIMARY KEY CLUSTERED ([IdDinamicsAx] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxComparativa_IdSolicitudPedido]
+    ON [dbo].[AX_Comparativa]([IdSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

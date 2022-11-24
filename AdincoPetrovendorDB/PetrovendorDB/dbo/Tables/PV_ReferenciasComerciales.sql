@@ -9,6 +9,6 @@
     [FechaAltaReferencia]     DATETIME       NULL,
     [FechaModificacion]       DATETIME       NULL,
     [IdProveedorReferenciado] INT            NULL,
-    CONSTRAINT [PK_PV_ReferenciasComerciales] PRIMARY KEY CLUSTERED ([IdReferenciaComercial] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_ReferenciasComerciales] PRIMARY KEY CLUSTERED ([IdReferenciaComercial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

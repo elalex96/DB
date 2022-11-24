@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_AP_ExtraeCalendario_v2]    Script Date: 18/01/2022 03:55:40 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Stephany Vega>
 -- Create date: <29/04/20>
 -- Description:	<Description,,>
@@ -15,7 +8,7 @@ GO
 -- Create date: <17/01/21>
 -- Description:	<Opcion de todos los reguladores en el calendario>
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_AP_ExtraeCalendario_v2] --[sp_AP_ExtraeCalendario_v2] 3,0,10001
+CREATE PROCEDURE [dbo].[sp_AP_ExtraeCalendario_v2] --[sp_AP_ExtraeCalendario_v2] 3,0,10001
 	-- Add the parameters for the stored procedure here
 	@idContrato INT,
 	@idUsuario INT,

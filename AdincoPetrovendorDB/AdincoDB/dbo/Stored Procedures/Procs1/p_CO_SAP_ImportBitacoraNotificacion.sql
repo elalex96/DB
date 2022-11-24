@@ -1,4 +1,5 @@
-﻿--===========================================
+﻿
+--===========================================
 --Modificador: Neri del Angel
 --Fecha:       30 de Marzo del 20222
 --Notas:       *Se ajustó filtrado de consultas principales 

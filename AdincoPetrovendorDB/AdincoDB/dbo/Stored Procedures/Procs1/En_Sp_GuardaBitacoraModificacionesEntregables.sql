@@ -1,12 +1,4 @@
-﻿--=============================================
--- CREADO POR: LUIS DAVID
--- FECHA MODIFICACIÓN: 22/11/2021
--- DESCRIPCIÓN: SE CONTEMPLA EL BIT AWARENESS
---=============================================
-GO
-DROP PROCEDURE IF EXISTS En_Sp_GuardaBitacoraModificacionesEntregables
-GO
-CREATE PROCEDURE En_Sp_GuardaBitacoraModificacionesEntregables
+﻿CREATE PROCEDURE En_Sp_GuardaBitacoraModificacionesEntregables
 @IdUsuario int,
 @IdContrato int,
 @IdEntregable int,

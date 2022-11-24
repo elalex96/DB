@@ -6,6 +6,6 @@
     [CreadoEl]        DATETIME       NULL,
     [EditadorPor]     INT            NULL,
     [EditadoEl]       DATETIME       NULL,
-    CONSTRAINT [PK_DG_TipoDomicilio] PRIMARY KEY CLUSTERED ([IdTipoDomicilio] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_DG_TipoDomicilio] PRIMARY KEY CLUSTERED ([IdTipoDomicilio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

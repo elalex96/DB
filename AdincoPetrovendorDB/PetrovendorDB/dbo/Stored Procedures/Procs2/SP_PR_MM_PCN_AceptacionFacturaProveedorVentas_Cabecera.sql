@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_PR_MM_PCN_AceptacionFacturaProveedorVentas_Cabecera
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 08-02-2018
 -- Description:	Actualice columna de Proveedor agregando isnull

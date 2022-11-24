@@ -1,8 +1,4 @@
-﻿USE PETROVENDOR
-GO
-DROP PROCEDURE IF EXISTS SP_ConsultaSeguimientosPagosV2
-GO
--- Author:		<Alexander Gomez>
+﻿-- Author:		<Alexander Gomez>
 -- Create date: <06-12-2018>
 -- Description:	<Se consultan tambien los registros de murphy>
 -- =============================================

@@ -14,6 +14,6 @@
     [StartTime]       DATETIME       NULL,
     [EndTime]         DATETIME       NULL,
     [BinaryData]      IMAGE          NULL,
-    PRIMARY KEY CLUSTERED ([RowNumber] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([RowNumber] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

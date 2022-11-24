@@ -11,7 +11,7 @@
     [Todo]                NVARCHAR (MAX) NULL,
     [Inversion]           BIT            NULL,
     [Operacion]           BIT            NULL,
-    CONSTRAINT [PK_CatalogoCuentasSH] PRIMARY KEY CLUSTERED ([IdCatalogoCuentasSH] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CatalogoCuentasSH] PRIMARY KEY CLUSTERED ([IdCatalogoCuentasSH] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_CatalogoCuentaSH_CO_VersionCatalogoCuentasSH] FOREIGN KEY ([IdVersion]) REFERENCES [dbo].[CO_VersionCatalogoCuentasSH] ([IdVersion])
 );
 

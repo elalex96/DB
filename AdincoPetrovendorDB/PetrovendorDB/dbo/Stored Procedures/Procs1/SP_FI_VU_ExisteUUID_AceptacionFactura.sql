@@ -1,11 +1,10 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_VU_ExisteUUID_AceptacionFactura]    Script Date: 09/02/2022 01:08:18 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿CREATE PROCEDURE [dbo].[SP_FI_VU_ExisteUUID_AceptacionFactura]
+	-- Add the parameters for the stored procedure here
+	
+	@UUID nvarchar (MAX) = 0,
+	@IdAceptacionPedido int
+AS
+BEGIN
 -- =============================================
 -- Author: DANIEL AC 
 -- Create date: 08/02/2018
@@ -18,23 +17,14 @@ GO
 -- Author: Daniel AC
 -- Create date: 16/03/2018
 -- Description:	Se elimina filtro de tipo de pedido para evitar subir doble factura cuando este rechazada
--- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_VU_ExisteUUID_AceptacionFactura] --'D8771270-0571-440D-B982-08CBE244BFB7-TEST',17109	
-	-- Add the parameters for the stored procedure here
-	
-	@UUID nvarchar (MAX) = 0,
-	@IdAceptacionPedido int
-AS
-		DECLARE @ENCONTRADO AS INT
-BEGIN
-	
+-- =============================================	
 
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 	DECLARE @IdFactura INT
     DECLARE @UUID_ACTUAL NVARCHAR(MAX)
-
+	DECLARE @ENCONTRADO AS INT
 
 	Select @ENCONTRADO = COUNT (IdFactura) from  FI_Factura  where UUID = @UUID AND IsEliminado IS NULL
 	IF (@ENCONTRADO > 0 AND LEN(RTRIM (@UUID))>0)
@@ -65,6 +55,3 @@ BEGIN
 
 	
 END
-
-
-

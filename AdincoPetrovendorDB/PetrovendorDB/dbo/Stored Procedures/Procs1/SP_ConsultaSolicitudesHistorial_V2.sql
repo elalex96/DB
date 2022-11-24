@@ -1,8 +1,4 @@
-use petrovendor
-go
-drop procedure if exists SP_ConsultaSolicitudesHistorial_V2
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <09/03/2020>
 -- Description:	<Consultar solicitudes de pedido par visualizar el historial>

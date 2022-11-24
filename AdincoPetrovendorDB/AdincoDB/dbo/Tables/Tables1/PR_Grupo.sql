@@ -1,6 +1,0 @@
-﻿CREATE TABLE [dbo].[PR_Grupo] (
-    [Id]     INT           IDENTITY (1, 1) NOT NULL,
-    [Nombre] VARCHAR (200) NULL,
-    CONSTRAINT [PK_PR_Grupo] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
-);
-

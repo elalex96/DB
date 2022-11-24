@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ConsultarFlujoCombo]    Script Date: 26/11/2021 01:47:42 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:		<Unknown>
 -- =============================================
@@ -14,7 +7,7 @@ GO
 -- Description:	<Se agrega a la consulta el Telefono>
 -- =============================================
 
-ALTER PROCEDURE [dbo].[SP_ConsultarFlujoCombo]
+CREATE PROCEDURE [dbo].[SP_ConsultarFlujoCombo]
 	(@idFlujo INT)
 AS
 BEGIN
@@ -39,5 +32,3 @@ BEGIN
           AND flujo.IdFlujoTarea = @idFlujo;
 
 END;
-
-

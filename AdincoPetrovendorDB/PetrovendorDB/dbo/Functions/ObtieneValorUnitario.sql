@@ -1,6 +1,4 @@
-USE petrovendor
-GO
-CREATE FUNCTION dbo.ObtieneValorUnitario
+﻿CREATE FUNCTION dbo.ObtieneValorUnitario
 (
     @pIdFactura INT
 )

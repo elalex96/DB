@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[sp_EN_InfoContratoEntregable] --3,10641,10061 -- 10146, 20513,10082
+﻿CREATE PROCEDURE [dbo].[sp_EN_InfoContratoEntregable] --3,10641,10061 -- 10146, 20513,10082
 (
     @IdContrato				INT,
 	@idContratoEntregable	INT,

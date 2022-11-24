@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_RegistrarNuevoPedimentoComprobante]    Script Date: 20/10/2022 12:22:15 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 27-03-18
 -- Description:	Registrar un nuevo pedimento comprobante 
@@ -14,7 +7,7 @@ GO
 -- Create date: 12/11/2019
 -- Description:	modificacion del agregado de los  detalles del pedimento comprobante desde la aceptacion
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PC_RegistrarNuevoPedimentoComprobante]
+CREATE PROCEDURE [dbo].[SP_PC_RegistrarNuevoPedimentoComprobante]
     -- Add the parameters for the stored procedure here
 
     @IdProveedor INT,

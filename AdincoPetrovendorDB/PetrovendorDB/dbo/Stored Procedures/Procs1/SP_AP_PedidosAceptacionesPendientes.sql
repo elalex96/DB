@@ -1,18 +1,4 @@
-USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_AP_PedidosAceptacionesPendientes'
-)
-    DROP PROCEDURE SP_AP_PedidosAceptacionesPendientes;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_AP_PedidosAceptacionesPendientes]    Script Date: 26/04/2022 12:34:10 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:		<Abel Rivera>

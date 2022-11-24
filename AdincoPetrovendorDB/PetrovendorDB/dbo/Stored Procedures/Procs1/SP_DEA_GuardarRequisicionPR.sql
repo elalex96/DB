@@ -1,21 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_DEA_GuardarRequisicionPR'
-)
-    DROP PROCEDURE SP_DEA_GuardarRequisicionPR;
-
-/****** Object:  StoredProcedure [dbo].[SP_DEA_GuardarRequisicionPR]    Script Date: 02/07/2021 10:40:20 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	Agregar referencia a  documentos 
@@ -200,5 +183,3 @@ BEGIN
 	END 
 
 END
-
-

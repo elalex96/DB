@@ -1,12 +1,13 @@
-CREATE TABLE WDEA_WBSLineaPresupuesto
-(
-	Id int primary key not null identity(1,1),
-	IdWBS int,
-	IdLineaPresupuesto int,
-	IdContrato int,
-	Activo bit,
-	CreadoEl datetime,
-	ModificadoEl datetime,
-	CreadoPor int,
-	ModificadoPor int
-)
+﻿CREATE TABLE [dbo].[WDEA_WBSLineaPresupuesto] (
+    [Id]                 INT      IDENTITY (1, 1) NOT NULL,
+    [IdWBS]              INT      NULL,
+    [IdLineaPresupuesto] INT      NULL,
+    [IdContrato]         INT      NULL,
+    [Activo]             BIT      NULL,
+    [CreadoEl]           DATETIME NULL,
+    [ModificadoEl]       DATETIME NULL,
+    [CreadoPor]          INT      NULL,
+    [ModificadoPor]      INT      NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

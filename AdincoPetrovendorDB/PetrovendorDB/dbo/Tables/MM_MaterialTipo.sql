@@ -3,6 +3,6 @@
     [TipoMaterial]   NVARCHAR (MAX) NULL,
     [Activo]         BIT            NULL,
     [CreadoPor]      INT            NULL,
-    CONSTRAINT [PK_MM_MaterialTipo] PRIMARY KEY CLUSTERED ([IdTipoMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_MaterialTipo] PRIMARY KEY CLUSTERED ([IdTipoMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

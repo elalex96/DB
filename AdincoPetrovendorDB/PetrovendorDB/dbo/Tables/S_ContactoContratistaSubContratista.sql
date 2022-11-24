@@ -4,6 +4,6 @@
     [IdContratistaSubContratista] INT      NULL,
     [IsActivo]                    BIT      NULL,
     [FechaRegistro]               DATETIME NULL,
-    CONSTRAINT [PK_S_ContactoContratistaSubContratista] PRIMARY KEY CLUSTERED ([IdContactoCS] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_S_ContactoContratistaSubContratista] PRIMARY KEY CLUSTERED ([IdContactoCS] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

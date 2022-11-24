@@ -1,6 +1,4 @@
-
-
-CREATE PROCEDURE [dbo].[SP_APR_ConsultaAceptacionPedidoCabecera] --2243,420
+﻿CREATE  PROCEDURE [dbo].[SP_APR_ConsultaAceptacionPedidoCabecera] --2243,420
 (	-- Add the parameters for the stored procedure here
 	
 	--declare 

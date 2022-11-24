@@ -18,6 +18,6 @@
     [InicioC2]            INT            NULL,
     [C1]                  VARCHAR (10)   NULL,
     [InicioC1]            INT            NULL,
-    CONSTRAINT [PK_FI_CFDICromatografia] PRIMARY KEY CLUSTERED ([IdCFDICromatografia] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_CFDICromatografia] PRIMARY KEY CLUSTERED ([IdCFDICromatografia] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

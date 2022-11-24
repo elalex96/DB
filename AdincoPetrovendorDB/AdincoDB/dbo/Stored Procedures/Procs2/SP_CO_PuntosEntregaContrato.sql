@@ -1,4 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_PuntosEntregaContrato]
+﻿  
+CREATE PROCEDURE [dbo].[SP_CO_PuntosEntregaContrato]
 	@IdContrato INT = 0,
 	@IdUsuario INT = 0
 AS

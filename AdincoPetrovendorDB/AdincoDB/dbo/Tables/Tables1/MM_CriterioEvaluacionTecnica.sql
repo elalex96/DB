@@ -5,6 +5,6 @@
     [Criterion]            NVARCHAR (MAX) NULL,
     [Description]          NVARCHAR (MAX) NULL,
     [Activo]               BIT            NULL,
-    CONSTRAINT [PK_MM_CriteriosEvaluacionTecnica] PRIMARY KEY CLUSTERED ([IdCriterioEvaluacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_CriteriosEvaluacionTecnica] PRIMARY KEY CLUSTERED ([IdCriterioEvaluacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

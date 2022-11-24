@@ -11,6 +11,7 @@
     [CreadoEl]                       DATETIME       NULL,
     [IdPedimentoComprobanteADINCO]   INT            NULL,
     [IdProveedorVenta]               NVARCHAR (50)  NULL,
-    CONSTRAINT [PK_MPY_FI_RelacionPedimentoComprobantePedido] PRIMARY KEY CLUSTERED ([IdRelacionPedimentoComprobante] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    [Bucket]                         VARCHAR (200)  NULL,
+    CONSTRAINT [PK_MPY_FI_RelacionPedimentoComprobantePedido] PRIMARY KEY CLUSTERED ([IdRelacionPedimentoComprobante] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

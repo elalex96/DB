@@ -6,11 +6,11 @@
     [IdUsuario]     INT            NULL,
     [IdContrato]    INT            NULL,
     [FechaRegistro] DATETIME       NULL,
-    PRIMARY KEY CLUSTERED ([IdError] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdError] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [idx_BitacoraUsuario]
-    ON [dbo].[AP_BitacoraErrores]([IdUsuario] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[AP_BitacoraErrores]([IdUsuario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

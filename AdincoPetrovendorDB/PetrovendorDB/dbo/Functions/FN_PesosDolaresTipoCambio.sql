@@ -1,9 +1,4 @@
-﻿
-use Petrovendor
-go
-DROP FUNCTION IF EXISTS FN_PesosDolaresTipoCambio
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 12/07/2018
 -- Description: Realiza la convercion de pesos mexicanos a dolares segun la fecha de tipo de cambio

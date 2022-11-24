@@ -32,7 +32,7 @@ AS
          )
                 SELECT @pAWSDocumentoId, 
                        @pNombreArchivo, 
-                       @pUUIDAmazon, 
+                       UPPER(@pUUIDAmazon), 
                        @pMeta, 
                        @pBucket, 
                        @pCreadoPor, 
@@ -53,5 +53,3 @@ AS
                                NULL;
              END;
      END;
-
-

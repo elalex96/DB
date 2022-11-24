@@ -53,10 +53,10 @@ BEGIN
            0,
            mensajes.IdProveedorCreador,
            mensajes.FechaCreado
-    FROM dbo.Ja_MensajesPendientesComentarios mensajes
-        INNER JOIN dbo.S_Proveedor prov
+    FROM dbo.Ja_MensajesPendientesComentarios mensajes	(NOLOCK)
+        INNER JOIN dbo.S_Proveedor prov	(NOLOCK)
             ON prov.IdProveedor = mensajes.IdProveedor
-        INNER JOIN JA_ComentarioBase comBase
+        INNER JOIN JA_ComentarioBase comBase	(NOLOCK)
             ON comBase.IdComentarioBase = mensajes.IdPrimario
     WHERE (
               mensajes.Enviado = 0 -- no se le ha enviado el mensaje al usuario
@@ -97,10 +97,10 @@ BEGIN
            0,
            mensajes.IdProveedorCreador,
            mensajes.FechaCreado
-    FROM dbo.Ja_MensajesPendientesComentarios mensajes
-        INNER JOIN dbo.S_Proveedor prov
+    FROM dbo.Ja_MensajesPendientesComentarios mensajes	(NOLOCK)
+        INNER JOIN dbo.S_Proveedor prov	(NOLOCK)
             ON prov.IdProveedor = mensajes.IdProveedor
-        INNER JOIN JA_ComentarioRespuesta resp
+        INNER JOIN JA_ComentarioRespuesta resp	(NOLOCK)
             ON resp.IdComentarioRespuesta = mensajes.IdPrimario
     WHERE (
               mensajes.Enviado = 0 -- no se le ha enviado el mensaje al usuario
@@ -121,7 +121,7 @@ BEGIN
         FechaEnviado,
         IdOFerta,
         IdSolPed,
-        IdProveedor,
+       IdProveedor,
         IdPrimario,
         Descripcion,
         CreadorProveedor,
@@ -141,10 +141,11 @@ BEGIN
            mensajes.IdProveedorCreador,
            dbo.Func_Ja_ObtenerIdEncabezado(2, mensajes.IdPrimario, mensajes.IdProveedor),
            mensajes.FechaCreado
-    FROM dbo.Ja_MensajesPendientesComentarios mensajes
-        INNER JOIN dbo.S_Proveedor prov
+    FROM dbo.Ja_MensajesPendientesComentarios mensajes	(NOLOCK)
+        INNER JOIN dbo.S_Proveedor prov	(NOLOCK)
             ON prov.IdProveedor = mensajes.IdProveedor
-        INNER JOIN JA_ComentariosBasesConvocatoria com
+			AND mensajes.IdProveedor = @IdProveedor
+        INNER JOIN JA_ComentariosBasesConvocatoria com	(NOLOCK)
             ON com.IdComentarioBases = mensajes.IdPrimario
     WHERE (
               mensajes.Enviado = 0 -- no se le ha enviado el mensaje al usuario
@@ -154,7 +155,7 @@ BEGIN
                  )
           )
           AND mensajes.TipoMensaje = 2 --Comentario Base Convocatoria [JA_ComentariosBasesConvocatoria]
-          AND mensajes.IdProveedor = @IdProveedor
+          
           AND mensajes.Visto = 0
 
     INSERT INTO @TablaRetornoMensajes
@@ -185,10 +186,11 @@ BEGIN
            mensajes.IdProveedorCreador,
            dbo.Func_Ja_ObtenerIdEncabezado(3, mensajes.IdPrimario, mensajes.IdProveedor),
            mensajes.FechaCreado
-    FROM dbo.Ja_MensajesPendientesComentarios mensajes
-        INNER JOIN dbo.S_Proveedor prov
+    FROM dbo.Ja_MensajesPendientesComentarios mensajes	(NOLOCK)
+        INNER JOIN dbo.S_Proveedor prov	(NOLOCK)
             ON prov.IdProveedor = mensajes.IdProveedor
-        INNER JOIN JA_ComentariosBasesConvocatoriaRespuesta resp
+			AND mensajes.IdProveedor = @IdProveedor
+        INNER JOIN JA_ComentariosBasesConvocatoriaRespuesta resp	(NOLOCK)
             ON resp.IdRespuesta = mensajes.IdPrimario
     WHERE (
               mensajes.Enviado = 0 -- no se le ha enviado el mensaje al usuario
@@ -229,10 +231,11 @@ BEGIN
            0,
            mensajes.IdProveedorCreador,
            mensajes.FechaCreado
-    FROM dbo.Ja_MensajesPendientesComentarios mensajes
-        INNER JOIN dbo.S_Proveedor prov
+    FROM dbo.Ja_MensajesPendientesComentarios mensajes	(NOLOCK)
+        INNER JOIN dbo.S_Proveedor prov	(NOLOCK)
             ON prov.IdProveedor = mensajes.IdProveedor
-        INNER JOIN JA_EncabezadoComentarios enc
+			AND mensajes.IdProveedor = @IdProveedor
+        INNER JOIN JA_EncabezadoComentarios enc	(NOLOCK)
             ON enc.IdEncabezado = mensajes.IdPrimario
     WHERE (
               mensajes.Enviado = 0 -- no se le ha enviado el mensaje al usuario
@@ -274,10 +277,11 @@ BEGIN
            0,
            mensajes.IdProveedorCreador,
            mensajes.FechaCreado
-    FROM dbo.Ja_MensajesPendientesComentarios mensajes
-        INNER JOIN dbo.S_Proveedor prov
-            ON prov.IdProveedor = mensajes.IdProveedor
-        INNER JOIN JA_TopicAclaraciones junta
+    FROM dbo.Ja_MensajesPendientesComentarios mensajes	(NOLOCK)
+        INNER JOIN dbo.S_Proveedor prov	(NOLOCK)
+            ON prov.IdProveedor = mensajes.IdProveedor	
+			AND mensajes.IdProveedor = @IdProveedor
+        INNER JOIN JA_TopicAclaraciones junta	(NOLOCK)
             ON junta.IdTopic = mensajes.IdPrimario
     WHERE (
               mensajes.Enviado = 0 -- no se le ha enviado el mensaje al usuario
@@ -293,7 +297,7 @@ BEGIN
     UPDATE mensaj
     SET RazonSocial = prov.RazonSocial
     FROM @TablaRetornoMensajes mensaj
-        INNER JOIN dbo.S_Proveedor prov
+        INNER JOIN dbo.S_Proveedor prov (NOLOCK)
             ON prov.IdProveedor = mensaj.CreadorProveedor
 
     --retorno a la vista los mensajes pendientes por notificar

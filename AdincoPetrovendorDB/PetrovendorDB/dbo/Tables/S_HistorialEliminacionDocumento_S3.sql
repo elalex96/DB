@@ -4,6 +4,6 @@
     [IdProveedor]          INT      NULL,
     [EliminadoPor]         INT      NULL,
     [EliminadoEl]          DATETIME NULL,
-    CONSTRAINT [PK_S_HistorialEliminacionDocumento_S3] PRIMARY KEY CLUSTERED ([IdHistorialDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_S_HistorialEliminacionDocumento_S3] PRIMARY KEY CLUSTERED ([IdHistorialDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

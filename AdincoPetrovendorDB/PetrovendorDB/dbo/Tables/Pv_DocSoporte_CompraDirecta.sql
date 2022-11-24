@@ -10,8 +10,8 @@
     [AMS3]          BIT            NULL,
     [EliminadoS3]   BIT            NULL,
     [isEliminado]   BIT            NULL,
-	Bucket			varchar(100)
-    PRIMARY KEY CLUSTERED ([id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [Bucket]        VARCHAR (100)  NULL,
+    PRIMARY KEY CLUSTERED ([id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PV_DocSoporte_CompraDirecta] FOREIGN KEY ([idFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura]),
     CONSTRAINT [FK_PV_DocSoporte_CompraDirecta_Fi_Factura] FOREIGN KEY ([idFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura])
 );

@@ -11,7 +11,7 @@
     [ModificadoPor]   INT             NULL,
     [ModificadoEl]    DATETIME        NULL,
     [Activo]          BIT             NULL,
-    CONSTRAINT [PK__IN_Insum__5AFC692AD4BDA12D] PRIMARY KEY CLUSTERED ([idInsumoMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK__IN_Insum__5AFC692AD4BDA12D] PRIMARY KEY CLUSTERED ([idInsumoMes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [fk_idControlInsumoPorMes] FOREIGN KEY ([idControlInsumo]) REFERENCES [dbo].[IN_ControlInsumo] ([idControlInsumo])
 );
 

@@ -1,22 +1,7 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_TA_AgregarOperacionNotaCredito'
-)
-    DROP PROCEDURE SP_TA_AgregarOperacionNotaCredito;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarOperacionNotaCredito]    Script Date: 25/03/2021 12:19:56 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel A Cruz  
--- Create date: 25/03/2021  
--- Description: Permite agregar LA OPERACION de nota de crédito, con validación DEA
+-- Create date: 14/10/2020  
+-- Description: Permite agregar LA OPERACION para hacer relacion con un flujo de tareas  
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_TA_AgregarOperacionNotaCredito]
     -- Add the parameters for the stored procedure here    
@@ -35,74 +20,27 @@ BEGIN
     DECLARE @DescripcionH NVARCHAR(MAX);
     DECLARE @IdOperacion INT;
     DECLARE @IdTipoOperacion INT = 17; ---> APROBACIÓN DE NOTA DE CREDITO   
-	DECLARE @ID_OPERADORA INT = ( SELECT IdProveedor FROM dbo.MM_AceptacionPedido WHERE IdAceptacionPedido = @IdAceptacionPedido);
-    
-	-- CONSULTAR EL FLUJO DE APROBACIÓN PREDETERMINADO DE ACEPTACIÓN DE FACTURA (FLUJO DE LA OPERADORA)
+
+    -- CONSULTAR EL FLUJO DE APROBACIÓN PREDETERMINADO DE ACEPTACIÓN DE FACTURA (FLUJO DE LA OPERADORA)
+
     DECLARE @IdFlujoAprobacion INT;
+    SELECT @IdFlujoAprobacion = FT.IdFlujoTarea
+    FROM MM_AceptacionFactura AS AF
+        JOIN MM_AceptacionPedido AS AP
+            ON AF.IdAceptacionPedido= AP.IdAceptacionPedido
+        JOIN MM_Pedido AS P
+            ON AP.IdPedido=P.IdPedido 
+        JOIN S_Proveedor AS PR
+            ON P.IdProveedorCompras=PR.IdProveedor 
+        JOIN TA_FlujoTarea AS FT
+            ON  P.IdProveedorCompras=FT.IdProveedor
+    WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
+          AND FT.IdTipoOperacion = 10 --> ACEPTACIÓN DE FACTURA
+          AND FT.Activo = 1 --> QUE ESTE ACTIVO
+          AND FT.Predeterminado = 1; --> QUE SEA EL PREDETERMINADO
 
-	/*VALIDACIÓN FLUJO DEA PARA VALIDAR SI SE ASIGNA EL FLUJO DEL CENTRO DE COSTO RELACIONADO DESDE EL CENTRO DE COSTO SELECIONADO EN LA REQUISICION*/
-	IF EXISTS (SELECT 1 FROM dbo.DEA_Proveedor WHERE IdProveedor =@ID_OPERADORA)
-	BEGIN
-				-- CONSULTAMOS EL FLUJO DE APROBACION DE LA FACTURA RELACIONADO CON EL CENTRO DE COSTO DE LA REQUISICION
-			       SELECT @IdFlujoAprobacion=
-						RCFA.IdFlujoFactura 
-					FROM dbo.MM_SolicitudPedido SP
-					LEFT JOIN dbo.MM_Pedido P 
-						ON P.IdSolicitudPedido = SP.IdSolicitudPedido
-					LEFT JOIN dbo.MM_AceptacionPedido AP 
-						ON AP.IdPedido = P.IdPedido
-					LEFT JOIN dbo.MM_SolicitudPedidoDetalle SPD
-						ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido
-					LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL
-						ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
-					LEFT JOIN dbo.RelacionCentroCostoFlujoAprob RCFA 
-						ON RCFA.IdCentroCosto = SPDL.IdCentroCosto
-					WHERE AP.IdAceptacionPedido = @IdAceptacionPedido 
-						AND RCFA.IdFlujoFactura IS NOT NULL
-						AND RCFA.Activo = 1
-					GROUP BY RCFA.IdFlujoFactura,RCFA.IdCentroCosto;
+    -- Agregar Operación Si IdFlujoTarea =  0 Es una operación que no tiene flujo de tarea  
 
-				/*SI NO SE ENCONTRO FLUJO RELACIONADO AL CENTRO DE COSTO- ASIGNAR EL PREDERTERMINADO POR LA OPERADORA*/
-				IF ISNULL(@IdFlujoAprobacion,0) = 0
-					BEGIN 
-					SELECT @IdFlujoAprobacion = FT.IdFlujoTarea
-						FROM MM_AceptacionFactura AS AF
-						JOIN MM_AceptacionPedido AS AP
-							ON AF.IdAceptacionPedido= AP.IdAceptacionPedido
-						JOIN MM_Pedido AS P
-							ON AP.IdPedido=P.IdPedido 
-						JOIN S_Proveedor AS PR
-							ON P.IdProveedorCompras=PR.IdProveedor 
-						JOIN TA_FlujoTarea AS FT
-							ON  P.IdProveedorCompras=FT.IdProveedor
-						WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
-						  AND FT.IdTipoOperacion = 10 --> ACEPTACIÓN DE FACTURA
-						  AND FT.Activo = 1 --> QUE ESTE ACTIVO
-						  AND FT.Predeterminado = 1; --> QUE SEA EL PREDETERMINADO
-					END 
-
-	END
-	ELSE
-	BEGIN
-	
-		    SELECT @IdFlujoAprobacion = FT.IdFlujoTarea
-			FROM MM_AceptacionFactura AS AF
-			JOIN MM_AceptacionPedido AS AP
-				ON AF.IdAceptacionPedido= AP.IdAceptacionPedido
-			JOIN MM_Pedido AS P
-				ON AP.IdPedido=P.IdPedido 
-			JOIN S_Proveedor AS PR
-				ON P.IdProveedorCompras=PR.IdProveedor 
-			JOIN TA_FlujoTarea AS FT
-				ON  P.IdProveedorCompras=FT.IdProveedor
-			WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
-			  AND FT.IdTipoOperacion = 10 --> ACEPTACIÓN DE FACTURA
-			  AND FT.Activo = 1 --> QUE ESTE ACTIVO
-			  AND FT.Predeterminado = 1; --> QUE SEA EL PREDETERMINADO
-
-	END 
-
-	
     INSERT INTO TA_Operacion
     (
         IdDocumento,
@@ -149,9 +87,7 @@ BEGIN
 
 
     --AGREGAR APROBADORES   
-	--PARA LOS APROBADORES QUE SON SERIALES SE LE AGREGAR EL ESTATUS EN APROBACIÓN 
-	--Y A LAS SIGUIENTES SE LES AGREGA EL ESTATUS SIN INCIAR APROBACIÓN
-	--SI SON PARALELOS TODOS TIENE ESTATUS EN APROBACIÓN
+
     INSERT INTO dbo.TA_Tarea
     (
         NombreTarea,

@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PV_EditarPerfilEmpresa_S3'
-)
-    DROP PROCEDURE SP_PV_EditarPerfilEmpresa_S3;
-/****** Object:  StoredProcedure [dbo].[SP_PV_EditarPerfilEmpresa_S3]    Script Date: 26/07/2021 05:06:29 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author: DANIEL AC
 -- Create date: 18/08/2017
 -- Description:	Actualización de Documentos de S3
@@ -39,13 +25,13 @@ CREATE  PROCEDURE [dbo].[SP_PV_EditarPerfilEmpresa_S3]
 @Curriculum_EXTENSION nvarchar(max),
 @Curriculum_CARPETA nvarchar(max),
 @Curriculum_IDENTIFICADOR nvarchar(max),
-@Curriculum_BUCKET nvarchar(max),
+@Curriculum_BUCKET nvarchar(max) = 'petrovendor-pr',
 @Organigrama_NOMBREDOCUMENTO nvarchar(max),
 @Organigrama_MIME nvarchar(max),
 @Organigrama_EXTENSION nvarchar(max),
 @Organigrama_CARPETA nvarchar(max),
 @Organigrama_IDENTIFICADOR nvarchar(max),
-@Organigrama_BUCKET nvarchar(max)
+@Organigrama_BUCKET nvarchar(max) = 'petrovendor-pr'
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from

@@ -52,23 +52,23 @@
     [ComentariosAsignado]        NVARCHAR (MAX) NULL,
     [UnicaCondicionPago]         BIT            NULL,
     [FechaEntregaPedido]         DATETIME       NULL,
-    CONSTRAINT [PK_MM_Pedido] PRIMARY KEY CLUSTERED ([IdPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_Pedido] PRIMARY KEY CLUSTERED ([IdPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_Pedido_MM_SolicitudPedido] FOREIGN KEY ([IdSolicitudPedido]) REFERENCES [dbo].[MM_SolicitudPedido] ([IdSolicitudPedido]),
     CONSTRAINT [FK_MM_Pedido_S_Proveedor] FOREIGN KEY ([IdSubcontratista]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
+    CONSTRAINT [FK_MM_Pedido_S_Proveedor_Compras] FOREIGN KEY ([IdProveedorCompras]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_MM_Pedido_S_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
     CONSTRAINT [FK_MM_Pedido_S_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
-    CONSTRAINT [FK_MM_Pedido_S_UsuarioRecepcion] FOREIGN KEY ([IdUsuarioRecepcionServicio]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
-	constraint FK_MM_PedidoDetalle_MM_Pedido foreign key (IdPedido) references MM_Pedido(IdPedido)
+    CONSTRAINT [FK_MM_Pedido_S_UsuarioRecepcion] FOREIGN KEY ([IdUsuarioRecepcionServicio]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdProveedorCompras_MM_Pedido]
-    ON [dbo].[MM_Pedido]([IdProveedorCompras] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_Pedido]([IdProveedorCompras] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [MM_Pedido_IdSolPedido]
     ON [dbo].[MM_Pedido]([IdSolicitudPedido] ASC, [Version] ASC)
-    INCLUDE([IdSubcontratista]) WITH (STATISTICS_NORECOMPUTE = ON);
+    INCLUDE([IdSubcontratista]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

@@ -3,6 +3,6 @@
     [IdTipoContrato]                    INT            NULL,
     [MetodoCalculo]                     INT            NULL,
     [Metodo]                            NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_CP_MetodoCalculoContraprestaciones] PRIMARY KEY CLUSTERED ([IdMetodoCalculoContraprestaciones] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CP_MetodoCalculoContraprestaciones] PRIMARY KEY CLUSTERED ([IdMetodoCalculoContraprestaciones] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -6,6 +6,6 @@
     [ModificadoPor]     INT          NULL,
     [ModificadoEl]      DATETIME     NULL,
     [Activo]            BIT          NULL,
-    PRIMARY KEY CLUSTERED ([idClasMenu] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([idClasMenu] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

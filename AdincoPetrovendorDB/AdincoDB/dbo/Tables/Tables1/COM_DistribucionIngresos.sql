@@ -31,7 +31,7 @@
     [MonedalLocal2]                   NVARCHAR (255) NULL,
     [OrganismoSecundario]             NVARCHAR (255) NULL,
     [DescripcionOrganismoSecundario]  NVARCHAR (255) NULL,
-    CONSTRAINT [PK_COM_Distribucion] PRIMARY KEY CLUSTERED ([IdDistribucionIngresos] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_COM_Distribucion] PRIMARY KEY CLUSTERED ([IdDistribucionIngresos] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_COM_DistribucionIngresos_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

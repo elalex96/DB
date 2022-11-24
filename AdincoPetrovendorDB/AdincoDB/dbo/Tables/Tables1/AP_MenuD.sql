@@ -9,7 +9,7 @@
     [Visible]         BIT           NULL,
     [MenuNId]         INT           NULL,
     [InnerHtmlIngles] VARCHAR (250) NULL,
-    CONSTRAINT [PK_AP_MenuD] PRIMARY KEY CLUSTERED ([MenuId] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AP_MenuD] PRIMARY KEY CLUSTERED ([MenuId] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 

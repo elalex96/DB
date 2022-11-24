@@ -14,7 +14,7 @@
     [ModificadoPor]         INT           NULL,
     [ModificadoEl]          DATETIME      NULL,
     [Activo]                BIT           NULL,
-    CONSTRAINT [PK_SC_ORDENTRABAJO] PRIMARY KEY CLUSTERED ([IdOrdenTrabajo] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SC_ORDENTRABAJO] PRIMARY KEY CLUSTERED ([IdOrdenTrabajo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SC_ORDENTRABAJO_AP_USUARIO] FOREIGN KEY ([SupervisorID]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SC_ORDENTRABAJO_CO_INSTALACION] FOREIGN KEY ([IdInstalacion]) REFERENCES [dbo].[CO_Instalacion] ([IdInstalacion]),
     CONSTRAINT [FK_SC_ORDENTRABAJO_CO_LINEAPRESUPUESTOMES] FOREIGN KEY ([IdLineaPresupuestoMes]) REFERENCES [dbo].[CO_LineaPresupuestoMes] ([IdLineaPresupuestoMes]),

@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_TA_BuscarSinNotificacion
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 08/03/2018
 -- Description:	Retorna un bit para saber si existe o no el usuario que no quiere ser notificado
@@ -54,7 +50,10 @@ BEGIN
         --en caso de que el proveedor este en 0 lo busco y si es mas de un proveedor hay que restringirlo en todas las empresas
         IF (@IdProveedor = 0)
         BEGIN
-            --SELECT uProv.IdProveedor , usuario.IdUsuario FROM dbo.S_Usuario usuario INNER JOIN dbo.S_UsuarioProveedor uProv ON uProv.IdUsuario = usuario.IdUsuario WHERE usuario.IdUsuario = @IdUsuario AND usuario.Activo =  1 AND usuario.IsEliminado = 0 
+            --SELECT uProv.IdProveedor , usuario.IdUsuario FROM dbo.S_Usuario usuario INNER JOIN dbo.S_UsuarioProveedor uProv ON uProv.IdUsuario = usuario.IdUsuario WHERE usuario.IdUsuario = @IdUsuario AND usuario.Activo =  1 AND usuario.IsEliminado = 0 
+
+
+
             INSERT INTO @tablaProveedor
             (
                 fila,

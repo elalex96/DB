@@ -12,7 +12,7 @@
     [idEstadoRegistro] INT            NULL,
     [idUsuarioExterno] INT            NULL,
     [MotivoRechazo]    VARCHAR (MAX)  NULL,
-    CONSTRAINT [PK_TaTarea] PRIMARY KEY CLUSTERED ([IdTarea] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_TaTarea] PRIMARY KEY CLUSTERED ([IdTarea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__Tarea__IdEstatus] FOREIGN KEY ([IdEstatus]) REFERENCES [dbo].[TaEstatus] ([IdEstatus]),
     CONSTRAINT [FK__Tarea__IdPriorid] FOREIGN KEY ([IdPrioridad]) REFERENCES [dbo].[TaPrioridad] ([IdPrioridad]),
     CONSTRAINT [FK__Tarea__IdTipoTar] FOREIGN KEY ([IdTipoTarea]) REFERENCES [dbo].[TaTipoTarea] ([IdTipoTarea]),

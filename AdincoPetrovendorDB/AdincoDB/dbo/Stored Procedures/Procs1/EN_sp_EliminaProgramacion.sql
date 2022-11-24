@@ -1,6 +1,4 @@
-﻿drop procedure if exists EN_sp_EliminaProgramacion
-go
-CREATE PROCEDURE EN_sp_EliminaProgramacion
+﻿CREATE PROCEDURE EN_sp_EliminaProgramacion
 @idInstancia int
 AS
 BEGIN
@@ -12,6 +10,8 @@ BEGIN
 	FROM EN_ExcepcionesActividad
 	WHERE IdInstanciasEntregables = @idInstancia
 
+	DELETE EN_HistorialAprobacionesLineaTiempo
+	WHERE idInstanciaEntregable = @idInstancia
 
 	DELETE
 	FROM EN_InstanciasEntregable

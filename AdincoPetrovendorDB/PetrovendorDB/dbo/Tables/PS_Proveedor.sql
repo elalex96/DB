@@ -14,7 +14,7 @@
     [Facebook]          NVARCHAR (MAX) NULL,
     [Twitter]           NVARCHAR (MAX) NULL,
     [Skipe]             NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_PS_Proveedor] PRIMARY KEY CLUSTERED ([IdPSProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PS_Proveedor] PRIMARY KEY CLUSTERED ([IdPSProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PS_Proveedor_S_GiroProveedor] FOREIGN KEY ([Giro]) REFERENCES [dbo].[PV_GiroEmpresarial] ([IdGiroProveedor]),
     CONSTRAINT [FK_PS_Proveedor_S_Ofrece] FOREIGN KEY ([Ofrece]) REFERENCES [dbo].[S_Ofrece] ([IdOfrece]),
     CONSTRAINT [FK_PS_Proveedor_S_Proveedor] FOREIGN KEY ([Proveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),

@@ -20,7 +20,7 @@
     [CreadoEl]           DATETIME       NULL,
     [IdSubcontrato]      INT            NULL,
     [IdTipoPedido]       INT            NULL,
-    CONSTRAINT [PK_SC_Importacion] PRIMARY KEY CLUSTERED ([IdSCDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SC_Importacion] PRIMARY KEY CLUSTERED ([IdSCDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SC_Importacion_SC_SubContrato] FOREIGN KEY ([IdSubcontrato]) REFERENCES [dbo].[SC_SubContrato] ([IdSubContrato])
 );
 

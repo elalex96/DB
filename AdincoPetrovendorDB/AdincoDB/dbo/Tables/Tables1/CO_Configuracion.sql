@@ -8,6 +8,6 @@
     [ModificadoPor]   INT      NULL,
     [Modificado]      DATETIME NULL,
     [CreadoPor]       INT      NULL,
-    CONSTRAINT [PK_ContratistaContratoRolUsuario] PRIMARY KEY CLUSTERED ([IdConfiguracion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ContratistaContratoRolUsuario] PRIMARY KEY CLUSTERED ([IdConfiguracion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

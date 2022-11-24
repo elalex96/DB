@@ -1,19 +1,4 @@
-﻿USE [Adinco]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_Migracion_EntregablesInstanciasDocumentos'
-)
-    DROP PROCEDURE SP_Migracion_EntregablesInstanciasDocumentos;
-GO 
-/****** Object:  StoredProcedure [dbo].[TA_SP_ConsultaCorreos]    Script Date: 16/02/2022 10:47:50 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 CREATE PROCEDURE [dbo].[SP_Migracion_EntregablesInstanciasDocumentos] 
 @ContratoId DATETIME,
 @ProgramacionId  INT
@@ -51,4 +36,3 @@ BEGIN
 		AND DV.Activo	=	1	
 
 END;
-

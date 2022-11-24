@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]    Script Date: 18/05/2022 05:05:27 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      Alexander Gomez
 -- Create date: 05/06/2018
 -- Description: Consulta de los conceptos de la carta de contenido nacional
@@ -15,7 +8,7 @@ GO
 -- Create date: 18/05/2022
 -- Description: truncado a 3 digitos sin redondeo del PCN segun la SE y optimizacion
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]-- 17262
+CREATE PROCEDURE [dbo].[SP_CN_ConsultarConceptosAprobacionCartaCN]-- 17262
     -- Add the parameters for the stored procedure here
     @IdAceptacion INT,
     /*--------------------

@@ -20,16 +20,14 @@
     [IdTipoTanque]       INT             NULL,
     [MedicionManual]     BIT             NULL,
     [PuntoEntregaID]     INT             NULL,
-    CreadoPor INT,
-		CreadoEl DATETIME,
-		ModificadoPor INT null,
-		ModificadoEl DATETIME null,
-		Activo BIT,
-	CONSTRAINT PR_TanqueCreadoPor FOREIGN KEY (CreadoPor)
-	REFERENCES AP_Usuario(UsuarioID),
-	CONSTRAINT PR_TanqueModificadoPor FOREIGN KEY (ModificadoPor)
-	REFERENCES AP_Usuario(UsuarioID),
-    CONSTRAINT [PK_PR_Tanque] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
-    CONSTRAINT [FK_Tanque_Estacion] FOREIGN KEY ([Estacion]) REFERENCES [dbo].[PR_Estacion] ([Id])
+    [CreadoPor]          INT             NULL,
+    [CreadoEl]           DATETIME        NULL,
+    [ModificadoPor]      INT             NULL,
+    [ModificadoEl]       DATETIME        NULL,
+    [Activo]             BIT             NULL,
+    CONSTRAINT [PK_PR_Tanque] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_Tanque_Estacion] FOREIGN KEY ([Estacion]) REFERENCES [dbo].[PR_Estacion] ([Id]),
+    CONSTRAINT [PR_TanqueCreadoPor] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [PR_TanqueModificadoPor] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 

@@ -1,8 +1,4 @@
-﻿USE petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_TA_ConsultarAprobadorDetalleFactura
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Daniel AC
 -- Create date: 02/09/2019
 -- Description:	Consultar aprobadores de factura

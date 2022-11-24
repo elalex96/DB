@@ -64,4 +64,3 @@ BEGIN
 		FAC.IdFactura = @IdFactura
 	ORDER BY FAC.Fecha DESC
 END
-

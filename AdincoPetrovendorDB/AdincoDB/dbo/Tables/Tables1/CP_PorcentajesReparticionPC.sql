@@ -11,7 +11,7 @@
     [ModificadoPor]                           INT        NULL,
     [ModificadoEl]                            DATETIME   NULL,
     [Activo]                                  BIT        NULL,
-    CONSTRAINT [PK_CP_PorcentajesReparticionPC] PRIMARY KEY CLUSTERED ([IdPorcentajeReparticion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CP_PorcentajesReparticionPC] PRIMARY KEY CLUSTERED ([IdPorcentajeReparticion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CP_PorcentajesReparticionPC_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

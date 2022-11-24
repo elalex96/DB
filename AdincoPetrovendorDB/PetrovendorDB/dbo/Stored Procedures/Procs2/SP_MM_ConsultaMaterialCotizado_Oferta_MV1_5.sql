@@ -7,12 +7,7 @@
 -- Author:           Daniel AC  
 -- Create date: 23-10-2019  
 -- Description: Se agrego columnas de día de crédito por partida  
--- =============================================
--- =============================================
--- Author:		Luis David De La Cruz Bautista
--- Create date: 03/02/2021
--- Description:	Optimización por issue 955
--- =============================================
+-- =============================================  
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaMaterialCotizado_Oferta_MV1_5] --19435,44,0,0,''  
 @IdPeticionOfertaDetalle INT,   
 @IdProveedor             INT,   
@@ -21,30 +16,18 @@ CREATE PROCEDURE [dbo].[SP_MM_ConsultaMaterialCotizado_Oferta_MV1_5] --19435,44,
 @FechaRegistro           DATETIME  
 AS  
     BEGIN  
-        DECLARE @MATERIALES_ADD_PED FLOAT, 
-		@MATERIALES_REQUERIDOS FLOAT, 
-		@MATERIALES_EN_APROBACION FLOAT, 
-		@MATERIALES_FALTANTES FLOAT, 
-		@ID_SPD INT, 
-		@PRECIO_UNITARIO_ACTUAL MONEY, 
-		@VALIDAR_TIPO_CAMBIO NVARCHAR(150),
-		@TIPO_MONEDA_TEXT NVARCHAR(150), 
-		@TIPO_MONEDA_ACTUAL INT, 
-		@NOMBRE_MATERIAL_SPD NVARCHAR(MAX),
-        @ID_MONEDA_DLS INT= 2,  
-        @ID_MONEDA_MX INT= 1,
-        @EsProveedorDeCARSO INT,
-		@FechaActualizacionMateriales DATETIME,
-		@VencidaReActivada INT,
-        @FechaCotizacionEnviado DATETIME,
-		@ESTRELLAS INT= dbo.ObtenerEstrellasModificado(@IdProveedor);
+        DECLARE @MATERIALES_ADD_PED FLOAT, @MATERIALES_REQUERIDOS FLOAT, @MATERIALES_EN_APROBACION FLOAT, @MATERIALES_FALTANTES FLOAT, @ID_SPD INT, @PRECIO_UNITARIO_ACTUAL MONEY, @VALIDAR_TIPO_CAMBIO NVARCHAR(150), @TIPO_MONEDA_TEXT NVARCHAR(150), @TIPO_MONEDA_ACTUAL INT, @NOMBRE_MATERIAL_SPD NVARCHAR(MAX);  
+        DECLARE @ID_MONEDA_DLS INT= 2;  
+        DECLARE @ID_MONEDA_MX INT= 1;  
         DECLARE @NOMBRE_MONEDA_DLS VARCHAR(MAX)=  
         (  
             SELECT TipoMonedaCorto  
             FROM PV_TipoMoneda  
             WHERE IdMoneda = @ID_MONEDA_DLS  
         );  
+        DECLARE @FechaCotizacionEnviado DATETIME;  
         --VALIDACIÓN CARSO ---   
+        DECLARE @EsProveedorDeCARSO INT;  
         CREATE TABLE #ProveedoresCARSO(IdProveedor INT);  
         INSERT INTO #ProveedoresCARSO(IdProveedor)  
         VALUES(650); ---VALOR A EDITAR SEGÚN EL PROVEEDOR CARSO ##EDITAR##  
@@ -55,12 +38,9 @@ AS
         (  
             SELECT SP.IdProveedor  
             FROM dbo.MM_SolicitudPedido SP  
-                 INNER JOIN dbo.MM_SolicitudPedidoDetalle SPD (NOLOCk)
-					ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido  
-				INNER JOIN dbo.MM_PeticionOferta PO (NOLOCk)
-					ON SP.IdSolicitudPedido  = PO.IdSolicitudPedido
-                 INNER JOIN dbo.MM_PeticionOfertaDetalle POD (NOLOCk)
-					ON PO.IdPeticionOferta  = POD.IdPeticionOferta
+                 INNER JOIN dbo.MM_SolicitudPedidoDetalle SPD ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido  
+                 INNER JOIN dbo.MM_PeticionOferta PO ON PO.IdSolicitudPedido = SP.IdSolicitudPedido  
+                 INNER JOIN dbo.MM_PeticionOfertaDetalle POD ON POD.IdPeticionOferta = PO.IdPeticionOferta  
             WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle  
             GROUP BY SP.IdProveedor  
         );  
@@ -68,12 +48,10 @@ AS
   
         SELECT @FechaCotizacionEnviado = PO.FechaFinalizado  
         FROM dbo.MM_PeticionOferta PO  
-             LEFT JOIN dbo.MM_PeticionOfertaDetalle POD (NOLOCk)
-				ON PO.IdPeticionOferta = POD.IdPeticionOferta  
+             LEFT JOIN dbo.MM_PeticionOfertaDetalle POD ON PO.IdPeticionOferta = POD.IdPeticionOferta  
         WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle;  
         SET @VALIDAR_TIPO_CAMBIO = @NOMBRE_MONEDA_DLS;  
-        CREATE TABLE #TEMPSTARS(NumeroEstrellas INT NULL
-);  
+        CREATE TABLE #TEMPSTARS(NumeroEstrellas INT NULL);  
   
         --#TABLA PARA OBTENER CANTIDADES CON ESTATUS DEL MATERIAL  
         CREATE TABLE #CM_ESTATUS  
@@ -90,20 +68,17 @@ AS
          CantidadRecibidaPedidoCerrado       FLOAT  
         );  
         SET @ID_SPD =  
-      
-  (  
+        (  
             SELECT SPD.IdSolicitudPedidoDetalle  
-            FROM MM_SolicitudPedidoDetalle AS SPD  (NOLOCk)
-                 INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCk)
-					ON SPD.IdSolicitudPedidoDetalle  = POD.IdSolicitudPedidoDetalle
+            FROM MM_SolicitudPedidoDetalle AS SPD  
+                 INNER JOIN MM_PeticionOfertaDetalle AS POD ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle  
             WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle  
         );  
         SET @MATERIALES_ADD_PED =  
         (  
             SELECT SUM([AddCantidadTemp])  
             FROM MM_PeticionOfertaDetalle AS POD  
-            WHERE POD.IdSolicitudPedidoDetalle
- = @ID_SPD  
+            WHERE POD.IdSolicitudPedidoDetalle = @ID_SPD  
                   AND AddPedidoTemp = 1  
                   AND AddValidado = 1  
         );  
@@ -111,14 +86,11 @@ AS
         (  
             SELECT SPD.Cantidad  
             FROM MM_SolicitudPedidoDetalle AS SPD  
-          
-       INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCk)
-		ON SPD.IdSolicitudPedidoDetalle  = POD.IdSolicitudPedidoDetalle
+                 INNER JOIN MM_PeticionOfertaDetalle AS POD ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle  
             WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle  
         );  
         SET @MATERIALES_EN_APROBACION = 0;  
-       
- INSERT INTO #CM_ESTATUS  
+        INSERT INTO #CM_ESTATUS  
 			 
         EXEC SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5   
              @ID_SPD,   
@@ -126,8 +98,7 @@ AS
              @IdUsuario,   
              @FechaRegistro;  
         SET @MATERIALES_FALTANTES =  
-      
-  (  
+        (  
             SELECT TOP 1 CantidadPorSolicitar  
             FROM #CM_ESTATUS  
         );  
@@ -138,21 +109,18 @@ AS
         );  
   
         --VALIDAR SI LA COTIZACIÓN SE ENVIO ANTES DE ESA FECHA EL PROVEEDOR ENVIO LA COTIZACIÓN DETALLE SIN LA NUEVA MODIFICACIÓN DE TEXTOS MATERIALES   
-        
+        DECLARE @FechaActualizacionMateriales DATETIME;  
         SELECT @FechaActualizacionMateriales = CONVERT(DATETIME, '2019-09-16 23:59:59.000', 21);-- yyyy-mm-dd hh:mm:ss.mmm ODBC  
   
         IF @EsProveedorDeCARSO = 0  
            AND @FechaActualizacionMateriales > @FechaCotizacionEnviado  
             BEGIN  
                 SET @NOMBRE_MATERIAL_SPD =  
-     
-           (  
+                (  
                     SELECT M.DescripcionCorta--M.DescripcionCorta  
                     FROM dbo.MM_Material AS M  
-                         INNER JOIN dbo.MM_SolicitudPedidoDetalle AS SPD (NOLOCk)
-						 ON M.IdMaterial  = SPD.IdMaterial
-                
-    WHERE SPD.IdSolicitudPedidoDetalle = @ID_SPD  
+                         INNER JOIN dbo.MM_SolicitudPedidoDetalle AS SPD ON SPD.IdMaterial = M.IdMaterial  
+                    WHERE SPD.IdSolicitudPedidoDetalle = @ID_SPD  
                 );  
         END;  
   
@@ -164,10 +132,8 @@ AS
                        THEN CAST(ROUND(ISNULL(POD.PrecioUnitario, 0) / ISNULL([dbo].[GetTipoCambioActualScalar](POD.IdMoneda, GETDATE()), 0), 2) AS DECIMAL(15, 2))  
                        ELSE POD.PrecioUnitario  
                    END  
-
             FROM MM_PeticionOfertaDetalle AS POD  
-                 INNER JOIN MM_PeticionOferta AS PO (NOLOCk)
-					ON POD.IdPeticionOferta  = PO.IdPeticionOferta
+                 INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta = POD.IdPeticionOferta  
             WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOFertaDetalle  
         );  
         SET @TIPO_MONEDA_ACTUAL =  
@@ -183,20 +149,16 @@ AS
                 SELECT @VALIDAR_TIPO_CAMBIO = CASE  
                                                   WHEN [dbo].[GetTipoCambioActualScalar](POD.IdMoneda, GETDATE()) IS NULL  
                                                   THEN 'TIPO_CAMBIO_NULL'  
-                                
-                  ELSE 'TIPO_CAMBIO_EXISTE'  
+                                                  ELSE 'TIPO_CAMBIO_EXISTE'  
                                               END  
                 FROM MM_PeticionOfertaDetalle AS POD  
-                     INNER JOIN MM_PeticionOferta AS PO (NOLOCk)
-						ON POD.IdPeticionOferta = PO.IdPeticionOferta
- 
+                     INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta = POD.IdPeticionOferta  
                 WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOFertaDetalle;  
                 IF @VALIDAR_TIPO_CAMBIO = 'TIPO_CAMBIO_NULL'  
                     BEGIN  
                         SET @TIPO_MONEDA_TEXT =  
                         (  
-    
-                        SELECT TM.TipoMonedaCorto  
+                            SELECT TM.TipoMonedaCorto  
                             FROM MM_PeticionOfertaDetalle AS POD  
                                  INNER JOIN PV_TipoMoneda TM ON POD.IdMoneda = TM.IdMoneda  
                             WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOFertaDetalle  
@@ -206,16 +168,17 @@ AS
   
         --INSERT INTO #TEMPSTARS  EXEC SP_EP_ValoracionEstrellas @IdProveedorEvaluado = @IdProveedor  
         -- DAC COMENTE ESTA FUNCIÓN EL DIA 09/ENERO   
+        DECLARE @ESTRELLAS INT= dbo.ObtenerEstrellasModificado(@IdProveedor);  
   
         ---SET @ESTRELLAS = (SELECT NumeroEstrellas FROM #TEMPSTARS )  
         -- consulta si este material con cotización vencida se puede agregar  
+        DECLARE @VencidaReActivada INT;  
         IF EXISTS  
         (  
             --SELECT  
             --*  
             --FROM dbo.MM_PeticionOfertaDetalle  
-            --WHERE ( DATEDIFF ( MINUTE, FechaVigencia, GETDATE ())) > 0 -- fecha vencida 
- 
+            --WHERE ( DATEDIFF ( MINUTE, FechaVigencia, GETDATE ())) > 0 -- fecha vencida  
             --AND ISNULL(AddPedidoTemp,0) > 0 --  que exista un material agregado al pedido  
             --AND IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle  
             SELECT IdHistorialProcesoAbierto  
@@ -233,8 +196,7 @@ AS
         SELECT POD.IdPeticionOfertaDetalle,  
                CASE  
                    WHEN DATALENGTH(M.Imagen_real) IS NOT NULL  
-   
-                     AND DATALENGTH(M.Imagen_real) > 0  
+                        AND DATALENGTH(M.Imagen_real) > 0  
                    THEN M.Imagen_real  
                    ELSE  
         (  
@@ -261,20 +223,17 @@ AS
                     WHEN(DATEDIFF(MINUTE, POD.FechaVigencia, GETDATE())) <= 0  
                     THEN 'false'  
                     ELSE 'true'  
-   
-             END) AS POD_Vencida,   
+                END) AS POD_Vencida,   
                ISNULL(POD.AddCantidadTemp, 0) AS CantidadAgregadaActualmente,   
                SP.AdjudicableParcialmente,   
                PO.IdSubcontratista AS IdProveedor,   
-               @MATERIALES_FALTANTES 
-AS MaterialesLibres,   
+               @MATERIALES_FALTANTES AS MaterialesLibres,   
                (CASE  
                     WHEN(@ESTRELLAS > 0)  
                     THEN @ESTRELLAS  
                     ELSE 0  
                 END) AS CalificacionProveedor,   
-               ISNULL(@PRECIO_UNITARIO_ACTUAL, 0
-) AS PRECIO_DLS,   
+               ISNULL(@PRECIO_UNITARIO_ACTUAL, 0) AS PRECIO_DLS,   
                @TIPO_MONEDA_TEXT AS MONEDA_TXT,   
                @NOMBRE_MATERIAL_SPD AS NombreMaterialSPD,   
                UM.Unidad,  
@@ -284,29 +243,19 @@ AS MaterialesLibres,
                ISNULL(CD.CondicionPago, 'No definido') AS CondicionPago,   
                @VencidaReActivada AS VencidaReActivada  
         FROM MM_Material AS M  
-             INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCk)
-				ON M.IdMaterial  = POD.IdMaterialVendedor 
-             INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-				ON POD.IdPeticionOferta  = PO.IdPeticionOferta
-             INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-				ON PO.IdSolicitudPedido  = SP.IdSolicitudPedido
-             INNER JOIN S_Proveedor AS P (NOLOCK)
-				ON PO.IdSubcontratista  = P.IdProveedor
-             INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
-				ON POD.IdMoneda  = TM.IdMoneda
-             LEFT JOIN dbo.PV_MM_MaterialUnidad AS UM (NOLOCK)
-				ON POD.IdUnidadProveedor  = UM.IdUnidad
+             INNER JOIN MM_PeticionOfertaDetalle AS POD ON POD.IdMaterialVendedor = M.IdMaterial  
+             INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta = POD.IdPeticionOferta  
+             INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = PO.IdSolicitudPedido  
+             INNER JOIN S_Proveedor AS P ON P.IdProveedor = PO.IdSubcontratista  
+             INNER JOIN PV_TipoMoneda AS TM ON TM.IdMoneda = POD.IdMoneda  
+             LEFT JOIN dbo.PV_MM_MaterialUnidad AS UM ON UM.IdUnidad = POD.IdUnidadProveedor  
              --LEFT JOIN EP_EvaluacionProveedor AS EP  
              --ON P.IdProveedor = EP.IdProveedorEvaluado  
-             LEFT JOIN dbo.PV_ContratistaSubContratista contratista (NOLOCK)
-				ON PO.IdSubcontratista  = contratista.IdSubContratista
-				AND contratista.IsActivo = 1  
-                AND contratista.IdContratista = @IdProveedor  
-             LEFT JOIN PV_CondicionesPago condici (NOLOCK)
-				ON contratista.IdRelacion  = condici.IdContratistaSubContratista
-             LEFT JOIN dbo.MM_CondicionPago CD (NOLOCK)
-				ON POD.IdCondicionPago = CD.IdCondicionPago  
+             LEFT JOIN dbo.PV_ContratistaSubContratista contratista ON contratista.IdSubContratista = PO.IdSubcontratista  
+                                                                       AND contratista.IsActivo = 1  
+                                                                       AND contratista.IdContratista = @IdProveedor  
+             LEFT JOIN PV_CondicionesPago condici ON condici.IdContratistaSubContratista = contratista.IdRelacion  
+             LEFT JOIN dbo.MM_CondicionPago CD ON CD.IdCondicionPago = POD.IdCondicionPago  
         WHERE POD.IdPeticionOfertaDetalle = @IdPeticionOFertaDetalle  
-      
-        AND POD.IdProveedorVenta = @IdProveedor;  
+              AND POD.IdProveedorVenta = @IdProveedor;  
     END;

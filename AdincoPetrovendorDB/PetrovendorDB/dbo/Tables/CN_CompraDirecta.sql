@@ -17,6 +17,6 @@
     [CreadoPor]                  INT            NULL,
     [CreadoEl]                   DATETIME       NULL,
     [IdPedimentoComprobante]     INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdCDCN] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdCDCN] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

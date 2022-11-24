@@ -9,7 +9,7 @@
     [IsEliminado]      INT            NULL,
     [IdContrato]       INT            NULL,
     [IdSubcontratista] INT            NULL,
-    CONSTRAINT [PK_MA_Estatus] PRIMARY KEY CLUSTERED ([IdEstatus] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MA_Estatus] PRIMARY KEY CLUSTERED ([IdEstatus] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MA_Estatus_MA_TipoEstatus] FOREIGN KEY ([IdTipoEstatus]) REFERENCES [dbo].[MA_TipoEstatus] ([IdTipoEstatus])
 );
 

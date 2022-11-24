@@ -17,7 +17,7 @@
     [IdModificadoPor] INT            NULL,
     [ModificadorEl]   DATETIME       NULL,
     [SoloNotificar]   BIT            NULL,
-    CONSTRAINT [PK_TaFlujoTarea] PRIMARY KEY CLUSTERED ([IdFlujoTarea] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_TaFlujoTarea] PRIMARY KEY CLUSTERED ([IdFlujoTarea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_S_Proveedor_TaTipoFlujoTarea] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_TaFlujoTarea_TaTipoFlujoTarea] FOREIGN KEY ([IdTipoFlujo]) REFERENCES [dbo].[TA_TipoFlujoTarea] ([IdTipoFlujoTarea]),
     CONSTRAINT [FK_TaFlujoTarea_TaTipoOperacion] FOREIGN KEY ([IdTipoOperacion]) REFERENCES [dbo].[TA_TipoOperacion] ([IdTipoOperacion])

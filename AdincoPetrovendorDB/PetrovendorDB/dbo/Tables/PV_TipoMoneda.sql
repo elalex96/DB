@@ -3,6 +3,6 @@
     [TipoMoneda]      VARCHAR (50)   NOT NULL,
     [TipoMonedaCorto] NVARCHAR (MAX) NULL,
     [Eliminado]       BIT            NULL,
-    CONSTRAINT [PK_Cat_TipoMoneda] PRIMARY KEY CLUSTERED ([IdMoneda] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Cat_TipoMoneda] PRIMARY KEY CLUSTERED ([IdMoneda] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

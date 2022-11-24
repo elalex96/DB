@@ -1,15 +1,4 @@
-﻿USE Adinco
-
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_BuscaDatosInstanciaParaCalendario'
-)
-    DROP PROCEDURE EN_BuscaDatosInstanciaParaCalendario;
-GO 
-
+﻿
 -- =============================================  
 -- Author:  Reyna Olvera  
 -- Create date: 20190104  

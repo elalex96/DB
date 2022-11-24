@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarPedido_V4_MV1_5]    Script Date: 22/09/2022 11:01:46 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 09/07/2018
 -- Description:	ahora la aprobacion es por cada pedido y no una aprobacion para todos los pedidos generados
@@ -21,7 +14,7 @@ GO
 -- Description:	Se agrega personalización de días de crédito por detalle 
 -- =============================================
 
-ALTER PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5]
+CREATE PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5]
     @IdSolicitudPedido INT,
     @Mensaje NVARCHAR(MAX),
     @IdPrioridad INT,

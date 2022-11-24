@@ -1,10 +1,4 @@
-﻿USE [Adinco]
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:                            Yazmin Glez
 -- Create date:  2017-11-29

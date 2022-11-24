@@ -4,6 +4,6 @@
     [IdPresupuesto]            INT      NOT NULL,
     [CreadoPor]                INT      NOT NULL,
     [CreadoEl]                 DATETIME NOT NULL,
-    CONSTRAINT [PK_SC_Presupuesto] PRIMARY KEY CLUSTERED ([IdSubContratoPresupuesto] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SC_Presupuesto] PRIMARY KEY CLUSTERED ([IdSubContratoPresupuesto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

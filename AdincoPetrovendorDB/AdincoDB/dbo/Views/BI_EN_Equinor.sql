@@ -39,7 +39,10 @@ SELECT
 		WHEN AACT.EstadoID = 10003 THEN 'Completado'
 		WHEN AACT.EstadoID = 10001 OR AACT.EstadoID = 10002  THEN 'En Progreso'
 	ELSE 'No iniciado'
-	END		AS [NvoStatus]
+	END		AS [NvoStatus],
+	CASE WHEN ISNULL(BitContieneAcuse,0) = 0 THEN 'No'
+		ELSE 'Si'
+	END	AS	ContieneAcuse
 FROM
 	EN_InstanciasEntregable	IE (NOLOCK)
 JOIN
@@ -131,6 +134,9 @@ GROUP BY
 		WHEN AACT.EstadoID = 10003 THEN 'Completado'
 		WHEN AACT.EstadoID = 10001 OR AACT.EstadoID = 10002  THEN 'En Progreso'
 	ELSE 'No iniciado'
+	END,
+	CASE WHEN ISNULL(BitContieneAcuse,0) = 0 THEN 'No'
+		ELSE 'Si'
 	END
 
 GO

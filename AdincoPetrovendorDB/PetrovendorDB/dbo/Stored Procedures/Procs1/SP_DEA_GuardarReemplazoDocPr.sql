@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:	Daniel AC
 -- Create date: 08/10/2019
 -- Description:	Actualizar PR Documento
@@ -18,6 +19,7 @@ CREATE PROCEDURE [dbo].[SP_DEA_GuardarReemplazoDocPr]
     @CargadaManualmente BIT,
 	@IdProveedor INT,
 	@IdUsuario INT
+	
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -101,6 +103,3 @@ BEGIN
  
 
 END;
-
-
-

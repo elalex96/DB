@@ -12,14 +12,16 @@
     [IsProcesoEvento] BIT            NULL,
     [IsSerie]         BIT            NULL,
     [Clave]           VARCHAR (MAX)  NULL,
-    [EtapaPozoId]   INT            NULL,
-    CONSTRAINT [PK_procesos] PRIMARY KEY CLUSTERED ([IdProceso] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [EtapaPozoId]     INT            NULL,
+    CONSTRAINT [PK_procesos] PRIMARY KEY CLUSTERED ([IdProceso] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_Proceso_Instalacion] FOREIGN KEY ([IdInstalacion]) REFERENCES [dbo].[CO_Instalacion] ([IdInstalacion]),
     CONSTRAINT [FK_EN_TipoProcesos_EN_procesos] FOREIGN KEY ([idTipoProceso]) REFERENCES [dbo].[EN_TipoProcesos] ([idTipoProceso]),
     CONSTRAINT [FK_Procesos_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_Procesos_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
-go
 
-create index IX_EN_Procesos									on	EN_Procesos(IdProceso)
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_Procesos]
+    ON [dbo].[EN_Procesos]([IdProceso] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

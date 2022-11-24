@@ -1,4 +1,5 @@
-﻿CREATE PROC [dbo].[sp_AP_ActualizarUsuario]  
+﻿--USE adinco
+CREATE PROC [dbo].[sp_AP_ActualizarUsuario]  
 --  
 @pUsuarioID     INT,   
 @pUsuario       VARCHAR(100),   

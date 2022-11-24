@@ -1,7 +1,10 @@
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL Cruz
 -- Create date: 08-02-18
 -- Description:	Consultar detalle de encabezado de aprobación de carta de contenido nacional en procura, se agrego valicación de enviar siempre y cuando se solicito en la aceptación
+-- Author:		<Manuel Cruz>
+-- Create date: <23/09/20219>
+-- Description:	<Se agrega columna Bucket para que devuelva el select descarga estandar avance 5>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DEA_GetDocumentoCNN]
 	-- Add the parameters for the stored procedure here
@@ -16,23 +19,20 @@ AS
          SET NOCOUNT ON;
 
     -- Insert statements for procedure here
- 
-
 
         SELECT CONCAT('Carta contenido nacional ',PG.IdPedido,'_',AC.IdAceptacionPedido,'.pdf') AS Documento,--0
 			D.Extension, 
 			d.Mime,
 			D.Carpeta,
-			CASE WHEN D.creadoel > '20210928' and D.creadoel < '20210929' then UPPER(D.Identificador)
-			ELSE D.Identificador	END Identificador, 
-			--D.Identificador,
-			 AC.IdAceptacionCartaPCN,
-			 Ac.IdAceptacionPedido, 
-			 AP.IdPedido, 
-			 AC.IdDocumento,
+			D.Identificador,
+			AC.IdAceptacionCartaPCN,
+			AC.IdAceptacionPedido, 
+			AP.IdPedido, 
+			AC.IdDocumento,
 			TD.TipoValidacion, 
 			TD.IdTipoValidacionDoc, 		
-			TP.IdTipoPedido			
+			TP.IdTipoPedido,
+			D.Bucket
 		FROM [dbo].[MM_AceptacionCartaPCN] AS AC
 		INNER JOIN [dbo].[S_Documento_S3] AS D ON D.IdDocumento = AC.IdDocumento
 		INNER JOIN [dbo].[MM_AceptacionPedido] AS AP ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
@@ -41,12 +41,12 @@ AS
 		INNER JOIN [dbo].[S_TipoValidacionDoc] AS TD ON TD.IdTipoValidacionDoc = AC.IdEstatus
 		INNER JOIN MM_Pedidos AS PG ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IdProveedor
 		LEFT JOIN [dbo].[S_Usuario] as U ON U.IdUsuario = AC.IdUsuarioEvaluador
-		LEFT  JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
+		LEFT JOIN dbo.MM_TipoPedido AS TP ON TP.IdTipoPedido = PG.IdTipoPedido
 		LEFT JOIN dbo.RelacionCartaCNPedido RCN ON RCN.IdAceptacionPedido = AP.IdAceptacionPedido
 		WHERE  
 		AC.IdEstatus= 2  --> QUE ESTE APROBADA 
 		AND P.IdProveedorCompras = @IdProveedor
-		AND  AC.IdAceptacionPedido =@IdAceptacionPedido---AND IdAceptacionCartaPCN=@IdAceptacionCartaPCN
+		AND AC.IdAceptacionPedido = @IdAceptacionPedido---AND IdAceptacionCartaPCN=@IdAceptacionCartaPCN
 		AND RCN.PedirCarta=1 ---> QUE SE SOLICTO CARTA
 
      END;

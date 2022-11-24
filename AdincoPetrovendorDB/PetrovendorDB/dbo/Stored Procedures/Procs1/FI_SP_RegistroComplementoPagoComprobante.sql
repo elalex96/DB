@@ -1,24 +1,4 @@
-﻿
--- =============================================
--- Author:		<Jose Roman>
--- Create date: <12-06-2018>
--- Description:	<Se registra un complemento de pago de un comprobante>
--- Create date: <07-02-2018>
--- Description:	<Se agrega el envio del comprobante a Adinco>
--- =============================================
--- =============================================
--- Author:   Daniel AC
--- Create date: 01/10/2019
--- Description:   Se removio insertado de registros de Adinco 
--- =============================================
--- Author:   LUIS DAVID DE LA CRUZ
--- Create date: 25/03/2021
--- Description: Se modifica para actualizar el mes presentación de la tabla de co_registro
--- =============================================
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'FI_SP_RegistroComplementoPagoComprobante')
-    DROP PROCEDURE FI_SP_RegistroComplementoPagoComprobante
-GO
-CREATE PROCEDURE [dbo].[FI_SP_RegistroComplementoPagoComprobante]
+﻿CREATE PROCEDURE [dbo].[FI_SP_RegistroComplementoPagoComprobante]
 	@IdFactura INT,
 	@Version FLOAT,
 	@FechaDePago DATETIME,

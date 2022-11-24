@@ -1,6 +1,4 @@
-﻿DROP FUNCTION IF EXISTS fnGetValidacionCantidadMateriales
-GO
-CREATE FUNCTION fnGetValidacionCantidadMateriales
+﻿CREATE FUNCTION fnGetValidacionCantidadMateriales
 (@IdPedidoDetalle int,
 @IdPedido int,  
 @Cantidad FLOAT)
@@ -41,3 +39,5 @@ DECLARE @CantidadSolicitadaPedido FLOAT  = 0  ,@CantidadYaAceptada FLOAT  = 0  ,
     END   
 	return @mensajeValidacion
 END
+
+--select dbo.fnGetValidacionCantidadMateriales(41170,20853,8) as 'cantidad'

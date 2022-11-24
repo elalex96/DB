@@ -1,10 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'SP_AD_S3_MM_DocAnexosPeticionOferta')
-begin
-	drop proc SP_AD_S3_MM_DocAnexosPeticionOferta
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 

@@ -17,8 +17,14 @@
     [FormaPagoID]         INT           NULL,
     [GrupoCuentasID]      INT           NULL,
     [UsuarioID]           INT           NULL,
-    CONSTRAINT [PK_Cat_Empresa] PRIMARY KEY CLUSTERED ([IdSubcontratista] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Cat_Empresa] PRIMARY KEY CLUSTERED ([IdSubcontratista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_PV_Subcontratista]
+    ON [dbo].[PV_Subcontratista]([RFC] ASC)
+    INCLUDE([IdSubcontratista]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO

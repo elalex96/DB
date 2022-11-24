@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS Carso_InsertaItemsCabecera
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  <Luis David>  
 -- Create date: <21/10/2021>  
 -- Description: <Se guarda la Cabecera de Carso>  

@@ -17,6 +17,6 @@
     [Activo]                BIT            NULL,
     [IdProveedorInvito]     INT            NULL,
     [CotizacionRestringida] BIT            NULL,
-    CONSTRAINT [PK_MM_InvitacionPeticionOferta] PRIMARY KEY CLUSTERED ([IdInvitacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_InvitacionPeticionOferta] PRIMARY KEY CLUSTERED ([IdInvitacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

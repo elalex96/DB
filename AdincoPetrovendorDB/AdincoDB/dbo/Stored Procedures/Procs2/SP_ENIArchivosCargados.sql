@@ -1,10 +1,10 @@
-﻿if exists (select * from sys.procedures where name = 'SP_ENIArchivosCargados')
+﻿
 -- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 26-06-2020
 -- Description:	
 -- =============================================
-create PROCEDURE [dbo].[SP_ENIArchivosCargados] 
+CREATE PROCEDURE [dbo].[SP_ENIArchivosCargados] 
 -- Add the parameters for the stored procedure here
 @IdContrato INT, 
 @IdUsuario  INT

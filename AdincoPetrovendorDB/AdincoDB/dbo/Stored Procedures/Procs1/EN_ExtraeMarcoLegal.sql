@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_ExtraeMarcoLegal]    Script Date: 20/06/2022 05:20:07 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[EN_ExtraeMarcoLegal]--10061,3
+﻿CREATE PROCEDURE [dbo].[EN_ExtraeMarcoLegal]--10061,3
     @idUsuario INT,
     @idContrato INT
 AS

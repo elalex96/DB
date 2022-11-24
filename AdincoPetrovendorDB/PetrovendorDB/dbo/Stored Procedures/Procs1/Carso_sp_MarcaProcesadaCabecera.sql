@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS Carso_sp_MarcaProcesadaCabecera
-go
-CREATE PROCEDURE Carso_sp_MarcaProcesadaCabecera
+﻿CREATE PROCEDURE Carso_sp_MarcaProcesadaCabecera
 @IdCabecera int
 AS
 BEGIN 

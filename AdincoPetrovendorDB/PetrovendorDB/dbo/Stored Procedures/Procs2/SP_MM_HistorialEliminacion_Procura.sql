@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_HistorialEliminacion_Procura]    Script Date: 04/07/2022 08:10:19 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:	DANIEL AC
 -- Create date: 08/03/2018
@@ -16,7 +9,7 @@ GO
 -- Description: correccion al eliminar factura
 -- =============================================
 
-ALTER  PROCEDURE [dbo].[SP_MM_HistorialEliminacion_Procura]  
+CREATE  PROCEDURE [dbo].[SP_MM_HistorialEliminacion_Procura]  
 
  @IDPROVEEDOR INT,
  @IDCONTRATO INT,

@@ -33,6 +33,6 @@
     [CantidadDescuento]  FLOAT (53)     NULL,
     [PedidoAutomatico]   BIT            NULL,
     [IdDomicilioEntrega] INT            NULL,
-    CONSTRAINT [PK_MM_Pedido] PRIMARY KEY CLUSTERED ([IdPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_Pedido] PRIMARY KEY CLUSTERED ([IdPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -13,7 +13,7 @@
     [CodigoPostal]     NVARCHAR (MAX) NULL,
     [Regimen]          NVARCHAR (MAX) NULL,
     [CreadoPor]        INT            NULL,
-    CONSTRAINT [PK_Emisor] PRIMARY KEY CLUSTERED ([IdEmisor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Emisor] PRIMARY KEY CLUSTERED ([IdEmisor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_VU_Emisor_PV_Subcontratista] FOREIGN KEY ([IdSubcontratista]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista])
 );
 

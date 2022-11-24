@@ -1,11 +1,9 @@
-﻿DROP PROCEDURE IF EXISTS SP_PC_GuardarArchivoCN
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <20/04/2020>
 -- Description:	<guardado de los archivos de s3 de carta cn de PEDIMENTOS/COMPROBANTES>
 -- =============================================
--- Author:		<LUIS DAVID>
+-- Author:		<Alexander Gomez>
 -- Create date: <20/04/2020>
 -- Description:	<guardado de los archivos de s3 de carta cn de PEDIMENTOS/COMPROBANTES>
 -- =============================================

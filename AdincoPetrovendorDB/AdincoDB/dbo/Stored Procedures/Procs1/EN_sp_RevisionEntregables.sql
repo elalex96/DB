@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS EN_sp_RevisionEntregables
-GO
-CREATE PROCEDURE EN_sp_RevisionEntregables
+﻿CREATE PROCEDURE EN_sp_RevisionEntregables
 @ContratoId INT,
 @Consecutivo VARCHAR(500)
 AS

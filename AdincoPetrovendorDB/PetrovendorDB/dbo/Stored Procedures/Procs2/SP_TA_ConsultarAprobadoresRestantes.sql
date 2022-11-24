@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarAprobadoresRestantes]    Script Date: 26/11/2021 01:46:10 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Author,,Name>
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
@@ -14,7 +7,7 @@ GO
 -- Create date: <16-08-2018>
 -- Description:	<Se agrega la consulta del telefono de los aprobadores>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_TA_ConsultarAprobadoresRestantes] --exec SP_TA_ConsultarAprobadoresRestantes @IdProveedor=573,@idFlujo=0,@IdRol=N'1'
+CREATE PROCEDURE [dbo].[SP_TA_ConsultarAprobadoresRestantes] --exec SP_TA_ConsultarAprobadoresRestantes @IdProveedor=573,@idFlujo=0,@IdRol=N'1'
 @IdProveedor INT,
 @IdRol INT,
 @idFlujo INT
@@ -57,5 +50,3 @@ BEGIN
           AND flujo.IdFlujoTarea = @idFlujo
 
 END
-
-

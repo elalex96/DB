@@ -8,7 +8,7 @@
     [ModificadoPor]           INT      NULL,
     [ModificadoEn]            DATETIME NULL,
     [Activo]                  BIT      NULL,
-    CONSTRAINT [PK_EN_ExcepcionesActividadInstancias] PRIMARY KEY CLUSTERED ([EstadoID] ASC, [idUsuario] ASC, [IdInstanciasEntregables] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_ExcepcionesActividadInstancias] PRIMARY KEY CLUSTERED ([EstadoID] ASC, [idUsuario] ASC, [IdInstanciasEntregables] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ActividadIDExcepcion] FOREIGN KEY ([ActividadIDExcepcion]) REFERENCES [dbo].[EN_Actividad] ([ActividadID]),
     CONSTRAINT [FK_EN_ExcepcionesActividadInstancias_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_ExcepcionesActividadInstancias_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),

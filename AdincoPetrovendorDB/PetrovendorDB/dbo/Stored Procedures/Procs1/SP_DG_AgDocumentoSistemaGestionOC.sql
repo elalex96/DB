@@ -1,10 +1,4 @@
-﻿if exists (select * from sys.procedures where name = 'SP_DG_AgDocumentoSistemaGestionOC')
-begin
-	drop proc	SP_DG_AgDocumentoSistemaGestionOC
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <30/052017>
 -- Description:	<Procedimiento para insertar un documento en especidico(INE, RCF, ACTA CONSTITUTIVA) en la tabla S_Documento>

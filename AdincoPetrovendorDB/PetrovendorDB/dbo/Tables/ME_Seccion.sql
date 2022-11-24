@@ -4,7 +4,7 @@
     [Ponderacion]        INT           NOT NULL,
     [Nombre]             VARCHAR (MAX) NULL,
     [Activo]             BIT           NULL,
-    CONSTRAINT [PK_ME_Seccion] PRIMARY KEY CLUSTERED ([IdSeccion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ME_Seccion] PRIMARY KEY CLUSTERED ([IdSeccion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ME_Seccion_ME_MatrizEvaluacion2] FOREIGN KEY ([IdMatrizEvaluacion]) REFERENCES [dbo].[ME_MatrizEvaluacion] ([IdMatrizEvaluacion])
 );
 

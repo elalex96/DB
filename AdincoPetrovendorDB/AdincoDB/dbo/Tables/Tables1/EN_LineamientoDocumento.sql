@@ -14,7 +14,7 @@
     [IdLineamientoEntidad]       INT              NULL,
     [IdLineamientoTipoDocumento] INT              NULL,
     [NombreDocumento]            VARCHAR (100)    NULL,
-    PRIMARY KEY CLUSTERED ([IdLineamientoDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdLineamientoDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_IdEntidad] FOREIGN KEY ([IdLineamientoEntidad]) REFERENCES [dbo].[EN_LineamientoEntidad] ([IdLineamientoEntidad]),
     CONSTRAINT [FK_IdTipoDocumento] FOREIGN KEY ([IdLineamientoTipoDocumento]) REFERENCES [dbo].[EN_LineamientoTipoDocumento] ([IdLineamientoTipoDocumento])
 );

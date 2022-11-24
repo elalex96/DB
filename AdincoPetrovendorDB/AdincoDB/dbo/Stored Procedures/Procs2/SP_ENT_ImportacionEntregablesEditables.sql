@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregablesEditables]    Script Date: 29/10/2021 10:08:26 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  Alexander Gomez 
 -- Create date: <26/08/2021>  
 -- Description: <Actualizacion de los registros existentes>  
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_ENT_ImportacionEntregablesEditables] 
+CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregablesEditables] 
 	@Layout dbo.Entregables_Importacion_Edicion_01 READONLY,
 	@IdContrato INT,
 	@IdUsuario INT

@@ -1,9 +1,9 @@
-create table BitacoraExcepcionNoControlada
-(Id int identity, 
-StackTrace nvarchar(max), 
-InnerException nvarchar(max), 
-Mensaje nvarchar(max),
-Pagina nvarchar(max),
-FechaAlta datetime)
-
+﻿CREATE TABLE [dbo].[BitacoraExcepcionNoControlada] (
+    [Id]             INT            IDENTITY (1, 1) NOT NULL,
+    [StackTrace]     NVARCHAR (MAX) NULL,
+    [InnerException] NVARCHAR (MAX) NULL,
+    [Mensaje]        NVARCHAR (MAX) NULL,
+    [Pagina]         NVARCHAR (MAX) NULL,
+    [FechaAlta]      DATETIME       NULL
+);
 

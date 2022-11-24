@@ -1,16 +1,9 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_CotizacionAutomatico_WDEA]    Script Date: 14/09/2022 10:55:12 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Creacion automatica de pedidos
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_CotizacionAutomatico_WDEA]
+CREATE PROCEDURE [dbo].[SP_MM_WDEA_CotizacionAutomatico_WDEA]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdPeticionOferta INT,

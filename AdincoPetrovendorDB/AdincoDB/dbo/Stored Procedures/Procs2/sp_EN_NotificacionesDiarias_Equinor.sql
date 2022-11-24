@@ -9,6 +9,8 @@ BEGIN
 -- 20200405	BAAC	Creación de sp
 -- =============================================
 SET NOCOUNT ON
+-- SE DESHABILITAN EL ENVIO DE NOTIFICACIONES A EQUINOR 20211007
+RETURN
 
 CREATE TABLE #Notificaciones
 (

@@ -1,5 +1,5 @@
 ﻿-- p_PR_ConsultaImportacionProdPozo '53,',0,0,3
-ALTER Proc p_PR_ConsultaImportacionProdPozoPrevio
+CREATE Proc p_PR_ConsultaImportacionProdPozoPrevio
 @pIdsProdDiaria  varchar(1000),
 @pAnio int=0,
 @pMes int=0,
@@ -14,9 +14,9 @@ as
 	from CO_Contrato c
 	inner join CO_Contratista co on co.IdContratista = c.IdContratista
 	where IdContrato = @pidContrato and
-	co.RFC = 'PEP170906DI5' --PANTERA
-
-	
+	(co.RFC = 'PEP170906DI5' --PANTERA
+	OR
+	co.RFC = 'DDE151002QY9')	-- DEA
 
 	select ID= splitdata
 	into #tmpIds
@@ -52,7 +52,7 @@ as
 								 else ''
 								 End
 							  else
-									cast(pozo.Est_64Plg as varchar)
+									cast(pozo.Est_64Plg as varchar) + '/64'
 							end
 							
 		from PR_ProdDiariaPozo_Previo pozo
@@ -96,7 +96,7 @@ as
 								 else ''
 								 End
 							  else
-									cast(pozo.Est_64Plg as varchar)
+									cast(pozo.Est_64Plg as varchar)+ '/64'
 							end
 		from PR_ProdDiariaPozo_Previo pozo
 		inner join [PR_ProdDiaria_Previo]  pd on pd.ID = pozo.ProdDiaria
@@ -109,10 +109,4 @@ as
 		WHERE DATEPART(year,pozo.Fecha) = @pAnio and
 		DATEPART(month,pozo.Fecha) = @pMes 
 
-	eND
-
-
-
-
-
-
+	END

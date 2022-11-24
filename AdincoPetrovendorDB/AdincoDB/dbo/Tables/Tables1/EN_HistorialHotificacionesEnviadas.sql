@@ -12,6 +12,6 @@
     [IdEntregable]            INT            NULL,
     [CreadoPor]               INT            NULL,
     [CreadoEl]                DATETIME       NULL,
-    CONSTRAINT [PK_EN_HistorialHotificacionesEnviadas] PRIMARY KEY CLUSTERED ([idHistorialNotificacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EN_HistorialHotificacionesEnviadas] PRIMARY KEY CLUSTERED ([idHistorialNotificacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

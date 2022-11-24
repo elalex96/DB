@@ -11,7 +11,7 @@
     [ModificadoEl]        DATETIME      NULL,
     [Activo]              BIT           NULL,
     [Nombre]              VARCHAR (MAX) NULL,
-    CONSTRAINT [PK_PRED_Predios] PRIMARY KEY CLUSTERED ([IdPredio] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PRED_Predios] PRIMARY KEY CLUSTERED ([IdPredio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PRED_Predios_AP_Usuario_Ins] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_PRED_Predios_AP_Usuario_Upd] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_PRED_Predios_CAT_Estados] FOREIGN KEY ([IdEstado]) REFERENCES [dbo].[CAT_Estados] ([IdEstado]),

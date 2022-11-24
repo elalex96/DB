@@ -1,8 +1,9 @@
-﻿--***********************************
+﻿
+--***********************************
 -- ESTE SP SE ENCUENTRA TANTO EN PETROVENDOR COMO EN ADINCO, PERO TIENEN LOGICA DIFERENTE
 --***********************************
 -- sp_OT_ConsultaSolicitudMateriales 57,1
-create Proc [dbo].[sp_OT_ConsultaSolicitudMateriales]
+CREATE Proc [dbo].[sp_OT_ConsultaSolicitudMateriales]
     @pIdOTSolicitud INT,
     @pTipoUsuario INT = 1 -- 1.Contratista 2.SubContratista
 As
@@ -198,8 +199,5 @@ BEGIN
              SC_Materiales.Concepto
 
 END
-
-
-GO
 
 

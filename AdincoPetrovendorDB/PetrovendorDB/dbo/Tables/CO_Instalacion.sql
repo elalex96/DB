@@ -17,6 +17,6 @@
     [UTMX]                     FLOAT (53)     NULL,
     [UTMY]                     FLOAT (53)     NULL,
     [CreadoPor]                INT            NULL,
-    CONSTRAINT [PK_Instalaciones] PRIMARY KEY CLUSTERED ([IdInstalacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Instalaciones] PRIMARY KEY CLUSTERED ([IdInstalacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -5,7 +5,7 @@
     [Descripcion] NVARCHAR (2000) NOT NULL,
     [Estatus]     TINYINT         NOT NULL,
     [Bloque]      INT             NOT NULL,
-    CONSTRAINT [PK_PR_Ramal] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_Ramal] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Ramal_Bloque] FOREIGN KEY ([Bloque]) REFERENCES [dbo].[PR_Bloque] ([Id])
 );
 

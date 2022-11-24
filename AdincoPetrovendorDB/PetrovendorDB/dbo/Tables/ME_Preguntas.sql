@@ -7,7 +7,7 @@
     [Ponderacion]        FLOAT (53)    NOT NULL,
     [RequiereDocumento]  BIT           NOT NULL,
     [Activo]             BIT           NULL,
-    CONSTRAINT [PK_ME_Preguntas] PRIMARY KEY CLUSTERED ([IdPregunta] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ME_Preguntas] PRIMARY KEY CLUSTERED ([IdPregunta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ME_Preguntas_ME_Seccion] FOREIGN KEY ([IdSeccion]) REFERENCES [dbo].[ME_Seccion] ([IdSeccion]),
     CONSTRAINT [FK_ME_Preguntas_ME_TiposRespuesta] FOREIGN KEY ([IdTipoRespuesta]) REFERENCES [dbo].[ME_TiposRespuesta] ([IdTipoRespuesta])
 );

@@ -1,6 +1,4 @@
-﻿drop procedure if exists MM_SP_DescargarDocSolPed
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <02-03-2018>
 -- Description:	<Descarga de un documento adjunto en la SolPed>

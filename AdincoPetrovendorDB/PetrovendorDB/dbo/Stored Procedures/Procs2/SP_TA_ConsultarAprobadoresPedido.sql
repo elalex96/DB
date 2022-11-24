@@ -1,20 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_TA_ConsultarAprobadoresPedido'
-)
-    DROP PROCEDURE SP_TA_ConsultarAprobadoresPedido;
-
-/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarAprobadoresPedido]    Script Date: 24/05/2021 06:54:34 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 14-09-17
 -- Description:	 Consultar Aprobadores recibiendo el IdOperador
@@ -45,5 +29,3 @@ BEGIN
 		AND T.Activo=1
 		ORDER BY NoSecuencia ASC 
 END
-
-

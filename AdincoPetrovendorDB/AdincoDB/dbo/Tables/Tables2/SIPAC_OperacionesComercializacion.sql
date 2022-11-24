@@ -8,6 +8,6 @@
     [VolumenHVendido]            FLOAT (53)    NULL,
     [PrecioVentaH]               MONEY         NULL,
     [Fecha]                      DATE          NULL,
-    CONSTRAINT [PK_SIPACOperacionesComercializacion] PRIMARY KEY CLUSTERED ([IdOperacionComerializacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SIPACOperacionesComercializacion] PRIMARY KEY CLUSTERED ([IdOperacionComerializacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -24,7 +24,7 @@
     [N2_Ft3]                     FLOAT (53) NULL,
     [IdPtoExpedicionRecepcion]   INT        NULL,
     [idContrato]                 INT        NULL,
-    CONSTRAINT [PK__CO_Const__8D9AD3A2A941CCD3] PRIMARY KEY CLUSTERED ([idConstantes] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK__CO_Const__8D9AD3A2A941CCD3] PRIMARY KEY CLUSTERED ([idConstantes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__CO_Consta__idCon__6721B179] FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK__CO_Consta__IdPto__47A90620] FOREIGN KEY ([IdPtoExpedicionRecepcion]) REFERENCES [dbo].[PC_PtoExpedicionRecepcion] ([IdPtoExpedicionRecepcion])
 );

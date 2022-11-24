@@ -19,7 +19,7 @@
     [FechaAlta]                  DATETIME       NULL,
     [EntregasParciales]          BIT            NULL,
     [PeticionEnviada]            BIT            NULL,
-    CONSTRAINT [PK_MM_SolicitudPedido] PRIMARY KEY CLUSTERED ([IdSolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_SolicitudPedido] PRIMARY KEY CLUSTERED ([IdSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_SolicitudPedido_AP_Usuario] FOREIGN KEY ([IdUsuarioSolicitante]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_MM_SolicitudPedido_MM_PrioridadSolicitudPedido] FOREIGN KEY ([IdPrioridadSolicitudPedido]) REFERENCES [dbo].[MM_PrioridadSolicitudPedido] ([IdPrioridadSolicitudPedido]),
     CONSTRAINT [FK_MM_SolicitudPedido_MM_ProcedimientoProcura] FOREIGN KEY ([IdProcedimientoProcura]) REFERENCES [dbo].[MM_ProcedimientoProcura] ([IdProcedimientoProcura]),

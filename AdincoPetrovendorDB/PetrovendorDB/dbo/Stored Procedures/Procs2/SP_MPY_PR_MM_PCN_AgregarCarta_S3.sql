@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MPY_PR_MM_PCN_AgregarCarta_S3'
-)
-    DROP PROCEDURE SP_MPY_PR_MM_PCN_AgregarCarta_S3;
-/****** Object:  StoredProcedure [dbo].[SP_MPY_PR_MM_PCN_AgregarCarta_S3]    Script Date: 28/07/2021 12:53:46 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 03-05-18
 -- Description:	Agregar carta de contenido nacional con información del documento 

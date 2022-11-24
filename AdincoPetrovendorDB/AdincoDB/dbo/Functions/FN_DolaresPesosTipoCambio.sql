@@ -25,4 +25,3 @@ BEGIN
 	RETURN isnull(@MontoMXN,0);
 
 END
-

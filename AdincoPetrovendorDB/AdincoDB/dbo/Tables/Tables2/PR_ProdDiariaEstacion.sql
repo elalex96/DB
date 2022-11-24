@@ -11,7 +11,7 @@
     [ProduccionTeorica]  DECIMAL (24, 8) CONSTRAINT [DF_ProdDiariaEstacion_ProduccionTeorica] DEFAULT ((0)) NOT NULL,
     [ProduccionReal]     DECIMAL (24, 8) CONSTRAINT [DF_ProdDiariaEstacion_ProduccionReal] DEFAULT ((0)) NOT NULL,
     [ProduccionAlocada]  DECIMAL (24, 8) CONSTRAINT [DF_ProdDiariaEstacion_ProduccionAlocada] DEFAULT ((0)) NOT NULL,
-    CONSTRAINT [PK_PR_ProdDiariaEstacion] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_ProdDiariaEstacion] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ProdDiariaEstacion_Estacion] FOREIGN KEY ([Estacion]) REFERENCES [dbo].[PR_Estacion] ([Id]),
     CONSTRAINT [FK_ProdDiariaEstacion_ProdDiaria] FOREIGN KEY ([ProdDiaria]) REFERENCES [dbo].[PR_ProdDiaria] ([Id])
 );

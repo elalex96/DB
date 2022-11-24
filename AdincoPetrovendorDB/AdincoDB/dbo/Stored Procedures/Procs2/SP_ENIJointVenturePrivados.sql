@@ -1,10 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'SP_ENIJointVenturePrivados')
-begin
-	drop proc SP_ENIJointVenturePrivados
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Marcos Garcia
 -- Create date: 27-07-2020
 -- Description:	Seleciona solo Documentos que han sido marcados 
@@ -137,5 +131,3 @@ FROM
 	ORDER BY R.CreadoEl DESC;
 
 END;
-
-

@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarContratosPorIdSolicitudPedido]    Script Date: 26/11/2021 01:56:27 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:Daniel AC  
 -- Create date: 22-01-2017  
 -- Description: Buscar el nombre del contrato por la solicitud de pedido, si no se encuentra retornar textos vacios   
 -- =============================================  
-ALTER  PROCEDURE [dbo].[SP_MM_ConsultarContratosPorIdSolicitudPedido]   
+CREATE  PROCEDURE [dbo].[SP_MM_ConsultarContratosPorIdSolicitudPedido]   
     -- Add the parameters for the stored procedure here  
      
     @IdSolicitudPedido INT  

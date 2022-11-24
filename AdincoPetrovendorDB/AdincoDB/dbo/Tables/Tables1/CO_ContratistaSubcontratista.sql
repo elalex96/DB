@@ -3,6 +3,6 @@
     [IdContratista]               INT NULL,
     [IdSubcontratista]            INT NULL,
     [Relacionada]                 BIT NULL,
-    CONSTRAINT [PK_CO_ContratistaSubcontratista] PRIMARY KEY CLUSTERED ([IdContratistaSubcontratista] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_ContratistaSubcontratista] PRIMARY KEY CLUSTERED ([IdContratistaSubcontratista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

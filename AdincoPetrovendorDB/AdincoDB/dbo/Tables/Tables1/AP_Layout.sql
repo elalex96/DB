@@ -9,6 +9,6 @@
     [PorDefecto]   BIT             NULL,
     [Activo]       BIT             NULL,
     [CreadoPor]    INT             NULL,
-    CONSTRAINT [PK_Layouts] PRIMARY KEY CLUSTERED ([IdLayout] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Layouts] PRIMARY KEY CLUSTERED ([IdLayout] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

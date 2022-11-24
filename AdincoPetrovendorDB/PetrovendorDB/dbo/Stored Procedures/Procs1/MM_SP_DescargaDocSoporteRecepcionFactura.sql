@@ -1,6 +1,4 @@
-﻿drop procedure if exists MM_SP_DescargaDocSoporteRecepcionFactura
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <01-04-2018>
 -- Description:	<Consulta para descargar el documento de soporte en la recepcion de factura>

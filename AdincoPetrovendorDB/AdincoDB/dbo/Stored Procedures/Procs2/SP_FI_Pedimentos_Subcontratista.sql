@@ -1,10 +1,9 @@
-﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL MORENO
 -- Create date: 03-11-21
 -- Description:	
 -- =============================================
-CREATEPROCEDURE [dbo].[SP_FI_Pedimentos_Subcontratista]-- 10007,10002,11571
+CREATE PROCEDURE [dbo].[SP_FI_Pedimentos_Subcontratista]-- 10007,10002,11571
 	-- Add the parameters for the stored procedure here
 @IdContrato INT,
 @IdUsuario  INT,
@@ -56,7 +55,6 @@ AS
                    AND PC.IdContrato = @IdContrato
              ORDER BY IdPedimento DESC;
          END;
-
 
 
 

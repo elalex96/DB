@@ -6,6 +6,6 @@
     [Host]      NVARCHAR (50) NULL,
     [Minutos]   INT           NULL,
     [CreadoPor] INT           NULL,
-    CONSTRAINT [PK_Sesiones] PRIMARY KEY CLUSTERED ([IdSesion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Sesiones] PRIMARY KEY CLUSTERED ([IdSesion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

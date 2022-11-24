@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ENIContratos]    Script Date: 01/09/2021 02:48:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 26-06-2020
 -- Description:	
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_ENIContratos] 
+CREATE PROCEDURE [dbo].[SP_ENIContratos] 
 -- Add the parameters for the stored procedure here
 @IdContrato INT, 
 @IdUsuario  INT

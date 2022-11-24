@@ -5,6 +5,6 @@
     [IdBanco]            INT            NULL,
     [Descripción]        NVARCHAR (MAX) NULL,
     [Activo]             BIT            NULL,
-    CONSTRAINT [PK_FI_Beneficiarios] PRIMARY KEY CLUSTERED ([IdBeneficiario] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_Beneficiarios] PRIMARY KEY CLUSTERED ([IdBeneficiario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

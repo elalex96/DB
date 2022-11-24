@@ -51,7 +51,8 @@ DECLARE
 	@Butano			DECIMAL(10, 2)
 
 SELECT
-	@UsuarioPEP	=	CASE WHEN Usuario LIKE '%@pemex.com%' THEN 1 ELSE 0	END
+	@UsuarioPEP	=	CASE WHEN Usuario LIKE '%@pemex.com%' THEN 1 
+					ELSE 0	END
 FROM
 	dbo.AP_Usuario
 WHERE

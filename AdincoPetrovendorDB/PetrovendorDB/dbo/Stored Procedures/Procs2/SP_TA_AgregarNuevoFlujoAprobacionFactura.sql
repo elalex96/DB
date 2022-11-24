@@ -1,21 +1,9 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFactura]    Script Date: 08/09/2022 12:48:50 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Daniel AC>
 -- Create date: <02-08-19>
 -- Description:	<Consulta usuarios con rol de aprobación de factura>
 -- =============================================
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 08/09/2022
--- Description:	Issue #1987  Optimizacion pantallas se ordena y revisa joins 
--- =============================================
-ALTER PROCEDURE [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFactura]  
+CREATE PROCEDURE [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFactura]  
 @IdProveedor INT,
 @IdUsuario INT,
 @IdAceptacionFactura INT, 

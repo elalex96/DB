@@ -1,16 +1,9 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ENI_EstadoPozo]    Script Date: 04/06/2021 01:32:05 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <02-06-2021>
 -- Description:	<cosnulta de estados de pozozs>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_ENI_EstadoPozo]
+CREATE PROCEDURE [dbo].[SP_ENI_EstadoPozo]
 	-- Add the parameters for the stored procedure here
 	@IdContrato INT
 AS
@@ -28,7 +21,8 @@ BEGIN
              JOIN dbo.CO_EstadoPozos EP ON EP.idEstatus = I.IdEstatus
              JOIN dbo.CO_AreaContractual AC ON I.IdAreaContractual = AC.IdAreaContractual
              JOIN dbo.CO_Contrato C ON AC.IdAreaContractual = C.IdAreaContractual
-        WHERE C.IdContrato = @IdContrato
-              AND A.IdActividad = 5;
-
+        WHERE --C.IdContrato = @IdContrato
+              --AND 
+			  A.IdActividad = 5;
+	
 END

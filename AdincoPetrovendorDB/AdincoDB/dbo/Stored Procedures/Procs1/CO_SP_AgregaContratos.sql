@@ -1,5 +1,4 @@
-﻿GO
-CREATE PROCEDURE [dbo].[CO_SP_AgregaContratos]
+﻿CREATE PROCEDURE [dbo].[CO_SP_AgregaContratos]
 	@NumeroContrato VARCHAR(300),
 	@DescripcionContrato VARCHAR(500),
 	@IdContratista INT,
@@ -83,3 +82,4 @@ AS
 	@ContratoFicticio)
 
 END;
+

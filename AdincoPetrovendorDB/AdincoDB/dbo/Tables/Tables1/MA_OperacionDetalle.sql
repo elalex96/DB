@@ -13,6 +13,6 @@
     [IdFirma]            NVARCHAR (35)  NULL,
     [IdContrato]         INT            NULL,
     [IdSubcontratista]   INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdOperacionDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdOperacionDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

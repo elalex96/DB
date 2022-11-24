@@ -7,7 +7,7 @@
     [IdEstatus]        INT      NULL,
     [FechaEnvio]       DATETIME NULL,
     [IdUsuario]        INT      NULL,
-    CONSTRAINT [PK_MM_Oferta] PRIMARY KEY CLUSTERED ([IdOferta] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_Oferta] PRIMARY KEY CLUSTERED ([IdOferta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_Oferta_MM_PeticionOferta] FOREIGN KEY ([IdPeticionOferta]) REFERENCES [dbo].[MM_PeticionOferta] ([IdPeticionOferta]),
     CONSTRAINT [FK_MM_Oferta_PV_TipoMoneda] FOREIGN KEY ([IdMoneda]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda])
 );

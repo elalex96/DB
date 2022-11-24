@@ -1,43 +1,18 @@
-
-/****** Object:  Table [dbo].[SIPAC_ImportRML_CONT_28_M]    Script Date: 16/04/2021 01:56:15 p. m. ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE TABLE [dbo].[SIPAC_ImportRML_CONT_28_M](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[IdBitacora] [int] NOT NULL,
-	[RF_00] [varchar](200) NULL,
-	[RI_00] [varchar](200) NULL,
-	[RF01_01] [varchar](200) NULL,
-	[RMLCT28_00] [tinyint] NULL,
-	[RMLCT28_01] [smallint] NULL,
-	[RMLCT28_02] [tinyint] NULL,
-	[RMLCT28_03] [smallint] NULL,
-	[RMLCT28_04] [decimal](18, 2) NULL,
-	[CreadoPor] [int] NULL,
-	[CreadoEl] [datetime] NULL,
- CONSTRAINT [PK_SIPAC_ImportRML_CONT_28_M] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_28_M]  WITH CHECK ADD  CONSTRAINT [FK_SIPAC_ImportRML_CONT_28_M_AP_Usuario] FOREIGN KEY([CreadoPor])
-REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_28_M] CHECK CONSTRAINT [FK_SIPAC_ImportRML_CONT_28_M_AP_Usuario]
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_28_M]  WITH CHECK ADD  CONSTRAINT [FK_SIPAC_ImportRML_CONT_28_M_SIPAC_ImportBitacora] FOREIGN KEY([IdBitacora])
-REFERENCES [dbo].[SIPAC_ImportBitacora] ([Id])
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_28_M] CHECK CONSTRAINT [FK_SIPAC_ImportRML_CONT_28_M_SIPAC_ImportBitacora]
-GO
-
+﻿CREATE TABLE [dbo].[SIPAC_ImportRML_CONT_28_M] (
+    [Id]         INT             IDENTITY (1, 1) NOT NULL,
+    [IdBitacora] INT             NOT NULL,
+    [RF_00]      VARCHAR (200)   NULL,
+    [RI_00]      VARCHAR (200)   NULL,
+    [RF01_01]    VARCHAR (200)   NULL,
+    [RMLCT28_00] TINYINT         NULL,
+    [RMLCT28_01] SMALLINT        NULL,
+    [RMLCT28_02] TINYINT         NULL,
+    [RMLCT28_03] SMALLINT        NULL,
+    [RMLCT28_04] DECIMAL (18, 2) NULL,
+    [CreadoPor]  INT             NULL,
+    [CreadoEl]   DATETIME        NULL,
+    CONSTRAINT [PK_SIPAC_ImportRML_CONT_28_M] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_SIPAC_ImportRML_CONT_28_M_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_SIPAC_ImportRML_CONT_28_M_SIPAC_ImportBitacora] FOREIGN KEY ([IdBitacora]) REFERENCES [dbo].[SIPAC_ImportBitacora] ([Id])
+);
 

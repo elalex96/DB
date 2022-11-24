@@ -9,6 +9,6 @@
     [ModificadoPor]   INT           NULL,
     [ModificadoEl]    DATETIME      NULL,
     [Activo]          BIT           NULL,
-    CONSTRAINT [PK_PRED_PreviosDetale] PRIMARY KEY CLUSTERED ([IdPrevioDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PRED_PreviosDetale] PRIMARY KEY CLUSTERED ([IdPrevioDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

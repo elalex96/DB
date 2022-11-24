@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]    Script Date: 14/09/2022 10:47:38 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Generacion automatiza de solicitud oferta
@@ -14,7 +7,7 @@ GO
 -- Create date: 15/08/2022
 -- Description:	Se corrigen los errores ortográficos para issue #1963 (Petrovendor)
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]
+CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@Purchasing NVARCHAR(100),

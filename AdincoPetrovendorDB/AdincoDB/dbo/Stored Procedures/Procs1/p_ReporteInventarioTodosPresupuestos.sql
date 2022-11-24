@@ -1,6 +1,4 @@
-USE Adinco;
-GO
-CREATE PROCEDURE [dbo].[p_ReporteInventarioTodosPresupuestos]--10036
+﻿CREATE PROCEDURE [dbo].[p_ReporteInventarioTodosPresupuestos]--10036
 @pIdContrato int
 as
 begin

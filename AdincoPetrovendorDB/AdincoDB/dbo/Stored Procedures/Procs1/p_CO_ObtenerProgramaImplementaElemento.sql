@@ -1,4 +1,5 @@
-﻿create PRoc p_CO_ObtenerProgramaImplementaElemento
+﻿  
+CREATE PRoc p_CO_ObtenerProgramaImplementaElemento
 @pIdProgramaImplementaPolitica int,
 @pIdProgramaImplementa int,
 @pIdProgramaImplementaElemento	int 
@@ -16,7 +17,3 @@ as
 	where @pIdProgramaImplementa in (0,pe.IdProgramaImplementa)
 	AND @pIdProgramaImplementaPolitica = IdProgramaImplementaPolitica
 	order by pe.Orden, pe.Descripcion
-
-
-
-

@@ -18,7 +18,7 @@
     [ModificadoEn]               DATETIME       NULL,
     [CURP]                       NVARCHAR (50)  NULL,
     [IdDocumento]                INT            NULL,
-    CONSTRAINT [PK_DG_RepresentanteLegal] PRIMARY KEY CLUSTERED ([IdRepresentanteLegal] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_DG_RepresentanteLegal] PRIMARY KEY CLUSTERED ([IdRepresentanteLegal] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdDocumento]) REFERENCES [dbo].[S_Documento_S3] ([IdDocumento]),
     FOREIGN KEY ([IdDocumento]) REFERENCES [dbo].[S_Documento_S3] ([IdDocumento]),
     CONSTRAINT [FK_DG_RepresentanteLegal_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),

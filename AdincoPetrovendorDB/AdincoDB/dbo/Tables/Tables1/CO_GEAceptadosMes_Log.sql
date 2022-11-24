@@ -9,7 +9,7 @@
     [ModificadoPor]       INT      NULL,
     [ModificadoEl]        DATETIME NULL,
     [Activo]              BIT      NULL,
-    CONSTRAINT [PK_CO_GEAceptadosMes_Log] PRIMARY KEY CLUSTERED ([IdGEAceptadoMes_Log] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_GEAceptadosMes_Log] PRIMARY KEY CLUSTERED ([IdGEAceptadoMes_Log] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_GEAceptadosMes_Log_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

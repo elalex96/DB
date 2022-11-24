@@ -17,7 +17,7 @@ SET NOCOUNT ON
 	FROM dbo.AP_Usuario
 	WHERE UsuarioID = @IdUsuario
 
-	IF @usuario LIKE '%@pemex.com%' or @usuario LIKE '%@shell.com%' or @usuario LIKE '%@adinco.mx%' or @usuario = 'EntregablesR@gmail.com'
+	IF @usuario LIKE '%@pemex.com%' or @usuario LIKE '%@shell.com%' or @usuario LIKE '%@adinco.mx%' or @usuario = 'EntregablesR@gmail.com' or @usuario LIKE '%@tonallienergia.com.mx%' or @usuario LIKE '%@bhp.com%'
 	BEGIN
 		SELECT	DISTINCT
 				AP_Usuario.Nombre, AP_Usuario.Idioma, CO_Contrato.NumeroContrato, CO_AreaContractual.NombreAreaContractual ,

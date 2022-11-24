@@ -19,7 +19,7 @@
     [FechaInicio]       DATETIME      NULL,
     [FechaFin]          DATETIME      NULL,
     [DiasCredito]       INT           NULL,
-    CONSTRAINT [PK_SC_SubContratos] PRIMARY KEY CLUSTERED ([IdSubContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SC_SubContratos] PRIMARY KEY CLUSTERED ([IdSubContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__SC_SubCon__IdCon__22227BB6] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_SC_SubContratos_CO_Contratista] FOREIGN KEY ([IdContratista]) REFERENCES [dbo].[CO_Contratista] ([IdContratista]),
     CONSTRAINT [FK_SC_SubContratos_PV_Subcontratista] FOREIGN KEY ([IdSubContratista]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista])

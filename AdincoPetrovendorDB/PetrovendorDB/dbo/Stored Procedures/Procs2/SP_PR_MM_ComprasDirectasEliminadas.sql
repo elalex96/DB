@@ -1,16 +1,9 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ComprasDirectasEliminadas]    Script Date: 12/11/2021 11:55:39 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <08-07-2019>
 -- Description:	<Consulta de compras directas eliminadas>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PR_MM_ComprasDirectasEliminadas] --1835
+CREATE PROCEDURE [dbo].[SP_PR_MM_ComprasDirectasEliminadas] --1835
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT
 AS
@@ -43,4 +36,3 @@ BEGIN
 		RE.IdProveedor = @IdProveedor
 		AND RE.TipoEliminacion = 'OCD-F'--Factura
 END
-

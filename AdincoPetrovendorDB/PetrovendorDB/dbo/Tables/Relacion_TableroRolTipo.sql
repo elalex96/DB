@@ -9,6 +9,6 @@
     [FechaRegistro]           DATETIME NULL,
     [Activo]                  BIT      NULL,
     [IdContrato]              INT      NULL,
-    CONSTRAINT [PK_Relacion_TableroRolTipo] PRIMARY KEY CLUSTERED ([IdTableroTipoUsuarioRol] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Relacion_TableroRolTipo] PRIMARY KEY CLUSTERED ([IdTableroTipoUsuarioRol] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

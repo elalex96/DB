@@ -1,13 +1,4 @@
-﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_AceptacionPedidoProveedor'
-)
-    DROP PROCEDURE SP_PR_MM_AceptacionPedidoProveedor;
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		DAVID DE LA CRUZ
 -- Create date: 22-09-20
 -- Description:	Se agrega el tipo de pedido a la consulta

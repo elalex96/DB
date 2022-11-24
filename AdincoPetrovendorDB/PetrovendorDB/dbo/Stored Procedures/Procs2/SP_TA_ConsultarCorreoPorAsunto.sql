@@ -1,14 +1,4 @@
-﻿use Petrovendor 
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_TA_ConsultarCorreoPorAsunto'
-)
-    DROP PROCEDURE SP_TA_ConsultarCorreoPorAsunto;
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel Cruz  
 -- Create date: 23-03-17  
 -- Description: Regresa los tipos de aprobación de una tarea       
@@ -31,6 +21,3 @@ BEGIN
   WHERE  C.Asunto  = @Asunto
   
 END  
-  
-  
-  

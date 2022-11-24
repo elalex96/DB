@@ -1,5 +1,5 @@
 ﻿-- sp_OT_ConsultaSolicitudPrograma 24
-create Proc [dbo].[sp_OT_ConsultaSolicitudPrograma]
+CREATE Proc [dbo].[sp_OT_ConsultaSolicitudPrograma]
 @pIdOTSolicitud int
 As
 
@@ -134,8 +134,5 @@ As
 			meses.mes
 
 
-
-
-GO
 
 

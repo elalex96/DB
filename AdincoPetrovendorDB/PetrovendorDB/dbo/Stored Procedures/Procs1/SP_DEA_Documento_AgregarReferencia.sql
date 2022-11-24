@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_DEA_Documento_AgregarReferencia
-GO
-
+﻿
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 27/04/2018

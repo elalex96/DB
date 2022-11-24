@@ -1,4 +1,4 @@
-CREATE VIEW dbo.EntregablesShellFacts
+﻿CREATE VIEW dbo.EntregablesShellFacts
 AS
 SELECT
 	C.NumeroContrato	AS Contrato,
@@ -53,20 +53,20 @@ SELECT
 	ISNULL(ML.MarcoLegalIngles,ML.MarcoLegal)	AS MarcoLegalIngles,
 	ISNULL(I.NombreInstalacion,'')	AS Instalacion
 FROM
-	EN_InstanciasEntregable	IE (NOLOCK)
-JOIN
-	EN_ContratoEntregable	CE	(NOLOCK)
-	ON	IE.IdContratoEntregable	=	CE.IdContratoEntregable
-	AND	ISNULL(IE.Activo,1)	=	1
-	AND	ISNULL(CE.Activo,1)	=	1
-	AND IE.FechaCalculadaEntregaReg	<	DATEADD(YEAR,4,GETDATE())
-JOIN
 	CO_Contrato	C	(NOLOCK)
-	ON	CE.IdContrato	=	C.IdContrato
-	AND	C.DescripcionContrato LIKE '%SHELL%'
 JOIN
 	CO_ContratoArea	CA	(NOLOCK)
 	ON	C.IdContrato	=	CA.IdContrato
+	AND	C.DescripcionContrato LIKE '%SHELL%'
+JOIN
+	EN_ContratoEntregable	CE	(NOLOCK)
+	ON	C.IdContrato	=	CE.IdContrato
+	AND	ISNULL(CE.Activo,1)	=	1
+JOIN
+	EN_InstanciasEntregable	IE (NOLOCK)
+	ON	CE.IdContratoEntregable	=	IE.IdContratoEntregable
+	AND	ISNULL(IE.Activo,1)	=	1
+	AND IE.FechaCalculadaEntregaReg	<	DATEADD(YEAR,2,GETDATE())
 JOIN
 	EN_Entregable	E	(NOLOCK)
 	ON	CE.IdEntregable	=	E.IdEntregable
@@ -126,10 +126,9 @@ LEFT JOIN
 	CO_Instalacion	I	(NOLOCK)
 	ON	PRO.IdInstalacion	=	I.IdInstalacion
 WHERE
-	--AND	AACT.EstadoID NOT IN (10003)
---	AND
+	IE.FechaCalculadaEntregaReg	<=	'20240131'
+	AND
 	IE.FechaCalculadaEntregaReg	IS NOT NULL
-	AND IE.Activo =  1
 GROUP BY
 	C.NumeroContrato,
 	ISNULL(CA.NombreArea,''),

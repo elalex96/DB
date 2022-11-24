@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PV_ConsultarUsuarios]    Script Date: 26/11/2021 01:33:31 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author: DANIEL AC
 -- Create date: 31/08/2017
 -- Description:	CONSULTAR USUARIO

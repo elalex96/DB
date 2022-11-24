@@ -1,8 +1,4 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MM_WDEA_ProcesamientoSAP_Procura
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/092021
 -- Description:	Procesamiento Interfaz SAP-Procura

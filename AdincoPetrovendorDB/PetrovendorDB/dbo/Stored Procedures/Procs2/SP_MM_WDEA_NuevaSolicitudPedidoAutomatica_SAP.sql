@@ -1,28 +1,11 @@
-USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP'
-)
-    DROP PROCEDURE SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP;
-GO
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP]    Script Date: 07/11/2022 03:27:42 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Creacion de solicitud de pedido automatica
 -- =============================================
 -- Author:		LUIS DAVID
 -- Create date: 02/11/2022
--- Description:	Asignación del centro de costo por la tabla purchasing 
--- DAC asignación de instalación y centro de costo dinamico
+-- Description:	Asignación del centro de costo por la tabla purchasing
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP] --'4500564101',3315
 	-- Add the parameters for the stored procedure here
@@ -73,35 +56,27 @@ BEGIN
 		@RESPUESTASOLPEDLINEAPRESUPUESTO INT,
 		@RESPUESTAOPERACION INT,
 		@RESPUESTATAREA INT,
-		@MENSAJEFINAL NVARCHAR(1000);
+		@MENSAJEFINAL NVARCHAR(1000);	
 		
-		DECLARE @Instalaciones AS TABLE(
-		IDIMPORTACION INT, 
-		WBS VARCHAR(1000),
-		InstalacionId INT)
-		
-IF @IdContrato = 10145 --> CTE Bloque WD ADMIN
+IF @IdContrato = 10145
 BEGIN
 	
 	SET @IdInstalacion = (SELECT TOP 1
 								i.IdInstalacion
 							FROM Adinco.dbo.CO_Instalacion AS i (NOLOCK)
-							JOIN adinco.dbo.CO_Contrato AS c (NOLOCK) 
-								ON c.IdAreaContractual = i.IdAreaContractual 
-								and c.IdContrato = @IdContrato
+							 JOIN adinco.dbo.CO_Contrato AS c (NOLOCK) ON c.IdAreaContractual = i.IdAreaContractual and c.IdContrato = @IdContrato
 							WHERE ISNULL(i.Activo,0) = 1
 							ORDER BY i.CreadoEn DESC);
-	SET @IdCentroCosto =  (579); --> CTE DEFINIDA X PO
+	SET @IdCentroCosto =  (579);
 END
 ELSE
 BEGIN
 	
-	--SE OBTIENE DEL WBS EL CENTRO DE COSTO DEL CATALOGO 
-	SET @IdCentroCosto = (SELECT TOP 1 COST_CENTER 
+	--SE OBTIENE DEL WBS EL CENTRO DE COSTO DEL CATALOGO
+	SET @IdCentroCosto = (SELECT COST_CENTER 
 						  FROM WDEA_PurchasingDocumentsImportados 
 						  WHERE purchasing_document = @Purchasing AND IDBITACORA = @IdBitacoraLectura
 						  GROUP BY COST_CENTER);
-
 	SET @WBS = (SELECT TOP 1 
 					RIGHT(WBS_ELEMENT, LEN(WBS_ELEMENT) - 11)
 				FROM dbo.WDEA_PurchasingDocumentsImportados
@@ -109,32 +84,11 @@ BEGIN
 
 	SET @WBS = (SELECT LEFT(@WBS, LEN(@WBS) - 10));
 
-	--SE ASIGNA LA INSTALACIÓN POR CONTRATO
+	--SE ASIGNA EL CENTRO DE COSTO
 	SET @IdInstalacion = (SELECT TOP 1 
 								IdInstalacionAdinco 
 							FROM PozosSAP 
-							WHERE IdPozoSAP = CAST(@WBS AS INT)
-							AND IdContrato=@IdContrato);
-
-	-- OBTENER LAS INSTALACIONES DEL PURCHASING_DOCUMENT ACTUAL
-	INSERT INTO @Instalaciones(IDIMPORTACION,WBS)
-	SELECT  IDIMPORTACION, WBS_ELEMENT
-	FROM WDEA_PurchasingDocumentsImportados  
-	WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato
-
-	UPDATE @Instalaciones
-	SET WBS=RIGHT(WBS, LEN(WBS) - 11)
-
-	UPDATE @Instalaciones
-	SET WBS=LEFT(WBS, LEN(WBS) - 10)
-
-	-- OBTENER LA INSTALACION ADINCO REAL 
-	UPDATE  I
-	SET I.InstalacionId=P.IdInstalacionAdinco
-	FROM @Instalaciones I
-	JOIN PozosSAP P
-		ON CAST(I.WBS AS INT)=P.IdPozoSAP
-	WHERE P.IdContrato=@IdContrato;
+							WHERE IdPozoSAP = CAST(@WBS AS INT));
 
 END
 
@@ -143,31 +97,32 @@ END
 
 --SE ASIGNA LAS VARIABLES NECESARIAS PARA LA CREACION DEL PROCESO DE PROCURA
 SELECT TOP 1
-	@IdTipoSolicitudPedido = 10002,--CTE BIENES/SERVICIOS
+	@IdTipoSolicitudPedido = 10002,--BIENES/SERVICIOS
 	@IdProveedor = IDPROVEEDOR,
 	@IdUsuarioSolicitante = IDUSUARIOSOLICITANTE,
-	@AdjudicableParcialmente = 0, --> CTE COMO ADQUISICIÓN UNICA
-	@IdPrioridad = 10001, --CTE ALTA (ESTE DATO YA NO SE MUESTRA)
+	@AdjudicableParcialmente = 0,
+	@IdPrioridad = 10001, --ALTA (ESTE DATO YA NO SE MUESTRA)
 	@MotivoUrgencia = JUSTIFICACION,
-	@VisitaRequerida = 0,-->CTE COMO FALSE
-	@JuntaAclaracionesRequerida = 0,-->CTE COMO FALSE
-	@UnaSolaEntregaRequerida = 1,-->CTE COMO TRUE
-	@Activo = 1,-->CTE COMO ACTIVA
+	@VisitaRequerida = 0,
+	@JuntaAclaracionesRequerida = 0,
+	@UnaSolaEntregaRequerida = 1,
+	@Activo = 1,
 	@FechaEntregaRequerida = VALIDITY_PER_START,
 	@FechaEntregaFinRequerida = VALIDITY_PER_END,
-	@EntregasParciales = 0,-->CTE COMO FALSE
-	@IdTipoGasto = 0,-->CTE COMO FALSE
-	@IdTerminosInternacionales = 0,-->CTE COMO FALSE
-	@EntregaUnicoDomicilio = 1,-->CTE COMO TRUE
+	@EntregasParciales = 0,
+	@IdTipoGasto = 0,
+	@IdTerminosInternacionales = 0,
+	@EntregaUnicoDomicilio = 1,
 	@IdContrato = IDCONTRATO,
 	@IdLineaPresupuesto = IDLINEAPRESUPUESTOMES,
-	@Fianza = 0,-->CTE COMO FALSE
-	@Controlados = 0,-->CTE COMO FALSE
+	@Fianza = 0,
+	@Controlados = 0,
 	@Solicitante = IDUSUARIOSOLICITANTE
 FROM dbo.WDEA_PurchasingDocumentsImportados
-WHERE PURCHASING_DOCUMENT = @Purchasing 
-AND IDCONTRATO = @IdContrato;
+WHERE PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato;
 
+--CONTRATO DE PRUEBAS- COMENTAR PARA PRODUCTIVO
+-- SET @IdContrato = 10038;
 
 --SE BUSCA LA OPERADORA SEGUN EL CONTRATO
 SET @IdOperadora = (SELECT TOP 1
@@ -176,6 +131,7 @@ SET @IdOperadora = (SELECT TOP 1
 						JOIN Adinco.dbo.CO_Contratista AS CI ON C.IdContratista = CI.IdContratista
 						JOIN Petrovendor.dbo.S_Proveedor AS PR ON CI.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = PR.RFC
 					WHERE C.IdContrato = @IdContrato AND C.Activo = 1);
+
 
 SET @IdDomiclioEntrega = (SELECT TOP 1 IdDomicilio FROM dbo.DG_Domicilio WHERE IdProveedor = @IdOperadora);
 
@@ -267,8 +223,7 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 		IdDomicilioEntrega,
 		IDMONEDA_WS,
 		NET_PRICE,
-		TERMINOS_PAGO,
-		ID_IMPORTACION_PDI
+		TERMINOS_PAGO
 	)
 	SELECT
 		@IdSolicitudPedido,
@@ -282,8 +237,7 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 		@IdDomiclioEntrega,
 		PDI.IDMONEDA,
 		PDI.NET_PRICE,
-		PDI.TERMINOS_DE_PAGO,
-		PDI.IDIMPORTACION
+		PDI.TERMINOS_DE_PAGO
 	FROM WDEA_PurchasingDocumentsImportados AS PDI
 	WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato
 	GROUP BY PDI.IDMATERIAL,
@@ -291,9 +245,8 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 			PDI.IDUNIDAD,
 			PDI.IDMONEDA,
 			PDI.NET_PRICE,
-			PDI.TERMINOS_DE_PAGO,
-			PDI.IDIMPORTACION;
-			
+			PDI.TERMINOS_DE_PAGO;
+
 	--CREACION DE LAS LINEAS DE PRESUPUESTO POR DETALLE
 	INSERT INTO dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
 	(
@@ -305,18 +258,10 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 	SELECT
 		IdSolicitudPedidoDetalle,
 		@IdCentroCosto,
-		CASE WHEN @IdContrato = 10145 THEN--> CTE Bloque WD ADMIN
-			@IdInstalacion
-		ELSE
-			I.InstalacionId
-		END,
-	ISNULL(PDI.IDLINEAPRESUPUESTOMES,@IdLineaPresupuesto)
-	FROM MM_SolicitudPedidoDetalle SPD
-	JOIN WDEA_PurchasingDocumentsImportados PDI
-		ON SPD.ID_IMPORTACION_PDI = PDI.IDIMPORTACION --> NUEVA COLUMNA PARA SABER QUE RELACION EXISTE 
-	LEFT JOIN @Instalaciones I
-		ON SPD.ID_IMPORTACION_PDI = I.IDIMPORTACION
-	WHERE SPD.IdSolicitudPedido = @IdSolicitudPedido;
+		@IdInstalacion,
+		@IdLineaPresupuesto
+	FROM MM_SolicitudPedidoDetalle
+	WHERE IdSolicitudPedido = @IdSolicitudPedido;
 
 	--BUSQUEDA DEL FLUJO DEFAULT DE APROBACION AUTOMATICA
 	SET @IdFlujoTarea = (SELECT TOP 1 IdFlujoTarea FROM TA_FlujoTarea WHERE Nombre = 'FLUJO APROBACION AUTOMATICA - SOLICITUD DE PEDIDO');

@@ -27,7 +27,7 @@
     [Cromatografia_C8]    FLOAT (53) NULL,
     [Cromatografia_C9]    FLOAT (53) NULL,
     [Cromatografia_C10]   FLOAT (53) NULL,
-    CONSTRAINT [PK_LOG_CalculoProduccionMensual] PRIMARY KEY CLUSTERED ([IdCalculoProduccion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_LOG_CalculoProduccionMensual] PRIMARY KEY CLUSTERED ([IdCalculoProduccion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_LOG_CalculoProduccionMensual_AP_Usuario] FOREIGN KEY ([UsuarioID]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_LOG_CalculoProduccionMensual_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_LOG_CalculoProduccionMensual_CO_PuntosdeEntrega] FOREIGN KEY ([PuntoEntregaID]) REFERENCES [dbo].[CO_PuntosdeEntrega] ([PuntoEntregaID])
@@ -36,5 +36,5 @@
 
 GO
 CREATE NONCLUSTERED INDEX [idx_ContratoMesPtoEntrega]
-    ON [dbo].[LOG_CalculoProduccionMensual]([IdContrato] ASC, [MesReporte] ASC, [PuntoEntregaID] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[LOG_CalculoProduccionMensual]([IdContrato] ASC, [MesReporte] ASC, [PuntoEntregaID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

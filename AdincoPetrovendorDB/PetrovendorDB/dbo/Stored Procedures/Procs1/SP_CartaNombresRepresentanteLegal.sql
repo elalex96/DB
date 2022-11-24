@@ -1,8 +1,4 @@
-﻿use Petrovendor
-go
-drop procedure if exists SP_CartaNombresRepresentanteLegal
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <08/03/2019>
 -- Description:	<Store para retornar los representanes legales que tienen dados de alta en la empresa>

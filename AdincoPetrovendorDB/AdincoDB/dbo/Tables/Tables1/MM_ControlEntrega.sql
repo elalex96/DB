@@ -14,6 +14,6 @@
     [IdUnidadAlterna] INT            NULL,
     [Promedio]        FLOAT (53)     NULL,
     [CreadoPor]       INT            NULL,
-    CONSTRAINT [PK_admin_cntrl_entrega] PRIMARY KEY CLUSTERED ([id_] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_admin_cntrl_entrega] PRIMARY KEY CLUSTERED ([id_] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

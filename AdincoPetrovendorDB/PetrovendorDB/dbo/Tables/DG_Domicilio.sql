@@ -21,7 +21,12 @@
     [IdActualizadoPor] INT            NULL,
     [FechaCambio]      DATETIME       NULL,
     [NoSecuencia]      INT            NULL,
-    CONSTRAINT [PK_DG_Domicilios] PRIMARY KEY CLUSTERED ([IdDomicilio] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_DG_Domicilios] PRIMARY KEY CLUSTERED ([IdDomicilio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_DG_Domicilio_DG_TipoDomicilio] FOREIGN KEY ([IdTipoDomicilio]) REFERENCES [dbo].[DG_TipoDomicilio] ([IdTipoDomicilio])
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxDomicilio_IdProveedor]
+    ON [dbo].[DG_Domicilio]([IdProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

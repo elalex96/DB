@@ -37,6 +37,6 @@
     [CreadoPor]                             INT            NULL,
     [CreadoEn]                              DATETIME       NULL,
     [ID]                                    INT            NULL,
-    CONSTRAINT [PK_SIPAC_RCCONT21M] PRIMARY KEY CLUSTERED ([IdRccont21] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SIPAC_RCCONT21M] PRIMARY KEY CLUSTERED ([IdRccont21] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

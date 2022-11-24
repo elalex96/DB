@@ -1,10 +1,4 @@
-﻿	if exists (select * from sys.procedures where name = 'SP_ProcenDocumentosProveedor')
-begin
-	drop proc SP_ProcenDocumentosProveedor
-end
-
-go
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:		Alexander G
 -- Create date: 21/06/2017
@@ -50,6 +44,9 @@ NombreTipoDocumento varchar(50),
 TipoValidacionDocumento varchar(50) null
 )
 
+
+
+--drop table #TbTempDocumentos
 INSERT INTO #TbTempDocumentos  
  SELECT  
  ROW_NUMBER() OVER(ORDER BY TPersona.[IdTipoDocumento]  ASC) AS Row#,
@@ -81,7 +78,8 @@ SET @ContadorDocumentosExistentes =(
  SELECT COUNT([IdDocumento]) AS ContadorDocumentosExistentes
  FROM [dbo].[S_Documento_S3]
  WHERE [IdTipoDocumento] = @IdDocumentoTemp
-  AND IdProveedor = @IdProveedor AND Activo = 1)
+ ---AND IdUsuario = @IdUsuario
+ AND IdProveedor = @IdProveedor AND Activo = 1)
 
  --- Validar 
  IF @ContadorDocumentosExistentes  > 0 
@@ -124,14 +122,14 @@ SET @ContadorDocumentosExistentes =(
 	 DECLARE @PORC_DOC_RESTANTE INT
 	 DECLARE @PORC_POR_DOCUMENTO INT 
 
-	 if(isnull(@CANT_DOC_TOTAL,0)=0)
-	 begin
-		select @PORC_POR_DOCUMENTO = 0
-	 end	
-	 else
-	 begin
+	 --if(isnull(@CANT_DOC_TOTAL,0)=0)
+	 --begin
+		--select @PORC_POR_DOCUMENTO = 0
+	 --end	
+	 --else
+	 --begin
 			select @PORC_POR_DOCUMENTO = (100/@CANT_DOC_TOTAL)
-	 end
+	 --end
 
 	 SET @PORC_DOC_SUBIDO = (@CANT_DOC_CARGADOS * @PORC_POR_DOCUMENTO)
 
@@ -144,4 +142,3 @@ SET @ContadorDocumentosExistentes =(
 
 END
 
-go

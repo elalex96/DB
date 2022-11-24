@@ -16,7 +16,9 @@ AS
              SELECT   
      U.Pass,  
      U.Salt,  
-     U.UsuarioID  
+     U.UsuarioID ,
+	 U.IsActivo,
+	 U.Nombre
              FROM AP_Usuario U                   
              WHERE(U.usuario = RTRIM(@Usuario))  
                   AND u.IsActivo = 1 AND ISNULL(IsGrupo,0)=0;  

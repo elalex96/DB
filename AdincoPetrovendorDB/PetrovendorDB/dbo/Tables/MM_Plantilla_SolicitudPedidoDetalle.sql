@@ -13,6 +13,6 @@
     [IdInstalacion]                     INT            NULL,
     [IdLineaPresupuesto]                INT            NULL,
     [Activo]                            BIT            NULL,
-    CONSTRAINT [PK_MM_Plantilla_SolicitudPedidoDetalle] PRIMARY KEY CLUSTERED ([IdPlantillaSolicitudPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_Plantilla_SolicitudPedidoDetalle] PRIMARY KEY CLUSTERED ([IdPlantillaSolicitudPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

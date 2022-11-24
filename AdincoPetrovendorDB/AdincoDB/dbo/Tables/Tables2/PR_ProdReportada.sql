@@ -7,6 +7,6 @@
     [Modificado]       DATETIME        NULL,
     [ModificadoPor]    VARCHAR (200)   NULL,
     [ModificadoServer] DATETIME        NULL,
-    CONSTRAINT [PK_PR_ProdReportada] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PR_ProdReportada] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

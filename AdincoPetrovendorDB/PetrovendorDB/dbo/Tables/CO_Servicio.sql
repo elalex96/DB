@@ -7,6 +7,6 @@
     [FecMovto]       DATETIME       NULL,
     [Activo]         BIT            NULL,
     [CreadoPor]      INT            NULL,
-    CONSTRAINT [PK_Servicios] PRIMARY KEY CLUSTERED ([IdServicio] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Servicios] PRIMARY KEY CLUSTERED ([IdServicio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

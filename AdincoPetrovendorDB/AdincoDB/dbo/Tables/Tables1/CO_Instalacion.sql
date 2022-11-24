@@ -22,7 +22,7 @@
     [ModificadoPor]            INT            NULL,
     [ModificadoEn]             DATETIME       NULL,
     [ComodinBolsa]             BIT            NULL,
-    CONSTRAINT [PK_Instalaciones] PRIMARY KEY CLUSTERED ([IdInstalacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Instalaciones] PRIMARY KEY CLUSTERED ([IdInstalacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__CO_Instal__IdEst__2296B1AB] FOREIGN KEY ([IdEstatus]) REFERENCES [dbo].[CO_EstadoPozos] ([idEstatus]),
     CONSTRAINT [FK__CO_Instal__IdEst__4F344DF8] FOREIGN KEY ([IdEstatus]) REFERENCES [dbo].[CO_EstadoPozos] ([idEstatus]),
     CONSTRAINT [FK_CO_Instalaciones_PD_Campo] FOREIGN KEY ([IdCampo]) REFERENCES [dbo].[PD_Campo] ([IdCampo]),
@@ -32,6 +32,8 @@
     CONSTRAINT [FK_Instalaciones_Yacimiento] FOREIGN KEY ([IdYacimiento]) REFERENCES [dbo].[CO_Yacimiento] ([IdYacimiento])
 );
 
-go
 
-create index IX_CO_Instalacion								on	CO_Instalacion(IdInstalacion)
+GO
+CREATE NONCLUSTERED INDEX [IX_CO_Instalacion]
+    ON [dbo].[CO_Instalacion]([IdInstalacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

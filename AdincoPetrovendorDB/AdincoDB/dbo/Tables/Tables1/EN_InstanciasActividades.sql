@@ -10,7 +10,7 @@
     [Activo]               BIT      NULL,
     [FechaRealActividad]   DATE     NULL,
     [FechaInicioActividad] DATE     NULL,
-    CONSTRAINT [PK_InstanciasActividades] PRIMARY KEY CLUSTERED ([idInstanciaActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_InstanciasActividades] PRIMARY KEY CLUSTERED ([idInstanciaActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_InstanciasActividades_Actividades] FOREIGN KEY ([IdActividad]) REFERENCES [dbo].[EN_Actividades] ([IdActividad]),
     CONSTRAINT [FK_InstanciasActividades_EN_InstanciasProcesos] FOREIGN KEY ([IdInstanciasProcesos]) REFERENCES [dbo].[EN_InstanciasProcesosFecha] ([IdInstanciasProcesos]),
     CONSTRAINT [FK_InstanciasActividades_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
@@ -20,8 +20,10 @@
 
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [indiceInstProcesoActividadFecha]
-    ON [dbo].[EN_InstanciasActividades]([IdInstanciasProcesos] ASC, [IdActividad] ASC, [FechaActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[EN_InstanciasActividades]([IdInstanciasProcesos] ASC, [IdActividad] ASC, [FechaActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
-go
 
-create index IX_EN_InstanciasActividades					on	EN_InstanciasActividades(idInstanciaActividad)
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_InstanciasActividades]
+    ON [dbo].[EN_InstanciasActividades]([idInstanciaActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

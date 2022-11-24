@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro, Acuña>
 -- Modified date: <10/01/2018>
 -- Description:	<Se quita el documento de la carga, ya que tarda mucho la pagina en cargar en su lugar la carga del documento se hace hasta que el usuario da click en el documento>

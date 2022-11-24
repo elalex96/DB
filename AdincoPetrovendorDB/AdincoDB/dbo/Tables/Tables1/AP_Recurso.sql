@@ -4,6 +4,6 @@
     [RecursoNombre] NVARCHAR (50) NOT NULL,
     [Color]         INT           NULL,
     [Image]         IMAGE         NULL,
-    CONSTRAINT [PK_Resources] PRIMARY KEY CLUSTERED ([ID] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Resources] PRIMARY KEY CLUSTERED ([ID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

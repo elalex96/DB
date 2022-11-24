@@ -10,6 +10,6 @@
     [EditadoEl]              DATETIME NULL,
     [Activo]                 BIT      NULL,
     [IdProveedor]            INT      NULL,
-    CONSTRAINT [PK_PV_PerfilEmpresa] PRIMARY KEY CLUSTERED ([IdPerfilEmpresa] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_PerfilEmpresa] PRIMARY KEY CLUSTERED ([IdPerfilEmpresa] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

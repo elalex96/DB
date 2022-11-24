@@ -4,6 +4,6 @@
     [NumUsuarios] INT           NULL,
     [Precio]      DECIMAL (18)  NULL,
     [Descripcion] VARCHAR (200) NULL,
-    CONSTRAINT [PK_CAT_TipoPaquete] PRIMARY KEY CLUSTERED ([IdPaquete] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CAT_TipoPaquete] PRIMARY KEY CLUSTERED ([IdPaquete] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

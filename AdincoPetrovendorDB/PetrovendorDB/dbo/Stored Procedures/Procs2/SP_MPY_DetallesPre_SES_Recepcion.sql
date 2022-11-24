@@ -1,6 +1,4 @@
-DROP PROCEDURE IF EXISTS SP_MPY_DetallesPre_SES_Recepcion
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  ALexander Gomez  
 -- Create date: 29/10/2018  
  -- Description: Consulta de los detalles de la PRE-SES  

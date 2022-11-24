@@ -14,5 +14,11 @@
 
 GO
 CREATE NONCLUSTERED INDEX [<MM_PedidosIdPedido, sysname,>]
-    ON [dbo].[MM_Pedidos]([IdPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_Pedidos]([IdPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [IdPedidoTipoPedido]
+    ON [dbo].[MM_Pedidos]([IdIdentificador] ASC, [IdProveedorCliente] ASC)
+    INCLUDE([IdPedido], [IdTipoPedido]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

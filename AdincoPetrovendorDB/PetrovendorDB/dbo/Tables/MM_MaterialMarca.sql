@@ -3,6 +3,6 @@
     [Marca]     NVARCHAR (MAX) NULL,
     [Activo]    BIT            NULL,
     [CreadoPor] INT            NULL,
-    CONSTRAINT [PK_MM_MarcaMaterial] PRIMARY KEY CLUSTERED ([IdMarca] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_MarcaMaterial] PRIMARY KEY CLUSTERED ([IdMarca] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

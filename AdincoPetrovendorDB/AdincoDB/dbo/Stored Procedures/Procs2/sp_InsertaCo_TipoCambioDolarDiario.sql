@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_InsertaCo_TipoCambioDolarDiario]    Script Date: 25/05/2022 11:10:23 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[sp_InsertaCo_TipoCambioDolarDiario]
+﻿CREATE PROCEDURE [dbo].[sp_InsertaCo_TipoCambioDolarDiario]
 @Fecha DATE, --varchar(10),
 @Fix DECIMAL (18,4),
 @PublicacionDOF DECIMAL (18,4),

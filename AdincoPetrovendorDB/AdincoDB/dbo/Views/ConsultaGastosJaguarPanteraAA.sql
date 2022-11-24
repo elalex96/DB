@@ -1,4 +1,4 @@
-CREATE VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
+﻿CREATE VIEW [dbo].[ConsultaGastosJaguarPanteraAA]
 AS
      /*Consulta general*/
 	 
@@ -164,7 +164,8 @@ AS
                 WHEN R.CvTipoDocFacturacion IN(2, 3)
                 THEN TCDPC.TipoCambio	--(SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, PC.FechaPago))
             END AS TipoCambio,
-			(Petrovendor.dbo.fnObtenCentroCosto(FP.IdFactura)) as CentroCosto
+			(Petrovendor.dbo.fnObtenCentroCosto(FP.IdFactura)) as CentroCosto,
+			R.Poliza
      FROM dbo.CO_LineaPresupuestoMes LPM(NOLOCK)
           JOIN dbo.CO_Servicio S(NOLOCK) ON LPM.IdServicio = S.IdServicio
           LEFT JOIN dbo.CO_Instalacion I(NOLOCK) ON LPM.IdInstalacion = I.IdInstalacion
@@ -179,7 +180,7 @@ AS
           JOIN dbo.CO_AreaContractual ACC(NOLOCK) ON ACC.IdAreaContractual = C.IdAreaContractual
 		  JOIN dbo.CO_Area A(NOLOCK) ON A.IdArea = LPM.IdArea
           JOIN dbo.CO_Registro R(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-			AND YEAR(R.MesPresentacion) >= 2020
+		--	AND YEAR(R.MesPresentacion) >= 2020
           LEFT JOIN dbo.CO_GastosRubro GR(NOLOCK) ON R.IdGastoRubro = GR.IdGastoRubro
           LEFT JOIN dbo.FI_Factura F(NOLOCK) ON F.IdFactura = R.IdFactura
 		  LEFT JOIN dbo.FacturasAWSDocumentos AWSDOCF (NOLOCK) ON F.IdFactura = AWSDOCF.IdFactura
@@ -380,4 +381,5 @@ AS
                 WHEN R.CvTipoDocFacturacion IN(2, 3)
                 THEN TCDPC.TipoCambio	--(SELECT TipoCambio FROM Petrovendor.dbo.GetTipoCambioActual(1, PC.FechaPago))
             END,
-			FP.IdFactura
+			FP.IdFactura,
+			R.Poliza

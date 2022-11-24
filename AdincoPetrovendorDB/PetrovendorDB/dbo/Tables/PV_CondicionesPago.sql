@@ -6,7 +6,7 @@
     [Anticipo]                    BIT NOT NULL,
     [DiasCredito]                 INT NULL,
     [PorcentajeAnticipo]          INT NULL,
-    CONSTRAINT [PK_PV_CondicionesPago] PRIMARY KEY CLUSTERED ([IdCondicionPago] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PV_CondicionesPago] PRIMARY KEY CLUSTERED ([IdCondicionPago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PV_CondicionesPago_PV_ContratistaSubContratista] FOREIGN KEY ([IdContratistaSubContratista]) REFERENCES [dbo].[PV_ContratistaSubContratista] ([IdRelacion])
 );
 

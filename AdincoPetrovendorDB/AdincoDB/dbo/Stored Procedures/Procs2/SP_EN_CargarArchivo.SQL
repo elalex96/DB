@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CargarArchivo]    Script Date: 29/06/2022 05:29:22 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <12/01/2022>
 -- Description:	<Agregar un archivo al visor V2>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_CargarArchivo] 
+CREATE PROCEDURE [dbo].[SP_EN_CargarArchivo] 
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@IdUsuario INT,

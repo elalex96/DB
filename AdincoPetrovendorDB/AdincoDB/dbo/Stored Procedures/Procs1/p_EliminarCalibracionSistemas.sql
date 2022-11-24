@@ -1,4 +1,4 @@
-﻿Create Proc p_EliminarCalibracionSistemas
+﻿CREATE Proc p_EliminarCalibracionSistemas
 @pIdCalibracion	int,
 @UsuarioId INT
 as

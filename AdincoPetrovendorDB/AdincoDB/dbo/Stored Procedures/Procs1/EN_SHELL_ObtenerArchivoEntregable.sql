@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerArchivoEntregable]    Script Date: 15/10/2021 09:47:41 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerArchivoEntregable]    
+﻿CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerArchivoEntregable]    
 	@ContratoId INT,
 	@DocumentoId INT,
 	@Origen NVARCHAR(max)

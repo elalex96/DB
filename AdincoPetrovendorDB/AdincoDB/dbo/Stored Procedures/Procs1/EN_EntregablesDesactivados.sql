@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesDesactivados]    Script Date: 02/11/2022 02:13:16 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
+﻿CREATE PROCEDURE [dbo].[EN_EntregablesDesactivados] --10061,3,0
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT

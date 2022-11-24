@@ -17,7 +17,7 @@
     [RevisionSAP]             BIT            NULL,
     [RevisionSAPPor]          INT            NULL,
     [RevisionSAPEl]           DATETIME       NULL,
-    PRIMARY KEY CLUSTERED ([IdAceptacionNotaCredito] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdAceptacionNotaCredito] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdEstatus]) REFERENCES [dbo].[TA_Estatus] ([IdEstatus]),
     CONSTRAINT [FK_MPY_MM_AceptacionNotaCredito_S_Usuario] FOREIGN KEY ([IdAprobador]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );

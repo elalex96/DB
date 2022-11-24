@@ -1,4 +1,5 @@
-﻿CREATE VIEW dbo.SASISOPAFacts
+﻿
+CREATE VIEW [dbo].[SASISOPAFacts]
 AS
 
 SELECT

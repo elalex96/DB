@@ -1,10 +1,13 @@
-﻿
-CREATE PROCEDURE [dbo].[CO_ModificaPuntosdeEntrega]
+﻿CREATE PROCEDURE [dbo].[CO_ModificaPuntosdeEntrega]
 	@Nombre				NVARCHAR(Max),
 	@TagPatinMedicion	NVARCHAR(100),
 	@TipoMedidor		NVARCHAR(100),
 	@TagMedidor			NVARCHAR(100),
 	@Clasificacion		NVARCHAR(100),
+	@IdentificacionResponsable		VARCHAR(150),
+	@Coordenadas		VARCHAR(150),
+	@Latitud		VARCHAR(150),
+	@Longitud  VARCHAR(150),
 	@PuntoEntregaID		INT,
 	@idusuario			INT =0,
 	@idContrato			INT=0
@@ -36,10 +39,15 @@ BEGIN
 				TipoMedidor			=	LTRIM(RTRIM(@TipoMedidor)),
 				TagMedidor			=	LTRIM(RTRIM(@TagMedidor)),
 				Clasificacion		=	LTRIM(RTRIM(@Clasificacion)),
+				IdentificacionResponsable = LTRIM(RTRIM(@IdentificacionResponsable)),
+				Coordenadas = LTRIM(RTRIM(@Coordenadas)),
+				Latitud = LTRIM(RTRIM(@Latitud)),
+				Longitud = LTRIM(RTRIM(@Longitud)),
 				ModificadoPor		=	@idusuario,
 				ModificadoEl		=	GETDATE()
 		WHERE
 			PuntoEntregaID = @PuntoEntregaID
 	END
 END
+
 

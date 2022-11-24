@@ -1,9 +1,4 @@
-﻿
- USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MPY_AprobadoresFacturaPO
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 06/11/2018
 -- Description:	Consultar los aprobadores de factura

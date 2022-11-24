@@ -1,13 +1,4 @@
-﻿use Petrovendor 
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_NC_Documento_AgregarReferencia'
-)
-    DROP PROCEDURE SP_NC_Documento_AgregarReferencia;
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel AC  
 -- Create date: 27/04/2018  
 -- Description: Agregar referencia a  documentos   

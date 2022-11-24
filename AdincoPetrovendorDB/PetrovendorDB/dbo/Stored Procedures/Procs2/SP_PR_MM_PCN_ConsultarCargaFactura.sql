@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_PR_MM_PCN_ConsultarCargaFactura
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 08-08-17
 -- Description:	Consulta Aceptaciones que tengan una carta de contenido nacional aprobada para adjuntarle una factura

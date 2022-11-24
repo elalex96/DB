@@ -8,7 +8,7 @@
     [FechaEvaluacion]       DATETIME       NULL,
     [ModificadoEl]          DATETIME       NULL,
     [ModificadoPor]         INT            NULL,
-    CONSTRAINT [PK_DG_EvaluacionEstrellas_Proveedor] PRIMARY KEY CLUSTERED ([IdEvaluacionProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_DG_EvaluacionEstrellas_Proveedor] PRIMARY KEY CLUSTERED ([IdEvaluacionProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_DG_EvaluacionComercial_Proveedor_S_Proveedor] FOREIGN KEY ([IdProveedorEvaluado]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_DG_EvaluacionComercial_Proveedor_S_Proveedor1] FOREIGN KEY ([IdProveedorEvaluador]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_DG_EvaluacionComercial_Proveedor_S_Usuario] FOREIGN KEY ([IdUsuarioEvaluador]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])

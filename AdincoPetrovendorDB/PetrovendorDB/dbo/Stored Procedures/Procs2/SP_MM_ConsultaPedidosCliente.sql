@@ -1,20 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_ConsultaPedidosCliente'
-)
-    DROP PROCEDURE SP_MM_ConsultaPedidosCliente;
-GO
-
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosCliente]    Script Date: 07/11/2022 05:05:58 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Update: 08-10-2020
 -- Description:	Revisión issue #759/Se agrego filtro pedido (2-Mercadeo, 4-AD, 6-OT)
@@ -157,6 +141,8 @@ BEGIN
         FROM MM_Pedido AS P (NOLOCK)
             JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido = PD.IdPedido
+				AND ISNULL(P.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
+				AND ISNULL(P.Cerrado, 0) = 0 --> PEDIDOS NO CERRADOS
             JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
             JOIN MM_PeticionOferta AS PO  (NOLOCK)
@@ -165,6 +151,8 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             JOIN TA_Operacion AS O  (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
+				AND O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             JOIN TA_Prioridad AS PR  (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             JOIN TA_Vencimiento AS V  (NOLOCK)
@@ -379,6 +367,8 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
+				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -486,6 +476,8 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
+				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -600,6 +592,8 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
+				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -713,7 +707,9 @@ BEGIN
             INNER JOIN S_Proveedor AS PV  (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor
             INNER JOIN TA_Operacion AS O  (NOLOCK)
-                ON P.IdSolicitudPedido=O.IdDocumento 
+                ON P.IdSolicitudPedido=O.IdDocumento
+				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR  (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V  (NOLOCK)
@@ -822,6 +818,8 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                 ON P.IdSubcontratista=PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido=O.IdDocumento
+				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -945,7 +943,9 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
             INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor 
             INNER JOIN TA_Operacion AS O (NOLOCK)
-                ON P.IdSolicitudPedido=O.IdDocumento 
+                ON P.IdSolicitudPedido=O.IdDocumento
+				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -1072,6 +1072,8 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                 ON P.IdSubcontratista=PV.IdProveedor 
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON  P.IdSolicitudPedido=O.IdDocumento
+				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON  O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)

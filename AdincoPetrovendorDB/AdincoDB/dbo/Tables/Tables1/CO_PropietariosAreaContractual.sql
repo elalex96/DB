@@ -10,7 +10,7 @@
     [Telefono]          NVARCHAR (15)  NULL,
     [Direccion]         NVARCHAR (250) NULL,
     [MontoRenta]        MONEY          NULL,
-    CONSTRAINT [PK_CO_PropietariosAreaContractual] PRIMARY KEY CLUSTERED ([IdPropietario] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_PropietariosAreaContractual] PRIMARY KEY CLUSTERED ([IdPropietario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_PropietariosAreaContractual_CO_AreaContractual] FOREIGN KEY ([IdAreaContractual]) REFERENCES [dbo].[CO_AreaContractual] ([IdAreaContractual])
 );
 

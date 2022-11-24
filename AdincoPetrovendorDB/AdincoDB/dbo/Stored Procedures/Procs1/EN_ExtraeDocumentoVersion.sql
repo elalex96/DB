@@ -1,8 +1,4 @@
-USE ADINCO
-GO
-DROP PROCEDURE IF EXISTS EN_ExtraeDocumentoVersion
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20/05/28
 -- Description:	Extrae los documentos que fueron enviados de acuerdo a la version

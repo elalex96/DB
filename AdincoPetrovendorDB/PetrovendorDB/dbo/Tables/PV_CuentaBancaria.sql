@@ -11,7 +11,7 @@
     [TipoCuentaInterbancaria] INT           NULL,
     [EstadoCuentaDelBanco]    INT           NULL,
     [IsEliminado]             BIT           NULL,
-    CONSTRAINT [PK_S_CuentaBancaria] PRIMARY KEY CLUSTERED ([DatoBancarioID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_CuentaBancaria] PRIMARY KEY CLUSTERED ([DatoBancarioID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PV_CuentaBancaria_PV_TipoCuentaInterbancaria] FOREIGN KEY ([TipoCuentaInterbancaria]) REFERENCES [dbo].[PV_TipoCuentaInterbancaria] ([IdTipoCuentaInterbancaria]),
     CONSTRAINT [FK_S_CuentaBancaria_PV_Banco] FOREIGN KEY ([BancoID]) REFERENCES [dbo].[PV_Banco] ([BancoID]),
     CONSTRAINT [FK_S_CuentaBancaria_PV_TipoMoneda] FOREIGN KEY ([TipoMonedaID]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda]),

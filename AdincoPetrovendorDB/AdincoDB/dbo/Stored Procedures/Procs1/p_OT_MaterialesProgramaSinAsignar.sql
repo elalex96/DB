@@ -29,5 +29,3 @@ GROUP BY OT_Solicitud.IdOTSolicitud,
          SC_Materiales.DescripcionCorta,
          OT_SolicitudMaterial.IdOTSolicitudMaterial,
          MM_Maestro.IdMaestro
-GO
-

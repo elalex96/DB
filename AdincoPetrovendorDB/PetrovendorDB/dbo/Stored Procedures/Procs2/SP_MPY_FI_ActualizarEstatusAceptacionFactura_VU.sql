@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MPY_FI_ActualizarEstatusAceptacionFactura_VU
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 21-06-2018
 -- Description:	Permite agregar un condicion a un flujo de tareas

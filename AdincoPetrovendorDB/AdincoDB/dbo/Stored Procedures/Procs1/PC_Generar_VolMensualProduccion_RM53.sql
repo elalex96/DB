@@ -227,7 +227,7 @@ INSERT INTO #PC_VolumenProduccionPeriodo
     VolumenMetanoC1ContratistaCompensacion,
     VolumenEtanoC2ContratistaCompensacion,
     VolumenPropanoC3ContratistaCompensacion,
-VolumenButanoC4ContratistaCompensacion,
+	VolumenButanoC4ContratistaCompensacion,
     VolumenCondensadosContratistaCompensacion,
     VolumenPetroleoEstadoCompensacion,
     VolumenMetanoC1EstadoCompensacion,
@@ -340,7 +340,7 @@ INSERT INTO #PC_RM
     CompensacionVolSaldoAcumuladoContratistaC1,
     CompensacionVolSaldoAcumuladoContratistaC2,
     CompensacionVolSaldoAcumuladoContratistaC3,
- CompensacionVolSaldoAcumuladoContratistaC4,
+	CompensacionVolSaldoAcumuladoContratistaC4,
     CompensacionVolSaldoAcumuladoContratistaCondensado,
     CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo,
     CompensacionVolNuevoSaldoAcumuladoEstadoC1,
@@ -515,8 +515,10 @@ BEGIN
 		END		AS [Comp_Vol. Oper],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo
 		END		AS [FINAL Comp_Vol. Oper],
 
@@ -525,8 +527,10 @@ BEGIN
 		END		AS [Comp_Vol. Estado],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo
 		END		AS [FINAL Comp_Vol. Estado],
 
@@ -535,8 +539,10 @@ BEGIN
 		END		AS	[Total Vol_Oper],
 
 		(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) + CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo
 		END		AS	[NVO Total Vol_Oper],
 
@@ -545,8 +551,10 @@ BEGIN
 		END		AS	[Total Vol_Estado],
 
 		(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) + CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo
 		END		AS	[NVO Total Vol_Estado],
 
@@ -666,8 +674,10 @@ BEGIN
 		END		AS [Comp_Vol. Oper C1],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1 > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1 > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1
 		END		AS [FINAL Comp_Vol. Oper C1],
 
@@ -677,8 +687,10 @@ BEGIN
 		END		AS [Comp_Vol. Oper C2],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2 > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2) > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2 > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2) > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2
 		END		AS [FINAL Comp_Vol. Oper C2],
 
@@ -687,8 +699,10 @@ BEGIN
 		END		AS [Comp_Vol. Oper C3],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3 > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3) > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3 > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3) > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3
 		END		AS [FINAL Comp_Vol. Oper C3],
 
@@ -697,8 +711,10 @@ BEGIN
 		END		AS [Comp_Vol. Oper C4],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4 > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4) > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4 > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4) > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4
 		END		AS [FINAL Comp_Vol. Oper C4],
 
@@ -718,8 +734,10 @@ BEGIN
 		END		AS [Comp_Vol. Estado C1],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1 > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1 > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoC1
 		END		AS [FINAL Comp_Vol. Estado C1],
 
@@ -807,8 +825,10 @@ BEGIN
 		END		AS [Comp_Vol. Oper],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado
 		END		AS [FINAL Comp_Vol. Oper],
 
@@ -817,8 +837,10 @@ BEGIN
 		END		AS [Comp_Vol. Estado],
 
 		CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado
 		END		AS [FINAL Comp_Vol. Estado],
 
@@ -827,8 +849,10 @@ BEGIN
 		END		AS	[Total Vol_Oper],
 
 		(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) + CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado
 		END		AS	[Nvo Total Vol_Oper],
 
@@ -837,8 +861,10 @@ BEGIN
 		END		AS	[Total Vol_Estado],
 
 		(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) + CASE WHEN RM.Id = 1 THEN 0
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+			THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+			WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+			THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 			ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado
 		END		AS	[NVO Total Vol_Estado],
 		CASE WHEN T.Total_Produccion_Condensado = 0 THEN 0 ELSE
@@ -874,6 +900,9 @@ BEGIN
 	CROSS JOIN
 		#Totales	T
 END
+
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101', '2022-04-01', '2022-05-01', '2022-06-01')
+	SELECT @FechaLimite = '20221001 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()
@@ -927,8 +956,10 @@ BEGIN
 			RM.CompensacionVolSaldoAcumuladoContratistaC4,
 			RM.CompensacionVolSaldoAcumuladoContratistaCondensado,
 			CASE 
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo
 			END		AS [CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo],
 			CASE 
@@ -953,39 +984,49 @@ BEGIN
 			END		AS [CompensacionVolNuevoSaldoAcumuladoEstadoC4],
 
 			CASE WHEN RM.Id = 1 THEN 0
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado
 			END		AS [CompensacionVolNuevoSaldoAcumuladoEstadoCondensado],
 			CASE 
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo],
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1 > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC1],
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2 > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2) > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2) > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC2],
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3 > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3) > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3) > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC3],
 
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4 > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4) > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4) > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC4],
 			CASE 
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado
 			END	AS [CompensacionVolNuevoSaldoAcumuladoContratistaCondensado],
 			CASE WHEN ND.NuevaDistribucionEstadoPetroleo = 100 THEN ND.NuevaDistribucionEstadoCondensado ELSE ND.NuevaDistribucionEstadoPetroleo END	AS [NuevaDistribucionProvisionalEstado],
@@ -1179,8 +1220,10 @@ BEGIN
 			RM.CompensacionVolSaldoAcumuladoContratistaC4,
 			RM.CompensacionVolSaldoAcumuladoContratistaCondensado,
 			CASE 
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo
 			END		AS [CompensacionVolNuevoSaldoAcumuladoEstadoPetroleo],
 			CASE 
@@ -1205,39 +1248,49 @@ BEGIN
 			END		AS [CompensacionVolNuevoSaldoAcumuladoEstadoC4],
 
 			CASE WHEN RM.Id = 1 THEN 0
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoEstadoCondensado
 			END		AS [CompensacionVolNuevoSaldoAcumuladoEstadoCondensado],
 			CASE 
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo) > (VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.VolumenPetroleoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaPetroleo],
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1 > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1) > (VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.MetanoC1 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC1
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC1],
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2 > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2) > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2) > (VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.EtanoC2 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC2
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC2],
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3 > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3) > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3) > (VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.PropanoC3 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC3
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC3],
 
 			CASE 
 				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4 > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4) > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4) > (VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.ButanoC4 * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaC4
 			END		AS [CompensacionVolNuevoSaldoAcumuladoContratistaC4],
 			CASE 
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
-				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado>0 AND RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100)) 
+				THEN (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalEstado/100))
+				WHEN RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado<0 AND ABS(RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado) > (VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100)) 
+				THEN -(VP.VolumenCondensadoPuntoMedicion * (RM.NuevaDistribucionProvisionalContratista/100))
 				ELSE RM.CompensacionVolNuevoSaldoAcumuladoContratistaCondensado
 			END	AS [CompensacionVolNuevoSaldoAcumuladoContratistaCondensado],
 			CASE WHEN ND.NuevaDistribucionEstadoPetroleo = 100 THEN ND.NuevaDistribucionEstadoCondensado ELSE ND.NuevaDistribucionEstadoPetroleo END	AS [NuevaDistribucionProvisionalEstado],
@@ -1369,5 +1422,3 @@ BEGIN
 	END
 END
 END
-
-

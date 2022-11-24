@@ -8,6 +8,6 @@
     [DescripcionHijo]  NVARCHAR (MAX) NULL,
     [Activo]           BIT            NULL,
     [CreadoPor]        INT            NULL,
-    CONSTRAINT [PK_MM_Maquilados] PRIMARY KEY CLUSTERED ([IdMaquilado] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_Maquilados] PRIMARY KEY CLUSTERED ([IdMaquilado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

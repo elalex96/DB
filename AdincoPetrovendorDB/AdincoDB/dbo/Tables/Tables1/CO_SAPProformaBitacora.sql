@@ -14,7 +14,7 @@
     [ModificadoPor]     INT           NULL,
     [IdSAPGR]           INT           NULL,
     [IdSAPSES]          INT           NULL,
-    PRIMARY KEY CLUSTERED ([id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SAPProformaBitacora_SAPGRData] FOREIGN KEY ([IdSAPGR]) REFERENCES [dbo].[CO_SAPGRData] ([IdSAPGR]),
     CONSTRAINT [FK_SAPProformaBitacora_SAPSESData] FOREIGN KEY ([IdSAPSES]) REFERENCES [dbo].[CO_SAPSESData] ([IdSAPSES])
 );

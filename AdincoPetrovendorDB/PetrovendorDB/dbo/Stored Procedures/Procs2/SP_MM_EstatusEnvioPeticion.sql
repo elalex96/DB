@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <05/02/2020>
 -- Description:	<Consulta de estatus de peticion oferta>
@@ -8,7 +8,7 @@
 -- Create date: <23/03/2021>
 -- Description:	<Se agregan los datos de comprador asignado y fecha de envio de la peticion oferta>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_EstatusEnvioPeticion] 
+CREATE PROCEDURE [dbo].[SP_MM_EstatusEnvioPeticion] 
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT
 AS

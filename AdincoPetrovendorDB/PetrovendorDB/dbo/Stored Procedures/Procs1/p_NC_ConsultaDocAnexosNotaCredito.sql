@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS p_NC_ConsultaDocAnexosNotaCredito
-go
--- =============================================
+﻿-- =============================================
 -- Author:	Luis David De La Cruz 
 -- Create date: 11/11/19
 -- Description:	<Consulta para los documentos de soporte de recepcion de nota de credito.>

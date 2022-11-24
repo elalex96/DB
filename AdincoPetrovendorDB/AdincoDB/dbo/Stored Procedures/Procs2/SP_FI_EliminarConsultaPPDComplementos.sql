@@ -3,7 +3,7 @@
 -- Create date: 25-08-2021
 -- Description:	Eliminar FI_ControlPPDComplementos por Id principal
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_EliminarConsultaPPDComplementos]
+CREATE PROCEDURE [dbo].[SP_FI_EliminarConsultaPPDComplementos] 
 -- ============================================= 
 @IdControlPPDC   INT,
 @IdContrato      INT, 

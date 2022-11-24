@@ -26,6 +26,7 @@ AS
           IdContrato, 
           SIPAC
          )
+				--EPT ligadas a facturas PUE
                 SELECT EPT.IdEstudioPrecioTransfer, 
                        EPT.IdContrato, 
                        ROW_NUMBER() OVER(ORDER BY EPT.IdEstudioPrecioTransfer) AS SIPAC
@@ -38,6 +39,7 @@ AS
                      JOIN dbo.CO_Presupuesto P ON P.IdPresupuesto = L.IdPresupuesto
                      JOIN dbo.FI_TransferFactura TF ON TF.IdFactura = F.IdFactura
                      JOIN dbo.FI_Transfer T ON T.IdTransferencia = TF.IdTransfer
+											   AND F.IdDocFacturacionSIPAC IS NOT NULL
                 WHERE C.IdContrato = @Contrato
                       AND R.IdEstado = 10004
                       AND EPT.FechaCargaSIPAC = @Mes
@@ -47,9 +49,9 @@ AS
                 --AND P.IdPresupuesto = @IdPresupuesto
                 GROUP BY EPT.IdEstudioPrecioTransfer, 
                          EPT.IdContrato;
-         --
-         DECLARE @maxid INT;
-         SELECT @maxid = MAX(SIPAC)
+         --EPT ligadas a facturas PPD /*Ya no aplica a partir de EPT 2020*/
+         DECLARE @maxid INT = 0;
+         /*SELECT @maxid = MAX(SIPAC)
          FROM #EstudiosTransfer;
          --
          INSERT INTO #EstudiosTransfer
@@ -73,6 +75,7 @@ AS
                      JOIN dbo.FI_TransferFactura TF ON TF.IdFactura = FCP.IdFactura
                      JOIN dbo.FI_Transfer T ON T.IdTransferencia = TF.IdTransfer
                                                AND FCP.IdContrato = T.IdContrato
+											   AND F.IdDocFacturacionSIPAC IS NOT NULL
                 WHERE C.IdContrato = @Contrato
                       AND R.IdEstado = 10004
                       AND EPT.FechaCargaSIPAC = @Mes
@@ -81,8 +84,8 @@ AS
                       AND F.IdEstudioPrecioTransfer IS NOT NULL
                 --AND P.IdPresupuesto = @IdPresupuesto
                 GROUP BY EPT.IdEstudioPrecioTransfer, 
-                         EPT.IdContrato;
-         --
+                         EPT.IdContrato;*/
+         --EPT ligado a Pedimentos de Importación o Complemento de Proveedor Extranjero
          SELECT @maxid = MAX(SIPAC)
          FROM #EstudiosTransfer;
          --
@@ -104,12 +107,48 @@ AS
                      JOIN dbo.FI_TransferFactura TF ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante
                      JOIN dbo.FI_Transfer T ON T.IdTransferencia = TF.IdTransfer
                                                AND PC.IdContrato = T.IdContrato
+											   AND PC.IdDocFacturacionSIPAC IS NOT NULL
                 WHERE C.IdContrato = @Contrato
                       AND R.IdEstado = 10004
                       AND EPT.FechaCargaSIPAC = @Mes
                       AND R.CvTipoDocFacturacion IN(2, 3)
                      AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
                      AND PC.IdEstudioPrecioTransfer IS NOT NULL
+                --AND P.IdPresupuesto = @IdPresupuesto
+                GROUP BY EPT.IdEstudioPrecioTransfer, 
+                         EPT.IdContrato;
+         --EPT ligado al Complemento de Pago de la factura PPD principal relacionado al gasto
+		 SELECT @maxid = MAX(SIPAC)
+         FROM #EstudiosTransfer;
+         --
+         INSERT INTO #EstudiosTransfer
+         (IdEstudioPrecioTransfer, 
+          IdContrato, 
+          SIPAC
+         )
+                SELECT EPT.IdEstudioPrecioTransfer, 
+                       EPT.IdContrato, 
+                       ROW_NUMBER() OVER(ORDER BY EPT.IdEstudioPrecioTransfer) + ISNULL(@maxid, 0) AS SIPAC
+				FROM dbo.FI_EstudioPreciosTransfer EPT
+		   			 JOIN dbo.FI_Factura F ON F.IdEstudioPrecioTransfer = EPT.IdEstudioPrecioTransfer
+					 JOIN dbo.FI_ComplementoDePago CP ON CP.IdFactura = F.IdFactura
+					 JOIN dbo.FI_CPDocRelacionado DR ON CP.IdComplementoDePago = DR.IdComplementoDePago
+					 JOIN dbo.FI_Factura FDR ON FDR.UUID = DR.IdDocumento
+					 JOIN dbo.CO_Contrato C ON C.IdContrato = EPT.IdContrato
+					 JOIN dbo.CO_Contratista CC ON CC.IdContratista = C.IdContratista
+					 JOIN dbo.CO_Registro R ON R.IdFactura = FDR.IdFactura
+					 JOIN dbo.CO_LineaPresupuestoMes L ON L.IdLineaPresupuestoMes = R.IdPrograma
+					 JOIN dbo.CO_Presupuesto P ON P.IdPresupuesto = L.IdPresupuesto
+					 JOIN dbo.FI_TransferFactura TF ON TF.IdFactura = F.IdFactura
+					 JOIN dbo.FI_Transfer T ON T.IdTransferencia = TF.IdTransfer
+											   AND F.IdContrato = T.IdContrato
+											   AND F.IdDocFacturacionSIPAC IS NOT NULL
+                WHERE C.IdContrato = @Contrato
+                      AND R.IdEstado = 10004
+                      AND EPT.FechaCargaSIPAC = @Mes
+                      AND R.CvTipoDocFacturacion = 1
+                     AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
+                     AND F.IdDocFacturacionSIPAC IS NOT NULL
                 --AND P.IdPresupuesto = @IdPresupuesto
                 GROUP BY EPT.IdEstudioPrecioTransfer, 
                          EPT.IdContrato;

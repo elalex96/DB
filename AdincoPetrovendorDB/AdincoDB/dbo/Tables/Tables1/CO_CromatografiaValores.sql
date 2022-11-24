@@ -36,9 +36,9 @@
     [PrecioUnitarioCondensadoDLS] FLOAT (53) NULL,
     [H2O]                         FLOAT (53) NULL,
     [O2]                          FLOAT (53) NULL,
-    [TemperaturaPrecioPetroleo] FLOAT NULL, 
-    [TemperaturaPrecioCondensado] FLOAT NULL, 
-    CONSTRAINT [PK_CO_CromatografiaValores_1] PRIMARY KEY CLUSTERED ([IdCromatografiaValor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [TemperaturaPrecioPetroleo]   FLOAT (53) NULL,
+    [TemperaturaPrecioCondensado] FLOAT (53) NULL,
+    CONSTRAINT [PK_CO_CromatografiaValores_1] PRIMARY KEY CLUSTERED ([IdCromatografiaValor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_CromatografiaValores_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_CromatografiaValores_AP_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_CromatografiaValores_CO_Cromatografia] FOREIGN KEY ([IdCromatografia]) REFERENCES [dbo].[CO_Cromatografia] ([IdCromatografia]),
@@ -48,5 +48,5 @@
 
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [IX_CO_CromatografiaValores]
-    ON [dbo].[CO_CromatografiaValores]([IdCromatografia] ASC, [IdPuntoEntregaContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[CO_CromatografiaValores]([IdCromatografia] ASC, [IdPuntoEntregaContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

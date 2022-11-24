@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[FI_SP_DescargarPDFComplemento]    Script Date: 07/12/2021 06:05:54 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <04-12-2018>
 -- Description:	<Se consultan los datos para la descarga del PDF Complemento>
@@ -16,7 +9,7 @@ GO
 -- =============================================
 -- 08/12/2021 MC buscar PDF complemento en Adinco y Petrovendor ISSUE 1509 petrovendor
 -- =============================================
-ALTER PROCEDURE [dbo].[FI_SP_DescargarPDFComplemento] --72540
+CREATE PROCEDURE [dbo].[FI_SP_DescargarPDFComplemento] --72540
 	@IdFacturaComplemento INT,
 	/*---------------------Parametros contrato---------------------*/
 	@IdContrato INT = NULL,

@@ -14,7 +14,7 @@
     [VendorAccountGroup] VARCHAR (10)  NULL,
     [Activo]             BIT           NULL,
     [KeyLastImport]      VARCHAR (50)  NULL,
-    CONSTRAINT [PK_CO_MapeoInterfazVendor] PRIMARY KEY CLUSTERED ([VendorIDSAP] ASC, [IdContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_MapeoInterfazVendor] PRIMARY KEY CLUSTERED ([VendorIDSAP] ASC, [IdContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_MapeoInterfazVendor_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

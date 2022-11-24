@@ -11,7 +11,7 @@
     [ImpPagado]           MONEY          NULL,
     [NumParcialidad]      INT            NULL,
     [TipoDeCambioDR]      FLOAT (53)     NULL,
-    CONSTRAINT [PK_FI_CPDocRelacionado] PRIMARY KEY CLUSTERED ([IdDocRelacionado] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_CPDocRelacionado] PRIMARY KEY CLUSTERED ([IdDocRelacionado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_CPDocRelacionado_FI_ComplementoDePago] FOREIGN KEY ([IdComplementoDePago]) REFERENCES [dbo].[FI_ComplementoDePago] ([IdComplementoDePago])
 );
 

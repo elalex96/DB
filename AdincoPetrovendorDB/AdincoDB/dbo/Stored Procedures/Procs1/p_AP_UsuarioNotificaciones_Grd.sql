@@ -1,5 +1,5 @@
 ﻿-- p_AP_UsuarioNotificaciones_Grd 10,3
-create proc p_AP_UsuarioNotificaciones_Grd
+CREATE proc p_AP_UsuarioNotificaciones_Grd
 @pUsuarioId int,
 @pContratoId int
 as

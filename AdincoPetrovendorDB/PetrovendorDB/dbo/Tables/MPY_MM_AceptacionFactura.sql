@@ -23,7 +23,7 @@
     [RegistroSAP]         BIT            NULL,
     [CuentaContable]      VARCHAR (50)   NULL,
     [CuentaCSH]           VARCHAR (50)   NULL,
-    CONSTRAINT [PK_MPY_MM_AceptacionFactura] PRIMARY KEY CLUSTERED ([IdAceptacionFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MPY_MM_AceptacionFactura] PRIMARY KEY CLUSTERED ([IdAceptacionFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MPY_MM_AceptacionFactura_MM_AceptacionPedido] FOREIGN KEY ([IdEstatus]) REFERENCES [dbo].[S_TipoValidacionDoc] ([IdTipoValidacionDoc]),
     CONSTRAINT [FK_MPY_MM_AceptacionFactura_MM_AceptacionPedido1] FOREIGN KEY ([IdAceptacionPedido]) REFERENCES [dbo].[MPY_MM_AceptacionPedido] ([IdAceptacionPedido]),
     CONSTRAINT [FK_MPY_MM_AceptacionFactura_S_TipoValidacionDoc] FOREIGN KEY ([IdEstatusPDF]) REFERENCES [dbo].[S_TipoValidacionDoc] ([IdTipoValidacionDoc]),

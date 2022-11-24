@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_ADM_DescargarDocumentosS3
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 18/09/2018
 -- Description:	Descarga de los documentos cargados en procura Tipo Documento (ADM_TipoDocumentosS3)
@@ -116,4 +114,3 @@ AS
 			END
 
 	END
-

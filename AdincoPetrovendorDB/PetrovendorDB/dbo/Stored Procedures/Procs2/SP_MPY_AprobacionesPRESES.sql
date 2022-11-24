@@ -1,8 +1,8 @@
-﻿----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿
 -- [SP_MPY_AprobacionesPRESES] 'MSU150922EYA', 0
 CREATE PROCEDURE [dbo].[SP_MPY_AprobacionesPRESES] --'OSS1608267811',0
-	@RFCProveedor VARCHAR(50),
-	@IdEstatus INT
+	@RFCProveedor	VARCHAR(50),
+	@IdEstatus		INT
 AS
 BEGIN
 	SET NOCOUNT ON;
@@ -18,7 +18,7 @@ BEGIN
 	SES NVARCHAR(50),
 	ComentarioInterno NVARCHAR(MAX)
 	);
-
+	
 	--DECLARE @IDCONTRATO INT = (SELECT 
 	--									SCP.IdContrato 
 	--								FROM Adinco.dbo.CO_Contrato AS SCP
@@ -439,5 +439,6 @@ BEGIN
 	SELECT * 
 	FROM #PRESE
 	ORDER BY FechaCarga DESC;
-
+	
 END
+

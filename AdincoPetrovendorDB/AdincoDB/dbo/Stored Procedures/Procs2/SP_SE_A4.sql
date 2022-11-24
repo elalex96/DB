@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -14,10 +13,6 @@
 -- Create date:		13 de Abril del 2022
 -- Description:		se Actualiza el stored procedure para mostrar el nuevo catalogo 
 --					de mano de obra y para tomar en cuenta gastos con PCN >=0 (issue 1890 adinco)
--- ============================================
--- Modificado Por:	Reyna 
--- Create date:		28 de Abril del 2022
--- Description:		Manda a llamar el nuevo sp para contratos de murphy
 -- ============================================
 
 CREATE PROCEDURE [dbo].[SP_SE_A4]--10038,10109,0,'20210101','20211201',10195,'Exploración'

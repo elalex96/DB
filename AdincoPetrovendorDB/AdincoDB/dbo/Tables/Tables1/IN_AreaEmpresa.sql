@@ -7,7 +7,7 @@
     [ModificadoPor] INT          NULL,
     [ModificadoEl]  DATETIME     NULL,
     [Activo]        BIT          NULL,
-    CONSTRAINT [PK__IN_AreaE__47C266E56F369BDD] PRIMARY KEY CLUSTERED ([idAreaEmpresa] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK__IN_AreaE__47C266E56F369BDD] PRIMARY KEY CLUSTERED ([idAreaEmpresa] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [fk_AreaEmpresaContratista] FOREIGN KEY ([idContratista]) REFERENCES [dbo].[CO_Contratista] ([IdContratista])
 );
 

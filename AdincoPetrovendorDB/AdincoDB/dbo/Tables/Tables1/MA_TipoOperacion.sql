@@ -9,6 +9,6 @@
     [IsEliminado]      INT            NULL,
     [IdSubcontratista] INT            NULL,
     [Activo]           BIT            NULL,
-    CONSTRAINT [PK_MA_TipoOperacion] PRIMARY KEY CLUSTERED ([IdTipoOperacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MA_TipoOperacion] PRIMARY KEY CLUSTERED ([IdTipoOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

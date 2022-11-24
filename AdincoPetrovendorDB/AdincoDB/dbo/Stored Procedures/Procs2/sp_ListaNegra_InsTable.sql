@@ -1,4 +1,4 @@
-﻿CREATE proc [dbo].[sp_ListaNegra_InsTable]
+﻿create proc [dbo].[sp_ListaNegra_InsTable]
 (
 	@tbl	ListaNegraTable readonly
 )

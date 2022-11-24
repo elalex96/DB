@@ -6,6 +6,6 @@
     [FechaSolicitud]          DATETIME NULL,
     [FechaEvaluacion]         DATETIME NULL,
     [UsuarioAprobador]        INT      NULL,
-    CONSTRAINT [PK_MM_Solicitud_ExclucionCN] PRIMARY KEY CLUSTERED ([IdAprobacionExclucionCN] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_Solicitud_ExclucionCN] PRIMARY KEY CLUSTERED ([IdAprobacionExclucionCN] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

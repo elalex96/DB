@@ -16,6 +16,6 @@
     [NumeroPolizaContable]     INT            NULL,
     [Intereses]                MONEY          NULL,
     [PDF]                      NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_FI_Transfer] PRIMARY KEY CLUSTERED ([IdTransferencia] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_Transfer] PRIMARY KEY CLUSTERED ([IdTransferencia] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

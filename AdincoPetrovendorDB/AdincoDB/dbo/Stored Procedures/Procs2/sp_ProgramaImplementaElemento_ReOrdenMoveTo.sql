@@ -47,5 +47,3 @@ begin
 	inner join #tmpOrden tmp on tmp.IdProgramaImplementaElemento = a.IdProgramaImplementaElemento
 	
 end
-
-

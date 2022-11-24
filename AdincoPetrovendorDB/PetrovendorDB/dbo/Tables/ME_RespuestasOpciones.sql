@@ -3,7 +3,7 @@
     [IdPregunta]           INT           NOT NULL,
     [Respuesta]            VARCHAR (MAX) NOT NULL,
     [Valor]                FLOAT (53)    NOT NULL,
-    CONSTRAINT [PK_ME_RespuestasOpciones] PRIMARY KEY CLUSTERED ([IdRespuestasOpciones] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ME_RespuestasOpciones] PRIMARY KEY CLUSTERED ([IdRespuestasOpciones] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ME_RespuestasOpciones_ME_Preguntas] FOREIGN KEY ([IdPregunta]) REFERENCES [dbo].[ME_Preguntas] ([IdPregunta])
 );
 

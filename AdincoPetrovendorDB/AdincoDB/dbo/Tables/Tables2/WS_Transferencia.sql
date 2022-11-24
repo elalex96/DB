@@ -24,6 +24,6 @@
     [WSFechaRegistro]          DATETIME      NULL,
     [WSError]                  VARCHAR (250) NULL,
     [TransferenciaAplicada]    BIT           NULL,
-    CONSTRAINT [PK_WS_Transfer] PRIMARY KEY CLUSTERED ([IdWSTransfer] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_WS_Transfer] PRIMARY KEY CLUSTERED ([IdWSTransfer] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

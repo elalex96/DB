@@ -11,7 +11,7 @@
     [ModificadoPor]  INT              NULL,
     [ModificadoEl]   DATETIME         NULL,
     [Privado]        BIT              NULL,
-    CONSTRAINT [PK_AWS_DocumentoENI] PRIMARY KEY CLUSTERED ([IdAWSDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AWS_DocumentoENI] PRIMARY KEY CLUSTERED ([IdAWSDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AWS_DocumentoENI_AP_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_AWS_DocumentoENI_AP_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_AWS_DocumentoENI_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])

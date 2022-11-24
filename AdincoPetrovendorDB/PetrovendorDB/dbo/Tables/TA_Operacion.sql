@@ -20,7 +20,7 @@
     [IdEstatusEliminado] INT            NULL,
     [IdEliminado]        INT            NULL,
     [IsMercadeo]         BIT            NULL,
-    CONSTRAINT [PK_TA_Operacion] PRIMARY KEY CLUSTERED ([IdOperacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_TA_Operacion] PRIMARY KEY CLUSTERED ([IdOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_TA_Operacion_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_TA_Operacion_TA_FlujoTarea] FOREIGN KEY ([IdFlujoTarea]) REFERENCES [dbo].[TA_FlujoTarea] ([IdFlujoTarea]),
     CONSTRAINT [FK_TA_Operacion_TA_Operacion] FOREIGN KEY ([IdOperacion]) REFERENCES [dbo].[TA_Operacion] ([IdOperacion]),
@@ -31,10 +31,26 @@
 GO
 CREATE NONCLUSTERED INDEX [<TA_OperacionIdEstatusOp, sysname,>]
     ON [dbo].[TA_Operacion]([IdEstatusOperacion] ASC)
-    INCLUDE([IdDocumento]) WITH (STATISTICS_NORECOMPUTE = ON);
+    INCLUDE([IdDocumento]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdTipoOperacion]
-    ON [dbo].[TA_Operacion]([IdTipoOperacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[TA_Operacion]([IdTipoOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxOperacion_IdTipoOperacion]
+    ON [dbo].[TA_Operacion]([IdTipoOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxOperacion_IdDocumento]
+    ON [dbo].[TA_Operacion]([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [<Name of Missing Index, sysname,>]
+    ON [dbo].[TA_Operacion]([IdTipoOperacion] ASC, [IdEstatusOperacion] ASC)
+    INCLUDE([IdDocumento], [NoVersion]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

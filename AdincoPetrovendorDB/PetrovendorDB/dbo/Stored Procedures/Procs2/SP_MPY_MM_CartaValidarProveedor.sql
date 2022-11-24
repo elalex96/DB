@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:	Alexander Gomez
 -- Create date: 15-06-17
 -- Description:	
@@ -8,7 +8,7 @@
 -- Create date: 18-02-21  
 -- Description: adecuacion para carta CN para DEA  
 -- =============================================  
-ALTER procedure [dbo].[SP_MPY_MM_CartaValidarProveedor] 
+CREATE procedure [dbo].[SP_MPY_MM_CartaValidarProveedor] 
 	-- Add the parameters for the stored procedure here
 @IdAceptacionPedido INT,
 @IdProveedor NVARCHAR(20) 
@@ -50,4 +50,3 @@ BEGIN
 	END;
 
 END
-

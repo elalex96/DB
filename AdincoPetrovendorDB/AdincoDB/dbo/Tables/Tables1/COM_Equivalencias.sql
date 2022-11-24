@@ -3,6 +3,6 @@
     [Unidad]         VARCHAR (5) NULL,
     [Factor]         FLOAT (53)  NULL,
     [UnidadDestino]  VARCHAR (5) NULL,
-    PRIMARY KEY CLUSTERED ([IdEquivalencia] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdEquivalencia] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

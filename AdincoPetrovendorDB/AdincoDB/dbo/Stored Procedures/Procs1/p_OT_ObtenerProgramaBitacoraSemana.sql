@@ -1,4 +1,5 @@
-﻿-- p_OT_ObtenerProgramaBitacoraSemana 1,'20180108-20180114'
+﻿
+-- p_OT_ObtenerProgramaBitacoraSemana 1,'20180108-20180114'
 Create Proc [dbo].[p_OT_ObtenerProgramaBitacoraSemana]
     @pIdOTSolicitud int,
     @pSemanaID varchar(21)
@@ -41,7 +42,4 @@ from OT_ProgramaBitacoraSemana
 where OT_ProgramaBitacoraSemana.IdOTSolicitud = @pIdOTSolicitud
       and OT_ProgramaBitacoraSemana.SemanaID = @pSemanaID
 order by OT_ProgramaBitacoraSemana.FechaRegistro desc
-
-GO
-
 

@@ -46,16 +46,16 @@
     [UpdateDiasCredito]        BIT            NULL,
     [IdCondicionPagoTemp]      INT            NULL,
     [DiasCreditoTemp]          INT            NULL,
-    CONSTRAINT [PK_MM_PeticionOfertaDetalle] PRIMARY KEY CLUSTERED ([IdPeticionOfertaDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_PeticionOfertaDetalle] PRIMARY KEY CLUSTERED ([IdPeticionOfertaDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdPeticionOferta_MM_PeticionOfertaDetalle]
-    ON [dbo].[MM_PeticionOfertaDetalle]([IdPeticionOferta] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_PeticionOfertaDetalle]([IdPeticionOferta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdSolicitudPedidoDetalle_MM_PeticionOfertaDetalle]
-    ON [dbo].[MM_PeticionOfertaDetalle]([IdSolicitudPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_PeticionOfertaDetalle]([IdSolicitudPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

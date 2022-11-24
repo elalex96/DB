@@ -1,7 +1,7 @@
 ﻿CREATE VIEW [dbo].[ReporteDeAceptaciones]
 AS
 
-/*
+
 select '' as NumeroContrato,
 '' as NombreAreaContractual,
 '' as Operadora,
@@ -19,7 +19,7 @@ getdate() as FechaRegistro,
 '' as RFC,
 '' as TipoDomicilio,
 '' as Estatus
-*/
+/*
      SELECT C.NumeroContrato,
             AC.NombreAreaContractual,
             PC.RazonSocial AS Operadora,
@@ -100,3 +100,4 @@ getdate() as FechaRegistro,
               DG.CodigoPostal,
               TDG.TipoDomicilio,
               AP.Comentario;
+*/

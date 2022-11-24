@@ -1,5 +1,4 @@
-﻿
-CREATE PROCEDURE [dbo].[EPT_RegistraImportaLayoutDetalle]
+﻿CREATE PROCEDURE [dbo].[EPT_RegistraImportaLayoutDetalle]
 	@IdContrato INT,
 	@IdUsuario INT,
 	@ArchivoImportado VARCHAR(150),
@@ -39,3 +38,4 @@ BEGIN
 	END
 	
 END;
+

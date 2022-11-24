@@ -10,7 +10,7 @@
     [ModificadoEl]  DATETIME      NULL,
     [Activo]        BIT           NULL,
     [Formula]       VARCHAR (500) NULL,
-    CONSTRAINT [PK__IN_Indic__1F4DEAEFD8F24719] PRIMARY KEY CLUSTERED ([idIndicador] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK__IN_Indic__1F4DEAEFD8F24719] PRIMARY KEY CLUSTERED ([idIndicador] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [fk_IndicadorArea] FOREIGN KEY ([idAreaEmpresa]) REFERENCES [dbo].[IN_AreaEmpresa] ([idAreaEmpresa])
 );
 

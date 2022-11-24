@@ -1,5 +1,4 @@
-﻿
-create proc [dbo].[p_OT_ObtenerArchivoProgramaAdjunto]
+﻿CREATE proc [dbo].[p_OT_ObtenerArchivoProgramaAdjunto]
 (
 	@pID int
 )
@@ -19,5 +18,3 @@ begin
 	where		pa.ID							=	@pID
 
 end
-
-

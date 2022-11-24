@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_InsLayoutWDEA]    Script Date: 23/08/2022 10:16:09 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <25/08/2021>  
@@ -15,7 +8,7 @@ GO
 -- Create date: <05/10/2022>  
 -- Description: <Se agregan los trims para wbs y mecanismo oferta>  
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_InsLayoutWDEA] 
+CREATE PROCEDURE [dbo].[SP_InsLayoutWDEA] 
 @LayoutWDEA dbo.WDEA_Layout_T_V4 READONLY,
 @Remitente NVARCHAR(100),
 @FileName NVARCHAR(500),

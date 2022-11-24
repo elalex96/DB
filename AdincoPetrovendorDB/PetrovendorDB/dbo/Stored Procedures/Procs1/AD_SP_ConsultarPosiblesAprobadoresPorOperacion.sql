@@ -1,14 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'AD_SP_ConsultarPosiblesAprobadoresPorOperacion'
-)
-DROP PROCEDURE AD_SP_ConsultarPosiblesAprobadoresPorOperacion;
-GO 
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel A Cruz  
 -- Create date: 05-04-2021  
 -- Description:  Consultar los usuarios por empresa u descartando los aprobadores actuales de la operación de entrada

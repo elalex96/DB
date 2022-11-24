@@ -1,4 +1,4 @@
-﻿Create PROCEDURE p_InsUpdEquiposAutoconsumo
+﻿CREATE PROCEDURE p_InsUpdEquiposAutoconsumo
 @pIdContrato	int,
 @pIdEquipo	int,
 @pFecha	datetime,

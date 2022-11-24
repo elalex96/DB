@@ -1,19 +1,16 @@
-USE petrovendor
-GO
-DROP TABLE IF EXISTS WDEA_PedidosPendientesCorreosConfirmacion
-GO
-CREATE TABLE WDEA_PedidosPendientesCorreosConfirmacion
-(
-	Id int primary key not null identity(1,1),
-	IdSolicitudPedido int,
-	IdOperacion int,
-	IdAprobador int,
-	Purchasing_Document varchar(300),
-	IdTarea int,
-	IdPedidoActual int,
-	IdPedidoGeneral int,
-	Procesado bit,
-	CreadoEl datetime,
-	ProcesadoEl datetime,
-	IdBitacoraLectura int
-)
+﻿CREATE TABLE [dbo].[WDEA_PedidosPendientesCorreosConfirmacion] (
+    [Id]                  INT           IDENTITY (1, 1) NOT NULL,
+    [IdSolicitudPedido]   INT           NULL,
+    [IdOperacion]         INT           NULL,
+    [IdAprobador]         INT           NULL,
+    [Purchasing_Document] VARCHAR (300) NULL,
+    [IdTarea]             INT           NULL,
+    [IdPedidoActual]      INT           NULL,
+    [IdPedidoGeneral]     INT           NULL,
+    [Procesado]           BIT           NULL,
+    [CreadoEl]            DATETIME      NULL,
+    [ProcesadoEl]         DATETIME      NULL,
+    [IdBitacoraLectura]   INT           NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+);
+

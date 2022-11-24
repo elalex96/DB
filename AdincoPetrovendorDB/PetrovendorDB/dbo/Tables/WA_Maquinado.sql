@@ -9,7 +9,7 @@
     [CreadoEl]        DATETIME   NULL,
     [ModificadoPor]   INT        NULL,
     [ModificadoEl]    DATETIME   NULL,
-    CONSTRAINT [PK_WA_Maquinado] PRIMARY KEY CLUSTERED ([IdMaquinadoPH] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_WA_Maquinado] PRIMARY KEY CLUSTERED ([IdMaquinadoPH] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_WA_Maquinado_MM_Material] FOREIGN KEY ([IdMaterialPadre]) REFERENCES [dbo].[MM_Material] ([IdMaterial]),
     CONSTRAINT [FK_WA_Maquinado_MM_Material1] FOREIGN KEY ([IdMaterialHijo]) REFERENCES [dbo].[MM_Material] ([IdMaterial])
 );

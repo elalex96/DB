@@ -3,6 +3,6 @@
     [TipoDocumento] NVARCHAR (MAX) NULL,
     [Aplicacion]    INT            NULL,
     [Descripcion]   NVARCHAR (MAX) NULL,
-    PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

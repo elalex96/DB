@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]    Script Date: 22/09/2022 11:02:54 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:        Marcos Neri
 -- Create date:	  20/05/2018
 -- Description:   Se agrego el contrato y el area contractual
@@ -14,7 +7,7 @@ GO
 -- Create date:	  26-07-21
 -- Description:   Se agrega columna de Bucket
 -- ============================================= 
-ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]
+CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]
 -- Add the parameters for the stored procedure here
 @IdProveedor        INT, 
 @IdUsuario          INT, 

@@ -3,6 +3,6 @@
     [Clave]            NVARCHAR (MAX) NULL,
     [Descripcion]      NVARCHAR (MAX) NULL,
     [IdClavePedimento] INT            NULL,
-    CONSTRAINT [PK_FI_ClavesPedimento] PRIMARY KEY CLUSTERED ([IdPedimento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_ClavesPedimento] PRIMARY KEY CLUSTERED ([IdPedimento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

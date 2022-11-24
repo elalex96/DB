@@ -1,8 +1,4 @@
-﻿use Adinco
-go
-drop procedure if exists EN_CambioEstadoARevision
-go
--- =============================================  
+﻿-- =============================================  
 -- Author:   Daniel AC  
 -- Update date: 20/10/2020  
 -- Description: Se agrego métodos para avance de entregable instancia EQUINOR

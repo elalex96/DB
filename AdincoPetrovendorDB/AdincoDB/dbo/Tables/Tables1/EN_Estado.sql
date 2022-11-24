@@ -6,11 +6,13 @@
     [ModificadoPor] INT            NULL,
     [ModificadoEn]  DATETIME       NULL,
     [Activo]        BIT            NULL,
-    CONSTRAINT [PK_EN_Estado] PRIMARY KEY CLUSTERED ([EstadoID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_Estado] PRIMARY KEY CLUSTERED ([EstadoID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_Estado_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_Estado_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
-go
 
-create index IX_EN_Estado				on	EN_Estado(EstadoID)
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_Estado]
+    ON [dbo].[EN_Estado]([EstadoID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

@@ -9,6 +9,6 @@
     [Visto]            BIT            NULL,
     [IdProveedor]      INT            NULL,
     [IdContrato]       INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdComentarioBase] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdComentarioBase] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

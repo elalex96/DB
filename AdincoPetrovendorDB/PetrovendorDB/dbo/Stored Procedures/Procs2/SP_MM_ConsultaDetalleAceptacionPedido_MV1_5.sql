@@ -1,16 +1,8 @@
-﻿-- =============================================
--- Author:		Daniel AC
--- Create date: 03-07-17
--- Description:	
+﻿
 -- =============================================
--- Author:		Alexander Gomez
--- Create date: 27/08/2019
--- Description:	Agregado de la instalacion en los detalles del material
--- =============================================
--- =============================================
--- Author:           Daniel AC
--- Create date: 29-11-2019
--- Description: Add Marca, Modelo, No Parte a Descripción material , Add Linea presupuesto mes 
+-- Author: Daniel AC
+-- Create date: 05-01-2021
+-- Description: Se agrego infromación del yacimiento en la descripción del material
 -- =============================================
 
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaDetalleAceptacionPedido_MV1_5] --442
@@ -34,10 +26,14 @@ AS
          NombrePresupuesto  NVARCHAR(MAX), 
          AC_PRESUP_MES      DATE
         );
+
         DECLARE @LineaPresupuesto NVARCHAR(MAX), @IdPedido INT;
+
         SELECT @IdPedido = IdPedido
         FROM dbo.MM_AceptacionPedido
         WHERE IdAceptacionPedido = @IdAceptacionPedido;
+
+
         INSERT INTO @LineasPresupuesto
         (IdLineaPresupuesto, 
          IdActividad, 
@@ -74,10 +70,14 @@ AS
                     LEFT JOIN Adinco.dbo.CO_TareaPetrolera tp ON tp.IdTareaPetrolera = lpm.IdTareaPetrolera
                     LEFT JOIN Adinco.dbo.CO_Servicio s ON s.IdServicio = lpm.IdServicio
                     LEFT JOIN Adinco.dbo.CO_Presupuesto AS PRS ON PRS.IdPresupuesto = lpm.IdPresupuesto
+
                WHERE P.IdPedido = @IdPedido;
+
         SELECT @LineaPresupuesto = CONCAT(NombrePresupuesto, ' | ', 'Mes Programado: ', RIGHT('00' + LTRIM(MONTH(AC_PRESUP_MES)), 2), ' ', dbo.Fn_RetornarMesEspanol(MONTH(AC_PRESUP_MES)), ' ', YEAR(AC_PRESUP_MES), ' | ', IdActividad, ' | ', Actividad, ' | ', IdSubActividad, ' | ', SubActividad, ' | ', IdTarea, ' | ', Tarea, ' | ', IdServicio, ' | ', Servicio)
         FROM @LineasPresupuesto;
-        SELECT M.IdMaterial, 
+       
+
+	    SELECT M.IdMaterial, 
                CONCAT(POD.MaterialCotizadoTextoC, ' Descripción: ', POD.MaterialCotizadoTextoL) AS DescripcionCorta, 
                U.Unidad AS NombreUnidad, 
                CONCAT(APD.Cantidad, ' / ', APD.Excedente) AS Cantidad, 
@@ -85,7 +85,7 @@ AS
                            WHEN LEN(APD.Detalle) > 0
                            THEN CONCAT(APD.Detalle, ' | ')
                            ELSE ' '
-                       END), ISNULL('Instalación: ' + INS.NombreInstalacion COLLATE Modern_Spanish_CI_AS, ' '), ' | ', ISNULL(@LineaPresupuesto, ' ')) AS Detalle
+                       END), ISNULL('Instalación: ' + INS.NombreInstalacion COLLATE Modern_Spanish_CI_AS, ' '),ISNULL(' | Yacimiento: ' + Y.NombreYacimiento COLLATE Modern_Spanish_CI_AS, ' '), ' | ', ISNULL(@LineaPresupuesto, ' ')) AS Detalle
         FROM MM_AceptacionPedidoDetalle AS APD
              LEFT JOIN MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
              LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
@@ -100,5 +100,6 @@ AS
                                                                             AND APDI.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle
              LEFT JOIN Adinco.dbo.CO_Instalacion AS INS ON INS.IdInstalacion = APDI.IdInstalacion
              LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp ON lp.IdLineaPresupuestoMes = APDI.IdLineaPresupuesto
+			 LEFT JOIN Adinco..CO_Yacimiento Y ON INS.IdYacimiento=Y.IdYacimiento
         WHERE AP.IdAceptacionPedido = @IdAceptacionPedido;
     END;

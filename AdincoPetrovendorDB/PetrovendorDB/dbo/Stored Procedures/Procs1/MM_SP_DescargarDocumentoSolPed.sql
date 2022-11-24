@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS MM_SP_DescargarDocumentoSolPed
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>

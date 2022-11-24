@@ -1,18 +1,11 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_ExtraeDatosAlertasInstancias]    Script Date: 23/11/2021 05:26:14 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
---==============================================
+﻿--==============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Crea Alertas 
 -- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb se añade (NOLOCK)
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_ExtraeDatosAlertasInstancias]
+CREATE PROCEDURE [dbo].[sp_ExtraeDatosAlertasInstancias]
 AS
     BEGIN
         DECLARE @HOY DATE;

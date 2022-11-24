@@ -11,6 +11,6 @@
     [CO2]             FLOAT (53) NULL,
     [H2S]             FLOAT (53) NULL,
     [N2]              FLOAT (53) NULL,
-    PRIMARY KEY CLUSTERED ([IdPesoMolecular] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdPesoMolecular] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

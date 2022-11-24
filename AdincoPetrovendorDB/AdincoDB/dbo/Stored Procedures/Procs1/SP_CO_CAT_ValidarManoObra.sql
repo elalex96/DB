@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_CAT_ValidarManoObra]
+﻿CREATE PROCEDURE [dbo].[SP_CO_CAT_ValidarManoObra] 
 -- ============================================= 
 @IdContrato   INT,
 @IdUsuario    INT, 

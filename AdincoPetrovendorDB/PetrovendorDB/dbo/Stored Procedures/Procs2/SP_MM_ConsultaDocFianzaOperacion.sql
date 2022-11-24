@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_MM_ConsultaDocFianzaOperacion
-GO
--- Author:		Josue Glez
+﻿-- Author:		Josue Glez
 -- Create date:  05/9/2017
 -- Description:	Obtiene documeto de fianza a partir de una solicitud de pedido en proceso de oferta
 -- Update: 09/05/2018 Daniel AC se agrega parametros de identificación en S3

@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_AWSDocumentoENIGuardar]    Script Date: 01/09/2021 06:28:11 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 23-06-2020
 -- Description:	
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_AWSDocumentoENIGuardar]
+CREATE PROCEDURE [dbo].[SP_AWSDocumentoENIGuardar]
 -- Add the parameters for the stored procedure here
 @s3Bucket    VARCHAR(500), 
 @subcarpeta  VARCHAR(500), 

@@ -30,21 +30,30 @@
     [IdAceptacionPedidoDetalle]       INT             NULL,
     [MesGasto]                        DATE            CONSTRAINT [DF_CO_Registro_MesGasto] DEFAULT (NULL) NULL,
     [ModificadoEn]                    DATE            NULL,
+    [CapexOpexEdicion]                BIT             NULL,
     [IdCatManoObra]                   INT             NULL,
-    RegistroConAjuste BIT NULL,
-    AsociadoIncrementoPMT BIT NULL,
-    Ajuste VARCHAR(2000) NULL, 
-    DescripcionPartidaServicio VARCHAR(2000) NULL,
-    OrdenServicioOrdenCompra VARCHAR(2000) NULL,
-    Partida VARCHAR(2000) NULL,
-    UnidadMedidaId INT NULL,
-    PrecioUnitario DECIMAL(18,4) NULL,
-    CantidadReal FLOAT NULL,
-    CONSTRAINT [PK_Registros] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [RegistroConAjuste]               BIT             NULL,
+    [AsociadoIncrementoPMT]           BIT             NULL,
+    [Ajuste]                          VARCHAR (2000)  NULL,
+    [DescripcionPartidaServicio]      VARCHAR (2000)  NULL,
+    [OrdenServicioOrdenCompra]        VARCHAR (2000)  NULL,
+    [Partida]                         VARCHAR (2000)  NULL,
+    [UnidadMedidaId]                  INT             NULL,
+    [PrecioUnitario]                  DECIMAL (18, 4) NULL,
+    [CantidadReal]                    FLOAT (53)      NULL,
+    CONSTRAINT [PK_Registros] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    FOREIGN KEY ([UnidadMedidaId]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
     CONSTRAINT [FK_CO_Registro_CO_CatalogoCuentaSH] FOREIGN KEY ([IdCatalogoCuentasSH]) REFERENCES [dbo].[CO_CatalogoCuentaSH] ([IdCatalogoCuentasSH]),
     CONSTRAINT [FK_CO_Registro_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante]),
+    CONSTRAINT [FK_Registros_EstadoRegistro] FOREIGN KEY ([IdEstado]) REFERENCES [dbo].[CO_EstadoRegistro] ([IdEstadoRegistro]),
     CONSTRAINT [FK_Registros_Facturas] FOREIGN KEY ([IdFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura]),
     CONSTRAINT [FK_Registros_Instalaciones] FOREIGN KEY ([IdInstalacion]) REFERENCES [dbo].[CO_Instalacion] ([IdInstalacion]),
-    CONSTRAINT [FK_Registros_Programas] FOREIGN KEY ([IdPrograma]) REFERENCES [dbo].[CO_LineaPresupuestoMes] ([IdLineaPresupuestoMes]),
-    CONSTRAINT [FK_Registros_UnidadMedida] FOREIGN KEY (UnidadMedidaId) REFERENCES PV_MM_MaterialUnidad(IdUnidad)
+    CONSTRAINT [FK_Registros_Programas] FOREIGN KEY ([IdPrograma]) REFERENCES [dbo].[CO_LineaPresupuestoMes] ([IdLineaPresupuestoMes])
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [ReporteGastosJaguar, sysname,>]
+    ON [dbo].[CO_Registro]([IdPrograma] ASC)
+    INCLUDE([IdRegistro], [IdFactura], [MontoRegistro], [InicioEjecucion], [FinEjecucion], [Comentarios], [MesPresentacion], [IdEstado], [IdUsuarioCreadoPor], [IdInstalacion], [IdPedimentoComprobante], [CvTipoDocFacturacion], [IdCatalogoCuentasSH], [IdGastoRubro], [PCN], [IdCBSISH]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

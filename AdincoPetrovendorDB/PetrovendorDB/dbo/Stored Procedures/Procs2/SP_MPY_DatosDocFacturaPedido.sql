@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_MPY_DatosDocFacturaPedido
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 21/12/2018
 -- Description:	Consulta de datos para descargar un documento de factura de pedido

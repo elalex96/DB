@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_ValidarUsuarioAdministrador]    Script Date: 26/01/2022 12:34:19 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 25/01/2022
 -- Description:	Validar si el usuario que va reiniciar es admin
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_ValidarUsuarioAdministrador]
+CREATE PROCEDURE [dbo].[SP_EN_ValidarUsuarioAdministrador]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
 	@IdContrato INT,

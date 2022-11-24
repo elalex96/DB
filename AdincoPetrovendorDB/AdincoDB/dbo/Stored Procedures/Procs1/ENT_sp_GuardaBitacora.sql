@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS ENT_sp_GuardaBitacora
-go
-CREATE PROCEDURE ENT_sp_GuardaBitacora
+﻿CREATE PROCEDURE ENT_sp_GuardaBitacora
 --===========================================
 --===========================================
 --Creado Por: Luis David

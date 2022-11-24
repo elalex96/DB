@@ -13,7 +13,7 @@
     [Comentarios]        VARCHAR (500) NULL,
     [FecMovto]           DATETIME      NULL,
     [UsuarioID]          INT           NULL,
-    CONSTRAINT [PK_SCOC_FirmaElectronica] PRIMARY KEY CLUSTERED ([IdFirma] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SCOC_FirmaElectronica] PRIMARY KEY CLUSTERED ([IdFirma] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SCOC_FirmaElectronica_AP_permiso] FOREIGN KEY ([IdPermiso]) REFERENCES [dbo].[AP_Permiso] ([IdPermiso]),
     CONSTRAINT [FK_SCOC_FirmaElectronica_AP_Usuario] FOREIGN KEY ([UsuarioID]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SCOC_FirmaElectronica_CO_CONTRATO] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])

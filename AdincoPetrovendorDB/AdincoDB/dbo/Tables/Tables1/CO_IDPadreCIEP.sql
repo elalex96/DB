@@ -14,7 +14,7 @@
     [ID_ACTIVIDAD]   FLOAT (53)     NULL,
     [IdPresupuesto]  INT            NULL,
     [CreadoPor]      INT            NULL,
-    CONSTRAINT [PK_IDPadre] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IDPadre] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_IDPadre_Presupuestos] FOREIGN KEY ([IdPresupuesto]) REFERENCES [dbo].[CO_Presupuesto] ([IdPresupuesto])
 );
 

@@ -8,7 +8,7 @@
     [ModificadoPor]       INT           NULL,
     [ModificadoEn]        DATETIME      NULL,
     [Activo]              BIT           NULL,
-    CONSTRAINT [PK_BitacoraRespaldos] PRIMARY KEY CLUSTERED ([IdBitacoraRespaldos] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_BitacoraRespaldos] PRIMARY KEY CLUSTERED ([IdBitacoraRespaldos] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CreadoPorBitacoraRespaldos] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 

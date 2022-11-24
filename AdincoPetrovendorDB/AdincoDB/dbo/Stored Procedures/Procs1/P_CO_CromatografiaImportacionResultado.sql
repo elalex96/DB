@@ -1,4 +1,5 @@
-﻿CREATE  PROCEDURE dbo.P_CO_CromatografiaImportacionResultado --'50'
+﻿
+CREATE PROCEDURE dbo.P_CO_CromatografiaImportacionResultado --'50'
  @pIdsCromatografia VARCHAR(100)
 AS
     BEGIN

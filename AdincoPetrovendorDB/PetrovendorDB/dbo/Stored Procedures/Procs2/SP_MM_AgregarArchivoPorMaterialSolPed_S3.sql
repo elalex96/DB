@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MM_AgregarArchivoPorMaterialSolPed_S3
-GO
-
+﻿
 -- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>

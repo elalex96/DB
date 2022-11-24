@@ -9,7 +9,7 @@
     [ModificadoPor]  VARCHAR (50)  NULL,
     [ModificadoEl]   DATETIME      NULL,
     [MotivoApertura] VARCHAR (250) NULL,
-    CONSTRAINT [PK_OT_ProgramaSemanaCerrada] PRIMARY KEY CLUSTERED ([IdOTSolicitud] ASC, [SemanaID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_OT_ProgramaSemanaCerrada] PRIMARY KEY CLUSTERED ([IdOTSolicitud] ASC, [SemanaID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ProgramaSemanaCerrada_OT_Solicitud] FOREIGN KEY ([IdOTSolicitud]) REFERENCES [dbo].[OT_Solicitud] ([IdOTSolicitud])
 );
 

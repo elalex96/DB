@@ -4,6 +4,6 @@
     [Activo]           BIT           NULL,
     [fechaRegistro]    DATETIME      NULL,
     [IdProveedor]      INT           NULL,
-    CONSTRAINT [PK_AP_CodActivacion] PRIMARY KEY CLUSTERED ([IdCodActivacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AP_CodActivacion] PRIMARY KEY CLUSTERED ([IdCodActivacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

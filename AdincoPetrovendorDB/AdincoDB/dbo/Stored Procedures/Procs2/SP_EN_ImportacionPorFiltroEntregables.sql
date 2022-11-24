@@ -1,10 +1,4 @@
-﻿if exists (select * from sys.procedures where name = 'SP_EN_ImportacionPorFiltroEntregables')
-begin
-	drop proc SP_EN_ImportacionPorFiltroEntregables
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/06/2021>
 -- Description:	<Consulta de entregables para importacion>
@@ -187,9 +181,9 @@ BEGIN
 					CE.IdContratoEntregable DESC
 
 		END
-		
+
 		-- SHELL
-		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131) 
+		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131, 10151, 10152) 
 		BEGIN
 			SELECT	DISTINCT 
 			--TOP 20
@@ -217,7 +211,7 @@ BEGIN
 			JOIN
 				CO_Contrato	C	(NOLOCK)
 				ON CE.IdContrato	=	C.IdContrato
-				AND C.DescripcionContrato LIKE '%SHELL%'
+				AND ( C.DescripcionContrato LIKE '%SHELL%' OR C.DescripcionContrato = 'Seguimiento Planes de Acción' OR C.DescripcionContrato = 'Purple Angel' )
 			JOIN
 				EN_EntregableRonda	ER	(NOLOCK)
 				ON	E.IdEntregable	=	ER.idEntregable
@@ -435,7 +429,7 @@ BEGIN
 			END
 
 		-- SHELL
-		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131) 
+		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131,10151, 10152) 
 		BEGIN
 			SELECT	DISTINCT 
 			--TOP 20
@@ -463,7 +457,7 @@ BEGIN
 			JOIN
 				CO_Contrato	C	(NOLOCK)
 				ON CE.IdContrato	=	C.IdContrato
-				AND C.DescripcionContrato LIKE '%SHELL%'
+				AND ( C.DescripcionContrato LIKE '%SHELL%' OR C.DescripcionContrato = 'Seguimiento Planes de Acción' OR C.DescripcionContrato = 'Purple Angel')
 			JOIN
 				EN_EntregableRonda	ER	(NOLOCK)
 				ON	E.IdEntregable	=	ER.idEntregable
@@ -682,7 +676,7 @@ BEGIN
 			END
 
 		-- SHELL
-		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131) 
+		IF @IdContrato IN (10101,10103,10104,10106,10107,10112,10113,10115,10118,10131,10151, 10152) 
 		BEGIN
 			SELECT	DISTINCT 
 			--TOP 20
@@ -710,7 +704,7 @@ BEGIN
 			JOIN
 				CO_Contrato	C	(NOLOCK)
 				ON CE.IdContrato	=	C.IdContrato
-				AND C.DescripcionContrato LIKE '%SHELL%'
+				AND ( C.DescripcionContrato LIKE '%SHELL%' OR C.DescripcionContrato = 'Seguimiento Planes de Acción' OR C.DescripcionContrato = 'Purple Angel')
 			JOIN
 				EN_EntregableRonda	ER	(NOLOCK)
 				ON	E.IdEntregable	=	ER.idEntregable
@@ -760,6 +754,3 @@ BEGIN
 		END
 	END
 END
-
-
-go

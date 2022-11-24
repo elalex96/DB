@@ -18,5 +18,3 @@ begin
 						it.Descripcion
 						
 end
-
-

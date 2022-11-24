@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_ADM_GuardarDocumentosS3
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 20/09/2018
 -- Description:	guardar los documentos en S3 

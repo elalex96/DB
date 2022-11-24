@@ -19,6 +19,6 @@
     [Subtotal]                    FLOAT (53)     NULL,
     [Entregado]                   BIT            NULL,
     [ConfirmacionSurtido]         BIT            NULL,
-    CONSTRAINT [PK_MM_PedidoDetalle] PRIMARY KEY CLUSTERED ([IdPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_PedidoDetalle] PRIMARY KEY CLUSTERED ([IdPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

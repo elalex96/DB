@@ -7,44 +7,64 @@ AS
 BEGIN
     SET NOCOUNT ON;
 	SET LANGUAGE Spanish; 
+	declare	@isShell bit
 
 IF @IdContrato = 10054
 BEGIN
 	EXEC sp_EN_ExtraeReporteEntregablesRespaldos_ENI @IdContrato, @idUsuario
 	RETURN
 END
+
 	CREATE TABLE #DocumentosInstancias(IdInstanciaEntregable INT,
-									  NombreArchivo  VARCHAR(1500),
+									  NombreArchivo  varchar(1500),
 									  CantidadArchivos INT
 									  );
 
 
-	CREATE TABLE #Respaldos(AreaBOM VARCHAR(1500),
-							Contrato VARCHAR(1500),
-							NombreEntregable VARCHAR(1500),
-							Funcion  VARCHAR(1500),
-							Subfuncion  VARCHAR(1500),
-							Usuario   VARCHAR(1500),
-							CorreoUsuario   VARCHAR(1500),
-							Rol    VARCHAR(1500),
-							FocalPoint  VARCHAR(1500),
-							FocalPointEmail  VARCHAR(1500),
-							AccountableCompliance VARCHAR(1500),
-							AccountableComplianceEmail  VARCHAR(1500),
-							Accountable   VARCHAR(1500),
-							AccountableEmail   VARCHAR(1500),
-							MarcoLegal  VARCHAR(1500),
-							FechaRealEntregaRegulador DATETIME,
-							FechaEstimadaEntregaRegulador DATETIME,
-							ID INT,
-							Anio INT,
-							Mes VARCHAR(1500),
-							EstatusParaColor VARCHAR(1500),
-							NombreArchivo  VARCHAR(1500),
-							CantidadArchivos INT
+	CREATE TABLE #Respaldos(AreaBOM							varchar(1500),
+							Contrato						varchar(1500),
+							NombreEntregable				varchar(1500),
+							Funcion							varchar(1500),
+							Subfuncion						varchar(1500),
+							Usuario							varchar(1500),
+							CorreoUsuario					varchar(1500),
+							Rol								varchar(1500),
+							FocalPoint						varchar(1500),
+							FocalPointEmail					varchar(1500),
+							AccountableCompliance			varchar(1500),
+							AccountableComplianceEmail		varchar(1500),
+							Accountable						varchar(1500),
+							AccountableEmail				varchar(1500),
+							MarcoLegal						varchar(1500),
+							FechaRealEntregaRegulador		datetime,
+							FechaEstimadaEntregaRegulador	datetime,
+							ID								int,
+							Anio							int,
+							Mes								varchar(1500),
+							EstatusParaColor				varchar(1500),
+							NombreArchivo					varchar(1500),
+							CantidadArchivos				int
 						    );
 
 
+	if exists(
+				select		co.* 
+				from		CO_Contrato				co
+				inner join	CO_Contratista			ci
+				on			co.IdContratista		=		ci.IdContratista
+				where		ci.NombreContratista	like	'%shell%'
+				and			co.IdContrato			=		@IdContrato)
+	begin
+		select @isShell = 1
+	end
+	else
+	begin
+		select @isShell = 0
+	end
+
+	if (@isShell = 1)
+	begin
+		
 	INSERT INTO #Respaldos(	AreaBOM,
 							Contrato,
 							NombreEntregable,
@@ -165,6 +185,90 @@ END
 	AND
 			IE.FechaCalculadaEntregaReg BETWEEN @FechaInicio AND @FechaFin
 
+	end
+	else
+	begin
+		INSERT INTO #Respaldos(	
+							Contrato,
+							NombreEntregable,
+							Funcion,						
+							Usuario,
+							CorreoUsuario,
+							Rol,
+							MarcoLegal,
+							FechaRealEntregaRegulador,
+							FechaEstimadaEntregaRegulador,
+							ID,
+							Anio,
+							Mes,
+							EstatusParaColor,
+							NombreArchivo,
+							CantidadArchivos
+						    )
+	SELECT 
+
+		C.NumeroContrato												AS Contrato,
+		E.DocumentoEntregable + '-' + LTRIM(IE.idInstanciaEntregable)  	AS [NombreEntregable],
+		AR.NombreArea													AS Funcion,
+		
+		U.Nombre						AS Usuario,
+		U.Usuario						AS CorreoUsuario,
+		CASE WHEN A.EstadoID = 10000 THEN 'Elaborador'
+			WHEN A.EstadoID = 10001 THEN 'Revisor'
+			WHEN A.EstadoID = 10002 THEN 'Aprobador'
+		END								AS Rol,
+		ISNULL(ML.MarcoLegal,'')	AS MarcoLegal,
+		IE.FechaRealEntregaRegulador,
+		IE.FechaCalculadaEntregaReg	AS	FechaEstimadaEntregaRegulador,
+		IE.idInstanciaEntregable	AS ID,
+		YEAR(IE.FechaCalculadaEntregaReg) AS Anio,
+		DATENAME(MONTH,IE.FechaCalculadaEntregaReg) AS Mes,
+		CASE
+			WHEN AACT.EstadoID = 10003 THEN 'Delivered' -- NEGRO 1
+			WHEN DATEDIFF(DAY,IE.FechaCalculadaEntregaReg,GETDATE()) > 0 AND AACT.EstadoID <> 10003 THEN 'Delayed'	-- NEGRO 1
+			WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0 AND 0.4 THEN '0-40% of time remaining' -- ROJO 2
+			WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) BETWEEN 0.41 AND 0.69 THEN '40-70% of time remaining' -- AMARILLO 3
+			WHEN (CONVERT(FLOAT,DATEDIFF(DAY,GETDATE(),IE.FechaCalculadaEntregaReg))/CONVERT(FLOAT,DATEDIFF(DAY, IE.FechaInicioElaboracion,IE.FechaCalculadaEntregaReg))) > 0.69 THEN 'More than 70% of time remaining' -- VERDE 4
+		END		AS EstatusParaColor,
+		 '' as NombreArchivo,
+		 0
+		 
+	FROM		EN_InstanciasEntregable								IE (NOLOCK)
+	inner JOIN	EN_ContratoEntregable								CE	(NOLOCK)
+	ON			IE.IdContratoEntregable								=	CE.IdContratoEntregable
+	AND			CE.IdContrato										=	@IdContrato
+	AND			ISNULL(IE.Activo,1)									=	1
+	AND			ISNULL(CE.Activo,1)									=	1
+	inner JOIN	CO_Contrato											C	(NOLOCK)
+	ON			CE.IdContrato										=	C.IdContrato
+	inner JOIN	EN_Entregable										E	(NOLOCK)
+	ON			CE.IdEntregable										=	E.IdEntregable
+	AND			ISNULL(E.IsActivo,1)								=	1
+	AND			E.BITJOA											=	0	--JOA
+	inner JOIN	EN_Area												AR	(NOLOCK)
+	ON			CE.IdArea											=	AR.idArea
+	inner JOIN	EN_Actividad										A	(NOLOCK)
+	ON			CE.IdContratoEntregable								=	A.IdContratoEntregable
+	AND			A.EstadoID											= 10000
+	inner join	EN_Actividad										AACT	(NOLOCK)
+	ON			IE.ActividadID										=	AACT.ActividadID
+	left join	EN_MarcoLegal										ML
+	ON			E.IdMarcoLegal										=	ML.IdMarcoLegal
+	left join	AP_Usuario											U
+	ON			A.idUsuario											=	U.UsuarioID
+	left join	EN_ContratoEntregableProgramaImplementaAcciones		ENT_ACC
+	ON			CE.IdContratoEntregable								=		ENT_ACC.IdContratoEntregable			----	SASISOPA NULL
+	WHERE
+			CE.IdContrato	=	@IdContrato
+	AND
+			ENT_ACC.IdProgramaImplementaAccion IS NULL
+	AND
+			E.BitJOA	=	0													--JOA
+	AND
+			IE.FechaCalculadaEntregaReg BETWEEN @FechaInicio AND @FechaFin
+	end
+
+	
 
 	INSERT INTO #DocumentosInstancias(IdInstanciaEntregable ,
 									  CantidadArchivos,
@@ -187,9 +291,9 @@ END
 		AND FINR.IdLineaTiempo	=	DV.N_version
 		AND DV.Activo = 1
 	GROUP BY R.ID
-
+	
 	--Modifica la tabla principal a las instancias que contienen archivos
-
+	
 	UPDATE R
 		SET	R.NombreArchivo =	DI.NombreArchivo,
 			R.CantidadArchivos = DI.CantidadArchivos
@@ -198,7 +302,56 @@ END
 	JOIN
 		#DocumentosInstancias DI
 		ON R.ID	=	DI.idInstanciaEntregable
-
-	SELECT * FROM #Respaldos
-
+	
+	if (@isShell = 1)
+	begin	
+		select	AreaBOM,
+				Contrato,
+				NombreEntregable,
+				Funcion,
+				Subfuncion,
+				Usuario,
+				CorreoUsuario,
+				Rol,
+				FocalPoint,
+				FocalPointEmail,
+				AccountableCompliance,
+				AccountableComplianceEmail,
+				Accountable,
+				AccountableEmail,
+				MarcoLegal,
+				FechaRealEntregaRegulador,
+				FechaEstimadaEntregaRegulador,
+				ID,
+				Anio,
+				Mes,
+				EstatusParaColor,
+				NombreArchivo,
+				CantidadArchivos,
+				@isShell	IsShell--							=	0--@isShell
+		from	#Respaldos
+	end
+	else
+	begin
+		select	
+				Contrato,
+				NombreEntregable,
+				Funcion,
+				Usuario,
+				CorreoUsuario,
+				Rol,
+				MarcoLegal,
+				FechaRealEntregaRegulador,
+				FechaEstimadaEntregaRegulador,
+				ID,
+				Anio,
+				Mes,
+				EstatusParaColor,
+				NombreArchivo,
+				CantidadArchivos
+--				@isShell	IsShell--							=	0--@isShell
+		from	#Respaldos
+	end
+	
+	
 END

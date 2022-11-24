@@ -1,13 +1,4 @@
-﻿USE ADINCO
-GO
-DROP PROCEDURE IF EXISTS EN_sp_GuardaBitacoraReporteSASISOPA
--- =============================================
--- Author:		LUIS DAVID
--- Create date: 10/Marzo/2022
--- Description:	Se guardan las solicitudes de documentos de exportación sasisopa
--- =============================================
-GO
-CREATE PROC EN_sp_GuardaBitacoraReporteSASISOPA
+﻿CREATE PROC EN_sp_GuardaBitacoraReporteSASISOPA
 @IdUsuario int,
 @IdContrato int,
 @FechaInicial datetime,

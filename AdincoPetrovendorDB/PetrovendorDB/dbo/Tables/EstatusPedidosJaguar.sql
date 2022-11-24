@@ -60,6 +60,6 @@
     [Servicio]                  VARCHAR (6000) NULL,
     [IdAceptacionPedido]        INT            NULL,
     [MesSIPAC]                  DATE           NULL,
-    CONSTRAINT [PK_EstatusPedidosJaguar] PRIMARY KEY CLUSTERED ([IdConsecutivo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EstatusPedidosJaguar] PRIMARY KEY CLUSTERED ([IdConsecutivo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

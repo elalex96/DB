@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_ActualizarFechaFinalizacionPedido'
-)
-    DROP PROCEDURE SP_MM_ActualizarFechaFinalizacionPedido;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ActualizarFechaFinalizacionPedido]    Script Date: 06/10/2022 02:31:34 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- DANIEL AC /25-03-2022 --> SE JUNTA ACTUALIZACIÓN DE FECHA DE LIMITE CONFIRMACIÓN, ACTUALZIACIÓN DE PARTIDAS Y ENVIO DE CORREO DE ACTUALIZACIÓN
+﻿-- DANIEL AC /25-03-2022 --> SE JUNTA ACTUALIZACIÓN DE FECHA DE LIMITE CONFIRMACIÓN, ACTUALZIACIÓN DE PARTIDAS Y ENVIO DE CORREO DE ACTUALIZACIÓN
 CREATE PROCEDURE [dbo].[SP_MM_ActualizarFechaFinalizacionPedido]
     @IdPedido INT,
     @NuevaFechaLimite DATETIME,

@@ -3,6 +3,6 @@
     [NombreEstado]        NVARCHAR (200) NULL,
     [Descripcion]         NVARCHAR (MAX) NULL,
     [EstadosSubsecuentes] NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_Ta_EstadosAprobacionSerial] PRIMARY KEY CLUSTERED ([Idestado] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Ta_EstadosAprobacionSerial] PRIMARY KEY CLUSTERED ([Idestado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

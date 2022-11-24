@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5]    Script Date: 18/05/2022 04:52:05 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Update date: 09-02-18
 -- Description:	Muestra Detalle de aceptación pedido detalle 
@@ -23,7 +16,11 @@ GO
 -- Create date: 18/05/2022
 -- Description: truncado a 3 digitos sin redondeo del PCN segun la SE Y optimizacion
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5] --44,473,1061,0,0
+-- Author:		Luis David
+-- Create date: <02/09/2022>
+-- Description:	<Se optimiza para el Issue #1986>
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionDetalleProveedorVentas_MV1_5] --44,473,1061,0,0
 	-- Add the parameters for the stored procedure here
 	@IdProveedor        INT,
 	@IdAceptacionPedido INT,
@@ -53,19 +50,19 @@ AS
 		  FROM MM_AceptacionPedidoDetalle AS APD
 			  JOIN MM_AceptacionPedido AS A 
 				ON APD.IdAceptacionPedido = A.IdAceptacionPedido
-				AND A.IdAceptacionPedido = @IdAceptacionPedido 
+				AND @IdAceptacionPedido = A.IdAceptacionPedido  
 				AND APD.IdAceptacionPedidoDetalle= @IdAceptacionPedidoDetalle
 			  JOIN MM_PedidoDetalle AS PD 
-				ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
+				ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
 			  JOIN MM_Pedido AS P 
-				ON P.IdPedido =  A.IdPedido
-				and P.IdSubcontratista =@IdProveedor
+				ON A.IdPedido = P.IdPedido
+				and @IdProveedor = P.IdSubcontratista
 			  JOIN MM_PeticionOferta AS PO 
-				ON PO.IdPeticionOferta=P.IdPeticionOferta
+				ON P.IdPeticionOferta = PO.IdPeticionOferta
 			  JOIN MM_PeticionOfertaDetalle AS POD 
-				ON POD.IdPeticionOfertaDetalle=PD.IdPeticionOfertaDetalle 
-			  JOIN PV_TipoMoneda AS TM 
-				ON TM.IdMoneda = PD.IdMoneda
+				ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
+			  JOIN PV_TipoMoneda (NOLOCK) AS TM 
+				ON PD.IdMoneda = TM.IdMoneda
 		  GROUP BY 
 		  APD.IdAceptacionPedidoDetalle,
 		  PD.IdMaterialVendedor,

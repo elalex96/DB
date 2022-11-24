@@ -1,21 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'ActualizarRequisicion'
-)
-    DROP PROCEDURE ActualizarRequisicion;
-
-/****** Object:  StoredProcedure [dbo].[ActualizarRequisicion]    Script Date: 02/07/2021 12:24:15 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[ActualizarRequisicion]
+﻿CREATE PROCEDURE [dbo].[ActualizarRequisicion]
 @IdSolicitudPedidoDetalle INT,
 @IdProveedor INT,
 @IdMaterial INT,
@@ -213,4 +196,3 @@ BEGIN
 	-- esto en el evento Grid_RowUpdated
     END
 END
-

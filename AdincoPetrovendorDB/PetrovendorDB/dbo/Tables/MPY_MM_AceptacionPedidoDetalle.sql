@@ -51,6 +51,6 @@
     [Partida]                    NVARCHAR (MAX) NULL,
     [DescripcionCorta]           NVARCHAR (MAX) NULL,
     [DescripcionLarga]           NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_MPY_MM_AceptacionPedidoDetalle] PRIMARY KEY CLUSTERED ([IdAceptacionPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MPY_MM_AceptacionPedidoDetalle] PRIMARY KEY CLUSTERED ([IdAceptacionPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

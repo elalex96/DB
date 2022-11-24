@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_CF_GuardarEdoCuenta'
-)
-    DROP PROCEDURE SP_CF_GuardarEdoCuenta;
-/****** Object:  StoredProcedure [dbo].[SP_CF_GuardarEdoCuenta]    Script Date: 20/07/2021 03:13:02 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:           Daniel AC
 -- Create date: 26-09-2019
 -- Description: Se agregaron parametros de referencia al S3

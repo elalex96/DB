@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[SP_PC_InsertarDistribucionIngresos]
+﻿CREATE PROCEDURE [dbo].[SP_PC_InsertarDistribucionIngresos]
 	@IdUsuario  INT,
 	@IdContrato INT,
 	@MesReporte NVARCHAR(50)

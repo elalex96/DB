@@ -17,6 +17,6 @@
     [ModificadoPor]             INT            NULL,
     [ModificadoEn]              DATETIME       NULL,
     [CreadoPor]                 INT            NULL,
-    CONSTRAINT [PK_admin_almacenes] PRIMARY KEY CLUSTERED ([idAlmacen] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_admin_almacenes] PRIMARY KEY CLUSTERED ([idAlmacen] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

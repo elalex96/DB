@@ -16,7 +16,7 @@
     [Extension]                   NVARCHAR (300) NULL,
     [Mime]                        NVARCHAR (300) NULL,
     [AMS3]                        BIT            NULL,
-    [Bucket] NVARCHAR(MAX) NULL, 
-    CONSTRAINT [PK_PV_SistemaGestion] PRIMARY KEY CLUSTERED ([IdSistemaGestion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    [Bucket]                      VARCHAR (50)   NULL,
+    CONSTRAINT [PK_PV_SistemaGestion] PRIMARY KEY CLUSTERED ([IdSistemaGestion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -31,7 +31,7 @@
     [Imagen]                    NVARCHAR (MAX) NULL,
     [FichaTecnica]              NVARCHAR (MAX) NULL,
     [FechaActualizacion]        DATETIME       NULL,
-    CONSTRAINT [PK_MM_Material] PRIMARY KEY CLUSTERED ([IdMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_Material] PRIMARY KEY CLUSTERED ([IdMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_Material_MM_EstadoMaterial] FOREIGN KEY ([IdEstadoMaterial]) REFERENCES [dbo].[MM_EstadoMaterial] ([IdEstadoMaterial]),
     CONSTRAINT [FK_MM_Material_MM_MarcaMaterial] FOREIGN KEY ([IdMarca]) REFERENCES [dbo].[MM_MaterialMarca] ([IdMarca]),
     CONSTRAINT [FK_MM_Material_MM_MaterialFamilia] FOREIGN KEY ([IdFamilia]) REFERENCES [dbo].[MM_MaterialFamilia] ([IdMaterialFamilia]),

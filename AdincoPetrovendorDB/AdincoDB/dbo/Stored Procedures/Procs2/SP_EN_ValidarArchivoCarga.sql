@@ -1,16 +1,9 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_ValidarArchivoCarga]    Script Date: 27/04/2022 03:28:22 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/04/2022>
 -- Description:	<Validacion al cargar los archivos para no cargar archivos iguales>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_ValidarArchivoCarga]
+CREATE PROCEDURE [dbo].[SP_EN_ValidarArchivoCarga]
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@Nivel INT,

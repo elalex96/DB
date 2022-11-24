@@ -69,5 +69,3 @@ begin
 		set @pError = 'Ocurrió un error inesperado'+ERROR_MESSAGE()
 	end catch
 end
-
-

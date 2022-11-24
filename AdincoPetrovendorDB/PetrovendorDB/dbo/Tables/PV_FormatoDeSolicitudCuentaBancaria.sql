@@ -3,6 +3,6 @@
     [Documento]           NVARCHAR (MAX) NULL,
     [FechaRegistro]       DATETIME       NULL,
     [NombreArchivo]       VARCHAR (100)  NULL,
-    CONSTRAINT [PK_PV_FormatoDeSolicitudCuentaBancaria] PRIMARY KEY CLUSTERED ([IdFormatoAprobacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_FormatoDeSolicitudCuentaBancaria] PRIMARY KEY CLUSTERED ([IdFormatoAprobacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -1,4 +1,5 @@
-﻿-- p_OT_Estimacion_Notificacion 510,1,10
+﻿
+-- p_OT_Estimacion_Notificacion 510,1,10
 CREATE proc p_OT_Estimacion_Notificacion
 @pIdOTEstimacion int,
 @pTipoCorreo int, 

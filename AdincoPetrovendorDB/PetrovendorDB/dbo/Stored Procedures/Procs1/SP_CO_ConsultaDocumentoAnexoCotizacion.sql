@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_CO_ConsultaDocumentoAnexoCotizacion
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>

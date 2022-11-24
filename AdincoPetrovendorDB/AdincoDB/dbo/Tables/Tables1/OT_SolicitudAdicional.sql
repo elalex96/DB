@@ -5,7 +5,7 @@
     [Motivo]                 VARCHAR (300) NULL,
     [CreadoEl]               DATETIME      NOT NULL,
     [CreadoPor]              INT           NOT NULL,
-    CONSTRAINT [PK_OT_SolicitudAdicional] PRIMARY KEY CLUSTERED ([IdOTSolicitudAdicional] ASC),
+    CONSTRAINT [PK_OT_SolicitudAdicional] PRIMARY KEY CLUSTERED ([IdOTSolicitudAdicional] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_OT_SolicitudAdicional_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_OT_SolicitudAdicional_OT_EstatusAdicional] FOREIGN KEY ([IdEstatusAdicional]) REFERENCES [dbo].[OT_EstatusAdicional] ([IdEstatusAdicional]),
     CONSTRAINT [FK_OT_SolicitudAdicional_OT_Solicitud] FOREIGN KEY ([IdOTSolicitud]) REFERENCES [dbo].[OT_Solicitud] ([IdOTSolicitud])

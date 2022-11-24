@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[sp_ObtieneRutaPerfilEntregables]
+﻿CREATE PROCEDURE [dbo].[sp_ObtieneRutaPerfilEntregables]--3,10061,256582,'inst=MjU2NTgy','&Estat=MA==','&Usu=MTAwNjE=','&TO=Mw==','&ET=MQ=='
 	@IdContrato INT,
 	@IdUsuario INT,
 	@IdInstancia INT,
@@ -24,7 +24,7 @@ IF @IdContrato IN (10093,10108,10110,10119,10120,10122)
 BEGIN
 	SELECT
 		case when @opcionBoton = 'carga'
-			then '../../2/Entregables/subeEntregables.aspx?' + 'inst=' + LTRIM(@IdInstancia)
+			then '../../2/Entregables/SubeHistorico.aspx?' + 'inst=' + LTRIM(@IdInstancia)
 		else
 		'../../2/Entregables/RespuestaEntregable.aspx?'+	@InstanciaEncript	+	@EstatusEncript	+	@UsuarioEncript	+	@TipoOperacionEncript	+'&Com='''+	@EsTableroEncript
 
@@ -71,7 +71,7 @@ BEGIN
 					THEN   
 						   '../../2/Entregables/CalculoFechasProcesos.aspx?idProceso=' + ltrim(@IdProceso) 
 					ELSE
-						   '../../2/Entregables/RecalculoDetalleProcesos.aspx?idProceso=' + ltrim(@IdProceso)+'&idInstanciaProceso='+ ltrim(@IdInstanciaProceso)
+		 '../../2/Entregables/RecalculoDetalleProcesos.aspx?idProceso=' + ltrim(@IdProceso)+'&idInstanciaProceso='+ ltrim(@IdInstanciaProceso)
 				 END
 		ELSE
 			'../../2/Entregables/RespuestaEntregable.aspx?'+	@InstanciaEncript	+	@EstatusEncript	+	@UsuarioEncript	+	@TipoOperacionEncript	+'&Com='''

@@ -10,7 +10,7 @@
     [ModificadoEl]             DATETIME       NULL,
     [Activo]                   BIT            NULL,
     [PDF]                      NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_CO_ProduccionCrudoMensualCIEP] PRIMARY KEY CLUSTERED ([IdProduccionCrudoMensual] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_ProduccionCrudoMensualCIEP] PRIMARY KEY CLUSTERED ([IdProduccionCrudoMensual] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_ProduccionCrudoMensualCIEP_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

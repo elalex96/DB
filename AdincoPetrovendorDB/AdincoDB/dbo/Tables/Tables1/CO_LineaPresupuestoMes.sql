@@ -46,7 +46,7 @@
     [CNac]                        DECIMAL (18, 4) NULL,
     [TTec]                        DECIMAL (18, 4) NULL,
     [ISoc]                        DECIMAL (18, 4) NULL,
-    CONSTRAINT [PK_LineaPresupuestoMes] PRIMARY KEY CLUSTERED ([IdLineaPresupuestoMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_LineaPresupuestoMes] PRIMARY KEY CLUSTERED ([IdLineaPresupuestoMes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_LineaPresupuestoMes_AP_Usuario] FOREIGN KEY ([IdUsuario]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_LineaPresupuestoMes_CO_ActividadCIEP] FOREIGN KEY ([IdActividad]) REFERENCES [dbo].[CO_ActividadCIEP] ([IdActividad]),
     CONSTRAINT [FK_CO_LineaPresupuestoMes_CO_ActividadHidrocarburoCIEP] FOREIGN KEY ([IdActvidadHidrocarburo]) REFERENCES [dbo].[CO_ActividadHidrocarburoCIEP] ([IdActividadHidrocarburo]),
@@ -65,4 +65,14 @@
     CONSTRAINT [FK_CO_LineaPresupuestoMes_CO_TareaPetrolera] FOREIGN KEY ([IdTareaPetrolera]) REFERENCES [dbo].[CO_TareaPetrolera] ([IdTareaPetrolera]),
     CONSTRAINT [FK_CO_LineaPresupuestoMes_CO_TipoServicio] FOREIGN KEY ([IdTipoServicio]) REFERENCES [dbo].[CO_TipoServicio] ([IdTipoServicio])
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxPresupuestoActividadSubactividadTarea]
+    ON [dbo].[CO_LineaPresupuestoMes]([IdPresupuesto] ASC, [IdActividadPetrolera] ASC, [IdSubactividadPetrolera] ASC, [IdTareaPetrolera] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxPresupuestoActividadSubactividadTareaServicio]
+    ON [dbo].[CO_LineaPresupuestoMes]([IdPresupuesto] ASC, [IdActividadPetrolera] ASC, [IdSubactividadPetrolera] ASC, [IdTareaPetrolera] ASC, [IdServicio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

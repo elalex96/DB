@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_DEA_GetDocumentoPR]    Script Date: 24/09/2021 05:05:09 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      Daniel AC
 -- Create date: <18-09-18>
 -- Description: <obtiene la informacion del documento del factura ya sea xml o pdf>
@@ -13,7 +6,7 @@ GO
 -- Create date: <23/09/20219>
 -- Description:	<Se agrega columna Bucket para que devuelva el select descarga estandar avance 5>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_DEA_GetDocumentoPR]
+CREATE PROCEDURE [dbo].[SP_DEA_GetDocumentoPR]
 @IdProveedor INT,
 @IdUsuario INT,
 @IdDocumento INT,

@@ -8,6 +8,6 @@
     [Fecha]            DATETIME       NULL,
     [FechaEnvio]       DATETIME       NULL,
     [AdincoMailId]     INT            NULL,
-    CONSTRAINT [PK_ProcesadoMails] PRIMARY KEY CLUSTERED ([IdProcesadoMails] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ProcesadoMails] PRIMARY KEY CLUSTERED ([IdProcesadoMails] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

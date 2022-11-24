@@ -3,6 +3,6 @@
     [IdAreaContractual] INT NULL,
     [IdYacimiento]      INT NULL,
     [CreadoPor]         INT NULL,
-    CONSTRAINT [PK_AreaContractualYacimientos] PRIMARY KEY CLUSTERED ([IdACYacimiento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AreaContractualYacimientos] PRIMARY KEY CLUSTERED ([IdACYacimiento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

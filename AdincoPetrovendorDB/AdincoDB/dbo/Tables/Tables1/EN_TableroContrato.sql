@@ -17,7 +17,7 @@
     [Parametros]        VARCHAR (500) NULL,
     [UserTableau]       VARCHAR (150) NULL,
     [MuestraToolbar]    BIT           NULL,
-    CONSTRAINT [PK_TableroContrato] PRIMARY KEY CLUSTERED ([IdTableroContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_TableroContrato] PRIMARY KEY CLUSTERED ([IdTableroContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Tablero_AP_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_Tablero_AP_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_Tablero_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])

@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura]    Script Date: 04/11/2022 11:08:22 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/01/2019
 -- Description:	Consultar los usuarios de finanzas de un proveedor poe factura
@@ -14,7 +7,7 @@ GO
 -- Create date: 04/11/2022
 -- Description:	Se validan los usuarios activos
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura] --236
+CREATE PROCEDURE [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura] --236
 	-- Add the parameters for the stored procedure here
 	@IdAprobacionPedido INT
 AS

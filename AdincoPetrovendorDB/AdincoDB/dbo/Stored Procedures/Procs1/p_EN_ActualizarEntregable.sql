@@ -1,13 +1,4 @@
-﻿USE [Adinco]
-GO
-DROP PROCEDURE IF EXISTS p_EN_ActualizarEntregable
-
-/****** Object:  StoredProcedure [dbo].[p_EN_ActualizarEntregable]    Script Date: 25/05/2022 12:40:14 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE Proc [dbo].[p_EN_ActualizarEntregable]
+﻿CREATE Proc [dbo].[p_EN_ActualizarEntregable]
 @pIdEntregable	int ,
 @pDocumentoEntregable	nvarchar(max),
 @pDocumentoEntregableIngles	nvarchar(max) = null,

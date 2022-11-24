@@ -1,18 +1,11 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5]    Script Date: 20/10/2022 12:37:23 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:	Daniel AC
 -- Create date:29-11-2019
 -- Description:	Se agrego detalle de los días de crédito y detalle de la aceptación, Add Linea presupuesto mes
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5] 
+CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5] 
 	-- Add the parameters for the stored procedure here
 @IdProveedor        INT,
 @IdAceptacionPedido INT,

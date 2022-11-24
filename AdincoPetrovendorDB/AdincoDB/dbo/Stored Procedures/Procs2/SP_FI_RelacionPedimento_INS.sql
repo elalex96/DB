@@ -1,5 +1,4 @@
-﻿
---Created by: DANIEL MORENO
+﻿--Created by: DANIEL MORENO
 --Created at : 04/11/2021
 
 --Usage: Get a bill and add more than one with relationship to that

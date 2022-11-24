@@ -13,6 +13,6 @@
     [Activo]            BIT            NULL,
     [IsEliminado]       BIT            NULL,
     [ID_PR]             NVARCHAR (MAX) NULL,
-    PRIMARY KEY CLUSTERED ([IdAjuntoPr] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdAjuntoPr] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

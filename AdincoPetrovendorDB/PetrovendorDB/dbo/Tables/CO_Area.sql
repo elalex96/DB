@@ -6,6 +6,6 @@
     [FecMovto]      DATETIME       NULL,
     [IdProveedor]   INT            NULL,
     [CreadoPor]     INT            NULL,
-    CONSTRAINT [PK_Areas] PRIMARY KEY CLUSTERED ([IdArea] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Areas] PRIMARY KEY CLUSTERED ([IdArea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

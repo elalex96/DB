@@ -1,8 +1,10 @@
-﻿-- =============================================
+﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:           Daniel AC
 -- Create date: 26-09-2019
 -- Description: Referencias al s3 
 -- =============================================
+
 CREATE PROCEDURE [dbo].[SP_PV_ConsultaSGDocumentoProveedor]
 	-- Add the parameters for the stored procedure here
 	@iddocsg INT
@@ -16,3 +18,4 @@ BEGIN
 		ON DSG.IdDocSistemaGestion = SG.IdTipoDocSG
 	WHERE		SG.IdSistemaGestion = @iddocsg
 END
+

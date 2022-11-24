@@ -8,7 +8,7 @@
     [ModificadoPor]         INT      NULL,
     [ModificadoEl]          DATETIME NULL,
     [Activo]                BIT      NULL,
-    PRIMARY KEY CLUSTERED ([idHistorial] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([idHistorial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_DocumentoVersion_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_DocumentoVersion_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_DocumentoVersion_EN_EntregableDocumento] FOREIGN KEY ([DocumentoEntregableId]) REFERENCES [dbo].[EN_EntregableDocumento] ([DocumentoEntregableId]),

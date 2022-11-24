@@ -1,12 +1,5 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[AD_SP_ComboInstalaciones]    Script Date: 26/11/2021 01:44:37 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-ALTER procedure [dbo].[AD_SP_ComboInstalaciones]
+﻿
+CREATE procedure [dbo].[AD_SP_ComboInstalaciones]
 	@IdContrato INT
 
 AS

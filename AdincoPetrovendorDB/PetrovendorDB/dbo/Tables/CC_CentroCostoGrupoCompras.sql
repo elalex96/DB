@@ -11,6 +11,6 @@
     [EliminadoEl]               DATETIME NULL,
     [IdProveedor]               INT      NULL,
     [IsHistorico]               BIT      NULL,
-    PRIMARY KEY CLUSTERED ([IdCentroCostoGrupoCompras] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdCentroCostoGrupoCompras] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

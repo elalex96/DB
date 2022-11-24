@@ -4,6 +4,6 @@
     [IdContrato]          INT NULL,
     [IdUsuarioAprobador]  INT NULL,
     [IdEstatus]           INT NULL,
-    CONSTRAINT [PK_FI_AprobacionFactura] PRIMARY KEY CLUSTERED ([IdAprobacionFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_AprobacionFactura] PRIMARY KEY CLUSTERED ([IdAprobacionFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

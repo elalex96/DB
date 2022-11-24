@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaAprobacionCN_S3]    Script Date: 02/05/2022 06:39:34 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL AC
 -- Update date: 07/02/2018
 -- Description:	agregue filtro para todos los estatus de carta de contenido nacional y cambio tipo pedido
@@ -34,7 +27,7 @@ GO
 -- Create date: 03-05-2022
 -- Description:	se corrige la consulta de murphy para consultar por contrato 
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCN_S3] 
+CREATE PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCN_S3] 
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @Estado INT,

@@ -5,6 +5,6 @@
     [GravedadAPI]      FLOAT (53)     NULL,
     [ProfundidadMedia] FLOAT (53)     NULL,
     [CreadoPor]        INT            NULL,
-    CONSTRAINT [PK_Yacimiento] PRIMARY KEY CLUSTERED ([IdYacimiento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Yacimiento] PRIMARY KEY CLUSTERED ([IdYacimiento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

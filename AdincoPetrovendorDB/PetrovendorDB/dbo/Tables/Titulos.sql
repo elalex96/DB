@@ -6,6 +6,6 @@
     [IsActivo]        BIT            NULL,
     [ModificadoEl]    DATETIME       NULL,
     [IdIdioma]        INT            NULL,
-    CONSTRAINT [PK_Titulos] PRIMARY KEY CLUSTERED ([IdTitulo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Titulos] PRIMARY KEY CLUSTERED ([IdTitulo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

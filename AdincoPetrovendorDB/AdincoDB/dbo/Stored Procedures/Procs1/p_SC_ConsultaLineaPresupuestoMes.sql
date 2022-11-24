@@ -1,4 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[p_SC_ConsultaLineaPresupuestoMes]
+﻿
+CREATE PROCEDURE [dbo].[p_SC_ConsultaLineaPresupuestoMes]
     @presupuesto varchar(250),
     @pIdSubcontrato int
 AS

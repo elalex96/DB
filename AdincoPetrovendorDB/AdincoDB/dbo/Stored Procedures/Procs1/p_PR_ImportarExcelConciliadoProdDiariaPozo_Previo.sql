@@ -55,7 +55,7 @@ as
 	begin
 		select @pidBloque =Id
 		from PR_Bloque
-		where UPPER(replace(ltrim(RTRIM(Descripcion)),'','')) = REPLACE(UPPER(LTRIM(RTRIM(@pBloque))),'','')
+		where replace(ltrim(RTRIM(Descripcion)),'','') = RTRIM(@pBloque)
 	end
 
 

@@ -2,11 +2,11 @@
     [IdPedimentoLista]   INT            IDENTITY (1, 1) NOT NULL,
     [IdClavePedimento]   INT            NULL,
     [TipoClavePedimento] NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_FI_PedimentoLista] PRIMARY KEY CLUSTERED ([IdPedimentoLista] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_PedimentoLista] PRIMARY KEY CLUSTERED ([IdPedimentoLista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [IX_FI_ClavesPedimento]
-    ON [dbo].[FI_ClavesPedimentoLista]([IdClavePedimento] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[FI_ClavesPedimentoLista]([IdClavePedimento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

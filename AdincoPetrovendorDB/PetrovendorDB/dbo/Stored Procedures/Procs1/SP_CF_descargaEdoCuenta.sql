@@ -1,5 +1,4 @@
 ﻿
-
 CREATE PROCEDURE [dbo].[SP_CF_descargaEdoCuenta]
 	@IdEdoCuenta int
 AS

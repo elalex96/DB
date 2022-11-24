@@ -9,6 +9,6 @@
     [EditadoEl]        DATETIME       NULL,
     [IdContratista]    INT            NULL,
     [IdSubcontratista] INT            NULL,
-    CONSTRAINT [PK_MA_TipoDocumento] PRIMARY KEY CLUSTERED ([IdTipoDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MA_TipoDocumento] PRIMARY KEY CLUSTERED ([IdTipoDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

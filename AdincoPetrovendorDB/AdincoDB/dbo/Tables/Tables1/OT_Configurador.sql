@@ -9,7 +9,7 @@
     [IdUsuarioTaskPetro]            INT     NULL,
     [PermitirAceptacionAut]         BIT     NULL,
     [Decimales]                     TINYINT NULL,
-    CONSTRAINT [PK_OT_Configurador] PRIMARY KEY CLUSTERED ([IdContratista] ASC, [IdContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_OT_Configurador] PRIMARY KEY CLUSTERED ([IdContratista] ASC, [IdContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_OT_Configurador_CO_Contratista] FOREIGN KEY ([IdContratista]) REFERENCES [dbo].[CO_Contratista] ([IdContratista]),
     CONSTRAINT [FK_OT_Configurador_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );

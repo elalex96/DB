@@ -39,6 +39,6 @@
     [CreadoPor]                   INT             NULL,
     [IdLineaProgramaActividadMes] INT             NULL,
     [CAPEX]                       BIT             NULL,
-    CONSTRAINT [PK_LineaPresupuestoMes] PRIMARY KEY CLUSTERED ([IdLineaPresupuestoMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_LineaPresupuestoMes] PRIMARY KEY CLUSTERED ([IdLineaPresupuestoMes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

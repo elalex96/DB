@@ -6,6 +6,6 @@
     [FechaRegistro]         DATETIME NULL,
     [IsActivo]              BIT      NULL,
     [TotalDePuntos]         INT      NULL,
-    CONSTRAINT [PK_SP_EP_EvaluacionCalidad] PRIMARY KEY CLUSTERED ([IdEvaluacionProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SP_EP_EvaluacionCalidad] PRIMARY KEY CLUSTERED ([IdEvaluacionProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

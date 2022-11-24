@@ -12,6 +12,6 @@
     [Activo]             BIT            NULL,
     [IdVencimiento]      INT            NULL,
     [NoSecuencia]        INT            NULL,
-    CONSTRAINT [PK_TA_Tarea] PRIMARY KEY CLUSTERED ([IdTarea] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TA_Tarea] PRIMARY KEY CLUSTERED ([IdTarea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

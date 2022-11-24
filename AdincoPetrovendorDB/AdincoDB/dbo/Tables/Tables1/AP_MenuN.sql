@@ -13,7 +13,7 @@
     [descripcion]   VARCHAR (MAX)  NULL,
     [Orden]         INT            NULL,
     [HTML]          NVARCHAR (MAX) NULL,
-    PRIMARY KEY CLUSTERED ([MenuId] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([MenuId] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__AP_MenuN__idClas__493C48D7] FOREIGN KEY ([idClasMenu]) REFERENCES [dbo].[AP_ClasificacionMenu] ([idClasMenu])
 );
 

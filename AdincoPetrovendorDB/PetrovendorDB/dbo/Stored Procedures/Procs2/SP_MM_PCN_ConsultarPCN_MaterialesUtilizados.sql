@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MM_PCN_ConsultarPCN_MaterialesUtilizados
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 13-04-2018
 -- Description:	CONSULTAR EL DETALLE DE MATERIALES UTILIZADOS PARA EL BIEN FINAL 

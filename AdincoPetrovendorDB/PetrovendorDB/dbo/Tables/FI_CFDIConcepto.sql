@@ -11,7 +11,7 @@
     [ClaveProdServ]     NVARCHAR (50)  NULL,
     [ClaveUnidad]       NVARCHAR (50)  NULL,
     [Descuento]         MONEY          NULL,
-    CONSTRAINT [PK_FacturaConcepto] PRIMARY KEY CLUSTERED ([IdFacturaConcepto] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FacturaConcepto] PRIMARY KEY CLUSTERED ([IdFacturaConcepto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_VU_FacturaConcepto_VU_Factura] FOREIGN KEY ([IdFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura])
 );
 

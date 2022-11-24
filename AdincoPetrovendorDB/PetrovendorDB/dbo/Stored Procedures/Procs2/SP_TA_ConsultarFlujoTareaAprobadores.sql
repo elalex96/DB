@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_ConsultarFlujoTareaAprobadores]    Script Date: 18/05/2022 03:46:56 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 27-03-17
 -- Description:	Regresa los aprobadores de un flujo de tarea				
@@ -24,7 +17,7 @@ GO
 -- Updated date: 18/05/2022
 -- Description: se realiza una secuencia de acuerdo a los usuarios activos
 --************************************************************** 
-ALTER  PROCEDURE [dbo].[SP_TA_ConsultarFlujoTareaAprobadores]
+CREATE  PROCEDURE [dbo].[SP_TA_ConsultarFlujoTareaAprobadores]
 	-- Add the parameters for the stored procedure here
 	 @IdFlujoTarea int 
 AS

@@ -10,7 +10,7 @@
     [ModificadoPor]        INT           NULL,
     [ModificadoEl]         DATETIME      NULL,
     [Activo]               BIT           NULL,
-    CONSTRAINT [PK_CO_SubcontratoDetalle] PRIMARY KEY CLUSTERED ([IdSubcontratoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_SubcontratoDetalle] PRIMARY KEY CLUSTERED ([IdSubcontratoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_SubcontratoDetalle_CO_Subcontrato] FOREIGN KEY ([IdSubcontrato]) REFERENCES [dbo].[CO_Subcontrato] ([IdSubcontrato]),
     CONSTRAINT [FK_CO_SubcontratoDetalle_MM_Material] FOREIGN KEY ([IdMaterial]) REFERENCES [dbo].[MM_Material] ([IdMaterial])
 );

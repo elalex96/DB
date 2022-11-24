@@ -1,22 +1,4 @@
--- =============================================  
--- Author:  <Luis David>  
--- Create date: 18/02/2021
--- Description: se valida la aprobacion de la factura para el envio de gasto  
--- =============================================  
--- Author:  <Luis David>  
--- Create date: 18/02/2021
--- Description: se valida que tenga conceptos corrige issue 1047 petrovendor
-
--- =============================================  
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'MM_SP_EnvioDeGastoCompraDirectaAdinco'
-)
-    DROP PROCEDURE MM_SP_EnvioDeGastoCompraDirectaAdinco;
-GO 
-CREATE PROCEDURE [dbo].[MM_SP_EnvioDeGastoCompraDirectaAdinco]
+﻿CREATE PROCEDURE [dbo].[MM_SP_EnvioDeGastoCompraDirectaAdinco]
 @idFacturaP INT,
 @IdFacturaAdinco INT,
 /*--------------------parametros contrato  --------------------*/
@@ -33,7 +15,18 @@ BEGIN
             @XMLAdinco INT,
             @XMLPetrovendor INT,
 			@EstatusAprobacionFactura INT,
+			@MontoRegistro FLOAT,
+			@IdUsuarioADINCO INT,
             @IdProveedorCursor AS nvarchar(400);
+
+	SET @IdUsuarioADINCO = (SELECT IdUsuarioADINCO FROM S_Usuario WHERE IdUsuario = @IdUsuario);
+
+	DECLARE @RFC VARCHAR(300) = (SELECT TOP 1 CTA.RFC FROM Adinco..CO_CONTRATO AS CTO
+									JOIN ADINCO..CO_CONTRATISTA AS CTA
+										ON CTO.IDCONTRATISTA = CTA.IDCONTRATISTA 
+									JOIN FI_FACTURA AS F
+										ON CTO.IDCONTRATO = F.IDCONTRATO
+									WHERE F.IDFACTURA = @idFacturaP);
 
 
             CREATE TABLE #RegistroTemp
@@ -285,6 +278,35 @@ BEGIN
             WHERE pr.IdRegistro = @IdRegistro;
 
             SELECT @IdRegistroAdinco = SCOPE_IDENTITY();
+
+			SET @MontoRegistro = (SELECT TOP 1 MontoRegistro FROM Adinco.dbo.CO_Registro WHERE IdRegistro = @IdRegistroAdinco);
+
+			IF @RFC = 'PAM140722DK6'
+			BEGIN
+
+				INSERT INTO Adinco..CO_RegistroMarkup(
+					GastoId,
+					Porcentaje,
+					MontoEquivalente,
+					MontoGasto,
+					Activo,
+					CreadoPor,
+					CreadoEn,
+					ContratoId
+				)
+				VALUES
+				(
+					@IdRegistroAdinco,
+					0,
+					0,
+					@MontoRegistro,
+					1,
+					ISNULL(@IdUsuarioADINCO,1),
+					GETDATE(),
+					10007--CONTRATO AMATITLAN;
+				);
+
+			END
 
             INSERT INTO dbo.CO_RelacionRegistroAdinco (IdRegistroPetrovendor, IdRegistroAdinco)
             VALUES

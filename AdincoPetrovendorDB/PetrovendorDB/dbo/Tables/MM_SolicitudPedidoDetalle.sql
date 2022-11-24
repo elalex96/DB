@@ -51,22 +51,30 @@
     [IdEstatusEliminado]               INT            NULL,
     [IdDinamicsAx]                     INT            NULL,
     [FechaModificado]                  DATETIME       NULL,
-    [ID_IMPORTACION_PDI]               INT            NULL 
-    CONSTRAINT [PK_MM_SolicitudPedidoDetalle] PRIMARY KEY CLUSTERED ([IdSolicitudPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    [IDMONEDA_WS]                      INT            NULL,
+    [NET_PRICE]                        FLOAT (53)     NULL,
+    [TERMINOS_PAGO]                    INT            NULL,
+    [ID_IMPORTACION_PDI]               INT            NULL,
+    CONSTRAINT [PK_MM_SolicitudPedidoDetalle] PRIMARY KEY CLUSTERED ([IdSolicitudPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [<MM_SPDIdSolicitud, sysname,>]
-    ON [dbo].[MM_SolicitudPedidoDetalle]([IdSolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_SolicitudPedidoDetalle]([IdSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdMaterial_MM_SolicitudPedidoDetalle]
-    ON [dbo].[MM_SolicitudPedidoDetalle]([IdMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_SolicitudPedidoDetalle]([IdMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdDomicilioEntrega_MM_SolicitudPedidoDetalle]
-    ON [dbo].[MM_SolicitudPedidoDetalle]([IdDomicilioEntrega] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_SolicitudPedidoDetalle]([IdDomicilioEntrega] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxSolicitudPedidoDetalle_IdDinamicsAx]
+    ON [dbo].[MM_SolicitudPedidoDetalle]([IdDinamicsAx] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

@@ -1,20 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'DEA_SP_UsuarioOBS_Grid'
-)
-    DROP PROCEDURE DEA_SP_UsuarioOBS_Grid;
-
-/****** Object:  StoredProcedure [dbo].[sp_CentroCostoFiltro_Grd]    Script Date: 13/07/2021 01:17:22 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 CREATE proc [dbo].[DEA_SP_UsuarioOBS_Grid]
 AS
 BEGIN
@@ -30,4 +14,3 @@ BEGIN
 	ON C.IdAreaContractual =AC.IdAreaContractual
 	ORDER BY U.Nombre ASC 
 END
-

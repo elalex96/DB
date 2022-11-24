@@ -7,7 +7,7 @@
     [ModificadoPor]              INT      NULL,
     [ModificadoEl]               DATETIME NULL,
     [Activo]                     BIT      NULL,
-    CONSTRAINT [PK_CO_PresupuestoDetalle] PRIMARY KEY CLUSTERED ([IdPresupuestoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_PresupuestoDetalle] PRIMARY KEY CLUSTERED ([IdPresupuestoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_PresupuestoDetalle_AP_Usuario] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_PresupuestoDetalle_CO_Presupuesto] FOREIGN KEY ([IdPresupuesto]) REFERENCES [dbo].[CO_Presupuesto] ([IdPresupuesto]),
     CONSTRAINT [FK_CO_PresupuestoDetalle_CO_ProgramaActividadDetalle] FOREIGN KEY ([IdProgramaActividadDetalle]) REFERENCES [dbo].[CO_ProgramaActividadDetalle] ([IdProgramaActividadDetalle])

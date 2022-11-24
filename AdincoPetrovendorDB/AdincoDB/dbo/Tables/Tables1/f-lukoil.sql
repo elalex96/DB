@@ -4,6 +4,6 @@
     [IdProveedor] INT            NULL,
     [Proveedor]   NVARCHAR (MAX) NULL,
     [IdFactura]   INT            NULL,
-    CONSTRAINT [PK_f-lukoil] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_f-lukoil] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

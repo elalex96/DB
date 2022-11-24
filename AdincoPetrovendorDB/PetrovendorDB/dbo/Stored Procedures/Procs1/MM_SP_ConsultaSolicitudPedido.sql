@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_ConsultaSolicitudPedido]    Script Date: 06/07/2022 12:05:52 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro, Acuña
 -- Create date: 06/02/2018
 -- Description:	se agrega un bit para saber si existen las bases para mostrar o no el boton de descarga de bases
@@ -19,7 +12,7 @@ GO
 -- Description:	se obtienen los datos de presupuesto y periodo de la linea de presupuesto
 -- =============================================
 
-ALTER PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido] --26352
+CREATE PROCEDURE [dbo].[MM_SP_ConsultaSolicitudPedido] --26352
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT
 AS

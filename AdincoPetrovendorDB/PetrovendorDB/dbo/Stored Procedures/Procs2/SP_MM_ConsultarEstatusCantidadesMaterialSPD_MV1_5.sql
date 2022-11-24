@@ -1,10 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5')
-begin
-	drop proc SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 06/04/2018
 -- Description:	se adecua ya que ahora se puede añadir mas tiempo de vigencia al pedido, se descartan las cantidades que ya fueron reactivadas
@@ -303,4 +297,3 @@ BEGIN
 	
 END
 
-go

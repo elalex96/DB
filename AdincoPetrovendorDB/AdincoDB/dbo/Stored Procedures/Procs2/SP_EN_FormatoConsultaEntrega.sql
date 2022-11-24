@@ -1,4 +1,4 @@
-﻿
+﻿	
 CREATE PROCEDURE [dbo].[SP_EN_FormatoConsultaEntrega] --13254,3,10
 	-- Add the parameters for the stored procedure here
 @IdEntregable INT,

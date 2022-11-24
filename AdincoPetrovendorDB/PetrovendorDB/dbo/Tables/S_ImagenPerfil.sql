@@ -10,7 +10,7 @@
     [ImagenProveedor]      IMAGE          NULL,
     [ImagenProveedorThumb] IMAGE          NULL,
     [ModificadoPor]        INT            NULL,
-    CONSTRAINT [PK_S_ImagenPerfil] PRIMARY KEY CLUSTERED ([IdImagen] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_ImagenPerfil] PRIMARY KEY CLUSTERED ([IdImagen] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_S_ImagenPerfil_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_S_ImagenPerfil_S_Usuario] FOREIGN KEY ([IdUsuario]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );

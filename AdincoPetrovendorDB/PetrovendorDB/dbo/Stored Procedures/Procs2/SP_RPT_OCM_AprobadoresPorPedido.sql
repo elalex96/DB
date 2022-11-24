@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_RPT_OCM_AprobadoresPorPedido'
-)
-    DROP PROCEDURE SP_RPT_OCM_AprobadoresPorPedido;
-/****** Object:  StoredProcedure [dbo].[SP_RPT_OCM_AprobadoresPorPedido]    Script Date: 12/04/2022 05:04:19 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author: Daniel AC
 -- Create date: 12-04-2022
@@ -41,6 +27,5 @@ BEGIN
 		AND TOO.IdTipoOperacion = 9 --> CTE APROBACION DE PEDIDO
 	ORDER BY NoSecuencia ASC 		
 END
-
 
 

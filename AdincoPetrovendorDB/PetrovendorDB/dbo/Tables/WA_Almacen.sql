@@ -15,7 +15,7 @@
     [CreadoEl]         DATETIME       NULL,
     [ModificadoPor]    INT            NULL,
     [ModificadoEl]     DATETIME       NULL,
-    CONSTRAINT [PK_WA_Almacen] PRIMARY KEY CLUSTERED ([IdAlmacen] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_WA_Almacen] PRIMARY KEY CLUSTERED ([IdAlmacen] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_WA_Almacen_PV_Subcontratista] FOREIGN KEY ([IdSubcontratista]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista])
 );
 

@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_EdicionPedidoDetalle]    Script Date: 24/10/2022 10:09:25 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 13/10/2022
 -- Description:	actualizacion de los detalles del pedido
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_EdicionPedidoDetalle]
+CREATE PROCEDURE [dbo].[SP_MM_EdicionPedidoDetalle]
 	-- Add the parameters for the stored procedure here
 	@IdPedidoDetalle INT,
 	@Cantidad FLOAT,

@@ -41,7 +41,7 @@
     [IdPeriodo]                  INT            NULL,
     [IdPresupuesto]              INT            NULL,
     [IdLineaPresupuesto]         INT            NULL,
-    CONSTRAINT [PK_FI_PedimentoComprobante] PRIMARY KEY CLUSTERED ([IdPedimentoComprobante] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_PedimentoComprobante] PRIMARY KEY CLUSTERED ([IdPedimentoComprobante] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__FI_PedimentoComprobante__CC_CentroCosto] FOREIGN KEY ([IdCentroCosto]) REFERENCES [dbo].[CC_CentroCosto] ([IdCentroCosto])
 );
 

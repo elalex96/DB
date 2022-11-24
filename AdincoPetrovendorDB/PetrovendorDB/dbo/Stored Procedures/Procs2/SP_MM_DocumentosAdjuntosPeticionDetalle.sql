@@ -1,6 +1,4 @@
-﻿drop procedure if exists SP_MM_DocumentosAdjuntosPeticionDetalle
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-04-17
 -- Description:	Consultar Solicitudes de Oferta 

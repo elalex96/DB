@@ -20,7 +20,7 @@
     [SizeDocumento]             FLOAT (53)     NULL,
     [IdDocumentoTabla]          INT            NULL,
     [Bucket]                    VARCHAR (50)   NULL,
-    CONSTRAINT [PK_S_DocumentoS3] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_DocumentoS3] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__S_Documento__S_Usuario] FOREIGN KEY ([IdUsuario]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
     CONSTRAINT [FK__S_DocumentoS3__S_TipoDocumento] FOREIGN KEY ([IdTipoDocumento]) REFERENCES [dbo].[S_TipoDocumento] ([IdTipoDocumento]),
     CONSTRAINT [FK__S_DocumentoS3_S_TipoValidacionDoc] FOREIGN KEY ([IdTipoValidacionDocumento]) REFERENCES [dbo].[S_TipoValidacionDoc] ([IdTipoValidacionDoc]),

@@ -3,7 +3,7 @@
     [IdSolicitudPedido]       INT NULL,
     [IdPedido]                INT NULL,
     [Activo]                  BIT NULL,
-    CONSTRAINT [PK_MM_SolicitudPedidoPedido] PRIMARY KEY CLUSTERED ([IdSolicitudPedidoPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_SolicitudPedidoPedido] PRIMARY KEY CLUSTERED ([IdSolicitudPedidoPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_SolicitudPedidoPedido_MM_Pedido] FOREIGN KEY ([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido]),
     CONSTRAINT [FK_MM_SolicitudPedidoPedido_MM_SolicitudPedido] FOREIGN KEY ([IdSolicitudPedido]) REFERENCES [dbo].[MM_SolicitudPedido] ([IdSolicitudPedido])
 );

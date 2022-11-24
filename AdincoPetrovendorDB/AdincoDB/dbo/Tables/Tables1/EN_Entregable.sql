@@ -68,7 +68,8 @@
     [DeliverableName]                  VARCHAR (8000) NULL,
     [BitJOA]                           BIT            NULL,
     [BitMostrarMensaje]                BIT            NULL,
-    CONSTRAINT [PK_EN_Entregable] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [BitAwareness]                     BIT            NULL,
+    CONSTRAINT [PK_EN_Entregable] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [Clasificacion_Entregable] FOREIGN KEY ([IdClasificacion]) REFERENCES [dbo].[En_Clasificacion] ([IdClasificacion]),
     CONSTRAINT [fk_En_entregableCO_Regulador] FOREIGN KEY ([IdRegulador]) REFERENCES [dbo].[CO_Regulador] ([IdRegulador]),
     CONSTRAINT [fk_en_entregableEN_FrecuenciaEntregable] FOREIGN KEY ([IdFrecuenciaEntregable]) REFERENCES [dbo].[EN_FrecuenciaEntregable] ([IdFrecuenciaEntregable]),
@@ -77,6 +78,11 @@
     CONSTRAINT [fk_en_entregableReceptorEntregable] FOREIGN KEY ([IdReceptorEntregable]) REFERENCES [dbo].[EN_ReceptorEntregable] ([IdReceptorEntregable]),
     CONSTRAINT [fk_en_entregableReceptorGenerador] FOREIGN KEY ([IdResponsableGenerador]) REFERENCES [dbo].[EN_ResponsableGenerador] ([IdResponsableGenerador])
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_Entregable]
+    ON [dbo].[EN_Entregable]([IdEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
@@ -147,6 +153,4 @@ INSERT INTO EN_ContratoEntregable (IdContrato,
 GO
 DISABLE TRIGGER [dbo].[EN_NuevoEntregable]
     ON [dbo].[EN_Entregable];
-go
 
-create index IX_EN_Entregable			on	EN_Entregable(IdEntregable)

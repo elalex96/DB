@@ -9,6 +9,6 @@
     [IdContrato]       INT            NULL,
     [IdSubcontratista] INT            NULL,
     [Activo]           BIT            NULL,
-    CONSTRAINT [PK_MA_Prioridad] PRIMARY KEY CLUSTERED ([IdPrioridad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MA_Prioridad] PRIMARY KEY CLUSTERED ([IdPrioridad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_PC_ConsultaDocContenidoNacional
-GO
- -- =============================================
+﻿ -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <04/09/2020>
 -- Description:	<Consulta a detalle de un Pedimento/Comprobante de Procura>

@@ -7,7 +7,7 @@
     [CreadoEn]      DATETIME      NULL,
     [ModificadoPor] INT           NULL,
     [ModificadoEn]  DATETIME      NULL,
-    CONSTRAINT [PK_CatProceso] PRIMARY KEY CLUSTERED ([IdCatProceso] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CatProceso] PRIMARY KEY CLUSTERED ([IdCatProceso] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CreadoPor_EN_CatalogoProcesos] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_ModificadoPor_EN_CatalogoProcesos] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
@@ -15,5 +15,5 @@
 
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [idxClaveCatProc]
-    ON [dbo].[EN_CatalogoProcesos]([Clave] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[EN_CatalogoProcesos]([Clave] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

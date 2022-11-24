@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_ExtraeCalendarioRegulador]    Script Date: 18/01/2022 04:09:02 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- =============================================
@@ -13,7 +6,7 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 2022/18/01
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_EN_ExtraeCalendarioRegulador]--[sp_EN_ExtraeCalendarioRegulador] 3,10061
+CREATE PROCEDURE [dbo].[sp_EN_ExtraeCalendarioRegulador]--[sp_EN_ExtraeCalendarioRegulador] 3,10061
 	@idContrato INT,
 	@idUsuario INT
 AS

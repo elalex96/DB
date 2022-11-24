@@ -3,6 +3,6 @@
     [Giro]                 NVARCHAR (MAX) NULL,
     [Creado]               DATE           NULL,
     [CreadoPor]            INT            NULL,
-    CONSTRAINT [PK_GiroProveedor] PRIMARY KEY CLUSTERED ([IdGiroSubcontratista] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_GiroProveedor] PRIMARY KEY CLUSTERED ([IdGiroSubcontratista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

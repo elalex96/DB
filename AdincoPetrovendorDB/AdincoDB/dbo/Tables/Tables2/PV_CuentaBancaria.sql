@@ -21,7 +21,7 @@
     [Eliminada]      BIT            NULL,
     [Alias]          NVARCHAR (MAX) NULL,
     [IdCuenta]       INT            NULL,
-    CONSTRAINT [PK_DatosBancarios] PRIMARY KEY CLUSTERED ([DatoBancarioID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_DatosBancarios] PRIMARY KEY CLUSTERED ([DatoBancarioID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_DatosBancarios_TipoMoneda] FOREIGN KEY ([TipoMonedaID]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda]),
     CONSTRAINT [FK_PV_CuentaBancaria_PV_MetodoPago] FOREIGN KEY ([IdTipoCuenta]) REFERENCES [dbo].[PV_MetodoPago] ([idMetodoPago]),
     CONSTRAINT [FK_PV_CuentaBancaria_PV_Subcontratista] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista])

@@ -9,7 +9,7 @@
     [CreadoEl]                    DATETIME        NOT NULL,
     [CreadoPor]                   INT             NOT NULL,
     [IdUnidad]                    INT             NULL,
-    CONSTRAINT [PK_CO_LineaProgramaActividadMesDetalle] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_LineaProgramaActividadMesDetalle] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdUnidad]) REFERENCES [dbo].[CO_Unidad] ([IdUnidad]),
     CONSTRAINT [FK_CO_LineaProgramaActividadMesDetalle_CO_LineaProgramaActividadMes] FOREIGN KEY ([IdLineaProgramaActividadMes]) REFERENCES [dbo].[CO_LineaProgramaActividadMes] ([IdLineaProgramaActividadMes])
 );

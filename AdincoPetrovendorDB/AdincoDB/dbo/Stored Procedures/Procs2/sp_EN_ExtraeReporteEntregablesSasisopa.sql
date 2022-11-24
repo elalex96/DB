@@ -159,9 +159,9 @@ BEGIN
 		 0,
 		CF.Comentario + '' + HALT.Comentario,
 		 N.Cardinal,
---		 0
+		 0
 --		 CONVERT(INT,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(SUBSTRING(PIE.Descripcion,1,CHARINDEX('.',PIE.Descripcion)),'"',''),'-',''),'.',''))))
-		CONVERT(INT,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(SUBSTRING(PIE.Descripcion,1,CHARINDEX(' ',PIE.Descripcion)),'"',''),'-',''),'.',''))))
+--		CONVERT(INT,LTRIM(RTRIM(REPLACE(REPLACE(REPLACE(SUBSTRING(PIE.Descripcion,1,CHARINDEX(' ',PIE.Descripcion)),'"',''),'-',''),'.',''))))
 	FROM
 		CO_ProgramaImplementa	CPI
 	JOIN

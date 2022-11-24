@@ -8,6 +8,6 @@
     [Comentario]           VARCHAR (1500)   NULL,
     [NomDocumento]         NVARCHAR (MAX)   NULL,
     [Eliminado]            BIT              NOT NULL,
-    CONSTRAINT [PK_OF_DocAdjuntosXOficio] PRIMARY KEY CLUSTERED ([IdDocAdjuntosXOficio] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_OF_DocAdjuntosXOficio] PRIMARY KEY CLUSTERED ([IdDocAdjuntosXOficio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

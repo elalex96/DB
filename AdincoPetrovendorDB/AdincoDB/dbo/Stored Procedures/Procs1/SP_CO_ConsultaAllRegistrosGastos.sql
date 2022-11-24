@@ -10,9 +10,13 @@
 -- Author:		 Daniel Moreno
 -- Alter date:	 05-04-2021
 -- Description: Se agregan filtros de fechas
+-- =============================================
+-- Author:		Reyna O.
+-- Create date: 30-06-2022
+-- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 
+-- de la tabla al inicio de procedure, se eliminan algunos Left y Joins innecesarios
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos]
--- ============================================= 
--- [SP_CO_ConsultaAllRegistrosGastos] 3,10002
 @IdContrato INT, 
 @IdUsuario  INT,
 @FechaDel DATETIME = NULL,
@@ -584,5 +588,4 @@ AS
          FROM #Datos
 		 ORDER BY MesPresentacion DESC;
      END;
-
 

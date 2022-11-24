@@ -1,10 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'sp_ConsultaCompraDirectaEdicion')
-begin
-	drop proc sp_ConsultaCompraDirectaEdicion
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:   Daniel AC
 -- Create date: 26-09-2019
 -- Description: Agregue cambio de referecias al s3 en los documentos adjuntos 
@@ -163,7 +157,3 @@ AS
     END;
 
 
-go
-
---exec sp_ConsultaCompraDirectaEdicion 10, 59436, 0
---exec sp_ConsultaCompraDirectaEdicion 10, 59436, 45348

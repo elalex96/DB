@@ -1,9 +1,10 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date:03032020
 -- Description:	Guarda correo 
 -- =============================================
-CREATE  PROCEDURE [dbo].[sp_GuardaCorreoS_Notificacion]
+CREATE PROCEDURE [dbo].[sp_GuardaCorreoS_Notificacion]
 	@Para VARCHAR(500),
 	@Asunto VARCHAR(500),
 	@Mensaje TEXT,

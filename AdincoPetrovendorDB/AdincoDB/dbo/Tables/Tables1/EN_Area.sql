@@ -7,7 +7,7 @@
     [ModificadoPor] INT           NULL,
     [ModificadoEn]  DATETIME      NULL,
     [Activo]        BIT           NULL,
-    CONSTRAINT [PK_EN_Area] PRIMARY KEY CLUSTERED ([idArea] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_Area] PRIMARY KEY CLUSTERED ([idArea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_Area_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_Area_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
@@ -15,8 +15,10 @@
 
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [indiceEN_Area]
-    ON [dbo].[EN_Area]([NombreArea] ASC, [idContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[EN_Area]([NombreArea] ASC, [idContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
-go
 
-create index IX_EN_Area					on	EN_Area(idArea)
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_Area]
+    ON [dbo].[EN_Area]([idArea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

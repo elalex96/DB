@@ -12,7 +12,7 @@
     [ModificadoPor]         INT           NULL,
     [ModificadoEl]          DATETIME      NULL,
     [IdLineaPresupuestoMes] INT           NULL,
-    CONSTRAINT [PK_IN_Almacen] PRIMARY KEY CLUSTERED ([IdAlmacen] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IN_Almacen] PRIMARY KEY CLUSTERED ([IdAlmacen] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_IN_Almacen_S_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );
 

@@ -9,7 +9,7 @@
     [ModificadoPor]        INT      NULL,
     [ModificadoEn]         DATETIME NULL,
     [Activo]               BIT      NULL,
-    CONSTRAINT [PK_EN_Transicion] PRIMARY KEY CLUSTERED ([ActividadInicialID] ASC, [AccionID] ASC, [SiguienteActividadID] ASC, [IdContratoEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_Transicion] PRIMARY KEY CLUSTERED ([ActividadInicialID] ASC, [AccionID] ASC, [SiguienteActividadID] ASC, [IdContratoEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_Transicion_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_Transicion_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_Transicion_EN_Accion] FOREIGN KEY ([AccionID]) REFERENCES [dbo].[EN_Accion] ([AccionID]),

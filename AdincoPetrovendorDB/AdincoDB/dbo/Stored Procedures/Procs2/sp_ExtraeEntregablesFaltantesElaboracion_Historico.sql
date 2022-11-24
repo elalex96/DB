@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_Historico]    Script Date: 16/09/2021 04:51:39 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_Historico] --3,10--3,10061
+﻿CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_Historico] --3,10--3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -22,24 +15,29 @@ BEGIN
     -- Create date: 2020-05-11
     -- Description: Se agregar NOLOCKS en las tablas que tienen mas recurrencia y referencias al objero dbo
     -- =============================================
+	-- =============================================
+    -- Author:  Luis David 
+    -- Create date: 28/09/22
+    -- Description: Se eliminan subconsultas, reacomodo de tablas según su declaración y su cantidad de datos Issue#809(Entregables)
+    -- =============================================
     SET NOCOUNT ON;
 	SET LANGUAGE Spanish; 
-
-	 CREATE TABLE #TempInstancias
+    DECLARE @Count  INT =   0;
+	DROP TABLE IF EXISTS #TempInstancias
+	CREATE TABLE #TempInstancias
     (
-       id INT PRIMARY KEY IDENTITY(1, 1),
-        FechasLimiteElaboracion DATE,
+		id int primary key not null identity(1,1),
+		FechasLimiteElaboracion DATE,
         idEntregable INT,
         countIntancias INT NULL
     );
-
+	CREATE NONCLUSTERED INDEX ix_tempTempInstancias ON #TempInstancias (FechasLimiteElaboracion);
+	DROP TABLE IF EXISTS #GrupoUsuario
     CREATE TABLE #GrupoUsuario
     (
-        id INT PRIMARY KEY IDENTITY(1, 1),
         IdUsuarioGrupo int
     );
-
-    DECLARE @Count  INT =   0;
+	CREATE NONCLUSTERED INDEX ix_tempGrupoUsuario ON #GrupoUsuario (IdUsuarioGrupo);
 
 	IF 0 < (SELECT COUNT(1)
 			FROM
@@ -51,18 +49,16 @@ BEGIN
 			JOIN
 				dbo.AP_PERFIL	P (NOLOCK)
 				ON	PU.PerfilID	=	P.IdPerfil
-				AND	P.IdContrato	= @IdContrato
+				AND	@IdContrato =	P.IdContrato
 			JOIN
 				dbo.AP_ROL	R (NOLOCK)
 				ON	P.IdRol	=	R.IdRol
 			WHERE
-				R.Descripción LIKE '%SASISOPA%' )
+				LTRIM(R.Descripción) LIKE 'SASISOPA%' )
 	BEGIN
 		EXEC sp_ExtraeEntregablesFaltantesElaboracion_SASISOPA @IdContrato, @idUsuario
 		RETURN
 	END
-	  
-
     INSERT INTO #GrupoUsuario   (IdUsuarioGrupo)
     SELECT  IdGrupo
 	FROM    dbo.EN_GruposUsuarios	(NOLOCK)
@@ -83,15 +79,17 @@ BEGIN
     JOIN    
 		dbo.EN_ContratoEntregable   CE  (NOLOCK)
         ON  IE.IdContratoEntregable =	CE.IdContratoEntregable
-        AND CE.IdContrato   =   @IdContrato
+        AND @IdContrato =	CE.IdContrato
 	JOIN
 		dbo.CO_Contrato	C	(NOLOCK)
 		ON	CE.IdContrato	=	C.IdContrato
-		AND	C.IdContrato	=	@IdContrato
-		AND	IE.FechaCalculadaEntregaReg < DATEADD(YEAR, 5, GETDATE())	--(MONTH,6,DATEADD(YEAR,2,C.FechaArranqueEntregables))--'20211231' 
+		AND	@IdContrato = C.IdContrato
+		AND	IE.FechaCalculadaEntregaReg < DATEADD(YEAR, 5, GETDATE())
     JOIN    
 		dbo.EN_Actividad    A	(NOLOCK)
         ON  IE.ActividadID  =   A.ActividadID
+	JOIN #GrupoUsuario AS GU
+		on A.idUsuario = GU.IdUsuarioGrupo
     JOIN 
 		dbo.EN_Entregable ENT	(NOLOCK)
         ON  CE.IdEntregable =   Ent.IdEntregable
@@ -101,27 +99,56 @@ BEGIN
 		dbo.EN_ExcepcionesActividad EXAR
         ON  A.ActividadID   =   EXAR.ActividadIDExcepcion 
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
-    WHERE  
-		(
-		(A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
-            AND   EXAR.IdInstanciasEntregables    IS NULL
+		AND GU.IdUsuarioGrupo = EXAR.idUsuario
+    WHERE  EXAR.IdInstanciasEntregables    IS NULL
             AND   A.EstadoID  =   10000
             AND   ENT.IsActivo    =   1
             AND   CE.Activo   =   1
             AND   IE.Activo   =   1
-        )
-	OR (
-  
-          EXAR.idUsuario      IN (SELECT IdUsuarioGrupo   FROM     #GrupoUsuario)
-        AND EXAR.IdInstanciasEntregables    IS NOT NULL
-        AND EXAR.EstadoID   =   10000
-        AND ENT.IsActivo    =   1
-        AND CE.Activo   =   1
-        AND IE.Activo   =   1   ) )
     GROUP   BY  IE.FechasLimiteElaboracion,
 	    CE.IdEntregable
 
 
+-------------------------
+INSERT  INTO    #TempInstancias (FechasLimiteElaboracion,idEntregable)
+    SELECT  
+		IE.FechasLimiteElaboracion,
+		CE.IdEntregable
+   FROM 
+		dbo.EN_InstanciasEntregable IE	(NOLOCK)
+    JOIN    
+		dbo.EN_ContratoEntregable   CE  (NOLOCK)
+        ON  IE.IdContratoEntregable =	CE.IdContratoEntregable
+        AND @IdContrato =	CE.IdContrato
+	JOIN
+		dbo.CO_Contrato	C	(NOLOCK)
+		ON	CE.IdContrato	=	C.IdContrato
+		AND	@IdContrato = C.IdContrato
+		AND	IE.FechaCalculadaEntregaReg < DATEADD(YEAR, 5, GETDATE())
+    JOIN    
+		dbo.EN_Actividad    A	(NOLOCK)
+        ON  IE.ActividadID  =   A.ActividadID
+	JOIN #GrupoUsuario AS GU
+		on A.idUsuario = GU.IdUsuarioGrupo
+    JOIN 
+		dbo.EN_Entregable ENT	(NOLOCK)
+        ON  CE.IdEntregable =   Ent.IdEntregable
+		AND ENT.BITJOA = 0
+		AND ENT.IsActivo = 1
+    LEFT JOIN   
+		dbo.EN_ExcepcionesActividad EXAR
+        ON  A.ActividadID   =   EXAR.ActividadIDExcepcion 
+        AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
+		AND GU.IdUsuarioGrupo = EXAR.idUsuario
+    WHERE  
+        EXAR.IdInstanciasEntregables    IS NOT NULL
+        AND EXAR.EstadoID   =   10000
+        AND ENT.IsActivo    =   1
+        AND CE.Activo   =   1
+        AND IE.Activo   =   1  
+    GROUP   BY  IE.FechasLimiteElaboracion,
+	    CE.IdEntregable
+-------------------------
     SELECT @Count = MAX(id)
     FROM #TempInstancias;
 
@@ -178,11 +205,11 @@ BEGIN
 		dbo.EN_ContratoEntregable   CE  (NOLOCK)
 		ON  IE.IdContratoEntregable =   CE.IdContratoEntregable
         AND TI.idEntregable = CE.IdEntregable
-        AND CE.IdContrato = @IdContrato
+        AND @IdContrato = CE.IdContrato
     JOIN    
 		dbo.EN_Actividad A (NOLOCK)
 		ON  IE.ActividadID  =   A.ActividadID
-        AND A.EstadoID  =   10000
+        AND 10000 = A.EstadoID
     JOIN    
 		#GrupoUsuario   GU
 		ON  A.idUsuario =   GU.IdUsuarioGrupo
@@ -192,12 +219,11 @@ BEGIN
 	JOIN   
 		dbo.EN_Entregable EN  (NOLOCK)
 		ON CE.IdEntregable  =   EN.IdEntregable
-		AND EN.BITJOA = 0
-		AND EN.IsActivo = 1
-    LEFT    JOIN    
+		AND 0 = EN.BITJOA
+		AND 1 = EN.IsActivo 
+    LEFT JOIN    
 		dbo.CO_Regulador R  (NOLOCK)
-		ON EN.IdRegulador   =   R.IdRegulador
-  
+		ON EN.IdRegulador   =   R.IdRegulador  
 	LEFT    JOIN    
 		dbo.EN_FrecuenciaEntregable F (NOLOCK)
 		ON EN.IdFrecuenciaEntregable    =   F.IdFrecuenciaEntregable
@@ -287,11 +313,11 @@ BEGIN
 		dbo.EN_ContratoEntregable   CE  (NOLOCK)
 	    ON  IE.IdContratoEntregable = CE.IdContratoEntregable
         AND TI.idEntregable =   CE.IdEntregable
-        AND CE.IdContrato   =   @IdContrato
+        AND @IdContrato = CE.IdContrato
     JOIN    
 		dbo.EN_ExcepcionesActividad EXACT  (NOLOCK)
         ON  IE.idInstanciaEntregable    =   EXACT.IdInstanciasEntregables
-        AND EXACT.EstadoID  =   10000
+        AND 10000 = EXACT.EstadoID 
     JOIN    
 		#GrupoUsuario   GU
 		ON  EXACT.idUsuario =   GU.IdUsuarioGrupo
@@ -301,8 +327,8 @@ BEGIN
     JOIN    
 		dbo.EN_Entregable   EN  (NOLOCK)
         ON CE.IdEntregable = EN.IdEntregable
-		AND EN.BITJOA = 0
-		AND EN.IsActivo = 1
+		AND 0 = EN.BITJOA 
+		AND 1 = EN.IsActivo
     LEFT    JOIN    
 		dbo.EN_FrecuenciaEntregable F (NOLOCK)
         ON  EN.IdFrecuenciaEntregable   =   F.IdFrecuenciaEntregable

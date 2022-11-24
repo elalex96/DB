@@ -14,8 +14,8 @@
     [ModificadoPor]                    INT            NULL,
     [Periodicidad]                     VARCHAR (250)  NULL,
     [Porcentaje]                       FLOAT (53)     NULL,
-    Orden                               INT             NULL,
-    CONSTRAINT [PK_CO_ProgramaImplementaAcciones] PRIMARY KEY CLUSTERED ([IdProgramaImplementaAccion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [Orden]                            INT            NULL,
+    CONSTRAINT [PK_CO_ProgramaImplementaAcciones] PRIMARY KEY CLUSTERED ([IdProgramaImplementaAccion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_ProgramaImplementaAcciones_CO_ProgramaImplementaDepartamentos] FOREIGN KEY ([IdProgramaImplementaDepartamento]) REFERENCES [dbo].[CO_ProgramaImplementaDepartamentos] ([IdProgramaImplementaDepartamento]),
     CONSTRAINT [FK_CO_ProgramaImplementaAcciones_CO_ProgramaImplementaElemento] FOREIGN KEY ([IdProgramaImplementaElemento]) REFERENCES [dbo].[CO_ProgramaImplementaElemento] ([IdProgramaImplementaElemento]),
     CONSTRAINT [FK_CO_ProgramaImplementaAcciones_EN_FrecuenciaEntregable] FOREIGN KEY ([IdPeriodicidad]) REFERENCES [dbo].[EN_FrecuenciaEntregable] ([IdFrecuenciaEntregable])

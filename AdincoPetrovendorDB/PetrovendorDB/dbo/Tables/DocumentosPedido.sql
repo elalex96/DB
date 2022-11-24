@@ -12,7 +12,8 @@
     [ModificadoEl]    DATETIME       NULL,
     [ModificadoPor]   INT            NULL,
     [Activo]          BIT            NULL,
-    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [Bucket]          VARCHAR (200)  NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_DocumentosPedido_MM_Pedido] FOREIGN KEY ([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido])
 );
 

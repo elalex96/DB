@@ -7,7 +7,7 @@
     [idTransicion]             INT            NULL,
     [FechaHistorial]           DATE           NULL,
     [Comentario]               NVARCHAR (MAX) NULL,
-    PRIMARY KEY CLUSTERED ([IdHistorialEntregableIns] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdHistorialEntregableIns] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([idInstanciaEntregable]) REFERENCES [dbo].[EN_InstanciasEntregable] ([idInstanciaEntregable]),
     FOREIGN KEY ([idTransicion]) REFERENCES [dbo].[EN_TransicionEstatus] ([IdTransicion])
 );

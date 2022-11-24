@@ -1,5 +1,5 @@
 ﻿-- p_OT_TerminosCondiciones_Sel 10005
-create proc [dbo].[p_OT_TerminosCondiciones_Cmb]
+CREATE proc [dbo].[p_OT_TerminosCondiciones_Cmb]
 @pIdContratista int
 as
 
@@ -11,6 +11,3 @@ as
 	inner join PEtrovendor..TC_TerminosYCondicionesDocV2 (NOLOCK) on S_Proveedor.Idproveedor = TC_TerminosYCondicionesDocV2.IdProveedor  
 	where CO_Contratista.IdContratista = @pIdContratista
 	
-GO
-
-

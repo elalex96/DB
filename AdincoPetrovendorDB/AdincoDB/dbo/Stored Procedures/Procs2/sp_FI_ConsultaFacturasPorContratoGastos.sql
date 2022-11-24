@@ -233,9 +233,7 @@ BEGIN
         ORDER BY F.IdFactura DESC;
     END;
 
-    /**/
-
-    ELSE
+	ELSE
     BEGIN
         INSERT INTO #Facturas
         (
@@ -427,6 +425,123 @@ BEGIN
                   )
         ORDER BY F.IdFactura DESC;
     END;
+
+	-- Contratos de Carso se agregan las facturas de tipo Nomina cuando la operadora es la emisora
+    IF(@IdContrato IN (10047, 10048))
+	BEGIN
+		INSERT INTO #Facturas
+        (
+            IdFactura,
+            NombreEmisor,
+            RFC_Emisor,
+            Fecha,
+            Serie,
+            Folio,
+            SubTotal,
+            Descuento,
+            TipoCambio,
+            Total,
+            Moneda,
+            TipoComprobante,
+            MetodoPago,
+            LugarExpedicion,
+            NumCtaPago,
+            RFC_Receptor,
+            UUID,
+            FechaTimbrado,
+            SelloCFD,
+            NoCertificadoSAT,
+            SelloSAT,
+            Tipo,
+            FechaRecepcion,
+            Año,
+            Mes,
+            NombreReceptor,
+            TieneArchivo,
+            IVA,
+            IdContrato,
+            CCN,
+            CRCCN,
+            EsDePetrovendor
+        )
+        SELECT DISTINCT
+            F.IdFactura,
+            S.RazonSocial AS NombreEmisor,
+            S.RFC AS RFC_Emisor,
+            F.Fecha,
+            F.Serie,
+            F.Folio,
+            F.SubTotal,
+            F.Descuento,
+            F.TipoCambio,
+            F.MontoConIva AS Total,
+            M.TipoMonedaCorto AS Moneda,
+            SUBSTRING(F.TipoComprobante, 1, 1) AS TipoComprobante,
+            F.MetodoPago,
+            SUBSTRING(F.LugarExpedicion, 0, 20) AS LugarExpedicion,
+            F.NumCtaPago,
+            CC.RFC AS Receptor,
+            F.UUID,
+            F.FechaTimbrado,
+            F.SelloCFD,
+            F.NoCertificadoSAT,
+            F.SelloSAT,
+            F.Tipo,
+            F.FechaRecepcion,
+            YEAR(F.Fecha) AS Año,
+            CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS VARCHAR(2)), 2), ' ', DATENAME(MONTH, F.Fecha)) AS Mes,
+            CC.RazonSocial AS Receptor,
+            TieneArchivo = CAST(CASE
+                                    WHEN D.DocumentoByte IS NULL THEN
+                                        0
+                                    ELSE
+                                        1
+                                END AS BIT),
+            ISNULL((F.MontoConIva * .16), 0) AS IVA,
+            C.IdContrato,
+            CASE
+                WHEN WAD.IdDocAwsDocAdinco IS NULL THEN
+                    0
+                ELSE
+                    1
+            END AS CCN,
+            NULL AS CRCCN,
+            0
+        FROM dbo.FI_Factura AS F (NOLOCK)
+            JOIN dbo.PV_Subcontratista AS S (NOLOCK)
+                ON F.IdSubcontratista = S.IdSubcontratista
+                   AND F.IdContrato = @IdContrato
+				   AND UPPER(F.TipoComprobante) = 'N'
+            JOIN dbo.CO_Contrato C (NOLOCK)
+                ON F.IdContrato = C.IdContrato
+            JOIN dbo.CO_Contratista CC (NOLOCK)
+                ON C.IdContratista = CC.IdContratista
+				AND CC.RFC = F.Emisor
+            JOIN dbo.PV_TipoMoneda M (NOLOCK)
+                ON M.IdMoneda = F.IdMoneda
+            LEFT JOIN dbo.FI_Documento D (NOLOCK)
+                ON F.IdFactura = D.IdFactura
+                   AND D.IdTipoDocumento = 1
+                   AND ISNULL(D.IsEliminado, 0) = 0
+            LEFT JOIN dbo.AWS_DocAwsDocAdinco WAD
+                ON F.IdFactura = WAD.IdDocAdinco
+        WHERE F.IdContrato = @IdContrato
+              AND (
+                      (
+                          (
+                              @Del IS NOT NULL
+                              AND @Al IS NOT NULL
+                          )
+                          AND CONVERT(VARCHAR, F.Fecha, 112)
+              BETWEEN CONVERT(VARCHAR, @Del, 112) AND CONVERT(VARCHAR, @Al, 112)
+                      )
+                      OR (
+                             @Del IS NULL
+                             OR @Al IS NULL
+                         )
+                  )
+	END
+    
     /**/
     UPDATE #Facturas
     SET CCN = 0

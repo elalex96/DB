@@ -58,11 +58,17 @@
     [IdEliminado]             INT             NULL,
     [IdLectorXMLSAT]          INT             NULL,
     [ErroSAT]                 NVARCHAR (MAX)  NULL,
-    CONSTRAINT [PK_Facturas] PRIMARY KEY CLUSTERED ([IdFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Facturas] PRIMARY KEY CLUSTERED ([IdFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [idx_FacturaUUID]
-    ON [dbo].[FI_Factura]([UUID] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[FI_Factura]([UUID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [<Factura, sysname,>]
+    ON [dbo].[FI_Factura]([Activa] ASC, [UUID] ASC)
+    INCLUDE([IdFactura], [IsEliminado]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

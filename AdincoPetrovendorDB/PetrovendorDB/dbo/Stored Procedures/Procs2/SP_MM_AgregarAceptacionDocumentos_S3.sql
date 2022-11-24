@@ -1,7 +1,4 @@
-﻿
-drop procedure if exists SP_MM_AgregarAceptacionDocumentos_S3
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>

@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_DescargarDocAnexoMercadeo
-go
--- =============================================
+﻿-- =============================================
 -- Author:	Pedro Acuña
 -- Create date: 04-07-2018
 -- Description:	SP para obtener los datos necesarios para la descarga de amazon s3

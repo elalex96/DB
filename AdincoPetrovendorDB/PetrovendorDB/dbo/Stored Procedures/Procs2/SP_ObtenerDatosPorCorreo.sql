@@ -1,10 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'SP_ObtenerDatosPorCorreo')
-begin
-	drop proc SP_ObtenerDatosPorCorreo
-end
-
-go
-
+﻿
 -- =============================================
 -- Author:		<Jose Roman>
 -- Modified date: <16-03-2018>
@@ -56,7 +50,7 @@ BEGIN
 				p.RazonSocial,
 				ISNULL(p.IdPais,42),
 				ISNULL(p.IdTipoRegimen,1),
-				IdProveedor					=	@IdProveedor
+				IdProveedor					=	0--@IdProveedor
 	FROM		dbo.S_Usuario u
 	LEFT JOIN	dbo.S_UsuarioProveedor		up
 	ON			up.IdUsuario				=	u.IdUsuario

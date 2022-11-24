@@ -21,7 +21,7 @@ begin
 	HeightPX = @HeightPX,
 	NombreMostrar = @NombreMostrar,
 	Parametros = @Parametros,
-	UserTableau = @UserTableau,
+	UserTableau = ISNULL(@UserTableau,'admin'),
 	MuestraToolbar = @MuestraToolbar
 	WHERE Id = @Id
 end

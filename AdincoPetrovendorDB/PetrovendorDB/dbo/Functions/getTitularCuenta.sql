@@ -9,3 +9,4 @@ BEGIN
     select @titular = Titular from PV_CuentaBancaria where	NumeroCuenta = @Cuenta
     RETURN @titular
 END
+

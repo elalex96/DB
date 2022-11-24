@@ -6,6 +6,6 @@
     [Banco]          INT           NULL,
     [RFC]            VARCHAR (50)  NULL,
     [CuentaRegistro] INT           NULL,
-    CONSTRAINT [PK_Beneficiario] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Beneficiario] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

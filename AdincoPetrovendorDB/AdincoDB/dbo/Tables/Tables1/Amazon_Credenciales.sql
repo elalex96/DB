@@ -10,6 +10,6 @@
     [EsActivo]      BIT           NULL,
     [CreadoEl]      DATETIME      NULL,
     [ModificadoEl]  DATETIME      NULL,
-    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

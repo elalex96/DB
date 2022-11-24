@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_En_SubeHistoricoAprueba]    Script Date: 25/01/2022 09:14:33 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 10/04/2018
 -- Description:solo cambia el estatus para la instancia 
@@ -15,7 +8,7 @@ GO
 -- Create date: 24/02/2021
 -- Description: Modificaciones para usuario equinor
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_En_SubeHistoricoAprueba] 
+CREATE PROCEDURE [dbo].[sp_En_SubeHistoricoAprueba] 
     @idUsuario INT,
     @idContrato INT,
     @idInstanciaEntregable INT,

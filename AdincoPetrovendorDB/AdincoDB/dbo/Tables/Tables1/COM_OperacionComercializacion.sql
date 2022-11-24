@@ -24,7 +24,7 @@
     [PuntoEntregaID]                INT           NULL,
     [EsCondensable]                 BIT           DEFAULT ((0)) NULL,
     [PenaEconomica]                 FLOAT (53)    NULL,
-    CONSTRAINT [PK_COM_OperacionComercializacion] PRIMARY KEY CLUSTERED ([IdOperacionComercializacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_COM_OperacionComercializacion] PRIMARY KEY CLUSTERED ([IdOperacionComercializacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_COM_OperacionComercializacion_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_COM_OperacionComercializacion_CO_TipoHidrocarburo] FOREIGN KEY ([IdTipoHidrocarburo]) REFERENCES [dbo].[CO_TipoHidrocarburo] ([IdTipoHidrocarburo])
 );
@@ -32,7 +32,7 @@
 
 GO
 CREATE NONCLUSTERED INDEX [idx_ContratoMes]
-    ON [dbo].[COM_OperacionComercializacion]([IdContrato] ASC, [MesReporte] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[COM_OperacionComercializacion]([IdContrato] ASC, [MesReporte] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO

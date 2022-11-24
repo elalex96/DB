@@ -26,7 +26,7 @@
     [FechaAprobacionSAPPR] DATETIME      NULL,
     [Notas]                VARCHAR (300) NULL,
     [IdTerminos]           INT           NULL,
-    CONSTRAINT [PK_OT_Solicitud] PRIMARY KEY CLUSTERED ([IdOTSolicitud] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_OT_Solicitud] PRIMARY KEY CLUSTERED ([IdOTSolicitud] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__OT_Solici__IdOTE__0B3F165E] FOREIGN KEY ([IdOTEstatusAnt]) REFERENCES [dbo].[OT_Estatus] ([IdOtEstatus]),
     CONSTRAINT [FK__OT_Solici__IdOTE__7EA4354F] FOREIGN KEY ([IdOTEstatusAnt]) REFERENCES [dbo].[OT_Estatus] ([IdOtEstatus]),
     CONSTRAINT [FK__OT_Solici__IdPre__79C9A642] FOREIGN KEY ([IdPresupuesto]) REFERENCES [dbo].[CO_Presupuesto] ([IdPresupuesto]),
@@ -34,11 +34,9 @@
     CONSTRAINT [FK_OT_Solicitud_SC_SubContrato] FOREIGN KEY ([IdSubContrato]) REFERENCES [dbo].[SC_SubContrato] ([IdSubContrato])
 );
 
-go
 
-create nonclustered index IX_OT_Solicitud		on		OT_Solicitud	 (	[IdSubContrato],		[IsActivo],				[IsEliminado],		[IdOTEstatus]) 
-include (	[IdOTSolicitud],		[Folio],			[FechaInicio],		[FechaFin],				[PlazoEjecucion],		[CreadoPor],		[CreadoEl],				[ModificadoPor],
-			[ModificadoEl],			[IdPresupuesto],	[Objeto],			[FechaFinExtendida],	[IdOTEstatusAnt],		[IdMatContratista],	[IdMatSubcontratista],	[IdCentroCosto],
-			[ProgIniPorProveedor],	[IdMoneda],			[CapturaManual],	[SAPPR],				[FechaAprobacionSAPPR],	[Notas],			[IdTerminos])
-
+GO
+CREATE NONCLUSTERED INDEX [IX_OT_Solicitud]
+    ON [dbo].[OT_Solicitud]([IdSubContrato] ASC, [IsActivo] ASC, [IsEliminado] ASC, [IdOTEstatus] ASC)
+    INCLUDE([IdOTSolicitud], [Folio], [FechaInicio], [FechaFin], [PlazoEjecucion], [CreadoPor], [CreadoEl], [ModificadoPor], [ModificadoEl], [IdPresupuesto], [Objeto], [FechaFinExtendida], [IdOTEstatusAnt], [IdMatContratista], [IdMatSubcontratista], [IdCentroCosto], [ProgIniPorProveedor], [IdMoneda], [CapturaManual], [SAPPR], [FechaAprobacionSAPPR], [Notas], [IdTerminos]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

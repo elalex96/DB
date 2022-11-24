@@ -19,7 +19,7 @@
     [ProdPetroleoBruto]  FLOAT (53)    NULL,
     [Agua]               FLOAT (53)    NULL,
     [Comentarios]        VARCHAR (250) NULL,
-    CONSTRAINT [PK_PR_ProdDiariaPozo_Previo] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_ProdDiariaPozo_Previo] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PR_ProdDiariaPozo_Previo_Pozo] FOREIGN KEY ([Pozo]) REFERENCES [dbo].[PR_Pozo] ([Id]),
     CONSTRAINT [FK_PR_ProdDiariaPozo_Previo_ProdDiaria_Previo] FOREIGN KEY ([ProdDiaria]) REFERENCES [dbo].[PR_ProdDiaria_Previo] ([Id])
 );

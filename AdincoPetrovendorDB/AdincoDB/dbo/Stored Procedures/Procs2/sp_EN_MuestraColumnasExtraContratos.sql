@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_MuestraColumnasExtraContratos]    Script Date: 02/11/2022 11:39:55 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]--3,10061
+﻿CREATE PROCEDURE [dbo].[sp_EN_MuestraColumnasExtraContratos]--3,10061
 @idContrato INT,
 @idUsuario  INT
 AS

@@ -18,7 +18,7 @@
     [IdAceptacionPedido]            INT             NULL,
     [IdMaterialImportado]           INT             NULL,
     [IdAceptacionPedidoDetalle]     INT             NULL,
-    CONSTRAINT [PK_IdPedimentoComprobanteDetalle] PRIMARY KEY CLUSTERED ([IdPedimentoComprobanteDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IdPedimentoComprobanteDetalle] PRIMARY KEY CLUSTERED ([IdPedimentoComprobanteDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_PedimentoComprobanteDetalle_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante])
 );
 

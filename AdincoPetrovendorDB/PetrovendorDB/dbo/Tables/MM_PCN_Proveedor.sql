@@ -9,6 +9,6 @@
     [Activo]           INT            NULL,
     [IdProveedor]      INT            NULL,
     [CorreoInvitacion] NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_MM_PCN_Proveedor] PRIMARY KEY CLUSTERED ([IdPCNProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_PCN_Proveedor] PRIMARY KEY CLUSTERED ([IdPCNProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -1,4 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_InformeRevGast_TotalAprobados]
+﻿--[dbo].[SP_CO_InformeRevGast_TotalAprobados] 10159,'2021-08-01'
+CREATE PROCEDURE [dbo].[SP_CO_InformeRevGast_TotalAprobados]
     @IdPresupuesto INT,
     @MesPresentacion DATE
 AS
@@ -6,9 +7,9 @@ BEGIN
 	SET LANGUAGE SPANISH;
 	DECLARE @FechaSumaMes DATE = DATEADD(month, 1, @MesPresentacion)
 	DECLARE @Fecha VARCHAR(150) = LTRIM(UPPER(CONCAT( datename(month, @MesPresentacion), '/', YEAR(@MesPresentacion))));
-	DECLARE @FechaRevGastosElegibles VARCHAR(150) = LTRIM(CONCAT( '(Ver el Informe de Revisión de Gastos Elegibles ',datename(month, @MesPresentacion), '/', YEAR(@MesPresentacion), ')'));
+	DECLARE @FechaRevGastosElegibles VARCHAR(150) = LTRIM(CONCAT( '(Ver el Informe de Revisi�n de Gastos Elegibles ',datename(month, @MesPresentacion), '/', YEAR(@MesPresentacion), ')'));
 	DECLARE @FechaGastosPendientesReconocer VARCHAR(150) = LTRIM(CONCAT('(Ver el Informe de Saldos de Gastos Elegibles Pendientes de Reconocer a ',datename(month, @MesPresentacion), '/', YEAR(@MesPresentacion), ')'));
-	DECLARE @FechaInformeContableGastos VARCHAR(200) = LTRIM(CONCAT('De acuerdo al Informe Contable de Gastos elegibles correspondiente al mes de ',datename(month, @MesPresentacion), ' ', YEAR(@MesPresentacion), ' que se presento con fecha de 06/',RIGHT('0' + RTRIM(MONTH(@FechaSumaMes)), 2),'/',YEAR(@FechaSumaMes),' le notifico lo siguiente de acuerdo a nuestra revisión:'));
+	DECLARE @FechaInformeContableGastos VARCHAR(200) = LTRIM(CONCAT('De acuerdo al Informe Contable de Gastos elegibles correspondiente al mes de ',datename(month, @MesPresentacion), ' ', YEAR(@MesPresentacion), ' que se presento con fecha de 06/',RIGHT('0' + RTRIM(MONTH(@FechaSumaMes)), 2),'/',YEAR(@FechaSumaMes),' le notifico lo siguiente de acuerdo a nuestra revisi�n:'));
 	DECLARE @Presupuesto VARCHAR(150) = (SELECT TOP 1 Nombre FROM CO_Presupuesto WHERE IdPresupuesto = @IdPresupuesto);
 	SET @Presupuesto = LTRIM(UPPER(@Presupuesto));
    SELECT 

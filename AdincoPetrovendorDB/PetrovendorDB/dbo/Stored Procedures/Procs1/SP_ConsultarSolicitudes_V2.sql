@@ -1,8 +1,4 @@
-USE PETROVENDOR 
-GO
-DROP PROCEDURE IF EXISTS SP_ConsultarSolicitudes_V2
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 08/09/2020
 -- Description: Se removio las tareas seriales que todavia no se deben mostrar al usuario actual, por que el aprobador anterior todavia no realiza la aprobación

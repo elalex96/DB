@@ -15,7 +15,7 @@
     [Observacion]                 NVARCHAR (MAX) NULL,
     [IdCriticidad]                INT            NULL,
     [CreadoPor]                   INT            NULL,
-    CONSTRAINT [PK_Tb_Entregables_CatalogoEntregables] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Tb_Entregables_CatalogoEntregables] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_AreaResponsableEntregable] FOREIGN KEY ([IdAreaResponsableEntregable]) REFERENCES [dbo].[EN_AreaResponsableEntregable] ([IdAreaResponsableEntregable]),
     CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_ClausulaAnexo] FOREIGN KEY ([IdClausulaAnexo]) REFERENCES [dbo].[EN_ClausulaAnexo] ([IdClausulaAnexo]),
     CONSTRAINT [FK_Tb_Entregables_CatalogoEntregables_Cat_General_Entidades] FOREIGN KEY ([IdEntidad]) REFERENCES [dbo].[EN_Entidad] ([IdEntidad]),

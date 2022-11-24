@@ -5,7 +5,7 @@
     [ValorMax]          INT           NOT NULL,
     [Valor]             FLOAT (53)    NOT NULL,
     [Respuesta]         VARCHAR (MAX) NULL,
-    CONSTRAINT [PK_ME_RespuestasRango] PRIMARY KEY CLUSTERED ([IdRespuestasRango] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ME_RespuestasRango] PRIMARY KEY CLUSTERED ([IdRespuestasRango] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ME_RespuestasRango_ME_Preguntas] FOREIGN KEY ([IdPregunta]) REFERENCES [dbo].[ME_Preguntas] ([IdPregunta])
 );
 

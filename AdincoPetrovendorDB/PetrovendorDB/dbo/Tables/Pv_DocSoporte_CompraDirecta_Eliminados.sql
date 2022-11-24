@@ -11,6 +11,6 @@
     [AMS3]          BIT            NULL,
     [EliminadoS3]   BIT            NULL,
     [isEliminado]   BIT            NULL,
-    PRIMARY KEY CLUSTERED ([idEliminado] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([idEliminado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

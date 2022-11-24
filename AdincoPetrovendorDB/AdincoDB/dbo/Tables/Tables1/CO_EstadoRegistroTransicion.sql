@@ -7,7 +7,7 @@
     [CreadoEn]                   DATETIME       NULL,
     [ModificadoPor]              INT            NULL,
     [ModificadoEn]               DATETIME       NULL,
-    CONSTRAINT [PK_CO_EstadoRegistroTransicion] PRIMARY KEY CLUSTERED ([IdEstadoRegistroTransicion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_EstadoRegistroTransicion] PRIMARY KEY CLUSTERED ([IdEstadoRegistroTransicion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_EstadoRegistroTransicion_AP_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_EstadoRegistroTransicion_AP_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );

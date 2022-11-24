@@ -8,7 +8,7 @@
     [CreadoEl]          DATETIME        NOT NULL,
     [ModificadoPor]     INT             NULL,
     [ModificadoEl]      DATETIME        NULL,
-    CONSTRAINT [PK_IN_AL_MaterialExistencias] PRIMARY KEY CLUSTERED ([AlmacenId] ASC, [IdMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IN_AL_MaterialExistencias] PRIMARY KEY CLUSTERED ([AlmacenId] ASC, [IdMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_IN_AL_MaterialExistencias_IN_Almacen] FOREIGN KEY ([AlmacenId]) REFERENCES [dbo].[IN_Almacen] ([IdAlmacen]),
     CONSTRAINT [FK_IN_AL_MaterialExistencias_MM_Material] FOREIGN KEY ([IdMaterial]) REFERENCES [dbo].[MM_Material] ([IdMaterial])
 );

@@ -1,8 +1,4 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS RetornarRfcCarso
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Luis David
 -- Create date: 06/09/2022
 -- Description: Modificación de optimización Issue #1985 (Petrovendor)

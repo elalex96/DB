@@ -27,7 +27,7 @@
     [Error]                      VARCHAR (350) NULL,
     [CreadoEl]                   DATETIME      NOT NULL,
     [ModificadoEl]               DATETIME      NULL,
-    CONSTRAINT [PK_FI_TransferImportacion] PRIMARY KEY CLUSTERED ([IdTransferenciaImportacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_TransferImportacion] PRIMARY KEY CLUSTERED ([IdTransferenciaImportacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_TransferImportacion_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

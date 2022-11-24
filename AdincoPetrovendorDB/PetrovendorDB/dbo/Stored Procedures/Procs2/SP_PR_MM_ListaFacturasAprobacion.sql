@@ -1,8 +1,4 @@
-USE PETROVENDOR
-GO
-DROP PROCEDURE IF EXISTS SP_PR_MM_ListaFacturasAprobacion
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 21-09-2022
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 

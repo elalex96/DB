@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_InsertarMarcoLegal]    Script Date: 20/06/2022 05:25:27 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =================================================================
+﻿-- =================================================================
 -- Author:	Luis David
 -- Create date: 27/09/2019
 -- Description:	se agrega el bitjoa y nombreeningles para el issue 419
@@ -15,7 +8,7 @@ GO
 -- Create date: 20/06/2022
 -- Description:	se agrega el Alias
 -- =================================================================
-ALTER PROCEDURE [dbo].[EN_InsertarMarcoLegal]
+CREATE PROCEDURE [dbo].[EN_InsertarMarcoLegal]
     @MarcoLegal VARCHAR(MAX),
     @idUsuario INT,
     @idContrato INT,

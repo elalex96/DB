@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_DEA_ValidarPOFactura'
-)
-    DROP PROCEDURE SP_DEA_ValidarPOFactura;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_DEA_ValidarPOFactura]    Script Date: 27/04/2022 12:19:02 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <12/09/2020>
 -- Description:	<Validacion de PO para dea al aprobar factura>

@@ -1,5 +1,6 @@
-﻿-- p_OT_SolicitudAdicional_Grd 8,47,10
-CREATE proc p_OT_SolicitudAdicional_Grd
+﻿
+-- p_OT_SolicitudAdicional_Grd 8,47,10
+create proc p_OT_SolicitudAdicional_Grd
 @pIdOTSolicitudAdicional int,
 @pIdOTSolicitud int,
 @pUsuarioId int

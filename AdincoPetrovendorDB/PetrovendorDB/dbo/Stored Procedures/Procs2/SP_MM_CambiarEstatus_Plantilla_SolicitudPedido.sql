@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_CambiarEstatus_Plantilla_SolicitudPedido]    Script Date: 26/11/2021 01:57:02 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <21/11/2019>
 -- Description:	<cambiar el estado de la plantilla de solicitud de pedido>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_CambiarEstatus_Plantilla_SolicitudPedido]
+CREATE PROCEDURE [dbo].[SP_MM_CambiarEstatus_Plantilla_SolicitudPedido]
 	-- Add the parameters for the stored procedure here
 	@IdPlantillaSolicitudPedido INT,
 	@IdUsuario INT,

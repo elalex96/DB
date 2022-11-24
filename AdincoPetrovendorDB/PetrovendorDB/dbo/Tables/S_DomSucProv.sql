@@ -8,7 +8,7 @@
     [NumTel]       NVARCHAR (20) NULL,
     [IdProveedor]  INT           NULL,
     [IsEliminado]  BIT           NULL,
-    CONSTRAINT [PK_S_DomicilioSucursalesProveedor] PRIMARY KEY CLUSTERED ([IdDomSucProv] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_DomicilioSucursalesProveedor] PRIMARY KEY CLUSTERED ([IdDomSucProv] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__S_DomSucP__IdPro__3F9B6DFF] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])
 );
 

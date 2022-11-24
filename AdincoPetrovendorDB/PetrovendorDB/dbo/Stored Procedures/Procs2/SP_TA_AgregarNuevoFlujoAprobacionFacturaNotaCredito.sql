@@ -1,25 +1,9 @@
-﻿USE [Petrovendor]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_TA_AgregarNuevoFlujoAprobacionFacturaNotaCredito'
-)
-    DROP PROCEDURE SP_TA_AgregarNuevoFlujoAprobacionFacturaNotaCredito;
-GO 
-/****** Object:  StoredProcedure [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFacturaNotaCredito]    Script Date: 23/03/2021 01:35:09 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Daniel AC>
 -- Create date: <23-03-2021>
 -- Description:	<Consulta usuarios con rol de aprobación de factura para nota de credito>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFacturaNotaCredito]  
+create PROCEDURE [dbo].[SP_TA_AgregarNuevoFlujoAprobacionFacturaNotaCredito]  
 @IdProveedor INT,
 @IdUsuario INT,
 @IdAceptacionPedido INT, 
@@ -176,5 +160,3 @@ BEGIN
  
 
 END
-
- 

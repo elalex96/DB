@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS sp_EN_UpdateContratoEntregable
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Llama las rondas
@@ -42,7 +40,8 @@ CREATE PROCEDURE [dbo].[sp_EN_UpdateContratoEntregable]
 	@ContieneFechaInterna INT,
 	@ContieneFechaRegulador INT,
 	@ContieneInformacionSensible BIT,
-	@BitAwareness BIT = NULL
+	@BitAwareness BIT = NULL,
+	@Radar BIT = NULL
 AS
 BEGIN
 
@@ -88,7 +87,8 @@ BEGIN
 				   FocalPoint = REPLACE(REPLACE(REPLACE(RTRIM(LTRIM(@FocalPoint)),CHAR(9),''),CHAR(10),''),CHAR(13),''),
 				   AccountableCompliance = REPLACE(REPLACE(REPLACE(RTRIM(LTRIM(@AccountableCompliance)),CHAR(9),''),CHAR(10),''),CHAR(13),''),
 				   Accountable = REPLACE(REPLACE(REPLACE(RTRIM(LTRIM(@Accountable)),CHAR(9),''),CHAR(10),''),CHAR(13),''),
-				   ContieneInformacionSensible=@ContieneInformacionSensible
+				   ContieneInformacionSensible=@ContieneInformacionSensible,
+				   Radar = @Radar
              WHERE IdContratoEntregable =  @IdContratoEntregable;
        /* END;
         IF (@BitInterno = 1)

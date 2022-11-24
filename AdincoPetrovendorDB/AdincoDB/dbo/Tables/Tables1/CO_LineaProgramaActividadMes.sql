@@ -9,7 +9,7 @@
     [NumeroMes]                   INT        NULL,
     [Actividades]                 FLOAT (53) NULL,
     [Fecha]                       DATE       NULL,
-    CONSTRAINT [PK_CO_LineaProgramaActividadMes] PRIMARY KEY CLUSTERED ([IdLineaProgramaActividadMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_LineaProgramaActividadMes] PRIMARY KEY CLUSTERED ([IdLineaProgramaActividadMes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_LineaProgramaActividadMes_CO_ActividadPetroleraCNH] FOREIGN KEY ([IdActividadPetrolera]) REFERENCES [dbo].[CO_ActividadPetroleraCNH] ([IdActividadPetrolera]),
     CONSTRAINT [FK_CO_LineaProgramaActividadMes_CO_ProgramaActividad] FOREIGN KEY ([IdProgramaActividad]) REFERENCES [dbo].[CO_ProgramaActividad] ([IdProgramaActividad]),
     CONSTRAINT [FK_CO_LineaProgramaActividadMes_CO_SubactividadPetrolera] FOREIGN KEY ([IdSubactividadPetrolera]) REFERENCES [dbo].[CO_SubactividadPetrolera] ([IdSubactividadPetrolera]),

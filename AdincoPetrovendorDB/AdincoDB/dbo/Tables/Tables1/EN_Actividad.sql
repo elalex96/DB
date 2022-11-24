@@ -8,7 +8,7 @@
     [ModificadoPor]        INT      NULL,
     [ModificadoEn]         DATETIME NULL,
     [Activo]               BIT      NOT NULL,
-    CONSTRAINT [PK_EN_Actividad] PRIMARY KEY CLUSTERED ([EstadoID] ASC, [idUsuario] ASC, [IdContratoEntregable] ASC, [Activo] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_Actividad] PRIMARY KEY CLUSTERED ([EstadoID] ASC, [idUsuario] ASC, [IdContratoEntregable] ASC, [Activo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_Actividad_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_Actividad_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_Actividad_AP_UsuarioResponsable] FOREIGN KEY ([idUsuario]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
@@ -19,12 +19,15 @@
 
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [indiceActividadID]
-    ON [dbo].[EN_Actividad]([ActividadID] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[EN_Actividad]([ActividadID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [EN_Actividad_ContratoEntregable_Estado]
-    ON [dbo].[EN_Actividad]([IdContratoEntregable] ASC, [EstadoID] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[EN_Actividad]([IdContratoEntregable] ASC, [EstadoID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
-go
-create index IX_EN_Actividad			on	EN_Actividad(ActividadID)
+
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_Actividad]
+    ON [dbo].[EN_Actividad]([ActividadID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

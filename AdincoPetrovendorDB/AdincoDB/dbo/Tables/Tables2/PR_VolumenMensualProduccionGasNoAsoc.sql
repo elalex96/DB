@@ -35,7 +35,7 @@
     [VolumenPropanoC3EstadoCompensacion]        FLOAT (53)      NULL,
     [VolumenButanoC4EstadoCompensacion]         FLOAT (53)      NULL,
     [VolumenCondensadosEstadoCompensacion]      FLOAT (53)      NULL,
-    PRIMARY KEY CLUSTERED ([IdReporteVolumenesProduccionGasNoAsoc] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdReporteVolumenesProduccionGasNoAsoc] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PR_VolumenMensualProduccionGasNoAsoc_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

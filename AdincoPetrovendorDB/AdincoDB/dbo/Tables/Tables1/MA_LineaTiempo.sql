@@ -3,6 +3,6 @@
     [IdDocumento]       INT            NULL,
     [FechaCreacion]     DATETIME       NULL,
     [ComentarioRechazo] NVARCHAR (MAX) NULL,
-    PRIMARY KEY CLUSTERED ([IdLineaTiempo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdLineaTiempo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

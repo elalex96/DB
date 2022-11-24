@@ -9,7 +9,7 @@
     [ModificadoPor] INT            NULL,
     [ModificadoEl]  DATETIME       NULL,
     [Activo]        BIT            NULL,
-    CONSTRAINT [PK_Listas] PRIMARY KEY CLUSTERED ([IdLista] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Listas] PRIMARY KEY CLUSTERED ([IdLista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Listas_Grupos] FOREIGN KEY ([IdGrupo]) REFERENCES [dbo].[AP_Grupo] ([IdGrupo])
 );
 

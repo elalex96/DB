@@ -12,6 +12,6 @@
     [IdContrato]        INT            NULL,
     [IdProceso]         INT            NULL,
     [Confirmacion]      BIT            NULL,
-    PRIMARY KEY CLUSTERED ([IdEliminacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdEliminacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

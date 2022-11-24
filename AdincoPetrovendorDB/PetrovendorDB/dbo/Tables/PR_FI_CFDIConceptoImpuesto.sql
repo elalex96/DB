@@ -9,6 +9,6 @@
     [Tasa]               FLOAT (53)    NULL,
     [Importe]            MONEY         NULL,
     [IdEliminacion]      INT           NULL,
-    CONSTRAINT [PK_PR_FI_CFDIConceptoImpuesto] PRIMARY KEY CLUSTERED ([IdConceptoImpuesto] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PR_FI_CFDIConceptoImpuesto] PRIMARY KEY CLUSTERED ([IdConceptoImpuesto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

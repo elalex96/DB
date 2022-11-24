@@ -1,8 +1,4 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MM_ConsultarValidacionesDefault
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Daniel AC
 -- Date: 21/11/2019
 -- Description: Validación de administradores de compras 

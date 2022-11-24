@@ -32,14 +32,19 @@
     [BitCortoPlazo]               BIT            NULL,
     [BitMedianoPlazo]             BIT            NULL,
     [BitLargoPlazo]               BIT            NULL,
-    CONSTRAINT [PK_CO_ContratoEntregable] PRIMARY KEY CLUSTERED ([IdContratoEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [BitNA]                       BIT            DEFAULT ((0)) NULL,
+    [Radar]                       BIT            NULL,
+    CONSTRAINT [PK_CO_ContratoEntregable] PRIMARY KEY CLUSTERED ([IdContratoEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_ContratoEntregable_EN_Area] FOREIGN KEY ([IdArea]) REFERENCES [dbo].[EN_Area] ([idArea])
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [EN_CONTRATO_ENTREGABLE_CONTRATO_ACTIVO]
-    ON [dbo].[EN_ContratoEntregable]([IdContrato] ASC, [Activo] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[EN_ContratoEntregable]([IdContrato] ASC, [Activo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
-go
-create index IX_EN_ContratoEntregable	on	EN_ContratoEntregable(IdContratoEntregable)
+
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_ContratoEntregable]
+    ON [dbo].[EN_ContratoEntregable]([IdContratoEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

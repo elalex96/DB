@@ -12,7 +12,7 @@
     [Padre]       INT           NULL,
     [Orden]       INT           NULL,
     [CreadoPor]   INT           NULL,
-    CONSTRAINT [PK_Pagina] PRIMARY KEY CLUSTERED ([PaginaID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Pagina] PRIMARY KEY CLUSTERED ([PaginaID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Pagina_Modulo] FOREIGN KEY ([ModuloID]) REFERENCES [dbo].[AP_Modulo] ([IdModulo])
 );
 

@@ -7,10 +7,7 @@
 -- Create date: 20/03/2021
 -- Description:	Se optimiza la consulta para la pantalla detalle_pedido del issue 984
 -- =============================================
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_ConsultarEstatusSolicitudPedido')
-    DROP PROCEDURE SP_ConsultarEstatusSolicitudPedido
-go
-create PROCEDURE SP_ConsultarEstatusSolicitudPedido
+CREATE PROCEDURE [dbo].[SP_ConsultarEstatusSolicitudPedido]
 @IdSolicitudPedido INT,
 @IdProveedor INT 
 

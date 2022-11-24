@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado_AD]    Script Date: 10/03/2022 07:13:43 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -22,7 +15,7 @@ GO
 -- Description:	Consultar Detalle de La Oferta Cabecera y detalle del anexo de ad s3
 -- =============================================
 
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado_AD]
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado_AD]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT, @IdProveedor INT, @IdContrato INT, @IdUsuario INT, @FechaRegistro DATETIME
 AS

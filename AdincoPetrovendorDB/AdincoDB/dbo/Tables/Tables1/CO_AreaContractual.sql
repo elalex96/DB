@@ -14,7 +14,7 @@
     [IdUbicacionAC]          INT            NULL,
     [IdEstado]               INT            NULL,
     [CreadoPor]              INT            NULL,
-    CONSTRAINT [PK_AreasContractuales] PRIMARY KEY CLUSTERED ([IdAreaContractual] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AreasContractuales] PRIMARY KEY CLUSTERED ([IdAreaContractual] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_AreaContractual_CO_ActivoCNH] FOREIGN KEY ([IdActivo]) REFERENCES [dbo].[CO_ActivoCNH] ([IdActivo]),
     CONSTRAINT [FK_CO_AreaContractual_CO_Region] FOREIGN KEY ([IdRegion]) REFERENCES [dbo].[CO_Region] ([IdRegion]),
     CONSTRAINT [FK_CO_AreaContractual_CO_UbicacionAC] FOREIGN KEY ([IdUbicacionAC]) REFERENCES [dbo].[CO_UbicacionAC] ([IdUbicacionAC]),

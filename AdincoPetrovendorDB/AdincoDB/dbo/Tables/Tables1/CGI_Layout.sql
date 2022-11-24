@@ -25,6 +25,6 @@
     [CreadoPor]           INT            NULL,
     [ModificadoPor]       INT            NULL,
     [ModificadoEl]        DATETIME       NULL,
-    PRIMARY KEY CLUSTERED ([IdCGILayout] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdCGILayout] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

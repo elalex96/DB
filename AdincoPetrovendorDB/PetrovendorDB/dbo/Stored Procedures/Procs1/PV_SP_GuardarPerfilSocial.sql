@@ -1,18 +1,11 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[PV_SP_GuardarPerfilSocial]    Script Date: 23/11/2021 01:54:43 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <15/02/2018>
 -- Description:	<Se guarda o actualiza el perfil social>
 -- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
 -- =============================================
-ALTER PROCEDURE [dbo].[PV_SP_GuardarPerfilSocial]
+CREATE PROCEDURE [dbo].[PV_SP_GuardarPerfilSocial]
 	@IdProveedor INT,
 	@SitioWeb VARCHAR(max),
 	@Facebook VARCHAR(MAX),

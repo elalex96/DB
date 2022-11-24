@@ -13,7 +13,7 @@
     [RfcEmisorCtaBen]     NVARCHAR (50)  NULL,
     [CtaBeneficiario]     NVARCHAR (50)  NULL,
     [TipoDeCambio]        FLOAT (53)     NULL,
-    CONSTRAINT [PK_FI_ComplementoDePago] PRIMARY KEY CLUSTERED ([IdComplementoDePago] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_ComplementoDePago] PRIMARY KEY CLUSTERED ([IdComplementoDePago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_ComplementoDePago_FI_Factura] FOREIGN KEY ([IdFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura])
 );
 

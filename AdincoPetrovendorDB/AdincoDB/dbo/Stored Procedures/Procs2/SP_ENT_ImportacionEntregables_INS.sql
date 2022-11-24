@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS]    Script Date: 12/05/2022 03:15:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <06/12/2019>  
 -- Description: <Actualizacion de los registros existentes>  
@@ -15,7 +8,7 @@ GO
 -- Create date: <12/05/2022>  
 -- Description: <descarte de elementos vacios, incercion de registros en en_actividad en caso de que el entregable no tenga>  
 -- =============================================  
-ALTER PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS] 
+CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS] 
 @Layout dbo.EN_IMP_CONFIGURACION_REPSOL READONLY,
 @IdContrato INT,
 @IdUsuario INT

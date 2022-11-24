@@ -1,5 +1,6 @@
-﻿USE Adinco;
-GO
+﻿--AGREGAR SCRIPT DEL MENÚ
+-- 
+--SELECT * FROM AP_MenuD
 CREATE PROCEDURE [dbo].[CO_SP_EsGastoDelContrato]--10007,2,117940
 @IdContrato INT,
 @IdUsuario INT,
@@ -33,3 +34,5 @@ AS
 
 		 select @EsdeContrato
      END;
+
+

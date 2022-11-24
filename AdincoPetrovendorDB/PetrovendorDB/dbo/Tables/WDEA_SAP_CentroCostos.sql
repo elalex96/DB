@@ -1,14 +1,15 @@
-﻿CREATE TABLE [dbo].[WDEA_SAP_CentroCostos]
-(
-	Id int primary key not null identity(1,1),
-	IdCentroCostosADINCO int,
-	AcronimoSAP varchar(300),
-	WBS_Element varchar(300),
-	IdContrato int,
-	IdProveedor int,
-	Activo bit,
-	CreadoEl datetime,
-	ModificadoEl datetime,
-	CreadoPor int,
-	ModificadoPor int
-)
+﻿CREATE TABLE [dbo].[WDEA_SAP_CentroCostos] (
+    [Id]                   INT           IDENTITY (1, 1) NOT NULL,
+    [IdCentroCostosADINCO] INT           NULL,
+    [AcronimoSAP]          VARCHAR (300) NULL,
+    [WBS_Element]          VARCHAR (300) NULL,
+    [IdContrato]           INT           NULL,
+    [IdProveedor]          INT           NULL,
+    [Activo]               BIT           NULL,
+    [CreadoEl]             DATETIME      NULL,
+    [ModificadoEl]         DATETIME      NULL,
+    [CreadoPor]            INT           NULL,
+    [ModificadoPor]        INT           NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

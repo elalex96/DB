@@ -1,13 +1,7 @@
-﻿DROP PROCEDURE IF EXISTS SP_MPY_DetallesPre_SES
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		ALexander Gomez
 -- Create date: 29/10/2018
 -- Description:	Consulta de los detalles de la PRE-SES
--- =============================================
--- Author:		Luis David
--- Create date: 2930/09/2021
--- Description:	Se agrega el Bucket
 -- =============================================
 CREATE procedure [dbo].[SP_MPY_DetallesPre_SES]
 	-- Add the parameters for the stored procedure here

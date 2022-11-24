@@ -1,18 +1,4 @@
-﻿USE Adinco
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_ConsultarComentariosEntregableInstancia'
-)
-    DROP PROCEDURE EN_ConsultarComentariosEntregableInstancia;
-GO
-/****** Object:  StoredProcedure [dbo].[EN_ConsultarComentariosEntregableInstancia]    Script Date: 22/09/2022 07:19:38 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================  
 -- Author:   Daniel AC  
 -- Create date: 26/10/2020  

@@ -14,17 +14,17 @@ BEGIN
 	 declare @result float
 
 	
-	select @result = isnull(sum(otMat.Cantidad),0)
+	
+	select  @result = isnull(sum(otMat.Cantidad),0)
 	from OT_Solicitud ot
 	inner join SC_Subcontrato sc on sc.IdSubContrato = ot.IdSubContrato
 	inner join SC_Materiales sMat on sMat.IdSubContrato = sc.IdSubContrato
-	inner join [dbo].[OT_SolicitudMaterial] otMat on otMat.IdSCMaterial = sMat.IdSCMaterial
-	inner join OT_Solicitud ot2 on ot2.IdSubcontrato = ot.IdSubcontrato and
-	ot2.IdOTEstatus not in (7,8,12) and
-	otMat.IdOTSolicitud = ot2.IdOTSolicitud and
-	isnull(ot2.IsActivo,0) = 1
+	inner join [dbo].[OT_SolicitudMaterial] otMat on otMat.IdSCMaterial = sMat.IdSCMaterial	
 	where sMat.IdSCMATERIAL = @pIdSCMATERIAL and
-	isnull(ot.IsActivo,0) = 1
+	isnull(ot.IsActivo,0) = 1 and
+	ot.IdOTEstatus not in (7,8,12) and
+	otMat.IdOTSolicitud = ot.IdOTSolicitud 
+	--order by otMat.IdOTSolicitudMaterial
 
 
 	select	

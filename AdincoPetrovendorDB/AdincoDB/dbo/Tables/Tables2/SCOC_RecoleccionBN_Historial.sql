@@ -11,7 +11,7 @@
     [CreadoEn]          DATETIME       NULL,
     [ModificadoPor]     INT            NULL,
     [ModificadoEn]      DATETIME       NULL,
-    CONSTRAINT [PK_SCOC_RecoleccionBN_Historial] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [MesReporte] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SCOC_RecoleccionBN_Historial] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [MesReporte] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SCOC_RecoleccionBN_Historial_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SCOC_RecoleccionBN_Historial_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SCOC_RecoleccionBN_Historial_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])

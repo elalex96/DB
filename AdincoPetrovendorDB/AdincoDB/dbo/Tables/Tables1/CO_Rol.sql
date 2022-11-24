@@ -6,6 +6,6 @@
     [ModificadoPor] INT            NULL,
     [Modificado]    DATETIME       NULL,
     [CreadoPor]     INT            NULL,
-    CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED ([IdRol] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Roles] PRIMARY KEY CLUSTERED ([IdRol] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

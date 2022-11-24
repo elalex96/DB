@@ -9,6 +9,6 @@
     [Fn]                  FLOAT (53) NULL,
     [Gn]                  FLOAT (53) NULL,
     [Hn]                  FLOAT (53) NULL,
-    CONSTRAINT [PK_CP_ParametroRegalia] PRIMARY KEY CLUSTERED ([IdParametroRegalias] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CP_ParametroRegalia] PRIMARY KEY CLUSTERED ([IdParametroRegalias] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

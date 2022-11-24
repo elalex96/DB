@@ -1,7 +1,7 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_ConsultaMesPresentacion]
+﻿CREATE PROCEDURE [dbo].[SP_CO_ConsultaMesPresentacion] 
 AS
 BEGIN
-    SET LANGUAGE SPANISH
+	SET LANGUAGE SPANISH
     SELECT CONVERT(VARCHAR(10), MesPresentacion, 105) AS MesPresentacion,
                     DATENAME(mm, MONTH (MesPresentacion)) AS 'Mes',
 					YEAR (MesPresentacion) AS 'Year'
@@ -15,3 +15,4 @@ BEGIN
 					YEAR (MesPresentacion) DESC,
 					CONVERT(VARCHAR(10), MesPresentacion, 105) DESC 
 END;
+

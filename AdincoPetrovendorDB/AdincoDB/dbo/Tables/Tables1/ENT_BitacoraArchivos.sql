@@ -1,15 +1,16 @@
-﻿CREATE TABLE [dbo].[ENT_BitacoraArchivos]
-(
-	Id Int primary key not null identity (1,1),
-	ModuloId int,
-	Fecha datetime,
-	Ruta varchar(300),
-	Archivo varchar(500),
-	AWSArchivoId int,
-	AWSIdentificador varchar(max) NOT NULL,	
-	UsuarioId int,
-	IdContrato int,
-	Accion varchar(300),
-	FOREIGN KEY (UsuarioId) REFERENCES AP_Usuario(UsuarioId),
-	FOREIGN KEY (IdContrato) REFERENCES CO_Contrato(IdContrato)
-)
+﻿CREATE TABLE [dbo].[ENT_BitacoraArchivos] (
+    [Id]               INT           IDENTITY (1, 1) NOT NULL,
+    [ModuloId]         INT           NULL,
+    [Fecha]            DATETIME      NULL,
+    [Ruta]             VARCHAR (300) NULL,
+    [Archivo]          VARCHAR (500) NULL,
+    [AWSArchivoId]     INT           NULL,
+    [AWSIdentificador] VARCHAR (MAX) NOT NULL,
+    [UsuarioId]        INT           NULL,
+    [IdContrato]       INT           NULL,
+    [Accion]           VARCHAR (300) NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
+    FOREIGN KEY ([UsuarioId]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
+);
+

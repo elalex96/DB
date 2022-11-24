@@ -12,7 +12,7 @@
     [CreadoEl]        DATETIME       NULL,
     [ModificadoPor]   DATETIME       NULL,
     [ModificadoEl]    INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [fk_IdSAPProforma] FOREIGN KEY ([IdSAPProforma]) REFERENCES [dbo].[CO_SAPProforma] ([IdSAPProforma])
 );
 

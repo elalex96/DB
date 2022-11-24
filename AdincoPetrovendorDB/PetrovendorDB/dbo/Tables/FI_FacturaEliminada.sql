@@ -4,6 +4,6 @@
     [FechaEliminada]     DATETIME       NULL,
     [EliminadaPor]       INT            NULL,
     [UUID]               NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_FI_FacturaEliminada] PRIMARY KEY CLUSTERED ([IdFacturaEliminada] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_FacturaEliminada] PRIMARY KEY CLUSTERED ([IdFacturaEliminada] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

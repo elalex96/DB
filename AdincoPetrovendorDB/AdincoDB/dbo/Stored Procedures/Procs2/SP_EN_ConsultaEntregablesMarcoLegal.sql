@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_ConsultaEntregablesMarcoLegal]    Script Date: 29/10/2021 09:39:46 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 26/10/2021
 -- Description:	Consulta de entregables para importacion por marco legal
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_ConsultaEntregablesMarcoLegal] --3,10029
+CREATE PROCEDURE [dbo].[SP_EN_ConsultaEntregablesMarcoLegal] --3,10029
 	-- Add the parameters for the stored procedure here
 	@IdContrato INT,
 	@IdMarcoLegal INT

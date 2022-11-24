@@ -30,9 +30,10 @@ BEGIN
 			ON ml.IdMarcoLegal=e.IdMarcoLegal
 			AND E.BITJOA = 0
 		join EN_ContratoEntregable ce on e.IdEntregable= ce.IdEntregable AND ce.IdContrato=@idContrato
-		where ml.Activo=1 AND e.IsActivo= 1 AND ce.Activo=1 and ml.IsInterno=0
+		where ml.Activo=1 AND e.IsActivo= 1 AND ce.Activo=1 --and ml.IsInterno=0
 		GROUP BY  ml.IdMarcoLegal,
 			   ml.MarcoLegal
 		ORDER BY ML.MARCOLEGAL
+
 	END
 END

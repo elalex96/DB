@@ -1,7 +1,4 @@
-﻿
-DROP PROCEDURE IF EXISTS SP_MPY_InsFacturaExtranjero
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 19/12/2018
 -- Description: Guardar factura extranjeros

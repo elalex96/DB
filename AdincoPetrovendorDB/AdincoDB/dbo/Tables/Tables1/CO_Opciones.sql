@@ -7,6 +7,6 @@
     [ModificadoPor] INT            NULL,
     [Modificado]    DATETIME       NULL,
     [CreadoPor]     INT            NULL,
-    CONSTRAINT [PK_Opciones] PRIMARY KEY CLUSTERED ([IdOpcion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Opciones] PRIMARY KEY CLUSTERED ([IdOpcion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

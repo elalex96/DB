@@ -1,5 +1,4 @@
-﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-CREATE proc p_SC_Materiales_Upd
+﻿CREATE proc p_SC_Materiales_Upd
 (
     @pIdSCMaterial      int,
     @pConcepto          varchar(max),
@@ -66,4 +65,3 @@ begin
 		set @pError = 'Ocurrió un error inesperado'   
 	end catch
 end
-

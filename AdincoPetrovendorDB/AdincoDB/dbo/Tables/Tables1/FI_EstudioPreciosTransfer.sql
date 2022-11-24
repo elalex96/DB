@@ -17,7 +17,7 @@
     [IsEliminado]              BIT            NULL,
     [IdSubcontratista]         INT            NULL,
     [HashSHA256]               NVARCHAR (300) NULL,
-    CONSTRAINT [PK_FI_EstudioPreciosTransfer] PRIMARY KEY CLUSTERED ([IdEstudioPrecioTransfer] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_EstudioPreciosTransfer] PRIMARY KEY CLUSTERED ([IdEstudioPrecioTransfer] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_EstudioPreciosTransfer_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

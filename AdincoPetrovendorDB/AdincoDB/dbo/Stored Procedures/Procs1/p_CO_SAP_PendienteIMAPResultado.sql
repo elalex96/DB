@@ -1,4 +1,4 @@
-﻿create proc [dbo].[p_CO_SAP_PendienteIMAPResultado]
+﻿CREATE proc [dbo].[p_CO_SAP_PendienteIMAPResultado]
 @pIdContratista	int
 as
 
@@ -12,3 +12,4 @@ as
 	where IdContratista = @pIdContratista and 
 	isnull(Procesado,0) = 0 AND
 	FechaProcesado >= DATEADD(DD,-30,GETDATE())
+	

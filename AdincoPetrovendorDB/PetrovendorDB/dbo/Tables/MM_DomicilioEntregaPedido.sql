@@ -10,6 +10,6 @@
     [Referencia]         NVARCHAR (MAX) NULL,
     [IdProveedor]        INT            NULL,
     [NoSecuencia]        INT            NULL,
-    CONSTRAINT [PK_MM_DomicilioEntregaPedido] PRIMARY KEY CLUSTERED ([IdDomicilioEntrega] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_DomicilioEntregaPedido] PRIMARY KEY CLUSTERED ([IdDomicilioEntrega] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

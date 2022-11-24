@@ -1,8 +1,4 @@
-use adinco
-go
-drop procedure if exists SP_EN_FormatoConsultaEntregaPoInstancia
-go
-CREATE PROCEDURE [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia] -- 100261,3,10061
+﻿CREATE PROCEDURE [dbo].[SP_EN_FormatoConsultaEntregaPoInstancia] -- 100261,3,10061
     @Idinstancia INT,
     @idContrato INT,
     @idUsuario INT

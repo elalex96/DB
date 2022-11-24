@@ -8,6 +8,6 @@
     [IsEliminado]       BIT            NULL,
     [Aplicacion]        NVARCHAR (50)  NULL,
     [TipoActualizacion] NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_RegistroIteraciones] PRIMARY KEY CLUSTERED ([IdIteracion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_RegistroIteraciones] PRIMARY KEY CLUSTERED ([IdIteracion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -23,6 +23,6 @@
     [TipoCambio]          FLOAT (53)     NULL,
     [IdPrograma]          INT            NULL,
     [IdInstalacion]       INT            NULL,
-    CONSTRAINT [PK_LukoilOficial] PRIMARY KEY CLUSTERED ([ID] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_LukoilOficial] PRIMARY KEY CLUSTERED ([ID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

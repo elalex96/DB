@@ -50,7 +50,7 @@ BEGIN
 	)
 
 	declare @pais varchar(100)
-	select @pais = Pais from CAT_Paises
+	select @pais = Pais from Adinco.dbo.CAT_Paises
 
 	insert into Adinco..PV_Subcontratista
 	(

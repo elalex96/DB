@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_PR_MM_PCN_ConsultarEstatus_S3
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 31-07-17
 -- Description:	CONSULTAR ESTATUS DEL DOCUMENTO DEL LA CARTA DE CONTENIDO NACIONAL

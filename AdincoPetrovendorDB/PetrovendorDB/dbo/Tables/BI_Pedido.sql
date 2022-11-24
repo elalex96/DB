@@ -41,6 +41,8 @@
     [Modelo]                   VARCHAR (MAX)  NULL,
     [NumeroParte]              VARCHAR (MAX)  NULL,
     [CentroCosto]              VARCHAR (300)  NULL,
-    CONSTRAINT [PK_BI_Pedido] PRIMARY KEY CLUSTERED ([ID_BI_Pedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    [TotalPedido]              MONEY          NULL,
+    [TotalPedidoAceptado]      MONEY          NULL,
+    CONSTRAINT [PK_BI_Pedido] PRIMARY KEY CLUSTERED ([ID_BI_Pedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

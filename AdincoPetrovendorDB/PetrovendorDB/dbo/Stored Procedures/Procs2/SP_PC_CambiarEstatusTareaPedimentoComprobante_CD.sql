@@ -1,16 +1,9 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]    Script Date: 19/07/2022 01:37:28 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/09/2020>
 -- Description:	<Cambio de estatus de de la tarea de la aprobacion de comprobante extranjero>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
+CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
 	@IdOperacion INT,

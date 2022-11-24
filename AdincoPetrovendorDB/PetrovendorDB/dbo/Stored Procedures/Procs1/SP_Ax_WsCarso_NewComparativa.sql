@@ -1,6 +1,4 @@
-﻿DROP PROC IF EXISTS SP_Ax_WsCarso_NewComparativa
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 15/10/2018
 -- Description:	AGREGAR DETALLE DE UNA COMPARATIVA

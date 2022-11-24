@@ -8,7 +8,8 @@ CREATE PROCEDURE [dbo].[SP_FACTURAS_RELACIONARFACTURAS]
     @FirstName INT   
 AS   
     SET NOCOUNT ON;  
-   IF NOT EXISTS (
+
+	IF NOT EXISTS (
 		SELECT 1
 		FROM FI_RelacionRefacturas
 		WHERE idFacturaPadre = @idFacturaPadre AND

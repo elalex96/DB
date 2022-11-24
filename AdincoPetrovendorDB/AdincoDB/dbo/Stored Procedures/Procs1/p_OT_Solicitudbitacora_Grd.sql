@@ -1,5 +1,6 @@
-﻿-- p_OT_Solicitudbitacora_Grd 27
-create proc [dbo].[p_OT_Solicitudbitacora_Grd]
+﻿
+-- p_OT_Solicitudbitacora_Grd 27
+CREATE proc [dbo].[p_OT_Solicitudbitacora_Grd]
 @pIdOTSolicitud int
 as
 
@@ -22,7 +23,4 @@ as
 	left join OT_SolicitudBitacoraTipo (NOLOCK) on OT_SolicitudBitacora.IdTipoMovimiento = OT_SolicitudBitacoraTipo.Id  
 	where IdOTSolicitud = @pIdOTSolicitud
 	order by OT_SolicitudBitacora.CreadoEl desc
-
-GO
-
 

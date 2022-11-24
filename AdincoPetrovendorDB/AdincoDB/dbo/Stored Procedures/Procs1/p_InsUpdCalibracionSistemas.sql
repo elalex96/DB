@@ -1,4 +1,4 @@
-﻿Create Proc p_InsUpdCalibracionSistemas
+﻿CREATE Proc p_InsUpdCalibracionSistemas
 @pIdCalibracion	int out,
 @pIdContrato	int,
 @pIdSistema	int,

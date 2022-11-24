@@ -17,7 +17,7 @@
     [Cerrado]                      BIT             NULL,
     [CerradoPor]                   INT             NULL,
     [FechaCierre]                  DATETIME        NULL,
-    CONSTRAINT [PK_OT_SolicitudProgramaCaptura] PRIMARY KEY CLUSTERED ([IdOTSolicitudProgramaCaptura] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_OT_SolicitudProgramaCaptura] PRIMARY KEY CLUSTERED ([IdOTSolicitudProgramaCaptura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__OT_Solici__IdOTS__2D5F2438] FOREIGN KEY ([IdOTSolicitudMaterial]) REFERENCES [dbo].[OT_SolicitudMaterial] ([IdOTSolicitudMaterial]),
     CONSTRAINT [FK_SolicitudProgramaCaptura_usuarios] FOREIGN KEY ([CerradoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
@@ -25,5 +25,5 @@
 
 GO
 CREATE NONCLUSTERED INDEX [IX_OT_SolicitudProgramaCaptura]
-    ON [dbo].[OT_SolicitudProgramaCaptura]([IdOTSolicitudMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[OT_SolicitudProgramaCaptura]([IdOTSolicitudMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

@@ -6,6 +6,6 @@
     [IdUnidad]                           INT NULL,
     [IdTipoMaterial]                     INT NULL,
     [IsActivo]                           BIT NULL,
-    CONSTRAINT [PK_PV_MM_GrupoFamiliaSubFamiliaUnidadTipo] PRIMARY KEY CLUSTERED ([IdGrupoFamiliaSubfamiliaUnidadTipo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_MM_GrupoFamiliaSubFamiliaUnidadTipo] PRIMARY KEY CLUSTERED ([IdGrupoFamiliaSubfamiliaUnidadTipo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

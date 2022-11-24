@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <29/01/2020>
 -- Description:	<Consulta de los proveedores>

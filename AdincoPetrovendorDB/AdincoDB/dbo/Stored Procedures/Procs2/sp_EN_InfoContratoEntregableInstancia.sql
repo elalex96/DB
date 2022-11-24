@@ -8,7 +8,7 @@
 -- Create date: 14/12/2021
 -- Description:	Se muestra el comentario aunque no este desactivado(historial de cambios en fechas)
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_EN_InfoContratoEntregableInstancia] --3,59072,10061
+CREATE PROCEDURE [dbo].[sp_EN_InfoContratoEntregableInstancia] --3,59072,10061
     @IdContrato INT,
     @idInstanciaEntregable INT,
     @IdUsuario INT

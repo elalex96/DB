@@ -1,17 +1,10 @@
-USE [Petrovendor]
-GO
-/****** Object:  UserDefinedFunction [dbo].[Fn_RetornarMesProgramadoActividadConcat]    Script Date: 21/09/2021 01:41:47 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 07/11/2018
 -- Description: retornar el mes programado, la actividad, subactividad, tarea, clave tarea y a subtarea
 -- =============================================
 
-ALTER FUNCTION [dbo].[Fn_RetornarMesProgramadoActividadConcat]
+CREATE FUNCTION [dbo].[Fn_RetornarMesProgramadoActividadConcat]
 	( @IdLineaPresupuestoMes INT )
 RETURNS NVARCHAR(MAX)
 AS
@@ -36,16 +29,16 @@ AS
 				  ' | Clave Tarea: ', tp.id_Tarea COLLATE Modern_Spanish_CI_AS ,	-- Clave Tarea
 				  ' | Sub-Tarea: ', s.NombreServicio COLLATE Modern_Spanish_CI_AS ) -- Sub Tarea        
 		FROM		Adinco.dbo.CO_LineaPresupuestoMes lpm
-		LEFT JOIN	Adinco.dbo.CO_Registro R
-			ON LPM.IdLineaPresupuestoMes = R.IdPrograma
-		LEFT JOIN	Adinco.dbo.FI_Factura F
-			ON R.IdFactura = F.IdFactura
-		LEFT JOIN	Adinco.dbo.CO_TipoCambioDiario TCD
-			ON F.IdMoneda = TCD.IdMoneda
-			   AND	YEAR ( TCD.Fecha ) = YEAR ( F.Fecha )
-			   AND	MONTH ( TCD.Fecha ) = MONTH ( F.Fecha )
-			   AND	DAY ( TCD.Fecha ) = DAY ( F.Fecha )
-		LEFT JOIN	Adinco.dbo.CO_Presupuesto P
+		--LEFT JOIN	Adinco.dbo.CO_Registro R
+		--	ON LPM.IdLineaPresupuestoMes = R.IdPrograma
+		--LEFT JOIN	Adinco.dbo.FI_Factura F
+		--	ON R.IdFactura = F.IdFactura
+		--LEFT JOIN	Adinco.dbo.CO_TipoCambioDiario TCD
+		--	ON F.IdMoneda = TCD.IdMoneda
+		--	   AND	YEAR ( TCD.Fecha ) = YEAR ( F.Fecha )
+		--	   AND	MONTH ( TCD.Fecha ) = MONTH ( F.Fecha )
+		--	   AND	DAY ( TCD.Fecha ) = DAY ( F.Fecha )
+		JOIN	Adinco.dbo.CO_Presupuesto P
 			ON P.IdPresupuesto = LPM.IdPresupuesto
 		LEFT JOIN	Adinco.dbo.CO_AnioContractual AC
 			ON AC.IdAnioContractual = P.IdAnioContractual

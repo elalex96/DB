@@ -1,16 +1,9 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CF_GenerarSolicitudDescarga]    Script Date: 30/05/2022 08:23:21 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 25/05/2022
 -- Description:	Registro de solicitudes de descarga de rutas en contract files
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_CF_GenerarSolicitudDescarga]
+CREATE PROCEDURE [dbo].[SP_EN_CF_GenerarSolicitudDescarga]
 	-- Add the parameters for the stored procedure here
 	@Ruta NVARCHAR(MAX),
 	@IdUsuario INT,

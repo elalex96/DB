@@ -27,7 +27,7 @@
     [ContenidoAzufre]          FLOAT (53)      NULL,
     [ContenidoSal]             FLOAT (53)      NULL,
     [MMPCM]                    DECIMAL (24, 8) NULL,
-    CONSTRAINT [PK_PR_ProdDiariaPozo] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_ProdDiariaPozo] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ProdDiariaPozo_Pozo] FOREIGN KEY ([Pozo]) REFERENCES [dbo].[PR_Pozo] ([Id]),
     CONSTRAINT [FK_ProdDiariaPozo_ProdDiaria] FOREIGN KEY ([ProdDiaria]) REFERENCES [dbo].[PR_ProdDiaria] ([Id])
 );

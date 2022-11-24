@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Sp_CargaContratos'
-)
-    DROP PROCEDURE Sp_CargaContratos;
-/****** Object:  StoredProcedure [dbo].[Sp_CargaContratos]    Script Date: 12/07/2022 12:24:11 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 13-08-2019
 -- Description:	Carga de contratos filtrados por el proveedor

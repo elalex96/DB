@@ -17,7 +17,7 @@
     [NoSecuencia]                 INT            NULL,
     [ActualizadoByApp]            BIT            NULL,
     [IdPedido]                    INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdAprobacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdAprobacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 

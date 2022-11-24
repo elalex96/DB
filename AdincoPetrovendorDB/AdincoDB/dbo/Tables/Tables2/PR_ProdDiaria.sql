@@ -13,7 +13,7 @@
     [Algoritmo]           INT             CONSTRAINT [DF_ProdDiaria_Algoritmo] DEFAULT ((0)) NOT NULL,
     [TemperaturaGas]      FLOAT (53)      NULL,
     [TemperaturaPetroleo] FLOAT (53)      NULL,
-    CONSTRAINT [PK_PR_ProdDiaria] PRIMARY KEY NONCLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_ProdDiaria] PRIMARY KEY NONCLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ProdDiaria_Bloque] FOREIGN KEY ([Bloque]) REFERENCES [dbo].[PR_Bloque] ([Id])
 );
 

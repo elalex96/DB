@@ -1,6 +1,4 @@
-﻿USE ADINCO;
-GO
-CREATE PROCEDURE p_CO_GastosActualizar_Gen
+﻿CREATE PROCEDURE p_CO_GastosActualizar_Gen
 @pUsuarioID int,
 @pUUIDImport varchar(100),
 @pIdContrato int 

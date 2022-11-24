@@ -1,21 +1,4 @@
-USE [Adinco]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_EN_DescargarCarpeta'
-)
-    DROP PROCEDURE SP_EN_DescargarCarpeta;
-GO
-
-
-/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 09/11/2022 08:28:44 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      <Alexander Gomez>
 -- Create date: <13/02/2022>
 -- Description: <Descarga de carpetas etapas, reguladores, marcos legales, frecuencias, años y entregables>
@@ -48,6 +31,14 @@ BEGIN
     SELECT 
 	splitdata as Ruta
     FROM [dbo].[fnSplitString](@Ruta,'/')
+
+	--SE AGREGA JOIN A MARCOS LEGALES PARA SUSTITUIR POR EL ALIAS
+	UPDATE t
+	set dato = isnull(ML.alias,ML.MarcoLegal)
+	FROM #tabla T
+	JOIN EN_MARCOLEGAL ML
+		ON T.dato = ML.MarcoLegal
+
     SELECT 
 		@NuevaRuta = @NuevaRuta + CASE
 									WHEN CHARINDEX('- (',dato,1) > 0 THEN substring(LTRIM(RTRIM(SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)))),0,20) + '/'

@@ -49,5 +49,3 @@ begin
 	FROM CO_ProgramaImplementaAcciones a
 	inner join #tmpOrden tmp on tmp.IdProgramaImplementaAccion = a.IdProgramaImplementaAccion
 end
-
-go

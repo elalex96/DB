@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS Carso_sp_ObtenComparativasPendientes
-	GO
-	-- =============================================  
+﻿	-- =============================================  
 	-- Author:  <Luis David>  
 	-- Create date: <22/10/2021>  
 	-- Description: <Se obtienen las comparativas no procesadas>  
@@ -35,7 +33,7 @@
 		,CD.[p4]					
 		,CD.[p5]
 		,CC.IpAdress
-		,CC.HostName		
+		,CC.HostName
 		
 	FROM 
 	Carso_Items_comparativaCabecera as CC

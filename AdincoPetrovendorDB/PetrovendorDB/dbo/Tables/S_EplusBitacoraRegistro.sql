@@ -7,6 +7,6 @@
     [Nacionalidad]    INT            NULL,
     [RazonSocial]     NVARCHAR (MAX) NULL,
     [FechaRegistro]   DATETIME       NULL,
-    CONSTRAINT [PK_S_EplusBitacoraRegistro] PRIMARY KEY CLUSTERED ([IdBitacoraEplus] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_S_EplusBitacoraRegistro] PRIMARY KEY CLUSTERED ([IdBitacoraEplus] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

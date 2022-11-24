@@ -13,7 +13,7 @@
     [ModificadoPor]   INT              NULL,
     [ModificadoEl]    DATETIME         NULL,
     [Activo]          BIT              NULL,
-    CONSTRAINT [PK_SCOC_FormatoAmazon] PRIMARY KEY CLUSTERED ([MesReporte] ASC, [OpcionReporte] ASC, [idContrato] ASC, [FormatoAmazonID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SCOC_FormatoAmazon] PRIMARY KEY CLUSTERED ([MesReporte] ASC, [OpcionReporte] ASC, [idContrato] ASC, [FormatoAmazonID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SCOC_FormatoAmazon_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SCOC_FormatoAmazon_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SCOC_FormatoAmazon_CO_CONTRATO] FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),

@@ -9,6 +9,6 @@
     [ModificadoPor] INT            NULL,
     [ModificadoEl]  DATETIME       NULL,
     [Activo]        BIT            NULL,
-    CONSTRAINT [PK_CO_PeriodoContrato] PRIMARY KEY CLUSTERED ([IdPeriodo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_PeriodoContrato] PRIMARY KEY CLUSTERED ([IdPeriodo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

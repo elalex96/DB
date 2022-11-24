@@ -11,6 +11,6 @@
     [Activo]         BIT            NULL,
     [Eliminado]      BIT            NULL,
     [Pos]            BIT            NULL,
-    CONSTRAINT [PK_ET_Actividad] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ET_Actividad] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

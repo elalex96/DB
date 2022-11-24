@@ -17,6 +17,6 @@
     [ActaEntrega]            FLOAT (53)     NULL,
     [MontoGE]                MONEY          NULL,
     [IdFactura]              INT            NULL,
-    CONSTRAINT [PK_CO_GastosAmatitlan] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_GastosAmatitlan] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

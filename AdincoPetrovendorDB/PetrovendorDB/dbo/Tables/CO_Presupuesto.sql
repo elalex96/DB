@@ -13,6 +13,6 @@
     [Activo]              BIT            NULL,
     [IdPresupuestoCNH]    NVARCHAR (50)  NULL,
     [Actual]              BIT            NULL,
-    CONSTRAINT [PK_Presupuestos] PRIMARY KEY CLUSTERED ([IdPresupuesto] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Presupuestos] PRIMARY KEY CLUSTERED ([IdPresupuesto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

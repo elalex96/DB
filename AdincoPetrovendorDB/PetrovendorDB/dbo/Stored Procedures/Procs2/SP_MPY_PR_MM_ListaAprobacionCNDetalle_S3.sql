@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_MPY_PR_MM_ListaAprobacionCNDetalle_S3
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 14-06-18
 -- Description:	Consultar detalle de encabezado de aprobación de carta de contenido nacional en procura 

@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_AgregarDocMatrizOperacion]    Script Date: 26/11/2021 02:01:51 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      <Jose Roman>
 -- Create date: <2017>
 -- Description: <Se guarda el Id de encuesta con sus porcentajes de calculo>
@@ -18,7 +11,7 @@ GO
 -- Update date: <26/11/2021>
 -- Description: <se optmimiza para mejora de carga>
 -- =============================================
-ALTER PROCEDURE [dbo].[MM_SP_AgregarDocMatrizOperacion]
+CREATE PROCEDURE [dbo].[MM_SP_AgregarDocMatrizOperacion]
     @IdProveedor INT,
     @NombreDoc VARCHAR(MAX),
     @IdOperacion INT,

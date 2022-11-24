@@ -1,14 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_TA_ConsultarTareasdeAprobacion'
-)
-    DROP PROCEDURE SP_TA_ConsultarTareasdeAprobacion;
-GO 
-
+﻿
 -- =============================================  
 -- Author:      Daniel Cruz  
 -- Create date: 04-01-2022  

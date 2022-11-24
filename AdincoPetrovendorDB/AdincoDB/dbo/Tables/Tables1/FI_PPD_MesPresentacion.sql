@@ -7,7 +7,7 @@
     [ModificadoPor]          INT      NULL,
     [ModificadoEn]           DATETIME NULL,
     [Activo]                 BIT      NULL,
-    CONSTRAINT [PK_FI_PPD_MesPresentacion] PRIMARY KEY CLUSTERED ([idFactura] ASC, [MesPresentacionFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_PPD_MesPresentacion] PRIMARY KEY CLUSTERED ([idFactura] ASC, [MesPresentacionFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_PPD_MesPresentacion_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_FI_PPD_MesPresentacion_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_FI_PPD_MesPresentacion_FI_Factura] FOREIGN KEY ([idFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura])

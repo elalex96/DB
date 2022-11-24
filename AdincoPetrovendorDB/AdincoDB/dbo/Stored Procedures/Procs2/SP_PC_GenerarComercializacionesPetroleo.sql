@@ -147,7 +147,7 @@ JOIN
     ON CC.IdCampo                   = DI.IdCampo
 JOIN
     PC_PuntoVentaProducto   PVP
-    ON PVP.IdContrato               = CC.IdContrato
+ON PVP.IdContrato               = CC.IdContrato
     AND PVP.IdPtoExpedicionRecepcion = DI.IdPtoExpedicionRecepcion
     AND PVP.IdMaterialPC             = DI.IdMaterialPC
 WHERE
@@ -332,6 +332,10 @@ WHERE
     AND YEAR( CFDI.Fecha )  = YEAR( @MesReporte )
 	AND ( RC.factura LIKE '92%'   OR   RC.Factura LIKE '93%' )
 	AND DATEFROMPARTS( SUBSTRING( RC.FechaFactura, 7, 4 ), SUBSTRING( RC.FechaFactura, 4, 2 ), SUBSTRING( RC.FechaFactura, 1, 2 ) ) >= @FechaInicioContrato
+AND RC.Factura NOT IN ('93121782','92390240','92390988','93121785','92390238','93121777',
+'92390235','93121780','93121781','92391051','92391010','92390231','92391050','92390237','92390233','92390987','92390224','92390225',
+'92390969','92390227','92390230','92391009','92390223','92390239','92390236','92391029','92390226','92390968','92390228','92390232',
+'92390950','92390234','92391028','93121778','93121779', '93121785','93121786' ) -- CASO 14 DE MARZO 2022 FACTURAS CON MONSTOS MUY GRANDES, FUERA DE LO NORMAL
 GROUP BY
     CFDI.IdFactura,
     EPV.IdPtoExpedicionRecepcion,
@@ -403,7 +407,7 @@ BEGIN
 	SELECT   *
 	FROM    #DistCrudo ---comentar para web
 
-	--SELECT * FROM #VolumenFacturado
+
 END
 
 -- SE GENERARN LAS COMERCIALIZACIONES EN TABLA DE PASO PARA VALIDAR SI NO FALTAN BARRILES POR REPARTIR
@@ -499,6 +503,119 @@ BEGIN
 
 END
 
+SELECT @TotalDistribuido	=	SUM(VolumenVendido)
+FROM #Comercializaciones
+
+IF @Debug = 1
+BEGIN
+	SELECT @TotalADistribuir AS [TotalADistribuir], @TotalDistribuido AS [TotalDistribuidoV2]
+END
+
+-- SEGUNDO AJUSTE
+IF @TotalADistribuir <> @TotalDistribuido
+BEGIN
+	INSERT INTO #AjustesTotal
+	(
+		IdFactura,
+		IdAjuste,
+		VolumenVendido,
+		Ajuste
+	)
+	SELECT
+		IdFactura,
+		ROW_NUMBER() OVER (ORDER BY VolumenVendido DESC) AS IdAjuste,
+		VolumenVendido,
+		@TotalADistribuir - @TotalDistribuido
+	FROM
+		#Comercializaciones
+
+	UPDATE    C
+    SET  VolumenVendido = CASE	WHEN A.IdAjuste <= A.Ajuste THEN C.VolumenVendido + 1
+								ELSE C.VolumenVendido
+                          END
+	FROM
+		#Comercializaciones C
+	JOIN
+		#AjustesTotal       A
+		ON C.IdFactura                = A.Idfactura
+
+		IF @Debug = 1
+		BEGIN
+			SELECT * FROM #AjustesTotal
+        end
+	-- SE REALIZA EL AJUSTE NEGATIVO A LOS VOLUMENES
+	UPDATE    C
+		SET
+			 VolumenVendido = CASE	WHEN A.IdAjuste <= ABS(A.Ajuste) AND A.Ajuste < 0 THEN	C.VolumenVendido -1
+									ELSE C.VolumenVendido
+							END
+	FROM
+		#Comercializaciones C
+	JOIN
+		#AjustesTotal       A
+		ON C.IdFactura                = A.Idfactura
+	WHERE
+		A.Ajuste < 0
+
+END
+
+SELECT @TotalDistribuido	=	SUM(VolumenVendido)
+FROM #Comercializaciones
+
+IF @Debug = 1
+BEGIN
+	SELECT @TotalADistribuir AS [TotalADistribuir], @TotalDistribuido AS [TotalDistribuidoV3]
+END
+
+-- TERCER AJUSTE
+IF @TotalADistribuir <> @TotalDistribuido
+BEGIN
+	INSERT INTO #AjustesTotal
+	(
+		IdFactura,
+		IdAjuste,
+		VolumenVendido,
+		Ajuste
+	)
+	SELECT
+		IdFactura,
+		ROW_NUMBER() OVER (ORDER BY VolumenVendido DESC) AS IdAjuste,
+		VolumenVendido,
+		@TotalADistribuir - @TotalDistribuido
+	FROM
+		#Comercializaciones
+
+	UPDATE    C
+    SET  VolumenVendido = CASE	WHEN A.IdAjuste <= A.Ajuste THEN C.VolumenVendido + 1
+								ELSE C.VolumenVendido
+                          END
+	FROM
+		#Comercializaciones C
+	JOIN
+		#AjustesTotal       A
+		ON C.IdFactura                = A.Idfactura
+
+		IF @Debug = 1
+		BEGIN
+			SELECT * FROM #AjustesTotal
+        end
+	-- SE REALIZA EL AJUSTE NEGATIVO A LOS VOLUMENES
+	UPDATE    C
+		SET
+			 VolumenVendido = CASE	WHEN A.IdAjuste <= ABS(A.Ajuste) AND A.Ajuste < 0 THEN	C.VolumenVendido -1
+									ELSE C.VolumenVendido
+							END
+	FROM
+		#Comercializaciones C
+	JOIN
+		#AjustesTotal       A
+		ON C.IdFactura                = A.Idfactura
+	WHERE
+		A.Ajuste < 0
+
+END
+
+
 /*
 -- SE HACE AJUSTE PARA CASO MIQUETLA
 IF @IdContrato = 10051
@@ -550,12 +667,14 @@ BEGIN
 			Tarifa02		=	@Tarifa02
 
 END
-
+*/
 IF @Debug = 1
 BEGIN
 	SELECT * FROM #Comercializaciones
 END
-*/
+
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101', '2022-04-01', '2022-05-01', '2022-06-01')
+	SELECT @FechaLimite = '20221001 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()
@@ -680,5 +799,3 @@ FIN:
 SELECT	'true' AS msj
 --RETURN 0
 END
-
-

@@ -62,12 +62,14 @@ AS
               JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
               JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
                                                        AND SER.IdContrato = C.IdContrato
-              JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
-              JOIN dbo.PV_CuentaBancaria CBD WITH(NOLOCK) ON TR.IdCuentaDestino = CBD.DatoBancarioID
-              JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
-              JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
-              JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
-              JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
+
+              --JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
+              --JOIN dbo.PV_CuentaBancaria CBD WITH(NOLOCK) ON TR.IdCuentaDestino = CBD.DatoBancarioID
+              --JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
+              --JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
+              --JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
+              --JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
+
               JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON TR.IdMoneda = TM.IdMoneda
               LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TR.IdMoneda
                                                                     AND DAY(TCD.Fecha) = DAY(F.Fecha)
@@ -115,12 +117,14 @@ AS
               JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
               JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
                                                        AND SER.IdContrato = C.IdContrato
-              JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
-              JOIN dbo.PV_CuentaBancaria CBD WITH(NOLOCK) ON TR.IdCuentaDestino = CBD.DatoBancarioID
-              JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
-              JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
-              JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
-              JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
+
+              --JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
+              --JOIN dbo.PV_CuentaBancaria CBD WITH(NOLOCK) ON TR.IdCuentaDestino = CBD.DatoBancarioID
+              --JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
+              --JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
+              --JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
+              --JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
+
               JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON TR.IdMoneda = TM.IdMoneda
               LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TR.IdMoneda
                                                                     AND DAY(TCD.Fecha) = DAY(FCP.Fecha)
@@ -172,12 +176,14 @@ AS
               JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
               JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
                                                        AND SER.IdContrato = C.IdContrato
-              JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
-              JOIN dbo.PV_CuentaBancaria CBD ON TR.IdCuentaDestino = CBD.DatoBancarioID
-              JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
-              JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
-              JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
-              JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
+
+              --JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
+              --JOIN dbo.PV_CuentaBancaria CBD ON TR.IdCuentaDestino = CBD.DatoBancarioID
+              --JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
+              --JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
+              --JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
+              --JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
+
               JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON TR.IdMoneda = TM.IdMoneda
               LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TM.IdMoneda
                                                                     AND DAY(TCD.Fecha) = DAY(PC.FechaPago)

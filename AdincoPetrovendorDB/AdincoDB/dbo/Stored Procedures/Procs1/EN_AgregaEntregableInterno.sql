@@ -1,4 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[EN_AgregaEntregableInterno]
+﻿
+CREATE PROCEDURE [dbo].[EN_AgregaEntregableInterno]
     @idUsuario				INT,
     @idContrato				INT,
     @pDocumentoEntregable	VARCHAR(MAX),

@@ -19,7 +19,7 @@
     [IdAreaContractual]            INT        NOT NULL,
     [IdMes]                        INT        NOT NULL,
     [IdAñoContractual]             INT        NOT NULL,
-    CONSTRAINT [PK_tb_EH_Volumen] PRIMARY KEY CLUSTERED ([ProduccionId] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_tb_EH_Volumen] PRIMARY KEY CLUSTERED ([ProduccionId] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SIPAC_Produccion_CO_AreaContractual] FOREIGN KEY ([IdAreaContractual]) REFERENCES [dbo].[CO_AreaContractual] ([IdAreaContractual]),
     CONSTRAINT [FK_SIPAC_Produccion_Mes] FOREIGN KEY ([IdMes]) REFERENCES [dbo].[AP_Mes] ([idMes]),
     CONSTRAINT [FK_SIPAC_Produccion_SIPAC_GeneralTipoGas] FOREIGN KEY ([TipoGas]) REFERENCES [dbo].[SIPAC_GeneralTipoGas] ([idTipoGas])

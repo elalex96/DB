@@ -1,8 +1,4 @@
-use Petrovendor
-go
-drop procedure if exists SP_DEA_GetDocumento_PorTipo
-go
---===========================================
+﻿--===========================================
 -- LUIS DAVID
 -- 14/07/2022
 -- SE OBTIENE EL DOCUMENTO FIELDTICKET/PROFORMA

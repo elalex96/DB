@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_GuardarSolicitudPedidoDetalleLineaPresupuesto]    Script Date: 26/11/2021 01:59:57 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <2017>
@@ -20,7 +13,7 @@ GO
 -- Description:	<optimizacion>
 -- =============================================
 
-ALTER procedure [dbo].[MM_SP_GuardarSolicitudPedidoDetalleLineaPresupuesto]
+CREATE procedure [dbo].[MM_SP_GuardarSolicitudPedidoDetalleLineaPresupuesto]
 	@IdSolicitudPedidoDetalle INT,
 	@IdCentroCosto INT,
 	@IdInstalacion INT,

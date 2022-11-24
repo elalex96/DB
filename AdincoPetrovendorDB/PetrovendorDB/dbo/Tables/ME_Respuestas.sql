@@ -10,7 +10,7 @@
     [RespondidoEl]        SMALLDATETIME NOT NULL,
     [IdPedido]            INT           NULL,
     [ValorAutorizado]     FLOAT (53)    NULL,
-    CONSTRAINT [PK_ME_Respuestas] PRIMARY KEY CLUSTERED ([IdRespuestas] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ME_Respuestas] PRIMARY KEY CLUSTERED ([IdRespuestas] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ME_Respuestas_ME_MatrizEvaluacion] FOREIGN KEY ([IdMatrizEvaluacion]) REFERENCES [dbo].[ME_MatrizEvaluacion] ([IdMatrizEvaluacion]),
     CONSTRAINT [FK_ME_Respuestas_ME_Preguntas] FOREIGN KEY ([IdPregunta]) REFERENCES [dbo].[ME_Preguntas] ([IdPregunta]),
     CONSTRAINT [FK_ME_Respuestas_ME_Seccion] FOREIGN KEY ([IdSeccion]) REFERENCES [dbo].[ME_Seccion] ([IdSeccion]),

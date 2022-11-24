@@ -4,6 +4,6 @@
     [Identificador] INT            NULL,
     [Activo]        BIT            NULL,
     [Url]           NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_TA_Dominios] PRIMARY KEY CLUSTERED ([IdDominio] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TA_Dominios] PRIMARY KEY CLUSTERED ([IdDominio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

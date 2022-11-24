@@ -24,22 +24,22 @@
     [MensajeAsignacion]     NVARCHAR (MAX) NULL,
     [FechaActivacionSerial] DATETIME       NULL,
     [UpdateByApp]           BIT            NULL,
-    CONSTRAINT [PK_TA_Tarea] PRIMARY KEY CLUSTERED ([IdTarea] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TA_Tarea] PRIMARY KEY CLUSTERED ([IdTarea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [TA_TareaEstatusOper, sysname,>]
-    ON [dbo].[TA_Tarea]([IdEstatus] ASC, [IdOperacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[TA_Tarea]([IdEstatus] ASC, [IdOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdOperacion_TA_Tarea]
-    ON [dbo].[TA_Tarea]([IdOperacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[TA_Tarea]([IdOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [TA_Tarea_Id_Activo]
     ON [dbo].[TA_Tarea]([Activo] ASC)
-    INCLUDE([IdOperacion]) WITH (STATISTICS_NORECOMPUTE = ON);
+    INCLUDE([IdOperacion]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

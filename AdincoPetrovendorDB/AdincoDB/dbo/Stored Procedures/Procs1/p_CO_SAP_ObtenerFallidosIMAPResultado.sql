@@ -1,5 +1,4 @@
-﻿
-create PROC [dbo].[p_CO_SAP_ObtenerFallidosIMAPResultado]
+﻿CREATE PROC [dbo].[p_CO_SAP_ObtenerFallidosIMAPResultado]
 @pIdContratista int
 as
 
@@ -8,3 +7,5 @@ as
 	where Success = 0 and
 	IdContratista = @pIdContratista AND
 	FechaProcesado >= DATEADD(DD,-30,GETDATE())
+
+	

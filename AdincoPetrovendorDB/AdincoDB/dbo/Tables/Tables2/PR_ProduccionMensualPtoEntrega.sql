@@ -12,7 +12,7 @@
     [ModificadoPor]                 INT        NULL,
     [ModificadoEl]                  DATETIME   NULL,
     [Precio]                        MONEY      NULL,
-    CONSTRAINT [PK_PR_ProduccionMensualPtoEntrega] PRIMARY KEY CLUSTERED ([IdProduccionMensualPtoEntrega] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_ProduccionMensualPtoEntrega] PRIMARY KEY CLUSTERED ([IdProduccionMensualPtoEntrega] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PR_ProduccionMensualPtoEntrega_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_PR_ProduccionMensualPtoEntrega_CO_PuntosdeEntrega] FOREIGN KEY ([PuntoEntregaID]) REFERENCES [dbo].[CO_PuntosdeEntrega] ([PuntoEntregaID]),
     CONSTRAINT [FK_PR_ProduccionMensualPtoEntrega_CO_TipoHidrocarburo] FOREIGN KEY ([IdTipoHidrocarburo]) REFERENCES [dbo].[CO_TipoHidrocarburo] ([IdTipoHidrocarburo]),

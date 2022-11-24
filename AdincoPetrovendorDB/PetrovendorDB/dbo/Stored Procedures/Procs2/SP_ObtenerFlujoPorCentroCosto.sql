@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ObtenerFlujoPorCentroCosto]    Script Date: 26/11/2021 01:52:12 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <27-09-2019>
 -- Description:	<recuperar el flujo filtrado por el centro de costo>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_ObtenerFlujoPorCentroCosto] @IdCentroCosto INT
+CREATE PROCEDURE [dbo].[SP_ObtenerFlujoPorCentroCosto] @IdCentroCosto INT
 AS
 BEGIN
 	DECLARE @IdFlujoSeleccionado INT 
@@ -37,5 +30,3 @@ BEGIN
 	SELECT @IdFlujoSeleccionado,ISNULL(@IsActivoFlujo,0),ISNULL(@NombreCentroCosto,'Centro de costo no encontrado')
 
 END
-
-

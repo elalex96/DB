@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SIPAC_RC_CONT_25_M]    Script Date: 8/18/2022 3:50:14 PM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2017-03-29

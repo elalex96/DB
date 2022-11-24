@@ -1,5 +1,4 @@
-
-CREATE PROC sp_SC_InsertarSubContrato
+﻿CREATE PROC sp_SC_InsertarSubContrato
 @pIdSubContrato	int out,
 @pIdSubContratista	int,
 @pIdContratista	int,

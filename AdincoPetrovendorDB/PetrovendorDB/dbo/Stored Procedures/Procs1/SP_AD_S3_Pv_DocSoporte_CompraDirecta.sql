@@ -1,10 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'SP_AD_S3_Pv_DocSoporte_CompraDirecta')
-begin
-	drop proc SP_AD_S3_Pv_DocSoporte_CompraDirecta
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 26/09/2019
 -- Description:	CONSULTAR LOS DOCUMENTOS DE LA TABLA x 

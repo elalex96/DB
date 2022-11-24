@@ -9,7 +9,7 @@
     [IsPublicado]      BIT            NULL,
     [Imagen]           NVARCHAR (MAX) NULL,
     [IdUsuario]        INT            NULL,
-    CONSTRAINT [PK_PV_Publicacion] PRIMARY KEY CLUSTERED ([IdPublicacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PV_Publicacion] PRIMARY KEY CLUSTERED ([IdPublicacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__PV_Public__IdPro__6B79F03D] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])
 );
 

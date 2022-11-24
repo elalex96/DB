@@ -1,6 +1,4 @@
-﻿USE ADINCO;
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna O.
 -- Create date: 05-07-2022
 -- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 

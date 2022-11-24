@@ -1,7 +1,4 @@
-﻿USE Adinco;
-GO
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- =============================================  
+﻿-- =============================================  
 -- Author:  Manuel CD  
 -- Create date: 2018-10-16  
 -- Description:   
@@ -17,7 +14,7 @@ GO
 --					para tomar en cuenta gastos con PCN >=0
 --				    se agrego filtro de rubros (issue 1890 adinco)
 -- ============================================
-CREATE PROCEDURE [dbo].[SP_SE_ListaCartasS3]
+CREATE PROCEDURE [dbo].[SP_SE_ListaCartasS3]--10036,10109,10183,'20210101','20211201',10187,'Desarrollo'
     @IdContrato INT,
     @IdUsuario INT,
     @IdPresupuesto INT,
@@ -55,7 +52,7 @@ BEGIN
                     ON P.IdAnioContractual = AC.IdAnioContractual
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
-            WHERE P.nombre LIKE '%exploración%'
+            WHERE P.nombre LIKE '%exploraci�n%'
                   AND C.IdContratista IN ( 10005, 10006 )
         )
         BEGIN
@@ -71,7 +68,7 @@ BEGIN
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
             WHERE C.IdContrato = @IdContrato
-                  AND P.nombre LIKE '%exploración%'
+                  AND P.nombre LIKE '%exploraci�n%'
                   AND C.IdContratista IN ( 10005, 10006 );
         END;
     END
@@ -86,7 +83,7 @@ BEGIN
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
             WHERE P.IdPresupuesto = @IdPresupuesto
-                  AND P.Nombre LIKE '%exploración%'
+                  AND P.Nombre LIKE '%exploraci�n%'
                   AND C.IdContratista IN ( 10005, 10006 )
         )
         BEGIN
@@ -101,7 +98,7 @@ BEGIN
                 JOIN dbo.CO_Contrato C (NOLOCK)
                     ON AC.IdContrato = C.IdContrato
   WHERE C.IdContrato = @IdContrato
-                  AND P.Nombre LIKE '%exploración%'
+                  AND P.Nombre LIKE '%exploraci�n%'
                   AND C.IdContratista IN ( 10005, 10006 );
         END;
         ELSE

@@ -1,14 +1,4 @@
-﻿
---Modifier: Luis David De La Cruz
--- Modifier date: 24-06-2021
--- Description: Inserta en bitacora de carga facturas
------------------------------------------------------
---Modifier: Luis David De La Cruz
--- Modifier date: 13-07-2021
--- Description: Se inserta el correo cuando se bloquea a un proveedor
-DROP PROCEDURE IF EXISTS AP_sp_InsertaBitacoraBloqueoFactura
-GO
-CREATE PROCEDURE AP_sp_InsertaBitacoraBloqueoFactura
+﻿CREATE PROCEDURE AP_sp_InsertaBitacoraBloqueoFactura
 @IdProveedor int,
 @IdProveedorBloqueado Int,
 @IdUsuario int,
@@ -117,7 +107,6 @@ DECLARE @descripcionStr varchar(100),
 				table {
 					border-collapse: collapse;
 				}
-
 					table td[class=template-img] img {
 						width: 100% !important;
 						display: block !important;

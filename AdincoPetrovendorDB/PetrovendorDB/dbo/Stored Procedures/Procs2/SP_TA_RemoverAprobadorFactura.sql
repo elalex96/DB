@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_TA_RemoverAprobadorFactura]    Script Date: 04/11/2022 11:11:23 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Daniel AC>
 -- Create date: <02-08-19>
 -- Description:	Agregue, reinicio de aprobación de los aprobadores que ya tenian un estatus de aprobado y consulta para reenviarles notificación de reinicio
@@ -18,7 +11,7 @@ GO
 -- Create date: <04/11/2022>
 -- Description:	se agrega el filtrado de usuarios inactivos
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_TA_RemoverAprobadorFactura] --420, 2
+CREATE PROCEDURE [dbo].[SP_TA_RemoverAprobadorFactura] --420, 2
 @IdProveedor INT,
 @IdUsuario INT,
 @IdAceptacionFactura  INT, 

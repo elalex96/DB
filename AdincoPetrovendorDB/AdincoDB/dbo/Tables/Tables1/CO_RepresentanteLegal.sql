@@ -9,7 +9,7 @@
     [InstrumentoAcreditacionPersonalidad] NVARCHAR (MAX) NULL,
     [InstrumentoAcreditacionFacultades]   NVARCHAR (MAX) NULL,
     [CreadoPor]                           INT            NULL,
-    CONSTRAINT [PK_RepresentanteLegal] PRIMARY KEY CLUSTERED ([IdRepresentanteLegal] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_RepresentanteLegal] PRIMARY KEY CLUSTERED ([IdRepresentanteLegal] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_RepresentanteLegal_CO_Contratista] FOREIGN KEY ([IdContratista]) REFERENCES [dbo].[CO_Contratista] ([IdContratista])
 );
 

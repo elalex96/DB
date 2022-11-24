@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[MM_ValidarCantitadesAP]    Script Date: 20/10/2022 12:19:36 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <26-06-2018>
 -- Description:	<Se consultan las cantidades registradas en la aceptacion de pedido y la factura para su validacion>
@@ -28,7 +21,7 @@ GO
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
 
-ALTER PROCEDURE [dbo].[MM_ValidarCantitadesAP] --10317, 258
+CREATE PROCEDURE [dbo].[MM_ValidarCantitadesAP] --10317, 258
     @IdFactura INT,
     @IdAceptacionPedido INT,
     /*--------------------parametros contrato  --------------------*/

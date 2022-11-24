@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <18/04/2020>
 -- Description:	<consulta de las aceptaciones de pedido para reclasificacion>
@@ -7,7 +7,7 @@
 -- Create date: <04/06/2020>
 -- Description:	<se agrego el campo de justificacion de las OT y procesos de procura>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_APR_ConsultaAceptacionesReclasificacion] --617,3,0,1,''
+CREATE  PROCEDURE [dbo].[SP_APR_ConsultaAceptacionesReclasificacion] --617,3,0,1,''
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
     @IdContrato INT,

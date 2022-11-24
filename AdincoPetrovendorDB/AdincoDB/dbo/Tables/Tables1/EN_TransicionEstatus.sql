@@ -5,7 +5,7 @@
     [NombreCambioEstado]  NVARCHAR (MAX) NULL,
     [ComentarioRequerido] BIT            NULL,
     [CreadoPor]           INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdTransicion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdTransicion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdEstadoActual]) REFERENCES [dbo].[EN_Estatus] ([idEstatus]),
     FOREIGN KEY ([IdEstadoSiguiente]) REFERENCES [dbo].[EN_Estatus] ([idEstatus])
 );

@@ -5,7 +5,7 @@
     [IdFlujoTarea]         INT            NULL,
     [Valor]                FLOAT (53)     NULL,
     [IdConstanteCondicion] INT            NULL,
-    CONSTRAINT [PK_TaCondicionFlujoTarea] PRIMARY KEY CLUSTERED ([IdCondicion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_TaCondicionFlujoTarea] PRIMARY KEY CLUSTERED ([IdCondicion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_TaFlujoTareaCondicion_TaFlujoTarea1] FOREIGN KEY ([IdFlujoTarea]) REFERENCES [dbo].[TA_FlujoTarea] ([IdFlujoTarea]),
     CONSTRAINT [FK_TaFlujoTareaCondicion_TaFlujoTareaConstante] FOREIGN KEY ([IdConstanteCondicion]) REFERENCES [dbo].[TA_FlujoTareaConstante] ([IdConstante]),
     CONSTRAINT [FK_TaFlujoTareaCondicion_TaOperadorMatematico1] FOREIGN KEY ([IdTipoOperadorMat]) REFERENCES [dbo].[TA_OperadorMatematico] ([IdOperador])

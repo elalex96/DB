@@ -5,7 +5,7 @@
     [Termino]           DATE NULL,
     [IdContrato]        INT  NULL,
     [CreadoPor]         INT  NULL,
-    CONSTRAINT [PK_AniosContractuales] PRIMARY KEY CLUSTERED ([IdAnioContractual] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AniosContractuales] PRIMARY KEY CLUSTERED ([IdAnioContractual] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AniosContractuales_Contratos] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

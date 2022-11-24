@@ -55,7 +55,7 @@
     [TotalImpuestosTrasladados] MONEY           DEFAULT ((0)) NULL,
     [TotalImpuestosRetenidos]   MONEY           DEFAULT ((0)) NULL,
     [VarTransfer]               BIT             NULL,
-    CONSTRAINT [PK_Facturas] PRIMARY KEY CLUSTERED ([IdFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Facturas] PRIMARY KEY CLUSTERED ([IdFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Facturas_Contratos] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_Facturas_Monedas] FOREIGN KEY ([IdMoneda]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda]),
     CONSTRAINT [FK_Facturas_Subcontratistas] FOREIGN KEY ([IdSubcontratista]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista]),
@@ -67,16 +67,16 @@
 
 GO
 CREATE NONCLUSTERED INDEX [idx_FacturaUUID]
-    ON [dbo].[FI_Factura]([UUID] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[FI_Factura]([UUID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [idx_FechaTimbrado]
-    ON [dbo].[FI_Factura]([FechaTimbrado] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[FI_Factura]([FechaTimbrado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [IndexFacturaContrato]
     ON [dbo].[FI_Factura]([IdContrato] ASC)
-    INCLUDE([IdFactura], [Serie], [Folio], [Fecha], [FormaPago], [SubTotal], [Moneda], [MontoConIva], [TipoComprobante], [MetodoPago], [LugarExpedicion], [Emisor], [UUID], [FechaRecepcion], [IdSubcontratista]) WITH (STATISTICS_NORECOMPUTE = ON);
+    INCLUDE([IdFactura], [Serie], [Folio], [Fecha], [FormaPago], [SubTotal], [Moneda], [MontoConIva], [TipoComprobante], [MetodoPago], [LugarExpedicion], [Emisor], [UUID], [FechaRecepcion], [IdSubcontratista]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

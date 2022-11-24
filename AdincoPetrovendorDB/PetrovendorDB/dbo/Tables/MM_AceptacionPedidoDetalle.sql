@@ -18,17 +18,18 @@
     [DataAreaId]                CHAR (10)      NULL,
     [IdAnterior]                INT            NULL,
     [IsReclasificada]           BIT            NULL,
-    CONSTRAINT [PK_MM_AceptacionPedidoDetalle] PRIMARY KEY CLUSTERED ([IdAceptacionPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [PrecioUnitario]            FLOAT (53)     NULL,
+    CONSTRAINT [PK_MM_AceptacionPedidoDetalle] PRIMARY KEY CLUSTERED ([IdAceptacionPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_AceptacionPedidoDetalle_MM_AceptacionPedido] FOREIGN KEY ([IdAceptacionPedido]) REFERENCES [dbo].[MM_AceptacionPedido] ([IdAceptacionPedido])
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [<MM_APD_IdAcep, sysname,>]
-    ON [dbo].[MM_AceptacionPedidoDetalle]([IdAceptacionPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_AceptacionPedidoDetalle]([IdAceptacionPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 
 
 GO
 CREATE NONCLUSTERED INDEX [idxIdPedidoDetalle_MM_AceptacionPedidoDetalle]
-    ON [dbo].[MM_AceptacionPedidoDetalle]([IdPedidoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[MM_AceptacionPedidoDetalle]([IdPedidoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

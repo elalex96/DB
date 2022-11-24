@@ -1,8 +1,4 @@
-USE PETROVENDOR
-GO
-DROP PROCEDURE IF EXISTS SP_ConsultarTablerosProcura
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Abel Rivera>
 -- Create date: <24/06/2020>
 -- Description:	<Consulta los tableros a mostrar filtrados por tipo de usuario y roles>

@@ -1,14 +1,13 @@
-﻿CREATE TYPE [dbo].[Entregables_Importacion_SHELL] AS TABLE(
-	[IdEntregable] [nvarchar](500) NULL,
-	[Funcion] [nvarchar](500) NULL,
-	[Subfuncion] [nvarchar](500) NULL,
-	[DiasAlertaPrevia] [nvarchar](500) NULL,
-	[DiasElaboracion] [nvarchar](500) NULL,
-	[Activo] [nvarchar](500) NULL,
-	[Elaborador] [nvarchar](500) NULL,
-	[FocalPoint] [nvarchar](500) NULL,
-	[Accountable] [nvarchar](500) NULL,
-	[AccountableCompliance] [nvarchar](500) NULL,
-	[Column16] [nvarchar](500) NULL
-)
-GO
+﻿CREATE TYPE [dbo].[Entregables_Importacion_SHELL] AS TABLE (
+    [IdEntregable]          NVARCHAR (500) NULL,
+    [Funcion]               NVARCHAR (500) NULL,
+    [Subfuncion]            NVARCHAR (500) NULL,
+    [DiasAlertaPrevia]      NVARCHAR (500) NULL,
+    [DiasElaboracion]       NVARCHAR (500) NULL,
+    [Activo]                NVARCHAR (500) NULL,
+    [Elaborador]            NVARCHAR (500) NULL,
+    [FocalPoint]            NVARCHAR (500) NULL,
+    [Accountable]           NVARCHAR (500) NULL,
+    [AccountableCompliance] NVARCHAR (500) NULL,
+    [Column16]              NVARCHAR (500) NULL);
+

@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_RegistraExcepcionesFecha]    Script Date: 13/09/2022 02:03:36 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 2019
 -- Description:Crea excepciones para los responsables de una instancia
@@ -17,7 +10,7 @@ GO
 -- Create date: 14/09/2022
 -- Description:correccion en el idtipooperacion de bitacora
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_EN_RegistraExcepcionesFecha] --3,10061,249263,'20190910','20190913'
+CREATE PROCEDURE [dbo].[sp_EN_RegistraExcepcionesFecha] --3,10061,249263,'20190910','20190913'
     @idContrato INT,
     @idUsuario INT,
     @idInstanciaentregable INT,

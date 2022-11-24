@@ -16,9 +16,6 @@
 -- Description:		Manda a llamar el nuevo sp para contratos de murphy
 -- ============================================
 CREATE PROCEDURE [dbo].[SP_SE_TotalFacturadoRubro] 
--- [SP_SE_TotalFacturadoRubro] 10018,1,10079,'2019-01-01','2019-12-01',2 --BIENES
--- [SP_SE_TotalFacturadoRubro] 10018,1,10079,'2019-01-01','2019-12-01',3 --SERVICIOS
--- Add the parameters for the stored procedure here
 @IdContrato    INT, 
 @IdUsuario     INT, 
 @IdPresupuesto INT, 
@@ -398,4 +395,5 @@ AS
 					 END;
 		END
      END;
+
 

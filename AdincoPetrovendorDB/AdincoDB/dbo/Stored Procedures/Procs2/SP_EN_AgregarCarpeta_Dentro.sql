@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_AgregarCarpeta_Dentro]    Script Date: 06/07/2022 03:59:19 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <11/01/2022>
 -- Description:	<Agregado de carpetas en el visor de archivos V2>
@@ -15,7 +8,7 @@ GO
 -- Create date: <25/03/2022>
 -- Description:	Se agrego parametro de Nivel y CarpetaId del padre de la nueva carpeta
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro] --'','PRUEBA',0,2,18,3,1
+CREATE PROCEDURE [dbo].[SP_EN_AgregarCarpeta_Dentro] --'','PRUEBA',0,2,18,3,1
 	-- Add the parameters for the stored procedure here
 	@Ruta VARCHAR(MAX),
 	@Nombre NVARCHAR(500),

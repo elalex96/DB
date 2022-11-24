@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 26-06-2020
 -- Description:	
@@ -17,7 +17,7 @@ AS
          SELECT TOP 1 
 					  A.IdAWSDocumento, 
                       A.NombreArchivo,
-					  'adinco' as Bucket,                       
+					  'adinco-pr' as Bucket,                       
 					  A.Folder, 
                       UPPER(A.UUIDAmazon) AS UUIDAmazon, 
                       LTRIM(RTRIM(SUBSTRING(A.NombreArchivo, CHARINDEX('.', A.NombreArchivo, LEN(A.NombreArchivo)-5), LEN(A.NombreArchivo)))) AS TipoArchivo

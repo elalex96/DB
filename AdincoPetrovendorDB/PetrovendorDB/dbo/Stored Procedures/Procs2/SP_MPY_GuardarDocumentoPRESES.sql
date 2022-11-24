@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MPY_GuardarDocumentoPRESES'
-)
-    DROP PROCEDURE SP_MPY_GuardarDocumentoPRESES;
-/****** Object:  StoredProcedure [dbo].[SP_MPY_GuardarDocumentoPRESES]    Script Date: 28/07/2021 01:25:49 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 30/10/2018
 -- Description:	se guardan el documento para PRE-SES

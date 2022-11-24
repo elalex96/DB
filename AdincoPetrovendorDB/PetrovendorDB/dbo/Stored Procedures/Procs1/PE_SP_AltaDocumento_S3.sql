@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'PE_SP_AltaDocumento_S3'
-)
-    DROP PROCEDURE PE_SP_AltaDocumento_S3;
-/****** Object:  StoredProcedure [dbo].[PE_SP_AltaDocumento_S3]    Script Date: 26/07/2021 05:17:36 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- ============================================= 
+﻿-- ============================================= 
 -- Author:        Daniel Cruz
 -- Create date:	  26-07-21
 -- Description:   Se agrega columna de Bucket

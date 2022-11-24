@@ -40,13 +40,15 @@
     [CreadoEn]               DATETIME       NULL,
     [ModificadoPor]          INT            NULL,
     [ModificadoEn]           DATETIME       NULL,
-    CONSTRAINT [PK_Cat_Empresa] PRIMARY KEY CLUSTERED ([IdSubcontratista] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Cat_Empresa] PRIMARY KEY CLUSTERED ([IdSubcontratista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Empresa_ClasificacionEmpresa] FOREIGN KEY ([ClasificacionID]) REFERENCES [dbo].[PV_ClasificacionEmpresa] ([ClasificacionID]),
     CONSTRAINT [FK_Empresa_Nacionalidad] FOREIGN KEY ([NacionalidadID]) REFERENCES [dbo].[PV_Nacionalidad] ([NacionalidadID]),
     CONSTRAINT [FK_Empresa_TipoPersonaFiscal] FOREIGN KEY ([TipoPersonaFiscalID]) REFERENCES [dbo].[PV_TipoPersonaFiscal] ([TipoPersonaFiscalID])
 );
 
-go
 
-create nonclustered index IX_PV_Subcontratista	on		PV_Subcontratista(	[RFC]) include ([IdSubcontratista])
+GO
+CREATE NONCLUSTERED INDEX [IX_PV_Subcontratista]
+    ON [dbo].[PV_Subcontratista]([RFC] ASC)
+    INCLUDE([IdSubcontratista]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

@@ -12,6 +12,6 @@
     [CreadoEl]           DATETIME      NOT NULL,
     [CreadoPor]          INT           NOT NULL,
     [IdLineaPresupuesto] INT           NULL,
-    CONSTRAINT [PK_CO_GastosActualizar_1] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_GastosActualizar_1] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

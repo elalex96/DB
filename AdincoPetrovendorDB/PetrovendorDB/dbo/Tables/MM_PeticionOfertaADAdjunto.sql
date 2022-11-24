@@ -14,6 +14,7 @@
     [CreadoEl]          DATETIME       NULL,
     [ModificadoPor]     INT            NULL,
     [ModificadoEl]      DATETIME       NULL,
-    [IdSolicitudPedido] INT            NULL
+    [IdSolicitudPedido] INT            NULL,
+    [Bucket]            VARCHAR (200)  NULL
 );
 

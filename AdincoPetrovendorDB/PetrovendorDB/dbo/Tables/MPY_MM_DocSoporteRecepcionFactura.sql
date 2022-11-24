@@ -13,7 +13,7 @@
     [Mime]                         NVARCHAR (300) NULL,
     [AMS3]                         BIT            NULL,
     [EliminadoEl]                  DATETIME       NULL,
-    CONSTRAINT [PK_MPY_MM_DocSoporteRecepcionFactura] PRIMARY KEY CLUSTERED ([IdDocSoporteRecepcionFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MPY_MM_DocSoporteRecepcionFactura] PRIMARY KEY CLUSTERED ([IdDocSoporteRecepcionFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MPY_MM_DocSoporteRecepcionFactura_S_Usuario1] FOREIGN KEY ([CargadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );
 

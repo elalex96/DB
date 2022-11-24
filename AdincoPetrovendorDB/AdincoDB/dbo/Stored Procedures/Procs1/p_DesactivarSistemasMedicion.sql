@@ -1,4 +1,4 @@
-﻿Create Proc p_DesactivarSistemasMedicion
+﻿CREATE Proc p_DesactivarSistemasMedicion
 @pIdSistema	int,
 @UsuarioId INT
 as

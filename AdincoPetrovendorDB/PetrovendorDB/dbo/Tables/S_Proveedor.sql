@@ -42,7 +42,8 @@
     [Verificable]                 BIT            NULL,
     [EdicionCN]                   BIT            NULL,
     [CotizacionesRestringidas]    BIT            NULL,
-    CONSTRAINT [PK_S_Proveedor] PRIMARY KEY CLUSTERED ([IdProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [FechaVigenciaREPSE]          DATETIME       NULL,
+    CONSTRAINT [PK_S_Proveedor] PRIMARY KEY CLUSTERED ([IdProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdTipoMoneda]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda]),
     CONSTRAINT [FK__S_Proveed__IdNac__0E04126B] FOREIGN KEY ([IdNacionalidad]) REFERENCES [dbo].[S_Nacionalidad] ([IdNacionalidad]),
     CONSTRAINT [FK__S_Proveed__IdTip__0D0FEE32] FOREIGN KEY ([IdTipoRegimen]) REFERENCES [dbo].[S_TipoRegimen] ([IdTipoRegimen])

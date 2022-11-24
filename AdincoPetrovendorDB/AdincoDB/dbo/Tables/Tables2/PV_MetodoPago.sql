@@ -3,6 +3,6 @@
     [MetodoPago]   VARCHAR (MAX) NULL,
     [Orden]        INT           NULL,
     [C_FormaPago]  NVARCHAR (50) NULL,
-    CONSTRAINT [PK_PV_MetodoPago] PRIMARY KEY CLUSTERED ([idMetodoPago] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_MetodoPago] PRIMARY KEY CLUSTERED ([idMetodoPago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

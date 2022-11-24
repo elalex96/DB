@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿
+-- =============================================
 -- Author: DANIEL AC
 -- Create date: 18/08/2017
 -- Description:	CONSULTAR DETALLE DEL DOCUMENTO 
@@ -11,7 +12,7 @@ AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
 
-     SELECT		'Distribuidor Autorizado ' + NombreEmpresa + '.pdf' AS NombreDocumento,
+    SELECT		'Distribuidor Autorizado ' + NombreEmpresa + '.pdf' AS NombreDocumento,
 				D.IdDocumento,
 				D.Identificador,
 				D.Extension,

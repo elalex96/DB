@@ -1,4 +1,7 @@
-﻿CREATE VIEW [dbo].[VistaFacturasPCM]
+﻿
+
+
+CREATE VIEW [dbo].[VistaFacturasPCM]
 AS
      SELECT DISTINCT 
             CON.NumeroContrato, 
@@ -160,7 +163,7 @@ AS
           --LEFT JOIN FI_CFDIConcepto AS c ON F.IdFactura = c.IdFactura
           --LEFT JOIN FI_CFDIImpuesto AS i ON F.IdFactura = i.IdFactura
           LEFT JOIN dbo.FI_TransferFactura TF(NOLOCK) ON F.IdFactura = TF.IdFactura
-          LEFT JOIN dbo.FI_Transfer T(NOLOCK) ON TF.IdTransfer = T.IdTransferencia
+          LEFT JOIN dbo.FI_Transfer T(NOLOCK) ON TF.IdTransfer = T.IdTransferencia and T.IdContrato= 10036
           --LEFT JOIN dbo.PV_CuentaBancaria CBO(NOLOCK) ON T.IdCuentaOrigen = CBO.DatoBancarioID
           --LEFT JOIN dbo.PV_Banco BO(NOLOCK) ON CBO.BancoID = BO.BancoID
           --LEFT JOIN dbo.PV_CuentaBancaria CBD(NOLOCK) ON T.IdCuentaDestino = CBD.DatoBancarioID
@@ -188,7 +191,7 @@ AS
           LEFT JOIN dbo.FI_ComplementoDePago CP(NOLOCK) ON CP.IdComplementoDePago = FCPDR.IdComplementoDePago
           LEFT JOIN dbo.FI_Factura FCP ON CP.IdFactura = FCP.IdFactura
           LEFT JOIN dbo.FI_TransferFactura TFCP(NOLOCK) ON CP.IdFactura = TFCP.IdFactura
-          LEFT JOIN dbo.FI_Transfer TTFCP(NOLOCK) ON TFCP.IdTransfer = TTFCP.IdTransferencia
+          LEFT JOIN dbo.FI_Transfer TTFCP(NOLOCK) ON TFCP.IdTransfer = TTFCP.IdTransferencia and TTFCP.IdContrato = 10036
           LEFT JOIN dbo.PV_TipoMoneda TMTT(NOLOCK) ON TMTT.IdMoneda = TTFCP.IdMoneda
           LEFT JOIN dbo.CO_TipoCambioDiario TCDTT(NOLOCK) ON TCDTT.IdMoneda = TMTT.IdMoneda
                                                              AND DAY(TCDTT.Fecha) = DAY(F.Fecha)
@@ -198,5 +201,5 @@ AS
                                                     AND TA.id_Tarea = SIPACPUE.TareaRC2112
           LEFT JOIN dbo.SIPAC_RCCONT21M SIPACPPD ON FCP.UUID = SIPACPPD.IdentificadorCFDIRC2105
                                                     AND TA.id_Tarea = SIPACPPD.TareaRC2112
-     WHERE F.IdContrato IN(10036)
+     WHERE F.IdContrato IN(10036) --and TTFCP.IdContrato in ( 10036) and T.IdContrato in ( 10036)
           --AND CP.IdFactura = 116063;

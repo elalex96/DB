@@ -18,6 +18,6 @@
     [FolioBancarioTCDS]           NVARCHAR (30)  NULL,
     [NumeroTCD]                   NVARCHAR (16)  NULL,
     [CreadoPor]                   INT            NULL,
-    CONSTRAINT [PK_Pagos] PRIMARY KEY CLUSTERED ([IdPago] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Pagos] PRIMARY KEY CLUSTERED ([IdPago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -120,4 +120,4 @@ AS
          FROM #Facturas F
          WHERE F.TipoComprobante NOT LIKE '%P%'
          ORDER BY F.IdFactura DESC;
-     END;
+     END;	

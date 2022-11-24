@@ -8,6 +8,6 @@
     [FecMovto]           DATETIME       NULL,
     [Activo]             BIT            NULL,
     [CreadoPor]          INT            NULL,
-    CONSTRAINT [PK_Subactividades] PRIMARY KEY CLUSTERED ([IdSubactividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Subactividades] PRIMARY KEY CLUSTERED ([IdSubactividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

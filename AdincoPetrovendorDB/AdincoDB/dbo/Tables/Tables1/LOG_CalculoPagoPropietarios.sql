@@ -11,7 +11,7 @@
     [MontoDestinadoPago]      FLOAT (53) NULL,
     [UsuarioID]               INT        NULL,
     [FecMovto]                DATETIME   NULL,
-    CONSTRAINT [PK_LOG_CalculoPagoPropietarios] PRIMARY KEY CLUSTERED ([IdCalculoPago] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_LOG_CalculoPagoPropietarios] PRIMARY KEY CLUSTERED ([IdCalculoPago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_LOG_CalculoPagoPropietarios_AP_Usuario] FOREIGN KEY ([UsuarioID]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 

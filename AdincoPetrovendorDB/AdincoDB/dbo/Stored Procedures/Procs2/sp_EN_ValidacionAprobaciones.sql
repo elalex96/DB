@@ -18,7 +18,7 @@ BEGIN
     JOIN dbo.AP_Rol R ON P.IdRol = R.IdRol
     WHERE UsuarioID = @idUsuario
           AND P.IdContrato =	@idContrato
-          AND (R.Rol LIKE '%Administra%Entregables%' OR R.Rol LIKE '%Admin%Shell%' OR R.Rol LIKE '%Especial%BARBARA%');
+          AND (R.Rol LIKE '%Administra%Entregables%' OR R.Rol LIKE '%Admin%Shell%' OR R.Rol LIKE '%Especial%BARBARA%' OR R.Rol LIKE '%CARGA%HISTO%ENI%' OR R.Rol LIKE '%SASISOPA SHELL%' OR R.Rol LIKE '%SASISOPA CRISTINA SHELL%');
 
 	SELECT	@IdUsuarioActividad	=	
 	
@@ -100,4 +100,3 @@ BEGIN
 	WHERE	IE.idInstanciaEntregable	=	@idInstanciaEntregable;
 
 END
-

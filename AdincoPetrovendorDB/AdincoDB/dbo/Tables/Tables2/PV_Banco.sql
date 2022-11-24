@@ -8,6 +8,6 @@
     [CreadoEn]      DATETIME       NULL,
     [ModificadoPor] INT            NULL,
     [ModificadoEn]  DATETIME       NULL,
-    CONSTRAINT [PK_Cat_Banco] PRIMARY KEY CLUSTERED ([BancoID] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Cat_Banco] PRIMARY KEY CLUSTERED ([BancoID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

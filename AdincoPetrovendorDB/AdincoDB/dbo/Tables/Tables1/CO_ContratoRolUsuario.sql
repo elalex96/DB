@@ -8,7 +8,7 @@
     [ModificadoPor]        INT      NULL,
     [Modificado]           DATETIME NULL,
     [CreadoPor]            INT      NULL,
-    CONSTRAINT [PK_ContratoRolUsuario] PRIMARY KEY CLUSTERED ([IdContratoRolUsuario] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ContratoRolUsuario] PRIMARY KEY CLUSTERED ([IdContratoRolUsuario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ContratoRolUsuario_Contratos] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

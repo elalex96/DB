@@ -36,7 +36,3 @@ begin
 	WHERE PA.IdOTSolicitud = @pIdOTSolicitud
 
 end
-
-
-
-

@@ -13,7 +13,7 @@
     [ModificadoPor]        INT        NULL,
     [ModificadoEl]         DATETIME   NULL,
     [Activo]               BIT        NULL,
-    CONSTRAINT [PK__CO_Nomin__41693C83F310F556] PRIMARY KEY CLUSTERED ([idNominacionVolumen] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK__CO_Nomin__41693C83F310F556] PRIMARY KEY CLUSTERED ([idNominacionVolumen] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__CO_Nomina__idCon__16BBB602] FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK__CO_Nomina__idPro__18A3FE74] FOREIGN KEY ([idProductoNominacion]) REFERENCES [dbo].[CO_ClasificacionProductoNominacion] ([ProductoNominacionID]),
     CONSTRAINT [FK__CO_Nomina__idTip__1A8C46E6] FOREIGN KEY ([idTipoBase]) REFERENCES [dbo].[CO_TipoBasesNominacion] ([idTipoBase]),

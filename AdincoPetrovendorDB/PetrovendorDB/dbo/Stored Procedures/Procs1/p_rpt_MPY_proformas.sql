@@ -1,6 +1,4 @@
-﻿
-
-Create proc p_rpt_MPY_proformas
+﻿CREATE PROCEDURE  [dbo].[p_rpt_MPY_proformas]
 as
 
 /**************PCN******************************/
@@ -106,7 +104,7 @@ CREATE TABLE #Complementos
        WHERE TipoComprobante = 'P'
        AND 
 				IdContrato IN(10039, 10053)
-
+ 
 SELECT 
 		Company = ctista.NombreContratista,
 		SAPV.VendorName AS [Vendor Name],
@@ -454,4 +452,3 @@ GROUP BY
 DROP TABLE #Complementos;
 DROP TABLE #tablePCN;
 DROP TABLE #tmpPCNFinal;
-GO

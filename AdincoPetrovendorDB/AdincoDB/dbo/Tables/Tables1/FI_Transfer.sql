@@ -25,7 +25,7 @@
     [AWSPDFId]                   INT            NULL,
     [IdFormaPago]                INT            NULL,
     [IdTransferenciaImportacion] INT            NULL,
-    CONSTRAINT [PK_FI_Transfer] PRIMARY KEY CLUSTERED ([IdTransferencia] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_Transfer] PRIMARY KEY CLUSTERED ([IdTransferencia] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_Transfer_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_FI_Transfer_PV_CuentaDestino] FOREIGN KEY ([IdCuentaDestino]) REFERENCES [dbo].[PV_CuentaBancaria] ([DatoBancarioID]),
     CONSTRAINT [FK_FI_Transfer_PV_CuentaOrigen] FOREIGN KEY ([IdCuentaOrigen]) REFERENCES [dbo].[PV_CuentaBancaria] ([DatoBancarioID]),

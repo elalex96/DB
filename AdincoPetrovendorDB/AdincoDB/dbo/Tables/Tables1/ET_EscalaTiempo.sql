@@ -5,6 +5,6 @@
     [CreadoEn]           DATETIME       NULL,
     [Activo]             BIT            NULL,
     [Eliminado]          BIT            NULL,
-    CONSTRAINT [PK_ET_EscalaTiempoProyecto] PRIMARY KEY CLUSTERED ([IdEscalaTiempo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ET_EscalaTiempoProyecto] PRIMARY KEY CLUSTERED ([IdEscalaTiempo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

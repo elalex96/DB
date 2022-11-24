@@ -7,7 +7,7 @@
     [ModificadoPor]     INT      NULL,
     [ModificadoEn]      DATETIME NULL,
     [Activo]            BIT      NULL,
-    CONSTRAINT [PK_EN_ProcesoContrato] PRIMARY KEY CLUSTERED ([idContrato] ASC, [idProceso] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_ProcesoContrato] PRIMARY KEY CLUSTERED ([idContrato] ASC, [idProceso] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_ProcesoContrato_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_ProcesoContrato_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_ProcesoContrato_CO_Contrato] FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),

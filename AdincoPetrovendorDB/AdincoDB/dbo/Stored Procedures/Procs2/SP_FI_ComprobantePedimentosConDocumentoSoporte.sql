@@ -16,16 +16,17 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+
 	 CREATE TABLE #FI_Pedimento
         (
             IdPedimentoComprobante INT,
             Archivo VARCHAR(50),
             CreadoPor INT,
-            CreadoPorTexto VARCHAR(MAX),
+            CreadoPorTexto VARCHAR(2000),
             ModificadoPor INT,
-            ModificadoPorTexto VARCHAR(MAX),
+            ModificadoPorTexto VARCHAR(2000),
             ClavePedimento INT,
-            ClavePedimentoTexto VARCHAR(MAX),
+            ClavePedimentoTexto VARCHAR(1000),
             TieneSoporte BIT,
 			PRIMARY KEY (IdPedimentoComprobante)
         );
@@ -34,25 +35,25 @@ BEGIN
         (
             IdPedimentoComprobante INT,
             Archivo VARCHAR(50),
-            NumeroSerieMercancia NVARCHAR(MAX),
-            ClaseBienServicio NVARCHAR(MAX),
+            NumeroSerieMercancia NVARCHAR(1000),
+            ClaseBienServicio NVARCHAR(2000),
             PrecioUnitario MONEY,
             Cantidad NUMERIC,
             ImporteTotal MONEY,
             IdUnidadMedida INT,
-            IdUnidadMedidaTexto VARCHAR(MAX),
+            IdUnidadMedidaTexto VARCHAR(1000),
             IdSubcontratistaImportador INT,
-            IdSubcontratistaImportadorTexto VARCHAR(MAX),
+            IdSubcontratistaImportadorTexto VARCHAR(2000),
             IdSubcontratistaExportador INT,
-            IdSubcontratistaExportadorTexto VARCHAR(MAX),
+            IdSubcontratistaExportadorTexto VARCHAR(2000),
             IdMoneda INT,
-            IdMonedaTexto VARCHAR(MAX),
+            IdMonedaTexto VARCHAR(2000),
             IdFormaPago INT,
-            IdFormaPagoTexto VARCHAR(MAX),
+            IdFormaPagoTexto VARCHAR(2000),
             CreadoPor INT,
-            CreadoPorTexto VARCHAR(MAX),
+            CreadoPorTexto VARCHAR(2000),
             ModificadoPor INT,
-            ModificadoPorTexto VARCHAR(MAX),
+            ModificadoPorTexto VARCHAR(2000),
             TieneSoporte BIT,
 			PRIMARY KEY (IdPedimentoComprobante)
         );

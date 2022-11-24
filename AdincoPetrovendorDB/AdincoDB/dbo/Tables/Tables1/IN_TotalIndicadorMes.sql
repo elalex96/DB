@@ -11,7 +11,7 @@
     [ModificadoPor]       INT          NULL,
     [ModificadoEl]        DATETIME     NULL,
     [Activo]              BIT          NULL,
-    CONSTRAINT [PK__IN_Total__12E46EDC11345CDD] PRIMARY KEY CLUSTERED ([idIndicadorMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK__IN_Total__12E46EDC11345CDD] PRIMARY KEY CLUSTERED ([idIndicadorMes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [fk_IndicadorTotal] FOREIGN KEY ([idIndicadorContrato]) REFERENCES [dbo].[IN_IndicadorPorContrato] ([idIndicadorContrato])
 );
 

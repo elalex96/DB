@@ -17,6 +17,31 @@ AS
          -- SET NOCOUNT ON added to prevent extra result sets from
          -- interfering with SELECT statements.
          SET NOCOUNT ON;
+
+
+		  EXEC [SIPAC_RC_CONT_22_M_IdDoc]  
+
+              @Contrato,  
+
+              @Mes,  
+
+              @IdPresupuesto; 
+
+         EXEC [SIPAC_RC_CONT_24_M_IdDoc]  
+
+              @Contrato,  
+
+              @Mes,  
+
+              @IdPresupuesto; 
+
+         EXEC [SIPAC_RC_CONT_25_M_IdDoc]  
+
+              @Contrato,  
+
+              @Mes,  
+
+              @IdPresupuesto; 
 		 --========================================
          IF OBJECT_ID('tempdb..#PedimentoComprobante', 'U') IS NOT NULL
              DROP TABLE #PedimentoComprobante;

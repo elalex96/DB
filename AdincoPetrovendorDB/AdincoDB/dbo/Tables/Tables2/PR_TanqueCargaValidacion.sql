@@ -5,7 +5,7 @@
     [ValidadoEl]    DATETIME NULL,
     [ModificadoPor] INT      NULL,
     [ModificadoEl]  DATETIME NULL,
-    CONSTRAINT [PK_PR_TanqueCargaValidacion] PRIMARY KEY CLUSTERED ([IdTanque] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_TanqueCargaValidacion] PRIMARY KEY CLUSTERED ([IdTanque] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PR_TanqueCargaValidacion_AP_Usuario] FOREIGN KEY ([ValidadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_PR_TanqueCargaValidacion_AP_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_PR_TanqueCargaValidacion_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),

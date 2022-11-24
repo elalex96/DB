@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesHistorialMasTresAnios]    Script Date: 02/11/2022 02:15:42 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
+﻿CREATE PROCEDURE [dbo].[EN_EntregablesHistorialMasTresAnios]
     @idUsuario INT,
     @idContrato INT,
     @BitPantallaArea INT

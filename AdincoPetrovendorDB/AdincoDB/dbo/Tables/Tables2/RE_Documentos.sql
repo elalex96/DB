@@ -12,6 +12,6 @@
     [TipoDocumentoId] INT              NOT NULL,
     [RequerimientoId] INT              NOT NULL,
     [Version]         INT              NULL,
-    CONSTRAINT [PK_RE_Documentos] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_RE_Documentos] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

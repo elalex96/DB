@@ -11,7 +11,7 @@
     [ModificadoPor]              INT            NULL,
     [ModificadoEl]               DATETIME       NULL,
     [Activo]                     BIT            NULL,
-    CONSTRAINT [PK_CO_ProgramaActividadDetalle] PRIMARY KEY CLUSTERED ([IdProgramaActividadDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_ProgramaActividadDetalle] PRIMARY KEY CLUSTERED ([IdProgramaActividadDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_ProgramaActividadDetalle_CO_ProgramaActividad] FOREIGN KEY ([IdProgramaActividad]) REFERENCES [dbo].[CO_ProgramaActividad] ([IdProgramaActividad]),
     CONSTRAINT [FK_CO_ProgramaActividadDetalle_CO_ProgramaActividadDetalle] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );

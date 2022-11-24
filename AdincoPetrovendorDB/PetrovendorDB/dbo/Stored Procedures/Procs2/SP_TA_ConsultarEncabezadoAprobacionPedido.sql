@@ -7,9 +7,6 @@
 -- Create date: 20/03/2021
 -- Description:	Se optimiza la consulta para la pantalla detalle_pedido del issue 984
 -- =============================================
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_TA_ConsultarEncabezadoAprobacionPedido')
-    DROP PROCEDURE SP_TA_ConsultarEncabezadoAprobacionPedido
-go
 CREATE PROCEDURE [dbo].[SP_TA_ConsultarEncabezadoAprobacionPedido]  
 	-- Add the parameters for the stored procedure here
 	

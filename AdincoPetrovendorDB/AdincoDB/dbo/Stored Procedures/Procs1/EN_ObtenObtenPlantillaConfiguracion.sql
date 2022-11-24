@@ -1,8 +1,4 @@
-USE adinco
-GO
-DROP PROC IF EXISTS EN_ObtenObtenPlantillaConfiguracion
-GO
-CREATE PROC [dbo].[EN_ObtenObtenPlantillaConfiguracion]
+﻿CREATE PROC [dbo].[EN_ObtenObtenPlantillaConfiguracion]
 @ContratoId int
 AS 
 BEGIN 
@@ -19,9 +15,7 @@ BEGIN
 	E.DocumentoEntregable,
 	ISNULL(ML.MarcoLegal,'') AS MarcoLegal,
 	ISNULL(f.FrecuenciaEntregable,'') AS FrecuenciaEntregable,
-	case when (select count(1) from EN_InstanciasEntregable as ies join EN_ContratoEntregable ces on ies.IdContratoEntregable = ces.IdContratoEntregable where ces.idEntregable =e.IdEntregable ) > 0 
-	then 'SI'
-	ELSE 'NO' END AS 'ProgramarEntregable',
+	'NO' AS 'ProgramarEntregable',
 	A.NombreArea, 
 	ISNULL(CE.DiasAlerta,0) AS DiasAlerta,
 	ISNULL(CE.DiasElaboracion,0) AS DiasElaboracion,
@@ -52,4 +46,7 @@ BEGIN
 	CE.Activo = 1	
 	AND ACT.Activo = 1
 	AND	CE.IdContrato = @ContratoId
+	AND E.Consecutivo IS NOT NULL
 end
+
+

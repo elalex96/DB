@@ -1,8 +1,4 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_PR_MM_PCN_AceptacionProveedorDocumentos
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 27-04-2022
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 

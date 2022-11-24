@@ -12,6 +12,11 @@
     [IdPedido]          INT            NULL,
     [IdCreadoProveedor] INT            NULL,
     [IdAdjuntoPO]       INT            NULL,
-    CONSTRAINT [PK_DEA_Relacion_PR_PO] PRIMARY KEY CLUSTERED ([ID_R_PR_PO] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_DEA_Relacion_PR_PO] PRIMARY KEY CLUSTERED ([ID_R_PR_PO] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [idx_DEA_Relacion_PR_PO_IdPedido]
+    ON [dbo].[DEA_Relacion_PR_PO]([IdPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

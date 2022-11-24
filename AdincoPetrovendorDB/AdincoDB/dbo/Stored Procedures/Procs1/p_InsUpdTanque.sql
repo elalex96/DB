@@ -1,6 +1,4 @@
-﻿
-
-CREATE  PROCEDURE p_InsUpdTanque
+﻿CREATE PROCEDURE p_InsUpdTanque
 @pId	int out,
 @pClave	varchar(20),
 @pNombre	varchar(200),

@@ -9,6 +9,6 @@
     [CreadoPor]              INT             NULL,
     [EditadaPor]             INT             NULL,
     [EditadaEl]              DATETIME        NULL,
-    CONSTRAINT [PK_PV_ImagenPredeterminada] PRIMARY KEY CLUSTERED ([IdImagenPredeterminada] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_ImagenPredeterminada] PRIMARY KEY CLUSTERED ([IdImagenPredeterminada] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -9,6 +9,6 @@
     [FechaRegBitacora]       DATETIME        NULL,
     [RecibidoPor]            NVARCHAR (MAX)  NULL,
     [IsError]                BIT             NULL,
-    CONSTRAINT [PK_AX_BitacoraLecturaCorreos] PRIMARY KEY CLUSTERED ([IdBitacoLecturaCorreos] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AX_BitacoraLecturaCorreos] PRIMARY KEY CLUSTERED ([IdBitacoLecturaCorreos] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

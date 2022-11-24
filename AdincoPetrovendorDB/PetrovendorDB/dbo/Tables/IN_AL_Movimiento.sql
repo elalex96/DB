@@ -22,7 +22,7 @@
     [IdLineaPresupuestoMes] INT           NULL,
     [IdSolicitudPedido]     INT           NULL,
     [ReingresSinRef]        BIT           NULL,
-    CONSTRAINT [PK_IN_AL_Movimiento] PRIMARY KEY CLUSTERED ([IdMovimiento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IN_AL_Movimiento] PRIMARY KEY CLUSTERED ([IdMovimiento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_IN_AL_Movimiento_IN_AL_TipoMovimiento] FOREIGN KEY ([IdTipoMovimiento]) REFERENCES [dbo].[IN_AL_TipoMovimiento] ([IdTipoMovimiento]),
     CONSTRAINT [FK_IN_AL_Movimiento_IN_Almacen] FOREIGN KEY ([IdAlmacen]) REFERENCES [dbo].[IN_Almacen] ([IdAlmacen]),
     CONSTRAINT [FK_IN_AL_Movimiento_MM_Pedido] FOREIGN KEY ([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido]),

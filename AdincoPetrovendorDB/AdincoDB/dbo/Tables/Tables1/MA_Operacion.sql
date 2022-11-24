@@ -22,6 +22,6 @@
     [IdTipoDocumento]     INT            NULL,
     [IdTipoAprobacion]    INT            NULL,
     [IdTipoOperacion]     INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdOperacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

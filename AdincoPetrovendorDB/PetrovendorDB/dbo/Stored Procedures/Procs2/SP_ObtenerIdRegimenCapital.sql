@@ -1,4 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[SP_ObtenerIdRegimenCapital](@RegimenCapital NVARCHAR(200))
+﻿CREATE PROCEDURE [dbo].SP_ObtenerIdRegimenCapital
+	@RegimenCapital NVARCHAR(200)
 AS
 BEGIN
 	DECLARE @IdRegimenCapital INT
@@ -13,4 +14,4 @@ BEGIN
 
 	--Retorno el id del regimen capital
 	SELECT @IdRegimenCapital
-END	
+END

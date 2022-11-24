@@ -1,19 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros'
-)
-    DROP PROCEDURE SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros;
-	GO
-/****** Object:  StoredProcedure [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]    Script Date: 08/06/2022 03:15:13 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros]
 @Estatus		INT,  
 @ProveedorId INT = 0

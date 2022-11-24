@@ -53,5 +53,3 @@ as
 		where VendorIDSAP = @pVendorIDSAP and
 		IdContrato = @pIdContrato
 	end
-
-

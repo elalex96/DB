@@ -21,6 +21,6 @@
     [IdLineaPresupuestoMes]            INT            NULL,
     [IdFactura]                        INT            NULL,
     [IdProveedor]                      INT            NULL,
-    CONSTRAINT [PK_CO_GastosAmatitlan2] PRIMARY KEY CLUSTERED ([Fila] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_GastosAmatitlan2] PRIMARY KEY CLUSTERED ([Fila] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

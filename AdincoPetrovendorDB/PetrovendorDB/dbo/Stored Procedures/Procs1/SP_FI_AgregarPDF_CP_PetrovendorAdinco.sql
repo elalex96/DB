@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_AgregaFacturaPDF]    Script Date: 07/12/2021 09:05:11 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 07-12-2021
 -- Description:	Insertar PDF complemento de pago desde Petrovendor para Adinco

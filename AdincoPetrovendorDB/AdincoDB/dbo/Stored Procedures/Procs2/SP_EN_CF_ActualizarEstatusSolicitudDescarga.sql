@@ -1,16 +1,9 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CF_ActualizarEstatusSolicitudDescarga]    Script Date: 30/06/2022 08:24:05 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <26/05/2022>
 -- Description:	<Actualizar estatus de procesamiento del archivo>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_CF_ActualizarEstatusSolicitudDescarga]
+CREATE PROCEDURE [dbo].[SP_EN_CF_ActualizarEstatusSolicitudDescarga]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitud INT,
 	@IdContrato INT,
@@ -88,7 +81,7 @@ BEGIN
 		0,
 		GETDATE(),
 		GETDATE(),
-		(SELECT CuentaRegistro FROM dbo.TA_CorreoServidor WHERE IdServidor = 1),
+		'notificaciones@adinco.mx',
 		3
 	);
 

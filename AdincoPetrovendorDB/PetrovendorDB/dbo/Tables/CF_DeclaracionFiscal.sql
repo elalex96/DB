@@ -6,7 +6,7 @@
     [FechaCarga]          SMALLDATETIME  NOT NULL,
     [NombreDoc]           VARCHAR (MAX)  NULL,
     [Anio]                INT            NULL,
-    CONSTRAINT [PK_CF_DeclaracionFiscal] PRIMARY KEY CLUSTERED ([IdDeclaracionFiscal] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CF_DeclaracionFiscal] PRIMARY KEY CLUSTERED ([IdDeclaracionFiscal] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CF_DeclaracionFiscal_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK_CF_DeclaracionFiscal_S_Usuario] FOREIGN KEY ([SubidoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );

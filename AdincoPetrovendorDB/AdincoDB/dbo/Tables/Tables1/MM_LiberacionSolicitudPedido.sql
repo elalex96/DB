@@ -3,6 +3,6 @@
     [IdSolicitudPedido] INT NULL,
     [IdUsuario]         INT NULL,
     [Estado]            INT NULL,
-    CONSTRAINT [PK_MM_LiberacionSolicitudPedido] PRIMARY KEY CLUSTERED ([IdLiberacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_LiberacionSolicitudPedido] PRIMARY KEY CLUSTERED ([IdLiberacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

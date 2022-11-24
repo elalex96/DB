@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Modificado Por: Neri Garcia
 -- Fecha: 11 de Agosto del 2022
 -- Detalles: Agregado de NOLOCK, Nombrado de Tablas en select, eliminado de codigo comentado, se minimizan los lefts

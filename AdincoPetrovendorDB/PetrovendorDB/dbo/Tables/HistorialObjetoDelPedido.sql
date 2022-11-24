@@ -4,7 +4,7 @@
     [IdUsuarioModifico] INT            NULL,
     [MotivoAnterior]    NVARCHAR (MAX) NULL,
     [FechaModificado]   DATETIME       NULL,
-    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [Fk_HistorialObjetoDelPedidoSolped] FOREIGN KEY ([IdSolicitudPedido]) REFERENCES [dbo].[MM_SolicitudPedido] ([IdSolicitudPedido]),
     CONSTRAINT [FK_HistorialObjetoDelPedidoUsuario] FOREIGN KEY ([IdUsuarioModifico]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );

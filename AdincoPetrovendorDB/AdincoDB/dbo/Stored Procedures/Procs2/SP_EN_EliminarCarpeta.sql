@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_EliminarCarpeta]    Script Date: 11/02/2022 12:18:15 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <12/01/2022>
 -- Description:	<Eliminar archivo cargado en visor V2>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_EliminarCarpeta]-- 'Etapas>Exploraci�n>Nueva Carpeta para descargar>',0,3
+CREATE PROCEDURE [dbo].[SP_EN_EliminarCarpeta]-- 'Etapas>Exploración>Nueva Carpeta para descargar>',0,3
 	-- Add the parameters for the stored procedure here
 	@Ruta NVARCHAR(MAX),
 	@IdUsuario INT,

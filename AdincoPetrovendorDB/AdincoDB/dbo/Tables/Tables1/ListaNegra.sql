@@ -14,6 +14,6 @@
     [NoFechaOficioGlobalSentenciaFavorable]         VARCHAR (MAX) NULL,
     [PublicacionPaginaSATSentenciaFavorable]        SMALLDATETIME NULL,
     [PublicacionDOFSentenciaFavorable]              SMALLDATETIME NULL,
-    CONSTRAINT [PK_ListaNegra] PRIMARY KEY CLUSTERED ([RFC] ASC, [Situacion] ASC, [NoFechaOficioGlobalPresuncion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ListaNegra] PRIMARY KEY CLUSTERED ([RFC] ASC, [Situacion] ASC, [NoFechaOficioGlobalPresuncion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

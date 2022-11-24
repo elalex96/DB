@@ -1,5 +1,6 @@
-﻿-- p_OT_LineasPresupuesto 9
-create Proc [dbo].[p_OT_LineasPresupuesto]
+﻿
+-- p_OT_LineasPresupuesto 9
+CREATE Proc [dbo].[p_OT_LineasPresupuesto]
 @pIdOTSolicitud int
 as
 
@@ -12,6 +13,3 @@ as
 	left join CO_Instalacion (NOLOCK) on CO_LineaPresupuestoMes.IdInstalacion = CO_Instalacion.IdInstalacion 
 	LEFT JOIN CO_ActividadCIEP (NOLOCK) on CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad  	
 	where OT_LineaPresupuesto.IdOTSolicitud = @pIdOTSolicitud
-GO
-
-

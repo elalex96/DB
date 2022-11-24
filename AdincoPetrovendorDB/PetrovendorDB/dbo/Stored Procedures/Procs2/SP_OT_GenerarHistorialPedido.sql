@@ -1,18 +1,11 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_OT_GenerarHistorialPedido]    Script Date: 23/11/2021 01:56:24 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:	Daniel A Cruz
 -- Create date: 06-02-2018
 -- Description:	SP Historico de un Pedido de Orden de Trabajo
 -- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb se sustituyen por simbolo --
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_OT_GenerarHistorialPedido]
+CREATE PROCEDURE [dbo].[SP_OT_GenerarHistorialPedido]
     @IdOTSolicitud INT,
     @IdOTEstimacion INT,
     --- PARAMETROS SOLPED ---

@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS Carso_sp_EnviaCorreosComparativasPendientes
-GO
-CREATE PROCEDURE Carso_sp_EnviaCorreosComparativasPendientes
+﻿CREATE PROCEDURE Carso_sp_EnviaCorreosComparativasPendientes
 @ComparativaHtml varchar(max)
 AS
 BEGIN

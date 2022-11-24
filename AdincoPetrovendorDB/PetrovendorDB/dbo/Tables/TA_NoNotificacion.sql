@@ -8,6 +8,6 @@
     [FechaCreacion]       DATETIME NULL,
     [UsuarioCreador]      INT      NULL,
     [IsEliminado]         BIT      NULL,
-    PRIMARY KEY CLUSTERED ([IdNotificacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdNotificacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

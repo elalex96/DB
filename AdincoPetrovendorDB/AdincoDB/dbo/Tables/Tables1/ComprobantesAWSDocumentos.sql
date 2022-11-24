@@ -5,7 +5,7 @@
     [FechaPago]                 DATE     NULL,
     [CreadoPor]                 INT      NULL,
     [CreadoEl]                  DATETIME NULL,
-    CONSTRAINT [PK_ComprobantesAWSDocumentos] PRIMARY KEY CLUSTERED ([IdComprobanteAWSDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ComprobantesAWSDocumentos] PRIMARY KEY CLUSTERED ([IdComprobanteAWSDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ComprobantesAWSDocumentos_AWS_Documentos] FOREIGN KEY ([AWSDocumentoId]) REFERENCES [dbo].[AWS_Documentos] ([AWSDocumentoId])
 );
 

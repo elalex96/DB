@@ -1,4 +1,6 @@
-﻿create proc [dbo].[p_OT_ConsultarProgramaAdjunto] (@pIdOTSolicitud int)
+﻿
+
+create proc [dbo].[p_OT_ConsultarProgramaAdjunto] (@pIdOTSolicitud int)
 as
 begin
 
@@ -16,4 +18,3 @@ begin
             on pa.AWSDocumentoId = d.AWSDocumentoId
     where IdOTSolicitud = @pIdOTSolicitud
 end
-GO

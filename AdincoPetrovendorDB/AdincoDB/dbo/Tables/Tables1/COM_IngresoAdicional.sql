@@ -6,7 +6,7 @@
     [CostosPrevios]      MONEY NULL,
     [CostosElegibles]    MONEY NULL,
     [CostosRecuperables] MONEY NULL,
-    CONSTRAINT [PK_COM_IngresoAdicional] PRIMARY KEY CLUSTERED ([IdIngresoAdicional] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_COM_IngresoAdicional] PRIMARY KEY CLUSTERED ([IdIngresoAdicional] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_COM_IngresoAdicional_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

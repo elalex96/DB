@@ -20,15 +20,11 @@
 -- Create date: 13-08-2019    
 -- Description: Add Marca, Modelo, No Parte a Descripción material     
 -- =============================================    
--- =============================================    
--- Author:      Luis David De La Cruz Bautista
--- Create date: 03/02/2021
--- Description: Optimización de sp por issue 995
--- =============================================
     
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaMaterialesOfertaFinal_V7_MV1_5]    
+    
+CREATE  PROCEDURE [dbo].[SP_MM_ConsultaMaterialesOfertaFinal_V7_MV1_5]    
  -- Add the parameters for the stored procedure here    
-	@IdSolicitudPedido INT,    
+ @IdSolicitudPedido INT,    
     @IdContrato    INT,    
     @IdUsuario     INT,    
     @FechaRegistro DATETIME    
@@ -47,76 +43,43 @@ BEGIN
      
  --- VARIABLES A UTILIZAR ---    
      
- DECLARE @IsOfertaCotizada bit,     
- @IsOfertaNoCotizada bit,     
- @IsMaterialCotizado bit ,    
- @PeticionFinalizada int  ,  
- @DISABLED NVARCHAR(60)    ,
- @ICON_VENCIDO NVARCHAR(60) = '<i class="fa fa-calendar-times-o" title="Oferta vencida"></i>'    ,
- @ICON_ADDPEDIDOTEMP NVARCHAR(60)  = '<i class="fa fa-truck" title="Agregado al pedido"></i>'    ,
- @COLOR_PU_COSTO_MENOR NVARCHAR(60) = '#09A542'    ,
- @OFERTA_FINALIZACION_LICITACION DATETIME      ,
- @MOSTRAR_PRECIOS NVARCHAR(200)    ,
- @MATERIALES_EN_POD_ACTUAL  INT     ,
- @PROVEEDORES_EN_POD_ACTUAL INT    ,
- @ROW_MATERIAL INT    ,
- @COLUMN_PROVEEDOR INT ,    
- @ADJUDICACION_PARCIAL BIT     ,
- @TABLA nvarchar(MAX)    ,
- @Cantidad_PO_MejorCosto FLOAT    ,
- @TIPO_SOLICITUD_PEDIDO NVARCHAR(MAX),   
+ DECLARE @IsOfertaCotizada bit     
+ DECLARE @IsOfertaNoCotizada bit     
+ DECLARE @IsMaterialCotizado bit     
+ DECLARE @PeticionFinalizada int    
+ DECLARE @DISABLED NVARCHAR(60)    
+ DECLARE @ICON_VENCIDO NVARCHAR(60) = '<i class="fa fa-calendar-times-o" title="Oferta vencida"></i>'    
+ DECLARE @ICON_ADDPEDIDOTEMP NVARCHAR(60)  = '<i class="fa fa-truck" title="Agregado al pedido"></i>'    
+ DECLARE @COLOR_PU_COSTO_MENOR NVARCHAR(60) = '#09A542'    
+ DECLARE @OFERTA_FINALIZACION_LICITACION DATETIME      
+ DECLARE @MOSTRAR_PRECIOS NVARCHAR(200)    
+ DECLARE @MATERIALES_EN_POD_ACTUAL  INT     
+ DECLARE @PROVEEDORES_EN_POD_ACTUAL INT    
+ DECLARE @ROW_MATERIAL INT    
+ DECLARE @COLUMN_PROVEEDOR INT     
+ DECLARE @ADJUDICACION_PARCIAL BIT     
+    DECLARE @TABLA nvarchar(MAX)    
+ DECLARE @Cantidad_PO_MejorCosto FLOAT    
+ DECLARE @TIPO_SOLICITUD_PEDIDO NVARCHAR(MAX)    
+    
  --#VARAIBLES DE CONVERSION DE MONEDA     
- @ID_MONEDA_DLS INT = 2,  --2 -> DLS  1 --MX     
- @ID_MONEDA_MX  INT = 1 ,   
- @DATA_MATERIAL NVARCHAR(350) ,
- @DATA_ID_SPD NVARCHAR(350),
- @IdPROVEEDOR INT,
- @IdCotizacion INT,
- @ICON_MATERIALES_YA_SOLICITADOS NVARCHAR(MAX)     ,
- @MATERIALES_FALTANTES FLOAT = 0    ,
- @ID_SPD_MM INT = 0 ,
- @Cantidad_PU_MejorCosto FLOAT,
- @PRECIO_UNITARIO_ACTUAL FLOAT    ,
- @ID_POD INT     ,
- @CANTIDAD_DISPONIBLE FLOAT     ,
- @COMENTARIO_PROVEEDOR NVARCHAR(MAX)    ,
- @ADDLISTAPEDIDO BIT    ,
- @POD_COTIZADO BIT    ,
- @ADD_CANTIDADTEMP FLOAT    ,
- @OFERTA_VENCIDA BIT    ,
- @VALIDAR_TIPO_CAMBIO NVARCHAR(150)    ,
- @TIPO_MONEDA_ACTUAL INT,
- @IdProveedorActual int     ,
- @MejorOferta bit,
- @ETIQUETA_MENOR NVARCHAR(200),
- @COUNT_MATRIZ INT     ,
- @IdProveedorActualM INT     ,
- @IdEvaluacion NVARCHAR(MAX)  ,   
- @IdPeticionOfertaM INT     ,
- @CALIFICACION_EVALUACION FLOAT     ;
- ------------------------------
- DECLARE @NOMBRE_MONEDA_DLS  VARCHAR(MAX)=(SELECT TipoMonedaCorto FROM PV_TipoMoneda WHERE IdMoneda= @ID_MONEDA_DLS);
- DECLARE @TIPO_MONEDA_TEXT NVARCHAR(MAX)  = @NOMBRE_MONEDA_DLS    
+ DECLARE @ID_MONEDA_DLS INT = 2  --2 -> DLS  1 --MX     
+ DECLARE @ID_MONEDA_MX  INT = 1    
+ DECLARE @NOMBRE_MONEDA_DLS  VARCHAR(MAX)=(SELECT TipoMonedaCorto FROM PV_TipoMoneda WHERE IdMoneda= @ID_MONEDA_DLS)     
+     
  ----#VALIDAR SI YA EXISTE UNA PETICION OFERTA SI NO SE DEBE CREAR LA TABLA DESDE SOLPED     
     
- SET @MATERIALES_EN_POD_ACTUAL  = (
-			SELECT COUNT(IdPeticionOferta)    
-            FROM MM_PeticionOferta AS PO    (NOLOCK)
-            LEFT JOIN dbo.MM_SolicitudPedido sp (NOLOCK)
-			ON PO.IdSolicitudPedido = sp.IdSolicitudPedido    
-            WHERE 
-			PO.IdSolicitudPedido=@IdSolicitudPedido 
-			AND sp.IdContrato = @IdContrato)    
+ SET  @MATERIALES_EN_POD_ACTUAL  = (SELECT COUNT(IdPeticionOferta)    
+            FROM MM_PeticionOferta AS PO    
+            LEFT JOIN dbo.MM_SolicitudPedido sp ON PO.IdSolicitudPedido = sp.IdSolicitudPedido    
+            WHERE PO.IdSolicitudPedido=@IdSolicitudPedido AND sp.IdContrato = @IdContrato)    
     
  SET @ADJUDICACION_PARCIAL  = (SELECT AdjudicableParcialmente FROM MM_SolicitudPedido WHERE IdSolicitudPedido= @IdSolicitudPedido AND IdContrato = @IdContrato)    
      
   --EXECUTE [SP_MM_ActualizarPedidosTemporalesFechaVigenciaOferta]  @IdSolicitudPedido    
     
-  SET @TIPO_SOLICITUD_PEDIDO = (
-		SELECT TSP.TipoSolicitudPedido 
-		FROM dbo.MM_SolicitudPedido AS SP    
-         INNER JOIN dbo.MM_TipoSolicitudPedido AS TSP 
-		 ON SP.IdTipoSolicitudPedido    = TSP.IdTipoSolicitudPedido
+  SET @TIPO_SOLICITUD_PEDIDO = (SELECT TSP.TipoSolicitudPedido FROM dbo.MM_SolicitudPedido AS SP    
+         INNER JOIN dbo.MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido=SP.IdTipoSolicitudPedido    
          WHERE SP.IdSolicitudPedido=@IdSolicitudPedido AND SP.IdContrato = @IdContrato)    
   IF @MATERIALES_EN_POD_ACTUAL  = 0  --- IF 1     
   BEGIN -----------------------------INICIO CONDICION 1-------------------------------    
@@ -133,14 +96,9 @@ BEGIN
             ' No. Parte: ',CASE WHEN ISNULL(LEN(MM.NumeroParte),0)>0 THEN MM.NumeroParte  ELSE ' S/NP' END) AS DescripcionCorta,--MM.DescripcionCorta,    
    SPD.observaciones,SPD.Cantidad, SPD.IdSolicitudPedidoDetalle    
    FROM MM_SolicitudPedidoDetalle AS SPD    
-   INNER JOIN MM_Material AS MM (NOLOCK)
-   ON SPD.IdMaterial = MM.IdMaterial
-   INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-   ON SPD.IdSolicitudPedido    = SP.IdSolicitudPedido
-   WHERE 
-   SP.IdSolicitudPedido = @IdSolicitudPedido 
-   AND 
-   SP.IdContrato = @IdContrato    
+   INNER JOIN MM_Material AS MM ON MM.IdMaterial = SPD.IdMaterial     
+   INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido    
+   WHERE SP.IdSolicitudPedido = @IdSolicitudPedido AND SP.IdContrato = @IdContrato    
    GROUP BY SPD.IdMaterial,  MM.DescripcionCorta, SPD.observaciones, SPD.Cantidad, SPD.IdSolicitudPedidoDetalle, MM.Marca, MM.Modelo, MM.NumeroParte    
    ORDER BY  MM.DescripcionCorta ASC    
     
@@ -221,15 +179,10 @@ BEGIN
   SET @OFERTA_FINALIZACION_LICITACION = (     
   SELECT ISNULL(TAO.FechaFinalizacion,getDATE()) As FechaLimite    
   FROM MM_SolicitudPedido AS SP    
-  INNER JOIN TA_Operacion AS TAO (NOLOCK)
-	ON SP.IdSolicitudPedido    = TAO.IdDocumento
-  INNER JOIN TA_Vencimiento AS V (NOLOCK)
-	ON TAO.IdVigencia    = V.IdVencimiento
-  INNER JOIN S_Proveedor AS PR (NOLOCK)
-	ON SP.IdProveedor    = PR.IdProveedor
-  WHERE 
-  SP.IdSolicitudPedido = @IdSolicitudPedido 
-  AND IdTipoOperacion = 6)     
+  INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento = SP.IdSolicitudPedido    
+  INNER JOIN TA_Vencimiento AS V ON V.IdVencimiento = TAO.IdVigencia    
+  INNER JOIN S_Proveedor AS PR ON PR.IdProveedor = SP.IdProveedor    
+  WHERE SP.IdSolicitudPedido =@IdSolicitudPedido AND IdTipoOperacion = 6)     
       
   SET @MOSTRAR_PRECIOS =(SELECT (( case  when  (DATEDIFF(MINUTE,@OFERTA_FINALIZACION_LICITACION, GETDATE()))  <= 0 then  'NO' ELSE 'SI' END )))    
     
@@ -263,8 +216,7 @@ BEGIN
   INSERT INTO  #TIPO_CAMBIO  ---    
   SELECT  [dbo].[GetTipoCambioActualScalar](POD.IdMoneda, GETDATE()),GETDATE(), POD.IdMoneda    
   FROM dbo.MM_PeticionOfertaDetalle POD     
-  INNER JOIN dbo.MM_PeticionOferta AS PO (NOLOCK)
-	ON POD.IdPeticionOferta    = PO.IdPeticionOferta
+  INNER JOIN dbo.MM_PeticionOferta AS PO ON PO.IdPeticionOferta=POD.IdPeticionOferta    
   WHERE PO.IdSolicitudPedido =@IdSolicitudPedido AND PO.Cotizado IS NOT NULL AND POD.IdMoneda IS NOT NULL    
   GROUP BY  [dbo].[GetTipoCambioActualScalar](POD.IdMoneda, GETDATE()), POD.IdMoneda    
   ORDER BY POD.IdMoneda ASC    
@@ -282,12 +234,9 @@ BEGIN
             ' No. Parte: ',CASE WHEN ISNULL(LEN(MM.NumeroParte),0)>0 THEN MM.NumeroParte  ELSE ' S/NP' END) AS DescripcionCorta, --MM.DescripcionCorta,    
   POD.ComentariosComprador,POD.NoMaterialesRequeridos, POD.IdSolicitudPedidoDetalle    
   FROM MM_PeticionOfertaDetalle AS POD    
-  INNER JOIN dbo.MM_Material AS MM (NOLOCK)
-	ON POD.IdMaterial     = MM.IdMaterial 
-  INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-	ON POD.IdPeticionOferta    = PO.IdPeticionOferta
-  INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-	ON PO.IdSolicitudPedido    = SP.IdSolicitudPedido 
+  INNER JOIN dbo.MM_Material AS MM ON MM.IdMaterial = POD.IdMaterial     
+  INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta= POD.IdPeticionOferta    
+  INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = PO.IdSolicitudPedido    
   WHERE SP.IdSolicitudPedido = @IdSolicitudPedido    
   GROUP BY POD.IdMaterial,  MM.DescripcionCorta, pod.ComentariosComprador, POD.NoMaterialesRequeridos, POD.IdSolicitudPedidoDetalle,MM.Marca, MM.Modelo, MM.NumeroParte    
   ORDER BY  MM.DescripcionCorta ASC    
@@ -297,10 +246,8 @@ BEGIN
    INSERT INTO #PROVEEDORES    
    SELECT ROW_NUMBER() OVER(ORDER BY P.IdProveedor ASC) AS Row#, ISNULL(P.RazonSocial,'') +' '+ ISNULL(P.RegimenCapital,'') AS Razonsocial,  P.IdProveedor,RFC, PO.IdPeticionOferta,0,0    
    FROM MM_PeticionOferta PO    
-   INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-	ON PO.IdSolicitudPedido    = SP.IdSolicitudPedido
-   INNER JOIN S_Proveedor AS P (NOLOCK)
-	ON PO.IdSubcontratista    = P.IdProveedor
+   INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = PO.IdSolicitudPedido    
+   INNER JOIN S_Proveedor AS P ON P.IdProveedor= PO.IdSubcontratista    
    WHERE SP.IdSolicitudPedido =@IdSolicitudPedido    
    ORDER BY P.Razonsocial    
          
@@ -324,8 +271,8 @@ BEGIN
     
    BEGIN     
     
-   SET @IdPROVEEDOR = (SELECT IdProveedor FROM #PROVEEDORES WHERE IdRow = @COLUMN_PROVEEDOR)    
-   SET @IdCotizacion  = (SELECT IdPeticionOferta FROM #PROVEEDORES WHERE IdRow = @COLUMN_PROVEEDOR)    
+   DECLARE @IdPROVEEDOR INT = (SELECT IdProveedor FROM #PROVEEDORES WHERE IdRow = @COLUMN_PROVEEDOR)    
+   DECLARE @IdCotizacion INT = (SELECT IdPeticionOferta FROM #PROVEEDORES WHERE IdRow = @COLUMN_PROVEEDOR)    
     
     SET @TABLA = @TABLA + '<th width="500px;" style="text-align: -webkit-center;" class="prov" data-prov="'+CAST(@IdPROVEEDOR AS nvarchar(50))+'" title="Cotización No.'+CAST(@IdCotizacion AS nvarchar(50))+'">'     
     SET @TABLA =  @TABLA+(SELECT NombreProveedor FROM #PROVEEDORES WHERE IdRow = @COLUMN_PROVEEDOR)    
@@ -361,21 +308,15 @@ BEGIN
        SUM( ISNULL((POD.PrecioUnitario*Disponibilidad),0))  END AS MENOR_PRECIO --,    
       --POD.PrecioUnitario , POD.IdMoneda , Disponibilidad , TCD.TipoCambio , PO.FechaFinalizado       
     FROM S_Proveedor AS PR    
-    INNER JOIN #PROVEEDORES AS PV 
-		ON PR.IdProveedor    = PV.IdProveedor
-    INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-		ON PR.IdProveedor    = PO.IdSubcontratista 
-    INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
-		ON  PO.[IdPeticionOferta]        = POD.IdPeticionOferta
-    LEFT JOIN #TIPO_CAMBIO AS TC 
-		ON POD.IdMoneda     = TC.IdMoneda
+    INNER JOIN #PROVEEDORES AS PV ON PV.IdProveedor = PR.IdProveedor    
+    INNER JOIN MM_PeticionOferta AS PO ON PO.IdSubcontratista = PR.IdProveedor    
+    INNER JOIN MM_PeticionOfertaDetalle AS POD ON  POD.IdPeticionOferta = PO.[IdPeticionOferta]        
+    LEFT JOIN #TIPO_CAMBIO AS TC ON TC.IdMoneda= POD.IdMoneda     
     WHERE PO.IdSolicitudPedido = @IdSolicitudPedido AND PO.COTIZADO = 1 AND POD.Cotizado = 1 ---@IdSolicitudPedido    
     AND PR.IdProveedor NOT IN  (SELECT  IdProveedor    
           FROM S_Proveedor AS PR     
-          INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-			ON PR.IdProveedor    = PO.IdSubcontratista 
-          INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
-			ON  PO.[IdPeticionOferta]    = POD.IdPeticionOferta 
+          INNER JOIN MM_PeticionOferta AS PO ON PO.IdSubcontratista = PR.IdProveedor    
+          INNER JOIN MM_PeticionOfertaDetalle AS POD ON  POD.IdPeticionOferta = PO.[IdPeticionOferta]    
           WHERE PO.IdSolicitudPedido =@IdSolicitudPedido   AND PO.COTIZADO =1 AND ISNULL(POD.Cotizado,0) = 0 ----@IdSolicitudPedido    
           GROUP BY IdProveedor)     
     GROUP BY PR.IdProveedor , POD.IdMoneda---,POD.PrecioUnitario  ,POD.IdMoneda ,Disponibilidad ,TCD.TipoCambio ,PO.FechaFinalizado    
@@ -394,8 +335,7 @@ BEGIN
         
     UPDATE PV SET MejorOferta = 1    
     FROM #MATERIALES_COSTO_MENOR_DLS AS PR     
-    INNER JOIN #PROVEEDORES AS PV 
-		ON PR.IdProveedor    = PV.IdProveedor 
+    INNER JOIN #PROVEEDORES AS PV ON PV.IdProveedor = PR.IdProveedor    
     WHERE PR.PrecioTotal = @Cantidad_PO_MejorCosto     
     
    END     
@@ -405,8 +345,8 @@ BEGIN
    WHILE @ROW_MATERIAL <= (SELECT COUNT(IdMaterial) FROM #MATERIALES)    
    BEGIN    
         
-    SET @DATA_MATERIAL = CAST((SELECT IdMaterial FROM #MATERIALES WHERE IdRow = @ROW_MATERIAL) AS NVARCHAR(MAX))    
-    SET @DATA_ID_SPD =CAST((SELECT IdSolicitudPedidoDetalle FROM #MATERIALES WHERE IdRow = @ROW_MATERIAL) AS NVARCHAR(MAX))    
+    DECLARE @DATA_MATERIAL NVARCHAR(350) = CAST((SELECT IdMaterial FROM #MATERIALES WHERE IdRow = @ROW_MATERIAL) AS NVARCHAR(MAX))    
+    DECLARE @DATA_ID_SPD NVARCHAR(350) =CAST((SELECT IdSolicitudPedidoDetalle FROM #MATERIALES WHERE IdRow = @ROW_MATERIAL) AS NVARCHAR(MAX))    
     
     SET @TABLA = @TABLA+'<tr id="Material_'+CAST(@ROW_MATERIAL AS NVARCHAR(MAX))+'">'    
        
@@ -420,7 +360,9 @@ BEGIN
          
     DELETE FROM #CM_ESTATUS    
         
-    
+    DECLARE @ICON_MATERIALES_YA_SOLICITADOS NVARCHAR(MAX)     
+    DECLARE @MATERIALES_FALTANTES FLOAT = 0    
+    DECLARE @ID_SPD_MM INT = 0    
     
      --- REVISAR DISPONIBILIDAD DE MATERIALES    
    SET @ID_SPD_MM =(SELECT IdSolicitudPedidoDetalle FROM #MATERIALES WHERE IdRow =@ROW_MATERIAL)    
@@ -447,7 +389,7 @@ BEGIN
     
         
      ---INSERT INTO #MATERIALES_COSTO_MENOR    
-      
+      DECLARE @Cantidad_PU_MejorCosto FLOAT    
     
       IF @ADJUDICACION_PARCIAL = 1    
       BEGIN     
@@ -462,12 +404,9 @@ BEGIN
                POD.PrecioUnitario    
               END)    
                FROM MM_PeticionOfertaDetalle AS POD    
-               INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-				ON POD.IdPeticionOferta    = PO.IdPeticionOferta 
-               INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-				ON PO.IdSolicitudPedido    = SP.IdSolicitudPedido  
-               LEFT JOIN #TIPO_CAMBIO AS TC 
-				ON POD.IdMoneda      = TC.IdMoneda
+               INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta = POD.IdPeticionOferta    
+               INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido  = PO.IdSolicitudPedido    
+               LEFT JOIN #TIPO_CAMBIO AS TC ON TC.IdMoneda= POD.IdMoneda      
                WHERE SP.IdSolicitudPedido = @IdSolicitudPedido      
                AND POD.IdSolicitudPedidoDetalle= (SELECT IdSolicitudPedidoDetalle    
                 FROM #MATERIALES    
@@ -487,14 +426,26 @@ BEGIN
    BEGIN     
     
     --- VALIDAR SI EL PROVEEDOR TIENE PRECIO MENOR COSTO AGREGAR UN BACKGROUP COLOR ---    
-    --- OBTENER EL PRECIO UNITARIO DEL MATERIAL Y PROVEEDOR ACTUAL ---        
+    --- OBTENER EL PRECIO UNITARIO DEL MATERIAL Y PROVEEDOR ACTUAL ---    
+    
+    
+    DECLARE @PRECIO_UNITARIO_ACTUAL FLOAT    
+    DECLARE @ID_POD INT     
+    DECLARE @CANTIDAD_DISPONIBLE FLOAT     
+    DECLARE @COMENTARIO_PROVEEDOR NVARCHAR(MAX)    
+    DECLARE @ADDLISTAPEDIDO BIT    
+    DECLARE @POD_COTIZADO BIT    
+    DECLARE @ADD_CANTIDADTEMP FLOAT    
+    DECLARE @OFERTA_VENCIDA BIT    
+    DECLARE @TIPO_MONEDA_TEXT NVARCHAR(MAX)  = @NOMBRE_MONEDA_DLS    
+    DECLARE @VALIDAR_TIPO_CAMBIO NVARCHAR(150)    
+    DECLARE @TIPO_MONEDA_ACTUAL INT     
+        
              
     SET  @ID_POD =  (SELECT POD.IdPeticionOfertaDetalle     
          FROM MM_PeticionOfertaDetalle AS POD    
-         INNER  JOIN #PROVEEDORES AS PT 
-			ON POD.IdPeticionOferta = PT.IdPeticionOferta 
-         INNER JOIN #MATERIALES AS MT 
-			ON POD.IdSolicitudPedidoDetalle    = MT.IdSolicitudPedidoDetalle
+         INNER  JOIN #PROVEEDORES AS PT ON PT.IdPeticionOferta = POD.IdPeticionOferta     
+         INNER JOIN #MATERIALES AS MT ON MT.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle    
          WHERE PT.IdRow = @COLUMN_PROVEEDOR  AND MT.IdROW= @ROW_MATERIAL     
          AND  POD.IdProveedorVenta = PT.IdProveedor               
           )    
@@ -507,10 +458,8 @@ BEGIN
                POD.PrecioUnitario    
               END     
             FROM MM_PeticionOfertaDetalle AS POD    
-            INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-				ON POD.IdPeticionOferta    = PO.IdPeticionOferta 
-            LEFT JOIN #TIPO_CAMBIO AS TC 
-				ON POD.IdMoneda    = TC.IdMoneda
+            INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta = POD.IdPeticionOferta    
+            LEFT JOIN #TIPO_CAMBIO AS TC ON TC.IdMoneda= POD.IdMoneda    
             WHERE POD.IdPeticionOfertaDetalle = @ID_POD)    
     
       SET @TIPO_MONEDA_ACTUAL = (SELECT  POD.IdMoneda     
@@ -526,10 +475,8 @@ BEGIN
            'TIPO_CAMBIO_EXISTE'    
          END     
        FROM MM_PeticionOfertaDetalle AS POD    
-       INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-		ON POD.IdPeticionOferta    = PO.IdPeticionOferta 
-       LEFT JOIN #TIPO_CAMBIO AS TC 
-		ON POD.IdMoneda     = TC.IdMoneda
+       INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta = POD.IdPeticionOferta    
+       LEFT JOIN #TIPO_CAMBIO AS TC ON TC.IdMoneda= POD.IdMoneda     
        WHERE POD.IdPeticionOfertaDetalle = @ID_POD    
     
                   
@@ -567,7 +514,8 @@ BEGIN
           WHERE POD.IdPeticionOfertaDetalle = @ID_POD)    
     
     
-          
+     DECLARE @IdProveedorActual int     
+     DECLARE @MejorOferta bit      
         
     
      SET @IdProveedorActual   = (SELECT IdProveedor     
@@ -581,16 +529,14 @@ BEGIN
        
     SET @IsOfertaCotizada = (SELECT ISNULL(Cotizado,'false') AS PeticionCotizada          
            FROM MM_PeticionOferta AS PO    
-           INNER JOIN #PROVEEDORES AS PT 
-			ON PO.IdSubcontratista  = PT.IdProveedor 
+           INNER JOIN #PROVEEDORES AS PT ON PT.IdProveedor =PO.IdSubcontratista    
            WHERE PT.IdRow = @COLUMN_PROVEEDOR      
           AND PO.IdSolicitudPedido = @IdSolicitudPedido    
           AND PO.IdPeticionOferta = PT.IdPeticionOferta                    
           )    
     SET @IsOfertaNoCotizada = (SELECT NoCotizar AS PeticionNoCotizada          
            FROM MM_PeticionOferta AS PO    
-           INNER JOIN #PROVEEDORES AS PT 
-			ON PO.IdSubcontratista   = PT.IdProveedor 
+           INNER JOIN #PROVEEDORES AS PT ON PT.IdProveedor =PO.IdSubcontratista    
            WHERE PT.IdRow = @COLUMN_PROVEEDOR      
           AND PO.IdSolicitudPedido = @IdSolicitudPedido    
           AND PO.IdPeticionOferta = PT.IdPeticionOferta    
@@ -610,8 +556,9 @@ BEGIN
           
                 
       IF @IsMaterialCotizado = 1     
-       BEGIN  
-             ---# VALIDACIONES DE MATERIALES/SERVICIOS COTIZADOS        
+       BEGIN     
+             ---# VALIDACIONES DE MATERIALES/SERVICIOS COTIZADOS     
+             DECLARE @ETIQUETA_MENOR NVARCHAR(200)    
              
            
          ----  OBTENER INFORMACION DEL MATERIAL COTIZADO  ----    
@@ -621,8 +568,7 @@ BEGIN
          IF @PRECIO_UNITARIO_ACTUAL = @Cantidad_PU_MejorCosto  OR @MejorOferta = 1    
     
           BEGIN    
-           SET @TABLA = @TABLA + '<td class="item_peticion" bgcolor="'+@COLOR_PU_COSTO_MENOR+'" style="text-align:center" data-idPOD="'+CAST(@ID_POD AS nvarchar(50))+'" data-Proveedor="'+CAST(@IdProveedorActual AS nvarchar(50))+'"  title="Precio Unitario
- 
+           SET @TABLA = @TABLA + '<td class="item_peticion" bgcolor="'+@COLOR_PU_COSTO_MENOR+'" style="text-align:center" data-idPOD="'+CAST(@ID_POD AS nvarchar(50))+'" data-Proveedor="'+CAST(@IdProveedorActual AS nvarchar(50))+'"  title="Precio Unitario 
  
  del Material/Servicio. Seleccione para ver más detalles">'     
            SET @ETIQUETA_MENOR = ''----'<span class="label label-success">Menor Costo</span>'    
@@ -632,7 +578,6 @@ BEGIN
     
           BEGIN    
            SET @TABLA = @TABLA + '<td class="item_peticion" data-idPOD="'+CAST(@ID_POD AS nvarchar(50))+'"  style="text-align:center"  data-Proveedor="'+CAST(@IdProveedorActual AS nvarchar(50))+'" title="Precio Unitario del Material/Servicio. Seleccione p
-
   
 ara ver más detalles">'     
            SET @ETIQUETA_MENOR = ''    
@@ -654,7 +599,6 @@ ara ver más detalles">'
             BEGIN    
           
              SET @TABLA = @TABLA +'<h4><span class="semi-bold">$'+ CAST(CONVERT(NVARCHAR(MAX), CAST(@PRECIO_UNITARIO_ACTUAL AS money), 1) AS NVARCHAR(MAX))+'</span></H4><span class="text-black small-text">'+@TIPO_MONEDA_TEXT+' ' +@ICON_ADDPEDIDOTEMP+' '+'
-
   
 <span class="badge badge-success" title="Cantidad agregada a la orden de compra">'+CAST(@ADD_CANTIDADTEMP AS nvarchar(50))+'</span></span>'      
             
@@ -674,7 +618,6 @@ ara ver más detalles">'
            IF @ADDLISTAPEDIDO = 1    
             BEGIN    
              SET @TABLA = @TABLA +'<h4><span class="semi-bold">$'+ CAST(CONVERT(NVARCHAR(MAX), CAST(@PRECIO_UNITARIO_ACTUAL AS money), 1) AS NVARCHAR(MAX))+'</span></h4>'+'<span class=" text-black small-text">'+@TIPO_MONEDA_TEXT+' ' +@ICON_ADDPEDIDOTEMP+'
-
   
  '+'<span class="badge badge-success" title="Cantidad agregada">'+CAST(@ADD_CANTIDADTEMP AS nvarchar(50))+'</span>&nbsp;'+@ICON_VENCIDO +'</span>'      
              END     
@@ -793,7 +736,11 @@ ara ver más detalles">'
     
   ---# VALIDACIONES PARA MATRIZ EVALUACIÓN -----    
     
-  
+  DECLARE @COUNT_MATRIZ INT     
+  DECLARE @IdProveedorActualM INT     
+  DECLARE @IdEvaluacion NVARCHAR(MAX)     
+  DECLARE @IdPeticionOfertaM INT     
+  DECLARE @CALIFICACION_EVALUACION FLOAT     
     
   SET @COUNT_MATRIZ = (SELECT NombreDoc FROM TA_DocMatrizOperacion WHERE IdOperacion= @IdSolicitudPedido)    
     
@@ -822,19 +769,15 @@ ara ver más detalles">'
     
       SET @IsOfertaCotizada = (SELECT ISNULL(Cotizado,0) AS PeticionCotizada          
             FROM MM_PeticionOferta AS PO    
-            INNER JOIN #PROVEEDORES AS P 
-				ON PO.IdSubcontratista    = P.IdProveedor
-            INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-				ON  PO.IdSolicitudPedido    = SP.IdSolicitudPedido
+            INNER JOIN #PROVEEDORES AS P ON P.IdProveedor = PO.IdSubcontratista    
+            INNER JOIN MM_SolicitudPedido AS SP ON  SP.IdSolicitudPedido = PO.IdSolicitudPedido    
             WHERE PO.IdSolicitudPedido = @IdSolicitudPedido AND PO.IdPeticionOferta= @IdPeticionOfertaM AND IdRow =@COLUMN_PROVEEDOR)                          
               
     
       SET @IsOfertaNoCotizada = (SELECT NoCotizar AS PeticionNoCotizada          
              FROM MM_PeticionOferta AS PO    
-             INNER JOIN #PROVEEDORES AS P 
-				ON PO.IdSubcontratista    = P.IdProveedor 
-             INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
-				ON  PO.IdSolicitudPedido    = SP.IdSolicitudPedido 
+             INNER JOIN #PROVEEDORES AS P ON P.IdProveedor = PO.IdSubcontratista    
+             INNER JOIN MM_SolicitudPedido AS SP ON  SP.IdSolicitudPedido = PO.IdSolicitudPedido    
              WHERE PO.IdSolicitudPedido = @IdSolicitudPedido AND PO.IdPeticionOferta= @IdPeticionOfertaM AND IdRow =@COLUMN_PROVEEDOR)    
     
     
@@ -849,7 +792,6 @@ ara ver más detalles">'
                 WHERE RM.IdPedido =@IdPeticionOfertaM AND RM.IdProveedorEvaluado= @IdProveedorActualM)    
     
         SET @TABLA = @TABLA + '<td class="item_matriz" data-Evaluacion="'+CAST(ISNULL(@IdEvaluacion,0) AS nvarchar(MAX))+'" data-IdPO="'+CAST(ISNULL(@IdPeticionOfertaM,0) AS nvarchar(MAX))+'" data-Proveedor="'+CAST(@IdProveedorActualM AS nvarchar(50))+'">
-
   
     
                 <div  style="text-align:center">'    
@@ -897,7 +839,7 @@ ara ver más detalles">'
     
    SET @TABLA = @TABLA+'</tr>'    
   END     
-
+      
      
    SET @TABLA = @TABLA+'</tbody>'    
    SET @TABLA = @TABLA+'</table>'    
@@ -908,4 +850,11 @@ ara ver más detalles">'
  SELECT @TABLA     
      
 END    
+    
+    
+    
+    
+    
+    
+    
     

@@ -1,14 +1,7 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_JOA_ConfirmaJOA]    Script Date: 23/11/2021 05:27:54 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_JOA_ConfirmaJOA]
+CREATE PROCEDURE [dbo].[sp_JOA_ConfirmaJOA]
     @idUsuario INT,
 	@idContrato INT,
 	@idInstanciaEntregable INT,

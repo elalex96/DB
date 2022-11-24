@@ -57,6 +57,6 @@
     [id_precio]              INT            NULL,
     [OTM]                    NVARCHAR (50)  NULL,
     [CreadoPor]              INT            NULL,
-    CONSTRAINT [PK_admin_movimientos_almacn_1] PRIMARY KEY CLUSTERED ([IdMovimiento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_admin_movimientos_almacn_1] PRIMARY KEY CLUSTERED ([IdMovimiento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

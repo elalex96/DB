@@ -5,7 +5,7 @@
     [idContrato]      INT            NULL,
     [PorcentajePemex] DECIMAL (6, 2) NULL,
     [PorcentajeSocio] DECIMAL (6, 2) NULL,
-    PRIMARY KEY CLUSTERED ([idporcentaje] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([idporcentaje] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

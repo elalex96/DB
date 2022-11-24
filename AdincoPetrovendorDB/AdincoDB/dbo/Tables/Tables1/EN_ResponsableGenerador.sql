@@ -3,9 +3,11 @@
     [ResponsableGenerador]   NVARCHAR (MAX) NULL,
     [CreadoPor]              INT            NULL,
     [CreadoEn]               DATETIME       NULL,
-    CONSTRAINT [PK_EN_ResponsableGenerador] PRIMARY KEY CLUSTERED ([IdResponsableGenerador] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EN_ResponsableGenerador] PRIMARY KEY CLUSTERED ([IdResponsableGenerador] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
-go
 
-create index IX_EN_ResponsableGenerador						on	EN_ResponsableGenerador(IdResponsableGenerador)
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_ResponsableGenerador]
+    ON [dbo].[EN_ResponsableGenerador]([IdResponsableGenerador] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

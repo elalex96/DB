@@ -1,12 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[AP_ValidacionCargaFactura]    Script Date: 09/02/2022 05:25:28 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-CREATE PROCEDURE AP_ValidacionCargaFactura  
+﻿CREATE PROCEDURE AP_ValidacionCargaFactura  
 @IdProveedor int
 AS
 BEGIN
@@ -90,8 +82,7 @@ DECLARE @Cantidad int;
 		  Footer  
 	  )  
 	  VALUES (  
-	  'Para las facturas con método de pago en parcialidades o diferido (PPD), te recordamos que una vez liquidada la factura debes emitir el complemento de pago y subirlo a PetroVendor, 
-	  esto a más tardar el quinto día natural del mes siguiente al que se recibió el pago, en caso de no cumplir con esta obligación tus próximos pagos serán retenidos y no podrás ingresar nuevas facturas al sistema.',  
+	  'Para las facturas con método de pago en parcialidades o diferido (PPD), te recordamos que una vez liquidada la factura debes emitir el complemento de pago y subirlo a PetroVendor, esto a más tardar el quinto día natural del mes siguiente al que se recibió el pago, en caso de no cumplir con esta obligación tus próximos pagos serán retenidos y no podrás ingresar nuevas facturas al sistema.',  
 	  'Actualmente no puedes subir facturas a Petrovendor para Wintershall DEA, debido a un bloqueo por solicitud del área financiera.',  
 	  'Por favor Ponte en contacto al siguiente correo: invoice.mexico@wintershalldea.com para mayor información'
 	  )  

@@ -6,6 +6,6 @@
     [CreadoEl]   DATETIME       NULL,
     [EditadoPor] INT            NULL,
     [EditadoEl]  DATETIME       NULL,
-    UNIQUE NONCLUSTERED ([IdTipoBien] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    UNIQUE NONCLUSTERED ([IdTipoBien] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

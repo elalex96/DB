@@ -3,6 +3,6 @@
     [Clave]                  NVARCHAR (MAX) NULL,
     [ProductoHidrocarburo]   NVARCHAR (MAX) NULL,
     [IdTipoHidrocarburo]     INT            NULL,
-    CONSTRAINT [PK_COM_ProductoHidrocarburo] PRIMARY KEY CLUSTERED ([IdProductoHidrocarburo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_COM_ProductoHidrocarburo] PRIMARY KEY CLUSTERED ([IdProductoHidrocarburo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

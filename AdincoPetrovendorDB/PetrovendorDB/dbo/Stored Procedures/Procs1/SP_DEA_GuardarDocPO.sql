@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_DEA_GuardarDocPO]    Script Date: 01/11/2022 01:53:43 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <22/08/2019>
 -- Description:	<Guardar la PO del Correo>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_DEA_GuardarDocPO]
+CREATE PROCEDURE [dbo].[SP_DEA_GuardarDocPO]
 	-- Add the parameters for the stored procedure here
 	@ID_PO NVARCHAR(MAX),
 	@Mime NVARCHAR(MAX),

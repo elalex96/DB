@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_FI_EnviarComprobanteADINCO]    Script Date: 19/07/2022 03:17:12 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 06/06/2020
 -- Description:	se agrega la validacion de las unidad entre la db de adinco y petro para evitar errores de fk
@@ -20,7 +13,7 @@ GO
 -- Create date: 20-06-2021
 -- Description:	Se agrega validacion para ver si se envia o no el PCN 
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PC_FI_EnviarComprobanteADINCO]
+CREATE PROCEDURE [dbo].[SP_PC_FI_EnviarComprobanteADINCO]
     -- Add the parameters for the stored procedure here
 
     @IdPedimentoComprobante INT,   

@@ -23,7 +23,7 @@
     [Pass]             VARBINARY (MAX) NULL,
     [Salt]             VARBINARY (MAX) NULL,
     [IsGrupo]          BIT             NULL,
-    CONSTRAINT [PK_Usuario] PRIMARY KEY CLUSTERED ([UsuarioID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Usuario] PRIMARY KEY CLUSTERED ([UsuarioID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AP_Usuario_AP_Rutas] FOREIGN KEY ([IdRuta]) REFERENCES [dbo].[AP_Rutas] ([idRuta]),
     CONSTRAINT [FK_CodigoPais] FOREIGN KEY ([CodigoPais]) REFERENCES [dbo].[AP_Paises] ([idPais])
 );

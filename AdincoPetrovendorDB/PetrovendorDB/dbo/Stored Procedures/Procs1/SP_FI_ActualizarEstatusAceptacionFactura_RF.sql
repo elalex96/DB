@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_ActualizarEstatusAceptacionFactura_RF]    Script Date: 04/02/2022 12:30:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Update date: 09-10-2020
 -- Description: Se agrego condición en validación de aprobaciónes aprobadas sea = al número de aprobadores 
@@ -14,7 +7,7 @@ GO
 -- Create date: 30/09/2019
 -- Description:	se agrego la validacion en la tarea de estatus 12(eliminado) 
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_FI_ActualizarEstatusAceptacionFactura_RF]
+CREATE PROCEDURE [dbo].[SP_FI_ActualizarEstatusAceptacionFactura_RF]
     -- Add the parameters for the stored procedure here
     @IdProveedor INT,
     @IdUsuario INT,

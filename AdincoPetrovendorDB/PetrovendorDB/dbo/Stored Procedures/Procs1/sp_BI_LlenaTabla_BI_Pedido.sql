@@ -1,21 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'sp_BI_LlenaTabla_BI_Pedido'
-)
-    DROP PROCEDURE sp_BI_LlenaTabla_BI_Pedido;
-GO 
-
-      
-/****** Object:  StoredProcedure [dbo].[sp_BI_LlenaTabla_BI_Pedido]    Script Date: 04/05/2021 10:31:42 ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 CREATE PROCEDURE [dbo].[sp_BI_LlenaTabla_BI_Pedido]
 AS
 BEGIN
@@ -575,4 +558,3 @@ BEGIN
             ON P.IdPedido = PM.IdPedido; 
 
 END;
-

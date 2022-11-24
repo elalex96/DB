@@ -3,6 +3,6 @@
     [ConceptoEvaluarNombre] NVARCHAR (MAX) NULL,
     [valor]                 INT            NULL,
     [IdTipoDeEvaluacion]    INT            NULL,
-    CONSTRAINT [PK_EP_PregConceptoEvaluar] PRIMARY KEY CLUSTERED ([IdConceptoEvaluar] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EP_PregConceptoEvaluar] PRIMARY KEY CLUSTERED ([IdConceptoEvaluar] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

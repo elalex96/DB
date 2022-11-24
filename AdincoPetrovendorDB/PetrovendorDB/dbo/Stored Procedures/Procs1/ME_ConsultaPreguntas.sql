@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[ME_ConsultaPreguntas]    Script Date: 26/11/2021 01:53:21 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <12/02/2018>
 -- Description:	<Consultar preguntas>
 -- =============================================
-ALTER procedure [dbo].[ME_ConsultaPreguntas]
+CREATE procedure [dbo].[ME_ConsultaPreguntas]
 @IdSeccion int 
 as
 begin

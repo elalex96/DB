@@ -6,7 +6,7 @@
     [Descripcion] NVARCHAR (MAX) NULL,
     [IdProveedor] INT            NULL,
     [IsEliminado] BIT            NULL,
-    CONSTRAINT [PK_S_Producto] PRIMARY KEY CLUSTERED ([IdProducto] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_Producto] PRIMARY KEY CLUSTERED ([IdProducto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__S_Product__IdPro__60FC61CA] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])
 );
 

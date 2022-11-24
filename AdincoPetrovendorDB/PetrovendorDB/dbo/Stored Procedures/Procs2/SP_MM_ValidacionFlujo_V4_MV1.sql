@@ -1,8 +1,4 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MM_ValidacionFlujo_V4_MV1
-GO
-CREATE PROCEDURE SP_MM_ValidacionFlujo_V4_MV1
+﻿CREATE PROCEDURE SP_MM_ValidacionFlujo_V4_MV1
 @IdSolicitudPedido INT,
 @IdUsuarioCompras INT,
 @IdProveedorCompras INT

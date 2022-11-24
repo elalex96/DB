@@ -1,20 +1,4 @@
-﻿USE [Petrovendor]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'DEA_SP_AdministrarUsuarioOBS'
-)
-    DROP PROCEDURE DEA_SP_AdministrarUsuarioOBS;
-
-/****** Object:  StoredProcedure [dbo].[sp_CentroCostoFiltro_Grd]    Script Date: 13/07/2021 01:17:22 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 CREATE proc [dbo].[DEA_SP_AdministrarUsuarioOBS]
 @TipoConsulta NVARCHAR(MAX),
 @ContratoId INT = 0,
@@ -62,4 +46,3 @@ BEGIN
 	END 
 			
 END
-

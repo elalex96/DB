@@ -10,6 +10,6 @@
     [IsEliminado]           BIT      NULL,
     [IdFiltroUsuario]       INT      NULL,
     [IdProveedor]           INT      NULL,
-    CONSTRAINT [PK_AdministracionPermisosUsuarios] PRIMARY KEY CLUSTERED ([IdPerfilModuloUsuario] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AdministracionPermisosUsuarios] PRIMARY KEY CLUSTERED ([IdPerfilModuloUsuario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

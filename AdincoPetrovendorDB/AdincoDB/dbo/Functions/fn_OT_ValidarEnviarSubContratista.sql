@@ -1,5 +1,5 @@
-﻿--select  dbo.fn_OT_ValidarEnviarSubContratista(14,10)
-CREATE FUNCTION dbo.fn_OT_ValidarEnviarSubContratista(
+﻿--select  dbo.fn_OT_ValidarEnviarSubContratista(743,10)
+CREATE FUNCTION [dbo].[fn_OT_ValidarEnviarSubContratista](
 	@pIdOTSolicitud int	,
 	@pCreadoPor int
 )

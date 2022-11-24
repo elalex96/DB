@@ -200,7 +200,7 @@ AS
 			FI_RelacionSoporteFactura	SPP
 			ON	R.IdPedimentoComprobante	=	SPP.IdPedimentoComprobante
 	    ------------------------------
-     WHERE P.IdPresupuesto IN(10048, 10037, 10065, 10075, 10159)
+     WHERE P.IdPresupuesto IN(10000,10037,10038,10048,10065,10068,10075,10089,10114,10159,10169,10188)
           AND 
 		  (R.IdRegistro IS NOT NULL)
      GROUP BY PC.NumeroPedimento, 
@@ -284,10 +284,6 @@ AS
 					END 
             END
 			--------------------------------------------------
-			
-			 
-
-
 GO
 EXECUTE sp_addextendedproperty @name = N'MS_DiagramPane1', @value = N'[0E232FF0-B466-11cf-A24F-00AA00A3EFFF, 1.00]
 Begin DesignProperties = 

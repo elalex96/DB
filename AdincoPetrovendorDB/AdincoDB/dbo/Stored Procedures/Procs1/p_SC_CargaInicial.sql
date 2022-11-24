@@ -1,4 +1,4 @@
-CREATE PROC [dbo].[p_SC_CargaInicial]
+﻿CREATE PROC [dbo].[p_SC_CargaInicial]
     @pIdContratista INT,
     @pIdContrato INT,
     @pCreadoPor INT,
@@ -52,7 +52,7 @@ BEGIN TRY
     BEGIN
         DECLARE @MensajeError nvarchar(max)
         SELECT @MensajeError
-            = CONCAT('El o los RFC siguientes est�n repetidos como subcontratistas activos: ', @RFCRepetidos)
+            = CONCAT('El o los RFC siguientes están repetidos como subcontratistas activos: ', @RFCRepetidos)
         RAISERROR(   @MensajeError, -- Message text.  
                      16,            -- Severity.  
                      1              -- State.  

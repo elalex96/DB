@@ -3,6 +3,6 @@
     [Entidad]       NVARCHAR (MAX) NULL,
     [NombreEntidad] NVARCHAR (MAX) NULL,
     [CreadoPor]     INT            NULL,
-    CONSTRAINT [PK_Cat_General_Entidades] PRIMARY KEY CLUSTERED ([IdEntidad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Cat_General_Entidades] PRIMARY KEY CLUSTERED ([IdEntidad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

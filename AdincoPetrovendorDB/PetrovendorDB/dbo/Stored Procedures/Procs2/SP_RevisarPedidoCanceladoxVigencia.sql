@@ -3,6 +3,10 @@
 -- Create date: 09/04/2018
 -- Description:	se revisa si esta caducado por vigencia, si no fue ya enviado. existe para saber si se muestra o no el boton de modificar fecha
 -- =============================================
+-- Author:		Luis David De La Cruz
+-- Create date: 20/01/2021
+-- Description:	Se optimiza para el detalle de pedido -- Issue 920
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_RevisarPedidoCanceladoxVigencia] @IdPedido INT, @IdProveedor INT
 AS
 	BEGIN
@@ -11,30 +15,30 @@ AS
 				SELECT	 1
 				FROM	 MM_Pedido AS P
 				INNER JOIN MM_PedidoDetalle AS PD
-					ON PD.IdPedido = P.IdPedido
+					ON P.IdPedido = PD.IdPedido
 				INNER JOIN MM_PeticionOferta AS PO
-					ON PO.IdPeticionOferta = P.IdPeticionOferta
+					ON P.IdPeticionOferta = PO.IdPeticionOferta
 				INNER JOIN S_Proveedor AS PV
-					ON PV.IdProveedor = P.IdSubcontratista
+					ON P.IdSubcontratista = PV.IdProveedor
 				INNER JOIN TA_Operacion AS O
-					ON O.IdDocumento = P.IdSolicitudPedido
+					ON P.IdSolicitudPedido = O.IdDocumento
 				LEFT JOIN TA_Prioridad AS PR
-					ON PR.IdPrioridad = O.IdPrioridad
+					ON O.IdPrioridad = PR.IdPrioridad
 				LEFT JOIN TA_Vencimiento AS V
-					ON V.IdVencimiento = O.IdVigencia
+					ON O.IdVigencia = V.IdVencimiento
 				INNER JOIN TA_TipoOperacion AS TTO
-					ON TTO.IdTipoOperacion = O.IdTipoOperacion
+					ON O.IdTipoOperacion= TTO.IdTipoOperacion 
 				INNER JOIN TA_Estatus AS E
-					ON E.IdEstatus = O.IdEstatusOperacion
+					ON O.IdEstatusOperacion = E.IdEstatus
 				LEFT JOIN MM_HorasVigenciaPedido AS HV
 					ON P.IdPedido = HV.IdPedido
 				LEFT JOIN PV_TipoMoneda AS TM
-					ON TM.IdMoneda = P.IdMoneda
+					ON P.IdMoneda = TM.IdMoneda
 				INNER JOIN MM_Pedidos AS PG
 					ON P.IdPedido = PG.IdIdentificador
 					   AND PG.IdProveedorCliente = @IdProveedor
 				LEFT JOIN dbo.MM_TipoPedido AS TP
-					ON TP.IdTipoPedido = PG.IdTipoPedido
+					ON PG.IdTipoPedido = TP.IdTipoPedido
 				WHERE
 						 O.IdTipoOperacion = 9
 						 AND O.IdProveedor = @IdProveedor

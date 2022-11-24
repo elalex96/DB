@@ -5,6 +5,6 @@
     [IdUsuario]                 INT            NULL,
     [FechaRegistro]             DATETIME       NULL,
     [Activo]                    BIT            NULL,
-    CONSTRAINT [PK_S_AutentificacionNuevoRegistro] PRIMARY KEY CLUSTERED ([IdSolicitudRegistroCuenta] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_S_AutentificacionNuevoRegistro] PRIMARY KEY CLUSTERED ([IdSolicitudRegistroCuenta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

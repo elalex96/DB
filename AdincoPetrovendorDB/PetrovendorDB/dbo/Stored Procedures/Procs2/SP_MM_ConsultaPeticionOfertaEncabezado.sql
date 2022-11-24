@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado]    Script Date: 10/03/2022 07:09:49 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -22,7 +15,7 @@ GO
 -- Description: Se elimino de la consulta el regimen capital (ya no se usa)
 -- =============================================
 
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado]
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPeticionOfertaEncabezado]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT, @IdProveedor INT, @IdContrato INT = NULL, @IdUsuario INT = NULL, @FechaRegistro DATETIME = NULL
 AS

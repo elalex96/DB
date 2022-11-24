@@ -4,7 +4,7 @@
     [IdDocumento]        INT      NULL,
     [Fecha]              DATETIME NULL,
     [IdUsuario]          INT      NULL,
-    CONSTRAINT [PK_FacturaDocumento] PRIMARY KEY CLUSTERED ([IdFacturaDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FacturaDocumento] PRIMARY KEY CLUSTERED ([IdFacturaDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FacturaDocumento_Facturas] FOREIGN KEY ([IdDocumento]) REFERENCES [dbo].[FI_EstudioPreciosTransfer] ([IdEstudioPrecioTransfer])
 );
 

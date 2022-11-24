@@ -7,6 +7,6 @@
     [IdProveedorEvaluador] INT           NOT NULL,
     [IdTipoEvaluacion]     INT           NOT NULL,
     [Activo]               BIT           NULL,
-    CONSTRAINT [PK_ME_MatrizEvaluacion] PRIMARY KEY CLUSTERED ([IdMatrizEvaluacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ME_MatrizEvaluacion] PRIMARY KEY CLUSTERED ([IdMatrizEvaluacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

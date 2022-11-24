@@ -3,6 +3,6 @@
     [TipoSolicitudPedido]   NVARCHAR (MAX) NULL,
     [SolPedType]            NVARCHAR (MAX) NULL,
     [Activo]                BIT            NULL,
-    CONSTRAINT [PK_MM_TipoSolicitudPedido] PRIMARY KEY CLUSTERED ([IdTipoSolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_TipoSolicitudPedido] PRIMARY KEY CLUSTERED ([IdTipoSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

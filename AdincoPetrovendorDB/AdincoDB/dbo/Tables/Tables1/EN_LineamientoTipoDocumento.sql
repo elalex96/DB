@@ -5,6 +5,6 @@
     [CreadoPor]                  VARCHAR (50)  NULL,
     [ModificadoEl]               DATETIME      NULL,
     [ModificadoPor]              VARCHAR (100) NULL,
-    CONSTRAINT [PK__EN_Linea__6557F2DC90F32E91] PRIMARY KEY CLUSTERED ([IdLineamientoTipoDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK__EN_Linea__6557F2DC90F32E91] PRIMARY KEY CLUSTERED ([IdLineamientoTipoDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -5,7 +5,7 @@
     [CreadoEl]       DATETIME     NOT NULL,
     [Procesado]      BIT          NULL,
     [FechaProcesado] DATETIME     NULL,
-    CONSTRAINT [PK_CO_SAP_IMAP_Resultado] PRIMARY KEY CLUSTERED ([IdContratista] ASC, [uIdMail] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_SAP_IMAP_Resultado] PRIMARY KEY CLUSTERED ([IdContratista] ASC, [uIdMail] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_SAP_IMAP_Resultado_CO_Contratista] FOREIGN KEY ([IdContratista]) REFERENCES [dbo].[CO_Contratista] ([IdContratista])
 );
 

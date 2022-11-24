@@ -9,7 +9,7 @@
     [ModificadoPor]           INT           NULL,
     [ModificadoEl]            DATETIME      NULL,
     [Activo]                  BIT           NULL,
-    CONSTRAINT [PK_CoordPropietario] PRIMARY KEY CLUSTERED ([idCoordenadaPropietario] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CoordPropietario] PRIMARY KEY CLUSTERED ([idCoordenadaPropietario] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [fk_AreaContractual_Coordenadas] FOREIGN KEY ([idAreaContractual]) REFERENCES [dbo].[CO_AreaContractual] ([IdAreaContractual]),
     CONSTRAINT [fk_propietario_Coordenadas] FOREIGN KEY ([idPropietario]) REFERENCES [dbo].[CO_PropietariosAreaContractual] ([IdPropietario]),
     CONSTRAINT [fk_Usuario1_Coordenadas] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),

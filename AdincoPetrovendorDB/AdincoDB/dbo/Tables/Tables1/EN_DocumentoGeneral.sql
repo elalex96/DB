@@ -1,30 +1,29 @@
-﻿
-CREATE TABLE [dbo].[EN_DocumentoGeneral](
-	[DocumentoId] [int] NOT NULL IDENTITY(1,1),
-	[NivelPadre] [int] NULL,
-	[ContratoId] [int] NULL,
-	[EtapaId] [int] NULL,
-	[ReceptorId] [int] NULL,
-	[InstalacionId] [int] NULL,
-	[EtapaPozoId] [int] NULL,
-	[MarcoLegalId] [int] NULL,
-	[EntregableId] [int] NULL,
-	[Bucket] [nvarchar](max) NULL,
-	[Folder] [nvarchar](max) NULL,
-	[UUIDAmazon] [uniqueidentifier] NULL,
-	[NombreArchivo] [nvarchar](max) NULL,
-	[Meta] [nvarchar](max) NULL,
-	[CreadoPor] [int] NULL,
-	[CreadoEl] [datetime] NULL,
-	[ModificadoPor] [int] NULL,
-	[ModificadoEl] [datetime] NULL,
-	[Activo] [bit] NULL,
-	[TipoArchivo] [nvarchar](100) NULL,
-	[SizeBytes] [decimal] NULL,
-	[Comentarios] [nvarchar](max) NULL,
- CONSTRAINT [PK_EN_DocumentoGeneral] PRIMARY KEY CLUSTERED 
-(
-	[DocumentoId] ASC
-),
-CONSTRAINT FK_EN_DocumentoGeneral_CO_Contrato
-FOREIGN KEY (ContratoId) REFERENCES CO_Contrato(IdContrato))
+﻿CREATE TABLE [dbo].[EN_DocumentoGeneral] (
+    [DocumentoId]         INT              IDENTITY (1, 1) NOT NULL,
+    [NivelPadre]          INT              NULL,
+    [ContratoId]          INT              NULL,
+    [EtapaId]             INT              NULL,
+    [ReceptorId]          INT              NULL,
+    [InstalacionId]       INT              NULL,
+    [MarcoLegalId]        INT              NULL,
+    [EntregableId]        INT              NULL,
+    [Bucket]              NVARCHAR (MAX)   NULL,
+    [Folder]              NVARCHAR (MAX)   NULL,
+    [UUIDAmazon]          UNIQUEIDENTIFIER NULL,
+    [NombreArchivo]       NVARCHAR (MAX)   NULL,
+    [Meta]                NVARCHAR (MAX)   NULL,
+    [CreadoPor]           INT              NULL,
+    [CreadoEl]            DATETIME         NULL,
+    [ModificadoPor]       INT              NULL,
+    [ModificadoEl]        DATETIME         NULL,
+    [Activo]              BIT              NULL,
+    [TipoArchivo]         NVARCHAR (100)   NULL,
+    [SizeBytes]           DECIMAL (18)     NULL,
+    [Comentarios]         NVARCHAR (MAX)   NULL,
+    [Frecuencia]          NVARCHAR (MAX)   NULL,
+    [FechaEntregaAnioMes] NVARCHAR (MAX)   NULL,
+    [EtapaPozoId]         INT              NULL,
+    CONSTRAINT [PK_EN_DocumentoGeneral] PRIMARY KEY CLUSTERED ([DocumentoId] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_EN_DocumentoGeneral_CO_Contrato] FOREIGN KEY ([ContratoId]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
+);
+

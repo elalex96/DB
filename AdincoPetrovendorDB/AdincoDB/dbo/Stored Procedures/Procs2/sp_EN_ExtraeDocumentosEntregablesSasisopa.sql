@@ -1,8 +1,4 @@
-﻿USE adinco
-GO
-DROP PROCEDURE IF EXISTS sp_EN_ExtraeDocumentosEntregablesSasisopa
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		LUIS DAVID
 -- Create date: 10/Marzo/2022
 -- Description:	Se cambia la longitud de caracteres a 50

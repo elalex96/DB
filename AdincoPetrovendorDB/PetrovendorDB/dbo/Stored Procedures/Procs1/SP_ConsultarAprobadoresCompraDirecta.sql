@@ -1,16 +1,9 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ConsultarAprobadoresCompraDirecta]    Script Date: 16/05/2022 10:20:31 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 16/05/2022
 -- Description:	 Se descartan en la aprobacion los usuarios eliminados
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_ConsultarAprobadoresCompraDirecta]  
+CREATE PROCEDURE [dbo].[SP_ConsultarAprobadoresCompraDirecta]  
 @IdOperacion int,
 @IdTipoOperacion int 
 AS

@@ -7,6 +7,6 @@
     [NombreArchivo]     NVARCHAR (250) NULL,
     [HashSHA256]        NVARCHAR (500) NULL,
     [FechaCarga]        DATETIME       NULL,
-    CONSTRAINT [PK_SipacArchivos] PRIMARY KEY CLUSTERED ([IdSipacArchivos] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SipacArchivos] PRIMARY KEY CLUSTERED ([IdSipacArchivos] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

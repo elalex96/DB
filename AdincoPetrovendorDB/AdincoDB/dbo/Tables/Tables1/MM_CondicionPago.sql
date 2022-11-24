@@ -3,6 +3,6 @@
     [Condicion]       NVARCHAR (MAX) NULL,
     [Condition]       NVARCHAR (MAX) NULL,
     [Activo]          BIT            NULL,
-    CONSTRAINT [PK_MM_CondicionPago] PRIMARY KEY CLUSTERED ([IdCondicionPago] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_CondicionPago] PRIMARY KEY CLUSTERED ([IdCondicionPago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

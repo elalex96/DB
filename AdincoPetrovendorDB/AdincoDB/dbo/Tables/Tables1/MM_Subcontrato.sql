@@ -13,6 +13,6 @@
     [ModificadoPor]               INT            NULL,
     [ModificadoEl]                DATETIME       NULL,
     [Activo]                      BIT            NULL,
-    CONSTRAINT [PK_MM_Subcontrato] PRIMARY KEY CLUSTERED ([IdSubcontrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_Subcontrato] PRIMARY KEY CLUSTERED ([IdSubcontrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

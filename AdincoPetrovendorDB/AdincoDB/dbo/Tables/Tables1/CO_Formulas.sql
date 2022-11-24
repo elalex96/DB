@@ -3,6 +3,6 @@
     [FechaInicial] DATE     NULL,
     [FechaFinal]   DATETIME NULL,
     [Activo]       BIT      NULL,
-    CONSTRAINT [PK_CO_FormulasPetroleo] PRIMARY KEY CLUSTERED ([IdFormula] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_FormulasPetroleo] PRIMARY KEY CLUSTERED ([IdFormula] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -12,7 +12,7 @@
     [Estatus]             TINYINT         CONSTRAINT [DF_ProdDiaria_Previo_Estatus] DEFAULT ((0)) NOT NULL,
     [Algoritmo]           INT             CONSTRAINT [DF_ProdDiaria_Previo_Algoritmo] DEFAULT ((0)) NOT NULL,
     [Temperatura]         FLOAT (53)      NULL,
-    CONSTRAINT [PK_PR_ProdDiaria_Previo] PRIMARY KEY NONCLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_ProdDiaria_Previo] PRIMARY KEY NONCLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ProdDiaria_Previo_Bloque] FOREIGN KEY ([Bloque]) REFERENCES [dbo].[PR_Bloque] ([Id])
 );
 

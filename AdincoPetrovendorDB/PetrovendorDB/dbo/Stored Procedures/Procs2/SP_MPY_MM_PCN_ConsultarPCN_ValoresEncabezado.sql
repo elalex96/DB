@@ -71,9 +71,6 @@ BEGIN
 		FROM dbo.MPY_MM_AceptacionPedidoDetalle AS APD
 		WHERE APD.IdAceptacionPedidoDetalle=  @IdAceptacionPedidoDetalle;
 
-		UPDATE dbo.MPY_MM_PCN_ValoresPesos
-		SET ValorFactura = @ValorFactura
-		WHERE IdAceptacionPedidoDetalle = @IdAceptacionPedidoDetalle;
 	END
 		 
 	 SELECT V.IdValoresEnPesosPedidoDetalle, 
@@ -85,7 +82,7 @@ BEGIN
 	 ISNULL(V.IdTipoCriterio,0) AS IdTipoCriterio,
 	 ISNULL(V.IdCatalogoHidrocarburos,0) AS IdCatalogoHidrocarburos,
 	 ISNULL(V.FraccionArancelaria,'') AS FraccionArancelaria,
-	 ISNULL(V.ValorFactura,0) AS ValorFactura,	 
+	 ISNULL(V.ValorFactura,@ValorFactura) AS ValorFactura,	 
 	 APD.Detalle AS NombreMaterial
 	 FROM dbo.MPY_MM_PCN_ValoresPesos  AS V
 	 LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedidoDetalle=V.IdAceptacionPedidoDetalle

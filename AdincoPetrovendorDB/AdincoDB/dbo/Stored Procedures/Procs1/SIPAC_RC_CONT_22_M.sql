@@ -1,10 +1,4 @@
-﻿USE [Adinco]
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Yazmin Glez.
 -- Create date: 2017-11-28
 -- Description: Reporte de CGI - Registro de costos. Plantilla antes RC_CONT_02_M actual RC_CONT_22_M

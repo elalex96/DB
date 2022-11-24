@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_UpdateProcesos]    Script Date: 21/06/2022 02:56:37 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- ============================================= 
+﻿-- ============================================= 
 -- Author:    Reyna Olvera 
 -- Create date: 20181023 
 -- Description:  Guarda Procesos 
@@ -14,7 +7,7 @@ GO
 -- Create date: 21/06/2022
 -- Description:	Agregado del campo de la etapa
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_EN_UpdateProcesos]
+CREATE PROCEDURE [dbo].[sp_EN_UpdateProcesos]
   @idContrato            INT, 
   @idUsuario             INT, 
   @IdProceso             INT, 

@@ -8,11 +8,11 @@
     [ModificadoEl]  DATETIME       NULL,
     [IsActivo]      BIT            NULL,
     [Numero]        VARCHAR (MAX)  NULL,
-    CONSTRAINT [PK_CC_CentroCosto] PRIMARY KEY CLUSTERED ([IdCentroCosto] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CC_CentroCosto] PRIMARY KEY CLUSTERED ([IdCentroCosto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [IX_CC_CentroCosto]
-    ON [dbo].[CC_CentroCosto]([IdCentroCosto] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[CC_CentroCosto]([IdCentroCosto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

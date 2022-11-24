@@ -6,7 +6,7 @@
     [FecMovto]                    DATETIME      NULL,
     [IdContrato]                  INT           NULL,
     [CreadoPor]                   INT           NULL,
-    CONSTRAINT [PK_ActividadesHidrocarburos] PRIMARY KEY CLUSTERED ([IdActividadHidrocarburo] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_ActividadesHidrocarburos] PRIMARY KEY CLUSTERED ([IdActividadHidrocarburo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ActividadesHidrocarburos_Contratos] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

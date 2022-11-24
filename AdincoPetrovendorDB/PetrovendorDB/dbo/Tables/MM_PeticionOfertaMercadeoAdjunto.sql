@@ -12,6 +12,7 @@
     [ModificadoPor]     INT            NULL,
     [ModificadoEl]      DATETIME       NULL,
     [IdSolicitudPedido] INT            NULL,
-    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    [Bucket]            VARCHAR (200)  NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

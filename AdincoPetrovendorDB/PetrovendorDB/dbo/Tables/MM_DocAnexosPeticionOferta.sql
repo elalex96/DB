@@ -13,7 +13,8 @@
     [Mime]                     NVARCHAR (300) NULL,
     [AMS3]                     BIT            NULL,
     [EliminadoEl]              DATETIME       NULL,
-    CONSTRAINT [PK_MM_DocAnexosPeticionOferta] PRIMARY KEY CLUSTERED ([IdDocAnexoPeticionOferta] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [Bucket]                   VARCHAR (200)  NULL,
+    CONSTRAINT [PK_MM_DocAnexosPeticionOferta] PRIMARY KEY CLUSTERED ([IdDocAnexoPeticionOferta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_DocAnexosPeticionOferta_MM_PeticionOferta1] FOREIGN KEY ([IdPeticionOferta]) REFERENCES [dbo].[MM_PeticionOferta] ([IdPeticionOferta]),
     CONSTRAINT [FK_MM_DocAnexosPeticionOferta_S_Usuario1] FOREIGN KEY ([SubidoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );

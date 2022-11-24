@@ -5,6 +5,6 @@
     [SMTP]             NVARCHAR (MAX) NULL,
     [Puerto]           INT            NULL,
     [BBC]              NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_S_CorreoServidor] PRIMARY KEY CLUSTERED ([IdCorreoServidor] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_S_CorreoServidor] PRIMARY KEY CLUSTERED ([IdCorreoServidor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

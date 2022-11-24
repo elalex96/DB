@@ -3,6 +3,6 @@
     [ClasificacionAnexo4] NVARCHAR (MAX) NULL,
     [Clave]               NVARCHAR (MAX) NULL,
     [CreadoPor]           INT            NULL,
-    CONSTRAINT [PK_ClasificacionAnexo4] PRIMARY KEY CLUSTERED ([IdAnexo4] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ClasificacionAnexo4] PRIMARY KEY CLUSTERED ([IdAnexo4] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

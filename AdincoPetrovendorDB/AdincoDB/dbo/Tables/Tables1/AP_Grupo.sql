@@ -8,6 +8,6 @@
     [ModificadoPor] INT            NULL,
     [ModificadoEl]  DATETIME       NULL,
     [Activo]        BIT            NULL,
-    CONSTRAINT [PK_Grupos] PRIMARY KEY CLUSTERED ([IdGrupo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Grupos] PRIMARY KEY CLUSTERED ([IdGrupo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

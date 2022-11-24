@@ -1,14 +1,7 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_SqlResponsablesContratoEntregable]    Script Date: 23/11/2021 05:37:35 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
 -- =============================================
-ALTER PROCEDURE [dbo].[EN_SqlResponsablesContratoEntregable] -- 16841,10061,3,10002,10001
+CREATE PROCEDURE [dbo].[EN_SqlResponsablesContratoEntregable] -- 16841,10061,3,10002,10001
     @IdContratoEntregable INT,
     @idUsuarioSession INT,
     @idContrato INT,

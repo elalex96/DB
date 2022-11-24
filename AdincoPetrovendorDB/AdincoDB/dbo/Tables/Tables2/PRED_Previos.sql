@@ -15,7 +15,7 @@
     [IdTipoInstalacion] INT            NULL,
     [Gestor]            NVARCHAR (MAX) NULL,
     [JefeCampo]         NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_PRED_Previos] PRIMARY KEY CLUSTERED ([IdPrevio] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PRED_Previos] PRIMARY KEY CLUSTERED ([IdPrevio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PRED_Previos_CAT_TipoInstalacion] FOREIGN KEY ([IdTipoInstalacion]) REFERENCES [dbo].[CAT_TipoInstalacion] ([IdTipoInstalacion]),
     CONSTRAINT [FK_PRED_Previos_CAT_TiposBDT] FOREIGN KEY ([IdTipoBDT]) REFERENCES [dbo].[CAT_TiposBDT] ([IdTipoBDT])
 );

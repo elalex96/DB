@@ -9,6 +9,6 @@
     [Aprobador5]     DATETIME      NULL,
     [Aprobador6]     DATETIME      NULL,
     [TipoAprobacion] VARCHAR (200) NULL,
-    CONSTRAINT [PK_BI_Aprobaciones] PRIMARY KEY CLUSTERED ([IdAprobacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_BI_Aprobaciones] PRIMARY KEY CLUSTERED ([IdAprobacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

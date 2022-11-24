@@ -1,13 +1,4 @@
-﻿USE [Adinco]
-GO
-drop procedure if exists p_EN_InsertarEntregable
-
-/****** Object:  StoredProcedure [dbo].[p_EN_InsertarEntregable]    Script Date: 25/05/2022 12:34:18 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[p_EN_InsertarEntregable]
+﻿CREATE PROCEDURE [dbo].[p_EN_InsertarEntregable]
 	@pIdEntregable	int out,
 	@pDocumentoEntregable	nvarchar(max),
 	@pDocumentoEntregableIngles	nvarchar(max) = null,

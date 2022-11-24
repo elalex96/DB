@@ -1,6 +1,4 @@
-DROP PROCEDURE IF EXISTS sp_EN_ExtraeDatosProcesosExportar
-GO
-CREATE PROCEDURE sp_EN_ExtraeDatosProcesosExportar --3,10061
+﻿CREATE PROCEDURE sp_EN_ExtraeDatosProcesosExportar --3,10061
 	@IdContrato int,
 	@IdUsuario int,
 	@ListIdProcesos VARCHAR(MAX),

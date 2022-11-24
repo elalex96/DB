@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastosPorFechas]
+﻿CREATE PROCEDURE [dbo].[sp_CO_ConsultaRegistrosGastosPorFechas]
     @FechaMes DATETIME,
     @IdContrato INT,
     @IdUsuario INT

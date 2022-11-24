@@ -2,8 +2,8 @@
 -- Create date: <14/04/2020>
 -- Description:	<Description,,>
 -- =============================================
-CREATE PROCEDURE SP_CO_ConsultaConfiguracionContrato-- 3
-	-- Add the parameters for the stored procedure here
+CREATE PROCEDURE SP_CO_ConsultaConfiguracionContrato
+-- Add the parameters for the stored procedure here
 	@IdContrato INT
 AS
 BEGIN

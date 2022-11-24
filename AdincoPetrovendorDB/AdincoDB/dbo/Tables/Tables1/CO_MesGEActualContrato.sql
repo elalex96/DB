@@ -5,7 +5,7 @@
     [ModificadoPor]         INT      NULL,
     [Modificado]            DATETIME NULL,
     [CreadoPor]             INT      NULL,
-    CONSTRAINT [PK_MesGEContrato] PRIMARY KEY CLUSTERED ([IdMesGEActualContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MesGEContrato] PRIMARY KEY CLUSTERED ([IdMesGEActualContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MesGEContrato_Contratos] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

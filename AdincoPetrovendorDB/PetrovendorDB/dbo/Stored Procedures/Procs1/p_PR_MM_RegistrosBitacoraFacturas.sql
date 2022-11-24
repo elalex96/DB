@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[p_PR_MM_RegistrosBitacoraFacturas]    Script Date: 08/09/2022 05:40:16 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[p_PR_MM_RegistrosBitacoraFacturas]
+﻿CREATE PROCEDURE [dbo].[p_PR_MM_RegistrosBitacoraFacturas]
 	@IdProveedor int,
 	@Estatus int ,	
     @IdContrato    INT = null,

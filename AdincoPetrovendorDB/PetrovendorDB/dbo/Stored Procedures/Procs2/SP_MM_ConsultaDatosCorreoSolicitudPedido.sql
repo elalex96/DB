@@ -1,17 +1,10 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaDatosCorreoSolicitudPedido]    Script Date: 26/11/2021 01:57:35 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaDatosCorreoSolicitudPedido]    Script Date: 28/09/2020 14:13:08 ******/
+﻿/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaDatosCorreoSolicitudPedido]    Script Date: 28/09/2020 14:13:08 ******/
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <28/09/2020>
 -- Description:	<Consulta de datos de solicitud de pedido para evitar errores en campos vacios>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaDatosCorreoSolicitudPedido] 
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaDatosCorreoSolicitudPedido] 
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT
 AS

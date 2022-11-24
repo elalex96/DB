@@ -6,7 +6,7 @@
     [Telefono]   VARCHAR (50)  NOT NULL,
     [web]        VARCHAR (MAX) NOT NULL,
     [EmpresaID]  INT           NOT NULL,
-    CONSTRAINT [PK_Contacto] PRIMARY KEY CLUSTERED ([ContactoID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Contacto] PRIMARY KEY CLUSTERED ([ContactoID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Contacto_Empresa] FOREIGN KEY ([EmpresaID]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista])
 );
 

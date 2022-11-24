@@ -1,8 +1,4 @@
-﻿use Petrovendor
-go
-drop procedure if exists AD_SP_CambiarEstatusFacturaMercadeo
-go
--- =============================================  
+﻿-- =============================================  
 -- Author: Daniel AC  
 -- Create date: 08-04-2021  
 -- Description: Actualizar estatus de aprobación de factura de mercadeo

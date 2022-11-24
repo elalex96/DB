@@ -8,10 +8,8 @@
 -- Create date: <02/03/2021>
 -- Description:	<Se optimiza la consulta para la pantalla detalle_pedido del issue 984>
 -- =============================================
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'SP_ConsultarEstatusAprobadorPedido')
-    DROP PROCEDURE SP_ConsultarEstatusAprobadorPedido
-GO
-create PROCEDURE SP_ConsultarEstatusAprobadorPedido	
+
+CREATE PROCEDURE SP_ConsultarEstatusAprobadorPedido	
 	@IdOperacion INT,
 	@IdAprobador INT,
 	/*---------------------Parametros contrato---------------------*/

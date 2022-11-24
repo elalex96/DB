@@ -1,16 +1,4 @@
-﻿USE [Adinco]
-GO
-IF object_id('fn_ent_RutaArchivo', 'FN') IS NOT NULL
-BEGIN
-   DROP FUNCTION [dbo].[fn_ent_RutaArchivo]
-END
-GO
-/****** Object:  UserDefinedFunction [dbo].[fnSplitString]    Script Date: 25/03/2022 01:50:08 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 
 CREATE FUNCTION [dbo].[fn_ent_RutaArchivo] 
 ( 

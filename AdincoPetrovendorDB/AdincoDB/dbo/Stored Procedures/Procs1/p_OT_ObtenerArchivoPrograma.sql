@@ -1,5 +1,4 @@
-﻿
-create proc p_OT_ObtenerArchivoPrograma
+﻿CREATE proc p_OT_ObtenerArchivoPrograma
 (
 	@pID int
 )
@@ -19,4 +18,3 @@ begin
 	where		pa.ID					=	@pID
 
 end
-

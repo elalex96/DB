@@ -1,8 +1,4 @@
-﻿use petrovendor
-go
-drop procedure if exists SP_TA_ActualizarEstatusTarea
-go
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel A Cruz  
 -- Create date: 04-01-17  
 -- Description:  Actualiza el Estatus de la Tarea y   

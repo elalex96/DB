@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarAceptacionPedidoEncabezado]    Script Date: 11/08/2021 09:55:26 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 03/07/2017
 -- Description:	ALTA ACEPTACION DE PEDIDO 

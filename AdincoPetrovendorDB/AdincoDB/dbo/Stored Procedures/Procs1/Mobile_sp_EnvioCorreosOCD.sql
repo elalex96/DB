@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_EnvioCorreosOCD]    Script Date: 17/12/2020 03:01:25 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <09/02/2020>
 -- Description:	<Consultar de correos para la aprobacion de compra directa desde la app>

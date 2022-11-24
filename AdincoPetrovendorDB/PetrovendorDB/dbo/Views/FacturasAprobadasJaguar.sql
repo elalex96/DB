@@ -1,9 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS (SELECT 1 FROM dbo.sysobjects WHERE name = 'FacturasAprobadasJaguar')
-    DROP VIEW FacturasAprobadasJaguar
-GO
-CREATE VIEW [dbo].[FacturasAprobadasJaguar]
+﻿CREATE VIEW [dbo].[FacturasAprobadasJaguar]
 AS
 -------------------------------------------------------------------
 ---------------------- FACTURAS APROBADAS -------------------------
@@ -182,4 +177,3 @@ SELECT DISTINCT
 			ON PC.IdSubcontratistaExportador = PS.idSubcontratista		
 	WHERE APC.IdProveedor in (606, 676, 690, 1835)
 		AND APC.Activo = 1
-GO

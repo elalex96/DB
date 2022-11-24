@@ -8,7 +8,6 @@
 -- =============================================
 
 CREATE PROCEDURE [dbo].[SP_CO_ActualizarPresupuesto] 
---  the parameters for the stored procedure here 
 @IdPresupuesto     INT, 
 @IdPresupuestoCNH  NVARCHAR(50), 
 @Activo            BIT, 
@@ -16,7 +15,8 @@ CREATE PROCEDURE [dbo].[SP_CO_ActualizarPresupuesto]
 @InicioPresupuesto DATE, 
 @FinPresupuesto    DATE, 
 @IdUsuario         INT, 
-@IdContrato        INT
+@IdContrato        INT,
+@Nombre	VARCHAR(250)
 AS
      BEGIN
          DECLARE @DateInicio DATE, @DateFin DATE;
@@ -34,6 +34,7 @@ AS
              UPDATE dbo.CO_Presupuesto
                SET 
                    IdPresupuestoCNH = @IdPresupuestoCNH, 
+				   Nombre	=	@Nombre,
                    Actual = @Activo, 
                    ActivoProcura = @ActivoProcura, 
                    InicioPresupuesto = @DateInicio, 
@@ -47,3 +48,4 @@ AS
              ELSE
          SELECT 'true' AS msj;
      END;
+

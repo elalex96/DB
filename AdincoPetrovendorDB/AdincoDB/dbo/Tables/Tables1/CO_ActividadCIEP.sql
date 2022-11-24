@@ -8,7 +8,7 @@
     [IdUsuarioModPor]    INT           NULL,
     [Modificado]         DATETIME      NULL,
     [CreadoPor]          INT           NULL,
-    CONSTRAINT [PK_Actividades] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Actividades] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Actividades_Contratos] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_Actividades_Usuarios] FOREIGN KEY ([IdUsuarioCreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_Actividades_UsuariosMod] FOREIGN KEY ([IdUsuarioModPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])

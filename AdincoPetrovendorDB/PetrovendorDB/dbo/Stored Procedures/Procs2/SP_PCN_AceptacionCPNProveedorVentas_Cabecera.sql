@@ -1,8 +1,4 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_PCN_AceptacionCPNProveedorVentas_Cabecera
-GO
--- =============================================  
+﻿-- =============================================  
 -- Author:  Daniel Cruz  
 -- Create date: 05-02-18  
 -- Description: Consultar encabezado de aceptación de pedido en genración de carta de contenido nacional  

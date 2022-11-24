@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_AP_ConsultarUsuariosRolAcServicio]    Script Date: 01/03/2022 03:51:00 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Abel Rivera>
 -- Create date: <Consulta la lista de usuarios con rol de "Aceptación de servicio">
 -- Description:	<Description,,>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_AP_ConsultarUsuariosRolAcServicio] --420,3
+CREATE PROCEDURE [dbo].[SP_AP_ConsultarUsuariosRolAcServicio] --420,3
 @IdProveedor INT,
 @IdContrato INT
 AS

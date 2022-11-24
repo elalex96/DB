@@ -1,2 +1,26 @@
-CREATE TABLE PR_VolumenMensualProduccionPetroleoBitacora(IdReporteVolumenesProduccionPetroleo INT, Accion NVARCHAR(50), IdContrato INT, MesReporte DATE , VolumenPetroleoPuntoMedicion FLOAT, GradosAPI FLOAT, ContenidoAzufre FLOAT, VolumenPetroleoAutoconsumo FLOAT, MetanoC1 FLOAT, EtanoC2 FLOAT, PropanoC3 FLOAT, ButanoC4 FLOAT, MetanoC1Autoconsumo FLOAT, EtanoC2Autoconsumo FLOAT, PropanoC3Autoconsumo FLOAT, ButanoC4Autoconsumo FLOAT, VolumenCondensadoPuntoMedicion FLOAT, VolumenCondensadoAutoconsumo FLOAT, VolumenCondensablePuntoMedicion FLOAT, VolumenCondensableAutoconsumo FLOAT, CreadoEl Datetime, CreadoPor INT,
-FOREIGN KEY (CreadoPor) REFERENCES AP_Usuario(UsuarioID))
+﻿CREATE TABLE [dbo].[PR_VolumenMensualProduccionPetroleoBitacora] (
+    [IdReporteVolumenesProduccionPetroleo] INT           NULL,
+    [Accion]                               NVARCHAR (50) NULL,
+    [IdContrato]                           INT           NULL,
+    [MesReporte]                           DATE          NULL,
+    [VolumenPetroleoPuntoMedicion]         FLOAT (53)    NULL,
+    [GradosAPI]                            FLOAT (53)    NULL,
+    [ContenidoAzufre]                      FLOAT (53)    NULL,
+    [VolumenPetroleoAutoconsumo]           FLOAT (53)    NULL,
+    [MetanoC1]                             FLOAT (53)    NULL,
+    [EtanoC2]                              FLOAT (53)    NULL,
+    [PropanoC3]                            FLOAT (53)    NULL,
+    [ButanoC4]                             FLOAT (53)    NULL,
+    [MetanoC1Autoconsumo]                  FLOAT (53)    NULL,
+    [EtanoC2Autoconsumo]                   FLOAT (53)    NULL,
+    [PropanoC3Autoconsumo]                 FLOAT (53)    NULL,
+    [ButanoC4Autoconsumo]                  FLOAT (53)    NULL,
+    [VolumenCondensadoPuntoMedicion]       FLOAT (53)    NULL,
+    [VolumenCondensadoAutoconsumo]         FLOAT (53)    NULL,
+    [VolumenCondensablePuntoMedicion]      FLOAT (53)    NULL,
+    [VolumenCondensableAutoconsumo]        FLOAT (53)    NULL,
+    [CreadoEl]                             DATETIME      NULL,
+    [CreadoPor]                            INT           NULL,
+    FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
+);
+

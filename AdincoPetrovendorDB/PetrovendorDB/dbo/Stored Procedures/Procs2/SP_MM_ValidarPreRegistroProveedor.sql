@@ -3,7 +3,7 @@
 -- Create date: <22/03/2021>
 -- Description:	<Consulta de validacion de correo electronico registrado>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ValidarPreRegistroProveedor]
+CREATE PROCEDURE [dbo].[SP_MM_ValidarPreRegistroProveedor]--26197
 	-- Add the parameters for the stored procedure here
 	@Correo NVARCHAR(200),
 	@IdSolicitudPedido INT

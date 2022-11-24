@@ -10,7 +10,7 @@
     [FechaCarga]             DATETIME       NULL,
     [IsEliminado]            BIT            NULL,
     [DocumentoByte]          IMAGE          NULL,
-    CONSTRAINT [PK_FI_Documento] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_Documento] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_Documento_FI_TipoDocumento] FOREIGN KEY ([IdTipoDocumento]) REFERENCES [dbo].[FI_TipoDocumento] ([id_TipoDocumento])
 );
 

@@ -1,44 +1,27 @@
-CREATE TABLE [dbo].[SIPAC_ImportRML_CONT_27_M](
-	[Id] [int] IDENTITY(1,1) NOT NULL,
-	[IdBitacora] [int] NULL,
-	[RF_00] [varchar](200) NULL,
-	[RI_00] [varchar](200) NULL,
-	[RF01_01] [varchar](200) NULL,
-	[RMLCT27_00] [date] NULL,
-	[RMLCT27_01] [int] NULL,
-	[RMLCT27_02] [tinyint] NULL,
-	[RMLCT27_03] [int] NULL,
-	[RMLCT27_04] [decimal](10, 4) NULL,
-	[RMLCT27_05] [decimal](10, 4) NULL,
-	[RMLCT27_06] [decimal](10, 4) NULL,
-	[RMLCT27_07] [varchar](50) NULL,
-	[RMLCT27_08] [varchar](50) NULL,
-	[RMLCT27_09] [varchar](50) NULL,
-	[RMLCT27_10] [varchar](50) NULL,
-	[RMLCT27_11] [tinyint] NULL,
-	[RMLCT27_12] [tinyint] NULL,
-	[RMLCT27_13] [tinyint] NULL,
-	[CreadoPor] [int] NULL,
-	[CreadoEl] [datetime] NULL,
- CONSTRAINT [PK_SIPAC_ImportRML_CONT_27_M] PRIMARY KEY CLUSTERED 
-(
-	[Id] ASC
-)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_27_M]  WITH CHECK ADD  CONSTRAINT [FK_SIPAC_ImportRML_CONT_27_M_AP_Usuario] FOREIGN KEY([CreadoPor])
-REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_27_M] CHECK CONSTRAINT [FK_SIPAC_ImportRML_CONT_27_M_AP_Usuario]
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_27_M]  WITH CHECK ADD  CONSTRAINT [FK_SIPAC_ImportRML_CONT_27_M_SIPAC_ImportBitacora] FOREIGN KEY([IdBitacora])
-REFERENCES [dbo].[SIPAC_ImportBitacora] ([Id])
-GO
-
-ALTER TABLE [dbo].[SIPAC_ImportRML_CONT_27_M] CHECK CONSTRAINT [FK_SIPAC_ImportRML_CONT_27_M_SIPAC_ImportBitacora]
-GO
-
+﻿CREATE TABLE [dbo].[SIPAC_ImportRML_CONT_27_M] (
+    [Id]         INT             IDENTITY (1, 1) NOT NULL,
+    [IdBitacora] INT             NULL,
+    [RF_00]      VARCHAR (200)   NULL,
+    [RI_00]      VARCHAR (200)   NULL,
+    [RF01_01]    VARCHAR (200)   NULL,
+    [RMLCT27_00] DATE            NULL,
+    [RMLCT27_01] INT             NULL,
+    [RMLCT27_02] TINYINT         NULL,
+    [RMLCT27_03] INT             NULL,
+    [RMLCT27_04] DECIMAL (10, 4) NULL,
+    [RMLCT27_05] DECIMAL (10, 4) NULL,
+    [RMLCT27_06] DECIMAL (10, 4) NULL,
+    [RMLCT27_07] VARCHAR (50)    NULL,
+    [RMLCT27_08] VARCHAR (50)    NULL,
+    [RMLCT27_09] VARCHAR (50)    NULL,
+    [RMLCT27_10] VARCHAR (50)    NULL,
+    [RMLCT27_11] TINYINT         NULL,
+    [RMLCT27_12] TINYINT         NULL,
+    [RMLCT27_13] TINYINT         NULL,
+    [CreadoPor]  INT             NULL,
+    [CreadoEl]   DATETIME        NULL,
+    CONSTRAINT [PK_SIPAC_ImportRML_CONT_27_M] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_SIPAC_ImportRML_CONT_27_M_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_SIPAC_ImportRML_CONT_27_M_SIPAC_ImportBitacora] FOREIGN KEY ([IdBitacora]) REFERENCES [dbo].[SIPAC_ImportBitacora] ([Id])
+);
 

@@ -1,9 +1,5 @@
-﻿-- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <15/01/2020>
--- Description:	<consulta de los detalles de un complemento de pago>
--- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_CP_DetalleComplementoPago] --10325
+﻿
+create PROCEDURE [dbo].[SP_FI_CP_DetalleComplementoPago] --10325
 	-- Add the parameters for the stored procedure here
 	@IdComplementoPago INT,
 	@IdFactura INT

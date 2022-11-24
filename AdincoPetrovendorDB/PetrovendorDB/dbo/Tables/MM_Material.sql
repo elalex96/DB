@@ -32,7 +32,7 @@
     [IdTipoCatalogoMaestro]     INT            NULL,
     [Imagen_real]               IMAGE          NULL,
     [Imagen_thumb]              IMAGE          NULL,
-    CONSTRAINT [PK_MM_Material] PRIMARY KEY CLUSTERED ([IdMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_Material] PRIMARY KEY CLUSTERED ([IdMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_Material_MM_BS_Actividad] FOREIGN KEY ([IdBienServicioEconomia]) REFERENCES [dbo].[MM_BS_Actividad] ([IdActividad]),
     CONSTRAINT [FK_MM_Material_MM_TipoProveedor] FOREIGN KEY ([IdTipoProveedor]) REFERENCES [dbo].[MM_TipoProveedor] ([IdTipoProveedor]),
     CONSTRAINT [FK_MM_Material_PV_MM_MaterialSubFamilia] FOREIGN KEY ([IdSubFamilia]) REFERENCES [dbo].[PV_MM_MaterialSubFamilia] ([IdSubFamilia]),
@@ -41,4 +41,9 @@
     CONSTRAINT [FK_MM_Material_PV_MM_MaterialUnidad_Unidad3] FOREIGN KEY ([IdUnidad_3]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
     CONSTRAINT [FK_MM_Material_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxMaterial_IdProveedor]
+    ON [dbo].[MM_Material]([IdProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

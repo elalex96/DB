@@ -1,13 +1,4 @@
-﻿USE Adinco
-GO
-DROP PROCEDURE IF EXISTS En_sp_ObtenBitacoraDocumentosSASISOPA
--- =============================================
--- Author:		LUIS DAVID
--- Create date: 10/Marzo/2022
--- Description:	Obtiene los registros de solicitudes de exportación por contrato
--- =============================================
-GO
-CREATE PROCEDURE En_sp_ObtenBitacoraDocumentosSASISOPA
+﻿CREATE PROCEDURE En_sp_ObtenBitacoraDocumentosSASISOPA
 @IdContrato int,
 @IdUsuario int = NULL
 AS

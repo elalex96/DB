@@ -3,6 +3,6 @@
     [MarcadorCorto]    NVARCHAR (MAX) NULL,
     [Marcador]         NVARCHAR (MAX) NULL,
     [TipoHidrocarburo] INT            NULL,
-    CONSTRAINT [PK_CO_Marcadores] PRIMARY KEY CLUSTERED ([IdMarcador] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_Marcadores] PRIMARY KEY CLUSTERED ([IdMarcador] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

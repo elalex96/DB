@@ -1,21 +1,4 @@
 ﻿
-USE [Petrovendor]
-GO
-
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'sp_BI_LlenaTabla_BI_Requisicion'
-)
-    DROP PROCEDURE sp_BI_LlenaTabla_BI_Requisicion;
-
-/****** Object:  StoredProcedure [dbo].[sp_BI_LlenaTabla_BI_Requisicion]    Script Date: 30/06/2021 01:15:06 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 CREATE PROCEDURE [dbo].[sp_BI_LlenaTabla_BI_Requisicion]
 AS
 BEGIN
@@ -491,7 +474,3 @@ BEGIN
 --SE REPITE EL NO PEDIDO Y EL IDPEDIDOUNICO POR QUE PUEDE SER QUE EXISTAN MÁS DE UN PEDIDO DETALLE (PARTIDA) POR CABECERA DE PEDIDO
 --EL NUMERO DE REQUISICION SE REPITE YA QUE UN PEDIDO CABECERA PUEDE TENER N PEDIDOS 
 END;
-
-
-
-

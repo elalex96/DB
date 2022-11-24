@@ -16,6 +16,6 @@
     [CreadoEl]             DATETIME       NULL,
     [ModificadoPor]        INT            NULL,
     [ModificadoEl]         DATETIME       NULL,
-    CONSTRAINT [PK_Documentos] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Documentos] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

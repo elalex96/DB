@@ -16,7 +16,7 @@
     [FechaFinalizado]      DATETIME NULL,
     [Cotizado]             BIT      NULL,
     [IdEstatus]            INT      NULL,
-    CONSTRAINT [PK_MM_PeticionOferta] PRIMARY KEY CLUSTERED ([IdPeticionOferta] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_PeticionOferta] PRIMARY KEY CLUSTERED ([IdPeticionOferta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_PeticionOferta_MM_Licitacion] FOREIGN KEY ([IdPeticionOferta]) REFERENCES [dbo].[MM_Licitacion] ([IdLicitacion]),
     CONSTRAINT [FK_MM_PeticionOferta_MM_SolicitudPedido] FOREIGN KEY ([IdSolicitudPedido]) REFERENCES [dbo].[MM_SolicitudPedido] ([IdSolicitudPedido]),
     CONSTRAINT [FK_MM_PeticionOferta_PV_Subcontratista] FOREIGN KEY ([IdSubcontratista]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista]),

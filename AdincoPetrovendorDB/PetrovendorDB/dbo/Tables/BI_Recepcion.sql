@@ -40,7 +40,8 @@
     [Modelo]                 VARCHAR (MAX)  NULL,
     [NumeroParte]            VARCHAR (MAX)  NULL,
     [CentroCosto]            VARCHAR (300)  NULL,
-    [IdMaterial]       INT            NULL,
-    CONSTRAINT [PK_BI_Recepcion] PRIMARY KEY CLUSTERED ([IdRecepcion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    [ADN]                    VARCHAR (MAX)  NULL,
+    [IdMaterial]             INT            NULL,
+    CONSTRAINT [PK_BI_Recepcion] PRIMARY KEY CLUSTERED ([IdRecepcion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -1,8 +1,11 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel AC
 -- Create date: 20-02-2019
 -- Description:	Se actualiza sp de DEV A PR con consulta correcta del monto aceptado
+-- =============================================
+-- Author:		Luis David De La Cruz Bautsta
+-- Create date: 20/01/2021
+-- Description:	Se optimiza para issue 920
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultarPedidosDetalleCompras_MV1_5]
     -- Add the parameters for the stored procedure here
@@ -120,7 +123,7 @@ BEGIN
                      D.Calle,
                      ' ',
                      D.NoInterior,
-                     ' ',
+      ' ',
                      D.NoExterior,
                      ' ',
                      D.Colonia,
@@ -156,33 +159,33 @@ BEGIN
            END AS CondicionPago
     FROM MM_Pedido AS P
         INNER JOIN MM_PedidoDetalle AS PD
-            ON PD.IdPedido = P.IdPedido
+            ON P.IdPedido = PD.IdPedido
         INNER JOIN MM_PeticionOferta AS PO
-            ON PO.IdPeticionOferta = P.IdPeticionOferta
+            ON P.IdPeticionOferta = PO.IdPeticionOferta 
         INNER JOIN MM_PeticionOfertaDetalle AS POD
-            ON POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle
+            ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle 
         INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-            ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+            ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
         INNER JOIN S_Proveedor AS PV
-            ON PV.IdProveedor = P.IdSubcontratista
+            ON P.IdSubcontratista = PV.IdProveedor
         INNER JOIN TA_Operacion AS O
-            ON O.IdDocumento = P.IdSolicitudPedido
+            ON P.IdSolicitudPedido = O.IdDocumento
         INNER JOIN TA_Prioridad AS PR
-            ON PR.IdPrioridad = O.IdPrioridad
+            ON O.IdPrioridad = PR.IdPrioridad
         INNER JOIN TA_Vencimiento AS V
-            ON V.IdVencimiento = O.IdVigencia
+            ON O.IdVigencia = V.IdVencimiento
         INNER JOIN TA_TipoOperacion AS TTO
-            ON TTO.IdTipoOperacion = O.IdTipoOperacion
+            ON O.IdTipoOperacion = TTO.IdTipoOperacion
         INNER JOIN TA_Estatus AS E
-            ON E.IdEstatus = O.IdEstatusOperacion
+            ON O.IdEstatusOperacion = E.IdEstatus
         INNER JOIN PV_TipoMoneda AS TM
-            ON TM.IdMoneda = PD.IdMoneda
+            ON PD.IdMoneda = TM.IdMoneda
         INNER JOIN dbo.MM_HorasVigenciaPedido AS HV
-            ON HV.IdPedido = P.IdPedido        
+            ON P.IdPedido = HV.IdPedido        
         INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPLPM
-            ON SPLPM.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+            ON SPD.IdSolicitudPedidoDetalle = SPLPM.IdSolicitudPedidoDetalle 
 		LEFT JOIN DG_Domicilio AS D
-            ON D.IdDomicilio = SPD.IdDomicilioEntrega
+            ON SPD.IdDomicilioEntrega = D.IdDomicilio
         LEFT JOIN dbo.MM_CondicionPago CP
             ON PD.IdCondicionPago = CP.IdCondicionPago
     WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
@@ -221,7 +224,7 @@ BEGIN
     SET ret.SubTotalAceptado = acept.CantidadAceptada * ret.PrecioUnitario
     FROM @TablaRetorno ret
         LEFT JOIN @TablaAceptado acept
-            ON acept.IdPedidoDetalle = ret.IdPedidoDetalle;
+            ON ret.IdPedidoDetalle = acept.IdPedidoDetalle ;
 
     SELECT IdPedidoDetalle,
            IdMaterialVendedor,
@@ -244,5 +247,3 @@ BEGIN
 --- IdTipoOperacion = 9--> Aprobación de pedido
 
 END;
-
-

@@ -1,10 +1,4 @@
-﻿if exists(select * from sys.procedures where name = 'SP_ENIJointVenture')
-begin
-	drop proc SP_ENIJointVenture
-end
-
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 26-06-2020
 -- Description:	
@@ -78,6 +72,3 @@ AS
 
      END;
 
-go
-
---exec SP_ENIJointVenture 10054, 10150, 1,''

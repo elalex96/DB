@@ -6,6 +6,6 @@
     [IdEstado]            INT            NULL,
     [IdEstadoAnterior]    INT            NULL,
     [CreadoPor]           INT            NULL,
-    CONSTRAINT [PK_LogEstadoRegistro] PRIMARY KEY CLUSTERED ([idLogEstadoRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_LogEstadoRegistro] PRIMARY KEY CLUSTERED ([idLogEstadoRegistro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

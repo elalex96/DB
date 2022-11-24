@@ -10,7 +10,7 @@
     [EstatusEvaluacion]     INT      NULL,
     [FechaContestada]       DATETIME NULL,
     [IdProveedor]           INT      NULL,
-    CONSTRAINT [PK_EP_EvaluacionProveedor] PRIMARY KEY CLUSTERED ([IdEvaluacionProveedor] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EP_EvaluacionProveedor] PRIMARY KEY CLUSTERED ([IdEvaluacionProveedor] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EP_EvaluacionProveedor_MM_Pedido] FOREIGN KEY ([IdPedido]) REFERENCES [dbo].[MM_Pedido] ([IdPedido])
 );
 

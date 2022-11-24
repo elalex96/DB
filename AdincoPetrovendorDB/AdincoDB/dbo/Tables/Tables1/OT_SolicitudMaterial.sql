@@ -11,7 +11,7 @@
     [FechaProgramaInicio]   DATETIME        NULL,
     [FechaProgramaFin]      DATETIME        NULL,
     [Comentarios]           VARCHAR (300)   NULL,
-    CONSTRAINT [PK_OT_Material] PRIMARY KEY CLUSTERED ([IdOTSolicitudMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_OT_Material] PRIMARY KEY CLUSTERED ([IdOTSolicitudMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__OT_Solici__IdSer__7BB1EEB4] FOREIGN KEY ([IdServicio]) REFERENCES [dbo].[CO_Servicio] ([IdServicio]),
     CONSTRAINT [FK_OT_SolicitudMaterial_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_OT_SolicitudMaterial_OT_Solicitud] FOREIGN KEY ([IdOTSolicitud]) REFERENCES [dbo].[OT_Solicitud] ([IdOTSolicitud]),
@@ -21,5 +21,5 @@
 
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [IX_OT_SolicitudMaterial]
-    ON [dbo].[OT_SolicitudMaterial]([IdOTSolicitud] ASC, [IdSCMaterial] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[OT_SolicitudMaterial]([IdOTSolicitud] ASC, [IdSCMaterial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

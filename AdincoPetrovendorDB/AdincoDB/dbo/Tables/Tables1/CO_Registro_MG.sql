@@ -29,7 +29,7 @@
     [IdCBSISH]                        INT             NULL,
     [IdAceptacionPedidoDetalle]       INT             NULL,
     [MesGasto]                        DATE            CONSTRAINT [DF_CO_Registro_MG_MesGasto] DEFAULT (NULL) NULL,
-    CONSTRAINT [PK_Registros_MG] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Registros_MG] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Registro_MG_CO_CatalogoCuentaSH] FOREIGN KEY ([IdCatalogoCuentasSH]) REFERENCES [dbo].[CO_CatalogoCuentaSH] ([IdCatalogoCuentasSH]),
     CONSTRAINT [FK_CO_Registro_MG_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante])
 );

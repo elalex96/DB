@@ -9,6 +9,6 @@
     [IdContrato]            INT            NULL,
     [WSMensaje]             NVARCHAR (MAX) NULL,
     [IsError]               BIT            NULL,
-    PRIMARY KEY CLUSTERED ([IdRegistroEnvioAdinco] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdRegistroEnvioAdinco] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

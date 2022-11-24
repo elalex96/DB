@@ -1,10 +1,4 @@
-﻿USE [Adinco]
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:Yazmin Glez.
 -- Create date:2017-11-28
@@ -22,7 +16,7 @@ GO
 -- =============================================
 -- Modificado:       Reyna Olvera
 -- Fecha Modificado: 2022-08-18
--- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACI´N, SE QUITAN ALGUNOS ALIAS
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
 -- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_23_M]
     @Contrato      INT,

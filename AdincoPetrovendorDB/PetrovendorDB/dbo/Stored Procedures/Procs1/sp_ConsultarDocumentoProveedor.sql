@@ -1,7 +1,9 @@
-﻿-- =============================================
--- Author:	Daniel AC
--- Create date: 04/01/2022
--- Description: Se agrega columna de Bucket
+﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
+-- Author:		<Abel Rivera>
+-- Create date: <02/07/2017>
+-- Description:	<Consulta la infomacion del documento>
+-- DANIEL AC 08/05/2018 CAMBIO DE REFERENCIAS DE S_DOCUMENTO A S_DOCUMENTO_S3
 -- =============================================
 
 CREATE PROCEDURE [dbo].[sp_ConsultarDocumentoProveedor]

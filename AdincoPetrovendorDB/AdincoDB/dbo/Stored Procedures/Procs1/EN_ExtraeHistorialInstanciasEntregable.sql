@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_ExtraeHistorialInstanciasEntregable]    Script Date: 13/09/2022 02:31:55 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[EN_ExtraeHistorialInstanciasEntregable]-- 10061,3,211785	
+﻿CREATE PROCEDURE [dbo].[EN_ExtraeHistorialInstanciasEntregable]-- 10061,3,211785	
     @idUsuario INT,
     @idContrato INT = 0,
     @idInstanciaEntregable INT --" manda a elaboración, 3 Revisión, 4 Aprobación, 5 reinicio de flujo
@@ -21,7 +14,6 @@ BEGIN
 -- Create date: 14/09/2022
 -- Description: Descarte de los registros en bitacora como historial del entregable
 -- =============================================
-
 	SET NOCOUNT ON;
 	DECLARE @comentarioElaborador VARCHAR(200),
 			@idMax INT,

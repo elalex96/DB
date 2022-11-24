@@ -6,6 +6,6 @@
     [Transicion]   BIT NULL,
     [AbandonoArea] BIT NULL,
     [AbandonoPozo] BIT NULL,
-    CONSTRAINT [PK_EN_Entregable_ConfigAdicional] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EN_Entregable_ConfigAdicional] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

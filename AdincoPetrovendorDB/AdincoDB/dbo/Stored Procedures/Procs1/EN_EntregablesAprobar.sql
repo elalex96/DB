@@ -1,11 +1,4 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[EN_EntregablesAprobar]    Script Date: 11/11/2021 04:26:51 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[EN_EntregablesAprobar] --2,3
+﻿CREATE PROCEDURE [dbo].[EN_EntregablesAprobar] --2,3
     @idUsuario  INT,
     @idContrato INT
 AS

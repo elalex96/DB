@@ -5,6 +5,9 @@ BEGIN
 SET NOCOUNT ON
 SET LANGUAGE Spanish
 
+-- SE DESHABILITAN LAS NOTIFICACIONES HASTA NUEVO AVISO
+RETURN
+
 CREATE TABLE #NotificacionesProximas
 (
 	Destinatario	VARCHAR(250),
@@ -46,7 +49,7 @@ DECLARE
 	@HOY DATE,
 	@MaxNotificacion	INT = 0
 
-SELECT @HOY = '20200701' --GETDATE()
+SELECT @HOY = GETDATE()
 
 --================================ NOTIFICACIONES A RESPONSIBLES (LO QUE COMIENZA EN LOS SIGUIENTES 7 DIAS)==============================================
 	INSERT INTO #NotificacionesProximas
@@ -672,6 +675,9 @@ SELECT @HOY = '20200701' --GETDATE()
 
 /*************************************************/
 -- select * from #NotificacionesFinales order by id
+-- SE DESHABILITAN LOS CORREOS PARA JULIAN Y LUCIA A PETICION DE KHIANI PEREDO 5/11/2021
+delete from #NotificacionesFinales
+where Destinatario in ('Julian.Guerrero@shell.com','Lucia.Bustamante@shell.com')
 
 	SELECT
 		@MaxNotificacion = MAX(IdNotificacion)

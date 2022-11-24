@@ -1,19 +1,4 @@
-﻿USE [Adinco]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Mobile_CambioEstatusAprobacion'
-)
-    DROP PROCEDURE Mobile_CambioEstatusAprobacion;
-GO 
-/****** Object:  StoredProcedure [dbo].[Mobile_CambioEstatusAprobacion]    Script Date: 15/02/2022 10:05:39 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[Mobile_CambioEstatusAprobacion] @IdAprobacion INT, 
+﻿CREATE PROCEDURE [dbo].[Mobile_CambioEstatusAprobacion] @IdAprobacion INT, 
                                                        @Comentario   VARCHAR(250), 
                                                        @idStatus     INT, 
                                                        @ByMobileApp  INT          = 0

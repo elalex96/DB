@@ -1,16 +1,14 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20200206
 -- Description:	Usuarios Adinco
 -- =============================================
-
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 19/01/2022
 -- Description:	Optimizacion
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_Obten_AP_UsuariosContrato]--3,10109,0
+create PROCEDURE [dbo].[sp_Obten_AP_UsuariosContrato]--3,10109,0
 	@IdContrato INT,
 	@IdUsuario INT,
 	@OpcionTodos INT=0

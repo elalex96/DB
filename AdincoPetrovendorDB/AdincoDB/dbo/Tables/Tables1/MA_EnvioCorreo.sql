@@ -5,6 +5,6 @@
     [IdIdentificacion] NVARCHAR (MAX) NOT NULL,
     [EnviadoPor]       INT            NULL,
     [EnviadoEl]        SMALLDATETIME  NULL,
-    CONSTRAINT [PK_MA_EnvioCorreo] PRIMARY KEY CLUSTERED ([IdEnvioCorreo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MA_EnvioCorreo] PRIMARY KEY CLUSTERED ([IdEnvioCorreo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

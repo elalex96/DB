@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[EN_CarpetasArchivosVisor] (
+    [IdElemento]           INT            IDENTITY (1, 1) NOT NULL,
+    [IsCarpeta]            BIT            NULL,
+    [IsArchivo]            BIT            NULL,
+    [Nombre]               VARCHAR (500)  NULL,
+    [IdPadre]              INT            NULL,
+    [CreadoPor]            INT            NULL,
+    [CreadoEl]             DATETIME       NULL,
+    [Nivel]                INT            NULL,
+    [Activo]               INT            NULL,
+    [Frecuencia]           INT            NULL,
+    [Bucket]               VARCHAR (1000) NULL,
+    [Folder]               VARCHAR (2000) NULL,
+    [UUIDAmazon]           VARCHAR (1000) NULL,
+    [Meta]                 VARCHAR (1000) NULL,
+    [SizeBytes]            FLOAT (53)     NULL,
+    [IdContrato]           INT            NULL,
+    [FechaEliminado]       DATETIME       NULL,
+    [Ruta]                 VARCHAR (MAX)  NULL,
+    [Limitador]            INT            NULL,
+    [IdEntregable]         INT            NULL,
+    [AnioMes]              NVARCHAR (100) NULL,
+    [Etapa]                INT            NULL,
+    [IdReceptorEntregable] INT            NULL,
+    [IsPozo]               BIT            NULL,
+    CONSTRAINT [PK_EN_CarpetasArchivosVisor] PRIMARY KEY CLUSTERED ([IdElemento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

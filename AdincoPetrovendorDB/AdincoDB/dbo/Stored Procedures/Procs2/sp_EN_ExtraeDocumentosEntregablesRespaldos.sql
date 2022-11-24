@@ -1,14 +1,7 @@
-﻿USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_EN_ExtraeDocumentosEntregablesRespaldos]    Script Date: 23/11/2021 05:22:51 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_EN_ExtraeDocumentosEntregablesRespaldos]--3,10061,'20200101','20200331','Descarga todos los archiOs'--24
+CREATE PROCEDURE [dbo].[sp_EN_ExtraeDocumentosEntregablesRespaldos]--3,10061,'20200101','20200331','Descarga todos los archiOs'--24
     @IdContrato		INT,
     @idUsuario		INT,
 	@FechaInicio	DATETIME,

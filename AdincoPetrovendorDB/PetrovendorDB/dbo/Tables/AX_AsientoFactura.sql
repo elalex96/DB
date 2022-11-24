@@ -8,6 +8,6 @@
     [RECID]                     VARCHAR (MAX) NULL,
     [FechaRegistro]             DATETIME      NULL,
     [FechaFechaModifica]        DATETIME      NULL,
-    CONSTRAINT [PK_AX_AsientoFactura] PRIMARY KEY CLUSTERED ([IdAsientoFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AX_AsientoFactura] PRIMARY KEY CLUSTERED ([IdAsientoFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

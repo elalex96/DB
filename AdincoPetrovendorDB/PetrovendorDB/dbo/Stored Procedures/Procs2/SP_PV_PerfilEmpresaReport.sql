@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL AC 
 -- Update date: 08/05/2018
 -- Description:	Cambio de refrencia de s_documento a s_documento_s3

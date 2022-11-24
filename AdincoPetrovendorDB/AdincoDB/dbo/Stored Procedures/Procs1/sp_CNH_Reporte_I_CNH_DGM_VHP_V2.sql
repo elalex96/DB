@@ -2202,7 +2202,7 @@ BEGIN
 			AND	PDP.Fecha		=	PD.Fecha
 		WHERE
 			I.Activo = 1
-
+			AND (ROUND(ISNULL(PDP.ProdPetroleoBruto,0),3) + ROUND(ISNULL(PDP.GastoGas,0),3)) > 0
 		UNION
 
 		/************************* AFOROS DE POZO ****************************/
@@ -2264,6 +2264,7 @@ BEGIN
 			AND	PDP.Fecha		=	PD.Fecha
 		WHERE
 			I.Activo = 1
+			AND (ROUND(ISNULL(PDP.ProduccionReal,0),3) + ROUND(ISNULL(PDP.ProduccionRealGasM3,0),3)) > 0
 		 ORDER BY
 			C.NumeroContrato,
 			P.Nombre,

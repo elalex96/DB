@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PC_ConsultarDatosEvaluadorComprobante'
-)
-    DROP PROCEDURE SP_PC_ConsultarDatosEvaluadorComprobante;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_ConsultarDatosEvaluadorComprobante]    Script Date: 06/10/2022 03:26:09 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		DANIEL AC 
 -- Create date: 18/04/2018
 -- Description:	CONSULTAR DE INFORMACIÓN DE PERSONA QUE REALIZARA EVALUACIÓN AL PROVEEDOR

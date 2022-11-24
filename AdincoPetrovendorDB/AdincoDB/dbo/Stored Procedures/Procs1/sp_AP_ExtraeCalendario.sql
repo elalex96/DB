@@ -27,7 +27,7 @@ BEGIN
 				FinDeSemana,
 				DiaFeriado,
 				Descripcion from AP_Calendario
-				WHERE ANIO   >= YEAR(GETDATE())
+				WHERE ANIO   >= YEAR(GETDATE())-1
 				AND   IdFecha <= DATEADD(YEAR,5,GETDATE())
 	END
 	ELSE
@@ -63,7 +63,7 @@ BEGIN
 					LEFT JOIN AP_CalendarioExcepciones CE 
 						ON C.IdFecha= CE.IdFecha AND CE.IdRegulador=@IdRegulador
 						AND CE.Activo = 1
-					WHERE ANIO   >= YEAR(GETDATE())
+					WHERE ANIO   >= YEAR(GETDATE())-1
 					AND   C.IdFecha <= DATEADD(YEAR,5,GETDATE())
 	END
 END;

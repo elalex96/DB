@@ -1,20 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'DEA_ReporteTransacciones'
-)
-    DROP VIEW DEA_ReporteTransacciones;
-	
-/****** Object:  View [dbo].[DEA_ReporteTransacciones]    Script Date: 30/08/2022 04:54:21 p. m. ******/
-SET ANSI_NULLS ON
-GO
-
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 CREATE VIEW [dbo].[DEA_ReporteTransacciones]
 AS
 	SELECT  Bloque AS BLOQUE, 
@@ -46,5 +30,3 @@ AS
 			EstatusFinal AS [Status], 
 			PeriodoEnADINCO AS [Periodo en ADINCO]
 		FROM dbo.APP_TransaccionesProcura
-GO
-

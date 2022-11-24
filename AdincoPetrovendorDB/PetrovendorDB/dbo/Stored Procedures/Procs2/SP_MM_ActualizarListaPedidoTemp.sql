@@ -19,23 +19,21 @@ AS
         -- interfering with SELECT statements.
 
         SET NOCOUNT ON;
-        DECLARE @PRECIO_UNITARIO FLOAT,
-        @SUB_TOTAL FLOAT,
-        @ID_PETICION_OFERTA INT,
-        @ID_MATERIAL_SOLICITADO INT,
-        @ID_MMAESTRO INT,
-        @ADD_MM_ADD_PETICION_OFERTA FLOAT,
-        @ADD_MM_SOLICITADOS_PETICION_OFERTA FLOAT,
-        @ADJUDICACION_PARCIAL BIT,
-        @ADD_PETICION_OFERTA_DETALLE_ACTUAL FLOAT,
-        @ID_SOL_PED_DETALLE_ACTUAL INT,
-        @MATERIALES_FALTANTES FLOAT,
-        @CM_DISPONIBLES FLOAT,
-        @ID_CONDICIONPAGO INT,
-        @DIAS_CREDITO INT,
-		@MATERIALES_ADJ_DISPONIBLES DECIMAL(12, 2),
-		@MATERIALES_UNICA_DISPONIBLES DECIMAL(12, 2),
-		@FECHACONSULTA DATETIME= GETDATE();
+        DECLARE @PRECIO_UNITARIO FLOAT;
+        DECLARE @SUB_TOTAL FLOAT;
+        DECLARE @ID_PETICION_OFERTA INT;
+        DECLARE @ID_MATERIAL_SOLICITADO INT;
+        DECLARE @ID_MMAESTRO INT;
+        DECLARE @ADD_MM_ADD_PETICION_OFERTA FLOAT;
+        DECLARE @ADD_MM_SOLICITADOS_PETICION_OFERTA FLOAT;
+        DECLARE @ADJUDICACION_PARCIAL BIT;
+        DECLARE @ADD_PETICION_OFERTA_DETALLE_ACTUAL FLOAT;
+        DECLARE @ID_SOL_PED_DETALLE_ACTUAL INT;
+        DECLARE @MATERIALES_FALTANTES FLOAT;
+        DECLARE @CM_DISPONIBLES FLOAT;
+        DECLARE @ID_CONDICIONPAGO INT;
+        DECLARE @DIAS_CREDITO INT;
+
         ---#AGREGAR a la lista de Pedido
         IF @AddPedidoTemp = 1
             BEGIN
@@ -83,12 +81,9 @@ AS
                 (
                     SELECT SUM(POD.AddCantidadTemp)
                     FROM MM_PeticionOfertaDetalle AS POD
-                         INNER JOIN MM_PeticionOferta AS PO (nolock)
-							ON POD.IdPeticionOferta = PO.IdPeticionOferta
-                         INNER JOIN MM_SolicitudPedidoDetalle AS SPD (nolock)
-							ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
-                         INNER JOIN MM_Maestro AS MM (nolock)
-							ON SPD.IdMaterial = MM.IdMaestro
+                         INNER JOIN MM_PeticionOferta AS PO ON PO.IdPeticionOferta = POD.IdPeticionOferta
+                         INNER JOIN MM_SolicitudPedidoDetalle AS SPD ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+                         INNER JOIN MM_Maestro AS MM ON MM.IdMaestro = SPD.IdMaterial
                     WHERE POD.IdSolicitudPedidoDetalle = @ID_SOL_PED_DETALLE_ACTUAL
                           AND POD.AddValidado = 1
                 );
@@ -96,14 +91,13 @@ AS
                 (
                     SELECT POD.NoMaterialesRequeridos
                     FROM MM_PeticionOfertaDetalle AS POD
-            WHERE IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle
+                    WHERE IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle
                 );
                 SET @ADJUDICACION_PARCIAL =
                 (
                     SELECT SP.AdjudicableParcialmente
-                    FROM MM_SolicitudPedido AS SP (NOLOCK)
-                         INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
-							ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+                    FROM MM_SolicitudPedido AS SP
+                         INNER JOIN MM_PeticionOferta AS PO ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
                     WHERE PO.IdPeticionOferta = @ID_PETICION_OFERTA
                 );
                 SET @ADD_PETICION_OFERTA_DETALLE_ACTUAL =
@@ -126,6 +120,7 @@ AS
                  MaterialSolicitado                  NVARCHAR(MAX), 
                  CantidadRecibidaPedidoCerrado       FLOAT
                 );
+                DECLARE @FECHACONSULTA DATETIME= GETDATE();
                 INSERT INTO #CM_ESTATUS
                 EXEC dbo.SP_MM_ConsultarEstatusCantidadesMaterialSPD_MV1_5 
                      @IdSolicitudPedidoDetalle = @ID_SOL_PED_DETALLE_ACTUAL, -- int
@@ -163,6 +158,7 @@ AS
                         -- VALIDAR LA DISPONIBILIDAD DE LA COTIZACIÓN DEL PROVEEDOR QUE NO SOBREPASE LA CANTIDAD INGRESADA 					
                         IF CAST(ISNULL(@CM_DISPONIBLES, 0) AS DECIMAL(12, 2)) >= CAST(ISNULL(@AddCantidadTemp, 0) AS DECIMAL(12, 2))
                             BEGIN
+                                DECLARE @MATERIALES_ADJ_DISPONIBLES DECIMAL(12, 2);
                                 SET @MATERIALES_ADJ_DISPONIBLES = (ISNULL(@MATERIALES_FALTANTES, 0) + ISNULL(@ADD_PETICION_OFERTA_DETALLE_ACTUAL, 0));
                                 --VALIDAR QUE LA CANTIDAD SOLICITADA NO SOBREPASE LA CANTIDAD AGREGADA 
                                 -- COMO EN @CM_DISPONIBLES NO SE TOMAN EN CUENTA LOS MATERIALES EN ORDEN DE COMPRA TEMPORAL SE DEBEN SUMAR A LA DISPONIBLIDAD ACTUAL
@@ -216,6 +212,7 @@ AS
                     BEGIN
 
                         ---#ADJUDICACION UNICA -
+                        DECLARE @MATERIALES_UNICA_DISPONIBLES DECIMAL(12, 2);
                         SET @MATERIALES_UNICA_DISPONIBLES = (ISNULL(@MATERIALES_FALTANTES, 0) + ISNULL(@ADD_PETICION_OFERTA_DETALLE_ACTUAL, 0));
                         ---VALIDAR QUE LA CANTIDAD NO SOBREPASE LA CANTIDAD SOLICITADA 
                         --- EN ADJUDICACIÓN ÚNICA SE DEBE AGREGAR A LA ORDEN DE COMPRA LA CANTIDAD INDICADA EN LA SOLPED DETALLE ACTUAL
@@ -227,7 +224,7 @@ AS
                                     SELECT PrecioUnitario
                                     FROM MM_PeticionOfertaDetalle
                                     WHERE IdPeticionOfertaDetalle = @IdPeticionOfertaDetalle
-           );
+                                );
                                 SET @SUB_TOTAL = @PRECIO_UNITARIO * @AddCantidadTemp;
 
                                 ---#ACTUALIZAR CANTIDADES ----

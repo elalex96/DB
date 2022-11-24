@@ -1,4 +1,4 @@
-﻿Create PROCEDURE p_EliminarEquiposAutoconsumo
+﻿CREATE PROCEDURE p_EliminarEquiposAutoconsumo
 @pIdContrato	int,
 @pIdEquipo	int,
 @UsuarioId INT

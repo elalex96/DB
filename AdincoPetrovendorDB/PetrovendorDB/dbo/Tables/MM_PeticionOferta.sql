@@ -30,8 +30,23 @@
     [IdEliminado]               INT            NULL,
     [AMS3]                      BIT            NULL,
     [CotizacionRestringida]     BIT            NULL,
-    CONSTRAINT [PK_MM_PeticionOferta] PRIMARY KEY CLUSTERED ([IdPeticionOferta] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MM_PeticionOferta] PRIMARY KEY CLUSTERED ([IdPeticionOferta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_PeticionOferta_MM_SolicitudPedido] FOREIGN KEY ([IdSolicitudPedido]) REFERENCES [dbo].[MM_SolicitudPedido] ([IdSolicitudPedido]),
     CONSTRAINT [FK_MM_PeticionOferta_PV_Subcontratista] FOREIGN KEY ([IdSubcontratista]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])
 );
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxActivo_MM_PeticionOferta]
+    ON [dbo].[MM_PeticionOferta]([Activo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxIdSolicitudPedido_MM_PeticionOferta]
+    ON [dbo].[MM_PeticionOferta]([IdSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+
+
+GO
+CREATE NONCLUSTERED INDEX [idxIdSubcontratista_MM_PeticionOferta]
+    ON [dbo].[MM_PeticionOferta]([IdSubcontratista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

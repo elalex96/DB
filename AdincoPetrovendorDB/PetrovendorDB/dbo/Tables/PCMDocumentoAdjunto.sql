@@ -13,6 +13,7 @@
     [Identificador]     NVARCHAR (MAX) NULL,
     [Mime]              NVARCHAR (500) NULL,
     [Extension]         NVARCHAR (500) NULL,
-    [NombreDocumento]   NVARCHAR (MAX) NULL
+    [NombreDocumento]   NVARCHAR (MAX) NULL,
+    [Bucket]            VARCHAR (200)  NULL
 );
 

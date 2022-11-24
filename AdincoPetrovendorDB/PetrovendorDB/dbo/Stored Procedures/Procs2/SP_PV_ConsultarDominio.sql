@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PV_ConsultarDominio]    Script Date: 26/11/2021 01:58:10 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Author,,Name>
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_PV_ConsultarDominio] 
+CREATE PROCEDURE [dbo].[SP_PV_ConsultarDominio] 
 	-- Add the parameters for the stored procedure here
 	@IDENTIFICADOR INT
 AS

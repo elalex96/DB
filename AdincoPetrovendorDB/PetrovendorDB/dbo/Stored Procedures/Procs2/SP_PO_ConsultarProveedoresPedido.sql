@@ -1,19 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PO_ConsultarProveedoresPedido'
-)
-    DROP PROCEDURE SP_PO_ConsultarProveedoresPedido;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PO_ConsultarProveedoresPedido]    Script Date: 31/10/2022 05:41:12 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- DAC- No retornar usuarios inactivos 
+﻿-- DAC- No retornar usuarios inactivos 
 CREATE PROCEDURE [dbo].[SP_PO_ConsultarProveedoresPedido] 
 @IdSolicitudPedido 
 INT, @Version INT, 

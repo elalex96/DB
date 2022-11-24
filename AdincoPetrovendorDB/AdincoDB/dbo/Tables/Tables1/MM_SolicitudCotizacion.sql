@@ -41,6 +41,6 @@
     [fecha_fin_cot]   DATETIME        NULL,
     [descuento]       FLOAT (53)      NULL,
     [CreadoPor]       INT             NULL,
-    CONSTRAINT [PK_admin_sol_cotizacion] PRIMARY KEY CLUSTERED ([numero] ASC, [id_encryptado] ASC, [id_registro] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_admin_sol_cotizacion] PRIMARY KEY CLUSTERED ([numero] ASC, [id_encryptado] ASC, [id_registro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

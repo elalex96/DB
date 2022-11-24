@@ -6,6 +6,6 @@
     [IdUsuario]     INT            NULL,
     [IdProveedor]   INT            NULL,
     [FechaRegistro] DATETIME       NULL,
-    PRIMARY KEY CLUSTERED ([IdError] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdError] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

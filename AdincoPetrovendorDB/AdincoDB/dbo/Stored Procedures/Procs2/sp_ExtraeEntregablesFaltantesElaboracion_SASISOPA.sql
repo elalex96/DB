@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_SASISOPA] --3,10061
+﻿CREATE PROCEDURE [dbo].[sp_ExtraeEntregablesFaltantesElaboracion_SASISOPA] --3,10061
     @IdContrato INT,
     @idUsuario INT
 AS
@@ -16,30 +16,35 @@ BEGIN
     -- Create date: 2020-05-11
     -- Description: Se agregar NOLOCKS en las tablas que tienen mas recurrencia y referencias al objero dbo
     -- =============================================
+	-- =============================================
+    -- Author:  Luis David 
+    -- Create date: 28/09/22
+    -- Description: Se eliminan subconsultas, reacomodo de tablas según su declaración y su cantidad de datos Issue#809(Entregables)
+    -- =============================================
     SET NOCOUNT ON;
 	SET LANGUAGE Spanish; 
+    DECLARE @Count  INT =   0;
 
     CREATE TABLE #TempInstancias
     (
 
-     id INT PRIMARY KEY IDENTITY(1, 1),
+		id INT PRIMARY KEY IDENTITY(1, 1),
         FechasLimiteElaboracion DATE,
         idEntregable INT,
         countIntancias INT NULL
     );
+	CREATE NONCLUSTERED INDEX ix_tempTempInstanciasSASI ON #TempInstancias (FechasLimiteElaboracion);
 
     CREATE TABLE #GrupoUsuario
     (
-        id INT PRIMARY KEY IDENTITY(1, 1),
         IdUsuarioGrupo int
 	);
-
+	CREATE NONCLUSTERED INDEX ix_tempGrupoUsuarioSASI ON #GrupoUsuario (IdUsuarioGrupo);
 	CREATE TABLE #Area
-  (
-	IdArea	INT
-  )
-
-      DECLARE @Count  INT =   0;
+	(
+		IdArea	INT
+	)
+	CREATE NONCLUSTERED INDEX ix_tempAreaSASI ON #Area (IdArea);
 
   INSERT INTO #Area
   SELECT IdArea
@@ -48,9 +53,7 @@ BEGIN
   AND (NombreArea LIKE '%HSSE%' OR NombreArea LIKE '%HSE%')
   GROUP BY  IdArea
 
-    INSERT INTO #GrupoUsuario   (IdUsuarioGrupo
-
-)
+    INSERT INTO #GrupoUsuario   (IdUsuarioGrupo)
     SELECT  IdGrupo 
     FROM    dbo.EN_GruposUsuarios (NOLOCK)
     WHERE   
@@ -69,10 +72,10 @@ BEGIN
 		dbo.EN_InstanciasEntregable IE	(NOLOCK)
     JOIN    
 		dbo.EN_ContratoEntregable   CE  (NOLOCK)
-        ON  IE.IdContratoEntregable =   CE.IdContratoEntregable
-        AND CE.IdContrato   =   @IdContrato
-		AND   CE.Activo   =   1
-        AND   IE.Activo   =   1
+        ON  IE.IdContratoEntregable =	CE.IdContratoEntregable
+        AND @IdContrato				=	CE.IdContrato
+		AND 1						=	CE.Activo
+        AND   1						=	IE.Activo
 		AND IE.FechaCalculadaEntregaReg < DATEADD(YEAR,5,GETDATE())
 	JOIN
 		#Area	AREA
@@ -80,6 +83,8 @@ BEGIN
     JOIN    
 		dbo.EN_Actividad    A	(NOLOCK)
         ON  IE.ActividadID  =   A.ActividadID
+	JOIN #GrupoUsuario AS GU
+		on A.idUsuario = GU.IdUsuarioGrupo
     JOIN 
 		dbo.EN_Entregable ENT (NOLOCK)
         ON  CE.IdEntregable =   Ent.IdEntregable
@@ -96,18 +101,19 @@ BEGIN
 		dbo.EN_ExcepcionesActividad EXAR (NOLOCK)
         ON  A.ActividadID   =   EXAR.ActividadIDExcepcion 
         AND IE.idInstanciaEntregable    =   EXAR.IdInstanciasEntregables 
-    
+		AND GU.IdUsuarioGrupo = EXAR.idUsuario
 WHERE  
-	((A.idUsuario IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
-            AND   EXAR.IdInstanciasEntregables    IS NULL
-            AND   A.EstadoID  =   10000
-          )
+            (EXAR.IdInstanciasEntregables    IS NULL
+            AND   A.EstadoID  =   10000)
+          
 	 OR (
-        EXAR.idUsuario   IN (SELECT IdUsuarioGrupo FROM #GrupoUsuario)
-        AND EXAR.IdInstanciasEntregables    IS NOT NULL
-        AND EXAR.EstadoID   =   10000   ) )
+        EXAR.IdInstanciasEntregables    IS NOT NULL
+        AND EXAR.EstadoID   =   10000   ) 
     GROUP   BY  IE.FechasLimiteElaboracion,
 	    CE.IdEntregable
+
+----------------------
+---------------------------
 
     SELECT @Count = MAX(id)
     FROM #TempInstancias;
@@ -232,7 +238,7 @@ WHERE
 		E.NombreEstado AS Estatus,
         ISNULL(f.FrecuenciaEntregable,'') AS FrecuenciaEntregable,
     ISNULL(Et.Etapa,'') as Etapa,
-        ISNULL(EN.idRegulador,'')as idRegulador,
+   ISNULL(EN.idRegulador,'')as idRegulador,
         @Count AS countI,
         EN.Consecutivo,
         ISNULL(EN.Articulo,'') AS Articulo,

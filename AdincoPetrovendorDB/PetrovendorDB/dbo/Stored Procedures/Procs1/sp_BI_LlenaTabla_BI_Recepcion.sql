@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_BI_LlenaTabla_BI_Recepcion]    Script Date: 30/03/2021 10:59:08 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[sp_BI_LlenaTabla_BI_Recepcion]
+﻿CREATE PROCEDURE [dbo].[sp_BI_LlenaTabla_BI_Recepcion]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -152,7 +145,7 @@ BEGIN
            C.NumeroContrato,
            UR.Nombre,
            UC.Nombre,
-           S.MotivoUrgencia,
+           SUBSTRING(S.MotivoUrgencia,1,8000),
            P.FechaEnvioPedido,
            P.CreadoEl,
            TM.TipoMonedaCorto,

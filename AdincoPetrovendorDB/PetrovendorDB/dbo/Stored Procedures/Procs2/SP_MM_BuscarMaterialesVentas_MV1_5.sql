@@ -33,7 +33,7 @@ BEGIN
 		FROM		MM_Material				AS	M	
 		inner JOIN	PV_MM_MaterialUnidad	AS	MU 
 		ON			MU.IdUnidad				=	M.IdUnidad
-		inner join	dbo.S_Usuario			u	
+		LEFT join	dbo.S_Usuario			u	
 		ON			u.IdUsuario				=	m.CreadoPor
 		WHERE		M.IdProveedor			=	@IdProveedor 
 		AND			M.Activo				=	1 
@@ -58,11 +58,10 @@ BEGIN
 		FROM		dbo.MM_Material			AS	M	
 		inner JOIN	PV_MM_MaterialUnidad	AS	MU 
 		ON			MU.IdUnidad				=	M.IdUnidad 
-		inner join	dbo.S_Usuario			u	ON u.IdUsuario = m.CreadoPor
+		LEFT join	dbo.S_Usuario			u	ON u.IdUsuario = m.CreadoPor
 		WHERE		M.IdProveedor			=	@IdProveedor 
 		AND			M.Activo				=	1 
 		ORDER BY	M.IdMaterial ASC
 	
 		
 END
-

@@ -73,7 +73,8 @@ DECLARE
 	@PorcentajeMinVta		FLOAT = 50
 
 SELECT
-	@UsuarioPEP	=	CASE WHEN Usuario LIKE '%@pemex.com%' THEN 1 ELSE 0	END
+	@UsuarioPEP	=	CASE WHEN Usuario LIKE '%@pemex.com%' THEN 1 
+					ELSE 0	END
 FROM
 	dbo.AP_Usuario
 WHERE
@@ -446,7 +447,7 @@ BEGIN
                 'NA' AS RMLCT25_41, 
                 'NA' AS RMLCT25_42, 
                 'NA' AS RMLCT25_43, 
-                'NA' AS RMLCT25_44, 
+      'NA' AS RMLCT25_44, 
                 'NA' AS RMLCT25_45
             FROM dbo.PR_VolumenMensualProduccionPetroleo VMPPG
                 JOIN dbo.CO_Contrato C ON VMPPG.IdContrato = C.IdContrato
@@ -605,7 +606,7 @@ BEGIN
         NULL AS RMLCT25_16, 
         NULL AS RMLCT25_17, 
         NULL AS RMLCT25_18, 
-        NULL AS RMLCT25_19, 
+     NULL AS RMLCT25_19, 
         NULL AS RMLCT25_20, 
         NULL AS RMLCT25_21, 
         NULL AS RMLCT25_22, 

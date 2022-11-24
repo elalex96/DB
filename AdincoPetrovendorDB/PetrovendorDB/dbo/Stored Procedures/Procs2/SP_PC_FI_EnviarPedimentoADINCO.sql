@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PC_FI_EnviarPedimentoADINCO]    Script Date: 19/07/2022 01:41:14 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:		DANIEL AC
 -- Create date: 28-03-18
@@ -22,7 +15,7 @@ GO
 -- Description:	<se agrego la bitacora de envio adinco>
 -- =============================================
 
-ALTER  PROCEDURE [dbo].[SP_PC_FI_EnviarPedimentoADINCO]
+CREATE  PROCEDURE [dbo].[SP_PC_FI_EnviarPedimentoADINCO]
     -- Add the parameters for the stored procedure here
     @IdPedimentoComprobante INT,   
     @IdProveedor INT,

@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_GuardarDocumentoAnexo'
-)
-    DROP PROCEDURE SP_MM_GuardarDocumentoAnexo;
-/****** Object:  StoredProcedure [dbo].[SP_MM_GuardarDocumentoAnexo]    Script Date: 20/07/2021 05:04:13 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:		<>
 -- Update date: <>
@@ -69,5 +55,3 @@ BEGIN
     ) 
 
 END
-
-

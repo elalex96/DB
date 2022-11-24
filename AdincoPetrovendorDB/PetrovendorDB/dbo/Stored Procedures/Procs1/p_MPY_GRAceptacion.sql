@@ -1,12 +1,5 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[p_MPY_GRAceptacion]    Script Date: 09/09/2022 11:24:15 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
-ALTER Proc [dbo].[p_MPY_GRAceptacion]
+﻿-- p_MPY_GRAceptacion 3,'4500092975',80,'20190305',0
+CREATE Proc [dbo].[p_MPY_GRAceptacion]
 @pIdContrato int,
 @pPO_SAPNumber varchar(50),
 @pPOLineNumber varchar(50),
@@ -20,18 +13,20 @@ as
 
 	select @rfcContratista = con.RFC,
 		@idContratista = c.IdContratista
-	from Adinco..CO_Contrato c (NOLOCK)
+	from Adinco..CO_Contrato c
 	inner join Adinco..CO_Contratista con on con.IdContratista = c.IdContratista
 	where c.IdContrato = @pIdContrato
 
 	select @IDACEPTACIONPEDIDO=aprov.IdAceptacionPedido
-	from  MPY_MM_AceptacionPedido aprov (NOLOCK)
-		inner join Adinco..CO_SAPGR ses (NOLOCK) on ses.PO_SAPNumber = @pPO_SAPNumber and
-											ses.DocumentDate =  @pDocumentDate
-		inner join Adinco..CO_SAPPO po (NOLOCK) on ses.PO_SAPNumber = po.SAPPONumber and
+	from  MPY_MM_AceptacionPedido aprov
+		inner join Adinco..CO_SAPGR ses on ses.PO_SAPNumber = @pPO_SAPNumber and
+											ses.DocumentDate =  @pDocumentDate--And
+											--ses.POLineNumber = @pPOLineNumber 
+		inner join Adinco..CO_SAPPO po on po.SAPPONumber = ses.PO_SAPNumber and
 								po.ItemNumber = ses.POLineNumber									
 	where aprov.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = ses.PO_SAPNumber COLLATE SQL_Latin1_General_CP1_CI_AS and
-	aprov.DocumentDate COLLATE SQL_Latin1_General_CP1_CI_AS =  ses.DocumentDate COLLATE SQL_Latin1_General_CP1_CI_AS
+	aprov.DocumentDate COLLATE SQL_Latin1_General_CP1_CI_AS =  ses.DocumentDate COLLATE SQL_Latin1_General_CP1_CI_AS--and
+	--aprov.ServiceLineNumber COLLATE SQL_Latin1_General_CP1_CI_AS = ses.POLineNumber COLLATE SQL_Latin1_General_CP1_CI_AS
 
 
 	/**********encabezado SES***************/
@@ -56,17 +51,17 @@ as
 		ven.ContactEmail,	ven.Country,			min(po.ItemNumber),	po.ShortText,
 		po.ParentLineUOM,	po.ServiceShortText,	po.ServicesUOM,			GRReferenceNumber,
 		@pDocumentDate
-		from Adinco..CO_SAPGR ses (NOLOCK)
-		inner join Adinco..CO_SAPPO po (NOLOCK) on ses.PO_SAPNumber = po.SAPPONumber and
-								ses.POLineNumber = po.ItemNumber 	
-		inner join Adinco..CO_SAPVendor ven (NOLOCK) on po.SAPVendorNumber = ven.VendorIDSAP						
+		from Adinco..CO_SAPGR ses 
+		inner join Adinco..CO_SAPPO po on po.SAPPONumber = ses.PO_SAPNumber and
+								po.ItemNumber = ses.POLineNumber	
+		inner join Adinco..CO_SAPVendor ven	on ven.VendorIDSAP = 	po.SAPVendorNumber						
 		where ses.PO_SAPNumber = @pPO_SAPNumber And
 								ses.POLineNumber = @pPOLineNumber 
 		--Se agregó esta validación para evitar duplicar aceptaciones, por el nuevo cambio de llave primaria en la tabla CO_SAPGR
 		and not exists (
 			select 1
-			from MPY_MM_AceptacionPedidoDetalle st1 (NOLOCK)
-			inner join [MPY_MM_AceptacionPedido] st2 (NOLOCK) on ses.PO_SAPNumber COLLATE Modern_Spanish_CI_AS = st2.IdPedido COLLATE Modern_Spanish_CI_AS
+			from MPY_MM_AceptacionPedidoDetalle st1
+			inner join [MPY_MM_AceptacionPedido] st2 on st2.IdPedido COLLATE Modern_Spanish_CI_AS = ses.PO_SAPNumber COLLATE Modern_Spanish_CI_AS
 			where st1.IdAceptacionPedido = st2.IdAceptacionPedido and
 			st1.[Partida] COLLATE Modern_Spanish_CI_AS = ses.POLineNumber  COLLATE Modern_Spanish_CI_AS and
 			st1.Cantidad = ses.Quantity
@@ -102,11 +97,12 @@ as
 			ParentLineUOM=po.ParentLineUOM,		ServiceShortText=po.ServiceShortText,		
 			ServicesUOM=po.ServicesUOM,
 			ReferenceNumber = case when aprov.ReferenceNumber COLLATE Modern_Spanish_CI_AS is null or aprov.ReferenceNumber = '' then ses.GRReferenceNumber COLLATE Modern_Spanish_CI_AS  else aprov.ReferenceNumber COLLATE Modern_Spanish_CI_AS end
-		from MPY_MM_AceptacionPedido aprov (NOLOCK)
-		inner join Adinco..CO_SAPGR ses (NOLOCK) on ses.PO_SAPNumber = @pPO_SAPNumber
-		inner join Adinco..CO_SAPPO po (NOLOCK) on ses.PO_SAPNumber = po.SAPPONumber and
-								ses.POLineNumber = po.ItemNumber		
-		inner join Adinco..CO_SAPVendor ven (NOLOCK)	on po.SAPVendorNumber = ven.VendorIDSAP						
+		from MPY_MM_AceptacionPedido aprov
+		inner join Adinco..CO_SAPGR ses on ses.PO_SAPNumber = @pPO_SAPNumber --And
+											--ses.POLineNumber = @pPOLineNumber 
+		inner join Adinco..CO_SAPPO po on po.SAPPONumber = ses.PO_SAPNumber and
+								po.ItemNumber = ses.POLineNumber		
+		inner join Adinco..CO_SAPVendor ven	on ven.VendorIDSAP = 	po.SAPVendorNumber						
 		where aprov.IdAceptacionPedido = @IDACEPTACIONPEDIDO
 		and aprov.IdAceptacionPedido not in (99,712)
 
@@ -143,27 +139,37 @@ as
 			ses.MaterialGroupDesc2,
 			ses.MaterialGroupDesc2
 		
-	from MPY_MM_AceptacionPedido aprov (NOLOCK)
-	inner join Adinco..CO_SAPGR ses (NOLOCK) on ses.PO_SAPNumber = @pPO_SAPNumber
-	inner join Adinco..CO_SAPPO po (NOLOCK) on po.SAPPONumber = ses.PO_SAPNumber and
+	from MPY_MM_AceptacionPedido aprov
+	inner join Adinco..CO_SAPGR ses on ses.PO_SAPNumber = @pPO_SAPNumber --And
+											--ses.POLineNumber = @pPOLineNumber 
+	inner join Adinco..CO_SAPPO po on po.SAPPONumber = ses.PO_SAPNumber and
 								po.ItemNumber = ses.POLineNumber		
 	where aprov.IdAceptacionPedido = @IDACEPTACIONPEDIDO
+	--and aprov.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = ses.PO_SAPNumber COLLATE SQL_Latin1_General_CP1_CI_AS --and
+		--aprov.ServiceLineNumber COLLATE SQL_Latin1_General_CP1_CI_AS = ses.POLineNumber COLLATE SQL_Latin1_General_CP1_CI_AS
 	and not exists(
 		select 1
-		from MPY_MM_AceptacionPedidoDetalle s1 (NOLOCK)
+		from MPY_MM_AceptacionPedidoDetalle s1
 		where s1.IdAceptacionPedido  = aprov.IdAceptacionPedido and
+		--s1.SAPNumber Collate SQL_Latin1_General_CP1_CI_AS = ses.PO_SAPNumber Collate SQL_Latin1_General_CP1_CI_AS and
 		s1.Partida Collate SQL_Latin1_General_CP1_CI_AS = ses.POLineNumber Collate SQL_Latin1_General_CP1_CI_AS
 
 	)
 	--Se agregó esta validación para evitar duplicar aceptaciones, por el nuevo cambio de llave primaria en la tabla CO_SAPGR
 		and not exists (
 			select 1
-			from MPY_MM_AceptacionPedidoDetalle st1 (NOLOCK)
-			inner join [MPY_MM_AceptacionPedido] st2 (NOLOCK) on st2.IdPedido COLLATE Modern_Spanish_CI_AS = ses.PO_SAPNumber COLLATE Modern_Spanish_CI_AS
+			from MPY_MM_AceptacionPedidoDetalle st1
+			inner join [MPY_MM_AceptacionPedido] st2 on st2.IdPedido COLLATE Modern_Spanish_CI_AS = ses.PO_SAPNumber COLLATE Modern_Spanish_CI_AS
 			where st1.IdAceptacionPedido = st2.IdAceptacionPedido and
 			st1.[Partida] COLLATE Modern_Spanish_CI_AS = ses.POLineNumber COLLATE Modern_Spanish_CI_AS and
 			st1.Cantidad = ses.Quantity
 			
 		)
+	
+
+
+
+
+
 
 	set @pIdAceptacionPedido = isnull(@pIdAceptacionPedido,0)

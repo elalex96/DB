@@ -47,11 +47,11 @@
     [VolumenCondensablePuntoMedicion]           FLOAT (53)      NULL,
     [VolumenCondensableAutoconsumo]             FLOAT (53)      NULL,
     [IsEditado]                                 BIT             DEFAULT ((1)) NOT NULL,
-    CreadoPor                                   INT,
-    CreadoEl                                    DATETIME,
-    ModificadoPor                               INT,
-    ModificadoEl                                DATETIME,
-    CONSTRAINT [PK_PR_VolumenMensualProduccion] PRIMARY KEY CLUSTERED ([IdReporteVolumenesProduccionPetroleo] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [CreadoPor]                                 INT             NULL,
+    [CreadoEl]                                  DATETIME        NULL,
+    [ModificadoPor]                             INT             NULL,
+    [ModificadoEl]                              DATETIME        NULL,
+    CONSTRAINT [PK_PR_VolumenMensualProduccion] PRIMARY KEY CLUSTERED ([IdReporteVolumenesProduccionPetroleo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PR_VolumenMensualProduccionPetroleo_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

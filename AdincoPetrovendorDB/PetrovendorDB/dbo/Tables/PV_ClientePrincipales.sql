@@ -8,6 +8,6 @@
     [EditadoPor]           INT            NULL,
     [EditadoEl]            DATETIME       NULL,
     [RFC]                  NVARCHAR (350) NULL,
-    CONSTRAINT [PK_PV_ClientePrincipales] PRIMARY KEY CLUSTERED ([IdClientePrincipales] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_ClientePrincipales] PRIMARY KEY CLUSTERED ([IdClientePrincipales] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -1,14 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_AceptacionPedidoProveedorVentasExtranjeros'
-)
-    DROP PROCEDURE SP_PR_MM_AceptacionPedidoProveedorVentasExtranjeros;
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 23-03-18
 -- Description:	Consulta Aceptaciones de pedido de extranjeros proveedor de ventas para pedimento o comprobante

@@ -18,7 +18,7 @@
     [Volumen15Grados] FLOAT (53) NULL,
     [Temperatura]     FLOAT (53) NULL,
     [CampoID]         INT        DEFAULT ((1)) NOT NULL,
-    CONSTRAINT [PK_SCOC_ReporteDiarioPetroleo] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [MesReporte] ASC, [Dia] ASC, [CampoID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_SCOC_ReporteDiarioPetroleo] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [MesReporte] ASC, [Dia] ASC, [CampoID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_SCOC_ReporteDiarioPetroleo_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SCOC_ReporteDiarioPetroleo_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_SCOC_ReporteDiarioPetroleo_Campo] FOREIGN KEY ([CampoID]) REFERENCES [dbo].[SCOC_Campo] ([CampoID]),

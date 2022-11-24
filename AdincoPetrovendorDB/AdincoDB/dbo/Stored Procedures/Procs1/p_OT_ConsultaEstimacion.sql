@@ -31,6 +31,3 @@ as
 			Subcontratista,
 			vw.Moneda
 			
-GO
-
-

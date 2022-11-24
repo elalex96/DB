@@ -8,6 +8,6 @@
     [IdUsuarioModPor]    INT           NULL,
     [Modificado]         DATETIME      NULL,
     [CreadoPor]          INT           NULL,
-    CONSTRAINT [PK_Actividades] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Actividades] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

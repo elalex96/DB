@@ -8,6 +8,6 @@
     [IdTabla]                   INT            NULL,
     [HistorialTipo]             INT            NULL,
     [Version]                   INT            NULL,
-    CONSTRAINT [PK_PA_HistorialProcesoAbierto] PRIMARY KEY CLUSTERED ([IdHistorialProcesoAbierto] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PA_HistorialProcesoAbierto] PRIMARY KEY CLUSTERED ([IdHistorialProcesoAbierto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

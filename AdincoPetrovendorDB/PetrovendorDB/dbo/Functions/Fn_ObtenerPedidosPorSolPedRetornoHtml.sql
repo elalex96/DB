@@ -1,8 +1,4 @@
-﻿use Petrovendor
-go
-drop function if exists Fn_ObtenerPedidosPorSolPedRetornoHtml
-go
--- =============================================
+﻿-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 30/08/2018
 -- Description: obtener los pedidos de cada solicitud de pedido
@@ -45,9 +41,9 @@ AS
 					CONVERT ( VARCHAR(100), CAST(ROUND ( SUM ( PD.Subtotal ), 2 ) AS MONEY), 1 ), TM.TipoMonedaCorto
 		FROM		MM_Pedido AS P
 		INNER JOIN	MM_PedidoDetalle AS PD
-			ON P.IdPedido = PD.IdPedido
+			ON PD.IdPedido = P.IdPedido
 		INNER JOIN	S_Proveedor AS PV
-			ON P.IdSubcontratista = PV.IdProveedor
+			ON PV.IdProveedor = P.IdSubcontratista
 		INNER JOIN	TA_Operacion AS O
 			ON P.IdSolicitudPedido = O.IdDocumento
 			   AND	P.Version = O.NoVersion

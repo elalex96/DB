@@ -6,6 +6,6 @@
     [FechaCarga]      DATETIME       NULL,
     [Estado]          NVARCHAR (250) NULL,
     [ProcesadoMailId] INT            NULL,
-    CONSTRAINT [PK_SipacMail] PRIMARY KEY CLUSTERED ([IdSipacMail] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SipacMail] PRIMARY KEY CLUSTERED ([IdSipacMail] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -12,7 +12,7 @@
     [IsActual]        BIT           NOT NULL,
     [IsEliminado]     BIT           NOT NULL,
     [TipoDomicilioID] INT           NOT NULL,
-    CONSTRAINT [PK_Domicilio] PRIMARY KEY CLUSTERED ([DomilioID] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Domicilio] PRIMARY KEY CLUSTERED ([DomilioID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_Domicilio_Empresa] FOREIGN KEY ([EmpresaID]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista]),
     CONSTRAINT [FK_Domicilio_EstadoRepublica] FOREIGN KEY ([EstadoID]) REFERENCES [dbo].[PV_EstadoRepublica] ([idEstado]),
     CONSTRAINT [FK_Domicilio_PaisRepublica] FOREIGN KEY ([PaisID]) REFERENCES [dbo].[PV_PaisRepublica] ([id]),

@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaSolicitudPedidoDetalleReciclaje_MV1_5]    Script Date: 26/11/2021 01:48:47 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <17-09-2018>
 -- Description:	<Se agrega el bit de activo>
@@ -16,7 +9,7 @@ GO
 -- Description: Consulta Solicitud Pedido Detalle  
 -- =============================================
 
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoDetalleReciclaje_MV1_5]
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoDetalleReciclaje_MV1_5]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT ,
 

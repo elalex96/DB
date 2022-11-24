@@ -1,6 +1,4 @@
-﻿drop procedure if exists SP_DOC_DescargaDocumentosOCD
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <09/12/2020>
 -- Description:	<Descarga de documentos de compra directa>

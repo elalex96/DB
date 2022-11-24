@@ -4,7 +4,7 @@
     [CreadoPor]     INT           NULL,
     [CreadoEn]      DATETIME      NULL,
     [CountColumnas] INT           NULL,
-    CONSTRAINT [PK_AA_TipoReporte] PRIMARY KEY CLUSTERED ([IdTipoReporte] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_AA_TipoReporte] PRIMARY KEY CLUSTERED ([IdTipoReporte] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AA_TipoReporte_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 

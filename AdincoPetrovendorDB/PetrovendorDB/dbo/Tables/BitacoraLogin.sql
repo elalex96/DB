@@ -10,6 +10,6 @@
     [IdUsuario]         INT            NULL,
     [Aplicacion]        TINYINT        NULL,
     [TipoUsuarioID]     INT            NULL,
-    PRIMARY KEY CLUSTERED ([IdLogin] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdLogin] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

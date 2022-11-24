@@ -1,4 +1,5 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_InformeRevGast_TotalNoProcedentes]
+﻿-- [dbo].[SP_CO_InformeRevGast_TotalNoProcedentes] 10159,'2021-09-01'
+CREATE PROCEDURE [dbo].[SP_CO_InformeRevGast_TotalNoProcedentes]
     @IdPresupuesto INT,
     @MesPresentacion DATE
 AS
@@ -149,6 +150,5 @@ BEGIN
                          I.NombreInstalacion,
                          R.Poliza,
                          UC.Nombre,
-                         UM.Nombre) SRC;
-END;
-
+                         UM.Nombre) SRC
+END

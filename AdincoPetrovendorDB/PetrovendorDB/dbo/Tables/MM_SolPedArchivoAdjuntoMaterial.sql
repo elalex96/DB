@@ -12,7 +12,8 @@
     [CreadoEl]                     DATETIME       NULL,
     [ModificadoPor]                INT            NULL,
     [ModificadoEl]                 DATETIME       NULL,
-    CONSTRAINT [PK_MM_SolPedArchivoAdjuntoMaterial] PRIMARY KEY CLUSTERED ([IdSolPedMaterialDocumentoAdj] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [Bucket]                       VARCHAR (200)  NULL,
+    CONSTRAINT [PK_MM_SolPedArchivoAdjuntoMaterial] PRIMARY KEY CLUSTERED ([IdSolPedMaterialDocumentoAdj] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_SolPedArchivoAdjuntoMaterial_MM_SolicitudPedidoDetalle] FOREIGN KEY ([IdSolPedDetalle]) REFERENCES [dbo].[MM_SolicitudPedidoDetalle] ([IdSolicitudPedidoDetalle])
 );
 

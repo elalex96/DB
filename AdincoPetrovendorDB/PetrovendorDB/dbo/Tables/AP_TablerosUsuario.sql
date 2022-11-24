@@ -5,7 +5,7 @@
     [Activo]    BIT      NULL,
     [CreadoEl]  DATETIME NULL,
     [CreadoPor] INT      NULL,
-    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdTablero]) REFERENCES [dbo].[AP_Tableros] ([Id])
 );
 

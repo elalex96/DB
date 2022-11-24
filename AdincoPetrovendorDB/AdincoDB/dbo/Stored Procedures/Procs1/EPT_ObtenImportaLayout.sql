@@ -1,5 +1,4 @@
-﻿
-CREATE  PROCEDURE [dbo].[EPT_ObtenImportaLayout]
+﻿CREATE PROCEDURE [dbo].[EPT_ObtenImportaLayout]
 	@IdContrato INT,
 	@IdUsuario INT
 AS
@@ -31,3 +30,4 @@ BEGIN
 		IL.ContratoId = @IdContrato
 	 ORDER BY IL.CreadoEn DESC;
 END;
+

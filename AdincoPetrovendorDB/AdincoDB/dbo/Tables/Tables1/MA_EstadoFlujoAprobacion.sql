@@ -7,6 +7,6 @@
     [CreadoEl]            DATETIME       NULL,
     [EditadoPor]          INT            NULL,
     [EditadoEl]           DATETIME       NULL,
-    CONSTRAINT [PK_MA_EstadoFlujoAprobacion] PRIMARY KEY CLUSTERED ([IdEstado] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MA_EstadoFlujoAprobacion] PRIMARY KEY CLUSTERED ([IdEstado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

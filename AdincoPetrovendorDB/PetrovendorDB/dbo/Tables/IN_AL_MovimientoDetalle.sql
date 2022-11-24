@@ -16,7 +16,7 @@
     [Existencia]          DECIMAL (15, 3) NULL,
     [CostoUltimaCompra]   MONEY           NULL,
     [CostoPromedio]       MONEY           NULL,
-    CONSTRAINT [PK_IN_AL_MovimientoDetalle] PRIMARY KEY CLUSTERED ([IdMovimientoDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IN_AL_MovimientoDetalle] PRIMARY KEY CLUSTERED ([IdMovimientoDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_IN_AL_MovimientoDetalle_IN_AL_Movimiento] FOREIGN KEY ([IdMovimiento]) REFERENCES [dbo].[IN_AL_Movimiento] ([IdMovimiento]),
     CONSTRAINT [FK_IN_AL_MovimientoDetalle_MM_PedidoDetalle] FOREIGN KEY ([IdPedidoDetalle]) REFERENCES [dbo].[MM_PedidoDetalle] ([IdPedidoDetalle]),
     CONSTRAINT [FK_IN_AL_MovimientoDetalle_S_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),

@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ConsultarFlujoTareaFactura]    Script Date: 08/09/2022 12:58:45 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:	Daniel AC
 -- Create date: 29-06-17
 -- Description:	consultar todos los flujos de aprobación de factura 
@@ -20,7 +13,7 @@ GO
 -- Create date: 08/09/2022
 -- Description:	Issue #1987  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
-ALTER  PROCEDURE [dbo].[SP_ConsultarFlujoTareaFactura] @IdProveedor INT, @IdUsuario INT
+CREATE  PROCEDURE [dbo].[SP_ConsultarFlujoTareaFactura] @IdProveedor INT, @IdUsuario INT
 AS
 	BEGIN
 		SET NOCOUNT ON

@@ -9,6 +9,6 @@
     [NumeroMes]                   INT        NULL,
     [Actividades]                 FLOAT (53) NULL,
     [Fecha]                       DATE       NULL,
-    CONSTRAINT [PK_CO_LineaProgramaActividadMes] PRIMARY KEY CLUSTERED ([IdLineaProgramaActividadMes] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_LineaProgramaActividadMes] PRIMARY KEY CLUSTERED ([IdLineaProgramaActividadMes] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

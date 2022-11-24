@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_TA_ConsultarNotaCreditoProveedor
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 11/09/2019
 -- Description:	Permite agregar LA OPERACION para hacer relacion con un flujo de tareas

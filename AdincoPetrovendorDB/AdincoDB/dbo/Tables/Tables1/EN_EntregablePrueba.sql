@@ -58,6 +58,6 @@
     [APReparacionMenor]                BIT            NULL,
     [APTransporteHidrocarburos]        BIT            NULL,
     [APQuemaGas]                       BIT            NULL,
-    CONSTRAINT [PK__EN_Entre__CA97CB61E84BB2B0] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK__EN_Entre__CA97CB61E84BB2B0] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

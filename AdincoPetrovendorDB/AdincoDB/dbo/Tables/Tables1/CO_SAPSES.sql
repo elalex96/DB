@@ -19,7 +19,7 @@
     [SESServiceStart]    VARCHAR (15)  NULL,
     [SESServiceEnd]      VARCHAR (15)  NULL,
     [Plant]              VARCHAR (15)  NULL,
-    [SESReferenceNumber] VARCHAR (20)  NULL,   
+    [SESReferenceNumber] VARCHAR (20)  NULL,
     CONSTRAINT [FK_CO_MapeoInterfazApprovedSES_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_MapeoInterfazApprovedSES_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );

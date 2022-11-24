@@ -16,7 +16,7 @@
     [ClasificacionInterna] VARCHAR (MAX) NULL,
     [FechaContratacion]    DATETIME      NULL,
     [ProximoPago]          DATETIME      NULL,
-    CONSTRAINT [PK_PV_GastoDomiciliado] PRIMARY KEY CLUSTERED ([idDomiciliado] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PV_GastoDomiciliado] PRIMARY KEY CLUSTERED ([idDomiciliado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PV_GastoDomiciliado_PV_Criticidad] FOREIGN KEY ([idCriticidad]) REFERENCES [dbo].[PV_Criticidad] ([idCriticidad]),
     CONSTRAINT [FK_PV_GastoDomiciliado_PV_MetodoPago] FOREIGN KEY ([IdMetodoPreferente]) REFERENCES [dbo].[PV_MetodoPago] ([idMetodoPago]),
     CONSTRAINT [FK_PV_GastoDomiciliado_PV_Nacionalidad] FOREIGN KEY ([IdNacionalidad]) REFERENCES [dbo].[PV_Nacionalidad] ([NacionalidadID]),

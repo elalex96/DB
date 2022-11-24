@@ -1,19 +1,4 @@
-﻿USE [Adinco]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EN_SHELL_GuardarDocumentoGeneral'
-)
-    DROP PROCEDURE EN_SHELL_GuardarDocumentoGeneral;
-GO 
-/****** Object:  StoredProcedure [dbo].[EN_SHELL_GuardarDocumentoGeneral]    Script Date: 18/05/2021 01:30:28 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE PROCEDURE [dbo].[EN_SHELL_GuardarDocumentoGeneral]    
+﻿CREATE PROCEDURE [dbo].[EN_SHELL_GuardarDocumentoGeneral]    
 	@ContratoId INT,
 	@NivelPadre INT,
 	@EtapaId INT,

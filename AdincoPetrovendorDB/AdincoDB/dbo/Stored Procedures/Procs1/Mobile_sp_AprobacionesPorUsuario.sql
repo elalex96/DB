@@ -1,11 +1,4 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[Mobile_sp_AprobacionesPorUsuario]    Script Date: 24/08/2022 10:32:17 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Luis David De La Cruz
 -- Create date: 11/01/2018
 -- Description:	Se obtienen los pedidos (solped/pedido/cd/p-c)
@@ -29,7 +22,7 @@ GO
 -- =============================================
 
 --[dbo].[Mobile_sp_AprobacionesPorUsuario]10109,9,-1,-1,-1
-ALTER  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10109,9,-1,-1,-1
+CREATE  PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuario] --10109,9,-1,-1,-1
 	@IdUsuario		INT,
 	@IdTipo			INT,
 	@IdOperacion	int		=	-1,

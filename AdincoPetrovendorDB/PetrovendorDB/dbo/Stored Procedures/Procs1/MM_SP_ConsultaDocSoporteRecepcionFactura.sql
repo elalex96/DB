@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_ConsultaDocSoporteRecepcionFactura]    Script Date: 12/10/2021 12:18:18 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+﻿
 -- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <01-04-2018>

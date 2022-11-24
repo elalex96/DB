@@ -12,7 +12,7 @@
     [ModificadoPor]             INT              NULL,
     [ModificadoEl]              DATETIME         NULL,
     [Activo]                    BIT              NULL,
-    CONSTRAINT [PK_EN_DocumentoFormatoFichaTecnica] PRIMARY KEY CLUSTERED ([IdFormatoFichaTecnica] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_DocumentoFormatoFichaTecnica] PRIMARY KEY CLUSTERED ([IdFormatoFichaTecnica] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [CreadoPor_EN_DocumentoFormatoFichaTecnica] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [EN_entregable_EN_DocumentoFormatoFichaTecnica] FOREIGN KEY ([idEntregable]) REFERENCES [dbo].[EN_Entregable] ([IdEntregable]),
     CONSTRAINT [Modificado_EN_DocumentoFormatoFichaTecnica] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),

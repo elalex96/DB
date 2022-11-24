@@ -24,6 +24,6 @@
     [MontoAceptadoUSD]    FLOAT (53)     NULL,
     [MontoFacturacionUSD] FLOAT (53)     NULL,
     [MontoMes]            FLOAT (53)     NULL,
-    CONSTRAINT [PK_BI_Facturas] PRIMARY KEY CLUSTERED ([Id_BI_Factura] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_BI_Facturas] PRIMARY KEY CLUSTERED ([Id_BI_Factura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

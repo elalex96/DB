@@ -8,7 +8,7 @@
     [RevisadoPor]                      INT      NULL,
     [CreadoEl]                         DATETIME NOT NULL,
     [CreadoPor]                        INT      NULL,
-    CONSTRAINT [PK_CO_ProgramaImplementaProgramacion] PRIMARY KEY CLUSTERED ([IdProgramaImplementaProgramacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_ProgramaImplementaProgramacion] PRIMARY KEY CLUSTERED ([IdProgramaImplementaProgramacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_ProgramaImplementaProgramacion_AP_Usuario] FOREIGN KEY ([RevisadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_ProgramaImplementaProgramacion_AP_Usuario1] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_ProgramaImplementaProgramacion_CO_ProgramaImplementaAcciones] FOREIGN KEY ([IdProgramaImplementaAccion]) REFERENCES [dbo].[CO_ProgramaImplementaAcciones] ([IdProgramaImplementaAccion])

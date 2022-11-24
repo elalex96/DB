@@ -1,16 +1,9 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarMaterialesSolicitudPedido_Plantilla]    Script Date: 26/11/2021 01:49:41 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <21/11/2019>
 -- Description:	<consultar los materiales de una plantilla de una solicitud de pedido>
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_ConsultarMaterialesSolicitudPedido_Plantilla]
+CREATE PROCEDURE [dbo].[SP_MM_ConsultarMaterialesSolicitudPedido_Plantilla]
 	-- Add the parameters for the stored procedure here
 	@IdPlantillaSolicitudPedido INT
 AS

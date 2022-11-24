@@ -1,5 +1,6 @@
-﻿-- sp_SC_ConsultaServicio 7
-create proc [dbo].[sp_SC_ConsultaMaterialServicio]
+﻿
+-- sp_SC_ConsultaServicio 7
+CREATE proc [dbo].[sp_SC_ConsultaMaterialServicio]
 @pIdSubContrato int
 As
 
@@ -10,7 +11,4 @@ As
 	where SC_Materiales.IdSubContrato = @pIdSubContrato
 	group by CO_Servicio.IdServicio,
 		CO_Servicio.NombreServicio
-
-GO
-
 

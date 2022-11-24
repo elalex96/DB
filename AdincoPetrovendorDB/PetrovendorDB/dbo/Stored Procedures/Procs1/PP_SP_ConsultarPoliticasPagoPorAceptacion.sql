@@ -1,7 +1,4 @@
-﻿
-DROP PROCEDURE IF EXISTS PP_SP_ConsultarPoliticasPagoPorAceptacion
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <20-09-2018>
 -- Description:	<Se consultan las politicas de pago por IdAceptacion>

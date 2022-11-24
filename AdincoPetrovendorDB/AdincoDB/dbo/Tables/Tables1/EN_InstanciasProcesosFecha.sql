@@ -12,13 +12,15 @@
     [Activo]               BIT            NULL,
     [FechaInicioProceso]   DATE           NULL,
     [FechaFinProceso]      DATE           NULL,
-    CONSTRAINT [PK_InstanciasProcesos] PRIMARY KEY CLUSTERED ([IdInstanciasProcesos] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_InstanciasProcesos] PRIMARY KEY CLUSTERED ([IdInstanciasProcesos] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ContratoInstanciasProcesosFechas] FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_InstanciasProcesos_Procesos] FOREIGN KEY ([IdProceso]) REFERENCES [dbo].[EN_Procesos] ([IdProceso]),
     CONSTRAINT [FK_InstanciasProcesos_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_InstanciasProcesos_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
-go
 
-create index IX_EN_InstanciasProcesosFecha					on	EN_InstanciasProcesosFecha(IdInstanciasProcesos)
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_InstanciasProcesosFecha]
+    ON [dbo].[EN_InstanciasProcesosFecha]([IdInstanciasProcesos] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

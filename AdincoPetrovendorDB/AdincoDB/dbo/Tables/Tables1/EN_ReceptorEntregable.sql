@@ -3,9 +3,11 @@
     [ReceptorEntregable]   VARCHAR (3000) NULL,
     [CreadoPor]            INT            NULL,
     [CreadoEn]             DATETIME       NULL,
-    CONSTRAINT [PK_EN_ReceptorEntregable] PRIMARY KEY CLUSTERED ([IdReceptorEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EN_ReceptorEntregable] PRIMARY KEY CLUSTERED ([IdReceptorEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
-go
 
-create index IX_EN_ReceptorEntregable	on	EN_ReceptorEntregable(IdReceptorEntregable)
+GO
+CREATE NONCLUSTERED INDEX [IX_EN_ReceptorEntregable]
+    ON [dbo].[EN_ReceptorEntregable]([IdReceptorEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

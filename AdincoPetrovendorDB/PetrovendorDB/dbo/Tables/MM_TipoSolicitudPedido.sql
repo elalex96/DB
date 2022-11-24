@@ -6,6 +6,6 @@
     [TipoProcura]           NVARCHAR (250) NULL,
     [CreadoPor]             INT            NULL,
     [Creado]                DATETIME       NULL,
-    CONSTRAINT [PK_MM_TipoSolicitudPedido] PRIMARY KEY CLUSTERED ([IdTipoSolicitudPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_TipoSolicitudPedido] PRIMARY KEY CLUSTERED ([IdTipoSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

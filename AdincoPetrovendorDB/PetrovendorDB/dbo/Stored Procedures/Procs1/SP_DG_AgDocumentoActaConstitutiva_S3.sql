@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:		<DANIEL AC>
 -- Create date: <06/04/2018>
 -- Description:	<Procedimiento para insertar un documento en especidico(INE, RCF, ACTA CONSTITUTIVA) en la tabla S_Documento_S3>
@@ -18,7 +17,7 @@
 -- Create date:	  09-03-2022
 -- Description:   Se agrega el parametro para la fecha del documento repse
 -- ============================================= 
-ALTER PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
+CREATE PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
 
 	-- Insertar Documento nuevo---
 	@IdTipoDocumento INT, 
@@ -47,7 +46,7 @@ ALTER PROCEDURE [dbo].[SP_DG_AgDocumentoActaConstitutiva_S3]
 
 	-- Nuevos parametros de entrada
 	@NombreDocumentoRPPC NVARCHAR (MAX) = NULL, @MimeRPPC NVARCHAR (MAX) = NULL, @ExtensionRPPC NVARCHAR (MAX) = NULL ,
-	@IdentificadorS3RPPC NVARCHAR (MAX) = NULL, @CarpetaRPPC NVARCHAR (MAX), @BucketRPPC NVARCHAR (MAX)
+	@IdentificadorS3RPPC NVARCHAR (MAX) = NULL, @CarpetaRPPC NVARCHAR (MAX), @BucketRPPC NVARCHAR (MAX) = 'petrovendor-pr'
 AS
 	BEGIN
 		DECLARE @IdDocumento INT,@NOMBRETIPODOCUMENTO VARCHAR(1000);

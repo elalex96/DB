@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[A5_CS_2021] (
+    [ID]      FLOAT (53)     NULL,
+    [PA_04]   NVARCHAR (255) NULL,
+    [PA_05]   NVARCHAR (255) NULL,
+    [PA_06]   NVARCHAR (255) NULL,
+    [PA_07]   NVARCHAR (255) NULL,
+    [PA_08]   NVARCHAR (255) NULL,
+    [PA_09]   NVARCHAR (255) NULL,
+    [PA_10]   NVARCHAR (255) NULL,
+    [PA_11]   NVARCHAR (MAX) NULL,
+    [PA_12]   NVARCHAR (255) NULL,
+    [PA_13]   NVARCHAR (255) NULL,
+    [PA_14]   NVARCHAR (255) NULL,
+    [PA_15]   NVARCHAR (255) NULL,
+    [PA_16]   NVARCHAR (255) NULL,
+    [PA_16_2] NVARCHAR (255) NULL,
+    [PA_17]   FLOAT (53)     NULL,
+    [PA_18]   FLOAT (53)     NULL,
+    [PA_19]   FLOAT (53)     NULL,
+    [PA_20]   FLOAT (53)     NULL,
+    [PA_21]   FLOAT (53)     NULL,
+    [PA_22]   FLOAT (53)     NULL,
+    [PA_23]   FLOAT (53)     NULL,
+    [PA_24]   FLOAT (53)     NULL,
+    [PA_25]   FLOAT (53)     NULL,
+    [PA_26]   FLOAT (53)     NULL
+);
+

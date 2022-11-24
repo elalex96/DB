@@ -22,12 +22,12 @@
     [CreadoPor]                INT           NULL,
     [ModificadoEl]             DATETIME      NULL,
     [IdSAPData]                INT           NULL,
-    CONSTRAINT [PK_CO_SAPDataDetalle] PRIMARY KEY CLUSTERED ([IdSAPDataDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_SAPDataDetalle] PRIMARY KEY CLUSTERED ([IdSAPDataDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     FOREIGN KEY ([IdSAPData]) REFERENCES [dbo].[CO_SAPPOData] ([IdSAPData])
 );
 
 
 GO
 CREATE UNIQUE NONCLUSTERED INDEX [IX_CO_SAPDataDetalle]
-    ON [dbo].[CO_SAPPODataDetalle]([ItemNumber] ASC, [SAPMaterialNumber] ASC, [IdSAPData] ASC, [ServiceLineNumber] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[CO_SAPPODataDetalle]([ItemNumber] ASC, [SAPMaterialNumber] ASC, [IdSAPData] ASC, [ServiceLineNumber] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

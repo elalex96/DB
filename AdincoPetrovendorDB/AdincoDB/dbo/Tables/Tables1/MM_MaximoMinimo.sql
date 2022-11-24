@@ -7,6 +7,6 @@
     [CantidadMaxima]          FLOAT (53)     NULL,
     [Activo]                  INT            NULL,
     [CreadoPor]               INT            NULL,
-    CONSTRAINT [PK_admin_max_nin_cntrl] PRIMARY KEY CLUSTERED ([IdMaximoMinimo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_admin_max_nin_cntrl] PRIMARY KEY CLUSTERED ([IdMaximoMinimo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

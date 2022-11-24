@@ -12,7 +12,7 @@
     [DocumentoByte]          IMAGE          NULL,
     [ModificadoPor]          INT            NULL,
     [ModificadoEn]           DATETIME       NULL,
-    CONSTRAINT [PK_FI_Documento] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FI_Documento] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_Documento_FI_Factura] FOREIGN KEY ([IdFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura]),
     CONSTRAINT [FK_FI_Documento_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante]),
     CONSTRAINT [FK_FI_Documento_FI_TipoDocumento] FOREIGN KEY ([IdTipoDocumento]) REFERENCES [dbo].[FI_TipoDocumento] ([id_TipoDocumento])

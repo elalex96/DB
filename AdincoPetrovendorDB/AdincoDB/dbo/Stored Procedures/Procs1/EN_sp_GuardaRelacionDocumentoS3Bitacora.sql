@@ -1,13 +1,4 @@
-﻿USE Adinco
-GO
-DROP PROCEDURE IF EXISTS EN_sp_GuardaRelacionDocumentoS3Bitacora
--- =============================================
--- Author:		LUIS DAVID
--- Create date: 10/Marzo/2022
--- Description:	Se guarda la relación del documento subido al S3 con el de la bitácora, marca como procesado el dicho registro y manda notificación al usuario
--- =============================================
-GO
-CREATE PROC EN_sp_GuardaRelacionDocumentoS3Bitacora
+﻿CREATE PROC EN_sp_GuardaRelacionDocumentoS3Bitacora
 @IdBitacora int,
 @IdDocumento int,
 @IdUsuario int,
@@ -191,7 +182,7 @@ href="##URL_TAREA##/2/Entregables/ReporteSasisopa.aspx" target="_blank" name="bt
 				FechaProgramadaEnvio,	Enviada,		FechaEnvio,		CreadoPor,
 				CreadoEl,				ModificadoPor,	ModificadoEl,	De,				EN_MsjEnviado)
 				VALUES (
-				@pIdNotificacion ,		@para,			'Descarga de Reporte SASISOPA',	isnull(@HTML,''),
+				@pIdNotificacion ,		@para,			'Descargade Reporte SASISOPA',	isnull(@HTML,''),
 				getdate(),				0,				null,			1,
 				getdate(),				null,			null,			'notificaciones@adinco.mx',null)
 END

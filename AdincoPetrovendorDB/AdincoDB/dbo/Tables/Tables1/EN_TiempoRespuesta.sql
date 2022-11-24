@@ -3,6 +3,6 @@
     [TiempoRespuesta]   VARCHAR (6000) NULL,
     [CreadoPor]         INT            NULL,
     [CreadoEn]          DATETIME       NULL,
-    CONSTRAINT [PK_EN_TiempoRespuesta] PRIMARY KEY CLUSTERED ([IdTiempoRespuesta] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EN_TiempoRespuesta] PRIMARY KEY CLUSTERED ([IdTiempoRespuesta] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

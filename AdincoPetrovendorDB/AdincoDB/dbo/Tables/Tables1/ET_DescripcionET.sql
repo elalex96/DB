@@ -5,6 +5,6 @@
     [Descripción]     NVARCHAR (MAX) NULL,
     [CreadoPor]       INT            NULL,
     [CreadoEn]        DATETIME       NULL,
-    CONSTRAINT [PK_ET_DescripcionET] PRIMARY KEY CLUSTERED ([IdDescripcionET] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_ET_DescripcionET] PRIMARY KEY CLUSTERED ([IdDescripcionET] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

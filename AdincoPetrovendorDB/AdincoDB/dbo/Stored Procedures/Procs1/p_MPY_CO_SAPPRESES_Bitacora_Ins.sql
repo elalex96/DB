@@ -1,5 +1,5 @@
 ﻿
-create proc p_MPY_CO_SAPPRESES_Bitacora_Ins
+CREATE proc p_MPY_CO_SAPPRESES_Bitacora_Ins
 (
 	@ReferenceNumber	varchar(50),
 	@GRNumber			varchar(50),

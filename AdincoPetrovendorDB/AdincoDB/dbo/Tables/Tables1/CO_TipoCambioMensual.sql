@@ -8,7 +8,7 @@
     [FecMovto]            INT             NULL,
     [Activo]              BIT             NULL,
     [CreadoPor]           INT             NULL,
-    [ObtenidoSDK] BIT NULL,
-    [TipoCambioBanxico] DECIMAL(12,4) NULL
+    [ObtenidoSDK]         BIT             NULL,
+    [TipoCambioBanxico]   DECIMAL (12, 4) NULL
 );
 

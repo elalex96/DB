@@ -1,11 +1,4 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[MM_SP_CentroCostos]    Script Date: 26/11/2021 01:39:54 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:      Daniel Cruz
 -- Create date: 06-07-17
 -- Description: 
@@ -15,7 +8,7 @@ GO
 -- Create date: 25/11/2021
 -- Description: optimizacion
 -- =============================================
-ALTER PROCEDURE [dbo].[MM_SP_CentroCostos]
+CREATE PROCEDURE [dbo].[MM_SP_CentroCostos]
 -- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @IdUsuario INT

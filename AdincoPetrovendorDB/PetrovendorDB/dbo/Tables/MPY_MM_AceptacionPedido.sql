@@ -41,7 +41,7 @@
     [IdNacionalidadProveedor] INT            NULL,
     [IdPRESES]                INT            NULL,
     [DocumentDate]            VARCHAR (15)   NULL,
-    CONSTRAINT [PK_MPY_MM_AceptacionPedido] PRIMARY KEY CLUSTERED ([IdAceptacionPedido] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MPY_MM_AceptacionPedido] PRIMARY KEY CLUSTERED ([IdAceptacionPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MPYAceptacion_Factura] FOREIGN KEY ([IdPrefactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura]),
     CONSTRAINT [FK_MPYAceptacion_PDFFacturaS3] FOREIGN KEY ([IdPDFPrefacturaS3]) REFERENCES [dbo].[S_Documento_S3] ([IdDocumento])
 );

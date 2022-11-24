@@ -3,6 +3,6 @@
     [URL]          NVARCHAR (MAX) NULL,
     [CreadoPor]    INT            NULL,
     [CreadoEn]     DATETIME       NULL,
-    CONSTRAINT [PK_AWS_ServiceUrl] PRIMARY KEY CLUSTERED ([IdServiceUrl] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AWS_ServiceUrl] PRIMARY KEY CLUSTERED ([IdServiceUrl] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

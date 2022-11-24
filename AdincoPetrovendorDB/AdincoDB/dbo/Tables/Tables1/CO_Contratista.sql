@@ -25,7 +25,7 @@
     [IdRuta]              INT            NULL,
     [Abreviatura]         VARCHAR (7)    NULL,
     [ContratistaFicticio] BIT            CONSTRAINT [DF_CO_Contratista_ContratistaFicticio] DEFAULT ((0)) NULL,
-    CONSTRAINT [PK_Contratistas] PRIMARY KEY CLUSTERED ([IdContratista] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Contratistas] PRIMARY KEY CLUSTERED ([IdContratista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Contratista_PV_Subcontratista] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista])
 );
 

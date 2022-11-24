@@ -1,5 +1,4 @@
-﻿USE Adinco;
-GO
+﻿
 CREATE PROCEDURE [dbo].[SP_CO_ResumenGastosAprobados] 
     @IdPresupuesto INT,
     @MesPresentacion DATE

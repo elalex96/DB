@@ -1,5 +1,5 @@
 ﻿-- [sp_S_ConsultarNotificaciones] '',0
-alter procedure [dbo].[sp_S_ConsultarNotificaciones]   
+CREATE procedure [dbo].[sp_S_ConsultarNotificaciones]   
 @pIdsNotificaciones VARCHAR(500),    
 @pSoloPendientes    BIT          = 1  
   
@@ -19,10 +19,8 @@ AS
              SELECT 0;  
          END; 
 
-  
-   
 
-   SELECT  top 30
+   SELECT  top 20
 			N.IdNotificacion,    
             Para = N.Para,    
 			N.Asunto, 
@@ -61,7 +59,4 @@ AS
             N.De,
 			N.Para
      having count(distinct ne.IdNotificacionError) < 3--Solo se intentará enviar hasta 3 veces un mismo correo
-     ORDER BY N.IdNotificacion ASC;
-
-
-
+     ORDER BY N.IdNotificacion;

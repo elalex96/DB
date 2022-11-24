@@ -1,6 +1,4 @@
-﻿drop procedure if exists SP_PR_MM_PCN_ConsultaDocumento_S3
-go
--- =============================================
+﻿-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 05-07-17
 -- Description:	CONSULTAR CARTA DE CONTENIDO NACIONAL

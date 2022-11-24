@@ -8,6 +8,14 @@
 @FFin       DATE
 AS
      BEGIN
+
+	 --RFC Contrato
+	 DECLARE @RFC VARCHAR(50)
+	 SELECT @RFC = CC.RFC FROM Adinco.dbo.CO_Contrato C 
+	 JOIN Adinco.dbo.CO_Contratista CC ON C.IdContratista = CC.IdContratista
+	 WHERE C.IdContrato = @IdContrato
+
+	 --
          CREATE TABLE #ICNMurphy
          (Identificador   NVARCHAR(MAX), 
           Carpeta         NVARCHAR(MAX), 
@@ -36,7 +44,8 @@ AS
                        S3.NombreDocumento AS NombreDocumento, 
                        F.IdFactura, 
                        F.UUID, 
-                       F.IdContrato
+                       F.IdContrato--,
+					   --C.NumeroContrato--select *
                 FROM Petrovendor.dbo.MPY_MM_AceptacionPedidoDetalle APD
                      JOIN Petrovendor.dbo.MPY_MM_AceptacionPedido AP ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
                      JOIN Petrovendor.dbo.MPY_MM_AceptacionFactura AF ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
@@ -51,10 +60,15 @@ AS
                      JOIN Adinco.dbo.CO_TipoCambioDiario TCD ON CAST(APD.Creado AS DATE) = TCD.Fecha
                                                                 AND TCD.IdMoneda <> F.IdMoneda
                                                                 AND TCD.IdMoneda <> 10000
-                WHERE(F.Fecha >= @FInicio
-                      AND F.Fecha <= EOMONTH(@FFin))
+					 JOIN Adinco.dbo.CO_Contrato C ON F.IdContrato = C.IdContrato
+					 JOIN Adinco.dbo.CO_Contratista CC ON C.IdContratista = CC.IdContratista
+                WHERE(CAST(F.Fecha AS DATE) >= @FInicio
+                      AND CAST(F.Fecha AS DATE) <= EOMONTH(@FFin))
                      AND F.IdContrato = @IdContrato
-                     AND APD.PCN <> 0;
+                     AND APD.PCN <> 0
+					 --AND F.Receptor = @RFC
+					 --AND F.Receptor = 'MSU150922EYA'--murphy
+					 --AND F.Receptor = 'DEP180824FS8'--dorado
          SELECT Identificador, 
                 Carpeta, 
                 Ruta, 

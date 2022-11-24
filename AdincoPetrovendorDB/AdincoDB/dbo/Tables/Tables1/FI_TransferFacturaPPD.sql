@@ -8,6 +8,6 @@
     [CreadoEn]             DATETIME   NULL,
     [ModificadoPor]        INT        NULL,
     [ModificadoEn]         DATETIME   NULL,
-    CONSTRAINT [PK_FI_TransferFacturaPPD] PRIMARY KEY CLUSTERED ([IdTransferFacturaPPD] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_TransferFacturaPPD] PRIMARY KEY CLUSTERED ([IdTransferFacturaPPD] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

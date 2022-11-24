@@ -5,6 +5,6 @@
     [ContractType]   NVARCHAR (MAX) NULL,
     [Description]    NVARCHAR (MAX) NULL,
     [Activo]         BIT            NULL,
-    CONSTRAINT [PK_MM_TipoContrato] PRIMARY KEY CLUSTERED ([IdTipoContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_TipoContrato] PRIMARY KEY CLUSTERED ([IdTipoContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

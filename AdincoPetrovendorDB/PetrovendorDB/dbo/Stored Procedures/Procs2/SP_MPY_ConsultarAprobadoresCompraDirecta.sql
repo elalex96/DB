@@ -1,9 +1,4 @@
-﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MPY_ConsultarAprobadoresCompraDirecta
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Author,,Name>
 -- Create date: <Create Date,,>
 -- Description:	<Description,,>
@@ -41,7 +36,7 @@ BEGIN
 		Correo varchar(500),
 		EstatusAprobacion varchar(500),
 		Comentario varchar(500),
-		FechaEvaluacion varchar(500)
+		FechaEvaluacion datetime
 	)
 
 	INSERT INTO #AprobacionAceptacionHistorial
@@ -50,7 +45,7 @@ BEGIN
 		u.Correo, 
 		t.Nombre AS EstatusAprobacion,
 		af.Comentario,
-		FORMAT(af.FechaAprobacion, 'hh\:mm tt') as FechaEvaluacion
+		af.FechaAprobacion as FechaEvaluacion
 	FROM dbo.MPY_MM_AceptacionFactura af
 	left JOIN dbo.S_Usuario u ON af.IdAprobador = u.IdUsuario
 	left JOIN dbo.TA_estatus t ON  af.IdEstatus = t.IdEstatus 
@@ -61,7 +56,7 @@ BEGIN
 		u.Correo, 
 		t.Nombre AS EstatusAprobacion,
 		af.Comentario,
-		FORMAT(af.FechaAprobacion, 'hh\:mm tt') as FechaEvaluacion
+		af.FechaAprobacion as FechaEvaluacion
 	FROM dbo.MPY_MM_AceptacionFactura_bitacora af
 	inner join MPY_MM_AceptacionFactura af1 on af1.IdAceptacionFactura = af.IdAceptacionFactura
 	left JOIN dbo.S_Usuario u ON af.IdAprobador = u.IdUsuario
@@ -83,6 +78,5 @@ BEGIN
 		EstatusAprobacion ,
 		Comentario ,
 		FechaEvaluacion
-	order by CONVERT (datetime, FechaEvaluacion, 103)
-	asc
+
 END

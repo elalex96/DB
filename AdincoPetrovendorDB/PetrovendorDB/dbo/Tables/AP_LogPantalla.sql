@@ -9,6 +9,6 @@
     [ModificadoPor]  INT            NULL,
     [ModificadoEl]   DATETIME       NULL,
     [Activo]         BIT            NULL,
-    CONSTRAINT [PK_AP_LogPantalla] PRIMARY KEY CLUSTERED ([IdLogPantalla] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AP_LogPantalla] PRIMARY KEY CLUSTERED ([IdLogPantalla] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -6,6 +6,6 @@
     [ModificadoEl] DATETIME       NULL,
     [IsActivo]     BIT            NULL,
     [Dispositivo]  VARCHAR (50)   NULL,
-    PRIMARY KEY CLUSTERED ([IdDevice] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdDevice] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -44,7 +44,7 @@
     [VolumenButanoC4EstadoCompensacion]           FLOAT (53)      NULL,
     [VolumenCondensadosEstadoCompensacion]        FLOAT (53)      NULL,
     [AcumuladoCostosRecuperablesInsolutos]        MONEY           NULL,
-    CONSTRAINT [PK_PR_VolumenMensualProduccionPetroleoOficial] PRIMARY KEY CLUSTERED ([IdReporteVolumenesProduccionPetroleoOficial] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_PR_VolumenMensualProduccionPetroleoOficial] PRIMARY KEY CLUSTERED ([IdReporteVolumenesProduccionPetroleoOficial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PR_VolumenMensualProduccionPetroleoOficial_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

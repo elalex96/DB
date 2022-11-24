@@ -13,7 +13,7 @@
     [EditadoEl]                     DATETIME       NULL,
     [IsEliminado]                   BIT            NULL,
     [IdPCNProveedor]                INT            NULL,
-    CONSTRAINT [PK_MPY_PCN_MaterialesUtilizados] PRIMARY KEY CLUSTERED ([IdMaterialServicioUtilizado] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_MPY_PCN_MaterialesUtilizados] PRIMARY KEY CLUSTERED ([IdMaterialServicioUtilizado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MPY_MM_PCN_MaterialesUtilizados_MPY_MM_PCN_ValoresPesos] FOREIGN KEY ([IdTipoMaterial]) REFERENCES [dbo].[MM_TipoMaterialProcura] ([IdTipoMaterialProcura])
 );
 

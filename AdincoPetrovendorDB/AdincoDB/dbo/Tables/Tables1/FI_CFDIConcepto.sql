@@ -10,12 +10,12 @@
     [Importe]           MONEY          NULL,
     [NoIdentificacion]  NVARCHAR (MAX) NULL,
     [Descuento]         MONEY          DEFAULT ((0)) NULL,
-    CONSTRAINT [PK_FacturaConcepto] PRIMARY KEY CLUSTERED ([IdFacturaConcepto] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_FacturaConcepto] PRIMARY KEY CLUSTERED ([IdFacturaConcepto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_VU_FacturaConcepto_VU_Factura] FOREIGN KEY ([IdFactura]) REFERENCES [dbo].[FI_Factura] ([IdFactura])
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [idx_IdFactura]
-    ON [dbo].[FI_CFDIConcepto]([IdFactura] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[FI_CFDIConcepto]([IdFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

@@ -14,7 +14,7 @@
     [Comision]       MONEY          NULL,
     [IVA]            MONEY          NULL,
     [IdUsuario]      INT            NOT NULL,
-    CONSTRAINT [PK_Gasto] PRIMARY KEY CLUSTERED ([idGasto] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_Gasto] PRIMARY KEY CLUSTERED ([idGasto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_PV_Gasto_PV_TipoMoneda] FOREIGN KEY ([idMoneda]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda]),
     CONSTRAINT [FK_PV_Gasto_PV_Unidad] FOREIGN KEY ([IdUnidad]) REFERENCES [dbo].[PV_Unidad] ([idUnidad])
 );

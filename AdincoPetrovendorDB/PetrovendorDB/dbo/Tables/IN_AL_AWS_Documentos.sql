@@ -9,7 +9,7 @@
     [CreadoEl]       DATETIME         NOT NULL,
     [ModificadoPor]  INT              NULL,
     [ModificadoEl]   DATETIME         NULL,
-    CONSTRAINT [PK_IN_AL_AWS_Documentos] PRIMARY KEY CLUSTERED ([AWSDocumentoId] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IN_AL_AWS_Documentos] PRIMARY KEY CLUSTERED ([AWSDocumentoId] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_IN_AL_AWS_Documentos_S_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario]),
     CONSTRAINT [FK_IN_AL_AWS_Documentos_S_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
 );

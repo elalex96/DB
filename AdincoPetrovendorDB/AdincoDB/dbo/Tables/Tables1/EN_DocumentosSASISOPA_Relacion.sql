@@ -1,9 +1,10 @@
-﻿CREATE TABLE [dbo].[EN_DocumentosSASISOPA_Relacion]
-(
-	Id int primary key not null identity(1,1),
-	IdBitacoraReporte int not null,
-	IdDocumento int not null,
-	NombreDocumento varchar(1000) null,
-	FOREIGN KEY (IdBitacoraReporte) REFERENCES EN_Documentos_BitacoraReporteSASISOPA(Id),
-	FOREIGN KEY (IdDocumento) REFERENCES AWS_Documentos(AWSDocumentoId)
-)
+﻿CREATE TABLE [dbo].[EN_DocumentosSASISOPA_Relacion] (
+    [Id]                INT            IDENTITY (1, 1) NOT NULL,
+    [IdBitacoraReporte] INT            NOT NULL,
+    [IdDocumento]       INT            NOT NULL,
+    [NombreDocumento]   VARCHAR (1000) NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    FOREIGN KEY ([IdBitacoraReporte]) REFERENCES [dbo].[EN_Documentos_BitacoraReporteSASISOPA] ([Id]),
+    FOREIGN KEY ([IdDocumento]) REFERENCES [dbo].[AWS_Documentos] ([AWSDocumentoId])
+);
+

@@ -6,11 +6,11 @@
     [IdUsuario]    INT             NULL,
     [Activo]       BIT             NULL,
     [CreadoPor]    INT             NULL,
-    CONSTRAINT [PK_TIPOSCAMBIODIARIO] PRIMARY KEY CLUSTERED ([IdTipoCambio] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TIPOSCAMBIODIARIO] PRIMARY KEY CLUSTERED ([IdTipoCambio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [idx_MonedaFecha]
-    ON [dbo].[CO_TipoCambioDiario]([IdMoneda] ASC, [Fecha] ASC) WITH (STATISTICS_NORECOMPUTE = ON);
+    ON [dbo].[CO_TipoCambioDiario]([IdMoneda] ASC, [Fecha] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

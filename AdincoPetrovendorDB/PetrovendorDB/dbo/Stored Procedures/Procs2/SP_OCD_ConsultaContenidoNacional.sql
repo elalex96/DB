@@ -7,7 +7,7 @@
 -- Create date: <19/02/2021>
 -- Description:	<SE QUIITA EL CONTRATO EN CONSULTA>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_OCD_ConsultaContenidoNacional] --19868,11108,420,3
+CREATE  PROCEDURE [dbo].[SP_OCD_ConsultaContenidoNacional] --19868,11108,420,3
 	-- Add the parameters for the stored procedure here
 	@IdFactura INT,
 	@IdPedido INT,

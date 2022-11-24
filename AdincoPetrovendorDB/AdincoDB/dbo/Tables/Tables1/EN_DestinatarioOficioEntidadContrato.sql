@@ -3,6 +3,6 @@
     [idDestinatarioEntidad]         INT NULL,
     [idEntidad]                     INT NULL,
     [idContrato]                    INT NULL,
-    CONSTRAINT [PK__EN_Desti__5338DE233A812BB2] PRIMARY KEY CLUSTERED ([idDestinatarioEntidadContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK__EN_Desti__5338DE233A812BB2] PRIMARY KEY CLUSTERED ([idDestinatarioEntidadContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -5,7 +5,7 @@
     [FechaEmision] DATE           NULL,
     [Archivo]      NVARCHAR (255) NULL,
     [Adjunto]      IMAGE          NULL,
-    CONSTRAINT [PK_COPADE] PRIMARY KEY CLUSTERED ([IdCopade] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_COPADE] PRIMARY KEY CLUSTERED ([IdCopade] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_COPADE_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
 );
 

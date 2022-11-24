@@ -11,7 +11,7 @@
     [CreadoEl]                DATETIME      NOT NULL,
     [UrlAdinco]               VARCHAR (300) NULL,
     [UrlPetro]                VARCHAR (300) NULL,
-    CONSTRAINT [PK_OT_SolicitudTareas] PRIMARY KEY CLUSTERED ([IdOTTarea] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_OT_SolicitudTareas] PRIMARY KEY CLUSTERED ([IdOTTarea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_OT_SolicitudTareas_AP_FlujoAprobacion_Tareas] FOREIGN KEY ([FlujoAprobacionTareaId]) REFERENCES [dbo].[AP_FlujoAprobacion_Tareas] ([FlujoAprobacionTareaId]),
     CONSTRAINT [FK_OT_SolicitudTareas_AP_Usuario] FOREIGN KEY ([UsuarioAdinRequeridoId]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_OT_SolicitudTareas_OT_Solicitud] FOREIGN KEY ([IdOTSolicitud]) REFERENCES [dbo].[OT_Solicitud] ([IdOTSolicitud])

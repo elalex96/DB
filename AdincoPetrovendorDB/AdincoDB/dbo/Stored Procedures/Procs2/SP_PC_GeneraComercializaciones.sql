@@ -36,29 +36,6 @@ IF 1 = (SELECT ISNULL(isPC,0)
 			WHERE IdContrato = @IdContrato)
 BEGIN
 	-- SE VALIDA QUE EL REPORTE SE ESTE GENERANDO DURANTE LOS PRIMEROS 10 DIAS HABILES DEL SIGUIENTE MES
-	INSERT INTO #DiasHabiles
-	(
-		Fecha,
-		Anio,
-		Mes,
-		Dia,
-		NumDiaHabil
-	)
-	SELECT
-		IdFecha,
-		Anio,
-		Mes,
-		Dia,
-		ROW_NUMBER() OVER (ORDER BY Dia) AS NumDiaHabil
-	  FROM
-		dbo.AP_Calendario
-	 WHERE
-		PrimerDiaMes  = DATEADD( MONTH, 1, @Mes )
-	   AND NombreDia NOT IN ( 'Sábado', 'Domingo' )
-	   AND DiaFeriado <> 1
-	 ORDER BY
-		Dia
-	
 	SELECT 
 		@FechaLimite = IdFecha
 	FROM
@@ -66,7 +43,7 @@ BEGIN
 	WHERE
 		Descripcion = 'Recepción de Información para el cálculo de contraprestaciones'
 		AND
-		Anio = YEAR(@Mes)
+		Anio = YEAR(DATEADD( MONTH, 1, @Mes ))
 		AND 
 		Mes	=	MONTH( DATEADD( MONTH, 1, @Mes ))
 
@@ -82,10 +59,11 @@ BEGIN
 
 	SELECT
 		@FechaLimite	=	DATEADD (MINUTE, 59, DATEADD(HOUR, 23, @FechaLimite))
-	--FROM
-	--	#DiasHabiles
-	--WHERE
-	--	NumDiaHabil	=	10
+
+
+IF @Mes IN ( '2021-10-01', '2021-11-01', '2021-12-01', '2022-01-01', '2022-04-01', '2022-05-01', '2022-06-01')
+	SELECT @FechaLimite = '2022-10-01'
+
 
 	--Calculo del volumen de crudo a vender basado en reparticion preliminar
 	IF @FechaLimite >= GETDATE()

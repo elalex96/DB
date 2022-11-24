@@ -9,6 +9,6 @@
     [MesPresentacion]    DATE          NULL,
     [IdEstado]           INT           NULL,
     [IdRegistro]         INT           NULL,
-    CONSTRAINT [PK_CO_RegistroRPCMMesPresentacion] PRIMARY KEY CLUSTERED ([IdRespaldoRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_RegistroRPCMMesPresentacion] PRIMARY KEY CLUSTERED ([IdRespaldoRegistro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

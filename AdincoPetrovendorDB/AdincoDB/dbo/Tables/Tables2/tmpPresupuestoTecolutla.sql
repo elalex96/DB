@@ -60,6 +60,6 @@
     [M12MONac]                 FLOAT (53)     NULL,
     [M12BSExt]                 FLOAT (53)     NULL,
     [M12BSNac]                 FLOAT (53)     NULL,
-    CONSTRAINT [PK_tmpPresupuestoTecolutla] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_tmpPresupuestoTecolutla] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

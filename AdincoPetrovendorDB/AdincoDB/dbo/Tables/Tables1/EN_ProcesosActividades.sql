@@ -9,7 +9,7 @@
     [ModificadoEl]        DATETIME NULL,
     [Activo]              BIT      NULL,
     [BitIniciaSigProceso] BIT      NULL,
-    CONSTRAINT [PK_procesosActividad] PRIMARY KEY CLUSTERED ([IdProceso] ASC, [idActividad] ASC, [IdContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_procesosActividad] PRIMARY KEY CLUSTERED ([IdProceso] ASC, [idActividad] ASC, [IdContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_ProcesosActividad_Actividad] FOREIGN KEY ([idActividad]) REFERENCES [dbo].[EN_Actividades] ([IdActividad]),
     CONSTRAINT [FK_ProcesosActividad_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_ProcesosActividad_Procesos] FOREIGN KEY ([IdProceso]) REFERENCES [dbo].[EN_Procesos] ([IdProceso]),

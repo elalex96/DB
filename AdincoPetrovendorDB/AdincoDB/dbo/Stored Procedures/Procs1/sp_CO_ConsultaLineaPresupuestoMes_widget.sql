@@ -1,6 +1,4 @@
-﻿-- Stored Procedure
-
--- =============================================
+﻿-- =============================================
 -- Author:		Josue Gonzalez
 -- Create date: 21 Junio 2017
 -- Description:	Presupuestos
@@ -71,26 +69,30 @@ AS
                                      END)) AS monto,
                             dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES
                      INTO #tmp
-                     FROM dbo.CO_LineaPresupuestoMes
-                          LEFT OUTER JOIN CO_ActividadPetroleraCNH ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
-                          LEFT OUTER JOIN CO_SubactividadPetrolera ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
-                          LEFT OUTER JOIN CO_TareaPetrolera ON dbo.CO_LineaPresupuestoMes.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
-                          LEFT OUTER JOIN CO_ActividadCIEP ON dbo.CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad
-                          LEFT OUTER JOIN CO_TipoServicio ON dbo.CO_LineaPresupuestoMes.IdTipoServicio = CO_TipoServicio.ID_TIPOSER
-                          LEFT OUTER JOIN CO_SubactividadCIEP ON dbo.CO_LineaPresupuestoMes.IdSubactividad = CO_SubactividadCIEP.IdSubactividad
-                          LEFT OUTER JOIN CO_Servicio ON dbo.CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
-                          LEFT OUTER JOIN CO_Area ON dbo.CO_LineaPresupuestoMes.IdArea = CO_Area.IdArea
-                          LEFT OUTER JOIN CO_Instalacion ON dbo.CO_LineaPresupuestoMes.IdInstalacion = CO_Instalacion.IdInstalacion
-                          LEFT OUTER JOIN CO_Registro ON dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
-                          LEFT OUTER JOIN CO_ClasificacionAnexo4 ON dbo.CO_LineaPresupuestoMes.IdAnexo4 = CO_ClasificacionAnexo4.IdAnexo4
-                          LEFT OUTER JOIN FI_Factura ON FI_Factura.IdFactura = CO_Registro.IdFactura
-                          LEFT OUTER JOIN CO_TipoCambioDiario ON CO_TipoCambioDiario.IdMoneda = FI_Factura.IdMoneda
+                     FROM dbo.CO_LineaPresupuestoMes (NOLOCK)
+					 JOIN co_presupuesto (NOLOCK)
+						ON CO_Presupuesto.idpresupuesto = CO_LineaPresupuestoMes.idpresupuesto
+					 AND dbo.CO_LineaPresupuestoMes.IdPresupuesto = @idpresupuesto
+                          JOIN CO_ActividadPetroleraCNH 
+							ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
+                          JOIN CO_SubactividadPetrolera ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
+                          JOIN CO_TareaPetrolera ON dbo.CO_LineaPresupuestoMes.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
+                          JOIN CO_ActividadCIEP ON dbo.CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad
+                          JOIN CO_TipoServicio ON dbo.CO_LineaPresupuestoMes.IdTipoServicio = CO_TipoServicio.ID_TIPOSER
+                          JOIN CO_SubactividadCIEP ON dbo.CO_LineaPresupuestoMes.IdSubactividad = CO_SubactividadCIEP.IdSubactividad
+                          JOIN CO_Servicio ON dbo.CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
+                          JOIN CO_Area ON dbo.CO_LineaPresupuestoMes.IdArea = CO_Area.IdArea
+                          JOIN CO_Instalacion ON dbo.CO_LineaPresupuestoMes.IdInstalacion = CO_Instalacion.IdInstalacion
+                          JOIN CO_Registro ON dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+                          JOIN CO_ClasificacionAnexo4 ON dbo.CO_LineaPresupuestoMes.IdAnexo4 = CO_ClasificacionAnexo4.IdAnexo4
+                          JOIN FI_Factura ON FI_Factura.IdFactura = CO_Registro.IdFactura
+                          JOIN CO_TipoCambioDiario ON CO_TipoCambioDiario.IdMoneda = FI_Factura.IdMoneda
                                                                  AND MONTH(CO_TipoCambioDiario.fecha) = MONTH(FI_Factura.fecha)
                                                                  AND YEAR(CO_TipoCambioDiario.fecha) = YEAR(FI_Factura.fecha)
                                                                  AND DAY(CO_TipoCambioDiario.fecha) = DAY(FI_Factura.fecha)
                           LEFT OUTER JOIN CO_RubroInterno ON dbo.CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
                           LEFT OUTER JOIN DG_Grafica ON @IdGrafica = DG_Grafica.Id_Grafica
-                          JOIN co_presupuesto ON CO_Presupuesto.idpresupuesto = CO_LineaPresupuestoMes.idpresupuesto
+                          
                      WHERE(dbo.CO_LineaPresupuestoMes.IdPresupuesto = @idpresupuesto) 
          --and MONTH ( CO_LineaPresupuestoMes.AC_FEC_INI ) = @mes 
                      GROUP BY
@@ -189,8 +191,7 @@ AS
                                 THEN 'Real (USD/Bl)'
                                 ELSE 'Real (USD/Bl)'
                             END AS 'SerieName1',
-                            SUM(CASE
-                                    WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0
+                            SUM(CASE    WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0
                                     THEN ISNULL(CO_Registro.MontoRegistro, 0) / CO_TipoCambioDiario.TipoCambio
                                     ELSE 0
                                 END) AS 'SerieValues1',
@@ -202,10 +203,13 @@ AS
                                      END)) AS monto,
                             dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES
                      INTO #opex
-                     FROM dbo.CO_LineaPresupuestoMes
-                          LEFT OUTER JOIN CO_ActividadPetroleraCNH ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
-                          LEFT OUTER JOIN CO_SubactividadPetrolera ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
-                          LEFT OUTER JOIN CO_TareaPetrolera ON dbo.CO_LineaPresupuestoMes.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
+                     FROM dbo.CO_LineaPresupuestoMes	(NOLOCK)
+					 JOIN co_presupuesto (NOLOCK)
+						ON CO_Presupuesto.idpresupuesto = CO_LineaPresupuestoMes.idpresupuesto
+						AND dbo.CO_LineaPresupuestoMes.IdPresupuesto = @idpresupuesto
+                          JOIN CO_ActividadPetroleraCNH ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
+                          JOIN CO_SubactividadPetrolera ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
+                          JOIN CO_TareaPetrolera ON dbo.CO_LineaPresupuestoMes.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
                           LEFT OUTER JOIN CO_ActividadCIEP ON dbo.CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad
                           LEFT OUTER JOIN CO_TipoServicio ON dbo.CO_LineaPresupuestoMes.IdTipoServicio = CO_TipoServicio.ID_TIPOSER
                           LEFT OUTER JOIN CO_SubactividadCIEP ON dbo.CO_LineaPresupuestoMes.IdSubactividad = CO_SubactividadCIEP.IdSubactividad
@@ -221,7 +225,7 @@ AS
                                                                  AND DAY(CO_TipoCambioDiario.fecha) = DAY(FI_Factura.fecha)
                           LEFT OUTER JOIN CO_RubroInterno ON dbo.CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
                           LEFT OUTER JOIN DG_Grafica ON @IdGrafica = DG_Grafica.Id_Grafica
-                          JOIN co_presupuesto ON CO_Presupuesto.idpresupuesto = CO_LineaPresupuestoMes.idpresupuesto
+                          
                      WHERE(dbo.CO_LineaPresupuestoMes.IdPresupuesto = @idpresupuesto) 
          --and MONTH ( CO_LineaPresupuestoMes.AC_FEC_INI ) = @mes 
                      GROUP BY
@@ -236,11 +240,11 @@ AS
                      DG_Grafica.Title_yAxis,
                      DG_Grafica.Titulo_xAxis,
                      DG_Grafica.Title_xAxis
-         --       CO_Area.NombreArea,--     CO_TipoServicio.ID_TIPOSER,--   CO_TipoServicio.NombreTipoServicio,-- CO_ActividadCIEP.ID_CATACTIV,-- CO_ActividadCIEP.NombreActividad,-- CO_SubactividadCIEP.ID_CATSUBACTIV,-- CO_SubactividadCIEP.NombreSubactividad,-- dbo.CO_LineaPresupuestoMes.ID_PADRE,--CO_ClasificacionAnexo4.ClasificacionAnexo4,--CO_Servicio.NombreServicio,--CO_Instalacion.NombreInstalacion,--CO_Instalacion.IdInstalacionPemex,--dbo.CO_LineaPresupuestoMes.Monto--dbo.CO_LineaPresupuestoMes.IdExcel,--CO_RubroInterno.NombreRubro,--CO_ActividadPetroleraCNH.id_Actividad,--CO_ActividadPetroleraCNH.DescripcionActividadPetrolera,--CO_SubactividadPetrolera.[id_Sub-actividad],--CO_SubactividadPetrolera.SubactividadPetrolera,--CO_TareaPetrolera.id_Tarea,--CO_TareaPetrolera.TareaPetrolera
-                     ORDER BY-- Mes_Presupuestado;
+            ORDER BY-- Mes_Presupuestado;
 
                      dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES;--,--Area;
 
 
                  END;
          END;
+

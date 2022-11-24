@@ -7,7 +7,7 @@
     [ModificadoPor]       INT           NULL,
     [activo]              BIT           NULL,
     [BitJOA]              BIT           NULL,
-    CONSTRAINT [PK_IdClasificacion] PRIMARY KEY CLUSTERED ([IdClasificacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IdClasificacion] PRIMARY KEY CLUSTERED ([IdClasificacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [CreadoEl_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [ModificadoPor_Usuario] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );

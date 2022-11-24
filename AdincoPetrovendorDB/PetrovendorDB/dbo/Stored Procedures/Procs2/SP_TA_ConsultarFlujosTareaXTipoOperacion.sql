@@ -20,11 +20,8 @@ BEGIN
 
     -- Insert statements for procedure here
 	 SELECT IdFlujoTarea, Concat(Nombre , ' - ',Descripcion) as Descripcion
-	 FROM TA_FlujoTarea
+	 FROM TA_FlujoTarea (NOLOCK)
 	 WHERE IdTipoOperacion = @IdTipoOperacion
 	 AND IdProveedor = @IdProveedor
 	 and ( Activo is null or Activo = 1) And (Eliminado = 0 OR Eliminado is null)
 END
-
-
-

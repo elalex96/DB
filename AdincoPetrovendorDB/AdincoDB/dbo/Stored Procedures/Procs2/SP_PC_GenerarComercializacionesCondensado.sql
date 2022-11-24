@@ -307,6 +307,12 @@ WHERE
     AND YEAR( CFDI.Fecha )   = YEAR( @MesReporte )
 	AND ( RC.factura LIKE '92%'   OR   RC.Factura LIKE '93%' )
 	AND DATEFROMPARTS( SUBSTRING( RC.[Fechafactura], 7, 4 ), SUBSTRING( RC.[Fechafactura], 4, 2 ), SUBSTRING( RC.[Fechafactura], 1, 2 ) ) >= @FechaInicioContrato
+AND RC.factura NOT IN ('92390564','92390424','92390295','92390394','92390416','92390401','92390386','92390288',
+'92390555','92390319','92390459','92390281','92390378','92390408','92390552','92390311',
+'92390480','92390452','92390303','92390326','92390370','92390362','92390354','92390347',
+'92390340','92390333','92390430','92390494','92390437','92390561','92390876','92390567',
+'92390967','92390467','92390501','92390985','92390509','92390445','92390925','92390516',
+'92390558','92390949') -- CASO 14 DE MARZO 2022 DE FACTURAS CON MONTOS MUY GRANDES, FUERA DE LO NORMAL
 GROUP BY
     CFDI.IdFactura,
     EPV.IdPtoExpedicionRecepcion,
@@ -496,6 +502,9 @@ END
 SELECT @TotalDistribuido	=	SUM(VolumenVendido)
 FROM #ComercializacionesConde
 
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101', '2022-04-01', '2022-05-01', '2022-06-01')
+	SELECT @FechaLimite = '20221001 23:59'
+
 IF @IdContrato <> 10028 -- MISIÓN
 BEGIN
 	/***************     SE BUSCA EL PRECIO CALCULADO DEL CONDENSADO PARA GENERAR LAS COMERCIALIZACIONES CON EL PRECIO YA CORRECTO           *************/
@@ -669,26 +678,6 @@ BEGIN
 			0
 		FROM
 			#ComercializacionesConde	C
-		--	#PC_FacturasConde2    FC
-		--JOIN
-		--	#DistConde          DC
-		--	ON FC.IdPtoExpedicionRecepcion = DC.IdPtoExpedicionRecepcion
-		--	AND FC.IdMaterialPC             = DC.IdMaterialPC
-		--JOIN
-		--	FI_Factura          F (NOLOCK)
-		--	ON F.IdFactura                 = FC.IdFactura
-		--JOIN
-		--	FI_CFDIConcepto     C (NOLOCK)
-		--	ON F.IdFactura                 = C.IdFactura
-		--JOIN
-		--	COM_Equivalencias   E
-		--	ON C.Unidad                    = E.Unidad
-		--JOIN
-		--	CO_TipoCambioDiario T
-		--	ON F.IdMoneda                  = T.IdMoneda
-		--	AND CONVERT( DATE, F.Fecha )    = T.Fecha
-		--WHERE
-		--	ROUND( C.Cantidad * E.Factor * DC.FactorDistribucion, 0 ) > 0
 
 		SELECT @NumError = @@ERROR
 		IF @NumError <> 0

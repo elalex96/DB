@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS SP_AD_ObtenerDocumentoPorPetOferta
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 01/02/2018
 -- Description:	obtener documento de la justificacion de la petOferta

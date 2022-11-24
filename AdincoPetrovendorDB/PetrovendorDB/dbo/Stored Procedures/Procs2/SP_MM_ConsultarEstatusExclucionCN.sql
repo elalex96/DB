@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarEstatusExclucionCN]    Script Date: 11/08/2021 02:07:10 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <09/12/2019>
 -- Description:	<Cosultar estatus solicitud exclucion de carta cn>

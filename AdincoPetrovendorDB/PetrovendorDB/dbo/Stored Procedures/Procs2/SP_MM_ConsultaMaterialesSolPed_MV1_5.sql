@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- Author:      Daniel AC
 -- Create date: 18-12-17
 -- Description: Consulta materiales del catálogo de la operadora
@@ -11,7 +11,7 @@
 -- Create date: 26/11/2021
 -- Description: optmizacion
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaMaterialesSolPed_MV1_5]
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaMaterialesSolPed_MV1_5]
     -- Add the parameters for the stored procedure here
     @IdTipoPedido INT, @IdProveedor INT ,
     /*--------------------

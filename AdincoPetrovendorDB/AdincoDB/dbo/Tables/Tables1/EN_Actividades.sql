@@ -10,7 +10,7 @@
     [Activo]              BIT            NULL,
     [IdRegulador]         INT            NULL,
     [IdActividadOriginal] INT            NULL,
-    CONSTRAINT [PK_EN_Actividades] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_Actividades] PRIMARY KEY CLUSTERED ([IdActividad] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_Actividades_UsuarioCreado] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_Actividades_UsuarioModificado] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_IdActividadOriginal_EN_Actividades] FOREIGN KEY ([IdActividadOriginal]) REFERENCES [dbo].[EN_Actividades] ([IdActividad]),

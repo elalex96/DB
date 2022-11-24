@@ -12,6 +12,6 @@
     [CreadoEl]                          DATETIME   NULL,
     [EliminadoEl]                       DATETIME   NULL,
     [EliminadoPor]                      INT        NULL,
-    CONSTRAINT [PK_MM_AceptacionPedidoDetalleEliminada] PRIMARY KEY CLUSTERED ([IdAceptacionPedidoDetalleBitacora] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_MM_AceptacionPedidoDetalleEliminada] PRIMARY KEY CLUSTERED ([IdAceptacionPedidoDetalleBitacora] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

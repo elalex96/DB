@@ -1,10 +1,9 @@
-
--- =============================================    
+﻿-- =============================================    
 -- Author:  <Author,,Name>    
 -- Create date: <Create Date,,>    
 -- Description: <Description,,>    
 -- =============================================       
-ALTER PROCEDURE [dbo].[SP_SegRenovarContrasena]    
+CREATE PROCEDURE [dbo].[SP_SegRenovarContrasena]    
 -- Add the parameters for the stored procedure here    
 @idusuario  INT            = NULL, 
 @Pass       VARBINARY(MAX) = NULL, 

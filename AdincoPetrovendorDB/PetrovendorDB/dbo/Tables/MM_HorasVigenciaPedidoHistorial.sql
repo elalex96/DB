@@ -6,6 +6,6 @@
     [FechaCreacion]    DATETIME       NULL,
     [IdUsuarioCreador] INT            NULL,
     [Motivo]           NVARCHAR (MAX) NULL,
-    PRIMARY KEY CLUSTERED ([IdHorasVigencia] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdHorasVigencia] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

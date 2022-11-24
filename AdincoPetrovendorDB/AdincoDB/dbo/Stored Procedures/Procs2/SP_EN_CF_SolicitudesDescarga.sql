@@ -1,24 +1,9 @@
-﻿-- ================================================
--- Template generated from Template Explorer using:
--- Create Procedure (New Menu).SQL
---
--- Use the Specify Values for Template Parameters 
--- command (Ctrl-Shift-M) to fill in the parameter 
--- values below.
---
--- This block of comments will not be included in
--- the definition of the procedure.
--- ================================================
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <26/05/2022>
 -- Description:	<Consulta de las solicitudes de descarga de archivos en contract files>
 -- =============================================
-ALTER PROCEDURE SP_EN_CF_SolicitudesDescarga
+CREATE PROCEDURE SP_EN_CF_SolicitudesDescarga
 	-- Add the parameters for the stored procedure here
 	@IdContrato INT,
 	@IdUsuario INT
@@ -54,4 +39,3 @@ BEGIN
 	ORDER BY SolicitadoEl DESC;
 
 END
-GO

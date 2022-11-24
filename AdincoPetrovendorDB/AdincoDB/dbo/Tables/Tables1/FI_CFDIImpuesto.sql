@@ -9,6 +9,6 @@
     [Importe]        MONEY          NULL,
     [Bit_Retencion]  BIT            CONSTRAINT [DF__FI_CFDIIm__Bit_R__4D37C244] DEFAULT ((0)) NULL,
     [Base]           MONEY          NULL,
-    CONSTRAINT [PK_FI_CFDIImpuesto] PRIMARY KEY CLUSTERED ([IdCFDIImpuesto] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_FI_CFDIImpuesto] PRIMARY KEY CLUSTERED ([IdCFDIImpuesto] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

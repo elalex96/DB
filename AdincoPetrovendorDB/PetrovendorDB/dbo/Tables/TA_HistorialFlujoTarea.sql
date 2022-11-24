@@ -4,6 +4,6 @@
     [IdOperacion]   INT            NULL,
     [Fecha]         DATETIME       NULL,
     [IdEstadoFlujo] INT            NULL,
-    CONSTRAINT [PK_TA_FlujoTareaHistorial] PRIMARY KEY CLUSTERED ([IdHistorial] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_TA_FlujoTareaHistorial] PRIMARY KEY CLUSTERED ([IdHistorial] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

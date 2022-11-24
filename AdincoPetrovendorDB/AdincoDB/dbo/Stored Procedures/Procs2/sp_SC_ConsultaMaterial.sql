@@ -1,5 +1,5 @@
 ﻿-- sp_SC_ConsultaMaterial 12,0
-create Proc [dbo].[sp_SC_ConsultaMaterial]
+CREATE Proc [dbo].[sp_SC_ConsultaMaterial]
 @pIdSubContrato int,
 @pSoloConvenios bit = 0
 As
@@ -119,8 +119,5 @@ As
 
 
 
-
-
-GO
 
 

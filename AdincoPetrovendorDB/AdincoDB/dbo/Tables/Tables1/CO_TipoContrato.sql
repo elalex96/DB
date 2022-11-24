@@ -3,6 +3,6 @@
     [TipoContratoCorto] NVARCHAR (MAX) NULL,
     [TipoContrato]      NVARCHAR (MAX) NULL,
     [CreadoPor]         INT            NULL,
-    CONSTRAINT [PK_CO_TipoContrato] PRIMARY KEY CLUSTERED ([IdTipoContrato] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_CO_TipoContrato] PRIMARY KEY CLUSTERED ([IdTipoContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

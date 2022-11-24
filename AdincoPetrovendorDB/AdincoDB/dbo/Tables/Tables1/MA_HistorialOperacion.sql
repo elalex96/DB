@@ -9,6 +9,6 @@
     [FechaRegistro]        DATETIME NULL,
     [FechaModificacion]    DATETIME NULL,
     [ModificadoPor]        INT      NULL,
-    PRIMARY KEY CLUSTERED ([IdHistorialOperacion] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdHistorialOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

@@ -8,6 +8,6 @@
     [CreadoEn]      DATETIME       NULL,
     [ModificadoPor] INT            NULL,
     [ModificadoEn]  DATETIME       NULL,
-    CONSTRAINT [PK_PV_MM_MaterialGrupo] PRIMARY KEY CLUSTERED ([IdGrupo] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_PV_MM_MaterialGrupo] PRIMARY KEY CLUSTERED ([IdGrupo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

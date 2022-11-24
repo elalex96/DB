@@ -9,7 +9,7 @@
     [CreadoEl]                 DATETIME       NULL,
     [CreadoPor]                INT            NULL,
     [Comentario]               NVARCHAR (MAX) NULL,
-    PRIMARY KEY CLUSTERED ([IdAceptacionDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdAceptacionDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__MM_AceptacionDocumento_Proveedor__S_Documento_S3] FOREIGN KEY ([IdDocumentoS3Proveedor]) REFERENCES [dbo].[S_Documento_S3] ([IdDocumento]),
     CONSTRAINT [FK__MM_AceptacionDocumento_Proveedor__S_Operadora] FOREIGN KEY ([IdOperadora]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK__MM_AceptacionDocumento_Proveedor__S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),

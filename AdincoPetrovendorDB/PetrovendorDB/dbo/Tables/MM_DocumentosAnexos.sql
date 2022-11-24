@@ -15,8 +15,8 @@
     [CreadoPor]               INT            NULL,
     [ModificadoPor]           INT            NULL,
     [ModificadoEl]            DATETIME       NULL,
-    [Bucket] VARCHAR(50) NULL, 
-    CONSTRAINT [PK_MM_DocumentosAnexos] PRIMARY KEY CLUSTERED ([IdDocumentoAnexo] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    [Bucket]                  VARCHAR (50)   NULL,
+    CONSTRAINT [PK_MM_DocumentosAnexos] PRIMARY KEY CLUSTERED ([IdDocumentoAnexo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_DocumentosAnexos_MM_PeticionOferta] FOREIGN KEY ([IdPeticionOferta]) REFERENCES [dbo].[MM_PeticionOferta] ([IdPeticionOferta]),
     CONSTRAINT [FK_MM_DocumentosAnexos_MM_PeticionOfertaDetalle] FOREIGN KEY ([IdPeticionOfertaDetalle]) REFERENCES [dbo].[MM_PeticionOfertaDetalle] ([IdPeticionOfertaDetalle])
 );

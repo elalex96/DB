@@ -12,7 +12,7 @@
     [ModificadoEl]              DATETIME       NULL,
     [Descripcion]               NVARCHAR (MAX) NULL,
     [IdDocumentoS3]             INT            NULL,
-    CONSTRAINT [PK_S_Documento] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_S_Documento] PRIMARY KEY CLUSTERED ([IdDocumento] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK__S_Documen__IdPro__57A801BA] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
     CONSTRAINT [FK__S_Documen__IdTip__55BFB948] FOREIGN KEY ([IdTipoDocumento]) REFERENCES [dbo].[S_TipoDocumento] ([IdTipoDocumento]),
     CONSTRAINT [FK__S_Documen__IdTip__589C25F3] FOREIGN KEY ([IdTipoValidacionDocumento]) REFERENCES [dbo].[S_TipoValidacionDoc] ([IdTipoValidacionDoc]),

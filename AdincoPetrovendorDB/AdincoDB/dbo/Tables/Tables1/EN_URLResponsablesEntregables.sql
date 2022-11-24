@@ -18,7 +18,7 @@
     [ModificadoPor]           INT            NULL,
     [ModificadoEn]            DATETIME       NULL,
     [Activo]                  BIT            NULL,
-    CONSTRAINT [PK_EN_URLResponsablesEntregables] PRIMARY KEY CLUSTERED ([idResponsableEntregable] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_URLResponsablesEntregables] PRIMARY KEY CLUSTERED ([idResponsableEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_URLResponsablesEntregables_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_URLResponsablesEntregables_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_URLResponsablesEntregables_AP_UsuarioTarea] FOREIGN KEY ([idUsuarioTarea]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),

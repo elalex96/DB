@@ -71,4 +71,3 @@ BEGIN
   -- TipoOperacion --> 2 = Solicitud de Pedido
 
 END
-

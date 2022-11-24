@@ -3,6 +3,6 @@
     [TiempoEntrega]   NVARCHAR (MAX) NULL,
     [CreadoPor]       INT            NULL,
     [CreadoEn]        DATETIME       NULL,
-    CONSTRAINT [PK_EN_TiempoEntrega] PRIMARY KEY CLUSTERED ([IdTiempoEntrega] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_EN_TiempoEntrega] PRIMARY KEY CLUSTERED ([IdTiempoEntrega] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

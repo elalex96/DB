@@ -1,5 +1,6 @@
-﻿ -- sp_SC_ObtenerPresupuestos 2,10,0
-create Proc [dbo].[sp_SC_ObtenerPresupuestos]
+﻿
+ -- sp_SC_ObtenerPresupuestos 2,10,0
+CREATE Proc [dbo].[sp_SC_ObtenerPresupuestos]
 @pIdContratista int,
 @pIdSubContrato int,
 @pSoloSeleccionados bit=0
@@ -53,8 +54,5 @@ As
 	end
 
 	select * from #tmpResult
-
-
-GO
 
 

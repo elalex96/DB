@@ -16,7 +16,7 @@
     [VendorBankName]       VARCHAR (50)  NULL,
     [IdTransferencia]      INT           NULL,
     [InvoiceNumber]        VARCHAR (20)  DEFAULT ('') NOT NULL,
-    CONSTRAINT [PK_CO_SAPPaymentData] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [SourceAccount] ASC, [FinalAccount] ASC, [PaymentReference] ASC, [PaymentDate] ASC, [PaidAmount] ASC, [InvoiceNumber] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_SAPPaymentData] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [SourceAccount] ASC, [FinalAccount] ASC, [PaymentReference] ASC, [PaymentDate] ASC, [PaidAmount] ASC, [InvoiceNumber] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_SAPPaymentData_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_SAPPayment_FI_Transfer] FOREIGN KEY ([IdTransferencia]) REFERENCES [dbo].[FI_Transfer] ([IdTransferencia])
 );

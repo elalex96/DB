@@ -1,6 +1,4 @@
-﻿DROP PROCEDURE IF EXISTS MM_SP_ConsultaMaterialesImportados
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Jose Roman>
 -- Create date: <07-08-2018>
 -- Description:	<Consulta de materiales por proveedor en pantalla de importacion de materiales>

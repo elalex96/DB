@@ -1,14 +1,12 @@
-﻿drop procedure if exists SP_OCD_ConsultaDescargaCN
-go
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <20/04/2020>
 -- Description:	<consultar datos de descarga de la carta cn para compra directa>
 -- =============================================
+-- =============================================
 -- Author:		<Luis David De La Cruz>
 -- Create date: <18/10/2021>
 -- Description:	<se agregró el campo Bucket a las consultas>
--- =============================================
 CREATE PROCEDURE [dbo].[SP_OCD_ConsultaDescargaCN]
 	-- Add the parameters for the stored procedure here
 	@IdFactura INT,

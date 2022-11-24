@@ -21,7 +21,7 @@
     [Presion]                        FLOAT (53) NULL,
     [Tempertura]                     FLOAT (53) NULL,
     [ProduccionCondensadoNeto]       FLOAT (53) NULL,
-    CONSTRAINT [PK_CO_MedicionEntregaHidrocarburos] PRIMARY KEY CLUSTERED ([IdMedicionEntregaHidrocarburos] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_MedicionEntregaHidrocarburos] PRIMARY KEY CLUSTERED ([IdMedicionEntregaHidrocarburos] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_MedicionEntregaHidrocarburos_CO_PuntosdeEntrega] FOREIGN KEY ([PuntoEntregaID]) REFERENCES [dbo].[CO_PuntosdeEntrega] ([PuntoEntregaID])
 );
 

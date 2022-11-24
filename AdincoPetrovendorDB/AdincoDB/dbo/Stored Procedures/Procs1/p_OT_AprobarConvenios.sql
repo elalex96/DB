@@ -1,7 +1,4 @@
-﻿
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- p_OT_AprobarConvenios 52,10,''
+﻿-- p_OT_AprobarConvenios 52,10,''
 CREATE proc p_OT_AprobarConvenios-- 17,10,''
 @pIdSubcontrato int,
 @pIdUsuario int,
@@ -29,7 +26,6 @@ as
 		where ot1.IsActivo = 1 and
 		ot1.IdSubcontrato = @pIdSubcontrato
 		and ot1.IdOTEstatus = 9 --Convenio
-		--and dbo.fn_SC_ExcedidoSiNo(ot1.IdOTSolicitud)  = 0
 		and not exists (
 			select 
 				otm.IdSCMaterial,

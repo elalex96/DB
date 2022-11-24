@@ -5,22 +5,22 @@
 -- Si es el requisitor relacionado la proceso actual tambien tiene permisos de acceso 
 -- =============================================
 -- Author:		Luis David De La Cruz Bautista
--- Create date: 03/02/2021
--- Description:	Optimización por issue 955
+-- Create date: 20/01/2021
+-- Description:	Se optimiza para issue 920
 -- =============================================
-
 CREATE PROCEDURE [dbo].[SP_ValidarAccesoDetalleCompra] 
+
 @IdUsuario INT, 
 @IdProveedor INT,
 @IdSolicitudPedido INT 
 
 AS
 	BEGIN
-		DECLARE @EsAdministradorCompras BIT =0,
-		@EsTipoAdministrador BIT = 0,
-		@EsAdministrador BIT =0, 
-		@EsRequisitor BIT = 0,
-		@EsCompradorAsignado BIT;
+
+		DECLARE @EsAdministradorCompras BIT =0
+		DECLARE @EsTipoAdministrador BIT = 0
+		DECLARE @EsAdministrador BIT =0
+		DECLARE @EsRequisitor BIT =0
 
 		--CONSULTAR SI EL USUARIO ACTUAL ES ADMINISTRADOR DE COMPRAS
 		SELECT  @EsAdministradorCompras=Activo
@@ -49,6 +49,8 @@ AS
          SET @EsAdministrador =1
 		END 
 
+		DECLARE @EsCompradorAsignado BIT
+
 		SELECT  @EsCompradorAsignado=CP.Activo
 		FROM dbo.MM_SolicitudPedidoComprador CP
 		WHERE CP.IdAsignadoA=@IdUsuario 
@@ -67,4 +69,6 @@ AS
 		'SIN_PERMISOS' END 
 		AS EsAdministrador
 			 
+
+		
 	END

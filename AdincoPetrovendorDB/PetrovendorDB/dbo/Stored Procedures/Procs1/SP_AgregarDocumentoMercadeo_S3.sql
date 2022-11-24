@@ -1,8 +1,4 @@
-﻿USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_AgregarDocumentoMercadeo_S3
-GO-- =============================================
--- Author:	Pedro Acuña
+﻿-- Author:	Pedro Acuña
 -- Create date: 03-07-2018
 -- Description:	SP que agrega DOCUMENTO de Mercadeo en la solicitud de oferta
 -- =============================================

@@ -1,4 +1,5 @@
-﻿create Proc p_OT_ConsultaOTSolicitud --10013,10038,0,1,0,1,0,0,1,0,10,'20190101','20220810'
+﻿
+create Proc p_OT_ConsultaOTSolicitud --10013,10038,0,1,0,1,0,0,1,0,10,'20190101','20220810'
 @pIdContratista int,
 @pIdContrato int,
 @pPendientes bit,

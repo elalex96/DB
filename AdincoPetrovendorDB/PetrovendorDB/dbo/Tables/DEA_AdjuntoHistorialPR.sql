@@ -14,6 +14,6 @@
     [EliminadoPor]        INT            NULL,
     [Activo]              BIT            NULL,
     [IsEliminado]         BIT            NULL,
-    PRIMARY KEY CLUSTERED ([IdAjuntoHistorialPr] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([IdAjuntoHistorialPr] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

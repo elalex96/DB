@@ -1,11 +1,4 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ObtenerInfoCardAceptacionFactura]    Script Date: 20/10/2022 12:16:09 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 29-11-18
 -- Description:	Obtener la informacion de la card reporte que se encuentra en la aceptacion de la factura
@@ -27,7 +20,7 @@ GO
 -- Create date: 27-04-2022
 -- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_ObtenerInfoCardAceptacionFactura]
+CREATE PROCEDURE [dbo].[SP_ObtenerInfoCardAceptacionFactura]
 @IdProveedor INT, 
 @IdAceptacionPedido INT
 AS

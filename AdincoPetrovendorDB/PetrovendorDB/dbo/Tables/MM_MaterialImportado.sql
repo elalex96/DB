@@ -5,7 +5,7 @@
     [CreadorEl]           DATETIME NULL,
     [CreadorPor]          INT      NULL,
     [IdProveedorOperador] INT      NULL,
-    PRIMARY KEY CLUSTERED ([IdMaterialImportado] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    PRIMARY KEY CLUSTERED ([IdMaterialImportado] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_MaterialImportado_MM_Material_ProveedorOperador] FOREIGN KEY ([IdMaterialOperador]) REFERENCES [dbo].[MM_Material] ([IdMaterial]),
     CONSTRAINT [FK_MM_MaterialImportado_MM_Material_ProveedorPetrovendor] FOREIGN KEY ([IdMaterial]) REFERENCES [dbo].[MM_Material] ([IdMaterial]),
     CONSTRAINT [FK_MM_MaterialImportado_S_Proveedor] FOREIGN KEY ([IdProveedorOperador]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),

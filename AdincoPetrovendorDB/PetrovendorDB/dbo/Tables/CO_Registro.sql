@@ -26,12 +26,12 @@
     [PCN]                             FLOAT (53)      NULL,
     [IdCBSISH]                        INT             NULL,
     [IdAceptacionPedidoDetalle]       INT             NULL,
-    CONSTRAINT [PK_Registros] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_Registros] PRIMARY KEY CLUSTERED ([IdRegistro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
 
 GO
 CREATE NONCLUSTERED INDEX [CO_Registro_IdFactura]
     ON [dbo].[CO_Registro]([IdFactura] ASC)
-    INCLUDE([IdLineaPresupuestoMes]) WITH (STATISTICS_NORECOMPUTE = ON);
+    INCLUDE([IdLineaPresupuestoMes]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
 

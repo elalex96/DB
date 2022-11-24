@@ -1,13 +1,11 @@
-DROP PROCEDURE IF EXISTS SP_ENI_GuardadoEdicionPozo 
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<ALEXANDER GOMEZ>
 -- Create date: <02-06-2021>
 -- Description:	<GUARDADO DE LA EDICION DE POZO>
 -- =============================================
 -- Author:		<LUIS DAVID>
 -- Create date: <18-08-2021>
--- Description:	<SE GUARDA LA FECHA FIN PERFORACI�N>
+-- Description:	<SE GUARDA LA FECHA FIN PERFORACIÓN>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_ENI_GuardadoEdicionPozo]
 	-- Add the parameters for the stored procedure here

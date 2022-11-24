@@ -45,6 +45,6 @@
     [DiasCasoFortuito]                 INT           NULL,
     [IngresosPrestacionServicios]      MONEY         NULL,
     [Fecha]                            DATE          NULL,
-    CONSTRAINT [PK_SIPACReporteMensual] PRIMARY KEY CLUSTERED ([IdReporteMensual] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_SIPACReporteMensual] PRIMARY KEY CLUSTERED ([IdReporteMensual] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

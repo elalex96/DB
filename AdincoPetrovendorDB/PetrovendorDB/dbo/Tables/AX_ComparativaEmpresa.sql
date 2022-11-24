@@ -7,6 +7,6 @@
     [Activo]                 BIT      NULL,
     [IdContrato]             INT      NULL,
     [IdUsuarioAdinco]        INT      NULL,
-    CONSTRAINT [PK_AX_ComparativaEmpresa] PRIMARY KEY CLUSTERED ([IdAxComparativaEmpresa] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    CONSTRAINT [PK_AX_ComparativaEmpresa] PRIMARY KEY CLUSTERED ([IdAxComparativaEmpresa] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

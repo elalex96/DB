@@ -9,6 +9,6 @@
     [cp]           INT          NOT NULL,
     [asentamiento] VARCHAR (70) NOT NULL,
     [tipo]         VARCHAR (20) NOT NULL,
-    PRIMARY KEY CLUSTERED ([id] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    PRIMARY KEY CLUSTERED ([id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

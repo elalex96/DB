@@ -1,17 +1,10 @@
-USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_CartaProveedorDetalle_MV1_5]    Script Date: 17/11/2021 09:21:01 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author: DANIEL AC 
 -- Create date: 16-05-18
 -- Description:	Actualización agrupación de actividades 
 -- =============================================
 
-ALTER PROCEDURE [dbo].[SP_MM_CartaProveedorDetalle_MV1_5] --12720
+CREATE PROCEDURE [dbo].[SP_MM_CartaProveedorDetalle_MV1_5] --12720
     -- Add the parameters for the stored procedure here
     @IdPedido INT,
 	/*--------------------
@@ -151,6 +144,3 @@ BEGIN
 		--LEFT JOIN MM_PeticionOfertaDetalle AS POD ON POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle
   --  WHERE AP.IdAceptacionPedido = @IdPedido;2260400.00
 END;
-
-
- 

@@ -11,7 +11,7 @@
     [Constante2_API]     FLOAT (53)    NULL,
     [Elevacion_API]      INT           NULL,
     [FormulaCompleta]    VARCHAR (500) NULL,
-    CONSTRAINT [PK_CO_Formulas_Detalle] PRIMARY KEY CLUSTERED ([IdFormula] ASC, [IdTipoHidrocarburo] ASC, [API_RangoIni] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_Formulas_Detalle] PRIMARY KEY CLUSTERED ([IdFormula] ASC, [IdTipoHidrocarburo] ASC, [API_RangoIni] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Formulas_CO_Formulas_Detalle] FOREIGN KEY ([IdFormula]) REFERENCES [dbo].[CO_Formulas] ([IdFormula])
 );
 

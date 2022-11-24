@@ -1,16 +1,9 @@
-USE [Adinco]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_EN_CrearNuevaCarpeta]    Script Date: 11/11/2021 11:59:30 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 14/10/2021
 -- Description:	Creacion de nuevas carpetas para el visor de archivos
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_EN_CrearNuevaCarpeta]
+CREATE PROCEDURE [dbo].[SP_EN_CrearNuevaCarpeta]
 	-- Add the parameters for the stored procedure here
 	@ContratoId INT,
 	@Padre INT,

@@ -1,14 +1,4 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'AD_SP_AgregarNuevoFlujoAprobacionCompraDirecta'
-)
-    DROP PROCEDURE AD_SP_AgregarNuevoFlujoAprobacionCompraDirecta;
-GO 
-
+﻿
 -- =============================================  
 -- Author:  <Daniel AC>  
 -- Create date: <07-04-2021>  

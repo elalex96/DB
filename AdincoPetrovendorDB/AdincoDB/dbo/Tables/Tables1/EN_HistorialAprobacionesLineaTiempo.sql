@@ -14,7 +14,7 @@
     [ActualizadoByApp]               BIT            NULL,
     [URLRepositorio]                 VARCHAR (5000) NULL,
     [ContieneURLRepositorio]         BIT            NULL,
-    CONSTRAINT [PK_EN_HistorialAprobacionesVersion] PRIMARY KEY CLUSTERED ([IdLineaTiempo] ASC, [idInstanciaEntregable] ASC, [Rechazado] ASC, [idTipoOperacion] ASC, [CreadoPor] ASC, [IdHistorialAprobacionesVersion] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_EN_HistorialAprobacionesVersion] PRIMARY KEY CLUSTERED ([IdLineaTiempo] ASC, [idInstanciaEntregable] ASC, [Rechazado] ASC, [idTipoOperacion] ASC, [CreadoPor] ASC, [IdHistorialAprobacionesVersion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_EN_HistorialAprobacionesVersion_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_HistorialAprobacionesVersion_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_EN_HistorialAprobacionesVersion_Co_Contrato] FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),

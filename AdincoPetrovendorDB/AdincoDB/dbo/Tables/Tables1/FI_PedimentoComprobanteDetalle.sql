@@ -12,7 +12,7 @@
     [CreadoEn]                      DATETIME       NULL,
     [ModificadoPor]                 INT            NULL,
     [ModificadoEn]                  DATETIME       NULL,
-    CONSTRAINT [PK_IdPedimentoComprobanteDetalle] PRIMARY KEY CLUSTERED ([IdPedimentoComprobanteDetalle] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_IdPedimentoComprobanteDetalle] PRIMARY KEY CLUSTERED ([IdPedimentoComprobanteDetalle] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_PedimentoComprobanteDetalle_FI_PedimentoComprobante] FOREIGN KEY ([IdPedimentoComprobante]) REFERENCES [dbo].[FI_PedimentoComprobante] ([IdPedimentoComprobante]),
     CONSTRAINT [FK_FI_PedimentoComprobanteDetalle_PV_MM_MaterialUnidad] FOREIGN KEY ([IdUnidadMedida]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad])
 );

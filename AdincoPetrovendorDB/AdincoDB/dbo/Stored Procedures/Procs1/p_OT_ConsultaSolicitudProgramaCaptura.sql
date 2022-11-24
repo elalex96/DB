@@ -1,6 +1,5 @@
 ﻿--************************************************************
 --ESTE SP TAMBIEN SE UTILIZA DENTRO DE p_OT_ActualizarProgramaCaptura EN ADINCO
---ESTE SP TAMBIEN SE UTILIZA DENTRO DE LA SOLUCIÓN DE PETROVENDOR
 --************************************************************
 -- Modificado por Pedro Acuna 29-Jun-2022 por el issue 2088 Adinco
 -- Modificado por Neri del Angel 20 de Julio del 2022 en Issue 2088 (Se quito el Max en NVARCHAR, se elimina subquery y los left join se eliminan completamente)
@@ -577,6 +576,7 @@ BEGIN
     FROM #tmpResult
         INNER JOIN #tmpDatos
             ON #tmpResult.IdOTSolicitudMaterial = #tmpDatos.IdOTSolicitudMaterial;
+    -- GROUP BY #tmpDatos.IdOTSolicitudMaterial;
 
     UPDATE #tmpResult
     SET #tmpResult.LunesCaptura = #tmpDatos.LunesCaptura,

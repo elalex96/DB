@@ -14,6 +14,8 @@
     [NoServicio]                           INT            NULL,
     [DesServicio]                          NVARCHAR (MAX) NULL,
     [Orden]                                INT            NULL,
-    CONSTRAINT [PK_TempReporteIntegracionGastosNivelActividadRenglon] PRIMARY KEY CLUSTERED ([IdReporteGastosNivelActividadRenglon] ASC) WITH (STATISTICS_NORECOMPUTE = ON)
+    [IdRubro]                              INT            NULL,
+    [Rubro]                                VARCHAR (300)  NULL,
+    CONSTRAINT [PK_TempReporteIntegracionGastosNivelActividadRenglon] PRIMARY KEY CLUSTERED ([IdReporteGastosNivelActividadRenglon] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

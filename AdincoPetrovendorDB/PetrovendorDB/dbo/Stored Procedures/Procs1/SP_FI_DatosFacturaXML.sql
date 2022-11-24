@@ -1,18 +1,4 @@
-﻿USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_FI_DatosFacturaXML'
-)
-    DROP PROCEDURE SP_FI_DatosFacturaXML;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_FI_DatosFacturaXML]    Script Date: 27/04/2022 11:57:15 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <16/10/2019>
 -- Description:	<Consulta datos del xml de la factura>

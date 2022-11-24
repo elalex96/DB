@@ -1,18 +1,4 @@
-USE [Petrovendor]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_ConsultarAprobadoresFactura'
-)
-    DROP PROCEDURE SP_ConsultarAprobadoresFactura;
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ConsultarAprobadoresFactura]    Script Date: 26/04/2022 06:55:50 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+﻿-- =============================================
 -- Author: Daniel AC
 -- Create date: 02/09/2019
 -- Description:	Consultar aprobadores de factura

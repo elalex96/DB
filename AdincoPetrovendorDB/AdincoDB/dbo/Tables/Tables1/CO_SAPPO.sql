@@ -32,7 +32,7 @@
     [POActivo]                 BIT           NULL,
     [CancaladoPor]             INT           NULL,
     [CancaladoEl]              DATETIME      NULL,
-    CONSTRAINT [PK_CO_MapeoInterfazPO] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [SAPPONumber] ASC, [ItemNumber] ASC) WITH (STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [PK_CO_MapeoInterfazPO] PRIMARY KEY CLUSTERED ([IdContrato] ASC, [SAPPONumber] ASC, [ItemNumber] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_MapeoInterfazPO_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 
