@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP'
+)
+    DROP PROCEDURE SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP]    Script Date: 07/11/2022 03:27:42 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Creacion de solicitud de pedido automatica
@@ -6,6 +21,10 @@
 -- Author:		LUIS DAVID
 -- Create date: 02/11/2022
 -- Description:	Asignación del centro de costo por la tabla purchasing
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 29/11/2022
+-- Description:	filtrado de los materiales de la solicitud de pedido por bitacora
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP] --'4500564101',3315
 	-- Add the parameters for the stored procedure here
@@ -239,7 +258,7 @@ INSERT INTO [dbo].[MM_SolicitudPedido]
 		PDI.NET_PRICE,
 		PDI.TERMINOS_DE_PAGO
 	FROM WDEA_PurchasingDocumentsImportados AS PDI
-	WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato
+	WHERE PDI.PURCHASING_DOCUMENT = @Purchasing AND IDCONTRATO = @IdContrato AND PDI.IdBitacora = @IdBitacoraLectura
 	GROUP BY PDI.IDMATERIAL,
 			PDI.ORDER_QUANTITY,
 			PDI.IDUNIDAD,
