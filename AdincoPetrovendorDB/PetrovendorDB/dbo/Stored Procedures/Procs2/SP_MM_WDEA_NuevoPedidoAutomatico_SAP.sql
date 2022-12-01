@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevoPedidoAutomatico_SAP
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Creacion de pedido automatica
@@ -28,7 +32,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+BEGIN TRY
     -- Insert statements for procedure here
 	DECLARE @IdProveedor INT = (SELECT TOP 1 IDPROVEEDOR 
 								FROM dbo.WDEA_PurchasingDocumentsImportados
@@ -345,15 +349,15 @@ SELECT
 
 		INSERT INTO dbo.MM_HorasVigenciaPedido
         (
-  IdPedido,
+		IdPedido,
             HorasVigencia,
             FechaVigencia
         )
         VALUES
         (   @IdPedidoActual, -- IdPedido - int
             720,  -- HorasVigencia - int
-            GETDATE()             -- FechaCreacionPedido - smalldatetime
-        );
+            DATEADD(HOUR,720,GETDATE())             -- FechaCreacionPedido - smalldatetime
+		);
         --#Almacenar historial del tipo de cambio de la modeda actual 
 		
         SET @FECHA_TIPO_CONVERSION_ACTUAL =
@@ -614,5 +618,16 @@ SELECT
 				@IdBitacoraLectura
 			);
 
-		END
+		END;
+END TRY
+BEGIN CATCH
+	
+	insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	
+		IdBitacoraLectura,		IsImportacionExitosa)
+	  SELECT
+		GETDATE(),				ERROR_MESSAGE(),	ERROR_LINE(),
+		@IdBitacoraLectura,		0;
+
+END CATCH;
 END

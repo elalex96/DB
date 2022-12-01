@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_CotizacionAutomatico_WDEA
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Creacion automatica de pedidos
@@ -16,7 +20,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+BEGIN TRY
     -- Insert statements for procedure here
 	DECLARE @IdOperacion INT,
 		@MENSAJEFINAL NVARCHAR(1000),
@@ -187,5 +191,16 @@ BEGIN
 			@IdBitacoraLectura
 		);
 
-	END
+	END;
+END TRY
+BEGIN CATCH
+	
+	insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	
+		IdBitacoraLectura,		IsImportacionExitosa)
+	  SELECT
+		GETDATE(),				ERROR_MESSAGE(),	ERROR_LINE(),
+		@IdBitacoraLectura,		0;
+
+END CATCH;
 END

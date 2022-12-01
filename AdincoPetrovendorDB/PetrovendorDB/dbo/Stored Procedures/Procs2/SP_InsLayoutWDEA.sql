@@ -1,4 +1,7 @@
-﻿--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_InsLayoutWDEA
+GO
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <25/08/2021>  
@@ -16,7 +19,7 @@ CREATE PROCEDURE [dbo].[SP_InsLayoutWDEA]
 @Destinatario NVARCHAR(100)
 AS
 BEGIN
-
+	
 	DECLARE @MENSAJELECUTRA NVARCHAR(MAX) = '';
 	DECLARE @CANT_GUARDADOS INT = 0;
 	DECLARE @IDBITACORA INT = 0;
@@ -49,7 +52,7 @@ BEGIN
 	);
 
 	SET @IDBITACORA = @@IDENTITY;
-
+	BEGIN TRY
     --SE INSERTAN LOS NUEVOS  
     INSERT INTO dbo.WDEA_Layout_T
     (
@@ -123,6 +126,16 @@ BEGIN
 	WHERE Item <> '';
 
 	SELECT @IDBITACORA;
-
 	exec SP_Ins_WDEA_Bitacora_AdincoSAP @IDBITACORA
+	END TRY
+	BEGIN CATCH
+	
+	insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	
+		IdBitacoraLectura,		IsImportacionExitosa)
+	  SELECT
+		GETDATE(),				CONCAT(ERROR_MESSAGE(),'-SP_InsLayoutWDEA'),	ERROR_LINE(),
+		@IDBITACORA,		0;
+
+	END CATCH;
 END
