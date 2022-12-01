@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_NuevaPeticionOfertaAutomatica_SAP
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/09/2021
 -- Description:	Generacion automatiza de solicitud oferta
@@ -19,7 +23,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+BEGIN TRY
     -- Insert statements for procedure here
 	DECLARE @IdProveedor INT,
 		@IdPeticionOferta INT,
@@ -158,7 +162,7 @@ BEGIN
     --ACTUALIZAR ENVIO DE LA PETICION
     UPDATE [dbo].[MM_SolicitudPedido]
     SET [PeticionEnviada] = 1,
-        JustificacionSolOferta = 'COTIZACIÓN AUTOMÁTICA'
+JustificacionSolOferta = 'COTIZACIÓN AUTOMÁTICA'
     WHERE [IdSolicitudPedido] = @IdSolicitudPedido;
 
 	INSERT INTO dbo.TA_TerminosCondicionesOperacion (IdOperacion, IdTerminosYCondiciones, TerminosCondicionesTexto)
@@ -259,5 +263,15 @@ BEGIN
 		);
 
 	END
+END TRY
+BEGIN CATCH
+	
+	insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	
+		IdBitacoraLectura,		IsImportacionExitosa)
+	  SELECT
+		GETDATE(),				ERROR_MESSAGE(),	ERROR_LINE(),
+		@IdBitacoraLectura,		0;
 
+END CATCH;
 END
