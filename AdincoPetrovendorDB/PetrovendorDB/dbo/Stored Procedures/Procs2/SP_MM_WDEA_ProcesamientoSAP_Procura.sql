@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE PETROVENDOR
+GO
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_ProcesamientoSAP_Procura
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/092021
 -- Description:	Procesamiento Interfaz SAP-Procura
@@ -18,7 +22,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+BEGIN TRY
     -- Insert statements for procedure here
 	DECLARE @CONT INT = 1,
 			@CONTTOTAL INT,
@@ -345,5 +349,15 @@ BEGIN
 		NULL,
 		NULL
 	);
+END TRY
+BEGIN CATCH
+	
+	insert into WDEA_Bitacora_AdincoSAP(
+		Fecha,					Mensaje,			NoConsecutivoProcesamiento,	
+		IdBitacoraLectura,		IsImportacionExitosa)
+	  SELECT
+		GETDATE(),				ERROR_MESSAGE(),	ERROR_LINE(),
+		@IDBITACORA,		0;
 
+END CATCH;
 END
