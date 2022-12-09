@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP'
+)
+    DROP PROCEDURE SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_WDEA_AD_BitacoraLayoutWDEA_ADINCO_SAP]    Script Date: 09/12/2022 11:51:45 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 26/10/2022
 -- Description:	Consulta del registro de datos
@@ -48,8 +63,7 @@ BEGIN
       ,[Created_On]
       ,[Mecanismo_de_Contratacion]
 	FROM WDEA_Layout_T (NOLOCK)
-	WHERE len(rtrim(ltrim(Created_On))) > 6 AND cast(substring(Created_On,7,4)+'-'+ substring(Created_On,4,2)+'-'+substring(Created_On,0,3) as date) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date) 
+	WHERE (case when len(rtrim(ltrim(Created_On)))>6 then cast(substring(LTRIM(Created_On),7,4)+'-'+ substring(LTRIM(Created_On),4,2)+'-'+substring(LTRIM(Created_On),0,3)  as date) else null end) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date) 
 	ORDER BY RowN,CreadoEL DESC
 
 END
-
