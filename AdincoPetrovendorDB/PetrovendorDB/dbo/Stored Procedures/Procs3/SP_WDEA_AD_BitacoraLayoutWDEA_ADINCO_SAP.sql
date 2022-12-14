@@ -63,7 +63,7 @@ BEGIN
       ,[Created_On]
       ,[Mecanismo_de_Contratacion]
 	FROM WDEA_Layout_T (NOLOCK)
-	WHERE (case when len(rtrim(ltrim(Created_On)))>6 then cast(substring(LTRIM(Created_On),7,4)+'-'+ substring(LTRIM(Created_On),4,2)+'-'+substring(LTRIM(Created_On),0,3)  as date) else null end) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date) 
+	WHERE dbo.convertirFechaString(Created_On) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date) 
 	ORDER BY RowN,CreadoEL DESC
 
 END
