@@ -95,7 +95,7 @@ BEGIN
 			ON AP_PC.IdPedimentoComprobante = PC.IdPedimentoComprobante
 		JOIN TA_Operacion O 
 			ON PC.IdPedimentoComprobante  = O.IdDocumento 
-			AND O.IdTipoOperacion = 16
+			AND O.IdTipoOperacion = @TipoOperacionId
 		JOIN TA_ESTATUS AS E
 			ON E.IdEstatus = O.IdEstatusOperacion
 		WHERE		ISNULL ( AP.IdEstatusEliminado, 0 ) <> 1 --> MOSTRAR ACEPTACIONES NO ELIMINADAS						
