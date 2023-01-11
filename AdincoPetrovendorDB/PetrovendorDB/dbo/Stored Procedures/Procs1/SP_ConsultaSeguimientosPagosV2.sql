@@ -1,4 +1,19 @@
-﻿-- Author:		<Alexander Gomez>
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ConsultaSeguimientosPagosV2'
+)
+    DROP PROCEDURE SP_ConsultaSeguimientosPagosV2; 
+GO
+/****** Object:  StoredProcedure [dbo].[SP_ConsultaSeguimientosPagosV2]    Script Date: 10/01/2023 06:23:10 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Author:		<Alexander Gomez>
 -- Create date: <06-12-2018>
 -- Description:	<Se consultan tambien los registros de murphy>
 -- =============================================
@@ -11,6 +26,11 @@
 -- Author:		Luis David
 -- Create date: 10/05/2022
 -- Description: Optimización de sp
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 11/01/2023
+-- Description: Se agrega nolocks 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_ConsultaSeguimientosPagosV2] @IdProveedor   INT, 
                                                        @Pagado        BIT, 
@@ -112,12 +132,12 @@ AS
                       AP.IdAceptacionPedido, 
                       FP.Receptor, 
                       TR.AWSPDFId
-               FROM dbo.MM_AceptacionFactura AS AF
-                    LEFT JOIN dbo.FI_Factura AS FP 
+               FROM dbo.MM_AceptacionFactura AS AF (NOLOCK)
+                    LEFT JOIN dbo.FI_Factura AS FP (NOLOCK)
 					ON AF.IdFactura = FP.IdFactura
-                    LEFT JOIN dbo.MM_AceptacionPedido AS AP 
+                    LEFT JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK)
 					ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
-                    LEFT JOIN dbo.MM_Pedido AS P 
+                    LEFT JOIN dbo.MM_Pedido AS P (NOLOCK)
 					ON AP.IdPedido = P.IdPedido
                     LEFT JOIN dbo.PV_TipoMoneda (NOLOCK) AS M 
 					ON FP.IdMoneda = M.IdMoneda
@@ -125,9 +145,9 @@ AS
 					ON FP.UUID COLLATE Modern_Spanish_CI_AS = FA.UUID COLLATE Modern_Spanish_CI_AS
                     LEFT JOIN dbo.S_Proveedor (NOLOCK) AS PR 
 					ON FP.Receptor = PR.RFC
-                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF 
+                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF (NOLOCK)
 					ON FA.IdFactura = TRF.IdFactura
-                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR 
+                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR (NOLOCK)
 					ON TRF.IdTransfer = TR.IdTransferencia
                WHERE AF.IdEstatusXML = 2 --XML APROBADO
                      AND AF.IdEstatusPDF = 2 --PDF APROBADO
@@ -180,12 +200,12 @@ AS
                       acepFact.IdAceptacionPedido, 
                       aFact.Receptor, 
                       transf.AWSPDFId
-               FROM Adinco.dbo.FI_Factura aFact
-                    LEFT JOIN Petrovendor.dbo.FI_Factura pFact
+               FROM Adinco.dbo.FI_Factura aFact (NOLOCK)
+                    LEFT JOIN Petrovendor.dbo.FI_Factura pFact (NOLOCK)
 					ON aFact.UUID COLLATE Modern_Spanish_CI_AS = pFact.UUID
-                    LEFT JOIN dbo.MPY_MM_AceptacionFactura acepFact
+                    LEFT JOIN dbo.MPY_MM_AceptacionFactura acepFact (NOLOCK)
 					ON pFact.IdFactura = acepFact.IdFactura
-                    INNER JOIN dbo.MPY_MM_AceptacionPedido acepPed 
+                    INNER JOIN dbo.MPY_MM_AceptacionPedido acepPed (NOLOCK)
 					ON acepFact.IdAceptacionPedido = acepPed.IdAceptacionPedido
                     LEFT JOIN Petrovendor.dbo.TA_Estatus (NOLOCK) AS TE
 					ON acepFact.IdEstatus = TE.IdEstatus
@@ -193,9 +213,9 @@ AS
 					ON pFact.Receptor COLLATE SQL_Latin1_General_CP1_CI_AS = CON.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
                     LEFT JOIN Adinco.dbo.PV_TipoMoneda (NOLOCK) AS M
 					ON aFact.IdMoneda = M.IdMoneda
-                    LEFT JOIN Adinco.dbo.FI_TransferFactura transFac
+                    LEFT JOIN Adinco.dbo.FI_TransferFactura transFac (NOLOCK)
 					ON aFact.IdFactura = transFac.IdFactura
-                    LEFT JOIN Adinco.dbo.FI_Transfer transf 
+                    LEFT JOIN Adinco.dbo.FI_Transfer transf  (NOLOCK)
 					ON transFac.IdTransfer = transf.IdTransferencia
                WHERE TE.IdEstatus = 2 --aprobadas
                      AND aFact.Activa = 1
@@ -260,26 +280,26 @@ AS
                       AP.IdAceptacionPedido, 
                       FP.Receptor, 
                       TR.AWSPDFId
-               FROM dbo.MM_AceptacionFactura AS AF
-                    LEFT JOIN dbo.FI_Factura AS FP 
+               FROM dbo.MM_AceptacionFactura AS AF (NOLOCK)
+                    LEFT JOIN dbo.FI_Factura AS FP (NOLOCK)
 					ON AF.IdFactura = FP.IdFactura
-                    LEFT JOIN dbo.MM_AceptacionPedido AS AP 
+                    LEFT JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK)
 					ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
-                    LEFT JOIN dbo.MM_Pedido AS P
+                    LEFT JOIN dbo.MM_Pedido AS P (NOLOCK)
 					ON AP.IdPedido = P.IdPedido
                     LEFT JOIN dbo.PV_TipoMoneda (NOLOCK) AS M
 					ON FP.IdMoneda = M.IdMoneda
-                    LEFT JOIN Adinco.dbo.FI_Factura AS FA 
+                    LEFT JOIN Adinco.dbo.FI_Factura AS FA (NOLOCK)
 					ON FP.UUID COLLATE Modern_Spanish_CI_AS = FA.UUID COLLATE Modern_Spanish_CI_AS
                     LEFT JOIN dbo.S_Proveedor (NOLOCK) AS PR
 					ON FP.Receptor = PR.RFC
                     LEFT JOIN Adinco.dbo.FI_CPDocRelacionado (NOLOCK) AS dr
 					ON FA.UUID = DR.IdDocumento
-                    LEFT JOIN Adinco.dbo.FI_ComplementoDePago cp 
+                    LEFT JOIN Adinco.dbo.FI_ComplementoDePago cp (NOLOCK)
 					ON dr.IdComplementoDePago = cp.IdComplementoDePago
-                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF 
+                    LEFT JOIN Adinco.dbo.FI_TransferFactura AS TRF (NOLOCK)
 					ON CP.IdFactura = TRF.IdFactura
-                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR 
+                    LEFT JOIN Adinco.dbo.FI_Transfer AS TR (NOLOCK)
 					ON TRF.IdTransfer = TR.IdTransferencia
                WHERE AF.IdEstatusXML = 2 --XML APROBADO
                      AND AF.IdEstatusPDF = 2 --PDF APROBADO
