@@ -1,16 +1,30 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'CP_SP_VerificarUUIDComprobante'
+)
+    DROP PROCEDURE CP_SP_VerificarUUIDComprobante; 
+GO
 
--- =============================================
--- Author:		<Jose Roman>
--- Create date: <11-06-2018>
--- Description:	<Se verifica que el comprobante no ha sido registrado anteriormente>
+/****** Object:  StoredProcedure [dbo].[CP_SP_VerificarUUIDComprobante]    Script Date: 11/01/2023 11:32:41 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <04-07-2019>
 -- Description:	<Se agrega que revise en las dos BD ya que anteriormente solo revisaba en petrovendor>
 -- =============================================
-
-CREATE PROCEDURE CP_SP_VerificarUUIDComprobante
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 11/01/2023
+-- Description: Se agrega nolocks 
+-- =============================================
+CREATE PROCEDURE [dbo].[CP_SP_VerificarUUIDComprobante]
     @UUID          NVARCHAR (MAX),
     /*--------------------parametros contrato  --------------------*/
     @IdContrato    INT      = NULL,
@@ -24,12 +38,12 @@ AS
 
         INSERT INTO
             @TablaFactura ( IdFactura )
-        SELECT IdFactura FROM dbo.FI_Factura WHERE UUID = @UUID
+        SELECT IdFactura FROM dbo.FI_Factura  (NOLOCK) WHERE UUID = @UUID
 
 
         INSERT INTO
             @TablaFactura ( IdFactura )
-        SELECT IdFactura FROM Adinco.dbo.FI_Factura WHERE UUID = @UUID
+        SELECT IdFactura FROM Adinco.dbo.FI_Factura (NOLOCK) WHERE UUID = @UUID
 
 		SELECT * FROM @TablaFactura
     END
