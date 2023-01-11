@@ -38,7 +38,7 @@ BEGIN
 
 	SELECT pFact.IdFactura
 	FROM Adinco.dbo.FI_Factura aFact  (NOLOCK)
-        JOIN Petrovendor.dbo.FI_Factura pFact	 (NOLOCK) ON pFact.UUID = aFact.UUID COLLATE Modern_Spanish_CI_AS
+        JOIN Petrovendor.dbo.FI_Factura pFact	 (NOLOCK) ON aFact.UUID = pFact.UUID COLLATE Modern_Spanish_CI_AS
         JOIN dbo.MM_AceptacionFactura acepFact  (NOLOCK) ON pFact.IdFactura = acepFact.IdFactura 
 		JOIN dbo.MM_AceptacionPedido acepPed  (NOLOCK) ON acepFact.IdAceptacionPedido = acepPed.IdAceptacionPedido
 		JOIN dbo.MM_Pedido p  (NOLOCK) ON acepPed.IdPedido = p.IdPedido 
@@ -51,7 +51,7 @@ BEGIN
 	UNION
 	SELECT pFact.IdFactura
 	FROM Adinco.dbo.FI_Factura aFact
-		JOIN Petrovendor.dbo.FI_Factura pFact	 (NOLOCK) ON pFact.UUID = aFact.UUID COLLATE Modern_Spanish_CI_AS
+		JOIN Petrovendor.dbo.FI_Factura pFact	 (NOLOCK) ON aFact.UUID = pFact.UUID COLLATE Modern_Spanish_CI_AS
 		JOIN dbo.MPY_MM_AceptacionFactura acepFact  (NOLOCK) ON pFact.IdFactura = acepFact.IdFactura 
 		JOIN dbo.MPY_MM_AceptacionPedido acepPed  (NOLOCK) ON acepFact.IdAceptacionPedido = acepPed.IdAceptacionPedido 
     WHERE acepFact.IdEstatus = 2 --CTE aprobadas
