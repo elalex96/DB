@@ -1,4 +1,18 @@
-﻿-- =============================================  
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_CartaProveedor_V2'
+)
+    DROP PROCEDURE SP_MM_CartaProveedor_V2;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:  Manuel Cruz  
 -- Create date: 26-06-17  
 -- Description:   
@@ -37,6 +51,10 @@
 -- Author:  Alexander Gomez  
 -- Create date: 18/05/2022
 -- Description: truncado a 3 digitos sin redondeo del PCN segun la SE y optimizacion
+-- =============================================  
+-- Author:  Alexander Gomez  
+-- Create date: 17/01/2023
+-- Description: consultar los usuarios de contacto de la empresa Adminsitradores, Ventas y Direccion General
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_MM_CartaProveedor_V2] --552,17262,0,0,'',46
 -- Add the parameters for the stored procedure here  
@@ -125,6 +143,15 @@ BEGIN
         NombreOperadora NVARCHAR(MAX),
         IdAceptacionPedido INT
     );
+
+	DECLARE @tablaTiposUsuario TABLE
+    (
+        IdTipoUsuario INT
+    );
+
+	INSERT INTO @tablaTiposUsuario
+	SELECT IdTipoUsuario
+	FROM S_TipoUsuario (NOLOCK) WHERE NombreTipoUsuario IN ('Administrador','Ventas','Director General')
 
     --Cuenta los tipos de materiales para determinar si son Materiales / Servicios o la combinacion de ambas --  
     SET @CantidadTiposXAceptacion = (SELECT 
@@ -310,6 +337,9 @@ BEGIN
             LEFT JOIN S_Usuario U (NOLOCK)
                 ON UP.IdUsuario = U.IdUsuario
 				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
+			JOIN @tablaTiposUsuario AS TTU
+				ON U.IdTipoUsuario = TTU.IdTipoUsuario
             JOIN MM_Pedido MP (NOLOCK)
                 ON P.IdProveedor = MP.IdSubcontratista
             JOIN MM_AceptacionPedido AS AP (NOLOCK)
@@ -558,6 +588,9 @@ BEGIN
             INNER JOIN S_Usuario U
                 ON UP.IdUsuario = U.IdUsuario
 				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
+			JOIN @tablaTiposUsuario AS TTU
+				ON U.IdTipoUsuario = TTU.IdTipoUsuario
             LEFT JOIN dbo.DG_ActaConstitutiva acta
                 ON P.IdProveedor = acta.IdProveedor
                    AND acta.IsActivo = 1
@@ -572,7 +605,12 @@ BEGIN
                    AND domicilio.Activo = 1
             INNER JOIN @tablaAux t
                 ON AP.IdAceptacionPedido = t.IdAceptacionPedido
-        ORDER BY U.IdTipoUsuario;
+        ORDER BY CASE
+                     WHEN U.IdTipoUsuario = 3 THEN
+                         '1'
+                     ELSE
+                         '2'
+                 END ASC;
     END;
 
     -- /////////////////////////////////////Seccion cabecera FIN  
