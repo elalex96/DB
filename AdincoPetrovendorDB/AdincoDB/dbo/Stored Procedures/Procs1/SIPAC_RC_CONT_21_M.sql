@@ -1,4 +1,5 @@
-﻿-- =============================================   
+﻿
+-- =============================================   
 -- Author: Manuel Cruz-Yazmin Glez.   
 -- Create date: 2017-11-24   
 -- Description: Reporte de CGI - Registro de costos. Plantilla antes RC_CONT_01_M actual RC_CONT_21_M   
@@ -7,16 +8,6 @@
 -- Fecha Modificado: 2019-06-28   
 -- Description: Cambio de consulta para mostrar los complementos de pago relacionadolos al gasto   
 -- =============================================   
-USE Adinco;
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SIPAC_RC_CONT_21_M'
-)
-    DROP PROCEDURE SIPAC_RC_CONT_21_M;
-GO
 -- Modificado:       Marcos Garcia   
 -- Fecha Modificado: 2020-01-13   
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0   
