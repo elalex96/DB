@@ -1,4 +1,19 @@
-﻿CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] --3,'2015/09/04' ,'2021/09/04'
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_SC_AdquisicionContratacionCNH'
+)
+    DROP PROCEDURE SP_SC_AdquisicionContratacionCNH;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_SC_AdquisicionContratacionCNH]    Script Date: 13/10/2022 11:33:52 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] --3,'2015/09/04' ,'2021/09/04'
 @IdContrato INT, 
 @Fechainicio DATE, 
 @FechaFin DATE 
@@ -13,6 +28,7 @@ BEGIN
 --					porque existen muchos registros repetidos y afecta la sumatorio de montos
 -- 20220118	BAAC	Se corrigen format en monto USD y MXN por error en DEA
 -- 20221014 DAC     Se toma en consideración MECANISMO_CONTRATACION para reporte DEA cuando sea L --> Poner default Licitación
+-- 20230119 JAGE    Se corrige la consulta de las relaciones de WDEA
 -- =============================================
 SET NOCOUNT ON
    -- SE CREA TABLA PARA QUE NO SE REPITAN LOS DATOS EN LOS MONTOS POR HABER DUPLICADOS EN ESTA TABLA: AX_Layout
@@ -40,8 +56,8 @@ SET NOCOUNT ON
         [Fecha Termino Contrato] DATETIME,   
         [Vigencia del contrato] DATETIME,   
         [Objeto del contrato] NVARCHAR(MAX),   
-        MontoUSD VARCHAR(500),   
-        MontoMXN VARCHAR(500),   
+        MontoUSD FLOAT,   
+        MontoMXN FLOAT,   
         TipoCambio FLOAT,   
         FechaTipoCambio DATETIME,   
         Comentarios NVARCHAR(MAX),   
@@ -61,8 +77,8 @@ SET NOCOUNT ON
         [Fecha Termino Contrato] NVARCHAR(MAX),   
         [Vigencia del contrato] NVARCHAR(MAX),   
         [Objeto del contrato] NVARCHAR(MAX),   
-        MontoUSD NVARCHAR(MAX),   
-        MontoMXN NVARCHAR(MAX),   
+        MontoUSD FLOAT,   
+        MontoMXN FLOAT,   
         TipoCambio NVARCHAR(MAX),
         FechaTipoCambio NVARCHAR(MAX),   
         Comentarios NVARCHAR(MAX),   
@@ -160,21 +176,17 @@ SET NOCOUNT ON
                UPPER(ISNULL(TAO.Descripcion, '')) AS 'Objeto del contrato',   
                CASE   
                    WHEN fiFact.IdMoneda = 1 THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)),   
-                       '#,#0.000')   
+                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE))  
                    ELSE   
-                       FORMAT(fiFact.SubTotal, '#,#0.000')   
+					   fiFact.SubTotal
 				END AS MontoUSD,   
                CASE   
-                   WHEN fiFact.IdMoneda = 2 THEN   
-                       FORMAT(   
+                   WHEN fiFact.IdMoneda = 2 THEN     
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)),   
-                       '#,#0.000')   
+                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)) 
                    ELSE   
-                       FORMAT(fiFact.SubTotal, '#,#0.000')   
+					   fiFact.SubTotal 
                END AS MontoMXN,   
                Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(TAO.FechaRegistro AS DATE)) AS TipoCambio,   
                CONVERT(VARCHAR, TAO.FechaRegistro, 105) AS FechaTipoCambio,   
@@ -261,30 +273,26 @@ SET NOCOUNT ON
                dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
                CASE   
                    WHEN Mon.IdMoneda = 1   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       FORMAT(   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN  
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
                        SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE)),   
-                       '#,#0.000')   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE)) 
                    WHEN Mon.IdMoneda = 2   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
-                   ELSE   
-                       FORMAT(0, '#,#0.000')   
+					   SUM(PD.Subtotal)
+                   ELSE  
+					   0 
                END AS MontoUSD,   
                CASE   
                    WHEN Mon.IdMoneda = 2   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
                        SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE)),   
-                       '#,#0.000')   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))  
                    WHEN Mon.IdMoneda = 1 AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL 
 					THEN (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))       
                    ELSE   
-                       FORMAT(0, '#,#0.000')   
+					   0  
                END AS MontoMXN,   
                CASE   
                    WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
@@ -302,6 +310,7 @@ SET NOCOUNT ON
 				AND LTRIM(RTRIM(AXP.Empresa))	=	@Bloque
             LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
                 ON PD.IdPedido = P.IdPedido   
+				AND ISNULL(P.IdEstatusEliminado,0) = 0
             LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
                 ON P.IdPedido = PSS.IdIdentificador   
                    AND PSS.IdProveedorCliente = P.IdProveedorCompras   
@@ -419,29 +428,25 @@ SET NOCOUNT ON
                CASE   
                    WHEN Mon.IdMoneda = 1   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
                        SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE)), '#,#0.000')   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))
                    WHEN Mon.IdMoneda = 2   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
+					   SUM(PD.Subtotal)
                    ELSE   
-                       FORMAT(0, '#,#0.000')   
+					   0
                END AS MontoUSD,   
                CASE   
                    WHEN Mon.IdMoneda = 2   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       FORMAT(   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN    
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
                        SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE)),   
-                       '#,#0.000')   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))  
                    WHEN Mon.IdMoneda = 1   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
                        (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
-                   ELSE   
-                       FORMAT(0, '##,###,###.000')   
+                   ELSE 0
                END AS MontoMXN,   
                CASE   
                    WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
@@ -455,10 +460,10 @@ SET NOCOUNT ON
                NombreContratista = UPPER(ctista.RazonSocial),   
                FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                        --DWONG 20190712       
         FROM Petrovendor.dbo.MM_Pedido AS P   
---            LEFT JOIN Petrovendor.dbo.AX_Layout AXP   
 			LEFT JOIN #AX_Layout	AXP
                 ON CAST(AXP.NoPedidoADINCO AS NVARCHAR(MAX)) = CAST(P.IdPedido AS NVARCHAR(MAX))   
 				AND LTRIM(RTRIM(AXP.Empresa))	=	@Bloque
+				AND ISNULL(P.IdEstatusEliminado,0) = 0
             LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
                 ON PD.IdPedido = P.IdPedido   
             LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
@@ -498,7 +503,6 @@ SET NOCOUNT ON
                 ON RE.IdProveedor = solPed.IdProveedor   
                    AND RE.IdSubcontratista = P.IdSubcontratista   
             LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
-                --ON TP.IdTipoPedido = PO.IdTipoProceso   
 				ON	PSS.IdTipoPedido	=	TP.IdTipoPedido
         WHERE O.IdTipoOperacion = 9   
               AND E.IdEstatus = 1   
@@ -578,30 +582,22 @@ SET NOCOUNT ON
                CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS 'Vigencia del contrato',                                         --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
                solPed.MotivoUrgencia AS 'Objeto del contrato',   
                CASE   
-                   WHEN Mon.IdMoneda = 1   
-               --AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL        
+                   WHEN Mon.IdMoneda = 1          
                THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       SUM(PD.Subtotal), CAST(O.FechaRegistro AS DATE)),   
-                       '#,#0.000')   
-                   WHEN Mon.IdMoneda = 2   
-        --AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL        
+                       SUM(PD.Subtotal), CAST(O.FechaRegistro AS DATE))
+                   WHEN Mon.IdMoneda = 2        
                THEN   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
+					   SUM(PD.Subtotal) 
                    ELSE   
-                       FORMAT(0, '#,#0.000')   
+					   0
                END AS MontoUSD,   
                CASE   
-                   WHEN Mon.IdMoneda = 2   
-               --AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL        
+                   WHEN Mon.IdMoneda = 2         
                THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       SUM(PD.Subtotal), CAST(O.FechaRegistro AS DATE)),   
-                       '#,#0.000')   
-                   WHEN Mon.IdMoneda = 1   
-               --AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL        
+                       SUM(PD.Subtotal), CAST(O.FechaRegistro AS DATE))
+                   WHEN Mon.IdMoneda = 1          
                THEN   
                     (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
                    ELSE   
@@ -613,10 +609,10 @@ SET NOCOUNT ON
                NombreContratista = UPPER(ctista.RazonSocial),   
                FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                     --DWONG 20190712       
         FROM Petrovendor.dbo.MM_Pedido p   
-            --LEFT JOIN Petrovendor.dbo.AX_Layout AXP   
 			LEFT JOIN #AX_Layout	AXP
                 ON CAST(AXP.NoPedidoADINCO AS NVARCHAR(MAX)) = CAST(p.IdPedido AS NVARCHAR(MAX))   
 				AND LTRIM(RTRIM(AXP.Empresa))	=	@Bloque
+				AND ISNULL(P.IdEstatusEliminado,0) = 0
             LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
                 ON PD.IdPedido = p.IdPedido   
             LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
@@ -712,13 +708,10 @@ SET NOCOUNT ON
                NombreContratista,   
                FechaEfectiva   
         FROM @Tabla   
-        ORDER BY [No. Contrato] DESC   
-   
-    --SELECT dbo.fn_SC_AdquisicionFechaNormalizadaCarso(FechaCreacionOCAX)       
-    --FROM #AX_Layout       
+        ORDER BY [No. Contrato] DESC         
     END;   
    
-    ---- VALIDA SI EL PROVEEDOR ES DEA   
+    ---- VALIDA SI EL PROVEEDOR ES DEA  
     ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060) AND IdContrato = @IdContrato) --DEA 	
     BEGIN      
         INSERT INTO @TablaDEA   
@@ -742,51 +735,54 @@ SET NOCOUNT ON
             FechaEfectiva   --
         )
 		SELECT
-			CON.NumeroContrato,
+			ISNULL(CONDEA.NumeroContrato,CON.NumeroContrato) AS NumeroContrato,
 			CASE 
 				WHEN PROSAP.IdProveedor IS NOT NULL THEN 'SI'
 				ELSE 'NO'
 			END AS RelacionOperadoraProveedor,
 			PRO.RazonSocial AS Proveedor,
-			CASE WHEN PDI.MECANISMO_CONTRATACION='L' THEN 
+			CASE WHEN PDI.MECANISMO_CONTRATACION ='L' THEN 
 				'Licitación' --> CTE SE PONE COMO DEFAULT YA QUE LOS PEDIDOS DE LICITACIÓN SE AGREGAN COMO MERCADEO
 			ELSE 
 				TP.TipoPedido 
 			END AS MecanismoContratacion,			
 			SP.MotivoUrgencia AS NombreContratoCP,
-			CASE	
-				WHEN RPRPO.PO IS NOT NULL THEN 
-					SUBSTRING(RPRPO.PO,CHARINDEX('45', RPRPO.PO) , 10)				
-				ELSE 
-					ISNULL(PDI.PURCHASING_DOCUMENT,PS.IdPedido)
-			END AS NoContratoCP,
+			ISNULL(PDI.PURCHASING_DOCUMENT,PS.IdPedido) AS NoContratoCP,
 			SP.FechaEntregaRequerida AS FechaInicio,
 			ISNULL(SP.FechaEntregaFinRequerida, SP.FechaEntregaRequerida) AS FechaFin,
 			ISNULL(SP.FechaEntregaFinRequerida, SP.FechaEntregaRequerida) AS FechaVigencia,
 			SP.MotivoUrgencia AS ObjetoContrato,
 			CASE
-				WHEN PDI.IdPedidoADINCO IS NOT NULL THEN
+				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) > 0 AND PDI.CURRENCY = 'USD' THEN PDI.NET_ORDER_VALUE
+				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) = 0 AND PDI.CURRENCY = 'USD' THEN
 						CASE		--PESO
-							WHEN PDI.IDMONEDA = 1 THEN FORMAT(Petrovendor.dbo.FN_PesosDolaresTipoCambio(PDI.NET_PRICE,SP.FechaEntregaRequerida), '#,#0.000')
-							ELSE FORMAT(PDI.NET_PRICE, '#,#0.000') -- DOLAR
+							WHEN PDI.IDMONEDA = 1 THEN 
+							Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(PDI.NET_PRICE),SP.FechaEntregaRequerida)
+							ELSE 
+							SUM(PDI.NET_PRICE)
 						END
 				ELSE 
 					CASE 
-						WHEN P.IdMoneda = 1 THEN FORMAT(Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl)), '#,#0.000')
-						ELSE FORMAT(SUM(PD.Subtotal), '###,###,###.000')
+						WHEN P.IdMoneda = 1 THEN 
+						Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
+						ELSE 
+						SUM(PD.Subtotal)
 				END
 			END AS MontoUSD,
 			CASE
-				WHEN PDI.IdPedidoADINCO IS NOT NULL THEN
+				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) > 0 AND PDI.CURRENCY = 'MXN' THEN PDI.NET_ORDER_VALUE
+				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) = 0 AND PDI.CURRENCY = 'MXN' THEN
 														CASE		--DOLAR
-															WHEN PDI.IDMONEDA = 2 THEN FORMAT(Petrovendor.dbo.Fn_dolarespesostipocambio(PDI.NET_PRICE,SP.FechaEntregaRequerida), '#,#0.000')
-															ELSE FORMAT(PDI.NET_PRICE, '#,#0.000') -- PESO MXN
+															WHEN PDI.IDMONEDA = 2 THEN 
+															Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(PDI.NET_PRICE),SP.FechaEntregaRequerida)
+															ELSE 
+															SUM(PDI.NET_PRICE)
 														END
 				ELSE 
 					CASE 
 						WHEN 
 						P.IdMoneda = 2 THEN 
-						FORMAT(Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl)), '#,#0.000')
+						Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
 						ELSE (DBO.fn_ObtenSubtotalPedido(1,P.IdPedido,@IdContrato))
 				END
 			END AS MontoMXN,
@@ -795,19 +791,18 @@ SET NOCOUNT ON
 			PDI.OUTLINE_AGREEMENT,
 			CT.RazonSocial,
 			CONVERT(VARCHAR, CON.FechaFirma, 103) AS FechaEfectiva 
-		FROM Adinco.dbo.CO_Contrato AS CON (NOLOCK)
-			JOIN Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
-				ON P.IdContrato = @IdContrato 
-				AND P.IdContrato = CON.IdContrato
+		FROM Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
+			JOIN Adinco.dbo.CO_Contrato AS CON (NOLOCK)
+				ON P.IdContrato = CON.IdContrato
+				AND ISNULL(P.IdEstatusEliminado,0) = 0
+				AND P.IdContrato = @IdContrato
 			JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD (NOLOCK) 
 				ON P.IdPedido = PD.IdPedido
 			JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP (NOLOCK) 
 				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
 				AND SP.Activo = 1			
 			JOIN Petrovendor.dbo.S_Proveedor AS PRO  (NOLOCK)
-				ON P.IdSubcontratista = PRO.IdProveedor				
-			JOIN Petrovendor.dbo.DEA_Relacion_PR_PO AS RPRPO (NOLOCK) 
-				ON P.IdPedido = RPRPO.IdPedido			
+				ON P.IdSubcontratista = PRO.IdProveedor			
 			JOIN Petrovendor.dbo.MM_Pedidos AS PS (NOLOCK)
 				ON P.IdPedido = PS.IdIdentificador 
 				AND PS.IdProveedorCliente = P.IdProveedorCompras
@@ -822,19 +817,19 @@ SET NOCOUNT ON
 				ON P.IdSubContratista = PROSAP.IdProveedor
 			LEFT JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados AS PDI (NOLOCK) 
 				ON P.IdPedido = PDI.IdPedidoADINCO
+			JOIN Adinco.dbo.CO_Contrato AS CONDEA (NOLOCK)
+				ON PDI.IDCONTRATO = CONDEA.IdContrato
 		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
 			GROUP BY CON.NumeroContrato,
 				PROSAP.IdProveedor,
 				PRO.RazonSocial,
 				SP.MotivoUrgencia,
-				RPRPO.PO,
 				PDI.PURCHASING_DOCUMENT,
 				SP.FechaEntregaFinRequerida,
 				SP.MotivoUrgencia,
 				PDI.IdPedidoADINCO,
 				PDI.IDMONEDA,
-				PDI.NET_PRICE,
 				P.FechaRecepcionServicio,
 				SP.FechaEntregaRequerida,
 				PDI.OUTLINE_AGREEMENT,
@@ -845,119 +840,10 @@ SET NOCOUNT ON
 				CT.RazonSocial,
 				CON.FechaFirma,
 				P.IdPedido,
-				PDI.MECANISMO_CONTRATACION;   
-
-  --      SELECT C.NumeroContrato,   
-  --             CASE   
-  --                 WHEN RE.IdRelacion IS NOT NULL THEN   
-  --                     'SI'   
-  --                 ELSE   
-  --                     'NO'   
-  --             END AS RelacionOperadoraProveedor,   
-  --             UPPER(P.RazonSocial) + ' ' + ISNULL(UPPER(P.RegimenCapital), '') AS Proveedor,   
-  --             CASE WHEN SC.NumeroSubcontrato IS NOT NULL    
-  --   THEN 'LICITACIÓN'    
-  --   ELSE 'ADJUDICACIÓN DIRECTA'    
-  --  END AS MecanismoContratacion,   
-  --  ISNULL(SC.NumeroSubcontrato,PG.IdPedido) AS  'Nombre Contrato C-P' ,   
-  --              UPPER(CONCAT(PG.IdPedido, ' CD')) AS 'No. Contrato',   
-                  
-  --  CASE   
-  --     WHEN OT.FechaInicio IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105)   
-  --     WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
-  --                     '-'   
-  --     ELSE   
-  --          CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
-  --  END AS 'Fecha Inicio Contrato',   
-  --  CASE   
-		--WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)   
-  --      WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
-  --                     '-'   
-  --      ELSE   
-  --          CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
-  --  END AS 'Fecha Termino Contrato',   
-  --   CASE   
-		--WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)   
-  --      WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
-  --                     '-'   
-  --      ELSE   
-  --          CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
-  --  END AS 'Vigencia del contrato',   
-  --    CASE    
-  --   WHEN SC.NumeroSubcontrato IS NOT NULL THEN OT.Objeto   
-  --   ELSE   UPPER(SUBSTRING(ISNULL(TAO.Descripcion, ''), 0, 40))    
-  --  END AS 'Objeto del contrato',   
-  --             CASE   
-  --                 WHEN fiFact.IdMoneda = 1 THEN   
-  --                     FORMAT(   
-  --                     Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-  --                     fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)),   
-  --                     '#,#0.000')   
-  --                 ELSE   
-  --                     FORMAT(fiFact.SubTotal, '#,#0.000')   
-  --             END AS MontoUSD,   
-  --             CASE   
-  --                 WHEN fiFact.IdMoneda = 2 THEN   
-  --                     FORMAT(   
-  --                     Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-  --                     fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)),   
-  --                     '#,#0.000')   
-  --                 ELSE   
-  --                     FORMAT(fiFact.SubTotal, '#,#0.000')   
-  --             END AS MontoMXN,   
-   
-  --            --SE CAMBIA LA FECHA DEL TIPO DE CAMBIO POR fiFact.FechaTimbrado, ESTO DE ACUERDO AL MANUAL EL CUAL INDICA 
-		--	  /* 
-		--	  FECHA AL TIPO DE CAMBIO: FECHA AL TIPO DE CAMBIO EN QUE SE LLEVÓ A CABO LA TRANSACCIÓN 
-		--	  */   
-  --             Petrovendor.dbo.FN_ValorTipoCambio(cast(fiFact.FechaTimbrado as DATE)) AS TipoCambio,    
-		--	 --SE CAMBIA LA FECHA DEL TIPO DE CAMBIO POR fiFact.FechaTimbrado, ESTO DE ACUERDO AL MANUAL EL CUAL INDICA 
-		--	  /* 
-		--	  FECHA AL TIPO DE CAMBIO: FECHA AL TIPO DE CAMBIO EN QUE SE LLEVÓ A CABO LA TRANSACCIÓN 
-		--	  */ 
-		--	  CONVERT(VARCHAR,fiFact.FechaTimbrado, 103)    FechaTipoCambio,   
-  --             UPPER(SUBSTRING(ISNULL(TAO.Descripcion, ''), 0, 40)) AS 'Comentarios',   
-  --             UPPER(ctista.RazonSocial) AS NombreContratista,   
-  --             CONVERT(VARCHAR, c.FechaFirma, 103) AS FechaEfectiva   
-  --      FROM Petrovendor.dbo.CO_Registro AS coRegistro   
-  --          LEFT JOIN Petrovendor.dbo.FI_Factura AS fiFact   
-  --              ON coRegistro.IdFactura = fiFact.IdFactura   
-  --          LEFT JOIN Petrovendor.dbo.TA_Operacion AS TAO   
-  --              ON TAO.IdDocumento = coRegistro.IdFactura   
-  --          LEFT JOIN Petrovendor.dbo.TA_Estatus AS TE   
-  --              ON TE.IdEstatus = TAO.IdEstatusOperacion   
-  --          LEFT JOIN Petrovendor.dbo.CC_CentroCosto centroCosto   
-  --              ON centroCosto.IdCentroCosto = coRegistro.CentroCostos   
-  --          LEFT JOIN Petrovendor.dbo.DG_CuentaContable cuentaContable   
-  --              ON cuentaContable.Id = coRegistro.CuentaContable   
-  --          LEFT JOIN Petrovendor.dbo.CO_CatalogoCuentaSH cuentaSh   
-  --              ON cuentaSh.IdCatalogoCuentasSH = coRegistro.IdCatalogoCuentasSH   
-  --          LEFT JOIN Petrovendor.dbo.CO_Instalacion instalacion   
-  --              ON instalacion.IdInstalacion = coRegistro.IdInstalacion   
-  --          LEFT JOIN Petrovendor.dbo.MM_Pedidos PG   
-  --              ON PG.IdIdentificador = fiFact.IdFactura   
-  --                 AND PG.IdTipoPedido = 1   
-  --                 AND TAO.IdProveedor = PG.IdProveedorCliente   
-  --          LEFT JOIN Petrovendor.dbo.S_Proveedor AS P   
-  --       ON P.RFC = fiFact.Emisor   
-  --          LEFT JOIN Adinco.dbo.CO_Contrato AS C   
-  --              ON fiFact.IdContrato = C.IdContrato   
-  --          LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC   
-  --              ON C.IdAreaContractual = AC.IdAreaContractual   
-  --          LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-  --              ON RE.IdProveedor = P.IdProveedor   
-  --                 AND RE.IdSubcontratista = P.IdProveedor   
-  -- LEFT JOIN Adinco.dbo.CO_Contratista ctista   
-  --              ON ctista.IdContratista = C.IdContratista   
-  -- LEFT JOIN Adinco..OT_Estimacion EST on EST.IdPedido = PG.IdIdentificador and isnull(EST.Cancelada,0) = 0   
-  -- LEFT JOIN Adinco..OT_Solicitud OT ON OT.IdOTSolicitud = EST.IdOTSolicitud   
-  -- LEFT JOIN Adinco..SC_Subcontrato SC ON SC.IdSubcontrato = OT.IdSubcontrato   
-  --      WHERE TAO.IdTipoOperacion = 14   
-  --            AND TE.IdEstatus = 2   
-  --            AND ISNULL(fiFact.IsEliminado, 0) = 0   
-  --            AND C.IdContrato = @IdContrato   
-  --            AND CONVERT(VARCHAR, TAO.FechaRegistro, 112)   
-  --            BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112);   
+				PDI.MECANISMO_CONTRATACION,
+				CONDEA.NumeroContrato,
+				PDI.CURRENCY,
+				PDI.NET_ORDER_VALUE;     
    
    
         INSERT INTO @TablaDEA   
@@ -995,12 +881,16 @@ SET NOCOUNT ON
 			ISNULL(ISNULL(SC.FechaFin,SC.FechaInicio),SC.CreadoEl) AS FechaVigencia,
 			SC.Objeto AS ObjetoContrato,
 			CASE
-				WHEN SC.IdMoneda = 1 THEN FORMAT(Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(SCM.Importe),ISNULL(SC.FechaInicio,SC.CreadoEl)),'###,###,###.000')
-				ELSE FORMAT(SUM(SCM.Importe),'###,###,###.000') -- PESO MXN					
+				WHEN SC.IdMoneda = 1 THEN
+				Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(SCM.Importe),ISNULL(SC.FechaInicio,SC.CreadoEl))
+				ELSE 
+				SUM(SCM.Importe)				
 			END AS MontoUSD,
 			CASE
-				WHEN SC.IdMoneda = 2 THEN FORMAT(Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(SCM.Importe),ISNULL(SC.FechaInicio,SC.CreadoEl)),'###,###,###.000')
-				ELSE FORMAT(SUM(SCM.Importe),'###,###,###.000') -- PESO MXN					
+				WHEN SC.IdMoneda = 2 THEN 
+				Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(SCM.Importe),ISNULL(SC.FechaInicio,SC.CreadoEl))
+				ELSE 
+				SUM(SCM.Importe)				
 			END AS MontoMXN,
 			Petrovendor.dbo.FN_ValorTipoCambio(ISNULL(SC.FechaInicio,SC.CreadoEl)) AS TipoCambio,
 			ISNULL(SC.FechaInicio,SC.CreadoEl) AS FechaTipoCambio,
@@ -1033,164 +923,9 @@ SET NOCOUNT ON
 				SC.IdMoneda,
 				SC.FechaInicio,
 				SC.NumeroSubContrato,
-				--SCM.Importe,
 				SC.CreadoEl,
 				CT.RazonSocial,
 				CON.FechaFirma;
-
-
-			
-
-   --     SELECT CONCAT(c.NumeroContrato, '(', periodo.NombrePeriodo, ')'),   
-   --            CASE   
-   --                WHEN RE.IdRelacion IS NOT NULL THEN   
-   --                    'SI'   
-   --                ELSE   
-   --                    'NO'   
-   --            END AS RelacionOperadoraProveedor,   
-   --            UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,   
-   --   CASE WHEN SC.NumeroSubcontrato IS NOT NULL OR solPed.MotivoUrgencia like '%ESTIMACIÓN COMPLETA PARA OT%' THEN 'LICITACIÓN'   
-   --  ELSE   
-   --   CASE        
-   --    WHEN TP.TipoPedido = 'Mercadeo' THEN   
-   --        'TRES COTIZACIONES'   
-   --    ELSE   
-   --        UPPER(TP.TipoPedido)   
-   --     END    
-   -- END AS MecanismoContratacion,       
-                  
-   --             ISNULL(isnull(SC.NumeroSubcontrato,DEA_RPO.PO),cast(p.IdPedido as varchar))  AS 'Nombre Contrato C-P',   
-   -- DEA_RPO.PO AS 'No. Contrato',   
-   -- isnull(CASE   
-			-- WHEN OT.FechaInicio IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaInicio, 105)    
-       
-			--ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105)    
-			--END, CONVERT(VARCHAR(10), min(O.FechaRegistro), 105) ) AS 'Fecha Inicio Contrato',   
-   -- isnull(CASE    
-   --  WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)   
-   --  ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105)    
-   -- END, CONVERT(VARCHAR(10), max(O.FechaRegistro), 105)) AS 'Fecha Termino Contrato',   
-   --  isnull(CASE    
-   --  WHEN OT.FechaFin IS NOT NULL THEN CONVERT(VARCHAR(10), OT.FechaFin, 105)   
-   --  ELSE CONVERT(VARCHAR(10), P.FechaRecepcionServicio, 105)    
-   -- END, CONVERT(VARCHAR(10), max(O.FechaRegistro), 105)) AS 'Vigencia del contrato',   
-   --   CASE WHEN SC.NumeroSubcontrato IS NOT NULL THEN OT.Objeto   
-   --  ELSE UPPER(SUBSTRING(solPed.MotivoUrgencia, 0, 40))   
-   -- END AS 'Objeto del contrato',   
-   --      CASE   
-   --                WHEN Mon.IdMoneda = 1 THEN   
-   --                    FORMAT(   
-   --                    Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-   --                    SUM(PD.Subtotal), CAST(PO.FechaFinalizado AS DATE)),   
-   --                    '#,#0.000')   
-   --                ELSE   
-   --                    FORMAT(SUM(PD.Subtotal), '#,#0.000')   
-   --            END AS MontoUSD,   
-   --            CASE   
-   --          WHEN Mon.IdMoneda = 2 THEN   
-   --                    FORMAT(   
-   --                    Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-   --                    SUM(PD.Subtotal), CAST(PO.FechaFinalizado AS DATE)),   
-   --                    '#,#0.000')   
-   --                ELSE   
-   --                    FORMAT(SUM(PD.Subtotal), '#,#0.000')   
-   --            END AS MontoMXN,   
-   --            Petrovendor.dbo.FN_ValorTipoCambio( CAST(PO.FechaFinalizado AS DATE)) AS TipoCambio,   
-			--	CAST(PO.FechaFinalizado AS DATE)			    
-			--   AS FechaTipoCambio, --DWONG 20190712     
-   
-   --            UPPER(SUBSTRING(solPed.MotivoUrgencia, 0, 40)) AS 'Comentarios',   
-   --            NombreContratista = UPPER(ctista.RazonSocial),                                                      --DWONG 20190712     
-   
-   --            FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                                                 --DWONG 20190712     
-   
-   --     FROM Petrovendor.dbo.MM_Pedido AS P   
-   --         LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
-   --             ON PD.IdPedido = P.IdPedido   
-   --         LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
-   --             ON P.IdPedido = PSS.IdIdentificador   
-   --                AND PSS.IdProveedorCliente = P.IdProveedorCompras   
-   --         LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido solPed   
-   --             ON solPed.IdSolicitudPedido = P.IdSolicitudPedido   
-   --         LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle SPD   
-   --             ON solPed.IdSolicitudPedido = SPD.IdSolicitudPedido   
-   --         LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL   
-   --             ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-   --         LEFT JOIN Petrovendor.dbo.MM_PeticionOferta AS PO   
-   --             ON PO.IdPeticionOferta = P.IdPeticionOferta   
-   --                AND PO.IdSolicitudPedido = solPed.IdSolicitudPedido   
-   --         LEFT JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle POD   
-   --             ON POD.IdPeticionOferta = PO.IdPeticionOferta   
-   --                AND POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-   --                AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle   
-   --         LEFT JOIN Petrovendor.dbo.S_Proveedor AS PV   
-   --             ON PV.IdProveedor = PO.IdSubcontratista   
-   --         LEFT JOIN Petrovendor.dbo.TA_Operacion AS O   
-   --             ON O.IdDocumento = P.IdSolicitudPedido   
-   --                AND P.Version = O.NoVersion   
-   --         LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO   
-   --             ON TTO.IdTipoOperacion = O.IdTipoOperacion   
-   --         LEFT JOIN Petrovendor.dbo.TA_Estatus AS E   
-   --             ON E.IdEstatus = O.IdEstatusOperacion   
-   --         LEFT JOIN Adinco.dbo.CO_Contrato c   
-   --             ON c.IdContrato = P.IdContrato   
-   --         INNER JOIN Adinco.dbo.CO_Contratista ctista   
-   --             ON ctista.IdContratista = c.IdContratista   
-   --         INNER JOIN Petrovendor.dbo.PV_TipoMoneda AS Mon   
-   --             ON P.IdMoneda = Mon.IdMoneda   
-   --         LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-   --             ON RE.IdProveedor = solPed.IdProveedor   
-   --                AND RE.IdSubcontratista = P.IdSubcontratista   
-   --         LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
-   --        ON TP.IdTipoPedido = PO.IdTipoProceso   
-   --         INNER JOIN @SolpedConMateriales filtro   
-   --             ON filtro.IdSolicitudPedido = solPed.IdSolicitudPedido   
-   --         INNER JOIN Petrovendor.dbo.DEA_Relacion_PR_PO DEA_RPO -- se agrego la relación PO    
-   --             ON DEA_RPO.IdPedido = P.IdPedido   
-   --         LEFT JOIN Adinco.dbo.CO_PeriodoContrato periodo   
-   --             ON periodo.IdPeriodo = solPed.IdPeriodo   
-   --LEFT JOIN Adinco..OT_Estimacion EST on EST.IdPedido = P.IdPedido and isnull(EST.Cancelada,0) = 0   
-   --LEFT JOIN Adinco..OT_Solicitud OT ON OT.IdOTSolicitud = EST.IdOTSolicitud    
-   --LEFT JOIN Adinco..SC_Subcontrato SC ON SC.IdSubcontrato = OT.IdSubcontrato   
-   --     WHERE O.IdTipoOperacion = 9   
-   --           AND E.IdEstatus = 2   
-   --           AND c.IdContrato = @IdContrato   
-   --           AND ISNULL(solPed.IdEstatusEliminado, 0 ) = 0   
-   --           AND ISNULL(P.IdEstatusEliminado, 0) = 0   
-   --           AND POD.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron     
-   
-   --           AND P.FechaEnvioPedido   
-   --           BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112) --Evitar mostrar pedidos que ya tengan un subcontrato asignado     
-   
-   --           AND NOT EXISTS   
-   --     (   SELECT 1   
-   --         FROM SC_SubContrato sc   
-   --         WHERE sc.IdPedido = P.IdPedido   
-   --               AND sc.IsActivo = 1)   
-   --     GROUP BY RE.IdRelacion,   
-   --              PV.RazonSocial,   
-   --              PV.RegimenCapital,   
-   --              TP.TipoPedido,   
-   --              solPed.MotivoUrgencia,   
-   --              c.NumeroContrato,   
-   --              solPed.FechaEntregaFinRequerida,   
-   --              solPed.FechaEntregaRequerida,   
-   --              PO.FechaFinalizado,   
-   --              c.DescripcionContrato,   
-   --              Mon.IdMoneda,   
-   --              solPed.IdSolicitudPedido,   
-   --              P.IdPedido,   
-   --              PSS.IdPedido,   
-   --              ctista.RazonSocial,   
-   --              c.FechaFirma,   
-   --              DEA_RPO.PO,   
-   --              periodo.NombrePeriodo,   
-   --              P.FechaRecepcionServicio,   
-   --  SC.NumeroSubcontrato,   
-   --  OT.FechaInicio,   
-   --  OT.FechaFin,   
-   --  OT.Objeto   
-   --     ORDER BY PSS.IdPedido ASC;   
    
    
         SELECT NumeroContrato,   
@@ -1203,14 +938,29 @@ SET NOCOUNT ON
 			   CONVERT(VARCHAR(10),[Fecha Termino Contrato], 105),
 			   CONVERT(VARCHAR(10),[Vigencia del contrato], 105),
                [Objeto del contrato],   
-               MontoUSD,   
-               MontoMXN,   
+               FORMAT(SUM(MontoUSD), '#,#0.000') AS MontoUSD,   
+               FORMAT(SUM(MontoMXN), '#,#0.000') AS MontoMXN,   
                TipoCambio,   
                CONVERT(VARCHAR(10), FechaTipoCambio, 105),   
                Comentarios,   
                NombreContratista,   
                FechaEfectiva
         FROM @TablaDEA   
+		GROUP BY NumeroContrato,   
+               RelacionOperadoraProveedor,   
+               Proveedor,   
+               MecanismoContratacion,   
+               [Nombre Contrato C-P],   
+               [No. Contrato],   
+               [Fecha Inicio Contrato],   
+               [Fecha Termino Contrato],   
+               [Vigencia del contrato],   
+               [Objeto del contrato],    
+			   TipoCambio,   
+               FechaTipoCambio,   
+               Comentarios,   
+               NombreContratista,   
+               FechaEfectiva
         ORDER BY [No. Contrato];   
     END   
     --- FIN VALIDACION DEA   
@@ -1268,21 +1018,17 @@ SET NOCOUNT ON
                UPPER(ISNULL(TAO.Descripcion, '')) AS 'Objeto del contrato',   
                CASE   
                    WHEN fiFact.IdMoneda = 1 THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)),   
-                       '#,#0.000')   
+                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)) 
                    ELSE   
-                       FORMAT(fiFact.SubTotal, '#,#0.000')   
+					   fiFact.SubTotal  
                END AS MontoUSD,   
                CASE   
                    WHEN fiFact.IdMoneda = 2 THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)),   
-                       '#,#0.000')   
+                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE))
                    ELSE   
-                       FORMAT(fiFact.SubTotal, '#,#0.000')   
+					   fiFact.SubTotal
                END AS MontoMXN,
                Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio, 
                CONVERT(VARCHAR, fiFact.FechaTimbrado, 103) AS FechaTipoCambio,   
@@ -1369,21 +1115,17 @@ SET NOCOUNT ON
                UPPER(solPed.MotivoUrgencia) AS 'Objeto del contrato',   
                CASE   
                    WHEN Mon.IdMoneda = 1 THEN   
-                       FORMAT(   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       SUM(PD.Subtotal), CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)),   
-                       '#,#0.000')   
+                       SUM(PD.Subtotal), CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)) 
                    ELSE   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
+					   SUM(PD.Subtotal) 
                END AS MontoUSD,   
                CASE   
-                   WHEN Mon.IdMoneda = 2 THEN   
-                       FORMAT(   
+                   WHEN Mon.IdMoneda = 2 THEN  
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       SUM(PD.Subtotal), ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado)),   
-                       '#,#0.000')   
+                       SUM(PD.Subtotal), ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado))  
                    ELSE   
-                       FORMAT(SUM(PD.Subtotal), '#,#0.000')   
+					   SUM(PD.Subtotal) 
                END AS MontoMXN,   
                Petrovendor.dbo.FN_ValorTipoCambio(   
                CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)) AS TipoCambio,   
@@ -1397,6 +1139,7 @@ SET NOCOUNT ON
         FROM Petrovendor.dbo.MM_Pedido AS P   
             LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
                 ON PD.IdPedido = P.IdPedido   
+				AND ISNULL(P.IdEstatusEliminado,0) = 0
             LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
                 ON P.IdPedido = PSS.IdIdentificador   
                    AND PSS.IdProveedorCliente = P.IdProveedorCompras   
@@ -1481,15 +1224,30 @@ SET NOCOUNT ON
                [Fecha Inicio Contrato],   
                [Fecha Termino Contrato],   
                [Vigencia del contrato],   
-               [Objeto del contrato],   
-               MontoUSD,   
-               MontoMXN,   
+               [Objeto del contrato],  
+               FORMAT(SUM(MontoUSD), '#,#0.000') AS MontoUSD,   
+               FORMAT(SUM(MontoMXN), '#,#0.000') AS MontoMXN,   
 			   TipoCambio,   
                FechaTipoCambio,   
                Comentarios,   
                NombreContratista,   
                FechaEfectiva   
         FROM @Tabla   
+		GROUP BY NumeroContrato,   
+               RelacionOperadoraProveedor,   
+               Proveedor,   
+               MecanismoContratacion,   
+               [Nombre Contrato C-P],   
+               [No. Contrato],   
+               [Fecha Inicio Contrato],   
+               [Fecha Termino Contrato],   
+               [Vigencia del contrato],   
+               [Objeto del contrato],    
+			   TipoCambio,   
+               FechaTipoCambio,   
+               Comentarios,   
+               NombreContratista,   
+               FechaEfectiva
         ORDER BY [No. Contrato];   
    
     END;   
