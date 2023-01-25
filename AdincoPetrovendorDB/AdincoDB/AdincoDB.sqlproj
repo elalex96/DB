@@ -3642,5 +3642,6 @@
     <Build Include="dbo\User Defined Types\Entregables_Importacion_Edicion_01.sql" />
     <Build Include="dbo\User Defined Types\EN_IMP_CONFIGURACION_REPSOL.sql" />
     <Build Include="dbo\User Defined Types\PreferenciaListaNegra.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\VAL_MontoComprobanteExtranjero.sql" />
   </ItemGroup>
 </Project>
