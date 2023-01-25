@@ -13,7 +13,7 @@ BEGIN
 			@MontoRegistroActual Money,
 			@MontoTotal Money
 
-	SELECT @MontoComprobante = ISNULL(SUM(PrecioUnitario), 0) 
+	SELECT @MontoComprobante = ISNULL(SUM(ImporteTotal), 0) 
 	FROM FI_PedimentoComprobanteDetalle WHERE IdPedimentoComprobante = @IdPedimentoComprobante
 
 	SELECT @MontoRegistroActual = ISNULL(SUM(MontoRegistro), 0) 
