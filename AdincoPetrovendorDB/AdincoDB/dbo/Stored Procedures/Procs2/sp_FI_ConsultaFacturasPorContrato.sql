@@ -1,4 +1,5 @@
-﻿-- =============================================  
+﻿
+-- =============================================  
 -- Author: Miguel Gomez  
 -- Create date: 14-01-2017  
 -- Description: Lista las facturas de un contrato  
@@ -16,6 +17,10 @@
 -- Author:		Neri Garcia
 -- Create date: 07 de Mayo del 2022
 -- Description:	Ajustes de Consulta principal y se agregan filtros de @FechaInicio y @FechaFin
+-- =============================================
+-- Author:		Reyna Olvera
+-- Create date: 30 de Enero del 2023
+-- Description:	Ajustes de agrupado para no repetir varias facturas
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
     @IdContrato INT = 0,
@@ -236,6 +241,39 @@ BEGIN
                 ON F.IdContrato = C.IdContrato
             JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
+			GROUP BY 
+				F.IdFactura,
+               S.RazonSocial,
+               S.RFC,
+               C.NumeroContrato,
+               F.Fecha,
+               F.Serie,
+               F.Folio,
+               F.SubTotal,
+               F.Descuento,
+               F.TipoCambio,
+               F.MontoConIva,
+               SUBSTRING(F.TipoComprobante, 1, 1),
+               F.MetodoPago,
+               SUBSTRING(F.LugarExpedicion, 0, 20),
+               F.NumCtaPago,
+               CC.RFC,
+               F.UUID,
+               F.FechaTimbrado,
+               F.SelloCFD,
+               F.NoCertificadoSAT,
+               F.SelloSAT,
+               F.Tipo,
+               F.FechaRecepcion,
+               YEAR(F.Fecha),
+               CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS NVARCHAR(20)), 2), ' ', DATENAME(MONTH, F.Fecha)),
+               CC.RazonSocial,
+               C.IdContrato,
+               CONVERT(DATE, F.CreadoEn),
+               F.IdMoneda,
+               F.CreadoPor,
+               F.IdSubcontratista,
+               F.Emisor
     END;
     ELSE
     BEGIN
@@ -335,7 +373,37 @@ BEGIN
             LEFT JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
                    AND CC.RFC <> F.Receptor
-
+			GROUP BY F.IdFactura,
+               S.RazonSocial,
+               S.RFC,
+               C.NumeroContrato,
+               F.Fecha,
+               F.Serie,
+               F.Folio,
+               F.SubTotal,
+               F.Descuento,
+               F.TipoCambio,
+               F.MontoConIva,
+               SUBSTRING(F.TipoComprobante, 1, 1),
+               F.MetodoPago,
+               SUBSTRING(F.LugarExpedicion, 0, 20),
+               F.NumCtaPago,
+               F.Receptor,
+               F.UUID,
+               F.FechaTimbrado,
+               F.SelloCFD,
+               F.NoCertificadoSAT,
+               F.SelloSAT,
+               F.Tipo,
+               F.FechaRecepcion,
+               YEAR(F.Fecha),
+               CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS NVARCHAR(20)), 2), ' ', DATENAME(MONTH, F.Fecha)),
+               C.IdContrato,
+               CONVERT(DATE, F.CreadoEn),
+               F.IdMoneda,
+               F.CreadoPor,
+               F.IdSubcontratista,
+               F.Emisor
         INSERT INTO #Facturas
         (
             IdFactura,
@@ -436,6 +504,38 @@ BEGIN
             LEFT JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
                    AND CC.RFC <> F.Receptor
+			GROUP BY
+			F.IdFactura,
+               S.RazonSocial,
+               S.RFC,
+               C.NumeroContrato,
+               F.Fecha,
+               F.Serie,
+               F.Folio,
+               F.SubTotal,
+               F.Descuento,
+               F.TipoCambio,
+               F.MontoConIva,
+               SUBSTRING(F.TipoComprobante, 1, 1),
+               F.MetodoPago,
+               SUBSTRING(F.LugarExpedicion, 0, 20),
+               F.NumCtaPago,
+               F.Receptor,
+               F.UUID,
+               F.FechaTimbrado,
+               F.SelloCFD,
+               F.NoCertificadoSAT,
+               F.SelloSAT,
+               F.Tipo,
+               F.FechaRecepcion,
+               YEAR(F.Fecha),
+               CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS NVARCHAR(20)), 2), ' ', DATENAME(MONTH, F.Fecha)),
+               C.IdContrato,
+               CONVERT(DATE, F.CreadoEn),
+               F.IdMoneda,
+               F.CreadoPor,
+               F.IdSubcontratista,
+               F.Emisor;
 
         UPDATE TEMP
         SET NombreReceptor = PV.RazonSocial
@@ -503,7 +603,7 @@ BEGIN
 
     UPDATE #Facturas
     SET CCN = 1
-    FROM #Facturas F
+  FROM #Facturas F
         JOIN #CartasProcura CP
             ON CP.UUID = F.UUID
     WHERE F.UUID = CP.UUID;
@@ -580,3 +680,4 @@ BEGIN
     FROM #Facturas F
     ORDER BY F.IdFactura DESC;
 END;
+
