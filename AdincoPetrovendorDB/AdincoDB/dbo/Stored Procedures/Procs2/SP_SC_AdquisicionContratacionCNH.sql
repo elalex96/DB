@@ -29,6 +29,7 @@ BEGIN
 -- 20220118	BAAC	Se corrigen format en monto USD y MXN por error en DEA
 -- 20221014 DAC     Se toma en consideración MECANISMO_CONTRATACION para reporte DEA cuando sea L --> Poner default Licitación
 -- 20230119 JAGE    Se corrige la consulta de las relaciones de WDEA
+-- 20230131 DAC     Se calcula subtotales en temporales para evitar duplicados DEA
 -- =============================================
 SET NOCOUNT ON
    -- SE CREA TABLA PARA QUE NO SE REPITAN LOS DATOS EN LOS MONTOS POR HABER DUPLICADOS EN ESTA TABLA: AX_Layout
@@ -42,7 +43,7 @@ SET NOCOUNT ON
 	Estatus	VARCHAR(250),
 	FechaEntrega	VARCHAR(250)
    )
-
+   	 
     --- VALIDAR SI EL CONTRATO ES DE CARSO, EJECUTAR SP DE SP_SC_AdquisicionContratacionCNH_Carso         
     DECLARE @TablaDEA TABLE   
     (   
@@ -85,6 +86,25 @@ SET NOCOUNT ON
         NombreContratista NVARCHAR(MAX),   
         FechaEfectiva NVARCHAR(10)   
     ); 
+
+	 DECLARE @TablaWDEA_PurchasingDocumentsImportados TABLE   
+    (   
+		IdPedidoADINCO INT,
+        PURCHASING_DOCUMENT VARCHAR(MAX),  
+		CURRENCY VARCHAR(MAX),  
+        NET_ORDER_VALUE FLOAT,   
+		SUM_NET_PRICE FLOAT,		
+		IDMONEDA INT,   
+		OUTLINE_AGREEMENT VARCHAR(MAX), 
+		NumeroContrato VARCHAR(MAX),
+		MECANISMO_CONTRATACION  VARCHAR(MAX)
+	);
+
+	DECLARE @MM_PedidoDetalle TABLE   
+	(   
+			IdPedido INT,    
+			SUM_Subtotal FLOAT		
+	);
 
 	DECLARE @Bloque	VARCHAR(50)
     ---AGREGAR LOS CONTRATOS QUE ESTAN INCLUIDOS EN EL REPORTE DE CARSO --         
@@ -711,9 +731,68 @@ SET NOCOUNT ON
         ORDER BY [No. Contrato] DESC         
     END;   
    
-    ---- VALIDA SI EL PROVEEDOR ES DEA  
+    ---- VALIDAR SI EL PROVEEDOR ES DEA  
     ELSE IF exists(select 1 from CO_contrato where IdContratista in (10013,10060) AND IdContrato = @IdContrato) --DEA 	
     BEGIN      
+		
+		--->	OBTENER SUBTOTALES DE WDEA_PurchasingDocumentsImportados POR PEDIDOS
+		INSERT INTO @TablaWDEA_PurchasingDocumentsImportados(
+		IdPedidoADINCO,
+		PURCHASING_DOCUMENT,   
+		NET_ORDER_VALUE,   
+		CURRENCY,
+		SUM_NET_PRICE,		
+		IDMONEDA,   
+		OUTLINE_AGREEMENT, 
+		NumeroContrato,
+		MECANISMO_CONTRATACION
+		)
+
+		SELECT
+		P.IdPedido,
+		PDI.PURCHASING_DOCUMENT,			
+		PDI.NET_ORDER_VALUE,
+		PDI.CURRENCY,
+		SUM(PDI.NET_PRICE) AS SUM_NET_PRICE,
+		PDI.IDMONEDA,			
+		PDI.OUTLINE_AGREEMENT,
+		CONDEA.NumeroContrato,
+		PDI.MECANISMO_CONTRATACION
+		FROM Petrovendor.dbo.MM_Pedido AS P (NOLOCK)			
+			JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados AS PDI (NOLOCK) 
+				ON P.IdPedido = PDI.IdPedidoADINCO
+				AND ISNULL(P.IdEstatusEliminado,0) = 0
+				AND P.IdContrato = @IdContrato	
+			JOIN Adinco.dbo.CO_Contrato AS CONDEA (NOLOCK)
+				ON  P.IdContrato = CONDEA.IdContrato
+		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
+              BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112) 
+		GROUP BY
+		P.IdPedido,
+		PDI.PURCHASING_DOCUMENT,				
+		PDI.NET_ORDER_VALUE,
+		PDI.CURRENCY,
+		PDI.NET_ORDER_VALUE,
+		PDI.IDMONEDA,				
+		PDI.OUTLINE_AGREEMENT,
+		CONDEA.NumeroContrato,
+		PDI.MECANISMO_CONTRATACION
+
+		--> OBTENER SUBTOTALES DE PEDIDOS DETALLE AGRUPADO POR PEDIDO 
+		INSERT INTO @MM_PedidoDetalle(IdPedido, SUM_Subtotal)
+		SELECT 
+		P.IdPedido,
+		SUM(PD.Subtotal)
+		FROM Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
+		JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD (NOLOCK) 
+			ON P.IdPedido = PD.IdPedido
+			AND P.IdContrato = @IdContrato
+		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
+		BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)	
+		GROUP BY 
+		P.IdPedido
+
+
         INSERT INTO @TablaDEA   
         (   
             NumeroContrato,   
@@ -735,7 +814,7 @@ SET NOCOUNT ON
             FechaEfectiva   --
         )
 		SELECT
-			ISNULL(CONDEA.NumeroContrato,CON.NumeroContrato) AS NumeroContrato,
+			ISNULL(PDI.NumeroContrato,CON.NumeroContrato) AS NumeroContrato,
 			CASE 
 				WHEN PROSAP.IdProveedor IS NOT NULL THEN 'SI'
 				ELSE 'NO'
@@ -757,16 +836,16 @@ SET NOCOUNT ON
 				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) = 0 AND PDI.CURRENCY = 'USD' THEN
 						CASE		--PESO
 							WHEN PDI.IDMONEDA = 1 THEN 
-							Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(PDI.NET_PRICE),SP.FechaEntregaRequerida)
+							Petrovendor.dbo.FN_PesosDolaresTipoCambio(PDI.SUM_NET_PRICE,SP.FechaEntregaRequerida)
 							ELSE 
-							SUM(PDI.NET_PRICE)
+							PDI.SUM_NET_PRICE
 						END
 				ELSE 
 					CASE 
 						WHEN P.IdMoneda = 1 THEN 
-						Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
+						Petrovendor.dbo.FN_PesosDolaresTipoCambio(PD.SUM_Subtotal,ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
 						ELSE 
-						SUM(PD.Subtotal)
+						PD.SUM_Subtotal
 				END
 			END AS MontoUSD,
 			CASE
@@ -774,16 +853,16 @@ SET NOCOUNT ON
 				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) = 0 AND PDI.CURRENCY = 'MXN' THEN
 														CASE		--DOLAR
 															WHEN PDI.IDMONEDA = 2 THEN 
-															Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(PDI.NET_PRICE),SP.FechaEntregaRequerida)
+															Petrovendor.dbo.Fn_dolarespesostipocambio(PDI.SUM_NET_PRICE,SP.FechaEntregaRequerida)
 															ELSE 
-															SUM(PDI.NET_PRICE)
+															PDI.SUM_NET_PRICE
 														END
 				ELSE 
 					CASE 
 						WHEN 
 						P.IdMoneda = 2 THEN 
-						Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(PD.Subtotal),ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
-						ELSE (DBO.fn_ObtenSubtotalPedido(1,P.IdPedido,@IdContrato))
+						Petrovendor.dbo.Fn_dolarespesostipocambio(PD.SUM_Subtotal,ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
+						ELSE PD.SUM_Subtotal
 				END
 			END AS MontoMXN,
 			Petrovendor.dbo.FN_ValorTipoCambio(SP.FechaEntregaRequerida) AS TipoCambio,
@@ -796,7 +875,7 @@ SET NOCOUNT ON
 				ON P.IdContrato = CON.IdContrato
 				AND ISNULL(P.IdEstatusEliminado,0) = 0
 				AND P.IdContrato = @IdContrato
-			JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD (NOLOCK) 
+			JOIN @MM_PedidoDetalle AS PD 
 				ON P.IdPedido = PD.IdPedido
 			JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP (NOLOCK) 
 				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
@@ -815,10 +894,8 @@ SET NOCOUNT ON
 				ON CON.IdContratista = CT.IdContratista
 			LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP AS PROSAP (NOLOCK)
 				ON P.IdSubContratista = PROSAP.IdProveedor
-			LEFT JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados AS PDI (NOLOCK) 
-				ON P.IdPedido = PDI.IdPedidoADINCO
-			JOIN Adinco.dbo.CO_Contrato AS CONDEA (NOLOCK)
-				ON PDI.IDCONTRATO = CONDEA.IdContrato
+			LEFT JOIN @TablaWDEA_PurchasingDocumentsImportados AS PDI 
+				ON P.IdPedido = PDI.IdPedidoADINCO			
 		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
 			GROUP BY CON.NumeroContrato,
@@ -841,9 +918,12 @@ SET NOCOUNT ON
 				CON.FechaFirma,
 				P.IdPedido,
 				PDI.MECANISMO_CONTRATACION,
-				CONDEA.NumeroContrato,
+				PDI.NumeroContrato,
 				PDI.CURRENCY,
-				PDI.NET_ORDER_VALUE;     
+				PDI.NET_ORDER_VALUE,
+				PDI.NumeroContrato,
+				PDI.SUM_NET_PRICE,
+				PD.SUM_Subtotal;
    
    
         INSERT INTO @TablaDEA   
