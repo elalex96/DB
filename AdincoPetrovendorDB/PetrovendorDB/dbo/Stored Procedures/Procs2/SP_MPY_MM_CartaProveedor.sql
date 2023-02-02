@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MPY_MM_CartaProveedor]    Script Date: 02/02/2023 10:11:55 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 18-06-2018
 -- Description:	
@@ -57,7 +64,9 @@ BEGIN
   DECLARE @UsuarioFisico NVARCHAR(MAX) = (SELECT TOP 1 U.Nombre AS RepresentanteLegal  
           FROM S_Proveedor AS P  
           JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
-          JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario  
+          JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario
+			AND U.Activo = 1
+			AND ISNULL(U.IsEliminado,0) = 0
           WHERE U.IdTipoUsuario = 3 AND P.IdProveedor = @IdProveedor)  
   
  END  
@@ -183,6 +192,8 @@ Permisionarios proporcionen información sobre contenido nacional en las activid
     LEFT JOIN DG_ActaConstitutiva AC ON P.IdProveedor = AC.IdProveedor AND AC.IsActivo = 1  
     LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
     LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario   
+	AND U.Activo = 1
+	AND ISNULL(U.IsEliminado,0) = 0
     LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
     LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
     LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
@@ -264,6 +275,8 @@ Permisionarios proporcionen información sobre contenido nacional en las activid
     LEFT JOIN DG_ActaConstitutiva AC ON AC.IdProveedor = @IdProveedor AND AC.IsActivo = 1  
     LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
     LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario  
+				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
     LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
     LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
     LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
@@ -408,7 +421,9 @@ BEGIN
 		LEFT JOIN DG_RepresentanteLegal RL ON P.IdProveedor = RL.IdProveedor AND RL.IsActivo =1  
 		LEFT JOIN DG_ActaConstitutiva AC ON P.IdProveedor = AC.IdProveedor AND AC.IsActivo = 1  
 		LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
-		LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario   
+		LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario 
+				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
 		LEFT JOIN dbo.MM_Pedido AS PE ON PE.IdPedido = AP.IdPedido
 		LEFT JOIN S_Proveedor AS POP ON POP.IdProveedor = PE.IdProveedorCompras
 		LEFT JOIN Adinco.dbo.CO_Contrato AS CON ON PE.IdContrato = CON.IdContrato
@@ -587,6 +602,8 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
     LEFT JOIN DG_ActaConstitutiva AC ON P.IdProveedor = AC.IdProveedor AND AC.IsActivo = 1  
     LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
     LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario   
+				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
     LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
     LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
     LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
@@ -667,6 +684,8 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
     LEFT JOIN DG_ActaConstitutiva AC ON AC.IdProveedor = @IdProveedor AND AC.IsActivo = 1  
     LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
     LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario  
+		AND U.Activo = 1
+		AND ISNULL(U.IsEliminado,0) = 0
     LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
     LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
     LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
