@@ -2902,5 +2902,8 @@
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V3.sql" />
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V4.sql" />
     <Build Include="dbo\Functions\convertirFechaString.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_DetalleReporteRemanentes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_ReporteRemanentesCabecera.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_MM_AceptacionesPorPartidaReporteRemanentes.sql" />
   </ItemGroup>
 </Project>
