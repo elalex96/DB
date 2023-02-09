@@ -28,12 +28,12 @@ AS
 									   THEN ACIEP.NombreActividad
 									   ELSE SAP.SubactividadPetrolera
 								   END COLLATE Modern_Spanish_CI_AS ,				-- Actividad
+				  ' | ',SAP.[id_Sub-actividad],
 				  ' | Sub-Actividad: ', CASE
 										   WHEN P.CIEP = 1
 										   THEN RI.NombreRubro
 										   ELSE TP.TareaPetrolera
 									   END COLLATE Modern_Spanish_CI_AS ,			-- SubActividad
-				  ' | ',SAP.[id_Sub-actividad],
 				  ' | Tarea: ', tp.TareaPetrolera COLLATE Modern_Spanish_CI_AS ,	-- Tarea
 				  ' | Clave Tarea: ', tp.id_Tarea COLLATE Modern_Spanish_CI_AS ,	-- Clave Tarea
 				  ' | Sub-Tarea: ', s.NombreServicio COLLATE Modern_Spanish_CI_AS ) -- Sub Tarea        
