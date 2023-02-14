@@ -1,7 +1,17 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+  IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ListaFacturasAprobacion_Bitacora'
+)
+    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion_Bitacora;   
+	GO 
+-- =============================================
 -- Author:		Daniel AC
--- Create date: 27-04-2022
--- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- Create date: 14-02-2023
+-- Description:	Se muestra UUID Y FOLIO FACTURA CONSULTAS MURPHY
 -- =============================================
 CREATE   PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion_Bitacora]
 	@IdProveedor int,
@@ -55,10 +65,6 @@ BEGIN
 											ON C.IdContratista = P.IdContratista
 										WHERE C.IdContrato = @IDCONTRATO2)
 
-	--IF(ISNULL(@IdContrato,0) = 0)
-	--BEGIN
-	--	SET @IdContrato = 10039;
-	--END
 
 	DECLARE @PROVEDORRFC NVARCHAR(20) = (SELECT RFC FROM dbo.S_Proveedor  (NOLOCK) WHERE IdProveedor = @IdProveedor);
 
@@ -104,7 +110,21 @@ BEGIN
 	 IF @Estatus=0  --TODAS
 	 BEGIN
 	
-		INSERT INTO #AceptacionesPedido
+		INSERT INTO #AceptacionesPedido(
+		IdAceptacionPedido,
+		Pedido,
+		IdPedido,
+		FechaRegistro,
+		Proveedor,
+		Nombre,
+		IdPedidoGeneral,
+		TipoPedido,
+		TotalPedido,
+		Moneda,
+		RFC,
+		IdSolicitudPedido,
+		span,
+		Contrato)
 		SELECT 
 		AF.IdAceptacionPedido,
 		CONCAT('PO Number:', AP.IdPedido COLLATE Modern_Spanish_CI_AS,' ','- SES Number: ', SES.SESNumber COLLATE Modern_Spanish_CI_AS ,' - Proforma Number:', CAST(PSES.IdPRESES AS NVARCHAR(100)) COLLATE Modern_Spanish_CI_AS),
@@ -119,7 +139,7 @@ BEGIN
 			ELSE F.SubTotal
 		END AS TotalPedido,
 		APD.IdMoneda,
-		SV.TaxID AS RFC,
+		CONCAT('RFC: ',SV.TaxID, ' - Folio: ',ISNULL(F.Folio,'-'), ' - UUID: ', ISNULL(F.UUID,'-')) AS RFC,
 		CONCAT('Reference Num:', AP.ReferenceNumber),
 		CASE
 			WHEN E.IdEstatus = 2 THEN 'label label-success'
@@ -180,6 +200,9 @@ BEGIN
 			F.IdMoneda,
 			F.FechaTimbrado,
 			F.FechaTimbrado,
+			F.Folio,
+			F.Serie,
+			F.UUID,
 			c.NumeroContrato,
 			c.IdContrato
 		ORDER BY AF.IdAceptacionPedido DESC

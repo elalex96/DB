@@ -1,12 +1,23 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+  IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ConsultarNotasDeCreditoOperadora'
+)
+    DROP PROCEDURE SP_TA_ConsultarNotasDeCreditoOperadora;   
+	GO 
+-- ====
+-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 11/09/2019
 -- Description:	Permite agregar LA OPERACION para hacer relacion con un flujo de tareas
 -- =============================================
 -- =============================================
 -- Author:		Daniel AC
--- Create date: 27-04-2022
--- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- Create date: 14-02-2023
+-- Description:	Se muestra UUID Y FOLIO FACTURA CONSULTAS MURPHY
 -- =============================================
 CREATE  PROCEDURE [dbo].[SP_TA_ConsultarNotasDeCreditoOperadora]--420,2205,10037
     -- Add the parameters for the stored procedure here
@@ -34,7 +45,7 @@ BEGIN
            O.FechaModificacion AS FechaCambioEstatus,
            '' AS ComentarioAprobador,
 		   F.Moneda,
-		   F.UUID,
+		   F.UUID AS UUID,
 		   cast(PG.IdPedido as varchar) AS NoPedido,
 		   NC.CFDIRelacionados,
 		   Contrato = c.NumeroContrato		  
@@ -74,7 +85,7 @@ BEGIN
            FechaModificacion = nc.FechaAprobacion,
            nc.Comentario AS ComentarioAprobador,
 		   F.Moneda,
-		   F.UUID,
+		   CONCAT('Folio: ',ISNULL(F.Folio,'-'), ' - UUID: ', ISNULL(F.UUID,'-')) AS UUID,		  
 		   ap.IdPedido AS NoPedido,
 		   NC.CFDIRelacionados,
 		   Contrato = c.NumeroContrato		  
@@ -101,13 +112,14 @@ BEGIN
              F.MontoConIva,           
 			 F.Moneda,
 			 F.UUID,
+			 F.Folio,
+			 F.Serie,
 			 NC.IdAceptacionPedido,			
 			 NC.CFDIRelacionados,
-			  ap.IdPedido,
+			 ap.IdPedido,
 			  nc.FechaAprobacion,
 			  nc.Comentario,
 			  c.IdContrato,
-			  c.NumeroContrato
-		
+			  c.NumeroContrato		
 		ORDER BY NC.CreadoEl DESC
 END;
