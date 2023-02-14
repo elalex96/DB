@@ -1,14 +1,41 @@
-﻿CREATE PROCEDURE [dbo].[co_sp_ExtraeGastosPorComprobantePedimento]--1,2,3
-    @IdUsuario INT,
-    @IdContrato INT,
-	@IdPedimento INT
+﻿CREATE PROCEDURE [dbo].[co_sp_InsertaArchivoLayoutGasto]
+    @pAWSDocumentoId INT OUT,
+    @pNombreArchivo VARCHAR(250),
+    @pFolder VARCHAR(100),
+    @pUUIDAmazon UNIQUEIDENTIFIER,
+    @pMeta VARCHAR(50)='',
+    @pBucket VARCHAR(50),
+    @pCreadoPor INT,
+    @IdContrato INT
 AS
 BEGIN
-     SELECT  
-	IdRegistro,IdInstalacion,IdPrograma,G.IdPedimentoComprobante,ISNULL( MontoRegistro,0) AS MontoRegistro,InicioEjecucion,FinEjecucion,IdGastoRubro 
-	FROM
-		CO_Registro G
-			WHERE  G.IdPedimentoComprobante = @IdPedimento
-		order by IdRegistro desc
- 
+	DECLARE @AWSDocumentoId INT=0;
+
+	SELECT @AWSDocumentoId = (MAX(AWSDocumentoId)+1) FROM AWS_Documentos;
+
+    INSERT INTO AWS_Documentos
+    (
+		AWSDocumentoId,
+		Bucket,
+		Folder,
+		UUIDAmazon,
+		NombreArchivo,
+		Meta,
+		CreadoPor,
+		CreadoEl
+    )
+    VALUES(@AWSDocumentoId, @pBucket, @pFolder, @pUUIDAmazon, @pNombreArchivo, @pMeta, @pCreadoPor, GETDATE());
+
+    SET @pAWSDocumentoId = @AWSDocumentoId;
+
+	INSERT INTO CO_ArchivoLayoutGasto
+	(
+	ContratoId,
+	AWSDocumentoId,
+	CreadoEl,
+	CreadoPor
+	)
+	VALUES (@IdContrato,@pAWSDocumentoId, GETDATE(),@pCreadoPor );
+
+	SELECT @pAWSDocumentoId AS pAWSDocumentoId
 END;

@@ -3643,5 +3643,8 @@
     <Build Include="dbo\User Defined Types\EN_IMP_CONFIGURACION_REPSOL.sql" />
     <Build Include="dbo\User Defined Types\PreferenciaListaNegra.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\VAL_MontoComprobanteExtranjero.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeGastosPorFactura.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeGastosPorComprobantePedimento.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_InsertaArchivoLayoutGasto.sql" />
   </ItemGroup>
 </Project>
