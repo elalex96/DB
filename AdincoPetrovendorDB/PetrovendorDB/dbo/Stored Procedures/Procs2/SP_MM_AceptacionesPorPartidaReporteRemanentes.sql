@@ -18,7 +18,6 @@ GO
 -- Description:	consulta de las aceptaciones por material del reporte de remanentes
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AceptacionesPorPartidaReporteRemanentes]
-	-- Add the parameters for the stored procedure here
 	@IdPedidoDetalle INT
 AS
 BEGIN

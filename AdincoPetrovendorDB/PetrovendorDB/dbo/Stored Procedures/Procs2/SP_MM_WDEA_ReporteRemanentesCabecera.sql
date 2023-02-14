@@ -18,7 +18,6 @@ GO
 -- Description:	Consulta de cabecera de pedidos del reporte de remanentes
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_WDEA_ReporteRemanentesCabecera] 
-	-- Add the parameters for the stored procedure here
 	@FechaInicio DATE,
 	@FechaFin DATE
 AS

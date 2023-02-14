@@ -8,13 +8,16 @@ IF EXISTS
 )
     DROP PROCEDURE SP_MM_DetalleReporteRemanentes;
 GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 25/01/2023
 -- Description:	consulta de los detalles de PO para reporte de remanentes
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_DetalleReporteRemanentes] --28414
-	-- Add the parameters for the stored procedure here
+CREATE PROCEDURE [dbo].[SP_MM_DetalleReporteRemanentes] 
 	@IdPedido INT
 AS
 BEGIN
