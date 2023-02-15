@@ -1,17 +1,22 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+  IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ListaFacturasAprobacion'
+)
+    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion;   
+	GO 
+-- =============================================
 -- Author:		Daniel AC
--- Create date: 21-09-2022
--- Description:	Issue #1739  Optimizacion pantallas se ordena y revisa joins 
+-- Create date: 14-02-2023
+-- Description:	Se muestra UUID Y FOLIO FACTURA CONSULTAS MURPHY
 -- =============================================
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 03-05-2022
 -- Description:	se corrige la consulta de murphy para consultar por contrato 
--- =============================================
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 11-10-2022
--- Description:	optimizacion para murphy
 -- =============================================
 -- =============================================
 -- Author:		LUIS DAVID
@@ -392,7 +397,7 @@ BEGIN
           ELSE F.SubTotal
           END AS TotalPedido,
           APD.IdMoneda,
-          SV.TaxID AS RFC,
+          CONCAT('RFC: ',SV.TaxID, ' - Folio: ',ISNULL(F.Folio,'-'), ' - UUID: ', ISNULL(F.UUID,'-')) AS RFC,
           CONCAT('Reference Num:', AP.ReferenceNumber),
           CASE
             WHEN E.IdEstatus = 2 THEN 'label label-success'
@@ -466,6 +471,9 @@ BEGIN
 				F.IdMoneda,
 				F.FechaTimbrado,
 				F.FechaTimbrado,
+				F.Folio,
+				F.Serie,
+				F.UUID,
 				RC.PedirCarta,
 				c.IdContrato,
 				c.NumeroContrato,
