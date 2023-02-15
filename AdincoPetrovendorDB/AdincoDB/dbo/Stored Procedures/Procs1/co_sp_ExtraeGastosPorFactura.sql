@@ -7,7 +7,7 @@ BEGIN
      SELECT  
 	IdRegistro,IdInstalacion,IdPrograma,IdFactura, ISNULL(MontoRegistro,0) AS MontoRegistro,InicioEjecucion,FinEjecucion,IdGastoRubro 
 	FROM
-		CO_Registro G
+		CO_Registro G	(NOLOCK)
 			WHERE G.IdFactura = @IdFactura
 		order by IdRegistro desc
  

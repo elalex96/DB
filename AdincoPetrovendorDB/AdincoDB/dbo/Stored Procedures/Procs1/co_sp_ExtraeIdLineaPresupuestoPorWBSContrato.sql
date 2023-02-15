@@ -9,7 +9,7 @@ BEGIN
 		SELECT 
 			WL.Id,WBS.WBS,IdLineaPresupuesto, WBS.IdContrato, PM.IdPresupuesto
 		FROM
-			Petrovendor.dbo.WDEA_WBSLineaPresupuesto WL
+			Petrovendor.dbo.WDEA_WBSLineaPresupuesto WL (NOLOCK)
 		JOIN 
 			Petrovendor.dbo.WDEA_WBS WBS (NOLOCK)  
 			ON WL.IdWBS = WBS.Id
@@ -28,7 +28,7 @@ BEGIN
 		SELECT 
 			WL.Id,WBS.WBS,IdLineaPresupuesto , PM.IdPresupuesto
 		FROM
-			Petrovendor.dbo.WDEA_WBSLineaPresupuesto WL
+			Petrovendor.dbo.WDEA_WBSLineaPresupuesto WL (NOLOCK)
 		JOIN 
 			Petrovendor.dbo.WDEA_WBS WBS (NOLOCK)  
 			ON WL.IdWBS = WBS.Id

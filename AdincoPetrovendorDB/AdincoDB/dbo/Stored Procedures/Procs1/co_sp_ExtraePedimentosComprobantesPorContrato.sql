@@ -14,7 +14,7 @@ BEGIN
                   END
               ),0) AS ImporteTotal
 		FROM
-			FI_PedimentoComprobante	
+			FI_PedimentoComprobante		(NOLOCK)
 	JOIN FI_PedimentoComprobanteDetalle (NOLOCK)  
             ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
 	JOIN PV_TipoMoneda (NOLOCK)

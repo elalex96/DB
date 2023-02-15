@@ -3646,5 +3646,12 @@
     <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeGastosPorFactura.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeGastosPorComprobantePedimento.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\co_sp_InsertaArchivoLayoutGasto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeArchivoLayoutGasto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeIdLineaPresupuestoPorWBSContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraePedimentosComprobantesPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_sp_InsertaRegistroPorLayout.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraePozosPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeUUIDIdFacturaPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraePresupuestoPorContrato.sql" />
   </ItemGroup>
 </Project>

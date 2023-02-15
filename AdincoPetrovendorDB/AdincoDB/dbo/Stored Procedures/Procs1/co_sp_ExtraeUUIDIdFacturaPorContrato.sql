@@ -6,7 +6,7 @@ BEGIN
 		SELECT 
 			F.IdFactura, F.UUID, F.Moneda,ISNULL(SubTotal,0) AS SubTotal,ISNULL(MontoConIva,0) as ImporteTotal
 		FROM
-			FI_Factura	F
+			FI_Factura	F (NOLOCK)
 		WHERE 
 			F.IdContrato =	@IdContrato
 			ORDER BY IDFACTURA DESC

@@ -7,8 +7,9 @@ BEGIN
      SELECT  
 	IdRegistro,IdInstalacion,IdPrograma,G.IdPedimentoComprobante,ISNULL( MontoRegistro,0) AS MontoRegistro,InicioEjecucion,FinEjecucion,IdGastoRubro 
 	FROM
-		CO_Registro G
+		CO_Registro G	(NOLOCK)
 			WHERE  G.IdPedimentoComprobante = @IdPedimento
 		order by IdRegistro desc
  
 END;
+

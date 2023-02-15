@@ -5,7 +5,7 @@ AS
 BEGIN
          SELECT P.IdPresupuesto,  
                 P.Nombre  
-         FROM CO_Presupuesto AS P  
+         FROM CO_Presupuesto AS P	(NOLOCK)  
               JOIN CO_ProgramaActividad AS PA (NOLOCK)  
 			  ON P.IdProgramaActividad = PA.IdProgramaActividad  
               JOIN CO_PeriodoContrato AS PC (NOLOCK)  

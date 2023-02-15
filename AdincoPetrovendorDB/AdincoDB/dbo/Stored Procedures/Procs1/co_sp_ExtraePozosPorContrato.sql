@@ -6,7 +6,7 @@ BEGIN
 		SELECT 
 			IdInstalacion,NombreInstalacion,IdInstalacionPemex
 		FROM
-			CO_CONTRATO	C 
+			CO_CONTRATO	C	(NOLOCK)
 		JOIN
 			CO_INSTALACION	I (NOLOCK)  
 			ON	C.IdContrato = @IdContrato
