@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -49,29 +49,34 @@ BEGIN
 		IdPedido INT
 	);
 
-	INSERT INTO #CABECERA
+	INSERT INTO #CABECERA(
+		PO,
+		Proveedor,
+		SolicitudPedido,
+		IdPedido
+	)
 	SELECT
 		ISNULL(PIM.PURCHASING_DOCUMENT,'N/A'),
 		PR.RazonSocial,
 		P.IdSolicitudPedido,
 		P.IdPedido
-	FROM MM_Pedido AS P 
-		JOIN MM_PedidoDetalle AS PD
+	FROM MM_Pedido AS P (NOLOCK)
+		JOIN MM_PedidoDetalle AS PD (NOLOCK)
 			ON P.IdPedido = PD.IdPedido
 			AND P.IdContrato IN (10045,10044,10046,10038,10144)--CONTRATOS DE WDEA
-		JOIN MM_PeticionOfertaDetalle AS POF
+		JOIN MM_PeticionOfertaDetalle AS POF (NOLOCK)
 			ON PD.IdPeticionOfertaDetalle = POF.IdPeticionOfertaDetalle
-		LEFT JOIN WDEA_PurchasingDocumentsImportados AS PIM
+		LEFT JOIN WDEA_PurchasingDocumentsImportados AS PIM (NOLOCK)
 			ON P.IdPedido = PIM.IdPedidoADINCO
 			AND POF.IdMaterial = PIM.IDMATERIAL
-		JOIN MM_AceptacionPedido AS AP
+		JOIN MM_AceptacionPedido AS AP (NOLOCK)
 			ON P.IdPedido = AP.IdPedido
 			AND ISNULL(AP.Activo,0) = 1
 			AND ISNULL(AP.IdEliminado,0) = 0
-		JOIN MM_AceptacionPedidoDetalle AS APD	
+		JOIN MM_AceptacionPedidoDetalle AS APD (NOLOCK)
 			ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
 			AND PD.IdPedidoDetalle = APD.IdPedidoDetalle
-		JOIN S_Proveedor AS PR
+		JOIN S_Proveedor AS PR (NOLOCK)
 			ON P.IdSubcontratista = PR.IdProveedor
 	WHERE IdAceptacionPedidoDetalle IS NOT NULL
 		AND (PD.Cantidad <> APD.Cantidad)
@@ -83,7 +88,13 @@ BEGIN
 			P.IdPedido;
 
 
-	INSERT INTO #CABECERA_DETALLE_PEDIDO
+	INSERT INTO #CABECERA_DETALLE_PEDIDO(
+		PO,
+		TotalPedido,
+		Proveedor,
+		SolicitudPedido,
+		IdPedido
+	)
 	SELECT
 		C.PO,
 		SUM(PD.Cantidad * PD.PrecioUnitario),
@@ -91,14 +102,21 @@ BEGIN
 		C.SolicitudPedido,
 		C.IdPedido
 	FROM #CABECERA AS C
-	JOIN MM_PedidoDetalle AS PD
+	JOIN MM_PedidoDetalle AS PD (NOLOCK)
 		ON C.IdPedido = PD.IdPedido
 	GROUP BY C.PO,
 			C.Proveedor,
 			C.SolicitudPedido,
 			C.IdPedido;
 
-	INSERT INTO #CABECERA_DETALLE_ACEPTACION
+	INSERT INTO #CABECERA_DETALLE_ACEPTACION(
+		PO,
+		TotalPedido,
+		TotalPedidoAceptado,
+		Proveedor,
+		SolicitudPedido,
+		IdPedido
+	)
 	SELECT
 		C.PO,
 		C.TotalPedido,
@@ -107,11 +125,11 @@ BEGIN
 		C.SolicitudPedido,
 		C.IdPedido
 	FROM #CABECERA_DETALLE_PEDIDO AS C
-	JOIN MM_PedidoDetalle AS PD
+	JOIN MM_PedidoDetalle AS PD (NOLOCK)
 		ON C.IdPedido = PD.IdPedido
-	JOIN MM_AceptacionPedidoDetalle AS APD
+	JOIN MM_AceptacionPedidoDetalle AS APD (NOLOCK)
 		ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-	JOIN MM_AceptacionPedido AS AP
+	JOIN MM_AceptacionPedido AS AP (NOLOCK)
 		ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
 		AND ISNULL(AP.Activo,0) = 1
 		AND ISNULL(AP.IdEliminado,0) = 0
