@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -31,15 +31,15 @@ BEGIN
 		APD.Cantidad AS CantidadAceptada,
 		CAST(APD.Creado AS DATE) AS FechaAceptacion,
 		AP.Comentario
-	FROM MM_Pedido AS P 
+	FROM MM_Pedido AS P (NOLOCK)
 		JOIN MM_PedidoDetalle AS PD
 			ON P.IdPedido = PD.IdPedido
 			AND PD.IdPedidoDetalle = @IdPedidoDetalle
-		JOIN MM_PeticionOfertaDetalle AS POF
+		JOIN MM_PeticionOfertaDetalle AS POF (NOLOCK)
 			ON PD.IdPeticionOfertaDetalle = POF.IdPeticionOfertaDetalle
-		JOIN MM_AceptacionPedidoDetalle AS APD	
+		JOIN MM_AceptacionPedidoDetalle AS APD (NOLOCK)	
 			ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-		JOIN MM_AceptacionPedido AS AP
+		JOIN MM_AceptacionPedido AS AP (NOLOCK)
 			ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
 			AND ISNULL(AP.Activo,0) = 1
 			AND ISNULL(AP.IdEliminado,0) = 0;
