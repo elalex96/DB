@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -17,7 +17,8 @@ GO
 -- Create date: 25/01/2023
 -- Description:	consulta de los detalles de PO para reporte de remanentes
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_DetalleReporteRemanentes] 
+CREATE PROCEDURE [dbo].[SP_MM_DetalleReporteRemanentes] --28414
+	-- Add the parameters for the stored procedure here
 	@IdPedido INT
 AS
 BEGIN
@@ -54,26 +55,26 @@ BEGIN
 		ISNULL(PIM.WBS_ELEMENT,'N/A') AS WBS_ELEMENT,
 		ISNULL(CC.CentroCosto,C.CentroCosto) AS CentroCosto,
 		PD.IdPedidoDetalle
-	FROM MM_Pedido AS P 
-		JOIN MM_PedidoDetalle AS PD
+	FROM MM_Pedido AS P (NOLOCK)
+		JOIN MM_PedidoDetalle AS PD (NOLOCK)
 			ON P.IdPedido = PD.IdPedido
 			AND PD.IdPedido = @IdPedido
-		JOIN MM_PeticionOfertaDetalle AS POF
+		JOIN MM_PeticionOfertaDetalle AS POF (NOLOCK)
 			ON PD.IdPeticionOfertaDetalle = POF.IdPeticionOfertaDetalle
-		JOIN MM_AceptacionPedidoDetalle AS APD	
+		JOIN MM_AceptacionPedidoDetalle AS APD (NOLOCK)
 			ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-		JOIN PV_TipoMoneda AS PM
+		JOIN PV_TipoMoneda AS PM (NOLOCK)
 			ON P.IdMoneda = PM.IdMoneda
-		LEFT JOIN WDEA_PurchasingDocumentsImportados AS PIM
+		LEFT JOIN WDEA_PurchasingDocumentsImportados AS PIM (NOLOCK)
 			ON P.IdPedido = PIM.IdPedidoADINCO
 			AND POF.IdMaterial = PIM.IDMATERIAL
-		LEFT JOIN CC_CentroCosto AS CC
+		LEFT JOIN CC_CentroCosto AS CC (NOLOCK)
 			ON PIM.COST_CENTER = CC.IdCentroCosto
-		LEFT JOIN MM_SolicitudPedidoDetalle AS SPD
+		LEFT JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
 			ON POF.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
-		LEFT JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP
+		LEFT JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP (NOLOCK)
 			ON SPD.IdSolicitudPedidoDetalle = SPDLP.IdSolicitudPedidoDetalle
-		LEFT JOIN CC_CentroCosto AS C
+		LEFT JOIN CC_CentroCosto AS C (NOLOCK)
 			ON SPDLP.IdCentroCosto = C.IdCentroCosto
 	GROUP BY POF.MaterialCotizadoTextoC,
 		PD.Cantidad,
@@ -95,9 +96,9 @@ BEGIN
 		PD.CentroCosto,
 		PD.IdPedidoDetalle
 	FROM #DETALLES_PEDIDO AS PD
-	JOIN MM_AceptacionPedidoDetalle AS APD
+	JOIN MM_AceptacionPedidoDetalle AS APD (NOLOCK)
 		ON PD.IdPedidoDetalle = APD.IdPedidoDetalle
-	JOIN MM_AceptacionPedido AS AP
+	JOIN MM_AceptacionPedido AS AP (NOLOCK)
 		ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
 		AND ISNULL(AP.Activo,0) = 1
 		AND ISNULL(AP.IdEliminado,0) = 0
