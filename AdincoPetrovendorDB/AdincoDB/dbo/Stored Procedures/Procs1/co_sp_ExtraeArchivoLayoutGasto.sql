@@ -12,13 +12,13 @@ SELECT
 	CA.CreadoPor
 		,D.*, U.Nombre AS ImportadoPor
 		FROM 
-			CO_ArchivoLayoutGasto	CA
+			CO_ArchivoLayoutGasto	CA	(NOLOCK)
 		JOIN
-			AWS_Documentos	D
+			AWS_Documentos	D	(NOLOCK)
 			ON	CA.AWSDocumentoId	=	D.AWSDocumentoId
 			AND CA.ContratoId =	@IdContrato
 		JOIN
-			AP_USUARIO U
+			AP_USUARIO U	(NOLOCK)
 			ON CA.CreadoPor = U.UsuarioID
 		WHERE CA.ContratoId =	@IdContrato
 		ORDER BY CA.CREADOEL DESC

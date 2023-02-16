@@ -82,8 +82,10 @@ BEGIN
      0,
 	 0
     );
-
-	SELECT @insertado =  SCOPE_IDENTITY();  
+	
+	SET @insertado =  SCOPE_IDENTITY(); 
+	SELECT  @insertado;
 	INSERT INTO CO_ArchivoLayoutGastoBitacora(AWSDocumentoId,GastoId,CreadoEl,CreadoPor)
 	VALUES(@IdArchivo,@insertado,GETDATE(),@IdUsuario);
+
 END

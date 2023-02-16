@@ -3653,5 +3653,9 @@
     <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraePozosPorContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraeUUIDIdFacturaPorContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\co_sp_ExtraePresupuestoPorContrato.sql" />
+    <Build Include="dbo\Tables\Tables1\Copia de A_PIActividadMalva.sql" />
+    <Build Include="dbo\Tables\Tables1\Copia de AM_Aprobacion.sql" />
+    <Build Include="dbo\Tables\Tables1\CO_ArchivoLayoutGasto.sql" />
+    <Build Include="dbo\Tables\Tables1\CO_ArchivoLayoutGastoBitacora.sql" />
   </ItemGroup>
 </Project>
