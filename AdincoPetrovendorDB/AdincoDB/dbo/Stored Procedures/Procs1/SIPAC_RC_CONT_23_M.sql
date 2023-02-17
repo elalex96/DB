@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:Yazmin Glez.
 -- Create date:2017-11-28
 -- Description:Reporte de CGI - Registro de CFDIs Relacionados_CONT_23_M
@@ -17,6 +16,10 @@
 -- Modificado:       Reyna Olvera
 -- Fecha Modificado: 2022-08-18
 -- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
+-- =============================================
+-- Modificado:       Neri del Angel
+-- Fecha Modificado: 16 de Febrero del 2023
+-- Description:      Se agrega la opción obtener el nuevo campo IDSIPAC desde la tabla CO_Contrato, si este viene vacío o nulo se obtendrá desde la tabla que ya se obtenía anteriormente CO_Contratista
 -- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_23_M]
     @Contrato      INT,
@@ -102,7 +105,12 @@ AS
         /**/
 
         SELECT
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC))         AS [RF_00],
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END									         AS [RF_00],
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))  AS [RI_00],
             CO_Contrato.NumeroContrato                   AS [RF01_01],
             MONTH(CO_Registro.MesPresentacion)           AS [RC23_00],
@@ -188,7 +196,12 @@ AS
                                                        @IdPresupuesto
                                                END
         GROUP BY
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END,
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
             MONTH(CO_Registro.MesPresentacion),
             YEAR(CO_Registro.MesPresentacion),
@@ -201,7 +214,12 @@ AS
         UNION
         --
         SELECT
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC))        AS [RF_00],
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END									        AS [RF_00],
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)) AS [RI_00],
             CO_Contrato.NumeroContrato                  AS [RF01_01],
             MONTH(CO_Registro.MesPresentacion)          AS [RC23_00],
@@ -297,7 +315,12 @@ AS
                                                        @IdPresupuesto
                                                END
         GROUP BY
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END,
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
             MONTH(CO_Registro.MesPresentacion),
             YEAR(CO_Registro.MesPresentacion),

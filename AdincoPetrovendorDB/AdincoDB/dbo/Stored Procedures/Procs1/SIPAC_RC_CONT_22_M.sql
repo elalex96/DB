@@ -18,6 +18,10 @@
 -- Description:      Se ajusta la consulta de la hoja 21 para poder retornar la snuevas columnas de la plantilla  2022 EPT y ajuste de gasto
 -- Se agrega mejoras de deuda tecnica
 -- =============================================
+-- Modificado:       Neri del Angel
+-- Fecha Modificado: 16 de Febrero del 2023
+-- Description:      Se agrega la opción obtener el nuevo campo IDSIPAC desde la tabla CO_Contrato, si este viene vacío o nulo se obtendrá desde la tabla que ya se obtenía anteriormente CO_Contratista
+-- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M]
     @Contrato      INT,
     @Mes           DATE,
@@ -384,7 +388,12 @@ AS
         /*Consulta final quue llena la hoja 22 de la plantilla*/
 
         SELECT
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC))                                   AS [RF_00],
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END																	   AS [RF_00],
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))                            AS [RI_00],
             CO_Contrato.NumeroContrato                                             AS [RF01_01],
             MONTH(CO_Registro.MesPresentacion)                                     AS [RC21_01],
@@ -478,7 +487,12 @@ AS
                                                        @IdPresupuesto
                                                END
         GROUP BY
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END,
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
             CO_Contrato.NumeroContrato,
             MONTH(CO_Registro.MesPresentacion),
@@ -505,7 +519,12 @@ AS
         UNION
         --
         SELECT
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC))                            AS [RF_00],
+             CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END								                                AS [RF_00],
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))                     AS [RI_00],
             CO_Contrato.NumeroContrato                                      AS [RF01_01],
             MONTH(CO_Registro.MesPresentacion)                              AS [RC21_01],
@@ -603,7 +622,12 @@ AS
                                                        @IdPresupuesto
                                                END
         GROUP BY
-            LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                ELSE
+                    LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+            END,
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)),
             CO_Contrato.NumeroContrato,
             MONTH(CO_Registro.MesPresentacion),
