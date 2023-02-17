@@ -8,6 +8,10 @@
 -- Description:			Optimizacion de PROCEDURE por temas de error marcado 
 --						[Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.]
 -- =============================================
+-- Modification Author:	Reyna Olvera
+-- Modification Date:	16 de Febrero del 2023
+-- Description:			Se modifica el stored procedure para mostrar el importe correcto en el gridview de la pantalla
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_Pedimentos]
     @IdContrato INT,
     @IdUsuario INT
@@ -100,7 +104,8 @@ BEGIN
            PC.CreadoEn,
            TEMP.ModificadoPorTexto AS ModificadoPor,
            PC.ModificadoEn,
-           ISNULL(pc.CuentaBancaria, '') CuentaBancaria
+           ISNULL(pc.CuentaBancaria, '') CuentaBancaria,
+		   PCD.ImporteTotal
     FROM #FI_PedimentoComprobante TEMP
         JOIN FI_PedimentoComprobante PC (NOLOCK)
             ON TEMP.IdPedimentoComprobante = PC.IdPedimentoComprobante
@@ -111,6 +116,6 @@ BEGIN
         INNER JOIN dbo.PV_Subcontratista SE (NOLOCK)
             ON PC.IdSubcontratistaExportador = SE.IdSubcontratista
         INNER JOIN dbo.PV_TipoMoneda TM (NOLOCK)
-            ON PC.IdMoneda = TM.IdMoneda
+  ON PC.IdMoneda = TM.IdMoneda
     ORDER BY TEMP.ClavePedimento DESC;
 END;

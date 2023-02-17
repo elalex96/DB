@@ -1,4 +1,5 @@
-﻿-- =============================================  
+﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================  
 -- Author:  Manuel CD  
 -- Create date: 15-11-17  
 -- Description:   
@@ -8,7 +9,11 @@
 -- Description:			Optimizacion de PROCEDURE por temas de error marcado 
 --						[Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.]
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_Comprobantes]
+-- Modification Author:	Reyna Olvera
+-- Modification Date:	16 de Febrero del 2023
+-- Description:			Se modifica el stored procedure para mostrar el importe correcto en el gridview de la pantalla
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_Comprobantes]--10038,1
     @IdContrato INT,
     @IdUsuario INT
 AS
@@ -165,25 +170,16 @@ BEGIN
            TEMP.ClaseBienServicio,
            SUBSTRING(TEMP.IdUnidadMedidaTexto, 0, 30) AS UnidadMedida,
            TEMP.IdMonedaTexto AS TipoMonedaCorto,
-           ----------------------------------------------------------------------- 
-           /*Se suma el importe total pero se deja con el nombre de PrecioUnitario para no afectar en codigo :
-					<dx:GridViewDataTextColumn FieldName="PrecioUnitario" VisibleIndex="9" Caption="Subtotal"> 
-					Cuando no hay importe total si se toma el precio unitario*/
-           ----------------------------------------------- DR 03/08/2020
            SUM(   CASE
-                      WHEN TEMP.ImporteTotal IS NOT NULL THEN
-                          TEMP.ImporteTotal
-                      ELSE
-                          TEMP.PrecioUnitario
+                      WHEN TEMP.PrecioUnitario IS NOT NULL  AND TEMP.PrecioUnitario > 0
+					  THEN
+                           TEMP.PrecioUnitario
+					   ELSE
+						   TEMP.ImporteTotal
                   END
               ) AS 'PrecioUnitario',
-           ----------------------------------------------------------------------------  
            TEMP.Cantidad,
-           ----------------------------------------------------------------------------
-           /*Se envía como nulo ya que no se ocupa y para no afectar en codigo:
-					<dx:GridViewDataTextColumn FieldName="ImporteTotal" VisibleIndex="11" Visible="false">*/
-           ---------------------- DR 03/08/2020
-           NULL AS 'ImporteTotal',
+           TEMP.ImporteTotal AS 'ImporteTotal',
            TEMP.IdFormaPagoTexto AS FormaDePago,
            Archivo AS 'Archivo',
            TEMP.CreadoPorTexto AS CreadoPor,
@@ -221,6 +217,7 @@ BEGIN
                      'No'
                  ELSE
                      'Si'
-             END
+             END,
+			 TEMP.ImporteTotal
     ORDER BY IdComprobante DESC;
 END;
