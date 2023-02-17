@@ -30,6 +30,10 @@
 -- Fecha Modificado: 11 de Octubre del 2022
 -- Description:      Se ajusta para que en la columna [RC26_12] se muestre la razón social del Receptor si la factura es de tipo N
 -- =============================================
+-- Modificado:       Neri del Angel
+-- Fecha Modificado: 16 de Febrero del 2023
+-- Description:      Se agrega la opción obtener el nuevo campo IDSIPAC desde la tabla CO_Contrato, si este viene vacío o nulo se obtendrá desde la tabla que ya se obtenía anteriormente CO_Contratista
+-- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_26_M]
 @Contrato      INT, 
 @Mes           DATE, 
@@ -821,7 +825,12 @@ INSERT INTO #MontosTotalTransferenciaPUE
 /*SELECT FINAL*/
 
 SELECT
-    LTRIM(RTRIM(CO_Contratista.IDSIPAC))                           AS [RF_00],
+    CASE
+        WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+            LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+        ELSE
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+    END															   AS [RF_00],
     CO_Contrato.IDRegFiducidiario                                  AS [RI_00],
     MONTH(CO_Registro.MesPresentacion)                             AS [RC26_00],
     YEAR(CO_Registro.MesPresentacion)                              AS [RC26_01],
@@ -909,7 +918,12 @@ WHERE
                                                @IdPresupuesto
                                        END
 GROUP BY
-    LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+    CASE
+        WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+            LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+        ELSE
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+    END,
     MONTH(CO_Registro.MesPresentacion),
     YEAR(CO_Registro.MesPresentacion),
     CASE
@@ -941,7 +955,12 @@ GROUP BY
 UNION
 --
 SELECT
-    LTRIM(RTRIM(CO_Contratista.IDSIPAC))                           AS [RF_00],
+    CASE
+        WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+            LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+        ELSE
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+    END															   AS [RF_00],
     CO_Contrato.IDRegFiducidiario                                  AS [RI_00],
     MONTH(CO_Registro.MesPresentacion)                             AS [RC26_00],
     YEAR(CO_Registro.MesPresentacion)                              AS [RC26_01],
@@ -1049,7 +1068,12 @@ WHERE
                                                @IdPresupuesto
                                        END
 GROUP BY
-    LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+    CASE
+        WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+            LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+        ELSE
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+    END,
     MONTH(CO_Registro.MesPresentacion),
     YEAR(CO_Registro.MesPresentacion),
     ISNULL(MTT.UUIDCP, 'NA'),
@@ -1078,7 +1102,12 @@ GROUP BY
 UNION
 --
 SELECT
-    LTRIM(RTRIM(CO_Contratista.IDSIPAC))                                                        AS [RF_00],
+    CASE
+        WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+            LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+        ELSE
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+    END																							AS [RF_00],
     CO_Contrato.IDRegFiducidiario                                                               AS [RI_00],
     MONTH(CO_Registro.MesPresentacion)                                                          AS [RC26_00],
     YEAR(CO_Registro.MesPresentacion)                                                           AS [RC26_01],
@@ -1172,7 +1201,12 @@ WHERE
                                                @IdPresupuesto
                                        END
 GROUP BY
-    LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
+    CASE
+        WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
+            LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+        ELSE
+            LTRIM(RTRIM(CO_Contratista.IDSIPAC))
+    END,
     MONTH(CO_Registro.MesPresentacion),
     YEAR(CO_Registro.MesPresentacion),
     CASE
