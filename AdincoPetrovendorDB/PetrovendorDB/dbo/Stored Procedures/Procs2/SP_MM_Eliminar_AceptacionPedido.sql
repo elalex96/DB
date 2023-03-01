@@ -184,7 +184,7 @@ BEGIN
                 INNER JOIN S_Proveedor AS PV (NOLOCK)
                     ON P.IdSubcontratista = PV.IdProveedor
                 INNER JOIN MM_Pedidos AS PG (NOLOCK)
-                    ON PG.IdIdentificador = P.IdPedido
+                    ON P.IdPedido = PG.IdIdentificador
                        AND PG.IdProveedorCliente = @IDPROVEEDOR
                 LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
                     ON PG.IdTipoPedido = TP.IdTipoPedido
@@ -318,13 +318,13 @@ BEGIN
                    0
             FROM #PROCESO AS TEM
                 INNER JOIN dbo.MM_AceptacionFactura AS AF (NOLOCK)
-                    ON AF.IdAceptacionFactura = TEM.ID_PROCESO
+                    ON TEM.ID_PROCESO = AF.IdAceptacionFactura
 					AND TEM.CLAVE_PROCESO = 'aceptacionfactura'
 					AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
                 INNER JOIN dbo.FI_Factura AS FP (NOLOCK)
-                    ON FP.IdFactura = AF.IdFactura
+                    ON AF.IdFactura = FP.IdFactura
                 LEFT JOIN Adinco.dbo.FI_Factura AS FA (NOLOCK)
-                    ON FA.UUID = FP.UUID COLLATE SQL_Latin1_General_CP1_CI_AS
+                    ON FP.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = FA.UUID
             GROUP BY AF.IdAceptacionPedido,
                      AF.IdAceptacionFactura,
                      AF.IdFactura,
@@ -742,26 +742,26 @@ BEGIN
                     F.EliminadoPor = 0,
                     F.Activa = 0,
                     F.IdEliminado = @IDELIMINACION
-                FROM dbo.FI_Factura F  
+                FROM dbo.FI_Factura F  (NOLOCK)
                     INNER JOIN #VALIDACION_FACTURA VF
-                        ON VF.IdFacturaPetronvendor = F.IdFactura;
+                        ON F.IdFactura = VF.IdFacturaPetronvendor;
 
                 /*APROBACIÓN FACTURA EN PROCESO DE MM_AceptacionFactura*/
                 UPDATE AF
                 SET AF.IdEstatusEliminado = 1,
                     AF.IdEliminado = @IDELIMINACION
-                FROM dbo.MM_AceptacionFactura AF  
+                FROM dbo.MM_AceptacionFactura AF  (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = AF.IdAceptacionFactura
+                        ON AF.IdAceptacionFactura = P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'aceptacionfactura';
 
                 /*APROBACIÓN CARTA CONTENIDO NACIONAL EN PROCESO DE MM_AceptacionCartaPCN*/
                 UPDATE AC
                 SET AC.IdEstatusEliminado = 1,
                     AC.IdEliminado = @IDELIMINACION
-                FROM dbo.MM_AceptacionCartaPCN AC
+                FROM dbo.MM_AceptacionCartaPCN AC (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = AC.IdAceptacionCartaPCN
+                        ON AC.IdAceptacionCartaPCN = P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'aceptacioncn';
 
                 /*ACEPTACION DE PEDIDO EN PROCESO DE MM_AceptacionPedido*/

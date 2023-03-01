@@ -141,14 +141,14 @@ BEGIN TRY
 				AND AP.IdPedido=@IDPEDIDO
 			INNER JOIN MM_Pedido AS P (NOLOCK) ON  P.IdPedido = AP.IdPedido	
 			INNER JOIN MM_AceptacionCartaPCN AS AC (NOLOCK) ON AP.IdAceptacionPedido = AC.IdAceptacionPedido	
-			INNER JOIN S_Documento_S3 AS D (NOLOCK) ON D.IdDocumento = AC.IdDocumento
-			INNER JOIN S_TipoValidacionDoc AS TD (NOLOCK) ON TD.IdTipoValidacionDoc = AC.IdEstatus
-			INNER JOIN S_Proveedor AS PV (NOLOCK) ON PV.IdProveedor = P.IdSubcontratista	
+			INNER JOIN S_Documento_S3 AS D (NOLOCK) ON AC.IdDocumento = D.IdDocumento
+			INNER JOIN S_TipoValidacionDoc AS TD (NOLOCK) ON AC.IdEstatus = TD.IdTipoValidacionDoc
+			INNER JOIN S_Proveedor AS PV (NOLOCK) ON P.IdSubcontratista = PV.IdProveedor	
 			INNER JOIN MM_Pedidos AS PG (NOLOCK) ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente =	AP.IdProveedor	
-			INNER JOIN #PROCESO AS TEM_CN (NOLOCK) ON TEM_CN.ID_PROCESO=ac.IdAceptacionCartaPCN
+			INNER JOIN #PROCESO AS TEM_CN (NOLOCK) ON ac.IdAceptacionCartaPCN = TEM_CN.ID_PROCESO
 				AND TEM_CN.CLAVE_PROCESO='aceptacioncn'
 				AND TEM_CN.IdEstatus=2 --> CN APROBADA
-			LEFT JOIN  MM_TipoPedido AS TP (NOLOCK) ON TP.IdTipoPedido = PG.IdTipoPedido
+			LEFT JOIN  MM_TipoPedido AS TP (NOLOCK) ON PG.IdTipoPedido = TP.IdTipoPedido
 
 			 /*COMPROBANTE EXTRANJERO*/
 			INSERT INTO #PROCESO(ID_PADRE,PROCESO,ESTATUS,IDESTATUS,CLAVE_PROCESO,ID_PROCESO)
@@ -160,22 +160,22 @@ BEGIN TRY
 			'aprobacionextranjera',	
 			PC.IdPedimentoComprobante	
 			FROM MM_AceptacionPedido AS AP (NOLOCK)
-			INNER JOIN MM_Pedido AS P (NOLOCK) ON  P.IdPedido = AP.IdPedido	
+			INNER JOIN MM_Pedido AS P (NOLOCK) ON  AP.IdPedido = P.IdPedido
 				AND ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> NACIONALIDAD EXTRANJERA
 				AND AP.IdPedido= @IDPEDIDO
-			INNER JOIN S_Proveedor AS PV (NOLOCK) ON PV.IdProveedor = P.IdSubcontratista	
+			INNER JOIN S_Proveedor AS PV (NOLOCK) ON P.IdSubcontratista = PV.IdProveedor	
 			INNER JOIN MM_Pedidos AS PG (NOLOCK) ON P.IdPedido = PG.IdIdentificador AND PG.IdProveedorCliente = @IDPROVEEDOR	 
-			LEFT JOIN  MM_TipoPedido AS TP (NOLOCK) ON TP.IdTipoPedido = PG.IdTipoPedido
+			LEFT JOIN  MM_TipoPedido AS TP (NOLOCK) ON PG.IdTipoPedido = TP.IdTipoPedido
 			INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC (NOLOCK) 
-					ON APC.IdAceptacionPedido=AP.IdAceptacionPedido
+					ON AP.IdAceptacionPedido = APC.IdAceptacionPedido
 			INNER JOIN dbo.FI_PedimentoComprobante PC (NOLOCK)
-					ON PC.IdPedimentoComprobante=APC.IdPedimentoComprobante
+					ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante
 						AND ISNULL(PC.IdEstatusEliminado,0)<> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
 			INNER JOIN dbo.TA_Operacion O (NOLOCK)
-					ON O.IdDocumento=PC.IdPedimentoComprobante AND O.IdTipoOperacion=16 -->APROBACIÓN DE COMPROBANTE EXTRANJERO
+					ON PC.IdPedimentoComprobante = O.IdDocumento AND O.IdTipoOperacion=16 -->APROBACIÓN DE COMPROBANTE EXTRANJERO
 			LEFT JOIN dbo.TA_Estatus AS E (NOLOCK)
-						ON E.IdEstatus = O.IdEstatusOperacion	
-			INNER JOIN #PROCESO PAP ON PAP.ID_PROCESO=AP.IdAceptacionPedido
+						ON O.IdEstatusOperacion = E.IdEstatus	
+			INNER JOIN #PROCESO PAP ON AP.IdAceptacionPedido = PAP.ID_PROCESO
 				AND PAP.CLAVE_PROCESO='aceptacionpedido'
 			  
 

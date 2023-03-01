@@ -235,11 +235,11 @@ BEGIN
 					AND O.NoVersion = P.Version
 					AND ISNULL(P.IdEstatusEliminado, 0) <> 1
                 INNER JOIN S_Proveedor AS PV (NOLOCK)
-                    ON PV.IdProveedor = P.IdSubcontratista
+                    ON P.IdSubcontratista = PV.IdProveedor
                 INNER JOIN TA_Estatus AS E (NOLOCK)
-                    ON E.IdEstatus = O.IdEstatusOperacion
+                    ON O.IdEstatusOperacion = E.IdEstatus
                 LEFT JOIN PV_TipoMoneda AS TM (NOLOCK)
-                    ON P.IdMoneda = TM.IdMoneda
+                    ON TM.IdMoneda = P.IdMoneda
                 INNER JOIN MM_Pedidos AS PG (NOLOCK)
                     ON P.IdPedido = PG.IdIdentificador
                        AND PG.IdProveedorCliente = @IDPROVEEDOR
