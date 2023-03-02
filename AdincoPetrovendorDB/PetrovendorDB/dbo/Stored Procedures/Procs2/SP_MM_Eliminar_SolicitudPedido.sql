@@ -1,4 +1,14 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_Eliminar_SolicitudPedido'
+)
+    DROP PROCEDURE SP_MM_Eliminar_SolicitudPedido;
+GO
+-- =============================================
 -- Author:	DANIEL AC
 -- Create date: 29/06/2018
 -- Description: ELIMINACIÓN DE SOLICITUD DE PEDIDO - MODIFICACIÓN
@@ -10,6 +20,10 @@
 -- Author:	Alexander Gomez
 -- Create date: 02/01/2020
 -- Description: agregado de eliminado de FI_ArchivoXML de adinco
+-- =============================================
+-- Author:	Alexander Gomez
+-- Create date: 27/02/2023
+-- Description: se agrega el bit 0 en activo al eliminar el proceso
 -- =============================================
 
 CREATE PROCEDURE [dbo].[SP_MM_Eliminar_SolicitudPedido] --14491, 420, 3, 'Comentario Interno prueba', 'Comentario externo prueba', 2205, 1
@@ -44,7 +58,7 @@ BEGIN
         /*VALIDAR SOLICITUD DE PEDIDO ESTE ACTIVOY DISPONIBLE PARA ELIMINAR*/
         DECLARE @DISPONIBLE_ELIMINACION INT = (
                                                   SELECT COUNT(IdSolicitudPedido)
-                                                  FROM dbo.MM_SolicitudPedido
+                                                  FROM dbo.MM_SolicitudPedido (NOLOCK)
                                                   WHERE IdSolicitudPedido = @IDSOLICITUDPEDIDO
                                                         AND IdProveedor = @IDPROVEEDOR
                                                         AND ISNULL(IdEstatusEliminado, 0) = 0
@@ -84,7 +98,7 @@ BEGIN
                    0,
                    'solicitudpedido',
                    IdSolicitudPedido
-            FROM dbo.MM_SolicitudPedido
+            FROM dbo.MM_SolicitudPedido (NOLOCK)
             WHERE IdSolicitudPedido = @IDSOLICITUDPEDIDO
                   AND ISNULL(IdEstatusEliminado, 0) <> 1;
 
@@ -106,14 +120,14 @@ BEGIN
                    'aprobacionsp',
                    '',
                    O.IdOperacion
-            FROM dbo.MM_SolicitudPedido AS SP
-                INNER JOIN dbo.TA_Operacion AS O
-                    ON O.IdDocumento = SP.IdSolicitudPedido
-                INNER JOIN dbo.TA_Estatus AS E
-                    ON E.IdEstatus = O.IdEstatusOperacion
-            WHERE IdSolicitudPedido = @IDSOLICITUDPEDIDO
-                  AND O.IdTipoOperacion = 2 -->APROBACIÓN DE SOLICITUD DE PEDIDO
-                  AND ISNULL(SP.IdEstatusEliminado, 0) <> 1;
+            FROM dbo.MM_SolicitudPedido AS SP (NOLOCK)
+                INNER JOIN dbo.TA_Operacion AS O (NOLOCK)
+                    ON SP.IdSolicitudPedido = O.IdDocumento
+					AND IdSolicitudPedido = @IDSOLICITUDPEDIDO
+					AND O.IdTipoOperacion = 2 -->APROBACIÓN DE SOLICITUD DE PEDIDO
+					AND ISNULL(SP.IdEstatusEliminado, 0) <> 1
+                INNER JOIN dbo.TA_Estatus AS E (NOLOCK)
+                    ON O.IdEstatusOperacion = E.IdEstatus
 
 
             /*CONSULTA DE OPERACION DE COTIZACIÓN*/
@@ -132,12 +146,12 @@ BEGIN
                    0,
                    'operacion_oferta',
                    O.IdOperacion
-            FROM dbo.MM_SolicitudPedido SP
-                INNER JOIN dbo.TA_Operacion O
-                    ON O.IdDocumento = SP.IdSolicitudPedido
-            WHERE SP.IdSolicitudPedido = @IDSOLICITUDPEDIDO
-                  AND O.IdTipoOperacion = 6 ---> OPERACIÓN DE COTIZACIÓN ES DONDE SE TIENE LA FECHA DE FINALIZACIÓN DE LA COTIZACIÓN
-                  AND ISNULL(SP.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTE ELIMINADA
+            FROM dbo.MM_SolicitudPedido SP (NOLOCK)
+                INNER JOIN dbo.TA_Operacion O (NOLOCK)
+                    ON SP.IdSolicitudPedido = O.IdDocumento
+					AND SP.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+					AND O.IdTipoOperacion = 6 ---> OPERACIÓN DE COTIZACIÓN ES DONDE SE TIENE LA FECHA DE FINALIZACIÓN DE LA COTIZACIÓN
+					AND ISNULL(SP.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTE ELIMINADA
             GROUP BY O.IdOperacion,
                      SP.IdSolicitudPedido;
 
@@ -158,12 +172,11 @@ BEGIN
                    0,
                    'cotizacion',
                    PO.IdPeticionOferta
-            FROM dbo.MM_PeticionOferta PO
-                INNER JOIN dbo.MM_SolicitudPedido SP
+            FROM dbo.MM_PeticionOferta PO (NOLOCK)
+                INNER JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                     ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
-            WHERE PO.IdSolicitudPedido = PO.IdSolicitudPedido
-                  AND SP.IdSolicitudPedido = @IDSOLICITUDPEDIDO
-                  AND ISNULL(PO.IdEstatusEliminado, 0) <> 1;
+					AND SP.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+					AND ISNULL(PO.IdEstatusEliminado, 0) <> 1;
 
             /*CONSULTA APROBACIÓN DE PEDIDO*/
 
@@ -184,14 +197,14 @@ BEGIN
                    'aprobacionpedido',
                    '',
                    O.IdOperacion
-            FROM dbo.MM_SolicitudPedido AS SP
-                INNER JOIN dbo.TA_Operacion AS O
-                    ON O.IdDocumento = SP.IdSolicitudPedido
-                INNER JOIN dbo.TA_Estatus AS E
+            FROM dbo.MM_SolicitudPedido AS SP (NOLOCK)
+                INNER JOIN dbo.TA_Operacion AS O (NOLOCK)
+                    ON SP.IdSolicitudPedido = O.IdDocumento
+					AND SP.IdSolicitudPedido = @IDSOLICITUDPEDIDO 
+					AND O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+                    AND ISNULL(O.IdEstatusEliminado, 0) <> 1
+                INNER JOIN dbo.TA_Estatus AS E (NOLOCK)
                     ON E.IdEstatus = O.IdEstatusOperacion
-            WHERE IdSolicitudPedido = @IDSOLICITUDPEDIDO
-                  AND O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-                  AND ISNULL(O.IdEstatusEliminado, 0) <> 1
             GROUP BY O.IdOperacion,
                      E.Nombre
             ORDER BY O.IdOperacion ASC;
@@ -213,25 +226,25 @@ BEGIN
                    '',
                    'pedido',
                    P.IdPedido
-            FROM TA_Operacion AS O
-                INNER JOIN MM_Pedido AS P
+            FROM TA_Operacion AS O (NOLOCK)
+                INNER JOIN MM_Pedido AS P (NOLOCK)
                     ON O.IdDocumento = P.IdSolicitudPedido
-                INNER JOIN S_Proveedor AS PV
-                    ON PV.IdProveedor = P.IdSubcontratista
-                INNER JOIN TA_Estatus AS E
-                    ON E.IdEstatus = O.IdEstatusOperacion
-                LEFT JOIN PV_TipoMoneda AS TM
+					AND O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
+					AND O.IdProveedor = @IDPROVEEDOR
+					AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+					AND O.NoVersion = P.Version
+					AND ISNULL(P.IdEstatusEliminado, 0) <> 1
+                INNER JOIN S_Proveedor AS PV (NOLOCK)
+                    ON P.IdSubcontratista = PV.IdProveedor
+                INNER JOIN TA_Estatus AS E (NOLOCK)
+                    ON O.IdEstatusOperacion = E.IdEstatus
+                LEFT JOIN PV_TipoMoneda AS TM (NOLOCK)
                     ON TM.IdMoneda = P.IdMoneda
-                INNER JOIN MM_Pedidos AS PG
+                INNER JOIN MM_Pedidos AS PG (NOLOCK)
                     ON P.IdPedido = PG.IdIdentificador
                        AND PG.IdProveedorCliente = @IDPROVEEDOR
-                LEFT JOIN MM_TipoPedido AS TP
-                    ON TP.IdTipoPedido = PG.IdTipoPedido
-            WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-                  AND O.IdProveedor = @IDPROVEEDOR
-                  AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
-                  AND O.NoVersion = P.Version
-                  AND ISNULL(P.IdEstatusEliminado, 0) <> 1
+                LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
+                    ON PG.IdTipoPedido = TP.IdTipoPedido
             GROUP BY P.IdPedido,
                      PV.RazonSocial,
                      PV.RegimenCapital,
@@ -254,33 +267,33 @@ BEGIN
                    1,
                    'aceptacionpedido',
                    AP.IdAceptacionPedido
-            FROM TA_Operacion AS O
-                INNER JOIN MM_Pedido AS P
+            FROM TA_Operacion AS O (NOLOCK)
+                INNER JOIN MM_Pedido AS P (NOLOCK)
                     ON O.IdDocumento = P.IdSolicitudPedido
-                INNER JOIN MM_AceptacionPedido AS AP
+					AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+					AND O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO APROBADA
+					AND O.IdEstatusOperacion = 2 --> APROBADA
+					AND O.IdProveedor = @IDPROVEEDOR
+					AND O.NoVersion = P.Version
+                INNER JOIN MM_AceptacionPedido AS AP (NOLOCK)
                     ON P.IdPedido = AP.IdPedido
-                INNER JOIN MM_HorasVigenciaPedido AS HV
-                    ON P.IdPedido = HV.IdPedido
-                INNER JOIN S_Proveedor AS PV
-                    ON PV.IdProveedor = P.IdSubcontratista
-                INNER JOIN TA_Estatus AS E
-                    ON E.IdEstatus = O.IdEstatusOperacion
-                INNER JOIN PV_TipoMoneda AS TM
-                    ON TM.IdMoneda = P.IdMoneda
-                INNER JOIN MM_Pedidos AS PG
+					AND ISNULL(AP.IdEstatusEliminado, 0) <> 1
+                INNER JOIN MM_HorasVigenciaPedido AS HV (NOLOCK)
+                    ON P.IdPedido = HV.IdPedido 
+                INNER JOIN S_Proveedor AS PV (NOLOCK)
+                    ON P.IdSubcontratista = PV.IdProveedor
+                INNER JOIN TA_Estatus AS E (NOLOCK)
+                    ON O.IdEstatusOperacion = E.IdEstatus
+                INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
+                    ON P.IdMoneda = TM.IdMoneda
+                INNER JOIN MM_Pedidos AS PG (NOLOCK)
                     ON P.IdPedido = PG.IdIdentificador
                        AND PG.IdProveedorCliente = @IDPROVEEDOR
                 INNER JOIN #PROCESO AS PP
                     ON PP.ID_PROCESO = AP.IdPedido
-                LEFT JOIN MM_TipoPedido AS TP
-                    ON TP.IdTipoPedido = PG.IdTipoPedido
-            WHERE O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO APROBADA
-                  AND O.IdEstatusOperacion = 2 --> APROBADA
-                  AND O.IdProveedor = @IDPROVEEDOR
-                  AND O.NoVersion = P.Version
-                  AND ISNULL(AP.IdEstatusEliminado, 0) <> 1
-                  AND PP.CLAVE_PROCESO = 'pedido'
-                  AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+					AND PP.CLAVE_PROCESO = 'pedido'
+                LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
+                    ON PG.IdTipoPedido = TP.IdTipoPedido
             GROUP BY P.IdPedido,
                      PV.RazonSocial,
                      PV.RegimenCapital,
@@ -309,31 +322,31 @@ BEGIN
                    AC.IdEstatus,
                    'aceptacioncn',
                    AC.IdAceptacionCartaPCN
-            FROM MM_AceptacionPedido AS AP
-                INNER JOIN MM_Pedido AS P
-                    ON P.IdPedido = AP.IdPedido
-                INNER JOIN MM_AceptacionCartaPCN AS AC
+            FROM MM_AceptacionPedido AS AP (NOLOCK)
+                INNER JOIN MM_Pedido AS P (NOLOCK)
+                    ON AP.IdPedido = P.IdPedido
+					AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+                INNER JOIN MM_AceptacionCartaPCN AS AC (NOLOCK)
                     ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-                INNER JOIN S_Documento_S3 AS D
-                    ON D.IdDocumento = AC.IdDocumento
-                INNER JOIN S_TipoValidacionDoc AS TD
-                    ON TD.IdTipoValidacionDoc = AC.IdEstatus
-                INNER JOIN S_Proveedor AS PV
-                    ON PV.IdProveedor = P.IdSubcontratista
-                INNER JOIN MM_Pedidos AS PG
+					AND ISNULL(AC.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
+                INNER JOIN S_Documento_S3 AS D (NOLOCK)
+                    ON AC.IdDocumento = D.IdDocumento
+                INNER JOIN S_TipoValidacionDoc AS TD (NOLOCK)
+                    ON AC.IdEstatus = TD.IdTipoValidacionDoc
+                INNER JOIN S_Proveedor AS PV (NOLOCK)
+                    ON P.IdSubcontratista = PV.IdProveedor
+                INNER JOIN MM_Pedidos AS PG (NOLOCK) 
                     ON P.IdPedido = PG.IdIdentificador
                        AND PG.IdProveedorCliente = @IDPROVEEDOR
-                INNER JOIN #PROCESO AS PP
-                    ON PP.ID_PROCESO = AP.IdPedido
+                INNER JOIN #PROCESO AS PP 
+                    ON AP.IdPedido = PP.ID_PROCESO
+					AND PP.CLAVE_PROCESO = 'pedido'
                 INNER JOIN #PROCESO AS PAP
-                    ON PAP.ID_PROCESO = AP.IdAceptacionPedido
-                LEFT JOIN MM_TipoPedido AS TP
-                    ON TP.IdTipoPedido = PG.IdTipoPedido
-            WHERE ISNULL(AC.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
-                  AND PAP.CLAVE_PROCESO = 'aceptacionpedido'
-                  AND PP.CLAVE_PROCESO = 'pedido'
-                  AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
-            GROUP BY AC.IdAceptacionCartaPCN,
+                    ON AP.IdAceptacionPedido = PAP.ID_PROCESO
+					AND PAP.CLAVE_PROCESO = 'aceptacionpedido'
+                LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
+                    ON PG.IdTipoPedido = TP.IdTipoPedido
+				GROUP BY AC.IdAceptacionCartaPCN,
                      TD.TipoValidacion,
                      AP.IdAceptacionPedido,
                      AC.IdEstatus,
@@ -356,34 +369,35 @@ BEGIN
                    O.IdEstatusOperacion,
                    'aceptacionfactura',
                    AF.IdAceptacionFactura
-            FROM MM_AceptacionFactura AS AF
-                INNER JOIN TA_Operacion AS O
-                    ON O.IdDocumento = AF.IdAceptacionFactura
-                INNER JOIN TA_Estatus AS E
-                    ON E.IdEstatus = O.IdEstatusOperacion
-                INNER JOIN MM_AceptacionPedido AS AP
-                    ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-                INNER JOIN MM_Pedido AS P
-                    ON P.IdPedido = AP.IdPedido
-                INNER JOIN MM_AceptacionCartaPCN AS AC
+            FROM MM_AceptacionFactura AS AF (NOLOCK)
+                INNER JOIN TA_Operacion AS O (NOLOCK)
+                    ON AF.IdAceptacionFactura = O.IdDocumento
+					AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
+                INNER JOIN TA_Estatus AS E (NOLOCK)
+                    ON O.IdEstatusOperacion = E.IdEstatus
+                INNER JOIN MM_AceptacionPedido AS AP (NOLOCK)
+                    ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+                INNER JOIN MM_Pedido AS P (NOLOCK)
+                    ON AP.IdPedido = P.IdPedido
+					AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+                INNER JOIN MM_AceptacionCartaPCN AS AC (NOLOCK)
                     ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
-                INNER JOIN S_Documento_S3 AS D
-                    ON D.IdDocumento = AC.IdDocumento
-                INNER JOIN S_TipoValidacionDoc AS TD
-                    ON TD.IdTipoValidacionDoc = AC.IdEstatus
-                INNER JOIN S_Proveedor AS PV
-                    ON PV.IdProveedor = P.IdSubcontratista
-                INNER JOIN MM_Pedidos AS PG
+                INNER JOIN S_Documento_S3 AS D (NOLOCK)
+                    ON AC.IdDocumento = D.IdDocumento
+                INNER JOIN S_TipoValidacionDoc AS TD (NOLOCK)
+                    ON AC.IdEstatus = TD.IdTipoValidacionDoc
+                INNER JOIN S_Proveedor AS PV (NOLOCK)
+                    ON P.IdSubcontratista = PV.IdProveedor
+                INNER JOIN MM_Pedidos AS PG (NOLOCK)
                     ON P.IdPedido = PG.IdIdentificador
-                       AND PG.IdProveedorCliente = AP.IdProveedor
+                       AND AP.IdProveedor = PG.IdProveedorCliente
                 INNER JOIN #PROCESO AS TEM_CN
-                    ON TEM_CN.ID_PROCESO = AC.IdAceptacionCartaPCN
-                LEFT JOIN MM_TipoPedido AS TP
-                    ON TP.IdTipoPedido = PG.IdTipoPedido
-            WHERE TEM_CN.CLAVE_PROCESO = 'aceptacioncn'
-                  AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
-                  AND TEM_CN.IDESTATUS = 2 --> CN APROBADA
-                  AND ISNULL(AF.IdEstatusEliminado, 0) <> 1; --> QUE NO SE ENCUENTREN ELIMINADAS 
+                    ON AC.IdAceptacionCartaPCN = TEM_CN.ID_PROCESO
+					AND TEM_CN.CLAVE_PROCESO = 'aceptacioncn'
+					AND TEM_CN.IDESTATUS = 2 --> CN APROBADA
+                LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
+                    ON TP.IdTipoPedido = PG.IdTipoPedido;
+
 
             /*COMPROBANTE EXTRANJERO*/
             INSERT INTO #PROCESO
@@ -401,32 +415,32 @@ BEGIN
                    O.IdEstatusOperacion,
                    'aprobacionextranjera',
                    PC.IdPedimentoComprobante
-            FROM MM_AceptacionPedido AS AP
-                INNER JOIN MM_Pedido AS P
-                    ON P.IdPedido = AP.IdPedido
-                INNER JOIN S_Proveedor AS PV
-                    ON PV.IdProveedor = P.IdSubcontratista
-                INNER JOIN MM_Pedidos AS PG
+            FROM MM_AceptacionPedido AS AP (NOLOCK)
+                INNER JOIN MM_Pedido AS P (NOLOCK)
+                    ON AP.IdPedido = P.IdPedido
+					AND ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> NACIONALIDAD EXTRANJERA
+					AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
+                INNER JOIN S_Proveedor AS PV (NOLOCK)
+                    ON P.IdSubcontratista = PV.IdProveedor
+                INNER JOIN MM_Pedidos AS PG (NOLOCK)
                     ON P.IdPedido = PG.IdIdentificador
                        AND PG.IdProveedorCliente = @IDPROVEEDOR
-                LEFT JOIN MM_TipoPedido AS TP
-                    ON TP.IdTipoPedido = PG.IdTipoPedido
-                INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC
-                    ON APC.IdAceptacionPedido = AP.IdAceptacionPedido
-                INNER JOIN dbo.FI_PedimentoComprobante PC
-                    ON PC.IdPedimentoComprobante = APC.IdPedimentoComprobante
-                INNER JOIN dbo.TA_Operacion O
-                    ON O.IdDocumento = PC.IdPedimentoComprobante
+                LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
+                    ON PG.IdTipoPedido = TP.IdTipoPedido
+                INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC (NOLOCK)
+                    ON AP.IdAceptacionPedido = APC.IdAceptacionPedido
+                INNER JOIN dbo.FI_PedimentoComprobante PC (NOLOCK)
+                    ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante
+					AND ISNULL(PC.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
+                INNER JOIN dbo.TA_Operacion O (NOLOCK)
+                    ON PC.IdPedimentoComprobante = O.IdDocumento
                        AND O.IdTipoOperacion = 16 -->APROBACIÓN DE COMPROBANTE EXTRANJERO
-                LEFT JOIN dbo.TA_Estatus AS E
-                    ON E.IdEstatus = O.IdEstatusOperacion
+                LEFT JOIN dbo.TA_Estatus AS E (NOLOCK)
+                    ON O.IdEstatusOperacion = E.IdEstatus
                 INNER JOIN #PROCESO PAP
                     ON PAP.ID_PROCESO = AP.IdAceptacionPedido
-            WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> NACIONALIDAD EXTRANJERA
-                  AND P.IdSolicitudPedido = @IDSOLICITUDPEDIDO
-                  AND PAP.CLAVE_PROCESO = 'aceptacionpedido'
-                  AND ISNULL(PC.IdEstatusEliminado, 0) <> 1; --> QUE NO SE ENCUENTREN ELIMINADAS 
-
+					AND PAP.CLAVE_PROCESO = 'aceptacionpedido';
+                  
             /*VALIDACION DE COMPROBANTES EXTRANJERO DE ADINCO*/
             CREATE TABLE #VALIDACION_PEDIMENTO
             (
@@ -452,16 +466,16 @@ BEGIN
                    0,
                    0
             FROM #PROCESO P
-                INNER JOIN dbo.FI_PedimentoComprobante PP
-                    ON PP.IdPedimentoComprobante = P.ID_PROCESO
-                INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APP
-                    ON APP.IdPedimentoComprobante = PP.IdPedimentoComprobante
-                INNER JOIN dbo.MM_AceptacionPedido AP
+                INNER JOIN dbo.FI_PedimentoComprobante PP (NOLOCK)
+                    ON P.ID_PROCESO = PP.IdPedimentoComprobante
+					AND P.CLAVE_PROCESO = 'aprobacionextranjera'
+					AND ISNULL(PP.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
+                INNER JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APP (NOLOCK)
+                    ON PP.IdPedimentoComprobante = APP.IdPedimentoComprobante
+                INNER JOIN dbo.MM_AceptacionPedido AP (NOLOCK)
                     ON AP.IdAceptacionPedido = APP.IdAceptacionPedido
-                INNER JOIN Adinco.dbo.FI_PedimentoComprobante PA
+                INNER JOIN Adinco.dbo.FI_PedimentoComprobante PA (NOLOCK)
                     ON PA.IdPedimentoComprobantePetrovendor = PP.IdPedimentoComprobante
-            WHERE CLAVE_PROCESO = 'aprobacionextranjera'
-                  AND ISNULL(PP.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
             GROUP BY AP.IdAceptacionPedido,
                      PP.IdPedimentoComprobante,
                      PA.IdPedimentoComprobante;
@@ -480,7 +494,7 @@ BEGIN
             SELECT VP.IdValidacion,
                    COUNT(R.IdPedimentoComprobante)
             FROM #VALIDACION_PEDIMENTO VP
-                INNER JOIN Adinco.dbo.CO_Registro R
+                INNER JOIN Adinco.dbo.CO_Registro R (NOLOCK)
                     ON VP.IdPedimentoAdinco = R.IdPedimentoComprobante
             GROUP BY VP.IdValidacion;
 
@@ -504,14 +518,14 @@ BEGIN
             SELECT VP.IdValidacion,
                    COUNT(T.IdTransferFactura)
             FROM #VALIDACION_PEDIMENTO VP
-                INNER JOIN Adinco.dbo.FI_TransferFactura T
+                INNER JOIN Adinco.dbo.FI_TransferFactura T (NOLOCK)
                     ON VP.IdPedimentoAdinco = T.IdPedimentoComprobante
             GROUP BY VP.IdValidacion;
 
             UPDATE VP
             SET VP.TieneTransferencias = PT.Tranferencias
             FROM #VALIDACION_PEDIMENTO VP
-                INNER JOIN #PEDIMENTO_TRANFERENCIAS PT
+                INNER JOIN #PEDIMENTO_TRANFERENCIAS PT (NOLOCK)
                     ON PT.IdValidacion = VP.IdValidacion;
 
 
@@ -543,14 +557,14 @@ BEGIN
                    0,
                    0
             FROM #PROCESO AS TEM
-                INNER JOIN dbo.MM_AceptacionFactura AS AF
-                    ON AF.IdAceptacionFactura = TEM.ID_PROCESO
-                INNER JOIN dbo.FI_Factura AS FP
-                    ON FP.IdFactura = AF.IdFactura
-                LEFT JOIN Adinco.dbo.FI_Factura AS FA
-                    ON FA.UUID = FP.UUID COLLATE SQL_Latin1_General_CP1_CI_AS
-            WHERE CLAVE_PROCESO = 'aceptacionfactura'
-                  AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
+                INNER JOIN dbo.MM_AceptacionFactura AS AF (NOLOCK)
+                    ON TEM.ID_PROCESO = AF.IdAceptacionFactura
+					AND TEM.CLAVE_PROCESO = 'aceptacionfactura'
+					AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
+                INNER JOIN dbo.FI_Factura AS FP (NOLOCK)
+                    ON AF.IdFactura = FP.IdFactura
+                LEFT JOIN Adinco.dbo.FI_Factura AS FA (NOLOCK)
+                    ON FP.UUID COLLATE SQL_Latin1_General_CP1_CI_AS = FA.UUID  
             GROUP BY AF.IdAceptacionPedido,
                      AF.IdAceptacionFactura,
                      AF.IdFactura,
@@ -570,8 +584,8 @@ BEGIN
             SELECT VF.IdValidacion,
                    COUNT(R.IdRegistro)
             FROM #VALIDACION_FACTURA AS VF
-                INNER JOIN Adinco.dbo.CO_Registro R
-                    ON R.IdFactura = VF.IdFacturaAdinco
+                INNER JOIN Adinco.dbo.CO_Registro R (NOLOCK)
+                    ON VF.IdFacturaAdinco = R.IdFactura
             WHERE VF.IdFacturaAdinco IS NOT NULL
             GROUP BY VF.IdValidacion;
 
@@ -579,7 +593,7 @@ BEGIN
             UPDATE VF
             SET VF.TieneGastos = FG.Gastos
             FROM #VALIDACION_FACTURA VF
-                INNER JOIN #FACTURAS_GASTOS FG
+                INNER JOIN #FACTURAS_GASTOS FG (NOLOCK)
                     ON FG.IdValidacion = VF.IdValidacion;
 
             /*VALIDACION DE TRANFERENCIAS CONTRA FACTURAS DE ADINCO*/
@@ -596,8 +610,8 @@ BEGIN
             SELECT VF.IdValidacion,
                    COUNT(T.IdTransferFactura)
             FROM #VALIDACION_FACTURA AS VF
-                INNER JOIN Adinco.dbo.FI_TransferFactura T
-                    ON T.IdFactura = VF.IdFacturaAdinco
+                INNER JOIN Adinco.dbo.FI_TransferFactura T (NOLOCK)
+                    ON VF.IdFacturaAdinco = T.IdFactura
             WHERE VF.IdFacturaAdinco IS NOT NULL
             GROUP BY VF.IdValidacion;
 
@@ -606,7 +620,7 @@ BEGIN
             SET VF.TieneTransferencias = FT.Tranferencias
             FROM #VALIDACION_FACTURA VF
                 INNER JOIN #FACTURAS_TRANFERENCIAS FT
-                    ON FT.IdValidacion = VF.IdValidacion;
+                    ON VF.IdValidacion = FT.IdValidacion;
 
             ----SELECT * FROM #PROCESO
             --SELECT * FROM #VALIDACION_FACTURA 
@@ -678,7 +692,7 @@ BEGIN
 
 
 				DELETE Adinco.dbo.FI_CFDIConceptoImpuesto WHERE IdFacturaConcepto IN (
-                                       SELECT IdFacturaConcepto FROM Adinco.dbo.FI_CFDIConcepto WHERE IdFactura IN (SELECT IdFacturaAdinco FROM #VALIDACION_FACTURA)
+                                       SELECT IdFacturaConcepto FROM Adinco.dbo.FI_CFDIConcepto (NOLOCK) WHERE IdFactura IN (SELECT IdFacturaAdinco FROM #VALIDACION_FACTURA)
                                    );
 
                 --SELECT * FROM #VALIDACION_FACTURA 
@@ -708,7 +722,7 @@ BEGIN
                        Importe,
                        NoIdentificacion,
                        @IDELIMINACION
-                FROM Adinco.dbo.FI_CFDIConcepto
+                FROM Adinco.dbo.FI_CFDIConcepto (NOLOCK)
                 WHERE IdFactura IN (
                                        SELECT IdFacturaAdinco FROM #VALIDACION_FACTURA
                                    );
@@ -736,7 +750,7 @@ BEGIN
                        Tasa,
                        Importe,
                        @IDELIMINACION
-                FROM Adinco.dbo.FI_CFDIImpuesto
+                FROM Adinco.dbo.FI_CFDIImpuesto (NOLOCK)
                 WHERE IdFactura IN (
                                        SELECT IdFacturaAdinco FROM #VALIDACION_FACTURA
                                    );
@@ -772,7 +786,7 @@ BEGIN
                        IsEliminado,
                        DocumentoByte,
                        @IDELIMINACION
-                FROM Adinco.dbo.FI_Documento
+                FROM Adinco.dbo.FI_Documento (NOLOCK)
                 WHERE IdFactura IN (
                                        SELECT IdFacturaAdinco FROM #VALIDACION_FACTURA
                                    )
@@ -904,7 +918,7 @@ BEGIN
                        --TipoRelacion,
                        --NoParcialidad,
                        @IDELIMINACION
-                FROM Adinco.dbo.FI_Factura
+                FROM Adinco.dbo.FI_Factura (NOLOCK)
                 WHERE IdFactura IN (
                                        SELECT IdFacturaAdinco FROM #VALIDACION_FACTURA
                                    );
@@ -923,42 +937,44 @@ BEGIN
                     F.EliminadoPor = @IDUSUARIO,
                     F.Activa = 0,
                     F.IdEliminado = @IDELIMINACION
-                FROM dbo.FI_Factura F
+                FROM dbo.FI_Factura F (NOLOCK)
                     INNER JOIN #VALIDACION_FACTURA VF
-                        ON VF.IdFacturaPetronvendor = F.IdFactura;
+                        ON F.IdFactura = VF.IdFacturaPetronvendor;
 
                 /*APROBACIÓN FACTURA EN PROCESO DE MM_AceptacionFactura*/
                 UPDATE AF
                 SET AF.IdEstatusEliminado = 1,
                     AF.IdEliminado = @IDELIMINACION
-                FROM dbo.MM_AceptacionFactura AF
+                FROM dbo.MM_AceptacionFactura AF (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = AF.IdAceptacionFactura
+                        ON AF.IdAceptacionFactura = P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'aceptacionfactura';
 
                 /*APROBACIÓN CARTA CONTENIDO NACIONAL EN PROCESO DE MM_AceptacionCartaPCN*/
                 UPDATE AC
                 SET AC.IdEstatusEliminado = 1,
                     AC.IdEliminado = @IDELIMINACION
-                FROM dbo.MM_AceptacionCartaPCN AC
+                FROM dbo.MM_AceptacionCartaPCN AC (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = AC.IdAceptacionCartaPCN
+                        ON AC.IdAceptacionCartaPCN =  P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'aceptacioncn';
 
                 /*ACEPTACION DE PEDIDO EN PROCESO DE MM_AceptacionPedido*/
                 UPDATE AP
                 SET IdEstatusEliminado = 1,
-                    IdEliminado = @IDELIMINACION
-                FROM dbo.MM_AceptacionPedido AP
+                    IdEliminado = @IDELIMINACION,
+					Activo = 0
+                FROM dbo.MM_AceptacionPedido AP (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = AP.IdAceptacionPedido
+                        ON AP.IdAceptacionPedido = P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'aceptacionpedido';
 
                 /*ELIMINACIÓN DE PEDIDOS*/
                 UPDATE P
                 SET P.IdEstatusEliminado = 1,
-                    P.IdEliminado = @IDELIMINACION
-                FROM dbo.MM_Pedido P
+                    P.IdEliminado = @IDELIMINACION,
+					P.Activo = 0
+                FROM dbo.MM_Pedido P (NOLOCK)
                     INNER JOIN #PROCESO PP
                         ON P.IdPedido = PP.ID_PROCESO
                            AND PP.CLAVE_PROCESO = 'pedido';
@@ -967,48 +983,50 @@ BEGIN
                 UPDATE O
                 SET O.IdEstatusEliminado = 1,
                     O.IdEliminado = @IDELIMINACION
-                FROM dbo.TA_Operacion O
+                FROM dbo.TA_Operacion O (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = O.IdOperacion
+                        ON O.IdOperacion = P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'aprobacionpedido';
 
                 /*ELIMINACION DE APROBACIÓN DE SOLICITUD DE PEDIDO*/
                 UPDATE O
                 SET O.IdEstatusEliminado = 1,
                     O.IdEliminado = @IDELIMINACION
-                FROM dbo.TA_Operacion O
+                FROM dbo.TA_Operacion O(NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = O.IdOperacion
+                        ON O.IdOperacion = P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'aprobacionsp';
 
                 /*ELIMINACION DE COTIZACIONES*/
                 UPDATE PO
                 SET PO.IdEstatusEliminado = 1,
-                    PO.IdEliminado = @IDELIMINACION
-                FROM dbo.MM_PeticionOferta PO
+                    PO.IdEliminado = @IDELIMINACION,
+					PO.Activo = 0
+                FROM dbo.MM_PeticionOferta PO (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = PO.IdPeticionOferta
+                        ON PO.IdPeticionOferta = P.ID_PROCESO
                            AND P.CLAVE_PROCESO = 'cotizacion';
 
                 /*ELIMINACIÓN DE OPERACIÓN DE OFERTA-COTIZACIONES*/
                 UPDATE O
                 SET O.IdEstatusEliminado = 1,
                     O.IdEliminado = @IDELIMINACION
-                FROM dbo.TA_Operacion O
+                FROM dbo.TA_Operacion O (NOLOCK)
                     INNER JOIN #PROCESO P
-                        ON P.ID_PROCESO = O.IdOperacion
-                WHERE O.IdTipoOperacion = 6 --> OPERACIÓN DE OFERTA - COTIZACIÓN
-                      AND P.CLAVE_PROCESO = 'operacion_oferta';
+                        ON O.IdOperacion = P.ID_PROCESO
+						AND O.IdTipoOperacion = 6 --> OPERACIÓN DE OFERTA - COTIZACIÓN
+						AND P.CLAVE_PROCESO = 'operacion_oferta';
 
 
                 /*ELIMINACION DE SOLICITUD DE PEDIDO*/
                 UPDATE SP
                 SET IdEstatusEliminado = 1,
-                    IdEliminado = @IDELIMINACION
-                FROM dbo.MM_SolicitudPedido SP
+                    IdEliminado = @IDELIMINACION,
+					Activo = 0
+                FROM dbo.MM_SolicitudPedido SP (NOLOCK)
                     INNER JOIN #PROCESO P
                         ON P.ID_PROCESO = SP.IdSolicitudPedido
-                WHERE P.CLAVE_PROCESO = 'solicitudpedido';
+						AND P.CLAVE_PROCESO = 'solicitudpedido';
 
 
                 /*PROCESO DE ELIMINACION DE COMPROBANTES EXTRANJEROS*/
@@ -1039,7 +1057,7 @@ BEGIN
                        IsEliminado,
                        DocumentoByte,
                        @IDELIMINACION
-                FROM Adinco.dbo.FI_Documento
+                FROM Adinco.dbo.FI_Documento (NOLOCK)
                 WHERE IdPedimentoComprobante IN (
                                                     SELECT IdPedimentoAdinco FROM #VALIDACION_PEDIMENTO
                                                 );
@@ -1079,7 +1097,7 @@ BEGIN
                        ModificadoPor,
                        ModificadoEn,
                        @IDELIMINACION
-                FROM Adinco.dbo.FI_PedimentoComprobanteDetalle
+                FROM Adinco.dbo.FI_PedimentoComprobanteDetalle (NOLOCK)
                 WHERE IdPedimentoComprobante IN (
                                                     SELECT IdPedimentoAdinco FROM #VALIDACION_PEDIMENTO
                                                 );
@@ -1147,7 +1165,7 @@ BEGIN
                        FechaIntercambio,
                        FechaModificacionIntercambio,
                        @IDELIMINACION
-                FROM Adinco.dbo.FI_PedimentoComprobante
+                FROM Adinco.dbo.FI_PedimentoComprobante (NOLOCK)
                 WHERE IdPedimentoComprobante IN (
                                                     SELECT IdPedimentoAdinco FROM #VALIDACION_PEDIMENTO
                                                 );
@@ -1158,7 +1176,8 @@ BEGIN
 
                 UPDATE dbo.FI_PedimentoComprobante
                 SET IdEstatusEliminado = 1,
-                    IdEliminado = @IDELIMINACION
+                    IdEliminado = @IDELIMINACION,
+					IsActivo = 0
                 WHERE IdPedimentoComprobante IN (
                                                     SELECT ID_PROCESO
                                                     FROM #PROCESO
