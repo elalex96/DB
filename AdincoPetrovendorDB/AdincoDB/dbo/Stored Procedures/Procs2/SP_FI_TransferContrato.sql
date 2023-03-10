@@ -116,7 +116,7 @@ BEGIN
                  OR FI_Factura.MetodoPago LIKE '%PPD%'
                  OR FI_Factura.FormaPago LIKE '%parcia%'
                  OR FI_Factura.FormaPago LIKE '%dife%'
-                 OR FI_Factura.FormaPago LIKE '%PPD%' THEN
+        OR FI_Factura.FormaPago LIKE '%PPD%' THEN
                 'PPD'
             ELSE
                 'NA'
@@ -132,7 +132,67 @@ BEGIN
                AND FI_Factura.IdContrato = @IdContrato
         JOIN CO_Contrato (NOLOCK)
             ON FI_Factura.IdContrato = CO_Contrato.IdContrato
+    WHERE CO_Contrato.IdContrato = @IdContrato
+	UNION
+	SELECT
+        FI_Factura.IdFactura,
+        FI_Factura.Serie,
+        CO_Contrato.NumeroContrato,
+        FI_Factura.Folio,
+        FI_Factura.Fecha,
+        CASE
+            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
+                 OR FI_Factura.MetodoPago LIKE '%PUE%'
+                 OR FI_Factura.MetodoPago LIKE '%parcia%'
+                 OR FI_Factura.MetodoPago LIKE '%dife%'
+                 OR FI_Factura.MetodoPago LIKE '%PPD%' THEN
+                FI_Factura.FormaPago
+            WHEN FI_Factura.FormaPago LIKE '%exhibi%'
+                 OR FI_Factura.FormaPago LIKE '%PUE%'
+                 OR FI_Factura.FormaPago LIKE '%parcia%'
+                 OR FI_Factura.FormaPago LIKE '%dife%'
+                 OR FI_Factura.FormaPago LIKE '%PPD%' THEN
+                FI_Factura.MetodoPago
+            ELSE
+                'NA'
+        END AS FormaPago,
+        ISNULL(FI_Factura.SubTotal, 0) AS SubTotal,
+        FI_Factura.Moneda,
+        ISNULL(FI_Factura.MontoConIva, 0) AS MontoConIva,
+        FI_Factura.TipoComprobante,
+        CASE
+            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
+                 OR FI_Factura.MetodoPago LIKE '%PUE%'
+                 OR FI_Factura.FormaPago LIKE '%exhibi%'
+                 OR FI_Factura.FormaPago LIKE '%PUE%' THEN
+                'PUE'
+            WHEN FI_Factura.MetodoPago LIKE '%parcia%'
+                 OR FI_Factura.MetodoPago LIKE '%dife%'
+                 OR FI_Factura.MetodoPago LIKE '%PPD%'
+                 OR FI_Factura.FormaPago LIKE '%parcia%'
+                 OR FI_Factura.FormaPago LIKE '%dife%'
+        OR FI_Factura.FormaPago LIKE '%PPD%' THEN
+                'PPD'
+            ELSE
+                'NA'
+        END AS MetodoPago,
+        SUBSTRING(FI_Factura.LugarExpedicion, 0, 15) AS LugarExpedicion,
+        FI_Factura.UUID,
+        FI_Factura.FechaRecepcion,
+        PV_Subcontratista.RazonSocial,
+        FI_Factura.Emisor
+    FROM 
+		FI_FacturaContrato	(NOLOCK)
+	JOIN
+		FI_Factura (NOLOCK)
+		ON FI_FacturaContrato.IdContrato = @IdContrato
+		AND FI_FacturaContrato.IdFactura = FI_Factura.IdFactura
+     JOIN PV_Subcontratista (NOLOCK)
+            ON FI_Factura.IdSubcontratista = PV_Subcontratista.IdSubcontratista
+     JOIN CO_Contrato (NOLOCK)
+            ON FI_FacturaContrato.IdContrato = CO_Contrato.IdContrato
     WHERE CO_Contrato.IdContrato = @IdContrato;
+	
     /**/
     INSERT INTO #UUIDS
     (
@@ -276,3 +336,4 @@ BEGIN
           AND FI_TransferFactura.IdTransfer IS NOT NULL
     ORDER BY FI_Transfer.IdTransferencia DESC;
 END;
+

@@ -51,7 +51,8 @@ AS
                 IdFactura       INT,
                 UUID            VARCHAR(2000),
                 TipoComprobante VARCHAR(50),
-                MetodoPago      VARCHAR(50)
+                MetodoPago      VARCHAR(50),
+				ProvieneOtroContrato INT
             );
 
         /*Montos Pagados*/
@@ -75,7 +76,8 @@ AS
                 IdFactura,
                 UUID,
                 TipoComprobante,
-                MetodoPago
+                MetodoPago,
+				ProvieneOtroContrato
             )
                     SELECT
                         FI_Factura.IdFactura,
@@ -114,7 +116,7 @@ AS
                                 THEN 'PPD'
                             WHEN FI_Factura.TipoComprobante = 'P'
                                 THEN 'PPD'
-                        END AS MetodoPago
+                        END AS MetodoPago,0
                     FROM
                         dbo.CO_Registro WITH (NOLOCK)
                         JOIN
@@ -149,6 +151,127 @@ AS
                                                                        ELSE
                                                                            @IdPresupuesto
                                                                    END
+                    GROUP BY
+                        CASE
+                            WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
+                                 OR FI_Factura.TipoComprobante LIKE 'I%'
+                                THEN 'I'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
+                                 OR FI_Factura.TipoComprobante LIKE 'E%'
+                                THEN 'E'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
+                                 OR FI_Factura.TipoComprobante LIKE 'T%'
+                                THEN 'T'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
+                                 OR FI_Factura.TipoComprobante LIKE 'N%'
+                                THEN 'N'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
+                                 OR FI_Factura.TipoComprobante LIKE 'P%'
+                                THEN 'P'
+                            ELSE
+                                'NA'
+                        END,
+                        CASE
+                            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
+                                 OR FI_Factura.MetodoPago LIKE '%PUE%'
+                                 OR FI_Factura.FormaPago LIKE '%exhibi%'
+                                 OR FI_Factura.FormaPago LIKE '%PUE%'
+                                THEN 'PUE'
+                            WHEN FI_Factura.MetodoPago LIKE '%parcia%'
+                                 OR FI_Factura.MetodoPago LIKE '%dife%'
+                                 OR FI_Factura.MetodoPago LIKE '%PPD%'
+                                 OR FI_Factura.FormaPago LIKE '%parcia%'
+                                 OR FI_Factura.FormaPago LIKE '%dife%'
+                                 OR FI_Factura.FormaPago LIKE '%PPD%'
+                                THEN 'PPD'
+                            WHEN FI_Factura.TipoComprobante = 'P'
+                                THEN 'PPD'
+                        END,
+                        FI_Factura.IdFactura,
+                        FI_Factura.UUID
+						
+						/*UNION PARA FACTURAS PERTENECIENTES A OTRO CONTRATO*/
+						UNION
+						 SELECT
+                        FI_Factura.IdFactura,
+                        FI_Factura.UUID,
+                        CASE
+                            WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
+                                 OR FI_Factura.TipoComprobante LIKE 'I%'
+                                THEN 'I'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
+                                 OR FI_Factura.TipoComprobante LIKE 'E%'
+                                THEN 'E'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
+                                 OR FI_Factura.TipoComprobante LIKE 'T%'
+                                THEN 'T'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
+                                 OR FI_Factura.TipoComprobante LIKE 'N%'
+                                THEN 'N'
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
+                                 OR FI_Factura.TipoComprobante LIKE 'P%'
+                                THEN 'P'
+                            ELSE
+                                'NA'
+                        END AS TipoComprobante,
+                        CASE
+                            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
+                                 OR FI_Factura.MetodoPago LIKE '%PUE%'
+                                 OR FI_Factura.FormaPago LIKE '%exhibi%'
+                                 OR FI_Factura.FormaPago LIKE '%PUE%'
+                                THEN 'PUE'
+                            WHEN FI_Factura.MetodoPago LIKE '%parcia%'
+                                 OR FI_Factura.MetodoPago LIKE '%dife%'
+                                 OR FI_Factura.MetodoPago LIKE '%PPD%'
+                                 OR FI_Factura.FormaPago LIKE '%parcia%'
+                                 OR FI_Factura.FormaPago LIKE '%dife%'
+                                 OR FI_Factura.FormaPago LIKE '%PPD%'
+                                THEN 'PPD'
+                            WHEN FI_Factura.TipoComprobante = 'P'
+                                THEN 'PPD'
+                        END AS MetodoPago,1
+                    FROM
+                        dbo.CO_Registro WITH (NOLOCK)
+                        JOIN
+                            dbo.FI_Factura WITH (NOLOCK)
+                                ON CO_Registro.IdFactura = FI_Factura.IdFactura
+						JOIN 
+							dbo.FI_FacturaContrato (NOLOCK)
+							ON dbo.CO_Registro.IdFactura = dbo.FI_FacturaContrato.IdFactura
+                        JOIN
+                            dbo.CO_Contrato WITH (NOLOCK)
+								ON FI_FacturaContrato.IdContrato = CO_Contrato.IdContrato
+                                   AND CO_Contrato.IdContrato = @Contrato
+                        JOIN
+                            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+                        JOIN
+                            dbo.CO_Servicio WITH (NOLOCK)
+                                ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio
+                        LEFT JOIN
+                            dbo.CO_TipoCambioDiario WITH (NOLOCK)
+                                ON CO_TipoCambioDiario.IdMoneda = FI_Factura.IdMoneda
+                                   AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Factura.Fecha)
+                                   AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Factura.Fecha)
+                                   AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Factura.Fecha)
+						LEFT JOIN
+							#Facturas
+							ON FI_FacturaContrato.IdFactura =#Facturas.IdFactura
+                    WHERE
+                        CO_Contrato.IdContrato = @Contrato
+                        AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
+                        AND CO_Registro.IdEstado = 10004
+                        AND CO_Registro.CvTipoDocFacturacion = 1
+                        AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
+                        AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
+                        AND CO_LineaPresupuestoMes.IdPresupuesto = CASE
+                                                                       WHEN @IdPresupuesto = 0
+                                                                           THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                                       ELSE
+                                                                           @IdPresupuesto
+                                                                   END
+						AND
+							#Facturas.Idfactura IS NULL
                     GROUP BY
                         CASE
                             WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
@@ -228,6 +351,7 @@ AS
                             #Facturas
                                 ON #Facturas.IdFactura = FI_Factura.IdFactura
                                    AND #Facturas.MetodoPago = 'PUE'
+								   AND	#Facturas.ProvieneOtroContrato = 0
                         LEFT JOIN
                             dbo.CO_TipoCambioDiario WITH (NOLOCK)
                                 ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
@@ -240,6 +364,7 @@ AS
                         AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
                         AND #Facturas.MetodoPago = 'PUE'
                         AND FI_TransferFactura.CvTipoDocFacturacion = 1
+						AND	#Facturas.ProvieneOtroContrato = 0
                     GROUP BY
                         CAST(ROUND(FI_Factura.MontoConIva, 2) AS DECIMAL(15, 2)),
                         FI_Factura.IdFactura,
@@ -294,6 +419,7 @@ AS
                             #Facturas
                                 ON #Facturas.IdFactura = FCPDR.IdFactura
                                    AND #Facturas.MetodoPago = 'PPD'
+								   AND	#Facturas.ProvieneOtroContrato = 0
                         LEFT JOIN
                             dbo.CO_TipoCambioDiario WITH (NOLOCK)
                                 ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
@@ -303,6 +429,138 @@ AS
                                    AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
                     WHERE
                         FI_Factura.IdContrato = @Contrato
+                        AND ISNULL(CONVERT(INT, FCPDR.ProcesadoSIPAC), 0) = 0
+                        AND #Facturas.MetodoPago = 'PPD'
+                        AND FI_TransferFactura.CvTipoDocFacturacion = 6
+						AND	#Facturas.ProvieneOtroContrato = 0
+                    GROUP BY
+                        FCPDR.IdFactura,
+                        FI_CPDocRelacionado.IdDocumento,
+                        PV_TipoMoneda.IdMoneda,
+                        CASE
+                            WHEN FI_CPDocRelacionado.MetodoDePagoDR IS NULL
+                                THEN FCPDR.MetodoPago
+                            ELSE
+                                FI_CPDocRelacionado.MetodoDePagoDR
+                        END,
+                        FI_Transfer.IdMoneda
+
+					/*UNION para facturas pertenecientes a otro contrato*/
+					UNION
+                    SELECT
+                        FI_Factura.IdFactura,
+                        FI_Factura.UUID,
+                        PV_MetodoPago.C_FormaPago                                AS FormaPago,
+                        FI_Factura.IdMoneda,
+                        #Facturas.MetodoPago                                     AS MetodoPago,
+                        FI_Transfer.IdMoneda,
+                        CO_TipoCambioDiario.TipoCambio,
+                        CAST(ROUND(FI_Factura.MontoConIva, 2) AS DECIMAL(15, 2)) AS RC2209,
+                        0                                                        AS NoParcialidad
+                    FROM
+                        dbo.FI_Transfer WITH (NOLOCK)
+                        JOIN
+                            dbo.FI_TransferFactura WITH (NOLOCK)
+                                ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_TransferFactura.CvTipoDocFacturacion = 1
+						JOIN
+                            #Facturas
+                                ON #Facturas.IdFactura = FI_TransferFactura.IdFactura
+                                   AND #Facturas.MetodoPago = 'PUE'
+								   AND #Facturas.ProvieneOtroContrato = 1
+                        JOIN
+                            dbo.FI_Factura WITH (NOLOCK)
+                                ON #Facturas.IdFactura = FI_Factura.IdFactura
+								AND	FI_TransferFactura.IdFactura = FI_Factura.IdFactura
+						JOIN
+							FI_FacturaContrato
+							ON	#Facturas.IdFactura	=	FI_FacturaContrato.IdFactura
+							AND	FI_Factura.IdFactura	=	FI_FacturaContrato.IdFactura
+							AND	FI_TransferFactura.IdFactura = FI_Factura.IdFactura
+							AND FI_Transfer.IdContrato = FI_FacturaContrato.IdContrato
+                            AND FI_FacturaContrato.IdContrato = @Contrato
+                        JOIN
+                            dbo.PV_MetodoPago WITH (NOLOCK)
+                                ON FI_Transfer.IdMetodoPago = PV_MetodoPago.IdMetodoPago
+                        LEFT JOIN
+                            dbo.CO_TipoCambioDiario WITH (NOLOCK)
+                                ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
+                                   AND FI_Transfer.IdMoneda <> FI_Factura.IdMoneda
+                                   AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
+                                   AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
+                                   AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
+                    WHERE
+                        FI_FacturaContrato.IdContrato = @Contrato
+                        AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
+                        AND #Facturas.MetodoPago = 'PUE'
+                        AND FI_TransferFactura.CvTipoDocFacturacion = 1
+                    GROUP BY
+                        CAST(ROUND(FI_Factura.MontoConIva, 2) AS DECIMAL(15, 2)),
+                        FI_Factura.IdFactura,
+                        FI_Factura.UUID,
+                        #Facturas.MetodoPago,
+                        FI_Factura.IdMoneda,
+                        PV_MetodoPago.C_FormaPago,
+                        FI_Transfer.IdMoneda,
+                        CO_TipoCambioDiario.TipoCambio
+                    --
+                    UNION
+                    --
+                    SELECT
+                        FCPDR.IdFactura,
+                        FI_CPDocRelacionado.IdDocumento,
+                        '99'               AS FormaPago,
+                        PV_TipoMoneda.IdMoneda,
+                        CASE
+                            WHEN FI_CPDocRelacionado.MetodoDePagoDR IS NULL
+                                THEN FCPDR.MetodoPago
+                            ELSE
+                                FI_CPDocRelacionado.MetodoDePagoDR
+                        END                AS MetodoPago,
+                        FI_Transfer.IdMoneda,
+                        MAX(CO_TipoCambioDiario.TipoCambio),
+                        0,
+                        0
+                    FROM
+                        dbo.FI_Transfer WITH (NOLOCK)
+                        JOIN
+                            dbo.FI_TransferFactura WITH (NOLOCK)
+                                ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_TransferFactura.CvTipoDocFacturacion = 6
+                        JOIN
+                            dbo.FI_ComplementoDePago WITH (NOLOCK)
+                                ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
+                        JOIN
+                            dbo.FI_CPDocRelacionado WITH (NOLOCK)
+                                ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
+                        JOIN
+                            dbo.FI_Factura WITH (NOLOCK)
+                                ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
+                        JOIN
+                            FI_Factura FCPDR WITH (NOLOCK)
+                                ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
+                                   AND FI_Factura.IdContrato = FCPDR.IdContrato
+						JOIN 
+							dbo.FI_FacturaContrato (NOLOCK)
+								ON FCPDR.IdFactura = dbo.FI_FacturaContrato.IdFactura
+								AND FI_FacturaContrato.IdContrato	=	@Contrato
+                        JOIN
+                            dbo.PV_TipoMoneda WITH (NOLOCK)
+                                ON FI_CPDocRelacionado.MonedaDR = PV_TipoMoneda.TipoMonedaCorto
+                        JOIN
+                            #Facturas
+                                ON #Facturas.IdFactura = FCPDR.IdFactura
+                                   AND #Facturas.MetodoPago = 'PPD'
+								   AND #Facturas.ProvieneOtroContrato = 1
+                        LEFT JOIN
+                            dbo.CO_TipoCambioDiario WITH (NOLOCK)
+                                ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
+                                   AND FI_Transfer.IdMoneda <> FCPDR.IdMoneda
+                                   AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
+                                   AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
+                                   AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
+                    WHERE
+                        FI_FacturaContrato.IdContrato = @Contrato
                         AND ISNULL(CONVERT(INT, FCPDR.ProcesadoSIPAC), 0) = 0
                         AND #Facturas.MetodoPago = 'PPD'
                         AND FI_TransferFactura.CvTipoDocFacturacion = 6

@@ -86,7 +86,7 @@ BEGIN
                      dbo.FI_Factura.MetodoPago
              END,
              dbo.FI_Factura.SubTotal,
-             dbo.FI_Factura.Moneda,
+dbo.FI_Factura.Moneda,
              dbo.FI_Factura.MontoConIva,
              dbo.FI_Factura.TipoComprobante,
              CASE
@@ -155,6 +155,9 @@ BEGIN
             ON dbo.FI_Factura.IdFactura = dbo.FI_FacturaContrato.IdFactura
         LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
             ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+		 LEFT JOIN 	FI_Transfer
+					ON FI_TransferFactura.IdTransfer	=	FI_Transfer.IdTransferencia
+					AND FI_Transfer.IdContrato = @IdContrato
     WHERE dbo.FI_FacturaContrato.IdContrato = @IdContrato
           AND dbo.FI_Factura.TipoComprobante <> 'P'
           AND (
@@ -163,7 +166,7 @@ BEGIN
                   OR dbo.FI_Factura.FormaPago LIKE '%exhibi%'
                   OR dbo.FI_Factura.FormaPago LIKE '%PUE%'
               )
-          AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+          AND FI_Transfer.IdTransferencia IS NULL
     GROUP BY dbo.FI_Factura.IdFactura,
              dbo.FI_Factura.Serie,
              dbo.CO_Contrato.NumeroContrato,
@@ -365,6 +368,9 @@ BEGIN
             ON CPDR.IdComplementoDePago = CP.IdComplementoDePago
         LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
             ON CP.IdFactura = dbo.FI_TransferFactura.IdFactura
+		LEFT JOIN 	FI_Transfer
+					ON FI_TransferFactura.IdTransfer	=	FI_Transfer.IdTransferencia
+					AND FI_Transfer.IdContrato = @IdContrato
     WHERE dbo.FI_FacturaContrato.IdContrato = @IdContrato
           AND dbo.FI_Factura.TipoComprobante <> 'P'
           AND (
@@ -375,7 +381,7 @@ BEGIN
                   OR dbo.FI_Factura.FormaPago LIKE '%dife%'
                   OR dbo.FI_Factura.FormaPago LIKE '%PPD%'
               )
-          AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+          AND FI_Transfer.IdTransferencia IS NULL
     GROUP BY dbo.FI_Factura.IdFactura,
              dbo.FI_Factura.Serie,
              dbo.CO_Contrato.NumeroContrato,
@@ -487,7 +493,7 @@ BEGIN
              dbo.FI_Factura.Fecha,
              CASE
                  WHEN dbo.FI_Factura.MetodoPago LIKE '%exhibi%'
-                      OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
+       OR dbo.FI_Factura.MetodoPago LIKE '%PUE%'
                       OR dbo.FI_Factura.MetodoPago LIKE '%parcia%'
                       OR dbo.FI_Factura.MetodoPago LIKE '%dife%'
                       OR dbo.FI_Factura.MetodoPago LIKE '%PPD%' THEN
@@ -575,6 +581,9 @@ BEGIN
             ON dbo.FI_Factura.IdContrato = dbo.FI_FacturaContrato.IdContrato
         LEFT JOIN dbo.FI_TransferFactura (NOLOCK)
             ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+		LEFT JOIN 	FI_Transfer
+					ON FI_TransferFactura.IdTransfer	=	FI_Transfer.IdTransferencia
+					AND FI_Transfer.IdContrato = @IdContrato
     WHERE dbo.FI_FacturaContrato.IdContrato = @IdContrato
           AND dbo.FI_Factura.TipoComprobante <> 'P'
           AND (
@@ -585,7 +594,7 @@ BEGIN
                   OR dbo.FI_Factura.FormaPago LIKE '%dife%'
                   OR dbo.FI_Factura.FormaPago LIKE '%PPD%'
               )
-          AND dbo.FI_TransferFactura.IdTransferFactura IS NULL
+          AND FI_Transfer.IdTransferencia IS NULL
     GROUP BY dbo.FI_Factura.IdFactura,
              dbo.FI_Factura.Serie,
              dbo.CO_Contrato.NumeroContrato,
