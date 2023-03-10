@@ -22,6 +22,10 @@
 -- Fecha Modificado: 16 de Febrero del 2023
 -- Description:      Se agrega la opción obtener el nuevo campo IDSIPAC desde la tabla CO_Contrato, si este viene vacío o nulo se obtendrá desde la tabla que ya se obtenía anteriormente CO_Contratista
 -- =============================================
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-08-18
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
+-- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M]
     @Contrato      INT,
     @Mes           DATE,

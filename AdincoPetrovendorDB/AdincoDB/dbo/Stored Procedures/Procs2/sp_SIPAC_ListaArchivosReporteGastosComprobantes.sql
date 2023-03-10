@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:      Manuel Cruz
 -- Create date: 07-06-17
 -- Description:
@@ -9,9 +8,11 @@
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0
 --                  *Agregar WITH (NOLOCK) en las tablas 
 -- =============================================
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-08-18
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_SIPAC_ListaArchivosReporteGastosComprobantes]
--- [sp_SIPAC_ListaArchivosReporteGastosComprobantes] 10011,'2019-04-01',1
--- Add the parameters for the stored procedure here
 @Contrato      INT, 
 @Mes           DATE, 
 @IdPresupuesto INT  = 0
@@ -52,8 +53,9 @@ AS
                 TR.NombreExtencionArchivo AS NombreArchivo
          FROM dbo.FI_Transfer TR WITH(NOLOCK)
               JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TR.IdTransferencia = TF.IdTransfer
+			  AND TR.IdContrato = @Contrato
               JOIN dbo.FI_Factura F WITH(NOLOCK) ON TF.IdFactura = F.IdFactura
-                                                    AND F.IdContrato = TR.IdContrato
+ --                                                   AND F.IdContrato = TR.IdContrato
               JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdFactura = F.IdFactura
               JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
               JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
@@ -62,17 +64,9 @@ AS
               JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
               JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
                                                        AND SER.IdContrato = C.IdContrato
-
-              --JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
-              --JOIN dbo.PV_CuentaBancaria CBD WITH(NOLOCK) ON TR.IdCuentaDestino = CBD.DatoBancarioID
-              --JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
-              --JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
-              --JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
-              --JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
-
               JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON TR.IdMoneda = TM.IdMoneda
               LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TR.IdMoneda
-                                                                    AND DAY(TCD.Fecha) = DAY(F.Fecha)
+                         AND DAY(TCD.Fecha) = DAY(F.Fecha)
                                                                     AND MONTH(TCD.Fecha) = MONTH(F.Fecha)
                                                                     AND YEAR(TCD.Fecha) = YEAR(F.Fecha)
               LEFT JOIN dbo.PV_MetodoPago PVM WITH(NOLOCK) ON PVM.idMetodoPago = TR.IdMetodoPago
@@ -90,9 +84,6 @@ AS
                                          THEN LPM.IdPresupuesto
                                          ELSE @IdPresupuesto
                                      END
-         --AND DATEFROMPARTS(YEAR(TR.FechaPago), MONTH(TR.FechaPago), 1) = @Mes
-         --AND P.IdPresupuesto = @IdPresupuesto
-
          GROUP BY TR.IdTransferencia, 
                   TR.IdContrato, 
                   TR.NombreExtencionArchivo
@@ -104,10 +95,11 @@ AS
                 TR.NombreExtencionArchivo AS NombreArchivo
          FROM dbo.FI_Transfer TR WITH(NOLOCK)
               JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TR.IdTransferencia = TF.IdTransfer
+			   AND TR.IdContrato = @Contrato
               JOIN dbo.FI_ComplementoDePago CP WITH(NOLOCK) ON CP.IdFactura = TF.IdFactura
               JOIN dbo.FI_CPDocRelacionado CPDR WITH(NOLOCK) ON CPDR.IdComplementoDePago = CP.IdComplementoDePago
               JOIN dbo.FI_Factura FCP WITH(NOLOCK) ON TF.IdFactura = FCP.IdFactura
-                                                      AND TR.IdContrato = FCP.IdContrato
+ --                                                     AND TR.IdContrato = FCP.IdContrato
               JOIN dbo.FI_Factura FCPDR WITH(NOLOCK) ON CPDR.IdDocumento = FCPDR.UUID
               JOIN dbo.CO_Registro R WITH(NOLOCK) ON FCPDR.IdFactura = R.IdFactura
               JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
@@ -117,14 +109,6 @@ AS
               JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
               JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
                                                        AND SER.IdContrato = C.IdContrato
-
-              --JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
-              --JOIN dbo.PV_CuentaBancaria CBD WITH(NOLOCK) ON TR.IdCuentaDestino = CBD.DatoBancarioID
-              --JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
-              --JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
-              --JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
-              --JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
-
               JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON TR.IdMoneda = TM.IdMoneda
               LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TR.IdMoneda
                                                                     AND DAY(TCD.Fecha) = DAY(FCP.Fecha)
@@ -152,9 +136,6 @@ AS
                                          THEN LPM.IdPresupuesto
                                          ELSE @IdPresupuesto
                                      END
-         --AND DATEFROMPARTS(YEAR(TR.FechaPago), MONTH(TR.FechaPago), 1) = @Mes
-         --AND P.IdPresupuesto = @IdPresupuesto
-
          GROUP BY TR.IdTransferencia, 
                   TR.IdContrato, 
                   TR.NombreExtencionArchivo
@@ -166,8 +147,9 @@ AS
                 TR.NombreExtencionArchivo AS NombreArchivo
          FROM dbo.FI_Transfer TR WITH(NOLOCK)
               JOIN dbo.FI_TransferFactura TF WITH(NOLOCK) ON TR.IdTransferencia = TF.IdTransfer
+			   AND TR.IdContrato = @Contrato
               JOIN dbo.FI_PedimentoComprobante PC WITH(NOLOCK) ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante
-                                                                  AND TR.IdContrato = PC.IdContrato
+ --                                                                 AND TR.IdContrato = PC.IdContrato
               JOIN dbo.CO_Registro R WITH(NOLOCK) ON R.IdPedimentoComprobante = PC.IdPedimentoComprobante
               JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK) ON R.IdPrograma = LPM.IdLineaPresupuestoMes
               JOIN dbo.CO_Presupuesto P WITH(NOLOCK) ON P.IdPresupuesto = LPM.IdPresupuesto
@@ -176,14 +158,6 @@ AS
               JOIN dbo.CO_Contratista CON WITH(NOLOCK) ON C.IdContratista = CON.IdContratista
               JOIN dbo.CO_Servicio SER WITH(NOLOCK) ON SER.IdServicio = LPM.IdServicio
                                                        AND SER.IdContrato = C.IdContrato
-
-              --JOIN dbo.PV_CuentaBancaria CBO WITH(NOLOCK) ON TR.IdCuentaOrigen = CBO.DatoBancarioID
-              --JOIN dbo.PV_CuentaBancaria CBD ON TR.IdCuentaDestino = CBD.DatoBancarioID
-              --JOIN dbo.PV_Subcontratista SUBO WITH(NOLOCK) ON CBO.IdProveedor = SUBO.IdSubcontratista
-              --JOIN dbo.PV_Subcontratista SUBD WITH(NOLOCK) ON CBD.IdProveedor = SUBD.IdSubcontratista
-              --JOIN dbo.PV_Banco BO WITH(NOLOCK) ON CBO.BancoID = BO.BancoID
-              --JOIN dbo.PV_Banco BD WITH(NOLOCK) ON CBD.BancoID = BD.BancoID
-
               JOIN dbo.PV_TipoMoneda TM WITH(NOLOCK) ON TR.IdMoneda = TM.IdMoneda
               LEFT JOIN dbo.CO_TipoCambioDiario TCD WITH(NOLOCK) ON TCD.IdMoneda = TM.IdMoneda
                                                                     AND DAY(TCD.Fecha) = DAY(PC.FechaPago)
@@ -201,54 +175,8 @@ AS
                                          ELSE @IdPresupuesto
                                      END
 
-         --AND DATEFROMPARTS(YEAR(TR.FechaPago), MONTH(TR.FechaPago), 1) = @Mes
-         --AND P.IdPresupuesto = @IdPresupuesto
 
          GROUP BY TR.IdTransferencia, 
                   TR.IdContrato, 
-                  TR.NombreExtencionArchivo;
-
-         ----
-         --UNION
-         ----
-         --SELECT TR.IdTransferencia,
-         --       TR.IdContrato,
-         --       TR.NombreExtencionArchivo AS NombreArchivo
-         --FROM dbo.FI_Transfer TR
-         --     JOIN dbo.FI_TransferFactura TF ON TR.IdTransferencia = TF.IdTransfer
-         --     JOIN dbo.FI_Factura F ON TF.IdFactura = F.IdFactura
-         --                              AND F.IdContrato = TR.IdContrato
-         --     JOIN dbo.CO_Registro R ON R.IdFactura = F.IdFactura
-         --     JOIN dbo.CO_LineaPresupuestoMes LPM ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-         --     JOIN dbo.CO_Presupuesto P ON P.IdPresupuesto = LPM.IdPresupuesto
-         --     JOIN dbo.CO_AnioContractual AC ON AC.IdAnioContractual = P.IdAnioContractual
-         --     JOIN dbo.CO_Contrato C ON AC.IdContrato = C.IdContrato
-         --     JOIN dbo.CO_Contratista CON ON C.IdContratista = CON.IdContratista
-         --     JOIN dbo.CO_Servicio SER ON SER.IdServicio = LPM.IdServicio
-         --                                 AND SER.IdContrato = C.IdContrato
-         --     JOIN dbo.PV_CuentaBancaria CBO ON TR.IdCuentaOrigen = CBO.DatoBancarioID
-         --     JOIN dbo.PV_CuentaBancaria CBD ON TR.IdCuentaDestino = CBD.DatoBancarioID
-         --     JOIN dbo.PV_Subcontratista SUBO ON CBO.IdProveedor = SUBO.IdSubcontratista
-         --     JOIN dbo.PV_Subcontratista SUBD ON CBD.IdProveedor = SUBD.IdSubcontratista
-         --     JOIN dbo.PV_Banco BO ON CBO.BancoID = BO.BancoID
-         --     JOIN dbo.PV_Banco BD ON CBD.BancoID = BD.BancoID
-         --     JOIN dbo.PV_TipoMoneda TM ON TR.IdMoneda = TM.IdMoneda
-         --     LEFT JOIN dbo.CO_TipoCambioDiario TCD ON TCD.IdMoneda = TR.IdMoneda
-         --                                              AND DAY(TCD.Fecha) = DAY(F.Fecha)
-         --                                              AND MONTH(TCD.Fecha) = MONTH(F.Fecha)
-         --                                              AND YEAR(TCD.Fecha) = YEAR(F.Fecha)
-         --     LEFT JOIN dbo.PV_MetodoPago PVM ON PVM.idMetodoPago = TR.IdMetodoPago
-         --WHERE C.IdContrato = @Contrato --10011
-         --      AND DATEFROMPARTS(YEAR(R.MesPresentacion), MONTH(R.MesPresentacion), 1) = @Mes --'2019-04-01'
-         --      AND R.IdEstado = 10004
-         --      AND ISNULL(CONVERT(INT, TR.ProcesadoSIPAC), 0) = 0
-         --      AND SER.NombreServicio NOT LIKE '%No elegibles%'
-         --      AND (F.MetodoPago NOT LIKE '%exhibi%'
-         --           OR F.MetodoPago NOT LIKE '%PUE%'
-         --           OR F.FormaPago NOT LIKE '%exhibi%'
-         --           OR F.FormaPago NOT LIKE '%PUE%')
-         --GROUP BY TR.IdTransferencia,
-         --         TR.IdContrato,
-         --         TR.NombreExtencionArchivo;
-
+                  TR.NombreExtencionArchivo
      END;

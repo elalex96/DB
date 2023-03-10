@@ -13,6 +13,10 @@
 -- Detalles: Agregado de NOLOCK, Nombrado de Tablas en select, ajustes de join en orden de llamado de tablas,
 --			eliminación de codigo comentado
 -- =============================================
+-- Modificado Por: Reyna olvera
+-- Fecha: 10 de MArzo del 2023
+-- Detalles: Se agrega facturas perteneciuentes a otro contrato que contienen relación con el contrato de sesion y contienen transferencia y gastos
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_FacturasMetodoPago]
     @IdContrato INT,
     @IdUsuario INT

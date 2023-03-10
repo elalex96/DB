@@ -17,6 +17,10 @@
 -- Fecha:			16 de Agosto del 2022
 -- Descripción:		Ajustado de orden en los join, ajuste en nombre de las tablas, no se realizo ajuste mayo ya que se ajusto en otro issue de deuda tecnica
 -- =============================================
+-- Modificado Por: Reyna olvera
+-- Fecha: 10 de MArzo del 2023
+-- Detalles: Se agrega facturas perteneciuentes a otro contrato que contienen relación con el contrato de sesion y contienen transferencia y gastos
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_TransferContrato]
     @IdContrato INT,
     @IdUsuario INT

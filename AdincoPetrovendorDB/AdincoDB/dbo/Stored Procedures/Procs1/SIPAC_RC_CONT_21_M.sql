@@ -1,13 +1,12 @@
-﻿
--- =============================================   
--- Author: Manuel Cruz-Yazmin Glez.   
--- Create date: 2017-11-24   
--- Description: Reporte de CGI - Registro de costos. Plantilla antes RC_CONT_01_M actual RC_CONT_21_M   
--- =============================================   
--- Modificado: Manuel Cruz   
--- Fecha Modificado: 2019-06-28   
--- Description: Cambio de consulta para mostrar los complementos de pago relacionadolos al gasto   
--- =============================================   
+﻿-- ============================================= 
+-- Author: Manuel Cruz-Yazmin Glez. 
+-- Create date: 2017-11-24 
+-- Description: Reporte de CGI - Registro de costos. Plantilla antes RC_CONT_01_M actual RC_CONT_21_M 
+-- ============================================= 
+-- Modificado: Manuel Cruz 
+-- Fecha Modificado: 2019-06-28 
+-- Description: Cambio de consulta para mostrar los complementos de pago relacionadolos al gasto 
+-- =============================================
 -- Modificado:       Marcos Garcia   
 -- Fecha Modificado: 2020-01-13   
 -- Description:     *Agregar Validacion de @IdPresupuesto = 0   
@@ -26,10 +25,22 @@
 -- Fecha Modificado: 2022-11-08  
 -- Description:      Se ajusta la consulta para mostrar en las columnas 21_27 y 21_28 para cuando no retorna gastos, envie estos campos en 0  
 -- =============================================  
+-- Modificado:       Neri del Angel
+-- Fecha Modificado: 10 de Enero del 2023
+-- Description:      Se agrega la opción de que si no se regresan registros en #ResultadosGastos se manda el reporte en 0
+-- =============================================
 -- Modificado:       Reyna Olvera
 -- Fecha Modificado: 2023-01-17
 -- Description:     ISSUE 2394- Se ajusta la consulta para mostrar en la columna 21_24 CF cuando se trata de facturas y se encuentran NULLS,como en el caso de las PUE tipo PPD pero soporte las
 --                   ajusta a PUE para que aparezcan en el reporte CGI, aunque no se encuentren en la hoja 22 ni en el zip de facturas 
+-- =============================================
+-- Modificado:       Neri del Angel
+-- Fecha Modificado: 19 de Enero del 2023
+-- Description:      Se agrega la opción obtener el nuevo campo IDSIPAC desde la tabla CO_Contrato, si este viene vacío o nulo se obtendrá desde la tabla que ya se obtenía anteriormente CO_Contratista
+-- =============================================
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-08-18
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
 -- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]
     @Contrato      INT,

@@ -1,5 +1,4 @@
-﻿
--- =============================================
+﻿-- =============================================
 -- Author:                            Manuel Cruz
 -- Create date: 2017-04-11
 -- Description:  
@@ -132,10 +131,11 @@ AS
                         JOIN
                             dbo.FI_TransferFactura      WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+								AND	FI_Transfer.IdContrato	= @Contrato
                         JOIN
                             dbo.FI_Factura             WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura
-                                   AND FI_Factura.IdContrato = FI_Transfer.IdContrato
+                                  -- AND FI_Factura.IdContrato = FI_Transfer.IdContrato
                         JOIN
                             dbo.CO_Registro             WITH (NOLOCK)
                                 ON  FI_Factura.IdFactura = CO_Registro.IdFactura
@@ -201,6 +201,7 @@ AS
                         JOIN
                             dbo.FI_TransferFactura      WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+								AND	FI_Transfer.IdContrato	= @Contrato
                         JOIN
                             dbo.FI_ComplementoDePago    WITH (NOLOCK)
                             ON  FI_TransferFactura.IdFactura	=	FI_ComplementoDePago.IdFactura
@@ -210,7 +211,7 @@ AS
                         JOIN
                             dbo.FI_Factura             FCP WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FCP.IdFactura
-                                   AND FI_Transfer.IdContrato = FCP.IdContrato
+                                 --  AND FI_Transfer.IdContrato = FCP.IdContrato
                         JOIN
                             dbo.FI_Factura             FCPDR WITH (NOLOCK)
                                 ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
@@ -285,10 +286,11 @@ AS
                         JOIN
                             dbo.FI_TransferFactura       WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+								AND	FI_Transfer.IdContrato	= @Contrato
                         JOIN
                             dbo.FI_PedimentoComprobante  WITH (NOLOCK)
                                 ON FI_TransferFactura.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
-                                   AND FI_Transfer.IdContrato = FI_PedimentoComprobante.IdContrato
+                                  -- AND FI_Transfer.IdContrato = FI_PedimentoComprobante.IdContrato
                         JOIN
                             dbo.CO_Registro              WITH (NOLOCK)
                                 ON  FI_PedimentoComprobante.IdPedimentoComprobante	=	CO_Registro.IdPedimentoComprobante
