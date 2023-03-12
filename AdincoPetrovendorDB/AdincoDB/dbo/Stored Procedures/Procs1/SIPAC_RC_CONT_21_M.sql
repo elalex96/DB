@@ -120,8 +120,7 @@ AS
                 RC2122          FLOAT,
                 MetodoPago      VARCHAR(50),
                 Fecha           DATETIME,
-                IdMoneda        INT,
-				ProvieneOtroContrato INT
+                IdMoneda        INT
             );
 
         CREATE TABLE #MontosTotalTransferenciaPPD
@@ -296,8 +295,7 @@ AS
                 RC2122,
                 MetodoPago,
                 Fecha,
-                IdMoneda,
-				ProvieneOtroContrato
+                IdMoneda
             )
                     SELECT
                         CO_Registro.IdRegistro,
@@ -351,7 +349,7 @@ AS
                                 THEN 'PPD'
                         END                                             AS MetodoPago,
                         FI_Factura.Fecha,
-                        FI_Factura.IdMoneda,0
+                        FI_Factura.IdMoneda
                     FROM
                         dbo.CO_Registro WITH (NOLOCK)
                         JOIN
@@ -360,12 +358,19 @@ AS
                                    AND CO_Registro.IdEstado = 10004
                                    AND CO_Registro.CvTipoDocFacturacion = 1
                         JOIN
-                            dbo.CO_Contrato WITH (NOLOCK)
-                                ON FI_Factura.IdContrato = CO_Contrato.IdContrato
-								AND  CO_Contrato.IdContrato = @Contrato
-                        JOIN
                             dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
                                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+                        JOIN
+                            dbo.CO_Presupuesto WITH (NOLOCK)
+                                ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+                        JOIN
+                            dbo.CO_AnioContractual WITH (NOLOCK)
+                                ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+                                   AND CO_AnioContractual.IdContrato = @Contrato
+                        JOIN
+                            dbo.CO_Contrato WITH (NOLOCK)
+                                ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+                                   AND CO_AnioContractual.IdContrato = @Contrato
                         JOIN
                             dbo.CO_Servicio WITH (NOLOCK)
                                 ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
@@ -431,163 +436,6 @@ AS
                         FI_Factura.Fecha,
                         FI_Factura.IdMoneda;
 
-		/*FACTURAS PERTENECIENTES A OTRO CONTRATO PERO SE COMPARTIO CON EL CONTRATO DE SESION.
-		- SE EXCLUYEN LOS QUE SE REGISTRARON ANTERIORMENTE EN EL INSERT ANTERIOR*/
-		INSERT INTO #Facturas
-        (
-            IdRegistro,
-            UUID,
-            Idfactura,
-            MontoRegistro,
-            TipoComprobante,
-            RC2122,
-            MetodoPago,
-            Fecha,
-            IdMoneda,
-			ProvieneOtroContrato
-        )
-		    SELECT
-        CO_Registro.IdRegistro,
-        ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO') AS UUID,
-        FI_Factura.IdFactura,
-        CO_Registro.MontoRegistro,
-        CASE
-            WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'I%'
-                THEN 'I'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'E%'
-                THEN 'E'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                    OR FI_Factura.TipoComprobante LIKE 'T%'
-                THEN 'T'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                    OR FI_Factura.TipoComprobante LIKE 'N%'
-                THEN 'N'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                    OR FI_Factura.TipoComprobante LIKE 'P%'
-                THEN 'P'
-            ELSE
-                'NA'
-        END                                             AS TipoComprobante,
-        SUM(   CASE
-                    WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0
-                        THEN CAST(ROUND(
-                                            (ISNULL(CO_Registro.MontoRegistro, 0)
-                                            / CO_TipoCambioDiario.TipoCambio
-                                            ), 2
-                                        ) AS DECIMAL(15, 2))
-                    ELSE
-                        0
-                END
-            )                                            AS [RC21_22],
-        CASE
-            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                    OR FI_Factura.MetodoPago LIKE '%PUE%'
-                    OR FI_Factura.FormaPago LIKE '%exhibi%'
-                    OR FI_Factura.FormaPago LIKE '%PUE%'
-                THEN 'PUE'
-            WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                    OR FI_Factura.MetodoPago LIKE '%dife%'
-                    OR FI_Factura.MetodoPago LIKE '%PPD%'
-                    OR FI_Factura.FormaPago LIKE '%parcia%'
-                    OR FI_Factura.FormaPago LIKE '%dife%'
-                    OR FI_Factura.FormaPago LIKE '%PPD%'
-                THEN 'PPD'
-            WHEN FI_Factura.TipoComprobante = 'P'
-                THEN 'PPD'
-        END                                             AS MetodoPago,
-        FI_Factura.Fecha,
-        FI_Factura.IdMoneda,
-		1
-    FROM
-        dbo.CO_Registro WITH (NOLOCK)
-	JOIN 
-		dbo.FI_FacturaContrato (NOLOCK)
-            ON dbo.CO_Registro.IdFactura = dbo.FI_FacturaContrato.IdFactura
-        JOIN
-            dbo.FI_Factura WITH (NOLOCK)
-                ON FI_FacturaContrato.IdFactura = FI_Factura.IdFactura
-					AND dbo.CO_Registro.IdFactura = dbo.FI_Factura.IdFactura
-                    AND CO_Registro.IdEstado = 10004
-                    AND CO_Registro.CvTipoDocFacturacion = 1
-					AND  FI_FacturaContrato.IdContrato = @Contrato
-        JOIN
-            dbo.CO_Contrato WITH (NOLOCK)
-                ON FI_FacturaContrato.IdContrato = CO_Contrato.IdContrato
-        JOIN
-            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
-                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
-        JOIN
-            dbo.CO_Servicio WITH (NOLOCK)
-                ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
-        LEFT JOIN
-            dbo.CO_TipoCambioDiario WITH (NOLOCK)
-                ON CO_TipoCambioDiario.IdMoneda = FI_Factura.IdMoneda
-                    AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Factura.Fecha)
-                    AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Factura.Fecha)
-                    AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Factura.Fecha)
-		LEFT JOIN
-			#Facturas
-			ON FI_FacturaContrato.IdFactura =#Facturas.IdFactura
-    WHERE
-        CO_Contrato.IdContrato = @Contrato
-        AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
-        AND CO_Registro.IdEstado = 10004
-        AND CO_Registro.CvTipoDocFacturacion = 1
-        AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
-        AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
-        AND CO_LineaPresupuestoMes.IdPresupuesto = CASE
-                                                        WHEN @IdPresupuesto = 0
-                                                            THEN CO_LineaPresupuestoMes.IdPresupuesto
-                                                        ELSE
-                                                            @IdPresupuesto
-                                                    END
-		AND
-			#Facturas.Idfactura IS NULL
-    GROUP BY
-        CO_Registro.IdRegistro,
-        ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO'),
-        FI_Factura.IdFactura,
-        CO_Registro.MontoRegistro,
-        CASE
-            WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'I%'
-                THEN 'I'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'E%'
-                THEN 'E'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                    OR FI_Factura.TipoComprobante LIKE 'T%'
-                THEN 'T'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                    OR FI_Factura.TipoComprobante LIKE 'N%'
-                THEN 'N'
-            WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                    OR FI_Factura.TipoComprobante LIKE 'P%'
-                THEN 'P'
-            ELSE
-                'NA'
-        END,
-        CASE
-            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                    OR FI_Factura.MetodoPago LIKE '%PUE%'
-                    OR FI_Factura.FormaPago LIKE '%exhibi%'
-                    OR FI_Factura.FormaPago LIKE '%PUE%'
-                THEN 'PUE'
-            WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                    OR FI_Factura.MetodoPago LIKE '%dife%'
-                    OR FI_Factura.MetodoPago LIKE '%PPD%'
-                    OR FI_Factura.FormaPago LIKE '%parcia%'
-                    OR FI_Factura.FormaPago LIKE '%dife%'
-                    OR FI_Factura.FormaPago LIKE '%PPD%'
-                THEN 'PPD'
-            WHEN FI_Factura.TipoComprobante = 'P'
-                THEN 'PPD'
-        END,
-        FI_Factura.Fecha,
-        FI_Factura.IdMoneda
-
 
         /*Facturas Con Tipo de Cambio de Transferencia*/
         INSERT INTO #MontosTotalTransferenciaPPD
@@ -628,7 +476,7 @@ AS
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
                                    AND FI_TransferFactura.CvTipoDocFacturacion = 6
-								   AND FI_Transfer.IdContrato = @Contrato
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_ComplementoDePago WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
@@ -641,8 +489,7 @@ AS
                         JOIN
                             dbo.FI_Factura FCPDR WITH (NOLOCK)
                                 ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
-                                  AND FI_Factura.IdContrato = FCPDR.IdContrato 
-								  AND FI_Factura.IdContrato = FI_Transfer.IdContrato
+                                   AND FI_Factura.IdContrato = FCPDR.IdContrato
                         JOIN
                             dbo.PV_TipoMoneda WITH (NOLOCK)
                                 ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
@@ -696,7 +543,7 @@ AS
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
                                    AND FI_TransferFactura.CvTipoDocFacturacion = 6
-								   AND FI_Transfer.IdContrato = @Contrato
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_ComplementoDePago WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
@@ -710,7 +557,6 @@ AS
                             dbo.FI_Factura FCPDR WITH (NOLOCK)
                                 ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
                                    AND FI_Factura.IdContrato = FCPDR.IdContrato
-                                   AND FI_Factura.IdContrato = FI_Transfer.IdContrato
                         JOIN
                             dbo.PV_TipoMoneda WITH (NOLOCK)
                                 ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
@@ -773,7 +619,7 @@ AS
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
                                    AND FI_TransferFactura.CvTipoDocFacturacion = 6
-								   AND FI_Transfer.IdContrato = @Contrato
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_ComplementoDePago WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
@@ -787,7 +633,6 @@ AS
                             dbo.FI_Factura FCPDR WITH (NOLOCK)
                                 ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
                                    AND FI_Factura.IdContrato = FCPDR.IdContrato
-                                   AND FI_Factura.IdContrato = FI_Transfer.IdContrato
                         JOIN
                             dbo.PV_TipoMoneda WITH (NOLOCK)
                                 ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
@@ -814,238 +659,8 @@ AS
                         FI_Factura.TipoComprobante,
                         CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2)),
                         #Facturas.IdRegistro
-		UNION
-				/*SE AGREGAN LA MISMA CONSULTA DE LOS APARTADOS DE ARRIBA, PARA LAS FACTURAS QUE PERTENECEN A OTRO CONTRATO*/
-			    SELECT
-                        FI_Factura.IdFactura                                                             AS IdFacturaCP,
-                        FI_Factura.UUID                                                                  AS UUIDCP,
-                        FI_ComplementoDePago.FormaDePagoP                                                AS FormaPagoCP,
-                        SUM(FI_CPDocRelacionado.ImpPagado)                                               AS MontoCP,
-                        CO_TipoCambioDiario.TipoCambio                                                   AS TipoCambioCP,
-                        FI_ComplementoDePago.MonedaP                                                     AS MonedaCP,
-                        CAST(SUM(FI_CPDocRelacionado.ImpPagado) AS DECIMAL(15, 2))                       AS MontoPesos,
-                        CAST(SUM(   CASE
-                                        WHEN PV_TipoMoneda.IdMoneda = 1
-                                            THEN FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
-                                        ELSE
-                                            FI_CPDocRelacionado.ImpPagado
-                                    END
-                                ) AS DECIMAL(15, 2))                                                     AS MontoDolares,
-                        FI_Factura.TipoComprobante,
-                        CAST(#Facturas.MontoRegistro / CO_TipoCambioDiario.TipoCambio AS DECIMAL(15, 2)) AS MontoRegistro,
-                        #Facturas.IdRegistro
-                    FROM
-                        dbo.FI_Transfer WITH (NOLOCK)
-                        JOIN
-                            dbo.FI_TransferFactura WITH (NOLOCK)
-                                ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-                                   AND FI_TransferFactura.CvTipoDocFacturacion = 6
-								   AND FI_Transfer.IdContrato = @Contrato
-                        JOIN
-                            dbo.FI_ComplementoDePago WITH (NOLOCK)
-                                ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
-                        JOIN
-                            dbo.FI_Factura WITH (NOLOCK)
-                                ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
-                        JOIN
-                            dbo.FI_CPDocRelacionado WITH (NOLOCK)
-                                ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
-                        JOIN
-                            dbo.FI_Factura FCPDR WITH (NOLOCK)
-                                ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
-                                  AND FI_Factura.IdContrato = FCPDR.IdContrato 
-						JOIN
-							FI_FacturaContrato	 WITH (NOLOCK)
-							ON	FCPDR.IdFactura = FI_FacturaContrato.IdFactura
-							AND	FI_FacturaContrato.IdContrato = FI_Transfer.IdContrato
-                        JOIN
-                            dbo.PV_TipoMoneda WITH (NOLOCK)
-                                ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
-                        JOIN
-                            #Facturas
-                                ON #Facturas.Idfactura = FCPDR.IdFactura
-                                   AND #Facturas.MetodoPago = 'PPD'
-								   AND #Facturas.ProvieneOtroContrato = 1
-                        LEFT JOIN
-                            dbo.CO_TipoCambioDiario WITH (NOLOCK)
-                                ON CO_TipoCambioDiario.IdMoneda = PV_TipoMoneda.IdMoneda
-                                   AND CO_TipoCambioDiario.IdMoneda = FCPDR.IdMoneda
-                                   AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
-                                   AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
-                                   AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
-                    WHERE
-                        #Facturas.MetodoPago = 'PPD'
-                        AND FI_TransferFactura.CvTipoDocFacturacion = 6
-                        AND CO_TipoCambioDiario.IdMoneda = FCPDR.IdMoneda
-						AND #Facturas.ProvieneOtroContrato = 1
-                    GROUP BY
-                        FI_Factura.IdFactura,
-                        FI_Factura.UUID,
-                        FI_ComplementoDePago.FormaDePagoP,
-                        CO_TipoCambioDiario.TipoCambio,
-                        FI_ComplementoDePago.MonedaP,
-                        FI_Factura.TipoComprobante,
-                        CAST(#Facturas.MontoRegistro / CO_TipoCambioDiario.TipoCambio AS DECIMAL(15, 2)),
-                        #Facturas.IdRegistro
-                    UNION
-                    SELECT
-                        FI_Factura.IdFactura                                                                          AS IdFacturaCP,
-                        FI_Factura.UUID                                                                               AS UUIDCP,
-                        FI_ComplementoDePago.FormaDePagoP                                                             AS FormaPagoCP,
-                        SUM(FI_CPDocRelacionado.ImpPagado)                                                            AS MontoCP,
-                        1                                                                                             AS TipoCambioCP,
-                        FI_ComplementoDePago.MonedaP                                                                  AS MonedaCP,
-                        CAST((SUM(FI_CPDocRelacionado.ImpPagado * CO_TipoCambioDiario.TipoCambio)) AS DECIMAL(15, 2)) AS MontoPesos,
-                        CAST((SUM(   CASE
-                                         WHEN PV_TipoMoneda.IdMoneda = 2
-                                             THEN FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
-                                         ELSE
-                                             FI_CPDocRelacionado.ImpPagado
-                                     END
-                                 )
-                             ) AS DECIMAL(15, 2))                                                                     AS MontoDolares,
-                        FI_Factura.TipoComprobante,
-                        CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2))                                               AS MontoRegistro,
-                        #Facturas.IdRegistro
-                    FROM
-                        dbo.FI_Transfer WITH (NOLOCK)
-                        JOIN
-                            dbo.FI_TransferFactura WITH (NOLOCK)
-                                ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-                                   AND FI_TransferFactura.CvTipoDocFacturacion = 6
-								   AND FI_Transfer.IdContrato = @Contrato
-                        JOIN
-                            dbo.FI_ComplementoDePago WITH (NOLOCK)
-                                ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
-                        JOIN
-                            dbo.FI_Factura WITH (NOLOCK)
-                                ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
-                        JOIN
-                            dbo.FI_CPDocRelacionado WITH (NOLOCK)
-                                ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
-                        JOIN
-                            dbo.FI_Factura FCPDR WITH (NOLOCK)
-                                ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
-                                   AND FI_Factura.IdContrato = FCPDR.IdContrato
-					   	JOIN
-							FI_FacturaContrato	 WITH (NOLOCK)
-							ON	FCPDR.IdFactura = FI_FacturaContrato.IdFactura
-							AND	FI_FacturaContrato.IdContrato = FI_Transfer.IdContrato
-                        JOIN
-                            dbo.PV_TipoMoneda WITH (NOLOCK)
-                                ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
-                        JOIN
-                            #Facturas
-                                ON #Facturas.Idfactura = FCPDR.IdFactura
-								AND #Facturas.ProvieneOtroContrato = 1
-                        LEFT JOIN
-                            dbo.CO_TipoCambioDiario WITH (NOLOCK)
-                                ON CO_TipoCambioDiario.IdMoneda = PV_TipoMoneda.IdMoneda
-                                   AND CO_TipoCambioDiario.IdMoneda <> FCPDR.IdMoneda
-                                   AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
-                                   AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
-                                   AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
-                    WHERE
-                        #Facturas.MetodoPago = 'PPD'
-                        AND FI_TransferFactura.CvTipoDocFacturacion = 6
-                        AND FI_Transfer.IdMoneda <> PV_TipoMoneda.IdMoneda
-                        AND PV_TipoMoneda.IdMoneda = FCPDR.IdMoneda
-						AND #Facturas.ProvieneOtroContrato = 1
-                    GROUP BY
-                        FI_Factura.IdFactura,
-                        FI_Factura.UUID,
-                        FI_ComplementoDePago.FormaDePagoP,
-                        FI_ComplementoDePago.MonedaP,
-                        FI_Factura.TipoComprobante,
-                        CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2)),
-                        #Facturas.IdRegistro
-                    UNION
 
-                    --Se agrego para los casos donde el complemento es igual a la moneda de la transferencia (USD = USD)   
-                    --y la factura ppd es igual a la moneada del documento relacionado (MXN = MXN)   
-                    SELECT
-                        FI_Factura.IdFactura                            AS IdFacturaCP,
-                        FI_Factura.UUID                                 AS UUIDCP,
-                        FI_ComplementoDePago.FormaDePagoP               AS FormaPagoCP,
-                        SUM(FI_CPDocRelacionado.ImpPagado)              AS MontoCP,
-                        1,
-                        FI_ComplementoDePago.MonedaP                    AS MonedaCP,
-                        CAST((SUM(   CASE
-                                         WHEN PV_TipoMoneda.IdMoneda = 2
-                                              AND FCPDR.IdMoneda = 1
-                                             THEN FI_CPDocRelacionado.ImpPagado * 1
-                                     END
-                                 )
-                             ) AS DECIMAL(15, 2))                       AS MontoPesos,
-                        CAST((SUM(   CASE
-                                         WHEN PV_TipoMoneda.IdMoneda = 2
-                                              AND FCPDR.IdMoneda = 1
-                                             THEN FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
-                                         ELSE
-                                             FI_CPDocRelacionado.ImpPagado
-                                     END
-                                 )
-                             ) AS DECIMAL(15, 2))                       AS MontoDolares,
-                        FI_Factura.TipoComprobante,
-                        CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2)) AS MontoRegistro,
-                        #Facturas.IdRegistro
-                    FROM
-                        dbo.FI_Transfer WITH (NOLOCK)
-                        JOIN
-                            dbo.FI_TransferFactura WITH (NOLOCK)
-                                ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-                                   AND FI_TransferFactura.CvTipoDocFacturacion = 6
-								   AND FI_Transfer.IdContrato = @Contrato
-                        JOIN
-                            dbo.FI_ComplementoDePago WITH (NOLOCK)
-                                ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
-                        JOIN
-                            dbo.FI_Factura WITH (NOLOCK)
-                                ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
-                        JOIN
-                            dbo.FI_CPDocRelacionado WITH (NOLOCK)
-                                ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
-                        JOIN
-                            dbo.FI_Factura FCPDR WITH (NOLOCK)
-                                ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
-                                   AND FI_Factura.IdContrato = FCPDR.IdContrato
-						JOIN
-							FI_FacturaContrato	 WITH (NOLOCK)
-							ON	FCPDR.IdFactura = FI_FacturaContrato.IdFactura
-							AND	FI_FacturaContrato.IdContrato = FI_Transfer.IdContrato
-                        JOIN
-                            dbo.PV_TipoMoneda WITH (NOLOCK)
-                                ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
-                        JOIN
-                            #Facturas
-                                ON #Facturas.Idfactura = FCPDR.IdFactura
-								AND #Facturas.ProvieneOtroContrato = 1
-                        LEFT JOIN
-                            dbo.CO_TipoCambioDiario WITH (NOLOCK)
-                                ON CO_TipoCambioDiario.IdMoneda <> PV_TipoMoneda.IdMoneda
-                                   AND CO_TipoCambioDiario.IdMoneda = FCPDR.IdMoneda
-                                   AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
-                                   AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
-                                   AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
-                    WHERE
-                        #Facturas.MetodoPago = 'PPD'
-						AND #Facturas.ProvieneOtroContrato = 1
-                        AND FI_TransferFactura.CvTipoDocFacturacion = 6
-                        AND FI_Transfer.IdMoneda = PV_TipoMoneda.IdMoneda
-                        AND PV_TipoMoneda.IdMoneda <> FCPDR.IdMoneda
-                    GROUP BY
-                        FI_Factura.IdFactura,
-                        FI_Factura.UUID,
-                        FI_ComplementoDePago.FormaDePagoP,
-                        FI_ComplementoDePago.MonedaP,
-                        FI_Factura.TipoComprobante,
-                        CAST(#Facturas.MontoRegistro AS DECIMAL(15, 2)),
-                        #Facturas.IdRegistro
-
-
-
-
-			/**/
+        /**/
         INSERT INTO #SumaDePagosDolaresBase
             (
                 UUID,
@@ -1084,7 +699,7 @@ AS
                         JOIN
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-								AND FI_Transfer.IdContrato = @Contrato
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             #Facturas
                                 ON FI_TransferFactura.IdFactura = #Facturas.Idfactura
@@ -1148,7 +763,7 @@ AS
                         JOIN
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-								AND FI_Transfer.IdContrato = @Contrato
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             #Facturas
                                 ON FI_TransferFactura.IdFactura = #Facturas.Idfactura

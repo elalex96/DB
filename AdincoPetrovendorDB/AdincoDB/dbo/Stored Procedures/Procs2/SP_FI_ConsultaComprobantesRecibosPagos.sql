@@ -1,4 +1,5 @@
-﻿-- =============================================
+﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 10-05-2018
 -- Description:	
@@ -21,7 +22,7 @@
 -- Fecha: 10 de MArzo del 2023
 -- Detalles: Se agrega facturas perteneciuentes a otro contrato que contienen relación con el contrato de sesion y contienen transferencia y gastos
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ConsultaComprobantesRecibosPagos]
+CREATE PROCEDURE [dbo].[SP_FI_ConsultaComprobantesRecibosPagos] --10147,10046,10,0,0
     @IdProveedor       INT,
     @IdContrato        INT,
     @IdUsuario         INT,
@@ -42,6 +43,37 @@ AS
                 Monto       MONEY,
                 FechaDePago DATETIME
             );
+        --========================       
+        IF OBJECT_ID('tempdb..#TransferenciasContratoFactura', 'U') IS NOT NULL
+            DROP TABLE #TransferenciasContratoFactura;
+        --========================  
+        CREATE TABLE #TransferenciasContratoFactura
+            (
+                IdTransferFactura INT PRIMARY KEY,
+                Idtransferencia   int,
+                IdFactura         int,
+                MontoPagado       FLOAT
+            );
+
+        INSERT INTO #TransferenciasContratoFactura
+            (
+                IdTransferFactura,
+                Idtransferencia,
+                IdFactura,
+                MontoPagado
+            )
+                    SELECT
+                        IdTransferFactura,
+                        Idtransferencia,
+                        IdFactura,
+                        FI_TransferFactura.MontoPagado
+                    FROM
+                        FI_TransferFactura
+                        JOIN
+                            FI_Transfer (NOLOCK)
+                                ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
+                    WHERE
+                        FI_Transfer.IdContrato = @IdContrato
         --========================
         INSERT INTO #IdFacturaComplemento
             (
@@ -77,7 +109,7 @@ AS
                         dbo.FI_ComplementoDePago.Monto,
                         dbo.FI_ComplementoDePago.FechaDePago;
 
-						--Select * from #IdFacturaComplemento
+        --Select * from #IdFacturaComplemento
         --========================
         -- Insert statements for procedure here
         IF (
@@ -118,17 +150,17 @@ AS
                         dbo.PV_Subcontratista (NOLOCK)
                             ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
                     LEFT JOIN
-                        dbo.FI_TransferFactura (NOLOCK)
-                            ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+                        #TransferenciasContratoFactura TFC (NOLOCK)
+                            ON dbo.FI_Factura.IdFactura = TFC.IdFactura
                     LEFT JOIN
                         dbo.FI_Transfer (NOLOCK)
-                            ON dbo.FI_TransferFactura.IdTransfer = dbo.FI_Transfer.IdTransferencia
-							AND FI_Transfer.IdContrato = @IdContrato
+                            ON TFC.Idtransferencia = dbo.FI_Transfer.IdTransferencia
+                               AND FI_Transfer.IdContrato = @IdContrato
                 WHERE
                     dbo.FI_Factura.IdSubcontratista = @IdProveedor
                     AND dbo.FI_Factura.IdContrato = @IdContrato
                     AND dbo.FI_Factura.TipoComprobante = 'P'
-                    AND dbo.FI_TransferFactura.IdTransfer IS NULL
+                    AND TFC.Idtransferencia IS NULL
                 GROUP BY
                     SUBSTRING(dbo.PV_Subcontratista.RazonSocial, 0, 30),
                     dbo.FI_Factura.IdFactura,
@@ -243,15 +275,15 @@ AS
                         dbo.PV_Subcontratista (NOLOCK)
                             ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
                     LEFT JOIN
-                        dbo.FI_TransferFactura (NOLOCK)
-                            ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+                        #TransferenciasContratoFactura TFC (NOLOCK)
+                            ON dbo.FI_Factura.IdFactura = TFC.IdFactura
                     LEFT JOIN
                         dbo.FI_Transfer (NOLOCK)
-                            ON dbo.FI_TransferFactura.IdTransfer = dbo.FI_Transfer.IdTransferencia
-							AND FI_Transfer.IdContrato = @IdContrato
+                            ON TFC.Idtransferencia = dbo.FI_Transfer.IdTransferencia
+                               AND FI_Transfer.IdContrato = @IdContrato
                 WHERE
                     dbo.FI_Factura.IdSubcontratista = @IdProveedor
-                    AND dbo.FI_TransferFactura.IdTransfer IS NULL
+                    AND TFC.Idtransferencia IS NULL
                 GROUP BY
                     SUBSTRING(dbo.PV_Subcontratista.RazonSocial, 0, 30),
                     dbo.FI_Factura.IdFactura,
@@ -367,16 +399,16 @@ AS
                         dbo.PV_Subcontratista (NOLOCK)
                             ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
                     LEFT JOIN
-                        dbo.FI_TransferFactura (NOLOCK)
-                            ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+                        #TransferenciasContratoFactura TFC (NOLOCK)
+                            ON dbo.FI_Factura.IdFactura = TFC.IdFactura
                     LEFT JOIN
                         dbo.FI_Transfer (NOLOCK)
-                            ON dbo.FI_TransferFactura.IdTransfer = dbo.FI_Transfer.IdTransferencia
+                            ON TFC.Idtransferencia = dbo.FI_Transfer.IdTransferencia
                 WHERE
                     dbo.FI_Factura.IdSubcontratista = @IdProveedor
                     AND dbo.FI_Factura.IdContrato = @IdContrato
                     AND dbo.FI_Factura.TipoComprobante = 'P'
-                    AND dbo.FI_TransferFactura.IdTransfer IS NULL
+                    AND TFC.Idtransferencia IS NULL
                 GROUP BY
                     SUBSTRING(dbo.PV_Subcontratista.RazonSocial, 0, 30),
                     dbo.FI_Factura.IdFactura,
@@ -431,16 +463,16 @@ AS
                         dbo.PV_Subcontratista (NOLOCK)
                             ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
                     LEFT JOIN
-                        dbo.FI_TransferFactura (NOLOCK)
-                            ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+                        #TransferenciasContratoFactura TFC (NOLOCK)
+                            ON dbo.FI_Factura.IdFactura = TFC.IdFactura
                     LEFT JOIN
                         dbo.FI_Transfer (NOLOCK)
-                            ON dbo.FI_TransferFactura.IdTransfer = dbo.FI_Transfer.IdTransferencia
+                            ON TFC.Idtransferencia = dbo.FI_Transfer.IdTransferencia
                 WHERE
                     dbo.FI_Factura.IdSubcontratista = @IdProveedor
                     AND dbo.FI_Factura.IdContrato = @IdContrato
                     AND dbo.FI_Factura.TipoComprobante = 'P'
-                    AND dbo.FI_TransferFactura.IdTransfer = @IdTransferFacPago
+                    AND TFC.Idtransferencia = @IdTransferFacPago
                 GROUP BY
                     SUBSTRING(dbo.PV_Subcontratista.RazonSocial, 0, 30),
                     dbo.FI_Factura.IdFactura,
@@ -552,15 +584,15 @@ AS
                         dbo.PV_Subcontratista (NOLOCK)
                             ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
                     LEFT JOIN
-                        dbo.FI_TransferFactura (NOLOCK)
-                            ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+                        #TransferenciasContratoFactura TFC (NOLOCK)
+                            ON dbo.FI_Factura.IdFactura = TFC.IdFactura
                     LEFT JOIN
                         dbo.FI_Transfer (NOLOCK)
-                            ON dbo.FI_TransferFactura.IdTransfer = dbo.FI_Transfer.IdTransferencia
-							AND FI_Transfer.IdContrato = @IdContrato
+                            ON TFC.Idtransferencia = dbo.FI_Transfer.IdTransferencia
+                               AND FI_Transfer.IdContrato = @IdContrato
                 WHERE
                     dbo.FI_Factura.IdSubcontratista = @IdProveedor
-                    AND dbo.FI_TransferFactura.IdTransfer = @IdTransferFacPago
+                    AND TFC.Idtransferencia = @IdTransferFacPago
                 GROUP BY
                     SUBSTRING(dbo.PV_Subcontratista.RazonSocial, 0, 30),
                     dbo.FI_Factura.IdFactura,
@@ -614,15 +646,15 @@ AS
                         dbo.PV_Subcontratista (NOLOCK)
                             ON dbo.FI_Factura.IdSubcontratista = dbo.PV_Subcontratista.IdSubcontratista
                     LEFT JOIN
-                        dbo.FI_TransferFactura (NOLOCK)
-                            ON dbo.FI_Factura.IdFactura = dbo.FI_TransferFactura.IdFactura
+                        #TransferenciasContratoFactura TFC (NOLOCK)
+                            ON dbo.FI_Factura.IdFactura = TFC.IdFactura
                     LEFT JOIN
                         dbo.FI_Transfer (NOLOCK)
-                            ON dbo.FI_TransferFactura.IdTransfer = dbo.FI_Transfer.IdTransferencia
-							AND FI_Transfer.IdContrato = @IdContrato
+                            ON TFC.Idtransferencia = dbo.FI_Transfer.IdTransferencia
+                               AND FI_Transfer.IdContrato = @IdContrato
                 WHERE
                     dbo.FI_Factura.IdSubcontratista = @IdProveedor
-                    AND dbo.FI_Transfer.IdTransferencia IS NULL
+                    AND TFC.IdTransferencia IS NULL
                 GROUP BY
                     SUBSTRING(dbo.PV_Subcontratista.RazonSocial, 0, 30),
                     dbo.FI_Factura.IdFactura,
