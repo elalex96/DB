@@ -1,7 +1,12 @@
-﻿-- =============================================
+﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Modificado Por: Neri Garcia
 -- Fecha: 11 de Agosto del 2022
 -- Detalles: Agregado de NOLOCK, Nombrado de Tablas en select, eliminado de codigo comentado, se minimizan los lefts
+-- =============================================
+-- Modificado Por: Reyna olvera
+-- Fecha: 10 de Marzo del 2023
+-- Detalles: Agregado de gastos solo del contrato y solución de modificación de mes presentación
 -- =============================================
 CREATE PROC [dbo].[p_FI_TransferFechaPresentacionGasto_Upd]
     --
@@ -37,7 +42,7 @@ BEGIN
            @FechaPago = DATEFROMPARTS(YEAR(dbo.FI_Transfer.FechaPago), MONTH(dbo.FI_Transfer.FechaPago), 1)
     FROM dbo.CO_Contrato (NOLOCK)
         JOIN dbo.FI_Transfer (NOLOCK)
-            ON dbo.CO_Contrato.IdContrato = dbo.FI_Transfer.IdContrato
+            ON dbo.FI_Transfer.IdContrato = dbo.CO_Contrato.IdContrato
     WHERE dbo.CO_Contrato.IdContrato = @IdContrato
           AND dbo.FI_Transfer.IdTransferencia = @pIdTransferencia;
     --
@@ -73,6 +78,16 @@ BEGIN
             ON dbo.FI_TransferFactura.IdFactura = dbo.FI_Factura.IdFactura
         JOIN dbo.CO_Registro (NOLOCK)
             ON dbo.FI_Factura.IdFactura = dbo.CO_Registro.IdFactura
+		JOIN
+            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+        JOIN
+            dbo.CO_Presupuesto WITH (NOLOCK)
+                ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+        JOIN
+            dbo.CO_AnioContractual WITH (NOLOCK)
+                ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+                    AND CO_AnioContractual.IdContrato = @IdContrato
         LEFT JOIN dbo.CO_Contrato (NOLOCK)
             ON dbo.FI_Transfer.IdContrato = dbo.CO_Contrato.IdContrato
     WHERE dbo.FI_Transfer.IdTransferencia = @pIdTransferencia
@@ -99,6 +114,16 @@ BEGIN
             ON dbo.FI_TransferFactura.IdPedimentoComprobante = dbo.FI_PedimentoComprobante.IdPedimentoComprobante
         JOIN dbo.CO_Registro (NOLOCK)
             ON dbo.FI_PedimentoComprobante.IdPedimentoComprobante = dbo.CO_Registro.IdPedimentoComprobante
+		JOIN
+            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+        JOIN
+            dbo.CO_Presupuesto WITH (NOLOCK)
+                ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+        JOIN
+            dbo.CO_AnioContractual WITH (NOLOCK)
+                ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+                    AND CO_AnioContractual.IdContrato = @IdContrato
         LEFT JOIN dbo.CO_Contrato (NOLOCK)
             ON dbo.FI_Transfer.IdContrato = dbo.CO_Contrato.IdContrato
     WHERE dbo.FI_Transfer.IdTransferencia = @pIdTransferencia
@@ -123,6 +148,16 @@ BEGIN
             ON dbo.FI_Transfer.IdFacturaPago = dbo.FI_Factura.IdFactura
         JOIN dbo.CO_Registro (NOLOCK)
             ON dbo.FI_Factura.IdFactura = dbo.CO_Registro.IdFactura
+		JOIN
+            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+        JOIN
+            dbo.CO_Presupuesto WITH (NOLOCK)
+                ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+        JOIN
+            dbo.CO_AnioContractual WITH (NOLOCK)
+                ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+                    AND CO_AnioContractual.IdContrato = @IdContrato
         LEFT JOIN dbo.CO_Contrato (NOLOCK)
             ON dbo.FI_Transfer.IdContrato = dbo.CO_Contrato.IdContrato
     WHERE dbo.FI_Transfer.IdTransferencia = @pIdTransferencia
