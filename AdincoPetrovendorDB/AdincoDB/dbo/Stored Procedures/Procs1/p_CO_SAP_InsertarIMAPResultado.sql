@@ -1,12 +1,12 @@
 ﻿create proc [dbo].[p_CO_SAP_InsertarIMAPResultado]
 @pIdContratista	int,
-@pIdMail	varchar(50),
+@pIdMail	varchar(MAX),
 @pSuccess	bit,
 @pProcesado bit
 as
 
 	if not exists (
-		select 1
+		select *
 		from [CO_SAP_IMAPResultado]
 		where IdContratista = @pIdContratista and
 		uIdMail = @pIdMail
@@ -18,3 +18,4 @@ as
 		select @pIdContratista,@pIdMail,@pSuccess,getdate(),@pProcesado
 
 	end
+
