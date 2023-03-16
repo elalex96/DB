@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -212,7 +212,7 @@ BEGIN
 				GETDATE(), 
 				@Descripcion,
 				@IdVigencia,
-				@IdPrioridad)
+				2)
 
 		SET @IdOperacion = (SCOPE_IDENTITY());
 
