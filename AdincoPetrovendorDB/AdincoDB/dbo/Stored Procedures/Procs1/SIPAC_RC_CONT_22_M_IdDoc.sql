@@ -145,6 +145,7 @@ AS
                         JOIN
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_Factura WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura
@@ -221,6 +222,7 @@ AS
                         JOIN
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_ComplementoDePago WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
@@ -296,6 +298,7 @@ AS
                         JOIN
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_ComplementoDePago WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
