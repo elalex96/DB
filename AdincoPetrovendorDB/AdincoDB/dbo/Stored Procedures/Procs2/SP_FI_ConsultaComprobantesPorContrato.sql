@@ -123,7 +123,7 @@ BEGIN
 					Cuando no hay precio unitario si se toma el importe total */
            --------------------------------------------- DR 06/08/2020
            SUM(   CASE
-                      WHEN FI_PedimentoComprobanteDetalle.PrecioUnitario IS NOT NULL THEN
+                      WHEN ISNULL(FI_PedimentoComprobanteDetalle.PrecioUnitario, 0) > 0 THEN
                           FI_PedimentoComprobanteDetalle.PrecioUnitario
                       ELSE
                           FI_PedimentoComprobanteDetalle.ImporteTotal
@@ -135,7 +135,7 @@ BEGIN
 			Hace practicamente lo mismo que el subtotal
 			--------------------------------------------------------  DR 06/08/2020*/
            SUM(   CASE
-                      WHEN FI_PedimentoComprobanteDetalle.PrecioUnitario IS NOT NULL THEN
+                      WHEN ISNULL(FI_PedimentoComprobanteDetalle.PrecioUnitario, 0) > 0 THEN
                           FI_PedimentoComprobanteDetalle.PrecioUnitario
                       ELSE
                           FI_PedimentoComprobanteDetalle.ImporteTotal
