@@ -1,5 +1,4 @@
-﻿
--- =============================================  
+﻿-- =============================================  
 -- Author: Miguel Gomez  
 -- Create date: 14-01-2017  
 -- Description: Lista las facturas de un contrato  
@@ -30,6 +29,7 @@ CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
 AS
 BEGIN
     SET NOCOUNT ON;
+
     SET LANGUAGE spanish;
     IF OBJECT_ID('tempdb..#tmpFiles') IS NOT NULL
         DROP TABLE #tmpFiles
@@ -277,6 +277,7 @@ BEGIN
     END;
     ELSE
     BEGIN
+
         INSERT INTO #Facturas
         (
             IdFactura,
@@ -403,7 +404,8 @@ BEGIN
                F.IdMoneda,
                F.CreadoPor,
                F.IdSubcontratista,
-               F.Emisor
+               F.Emisor;
+
         INSERT INTO #Facturas
         (
             IdFactura,
@@ -490,20 +492,22 @@ BEGIN
                F.IdSubcontratista,
                F.Emisor
         FROM dbo.FI_FacturaContrato FC WITH (NOLOCK)
-            JOIN #Facturas TEMP
-                ON FC.IdContrato = @IdContrato
-                   AND FC.IdFactura NOT IN ( TEMP.IdFactura )
             JOIN dbo.FI_Factura AS F WITH (NOLOCK)
                 ON FC.IdFactura = F.IdFactura
+				AND	FC.IdContrato = @IdContrato
                    AND CONVERT(DATE, ISNULL(F.FechaTimbrado, F.Fecha))
                    BETWEEN CONVERT(DATE, @FechaInicio) AND CONVERT(DATE, @FechaFin)
-            JOIN dbo.PV_Subcontratista AS S WITH (NOLOCK)
+          JOIN dbo.PV_Subcontratista AS S WITH (NOLOCK)
                 ON F.IdSubcontratista = S.IdSubcontratista
             JOIN dbo.CO_Contrato C WITH (NOLOCK)
                 ON F.IdContrato = C.IdContrato
             LEFT JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
                    AND CC.RFC <> F.Receptor
+			 LEFT JOIN #Facturas TEMP2 WITH (NOLOCK)
+                ON FC.IdFactura = TEMP2.IdFactura
+			WHERE
+				TEMP2.IdFactura IS NULL
 			GROUP BY
 			F.IdFactura,
                S.RazonSocial,
@@ -680,4 +684,3 @@ BEGIN
     FROM #Facturas F
     ORDER BY F.IdFactura DESC;
 END;
-
