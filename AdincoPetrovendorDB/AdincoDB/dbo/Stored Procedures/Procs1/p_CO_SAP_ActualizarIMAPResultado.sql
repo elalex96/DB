@@ -1,7 +1,6 @@
-﻿
-create proc [dbo].[p_CO_SAP_ActualizarIMAPResultado]
+﻿create proc [dbo].[p_CO_SAP_ActualizarIMAPResultado]
 @pIdContratista	int,
-@pIdMail	varchar(50),
+@pIdMail	varchar(500),
 @pSuccess	bit,
 @pProcesado bit
 as
@@ -12,3 +11,4 @@ as
 		FechaProcesado = getdate()
 	where IdContratista = @pIdContratista and
 	uIdMail = @pIdMail
+
