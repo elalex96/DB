@@ -22,6 +22,10 @@
 -- Fecha Modificado: 16 de Febrero del 2023
 -- Description:      Se agrega la opción obtener el nuevo campo IDSIPAC desde la tabla CO_Contrato, si este viene vacío o nulo se obtendrá desde la tabla que ya se obtenía anteriormente CO_Contratista
 -- =============================================
+-- Modificado:       Reyna Olvera
+-- Fecha Modificado: 2022-08-18
+-- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS
+-- =============================================
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M]
     @Contrato      INT,
     @Mes           DATE,
@@ -121,12 +125,20 @@ AS
                             dbo.FI_Factura WITH (NOLOCK)
                                 ON CO_Registro.IdFactura = FI_Factura.IdFactura
                         JOIN
-                            dbo.CO_Contrato WITH (NOLOCK)
-                                ON CO_Contrato.IdContrato = FI_Factura.IdContrato
-                                   AND CO_Contrato.IdContrato = @Contrato
-                        JOIN
                             dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
                                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+                        JOIN
+                            dbo.CO_Presupuesto WITH (NOLOCK)
+                                ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+                        JOIN
+                            dbo.CO_AnioContractual WITH (NOLOCK)
+                                ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+                                   AND CO_AnioContractual.IdContrato = @Contrato
+                        JOIN
+                            dbo.CO_Contrato WITH (NOLOCK)
+                                ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+                                   AND CO_AnioContractual.IdContrato = @Contrato
+                                   AND CO_Contrato.IdContrato = @Contrato
                         JOIN
                             dbo.CO_Servicio WITH (NOLOCK)
                                 ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio
@@ -186,7 +198,9 @@ AS
                                 THEN 'PPD'
                         END,
                         FI_Factura.IdFactura,
-                        FI_Factura.UUID;
+                        FI_Factura.UUID
+
+
         --
         INSERT INTO #MontosTotalTransferencia
             (
@@ -216,11 +230,10 @@ AS
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
                                    AND FI_TransferFactura.CvTipoDocFacturacion = 1
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_Factura WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura
-                                   AND FI_Transfer.IdContrato = FI_Factura.IdContrato
-                                   AND FI_Factura.IdContrato = @Contrato
                         JOIN
                             dbo.PV_MetodoPago WITH (NOLOCK)
                                 ON FI_Transfer.IdMetodoPago = PV_MetodoPago.IdMetodoPago
@@ -236,10 +249,10 @@ AS
                                    AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
                                    AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
                     WHERE
-                        FI_Factura.IdContrato = @Contrato
-                        AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
+                        ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
                         AND #Facturas.MetodoPago = 'PUE'
-                        AND FI_TransferFactura.CvTipoDocFacturacion = 1
+                        AND FI_Transfer.IdContrato = @Contrato
+						AND FI_TransferFactura.CvTipoDocFacturacion = 1
                     GROUP BY
                         CAST(ROUND(FI_Factura.MontoConIva, 2) AS DECIMAL(15, 2)),
                         FI_Factura.IdFactura,
@@ -273,6 +286,7 @@ AS
                             dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
                                    AND FI_TransferFactura.CvTipoDocFacturacion = 6
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
                             dbo.FI_ComplementoDePago WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
@@ -282,7 +296,6 @@ AS
                         JOIN
                             dbo.FI_Factura WITH (NOLOCK)
                                 ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
-                                   AND FI_Factura.IdContrato = @Contrato
                         JOIN
                             FI_Factura FCPDR WITH (NOLOCK)
                                 ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
@@ -302,7 +315,7 @@ AS
                                    AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
                                    AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
                     WHERE
-                        FI_Factura.IdContrato = @Contrato
+                        FI_Transfer.IdContrato = @Contrato
                         AND ISNULL(CONVERT(INT, FCPDR.ProcesadoSIPAC), 0) = 0
                         AND #Facturas.MetodoPago = 'PPD'
                         AND FI_TransferFactura.CvTipoDocFacturacion = 6
@@ -389,11 +402,11 @@ AS
 
         SELECT
             CASE
-                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
-                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> ''
+                    THEN LTRIM(RTRIM(CO_Contrato.IDSIPAC))
                 ELSE
                     LTRIM(RTRIM(CO_Contratista.IDSIPAC))
-            END																	   AS [RF_00],
+            END                                                                    AS [RF_00],
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))                            AS [RI_00],
             CO_Contrato.NumeroContrato                                             AS [RF01_01],
             MONTH(CO_Registro.MesPresentacion)                                     AS [RC21_01],
@@ -488,8 +501,8 @@ AS
                                                END
         GROUP BY
             CASE
-                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
-                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> ''
+                    THEN LTRIM(RTRIM(CO_Contrato.IDSIPAC))
                 ELSE
                     LTRIM(RTRIM(CO_Contratista.IDSIPAC))
             END,
@@ -519,12 +532,12 @@ AS
         UNION
         --
         SELECT
-             CASE
-                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
-                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+            CASE
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> ''
+                    THEN LTRIM(RTRIM(CO_Contrato.IDSIPAC))
                 ELSE
                     LTRIM(RTRIM(CO_Contratista.IDSIPAC))
-            END								                                AS [RF_00],
+            END                                                             AS [RF_00],
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))                     AS [RI_00],
             CO_Contrato.NumeroContrato                                      AS [RF01_01],
             MONTH(CO_Registro.MesPresentacion)                              AS [RC21_01],
@@ -551,6 +564,7 @@ AS
             JOIN
                 dbo.FI_TransferFactura WITH (NOLOCK)
                     ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                       AND FI_Transfer.IdContrato = @Contrato
             JOIN
                 dbo.FI_ComplementoDePago WITH (NOLOCK)
                     ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
@@ -596,6 +610,7 @@ AS
                     ON FCP.IdMoneda = PV_TipoMoneda.IdMoneda
         WHERE
             CO_Contrato.IdContrato = @Contrato
+            AND FI_Transfer.IdContrato = @Contrato
             AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
             AND CO_Registro.IdEstado = 10004
             AND CO_Registro.CvTipoDocFacturacion = 1
@@ -623,8 +638,8 @@ AS
                                                END
         GROUP BY
             CASE
-                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
-                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
+                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> ''
+                    THEN LTRIM(RTRIM(CO_Contrato.IDSIPAC))
                 ELSE
                     LTRIM(RTRIM(CO_Contratista.IDSIPAC))
             END,

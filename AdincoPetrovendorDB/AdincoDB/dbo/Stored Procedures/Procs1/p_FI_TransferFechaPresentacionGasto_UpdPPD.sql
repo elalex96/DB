@@ -7,6 +7,10 @@
 -- Fecha: 11 de Agosto del 2022
 -- Detalles: Agregado de NOLOCK y Nombrado de Tablas en select
 -- =============================================
+-- Modificado Por: Reyna olvera
+-- Fecha: 10 de Marzo del 2023
+-- Detalles: Agregado de gastos solo del contrato y solución de modificación de mes presentación
+-- =============================================
 CREATE PROCEDURE [dbo].[p_FI_TransferFechaPresentacionGasto_UpdPPD]
     @pIdTransferencia INT,
     @IdContrato INT,
@@ -14,6 +18,7 @@ CREATE PROCEDURE [dbo].[p_FI_TransferFechaPresentacionGasto_UpdPPD]
 AS
 BEGIN
     SET NOCOUNT ON;
+	
     DECLARE @MesPresentacionCGI DATE,
             @FechaPago DATE,
             @FechaMayor DATE;
@@ -68,7 +73,7 @@ BEGIN
         IdContrato,
         RegistroMesPresentacion
     )
-    SELECT dbo.CO_Registro.IdRegistro,
+    SELECT  dbo.CO_Registro.IdRegistro,
            MesPresentacion = dbo.CO_Contrato.MesPresentacionCGI,
            dbo.[FI_Transfer].IdTransferencia,
            dbo.[FI_Transfer].IdContrato,
@@ -76,6 +81,7 @@ BEGIN
     FROM dbo.[FI_Transfer] (NOLOCK)
         JOIN dbo.FI_TransferFactura (NOLOCK)
             ON dbo.[FI_Transfer].IdTransferencia = dbo.FI_TransferFactura.IdTransfer
+			  AND dbo.[FI_Transfer].IdContrato = @IdContrato
         JOIN dbo.FI_Factura (NOLOCK)
             ON dbo.FI_TransferFactura.IdFactura = dbo.FI_Factura.IdFactura
         JOIN dbo.FI_ComplementoDePago (NOLOCK)
@@ -83,13 +89,23 @@ BEGIN
         JOIN dbo.FI_CPDocRelacionado (NOLOCK)
             ON dbo.FI_ComplementoDePago.IdComplementoDePago = dbo.FI_CPDocRelacionado.IdComplementoDePago
         JOIN dbo.FI_Factura FI_Factura_DocRelacionado (NOLOCK)
-            ON dbo.FI_CPDocRelacionado.IdDocumento = dbo.FI_Factura.UUID
+            ON dbo.FI_CPDocRelacionado.IdDocumento = FI_Factura_DocRelacionado.UUID
         JOIN dbo.CO_Registro (NOLOCK)
             ON FI_Factura_DocRelacionado.IdFactura = dbo.CO_Registro.IdFactura
+		JOIN
+            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+        JOIN
+            dbo.CO_Presupuesto WITH (NOLOCK)
+                ON CO_Presupuesto.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
+        JOIN
+            dbo.CO_AnioContractual WITH (NOLOCK)
+                ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
+                    AND CO_AnioContractual.IdContrato = @IdContrato
         JOIN dbo.CO_Contrato (NOLOCK)
             ON dbo.[FI_Transfer].IdContrato = dbo.CO_Contrato.IdContrato
     WHERE dbo.[FI_Transfer].IdTransferencia = @pIdTransferencia
-          AND dbo.CO_Contrato.MesPresentacionCGI IS NOT NULL
+         AND dbo.CO_Contrato.MesPresentacionCGI IS NOT NULL
           AND dbo.[FI_Transfer].IdContrato = @IdContrato;
 
     /**/

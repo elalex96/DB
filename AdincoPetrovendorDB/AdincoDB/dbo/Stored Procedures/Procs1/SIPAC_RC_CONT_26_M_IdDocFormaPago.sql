@@ -20,7 +20,7 @@ CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_26_M_IdDocFormaPago]
 AS
     BEGIN
         SET NOCOUNT ON;
-		
+
         /*Omitir facturas en la hoja 22*/
         IF OBJECT_ID('tempdb..#uuidNoReportar', 'U') IS NOT NULL
             DROP TABLE #uuidNoReportar;
@@ -37,7 +37,7 @@ AS
                 SIPAC             INT
             );
 
-			  /*Verificar día de consulta*/
+        /*Verificar día de consulta*/
         DECLARE @DiaReporte INT;
         DECLARE @DiaActual INT;
         --
@@ -119,7 +119,13 @@ AS
             END;
 
         /*Actualizar o no nombre archivos*/
-        INSERT INTO #FI_Transfer(IdTransferencia,IdContrato,IdMetodoPago,SIPAC)
+        INSERT INTO #FI_Transfer
+            (
+                IdTransferencia,
+                IdContrato,
+                IdMetodoPago,
+                SIPAC
+            )
                     SELECT
                         FI_Transfer.IdTransferencia,
                         FI_Transfer.IdContrato,
@@ -128,36 +134,36 @@ AS
                                                FI_Transfer.FechaPago
                                           ) AS SIPAC
                     FROM
-                        dbo.FI_Transfer                 WITH (NOLOCK)
+                        dbo.FI_Transfer WITH (NOLOCK)
                         JOIN
-                            dbo.FI_TransferFactura      WITH (NOLOCK)
+                            dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
-                            dbo.FI_Factura             WITH (NOLOCK)
+                            dbo.FI_Factura WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura
-                                   AND FI_Factura.IdContrato = FI_Transfer.IdContrato
+                        -- AND FI_Factura.IdContrato = FI_Transfer.IdContrato
                         JOIN
-                            dbo.CO_Registro             WITH (NOLOCK)
-                                ON  FI_Factura.IdFactura = CO_Registro.IdFactura
-								 AND CO_Registro.IdEstado = 10004
+                            dbo.CO_Registro WITH (NOLOCK)
+                                ON FI_Factura.IdFactura = CO_Registro.IdFactura
+                                   AND CO_Registro.IdEstado = 10004
                         JOIN
-                            dbo.CO_LineaPresupuestoMes  WITH (NOLOCK)
+                            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
                                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
                         JOIN
-                            dbo.CO_Presupuesto          WITH (NOLOCK)
-                                ON  CO_LineaPresupuestoMes.IdPresupuesto	=	CO_Presupuesto.IdPresupuesto
+                            dbo.CO_Presupuesto WITH (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
                         JOIN
-                            dbo.CO_AnioContractual     WITH (NOLOCK)
-                                ON  CO_Presupuesto.IdAnioContractual	=	CO_AnioContractual.IdAnioContractual 
+                            dbo.CO_AnioContractual WITH (NOLOCK)
+                                ON CO_Presupuesto.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                         JOIN
-                            dbo.CO_Contrato            WITH (NOLOCK)
+                            dbo.CO_Contrato WITH (NOLOCK)
                                 ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
-								AND  CO_Contrato.IdContrato = @Contrato
+                                   AND CO_Contrato.IdContrato = @Contrato
                         JOIN
-                            dbo.CO_Servicio            WITH (NOLOCK)
-                                ON  CO_LineaPresupuestoMes.IdServicio	=	CO_Servicio.IdServicio
+                            dbo.CO_Servicio WITH (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
                                    AND CO_Servicio.IdContrato = CO_Contrato.IdContrato
-                   
                     WHERE
                         CO_Contrato.IdContrato = @Contrato
                         AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
@@ -171,11 +177,11 @@ AS
                                 OR FI_Factura.FormaPago LIKE '%PUE%'
                             )
                         AND CO_Presupuesto.IdPresupuesto = CASE
-                                                  WHEN @IdPresupuesto = 0
-                                                      THEN CO_LineaPresupuestoMes.IdPresupuesto
-                                                  ELSE
-                                                      @IdPresupuesto
-                                              END
+                                                               WHEN @IdPresupuesto = 0
+                                                                   THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                               ELSE
+                                                                   @IdPresupuesto
+                                                           END
                     GROUP BY
                         FI_Transfer.IdTransferencia,
                         FI_Transfer.IdContrato,
@@ -197,43 +203,44 @@ AS
                                                FI_Transfer.FechaPago
                                           ) + ISNULL(@maxid, 0) AS SIPAC
                     FROM
-                        dbo.FI_Transfer                WITH (NOLOCK)
+                        dbo.FI_Transfer WITH (NOLOCK)
                         JOIN
-                            dbo.FI_TransferFactura      WITH (NOLOCK)
+                            dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
-                            dbo.FI_ComplementoDePago    WITH (NOLOCK)
-                            ON  FI_TransferFactura.IdFactura	=	FI_ComplementoDePago.IdFactura
+                            dbo.FI_ComplementoDePago WITH (NOLOCK)
+                                ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
                         JOIN
-                            dbo.FI_CPDocRelacionado     WITH (NOLOCK)
-                                ON  FI_ComplementoDePago.IdComplementoDePago	=	FI_CPDocRelacionado.IdComplementoDePago
+                            dbo.FI_CPDocRelacionado WITH (NOLOCK)
+                                ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
                         JOIN
-                            dbo.FI_Factura             FCP WITH (NOLOCK)
+                            dbo.FI_Factura FCP WITH (NOLOCK)
                                 ON FI_TransferFactura.IdFactura = FCP.IdFactura
-                                   AND FI_Transfer.IdContrato = FCP.IdContrato
+                        --  AND FI_Transfer.IdContrato = FCP.IdContrato
                         JOIN
-                            dbo.FI_Factura             FCPDR WITH (NOLOCK)
+                            dbo.FI_Factura FCPDR WITH (NOLOCK)
                                 ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
                         JOIN
-                            dbo.CO_Registro             WITH (NOLOCK)
+                            dbo.CO_Registro WITH (NOLOCK)
                                 ON FCPDR.IdFactura = CO_Registro.IdFactura
-								AND CO_Registro.IdEstado = 10004
+                                   AND CO_Registro.IdEstado = 10004
                         JOIN
-                            dbo.CO_LineaPresupuestoMes  WITH (NOLOCK)
+                            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
                                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
                         JOIN
-                            dbo.CO_Presupuesto         WITH (NOLOCK)
-                                ON  CO_LineaPresupuestoMes.IdPresupuesto	=	CO_Presupuesto.IdPresupuesto
+                            dbo.CO_Presupuesto WITH (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
                         JOIN
-                            dbo.CO_AnioContractual      WITH (NOLOCK)
-                                ON CO_Presupuesto.IdAnioContractual	=	 CO_AnioContractual.IdAnioContractual
+                            dbo.CO_AnioContractual WITH (NOLOCK)
+                                ON CO_Presupuesto.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                         JOIN
-                            dbo.CO_Contrato             WITH (NOLOCK)
+                            dbo.CO_Contrato WITH (NOLOCK)
                                 ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
-								AND	CO_Contrato.IdContrato = @Contrato
+                                   AND CO_Contrato.IdContrato = @Contrato
                         JOIN
-                            dbo.CO_Servicio             WITH (NOLOCK)
-                                ON   CO_LineaPresupuestoMes.IdServicio	=	CO_Servicio.IdServicio
+                            dbo.CO_Servicio WITH (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
                                    AND CO_Servicio.IdContrato = CO_Contrato.IdContrato
                     WHERE
                         CO_Contrato.IdContrato = @Contrato
@@ -255,12 +262,12 @@ AS
                                                 WHERE
                                                     ControlF.IdContrato = @Contrato
                                             )
-							AND CO_Presupuesto.IdPresupuesto = CASE
-                                                  WHEN @IdPresupuesto = 0
-                                                      THEN CO_LineaPresupuestoMes.IdPresupuesto
-                                                  ELSE
-                                                      @IdPresupuesto
-                                              END
+                        AND CO_Presupuesto.IdPresupuesto = CASE
+                                                               WHEN @IdPresupuesto = 0
+                                                                   THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                               ELSE
+                                                                   @IdPresupuesto
+                                                           END
                     GROUP BY
                         FI_Transfer.IdTransferencia,
                         FI_Transfer.IdContrato,
@@ -281,34 +288,35 @@ AS
                                                FI_Transfer.FechaPago
                                           ) + ISNULL(@maxid, 0) AS SIPAC
                     FROM
-                        dbo.FI_Transfer                  WITH (NOLOCK)
+                        dbo.FI_Transfer WITH (NOLOCK)
                         JOIN
-                            dbo.FI_TransferFactura       WITH (NOLOCK)
+                            dbo.FI_TransferFactura WITH (NOLOCK)
                                 ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+                                   AND FI_Transfer.IdContrato = @Contrato
                         JOIN
-                            dbo.FI_PedimentoComprobante  WITH (NOLOCK)
+                            dbo.FI_PedimentoComprobante WITH (NOLOCK)
                                 ON FI_TransferFactura.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
-                                   AND FI_Transfer.IdContrato = FI_PedimentoComprobante.IdContrato
+                        -- AND FI_Transfer.IdContrato = FI_PedimentoComprobante.IdContrato
                         JOIN
-                            dbo.CO_Registro              WITH (NOLOCK)
-                                ON  FI_PedimentoComprobante.IdPedimentoComprobante	=	CO_Registro.IdPedimentoComprobante
-								AND CO_Registro.IdEstado = 10004
+                            dbo.CO_Registro WITH (NOLOCK)
+                                ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
+                                   AND CO_Registro.IdEstado = 10004
                         JOIN
-                            dbo.CO_LineaPresupuestoMes   WITH (NOLOCK)
+                            dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
                                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
                         JOIN
-                            dbo.CO_Presupuesto           WITH (NOLOCK)
-                                ON  CO_LineaPresupuestoMes.IdPresupuesto	=	CO_Presupuesto.IdPresupuesto
+                            dbo.CO_Presupuesto WITH (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
                         JOIN
-                            dbo.CO_AnioContractual       WITH (NOLOCK)
-                                ON   CO_Presupuesto.IdAnioContractual	=	CO_AnioContractual.IdAnioContractual
+                            dbo.CO_AnioContractual WITH (NOLOCK)
+                                ON CO_Presupuesto.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                         JOIN
-                            dbo.CO_Contrato              WITH (NOLOCK)
+                            dbo.CO_Contrato WITH (NOLOCK)
                                 ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
-								AND	 CO_Contrato.IdContrato = @Contrato
+                                   AND CO_Contrato.IdContrato = @Contrato
                         JOIN
-                            dbo.CO_Servicio              WITH (NOLOCK)
-                                ON CO_LineaPresupuestoMes.IdServicio	=	 CO_Servicio.IdServicio
+                            dbo.CO_Servicio WITH (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
                                    AND CO_Servicio.IdContrato = CO_Contrato.IdContrato
                     WHERE
                         CO_Contrato.IdContrato = @Contrato
@@ -318,11 +326,11 @@ AS
                         AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
                         AND ISNULL(FI_PedimentoComprobante.EsnotaCredito, 0) <> 1
                         AND CO_Presupuesto.IdPresupuesto = CASE
-                                                  WHEN @IdPresupuesto = 0
-                                                      THEN CO_LineaPresupuestoMes.IdPresupuesto
-                                                  ELSE
-                                                      @IdPresupuesto
-                                              END
+                                                               WHEN @IdPresupuesto = 0
+                                                                   THEN CO_LineaPresupuestoMes.IdPresupuesto
+                                                               ELSE
+                                                                   @IdPresupuesto
+                                                           END
                     GROUP BY
                         FI_Transfer.IdTransferencia,
                         FI_Transfer.IdContrato,
@@ -425,7 +433,7 @@ AS
                                      + LTRIM(YEAR(@Mes)) + '_' + RIGHT('000000' + CAST(TRT.SIPAC AS VARCHAR(6)), 6)
                                      + '.pdf'
         FROM
-            FI_Transfer        WITH (NOLOCK)
+            FI_Transfer WITH (NOLOCK)
             JOIN
                 #FI_Transfer TRT
                     ON FI_Transfer.IdTransferencia = TRT.IdTransferencia
