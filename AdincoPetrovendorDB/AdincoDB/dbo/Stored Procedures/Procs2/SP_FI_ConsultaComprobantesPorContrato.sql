@@ -8,6 +8,10 @@
 -- Descripción:				Se agregan NOLOCK y la llamada de columnas con nombre especifico de la tabla durante su llamado.
 --							Ajustes de left joins (esto ajusto detalles de datos repetidos)
 -- =============================================
+-- Modificado Por:			Neri del Angel
+-- Fecha de Modificación:	21 de Marzo del 2023
+-- Descripción:				Se ajusta para que muestre el precio unitario en Precio Unitario e Importe Total en el resultado de la consulta,
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ConsultaComprobantesPorContrato]
     @IdContrato INT,
     @IdUsuario INT
@@ -116,13 +120,13 @@ BEGIN
     SELECT #TablaComprobantesPorContrato.IdComprobante,
            ----------------------------------------------------------------------- 
            /*Se suma el importe total pero se deja con el nombre de PrecioUnitario para no afectar en codigo :
-					Cuando no hay importe total si se toma el precio unitario*/
+					Cuando no hay precio unitario si se toma el importe total */
            --------------------------------------------- DR 06/08/2020
            SUM(   CASE
-                      WHEN FI_PedimentoComprobanteDetalle.ImporteTotal IS NOT NULL THEN
-                          FI_PedimentoComprobanteDetalle.ImporteTotal
-                      ELSE
+                      WHEN ISNULL(FI_PedimentoComprobanteDetalle.PrecioUnitario, 0) > 0 THEN
                           FI_PedimentoComprobanteDetalle.PrecioUnitario
+                      ELSE
+                          FI_PedimentoComprobanteDetalle.ImporteTotal
                   END
               ),
            SUM(ISNULL(FI_PedimentoComprobanteDetalle.Cantidad, 0)),
@@ -131,10 +135,10 @@ BEGIN
 			Hace practicamente lo mismo que el subtotal
 			--------------------------------------------------------  DR 06/08/2020*/
            SUM(   CASE
-                      WHEN FI_PedimentoComprobanteDetalle.ImporteTotal IS NOT NULL THEN
-                          FI_PedimentoComprobanteDetalle.ImporteTotal
-                      ELSE
+                      WHEN ISNULL(FI_PedimentoComprobanteDetalle.PrecioUnitario, 0) > 0 THEN
                           FI_PedimentoComprobanteDetalle.PrecioUnitario
+                      ELSE
+                          FI_PedimentoComprobanteDetalle.ImporteTotal
                   END
               )
     FROM #TablaComprobantesPorContrato
