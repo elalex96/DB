@@ -1674,7 +1674,6 @@
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerArchivoEntregable.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDetalleDocumentosEntregables.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregables.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregables_V2.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerDocumentosEntregablesDescarga.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SHELL_ObtenerRutaDocumentosEntregables.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EN_SP_Actualiza_Frecuencias.sql" />
