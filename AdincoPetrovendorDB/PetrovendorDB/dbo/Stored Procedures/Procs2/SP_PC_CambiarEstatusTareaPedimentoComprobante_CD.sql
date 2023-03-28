@@ -1,7 +1,26 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_CambiarEstatusTareaPedimentoComprobante_CD'
+)
+    DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/09/2020>
 -- Description:	<Cambio de estatus de de la tarea de la aprobacion de comprobante extranjero>
+-- =============================================
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <01/09/2023>
+-- Description:	<se pasa el importe total en el campo de precio unitario para adinco>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -303,7 +322,7 @@ BEGIN
 					@IdPedimentoComprobante_ADINCO,
 					'-',
 					'-',
-					SUM(PCD.PrecioUnitario),
+					SUM(PCD.ImporteTotal),
 					US.IdUsuarioADINCO,
 					GETDATE(),
 					SUM(PCD.ImporteTotal)
