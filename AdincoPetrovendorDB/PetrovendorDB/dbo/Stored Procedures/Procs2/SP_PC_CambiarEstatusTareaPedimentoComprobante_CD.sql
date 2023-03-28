@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -282,7 +282,8 @@ BEGIN
 					 [CreadoEn],
 					 [IdFiscalP],
 					 [RazonSocialP],
-					 CuentaBancaria
+					 CuentaBancaria,
+					 IdPedimentoComprobantePetrovendor
 				)
 				SELECT
 					PC.IdContrato,
@@ -301,7 +302,8 @@ BEGIN
 					PC.CreadoEn,
 					PC.IdFiscalP,
 					PC.RazonSocialP,
-					PC.CuentaBancaria
+					PC.CuentaBancaria,
+					PC.IdPedimentoComprobante
 				FROM Petrovendor.dbo.FI_PedimentoComprobante AS PC
 				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PC.CreadoPor
 				WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante;
