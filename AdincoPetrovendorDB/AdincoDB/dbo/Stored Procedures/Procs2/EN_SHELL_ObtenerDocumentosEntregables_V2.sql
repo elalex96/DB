@@ -191,7 +191,7 @@ BEGIN
     JOIN EN_EntregableDocumento ED  (NOLOCK)
             ON DV.idInstanciaEntregable         =   ED.idInstanciaEntregable
             AND DV.DocumentoEntregableId        =   ED.DocumentoEntregableId
-            AND ED.idContratoEntregable         =   CE.IdContratoEntregable         
+            AND CE.IdContratoEntregable			= ED.idContratoEntregable                   
             AND ED.Activo = 1   --> EN_EntregableDocumento ACTIVO
     JOIN EN_TipoArchivo T       (NOLOCK)
             ON  ED.idTipoArchivo                =   T.idTipoArchivo     
@@ -315,14 +315,14 @@ BEGIN
             SC.Ruta,
             SC.RutaAnterior
         FROM #Documentos D    
-            JOIN EN_ReceptorEntregable RE 
+            JOIN EN_ReceptorEntregable RE  (NOLOCK)
                 ON D.IdReceptorEntregable  =   RE.IdReceptorEntregable AND
                     D.EsDeProceso = 0 -->QUE NO SEA DOCUMENTO DE UN PROCESO
             JOIN CO_ContratoEtapas CE   (NOLOCK)
                 ON D.FechaProgramadaEntrega BETWEEN CE.FechaInicio AND CE.FechaFin
                 AND CE.EtapaId = @IdCarpeta
 				AND  CE.EtapaId = @IdEtapaContrato
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC  (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -367,7 +367,7 @@ BEGIN
                 ON D.FechaProgramadaEntrega BETWEEN CE.FechaInicio AND CE.FechaFin
                 AND CE.EtapaId = @IdCarpeta
 				AND CE.EtapaId= @IdEtapaContrato
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC  (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -402,13 +402,13 @@ BEGIN
             SC.RutaAnterior,
             US.Nombre,
             ISNULL(CA.Limitador,0)
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
-                ON SC.IdCarpeta = CA.IdPadre
-                    AND SC.Nivel = CA.Nivel
-                    AND SC.IdContrato = CA.IdContrato
+        FROM EN_CarpetasArchivosVisor AS CA  (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC  (NOLOCK)
+                ON CA.IdPadre =SC.IdCarpeta 
+                    AND CA.Nivel = SC.Nivel 
+                    AND CA.IdContrato = SC.IdContrato 
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE CA.IsCarpeta = 1
 			AND (CA.IdEtapaContrato = @IdEtapaContrato OR CA.IdEtapaContrato =0)
@@ -460,13 +460,13 @@ BEGIN
             SC.RutaAnterior,
             US.Nombre,
             1
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
-                ON SC.IdCarpeta = CA.IdPadre
-                    AND SC.Nivel = CA.Nivel
-                    AND SC.IdContrato = CA.IdContrato
+        FROM EN_CarpetasArchivosVisor AS CA  (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
+                ON CA.IdPadre = SC.IdCarpeta 
+                    AND  CA.Nivel = SC.Nivel
+                    AND CA.IdContrato = SC.IdContrato 
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE IsArchivo = 1
 			AND (CA.IdEtapaContrato = @IdEtapaContrato OR CA.IdEtapaContrato =0)
@@ -501,9 +501,9 @@ BEGIN
                 1,
                 EP.IdEtapa
             FROM #Documentos D    
-                JOIN EN_Etapa EP
+                JOIN EN_Etapa EP (NOLOCK)
                     ON D.EtapaPozoId = EP.IdEtapa
-                LEFT JOIN EN_SecuenciaCarpetas AS SC
+                LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -548,11 +548,11 @@ BEGIN
                 D.IdReceptorEntregable,
                 ML.Alias
             FROM #Documentos D    
-                JOIN EN_MarcoLegal ML
+                JOIN EN_MarcoLegal ML (NOLOCK)
                     ON  D.IdMarcoLegal =   ML.IdMarcoLegal AND
                         D.IdReceptorEntregable = @IdCarpeta AND
                         D.EsDeProceso = 0 -->QUE NO SEA DOCUMENTO DE UN PROCESO
-                LEFT JOIN EN_SecuenciaCarpetas AS SC
+                LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                     ON SC.IdCarpeta = @IdCarpeta
                         AND SC.Nivel = @Nivel
                         AND SC.IdContrato = @ContratoId
@@ -593,13 +593,13 @@ BEGIN
             US.Nombre,
             ISNULL(CA.Limitador,0),
             CA.IsPozo
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE CA.IsCarpeta = 1			
             AND CA.IdPadre = @IdCarpeta
@@ -648,13 +648,13 @@ BEGIN
             CA.Meta,
             1,
             CA.IsPozo
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE IsArchivo = 1
             AND IdPadre = @IdCarpeta
@@ -693,9 +693,9 @@ BEGIN
                 1,
                 D.EtapaPozoId
             FROM #Documentos D    
-            JOIN EN_MarcoLegal AS ML
+            JOIN EN_MarcoLegal AS ML (NOLOCK)
                 ON D.IdMarcoLegal = ML.IdMarcoLegal
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                     ON SC.IdCarpeta = @IdCarpeta
                         AND SC.Nivel = @Nivel
                         AND SC.IdContrato = @ContratoId
@@ -744,7 +744,7 @@ BEGIN
                 SC.RutaAnterior,
                 D.IdReceptorEntregable
             FROM #Documentos D    
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                     ON SC.IdCarpeta = @IdCarpeta
                         AND SC.Nivel = @Nivel
                         AND SC.IdContrato = @ContratoId
@@ -789,8 +789,8 @@ BEGIN
             ISNULL(CA.Limitador,0),
             @IdReceptorEntregable,
             CA.IsPozo
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -798,7 +798,7 @@ BEGIN
                     AND SC.IdReceptorEntregable = @IdReceptorEntregable
                     AND SC.IsPozo = @IsPozo
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE IsCarpeta = 1
 			AND (CA.IdEtapaContrato = @IdEtapaContrato OR CA.IdEtapaContrato =0)
@@ -850,8 +850,8 @@ BEGIN
             CA.Meta,
             1,
             @IdReceptorEntregable
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -859,7 +859,7 @@ BEGIN
                     AND SC.IdReceptorEntregable = @IdReceptorEntregable
                     AND SC.IsPozo = @IsPozo
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE IsArchivo = 1
 			AND (CA.IdEtapaContrato = @IdEtapaContrato OR CA.IdEtapaContrato =0)
@@ -900,9 +900,9 @@ BEGIN
                 D.EtapaPozoId,
                 1
             FROM #Documentos D 
-            JOIN EN_Entregable  E
+            JOIN EN_Entregable  E (NOLOCK)
                 ON  D.IdEntregable  = E.IdEntregable
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                     ON SC.IdCarpeta = @IdCarpeta
                         AND SC.Nivel = @Nivel
                         AND SC.IdContrato = @ContratoId
@@ -968,7 +968,7 @@ BEGIN
                 D.FechaProgramadaEntregaAnioMes,
                 SC.RutaAnterior
             FROM #Documentos D 
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                     ON SC.IdCarpeta = @IdCarpeta
                         AND SC.Nivel = @Nivel
                         AND SC.IdContrato = @ContratoId
@@ -1035,8 +1035,8 @@ BEGIN
             CA.Meta,
             1,
             @IdReceptorEntregable
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -1047,7 +1047,7 @@ BEGIN
                     AND SC.IsPozo = @IsPozo
                     AND SC.IdReceptorEntregable = @IdReceptorEntregable
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE IsArchivo = 1		
             AND IdPadre = @IdCarpeta
@@ -1112,14 +1112,14 @@ Meta)
                 ED.UUIDAmazon,
                 ED.Meta
             FROM #Documentos D 
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                     ON SC.IdCarpeta = @IdCarpeta
                         AND SC.Nivel = @Nivel
                         AND SC.IdContrato = @ContratoId
                         AND SC.IsPozo = 1
                         AND SC.IdReceptorEntregable = @IdReceptorEntregable
 						AND SC.IdEtapaContrato = @IdEtapaContrato
-            LEFT JOIN EN_EntregableDocumento AS ED
+            LEFT JOIN EN_EntregableDocumento AS ED (NOLOCK)
                 ON D.DocumentoEntregableId = ED.DocumentoEntregableId
             WHERE D.IdEntregable = @IdCarpeta
                 AND D.EsDeProceso = 1
@@ -1184,7 +1184,7 @@ Meta)
                 SC.AnioMes,
                 D.IdEntregable
             FROM #Documentos D 
-            LEFT JOIN EN_SecuenciaCarpetas AS SC
+            LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                     ON SC.IdCarpeta = D.IdMarcoLegal
                         AND SC.Nivel = @Nivel
                         AND SC.IdContrato = @ContratoId
@@ -1268,8 +1268,8 @@ Meta)
             1,
             SC.AnioMes,
             SC.IdReceptorEntregable
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -1280,7 +1280,7 @@ Meta)
                     AND SC.IsPozo = @IsPozo
                     AND SC.IdReceptorEntregable = @IdReceptorEntregable
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE IsArchivo = 1
             AND IdPadre = @IdCarpeta
@@ -1374,7 +1374,7 @@ Meta)
             ED.Meta,
             SC.IdEntregable
         FROM #Documentos D 
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -1382,7 +1382,7 @@ Meta)
                     AND SC.Frecuencia = @Frecuencia
                     AND SC.IdEntregable = @IdEntregable
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN EN_EntregableDocumento AS ED
+        LEFT JOIN EN_EntregableDocumento AS ED (NOLOCK)
             ON D.DocumentoEntregableId = ED.DocumentoEntregableId
         WHERE D.IdMarcoLegal = @IdCarpeta
             AND D.EsDeProceso = 0
@@ -1455,8 +1455,8 @@ Frecuencia,IdEntregable)
             1,
             SC.Frecuencia,
             CA.IdEntregable
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = CA.IdPadre
                     AND SC.Nivel = @Nivel
                     AND SC.IdContrato = @ContratoId
@@ -1465,7 +1465,7 @@ Frecuencia,IdEntregable)
                     AND SC.AnioMes = @AnioMes
                     AND SC.IdReceptorEntregable = @IdReceptorEntregable
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE CA.IsArchivo = 1
             AND CA.IdPadre = @IdCarpeta
@@ -1522,14 +1522,14 @@ Frecuencia,IdEntregable)
             SC.AnioMes,
             ISNULL(CA.Limitador,0),
             CA.IsPozo
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
                 ON SC.IdCarpeta = @IdCarpeta
                     AND SC.Nivel = @Nivel
-                    AND SC.IdContrato = CA.IdContrato
+                    AND CA.IdContrato = SC.IdContrato 
 					AND SC.IdEtapaContrato = @IdEtapaContrato
                     --AND SC.IsCarpetaUsuario = 1
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE IsCarpeta = 1
             AND IdPadre = @IdCarpeta
@@ -1599,15 +1599,15 @@ Frecuencia)
             CA.Meta,
             1,
             SC.Frecuencia
-        FROM EN_CarpetasArchivosVisor AS CA
-        LEFT JOIN EN_SecuenciaCarpetas AS SC
-                ON SC.IdCarpeta = CA.IdPadre
+        FROM EN_CarpetasArchivosVisor AS CA (NOLOCK)
+        LEFT JOIN EN_SecuenciaCarpetas AS SC (NOLOCK)
+                ON CA.IdPadre = SC.IdCarpeta  
                     AND SC.Nivel = @Nivel
-                    AND SC.IdContrato = CA.IdContrato
+                    AND CA.IdContrato = SC.IdContrato  
                     AND SC.IsCarpetaUsuario = 1
                     AND SC.Frecuencia = @Frecuencia
 					AND SC.IdEtapaContrato = @IdEtapaContrato
-        LEFT JOIN AP_Usuario AS US
+        LEFT JOIN AP_Usuario AS US (NOLOCK)
             ON CA.CreadoPor = US.UsuarioID
         WHERE CA.IsArchivo = 1
             AND CA.IdPadre = @IdCarpeta
