@@ -324,15 +324,28 @@ BEGIN
 					@IdPedimentoComprobante_ADINCO,
 					'-',
 					'-',
-					SUM(PCD.ImporteTotal),
+					CASE
+						WHEN PC.TipoOrigen = 'PC_CD' THEN SUM(PCD.PrecioUnitario) --PEDIMENTO DE IMPORTACION COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'CE_CD' THEN SUM(PCD.PrecioUnitario) --COMPROBANTE EXTRANJERO COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'PC_M' THEN SUM(PCD.ImporteTotal) --PEDIMENTO/COMPROBANTE MERCADEO
+						ELSE SUM(PCD.ImporteTotal)
+					END,
 					US.IdUsuarioADINCO,
 					GETDATE(),
-					SUM(PCD.ImporteTotal)
+					CASE
+						WHEN PC.TipoOrigen = 'PC_CD' THEN SUM(PCD.PrecioUnitario) --PEDIMENTO DE IMPORTACION COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'CE_CD' THEN SUM(PCD.PrecioUnitario) --COMPROBANTE EXTRANJERO COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'PC_M' THEN SUM(PCD.ImporteTotal) --PEDIMENTO/COMPROBANTE MERCADEO
+						ELSE SUM(PCD.ImporteTotal)
+					END
 				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
 				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor
+					JOIN Petrovendor.dbo.FI_PedimentoComprobante AS PC
+						ON PCD.IdPedimentoComprobante = PC.IdPedimentoComprobante
 				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante
-				GROUP BY IdPedimentoComprobante,
-						US.IdUsuarioADINCO;
+				GROUP BY PC.IdPedimentoComprobante,
+						US.IdUsuarioADINCO,
+						PC.TipoOrigen;
 
 				INSERT INTO Adinco.dbo.FI_Documento
 				(
