@@ -72,7 +72,7 @@ BEGIN
 	END,
 	 CASE
 		WHEN ISNULL(@IdFactura,0) > 0
-		THEN 2
+		THEN 1
 		ELSE 3
 	END,
      @CostosAtribuibles,
