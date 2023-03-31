@@ -1,5 +1,4 @@
-﻿
-CREATE PROCEDURE p_GeneracionTransferenciaConLigueDeComplemento
+﻿CREATE PROCEDURE p_GeneracionTransferenciaConLigueDeComplemento
     @pIdContrato int,
     @pCreadoPor  int,
     @pIds        varchar(8000)
@@ -40,9 +39,6 @@ AS
             @MismaTransferencia             BIT,
             @IdCuentaBancariaOrigen         INT,
             @IdCuentaBancariaDestino        INT,
-            @Error                          VARCHAR(1000),
-            @TIeneError                     BIT          = 0,
-            @Sincronizar                    INT          = 1,
             @IdMoneda                       INT;
 
         -- SE INSERTA LOS ID SELECCIONADOS EN PANTALLA
@@ -98,9 +94,6 @@ AS
                 SET @MismaTransferencia = 0
                 SET @IdCuentaBancariaOrigen = 0;
                 SET @IdCuentaBancariaDestino = 0;
-                SET @Error = '';
-                SET @TieneError = 0;
-                SET @Sincronizar = 1;
                 SET @IdMoneda = 0;
 
                 BEGIN TRY
@@ -279,19 +272,19 @@ AS
                                                     ISNULL(@IdCuentaBancariaOrigen, 0) = 0
                                                     AND ISNULL(@IdCuentaBancariaDestino, 0) = 0
                                                 )
-                                                THEN CONCAT(Error, '[No se encontraron ambas cuentas bancarias] ')
+                                                THEN CONCAT(Error, '[No se encontraron ambas cuentas bancarias, verifique que los formato ingresados de este dato sea como texto] ')
                                             WHEN
                                                 (
                                                     ISNULL(@IdCuentaBancariaOrigen, 0) = 0
                                                     AND ISNULL(@IdCuentaBancariaDestino, 0) > 0
                                                 )
-                                                THEN CONCAT(Error, '[No se encontró la cuenta bancaria origen] ')
+                                                THEN CONCAT(Error, '[No se encontró la cuenta bancaria origen, verifique que los formato ingresados de este dato sea como texto] ')
                                             WHEN
                                                 (
                                                     ISNULL(@IdCuentaBancariaOrigen, 0) > 0
                                                     AND ISNULL(@IdCuentaBancariaDestino, 0) = 0
                                                 )
-                                                THEN CONCAT(Error, '[No se encontró la cuenta bancaria destino] ')
+                                                THEN CONCAT(Error, '[No se encontró la cuenta bancaria destino, verifique que los formato ingresados de este dato sea como texto] ')
                                             ELSE
                                                 Error
                                         END,
@@ -324,7 +317,7 @@ AS
                     IF (
                            (
                                SELECT
-                                   LEN(REPLACE(Error, ' ', ''))
+                                   LEN(REPLACE(ISNULL(Error,''), ' ', ''))
                                FROM
                                    FI_TransferImportacion (NOLOCK)
                                WHERE
@@ -585,18 +578,9 @@ AS
                 END CATCH;
 
                 SELECT
-                    @Error       = ISNULL(Error, ''),
-                    @TieneError  = TieneError,
-                    @Sincronizar = Sincronizar
-                FROM
-                    FI_TransferImportacion (NOLOCK)
-                WHERE
-                    FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion;
-
-                SELECT
                     @IdTransferenciaImportacion = MIN(IdTransferenciaImportacion)
                 FROM
-                    FI_TransferImportacion (NOLOCK)
+                    #tmpTransferencias (NOLOCK)
                 WHERE
                     IdTransferenciaImportacion > @IdTransferenciaImportacion
             END
