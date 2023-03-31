@@ -1,4 +1,17 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_FI_EnviarPedimentoADINCO'
+)
+    DROP PROCEDURE SP_PC_FI_EnviarPedimentoADINCO;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		DANIEL AC
 -- Create date: 28-03-18
@@ -14,7 +27,10 @@
 -- Update date: <28/10/2019>
 -- Description:	<se agrego la bitacora de envio adinco>
 -- =============================================
-
+-- Author:		<Alexander Gomez>
+-- Create date: <01/09/2023>
+-- Description:	<se pasa el importe total en el campo de precio unitario para adinco>
+-- =============================================
 CREATE  PROCEDURE [dbo].[SP_PC_FI_EnviarPedimentoADINCO]
     -- Add the parameters for the stored procedure here
     @IdPedimentoComprobante INT,   
@@ -214,8 +230,8 @@ BEGIN
                '-',
                '-',
                '-',
-               SUM(PCD.PrecioUnitario),
-               SUM(PCD.Cantidad),
+               SUM(PCD.ImporteTotal),
+               1,
                SUM(PCD.ImporteTotal),
                @IdUsuarioAdinco,
                GETDATE()
@@ -247,7 +263,7 @@ BEGIN
         WHERE IdPedimentoComprobante = @IdPedimentoComprobante
               AND IsEliminado = 0;
 
-		DECLARE @ID_DOCUMENTO_ADINCO INT = (SELECT SCOPE_IDENTITY())
+		DECLARE @ID_DOCUMENTO_ADINCO INT = (SELECT SCOPE_IDENTITY());
 
 		EXEC dbo.SP_WA_InserRegistroPaseAdinco  @IdPedimentoComprobante,       -- int
 		                                        4,       -- int
@@ -258,146 +274,9 @@ BEGIN
 		                                        'PASE DE PEDIMENTO DE IMPORTACION - ENVIO POR SP_PC_FI_EnviarPedimentoADINCO',       -- nvarchar(max)
 		                                        '',            -- nvarchar(50)
 		                                         0;           -- bit
-		
 
-		------------------- Registro de gasto en petrovendor ------------------------------------------
-		--IF(@IdAceptacionPedido > 0)
-		--BEGIN
-		--	INSERT INTO dbo.CO_Registro
-		--	(
-		--		IdPrograma,
-		--		IdFactura,
-		--		MontoRegistro,
-		--		InicioEjecucion,
-		--		FinEjecucion,
-		--		Comentarios,
-		--		MesPresentacion,
-		--		IdEstado,
-		--		IdUsuarioCreadoPor,
-		--		FecMovto,
-		--		IdInstalacion,
-		--		CreadoPor,
-		--		IdPedimentoComprobante,
-		--		CvTipoDocFacturacion,
-		--		CentroCostos,
-		--		IdLineaPresupuestoMes,
-		--		CostosAtribuiblesAdministracion,
-		--		IdGastoRubro,
-		--		PCN,
-		--		IdCBSISH,
-		--		IdAceptacionPedidoDetalle
-		--	)
-		--	SELECT spdlp.IdLineaPresupuesto,
-		--		NULL,
-		--		(apd.Cantidad * pod.PrecioUnitario),
-		--		p.FechaRecepcionServicio,
-		--		ap.Creado,
-		--		CONCAT(POD.MaterialCotizadoTextoC, ' - ', i.NombreInstalacion COLLATE Modern_Spanish_CI_AS),
-		--		DATEADD(MONTH, DATEDIFF(MONTH, 0, p.FechaRecepcionServicio), 0),
-		--		10000,
-		--		@IdUsuario,
-		--		GETDATE(),
-		--		spdlp.IdInstalacion,
-		--		@IdUsuario,
-		--		@IdPedimentoComprobante,
-		--		3,
-		--		spdlp.IdCentroCosto,
-		--		spdlp.IdLineaPresupuesto,
-		--		0,
-		--		apd.ClasificacionCN,
-		--		apd.PCN,
-		--		vp.IdCatalogoHidrocarburos,
-		--		apd.IdAceptacionPedidoDetalle
-		--	FROM dbo.MM_AceptacionPedidoDetalle apd 
-		--	INNER JOIN dbo.MM_PedidoDetalle pd ON pd.IdPedidoDetalle = apd.IdPedidoDetalle
-		--	INNER JOIN dbo.MM_PeticionOfertaDetalle pod ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle
-		--	INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdlp ON spdlp.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle 
-		--	INNER JOIN dbo.MM_Pedido p ON p.IdPedido = pd.IdPedido
-		--	INNER JOIN dbo.MM_AceptacionPedido ap ON ap.IdAceptacionPedido = apd.IdAceptacionPedido
-		--	INNER JOIN Adinco.dbo.CO_Instalacion i ON i.IdInstalacion = spdlp.IdInstalacion
-		--	LEFT JOIN MM_PCN_ValoresPesos vp ON vp.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
-		--	WHERE apd.IdAceptacionPedido = @IdAceptacionPedido
-
-		--	--Copia del gasto a la bd de Adinco
-		--	INSERT INTO Adinco.dbo.CO_Registro
-		--	(
-		--		IdPrograma,
-		--		IdFactura,
-		--		MontoRegistro,
-		--		InicioEjecucion,
-		--		FinEjecucion,
-		--		Comentarios,
-		--		MesPresentacion,
-		--		IdEstado,
-		--		IdUsuarioCreadoPor,
-		--		IdUsuarioModPor,
-		--		FecMovto,
-		--		IdInstalacion,
-		--		CreadoPor,
-		--		Fila,
-		--		IdPedimentoComprobante,
-		--		CvTipoDocFacturacion,
-		--		IdCatalogoCuentasSH,
-		--		Poliza,
-		--		IsEditable,
-		--		CostosAtribuiblesAdministracion,
-		--		IdGastoRubro,
-		--		PCN,
-		--		IdCBSISH
-		--	)
-		--	SELECT rp.IdPrograma,
-		--	rp.IdFactura,
-		--	rp.MontoRegistro,
-		--	rp.InicioEjecucion,
-		--	rp.FinEjecucion,
-		--	rp.Comentarios,
-		--	rp.MesPresentacion,
-		--	rp.IdEstado,
-		--	@IdUsuarioAdinco,
-		--	rp.IdUsuarioModPor,
-		--	rp.FecMovto,
-		--	rp.IdInstalacion,
-		--	@IdUsuarioAdinco,
-		--	rp.Fila,
-		--	@ID_PEDIMENTOCOMPROBANTE_ADINCO,
-		--	rp.CvTipoDocFacturacion,
-		--	rp.IdCatalogoCuentasSH,
-		--	rp.Poliza,
-		--	1,
-		--	rp.CostosAtribuiblesAdministracion,
-		--	rp.IdGastoRubro,
-		--	rp.PCN,
-		--	rp.IdCBSISH
-		--	FROM dbo.CO_Registro rp
-		--	WHERE rp.IdAceptacionPedidoDetalle 
-
-		--	INSERT INTO dbo.CO_RelacionRegistroAdinco
-		--	(
-		--		IdRegistroPetrovendor,
-		--		IdRegistroAdinco
-		--	)
-		--	SELECT rp.IdRegistro,
-		--		ra.IdRegistro
-		--	FROM dbo.CO_Registro rp
-		--	INNER JOIN Adinco.dbo.CO_Registro ra ON ra.IdAceptacionPedidoDetalle = rp.IdAceptacionPedidoDetalle
-		--	WHERE rp.IdPedimentoComprobante = @IdPedimentoComprobante
-		--END
-		
-        --COMMIT TRAN tran1;
 		 SELECT 'ENVIADO',
-		 @ID_PEDIMENTOCOMPROBANTE_ADINCO
-
-    --END TRY
-    --BEGIN CATCH
-    --    ROLLBACK TRAN tran1;
-    --    SELECT 'ERROR_PROCESO',
-    --           ERROR_NUMBER() AS ErrorNumber,
-    --           ERROR_SEVERITY() AS ErrorSeverity,
-    --           ERROR_STATE() AS ErrorState,
-    --           ERROR_PROCEDURE() AS ErrorProcedure,
-    --           ERROR_LINE() AS ErrorLine,
-    --           ERROR_MESSAGE() AS ErrorMessage;
-    --END CATCH;
+		 @ID_PEDIMENTOCOMPROBANTE_ADINCO;
 
 END;
 

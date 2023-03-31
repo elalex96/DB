@@ -1,7 +1,26 @@
-﻿-- =============================================
+USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_CambiarEstatusTareaPedimentoComprobante_CD'
+)
+    DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/09/2020>
 -- Description:	<Cambio de estatus de de la tarea de la aprobacion de comprobante extranjero>
+-- =============================================
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <01/09/2023>
+-- Description:	<se pasa el importe total en el campo de precio unitario para adinco>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -263,7 +282,8 @@ BEGIN
 					 [CreadoEn],
 					 [IdFiscalP],
 					 [RazonSocialP],
-					 CuentaBancaria
+					 CuentaBancaria,
+					 IdPedimentoComprobantePetrovendor
 				)
 				SELECT
 					PC.IdContrato,
@@ -282,7 +302,8 @@ BEGIN
 					PC.CreadoEn,
 					PC.IdFiscalP,
 					PC.RazonSocialP,
-					PC.CuentaBancaria
+					PC.CuentaBancaria,
+					PC.IdPedimentoComprobante
 				FROM Petrovendor.dbo.FI_PedimentoComprobante AS PC
 				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PC.CreadoPor
 				WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante;
@@ -303,15 +324,28 @@ BEGIN
 					@IdPedimentoComprobante_ADINCO,
 					'-',
 					'-',
-					SUM(PCD.PrecioUnitario),
+					CASE
+						WHEN PC.TipoOrigen = 'PC_CD' THEN SUM(PCD.PrecioUnitario) --PEDIMENTO DE IMPORTACION COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'CE_CD' THEN SUM(PCD.PrecioUnitario) --COMPROBANTE EXTRANJERO COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'PC_M' THEN SUM(PCD.ImporteTotal) --PEDIMENTO/COMPROBANTE MERCADEO
+						ELSE SUM(PCD.ImporteTotal)
+					END,
 					US.IdUsuarioADINCO,
 					GETDATE(),
-					SUM(PCD.ImporteTotal)
+					CASE
+						WHEN PC.TipoOrigen = 'PC_CD' THEN SUM(PCD.PrecioUnitario) --PEDIMENTO DE IMPORTACION COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'CE_CD' THEN SUM(PCD.PrecioUnitario) --COMPROBANTE EXTRANJERO COMPRA DIRECTA
+						WHEN PC.TipoOrigen = 'PC_M' THEN SUM(PCD.ImporteTotal) --PEDIMENTO/COMPROBANTE MERCADEO
+						ELSE SUM(PCD.ImporteTotal)
+					END
 				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
 				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor
+					JOIN Petrovendor.dbo.FI_PedimentoComprobante AS PC
+						ON PCD.IdPedimentoComprobante = PC.IdPedimentoComprobante
 				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante
-				GROUP BY IdPedimentoComprobante,
-						US.IdUsuarioADINCO;
+				GROUP BY PC.IdPedimentoComprobante,
+						US.IdUsuarioADINCO,
+						PC.TipoOrigen;
 
 				INSERT INTO Adinco.dbo.FI_Documento
 				(
