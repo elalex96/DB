@@ -1,31 +1,16 @@
-﻿USE [Adinco]
-
-IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'p_GeneracionTransferenciaConLigueDeComplemento'
-    )
-    DROP PROCEDURE p_GeneracionTransferenciaConLigueDeComplemento
-GO
+﻿
 CREATE PROCEDURE p_GeneracionTransferenciaConLigueDeComplemento
     @pIdContrato int,
     @pCreadoPor  int,
-    @pIds        varchar(max)
+    @pIds        varchar(8000)
 AS
     BEGIN
 
-        IF OBJECT_ID('tempdb..#TransferRealizadas') IS NOT NULL
-            DROP TABLE #TransferRealizadas
         IF OBJECT_ID('tempdb..#tmpId') IS NOT NULL
             DROP TABLE #tmpId
         IF OBJECT_ID('tempdb..#tmpTransferencias') IS NOT NULL
             DROP TABLE #tmpTransferencias
 
-        CREATE TABLE #TransferRealizadas (UUID varchar(100))
         CREATE TABLE #tmpId (Id int)
         CREATE TABLE #tmpTransferencias
             (
@@ -54,8 +39,13 @@ AS
             @IdFacturaDeComplementoLigada   INT,
             @MismaTransferencia             BIT,
             @IdCuentaBancariaOrigen         INT,
-            @IdCuentaBancariaDestino        INT;
+            @IdCuentaBancariaDestino        INT,
+            @Error                          VARCHAR(1000),
+            @TIeneError                     BIT          = 0,
+            @Sincronizar                    INT          = 1,
+            @IdMoneda                       INT;
 
+        -- SE INSERTA LOS ID SELECCIONADOS EN PANTALLA
         INSERT INTO #tmpId
             (
                 Id
@@ -65,6 +55,7 @@ AS
                     FROM
                         [dbo].[fnSplitString](@pIds, ',')
 
+        -- SE OBTIENEN LAS LINEAS QUE SE CONVERTIRAN EN TRANSFERENCIAS DE LOS ID SELECCIONADOS ANTERIORMENTE
         INSERT INTO #tmpTransferencias
             (
                 IdTransferenciaImportacion,
@@ -76,7 +67,7 @@ AS
                 UUIDPrincipal
             )
                     SELECT
-                        IdTransferenciaImportacion = min(IdTransferenciaImportacion),
+                        IdTransferenciaImportacion,
                         RFCEmisor,
                         CuentaOrigen,
                         CuentaDestino,
@@ -91,39 +82,31 @@ AS
                     WHERE
                         IdContrato = @pIdContrato
                         AND ISNULL(Sincronizar, 0) = 1
-                    GROUP BY
-                        RFCEmisor,
-                        CuentaOrigen,
-                        CuentaDestino,
-                        FechaPago,
-                        NumeroPoliza,
-                        UUIDFactura
 
+        -- SE COMIENZA CON LA EJECUCIÓN DE INSERTADO DE TRANSFERENCIA Y TRANSFER FACTURA APARTIR DE LA MINIMA POR INSERTAR
         SELECT
             @IdTransferenciaImportacion = MIN(IdTransferenciaImportacion)
         FROM
-            FI_TransferImportacion (NOLOCK)
-            INNER JOIN
-                #tmpId
-                    ON FI_TransferImportacion.Id = #tmpId.Id
-        WHERE
-            IdContrato = @pIdContrato
-            AND ISNULL(Sincronizar, 0) = 1
+            #tmpTransferencias (NOLOCK)
 
         WHILE @IdTransferenciaImportacion IS NOT NULL
             BEGIN
-                
-                SET @IdTransfer = 0
+
                 SET @IdTransferFactura = 0
                 SET @IdFacturaDeComplementoSinLigar = 0
                 SET @IdFacturaDeComplementoLigada = 0
                 SET @MismaTransferencia = 0
                 SET @IdCuentaBancariaOrigen = 0;
                 SET @IdCuentaBancariaDestino = 0;
+                SET @Error = '';
+                SET @TieneError = 0;
+                SET @Sincronizar = 1;
+                SET @IdMoneda = 0;
 
                 BEGIN TRY
                     BEGIN TRAN TRAN2
 
+                    -- se verifica si la factura por buscar ya contiene transferecias relacionadas
                     UPDATE
                         #tmpTransferencias
                     SET
@@ -133,17 +116,17 @@ AS
                     FROM
                         #tmpTransferencias
                         INNER JOIN
-                            FI_TransferImportacion
-                                ON #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
-                                   AND #tmpTransferencias.IdTransferenciaImportacion = FI_TransferImportacion.IdTransferenciaImportacion
-                        INNER JOIN
                             FI_Factura
-                                ON FI_TransferImportacion.UUIDFactura = FI_Factura.UUID
+                                ON #tmpTransferencias.UUIDPrincipal = FI_Factura.UUID
+                                   AND #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
                         INNER JOIN
                             FI_TransferFactura
                                 ON FI_Factura.IdFactura = FI_TransferFactura.IdFactura
                                    AND FI_TransferFactura.CvTipoDocFacturacion = 1
+                    WHERE
+                        #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
 
+                    --SE ASIGNA FACTURA COMPLEMENTO DE ACUERDO AL PPD DEL ARCHIVO
                     UPDATE
                         #tmpTransferencias
                     SET
@@ -167,19 +150,19 @@ AS
                     FROM
                         #tmpTransferencias
                         INNER JOIN
-                            FI_TransferImportacion
-                                ON #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
-                                   AND #tmpTransferencias.IdTransferenciaImportacion = FI_TransferImportacion.IdTransferenciaImportacion
-                        INNER JOIN
                             FI_CPDocRelacionado
-                                ON FI_TransferImportacion.UUIDFactura = FI_CPDocRelacionado.IdDocumento
+                                ON #tmpTransferencias.UUIDPrincipal = FI_CPDocRelacionado.IdDocumento
+                                   AND #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
                         INNER JOIN
                             FI_ComplementoDePago
                                 ON FI_CPDocRelacionado.IdComplementoDePago = FI_ComplementoDePago.IdComplementoDePago
                         LEFT JOIN
                             FI_TransferFactura
                                 ON FI_ComplementoDePago.IdFactura = FI_TransferFactura.IdFactura
+                    WHERE
+                        #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
 
+                    --SE ASIGNA FACTURA PRINCIPAL (PPD)
                     UPDATE
                         #tmpTransferencias
                     SET
@@ -195,17 +178,22 @@ AS
                         INNER JOIN
                             FI_Factura
                                 ON #tmpTransferencias.UUIDPrincipal = FI_Factura.UUID
+                                   AND #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
                     WHERE
                         IdTransferenciaImportacion = @IdTransferenciaImportacion
 
+
+                    -- VERIFICACIÓN SI LA FACTURA YA CONTIENE TRANSFERENCIA GUARDADA ANTERIORMENTE
                     UPDATE
                         FI_TransferImportacion
                     SET
                         Error = CONCAT(
-                                          'No fue generada la transferencia ya que el documento de facturación ya contiene una transferencia relacionada en la Transferencia: ',
+                                          '[No fue generada la transferencia ya que el documento de facturación ya contiene una transferencia relacionada en la Transferencia: ',
                                           #tmpTransferencias.IdTransfer, ', TransferFactura: ',
-                                          #tmpTransferencias.IdTransferFactura
-                                      )
+                                          #tmpTransferencias.IdTransferFactura, '] '
+                                      ),
+                        Sincronizar = 0,
+                        ModificadoEl = GETDATE()
                     FROM
                         #tmpTransferencias
                         INNER JOIN
@@ -213,6 +201,28 @@ AS
                                 ON #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
                                    AND #tmpTransferencias.IdTransferenciaImportacion = FI_TransferImportacion.IdTransferenciaImportacion
                                    AND #tmpTransferencias.IdTransfer IS NOT NULL;
+
+                    ----------- VALIDACION DE DATOS GENERALES ------------
+                    -- RETORNA ERROR DE QUE LA FACTURA NO ESTA REGISTRADA EN EL SISTEMA
+                    UPDATE
+                        FI_TransferImportacion
+                    SET
+                        Error = CONCAT(
+                                          Error,
+                                          '[No fue generada la transferencia ya que el documento de facturación con ',
+                                          UUIDPrincipal, ' no fue encontrado en el sistema] '
+                                      ),
+                        TieneError = 1,
+                        Sincronizar = 0,
+                        ModificadoEl = GETDATE()
+                    FROM
+                        #tmpTransferencias
+                        INNER JOIN
+                            FI_TransferImportacion
+                                ON #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
+                                   AND #tmpTransferencias.IdTransferenciaImportacion = FI_TransferImportacion.IdTransferenciaImportacion
+                                   AND #tmpTransferencias.IdFacturaPrincipal IS NULL;
+
 
                     select
                         @IdCuentaBancariaOrigen = ISNULL(PV_CuentaBancaria.DatoBancarioID, 0)
@@ -224,6 +234,7 @@ AS
                     WHERE
                         FI_TransferImportacion.IdContrato = @pIdContrato
                         AND FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
+
 
                     select
                         @IdCuentaBancariaDestino = ISNULL(PV_CuentaBancaria.DatoBancarioID, 0)
@@ -239,9 +250,23 @@ AS
                         FI_TransferImportacion.IdContrato = @pIdContrato
                         AND FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
 
+
+                    SELECT
+                        @IdMoneda = ISNULL(PV_TipoMoneda.IdMoneda, 0)
+                    FROM
+                        FI_TransferImportacion (NOLOCK)
+                        JOIN
+                            PV_TipoMoneda (NOLOCK)
+                                ON PV_TipoMoneda.TipoMonedaCorto = FI_TransferImportacion.MonedaPago
+                    WHERE
+                        FI_TransferImportacion.IdContrato = @pIdContrato
+                        AND FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion;
+
+
                     IF (
                            ISNULL(@IdCuentaBancariaOrigen, 0) = 0
                            OR ISNULL(@IdCuentaBancariaDestino, 0) = 0
+                           OR ISNULL(@IdMoneda, 0) = 0
                        )
                         BEGIN
                             update
@@ -254,21 +279,41 @@ AS
                                                     ISNULL(@IdCuentaBancariaOrigen, 0) = 0
                                                     AND ISNULL(@IdCuentaBancariaDestino, 0) = 0
                                                 )
-                                                THEN CONCAT(Error, '. NO SE ENCONTRARON AMBAS CUENTAS BANCARIAS')
+                                                THEN CONCAT(Error, '[No se encontraron ambas cuentas bancarias] ')
                                             WHEN
                                                 (
                                                     ISNULL(@IdCuentaBancariaOrigen, 0) = 0
                                                     AND ISNULL(@IdCuentaBancariaDestino, 0) > 0
                                                 )
-                                                THEN CONCAT(Error, '.NO SE ENCONTRÓ LA CUENTA BANCARIA ORIGEN')
+                                                THEN CONCAT(Error, '[No se encontró la cuenta bancaria origen] ')
                                             WHEN
                                                 (
                                                     ISNULL(@IdCuentaBancariaOrigen, 0) > 0
                                                     AND ISNULL(@IdCuentaBancariaDestino, 0) = 0
                                                 )
-                                                THEN CONCAT(Error, '.NO SE ENCONTRÓ LA CUENTA BANCARIA DESTINO')
+                                                THEN CONCAT(Error, '[No se encontró la cuenta bancaria destino] ')
+                                            ELSE
+                                                Error
                                         END,
-                                Sincronizar = 0
+                                Sincronizar = 0,
+                                ModificadoEl = GETDATE()
+                            from
+                                FI_TransferImportacion
+                            WHERE
+                                FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion;
+
+                            update
+                                FI_TransferImportacion
+                            set
+                                TieneError = 1,
+                                Error = CASE
+                                            WHEN (ISNULL(@IdMoneda, 0) = 0)
+                                                THEN CONCAT(Error, '[No se encontró la moneda de pago establecida] ')
+                                            ELSE
+                                                Error
+                                        END,
+                                Sincronizar = 0,
+                                ModificadoEl = GETDATE()
                             from
                                 FI_TransferImportacion
                             WHERE
@@ -281,13 +326,13 @@ AS
                                SELECT
                                    LEN(REPLACE(Error, ' ', ''))
                                FROM
-                                   FI_TransferImportacion
+                                   FI_TransferImportacion (NOLOCK)
                                WHERE
                                    IdTransferenciaImportacion = @IdTransferenciaImportacion
                            ) = 0
                        )
                         BEGIN
-
+                            SET @IdTransfer = 0
                             --Generar transferencias de las que estan pendientes
                             INSERT INTO FI_Transfer
                                 (
@@ -324,7 +369,7 @@ AS
                                             @IdCuentaBancariaOrigen,
                                             @IdCuentaBancariaDestino,
                                             MontoPagado,
-                                            PV_TipoMoneda.IdMoneda,
+                                            @IdMoneda,
                                             1,
                                             FI_TransferImportacion.Concepto,
                                             4,
@@ -346,13 +391,10 @@ AS
                                                     ON FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
                                                        AND #tmpTransferencias.IdTransferenciaImportacion = FI_TransferImportacion.IdTransferenciaImportacion
                                                        AND #tmpTransferencias.IdTransfer IS NULL
-                                            INNER JOIN
-                                                PV_TipoMoneda (NOLOCK)
-                                                    ON PV_TipoMoneda.TipoMonedaCorto = FI_TransferImportacion.MonedaPago
                                         WHERE
                                             FI_TransferImportacion.IdContrato = @pIdContrato
                                             AND FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
-                                            AND ISNULL(#tmpTransferencias.PUE, 0) = 0
+                                            AND ISNULL(#tmpTransferencias.PUE, 0) = 0;
 
                             SELECT
                                 @IdTransfer = SCOPE_IDENTITY();
@@ -364,11 +406,11 @@ AS
                                                SELECT
                                                    COUNT(1)
                                                from
-                                                   FI_Transfer
+                                                   FI_Transfer (NOLOCK)
                                                where
                                                    IdTransferencia = @IdTransfer
                                            ) > 0
-                                       ) --VERIFICACIIÓN SI EXISTE UNA TRANSFERENCIA CON ESE ID
+                                       ) --VERIFICACIÓN SI EXISTE UNA TRANSFERENCIA CON ESE ID
                                         BEGIN
                                             UPDATE
                                                 #tmpTransferencias
@@ -428,16 +470,12 @@ AS
                                                                   END
                                             FROM
                                                 #tmpTransferencias
-                                                INNER JOIN
-                                                    FI_TransferImportacion
-                                                        ON FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
-                                                           AND #tmpTransferencias.IdTransferenciaImportacion = FI_TransferImportacion.IdTransferenciaImportacion
-                                                           AND #tmpTransferencias.IdTransferFactura IS NULL
                                             WHERE
                                                 #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
                                                 AND ISNULL(#tmpTransferencias.PUE, 0) = 0
+                                                AND #tmpTransferencias.IdTransferFactura IS NULL
 
-                                            -- Ligar complemento de las transferencias que estan pendientes
+                                            -----Ligar complemento de las transferencias que estan pendientes, Solo para cuando contienen complemento ligado a la ppd-----
                                             DELETE FI_TransferFactura
                                             FROM
                                                 FI_TransferFactura
@@ -475,14 +513,11 @@ AS
                                                             null
                                                         FROM
                                                             #tmpTransferencias
-                                                            INNER JOIN
-                                                                FI_TransferImportacion (NOLOCK)
-                                                                    ON FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
-                                                                       AND #tmpTransferencias.IdTransferenciaImportacion = FI_TransferImportacion.IdTransferenciaImportacion
                                                         WHERE
-                                                            FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
+                                                            #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
                                                             AND #tmpTransferencias.LigarComplemento = 1
                                                             AND ISNULL(#tmpTransferencias.PUE, 0) = 0
+                                            ----------------
 
                                             UPDATE
                                                 FI_TransferImportacion
@@ -507,8 +542,8 @@ AS
                                             set
                                                 TieneError = 1,
                                                 Error = concat(
-                                                                  'Ocurrio un error al generar la transferencia detectada en el proceso como Id: ',
-                                                                  ISNULL(@IdTransfer, 0)
+                                                                  '[Ocurrio un error al generar la transferencia detectada en el proceso como Id: ',
+                                                                  ISNULL(@IdTransfer, 0), '] '
                                                               ),
                                                 Sincronizar = 0
                                             from
@@ -523,7 +558,7 @@ AS
                                         FI_TransferImportacion
                                     set
                                         TieneError = 1,
-                                        Error = 'NO SE ENCONTRÓ LA FACTURA O ALGUNA DE LAS CUENTAS BANCARIAS NO EXISTE',
+                                        Error = '[No se encontró la factura o alguna de las cuentas bancarias no existe] ',
                                         Sincronizar = 0
                                     from
                                         FI_TransferImportacion
@@ -537,7 +572,6 @@ AS
                 END TRY
                 BEGIN CATCH
                     ROLLBACK TRAN TRAN2
-
                     update
                         FI_TransferImportacion
                     set
@@ -550,6 +584,14 @@ AS
                         FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
                 END CATCH;
 
+                SELECT
+                    @Error       = ISNULL(Error, ''),
+                    @TieneError  = TieneError,
+                    @Sincronizar = Sincronizar
+                FROM
+                    FI_TransferImportacion (NOLOCK)
+                WHERE
+                    FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion;
 
                 SELECT
                     @IdTransferenciaImportacion = MIN(IdTransferenciaImportacion)
@@ -558,4 +600,5 @@ AS
                 WHERE
                     IdTransferenciaImportacion > @IdTransferenciaImportacion
             END
+
     END
