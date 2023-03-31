@@ -1,4 +1,5 @@
-﻿CREATE PROCEDURE p_GeneracionTransferenciaConLigueDeComplemento
+﻿
+CREATE PROCEDURE p_GeneracionTransferenciaConLigueDeComplemento
     @pIdContrato int,
     @pCreadoPor  int,
     @pIds        varchar(8000)
@@ -39,8 +40,8 @@ AS
             @MismaTransferencia             BIT,
             @IdCuentaBancariaOrigen         INT,
             @IdCuentaBancariaDestino        INT,
-            @IdMoneda                       INT;
-
+            @IdMoneda                       INT,
+			@IdTransferFacturaComplemento  INT;
         -- SE INSERTA LOS ID SELECCIONADOS EN PANTALLA
         INSERT INTO #tmpId
             (
@@ -88,14 +89,14 @@ AS
         WHILE @IdTransferenciaImportacion IS NOT NULL
             BEGIN
 
-                SET @IdTransferFactura = 0
+               
                 SET @IdFacturaDeComplementoSinLigar = 0
                 SET @IdFacturaDeComplementoLigada = 0
                 SET @MismaTransferencia = 0
                 SET @IdCuentaBancariaOrigen = 0;
                 SET @IdCuentaBancariaDestino = 0;
                 SET @IdMoneda = 0;
-
+				
                 BEGIN TRY
                     BEGIN TRAN TRAN2
 
@@ -325,7 +326,7 @@ AS
                            ) = 0
                        )
                         BEGIN
-                            SET @IdTransfer = 0
+                            
                             --Generar transferencias de las que estan pendientes
                             INSERT INTO FI_Transfer
                                 (
@@ -388,7 +389,7 @@ AS
                                             FI_TransferImportacion.IdContrato = @pIdContrato
                                             AND FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
                                             AND ISNULL(#tmpTransferencias.PUE, 0) = 0;
-
+							SET @IdTransfer = 0
                             SELECT
                                 @IdTransfer = SCOPE_IDENTITY();
 
@@ -448,8 +449,8 @@ AS
                                                             FI_TransferImportacion.IdTransferenciaImportacion = @IdTransferenciaImportacion
                                                             AND ISNULL(#tmpTransferencias.PUE, 0) = 0
 
-                                            SELECT
-                                                @IdTransferFactura = SCOPE_IDENTITY();
+											SET @IdTransferFactura = 0
+                                            SELECT @IdTransferFactura = SCOPE_IDENTITY();
 
                                             UPDATE
                                                 #tmpTransferencias
@@ -469,6 +470,7 @@ AS
                                                 AND #tmpTransferencias.IdTransferFactura IS NULL
 
                                             -----Ligar complemento de las transferencias que estan pendientes, Solo para cuando contienen complemento ligado a la ppd-----
+													
                                             DELETE FI_TransferFactura
                                             FROM
                                                 FI_TransferFactura
@@ -510,6 +512,8 @@ AS
                                                             #tmpTransferencias.IdTransferenciaImportacion = @IdTransferenciaImportacion
                                                             AND #tmpTransferencias.LigarComplemento = 1
                                                             AND ISNULL(#tmpTransferencias.PUE, 0) = 0
+												SET @IdTransferFacturaComplemento = 0
+												SELECT @IdTransferFacturaComplemento = SCOPE_IDENTITY();
                                             ----------------
 
                                             UPDATE
@@ -517,7 +521,7 @@ AS
                                             SET
                                                 Sincronizar = 0,
                                                 Procesado = 1,
-                                                IdTransferFactura = #tmpTransferencias.IdTransferFactura,
+                                                IdTransferFactura = CASE WHEN @IdTransferFacturaComplemento > 0 THEN @IdTransferFacturaComplemento ELSE #tmpTransferencias.IdTransferFactura END,
                                                 ModificadoEl = GETDATE()
                                             FROM
                                                 FI_TransferImportacion
