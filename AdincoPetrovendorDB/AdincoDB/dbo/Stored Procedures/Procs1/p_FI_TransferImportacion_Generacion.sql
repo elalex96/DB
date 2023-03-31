@@ -1,7 +1,7 @@
 ﻿CREATE PROCEDURE [dbo].[p_FI_TransferImportacion_Generacion]
     @pIdContrato int,
     @pCreadoPor int,
-    @pIds varchar(5000)
+    @pIds varchar(8000)
 as
 BEGIN
     IF OBJECT_ID('tempdb..#tmpId') IS NOT NULL
