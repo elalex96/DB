@@ -318,7 +318,8 @@ BEGIN
 					 [PrecioUnitario],
 					 [CreadoPor],
 					 [CreadoEn],
-					 [ImporteTotal]
+					 [ImporteTotal],
+					 [Cantidad]
 				)
 				SELECT
 					@IdPedimentoComprobante_ADINCO,
@@ -337,7 +338,8 @@ BEGIN
 						WHEN PC.TipoOrigen = 'CE_CD' THEN SUM(PCD.PrecioUnitario) --COMPROBANTE EXTRANJERO COMPRA DIRECTA
 						WHEN PC.TipoOrigen = 'PC_M' THEN SUM(PCD.ImporteTotal) --PEDIMENTO/COMPROBANTE MERCADEO
 						ELSE SUM(PCD.ImporteTotal)
-					END
+					END,
+					1
 				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
 				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor
 					JOIN Petrovendor.dbo.FI_PedimentoComprobante AS PC
