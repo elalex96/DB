@@ -3659,5 +3659,6 @@
     <Build Include="dbo\Tables\Tables1\Copia de COM_Equivalencias.sql" />
     <Build Include="dbo\Tables\Tables1\TA_Office_Servers.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\P_AP_ValidarAccesoPorURLContratoUsuario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\p_GeneracionTransferenciaConLigueDeComplemento.sql" />
   </ItemGroup>
 </Project>
