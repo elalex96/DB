@@ -6,8 +6,12 @@
 AS
 BEGIN
     SET @Permitir = 0;
-    SET @Url = LEFT(@Url, CHARINDEX('.aspx', @Url) - 1) + '.aspx';
+	SET @Url = LEFT(@Url, CHARINDEX('.aspx', @Url) - 1)+'.aspx';
     IF (ISNULL(LTRIM(RTRIM(UPPER(@Url))), '') LIKE '%ERROR%')
+    BEGIN
+        SET @Permitir = 1;
+    END;
+	IF (ISNULL(LTRIM(RTRIM(UPPER(@Url))), '') LIKE '%LLAMAURL%')
     BEGIN
         SET @Permitir = 1;
     END;
@@ -42,7 +46,7 @@ BEGIN
             INNER JOIN AP_PerfilUsuario (NOLOCK)
                 ON AP_perfil.IdPerfil = AP_PerfilUsuario.PerfilID
         WHERE AP_PerfilUsuario.UsuarioID = @UsuarioId
-              AND AP_Rol.Rol = 'Root'
+			    AND AP_Rol.Rol = 'Root'
     END;
-    SELECT @Permitir;
+    SELECT  @Permitir;
 END;
