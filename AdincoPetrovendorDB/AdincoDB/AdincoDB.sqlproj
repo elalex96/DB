@@ -3660,5 +3660,6 @@
     <Build Include="dbo\Tables\Tables1\TA_Office_Servers.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\P_AP_ValidarAccesoPorURLContratoUsuario.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\p_GeneracionTransferenciaConLigueDeComplemento.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\ObtenerReporteDiarioOperacion.sql" />
   </ItemGroup>
 </Project>
