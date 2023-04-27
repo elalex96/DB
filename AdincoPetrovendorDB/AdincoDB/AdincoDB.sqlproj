@@ -3661,5 +3661,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\P_AP_ValidarAccesoPorURLContratoUsuario.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\p_GeneracionTransferenciaConLigueDeComplemento.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ObtenerReporteDiarioOperacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\Guardar_PR_ProdDiariaPozo_Previo.sql" />
+    <Build Include="dbo\User Defined Types\Type_PR_ProdDiariaPozo_Previo.sql" />
   </ItemGroup>
 </Project>
