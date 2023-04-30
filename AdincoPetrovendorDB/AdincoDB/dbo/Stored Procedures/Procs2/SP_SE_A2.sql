@@ -47,10 +47,28 @@ BEGIN
             @Aprobado                  INT = 10004,
             @TipoComprobanteExtranjero INT = 3
 
+	CREATE TABLE #Presupuestos (IdPresupuesto INT);
+    CREATE TABLE #RFC (RFC VARCHAR(25));
+	CREATE TABLE #DATOS
+            (
+                Codigo VARCHAR(50),
+                Descripcion VARCHAR(300),
+                RazonSocial VARCHAR(300),
+                RFC VARCHAR(100),
+                SubTotal FLOAT,
+                SubTotalOriginal FLOAT,
+                PCN FLOAT,
+                IdFactura INT,
+                IdAceptacionPedidoDetalle INT,
+				IdMoneda INT,
+				SubtotalDls FLOAT,
+				FechaFactura DATETIME,
+				MontoRegistro FLOAT
+            )
 
     SELECT @RazonSocial = CA.RazonSocial
-    FROM CO_CONTRATO C
-        JOIN CO_CONTRATISTA CA
+    FROM CO_CONTRATO C (NOLOCK)
+        JOIN CO_CONTRATISTA CA (NOLOCK)
             ON C.IdContratista = CA.IdContratista
                AND C.IdContrato = @IdContrato
     WHERE C.IdContrato = @IdContrato
@@ -67,10 +85,7 @@ BEGIN
                             @Etapa;
     END
     ELSE
-    BEGIN
-
-        CREATE TABLE #Presupuestos (IdPresupuesto INT);
-        CREATE TABLE #RFC (RFC VARCHAR(25));
+    BEGIN      
         /*Se valida si el presupuesto viene en 0 para obtener todos los presupuestos del perido.*/
         IF (@IdPresupuesto = 0)
         BEGIN
@@ -254,22 +269,6 @@ BEGIN
         END;
         ELSE
         BEGIN
-            CREATE TABLE #DATOS
-            (
-                Codigo VARCHAR(50),
-                Descripcion VARCHAR(300),
-                RazonSocial VARCHAR(300),
-                RFC VARCHAR(100),
-                SubTotal FLOAT,
-                SubTotalOriginal FLOAT,
-                PCN FLOAT,
-                IdFactura INT,
-                IdAceptacionPedidoDetalle INT,
-				IdMoneda INT,
-				SubtotalDls FLOAT,
-				FechaFactura DATETIME,
-				MontoRegistro FLOAT
-            )
             INSERT INTO #DATOS
             (
                 Codigo,
@@ -400,7 +399,7 @@ BEGIN
 					FI_PedimentoComprobante.FechaPago,
 					CO_Registro.MontoRegistro
 			FROM FI_PedimentoComprobante WITH (NOLOCK)
-			INNER JOIN FI_PedimentoComprobanteDetalle
+			INNER JOIN FI_PedimentoComprobanteDetalle WITH (NOLOCK)
 				ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
 				AND FI_PedimentoComprobante.IdContrato = @IdContrato
 			INNER JOIN PV_Subcontratista WITH (NOLOCK)
