@@ -1,6 +1,0 @@
-﻿CREATE TABLE [dbo].[PR_Opciones] (
-    [Id]     INT            IDENTITY (1, 1) NOT NULL,
-    [Opcion] NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_PR_Opciones] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
-);
-

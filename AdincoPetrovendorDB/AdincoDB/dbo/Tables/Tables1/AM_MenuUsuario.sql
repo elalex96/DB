@@ -1,7 +1,0 @@
-﻿CREATE TABLE [dbo].[AM_MenuUsuario] (
-    [IdMnu]     INT IDENTITY (10000, 1) NOT NULL,
-    [IdUsuario] INT NULL,
-    [IdMenu]    INT NULL,
-    PRIMARY KEY CLUSTERED ([IdMnu] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
-);
-

@@ -1,8 +1,0 @@
-﻿	create PROCEDURE [dbo].Sp_Facturas_Pdfviewer_Mostrarpdf
-	@IDFACTURA INT 
-	AS
-	BEGIN
-	SELECT IDFACTURA,DocumentoByte 
-	FROM FI_DOCUMENTO 
-	WHERE IDFACTURA = @IDFACTURA
-	END

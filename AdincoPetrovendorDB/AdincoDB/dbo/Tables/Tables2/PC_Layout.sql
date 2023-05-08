@@ -1,6 +1,0 @@
-﻿CREATE TABLE [dbo].[PC_Layout] (
-    [IdTipoLayout] INT            IDENTITY (10000, 1) NOT NULL,
-    [NombreLayout] NVARCHAR (MAX) NULL,
-    CONSTRAINT [PK_PC_Layout] PRIMARY KEY CLUSTERED ([IdTipoLayout] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
-);
-

@@ -1,7 +1,0 @@
-﻿
-CREATE VIEW vw_getRANDValue
-
-AS
-
-SELECT RAND() 
-AS Value

@@ -1,7 +1,0 @@
-﻿CREATE TABLE [dbo].[ME_EG_Rubros] (
-    [IdRubro] INT           IDENTITY (1, 1) NOT NULL,
-    [Rubro]   VARCHAR (200) NOT NULL,
-    [Puntos]  FLOAT (53)    NOT NULL,
-    CONSTRAINT [PK_ME_EG_Rubros] PRIMARY KEY CLUSTERED ([IdRubro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
-);
-

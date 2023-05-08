@@ -1,8 +1,0 @@
-﻿CREATE TABLE [dbo].[PR_Parametro] (
-    [Id]     INT             IDENTITY (1, 1) NOT NULL,
-    [Clave]  VARCHAR (20)    NOT NULL,
-    [Nombre] VARCHAR (200)   NOT NULL,
-    [Valor]  NVARCHAR (2000) NOT NULL,
-    CONSTRAINT [PK_PR_Parametro] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
-);
-

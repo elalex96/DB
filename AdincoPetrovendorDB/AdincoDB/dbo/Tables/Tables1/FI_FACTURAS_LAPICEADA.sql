@@ -1,7 +1,0 @@
-﻿CREATE TABLE [dbo].[FI_FACTURAS_LAPICEADA] (
-    [IDFACTURA]  INT            IDENTITY (10000, 1) NOT NULL,
-    [UUID]       NVARCHAR (MAX) NULL,
-    [FECHA]      DATETIME       NULL,
-    [IDCONTRATO] INT            NULL
-);
-
