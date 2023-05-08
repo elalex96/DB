@@ -694,14 +694,6 @@
     <Build Include="dbo\Views\VistaReporteTableroA8BG.sql" />
     <Build Include="dbo\Views\VistaReporteTableroA7BG.sql" />
     <Build Include="dbo\Views\Estatus_de_pedidos.sql" />
-    <Build Include="Security\ViewRol.sql" />
-    <Build Include="Security\job.sql" />
-    <Build Include="Security\ViewUser.sql" />
-    <Build Include="Security\solser.sql" />
-    <Build Include="Security\adinco.sql" />
-    <Build Include="Security\Petrovendorread.sql" />
-    <Build Include="Security\DanielaLectura.sql" />
-    <Build Include="Security\RoleMemberships.sql" />
     <Build Include="dbo\Functions\FN_CarsoObtenerContieneCartaContenido.sql" />
     <Build Include="dbo\Functions\fnGetPedidoEntregaMaterial.sql" />
     <Build Include="dbo\Functions\ObtieneValorUnitario.sql" />
