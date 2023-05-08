@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[TA_FlujoTarea] (
+    [IdFlujoTarea]    INT            IDENTITY (1, 1) NOT NULL,
+    [Nombre]          NVARCHAR (MAX) NULL,
+    [Descripcion]     NVARCHAR (MAX) NULL,
+    [IdTipoFlujo]     INT            NULL,
+    [IdTipoOperacion] INT            NULL,
+    [Activo]          BIT            NULL,
+    [IdProveedor]     INT            NULL,
+    [Condicion]       BIT            NULL,
+    [FechaCreacion]   DATETIME       NULL,
+    [CreadorPor]      INT            NULL,
+    [Mensaje]         NVARCHAR (MAX) NULL,
+    [IdVencimiento]   INT            NULL,
+    [IdPrioridad]     INT            NULL,
+    [Eliminado]       BIT            NULL,
+    [Predeterminado]  BIT            NULL,
+    [IdModificadoPor] INT            NULL,
+    [ModificadorEl]   DATETIME       NULL,
+    [SoloNotificar]   BIT            NULL,
+    CONSTRAINT [PK_TaFlujoTarea] PRIMARY KEY CLUSTERED ([IdFlujoTarea] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_S_Proveedor_TaTipoFlujoTarea] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
+    CONSTRAINT [FK_TaFlujoTarea_TaTipoFlujoTarea] FOREIGN KEY ([IdTipoFlujo]) REFERENCES [dbo].[TA_TipoFlujoTarea] ([IdTipoFlujoTarea]),
+    CONSTRAINT [FK_TaFlujoTarea_TaTipoOperacion] FOREIGN KEY ([IdTipoOperacion]) REFERENCES [dbo].[TA_TipoOperacion] ([IdTipoOperacion])
+);
+

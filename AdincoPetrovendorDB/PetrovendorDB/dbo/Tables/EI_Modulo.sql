@@ -1,0 +1,6 @@
+﻿CREATE TABLE [dbo].[EI_Modulo] (
+    [IdModulo] INT            IDENTITY (1, 1) NOT NULL,
+    [Modulo]   NVARCHAR (100) NOT NULL,
+    CONSTRAINT [PK_Table_3] PRIMARY KEY CLUSTERED ([IdModulo] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

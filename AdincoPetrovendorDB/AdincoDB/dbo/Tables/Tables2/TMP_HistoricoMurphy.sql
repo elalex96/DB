@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[TMP_HistoricoMurphy] (
+    [IdTransfer]             INT            IDENTITY (1, 1) NOT NULL,
+    [Date]                   DATETIME       NULL,
+    [Account Number]         NVARCHAR (255) NULL,
+    [Bank]                   NVARCHAR (255) NULL,
+    [Bank ID]                NVARCHAR (255) NULL,
+    [Currency]               NVARCHAR (255) NULL,
+    [Amount]                 MONEY          NULL,
+    [Vendor]                 NVARCHAR (255) NULL,
+    [Tax ID]                 NVARCHAR (255) NULL,
+    [Vendor Bank]            NVARCHAR (255) NULL,
+    [Vendor Account Number]  NVARCHAR (255) NULL,
+    [Invoice (s)]            FLOAT (53)     NULL,
+    [Amount1]                MONEY          NULL,
+    [Journal Entry]          FLOAT (53)     NULL,
+    [Payment Entry]          FLOAT (53)     NULL,
+    [AC]                     NVARCHAR (255) NULL,
+    [SA]                     NVARCHAR (255) NULL,
+    [ID]                     NVARCHAR (255) NULL,
+    [CuentaSH]               NVARCHAR (MAX) NULL,
+    [IdLineaPresupuestoMes]  INT            NULL,
+    [IdCuentaSH]             INT            NULL,
+    [IdFactura]              INT            NULL,
+    [IdRegistro]             INT            NULL,
+    [IdPedimentoComprobante] INT            NULL,
+    [ReferenciaBancaria]     NVARCHAR (MAX) NULL
+);
+

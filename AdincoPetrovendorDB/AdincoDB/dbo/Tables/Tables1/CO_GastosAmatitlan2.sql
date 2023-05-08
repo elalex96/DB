@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[CO_GastosAmatitlan2] (
+    [Fila]                             INT            IDENTITY (1, 1) NOT NULL,
+    [ID del registro (sin duplicados)] FLOAT (53)     NULL,
+    [Tipo de Servicio]                 NVARCHAR (255) NULL,
+    [Actividad]                        NVARCHAR (255) NULL,
+    [Rubro]                            NVARCHAR (255) NULL,
+    [Clasificación]                    NVARCHAR (255) NULL,
+    [Servicio]                         NVARCHAR (255) NULL,
+    [No# Factura]                      NVARCHAR (255) NULL,
+    [Proveedor]                        NVARCHAR (255) NULL,
+    [Fecha Factura Registro]           DATETIME       NULL,
+    [MontoRegistro ]                   MONEY          NULL,
+    [Moneda]                           NVARCHAR (255) NULL,
+    [Periodo]                          NVARCHAR (255) NULL,
+    [Monto USD]                        MONEY          NULL,
+    [Clasificacion Anexo 4]            NVARCHAR (255) NULL,
+    [Tipo Cambio]                      FLOAT (53)     NULL,
+    [cert#acepto]                      NVARCHAR (255) NULL,
+    [F17]                              NVARCHAR (255) NULL,
+    [Fechaejec]                        DATE           NULL,
+    [IdLineaPresupuestoMes]            INT            NULL,
+    [IdFactura]                        INT            NULL,
+    [IdProveedor]                      INT            NULL,
+    CONSTRAINT [PK_CO_GastosAmatitlan2] PRIMARY KEY CLUSTERED ([Fila] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

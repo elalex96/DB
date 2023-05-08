@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[A7Gastos] (
+    [ID]                  FLOAT (53)     NULL,
+    [ID VENDOR]           FLOAT (53)     NULL,
+    [VENDOR NAME]         NVARCHAR (255) NULL,
+    [FOLIO]               FLOAT (53)     NULL,
+    [Total]               FLOAT (53)     NULL,
+    [Subtotal]            FLOAT (53)     NULL,
+    [Total USD]           FLOAT (53)     NULL,
+    [Subtotal USD]        FLOAT (53)     NULL,
+    [MONEDA]              NVARCHAR (255) NULL,
+    [TC]                  FLOAT (53)     NULL,
+    [Documento Factura]   FLOAT (53)     NULL,
+    [Documento Clearing]  FLOAT (53)     NULL,
+    [Texto clearing]      NVARCHAR (255) NULL,
+    [AREA]                NVARCHAR (255) NULL,
+    [Fecha clearing]      DATETIME       NULL,
+    [FECHA DOC]           DATETIME       NULL,
+    [CUENTA]              FLOAT (53)     NULL,
+    [FMP]                 NVARCHAR (255) NULL,
+    [FMP1]                NVARCHAR (255) NULL,
+    [WBS]                 NVARCHAR (255) NULL,
+    [AC]                  NVARCHAR (255) NULL,
+    [SA]                  NVARCHAR (255) NULL,
+    [TA]                  NVARCHAR (255) NULL,
+    [UUID FACTURA]        NVARCHAR (255) NULL,
+    [COMPLEMENTO DE PAGO] NVARCHAR (255) NULL
+);
+

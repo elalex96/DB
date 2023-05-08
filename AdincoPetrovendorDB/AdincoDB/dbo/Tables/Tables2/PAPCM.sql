@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[PAPCM] (
+    [ID]                      FLOAT (53)     NULL,
+    [Id_Actividad]            NVARCHAR (255) NULL,
+    [Actividad]               NVARCHAR (255) NULL,
+    [Id_SubActividad]         NVARCHAR (255) NULL,
+    [SubActividad]            NVARCHAR (255) NULL,
+    [Id_Tarea]                NVARCHAR (255) NULL,
+    [Tarea]                   NVARCHAR (255) NULL,
+    [Id_SubTarea]             NVARCHAR (255) NULL,
+    [SubTarea]                NVARCHAR (MAX) NULL,
+    [MES01]                   FLOAT (53)     NULL,
+    [MES02]                   FLOAT (53)     NULL,
+    [MES03]                   FLOAT (53)     NULL,
+    [MES04]                   FLOAT (53)     NULL,
+    [MES05]                   FLOAT (53)     NULL,
+    [MES06]                   FLOAT (53)     NULL,
+    [MES07]                   FLOAT (53)     NULL,
+    [MES08]                   FLOAT (53)     NULL,
+    [MES09]                   FLOAT (53)     NULL,
+    [MES10]                   FLOAT (53)     NULL,
+    [MES11]                   FLOAT (53)     NULL,
+    [MES12]                   FLOAT (53)     NULL,
+    [IdActividadPetrolera]    INT            NULL,
+    [IdSubactividadPetrolera] INT            NULL,
+    [IdTareaPetrolera]        INT            NULL,
+    [IdServicio]              INT            NULL
+);
+

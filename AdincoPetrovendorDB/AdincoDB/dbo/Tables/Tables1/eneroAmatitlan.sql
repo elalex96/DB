@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[eneroAmatitlan] (
+    [ FACTURA_LUM]       NVARCHAR (255) NULL,
+    [FECHAFACTURALUM]    DATETIME       NULL,
+    [PROVEEDOR]          NVARCHAR (255) NULL,
+    [DESCRIPCION]        NVARCHAR (255) NULL,
+    [X]                  NVARCHAR (255) NULL,
+    [FACTURA2]           NVARCHAR (255) NULL,
+    [FECHAFACTURA2]      DATETIME       NULL,
+    [PROVEEDOR2]         NVARCHAR (255) NULL,
+    [USD]                FLOAT (53)     NULL,
+    [MXN]                FLOAT (53)     NULL,
+    [TOTALGASTOS_markup] FLOAT (53)     NULL,
+    [TOTALGASTOSUSD]     FLOAT (53)     NULL,
+    [IVA]                FLOAT (53)     NULL,
+    [TOTAL]              FLOAT (53)     NULL,
+    [TIPOCAMBIO]         FLOAT (53)     NULL,
+    [CUENTA]             NVARCHAR (255) NULL,
+    [CONCEPTO_BUDGET]    NVARCHAR (255) NULL,
+    [INSTALACION]        NVARCHAR (255) NULL,
+    [IdSubcontratista]   INT            NULL,
+    [IdSubcontratista2]  INT            NULL,
+    [IdFactura]          INT            NULL,
+    [IdFactura2]         INT            NULL,
+    [nuevototal]         FLOAT (53)     NULL
+);
+

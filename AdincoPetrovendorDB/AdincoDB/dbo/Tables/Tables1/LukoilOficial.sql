@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[LukoilOficial] (
+    [ID]                  INT            IDENTITY (1, 1) NOT NULL,
+    [TipoServicio]        NVARCHAR (255) NULL,
+    [IdTipoServicio]      INT            NULL,
+    [Actividad]           NVARCHAR (255) NULL,
+    [IdActividad]         INT            NULL,
+    [Servicio]            NVARCHAR (255) NULL,
+    [IdServicio]          INT            NULL,
+    [NombreProveedor]     NVARCHAR (255) NULL,
+    [RazonSocial]         NVARCHAR (MAX) NULL,
+    [IdSubcontratista]    INT            NULL,
+    [NumeroFactura]       NVARCHAR (255) NULL,
+    [FechaFactura]        DATETIME       NULL,
+    [IdFactura]           INT            NULL,
+    [Moneda]              NVARCHAR (255) NULL,
+    [MesInforme]          NVARCHAR (255) NULL,
+    [MesInformeFecha]     DATE           NULL,
+    [MesCertificado]      NVARCHAR (255) NULL,
+    [MesCertificadoFecha] DATE           NULL,
+    [MontoFactura]        FLOAT (53)     NULL,
+    [MontoFacturaUSD]     FLOAT (53)     NULL,
+    [Periodo]             NVARCHAR (255) NULL,
+    [TipoCambio]          FLOAT (53)     NULL,
+    [IdPrograma]          INT            NULL,
+    [IdInstalacion]       INT            NULL,
+    CONSTRAINT [PK_LukoilOficial] PRIMARY KEY CLUSTERED ([ID] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

@@ -1,0 +1,7 @@
+﻿create proc p_FI_RelacionPedimentoComprobantePedido_Del
+@pIdRelacionPedimentoComprobante int
+as
+
+
+	delete MPY_FI_RelacionPedimentoComprobantePedido
+	where IdRelacionPedimentoComprobante = @pIdRelacionPedimentoComprobante

@@ -1,0 +1,54 @@
+﻿CREATE TABLE [dbo].[PV_Subcontratista] (
+    [IdSubcontratista]       INT            IDENTITY (10000, 1) NOT NULL,
+    [RFC]                    VARCHAR (30)   NULL,
+    [RazonSocial]            VARCHAR (MAX)  NULL,
+    [RepresentanteLegal]     VARCHAR (MAX)  NULL,
+    [DiasCreditoID]          INT            NULL,
+    [Giro]                   VARCHAR (MAX)  NULL,
+    [PatronalIMSS]           VARCHAR (MAX)  NULL,
+    [TipoPersonaFiscalID]    INT            NULL,
+    [NacionalidadID]         INT            NULL,
+    [ClasificacionID]        INT            NULL,
+    [Capital]                VARCHAR (50)   NULL,
+    [IdStatusValidacion]     INT            CONSTRAINT [DF_Cat_Empresa_IdStatusValidacion] DEFAULT ((1)) NULL,
+    [MotivoRechazo]          VARCHAR (MAX)  NULL,
+    [NombreComercial]        VARCHAR (MAX)  NULL,
+    [CURP]                   VARCHAR (50)   NULL,
+    [FormaPagoID]            INT            NULL,
+    [GrupoCuentasID]         INT            NULL,
+    [UsuarioID]              INT            NULL,
+    [RegimenCapital]         NVARCHAR (MAX) NULL,
+    [FechaConstitucion]      NVARCHAR (15)  NULL,
+    [FechaOperacion]         NVARCHAR (15)  NULL,
+    [SituacionContribuyente] NVARCHAR (15)  NULL,
+    [FechaCambioSituacion]   NVARCHAR (15)  NULL,
+    [Pais]                   NVARCHAR (MAX) NULL,
+    [Entidad]                NVARCHAR (MAX) NULL,
+    [Municipio]              NVARCHAR (MAX) NULL,
+    [Colonia]                NVARCHAR (MAX) NULL,
+    [TipoVialidad]           NVARCHAR (MAX) NULL,
+    [NombreVialidad]         NVARCHAR (MAX) NULL,
+    [NumExterior]            NVARCHAR (MAX) NULL,
+    [NumInterior]            NVARCHAR (MAX) NULL,
+    [CodigoPostal]           NVARCHAR (MAX) NULL,
+    [IsEliminado]            BIT            DEFAULT (N'false') NULL,
+    [ImagenSrc]              NVARCHAR (150) NULL,
+    [Relacionada]            BIT            NULL,
+    [IdPetroVendor]          INT            NULL,
+    [IsActivo]               BIT            DEFAULT (N'true') NULL,
+    [CreadoPor]              INT            NULL,
+    [CreadoEn]               DATETIME       NULL,
+    [ModificadoPor]          INT            NULL,
+    [ModificadoEn]           DATETIME       NULL,
+    CONSTRAINT [PK_Cat_Empresa] PRIMARY KEY CLUSTERED ([IdSubcontratista] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_Empresa_ClasificacionEmpresa] FOREIGN KEY ([ClasificacionID]) REFERENCES [dbo].[PV_ClasificacionEmpresa] ([ClasificacionID]),
+    CONSTRAINT [FK_Empresa_Nacionalidad] FOREIGN KEY ([NacionalidadID]) REFERENCES [dbo].[PV_Nacionalidad] ([NacionalidadID]),
+    CONSTRAINT [FK_Empresa_TipoPersonaFiscal] FOREIGN KEY ([TipoPersonaFiscalID]) REFERENCES [dbo].[PV_TipoPersonaFiscal] ([TipoPersonaFiscalID])
+);
+
+
+GO
+CREATE NONCLUSTERED INDEX [IX_PV_Subcontratista]
+    ON [dbo].[PV_Subcontratista]([RFC] ASC)
+    INCLUDE([IdSubcontratista]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

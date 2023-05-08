@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[PV_CuentaBancaria_RESP20191219] (
+    [DatoBancarioID] INT            IDENTITY (1, 1) NOT NULL,
+    [BancoID]        INT            NULL,
+    [Titular]        VARCHAR (MAX)  NULL,
+    [Sucursal]       VARCHAR (MAX)  NULL,
+    [NumeroCuenta]   VARCHAR (MAX)  NULL,
+    [CuentaClave]    VARCHAR (MAX)  NULL,
+    [NumeroTarjeta]  NVARCHAR (MAX) NULL,
+    [TipoMonedaID]   INT            NULL,
+    [IdProveedor]    INT            NULL,
+    [Predeterminado] BIT            NULL,
+    [IdTipoCuenta]   INT            NULL,
+    [TipoCuentaTemp] NVARCHAR (50)  NULL,
+    [Codigo]         INT            NULL,
+    [claveBanco]     NVARCHAR (50)  NULL,
+    [RFC]            NVARCHAR (300) NULL,
+    [IdContratista]  INT            NULL,
+    [Activa]         BIT            NULL,
+    [CreadoPor]      INT            NULL,
+    [CreadoEn]       DATETIME       NULL,
+    [Eliminada]      BIT            NULL,
+    [Alias]          NVARCHAR (MAX) NULL,
+    [IdCuenta]       INT            NULL
+);
+

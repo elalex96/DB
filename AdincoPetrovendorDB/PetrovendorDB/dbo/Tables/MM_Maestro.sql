@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[MM_Maestro] (
+    [IdMaestro]             INT            IDENTITY (10000, 1) NOT NULL,
+    [IdTipoCatalogoMaestro] INT            NULL,
+    [IdSubFamilia]          INT            NULL,
+    [TextoCorto]            NVARCHAR (MAX) NULL,
+    [TextoLargo]            NVARCHAR (MAX) NULL,
+    [IdMoneda]              INT            NULL,
+    [IdTipoMaterial]        INT            NULL,
+    [Prc]                   NVARCHAR (255) NULL,
+    [IsActivo]              BIT            NULL,
+    [IsEliminado]           BIT            NULL,
+    [CreadoPor]             INT            NULL,
+    [CreadoEn]              DATETIME       NULL,
+    [ModificadoPor]         INT            NULL,
+    [ModificadoEn]          DATETIME       NULL,
+    [IdUnidadPreterminada]  INT            NULL,
+    [IdUnidad_1]            INT            NULL,
+    [IdUnidad_2]            INT            NULL,
+    [IdUnidad_3]            INT            NULL,
+    CONSTRAINT [PK_MM_Maestro] PRIMARY KEY CLUSTERED ([IdMaestro] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    FOREIGN KEY ([IdUnidad_1]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
+    FOREIGN KEY ([IdUnidad_2]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
+    FOREIGN KEY ([IdUnidad_3]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
+    FOREIGN KEY ([IdUnidadPreterminada]) REFERENCES [dbo].[PV_MM_MaterialUnidad] ([IdUnidad]),
+    CONSTRAINT [FK_MM_Maestro_PV_MM_MaterialSubFamilia] FOREIGN KEY ([IdSubFamilia]) REFERENCES [dbo].[PV_MM_MaterialSubFamilia] ([IdSubFamilia]),
+    CONSTRAINT [FK_MM_Maestro_PV_TipoMoneda] FOREIGN KEY ([IdMoneda]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda])
+);
+

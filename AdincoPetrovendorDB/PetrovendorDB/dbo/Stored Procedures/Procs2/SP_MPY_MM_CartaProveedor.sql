@@ -1,0 +1,719 @@
+﻿-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 18-06-2018
+-- Description:	
+-- =============================================
+-- =============================================
+-- Author:		David De La Cruz
+-- Create date: 07-09-2020
+-- Description:	Fix bug issue 667 GitHub, ajuste en mostrar contrato
+-- =============================================  
+-- =============================================
+-- Author:		David De La Cruz
+-- Create date: 06-11-2020
+-- Description:	Fix bug issue 801 GitHub, 18 meses a 5 años
+-- ============================================= 
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 18-02-2021
+-- Description:	adaptacion para carta PROVEEDOR A PROVEEDOR para DEA
+-- =============================================  
+CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedor]   
+ -- Add the parameters for the stored procedure here  
+@IdProveedor INT,  
+@IdPedido INT,  
+@IdContrato INT = NULL,  
+@IdUsuario INT = NULL,  
+@fchRegistro DATETIME = NULL  
+AS  
+BEGIN  
+ -- SET NOCOUNT ON added to prevent extra result sets from  
+ -- interfering with SELECT statements.  
+ SET NOCOUNT ON;  
+  
+    -- Insert statements for procedure here  
+  
+  
+  
+ DECLARE @IdTipoRegimen INT   
+ Declare @NombreOperadora NVARCHAR(MAX)  
+ Declare @VendorsName NVARCHAR(MAX)  
+ DECLARE @RFC_ACTUAL_DEA NVARCHAR(200), @EXISTE_RFC_DEA INT;
+  
+ IF(@IdProveedor = 0)  
+ BEGIN  
+  SET @IdProveedor = (SELECT  
+        max(PR.IdProveedor)  
+       FROM dbo.S_Proveedor AS PR  
+       JOIN Adinco.dbo.CO_SAPVendor AS SV ON SV.TaxID COLLATE SQL_Latin1_General_CP1_CI_AS = PR.RFC COLLATE SQL_Latin1_General_CP1_CI_AS  
+       JOIN dbo.MPY_MM_AceptacionPedido AS AP ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS  
+       WHERE AP.IdAceptacionPedido = @IdPedido AND PR.Activo = 1)  
+ END;  
+  
+ SET @IdTipoRegimen =(SELECT IdTipoRegimen FROM S_PROVEEDOR WHERE IdProveedor = @IdProveedor) --427  
+  
+ IF (@IdTipoRegimen = 2)  
+ BEGIN  
+  DECLARE @UsuarioFisico NVARCHAR(MAX) = (SELECT TOP 1 U.Nombre AS RepresentanteLegal  
+          FROM S_Proveedor AS P  
+          JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+          JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario
+			AND U.Activo = 1
+			AND ISNULL(U.IsEliminado,0) = 0
+          WHERE U.IdTipoUsuario = 3 AND P.IdProveedor = @IdProveedor)  
+  
+ END  
+  
+ SET @NombreOperadora = (SELECT ISNULL(CONCAT(RazonSocial, ' '),A.IdProveedor) AS Proveedor  
+            FROM S_Proveedor AS P  
+            INNER JOIN MPY_MM_AceptacionPedido AS A ON A.IdProveedor = P.RFC AND P.Activo = 1  
+            WHERE A.IdAceptacionPedido = @IdPedido) ---48  
+  
+ SET @VendorsName = (SELECT A.VendorsName  
+       FROM MPY_MM_AceptacionPedido AS A  
+       WHERE A.IdAceptacionPedido = @IdPedido)  
+  
+  
+ DECLARE @NOMBRE_CONTRATO nvarchar(300)= (SELECT CO.NumeroContrato  
+            FROM adinco.dbo.CO_Contrato AS CO  
+            JOIN dbo.MPY_MM_AceptacionPedido AS AP ON AP.IdContrato = CO.IdContrato  
+            WHERE AP.IdAceptacionPedido = @IdPedido);  
+  
+DECLARE @PROVEEDOR_DEA INT = 0; 
+  
+  
+ DECLARE @CANT_TMAT INT = (SELECT COUNT(VP.IdTipoMaterialServicio)  
+        FROM dbo.MPY_MM_PCN_ValoresPesos AS VP  
+        LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedidoDetalle = VP.IdAceptacionPedidoDetalle  
+        LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = APD.IdAceptacionPedido  
+        WHERE AP.IdAceptacionPedido = @IdPedido AND VP.IdTipoMaterialServicio = 1)  
+  
+ DECLARE @CANT_TSER INT = (SELECT COUNT(VP.IdTipoMaterialServicio)  
+        FROM dbo.MPY_MM_PCN_ValoresPesos AS VP  
+        LEFT JOIN dbo.MPY_MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedidoDetalle = VP.IdAceptacionPedidoDetalle  
+        LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = APD.IdAceptacionPedido  
+        WHERE AP.IdAceptacionPedido = @IdPedido AND VP.IdTipoMaterialServicio = 2);  
+  
+ DECLARE @TIPO_MATERIAL NVARCHAR(MAX) = 'Material/Servicio';  
+  
+ IF @CANT_TMAT > 0 AND @CANT_TSER = 0  
+ BEGIN  
+  SET @TIPO_MATERIAL = 'Materiales';  
+ END  
+  
+ IF @CANT_TMAT = 0 AND @CANT_TSER > 0  
+ BEGIN  
+  SET @TIPO_MATERIAL = 'Servicios';  
+ END  
+  
+ IF @CANT_TMAT > 0 AND @CANT_TSER > 0  
+ BEGIN  
+  SET @TIPO_MATERIAL = 'Materiales/Servicios';  
+ END  
+  
+ IF @IdContrato = 10053--CONTRATO EL DORADO  
+BEGIN   
+  
+  
+ IF (@IdTipoRegimen = 2)  
+ BEGIN  
+    SET LANGUAGE spanish;  
+    SELECT DISTINCT TOP 1  
+    DAY ( GETDATE ()) AS DIA, DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS MES ,  
+       RIGHT(CAST(YEAR ( GETDATE ()) AS CHAR(4)), 2) AS ANIO ,  
+       'Ciudad de México, al ' + CAST(DAY ( GETDATE ()) AS NVARCHAR(2)) + ' de '  
+       + CAST(DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS NVARCHAR(10)) + ' del '  
+       + CONVERT ( NVARCHAR(10), YEAR ( GETDATE ())) AS FECHA,  
+    CON.RazonSocial AS NombreOperadora,   
+    @UsuarioFisico AS RepresentanteLegal,   
+        'CARTA DE PROVEEDOR A PROVEEDOR DE LO DESTINADO A UNA ASIGNACIÓN, CONTRATO O PERMISO, DE LA INDUSTRIA DE HIDROCARBUROS' AS Titulo,  
+        'Por medio de la presente, el (la) que suscribe ' + @UsuarioFisico  
+        +' representante legal de la empresa ' + ISNULL(P.RazonSocial,SV.VendorName)  
+        + case when isnull(AC.NoActaConstitutiva,'') <> '' then  ' lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
+				else '' end
+		+ ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL   
+        +' declarado(s) a continuación, se suministraron y facturaron al Operador del (de la) ' + @NOMBRE_CONTRATO + ' en el año '
+        + CAST(Year(GETDATE()) AS NVARCHAR(50)) + ' cuenta(n) con la Proporción de Contenido Nacional que se señala en esta carta'  
+        + ' y que mi representada la obtuvo de conformidad con lo establecido en el “Acuerdo por el '  
+        + 'que se establece la Metodología para la Medición del Contenido Nacional en Asignaciones y '  
+        + 'Contratos para la Exploración y Extracción de Hidrocarburos, así como para los permisos en '  
+        + 'la Industria de Hidrocarburos”, y demás disposiciones jurídicas aplicables, es correcta, completa,'  
+        +' veraz y verificable.' AS PrimerInical,  
+        '1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en la f
+orma que establezcan las disposiciones jurídicas aplicables.' AS PrimerParafo,  
+        '2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos 5 años contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Opera
+dor (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relaci
+onado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada 
+estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
+        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidroc
+arburos, en particular lo previsto en los artículos 85, fracción III y 86, fracción III. ' AS TercerParrafo,  
+        'Lo anterior, de conformidad con lo dispuesto en el artículo 46, párrafo quinto de la Ley de Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y 
+Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
+        'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
+        + CONCAT (  
+        domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
+                       ''  
+                    ELSE  
+                     ', No. Exterior ' + domicilio.NoExterior  
+                    END ,  
+        CASE WHEN domicilio.NoInterior = '' THEN  
+           ''  
+        ELSE  
+         ', No. Interior ' + domicilio.NoInterior  
+        END, CASE WHEN domicilio.Colonia = '' THEN  
+             ''  
+          ELSE  
+           ' Col. ' + domicilio.Colonia  
+          END, CASE WHEN domicilio.Municipio = '' THEN  
+               ''  
+            ELSE  
+             ', ' + domicilio.Municipio  
+            END, ' ', domicilio.Estado, ' ', domicilio.Pais ,  
+        CASE WHEN domicilio.CodigoPostal = '' THEN  
+           ''  
+        ELSE  
+         ', C.P. ' + domicilio.CodigoPostal  
+        END, CASE WHEN U.Correo = '' THEN  
+             ''  
+          ELSE  
+           ', Correo Electronico Contacto: ' + U.Correo  
+          END, CASE WHEN P.Telefono = '' THEN '' ELSE ', Tel. ' + P.Telefono END )  
+        + '. En caso de que este domicilio cambie, me comprometo a informárselo inmediatamente.' AS QuintoParrafo  
+    FROM dbo.MPY_MM_AceptacionPedido AS AP  
+    LEFT JOIN S_Proveedor AS P ON P.IdProveedor = @IdProveedor AND P.Activo = 1  
+    LEFT JOIN DG_RepresentanteLegal RL ON P.IdProveedor = RL.IdProveedor AND RL.IsActivo =1  
+    LEFT JOIN DG_ActaConstitutiva AC ON P.IdProveedor = AC.IdProveedor AND AC.IsActivo = 1  
+    LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+    LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario   
+	AND U.Activo = 1
+	AND ISNULL(U.IsEliminado,0) = 0
+    LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS C ON C.IdContratista = CAST(AP.IdProveedor AS INT)  
+    LEFT JOIN Adinco.dbo.CO_SAPVendor SV ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN dbo.DG_Domicilio domicilio ON domicilio.IdProveedor = P.IdProveedor AND domicilio.IdTipoDomicilio = 1 AND domicilio.Activo = 1  
+    WHERE AP.IdAceptacionPedido= @IdPedido --AND  AC.IsActivo = 1  
+    GROUP BY P.RazonSocial,P.RegimenCapital,RL.Nombre,RL.APaterno,RL.AMaterno,AC.Nombre, SV.VendorName,CON.RazonSocial,  
+    P.CURP, domicilio.TipoViabilidad,domicilio.NombreViabilidad,domicilio.NoExterior,domicilio.NoInterior,domicilio.Colonia,domicilio.Municipio,domicilio.Estado, 
+	domicilio.Pais,domicilio.CodigoPostal,P.CorreoProveedor,P.Telefono,domicilio.Calle,U.Correo,AP.IdSubContratista,AC.NoActaConstitutiva  
+  END  
+  ELSE  
+  BEGIN  
+  SET LANGUAGE spanish;  
+  SELECT DISTINCT TOP 1  
+  DAY ( GETDATE ()) AS DIA, DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS MES ,  
+       RIGHT(CAST(YEAR ( GETDATE ()) AS CHAR(4)), 2) AS ANIO ,  
+       'Ciudad de México, al ' + CAST(DAY ( GETDATE ()) AS NVARCHAR(2)) + ' de '  
+       + CAST(DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS NVARCHAR(10)) + ' del '  
+       + CONVERT ( NVARCHAR(10), YEAR ( GETDATE ())) AS FECHA,  
+    CON.RazonSocial AS NombreOperadora,   
+    CONCAT(RL.Nombre,' ',RL.APaterno,' ',RL.AMaterno) AS RepresentanteLegal,   
+        'CARTA DE PROVEEDOR A PROVEEDOR DE LO DESTINADO A UNA ASIGNACIÓN, CONTRATO O PERMISO, DE LA INDUSTRIA DE HIDROCARBUROS' AS Titulo,  
+        'Por medio de la presente, el (la) que suscribe ' + CONCAT(RL.Nombre,' ',RL.APaterno,' ',RL.AMaterno)  
+        +' representante legal de la empresa ' + ISNULL(P.RazonSocial,SV.VendorName)  
+        + ' lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
+        + ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL   
+        +' declarado(s) a continuación, se suministraron y facturaron al Operador del (de la) ' + @NOMBRE_CONTRATO + ' en el año '
+        + CAST(Year(GETDATE()) AS NVARCHAR(50)) + ' cuenta(n) con la Proporción de Contenido Nacional que se señala en esta carta'  
+        + ' y que mi representada la obtuvo de conformidad con lo establecido en el “Acuerdo por el '  
+        + 'que se establece la Metodología para la Medición del Contenido Nacional en Asignaciones y '  
+        + 'Contratos para la Exploración y Extracción de Hidrocarburos, así como para los permisos en '  
+        + 'la Industria de Hidrocarburos”, y demás disposiciones jurídicas aplicables, es correcta, completa,'  
+        +' veraz y verificable.' AS PrimerInical,  
+        '1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en la f
+o
+rma que establezcan las disposiciones jurídicas aplicables.' AS PrimerParafo,  
+        '2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos 5 años contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Opera
+dor (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relaci
+onado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada 
+estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
+        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidroc
+arburos, en particular lo previsto en los artículos 85, fracción III y 86, fracción III. ' AS TercerParrafo,  
+        'Lo anterior, de conformidad con lo dispuesto en el artículo 46, párrafo quinto de la Ley de Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y 
+Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
+        'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
+        + CONCAT (  
+        domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
+                       ''  
+                    ELSE  
+                     ', No. Exterior ' + domicilio.NoExterior  
+                    END ,  
+        CASE WHEN domicilio.NoInterior = '' THEN  
+           ''  
+        ELSE  
+         ', No. Interior ' + domicilio.NoInterior  
+        END, CASE WHEN domicilio.Colonia = '' THEN  
+             ''  
+          ELSE  
+           ' Col. ' + domicilio.Colonia  
+          END, CASE WHEN domicilio.Municipio = '' THEN  
+               ''  
+            ELSE  
+             ', ' + domicilio.Municipio  
+            END, ' ', domicilio.Estado, ' ', domicilio.Pais ,  
+        CASE WHEN domicilio.CodigoPostal = '' THEN  
+           ''  
+        ELSE  
+         ', C.P. ' + domicilio.CodigoPostal  
+        END, CASE WHEN U.Correo = '' THEN  
+             ''  
+          ELSE  
+           ', Correo Electronico Contacto: ' + U.Correo  
+          END, CASE WHEN P.Telefono = '' THEN '' ELSE ', Tel. ' + P.Telefono END )  
+        + '. En caso de que este domicilio cambie, me comprometo a informárselo inmediatamente.' AS QuintoParrafo  
+    FROM dbo.MPY_MM_AceptacionPedido AS AP  
+    LEFT JOIN S_Proveedor AS P ON P.IdProveedor = @IdProveedor AND P.Activo = 1  
+    LEFT JOIN DG_RepresentanteLegal RL ON RL.IdProveedor = @IdProveedor AND RL.IsActivo =1  
+    LEFT JOIN DG_ActaConstitutiva AC ON AC.IdProveedor = @IdProveedor AND AC.IsActivo = 1  
+    LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+    LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario  
+				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
+    LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS C ON C.IdContratista = CAST(AP.IdProveedor AS INT)  
+    LEFT JOIN Adinco.dbo.CO_SAPVendor SV ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN dbo.DG_Domicilio domicilio ON domicilio.IdProveedor = P.IdProveedor AND domicilio.IdTipoDomicilio = 1 AND domicilio.Activo = 1  
+    WHERE AP.IdAceptacionPedido = @IdPedido   
+    GROUP BY RL.Nombre,  
+     RL.APaterno,  
+     RL.AMaterno,  
+     AC.Nombre,   
+     AC.NoActaConstitutiva,  
+     AP.IdProveedor,  
+     AP.IdDomicilioEntrega,  
+     AP.IdSubContratista,  
+     P.RazonSocial,  
+     SV.VendorName,  
+     CON.RazonSocial,  
+     domicilio.TipoViabilidad,  
+     domicilio.Calle,  
+     domicilio.NoExterior,  
+     domicilio.NoInterior,  
+     domicilio.Colonia,  
+     domicilio.Municipio,  
+     domicilio.Estado,  
+     domicilio.Pais,  
+     domicilio.CodigoPostal,  
+     U.Correo,  
+     P.Telefono,  
+     C.NombreContratista  
+  END;  
+  END;  
+ELSE  
+BEGIN  
+
+	set @RFC_ACTUAL_DEA = (SELECT TOP 1
+							P.RFC
+						FROM dbo.MM_AceptacionPedido AS AP
+						JOIN dbo.S_Proveedor AS P ON AP.IdProveedor = P.IdProveedor
+						WHERE AP.IdAceptacionPedido = @IdPedido);
+
+	set @EXISTE_RFC_DEA = (SELECT COUNT(IdProveedor) 
+						FROM DEA_Proveedor 
+						WHERE RTRIM(LTRIM(RFC))=RTRIM(LTRIM(@RFC_ACTUAL_DEA)) 
+						AND Activo = 1)
+
+  IF  @EXISTE_RFC_DEA > 0
+  BEGIN
+		
+	SET @CANT_TMAT = (SELECT COUNT(VP.IdTipoMaterialServicio)  
+        FROM dbo.MM_PCN_ValoresPesos AS VP  
+        LEFT JOIN dbo.MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedidoDetalle = VP.IdAceptacionPedidoDetalle  
+        LEFT JOIN dbo.MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = APD.IdAceptacionPedido  
+        WHERE AP.IdAceptacionPedido = @IdPedido AND VP.IdTipoMaterialServicio = 1)  
+  
+	SET @CANT_TSER = (SELECT COUNT(VP.IdTipoMaterialServicio)  
+        FROM dbo.MM_PCN_ValoresPesos AS VP  
+        LEFT JOIN dbo.MM_AceptacionPedidoDetalle AS APD ON APD.IdAceptacionPedidoDetalle = VP.IdAceptacionPedidoDetalle  
+        LEFT JOIN dbo.MM_AceptacionPedido AS AP ON AP.IdAceptacionPedido = APD.IdAceptacionPedido  
+        WHERE AP.IdAceptacionPedido = @IdPedido AND VP.IdTipoMaterialServicio = 2);
+
+	IF @CANT_TMAT > 0 AND @CANT_TSER = 0  
+	 BEGIN  
+	  SET @TIPO_MATERIAL = 'Materiales';  
+	 END  
+  
+	 IF @CANT_TMAT = 0 AND @CANT_TSER > 0  
+	 BEGIN  
+	  SET @TIPO_MATERIAL = 'Servicios';  
+	 END  
+  
+	 IF @CANT_TMAT > 0 AND @CANT_TSER > 0  
+	 BEGIN  
+	  SET @TIPO_MATERIAL = 'Materiales/Servicios';  
+	 END  
+
+	 SET @UsuarioFisico = (SELECT TOP 1 U.Nombre AS RepresentanteLegal  
+							  FROM S_Proveedor AS P  
+							  JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+							  JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario  
+							  WHERE U.IdTipoUsuario = 3 AND P.IdProveedor = @IdProveedor);
+
+	 --IF (@IdTipoRegimen = 2) 
+	 --BEGIN 
+		
+		SET LANGUAGE spanish;  
+		SELECT DISTINCT TOP 1  
+			DAY ( GETDATE ()) AS DIA, DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS MES ,  
+			RIGHT(CAST(YEAR ( GETDATE ()) AS CHAR(4)), 2) AS ANIO ,  
+		    'Ciudad de México, al ' + CAST(DAY ( GETDATE ()) AS NVARCHAR(2)) + ' de ' + CAST(DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS NVARCHAR(10)) + ' del '  + CONVERT ( NVARCHAR(10), YEAR ( GETDATE ())) AS FECHA,  
+			POP.RazonSocial AS NombreOperadora,   
+			@UsuarioFisico AS RepresentanteLegal,   
+			'CARTA DE PROVEEDOR A PROVEEDOR DE LO DESTINADO A UNA ASIGNACIÓN, CONTRATO O PERMISO, DE LA INDUSTRIA DE HIDROCARBUROS' AS Titulo,  
+			'Por medio de la presente, el (la) que suscribe ' + @UsuarioFisico  
+			+' representante legal de la empresa ' + ISNULL(P.RazonSocial,'')  
+			+ case when isnull(AC.NoActaConstitutiva,'') <> '' then  ' lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
+					else '' end
+			+ ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL   
+			+' declarado(s) a continuación, se suministraron y facturaron al Operador del (de la) ' + ISNULL(CON.NumeroContrato,'') COLLATE SQL_Latin1_General_CP1_CI_AS + ' en el año '
+			+ CAST(Year(GETDATE()) AS NVARCHAR(50)) + ' cuenta(n) con la Proporción de Contenido Nacional que se señala en esta carta'  
+			+ ' y que mi representada la obtuvo de conformidad con lo establecido en el “Acuerdo por el '  
+			+ 'que se establece la Metodología para la Medición del Contenido Nacional en Asignaciones y '  
+			+ 'Contratos para la Exploración y Extracción de Hidrocarburos, así como para los permisos en '  
+			+ 'la Industria de Hidrocarburos”, y demás disposiciones jurídicas aplicables, es correcta, completa,'  
+			+' veraz y verificable.' AS PrimerInical,  
+			'1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en la forma que establezcan las disposiciones jurídicas aplicables.' AS PrimerParafo,  
+			'2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos dieciocho meses contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Operador (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
+			'3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidrocarburos, en particular lo previsto en los artículos 85, fracción III y 86, fracción III. ' AS TercerParrafo,  
+			'Lo anterior, de conformidad con lo dispuesto en el artículo 46, párrafo quinto de la Ley de Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
+			'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
+			+ CONCAT (  
+			domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
+						   ''  
+						ELSE  
+						 ', No. Exterior ' + domicilio.NoExterior  
+						END ,  
+			CASE WHEN domicilio.NoInterior = '' THEN  
+			   ''  
+			ELSE  
+			 ', No. Interior ' + domicilio.NoInterior  
+			END, CASE WHEN domicilio.Colonia = '' THEN  
+				 ''  
+			  ELSE  
+			   ' Col. ' + domicilio.Colonia  
+			  END, CASE WHEN domicilio.Municipio = '' THEN  
+				   ''  
+				ELSE  
+				 ', ' + domicilio.Municipio  
+				END, ' ', domicilio.Estado, ' ', domicilio.Pais ,  
+			CASE WHEN domicilio.CodigoPostal = '' THEN  
+			   ''  
+			ELSE  
+			 ', C.P. ' + domicilio.CodigoPostal  
+			END, CASE WHEN U.Correo = '' THEN  
+				 ''  
+			  ELSE  
+			   ', Correo Electronico Contacto: ' + U.Correo  
+			  END, CASE WHEN P.Telefono = '' THEN '' ELSE ', Tel. ' + P.Telefono END )  
+			+ '. En caso de que este domicilio cambie, me comprometo a informárselo inmediatamente.' AS QuintoParrafo  
+		FROM dbo.MM_AceptacionPedido AS AP  
+		LEFT JOIN S_Proveedor AS P ON P.IdProveedor = @IdProveedor AND P.Activo = 1  
+		LEFT JOIN DG_RepresentanteLegal RL ON P.IdProveedor = RL.IdProveedor AND RL.IsActivo =1  
+		LEFT JOIN DG_ActaConstitutiva AC ON P.IdProveedor = AC.IdProveedor AND AC.IsActivo = 1  
+		LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+		LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario 
+				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
+		LEFT JOIN dbo.MM_Pedido AS PE ON PE.IdPedido = AP.IdPedido
+		LEFT JOIN S_Proveedor AS POP ON POP.IdProveedor = PE.IdProveedorCompras
+		LEFT JOIN Adinco.dbo.CO_Contrato AS CON ON PE.IdContrato = CON.IdContrato
+		LEFT JOIN dbo.DG_Domicilio domicilio ON domicilio.IdProveedor = P.IdProveedor AND domicilio.IdTipoDomicilio = 1 AND domicilio.Activo = 1  
+		WHERE AP.IdAceptacionPedido= @IdPedido --AND  AC.IsActivo = 1  
+		GROUP BY P.RazonSocial,P.RegimenCapital,RL.Nombre,RL.APaterno,RL.AMaterno,AC.Nombre, 
+		P.CURP, domicilio.TipoViabilidad,domicilio.NombreViabilidad,domicilio.NoExterior,domicilio.NoInterior,domicilio.Colonia,domicilio.Municipio,domicilio.Estado, 
+		domicilio.Pais,domicilio.CodigoPostal,P.CorreoProveedor,P.Telefono,domicilio.Calle,U.Correo,AC.NoActaConstitutiva,POP.RazonSocial,CON.NumeroContrato
+
+	 --END
+	 --ELSE
+	 --BEGIN
+		
+		--SET LANGUAGE spanish;  
+	 -- SELECT DISTINCT TOP 1  
+	 -- DAY ( GETDATE ()) AS DIA, DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS MES ,  
+		--   RIGHT(CAST(YEAR ( GETDATE ()) AS CHAR(4)), 2) AS ANIO ,  
+		--   'Ciudad de México, al ' + CAST(DAY ( GETDATE ()) AS NVARCHAR(2)) + ' de '  
+		--   + CAST(DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS NVARCHAR(10)) + ' del '  
+		--   + CONVERT ( NVARCHAR(10), YEAR ( GETDATE ())) AS FECHA,  
+		--POP.RazonSocial AS NombreOperadora,   
+		--CONCAT(RL.Nombre,' ',RL.APaterno,' ',RL.AMaterno) AS RepresentanteLegal,   
+		--	'CARTA DEL PROVEEDOR DIRECTO DEL OPERADOR' AS Titulo,  
+		--	'Por medio de la presente, el (la) que suscribe ' + CONCAT(RL.Nombre,' ',RL.APaterno,' ',RL.AMaterno)  
+		--	+' representante legal de la empresa ' + ISNULL(P.RazonSocial,'')  
+		--	+ ' lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
+		--	+ ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL   
+		--	+' declarado(s) a continuación, se suministraron y facturaron al Operador del (de la) ' + CON.NumeroContrato COLLATE SQL_Latin1_General_CP1_CI_AS + ' en el año '
+		--	+ CAST(Year(GETDATE()) AS NVARCHAR(50)) + ' cuenta(n) con la Proporción de Contenido Nacional que se señala en esta carta'  
+		--	+ ' y que mi representada la obtuvo de conformidad con lo establecido en el “Acuerdo por el '  
+		--	+ 'que se establece la Metodología para la Medición del Contenido Nacional en Asignaciones y '  
+		--	+ 'Contratos para la Exploración y Extracción de Hidrocarburos, así como para los permisos en '  
+		--	+ 'la Industria de Hidrocarburos”, y demás disposiciones jurídicas aplicables, es correcta, completa,'  
+		--	+' veraz y verificable.' AS PrimerInical,  
+		--	'1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en forma que establezcan las disposiciones jurídicas aplicables' AS PrimerParafo,  
+		--	'2. Que está obligada a conservar el soporte documental de lo declarado en esta carta, por lo menos 5 años posteriores a que el Operador la presente a la Secretaría de Economía, y en caso de que se notifique al Operador que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el Operador.' AS SegundoParrafo,  
+		--	'3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidrocarburos, en particular lo previsto en los artículos 85, fracción III y 86, fracción III. ' AS TercerParrafo,  
+		--	'Lo anterior, de conformidad con lo dispuesto en el punto 19 del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,  
+		--	'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
+		--	+ CONCAT (  
+		--	domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
+		--				   ''  
+		--				ELSE  
+		--				 ', No. Exterior ' + domicilio.NoExterior  
+		--				END ,  
+		--	CASE WHEN domicilio.NoInterior = '' THEN  
+		--	   ''  
+		--	ELSE  
+		--	 ', No. Interior ' + domicilio.NoInterior  
+		--	END, CASE WHEN domicilio.Colonia = '' THEN  
+		--		 ''  
+		--	  ELSE  
+		--	   ' Col. ' + domicilio.Colonia  
+		--	  END, CASE WHEN domicilio.Municipio = '' THEN  
+		--		   ''  
+		--		ELSE  
+		--		 ', ' + domicilio.Municipio  
+		--		END, ' ', domicilio.Estado, ' ', domicilio.Pais ,  
+		--	CASE WHEN domicilio.CodigoPostal = '' THEN  
+		--	   ''  
+		--	ELSE  
+		--	 ', C.P. ' + domicilio.CodigoPostal  
+		--	END, CASE WHEN U.Correo = '' THEN  
+		--		 ''  
+		--	  ELSE  
+		--	   ', Correo Electronico Contacto: ' + U.Correo  
+		--	  END, CASE WHEN P.Telefono = '' THEN '' ELSE ', Tel. ' + P.Telefono END )  
+		--	+ '. En caso de que este domicilio cambie, me comprometo a informárselo inmediatamente.' AS QuintoParrafo  
+		--FROM dbo.MM_AceptacionPedido AS AP  
+		--LEFT JOIN S_Proveedor AS P ON P.IdProveedor = @IdProveedor AND P.Activo = 1  
+		--LEFT JOIN DG_RepresentanteLegal RL ON RL.IdProveedor = @IdProveedor AND RL.IsActivo =1  
+		--LEFT JOIN DG_ActaConstitutiva AC ON AC.IdProveedor = @IdProveedor AND AC.IsActivo = 1  
+		--LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+		--LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario   
+		--LEFT JOIN dbo.MM_Pedido AS PE ON PE.IdPedido = AP.IdPedido
+		--LEFT JOIN S_Proveedor AS POP ON POP.IdProveedor = PE.IdProveedorCompras
+		--LEFT JOIN Adinco.dbo.CO_Contrato AS CON ON PE.IdContrato = CON.IdContrato
+		--LEFT JOIN dbo.DG_Domicilio domicilio ON domicilio.IdProveedor = P.IdProveedor AND domicilio.IdTipoDomicilio = 1 AND domicilio.Activo = 1  
+		--WHERE AP.IdAceptacionPedido = @IdPedido   
+		--GROUP BY RL.Nombre,  
+		-- RL.APaterno,  
+		-- RL.AMaterno,  
+		-- AC.Nombre,   
+		-- AC.NoActaConstitutiva,  
+		-- AP.IdProveedor,  
+		-- AP.IdDomicilioEntrega,  
+		-- P.RazonSocial,  
+		-- domicilio.TipoViabilidad,  
+		-- domicilio.Calle,  
+		-- domicilio.NoExterior,  
+		-- domicilio.NoInterior,  
+		-- domicilio.Colonia,  
+		-- domicilio.Municipio,  
+		-- domicilio.Estado,  
+		-- domicilio.Pais,  
+		-- domicilio.CodigoPostal,  
+		-- U.Correo,  
+		-- P.Telefono,
+		-- POP.RazonSocial,
+		-- CON.NumeroContrato
+
+	 --END
+
+  END
+  ELSE
+  BEGIN
+	
+	IF (@IdTipoRegimen = 2)  
+	BEGIN  
+    SET LANGUAGE spanish;  
+    SELECT DISTINCT TOP 1  
+    DAY ( GETDATE ()) AS DIA, DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS MES ,  
+       RIGHT(CAST(YEAR ( GETDATE ()) AS CHAR(4)), 2) AS ANIO ,  
+       'Ciudad de México, al ' + CAST(DAY ( GETDATE ()) AS NVARCHAR(2)) + ' de '  
+       + CAST(DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS NVARCHAR(10)) + ' del '  
+       + CONVERT ( NVARCHAR(10), YEAR ( GETDATE ())) AS FECHA,  
+    CON.RazonSocial AS NombreOperadora,   
+    @UsuarioFisico AS RepresentanteLegal,   
+        'CARTA DEL PROVEEDOR DIRECTO DEL OPERADOR' AS Titulo,  
+        'Por medio de la presente, el (la) que suscribe ' + @UsuarioFisico  
+        +' representante legal de la empresa ' + ISNULL(P.RazonSocial,SV.VendorName)  
+       
+		
+		 + case when isnull(AC.NoActaConstitutiva,'') <> '' then  ' lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
+				else '' end
+		  
+        + ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL   
+        +' declarado(s) a continuación,  se suministraron y facturaron al Operador del (de la) ' + @NOMBRE_CONTRATO + ' en el año '  
+        + CAST(Year(GETDATE()) AS NVARCHAR(50)) + 'y que el cálculo de su Proporción de Contenido Nacional,se obtuvo de conformidad'  
+        + 'con lo señalado en el "Acuerdo por el que se establece la Metodología para la Medición del Contenido'  
+        + 'Nacional en Asignaciones y Contratos para la Exploración y Extracción de Hidrocarburos, así como para los'  
+        + 'permisos en la Industria de Hidrocarburos" , y demás disposiciones jurídicas aplicables, además de que es'  
+        +' correcta, completa, veraz y verificable.' AS PrimerInical,  
+        '1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en forma
+ que establezcan las disposiciones jurídicas aplicables' AS PrimerParafo,  
+        '2. Que está obligada a conservar el soporte documental de lo declarado en esta carta, por lo menos 5 años posteriores a que el Operador la presente a la Secretaría de Economía, y en caso de que se notifique al Operador que se va a verifi
+car la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plaz
+o para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el Operador.' AS SegundoParrafo,  
+        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidroc
+arburos, en particular lo previsto en los artículos 85, fracción III y 86, fracción III. ' AS TercerParrafo,  
+        'Lo anterior, de conformidad con lo dispuesto en el punto 19 del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que r
+ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,  
+        'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
+        + CONCAT (  
+        domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
+                       ''  
+                    ELSE  
+                     ', No. Exterior ' + domicilio.NoExterior  
+                    END ,  
+        CASE WHEN domicilio.NoInterior = '' THEN  
+           ''  
+        ELSE  
+         ', No. Interior ' + domicilio.NoInterior  
+        END, CASE WHEN domicilio.Colonia = '' THEN  
+             ''  
+          ELSE  
+           ' Col. ' + domicilio.Colonia  
+          END, CASE WHEN domicilio.Municipio = '' THEN  
+               ''  
+            ELSE  
+             ', ' + domicilio.Municipio  
+            END, ' ', domicilio.Estado, ' ', domicilio.Pais ,  
+        CASE WHEN domicilio.CodigoPostal = '' THEN  
+           ''  
+        ELSE  
+         ', C.P. ' + domicilio.CodigoPostal  
+        END, CASE WHEN U.Correo = '' THEN  
+             ''  
+          ELSE  
+           ', Correo Electronico Contacto: ' + U.Correo  
+          END, CASE WHEN P.Telefono = '' THEN '' ELSE ', Tel. ' + P.Telefono END )  
+        + '. En caso de que este domicilio cambie, me comprometo a informárselo inmediatamente.' AS QuintoParrafo  
+    FROM dbo.MPY_MM_AceptacionPedido AS AP  
+    LEFT JOIN S_Proveedor AS P ON P.IdProveedor = @IdProveedor AND P.Activo = 1  
+    LEFT JOIN DG_RepresentanteLegal RL ON P.IdProveedor = RL.IdProveedor AND RL.IsActivo =1  
+    LEFT JOIN DG_ActaConstitutiva AC ON P.IdProveedor = AC.IdProveedor AND AC.IsActivo = 1  
+    LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+    LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario   
+				AND U.Activo = 1
+				AND ISNULL(U.IsEliminado,0) = 0
+    LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS C ON C.IdContratista = CAST(AP.IdProveedor AS INT)  
+    LEFT JOIN Adinco.dbo.CO_SAPVendor SV ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN dbo.DG_Domicilio domicilio ON domicilio.IdProveedor = P.IdProveedor AND domicilio.IdTipoDomicilio = 1 AND domicilio.Activo = 1  
+    WHERE AP.IdAceptacionPedido= @IdPedido --AND  AC.IsActivo = 1  
+    GROUP BY P.RazonSocial,P.RegimenCapital,RL.Nombre,RL.APaterno,RL.AMaterno,AC.Nombre, SV.VendorName,CON.RazonSocial,  
+    P.CURP, domicilio.TipoViabilidad,domicilio.NombreViabilidad,domicilio.NoExterior,
+	domicilio.NoInterior,domicilio.Colonia,domicilio.Municipio,domicilio.Estado, 
+	domicilio.Pais,domicilio.CodigoPostal,P.CorreoProveedor,P.Telefono,domicilio.Calle,U.Correo,AP.IdSubContratista,AC.NoActaConstitutiva  
+  END  
+	ELSE  
+	BEGIN  
+  SET LANGUAGE spanish;  
+  SELECT DISTINCT TOP 1  
+  DAY ( GETDATE ()) AS DIA, DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS MES ,  
+       RIGHT(CAST(YEAR ( GETDATE ()) AS CHAR(4)), 2) AS ANIO ,  
+       'Ciudad de México, al ' + CAST(DAY ( GETDATE ()) AS NVARCHAR(2)) + ' de '  
+       + CAST(DATENAME ( MONTH, DATEADD ( MONTH, MONTH ( GETDATE ()), -1 )) AS NVARCHAR(10)) + ' del '  
+       + CONVERT ( NVARCHAR(10), YEAR ( GETDATE ())) AS FECHA,  
+    CON.RazonSocial AS NombreOperadora,   
+    CONCAT(RL.Nombre,' ',RL.APaterno,' ',RL.AMaterno) AS RepresentanteLegal,   
+        'CARTA DEL PROVEEDOR DIRECTO DEL OPERADOR' AS Titulo,  
+        'Por medio de la presente, el (la) que suscribe ' + CONCAT(RL.Nombre,' ',RL.APaterno,' ',RL.AMaterno)  
+        +' representante legal de la empresa ' + ISNULL(P.RazonSocial,SV.VendorName)  
+        + ' lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
+        + ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL   
+        +' declarado(s) a continuación, se suministraron y facturaron al Operador del (de la) ' + @NOMBRE_CONTRATO + ' en el año '
+        + CAST(Year(GETDATE()) AS NVARCHAR(50)) + ' cuenta(n) con la Proporción de Contenido Nacional que se señala en esta carta'  
+        + ' y que mi representada la obtuvo de conformidad con lo establecido en el “Acuerdo por el '  
+        + 'que se establece la Metodología para la Medición del Contenido Nacional en Asignaciones y '  
+        + 'Contratos para la Exploración y Extracción de Hidrocarburos, así como para los permisos en '  
+        + 'la Industria de Hidrocarburos”, y demás disposiciones jurídicas aplicables, es correcta, completa,'  
+        +' veraz y verificable.' AS PrimerInical,  
+        '1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en forma
+ que establezcan las disposiciones jurídicas aplicables' AS PrimerParafo,  
+        '2. Que está obligada a conservar el soporte documental de lo declarado en esta carta, por lo menos 5 años posteriores a que el Operador la presente a la Secretaría de Economía, y en caso de que se notifique al Operador que se va a verifi
+car la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plaz
+o para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el Operador.' AS SegundoParrafo,  
+        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidroc
+arburos, en particular lo previsto en los artículos 85, fracción III y 86, fracción III. ' AS TercerParrafo,  
+        'Lo anterior, de conformidad con lo dispuesto en el punto 19 del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que r
+ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,  
+        'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
+        + CONCAT (  
+        domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
+                       ''  
+                    ELSE  
+                     ', No. Exterior ' + domicilio.NoExterior  
+                    END ,  
+        CASE WHEN domicilio.NoInterior = '' THEN  
+           ''  
+        ELSE  
+         ', No. Interior ' + domicilio.NoInterior  
+        END, CASE WHEN domicilio.Colonia = '' THEN  
+             ''  
+          ELSE  
+           ' Col. ' + domicilio.Colonia  
+          END, CASE WHEN domicilio.Municipio = '' THEN  
+               ''  
+            ELSE  
+             ', ' + domicilio.Municipio  
+            END, ' ', domicilio.Estado, ' ', domicilio.Pais ,  
+        CASE WHEN domicilio.CodigoPostal = '' THEN  
+           ''  
+        ELSE  
+         ', C.P. ' + domicilio.CodigoPostal  
+        END, CASE WHEN U.Correo = '' THEN  
+             ''  
+          ELSE  
+           ', Correo Electronico Contacto: ' + U.Correo  
+          END, CASE WHEN P.Telefono = '' THEN '' ELSE ', Tel. ' + P.Telefono END )  
+        + '. En caso de que este domicilio cambie, me comprometo a informárselo inmediatamente.' AS QuintoParrafo  
+    FROM dbo.MPY_MM_AceptacionPedido AS AP  
+    LEFT JOIN S_Proveedor AS P ON P.IdProveedor = @IdProveedor AND P.Activo = 1  
+    LEFT JOIN DG_RepresentanteLegal RL ON RL.IdProveedor = @IdProveedor AND RL.IsActivo =1  
+    LEFT JOIN DG_ActaConstitutiva AC ON AC.IdProveedor = @IdProveedor AND AC.IsActivo = 1  
+    LEFT JOIN S_UsuarioProveedor UP ON P.IdProveedor = UP.IdProveedor  
+    LEFT JOIN S_Usuario U ON UP.IdUsuario = U.IdUsuario  
+		AND U.Activo = 1
+		AND ISNULL(U.IsEliminado,0) = 0
+    LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP ON CP.Planta = PO.Plant  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS CON ON CON.IdContratista = CP.IdContratista  
+    LEFT JOIN Adinco.dbo.CO_Contratista AS C ON C.IdContratista = CAST(AP.IdProveedor AS INT)  
+    LEFT JOIN Adinco.dbo.CO_SAPVendor SV ON SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS  
+    LEFT JOIN dbo.DG_Domicilio domicilio ON domicilio.IdProveedor = P.IdProveedor AND domicilio.IdTipoDomicilio = 1 AND domicilio.Activo = 1  
+    WHERE AP.IdAceptacionPedido = @IdPedido   
+    GROUP BY RL.Nombre,  
+     RL.APaterno,  
+     RL.AMaterno,  
+     AC.Nombre,   
+     AC.NoActaConstitutiva,  
+     AP.IdProveedor,  
+     AP.IdDomicilioEntrega,  
+     AP.IdSubContratista,  
+     P.RazonSocial,  
+     SV.VendorName,  
+     CON.RazonSocial,  
+     domicilio.TipoViabilidad,  
+     domicilio.Calle,  
+     domicilio.NoExterior,  
+     domicilio.NoInterior,  
+     domicilio.Colonia,  
+     domicilio.Municipio,  
+     domicilio.Estado,  
+     domicilio.Pais,  
+     domicilio.CodigoPostal,  
+     U.Correo,  
+     P.Telefono,  
+     C.NombreContratista  
+  END; 
+   
+  END;  
+
+END;
+
+
+END;

@@ -1,0 +1,5 @@
+﻿CREATE TABLE [dbo].[MM_Licitacion] (
+    [IdLicitacion] INT IDENTITY (1, 1) NOT NULL,
+    CONSTRAINT [PK_MM_Licitacion] PRIMARY KEY CLUSTERED ([IdLicitacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

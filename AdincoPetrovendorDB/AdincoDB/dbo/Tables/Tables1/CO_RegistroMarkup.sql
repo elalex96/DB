@@ -1,0 +1,24 @@
+﻿CREATE TABLE [dbo].[CO_RegistroMarkup] (
+    [Id]                     INT        IDENTITY (1, 1) NOT NULL,
+    [GastoId]                INT        NULL,
+    [Porcentaje]             FLOAT (53) NULL,
+    [MontoEquivalente]       FLOAT (53) NOT NULL,
+    [MontoGasto]             FLOAT (53) NOT NULL,
+    [Activo]                 BIT        NOT NULL,
+    [CreadoPor]              INT        NOT NULL,
+    [CreadoEn]               DATETIME   NOT NULL,
+    [ModificadoPor]          INT        NULL,
+    [ModificadoEn]           DATETIME   NULL,
+    [ContratoId]             INT        NULL,
+    [TipoCambio]             MONEY      NULL,
+    [MesCertificado]         DATETIME   NULL,
+    [IdEstadoPemex]          INT        NULL,
+    [MesEstadoPemex]         DATE       NULL,
+    [ImporteEstimadoParcial] FLOAT (53) NULL,
+    CONSTRAINT [PK_CO_RegistroMarkup] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_CO_RegistroMarkup_APP_Usuarios_Crear] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_CO_RegistroMarkup_APP_Usuarios_Modifica] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_CO_RegistroMarkup_CO_Contrato] FOREIGN KEY ([ContratoId]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
+    CONSTRAINT [FK_CO_RegistroMarkup_CO_Registro] FOREIGN KEY ([GastoId]) REFERENCES [dbo].[CO_Registro] ([IdRegistro])
+);
+

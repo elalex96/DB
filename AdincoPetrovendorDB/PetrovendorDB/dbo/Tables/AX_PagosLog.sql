@@ -1,0 +1,24 @@
+﻿CREATE TABLE [dbo].[AX_PagosLog] (
+    [FormaPago]           VARCHAR (MAX)  NULL,
+    [CuentaOrigen]        VARCHAR (MAX)  NULL,
+    [BancoOrigen]         VARCHAR (MAX)  NULL,
+    [TitularOrigen]       VARCHAR (MAX)  NULL,
+    [CuentaDestino]       VARCHAR (MAX)  NULL,
+    [BancoDestino]        VARCHAR (50)   NULL,
+    [TitularDestino]      NVARCHAR (MAX) NULL,
+    [ReferenciaPago]      VARCHAR (50)   NULL,
+    [FechaPago]           VARCHAR (MAX)  NULL,
+    [MontoPagado]         MONEY          NULL,
+    [Interes]             MONEY          NULL,
+    [Moneda]              VARCHAR (MAX)  NULL,
+    [Concepto]            VARCHAR (MAX)  NULL,
+    [NoPolizaContable]    VARCHAR (MAX)  NULL,
+    [UUIDFacturaPagada]   VARCHAR (MAX)  NULL,
+    [MontoPagadoFactura]  MONEY          NULL,
+    [ComplementoPagoUUID] VARCHAR (MAX)  NULL,
+    [RECID]               VARCHAR (MAX)  NULL,
+    [IdTransferencia]     INT            NULL,
+    [RFC]                 VARCHAR (MAX)  NULL,
+    [Fecharecepcion]      DATETIME       NULL
+);
+
