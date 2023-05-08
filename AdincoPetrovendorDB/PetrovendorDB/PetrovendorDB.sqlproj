@@ -2907,5 +2907,6 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_AceptacionesPorPartidaReporteRemanentes.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_AgregarSolicitudPedido_V2.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_WDEA_ReporteRemanentesGeneral.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SP_MM_DescargaArchivosSoporteProcura.sql" />
   </ItemGroup>
 </Project>
