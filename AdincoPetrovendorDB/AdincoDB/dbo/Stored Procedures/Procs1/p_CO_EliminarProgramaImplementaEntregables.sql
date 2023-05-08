@@ -1,0 +1,6 @@
+﻿Create Proc p_CO_EliminarProgramaImplementaEntregables
+@pIdProgramaImplementaEntregable int
+as
+
+	delete CO_ProgramaImplementaEntregables
+	where @pIdProgramaImplementaEntregable = IdProgramaImplementaEntregable

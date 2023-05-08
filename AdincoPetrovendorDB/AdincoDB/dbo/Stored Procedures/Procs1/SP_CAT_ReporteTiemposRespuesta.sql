@@ -1,0 +1,36 @@
+﻿-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 05/10/2021
+-- Description:	Consulta dell catalogo de tiempos de entrega
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_CAT_ReporteTiemposRespuesta]
+	-- Add the parameters for the stored procedure here
+	
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	SELECT 
+		TE.IdTiempoRespuesta,
+		TE.TiempoRespuesta,
+		(SELECT COUNT(1) FROM dbo.EN_Entregable AS E WHERE E.IdTiempoRespuesta = TE.IdTiempoRespuesta AND E.IsActivo = 1) AS EntregablesUsados
+	INTO #TIEMPOSENTREGA
+	FROM dbo.EN_TiempoRespuesta AS TE
+	ORDER BY EntregablesUsados DESC;
+
+	SELECT
+		TE.IdTiempoRespuesta,
+		TE.TiempoRespuesta,
+		E.Consecutivo,
+		E.DocumentoEntregable,
+		ML.MarcoLegal
+	FROM dbo.EN_Entregable AS E
+	JOIN dbo.EN_MarcoLegal AS ML ON ML.IdMarcoLegal = E.IdMarcoLegal
+	JOIN #TIEMPOSENTREGA AS TE ON E.IdTiempoRespuesta = TE.IdTiempoRespuesta
+	AND E.IsActivo = 1
+	ORDER BY TE.EntregablesUsados DESC;
+
+END
