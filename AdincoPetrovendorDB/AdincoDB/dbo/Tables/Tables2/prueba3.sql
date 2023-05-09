@@ -1,7 +1,0 @@
-﻿CREATE TABLE [dbo].[prueba3] (
-    [asignacion]   NVARCHAR (MAX) NULL,
-    [REGIONFISCAL] NVARCHAR (MAX) NULL,
-    [REGION]       NVARCHAR (MAX) NULL,
-    [POZOSNIP]     NVARCHAR (MAX) NULL
-);
-

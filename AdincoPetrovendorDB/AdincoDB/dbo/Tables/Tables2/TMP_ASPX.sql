@@ -1,4 +1,0 @@
-﻿CREATE TABLE [dbo].[TMP_ASPX] (
-    [F1] NVARCHAR (MAX) NULL
-);
-
