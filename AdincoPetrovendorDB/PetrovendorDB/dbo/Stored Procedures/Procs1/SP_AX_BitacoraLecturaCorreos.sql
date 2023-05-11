@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_AX_BitacoraLecturaCorreos
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <06/12/2019>
 -- Description:	<Registro de bitacora de lectura de correos>
@@ -6,6 +10,10 @@
 -- Author:		<LUIS DAVID>
 -- Create date: <21/10/2022>
 -- Description:	<Se agrega a bitacora cuando el documento no contenga info>
+-- =============================================
+-- Author:		<LUIS DAVID>
+-- Create date: <09/05/2023>
+-- Description:	<Se valida el bit de Error para notificar al usuario las columnas invalidas>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_AX_BitacoraLecturaCorreos]
 	-- Add the parameters for the stored procedure here
@@ -48,7 +56,7 @@ DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int;
 		@Para,
 		@Error
 	    );
-	if (@ServicioOperadora = 'CorreoError')
+	if (@ServicioOperadora = 'CorreoError' OR @Error = 1)
 	begin
 	SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
 	SET @HTML = (SELECT HTML FROM dbo.TA_Correo WHERE Asunto = 'Notificación de Resumen de Lectura de WDEA');
@@ -84,6 +92,6 @@ DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int;
 			NULL, 
 			NULL,
 			'notificaciones@adinco.mx'
-	FROM dbo.WDEA_CorreosResumenProcesamiento;
+	FROM dbo.WDEA_CorreosResumenProcesamiento (NOLOCK);
 	end
 END
