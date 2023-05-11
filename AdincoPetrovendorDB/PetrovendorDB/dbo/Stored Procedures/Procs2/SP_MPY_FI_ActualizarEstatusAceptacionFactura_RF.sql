@@ -77,7 +77,6 @@ BEGIN
 	FROM dbo.MPY_MM_AceptacionFactura AS AF (NOLOCK)
 		LEFT JOIN dbo.TA_Estatus AS E (NOLOCK)
 			ON AF.IdEstatus = E.IdEstatus
-			AND AF.IdAceptacionPedido = @IdAceptacionPedido
 		LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK)
 			ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
 		LEFT JOIN Adinco.dbo.CO_SAPVendor AS SV (NOLOCK)
@@ -90,15 +89,17 @@ BEGIN
 			ON UP.IdUsuario = US.IdUsuario  
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4) 
 			AND US.Activo = 1
-			AND US.IdUsuario IS NOT NULL
 		LEFT JOIN Adinco.dbo.CO_Contratista AS CO (NOLOCK)
-			ON CO.IdContratista = AP.IdProveedor
+			ON AP.IdProveedor = CO.IdContratista
 		LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK)
 			ON AP.IdPedido COLLATE Modern_Spanish_CI_AS = SES.PO_SAPNumer COLLATE Modern_Spanish_CI_AS 
 				AND AP.ReferenceNumber COLLATE Modern_Spanish_CI_AS = SES.SESReferenceNumber COLLATE Modern_Spanish_CI_AS
 		LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK)
 			ON SES.PO_SAPNumer = PSES.SAPPONumber
-			AND SES.SESReferenceNumber = PSES.SAPSESNumber;
+			AND SES.SESReferenceNumber = PSES.SAPSESNumber
+	WHERE AF.IdAceptacionPedido = @IdAceptacionPedido
+		 AND US.IdUsuario IS NOT NULL;
+
 END;
 
 
