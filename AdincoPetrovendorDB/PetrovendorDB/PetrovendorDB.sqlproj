@@ -2925,5 +2925,6 @@
     <Build Include="dbo\User Defined Types\TY_PedidoDetalle.sql" />
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V3.sql" />
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V4.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SP_WDEA_ObtenerAnioMesAceptacionesPedido.sql" />
   </ItemGroup>
 </Project>
