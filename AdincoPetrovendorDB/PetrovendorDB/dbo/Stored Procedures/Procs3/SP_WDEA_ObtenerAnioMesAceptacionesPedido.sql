@@ -82,7 +82,7 @@ BEGIN
 			CC.IdContrato
 		FROM Adinco..AP_PerfilUsuario AS PU (NOLOCK)
 		INNER JOIN Adinco..AP_Usuario AS APU (NOLOCK)
-			ON APU.UsuarioID = PU.UsuarioID
+			ON PU.UsuarioID = APU.UsuarioID
 		INNER JOIN Adinco..AP_Perfil AS APP (NOLOCK)
 			ON PU.PerfilID = APP.IdPerfil
 		INNER JOIN Adinco..CO_Contrato AS CC (NOLOCK)
