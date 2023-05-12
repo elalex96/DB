@@ -66,8 +66,10 @@ BEGIN
 			AND P.IdContrato = @IdContrato
 			AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 			AND AP.Activo = 1
-			AND P.Activo = 1
 			AND ISNULL(AP.IdEliminado,0) = 0
+		JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
+			ON AP.IdAceptacionPedido = SAP.IdAceptacionPedido
+			AND SAP.Activo = 1
 	GROUP BY P.IdContrato;
 	END
 	IF @Tipo = 'PEDIDO'
