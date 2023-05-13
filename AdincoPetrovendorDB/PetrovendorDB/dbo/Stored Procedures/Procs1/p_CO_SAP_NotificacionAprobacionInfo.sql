@@ -30,8 +30,9 @@ as
 	ItemNumber = @pItemNumber and
 	IdCOntrato = @pIdContrato
 
-	select top 10 Destinatario = ISNULL(u.Correo,'')+';',
-		NombreUsuario = u.Nombre,
+	select top 10 
+		Destinatario = ISNULL(u.Correo,'')+';',
+		NombreUsuario = prov.RazonSocial,
 		IdUsuario = u.idUsuario,
 		AreContractual = ac.NombreAreaContractual
 	from Adinco..CO_SAPVendor v (NOLOCK)
