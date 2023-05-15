@@ -1,4 +1,18 @@
-﻿CREATE PROCEDURE [dbo].[sp_RecalculaFechasProcesos]--  3,10061,'20200319',12784,12310,11443
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_RecalculaFechasProcesos'
+)
+    DROP PROCEDURE sp_RecalculaFechasProcesos;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_RecalculaFechasProcesos]--  3,10061,'20200319',12784,12310,11443
     @idContrato         INT,
     @idUsuario          INT,
     @FechaInicial       DATE,
