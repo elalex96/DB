@@ -1,4 +1,8 @@
-﻿-- =============================================
+use Petrovendor
+go
+DROP PROC IF EXISTS SP_MM_AgregarAceptacionPedidoEncabezado
+GO
+-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 03/07/2017
 -- Description:	ALTA ACEPTACION DE PEDIDO 
@@ -18,6 +22,10 @@
 -- Create date: 11/08/2021
 -- Description:	Validacion para agregar automaticamente aceptaciones de WD Admin sin carta CN
 -- =============================================
+-- Author:		DAVID DE LA CRUZ
+-- Create date: 03/05/2'23
+-- Description:	Se guarda la fecha inicio y fin de ejecución para AMATITLAN
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionPedidoEncabezado]
     @IdPedido INT,
     @CreadoPor INT,
@@ -26,7 +34,9 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionPedidoEncabezado]
     @NombreUsuarioRecibe NVARCHAR(300),
     @NombreUsuarioEntrega NVARCHAR(300),
     @IdDomicilioEntrega INT,
-    @NoPedirCarta BIT = NULL	
+    @NoPedirCarta BIT = NULL,
+	@FechaInicio DATE = NULL,
+	@FechaFin DATE = NULL
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -38,17 +48,15 @@ BEGIN
     DECLARE @ID_PAIS_ACTUAL INT = NULL
     DECLARE @ID_REGIMEN_ACTUAL INT = NULL
     DECLARE @IdAceptacionPedido INT
-	DECLARE @IDCONTRATO INT = (SELECT TOP 1 IdContrato FROM MM_Pedido WHERE IdPedido = @IdPedido)
-
-
+	DECLARE @IDCONTRATO INT = (SELECT TOP 1 IdContrato FROM MM_Pedido (NOLOCK) WHERE IdPedido = @IdPedido)
 
     SELECT @ID_PROVEEDOR_PEDIDO = P.IdSubcontratista,
            @ID_NACIONALIDAD_ACTUAL = S.IdNacionalidad,
            @ID_PAIS_ACTUAL = S.IdPais,
            @ID_REGIMEN_ACTUAL = S.IdTipoRegimen
-    FROM dbo.MM_Pedido P
-        INNER JOIN dbo.S_Proveedor S
-            ON S.IdProveedor = P.IdSubcontratista
+    FROM dbo.MM_Pedido P (NOLOCK)
+        INNER JOIN dbo.S_Proveedor S (NOLOCK)
+            ON P.IdSubcontratista = S.IdProveedor
     WHERE P.IdPedido = @IdPedido
 
 
@@ -66,12 +74,14 @@ BEGIN
         [NombreRecibidoPor],
         [IdNacionalidadProveedor],
         [IdRegimenProveedor],
-        [IdPaisProveedor]
+        [IdPaisProveedor],
+		[InicioEjecucion],
+		[FinEjecucion]
     )
     VALUES
     (@IdProveedor, @IdPedido, @DescripcionAceptacionPedido, @NombreUsuarioEntrega, 1, GETDATE(), @CreadoPor,
      @IdDomicilioEntrega, @CreadoPor, @NombreUsuarioRecibe, @ID_NACIONALIDAD_ACTUAL, @ID_REGIMEN_ACTUAL,
-     @ID_PAIS_ACTUAL)
+     @ID_PAIS_ACTUAL,@FechaInicio, @FechaFin)
 
     SELECT @IdAceptacionPedido = SCOPE_IDENTITY()
 
