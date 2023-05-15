@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_WDEA_ReporteRemanentesGeneral'
+)
+    DROP PROCEDURE SP_MM_WDEA_ReporteRemanentesGeneral;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_WDEA_ReporteRemanentesGeneral]    Script Date: 25/04/2023 09:25:12 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 28/02/2023
 -- Description:	Consulta general de pedidos del reporte de remanentes
