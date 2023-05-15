@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[FI_EliminaRelacionFacturaPuntoEntrega]
+CREATE PROCEDURE [dbo].[FI_EliminaRelacionFacturaPuntoEntrega]
     @idContrato            INT,
     @idUsuario             INT,
     @idFacturaPuntoEntrega INT
@@ -33,7 +33,8 @@ BEGIN
         AND com.PuntoEntregaID = FPE.PuntoEntregaId
         AND com.MesReporte = FPE.MesReporte
     WHERE
-		com.MesReporte = @MesReporte
+		FPE.idfacturaPuntoEntrega = @idFacturaPuntoEntrega
+		AND com.MesReporte = @MesReporte
 
     DELETE
         FI_FacturaPuntoEntrega
