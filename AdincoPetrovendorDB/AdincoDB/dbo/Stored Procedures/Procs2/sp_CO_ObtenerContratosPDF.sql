@@ -35,12 +35,20 @@ BEGIN
 		THEN 1
 		ELSE 0
 		END AS PDF,
-		ISNULL(C.UsaProcura, 0) UsaProcura
+		ISNULL(C.UsaProcura, 0) UsaProcura,
+		ISNULL(C.IDSIPAC,'') AS IDSIPAC,
+		D.AWSDocumentoId,
+		D.Bucket,
+		D.Folder,
+		D.UUIDAmazon,
+		D.NombreArchivo,
+		D.Meta
 		FROM 
-			CO_Contrato C (NOLOCK)
+			CO_Contrato C		(NOLOCK)
 		LEFT JOIN
-			CO_ContratoPDF PDF (NOLOCK)
+			CO_ContratoPDF PDF	(NOLOCK)
 		ON	C.IdContrato	=	PDF.IdContrato
+		LEFT JOIN
+			AWS_Documentos D	(NOLOCK) 
+			ON PDF.AWSDocumentoId = D.AWSDocumentoId
 END
-
-
