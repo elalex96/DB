@@ -10,7 +10,7 @@
 --						la moneda ya sea por TipoMoneda o TipoMonedaCorto, si se registra nueva moneda regresa el id de la moneda y no el identity de VU_MonedaXML
 -- =============================================  
 CREATE PROCEDURE [dbo].[sp_VU_ObtenIdMoneda] 
-	@moneda NVARCHAR(100)
+	@moneda VARCHAR(100)
 AS
 BEGIN    
     SET NOCOUNT ON;
@@ -18,7 +18,7 @@ BEGIN
 	DECLARE @ENCONTRADOS AS INT,
             @MonedaPorDefecto AS INT = 1 --MXN
 
-    SELECT @ENCONTRADOS = COUNT(*)
+    SELECT @ENCONTRADOS = COUNT(1)
     FROM VU_MonedaXML (NOLOCK)
     WHERE RTRIM(LTRIM(UPPER(NombreMonedaXML))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
 
@@ -30,7 +30,7 @@ BEGIN
     ELSE
     BEGIN
 
-        SELECT @ENCONTRADOS = COUNT(*)
+        SELECT @ENCONTRADOS = COUNT(1)
         FROM PV_TipoMoneda (NOLOCK)
         WHERE (
                   RTRIM(LTRIM(UPPER(TipoMoneda))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
