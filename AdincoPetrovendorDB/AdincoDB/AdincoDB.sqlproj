@@ -2885,6 +2885,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\CO_SP_ModificaContratos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\CO_SP_ValidacionContratos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\CO_SP_AgregaContratos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\ObtenerPozosPorContrato_AdmonPozosTanques.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ActualizarInsertarPozosAmat.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ActualizarInsertarTanquesAmat.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AlteMenuRol.sql" />
