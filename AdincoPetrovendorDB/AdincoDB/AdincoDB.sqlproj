@@ -2882,6 +2882,7 @@
     <Build Include="dbo\User Defined Types\PreferenciaListaNegra.sql" />
     <Build Include="dbo\User Defined Types\TableConjunciones.sql" />
     <Build Include="dbo\User Defined Types\Type_PR_ProdDiariaPozo_Previo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\ObtenerPozosPorContrato_AdmonPozosTanques.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ActualizarInsertarPozosAmat.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ActualizarInsertarTanquesAmat.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AlteMenuRol.sql" />
