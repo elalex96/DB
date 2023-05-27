@@ -3,7 +3,7 @@
     @UsuarioId INT = 0
 AS
 BEGIN
-    DECLARE @HOY DATE = GETDATE();
+    DECLARE @HOY DATE = GETDATE(), @DiasPrimerMes INT = 0;
 
     CREATE TABLE #AP_Calendario
     (
@@ -26,7 +26,7 @@ BEGIN
         [FinDeSemana] BIT NULL,
         [DiaFeriado] BIT NULL,
         [Descripcion] VARCHAR(1500) NULL,
-        [AgregadoEn] DATETIME NULL
+		[Id] INT 
     );
 
     INSERT INTO #AP_Calendario
@@ -50,7 +50,7 @@ BEGIN
         [FinDeSemana],
         [DiaFeriado],
         [Descripcion],
-        [AgregadoEn]
+		[Id]
     )
     SELECT [IdFecha],
            [Anio],
@@ -71,11 +71,13 @@ BEGIN
            ISNULL([FinDeSemana], 0) AS [FinDeSemana],
            ISNULL([DiaFeriado], 0) AS [DiaFeriado],
            [Descripcion],
-           GETDATE()
+		   ROW_NUMBER() OVER (ORDER BY [IdFecha] ASC) AS Id
     FROM [Adinco].[dbo].[AP_Calendario] (NOLOCK)
     WHERE MONTH([IdFecha]) = MONTH(@HOY)
           AND YEAR([IdFecha]) = YEAR(@HOY)
     ORDER BY [IdFecha] ASC
+
+	SELECT @DiasPrimerMes = COUNT(*) FROM #AP_Calendario;
 
     INSERT INTO #AP_Calendario
     (
@@ -98,7 +100,7 @@ BEGIN
         [FinDeSemana],
         [DiaFeriado],
         [Descripcion],
-        [AgregadoEn]
+		[Id]
     )
     SELECT [AP_Calendario].[IdFecha],
            [AP_Calendario].[Anio],
@@ -119,7 +121,7 @@ BEGIN
            ISNULL([AP_Calendario].[FinDeSemana], 0) AS [FinDeSemana],
            ISNULL([AP_Calendario].[DiaFeriado], 0) AS [DiaFeriado],
            [AP_Calendario].[Descripcion],
-           GETDATE()
+		   @DiasPrimerMes + ROW_NUMBER() OVER (ORDER BY [AP_Calendario].[IdFecha] ASC) AS Id
     FROM [Adinco].[dbo].[AP_Calendario] (NOLOCK)
         LEFT JOIN #AP_Calendario
             ON [AP_Calendario].[IdFecha] = #AP_Calendario.IdFecha
@@ -164,8 +166,8 @@ BEGIN
            [DiaLaborable],
            [FinDeSemana],
            [DiaFeriado],
-           [Descripcion]
+           [Descripcion],
+		   [Id]
     FROM #AP_Calendario
-    ORDER BY AgregadoEn ASC,
-             IdFecha ASC
+    ORDER BY Id ASC
 END
