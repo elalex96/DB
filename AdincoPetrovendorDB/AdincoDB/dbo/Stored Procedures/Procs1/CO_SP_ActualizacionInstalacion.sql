@@ -4,13 +4,12 @@
 -- Create date: <24-05-2018>
 -- Description:	<Se agrega nueva instalacion>
 -- =============================================
-
 CREATE procedure [dbo].[CO_SP_ActualizacionInstalacion]
-	@NombreInstalacion NVARCHAR(max),
-	@IdInstalacionPemex NVARCHAR(10),
+	@NombreInstalacion VARCHAR(500),
+	@IdInstalacionPemex VARCHAR(10),
 	@EsBolsa BIT,
 	@IdActividad INT = NULL,
-	@NombreInstalacionAlterno NVARCHAR(max),
+	@NombreInstalacionAlterno VARCHAR(500),
 	@IdCatalogoSCIEP INT,
 	@IdYacimiento INT = NULL,
 	@IdCampo INT = NULL,
@@ -18,7 +17,9 @@ CREATE procedure [dbo].[CO_SP_ActualizacionInstalacion]
 	@UTMY FLOAT,
 	@IdEstatus INT = NULL,
 	@IdUsuario INT,
-	@IdInstalacion INT
+	@IdInstalacion INT,
+	@Activo BIT,
+	@ComodinBolsa BIT
 AS
 BEGIN
 	IF(@IdCampo = 0)
@@ -37,6 +38,7 @@ BEGIN
 	BEGIN
 		SET @IdEstatus = NULL
 	end
+
 	UPDATE dbo.CO_Instalacion
 	    SET NombreInstalacion = @NombreInstalacion,
 			IdInstalacionPemex = @IdInstalacionPemex,
@@ -50,6 +52,21 @@ BEGIN
 			UTMY = @UTMY,
 			IdEstatus = @IdEstatus,
 			ModificadoPor = @IdUsuario,
-			ModificadoEn = GETDATE()
+			ModificadoEn = GETDATE(),
+			Activo =	@Activo,
+			ComodinBolsa = @ComodinBolsa
 		WHERE IdInstalacion = @IdInstalacion
-END
+
+		UPDATE P
+		SET	P.Nombre = UPPER(@NombreInstalacion),
+			P.Modificado = GETDATE(),
+			P.ModificadoPor = LTRIM(@IdUsuario)
+		FROM	
+			CO_Instalacion	I
+		JOIN
+			PR_Pozo	P
+			ON	I.WelIID	=	P.Id
+		WHERE I.IdInstalacion = @IdInstalacion
+		AND I.WelIID IS NOT NULL 
+		AND I.WelIID > 0
+END 
