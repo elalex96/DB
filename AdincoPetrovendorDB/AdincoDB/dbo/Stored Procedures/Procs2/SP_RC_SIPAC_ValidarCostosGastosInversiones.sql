@@ -1,5 +1,4 @@
-﻿
--- ==================================F===========  
+﻿-- ==============================================  
 -- Author:      Marcos Garcia  
 -- Create:      20-11-2019  
 -- Description: Procedimiento que valida el archivo  
@@ -35,6 +34,10 @@
 --      @Mes reemplaza el getdate de la comparación de fechas para las validaciones de presupuestos  
 --      @EsHistorico si es 1 omite las validaciones de presupuestos  
 --      Se agrega validación de que si es @Plantilla = 'CGI_2022 el SET @Reporte usa el where con las 2 nuevas columnas RegistroConAjuste_RC21_27 y AsociadoIncrementoPMT_RC21_28  
+-- =============================================  
+-- Alter Author:        Neri del Angel
+-- Alter Date:			08 de Mayo del 2023
+-- Alter Description:	Ajuste en columna RC21_13 si es reporte en ceros se muestre vacía y no con un 0
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]  
     @Contrato INT,  
@@ -1175,7 +1178,7 @@ BEGIN
             Actividad_RC21_10,  
             SubActividad_RC21_11,  
             Tarea_RC21_12,  
-            CASE WHEN CostAtribAdminGral_RC21_13 = 1 THEN 1 ELSE 0 END,  
+            CASE WHEN CostAtribAdminGral_RC21_13 IS NULL THEN NULL WHEN CostAtribAdminGral_RC21_13 = 1 THEN 1 ELSE 0 END AS CostAtribAdminGral_RC21_13,  
             Campo_RC21_14,  
             Yacimiento_RC21_15,  
             Pozo_RC21_16,  
@@ -1211,7 +1214,7 @@ BEGIN
             Actividad_RC21_10,  
             SubActividad_RC21_11,  
             Tarea_RC21_12,  
-            CASE WHEN CostAtribAdminGral_RC21_13 = 1 THEN 1 ELSE 0 END,  
+            CASE WHEN CostAtribAdminGral_RC21_13 IS NULL THEN NULL WHEN CostAtribAdminGral_RC21_13 = 1 THEN 1 ELSE 0 END AS CostAtribAdminGral_RC21_13,  
             Campo_RC21_14,  
             Yacimiento_RC21_15,  
             Pozo_RC21_16,  

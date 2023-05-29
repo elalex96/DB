@@ -1,7 +1,15 @@
-﻿-- =============================================
+USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS MM_SP_GuardarGasto
+GO
+-- =============================================
 -- Author:	Daniel AC
 -- Create date: 11/12/2019
 -- Description: Se agrego validación para guardar PCN en CO_Registro si se solicito en la aceptación de pedido 
+-- =============================================
+-- Author:	DAVID
+-- Create date: 04/05/20023
+-- Description: Se agrega la validación para tomar los datos de fechainicio y fechafin a tabla de CO_Registro
 -- =============================================
 CREATE PROCEDURE [dbo].[MM_SP_GuardarGasto]
     @IdFactura INT,
@@ -46,8 +54,11 @@ BEGIN
         )
         SELECT @IdFactura,
                pd.PrecioUnitario * APDI.Cantidad,
-               p.FechaRecepcionServicio,
-               ap.Creado,
+               case when ap.InicioEjecucion is not null then
+			   ap.InicioEjecucion else p.FechaRecepcionServicio end,
+               case when ap.FinEjecucion is not null then
+			   ap.FinEjecucion
+			   else ap.Creado end,
                CONCAT(pod.MaterialCotizadoTextoC, ' - ', i.NombreInstalacion COLLATE Modern_Spanish_CI_AS),
                DATEADD(MONTH, DATEDIFF(MONTH, 0, p.FechaRecepcionServicio), 0),
                @IdUsuario,
@@ -68,23 +79,23 @@ BEGIN
                apd.ClasificacionCN,
                vp.IdCatalogoHidrocarburos,
                apd.IdAceptacionPedidoDetalle
-        FROM dbo.MM_AceptacionPedido ap
-            INNER JOIN dbo.MM_AceptacionPedidoDetalle apd
-                ON apd.IdAceptacionPedido = ap.IdAceptacionPedido
-            INNER JOIN dbo.MM_PedidoDetalle pd
-                ON pd.IdPedidoDetalle = apd.IdPedidoDetalle
-            INNER JOIN dbo.MM_Pedido p
-                ON p.IdPedido = pd.IdPedido
-            INNER JOIN dbo.MM_PeticionOfertaDetalle pod
-                ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle
-            INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdlp
-                ON spdlp.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle
-            LEFT JOIN dbo.MM_AceptacionPedidoDetalleInstalacion AS APDI
-                ON APDI.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
-            INNER JOIN Adinco.dbo.CO_Instalacion i
-                ON i.IdInstalacion = APDI.IdInstalacion
-            LEFT JOIN MM_PCN_ValoresPesos vp
-                ON vp.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
+        FROM dbo.MM_AceptacionPedido ap (NOLOCK)
+            INNER JOIN dbo.MM_AceptacionPedidoDetalle apd (NOLOCK)
+                ON ap.IdAceptacionPedido = apd.IdAceptacionPedido
+            INNER JOIN dbo.MM_PedidoDetalle pd (NOLOCK)
+                ON apd.IdPedidoDetalle = pd.IdPedidoDetalle
+            INNER JOIN dbo.MM_Pedido p (NOLOCK)
+                ON pd.IdPedido = p.IdPedido
+            INNER JOIN dbo.MM_PeticionOfertaDetalle pod (NOLOCK)
+                ON pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle
+            INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdlp (NOLOCK)
+                ON pod.IdSolicitudPedidoDetalle = spdlp.IdSolicitudPedidoDetalle
+            LEFT JOIN dbo.MM_AceptacionPedidoDetalleInstalacion AS APDI (NOLOCK)
+                ON apd.IdAceptacionPedidoDetalle = APDI.IdAceptacionPedidoDetalle
+            INNER JOIN Adinco.dbo.CO_Instalacion i (NOLOCK)
+                ON APDI.IdInstalacion = i.IdInstalacion
+            LEFT JOIN MM_PCN_ValoresPesos vp (NOLOCK)
+                ON apd.IdAceptacionPedidoDetalle = vp.IdAceptacionPedidoDetalle
         WHERE ap.IdAceptacionPedido = @IdAceptacionPedido
 
         SELECT @IdFactura,
@@ -111,25 +122,23 @@ BEGIN
                apd.ClasificacionCN,
                vp.IdCatalogoHidrocarburos,
                apd.IdAceptacionPedidoDetalle
-        FROM dbo.MM_AceptacionPedido ap
-            INNER JOIN dbo.MM_AceptacionPedidoDetalle apd
-                ON apd.IdAceptacionPedido = ap.IdAceptacionPedido
-            INNER JOIN dbo.MM_PedidoDetalle pd
-                ON pd.IdPedidoDetalle = apd.IdPedidoDetalle
-            INNER JOIN dbo.MM_Pedido p
-                ON p.IdPedido = pd.IdPedido
-            INNER JOIN dbo.MM_PeticionOfertaDetalle pod
-                ON pod.IdPeticionOfertaDetalle = pd.IdPeticionOfertaDetalle
-            INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdlp
-                ON spdlp.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle
-            LEFT JOIN dbo.MM_AceptacionPedidoDetalleInstalacion AS APDI
-                ON APDI.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
-            INNER JOIN Adinco.dbo.CO_Instalacion i
-                ON i.IdInstalacion = APDI.IdInstalacion
-            LEFT JOIN MM_PCN_ValoresPesos vp
-                ON vp.IdAceptacionPedidoDetalle = apd.IdAceptacionPedidoDetalle
+        FROM dbo.MM_AceptacionPedido ap (NOLOCK)
+            INNER JOIN dbo.MM_AceptacionPedidoDetalle apd (NOLOCK)
+                ON ap.IdAceptacionPedido = apd.IdAceptacionPedido
+            INNER JOIN dbo.MM_PedidoDetalle pd (NOLOCK)
+                ON apd.IdPedidoDetalle = pd.IdPedidoDetalle
+            INNER JOIN dbo.MM_Pedido p (NOLOCK)
+                ON pd.IdPedido = p.IdPedido
+            INNER JOIN dbo.MM_PeticionOfertaDetalle pod (NOLOCK)
+                ON pd.IdPeticionOfertaDetalle = pod.IdPeticionOfertaDetalle
+            INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdlp (NOLOCK)
+                ON pod.IdSolicitudPedidoDetalle = spdlp.IdSolicitudPedidoDetalle
+            LEFT JOIN dbo.MM_AceptacionPedidoDetalleInstalacion AS APDI (NOLOCK)
+                ON apd.IdAceptacionPedidoDetalle = APDI.IdAceptacionPedidoDetalle
+            INNER JOIN Adinco.dbo.CO_Instalacion i (NOLOCK)
+                ON APDI.IdInstalacion = i.IdInstalacion
+            LEFT JOIN MM_PCN_ValoresPesos vp (NOLOCK)
+                ON apd.IdAceptacionPedidoDetalle = vp.IdAceptacionPedidoDetalle
         WHERE ap.IdAceptacionPedido = @IdAceptacionPedido
     END
 END
-
-

@@ -20,7 +20,7 @@ BEGIN
            PR_ProdDiariaPozo_Previo.EPM,
            PR_ProdDiariaPozo_Previo.NombreEstacion as SuministroGas,
            PR_ProdDiariaPozo_Previo.Nominal as Consumo,
-           PR_Tanque.Clave as Fluye,
+           ISNULL(PR_Tanque.Clave, '-') as Fluye,
            PR_ProdDiariaPozo_Previo.Comentarios,
 		   PR_ProdDiariaPozo_Previo.ProgramaInmediato,
 		   PR_ProdDiariaPozo_Previo.Seguimiento
@@ -30,11 +30,11 @@ BEGIN
                AND PR_BLOQUE.IdContrato = @IdContrato
         INNER JOIN PR_ProdDiariaPozo_Previo (NOLOCK)
             ON PR_ProdDiaria_Previo.Id = PR_ProdDiariaPozo_Previo.ProdDiaria
-        LEFT JOIN CO_Instalacion (NOLOCK)
+        INNER JOIN CO_Instalacion (NOLOCK)
             ON PR_ProdDiariaPozo_Previo.Pozo = CO_Instalacion.WelIID
-        LEFT JOIN PR_Unidades (NOLOCK)
+        INNER JOIN PR_Unidades (NOLOCK)
             ON PR_ProdDiariaPozo_Previo.IdUnidad = PR_Unidades.IdUnidad
-        LEFT JOIN PR_Sistemas (NOLOCK)
+        INNER JOIN PR_Sistemas (NOLOCK)
             ON PR_ProdDiariaPozo_Previo.IdSistema = PR_Sistemas.IdSistema
 		LEFT JOIN PR_Tanque (NOLOCK)
 			ON PR_ProdDiariaPozo_Previo.Estacion = PR_Tanque.Id

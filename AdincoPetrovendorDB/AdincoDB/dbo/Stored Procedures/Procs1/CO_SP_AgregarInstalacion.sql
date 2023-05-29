@@ -5,11 +5,11 @@
 -- Description:	<Se agrega nueva instalacion>
 -- =============================================
 CREATE PROCEDURE [dbo].[CO_SP_AgregarInstalacion]
-	@NombreInstalacion NVARCHAR(max),
-	@IdInstalacionPemex NVARCHAR(10),
+	@NombreInstalacion VARCHAR(500),
+	@IdInstalacionPemex VARCHAR(10),
 	@EsBolsa BIT,
 	@IdActividad INT,
-	@NombreInstalacionAlterno NVARCHAR(max),
+	@NombreInstalacionAlterno VARCHAR(500),
 	@IdCatalogoSCIEP INT,
 	@IdContrato INT,
 	@IdYacimiento INT,
@@ -17,11 +17,13 @@ CREATE PROCEDURE [dbo].[CO_SP_AgregarInstalacion]
 	@UTMX FLOAT,
 	@UTMY FLOAT,
 	@IdEstatus INT,
-	@IdUsuario INT
+	@IdUsuario INT,
+	@Activo BIT,
+	@ComodinBolsa BIT
 AS
 BEGIN
 	DECLARE @IdAreaContractual INT = (SELECT IdAreaContractual FROM dbo.CO_Contrato WHERE IdContrato = @IdContrato)
-	DECLARE @CountInstalaciones INT=(SELECT COUNT(*) FROM dbo.CO_Instalacion WHERE NombreInstalacion=@NombreInstalacion)
+	DECLARE @CountInstalaciones INT=(SELECT COUNT(1) FROM dbo.CO_Instalacion WHERE NombreInstalacion=@NombreInstalacion AND IdAreaContractual = @IdAreaContractual)
 	IF(@IdCampo = 0)
 	BEGIN
 		SET @IdCampo = NULL
@@ -59,7 +61,8 @@ BEGIN
 	    UTMY,
 	    IdEstatus,
 	    CreadoPor,
-	    CreadoEn
+	    CreadoEn,
+		ComodinBolsa
 	)
 	VALUES
 	(   @NombreInstalacion,
@@ -71,14 +74,15 @@ BEGIN
 		@NombreInstalacionAlterno,
 		@IdCatalogoSCIEP,
 		@IdAreaContractual,
-		1,
+		@Activo,
 		@IdYacimiento,
 		@IdCampo,
 		@UTMX,
 		@UTMY,
 		@IdEstatus,
 		@IdUsuario,
-		GETDATE()
+		GETDATE(),
+		@ComodinBolsa
 	)
 	END
 	ELSE
