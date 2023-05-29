@@ -2885,5 +2885,8 @@
     <Build Include="dbo\Stored Procedures\Procs1\CO_SP_ActualizacionInstalacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\CO_SP_AgregarInstalacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\CO_SP_ConsultaInstalacionesPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_InsertaContratista.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_ModificaContratista.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\ObtenerReporteDiarioOperacion.sql" />
   </ItemGroup>
 </Project>
