@@ -71,6 +71,7 @@
     <Folder Include="dbo\Stored Procedures\Procs2\" />
     <Folder Include="dbo\Stored Procedures\Procs3\" />
     <Folder Include="dbo\User Defined Types\" />
+    <Folder Include="dbo\Stored Procedures\Procs1" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\Tables\Tables1\00_MurphyNov2019.sql" />
@@ -2881,5 +2882,8 @@
     <Build Include="dbo\User Defined Types\PreferenciaListaNegra.sql" />
     <Build Include="dbo\User Defined Types\TableConjunciones.sql" />
     <Build Include="dbo\User Defined Types\Type_PR_ProdDiariaPozo_Previo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_ActualizacionInstalacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_AgregarInstalacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_ConsultaInstalacionesPorContrato.sql" />
   </ItemGroup>
 </Project>
