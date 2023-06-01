@@ -1,10 +1,10 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[SP_ConsultaSeguimientosPagosV2]    Script Date: 01/06/2023 01:45:18 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+﻿--USE [Petrovendor]
+--GO
+--/****** Object:  StoredProcedure [dbo].[SP_ConsultaSeguimientosPagosV2]    Script Date: 01/06/2023 01:45:18 p. m. ******/
+--SET ANSI_NULLS ON
+--GO
+--SET QUOTED_IDENTIFIER ON
+--GO
 -- Author:		<Alexander Gomez>
 -- Create date: <06-12-2018>
 -- Description:	<Se consultan tambien los registros de murphy>
