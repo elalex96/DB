@@ -2882,6 +2882,12 @@
     <Build Include="dbo\User Defined Types\PreferenciaListaNegra.sql" />
     <Build Include="dbo\User Defined Types\TableConjunciones.sql" />
     <Build Include="dbo\User Defined Types\Type_PR_ProdDiariaPozo_Previo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_ActualizacionInstalacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_AgregarInstalacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_SP_ConsultaInstalacionesPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_InsertaContratista.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\CO_ModificaContratista.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\ObtenerReporteDiarioOperacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\ObtenerPozosPorContrato_AdmonPozosTanques.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ActualizarInsertarPozosAmat.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ActualizarInsertarTanquesAmat.sql" />
@@ -3870,5 +3876,6 @@
     <Build Include="dbo\Stored Procedures\Procs1\sp_CO_EditarRegistroGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_CO_EliminaPrecioMarcador.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_CO_EliminarCOPADE.sql" />
+
   </ItemGroup>
 </Project>

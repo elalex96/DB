@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaPedidosCliente'
+)
+    DROP PROCEDURE SP_MM_ConsultaPedidosCliente;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Update: 08-10-2020
 -- Description:	Revisión issue #759/Se agrego filtro pedido (2-Mercadeo, 4-AD, 6-OT)
@@ -12,7 +26,11 @@
 -- Update:		25/01/2021
 -- Description:	Revisión issue #930/ Optimización de sp
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosCliente] --907,'TODOS',3296
+-- Author:		Alexander Gomez
+-- Update:		27/04/2023
+-- Description:	se agrega el monto de la aceptacion ligada al pedido para los usuarios de amatitlan
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosCliente] --570,'TODOS',2507
     -- Add the parameters for the stored procedure here
     @IdProveedor INT,
     @Filtro NVARCHAR(100),
@@ -45,7 +63,34 @@ BEGIN
         IdPedidoADINCO INT,
 		MECANISMO_CONTRATACION NVARCHAR(MAX)
     );
-    DECLARE @EsAdministradorCompras BIT = 0, @EsTipoAdministrador BIT = 0, @EsAdministrador BIT = 0;
+
+	CREATE TABLE #MM_SolicitudPedidoCompradorT
+    (
+        IdSolicitudPedido INT
+    );
+
+	DECLARE @PEDIDOS_CONSULTADOS TABLE(
+		IdPedido INT,
+		IdSolicitudPedido INT,
+		CreadoEl DATETIME,
+		FechaEnvioPedido DATETIME,
+		TotalPedido FLOAT,
+		Proveedor NVARCHAR(1000),
+		RecepcionServicio NVARCHAR(500),
+		Nombre NVARCHAR(500),
+		Version NVARCHAR(200),
+		TipoMoneda NVARCHAR(10),
+		IdPedidoGeneral INT,
+		TipoPedido NVARCHAR(100),
+		IdTipoPedido INT,
+		Asignados NVARCHAR(2000),
+		ID_PO NVARCHAR(100),
+		Contrato NVARCHAR(500)
+	);
+
+    DECLARE @EsAdministradorCompras BIT = 0, 
+			@EsTipoAdministrador BIT = 0, 
+			@EsAdministrador BIT = 0;
 
     --CONSULTAR SI EL USUARIO ACTUAL ES ADMINISTRADOR DE COMPRAS
     SELECT @EsAdministradorCompras = Activo
@@ -73,10 +118,6 @@ BEGIN
         SET @EsAdministrador = 1;
     END;
 
-    CREATE TABLE #MM_SolicitudPedidoCompradorT
-    (
-        IdSolicitudPedido INT
-    );
     INSERT INTO #MM_SolicitudPedidoCompradorT
     (
         IdSolicitudPedido
@@ -141,8 +182,6 @@ BEGIN
         FROM MM_Pedido AS P (NOLOCK)
             JOIN MM_PedidoDetalle AS PD (NOLOCK)
                 ON P.IdPedido = PD.IdPedido
-				AND ISNULL(P.IdEstatusEliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
-				AND ISNULL(P.Cerrado, 0) = 0 --> PEDIDOS NO CERRADOS
             JOIN dbo.MM_SolicitudPedido SP (NOLOCK)
                 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
             JOIN MM_PeticionOferta AS PO  (NOLOCK)
@@ -151,8 +190,6 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             JOIN TA_Operacion AS O  (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-				AND O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
             JOIN TA_Prioridad AS PR  (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             JOIN TA_Vencimiento AS V  (NOLOCK)
@@ -367,8 +404,6 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -476,8 +511,6 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -592,8 +625,6 @@ BEGIN
                 ON P.IdSubcontratista = PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido = O.IdDocumento
-				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad = PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -707,9 +738,7 @@ BEGIN
             INNER JOIN S_Proveedor AS PV  (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor
             INNER JOIN TA_Operacion AS O  (NOLOCK)
-                ON P.IdSolicitudPedido=O.IdDocumento
-				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
+                ON P.IdSolicitudPedido=O.IdDocumento 
             INNER JOIN TA_Prioridad AS PR  (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V  (NOLOCK)
@@ -818,8 +847,6 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                 ON P.IdSubcontratista=PV.IdProveedor
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON P.IdSolicitudPedido=O.IdDocumento
-				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -943,9 +970,7 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
             INNER JOIN S_Proveedor AS PV (NOLOCK)
                 ON P.IdSubcontratista=PV.IdProveedor 
             INNER JOIN TA_Operacion AS O (NOLOCK)
-                ON P.IdSolicitudPedido=O.IdDocumento
-				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
+                ON P.IdSolicitudPedido=O.IdDocumento 
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -1010,6 +1035,25 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
 
     IF @Filtro = 'TODOS'
     BEGIN
+		
+		INSERT INTO @PEDIDOS_CONSULTADOS(
+			IdPedido,
+			IdSolicitudPedido,
+			CreadoEl,
+			FechaEnvioPedido,
+			TotalPedido,
+			Proveedor,
+			RecepcionServicio,
+			Nombre,
+			Version,
+			TipoMoneda,
+			IdPedidoGeneral,
+			TipoPedido,
+			IdTipoPedido,
+			Asignados,
+			ID_PO,
+			Contrato
+		)
         SELECT P.IdPedido,
                P.IdSolicitudPedido,
                P.CreadoEl AS CreadoEl,
@@ -1046,8 +1090,8 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -1072,8 +1116,6 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                 ON P.IdSubcontratista=PV.IdProveedor 
             INNER JOIN TA_Operacion AS O (NOLOCK)
                 ON  P.IdSolicitudPedido=O.IdDocumento
-				AND	O.IdTipoOperacion = 9 --> APROBACIÓN DE PEDIDO
-				AND O.IdProveedor = @IdProveedor
             INNER JOIN TA_Prioridad AS PR (NOLOCK)
                 ON  O.IdPrioridad=PR.IdPrioridad
             INNER JOIN TA_Vencimiento AS V (NOLOCK)
@@ -1138,5 +1180,55 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
 				 PDI.MECANISMO_CONTRATACION
         ORDER BY PG.IdPedido DESC;
 
+		SELECT 
+			PC.IdPedido,
+			IdSolicitudPedido,
+			PC.CreadoEl,
+			FechaEnvioPedido,
+			TotalPedido,
+			Proveedor,
+			PC.RecepcionServicio,
+			Nombre,
+			Version,
+			TipoMoneda,
+			IdPedidoGeneral,
+			TipoPedido,
+			IdTipoPedido,
+			Asignados,
+			ID_PO,
+			Contrato,
+			CASE 
+				WHEN PR.RFC = 'PAM140722DK6' THEN SUM(APD.Cantidad * PD.PrecioUnitario)
+				ELSE 0
+			END AS MontoAceptado
+		FROM @PEDIDOS_CONSULTADOS AS PC 
+		LEFT JOIN MM_AceptacionPedido AS AP (NOLOCK)
+			ON PC.IdPedido = AP.IdPedido
+			AND AP.Activo = 1
+			AND ISNULL(AP.IdEstatusEliminado, 0) = 0--> QUE LA ACEPTACIÓN NO ESTE ELIMINADA
+		LEFT JOIN MM_AceptacionPedidoDetalle AS APD (NOLOCK)
+			ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
+		LEFT JOIN MM_PedidoDetalle AS PD (NOLOCK)
+			ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
+		LEFT JOIN S_Proveedor AS PR (NOLOCK)
+			ON AP.IdProveedor = PR.IdProveedor
+		GROUP BY PC.IdPedido,
+			IdSolicitudPedido,
+			PC.CreadoEl,
+			FechaEnvioPedido,
+			TotalPedido,
+			Proveedor,
+			PC.RecepcionServicio,
+			Nombre,
+			Version,
+			TipoMoneda,
+			IdPedidoGeneral,
+			TipoPedido,
+			IdTipoPedido,
+			Asignados,
+			ID_PO,
+			Contrato,
+			PR.RFC
+		ORDER BY IdPedido DESC;
     END;
-END
+END;
