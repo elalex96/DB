@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -465,8 +465,7 @@ BEGIN
                  P.RecepcionServicio,  
                  TP.TipoPedido,  
                  TP.IdTipoPedido,  
-     P.IdEstatusEliminado  ,
-	 PD.Subtotal
+                P.IdEstatusEliminado  
         ORDER BY PG.IdPedido DESC;  
   
     END;  
