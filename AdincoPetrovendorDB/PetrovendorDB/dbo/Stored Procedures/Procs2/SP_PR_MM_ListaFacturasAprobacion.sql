@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ListaFacturasAprobacion'
+)
+    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-02-2023
 -- Description:	Se muestra UUID Y FOLIO FACTURA CONSULTAS MURPHY

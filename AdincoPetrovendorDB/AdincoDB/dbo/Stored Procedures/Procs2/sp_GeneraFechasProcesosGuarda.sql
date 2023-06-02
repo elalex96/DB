@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_GeneraFechasProcesosGuarda'
+)
+    DROP PROCEDURE sp_GeneraFechasProcesosGuarda;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:    Reyna Olvera
 -- Create date: 20181023
 -- Description:  Guarda Procesos EntregablesIntancias

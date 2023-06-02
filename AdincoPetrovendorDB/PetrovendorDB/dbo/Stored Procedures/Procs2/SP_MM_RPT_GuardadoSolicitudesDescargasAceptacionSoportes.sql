@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_RPT_GuardadoSolicitudesDescargasAceptacionSoportes'
+)
+    DROP PROCEDURE SP_MM_RPT_GuardadoSolicitudesDescargasAceptacionSoportes;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 21/02/2023
 -- Description:	Guardado de solicitudes de descarga para aceptaciones de pedido de soportes
@@ -7,12 +22,17 @@
 -- Create date: 01/03/2023
 -- Description:	Se envía parámetro de tipo de aprobación a descargar
 -- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 12/05/2023
+-- Description:	se agrega el filtrado por contrato en las aceptaciones
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_RPT_GuardadoSolicitudesDescargasAceptacionSoportes]
 	-- Add the parameters for the stored procedure here
 	@FechaInicio DATE,
 	@FechaFin DATE,
 	@IdUsuario INT,
-	@Tipo varchar(300)
+	@Tipo varchar(300),
+	@IdContrato INT = NULL
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -43,10 +63,13 @@ BEGIN
 	FROM MM_AceptacionPedido AS AP (NOLOCK)
 		JOIN MM_Pedido AS P (NOLOCK)
 			ON AP.IdPedido = P.IdPedido
-			AND P.IdContrato IN (10045,10044,10046,10038,10144)
+			AND P.IdContrato = @IdContrato
 			AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 			AND AP.Activo = 1
 			AND ISNULL(AP.IdEliminado,0) = 0
+		JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
+			ON AP.IdAceptacionPedido = SAP.IdAceptacionPedido
+			AND SAP.Activo = 1
 	GROUP BY P.IdContrato;
 	END
 	IF @Tipo = 'PEDIDO'
