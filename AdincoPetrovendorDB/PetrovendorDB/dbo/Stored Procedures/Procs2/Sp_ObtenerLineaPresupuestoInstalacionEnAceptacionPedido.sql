@@ -1,9 +1,25 @@
-﻿
-
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Sp_ObtenerLineaPresupuestoInstalacionEnAceptacionPedido'
+)
+    DROP PROCEDURE Sp_ObtenerLineaPresupuestoInstalacionEnAceptacionPedido;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 12/06/2019
 -- Description:	Obtner la instalacion y la linea de presupuesto
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 01/06/2023
+-- Description:	correccion en la obtencion de la linea de presupuesto
 -- =============================================
 
 CREATE PROCEDURE [dbo].[Sp_ObtenerLineaPresupuestoInstalacionEnAceptacionPedido]
@@ -74,32 +90,19 @@ AS
 
         SELECT @CantidadLineas = COUNT(1) FROM @TablaLineas
 
-
-        SELECT
-                @IdInstalacion      = spdl.IdInstalacion,
-                @IdLineaPresupuesto = spdl.IdLineaPresupuesto
-        FROM
-                dbo.MM_Pedido                                 p
-            INNER JOIN
-                dbo.MM_PedidoDetalle                          pd
-                    ON pd.IdPedido = p.IdPedido
-            INNER JOIN
-                dbo.MM_PeticionOferta                         po
-                    ON po.IdSolicitudPedido = p.IdSolicitudPedido
-            INNER JOIN
-                dbo.MM_PeticionOfertaDetalle                  pod
-                    ON pod.IdPeticionOferta = po.IdPeticionOferta
-            INNER JOIN
-                dbo.MM_SolicitudPedidoDetalle                 spd
-                    ON spd.IdSolicitudPedidoDetalle = pod.IdSolicitudPedidoDetalle
-            INNER JOIN
-                dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdl
-                    ON spdl.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
-        WHERE
-                p.IdProveedorCompras = @IdProveedor
-                AND pd.IdPedidoDetalle = @IdPedidoDetalle
-        GROUP BY
-                spdl.IdInstalacion, spdl.IdLineaPresupuesto
+		SELECT
+			@IdInstalacion = SPDLP.IdInstalacion,
+			@IdLineaPresupuesto = SPDLP.IdLineaPresupuesto
+		FROM dbo.MM_PedidoDetalle AS PD (NOLOCK)
+			JOIN dbo.MM_PeticionOfertaDetalle AS POD (NOLOCK)
+				ON PD.IdPedidoDetalle = @IdPedidoDetalle
+				AND PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
+			JOIN dbo.MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+				ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+			JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP (NOLOCK)
+				ON SPD.IdSolicitudPedidoDetalle = SPDLP.IdSolicitudPedidoDetalle
+		GROUP BY SPDLP.IdInstalacion,
+				SPDLP.IdLineaPresupuesto;
 
 
         SELECT @RowNumber = ISNULL(Rw, 0)
