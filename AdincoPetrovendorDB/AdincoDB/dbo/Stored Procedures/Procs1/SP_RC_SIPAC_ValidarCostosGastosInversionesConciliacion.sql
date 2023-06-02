@@ -1146,7 +1146,8 @@ BEGIN
             TipoOpercion_RC21_26,  
             RegistroConAjuste_RC21_27,  
             AsociadoIncrementoPMT_RC21_28   
-			FROM #TEMPORAL_21_M;
+			FROM #TEMPORAL_21_M
+			ORDER BY AnioReporte_RC21_02, MesReporte_RC21_01
 	END
 	ELSE
 	BEGIN
@@ -1180,7 +1181,8 @@ BEGIN
             ClavaMoneda_RC21_24,  
             TipCamConvetUSD_RC21_25,  
             TipoOpercion_RC21_26 
-			FROM #TEMPORAL_21_M;
+			FROM #TEMPORAL_21_M
+			ORDER BY AnioReporte_RC21_02, MesReporte_RC21_01
 	END
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
@@ -1203,7 +1205,8 @@ BEGIN
 			RFC_Receptor_RC22_15,  
 			ClaveMoneda_RC22_16,  
 			ClasDocSoporte_RC22_17 
-			FROM #TEMPORAL_22_M;
+			FROM #TEMPORAL_22_M
+			ORDER BY AnioReporte_RC21_02, MesReporte_RC21_01
 
 	SELECT  IdContratista_RF_00,  
 			IdContrato_RI_00,  
@@ -1213,7 +1216,9 @@ BEGIN
 			UUID_RC23_02,  
 			UUID_Relacionado_C23_03,  
 			TipoRelacion_RC23_04,  
-			NumParcialidad_RC23_05  FROM #TEMPORAL_23_M;
+			NumParcialidad_RC23_05  
+			FROM #TEMPORAL_23_M
+			ORDER BY AnioReporte_RC23_01, MesReporte_RC23_00
 
 	SELECT  IdContratista_RF_00,  
 			IdContrato_RI_00,  
@@ -1238,7 +1243,10 @@ BEGIN
 			FechaFactura_RC24_17,  
 			ValMontFact_RC24_18,  
 			ValDolares_RC24_19,  
-			ClasDocSoporte_RC24_20  FROM #TEMPORAL_24_M
+			ClasDocSoporte_RC24_20  
+			FROM #TEMPORAL_24_M
+			ORDER BY AnioReporte_RC24_01, MesReporte_RC24_00
+
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
 			NumeroContrato_RF01_01,  
@@ -1259,7 +1267,10 @@ BEGIN
 			FechaFactura_RC25_14,  
 			ValMontFact_RC25_15,  
 			ValDolares_RC25_16,  
-			ClasDocSoporte_RC25_17 FROM #TEMPORAL_25_M
+			ClasDocSoporte_RC25_17 
+			FROM #TEMPORAL_25_M
+			ORDER BY AnioReporte_RC25_01, MesReporte_RC25_00
+
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
 			MesReporte_RC26_00,  
@@ -1274,5 +1285,7 @@ BEGIN
 			MontoEquivDolare_RC26_09,  
 			TipoCambio_RC26_10,  
 			Beneficiario_RC26_11,  
-			ClasDocSoporte_RC26_12 FROM #TEMPORAL_26_M
+			ClasDocSoporte_RC26_12 
+			FROM #TEMPORAL_26_M
+			ORDER BY AnioReporte_RC26_01, MesReporte_RC26_00
 END;  
