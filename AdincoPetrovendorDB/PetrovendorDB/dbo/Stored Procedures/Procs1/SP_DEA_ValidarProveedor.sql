@@ -1,9 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DEA_ValidarProveedor'
+)
+    DROP PROCEDURE SP_DEA_ValidarProveedor;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Luis David De La Cruz Bautista
 -- Update: 25-01-2021
 -- Description:	issue #930/ Optimización de sp
 -- =============================================
-CREATE PROCEDURE SP_DEA_ValidarProveedor
+-- Author:		Alexander Gomez
+-- Update: 27/04/2023
+-- Description:	se agrega validacion para usuario de amatitlan
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_DEA_ValidarProveedor]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor int, 
 	@IdUsuario int
@@ -23,7 +41,16 @@ BEGIN
 	END 
 	ELSE 
 	BEGIN 
-		SELECT 'SEGUIR_PROCESO'
+
+		IF @RFC_ACTUAL = 'PAM140722DK6'
+		BEGIN
+			SELECT 'AMATITLAN'
+		END
+		ELSE
+		BEGIN
+			SELECT 'SEGUIR_PROCESO'
+		END
+		
 	END 
 
 END
