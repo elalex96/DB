@@ -1,12 +1,3 @@
-USE [Adinco]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_CO_ValidacionesPresupuestos_Conciliacion'
-)
-    DROP PROCEDURE SP_CO_ValidacionesPresupuestos_Conciliacion
-GO
 CREATE PROCEDURE [dbo].[SP_CO_ValidacionesPresupuestos_Conciliacion]
     @IdContrato INT,
     @IdUsuario INT,

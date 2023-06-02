@@ -1,12 +1,3 @@
-USE [Adinco]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion'
-)
-    DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion
-GO 
 CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion]  
     @Contrato INT,  
     @IdPresupuesto INT,  

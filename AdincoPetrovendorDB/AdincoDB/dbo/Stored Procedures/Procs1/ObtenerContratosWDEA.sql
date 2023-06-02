@@ -1,12 +1,3 @@
-USE [Adinco]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'ObtenerContratosWDEA'
-)
-    DROP PROCEDURE ObtenerContratosWDEA
-GO
 CREATE PROCEDURE ObtenerContratosWDEA
 AS
 BEGIN

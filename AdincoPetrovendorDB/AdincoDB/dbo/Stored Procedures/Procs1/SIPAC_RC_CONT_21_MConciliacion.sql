@@ -1,12 +1,3 @@
-USE [Adinco]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SIPAC_RC_CONT_21_MConciliacion'
-)
-    DROP PROCEDURE SIPAC_RC_CONT_21_MConciliacion
-go
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_MConciliacion]  
     @Contrato      INT,  
     @IdPresupuesto INT          = 0,  
