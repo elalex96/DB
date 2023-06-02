@@ -28,7 +28,7 @@
     [FechaArranqueEntregables] DATE           NULL,
     [ContratoFicticio]         BIT            NULL,
     [UsaProcura]               BIT            NULL,
-    [IDSIPAC]                  NVARCHAR (10)  NULL,
+    [IDSIPAC]                  VARCHAR(20)  NULL,
     CONSTRAINT [PK_Contratos] PRIMARY KEY CLUSTERED ([IdContrato] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_Contrato_AP_Usuario] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_Contrato_CO_TipoContrato] FOREIGN KEY ([IdTipoContrato]) REFERENCES [dbo].[CO_TipoContrato] ([IdTipoContrato]),
