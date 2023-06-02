@@ -3,34 +3,58 @@
 -- Create date: 
 -- Description:	
 -- =============================================
-CREATE PROCEDURE sp_VU_ObtenIdMoneda 
-	-- Add the parameters for the stored procedure here
-	@moneda nvarchar(MAX)
+-- Alter Author:        Neri del Angel
+-- Alter Date:			17 de Mayo del 2023
+-- Alter Description:	Se ajusta temas de espacios al buscar la moneda en VU_MonedaXML
+--						Se agrego la búsqueda en PV_TipoMoneda en caso de que no se llegase a encontrar en la tabla VU_MonedaXML
+--						la moneda ya sea por TipoMoneda o TipoMonedaCorto, si se registra nueva moneda regresa el id de la moneda y no el identity de VU_MonedaXML
+-- =============================================  
+CREATE PROCEDURE [dbo].[sp_VU_ObtenIdMoneda] 
+	@moneda VARCHAR(100)
 AS
-	DECLARE @ENCONTRADOS AS INT
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	
-	SET NOCOUNT ON;
+BEGIN    
+    SET NOCOUNT ON;
 
-	SELECT @ENCONTRADOS = COUNT (*) FROM VU_MonedaXML 
-	WHERE RTRIM (NombreMonedaXML) = @moneda  
-	 
-	IF (@ENCONTRADOS >0)
-		SELECT IdMoneda AS ID, NombreMonedaXML AS MSG  FROM VU_MonedaXML
-		WHERE   RTRIM (NombreMonedaXML) = @moneda
-	ELSE
-		BEGIN
-			INSERT INTO [dbo].[VU_MonedaXML]
-			   ([NombreMonedaXML]
-			   ,[IdMoneda])
-			VALUES
-			   ( @moneda
-			   ,1)
-			SELECT @@IDENTITY AS ID , @moneda AS MSG 
-		END
+	DECLARE @ENCONTRADOS AS INT,
+            @MonedaPorDefecto AS INT = 1 --MXN
 
-    -- Insert statements for procedure here
-	
+    SELECT @ENCONTRADOS = COUNT(1)
+    FROM VU_MonedaXML (NOLOCK)
+    WHERE RTRIM(LTRIM(UPPER(NombreMonedaXML))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
+
+    IF (@ENCONTRADOS > 0)
+        SELECT TOP 1 IdMoneda AS ID,
+               NombreMonedaXML AS MSG
+        FROM VU_MonedaXML (NOLOCK)
+        WHERE RTRIM(LTRIM(UPPER(NombreMonedaXML))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
+    ELSE
+    BEGIN
+
+        SELECT @ENCONTRADOS = COUNT(1)
+        FROM PV_TipoMoneda (NOLOCK)
+        WHERE (
+                  RTRIM(LTRIM(UPPER(TipoMoneda))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
+                  OR RTRIM(LTRIM(UPPER(TipoMonedaCorto))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
+              )
+
+        IF (@ENCONTRADOS > 0)
+            SELECT TOP 1
+                @MonedaPorDefecto = IdMoneda
+            FROM PV_TipoMoneda (NOLOCK)
+            WHERE (
+                      RTRIM(LTRIM(UPPER(TipoMoneda))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
+                      OR RTRIM(LTRIM(UPPER(TipoMonedaCorto))) = RTRIM(LTRIM(UPPER(ISNULL(@moneda,''))))
+                  )
+
+        INSERT INTO [dbo].[VU_MonedaXML]
+        (
+            [NombreMonedaXML],
+            [IdMoneda]
+        )
+        VALUES
+        (RTRIM(LTRIM(ISNULL(@moneda, ''))), @MonedaPorDefecto)
+
+        SELECT @MonedaPorDefecto AS ID,
+               RTRIM(LTRIM(ISNULL(@moneda, ''))) AS MSG
+    END
 END
