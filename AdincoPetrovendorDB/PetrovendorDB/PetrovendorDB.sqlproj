@@ -2927,6 +2927,16 @@
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V3.sql" />
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V4.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_WDEA_ObtenerAnioMesAceptacionesPedido.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_CO_ValidacionesPresupuestos_Conciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_26_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_25_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_24_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_23_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_22_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\ObtenerContratosWDEA.sql" />
+    <Build Include="dbo\Tables\DEA_Contratos.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
