@@ -3873,5 +3873,22 @@
     <Build Include="dbo\Stored Procedures\Procs1\sp_CO_EditarRegistroGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_CO_EliminaPrecioMarcador.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_CO_EliminarCOPADE.sql" />
+    <Build Include="dbo\Tables\Tables2\AP_Bitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AP_InsercionEdicionCalendario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AP_InsercionEdicionCalendarioExcepciones.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AP_ObtenerCalendario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AP_ObtenerCalendarioExcepciones.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_ObtenerReguladores.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_ValidarAdministracionDeCalendarios.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_22_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\ObtenerContratosWDEA.sql" />
+    <Build Include="dbo\Tables\Tables1\DEA_Contratos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_CO_ValidacionesPresupuestos_Conciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_26_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_25_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_24_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_23_MConciliacion.sql" />
   </ItemGroup>
 </Project>
