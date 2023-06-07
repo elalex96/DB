@@ -3,7 +3,6 @@
 -- Create date: <23-05-2018>
 -- Description:	<Consulta de las instalaciones por contrato>
 -- =============================================
-
 CREATE procedure [dbo].[CO_SP_ConsultaInstalacionesPorContrato]
 	@IdContrato INT
 AS
@@ -19,8 +18,12 @@ BEGIN
 			i.IdCampo,
 			i.UTMX,
 			i.UTMY,
-			i.IdEstatus
+			i.IdEstatus,
+			ISNULL(i.Activo,0) AS Activo,
+			ISNULL(i.WelIID,0) AS WelIID,
+			ISNULL(i.ComodinBolsa,0) AS ComodinBolsa
 	FROM dbo.CO_Instalacion i
 	INNER JOIN dbo.CO_Contrato c ON c.IdAreaContractual = i.IdAreaContractual
-	WHERE c.IdContrato = @IdContrato AND i.Activo = 1
+	WHERE c.IdContrato = @IdContrato 
+	order by i.NombreInstalacion ASC
 END
