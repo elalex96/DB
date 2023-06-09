@@ -3893,5 +3893,6 @@
     <Build Include="dbo\Tables\Tables2\ENT_BitacoraEliminacionInstancia.sql" />
     <Build Include="dbo\Tables\Tables2\ENT_BitacoraEliminacionProgramacionDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_ENT_GuardarHistorialEliminacionProgramacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_AP_ObtenerHTMLBanner.sql" />
   </ItemGroup>
 </Project>
