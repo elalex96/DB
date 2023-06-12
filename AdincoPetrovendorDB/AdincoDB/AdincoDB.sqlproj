@@ -3879,6 +3879,5 @@
     <Build Include="dbo\Stored Procedures\Procs1\sp_CO_EditarRegistroGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_CO_EliminaPrecioMarcador.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_CO_EliminarCOPADE.sql" />
-
   </ItemGroup>
 </Project>

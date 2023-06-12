@@ -42,7 +42,14 @@ BEGIN
     )
     SELECT @IdMoneda,
            #FechasMes.Fecha,
-           @TipoCambio,
+		   CASE 
+		   WHEN ISNULL(@TipoCambio,0) <> 0
+		   THEN
+				(1/@TipoCambio)
+		   ELSE
+				@TipoCambio
+		   END
+           ,
            1,
            1,
            1
