@@ -2927,6 +2927,7 @@
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V3.sql" />
     <Build Include="dbo\User Defined Types\WDEA_Layout_T_V4.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_WDEA_ObtenerAnioMesAceptacionesPedido.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SP_MM_ValidarCartasPorAceptacionExistente.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
