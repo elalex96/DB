@@ -1,6 +1,6 @@
 ﻿--USE [Petrovendor]
 --GO
---/****** Object:  StoredProcedure [dbo].[SP_ConsultaSeguimientosPagosV2]    Script Date: 01/06/2023 01:45:18 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_ConsultaSeguimientosPagosV2]    Script Date: 01/06/2023 01:45:18 p. m. ******/
 --SET ANSI_NULLS ON
 --GO
 --SET QUOTED_IDENTIFIER ON

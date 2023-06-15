@@ -1,6 +1,13 @@
 USE [Petrovendor]
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]    Script Date: 02/06/2023 09:54:07 a. m. ******/
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaPedidosVenta_MV1_5'
+)
+    DROP PROCEDURE SP_MM_ConsultaPedidosVenta_MV1_5;
+GO
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,7 +25,7 @@ GO
 -- Create date: 01/06/2023
 -- Description:	correccion en la suma de los totales de los pedidos, reacomodo de joins y nolocks
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosVenta_MV1_5]  
     -- Add the parameters for the stored procedure here  
     @IdProveedor INT,  
     @CONSULTA NVARCHAR(300),   
@@ -458,7 +465,7 @@ BEGIN
                  P.RecepcionServicio,  
                  TP.TipoPedido,  
                  TP.IdTipoPedido,  
-				 P.IdEstatusEliminado  
+                P.IdEstatusEliminado  
         ORDER BY PG.IdPedido DESC;  
   
     END;  
@@ -600,4 +607,3 @@ BEGIN
 		SubTotal;
   
 END;  
-  
