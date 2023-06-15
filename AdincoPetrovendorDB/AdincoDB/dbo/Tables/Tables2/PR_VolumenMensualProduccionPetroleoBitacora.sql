@@ -21,6 +21,7 @@
     [VolumenCondensableAutoconsumo]        FLOAT (53)    NULL,
     [CreadoEl]                             DATETIME      NULL,
     [CreadoPor]                            INT           NULL,
+    [Activo] BIT NULL,
     FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
 );
 

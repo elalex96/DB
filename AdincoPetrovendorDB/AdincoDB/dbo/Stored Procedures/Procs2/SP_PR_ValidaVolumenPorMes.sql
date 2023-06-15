@@ -4,21 +4,23 @@
 -- Description:	
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_ValidaVolumenPorMes]
-    -- Add the parameters for the stored procedure here
     @IdContrato INT,
     @IdUsuario INT,
-    @MesReporte DATE
+    @MesReporte DATE,
+	@Activo BIT,
+	@Id INT
 AS
 BEGIN
-    -- SET NOCOUNT ON added to prevent extra result sets from
-    -- interfering with SELECT statements.
     SET NOCOUNT ON;
 
-    -- Insert statements for procedure here
+	IF(@Activo = 1)--Registro normal activo se verifica 
+	BEGIN
     IF EXISTS (   SELECT *
                     FROM dbo.PR_VolumenMensualProduccionPetroleo
                    WHERE IdContrato = @IdContrato
-                     AND MesReporte = @MesReporte)
+                     AND MesReporte = @MesReporte
+					 AND Activo = 1
+					 AND IdReporteVolumenesProduccionPetroleo <> @Id)
     BEGIN
         SELECT 'true' AS Existe,
                1 AS Editar;
@@ -28,4 +30,10 @@ BEGIN
         SELECT 'false' AS Existe,
                0 AS Editar;
     END;
+	END
+	ELSE
+	BEGIN -- Si el registro nuevo no esta activo no se hace validación  ya que va desactivado
+	  SELECT 'false' AS Existe,
+               0 AS Editar;
+	END;
 END;
