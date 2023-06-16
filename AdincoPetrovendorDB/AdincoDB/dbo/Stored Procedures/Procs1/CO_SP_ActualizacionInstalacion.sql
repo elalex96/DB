@@ -4,7 +4,6 @@
 -- Create date: <24-05-2018>
 -- Description:	<Se agrega nueva instalacion>
 -- =============================================
-
 CREATE procedure [dbo].[CO_SP_ActualizacionInstalacion]
 	@NombreInstalacion VARCHAR(500),
 	@IdInstalacionPemex VARCHAR(10),
@@ -70,4 +69,4 @@ BEGIN
 		WHERE I.IdInstalacion = @IdInstalacion
 		AND I.WelIID IS NOT NULL 
 		AND I.WelIID > 0
-END 
+END
