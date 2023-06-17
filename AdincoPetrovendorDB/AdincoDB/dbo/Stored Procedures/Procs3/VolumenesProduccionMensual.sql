@@ -19,7 +19,8 @@
     @VolumenCondensadoAutoconsumo FLOAT = 0,
     @VolumenCondensablePuntoMedicion FLOAT = 0,
     @VolumenCondensableAutoconsumo FLOAT = 0,
-    @CreadoPor INT
+    @CreadoPor INT,
+	@Activo BIT = 1
 AS
 BEGIN
     INSERT INTO PR_VolumenMensualProduccionPetroleoBitacora
@@ -45,7 +46,8 @@ BEGIN
         VolumenCondensablePuntoMedicion,
         VolumenCondensableAutoconsumo,
         CreadoEl,
-        CreadoPor
+        CreadoPor,
+		Activo
     )
     SELECT IdReporteVolumenesProduccionPetroleo,
            @Accion,
@@ -68,7 +70,8 @@ BEGIN
            VolumenCondensablePuntoMedicion,
            VolumenCondensableAutoconsumo,
            GETDATE(),
-           @CreadoPor
+           @CreadoPor,
+		   @Activo
     FROM PR_VolumenMensualProduccionPetroleo
     WHERE IdReporteVolumenesProduccionPetroleo = @IdReporteVolumenesProduccionPetroleo
 
@@ -101,7 +104,8 @@ BEGIN
             VolumenCondensablePuntoMedicion = @VolumenCondensablePuntoMedicion,
             VolumenCondensableAutoconsumo = @VolumenCondensableAutoconsumo,
             ModificadoPor = @CreadoPor,
-            ModificadoEl = GETDATE()
+            ModificadoEl = GETDATE(),
+			Activo = @Activo
         WHERE IdReporteVolumenesProduccionPetroleo = @IdReporteVolumenesProduccionPetroleo
     END
 
@@ -130,7 +134,8 @@ BEGIN
             VolumenCondensablePuntoMedicion,
             VolumenCondensableAutoconsumo,
             CreadoPor,
-            CreadoEl
+            CreadoEl,
+			Activo
         )
         VALUES
         (@IdContrato,
@@ -152,7 +157,8 @@ BEGIN
          @VolumenCondensablePuntoMedicion,
          @VolumenCondensableAutoconsumo,
          @CreadoPor,
-         GETDATE()
+         GETDATE(),
+		 @Activo
         )
 
         SELECT @IdReporteVolumenesProduccionPetroleo = SCOPE_IDENTITY()
@@ -180,7 +186,8 @@ BEGIN
             VolumenCondensablePuntoMedicion,
             VolumenCondensableAutoconsumo,
             CreadoEl,
-            CreadoPor
+            CreadoPor,
+			Activo
         )
         SELECT @IdReporteVolumenesProduccionPetroleo,
                @Accion,
@@ -203,17 +210,16 @@ BEGIN
                @VolumenCondensablePuntoMedicion,
                @VolumenCondensableAutoconsumo,
                GETDATE(),
-               @CreadoPor
+               @CreadoPor,
+			   @Activo
     END
 
     IF (@Accion = 'Delete')
     BEGIN
-        DELETE FROM PR_VolumenMensualProduccionPetroleo
+       UPDATE PR_VolumenMensualProduccionPetroleo
+	   SET Activo = 0,
+			ModificadoPor = @CreadoPor,
+            ModificadoEl = GETDATE()
         WHERE IdReporteVolumenesProduccionPetroleo = @IdReporteVolumenesProduccionPetroleo
     END
 END
-
-
-
-
-
