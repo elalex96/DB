@@ -27,11 +27,15 @@ GO
 -- Create date: 25/10/2022
 -- Description:	Se agrega el filtrado por fechas
 -- =============================================
--- Author:		Alezander Gomez
+-- Author:		Alexander Gomez
 -- Create date: 28/04/2023
 -- Description:	se reestringe la consulta para evitar consultar todos los datos cuando se obtienen las fechas
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
+-- Author:		Alexander Gomez
+-- Create date: 21/06/2023
+-- Description:	optmizacion de consulta para murphy
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] --1390,2,10039,0
 @IdProveedor int,
 @Estatus int,
 @IdContrato int = NULL,
@@ -42,7 +46,11 @@ CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion]
 AS
 BEGIN
   SET NOCOUNT ON;
-	DECLARE @PLANT	nvarchar(10) 	
+	DECLARE @PLANT	nvarchar(10);
+	
+	CREATE TABLE #Estatus(
+		IdEstatus INT
+	);
 
 	CREATE TABLE #AceptacionesPedido 
 	(
@@ -82,77 +90,93 @@ BEGIN
 
 	SET @PLANT = (SELECT TOP 1 PLANT FROM #PLANT);
 
-IF ISNULL(@PLANT,'') = ''
-BEGIN
+	IF ISNULL(@PLANT,'') = ''
+	BEGIN
 	
-	create table #FlujoSerial 
-	(
-		IdOperacion int,
-		NoSecuencia int
-	)
-	CREATE NONCLUSTERED INDEX ix_tempFlujoSerialIdOperacion  ON #FlujoSerial (IdOperacion);
+		create table #FlujoSerial 
+		(
+			IdOperacion int,
+			NoSecuencia int
+		)
+		CREATE NONCLUSTERED INDEX ix_tempFlujoSerialIdOperacion  ON #FlujoSerial (IdOperacion);
 
-	CREATE TABLE #OperacionNoAprobadas 
-	(
-		IdOperacion int
-	)
-	CREATE NONCLUSTERED INDEX ix_tempOperacionNoAprobadasIdOperacion ON #OperacionNoAprobadas (IdOperacion);
+		CREATE TABLE #OperacionNoAprobadas 
+		(
+			IdOperacion int
+		)
+		CREATE NONCLUSTERED INDEX ix_tempOperacionNoAprobadasIdOperacion ON #OperacionNoAprobadas (IdOperacion);
 
-	CREATE TABLE #AceptacionesFactura
-	(	
-		IdAceptacionFactura			INT,
-		IdPedido					INT,
-		IdAceptacionPedido			INT,
-		IdOperacion					INT,
-		IdFactura					INT,
-		IdContrato					INT,
-		FechaRegistro               DATETIME,
-		IdEstatus					INT,
-		IdFlujoTarea				INT,
-		IdSolicitudPedido			INT,
-		IdSubcontratista			INT,
-		IdMoneda					INT,
-		PedirCarta					BIT
+		CREATE TABLE #AceptacionesFactura
+		(	
+			IdAceptacionFactura			INT,
+			IdPedido					INT,
+			IdAceptacionPedido			INT,
+			IdOperacion					INT,
+			IdFactura					INT,
+			IdContrato					INT,
+			FechaRegistro               DATETIME,
+			IdEstatus					INT,
+			IdFlujoTarea				INT,
+			IdSolicitudPedido			INT,
+			IdSubcontratista			INT,
+			IdMoneda					INT,
+			PedirCarta					BIT
 
-	)
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionFactura  ON #AceptacionesFactura (IdAceptacionFactura);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdPedido  ON #AceptacionesFactura (IdPedido);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionPedido  ON #AceptacionesFactura (IdAceptacionPedido);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdOperacion  ON #AceptacionesFactura (IdOperacion);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdFactura  ON #AceptacionesFactura (IdFactura);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdContrato  ON #AceptacionesFactura (IdContrato);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdEstatus  ON #AceptacionesFactura (IdEstatus);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdFlujoTarea  ON #AceptacionesFactura (IdFlujoTarea);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdSolicitudPedido  ON #AceptacionesFactura (IdSolicitudPedido);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdMoneda  ON #AceptacionesFactura (IdMoneda);
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdSubcontratista ON #AceptacionesFactura (IdSubcontratista);
+		)
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionFactura  ON #AceptacionesFactura (IdAceptacionFactura);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdPedido  ON #AceptacionesFactura (IdPedido);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionPedido  ON #AceptacionesFactura (IdAceptacionPedido);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdOperacion  ON #AceptacionesFactura (IdOperacion);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdFactura  ON #AceptacionesFactura (IdFactura);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdContrato  ON #AceptacionesFactura (IdContrato);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdEstatus  ON #AceptacionesFactura (IdEstatus);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdFlujoTarea  ON #AceptacionesFactura (IdFlujoTarea);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdSolicitudPedido  ON #AceptacionesFactura (IdSolicitudPedido);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdMoneda  ON #AceptacionesFactura (IdMoneda);
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionIdSubcontratista ON #AceptacionesFactura (IdSubcontratista);
 
-	 CREATE TABLE #AceptacionTotales
-	(	
-		IdAceptacionPedido			INT,
-		TotalPedido			MONEY	
+		 CREATE TABLE #AceptacionTotales
+		(	
+			IdAceptacionPedido			INT,
+			TotalPedido			MONEY	
 
-	)
-	CREATE NONCLUSTERED INDEX ix_tempAceptacionTotalesIdAceptacionPedido  ON #AceptacionTotales (IdAceptacionPedido);
+		)
+		CREATE NONCLUSTERED INDEX ix_tempAceptacionTotalesIdAceptacionPedido  ON #AceptacionTotales (IdAceptacionPedido);
 
-	 CREATE TABLE #Contratos
-	(	
-		IdContrato			INT,
-		NombreContrato	 	VARCHAR(300)
+		 CREATE TABLE #Contratos
+		(	
+			IdContrato			INT,
+			NombreContrato	 	VARCHAR(300)
 
-	)
-	CREATE NONCLUSTERED INDEX ix_tempContratosIdContrato  ON #Contratos (IdContrato);
+		)
+		CREATE NONCLUSTERED INDEX ix_tempContratosIdContrato  ON #Contratos (IdContrato);
 
-	 CREATE TABLE #Proveedor
-	(	
-		IdProveedor			INT	
-	)
-	CREATE NONCLUSTERED INDEX ix_tempProveedorIdProveedor  ON #Proveedor (IdProveedor);
+		 CREATE TABLE #Proveedor
+		(	
+			IdProveedor			INT	
+		)
+		CREATE NONCLUSTERED INDEX ix_tempProveedorIdProveedor  ON #Proveedor (IdProveedor);
 
-	INSERT INTO #Proveedor(IdProveedor)
-	SELECT @IdProveedor	
+		INSERT INTO #Proveedor(IdProveedor)
+		SELECT @IdProveedor	
 
-END
+	END;
+
+	IF @Estatus = 0
+	BEGIN
+		
+		INSERT INTO #Estatus (IdEstatus) VALUES (1);--EN APROBACION
+		INSERT INTO #Estatus (IdEstatus) VALUES (2);--APROBADA
+		INSERT INTO #Estatus (IdEstatus) VALUES (3);--RECHAZADA
+		INSERT INTO #Estatus (IdEstatus) VALUES (9);--ELIMINADA
+	END
+	ELSE
+	BEGIN
+		
+		INSERT INTO #Estatus
+		SELECT @Estatus
+
+	END;
 
 IF @FechaInicio IS NULL OR @FechaFin IS NULL
 BEGIN
@@ -168,7 +192,7 @@ BEGIN
 	ELSE
 	BEGIN 
 		
-		SET @FechaInicio = DATEADD(YY,-3,GETDATE());
+		SET @FechaInicio = DATEADD(YY,-2,GETDATE());
 
 		SET @FechaFin = GETDATE();
 
@@ -225,15 +249,6 @@ BEGIN
 				AND AP.IdContrato = @IdContrato
 			JOIN MPY_MM_AceptacionFactura AS AF (NOLOCK)
 				ON AP.IdAceptacionPedido  = AF.IdAceptacionPedido
-				AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
-					AND AF.IdEstatusXML != 4  -->CTE
-					AND AF.IdEstatusXML != 4  -->CTE
-					AND (CASE WHEN @Estatus = 0 AND AF.IdEstatus IN (1,2,3,9)  THEN 1 
-						WHEN @Estatus =1 AND AF.IdEstatus = 1 THEN 1
-						WHEN @Estatus = 2 AND AF.IdEstatus = 2  THEN 1
-						WHEN @Estatus =3 AND AF.IdEstatus = 3  THEN 1
-						WHEN @Estatus =9 AND AF.IdEstatus = 9 THEN 1
-						END = 1)
 			JOIN TA_Estatus AS E (NOLOCK)
 				ON AF.IdEstatus = E.IdEstatus
 			JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
@@ -259,6 +274,11 @@ BEGIN
 			LEFT JOIN S_Proveedor AS PR (NOLOCK)
 				ON AP.IdSubContratista=PR.RFC
 				AND PR.Activo = 1  -->CTE		
+			WHERE AF.IdEstatus IN (SELECT IdEstatus FROM #Estatus)
+			AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+			AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
+			AND AF.IdEstatusXML != 4  -->CTE
+			AND AF.IdEstatusXML != 4  -->CTE
 			GROUP BY AF.IdAceptacionPedido,
 					AP.IdPedido,
 					PR.RazonSocial,
@@ -340,19 +360,9 @@ BEGIN
 		  AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 -->CTE NO ESTE ELIMINADO
 		JOIN dbo.RelacionCartaCNPedido RC (NOLOCK)
 			ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 	 
-		WHERE
-		(CASE WHEN @Estatus = 0 AND O.IdEstatusOperacion IN (1,2,3,9) AND ISNULL(O.IdFlujoTarea, 0) <> 0  THEN 
-		1 
-		WHEN @Estatus =1 AND O.IdEstatusOperacion = 1 AND ISNULL(O.IdFlujoTarea, 0) <> 0 THEN 
-		1
-		WHEN @Estatus = 2 AND O.IdEstatusOperacion = 2 AND ISNULL(O.IdFlujoTarea, 0) <> 0 THEN 
-		1
-		WHEN @Estatus =3 AND O.IdEstatusOperacion = 3 AND ISNULL(O.IdFlujoTarea, 0) <> 0 THEN 
-		1
-		WHEN @Estatus =9 AND O.IdEstatusOperacion = 9 AND  ISNULL(O.IdEstadoFlujo, 0) = 0  THEN 
-		1
-		END =1
-		)
+		WHERE O.IdEstatusOperacion IN (SELECT IdEstatus FROM #Estatus)
+		AND ISNULL(O.IdFlujoTarea, 0) <> 0
+		AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
 		GROUP BY  
 		AF.IdAceptacionFactura,
 		O.IdOperacion,
@@ -608,16 +618,6 @@ BEGIN
 				AND AP.IdContrato = @IdContrato
 			JOIN MPY_MM_AceptacionFactura AS AF (NOLOCK)
 				ON AP.IdAceptacionPedido  = AF.IdAceptacionPedido
-				AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
-				AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
-					AND AF.IdEstatusXML != 4  -->CTE
-					AND AF.IdEstatusXML != 4  -->CTE
-					AND (CASE WHEN @Estatus = 0 AND AF.IdEstatus IN (1,2,3,9)  THEN 1 
-						WHEN @Estatus =1 AND AF.IdEstatus = 1 THEN 1
-						WHEN @Estatus = 2 AND AF.IdEstatus = 2  THEN 1
-						WHEN @Estatus =3 AND AF.IdEstatus = 3  THEN 1
-						WHEN @Estatus =9 AND AF.IdEstatus = 9 THEN 1
-						END = 1)
 			JOIN TA_Estatus AS E (NOLOCK)
 				ON AF.IdEstatus = E.IdEstatus
 			JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
@@ -642,7 +642,12 @@ BEGIN
 				ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 
 			LEFT JOIN S_Proveedor AS PR (NOLOCK)
 				ON AP.IdSubContratista=PR.RFC
-				AND PR.Activo = 1  -->CTE		
+				AND PR.Activo = 1  -->CTE
+			WHERE AF.IdEstatus IN (SELECT IdEstatus FROM #Estatus)
+			AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+			AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
+			AND AF.IdEstatusXML != 4  -->CTE
+			AND AF.IdEstatusXML != 4  -->CTE
 			GROUP BY AF.IdAceptacionPedido,
 					AP.IdPedido,
 					PR.RazonSocial,
@@ -725,19 +730,8 @@ BEGIN
 		  AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 -->CTE NO ESTE ELIMINADO
 		JOIN dbo.RelacionCartaCNPedido RC (NOLOCK)
 			ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 	 
-		WHERE
-		(CASE WHEN @Estatus = 0 AND O.IdEstatusOperacion IN (1,2,3,9) AND ISNULL(O.IdFlujoTarea, 0) <> 0  THEN 
-		1 
-		WHEN @Estatus =1 AND O.IdEstatusOperacion = 1 AND ISNULL(O.IdFlujoTarea, 0) <> 0 THEN 
-		1
-		WHEN @Estatus = 2 AND O.IdEstatusOperacion = 2 AND ISNULL(O.IdFlujoTarea, 0) <> 0 THEN 
-		1
-		WHEN @Estatus =3 AND O.IdEstatusOperacion = 3 AND ISNULL(O.IdFlujoTarea, 0) <> 0 THEN 
-		1
-		WHEN @Estatus =9 AND O.IdEstatusOperacion = 9 AND  ISNULL(O.IdEstadoFlujo, 0) = 0  THEN 
-		1
-		END =1
-		)
+		WHERE O.IdEstatusOperacion IN (SELECT IdEstatus FROM #Estatus)
+		AND ISNULL(O.IdFlujoTarea, 0) <> 0
 		GROUP BY  
 		AF.IdAceptacionFactura,
 		O.IdOperacion,
