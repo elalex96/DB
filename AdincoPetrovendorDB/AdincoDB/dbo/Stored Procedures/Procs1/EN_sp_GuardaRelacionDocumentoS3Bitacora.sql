@@ -1,4 +1,4 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
 IF EXISTS
 (
@@ -32,7 +32,7 @@ DECLARE
 								US.Usuario
 								FROM AP_Usuario AS US (NOLOCK)
 								WHERE UsuarioID = @IdUsuario),
-@HTML varchar(max) = (SELECT HTML FROM TA_Correo (NOLOCK) WHERE Asunto = 'Descargade Reporte SASISOPA');
+@HTML varchar(max) = (SELECT HTML FROM TA_Correo (NOLOCK) WHERE Asunto = 'Descarga de Reporte SASISOPA');
 
 	-- SE ACTUALIZA EL PROCESADO
 	UPDATE EN_Documentos_BitacoraReporteSASISOPA
