@@ -296,7 +296,7 @@ DECLARE
 SELECT
 	@AplicaFactorCompresibilidad	=	ISNULL(AplicaFactorCompresibilidad,0)
 FROM
-	dbo.SCOC_Contrato
+	dbo.SCOC_Contrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
@@ -316,7 +316,7 @@ SELECT
 	Dia,
 	ROW_NUMBER() OVER (ORDER BY Dia) AS NumDiaHabil
 FROM
-	dbo.AP_Calendario
+	dbo.AP_Calendario (NOLOCK)
 WHERE
 	PrimerDiaMes  = DATEADD( MONTH, 1, @fechaMesDiaAnio )
 	AND NombreDia NOT IN ( 'Sábado', 'Domingo' )
@@ -345,9 +345,9 @@ UPDATE	PM
 								ELSE PM.VolumenProgramado
 							END
 FROM
-	SIPAC_RM_FMP_53_M	FMP53
+	SIPAC_RM_FMP_53_M	FMP53 (NOLOCK)
 JOIN
-	PR_ProduccionMensualSipac	PM
+	PR_ProduccionMensualSipac	PM (NOLOCK)
 	ON	FMP53.IdContrato	=	PM.idContrato
 	AND	DATEADD(MONTH,1,DATEFROMPARTS(FMP53.AnioReporte, FMP53.MesReporte,1)) = PM.idFecha
 WHERE
@@ -359,11 +359,11 @@ WHERE
 
 --Calculo del volumen de crudo a vender basado en reparticion preliminar
 SELECT	@UniMedidaBl = idUnidadMedida
-FROM dbo.CO_UnidadMedida
+FROM dbo.CO_UnidadMedida (NOLOCK)
 WHERE	Abreviatura = 'BL'
 
 SELECT	@UniMedidaBTU = idUnidadMedida
-FROM dbo.CO_UnidadMedida
+FROM dbo.CO_UnidadMedida (NOLOCK)
 WHERE	Abreviatura = 'MMBTU'
 
 INSERT INTO #CalculosGPA
@@ -417,12 +417,12 @@ SELECT
 	ISNULL(CV.PrecioPetroleo,0),
 	ISNULL(CV.PrecioCondensado,0)
 FROM
-    CO_Cromatografia             C
+    CO_Cromatografia             C (NOLOCK)
 JOIN
-    CO_CromatografiaValores      CV
+    CO_CromatografiaValores      CV (NOLOCK)
     ON C.IdCromatografia     = CV.IdCromatografia
 JOIN
-    CO_PuntosdeEntregaContrato	 PEC
+    CO_PuntosdeEntregaContrato	 PEC (NOLOCK)
     ON C.IdContrato	=	PEC.idContrato
 	AND CV.IdPuntoEntregaContrato = PEC.PuntoEntregaContratoID
 WHERE
@@ -441,7 +441,7 @@ SELECT
 	@GasVTA_20	=	SUM(CASE WHEN idHidrocarburo = 1000 AND VolumenVendido IS NULL THEN VolumenProgramado WHEN idHidrocarburo = 1000 AND VolumenVendido IS NOT NULL THEN VolumenVendido ELSE 0 END),
 	@CondensadoVTA_20	=	SUM(CASE WHEN idHidrocarburo = 1002 AND VolumenVendido IS NULL THEN VolumenProgramado WHEN idHidrocarburo = 1002 AND VolumenVendido IS NOT NULL THEN VolumenVendido ELSE 0 END)
 FROM
-	PR_ProduccionMensualSipac
+	PR_ProduccionMensualSipac (NOLOCK)
 WHERE
 	idContrato        = @Idcontrato
     AND idFecha        = @fechaMesDiaAnio
@@ -474,7 +474,7 @@ UPDATE #CalculosGPA
 
 --IF @Idcontrato = 10054	-- CASO ENI VOLUMEN DE PETROLEO A 15.56 Y PRECIO A 20°, SE VUELVE A RECALCULAR EL IMPORTE TOTAL
 -- SI ES PRODUCCION COMPARTIDA
-IF 2 = (SELECT ISNULL(IdTipoContrato,1) FROM CO_CONTRATO WHERE IdContrato = @Idcontrato)
+IF 2 = (SELECT ISNULL(IdTipoContrato,1) FROM CO_CONTRATO (NOLOCK) WHERE IdContrato = @Idcontrato)
 BEGIN
 
 	UPDATE #CalculosGPA
@@ -491,7 +491,7 @@ IF @Debug = 1
 SELECT
 	@TotalVolumenPetroleo	=	SUM(VolumenProgramado)
 FROM
-    PR_ProduccionMensualSipac
+    PR_ProduccionMensualSipac (NOLOCK)
 WHERE
     idContrato        = @Idcontrato
     AND idFecha        = @fechaMesDiaAnio
@@ -503,17 +503,17 @@ BEGIN
 		@PromAPI = CASE WHEN @TotalVolumenPetroleo = 0 THEN 0 ELSE SUM((ISNULL(CV.GradosAPI,0) * P.VolumenProgramado)/@TotalVolumenPetroleo) END,
 		@PromAzufre	= CASE WHEN @TotalVolumenPetroleo = 0 THEN 0 ELSE SUM((ISNULL(CV.Azufre,0) * P.VolumenProgramado)/@TotalVolumenPetroleo) END
 	FROM
-		PR_ProduccionMensualSipac	P
+		PR_ProduccionMensualSipac	P (NOLOCK)
 	JOIN
-		CO_Cromatografia             C
+		CO_Cromatografia             C (NOLOCK)
 		ON	P.idContrato	=	C.IdContrato
 		AND YEAR( P.idFecha )	=	C.Anio
 		AND MONTH( P.idFecha )	=	C.Mes
 	JOIN
-		CO_CromatografiaValores      CV
+		CO_CromatografiaValores      CV (NOLOCK)
 		ON C.IdCromatografia         = CV.IdCromatografia
 	JOIN
-		CO_PuntosdeEntregaContrato	 PEC
+		CO_PuntosdeEntregaContrato	 PEC (NOLOCK)
 		ON	C.IdContrato		=	PEC.idContrato
 		AND CV.IdPuntoEntregaContrato = PEC.PuntoEntregaContratoID
 	WHERE
@@ -729,7 +729,7 @@ UPDATE	#CalculosGPA
 SELECT
 	@SumaValoresGPA	=	Metano_C1+ Etano_C2+ Propano_C3+ Butano_iC4 + Butano_nC4 + Pentano_iC5 + Pentano_nC5 + Hexano_C6 + Heptano_C7 + Octano_C8 + Nonano_C9 + Decano_C10
 FROM
-	SCOC_ValoresEstandaresGPA_2145	
+	SCOC_ValoresEstandaresGPA_2145	(NOLOCK)
 WHERE
 	IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN IdFecIniVigencia AND FecFinVigencia
@@ -806,7 +806,7 @@ UPDATE C
 FROM
 	#CalculosGPA	C
 CROSS JOIN
-	SCOC_ValoresEstandaresGPA_2145	GPA
+	SCOC_ValoresEstandaresGPA_2145	GPA (NOLOCK)
 WHERE
 	GPA.IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
@@ -875,7 +875,7 @@ UPDATE	C
 FROM
 	#CalculosGPA	C
 CROSS JOIN
-	SCOC_ValoresEstandaresGPA_2145	GPA
+	SCOC_ValoresEstandaresGPA_2145	GPA (NOLOCK)
 WHERE
 	GPA.IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
@@ -918,7 +918,7 @@ UPDATE	C
 FROM
 	#CalculosGPA	C
 CROSS JOIN
-	SCOC_ValoresEstandaresGPA_2145	GPA
+	SCOC_ValoresEstandaresGPA_2145	GPA (NOLOCK)
 WHERE
 	GPA.IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
@@ -951,7 +951,7 @@ IF @DEBUG = 1
 BEGIN
 SELECT C.IDCONTRATO, VTA_Bll_C5_Equiv, FMP53.*
 FROM
-	SIPAC_RM_FMP_53_M	FMP53
+	SIPAC_RM_FMP_53_M	FMP53 (NOLOCK)
 JOIN
 	#CalculosGPA	C
 	ON	FMP53.IdContrato	=	C.idContrato
@@ -989,7 +989,7 @@ IF @DEBUG = 1
 BEGIN
 SELECT VTA_Bll_C5_Equiv
 FROM
-	SIPAC_RM_FMP_53_M	FMP53
+	SIPAC_RM_FMP_53_M	FMP53 (NOLOCK)
 JOIN
 	#CalculosGPA	C
 	ON	FMP53.IdContrato	=	C.idContrato
@@ -1083,7 +1083,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
-		dbo.CO_TipoHidrocarburo	TH
+		dbo.CO_TipoHidrocarburo	TH (NOLOCK)
 
 		SELECT
 		'COMERCIALIZACIONES CONDENSABLE',
@@ -1110,7 +1110,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	JOIN
-		dbo.LOG_CalculoProduccionMensual	LG
+		dbo.LOG_CalculoProduccionMensual	LG (NOLOCK)
 		ON	C.IdContrato	=	LG.IdContrato
 		AND	C.MesReporte	=	LG.MesReporte
 		AND	C.PuntoEntregaID	=	LG.PuntoEntregaID
@@ -1267,7 +1267,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
-		dbo.CO_TipoHidrocarburo	TH
+		dbo.CO_TipoHidrocarburo	TH (NOLOCK)
 
 	-- SE BORRAN LAS COMERCIALIZACIONES EXISTENTES PARA EL CONTRATO, MES, PTO ENTREGA, QUE NO PERTENEZCAN A PEMEX
 	DELETE	OC
@@ -1362,7 +1362,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
-		dbo.CO_TipoHidrocarburo	TH
+		dbo.CO_TipoHidrocarburo	TH (NOLOCK)
 
 	-- SI HAY VOLUMEN DE CONDENSABLE, SE GENERA LA COMERCIALIZACION
 	IF 0 < (SELECT ISNULL(Bll_C5_Equiv,0) FROM #CalculosGPA)
@@ -1578,7 +1578,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	JOIN
-		PR_ProduccionMensualPtoEntrega	PTE
+		PR_ProduccionMensualPtoEntrega	PTE (NOLOCK)
 		ON	C.IdContrato	=	PTE.IdContrato
 		AND	C.MesReporte	=	PTE.IdFecha
 	--WHERE
