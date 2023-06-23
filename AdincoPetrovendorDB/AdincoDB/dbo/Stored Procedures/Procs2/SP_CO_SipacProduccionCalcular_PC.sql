@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.SP_CO_SipacProduccionCalcular_PC
+﻿CREATE PROCEDURE [dbo].[SP_CO_SipacProduccionCalcular_PC]
     @Idcontrato      INT,
     @fechaMesDiaAnio DATE,
     @puntoEntrega    INT,
@@ -1499,7 +1499,7 @@ BEGIN
 	    ButanoC4Autoconsumo,
 	    VolumenCondensadoPuntoMedicion,
 	    VolumenCondensadoAutoconsumo,
-	 Bit_CasoFortuito,
+		Bit_CasoFortuito,
 	    CantDiasCasoFortuito,
 	    OtrosIngresosUsoCompartidoInfraestructura,
 	    VolumenPetroleoContratistaReparticion,
@@ -1526,7 +1526,8 @@ BEGIN
 	    VolumenPropanoC3EstadoCompensacion,
 	    VolumenButanoC4EstadoCompensacion,
 	    VolumenCondensadosEstadoCompensacion,
-	    AcumuladoCostosRecuperablesInsolutos
+	    AcumuladoCostosRecuperablesInsolutos,
+		Activo
 	)
 	SELECT
 		C.IdContrato,
@@ -1572,7 +1573,8 @@ BEGIN
 	    0,--VolumenPropanoC3EstadoCompensacion,
 	    0,--VolumenButanoC4EstadoCompensacion,
 	    0,--VolumenCondensadosEstadoCompensacion,
-	    0--AcumuladoCostosRecuperablesInsolut
+	    0,--AcumuladoCostosRecuperablesInsolut
+		1
 	FROM
 		#CalculosGPA	C
 	JOIN
