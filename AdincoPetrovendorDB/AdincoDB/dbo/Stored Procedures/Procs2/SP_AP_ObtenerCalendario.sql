@@ -77,7 +77,7 @@ BEGIN
           AND YEAR([IdFecha]) = YEAR(@HOY)
     ORDER BY [IdFecha] ASC
 
-	SELECT @DiasPrimerMes = COUNT(*) FROM #AP_Calendario;
+	SELECT @DiasPrimerMes = COUNT(1) FROM #AP_Calendario;
 
     INSERT INTO #AP_Calendario
     (
