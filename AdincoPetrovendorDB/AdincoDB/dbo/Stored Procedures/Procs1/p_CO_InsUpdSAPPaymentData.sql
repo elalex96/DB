@@ -27,11 +27,11 @@ as
 			@titularCuenta varchar(500)
 
 		select @IdMoneda = IdMoneda
-		from PV_TipoMoneda
+		from PV_TipoMoneda (NOLOCK)
 		where TipoMOnedaCorto = @pCurrency
 
 		select @IdMetodoPago = IdMetodoPagoAdinco
-		from [CO_SAPTaxMinistry_detalle]
+		from [CO_SAPTaxMinistry_detalle] (NOLOCK)
 		where SAPPayType = @pPaymentForm and
 		IdContrato = @pIdContrato
 
@@ -43,10 +43,10 @@ as
 
 		/**************SI NO EXISTE CUENTA DESTINO. GENERARLA AUTOMÁTICAMENTE**********************/
 		if not exists (
-			select * from CO_SAPVendor v 
-			INNER JOIN PV_Subcontratista sub on sub.RFC = v.TAXID
-			inner join Petrovendor..S_Proveedor prov on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
-			INNER JOIN PV_CuentaBancaria cb ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
+			select 1 from CO_SAPVendor v (NOLOCK)
+			INNER JOIN PV_Subcontratista sub (NOLOCK) on sub.RFC = v.TAXID
+			inner join Petrovendor..S_Proveedor prov  (NOLOCK) on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
+			INNER JOIN PV_CuentaBancaria cb (NOLOCK) ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
 											cb.IdProveedor = sub.IdSubcontratista
 			where  v.VendorIDSAP =@pSAPVendorId and
 			v.IdCOntrato = @pIdContrato
@@ -64,10 +64,10 @@ as
 			1,						null,			null,			null,			sub.RFC,
 			null,					1,				@pCreadoPor,	getdate(),		0,
 			null,					null
-			from CO_SAPVendor v 
-			INNER JOIN PV_Subcontratista sub on sub.RFC = v.TAXID
-			inner join Petrovendor..S_Proveedor prov on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS	
-			inner join PV_TipoMoneda m on m.TipoMonedaCorto = 	@pCurrency	
+			from CO_SAPVendor v (NOLOCK)
+			INNER JOIN PV_Subcontratista sub (NOLOCK) on sub.RFC = v.TAXID
+			inner join Petrovendor..S_Proveedor prov (NOLOCK) on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS	
+			inner join PV_TipoMoneda m (NOLOCK) on m.TipoMonedaCorto = 	@pCurrency	
 			where  v.VendorIDSAP =@pSAPVendorId and
 			v.IdCOntrato = @pIdContrato
 		end
@@ -79,7 +79,7 @@ as
 
 		if not exists (
 			select 1
-			from [CO_SAPPaymentData]
+			from [CO_SAPPaymentData] (NOLOCK)
 			where IdContrato = @pIdContrato and
 			rtrim(SourceAccount) = rtrim(@pSourceAccount) and
 			rtrim(FinalAccount) = rtrim(@pFinalAccount) and
@@ -137,10 +137,10 @@ as
 
 
 		if not exists (
-			select * from CO_SAPVendor v 
-			INNER JOIN PV_Subcontratista sub on sub.RFC = v.TAXID
-			inner join Petrovendor..S_Proveedor prov on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
-			INNER JOIN PV_CuentaBancaria cb ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
+			select 1 from CO_SAPVendor v (NOLOCK)
+			INNER JOIN PV_Subcontratista sub (NOLOCK) on sub.RFC = v.TAXID
+			inner join Petrovendor..S_Proveedor prov (NOLOCK) on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
+			INNER JOIN PV_CuentaBancaria cb (NOLOCK) ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
 											cb.IdProveedor = sub.IdSubcontratista
 			where  v.VendorIDSAP =@pSAPVendorId and
 			v.IdCOntrato = @pIdContrato
@@ -151,8 +151,8 @@ as
 
 		if not exists (
 			SELECT 1
-			FROM PV_CuentaBancaria C
-			INNER JOIN CO_Contrato CO on CO.IdContrato = @pIdContrato AND
+			FROM PV_CuentaBancaria C (NOLOCK)
+			INNER JOIN CO_Contrato CO (NOLOCK) on CO.IdContrato = @pIdContrato AND
 								CO.IdContratista = C.IdContratista AND
 								C.Activa = 1 AND
 								(RTRIM(C.NumeroCuenta) = RTRIM(@pSourceAccount) OR RTRIM(C.CuentaClave)  =RTRIM(@pSourceAccount))
@@ -171,7 +171,7 @@ as
 		BEGIN CATCH  
 
 			rollback tran
-			set @pError = ERROR_MESSAGE()
+			set @pError = Concat( 'Error sp: ',ERROR_PROCEDURE(), ' - Error Line: ', ERROR_LINE(), ' - Error Message: ' , ERROR_MESSAGE() )
 			
 			
 		END CATCH 
