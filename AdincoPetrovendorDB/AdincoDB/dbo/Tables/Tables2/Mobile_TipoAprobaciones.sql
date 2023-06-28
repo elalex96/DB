@@ -19,9 +19,9 @@ PRIMARY KEY CLUSTERED
 GO
 SET IDENTITY_INSERT [dbo].[Mobile_TipoAprobaciones] ON 
 GO
-INSERT [dbo].[Mobile_TipoAprobaciones] ([Id], [Menu], [IdTitulo], [Icon], [IdTipoAprobacion]) VALUES (1, N'Requisici�n', N'REQUI_TTL', N'requi.png', 2)
+INSERT [dbo].[Mobile_TipoAprobaciones] ([Id], [Menu], [IdTitulo], [Icon], [IdTipoAprobacion]) VALUES (1, N'Requisición', N'REQUI_TTL', N'requi.png', 2)
 GO
-INSERT [dbo].[Mobile_TipoAprobaciones] ([Id], [Menu], [IdTitulo], [Icon], [IdTipoAprobacion]) VALUES (2, N'Aprobaci�n Pedido', N'PEDIDO_TTL', N'pedido.png', 9)
+INSERT [dbo].[Mobile_TipoAprobaciones] ([Id], [Menu], [IdTitulo], [Icon], [IdTipoAprobacion]) VALUES (2, N'Aprobación Pedido', N'PEDIDO_TTL', N'pedido.png', 9)
 GO
 INSERT [dbo].[Mobile_TipoAprobaciones] ([Id], [Menu], [IdTitulo], [Icon], [IdTipoAprobacion]) VALUES (3, N'Compra Directa', N'COMPRADIRECTA_TTL', N'compradirecta.png', 14)
 GO
