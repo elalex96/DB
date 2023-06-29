@@ -13,6 +13,7 @@ BEGIN
 -- 20180801	BAAC	Se modifica para agregar el volumen de Condensable (C5+) en el Condensado
 -- 20190319	BAAC	Se modifica para agregar el usuario y solo obtener el porcentaje que corresponde a PEP,
 --					cuando el usuario tenga el dominio @pemex.com
+-- 20230628	RO	Se modifica para que se filtre la información de la tabla PR_VolumenMensualProduccionPetroleo por el Activo = 1
 -- =============================================
 SET NOCOUNT ON
 -- =============================================
@@ -176,6 +177,7 @@ BEGIN
 				END
 	FROM dbo.PR_VolumenMensualProduccionPetroleo VMPGN
     JOIN dbo.CO_Contrato C ON VMPGN.IdContrato = C.IdContrato
+	AND ISNULL(VMPGN.Activo,0) = 1
     JOIN dbo.CO_Contratista CC ON C.IdContratista = CC.IdContratista
     JOIN #Precio P ON VMPGN.IdContrato = P.IdContrato
     JOIN #Volumen V ON VMPGN.IdContrato = V.IdContrato
@@ -183,6 +185,7 @@ BEGIN
 		ON	VMPGN.IdContrato	=	PC.idContrato
 	WHERE VMPGN.IdContrato = @Contrato
     AND VMPGN.MesReporte = @Mes
+	AND ISNULL(VMPGN.Activo,0) = 1
 
 
     /**/
@@ -280,6 +283,7 @@ BEGIN
         ROUND(ISNULL(P.[2], 0), 4) AS RMLCT26_36
     FROM dbo.PR_VolumenMensualProduccionPetroleo VMPGN
         JOIN dbo.CO_Contrato C ON VMPGN.IdContrato = C.IdContrato
+		AND ISNULL(VMPGN.Activo,0) = 1
         JOIN dbo.CO_Contratista CC ON C.IdContratista = CC.IdContratista --PR_VolumenMensualProduccionGasNoAsoc
         JOIN #Precio P ON VMPGN.IdContrato = P.IdContrato
         JOIN #Volumen V ON VMPGN.IdContrato = V.IdContrato
@@ -287,6 +291,7 @@ BEGIN
 			ON	VMPGN.IdContrato	=	PC.idContrato
     WHERE VMPGN.IdContrato = @Contrato
         AND VMPGN.MesReporte = @Mes
+		AND ISNULL(VMPGN.Activo,0) = 1
 END
 ELSE
 BEGIN

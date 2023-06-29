@@ -37,10 +37,12 @@ BEGIN
     FROM CO_Contrato C(NOLOCK)
         LEFT JOIN CO_Contratista CC(NOLOCK) ON C.IdContratista = CC.IdContratista
         LEFT JOIN PR_VolumenMensualProduccionPetroleo VMPP(NOLOCK) ON C.IdContrato = VMPP.IdContrato
+		AND ISNULL(VMPP.Activo,0) = 1
         LEFT JOIN PR_VolumenMensualProduccionGasNoAsoc VMPGNA(NOLOCK) ON C.IdContrato = VMPGNA.IdContrato
                                                                         AND VMPP.MesReporte = @Mes
     WHERE C.IdContrato = @Contrato
         AND VMPP.MesReporte = @Mes
+		AND ISNULL(VMPP.Activo,0) = 1
         OR VMPGNA.MesReporte = @Mes;
     --EXEC SP_LI_SIPAC_ConsideracionesAdministrativas 10011,'2017-03-01'
 END;
