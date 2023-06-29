@@ -3,7 +3,6 @@
 -- Create date: <23-05-2018>
 -- Description:	<Consulta de las instalaciones por contrato>
 -- =============================================
-
 CREATE procedure [dbo].[CO_SP_ConsultaInstalacionesPorContrato]
 	@IdContrato INT
 AS

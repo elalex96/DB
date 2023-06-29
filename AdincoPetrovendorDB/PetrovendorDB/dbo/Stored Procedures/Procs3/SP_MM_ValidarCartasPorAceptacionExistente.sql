@@ -17,7 +17,7 @@ GO
 -- Create date: 12/06/2023
 -- Description:	Validacion de cartas de contenido nacional existentes relacionadas a una aceptacion
 -- =============================================
-CREATE PROCEDURE SP_MM_ValidarCartasPorAceptacionExistente
+CREATE PROCEDURE [dbo].[SP_MM_ValidarCartasPorAceptacionExistente]
 	-- Add the parameters for the stored procedure here
 	@IdAceptacionPedido INT
 AS
@@ -27,7 +27,7 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
-	IF EXISTS (SELECT IdAceptacionCartaPCN FROM MM_AceptacionCartaPCN WHERE IdAceptacionPedido = @IdAceptacionPedido AND Activo = 1)
+	IF EXISTS (SELECT IdAceptacionCartaPCN FROM MM_AceptacionCartaPCN WHERE IdAceptacionPedido = @IdAceptacionPedido AND Activo = 1 AND IdEstatus IN (1,2))
 	BEGIN
 		
 		SELECT 1 EXISTE
@@ -41,4 +41,5 @@ BEGIN
 	END
 
 END
+
 GO
