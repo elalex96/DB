@@ -8,6 +8,7 @@ BEGIN
 -- Create date: 05-06-17
 -- Description:	
 -- =============================================
+-- 20240628	RO	Se modifica para que se filtre la información de la tabla PR_VolumenMensualProduccionPetroleo por el Activo = 1
 SET NOCOUNT ON
 
     SELECT  
@@ -30,13 +31,14 @@ SET NOCOUNT ON
     LEFT JOIN
 	   PR_VolumenMensualProduccionPetroleo VMPP	  (NOLOCK)
 	   ON  C.IdContrato	   =	  VMPP.IdContrato
+	   AND ISNULL(VMPP.Activo,0) = 1
     LEFT JOIN
 	   PR_VolumenMensualProduccionGasNoAsoc VMPGNA	  (NOLOCK)
 	   ON  C.IdContrato	   =	  VMPGNA.IdContrato
     WHERE
 	   C.IdContrato    =   @Contrato
-	   AND
+	   	AND ISNULL(VMPP.Activo,0) = 1
+		AND
 	   (VMPP.MesReporte	   =	  @Mes	OR  VMPGNA.MesReporte   = @Mes)
 
 END
-
