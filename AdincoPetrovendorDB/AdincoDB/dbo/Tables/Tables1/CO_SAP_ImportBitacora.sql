@@ -8,6 +8,7 @@
     [CreadoEl]            DATETIME NOT NULL,
     [CreadoPor]           INT      NOT NULL,
     [NotificacionEnviada] BIT      NULL,
+    AplicacionEjecuto varchar(2000) NULL,
     CONSTRAINT [PK_CO_SAP_ImportBitacora] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_CO_SAP_ImportBitacora_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_CO_SAP_ImportBitacora_S_Notificacion] FOREIGN KEY ([IdNotificacion]) REFERENCES [dbo].[S_Notificacion] ([IdNotificacion])
