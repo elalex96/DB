@@ -2942,5 +2942,6 @@
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_Rpt.sql" />
+    <None Include="dbo\Stored Procedures\Procs2\SP_AP_GuardaBitacoraAccion.sql" />
   </ItemGroup>
 </Project>
