@@ -739,7 +739,7 @@ SELECT
 FROM
 	#CalculosGPA
 
-IF @Idcontrato = 3 OR @Idcontrato = 10036 --or @Idcontrato = 10054
+IF @Idcontrato = 3 OR @Idcontrato = 10036 
 	SELECT @FechaLimite = DATEADD(day,1,getdate())
 
 
@@ -1368,7 +1368,10 @@ BEGIN
 	    VolumenButanoC4EstadoCompensacion,
 	    VolumenCondensadosEstadoCompensacion,
 	    AcumuladoCostosRecuperablesInsolutos,
-		Activo
+		Activo,
+		CreadoEl,
+		CreadoPor
+
 	)
 	SELECT
 	 IdContrato,
@@ -1415,7 +1418,9 @@ BEGIN
 	    VolumenButanoC4EstadoCompensacion,
 	    VolumenCondensadosEstadoCompensacion,
 	    AcumuladoCostosRecuperablesInsolutos,
-		Activo
+		Activo,
+		GETDATE(),
+		@Usuario
 		FROM #TEMP_PR_VolumenMensualProduccionPetroleo;
 	END
 END
