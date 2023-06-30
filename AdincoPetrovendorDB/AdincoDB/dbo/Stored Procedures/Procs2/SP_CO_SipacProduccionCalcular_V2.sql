@@ -739,7 +739,7 @@ SELECT
 FROM
 	#CalculosGPA
 
-IF @Idcontrato = 3 OR @Idcontrato = 10036
+IF @Idcontrato = 3 OR @Idcontrato = 10036 --or @Idcontrato = 10054
 	SELECT @FechaLimite = DATEADD(day,1,getdate())
 
 
@@ -1124,7 +1124,7 @@ BEGIN
 		AND C.EsCondensable = 1
 
 
-IF 0 = (SELECT ISNULL(IsConsorcio,1) FROM CO_CONTRATO WHERE IdContrato = @Idcontrato)
+IF 0 = (SELECT ISNULL(IsConsorcio,1) FROM CO_CONTRATO WHERE IdContrato = @Idcontrato)-- si no es consorcio
 BEGIN
  
  	INSERT INTO #TEMP_PR_VolumenMensualProduccionPetroleo
@@ -1303,7 +1303,9 @@ BEGIN
 	    VMPP.VolumenButanoC4EstadoCompensacion = TVMPP.VolumenButanoC4EstadoCompensacion,
 	    VMPP.VolumenCondensadosEstadoCompensacion = TVMPP.VolumenCondensadosEstadoCompensacion,
 	    VMPP.AcumuladoCostosRecuperablesInsolutos = TVMPP.AcumuladoCostosRecuperablesInsolutos,
-		VMPP.Activo = TVMPP.Activo 
+		VMPP.Activo = TVMPP.Activo ,
+		VMPP.ModificadoPor=@Usuario,
+		VMPP.ModificadoEl = GETDATE()
 	FROM 
 		dbo.PR_VolumenMensualProduccionPetroleo VMPP
 	JOIN
@@ -1319,8 +1321,7 @@ BEGIN
 
 	END
 	ELSE
-	BEGIN
-	-- SE INSERTA LA INFORMACION EN LA TABLA DE PRODUCCION FINAL
+	BEGIN -- SE INSERTA LA INFORMACION EN LA TABLA DE PRODUCCION FINAL
 	INSERT INTO dbo.PR_VolumenMensualProduccionPetroleo
 	(
 	    IdContrato,
