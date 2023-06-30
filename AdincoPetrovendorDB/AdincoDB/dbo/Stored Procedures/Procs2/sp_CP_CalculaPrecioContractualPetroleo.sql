@@ -86,9 +86,11 @@ BEGIN
 	LEFT JOIN
 		dbo.CO_PorcentajesContrato	PC
 		ON	VPP.IdContrato	=	PC.idContrato
+		AND ISNULL(VPP.Activo,0) = 1
     WHERE
         VPP.IdContrato    = @IdContrato
         AND VPP.MesReporte = @Mes
+		AND ISNULL(VPP.Activo,0) = 1
 
 	---- Traer valores a multiplicar, para las formulas 
 	--SELECT 
@@ -131,7 +133,7 @@ BEGIN
     IF @NumError <> 0
     BEGIN
         SELECT
-            @MensajeError
+         @MensajeError
             = 'Error al obtener el Volumen Comercializado'
        + 'En el Stored Procedure: dbo.sp_CP_CalculaPrecioContractualPetroleo '
                 + 'Núm. Error en SQL Server:' + CHAR( 9 ) + LTRIM( STR( @NumError, 10, 0 ))
@@ -245,18 +247,21 @@ BEGIN
                     WHERE
                         IdContrato = @IdContrato
                         AND MesReporte BETWEEN DATEADD( MONTH, -2, @Mes ) AND @Mes
+						AND ISNULL(Activo,0) = 1
 					SELECT
 						@SumValor = SUM( VMP.VolumenPetroleoPuntoMedicion * MCH.Precio )
                     FROM
                         CP_MetodoCalculoHidrocarburoMes     MCH
                     JOIN
                         PR_VolumenMensualProduccionPetroleo VMP
-               ON MCH.IdContrato = VMP.IdContrato
+						ON MCH.IdContrato = VMP.IdContrato
                         AND MCH.Mes        = VMP.MesReporte
+						AND ISNULL(VMP.Activo,0) = 1
                     WHERE
                         MCH.IdContrato            = @IdContrato
                         AND MCH.Mes BETWEEN DATEADD( MONTH, -2, @Mes ) AND DATEADD(MONTH, -1, @Mes )
                         AND MCH.IdTipoHidrocarburo = 1
+						AND ISNULL(VMP.Activo,0) = 1
                 END
                 ELSE
                 BEGIN
@@ -268,6 +273,7 @@ BEGIN
                     WHERE
                         IdContrato = @IdContrato
                         AND MesReporte BETWEEN DATEADD( MONTH, -1, @Mes ) AND @Mes
+						AND ISNULL(Activo,0) = 1
               SELECT
                         @SumValor = (VMP.VolumenPetroleoPuntoMedicion * MCH.Precio)
                     FROM
@@ -276,10 +282,12 @@ BEGIN
                         PR_VolumenMensualProduccionPetroleo VMP
                         ON MCH.IdContrato = VMP.IdContrato
                         AND MCH.Mes        = VMP.MesReporte
+						AND ISNULL(VMP.Activo,0) = 1
                     WHERE
                         MCH.IdContrato            = @IdContrato
                         AND MCH.Mes                = DATEADD( MONTH, -1, @Mes )
                         AND MCH.IdTipoHidrocarburo = 1
+						AND ISNULL(VMP.Activo,0) = 1
                 END
                 -- Guardamos el precio observado para validar la diferencia con el calculado
                 SELECT
@@ -307,7 +315,7 @@ BEGIN
                     IF (@PrecioContractualPetroleo < @PrecioObservadoPetroleo)
                     BEGIN
                         SELECT
-                            @PrecioContractualPetroleo = @PrecioObservadoPetroleo * 0.5,
+    @PrecioContractualPetroleo = @PrecioObservadoPetroleo * 0.5,
   @Metodo                    = '2',
                             @IdMetodoCalculo           = 6
                     END
@@ -388,12 +396,14 @@ BEGIN
 					@PrecioContractualPetroleo	=	FD.Constante + (FD.Constante_LLS * LLS.Precio) + (FD.Constante_Brent * Brent.Precio) + (FD.Constante1_API * ROUND(OC.GradosAPI,1)) -  (FD.Constante2_API * POWER(ROUND(OC.GradosAPI,1),FD.Elevacion_API)) - (FD.Constante_S *
 
 
+
  OC.ContenidoAzufre)
 				FROM
 					PR_VolumenMensualProduccionPetroleo OC
 				JOIN
 					CO_PrecioMarcadorMensual      Brent
 					ON OC.IdContrato         = Brent.IdContrato
+					AND ISNULL(OC.Activo,0) = 1
 					AND OC.MesReporte         = Brent.Mes
 					AND Brent.IdMarcador      = 10002
 				JOIN
@@ -409,6 +419,7 @@ BEGIN
 				WHERE
 					OC.IdContrato          = @IdContrato
 					AND OC.MesReporte       = @Mes
+					AND ISNULL(OC.Activo,0) = 1
 				-------------------------------------------------
 				SELECT
 					@IdMetodoCalculo = 3

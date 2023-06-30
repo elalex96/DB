@@ -12,6 +12,7 @@ AS
 -- 20180801	BAAC	Se modifica para agregar el volumen de Condensable (C5+) en el Condensado
 -- 20180913	BAAC	Se modifica para asignar NA a los precios si no hay volumenes producidos de los hidrocarburos
 -- 20190321	BAAC	Se modifica para que en caso de haber un btu o barril que no se puede repartir, se asigne al que tenga el porcentaje mayor del mismo
+-- 20240628	RO	Se modifica para que se filtre la información de la tabla PR_VolumenMensualProduccionPetroleo por el Activo = 1
 -- ======================================================================
 SET NOCOUNT ON
 -- ======================================================================
@@ -335,7 +336,7 @@ BEGIN
                 END AS RMPCT32_35,
                 CASE
                     WHEN FMP53.CompensacionVolNuevoSaldoAcumuladoEstadoC2 < 0
-                    THEN ROUND(((ROUND(VMPPG.EtanoC2,0) * ((100.00 - FMP53.NuevaDistribucionProvisionalContratistaC2) / 100)) + FMP53.CompensacionVolNuevoSaldoAcumuladoEstadoC2), 0)
+             THEN ROUND(((ROUND(VMPPG.EtanoC2,0) * ((100.00 - FMP53.NuevaDistribucionProvisionalContratistaC2) / 100)) + FMP53.CompensacionVolNuevoSaldoAcumuladoEstadoC2), 0)
                     ELSE ROUND(((ROUND(VMPPG.EtanoC2,0) * ((100.00 - FMP53.NuevaDistribucionProvisionalContratistaC2) / 100))), 0)
                 END AS RMPCT32_36,
                 CASE
@@ -428,6 +429,7 @@ BEGIN
          FROM PR_VolumenMensualProduccionPetroleo VMPPG
         LEFT JOIN CO_Contrato C 
 			ON VMPPG.IdContrato = C.IdContrato
+			AND ISNULL(VMPPG.Activo,0) = 1
         LEFT JOIN CO_Contratista Ca 
 			ON C.IdContratista = Ca.IdContratista
         LEFT JOIN #Precio P 
@@ -442,6 +444,7 @@ BEGIN
             AND DATEADD(month, 1, DATEFROMPARTS(FMP53.anioreporte, FMP53.mesreporte, 1)) = @Mes
         WHERE VMPPG.IdContrato = @Contrato
                AND VMPPG.MesReporte = @Mes
+			   AND ISNULL(VMPPG.Activo,0) = 1
 
 		-- SE VALIDA SI AL SUMAR LOS VALORES DE REPARTICION DEL PETROLEO, EXISTE DIFERENCIA CONTRA LA PRODUCCION
 		IF 0 <> (SELECT	VolPetroPtoMed_RMPCT32_02 - (VolPetroContratistaReparticion_RMPCT32_28 + 
@@ -872,6 +875,7 @@ BEGIN
          FROM PR_VolumenMensualProduccionPetroleo VMPPG
         LEFT JOIN CO_Contrato C 
 			ON VMPPG.IdContrato = C.IdContrato
+			AND ISNULL(VMPPG.Activo,0) = 1
         LEFT JOIN CO_Contratista Ca 
 			ON C.IdContratista = Ca.IdContratista
         LEFT JOIN #Precio P 
@@ -886,6 +890,7 @@ BEGIN
             AND DATEADD(month, 1, DATEFROMPARTS(FMP53.anioreporte, FMP53.mesreporte, 1)) = @Mes
         WHERE VMPPG.IdContrato = @Contrato
                AND VMPPG.MesReporte = @Mes
+			   AND ISNULL(VMPPG.Activo,0) = 1
 
 		-- SE VALIDA SI AL SUMAR LOS VALORES DE REPARTICION DEL PETROLEO, EXISTE DIFERENCIA CONTRA LA PRODUCCION
 		IF 0 <> (SELECT	VolPetroPtoMed_RMPCT32_02 - (VolPetroContratistaReparticion_RMPCT32_28 + 
@@ -1301,7 +1306,7 @@ IF 0 <(SELECT COUNT(1)
                     THEN CONVERT(INT, FMP53.CompensacionVolNuevoSaldoAcumuladoEstadoC2)
                     ELSE 0
                 END AS RMPCT32_48,
-                CASE
+            CASE
                     WHEN FMP53.CompensacionVolNuevoSaldoAcumuladoEstadoC3 > 0
                     THEN CONVERT(INT, FMP53.CompensacionVolNuevoSaldoAcumuladoEstadoC3)
                     ELSE 0
@@ -1326,6 +1331,7 @@ IF 0 <(SELECT COUNT(1)
          FROM PR_VolumenMensualProduccionPetroleo VMPPG
         LEFT JOIN CO_Contrato C 
 			ON VMPPG.IdContrato = C.IdContrato
+			AND ISNULL(VMPPG.Activo,0) = 1
         LEFT JOIN CO_Contratista Ca 
 			ON C.IdContratista = Ca.IdContratista
         LEFT JOIN #Precio P 
@@ -1340,6 +1346,7 @@ IF 0 <(SELECT COUNT(1)
             AND DATEADD(month, 1, DATEFROMPARTS(FMP53.anioreporte, FMP53.mesreporte, 1)) = @Mes
         WHERE VMPPG.IdContrato = @Contrato
                AND VMPPG.MesReporte = @Mes
+			   AND ISNULL(VMPPG.Activo,0) = 1
 
 		-- SE VALIDA SI AL SUMAR LOS VALORES DE REPARTICION DEL PETROLEO, EXISTE DIFERENCIA CONTRA LA PRODUCCION
 		IF 0 <> (SELECT	VolPetroPtoMed_RMPCT32_02 - (VolPetroContratistaReparticion_RMPCT32_28 + 
