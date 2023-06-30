@@ -42,7 +42,6 @@ BEGIN
                                                                         AND VMPP.MesReporte = @Mes
     WHERE C.IdContrato = @Contrato
         AND VMPP.MesReporte = @Mes
-		AND ISNULL(VMPP.Activo,0) = 1
         OR VMPGNA.MesReporte = @Mes;
     --EXEC SP_LI_SIPAC_ConsideracionesAdministrativas 10011,'2017-03-01'
 END;
