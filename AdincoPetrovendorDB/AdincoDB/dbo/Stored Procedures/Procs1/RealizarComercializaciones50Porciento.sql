@@ -115,6 +115,7 @@ BEGIN
             FROM PR_VolumenMensualProduccionPetroleo
             WHERE IdContrato = @Idcontrato
                   AND MesReporte = @MesReporte
+				  AND Activo = 1
 
 
 
@@ -122,7 +123,7 @@ BEGIN
             (
                 Descripcion,
                 Petroleo,
-                Metano,
+    Metano,
                 Etano,
                 Propano,
                 Butano,
@@ -226,7 +227,7 @@ BEGIN
                 Petroleo,
                 Metano,
                 Etano,
-                Propano,
+  Propano,
                 Butano,
                 Condensado
             )
@@ -482,6 +483,3 @@ BEGIN
           AND MesReporte = @MesReporte
           AND #VendidoPorHidrocarburo.Actualizar = 1
 END
-
-
-
