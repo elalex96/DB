@@ -28,7 +28,7 @@ AS
 		-- SET NOCOUNT ON added to prevent extra result sets from
 		-- interfering with SELECT statements.
 		SET NOCOUNT ON ;
-		SELECT Clave,Titulo,RutaLogo
+		SELECT Clave,Titulo,RutaLogo,ColorHeaderTabla, ColorHeaderTexto
 		FROM APP_ConfiguracionHeaderExcel (NOLOCK)
 		WHERE Clave = @Clave
 
