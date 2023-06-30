@@ -37,7 +37,6 @@ SET NOCOUNT ON
 	   ON  C.IdContrato	   =	  VMPGNA.IdContrato
     WHERE
 	   C.IdContrato    =   @Contrato
-	   	AND ISNULL(VMPP.Activo,0) = 1
 		AND
 	   (VMPP.MesReporte	   =	  @Mes	OR  VMPGNA.MesReporte   = @Mes)
 
