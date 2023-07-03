@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.PC_Generar_VolMensualProduccion_RM53
+﻿CREATE PROCEDURE [dbo].[PC_Generar_VolMensualProduccion_RM53]
 	@IdContrato INT,
     @MesReporte DATE,
 	@Usuario	INT,
@@ -901,8 +901,8 @@ BEGIN
 		#Totales	T
 END
 
-IF @MesReporte IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01')
-	SELECT @FechaLimite = '2022-12-31'
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()
@@ -1363,7 +1363,8 @@ BEGIN
 		    VolumenCondensadosEstadoCompensacion,
 		    AcumuladoCostosRecuperablesInsolutos,
 			VolumenCondensablePuntoMedicion,
-			VolumenCondensableAutoconsumo
+			VolumenCondensableAutoconsumo,
+			Activo
 		)
 		SELECT
 			IdContrato,
@@ -1413,7 +1414,8 @@ BEGIN
 			SUM(ISNULL(VolumenCondensadosEstadoCompensacion,0))		AS [VolumenCondensadosEstadoCompensacion],
 			SUM(ISNULL(AcumuladoCostosRecuperablesInsolutos,0))		AS [AcumuladoCostosRecuperablesInsolutos],
 			SUM(ISNULL(VolumenCondensablePuntoMedicion,0))			AS [VolumenCondensablePuntoMedicion],
-			SUM(ISNULL(VolumenCondensableAutoconsumo,0))			AS [VolumenCondensableAutoconsumo]
+			SUM(ISNULL(VolumenCondensableAutoconsumo,0))			AS [VolumenCondensableAutoconsumo],
+			1
 		FROM
 			 #PC_VolumenProduccionPeriodo
 		GROUP BY
