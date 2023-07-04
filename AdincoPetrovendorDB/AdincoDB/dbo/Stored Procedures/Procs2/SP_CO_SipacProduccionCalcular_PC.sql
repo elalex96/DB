@@ -35,7 +35,7 @@ CREATE TABLE #DiasHabiles
 CREATE TABLE #CalculosGPA
 (
 	IdContrato		INT,
-	MesReporte		DATE,
+	MesReporte		DATE,	
 	PuntoEntregaID	INT,
 	C1				FLOAT,
     C2				FLOAT,
@@ -52,6 +52,7 @@ CREATE TABLE #CalculosGPA
 	CO2				FLOAT,
 	H2S				FLOAT,
 	N2				FLOAT,
+	VolumenPetroleoPuntoMedicion FLOAT,
 	Grados_API		FLOAT,
 	Azufre			FLOAT,
 	ImporteGas		FLOAT,
@@ -257,6 +258,53 @@ CREATE TABLE #CalculosGPA
 	PrecioVTA_Condensado	FLOAT
 )
 
+CREATE TABLE #Temp_PR_VolumenMensualProduccionPetroleo
+(
+	IdContrato INT,
+	MesReporte DATE,
+	VolumenPetroleoPuntoMedicion FLOAT,
+	GradosAPI FLOAT,
+	ContenidoAzufre FLOAT,
+	VolumenPetroleoAutoconsumo FLOAT,
+	MetanoC1 FLOAT,
+	EtanoC2 FLOAT,
+	PropanoC3 FLOAT,
+	ButanoC4 FLOAT,
+	MetanoC1Autoconsumo FLOAT,
+	EtanoC2Autoconsumo FLOAT,
+	PropanoC3Autoconsumo FLOAT,
+	ButanoC4Autoconsumo FLOAT,
+	VolumenCondensadoPuntoMedicion FLOAT,
+	VolumenCondensadoAutoconsumo FLOAT,
+	Bit_CasoFortuito BIT,
+	CantDiasCasoFortuito INT,
+	OtrosIngresosUsoCompartidoInfraestructura DECIMAL(16,4),
+	VolumenPetroleoContratistaReparticion FLOAT,
+	VolumenMetanoC1ContratistaReparticion FLOAT,
+	VolumenEtanoC2ContratistaReparticion FLOAT,
+	VolumenPropanoC3ContratistaReparticion FLOAT,
+	VolumenButanoC4ContratistaReparticion FLOAT,
+	VolumenCondensadosContratistaReparticion FLOAT,
+	VolumenPetroleoEstadoReparticion FLOAT,
+	VolumenMetanoC1EstadoReparticion FLOAT,
+	VolumenEtanoC2EstadoReparticion FLOAT,
+	VolumenPropanoC3EstadoReparticion FLOAT,
+	VolumenButanoC4EstadoReparticion FLOAT,
+	VolumenCondensadosEstadoReparticion FLOAT,
+	VolumenPetroleoContratistaCompensacion FLOAT,
+	VolumenMetanoC1ContratistaCompensacion FLOAT,
+	VolumenEtanoC2ContratistaCompensacion FLOAT,
+	VolumenPropanoC3ContratistaCompensacion FLOAT,
+	VolumenButanoC4ContratistaCompensacion FLOAT,
+	VolumenCondensadosContratistaCompensacion FLOAT,
+	VolumenPetroleoEstadoCompensacion FLOAT,
+	VolumenMetanoC1EstadoCompensacion FLOAT,
+	VolumenEtanoC2EstadoCompensacion FLOAT,
+	VolumenPropanoC3EstadoCompensacion FLOAT,
+	VolumenButanoC4EstadoCompensacion FLOAT,
+	VolumenCondensadosEstadoCompensacion FLOAT,
+	AcumuladoCostosRecuperablesInsolutos MONEY
+)
 CREATE TABLE #TipoHidrocarburo
 (
 	IdTipoHidrocarburo	INT,
@@ -1473,13 +1521,154 @@ BEGIN
 		--AND C.PuntoEntregaID = @idPuntoEntrega
 		AND C.IdTipoHidrocarburo = 10001
 		AND C.EsCondensable = 1
+	
 
+	INSERT INTO #Temp_PR_VolumenMensualProduccionPetroleo
+	(
+	    IdContrato,
+	    MesReporte,
+	    VolumenPetroleoPuntoMedicion,
+	    GradosAPI,
+	    ContenidoAzufre,
+	    VolumenPetroleoAutoconsumo,
+	    MetanoC1,
+	    EtanoC2,
+	    PropanoC3,
+	    ButanoC4,
+	    MetanoC1Autoconsumo,
+	    EtanoC2Autoconsumo,
+	    PropanoC3Autoconsumo,
+	    ButanoC4Autoconsumo,
+	    VolumenCondensadoPuntoMedicion,
+	    VolumenCondensadoAutoconsumo,
+		Bit_CasoFortuito,
+	    CantDiasCasoFortuito,
+	    OtrosIngresosUsoCompartidoInfraestructura,
+	    VolumenPetroleoContratistaReparticion,
+	    VolumenMetanoC1ContratistaReparticion,
+	    VolumenEtanoC2ContratistaReparticion,
+	    VolumenPropanoC3ContratistaReparticion,
+	    VolumenButanoC4ContratistaReparticion,
+	    VolumenCondensadosContratistaReparticion,
+	    VolumenPetroleoEstadoReparticion,
+	    VolumenMetanoC1EstadoReparticion,
+	    VolumenEtanoC2EstadoReparticion,
+	    VolumenPropanoC3EstadoReparticion,
+	    VolumenButanoC4EstadoReparticion,
+	    VolumenCondensadosEstadoReparticion,
+	    VolumenPetroleoContratistaCompensacion,
+	    VolumenMetanoC1ContratistaCompensacion,
+	    VolumenEtanoC2ContratistaCompensacion,
+	    VolumenPropanoC3ContratistaCompensacion,
+	    VolumenButanoC4ContratistaCompensacion,
+	    VolumenCondensadosContratistaCompensacion,
+	    VolumenPetroleoEstadoCompensacion,
+	    VolumenMetanoC1EstadoCompensacion,
+	    VolumenEtanoC2EstadoCompensacion,
+	    VolumenPropanoC3EstadoCompensacion,
+	    VolumenButanoC4EstadoCompensacion,
+	    VolumenCondensadosEstadoCompensacion,
+	    AcumuladoCostosRecuperablesInsolutos
+	)
+	SELECT
+		C.IdContrato,
+		PTE.IdFecha,
+		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10000	THEN PTE.VolumenProducido	ELSE 0	END)	AS	VolumenPetroleoPuntoMedicion,
+		@PromAPI,
+		@PromAzufre,
+		0,--	VolumenPetroleoAutoconsumo,
+		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10002	THEN PTE.VolumenProducido	ELSE 0 END)	AS	MetanoC1,
+		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10003	THEN PTE.VolumenProducido	ELSE 0 END)	AS	EtanoC2,
+		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10004	THEN PTE.VolumenProducido	ELSE 0 END)	AS	PropanoC3,
+		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10005	THEN PTE.VolumenProducido	ELSE 0 END)	AS	ButanoC4,
+		C.BN_MMBTU_C1,--		MetanoC1Autoconsumo,
+		C.BN_MMBTU_C2,--	    EtanoC2Autoconsumo,
+		C.BN_MMBTU_C3,--	    PropanoC3Autoconsumo,
+		C.BN_MMBTU_IC4 + C.BN_MMBTU_NC4,--	    ButanoC4Autoconsumo,
+		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10001	THEN PTE.VolumenProducido	ELSE 0 END)	AS	VolumenCondensadoPuntoMedicion,
+		C.BN_Bll_C5_Equiv,--		VolumenCondensadoAutoconsumo,
+		0,	-- Bit_CasoFortuito
+		0,	-- CantDiasCasoFortuito
+		0,	-- OtrosIngresosUsoCompartidoInfraestructura
+	    0,--VolumenPetroleoContratistaReparticion,
+	    0,--VolumenMetanoC1ContratistaReparticion,
+	    0,--VolumenEtanoC2ContratistaReparticion,
+	    0,--VolumenPropanoC3ContratistaReparticion,
+	    0,--VolumenButanoC4ContratistaReparticion,
+	    0,--VolumenCondensadosContratistaReparticion,
+	    0,--VolumenPetroleoEstadoReparticion,
+	    0,--VolumenMetanoC1EstadoReparticion,
+	    0,--VolumenEtanoC2EstadoReparticion,
+	    0,--VolumenPropanoC3EstadoReparticion,
+	    0,--VolumenButanoC4EstadoReparticion,
+	    0,--VolumenCondensadosEstadoReparticion,
+	    0,--VolumenPetroleoContratistaCompensacion,
+	    0,--VolumenMetanoC1ContratistaCompensacion,
+	    0,--VolumenEtanoC2ContratistaCompensacion,
+	    0,--VolumenPropanoC3ContratistaCompensacion,
+	    0,--VolumenButanoC4ContratistaCompensacion,
+	    0,--VolumenCondensadosContratistaCompensacion,
+	    0,--VolumenPetroleoEstadoCompensacion,
+	    0,--VolumenMetanoC1EstadoCompensacion,
+	    0,--VolumenEtanoC2EstadoCompensacion,
+	    0,--VolumenPropanoC3EstadoCompensacion,
+	    0,--VolumenButanoC4EstadoCompensacion,
+	    0,--VolumenCondensadosEstadoCompensacion,
+	    0 --AcumuladoCostosRecuperablesInsolut
 
-	-- SE BORRA EL VOLUMEN ANTERIORMENTE GENERADO
-	DELETE	dbo.PR_VolumenMensualProduccionPetroleo
-	WHERE	IdContrato	=	@Idcontrato
-		AND MesReporte	=	@fechaMesDiaAnio
+	FROM
+		#CalculosGPA	C
+	JOIN
+		PR_ProduccionMensualPtoEntrega	PTE (NOLOCK)
+		ON	C.IdContrato	=	PTE.IdContrato
+		AND	C.MesReporte	=	PTE.IdFecha
+	--WHERE
+	--	PTE.IdContrato		=	@Idcontrato
+	--	AND PTE.IdFecha		=	@fechaMesDiaAnio
+	GROUP BY
+		C.IdContrato,
+		PTE.IdFecha,
+		C.BN_MMBTU_C1,--		MetanoC1Autoconsumo,
+		C.BN_MMBTU_C2,--	    EtanoC2Autoconsumo,
+		C.BN_MMBTU_C3,--	    PropanoC3Autoconsumo,
+		C.BN_MMBTU_IC4 + C.BN_MMBTU_NC4,
+		C.BN_Bll_C5_Equiv
+	
 
+	IF EXISTS(SELECT 1 FROM dbo.PR_VolumenMensualProduccionPetroleo
+					WHERE	IdContrato	=	@Idcontrato
+						AND MesReporte	=	@fechaMesDiaAnio
+						AND Activo = 1)
+	BEGIN
+		UPDATE PR_VolumenMensualProduccionPetroleo
+		SET 
+		VolumenPetroleoPuntoMedicion = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenPetroleoPuntoMedicion,
+	    GradosAPI = #Temp_PR_VolumenMensualProduccionPetroleo.GradosAPI,
+	    ContenidoAzufre = #Temp_PR_VolumenMensualProduccionPetroleo.ContenidoAzufre,
+	    VolumenPetroleoAutoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenPetroleoAutoconsumo,
+	    MetanoC1 = #Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1,
+	    EtanoC2 = #Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2,
+	    PropanoC3 = #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3,
+	    ButanoC4 = #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4,
+	    MetanoC1Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1Autoconsumo,
+	    EtanoC2Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2Autoconsumo,
+	    PropanoC3Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3Autoconsumo,
+	    ButanoC4Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4Autoconsumo,
+	    VolumenCondensadoPuntoMedicion = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoPuntoMedicion,
+	    VolumenCondensadoAutoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoAutoconsumo,
+		ModificadoEl = GETDATE(),
+		ModificadoPor = @Usuario
+		FROM PR_VolumenMensualProduccionPetroleo
+		INNER JOIN #Temp_PR_VolumenMensualProduccionPetroleo
+			ON PR_VolumenMensualProduccionPetroleo.IdContrato = #Temp_PR_VolumenMensualProduccionPetroleo.IdContrato
+			AND PR_VolumenMensualProduccionPetroleo.MesReporte = #Temp_PR_VolumenMensualProduccionPetroleo.MesReporte
+			AND PR_VolumenMensualProduccionPetroleo.Activo = 1
+		WHERE PR_VolumenMensualProduccionPetroleo.IdContrato = @IdContrato
+			AND PR_VolumenMensualProduccionPetroleo.MesReporte = @fechaMesDiaAnio
+			AND PR_VolumenMensualProduccionPetroleo.Activo = 1 
+	END
+	ELSE
+	BEGIN
 	-- SE INSERTA LA INFORMACION EN LA TABLA DE PRODUCCION FINAL
 	INSERT INTO dbo.PR_VolumenMensualProduccionPetroleo
 	(
@@ -1530,22 +1719,22 @@ BEGIN
 		Activo
 	)
 	SELECT
-		C.IdContrato,
-		PTE.IdFecha,
-		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10000	THEN PTE.VolumenProducido	ELSE 0	END)	AS	VolumenPetroleoPuntoMedicion,
-		@PromAPI,
-		@PromAzufre,
+		#Temp_PR_VolumenMensualProduccionPetroleo.IdContrato,
+		#Temp_PR_VolumenMensualProduccionPetroleo.MesReporte,
+		#Temp_PR_VolumenMensualProduccionPetroleo.VolumenPetroleoPuntoMedicion,
+		#Temp_PR_VolumenMensualProduccionPetroleo.GradosAPI,
+		#Temp_PR_VolumenMensualProduccionPetroleo.ContenidoAzufre,
 		0,--	VolumenPetroleoAutoconsumo,
-		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10002	THEN PTE.VolumenProducido	ELSE 0 END)	AS	MetanoC1,
-		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10003	THEN PTE.VolumenProducido	ELSE 0 END)	AS	EtanoC2,
-		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10004	THEN PTE.VolumenProducido	ELSE 0 END)	AS	PropanoC3,
-		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10005	THEN PTE.VolumenProducido	ELSE 0 END)	AS	ButanoC4,
-		C.BN_MMBTU_C1,--		MetanoC1Autoconsumo,
-		C.BN_MMBTU_C2,--	    EtanoC2Autoconsumo,
-		C.BN_MMBTU_C3,--	    PropanoC3Autoconsumo,
-		C.BN_MMBTU_IC4 + C.BN_MMBTU_NC4,--	    ButanoC4Autoconsumo,
-		SUM(CASE PTE.IdTipoHidrocarburo WHEN 10001	THEN PTE.VolumenProducido	ELSE 0 END)	AS	VolumenCondensadoPuntoMedicion,
-		C.BN_Bll_C5_Equiv,--		VolumenCondensadoAutoconsumo,
+		#Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1,
+		#Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoPuntoMedicion,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoAutoconsumo,
 		0,	-- Bit_CasoFortuito
 		0,	-- CantDiasCasoFortuito
 		0,	-- OtrosIngresosUsoCompartidoInfraestructura
@@ -1564,7 +1753,7 @@ BEGIN
 	    0,--VolumenPetroleoContratistaCompensacion,
 	    0,--VolumenMetanoC1ContratistaCompensacion,
 	    0,--VolumenEtanoC2ContratistaCompensacion,
-	   0,--VolumenPropanoC3ContratistaCompensacion,
+	    0,--VolumenPropanoC3ContratistaCompensacion,
 	    0,--VolumenButanoC4ContratistaCompensacion,
 	    0,--VolumenCondensadosContratistaCompensacion,
 	    0,--VolumenPetroleoEstadoCompensacion,
@@ -1576,24 +1765,10 @@ BEGIN
 	    0,--AcumuladoCostosRecuperablesInsolut
 		1
 	FROM
-		#CalculosGPA	C
-	JOIN
-		PR_ProduccionMensualPtoEntrega	PTE (NOLOCK)
-		ON	C.IdContrato	=	PTE.IdContrato
-		AND	C.MesReporte	=	PTE.IdFecha
-	--WHERE
-	--	PTE.IdContrato		=	@Idcontrato
-	--	AND PTE.IdFecha		=	@fechaMesDiaAnio
-	GROUP BY
-		C.IdContrato,
-		PTE.IdFecha,
-		C.BN_MMBTU_C1,--		MetanoC1Autoconsumo,
-		C.BN_MMBTU_C2,--	    EtanoC2Autoconsumo,
-		C.BN_MMBTU_C3,--	    PropanoC3Autoconsumo,
-		C.BN_MMBTU_IC4 + C.BN_MMBTU_NC4,
-		C.BN_Bll_C5_Equiv
+		#Temp_PR_VolumenMensualProduccionPetroleo 
 
-	
+
+	END
 --****************************************************************************************************
 END
 --************************************************************************************************
