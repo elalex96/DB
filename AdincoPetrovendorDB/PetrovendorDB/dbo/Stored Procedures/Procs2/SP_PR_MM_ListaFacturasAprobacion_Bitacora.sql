@@ -1,7 +1,28 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ListaFacturasAprobacion_Bitacora'
+)
+    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion_Bitacora;   
+	
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion_Bitacora]    Script Date: 26/06/2023 05:25:36 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-02-2023
 -- Description:	Se muestra UUID Y FOLIO FACTURA CONSULTAS MURPHY
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 26-06-2023
+-- Description:	Se agrega columnas uuid, folio factura y fecha de timbrado
 -- =============================================
 CREATE   PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion_Bitacora]
 	@IdProveedor int,
@@ -29,7 +50,10 @@ BEGIN
 	RFC NVARCHAR(100) null,
 	IdSolicitudPedido NVARCHAR(100) NULL,
 	span NVARCHAR(100) NULL,
-	Contrato varchar(50)
+	Contrato varchar(50),
+	FolioFactura		nvarchar(200)	NULL,
+	UUID				nvarchar(100)	NULL,
+	FechaTimbrado		datetime		NULL
 	);
 
 	DECLARE @FlujoSerial TABLE
@@ -114,7 +138,10 @@ BEGIN
 		RFC,
 		IdSolicitudPedido,
 		span,
-		Contrato)
+		Contrato,
+		UUID,
+		FolioFactura,
+		FechaTimbrado)
 		SELECT 
 		AF.IdAceptacionPedido,
 		CONCAT('PO Number:', AP.IdPedido COLLATE Modern_Spanish_CI_AS,' ','- SES Number: ', SES.SESNumber COLLATE Modern_Spanish_CI_AS ,' - Proforma Number:', CAST(PSES.IdPRESES AS NVARCHAR(100)) COLLATE Modern_Spanish_CI_AS),
@@ -129,7 +156,7 @@ BEGIN
 			ELSE F.SubTotal
 		END AS TotalPedido,
 		APD.IdMoneda,
-		CONCAT('RFC: ',SV.TaxID, ' - Folio: ',ISNULL(F.Folio,'-'), ' - UUID: ', ISNULL(F.UUID,'-')) AS RFC,
+		SV.TaxID AS RFC,
 		CONCAT('Reference Num:', AP.ReferenceNumber),
 		CASE
 			WHEN E.IdEstatus = 2 THEN 'label label-success'
@@ -137,7 +164,10 @@ BEGIN
 			WHEN E.IdEstatus = 3 THEN 'label label-danger'
 			WHEN E.IdEstatus IS NULL THEN 'label label-default'
 		END,
-		Contrato = c.NumeroContrato
+		Contrato = c.NumeroContrato,
+		F.UUID,
+		CONCAT(ISNULL(F.Serie,''),(CASE WHEN LEN(RTRIM(LTRIM(ISNULL(F.Serie,''))))>0 AND LEN(RTRIM(LTRIM(ISNULL(F.Folio,'')))) >0 THEN '-' END), ISNULL(F.Folio,'')) AS FolioFactura,
+		F.FechaTimbrado
 		FROM MPY_MM_AceptacionFactura AS AF  (NOLOCK)
 		JOIN MPY_MM_AceptacionFactura_Bitacora afb   (NOLOCK)
 			on af.IdAceptacionFactura = afb.IdAceptacionFactura 
@@ -189,7 +219,6 @@ BEGIN
 			F.SubTotal,
 			F.IdMoneda,
 			F.FechaTimbrado,
-			F.FechaTimbrado,
 			F.Folio,
 			F.Serie,
 			F.UUID,
@@ -213,7 +242,9 @@ BEGIN
 		RFC,
 		IdSolicitudPedido,
 		span,
-		Contrato
+		Contrato,
+		UUID,
+		FolioFactura,
+		FechaTimbrado
 	 FROM #AceptacionesPedido ORDER BY FechaRegistro DESC;
 END
-
