@@ -3894,5 +3894,9 @@
     <Build Include="dbo\Tables\Tables2\ENT_BitacoraEliminacionProgramacionDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_ENT_GuardarHistorialEliminacionProgramacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AP_ObtenerHTMLBanner.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_APP_ConsultarConfiguracionHeaderExcel.sql" />
+    <Build Include="dbo\Tables\Tables1\APP_ConfiguracionHeaderExcel.sql" />
+    <Build Include="dbo\Tables\Tables2\Mobile_TipoAprobaciones.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\Mobile_sp_TipoAprobacionesPorUsuario.sql" />
   </ItemGroup>
 </Project>

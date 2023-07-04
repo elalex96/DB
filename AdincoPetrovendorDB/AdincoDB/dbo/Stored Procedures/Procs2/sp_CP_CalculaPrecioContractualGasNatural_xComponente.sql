@@ -83,9 +83,11 @@ FROM
 LEFT JOIN
 		dbo.CO_PorcentajesContrato	PC
 		ON	VPP.IdContrato	=	PC.idContrato
+		AND ISNULL(VPP.Activo,0) = 1
 WHERE
     VPP.IdContrato    = @IdContrato
     AND VPP.MesReporte = @Mes
+	AND ISNULL(VPP.Activo,0) = 1
 
 -- Verificamos que no haya ocurrido ningun Error
 SELECT   @NumError = @@ERROR
@@ -199,6 +201,7 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenGasesEntregado >= 5
                     WHERE
                         IdContrato = @IdContrato
                         AND MesReporte BETWEEN DATEADD( MONTH, -2, @Mes ) AND @Mes
+						AND ISNULL(Activo,0) = 1
 
 					SELECT
 						@SumValor = SUM( CASE  WHEN @IdTipoHidrocarburo = 10002 THEN ROUND(VMP.MetanoC1,0)
@@ -211,10 +214,12 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenGasesEntregado >= 5
 						PR_VolumenMensualProduccionPetroleo AS VMP
 						ON MCH.IdContrato = VMP.IdContrato
 						AND MCH.Mes        = VMP.MesReporte
+						AND ISNULL(VMP.Activo,0) = 1
 					WHERE
 						MCH.IdContrato            = @IdContrato
 						AND	MCH.Mes BETWEEN DATEADD( MONTH, -2, @Mes ) AND DATEADD( MONTH, -1, @Mes )
 						AND MCH.IdTipoHidrocarburo = @TipoHidrocarburo
+						AND ISNULL(VMP.Activo,0) = 1
                 END
                 ELSE
                 BEGIN
@@ -229,7 +234,7 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenGasesEntregado >= 5
                     WHERE
                         IdContrato = @IdContrato
                         AND MesReporte BETWEEN DATEADD( MONTH, -1, @Mes ) AND @Mes
-
+						AND ISNULL(Activo,0) = 1
 					SELECT
 						@SumValor = SUM( CASE  WHEN @IdTipoHidrocarburo = 10002 THEN ROUND(VMP.MetanoC1,0)
 											WHEN @IdTipoHidrocarburo = 10003 THEN ROUND(VMP.EtanoC2,0)
@@ -241,10 +246,12 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenGasesEntregado >= 5
                         PR_VolumenMensualProduccionPetroleo AS VMP
                         ON MCH.IdContrato = VMP.IdContrato
                         AND MCH.Mes        = VMP.MesReporte
+						AND ISNULL(VMP.Activo,0) = 1
                     WHERE
                         MCH.IdContrato            = @IdContrato
                         AND MCH.Mes                = DATEADD( MONTH, -1, @Mes )
                         AND MCH.IdTipoHidrocarburo = @TipoHidrocarburo
+						AND ISNULL(VMP.Activo,0) = 1
                 END
 
                 -- Guardamos el precio observado para validar la diferencia con el calculado
@@ -256,7 +263,7 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenGasesEntregado >= 5
                 -- VALIDAR DIFERENCIA ENTRE EL PRECIO ESTIMADO POR LA FORMULA Y EL PRECIO OBSERVADO, SI LA DIFERENCIA ES MAYOR AL 50% DEL PRECIO OBSERVADO
                 IF	(	SELECT ABS( @PrecioContractualGases - @PrecioObservadoGases ) ) > 0.5 * @PrecioObservadoGases
                 BEGIN
-                    -- SI EL PRECIO ESTIMADO ES MAYOR AL OBSERVADO
+ -- SI EL PRECIO ESTIMADO ES MAYOR AL OBSERVADO
                     IF @PrecioContractualGases > @PrecioObservadoGases
                     BEGIN
                         SELECT
@@ -339,7 +346,7 @@ ELSE
      --               tipohidrocarburo,
      --               VolumenComercializado
      --           )
-     --           SELECT
+ --           SELECT
      --               TH.TipoHidrocarburo,
      --               SUM( ROUND( VolumenVendido, 0 ))
 					----SUM( VolumenVendido)

@@ -113,16 +113,23 @@ BEGIN
                    ButanoC4,
                    VolumenCondensadoPuntoMedicion
             FROM PR_VolumenMensualProduccionPetroleo
-            WHERE IdContrato = @Idcontrato
+            WHERE IdContrato =  @Idcontrato
                   AND MesReporte = @MesReporte
+				  AND Activo = 1
 
+			IF((SELECT COUNT(1)FROM #Comercializacion)=0)
+			BEGIN
 
+			SELECT @ErrorMessage
+                    = 'Primero se necesita registrar los volumenes mensuales de producción';
+					GOTO FIN;
+			END
 
             INSERT INTO #Comercializacion
             (
                 Descripcion,
                 Petroleo,
-                Metano,
+    Metano,
                 Etano,
                 Propano,
                 Butano,
@@ -226,7 +233,7 @@ BEGIN
                 Petroleo,
                 Metano,
                 Etano,
-                Propano,
+  Propano,
                 Butano,
                 Condensado
             )
@@ -439,7 +446,7 @@ BEGIN
         END CATCH;
     END
 
-
+	FIN:
     SELECT @ErrorMessage ERROR
     SELECT *
     FROM #Comercializacion
@@ -482,6 +489,3 @@ BEGIN
           AND MesReporte = @MesReporte
           AND #VendidoPorHidrocarburo.Actualizar = 1
 END
-
-
-

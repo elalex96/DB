@@ -37,6 +37,7 @@ BEGIN
     FROM CO_Contrato C(NOLOCK)
         LEFT JOIN CO_Contratista CC(NOLOCK) ON C.IdContratista = CC.IdContratista
         LEFT JOIN PR_VolumenMensualProduccionPetroleo VMPP(NOLOCK) ON C.IdContrato = VMPP.IdContrato
+		AND ISNULL(VMPP.Activo,0) = 1
         LEFT JOIN PR_VolumenMensualProduccionGasNoAsoc VMPGNA(NOLOCK) ON C.IdContrato = VMPGNA.IdContrato
                                                                         AND VMPP.MesReporte = @Mes
     WHERE C.IdContrato = @Contrato

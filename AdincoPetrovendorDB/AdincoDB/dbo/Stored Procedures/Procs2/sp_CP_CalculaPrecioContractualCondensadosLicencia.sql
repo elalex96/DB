@@ -87,9 +87,11 @@ FROM
 LEFT JOIN
 		dbo.CO_PorcentajesContrato	PC
 		ON	VPP.IdContrato	=	PC.idContrato
+		AND ISNULL(VPP.Activo,0) = 1
 WHERE
     VPP.IdContrato    = @IdContrato
     AND VPP.MesReporte = @Mes
+	AND ISNULL(VPP.Activo,0) = 1
 
 SELECT
     @Metodo          = 'A',
@@ -226,7 +228,7 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenCondensadoEntregado
                             WHERE
                                 IdContrato = @IdContrato
                                 AND MesReporte BETWEEN DATEADD( MONTH, -2, @Mes ) AND @Mes
-
+								AND ISNULL(Activo,0) = 1
                             SELECT
                                 @SumValor = SUM( VMP.VolumenCondensadoPuntoMedicion * MCH.Precio )
                             FROM
@@ -235,10 +237,12 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenCondensadoEntregado
                                 PR_VolumenMensualProduccionPetroleo AS VMP
 								ON MCH.IdContrato = VMP.IdContrato
 								AND MCH.Mes        = VMP.MesReporte
+								AND ISNULL(VMP.Activo,0) = 1
 							WHERE
 								MCH.IdContrato            = @IdContrato
                                 AND	MCH.Mes BETWEEN DATEADD( MONTH, -2, @Mes ) AND DATEADD( MONTH, -1, @Mes )
                                 AND MCH.IdTipoHidrocarburo = 2
+								AND ISNULL(VMP.Activo,0) = 1
                         END
                         ELSE
                         BEGIN
@@ -250,7 +254,7 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenCondensadoEntregado
                             WHERE
                                 IdContrato = @IdContrato
                                 AND MesReporte BETWEEN DATEADD( MONTH, -1, @Mes ) AND @Mes
-
+								AND ISNULL(Activo,0) = 1
                             SELECT
                                 @SumValor = ISNULL(VMP.VolumenCondensadoPuntoMedicion * MCH.Precio,0)
                             FROM
@@ -259,10 +263,12 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenCondensadoEntregado
                                 PR_VolumenMensualProduccionPetroleo AS VMP
                                 ON MCH.IdContrato = VMP.IdContrato
                                 AND MCH.Mes        = VMP.MesReporte
+								AND ISNULL(VMP.Activo,0) = 1
                             WHERE
                                 MCH.IdContrato            = @IdContrato
                                 AND MCH.Mes                = DATEADD( MONTH, -1, @Mes )
                                 AND MCH.IdTipoHidrocarburo = 2
+								AND ISNULL(VMP.Activo,0) = 1
                         END
                         -- GUardamos el precio observado para validar la diferencia con el calculado
                         SELECT  @PrecioObservadoCondensados = @PrecioContractualCondensados
@@ -277,7 +283,7 @@ IF (@VolumenComercializadoBaseReglasMercado * 100) / @VolumenCondensadoEntregado
                                 SELECT
                                     @PrecioContractualCondensados = @PrecioObservadoCondensados * 1.5,
                                     @Metodo                       = 'i',
-   @IdMetodoCalculo              = 5
+   @IdMetodoCalculo = 5
                             END
                             -- SI EL PRECIO ESTIMADO ES MENOR AL OBSERVADO
                             IF @PrecioContractualCondensados < @PrecioObservadoCondensados
@@ -487,7 +493,7 @@ IF 0 =
 			Valor,
 			FechaCreacion,
 			CreadoPor
-        ) 
+      ) 
         SELECT
 			@IdContrato,
 				 2,
@@ -529,5 +535,3 @@ FIN:
 -- -----------------------------------------------------------------------------------------
 RETURN 0
 END
-
-
