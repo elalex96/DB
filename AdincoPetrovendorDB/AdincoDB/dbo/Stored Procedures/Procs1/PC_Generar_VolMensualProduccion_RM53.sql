@@ -68,7 +68,57 @@ CREATE TABLE #PC_VolumenProduccionPeriodo
 	VolumenCondensablePuntoMedicion		FLOAT,
 	VolumenCondensableAutoconsumo		FLOAT
 )
-
+CREATE TABLE #Temp_PC_VolumenProduccionPeriodo
+(
+	IdContrato	INT,
+	MesReporte	DATE,
+	FechaInicio	DATE,
+	FechaFin	DATE,
+	VolumenPetroleoPuntoMedicion	FLOAT,
+	GradosAPI	FLOAT,
+	ContenidoAzufre	FLOAT,
+	VolumenPetroleoAutoconsumo	FLOAT,
+	MetanoC1	FLOAT,
+	EtanoC2	FLOAT,
+	PropanoC3	FLOAT,
+	ButanoC4	FLOAT,
+	MetanoC1Autoconsumo	FLOAT,
+	EtanoC2Autoconsumo	FLOAT,
+	PropanoC3Autoconsumo	FLOAT,
+	ButanoC4Autoconsumo	FLOAT,
+	VolumenCondensadoPuntoMedicion	FLOAT,
+	VolumenCondensadoAutoconsumo	FLOAT,
+	Bit_CasoFortuito	BIT,
+	CantDiasCasoFortuito	INT,
+	OtrosIngresosUsoCompartidoInfraestructura	DECIMAL(16,4),
+	VolumenPetroleoContratistaReparticion	FLOAT,
+	VolumenMetanoC1ContratistaReparticion	FLOAT,
+	VolumenEtanoC2ContratistaReparticion	FLOAT,
+	VolumenPropanoC3ContratistaReparticion	FLOAT,
+	VolumenButanoC4ContratistaReparticion	FLOAT,
+	VolumenCondensadosContratistaReparticion	FLOAT,
+	VolumenPetroleoEstadoReparticion	FLOAT,
+	VolumenMetanoC1EstadoReparticion	FLOAT,
+	VolumenEtanoC2EstadoReparticion	FLOAT,
+	VolumenPropanoC3EstadoReparticion	FLOAT,
+	VolumenButanoC4EstadoReparticion	FLOAT,
+	VolumenCondensadosEstadoReparticion	FLOAT,
+	VolumenPetroleoContratistaCompensacion	FLOAT,
+	VolumenMetanoC1ContratistaCompensacion	FLOAT,
+	VolumenEtanoC2ContratistaCompensacion	FLOAT,
+	VolumenPropanoC3ContratistaCompensacion	FLOAT,
+	VolumenButanoC4ContratistaCompensacion	FLOAT,
+	VolumenCondensadosContratistaCompensacion	FLOAT,
+	VolumenPetroleoEstadoCompensacion	FLOAT,
+	VolumenMetanoC1EstadoCompensacion	FLOAT,
+	VolumenEtanoC2EstadoCompensacion	FLOAT,
+	VolumenPropanoC3EstadoCompensacion	FLOAT,
+	VolumenButanoC4EstadoCompensacion	FLOAT,
+	VolumenCondensadosEstadoCompensacion	FLOAT,
+	AcumuladoCostosRecuperablesInsolutos	MONEY,
+	VolumenCondensablePuntoMedicion		FLOAT,
+	VolumenCondensableAutoconsumo		FLOAT
+)
 CREATE TABLE #PC_RM
 (
 	Id	INT,
@@ -901,6 +951,8 @@ BEGIN
 		#Totales	T
 END
 
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()
@@ -1306,15 +1358,9 @@ BEGIN
 		CROSS JOIN #NuevaDistribucionProvisional	ND
 		WHERE
 			RM.Id	=	2
-
-		--Se borran los registros generados anteriormente del mismo mes EN PR_VolumenMensualProduccionPetroleo
-		DELETE
-		FROM	PR_VolumenMensualProduccionPetroleo
-		WHERE	IdContrato	=	@IdContrato
-			AND	MesReporte	=	@MesReporte
-
-
-		INSERT INTO dbo.PR_VolumenMensualProduccionPetroleo
+		
+		
+		INSERT INTO #Temp_PC_VolumenProduccionPeriodo
 		(
 		    IdContrato,
 		    MesReporte,
@@ -1361,8 +1407,7 @@ BEGIN
 		    VolumenCondensadosEstadoCompensacion,
 		    AcumuladoCostosRecuperablesInsolutos,
 			VolumenCondensablePuntoMedicion,
-			VolumenCondensableAutoconsumo,
-			Activo
+			VolumenCondensableAutoconsumo
 		)
 		SELECT
 			IdContrato,
@@ -1412,13 +1457,183 @@ BEGIN
 			SUM(ISNULL(VolumenCondensadosEstadoCompensacion,0))		AS [VolumenCondensadosEstadoCompensacion],
 			SUM(ISNULL(AcumuladoCostosRecuperablesInsolutos,0))		AS [AcumuladoCostosRecuperablesInsolutos],
 			SUM(ISNULL(VolumenCondensablePuntoMedicion,0))			AS [VolumenCondensablePuntoMedicion],
-			SUM(ISNULL(VolumenCondensableAutoconsumo,0))			AS [VolumenCondensableAutoconsumo],
-			1
+			SUM(ISNULL(VolumenCondensableAutoconsumo,0))			AS [VolumenCondensableAutoconsumo]
 		FROM
 			 #PC_VolumenProduccionPeriodo
 		GROUP BY
 			IdContrato,
 			MesReporte
+
+
+		IF EXISTS(SELECT 1 FROM	PR_VolumenMensualProduccionPetroleo 
+					WHERE IdContrato = @IdContrato
+						AND	MesReporte	=	@MesReporte
+						AND Activo = 1)
+		BEGIN
+			
+			UPDATE PR_VolumenMensualProduccionPetroleo
+			SET 
+		    VolumenPetroleoPuntoMedicion = #Temp_PC_VolumenProduccionPeriodo.VolumenPetroleoPuntoMedicion,
+		    GradosAPI=  #Temp_PC_VolumenProduccionPeriodo.GradosAPI,
+		    ContenidoAzufre= #Temp_PC_VolumenProduccionPeriodo.ContenidoAzufre,
+		    VolumenPetroleoAutoconsumo = #Temp_PC_VolumenProduccionPeriodo.VolumenPetroleoAutoconsumo,
+		    MetanoC1 = #Temp_PC_VolumenProduccionPeriodo.MetanoC1,
+		    EtanoC2 = #Temp_PC_VolumenProduccionPeriodo.EtanoC2,
+		    PropanoC3 = #Temp_PC_VolumenProduccionPeriodo.PropanoC3,
+		    ButanoC4 = #Temp_PC_VolumenProduccionPeriodo.ButanoC4,
+		    MetanoC1Autoconsumo = #Temp_PC_VolumenProduccionPeriodo.MetanoC1Autoconsumo,
+		    EtanoC2Autoconsumo = #Temp_PC_VolumenProduccionPeriodo.EtanoC2Autoconsumo,
+		    PropanoC3Autoconsumo = #Temp_PC_VolumenProduccionPeriodo.PropanoC3Autoconsumo,
+		    ButanoC4Autoconsumo = #Temp_PC_VolumenProduccionPeriodo.ButanoC4Autoconsumo,
+		    VolumenCondensadoPuntoMedicion = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensadoPuntoMedicion,
+		    VolumenCondensadoAutoconsumo = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensadoAutoconsumo,
+		    Bit_CasoFortuito = #Temp_PC_VolumenProduccionPeriodo.Bit_CasoFortuito,
+		    CantDiasCasoFortuito = #Temp_PC_VolumenProduccionPeriodo.CantDiasCasoFortuito,
+		    OtrosIngresosUsoCompartidoInfraestructura = #Temp_PC_VolumenProduccionPeriodo.OtrosIngresosUsoCompartidoInfraestructura,
+		    VolumenPetroleoContratistaReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenPetroleoContratistaReparticion,
+		    VolumenMetanoC1ContratistaReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenMetanoC1ContratistaReparticion,
+		    VolumenEtanoC2ContratistaReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenEtanoC2ContratistaReparticion,
+		    VolumenPropanoC3ContratistaReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenPropanoC3ContratistaReparticion,
+		    VolumenButanoC4ContratistaReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenButanoC4ContratistaReparticion,
+		    VolumenCondensadosContratistaReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensadosContratistaReparticion,
+		    VolumenPetroleoEstadoReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenPetroleoEstadoReparticion,
+		    VolumenMetanoC1EstadoReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenMetanoC1EstadoReparticion,
+		    VolumenEtanoC2EstadoReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenEtanoC2EstadoReparticion	,
+		    VolumenPropanoC3EstadoReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenPropanoC3EstadoReparticion,
+		    VolumenButanoC4EstadoReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenButanoC4EstadoReparticion,
+		    VolumenCondensadosEstadoReparticion = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensadosEstadoReparticion,
+		    VolumenPetroleoContratistaCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenPetroleoContratistaCompensacion,
+		    VolumenMetanoC1ContratistaCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenMetanoC1ContratistaCompensacion,
+		    VolumenEtanoC2ContratistaCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenEtanoC2ContratistaCompensacion,
+		    VolumenPropanoC3ContratistaCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenPropanoC3ContratistaCompensacion,
+		    VolumenButanoC4ContratistaCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenButanoC4ContratistaCompensacion,
+		    VolumenCondensadosContratistaCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensadosContratistaCompensacion,
+		    VolumenPetroleoEstadoCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenPetroleoEstadoCompensacion,
+		    VolumenMetanoC1EstadoCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenMetanoC1EstadoCompensacion,
+		    VolumenEtanoC2EstadoCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenEtanoC2EstadoCompensacion,
+		    VolumenPropanoC3EstadoCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenPropanoC3EstadoCompensacion,
+		    VolumenButanoC4EstadoCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenButanoC4EstadoCompensacion,
+		    VolumenCondensadosEstadoCompensacion = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensadosEstadoCompensacion,
+		    AcumuladoCostosRecuperablesInsolutos = #Temp_PC_VolumenProduccionPeriodo.AcumuladoCostosRecuperablesInsolutos,
+			VolumenCondensablePuntoMedicion = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensablePuntoMedicion,
+			VolumenCondensableAutoconsumo = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensableAutoconsumo,
+			ModificadoEl = GETDATE(),
+			ModificadoPor = @Usuario
+			FROM PR_VolumenMensualProduccionPetroleo
+			INNER JOIN #Temp_PC_VolumenProduccionPeriodo 
+				ON  PR_VolumenMensualProduccionPetroleo.IdContrato = #Temp_PC_VolumenProduccionPeriodo.IdContrato
+					AND PR_VolumenMensualProduccionPetroleo.MesReporte = #Temp_PC_VolumenProduccionPeriodo.MesReporte
+					AND PR_VolumenMensualProduccionPetroleo.Activo = 1
+			WHERE PR_VolumenMensualProduccionPetroleo.Activo = 1
+			AND PR_VolumenMensualProduccionPetroleo.IdContrato = @IdContrato
+			AND PR_VolumenMensualProduccionPetroleo.MesReporte = @MesReporte
+			
+		END
+		ELSE 
+		BEGIN
+
+			INSERT INTO dbo.PR_VolumenMensualProduccionPetroleo
+			(
+				IdContrato,
+				MesReporte,
+				VolumenPetroleoPuntoMedicion,
+				GradosAPI,
+				ContenidoAzufre,
+				VolumenPetroleoAutoconsumo,
+				MetanoC1,
+				EtanoC2,
+				PropanoC3,
+				ButanoC4,
+				MetanoC1Autoconsumo,
+				EtanoC2Autoconsumo,
+				PropanoC3Autoconsumo,
+				ButanoC4Autoconsumo,
+				VolumenCondensadoPuntoMedicion,
+				VolumenCondensadoAutoconsumo,
+				Bit_CasoFortuito,
+				CantDiasCasoFortuito,
+				OtrosIngresosUsoCompartidoInfraestructura,
+				VolumenPetroleoContratistaReparticion,
+				VolumenMetanoC1ContratistaReparticion,
+				VolumenEtanoC2ContratistaReparticion,
+				VolumenPropanoC3ContratistaReparticion,
+				VolumenButanoC4ContratistaReparticion,
+				VolumenCondensadosContratistaReparticion,
+				VolumenPetroleoEstadoReparticion,
+				VolumenMetanoC1EstadoReparticion,
+				VolumenEtanoC2EstadoReparticion,
+				VolumenPropanoC3EstadoReparticion,
+				VolumenButanoC4EstadoReparticion,
+				VolumenCondensadosEstadoReparticion,
+				VolumenPetroleoContratistaCompensacion,
+				VolumenMetanoC1ContratistaCompensacion,
+				VolumenEtanoC2ContratistaCompensacion,
+				VolumenPropanoC3ContratistaCompensacion,
+				VolumenButanoC4ContratistaCompensacion,
+				VolumenCondensadosContratistaCompensacion,
+				VolumenPetroleoEstadoCompensacion,
+				VolumenMetanoC1EstadoCompensacion,
+				VolumenEtanoC2EstadoCompensacion,
+				VolumenPropanoC3EstadoCompensacion,
+				VolumenButanoC4EstadoCompensacion,
+				VolumenCondensadosEstadoCompensacion,
+				AcumuladoCostosRecuperablesInsolutos,
+				VolumenCondensablePuntoMedicion,
+				VolumenCondensableAutoconsumo,
+				Activo
+			)
+			SELECT
+				IdContrato,
+				MesReporte,
+				VolumenPetroleoPuntoMedicion,
+				GradosAPI,
+				ContenidoAzufre,
+				VolumenPetroleoAutoconsumo,
+				MetanoC1,
+				EtanoC2,
+				PropanoC3,
+				ButanoC4,
+				MetanoC1Autoconsumo,
+				EtanoC2Autoconsumo,
+				PropanoC3Autoconsumo,
+				ButanoC4Autoconsumo,
+				VolumenCondensadoPuntoMedicion,
+				VolumenCondensadoAutoconsumo,
+				Bit_CasoFortuito,
+				CantDiasCasoFortuito,
+				OtrosIngresosUsoCompartidoInfraestructura,
+				VolumenPetroleoContratistaReparticion,
+				VolumenMetanoC1ContratistaReparticion,
+				VolumenEtanoC2ContratistaReparticion,
+				VolumenPropanoC3ContratistaReparticion,
+				VolumenButanoC4ContratistaReparticion,
+				VolumenCondensadosContratistaReparticion,
+				VolumenPetroleoEstadoReparticion,
+				VolumenMetanoC1EstadoReparticion,
+				VolumenEtanoC2EstadoReparticion,
+				VolumenPropanoC3EstadoReparticion,
+				VolumenButanoC4EstadoReparticion,
+				VolumenCondensadosEstadoReparticion,
+				VolumenPetroleoContratistaCompensacion,
+				VolumenMetanoC1ContratistaCompensacion,
+				VolumenEtanoC2ContratistaCompensacion,
+				VolumenPropanoC3ContratistaCompensacion,
+				VolumenButanoC4ContratistaCompensacion,
+				VolumenCondensadosContratistaCompensacion,
+				VolumenPetroleoEstadoCompensacion,
+				VolumenMetanoC1EstadoCompensacion,
+				VolumenEtanoC2EstadoCompensacion,
+				VolumenPropanoC3EstadoCompensacion,
+				VolumenButanoC4EstadoCompensacion,
+				VolumenCondensadosEstadoCompensacion,
+				AcumuladoCostosRecuperablesInsolutos,
+				VolumenCondensablePuntoMedicion,
+				VolumenCondensableAutoconsumo,
+				1
+			FROM
+				 #Temp_PC_VolumenProduccionPeriodo
+
+		END
 	END
 END
 END
