@@ -1,9 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'FN_CantidadClientesSubContratista'
+)
+    DROP FUNCTION FN_CantidadClientesSubContratista;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <30/01/2020>
 -- Description:	<Consultar la cantidad de operadores que le han hecho un pedido al subcontratista>
 -- =============================================
-CREATE FUNCTION FN_CantidadClientesSubContratista
+-- Author:		<Alexander Gomez>
+-- Create date: <05/07/2023>
+-- Description:	<Optimizacion del sp>
+-- =============================================
+CREATE FUNCTION [dbo].[FN_CantidadClientesSubContratista]
 (
 	-- Add the parameters for the function here
 	@IdProveedor INT
@@ -21,9 +39,9 @@ BEGIN
 	SELECT 
 		P.IdProveedorCompras
 	FROM dbo.MM_Pedido AS P
-		INNER JOIN dbo.MM_AceptacionPedido AS AP
-			ON AP.IdPedido = P.IdPedido
-	WHERE P.IdSubcontratista = @IdProveedor
+		JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK)
+			ON P.IdPedido = AP.IdPedido
+			AND P.IdSubcontratista = @IdProveedor
 	GROUP BY P.IdProveedorCompras;
 
 	SELECT
