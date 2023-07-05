@@ -21,7 +21,7 @@ GO
 -- Create date: <05/07/2023>
 -- Description:	<Optimizacion del sp>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaProveedoresPeticionOferta] --907,'',1
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaProveedoresPeticionOferta] --0,'',1
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
 	@Buscar NVARCHAR(200),
@@ -41,6 +41,9 @@ BEGIN
 	SET NOCOUNT ON;
 
     -- Insert statements for procedure here
+	DECLARE @RecordsByPage INT;
+	DECLARE @AllRecords INT;
+
 	CREATE TABLE #CO_CONTRATISTA(
 		RFC NVARCHAR(100)
 	);
@@ -66,16 +69,16 @@ BEGIN
 		END AS IsBlackList
 	FROM dbo.S_Proveedor AS P WITH (NOLOCK)
 		LEFT JOIN Adinco.dbo.ListaNegra AS LN WITH (NOLOCK)
-			ON LN.RFC COLLATE Modern_Spanish_CI_AS = P.RFC COLLATE Modern_Spanish_CI_AS
-	WHERE P.Activo = 1
-		AND P.IdProveedor <> @IdProveedor
-		AND ISNULL(P.IsEliminado,0) = 0
-		AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM #CO_CONTRATISTA)
+			ON P.RFC COLLATE Modern_Spanish_CI_AS = LN.RFC COLLATE Modern_Spanish_CI_AS
+			AND P.Activo = 1
+			AND P.IdProveedor <> @IdProveedor
+			AND ISNULL(P.IsEliminado,0) = 0
+	WHERE P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM #CO_CONTRATISTA)
 		AND (P.RazonSocial LIKE '%' + @Buscar + '%' OR
 						P.RFC LIKE '%' + @Buscar + '%');
 
-	DECLARE @RecordsByPage INT = 12;
-	DECLARE @AllRecords INT = (SELECT COUNT(IdProveedor) FROM #LISTA_PROVEEDORES_TOTAL);
+	SET @RecordsByPage = 12;
+	SET @AllRecords = (SELECT COUNT(IdProveedor) FROM #LISTA_PROVEEDORES_TOTAL);
 
 
 	SELECT 
@@ -88,15 +91,7 @@ BEGIN
 			ROW_NUMBER() OVER(PARTITION BY LP.IdProveedor ORDER BY LP.RazonSocial ASC) AS R,
 			LP.IdProveedor,
 			LP.RazonSocial,
-			isnull((SELECT TOP 1
-				US.Correo
-			FROM dbo.S_UsuarioProveedor AS UPR
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = UPR.IdUsuario
-			WHERE UPR.IdProveedor = LP.IdProveedor
-				AND US.IdTipoUsuario = 3
-				AND US.Activo = 1
-			ORDER BY US.FechaRegistro DESC
-			),'') AS CorreoEmpresa,
+			dbo.FN_MM_ObtenerCorreoProveedor(LP.IdProveedor) AS CorreoEmpresa,
 			dbo.ObtenerEstrellasModificado(LP.IdProveedor) AS Estrellas,
 			LP.IsBlackList,
 			IMP.ImagenProveedorThumb AS ImagenProveedor,

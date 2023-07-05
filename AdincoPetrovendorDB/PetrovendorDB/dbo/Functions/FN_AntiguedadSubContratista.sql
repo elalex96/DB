@@ -38,15 +38,15 @@ BEGIN
 	SELECT TOP 1
 		 @MESES = DATEDIFF(MONTH,U.FechaRegistro,GETDATE()),
 		 @AÑOS = DATEDIFF(YEAR,U.FechaRegistro,GETDATE())
-	FROM dbo.S_Proveedor AS PR (NOLOCK)
+	FROM dbo.S_Proveedor AS PR
 		LEFT JOIN dbo.S_UsuarioProveedor AS UP (NOLOCK)
 			ON PR.IdProveedor = UP.IdProveedor
 				AND UP.IsAdmin = 1
-				AND PR.IdProveedor = @IdProveedor
 		LEFT JOIN dbo.S_Usuario AS U (NOLOCK)
 			ON UP.IdUsuario = U.IdUsuario
 				AND U.IdTipoUsuario = 3
 				AND U.Activo = 1
+	WHERE PR.IdProveedor = @IdProveedor
 	ORDER BY U.FechaRegistro ASC;
 
 	IF @MESES <= 12

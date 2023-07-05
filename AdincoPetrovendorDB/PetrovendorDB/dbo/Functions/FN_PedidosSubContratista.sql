@@ -41,7 +41,7 @@ BEGIN
 		JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK)
 			ON P.IdPedido = AP.IdPedido
 			AND P.IdSubcontratista = @IdProveedor
-			AND P.CreadoEl >= @MESESATRAS   
+	WHERE P.CreadoEl >= @MESESATRAS   
 	GROUP BY P.IdPedido;
 
 	SELECT
