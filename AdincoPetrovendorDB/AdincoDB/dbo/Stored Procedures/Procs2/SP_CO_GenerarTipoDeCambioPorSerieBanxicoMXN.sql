@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_GenerarTipoDeCambioPorSerieBanxicoMXN] @FilasTB TY_ListaCambioDiario READONLY
+﻿CREATE PROCEDURE [dbo].[SP_CO_GenerarTipoDeCambioPorSerieBanxicoMXN] @UsuarioId INT = 0, @ContratoId INT = 0, @FilasTB TY_ListaCambioDiario READONLY
 AS
 BEGIN
     DECLARE @IdMoneda INT;
