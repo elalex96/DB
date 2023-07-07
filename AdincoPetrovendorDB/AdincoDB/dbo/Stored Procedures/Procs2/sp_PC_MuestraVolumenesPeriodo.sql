@@ -1,5 +1,4 @@
-﻿
-CREATE PROCEDURE dbo.sp_PC_MuestraVolumenesPeriodo
+﻿CREATE PROCEDURE dbo.sp_PC_MuestraVolumenesPeriodo
 	@IdContrato INT,
 	@MesReporte NVARCHAR(10),
 	@IdUsuario  INT
@@ -66,13 +65,14 @@ BEGIN
 		JOIN
 			PR_VolumenMensualProduccionPetroleo	VPP
 			ON	C.IdContrato	=	VPP.IdContrato
+			AND ISNULL(VPP.Activo,0) = 1
 		WHERE
 			C.IdContrato	=	@IdContrato
 			AND
 			CONVERT(VARCHAR(11), VPP.MesReporte, 103)	=	@MesReporte
+			AND ISNULL(VPP.Activo,0) = 1
 		ORDER BY
 			VPP.MesReporte
 END
 
 END
-
