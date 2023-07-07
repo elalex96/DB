@@ -951,6 +951,8 @@ BEGIN
 		#Totales	T
 END
 
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()
@@ -1578,7 +1580,9 @@ BEGIN
 				AcumuladoCostosRecuperablesInsolutos,
 				VolumenCondensablePuntoMedicion,
 				VolumenCondensableAutoconsumo,
-				Activo
+				Activo,
+				CreadoEl,
+				CreadoPor
 			)
 			SELECT
 				IdContrato,
@@ -1627,7 +1631,9 @@ BEGIN
 				AcumuladoCostosRecuperablesInsolutos,
 				VolumenCondensablePuntoMedicion,
 				VolumenCondensableAutoconsumo,
-				1
+				1,
+				GETDATE(),
+				@Usuario
 			FROM
 				 #Temp_PC_VolumenProduccionPeriodo
 
