@@ -3898,5 +3898,7 @@
     <Build Include="dbo\Tables\Tables1\APP_ConfiguracionHeaderExcel.sql" />
     <Build Include="dbo\Tables\Tables2\Mobile_TipoAprobaciones.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\Mobile_sp_TipoAprobacionesPorUsuario.sql" />
+    <Build Include="dbo\User Defined Types\TY_ListaCambioDiario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_GenerarTipoDeCambioPorSerieBanxicoMXN.sql" />
   </ItemGroup>
 </Project>
