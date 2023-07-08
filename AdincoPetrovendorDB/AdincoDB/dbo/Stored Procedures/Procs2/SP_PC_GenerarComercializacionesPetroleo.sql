@@ -156,7 +156,21 @@ WHERE
     AND DI.IdMaterialPC IN ( 10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009,
             10010, 10016, 10019, 10020
                             ) -- Lista de productos que son crudo
-    AND DATEFROMPARTS( SUBSTRING( DI.MesReporte, 7, 4 ), SUBSTRING( DI.MesReporte, 4, 2 ), 1 ) = @MesReporte
+    AND DATEFROMPARTS( 
+		CASE
+		WHEN CHARINDEX('/',SUBSTRING( DI.MesReporte, 4, 2 ))=2
+		THEN
+		REPLACE(SUBSTRING(DI.MesReporte, 6, 4 ),'/','')
+		ELSE
+		SUBSTRING(DI.MesReporte, 7, 4 )
+		END, 
+		CASE
+		WHEN CHARINDEX('/',SUBSTRING( DI.MesReporte, 4, 2 ))=2
+		THEN
+		CONCAT('0',REPLACE(SUBSTRING(DI.MesReporte, 4, 2 ),'/',''))
+		ELSE
+		SUBSTRING(DI.MesReporte, 4, 2 )
+		END, 1 )   = @MesReporte
     AND PVP.Mes                                                                                = @MesReporte
 GROUP BY
     PVP.IdPtoExpedicionRecepcion,
@@ -331,7 +345,22 @@ WHERE
     AND MONTH( CFDI.Fecha ) = MONTH( @MesReporte )
     AND YEAR( CFDI.Fecha )  = YEAR( @MesReporte )
 	AND ( RC.factura LIKE '92%'   OR   RC.Factura LIKE '93%' )
-	AND DATEFROMPARTS( SUBSTRING( RC.FechaFactura, 7, 4 ), SUBSTRING( RC.FechaFactura, 4, 2 ), SUBSTRING( RC.FechaFactura, 1, 2 ) ) >= @FechaInicioContrato
+	AND  DATEFROMPARTS( 
+		CASE
+		WHEN CHARINDEX('/',SUBSTRING(RC.FechaFactura, 4, 2 ))=2
+		THEN
+		REPLACE(SUBSTRING(RC.FechaFactura, 6, 4 ),'/','')
+		ELSE
+		SUBSTRING(RC.FechaFactura, 7, 4 )
+		END, 
+		CASE
+		WHEN CHARINDEX('/',SUBSTRING(RC.FechaFactura, 4, 2 ))=2
+		THEN
+		CONCAT('0',REPLACE(SUBSTRING(RC.FechaFactura, 4, 2 ),'/',''))
+		ELSE
+		SUBSTRING(RC.FechaFactura, 4, 2 )
+		END, SUBSTRING( RC.FechaFactura, 1, 2 ) )    >= @FechaInicioContrato
+		--DATEFROMPARTS( SUBSTRING( RC.FechaFactura, 7, 4 ), SUBSTRING( RC.FechaFactura, 4, 2 ), SUBSTRING( RC.FechaFactura, 1, 2 ) ) >= @FechaInicioContrato
 AND RC.Factura NOT IN ('93121782','92390240','92390988','93121785','92390238','93121777',
 '92390235','93121780','93121781','92391051','92391010','92390231','92391050','92390237','92390233','92390987','92390224','92390225',
 '92390969','92390227','92390230','92391009','92390223','92390239','92390236','92391029','92390226','92390968','92390228','92390232',
@@ -673,8 +702,8 @@ BEGIN
 	SELECT * FROM #Comercializaciones
 END
 
-IF @MesReporte IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01')
-	SELECT @FechaLimite = '2022-12-31'
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()

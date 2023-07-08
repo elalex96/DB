@@ -1,6 +1,6 @@
-﻿CREATE PROCEDURE dbo.SP_PC_GeneraComercializaciones  
+﻿CREATE PROCEDURE dbo.SP_PC_GeneraComercializaciones --  10010,'01/01/2022 12:00:00 a. m.',10,0
  @IdContrato INT,  
-    @MesReporte VARCHAR(10),  
+ @MesReporte VARCHAR(10),  
  @Usuario INT,  
  @Debug  BIT  
 AS  
@@ -66,7 +66,6 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
   
   
  --Calculo del volumen de crudo a vender basado en reparticion preliminar  
- SELECT @FechaLimite = '20231231';
  IF @FechaLimite >= GETDATE()  
  BEGIN  
   
