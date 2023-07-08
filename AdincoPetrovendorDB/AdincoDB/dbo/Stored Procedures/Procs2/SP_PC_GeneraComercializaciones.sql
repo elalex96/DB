@@ -66,6 +66,7 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
   
   
  --Calculo del volumen de crudo a vender basado en reparticion preliminar  
+ SELECT @FechaLimite = '20231231';
  IF @FechaLimite >= GETDATE()  
  BEGIN  
   
