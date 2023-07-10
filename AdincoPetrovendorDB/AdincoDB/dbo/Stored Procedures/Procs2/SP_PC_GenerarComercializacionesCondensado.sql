@@ -89,14 +89,14 @@ SELECT
 	@EsPC			=	IsPC,
 	@EsConsorcio	=	IsConsorcio
 FROM
-	CO_Contrato
+	CO_Contrato  (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
 SELECT
 	@PorcPemex	=	PorcentajePemex / 100.00
 FROM
-	dbo.CO_PorcentajesContrato
+	dbo.CO_PorcentajesContrato  (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
@@ -104,7 +104,7 @@ SELECT 	@Param = 6.2898
 
 -- SE OBTIENE EL COSTO UNITARIO DEL HIDROCARBURO
 SELECT @CostoUnitarioComercializacion = CostoUnitarioComercializacion
-FROM	COM_CostoUnitarioHidrocarburo
+FROM	COM_CostoUnitarioHidrocarburo  (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 	AND	Mes		=	@MesReporte
@@ -138,12 +138,12 @@ SELECT
     CAST(0.0000000000000000000000000 AS FLOAT) AS VolumenFacturado,
     CAST(0.0000000000000000000000000 AS FLOAT) AS FactorDistribucion
 FROM
-    PC_DistribucionIngresos DI
+    PC_DistribucionIngresos DI  (NOLOCK)
 JOIN
-    PC_ContratoCampo        CC
+    PC_ContratoCampo        CC  (NOLOCK)
     ON CC.IdCampo                   = DI.IdCampo
 JOIN
-    PC_PuntoVentaProducto   PVP
+    PC_PuntoVentaProducto   PVP  (NOLOCK)
     ON PVP.IdContrato               = CC.IdContrato
     AND PVP.IdPtoExpedicionRecepcion = DI.IdPtoExpedicionRecepcion
     AND PVP.IdMaterialPC             = DI.IdMaterialPC
@@ -223,7 +223,7 @@ SELECT
 						ELSE	Condensado
 						END
 FROM
-    PC_Volumenes
+    PC_Volumenes  (NOLOCK)
 WHERE
     IdContrato = @IdContrato
     AND Mes     = @MesReporte
@@ -252,7 +252,7 @@ SELECT
     Factura,
     UUID
 FROM
-    dbo.PC_PMI_V2
+    dbo.PC_PMI_V2  (NOLOCK)
 UNION
 SELECT
     Factura,
@@ -284,31 +284,31 @@ SELECT
     C.Cantidad,
     CAST(0.0000000000000000000000000 AS FLOAT) AS Factor
 FROM
-    PC_DistribucionIngresos   DI
+    PC_DistribucionIngresos   DI  (NOLOCK)
 JOIN
-    PC_Material               M
+    PC_Material               M  (NOLOCK)
     ON M.IdMaterialPC       = DI.IdMaterialPC
 JOIN
-    PC_Comercializacion_V2       RC
+    PC_Comercializacion_V2       RC  (NOLOCK)
     ON M.TextoBreve                 = RC.Denominación
 JOIN
-    PC_EquivalenciaPuntoVenta EPV
+    PC_EquivalenciaPuntoVenta EPV  (NOLOCK)
     ON EPV.IdPtoExpedicionRecepcion = DI.IdPtoExpedicionRecepcion
     AND EPV.[Nombre 1]               = RC.Nombre1	--[Nombre 1]
 LEFT JOIN
-    #PC_FacturasConde         F
+    #PC_FacturasConde         F  
     ON CONVERT(INT,RC.Factura )   = CONVERT(INT,F.Factura)
 JOIN
-    FI_Factura                CFDI
+    FI_Factura                CFDI  (NOLOCK)
     ON F.UUID                       = CFDI.UUID
 JOIN
-    FI_CFDIConcepto           C
+    FI_CFDIConcepto           C  (NOLOCK)
     ON C.IdFactura                  = CFDI.IdFactura
 JOIN
-    PC_ContratoCampo          CC
+    PC_ContratoCampo          CC  (NOLOCK)
     ON CC.IdCampo                   = DI.IdCampo
 JOIN
-    PC_PuntoVentaProducto     PVP
+    PC_PuntoVentaProducto     PVP  (NOLOCK)
     ON PVP.IdContrato               = CC.IdContrato
     AND PVP.IdPtoExpedicionRecepcion = DI.IdPtoExpedicionRecepcion
     AND PVP.IdMaterialPC             = DI.IdMaterialPC
@@ -364,10 +364,10 @@ BEGIN
 		FI_CFDIConcepto     C (NOLOCK)
 		ON F.IdFactura                 = C.IdFactura
 	JOIN
-		COM_Equivalencias   E
+		COM_Equivalencias   E  (NOLOCK)
 		ON C.Unidad                    = E.Unidad
 	JOIN
-		CO_TipoCambioDiario T
+		CO_TipoCambioDiario T  (NOLOCK)
 		ON F.IdMoneda                  = T.IdMoneda
 		AND CONVERT( DATE, F.Fecha )    = T.Fecha
 
@@ -456,10 +456,10 @@ JOIN
 	FI_CFDIConcepto     C (NOLOCK)
 	ON F.IdFactura                 = C.IdFactura
 JOIN
-	COM_Equivalencias   E
+	COM_Equivalencias   E  (NOLOCK)
 	ON C.Unidad                    = E.Unidad
 JOIN
-	CO_TipoCambioDiario T
+	CO_TipoCambioDiario T  (NOLOCK)
 	ON F.IdMoneda                  = T.IdMoneda
 	AND CONVERT( DATE, F.Fecha )    = T.Fecha
 WHERE
@@ -526,7 +526,7 @@ BEGIN
 	SELECT
 		@Precio	=	ISNULL(PrecioUnitario,0)
 	FROM
-		dbo.COM_PreciosObjetivosHidroCarburos
+		dbo.COM_PreciosObjetivosHidroCarburos  (NOLOCK)
 	WHERE
 		IdContrato	=	@IdContrato
 		AND IdTipoHidrocarburo	=	10001	-- CONDENSADO
@@ -541,7 +541,7 @@ BEGIN
 		SELECT
 			@Precio	=	ISNULL(PrecioUnitario,0)
 		FROM
-			dbo.COM_PreciosObjetivosHidroCarburos
+			dbo.COM_PreciosObjetivosHidroCarburos  (NOLOCK)
 		WHERE
 			IdContrato	=	@IdContrato
 			AND IdTipoHidrocarburo	=	10001	-- CONDENSADO

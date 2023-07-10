@@ -32,7 +32,7 @@ SELECT @Mes = DATEFROMPARTS( SUBSTRING( @MesReporte, 7, 4 ), SUBSTRING( @MesRepo
   
 -- SE VALIDA QUE EL CONTRATO DEL QUE SE ESTA GENERANDO LA INFORMACIÓN SEA DE CONSORCIO CON PEMEX  
 IF 1 = (SELECT ISNULL(isPC,0)   
-   FROM dbo.CO_Contrato  
+   FROM dbo.CO_Contrato   (NOLOCK)
    WHERE IdContrato = @IdContrato)  
 BEGIN  
  -- SE VALIDA QUE EL REPORTE SE ESTE GENERANDO DURANTE LOS PRIMEROS 10 DIAS HABILES DEL SIGUIENTE MES  
@@ -85,7 +85,7 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
   
   -- SI EL CONTRATO ES DE PRODUCCION COMPARTIDA, SE GENERA LA INFORMACION DE LOS VOLUMENES A PARTIR DE LOS PERIODOS Y DE LAS COMPENSACIONES  
   IF 2 = (SELECT ISNULL(IdTipoContrato,0)   
-   FROM dbo.CO_Contrato  
+   FROM dbo.CO_Contrato   (NOLOCK)
    WHERE IdContrato = @IdContrato)  
   BEGIN  
    -- SE EJECUTA PROCEDIMIENTO PARA LA GENERACION DE LAS TABLAS PR_VolumenMensualProduccionPetroleo Y SIPAC_RM_FMP_53_M  
@@ -139,15 +139,15 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
     AS C4,  
     ROUND( (((VMPPG.VolumenCondensablePuntoMedicion * (FMP53.NuevaDistribucionProvisionalContratistaC5 / 100)) )),0)  
    FROM  
-    PR_VolumenMensualProduccionPetroleo VMPPG  
+    PR_VolumenMensualProduccionPetroleo VMPPG   (NOLOCK)
    LEFT JOIN  
-    CO_Contrato                         C  
+    CO_Contrato                         C   (NOLOCK)
     ON VMPPG.IdContrato            = C.IdContrato  
    LEFT JOIN  
-    CO_Contratista                      Ca  
+    CO_Contratista                      Ca   (NOLOCK)
     ON C.IdContratista             = Ca.IdContratista  
    LEFT JOIN  
-    SIPAC_RM_FMP_53_M                   FMP53  
+    SIPAC_RM_FMP_53_M                   FMP53   (NOLOCK)
     ON FMP53.IdContrato            = @IdContrato  
     AND DATEADD( MONTH, 1, DATEFROMPARTS( FMP53.AnioReporte, FMP53.MesReporte, 1 )) = @Mes   
    WHERE  
@@ -189,7 +189,7 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
     ROUND(ButanoC4,0),  
     ROUND(VolumenCondensablePuntoMedicion,0)  
    FROM  
-    PR_VolumenMensualProduccionPetroleo  
+    PR_VolumenMensualProduccionPetroleo   (NOLOCK)
    WHERE  
     IdContrato = @IdContrato  
     AND  
@@ -211,7 +211,7 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
   
   -- SE EJECUTA EL PROCEDIMIENTO SI EL CONTRATO CUENTA CON VOLUMEN DE PRODUCCION DE PETROLEO  
   IF 0 < (SELECT ISNULL(Petroleo,0)  
-    FROM PC_Volumenes   
+    FROM PC_Volumenes    (NOLOCK)
     WHERE IdContrato = @IdContrato  
     AND Mes = @Mes 
     )  
@@ -221,7 +221,7 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
   END  
      
   IF 0 < (SELECT ISNULL(C1,0)  
-    FROM PC_Volumenes   
+    FROM PC_Volumenes    (NOLOCK)
     WHERE IdContrato = @IdContrato  
     AND Mes = @Mes
     )  
@@ -231,7 +231,7 @@ IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01
   END  
     -- SE EJECUTA EL PROCEDIMIENTO SI EL CONTRATO CUENTA CON VOLUMEN DE PRODUCCION DE PETROLEO  
   IF 0 < (SELECT ISNULL(Condensado,0)  
-    FROM PC_Volumenes   
+    FROM PC_Volumenes    (NOLOCK)
     WHERE IdContrato = @IdContrato  
     AND Mes = @Mes 
     )  
