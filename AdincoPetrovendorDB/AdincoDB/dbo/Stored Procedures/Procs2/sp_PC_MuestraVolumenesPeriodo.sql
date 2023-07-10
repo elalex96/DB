@@ -35,9 +35,9 @@ BEGIN
 			VPP.VolumenCondensadoPuntoMedicion	AS [Condensado],
 			VPP.VolumenCondensablePuntoMedicion	AS [Condensable]
 		FROM
-			dbo.CO_Contrato	C
+			dbo.CO_Contrato	C (NOLOCK)
 		JOIN
-			PC_VolumenProduccionPeriodo	VPP
+			PC_VolumenProduccionPeriodo	VPP (NOLOCK)
 			ON	C.IdContrato	=	VPP.IdContrato
 		WHERE
 			C.IdContrato	=	@IdContrato
@@ -61,9 +61,9 @@ BEGIN
 			VPP.VolumenCondensadoPuntoMedicion	AS [Condensado],
 			VPP.VolumenCondensablePuntoMedicion	AS [Condensable]
 		FROM
-			dbo.CO_Contrato	C
+			dbo.CO_Contrato	C (NOLOCK)
 		JOIN
-			PR_VolumenMensualProduccionPetroleo	VPP
+			PR_VolumenMensualProduccionPetroleo	VPP (NOLOCK)
 			ON	C.IdContrato	=	VPP.IdContrato
 			AND ISNULL(VPP.Activo,0) = 1
 		WHERE

@@ -234,7 +234,7 @@ DECLARE
 	@NumContrato	VARCHAR(50)
 
 SELECT @NumContrato = NumeroContrato
-FROM	dbo.CO_Contrato
+FROM	dbo.CO_Contrato (NOLOCK)
 WHERE	IdContrato	=	@IdContrato
 
 INSERT INTO #PC_VolumenProduccionPeriodo
@@ -339,7 +339,7 @@ SELECT	ROW_NUMBER() OVER (ORDER BY FechaInicio) AS Id,
 	VolumenCondensablePuntoMedicion,
 	VolumenCondensableAutoconsumo
 FROM
-	PC_VolumenProduccionPeriodo
+	PC_VolumenProduccionPeriodo (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 	AND	MesReporte	=	@MesReporte
@@ -468,7 +468,7 @@ SELECT
 	CONVERT(FLOAT, REPLACE([Nueva Distribución Provisional a favor del Estado (RM53_52)],',',''))		AS	NuevaDistribucionProvisionalEstado,
 	CONVERT(FLOAT, REPLACE([Nueva Distribución Provisional a favor del Contratista (RM53_53)],',',''))		AS	NuevaDistribucionProvisionalContratista
 FROM
-	PC_RM 
+	PC_RM  (NOLOCK)
 WHERE
 	[id del contrato asignado por CNH (RF01_01)] = @NumContrato
 	AND DATEFROMPARTS( [Año de reporte (RM53_01)], [Mes de reporte (RM53_00)], 1 ) BETWEEN DATEADD(MONTH,-2,@MesReporte) AND  DATEADD(MONTH,-1,@MesReporte)
@@ -1465,7 +1465,7 @@ BEGIN
 			MesReporte
 
 
-		IF EXISTS(SELECT 1 FROM	PR_VolumenMensualProduccionPetroleo 
+		IF EXISTS(SELECT 1 FROM	PR_VolumenMensualProduccionPetroleo (NOLOCK)
 					WHERE IdContrato = @IdContrato
 						AND	MesReporte	=	@MesReporte
 						AND Activo = 1)
