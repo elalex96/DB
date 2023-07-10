@@ -3900,5 +3900,7 @@
     <Build Include="dbo\Tables\Tables2\ENT_BitacoraEliminacionProgramacionDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_ENT_GuardarHistorialEliminacionProgramacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_AP_ObtenerHTMLBanner.sql" />
+    <Build Include="dbo\User Defined Types\TY_ListaCambioDiario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_GenerarTipoDeCambioPorSerieBanxicoMXN.sql" />
   </ItemGroup>
 </Project>
