@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 
 -- Description:	
@@ -68,10 +68,10 @@ BEGIN
 		 JOIN dbo.EN_Actividad AP (NOLOCK)
 			  ON CE.IdContratoEntregable = AP.IdContratoEntregable
 				 AND AP.EstadoID = 10002
-		JOIN EN_MarcoLegal AS ML (NOLOCK)
-			  ON EN.IdMarcoLegal = ML.IdMarcoLegal
 		JOIN [EN_FrecuenciaEntregable] AS FE (NOLOCK)
 			  ON EN.IdFrecuenciaEntregable = FE.IdFrecuenciaEntregable
+		LEFT JOIN EN_MarcoLegal AS ML (NOLOCK)
+			  ON EN.IdMarcoLegal = ML.IdMarcoLegal
 		LEFT JOIN dbo.EN_ExcepcionesActividad AEE (NOLOCK)
 				  ON AEE.IdInstanciasEntregables = @idInstanciaEntregable
 				     AND AE.ActividadID = AEE.ActividadIDExcepcion

@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.SP_CO_SipacProduccionCalcular_PC
+﻿CREATE PROCEDURE [dbo].[SP_CO_SipacProduccionCalcular_PC]
     @Idcontrato      INT,
     @fechaMesDiaAnio DATE,
     @puntoEntrega    INT,
@@ -35,7 +35,7 @@ CREATE TABLE #DiasHabiles
 CREATE TABLE #CalculosGPA
 (
 	IdContrato		INT,
-	MesReporte		DATE,
+	MesReporte		DATE,	
 	PuntoEntregaID	INT,
 	C1				FLOAT,
     C2				FLOAT,
@@ -52,6 +52,7 @@ CREATE TABLE #CalculosGPA
 	CO2				FLOAT,
 	H2S				FLOAT,
 	N2				FLOAT,
+	VolumenPetroleoPuntoMedicion FLOAT,
 	Grados_API		FLOAT,
 	Azufre			FLOAT,
 	ImporteGas		FLOAT,
@@ -257,6 +258,53 @@ CREATE TABLE #CalculosGPA
 	PrecioVTA_Condensado	FLOAT
 )
 
+CREATE TABLE #Temp_PR_VolumenMensualProduccionPetroleo
+(
+	IdContrato INT,
+	MesReporte DATE,
+	VolumenPetroleoPuntoMedicion FLOAT,
+	GradosAPI FLOAT,
+	ContenidoAzufre FLOAT,
+	VolumenPetroleoAutoconsumo FLOAT,
+	MetanoC1 FLOAT,
+	EtanoC2 FLOAT,
+	PropanoC3 FLOAT,
+	ButanoC4 FLOAT,
+	MetanoC1Autoconsumo FLOAT,
+	EtanoC2Autoconsumo FLOAT,
+	PropanoC3Autoconsumo FLOAT,
+	ButanoC4Autoconsumo FLOAT,
+	VolumenCondensadoPuntoMedicion FLOAT,
+	VolumenCondensadoAutoconsumo FLOAT,
+	Bit_CasoFortuito BIT,
+	CantDiasCasoFortuito INT,
+	OtrosIngresosUsoCompartidoInfraestructura DECIMAL(16,4),
+	VolumenPetroleoContratistaReparticion FLOAT,
+	VolumenMetanoC1ContratistaReparticion FLOAT,
+	VolumenEtanoC2ContratistaReparticion FLOAT,
+	VolumenPropanoC3ContratistaReparticion FLOAT,
+	VolumenButanoC4ContratistaReparticion FLOAT,
+	VolumenCondensadosContratistaReparticion FLOAT,
+	VolumenPetroleoEstadoReparticion FLOAT,
+	VolumenMetanoC1EstadoReparticion FLOAT,
+	VolumenEtanoC2EstadoReparticion FLOAT,
+	VolumenPropanoC3EstadoReparticion FLOAT,
+	VolumenButanoC4EstadoReparticion FLOAT,
+	VolumenCondensadosEstadoReparticion FLOAT,
+	VolumenPetroleoContratistaCompensacion FLOAT,
+	VolumenMetanoC1ContratistaCompensacion FLOAT,
+	VolumenEtanoC2ContratistaCompensacion FLOAT,
+	VolumenPropanoC3ContratistaCompensacion FLOAT,
+	VolumenButanoC4ContratistaCompensacion FLOAT,
+	VolumenCondensadosContratistaCompensacion FLOAT,
+	VolumenPetroleoEstadoCompensacion FLOAT,
+	VolumenMetanoC1EstadoCompensacion FLOAT,
+	VolumenEtanoC2EstadoCompensacion FLOAT,
+	VolumenPropanoC3EstadoCompensacion FLOAT,
+	VolumenButanoC4EstadoCompensacion FLOAT,
+	VolumenCondensadosEstadoCompensacion FLOAT,
+	AcumuladoCostosRecuperablesInsolutos MONEY
+)
 CREATE TABLE #TipoHidrocarburo
 (
 	IdTipoHidrocarburo	INT,
@@ -296,7 +344,7 @@ DECLARE
 SELECT
 	@AplicaFactorCompresibilidad	=	ISNULL(AplicaFactorCompresibilidad,0)
 FROM
-	dbo.SCOC_Contrato
+	dbo.SCOC_Contrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
@@ -316,7 +364,7 @@ SELECT
 	Dia,
 	ROW_NUMBER() OVER (ORDER BY Dia) AS NumDiaHabil
 FROM
-	dbo.AP_Calendario
+	dbo.AP_Calendario (NOLOCK)
 WHERE
 	PrimerDiaMes  = DATEADD( MONTH, 1, @fechaMesDiaAnio )
 	AND NombreDia NOT IN ( 'Sábado', 'Domingo' )
@@ -345,9 +393,9 @@ UPDATE	PM
 								ELSE PM.VolumenProgramado
 							END
 FROM
-	SIPAC_RM_FMP_53_M	FMP53
+	SIPAC_RM_FMP_53_M	FMP53 (NOLOCK)
 JOIN
-	PR_ProduccionMensualSipac	PM
+	PR_ProduccionMensualSipac	PM (NOLOCK)
 	ON	FMP53.IdContrato	=	PM.idContrato
 	AND	DATEADD(MONTH,1,DATEFROMPARTS(FMP53.AnioReporte, FMP53.MesReporte,1)) = PM.idFecha
 WHERE
@@ -359,11 +407,11 @@ WHERE
 
 --Calculo del volumen de crudo a vender basado en reparticion preliminar
 SELECT	@UniMedidaBl = idUnidadMedida
-FROM dbo.CO_UnidadMedida
+FROM dbo.CO_UnidadMedida (NOLOCK)
 WHERE	Abreviatura = 'BL'
 
 SELECT	@UniMedidaBTU = idUnidadMedida
-FROM dbo.CO_UnidadMedida
+FROM dbo.CO_UnidadMedida (NOLOCK)
 WHERE	Abreviatura = 'MMBTU'
 
 INSERT INTO #CalculosGPA
@@ -417,12 +465,12 @@ SELECT
 	ISNULL(CV.PrecioPetroleo,0),
 	ISNULL(CV.PrecioCondensado,0)
 FROM
-    CO_Cromatografia             C
+    CO_Cromatografia             C (NOLOCK)
 JOIN
-    CO_CromatografiaValores      CV
+    CO_CromatografiaValores      CV (NOLOCK)
     ON C.IdCromatografia     = CV.IdCromatografia
 JOIN
-    CO_PuntosdeEntregaContrato	 PEC
+    CO_PuntosdeEntregaContrato	 PEC (NOLOCK)
     ON C.IdContrato	=	PEC.idContrato
 	AND CV.IdPuntoEntregaContrato = PEC.PuntoEntregaContratoID
 WHERE
@@ -441,7 +489,7 @@ SELECT
 	@GasVTA_20	=	SUM(CASE WHEN idHidrocarburo = 1000 AND VolumenVendido IS NULL THEN VolumenProgramado WHEN idHidrocarburo = 1000 AND VolumenVendido IS NOT NULL THEN VolumenVendido ELSE 0 END),
 	@CondensadoVTA_20	=	SUM(CASE WHEN idHidrocarburo = 1002 AND VolumenVendido IS NULL THEN VolumenProgramado WHEN idHidrocarburo = 1002 AND VolumenVendido IS NOT NULL THEN VolumenVendido ELSE 0 END)
 FROM
-	PR_ProduccionMensualSipac
+	PR_ProduccionMensualSipac (NOLOCK)
 WHERE
 	idContrato        = @Idcontrato
     AND idFecha        = @fechaMesDiaAnio
@@ -474,7 +522,7 @@ UPDATE #CalculosGPA
 
 --IF @Idcontrato = 10054	-- CASO ENI VOLUMEN DE PETROLEO A 15.56 Y PRECIO A 20°, SE VUELVE A RECALCULAR EL IMPORTE TOTAL
 -- SI ES PRODUCCION COMPARTIDA
-IF 2 = (SELECT ISNULL(IdTipoContrato,1) FROM CO_CONTRATO WHERE IdContrato = @Idcontrato)
+IF 2 = (SELECT ISNULL(IdTipoContrato,1) FROM CO_CONTRATO (NOLOCK) WHERE IdContrato = @Idcontrato)
 BEGIN
 
 	UPDATE #CalculosGPA
@@ -491,7 +539,7 @@ IF @Debug = 1
 SELECT
 	@TotalVolumenPetroleo	=	SUM(VolumenProgramado)
 FROM
-    PR_ProduccionMensualSipac
+    PR_ProduccionMensualSipac (NOLOCK)
 WHERE
     idContrato        = @Idcontrato
     AND idFecha        = @fechaMesDiaAnio
@@ -503,17 +551,17 @@ BEGIN
 		@PromAPI = CASE WHEN @TotalVolumenPetroleo = 0 THEN 0 ELSE SUM((ISNULL(CV.GradosAPI,0) * P.VolumenProgramado)/@TotalVolumenPetroleo) END,
 		@PromAzufre	= CASE WHEN @TotalVolumenPetroleo = 0 THEN 0 ELSE SUM((ISNULL(CV.Azufre,0) * P.VolumenProgramado)/@TotalVolumenPetroleo) END
 	FROM
-		PR_ProduccionMensualSipac	P
+		PR_ProduccionMensualSipac	P (NOLOCK)
 	JOIN
-		CO_Cromatografia             C
+		CO_Cromatografia             C (NOLOCK)
 		ON	P.idContrato	=	C.IdContrato
 		AND YEAR( P.idFecha )	=	C.Anio
 		AND MONTH( P.idFecha )	=	C.Mes
 	JOIN
-		CO_CromatografiaValores      CV
+		CO_CromatografiaValores      CV (NOLOCK)
 		ON C.IdCromatografia         = CV.IdCromatografia
 	JOIN
-		CO_PuntosdeEntregaContrato	 PEC
+		CO_PuntosdeEntregaContrato	 PEC (NOLOCK)
 		ON	C.IdContrato		=	PEC.idContrato
 		AND CV.IdPuntoEntregaContrato = PEC.PuntoEntregaContratoID
 	WHERE
@@ -729,7 +777,7 @@ UPDATE	#CalculosGPA
 SELECT
 	@SumaValoresGPA	=	Metano_C1+ Etano_C2+ Propano_C3+ Butano_iC4 + Butano_nC4 + Pentano_iC5 + Pentano_nC5 + Hexano_C6 + Heptano_C7 + Octano_C8 + Nonano_C9 + Decano_C10
 FROM
-	SCOC_ValoresEstandaresGPA_2145	
+	SCOC_ValoresEstandaresGPA_2145	(NOLOCK)
 WHERE
 	IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN IdFecIniVigencia AND FecFinVigencia
@@ -806,7 +854,7 @@ UPDATE C
 FROM
 	#CalculosGPA	C
 CROSS JOIN
-	SCOC_ValoresEstandaresGPA_2145	GPA
+	SCOC_ValoresEstandaresGPA_2145	GPA (NOLOCK)
 WHERE
 	GPA.IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
@@ -875,7 +923,7 @@ UPDATE	C
 FROM
 	#CalculosGPA	C
 CROSS JOIN
-	SCOC_ValoresEstandaresGPA_2145	GPA
+	SCOC_ValoresEstandaresGPA_2145	GPA (NOLOCK)
 WHERE
 	GPA.IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
@@ -918,7 +966,7 @@ UPDATE	C
 FROM
 	#CalculosGPA	C
 CROSS JOIN
-	SCOC_ValoresEstandaresGPA_2145	GPA
+	SCOC_ValoresEstandaresGPA_2145	GPA (NOLOCK)
 WHERE
 	GPA.IdComponente	=	2
 	AND	@fechaMesDiaAnio	BETWEEN GPA.IdFecIniVigencia AND GPA.FecFinVigencia
@@ -951,7 +999,7 @@ IF @DEBUG = 1
 BEGIN
 SELECT C.IDCONTRATO, VTA_Bll_C5_Equiv, FMP53.*
 FROM
-	SIPAC_RM_FMP_53_M	FMP53
+	SIPAC_RM_FMP_53_M	FMP53 (NOLOCK)
 JOIN
 	#CalculosGPA	C
 	ON	FMP53.IdContrato	=	C.idContrato
@@ -989,7 +1037,7 @@ IF @DEBUG = 1
 BEGIN
 SELECT VTA_Bll_C5_Equiv
 FROM
-	SIPAC_RM_FMP_53_M	FMP53
+	SIPAC_RM_FMP_53_M	FMP53 (NOLOCK)
 JOIN
 	#CalculosGPA	C
 	ON	FMP53.IdContrato	=	C.idContrato
@@ -1083,7 +1131,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
-		dbo.CO_TipoHidrocarburo	TH
+		dbo.CO_TipoHidrocarburo	TH (NOLOCK)
 
 		SELECT
 		'COMERCIALIZACIONES CONDENSABLE',
@@ -1110,7 +1158,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	JOIN
-		dbo.LOG_CalculoProduccionMensual	LG
+		dbo.LOG_CalculoProduccionMensual	LG (NOLOCK)
 		ON	C.IdContrato	=	LG.IdContrato
 		AND	C.MesReporte	=	LG.MesReporte
 		AND	C.PuntoEntregaID	=	LG.PuntoEntregaID
@@ -1267,7 +1315,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
-		dbo.CO_TipoHidrocarburo	TH
+		dbo.CO_TipoHidrocarburo	TH (NOLOCK)
 
 	-- SE BORRAN LAS COMERCIALIZACIONES EXISTENTES PARA EL CONTRATO, MES, PTO ENTREGA, QUE NO PERTENEZCAN A PEMEX
 	DELETE	OC
@@ -1362,7 +1410,7 @@ BEGIN
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
-		dbo.CO_TipoHidrocarburo	TH
+		dbo.CO_TipoHidrocarburo	TH (NOLOCK)
 
 	-- SI HAY VOLUMEN DE CONDENSABLE, SE GENERA LA COMERCIALIZACION
 	IF 0 < (SELECT ISNULL(Bll_C5_Equiv,0) FROM #CalculosGPA)
@@ -1473,15 +1521,9 @@ BEGIN
 		--AND C.PuntoEntregaID = @idPuntoEntrega
 		AND C.IdTipoHidrocarburo = 10001
 		AND C.EsCondensable = 1
+	
 
-
-	-- SE BORRA EL VOLUMEN ANTERIORMENTE GENERADO
-	DELETE	dbo.PR_VolumenMensualProduccionPetroleo
-	WHERE	IdContrato	=	@Idcontrato
-		AND MesReporte	=	@fechaMesDiaAnio
-
-	-- SE INSERTA LA INFORMACION EN LA TABLA DE PRODUCCION FINAL
-	INSERT INTO dbo.PR_VolumenMensualProduccionPetroleo
+	INSERT INTO #Temp_PR_VolumenMensualProduccionPetroleo
 	(
 	    IdContrato,
 	    MesReporte,
@@ -1499,7 +1541,7 @@ BEGIN
 	    ButanoC4Autoconsumo,
 	    VolumenCondensadoPuntoMedicion,
 	    VolumenCondensadoAutoconsumo,
-	 Bit_CasoFortuito,
+		Bit_CasoFortuito,
 	    CantDiasCasoFortuito,
 	    OtrosIngresosUsoCompartidoInfraestructura,
 	    VolumenPetroleoContratistaReparticion,
@@ -1563,7 +1605,7 @@ BEGIN
 	    0,--VolumenPetroleoContratistaCompensacion,
 	    0,--VolumenMetanoC1ContratistaCompensacion,
 	    0,--VolumenEtanoC2ContratistaCompensacion,
-	   0,--VolumenPropanoC3ContratistaCompensacion,
+	    0,--VolumenPropanoC3ContratistaCompensacion,
 	    0,--VolumenButanoC4ContratistaCompensacion,
 	    0,--VolumenCondensadosContratistaCompensacion,
 	    0,--VolumenPetroleoEstadoCompensacion,
@@ -1572,11 +1614,12 @@ BEGIN
 	    0,--VolumenPropanoC3EstadoCompensacion,
 	    0,--VolumenButanoC4EstadoCompensacion,
 	    0,--VolumenCondensadosEstadoCompensacion,
-	    0--AcumuladoCostosRecuperablesInsolut
+	    0 --AcumuladoCostosRecuperablesInsolut
+
 	FROM
 		#CalculosGPA	C
 	JOIN
-		PR_ProduccionMensualPtoEntrega	PTE
+		PR_ProduccionMensualPtoEntrega	PTE (NOLOCK)
 		ON	C.IdContrato	=	PTE.IdContrato
 		AND	C.MesReporte	=	PTE.IdFecha
 	--WHERE
@@ -1590,8 +1633,142 @@ BEGIN
 		C.BN_MMBTU_C3,--	    PropanoC3Autoconsumo,
 		C.BN_MMBTU_IC4 + C.BN_MMBTU_NC4,
 		C.BN_Bll_C5_Equiv
-
 	
+
+	IF EXISTS(SELECT 1 FROM dbo.PR_VolumenMensualProduccionPetroleo
+					WHERE	IdContrato	=	@Idcontrato
+						AND MesReporte	=	@fechaMesDiaAnio
+						AND Activo = 1)
+	BEGIN
+		UPDATE PR_VolumenMensualProduccionPetroleo
+		SET 
+		VolumenPetroleoPuntoMedicion = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenPetroleoPuntoMedicion,
+	    GradosAPI = #Temp_PR_VolumenMensualProduccionPetroleo.GradosAPI,
+	    ContenidoAzufre = #Temp_PR_VolumenMensualProduccionPetroleo.ContenidoAzufre,
+	    VolumenPetroleoAutoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenPetroleoAutoconsumo,
+	    MetanoC1 = #Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1,
+	    EtanoC2 = #Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2,
+	    PropanoC3 = #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3,
+	    ButanoC4 = #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4,
+	    MetanoC1Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1Autoconsumo,
+	    EtanoC2Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2Autoconsumo,
+	    PropanoC3Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3Autoconsumo,
+	    ButanoC4Autoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4Autoconsumo,
+	    VolumenCondensadoPuntoMedicion = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoPuntoMedicion,
+	    VolumenCondensadoAutoconsumo = #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoAutoconsumo,
+		ModificadoEl = GETDATE(),
+		ModificadoPor = @Usuario
+		FROM PR_VolumenMensualProduccionPetroleo
+		INNER JOIN #Temp_PR_VolumenMensualProduccionPetroleo
+			ON PR_VolumenMensualProduccionPetroleo.IdContrato = #Temp_PR_VolumenMensualProduccionPetroleo.IdContrato
+			AND PR_VolumenMensualProduccionPetroleo.MesReporte = #Temp_PR_VolumenMensualProduccionPetroleo.MesReporte
+			AND PR_VolumenMensualProduccionPetroleo.Activo = 1
+		WHERE PR_VolumenMensualProduccionPetroleo.IdContrato = @IdContrato
+			AND PR_VolumenMensualProduccionPetroleo.MesReporte = @fechaMesDiaAnio
+			AND PR_VolumenMensualProduccionPetroleo.Activo = 1 
+	END
+	ELSE
+	BEGIN
+	-- SE INSERTA LA INFORMACION EN LA TABLA DE PRODUCCION FINAL
+	INSERT INTO dbo.PR_VolumenMensualProduccionPetroleo
+	(
+	    IdContrato,
+	    MesReporte,
+	    VolumenPetroleoPuntoMedicion,
+	    GradosAPI,
+	    ContenidoAzufre,
+	    VolumenPetroleoAutoconsumo,
+	    MetanoC1,
+	    EtanoC2,
+	    PropanoC3,
+	    ButanoC4,
+	    MetanoC1Autoconsumo,
+	    EtanoC2Autoconsumo,
+	    PropanoC3Autoconsumo,
+	    ButanoC4Autoconsumo,
+	    VolumenCondensadoPuntoMedicion,
+	    VolumenCondensadoAutoconsumo,
+		Bit_CasoFortuito,
+	    CantDiasCasoFortuito,
+	    OtrosIngresosUsoCompartidoInfraestructura,
+	    VolumenPetroleoContratistaReparticion,
+	    VolumenMetanoC1ContratistaReparticion,
+	    VolumenEtanoC2ContratistaReparticion,
+	    VolumenPropanoC3ContratistaReparticion,
+	    VolumenButanoC4ContratistaReparticion,
+	    VolumenCondensadosContratistaReparticion,
+	    VolumenPetroleoEstadoReparticion,
+	    VolumenMetanoC1EstadoReparticion,
+	    VolumenEtanoC2EstadoReparticion,
+	    VolumenPropanoC3EstadoReparticion,
+	    VolumenButanoC4EstadoReparticion,
+	    VolumenCondensadosEstadoReparticion,
+	    VolumenPetroleoContratistaCompensacion,
+	    VolumenMetanoC1ContratistaCompensacion,
+	    VolumenEtanoC2ContratistaCompensacion,
+	    VolumenPropanoC3ContratistaCompensacion,
+	    VolumenButanoC4ContratistaCompensacion,
+	    VolumenCondensadosContratistaCompensacion,
+	    VolumenPetroleoEstadoCompensacion,
+	    VolumenMetanoC1EstadoCompensacion,
+	    VolumenEtanoC2EstadoCompensacion,
+	    VolumenPropanoC3EstadoCompensacion,
+	    VolumenButanoC4EstadoCompensacion,
+	    VolumenCondensadosEstadoCompensacion,
+	    AcumuladoCostosRecuperablesInsolutos,
+		Activo
+	)
+	SELECT
+		#Temp_PR_VolumenMensualProduccionPetroleo.IdContrato,
+		#Temp_PR_VolumenMensualProduccionPetroleo.MesReporte,
+		#Temp_PR_VolumenMensualProduccionPetroleo.VolumenPetroleoPuntoMedicion,
+		#Temp_PR_VolumenMensualProduccionPetroleo.GradosAPI,
+		#Temp_PR_VolumenMensualProduccionPetroleo.ContenidoAzufre,
+		0,--	VolumenPetroleoAutoconsumo,
+		#Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1,
+		#Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.MetanoC1Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.EtanoC2Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.PropanoC3Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.ButanoC4Autoconsumo,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoPuntoMedicion,
+	    #Temp_PR_VolumenMensualProduccionPetroleo.VolumenCondensadoAutoconsumo,
+		0,	-- Bit_CasoFortuito
+		0,	-- CantDiasCasoFortuito
+		0,	-- OtrosIngresosUsoCompartidoInfraestructura
+	    0,--VolumenPetroleoContratistaReparticion,
+	    0,--VolumenMetanoC1ContratistaReparticion,
+	    0,--VolumenEtanoC2ContratistaReparticion,
+	    0,--VolumenPropanoC3ContratistaReparticion,
+	    0,--VolumenButanoC4ContratistaReparticion,
+	    0,--VolumenCondensadosContratistaReparticion,
+	    0,--VolumenPetroleoEstadoReparticion,
+	    0,--VolumenMetanoC1EstadoReparticion,
+	    0,--VolumenEtanoC2EstadoReparticion,
+	    0,--VolumenPropanoC3EstadoReparticion,
+	    0,--VolumenButanoC4EstadoReparticion,
+	    0,--VolumenCondensadosEstadoReparticion,
+	    0,--VolumenPetroleoContratistaCompensacion,
+	    0,--VolumenMetanoC1ContratistaCompensacion,
+	    0,--VolumenEtanoC2ContratistaCompensacion,
+	    0,--VolumenPropanoC3ContratistaCompensacion,
+	    0,--VolumenButanoC4ContratistaCompensacion,
+	    0,--VolumenCondensadosContratistaCompensacion,
+	    0,--VolumenPetroleoEstadoCompensacion,
+	    0,--VolumenMetanoC1EstadoCompensacion,
+	    0,--VolumenEtanoC2EstadoCompensacion,
+	    0,--VolumenPropanoC3EstadoCompensacion,
+	    0,--VolumenButanoC4EstadoCompensacion,
+	    0,--VolumenCondensadosEstadoCompensacion,
+	    0,--AcumuladoCostosRecuperablesInsolut
+		1
+	FROM
+		#Temp_PR_VolumenMensualProduccionPetroleo 
+
+
+	END
 --****************************************************************************************************
 END
 --************************************************************************************************
