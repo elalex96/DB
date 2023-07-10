@@ -33,7 +33,7 @@ BEGIN
 			@Sheet,
 			'no',
 			@Site,
-			'https://www.smps-adinco.com/trusted/',
+			'https://adincobi.mx/trusted/',
 			@idUsuario,
 			GETDATE(),
 			1,
