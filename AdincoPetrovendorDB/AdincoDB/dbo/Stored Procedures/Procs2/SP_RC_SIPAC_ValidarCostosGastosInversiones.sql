@@ -1,4 +1,16 @@
-﻿-- ==============================================  
+﻿USE [Adinco]
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_RC_SIPAC_ValidarCostosGastosInversiones'
+)
+    DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversiones;
+GO
+
+-- ==============================================  
 -- Author:      Marcos Garcia  
 -- Create:      20-11-2019  
 -- Description: Procedimiento que valida el archivo  
@@ -39,7 +51,7 @@
 -- Alter Date:			08 de Mayo del 2023
 -- Alter Description:	Ajuste en columna RC21_13 si es reporte en ceros se muestre vacía y no con un 0
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]  
+CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]
     @Contrato INT,  
     @Mes DATE,  
     @IdPresupuesto INT,  
@@ -73,6 +85,9 @@ BEGIN
   
     IF OBJECT_ID('tempdb..#TEMPORAL_26_MContTemp', 'U') IS NOT NULL  
         DROP TABLE #TEMPORAL_26_MContTemp;  
+
+	IF OBJECT_ID('tempdb..#TablaDeValidaciones', 'U') IS NOT NULL  
+        DROP TABLE #TablaDeValidaciones;  
 	
 
 	DECLARE @Aprobado INT = 10004,
@@ -84,6 +99,11 @@ BEGIN
 		@TipoComprobanteExtranjero INT = 3
 
     --________________________________________ Creación de Tablas Temporales ________________________________________--  
+	 CREATE TABLE #TablaDeValidaciones 
+	 (
+		IdRowExcel INT IDENTITY(1,1),
+		Validaciones VARCHAR(2000) NULL
+	 );
     --________________________________________  
     CREATE TABLE #TEMPORAL_21_M  
     (  
@@ -688,7 +708,7 @@ BEGIN
         );  
     END  
 	
-
+	
     IF (@Reporte <> 0)  
     BEGIN  
         SELECT ' La plantilla se reportará en 0 ya que no se encontró ningún gasto en el mes seleccionado' AS Validacion,  
@@ -696,11 +716,9 @@ BEGIN
     END;  
     ELSE  
     BEGIN  
-        --________________________________________ Validaciones ________________________________________--  
-        SELECT [Validaciones]  
-        FROM  
-        (  
+           --________________________________________ Validaciones ________________________________________--          
             --0______________________________Verificacion Presupuesto_______________________________--  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
             SELECT CASE  
                        WHEN IdPresupuestoCNH IS NULL  
                             OR IdPresupuestoCNH = ''  
@@ -710,11 +728,12 @@ BEGIN
                        ELSE  
                            '¡Alerta! No sé a proporcionado la fecha de inicio o fecha de fin del presupuesto: [ '  
                            + Nombre + ' - ' + SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH) - 8, 9) + ' ].'  
-                   END AS Validaciones  
+                   END AS Validaciones
             FROM #DatosPresupuestos  
             WHERE FechaInicioPresupuesto IS NULL  
-                  OR FechaFinPresupuesto IS NULL  
-            UNION  
+                  OR FechaFinPresupuesto IS NULL 
+			----------------------------  
+            INSERT INTO #TablaDeValidaciones (Validaciones)
             SELECT CASE  
                        WHEN @Count = 1 THEN  
                            '¡Alerta! No sé a proporcionado el identificador CNH del Presupuesto [' + DP.Nombre + '].'  
@@ -734,15 +753,13 @@ BEGIN
                              2,  
                              ''  
                                   ) + '].'  
-                   END AS Validaciones  
+                   END AS Validaciones
             FROM #DatosPresupuestos DP  
             WHERE DP.IdPresupuestoCNH IS NULL  
                   OR DP.IdPresupuestoCNH = ''  
-                  OR DP.IdPresupuestoCNH = 'FALTA ID'  
-            UNION  
-  
-            --   
-            --         
+                  OR DP.IdPresupuestoCNH = 'FALTA ID' 
+			----------------------------  
+            INSERT INTO #TablaDeValidaciones (Validaciones)    
             SELECT CASE  
                        WHEN IdPresupuestoCNH IS NULL  
                             OR IdPresupuestoCNH = ''  
@@ -753,16 +770,15 @@ BEGIN
                            '¡Alerta! El presupuesto: [ ' + Nombre + ' - '  
                            + SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH) - 8, 9) + ' ] con fecha fin vigencia '  
                            + CONVERT(VARCHAR(2000), FechaFinPresupuesto) + ' está fuera del periodo.'  
-                   END AS Validaciones  
+                   END AS Validaciones
             FROM #DatosPresupuestos  
             WHERE DATEDIFF(MONTH, FechaFinPresupuesto, @Mes) >= 1  
-      AND DATEDIFF(MONTH, FechaFinPresupuesto, @Mes) <= 6  
+				  AND DATEDIFF(MONTH, FechaFinPresupuesto, @Mes) <= 6  
                   AND FechaFinPresupuesto IS NOT NULL  
-                  AND @EsHistorico = 0  
-            --        
-  
-            UNION  
-            SELECT CASE  
+                  AND @EsHistorico = 0 
+			----------------------------  
+            INSERT INTO #TablaDeValidaciones (Validaciones)  
+            SELECT  CASE  
                        WHEN IdPresupuestoCNH IS NULL  
                             OR IdPresupuestoCNH = ''  
                             OR IdPresupuestoCNH = 'FALTA ID' THEN  
@@ -774,27 +790,26 @@ BEGIN
                            + SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH) - 8, 9) + ' ] con fecha fin vigencia '  
                            + CONVERT(VARCHAR(2000), FechaFinPresupuesto)  
                            + ' está fuera de los últimos 6 meses permitidos.'  
-                   END AS Validaciones  
+                   END AS Validaciones
             FROM #DatosPresupuestos  
             WHERE DATEDIFF(MONTH, FechaFinPresupuesto, @Mes) >= 7  
                   AND FechaFinPresupuesto IS NOT NULL  
-                  AND @EsHistorico = 0  
-            UNION  
-  
-            --1______________________________Complemento de Pago sea PPD_______________________________--  
-            SELECT ('El complemento de pago se Registró como PUE en vez de PPD, en la Hoja RC_CONT_22_M en la columna RC22_06 Renglón: '  
+                  AND @EsHistorico = 0 
+            --1______________________________Complemento de Pago sea PPD_______________________________--
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  ('El complemento de pago se Registró como PUE en vez de PPD, en la Hoja RC_CONT_22_M en la columna RC22_06 Renglón: '  
                     + CONVERT(VARCHAR(2000), T22.Id_22_M)  
                     + ', referente en la Hoja RC_CONT_23_M en la columna RC23_03 Renglón: '  
                     + CONVERT(VARCHAR(2000), T23.Id_23_M)  
-                   ) + '.' AS [Validaciones]  
+                   ) + '.' AS [Validaciones]
             FROM #TEMPORAL_23_M T23  
                 INNER JOIN #TEMPORAL_22_M T22  
                     ON T23.UUID_Relacionado_C23_03 = T22.UUID_RC22_04  
             WHERE T22.MetPago_RC22_06 = 'PUE'  
-                  AND T22.TipoComprobante_RC22_05 = 'I'  
-            UNION  
-  
-            --2_______________________________Monto Total Mayor o Igual que (Subtotal y Monto Liquida)__--  
+                  AND T22.TipoComprobante_RC22_05 = 'I'
+			ORDER BY T22.Id_22_M ASC  
+            --2_______________________________Monto Total Mayor o Igual que (Subtotal y Monto Liquida)__-- 
+			INSERT INTO #TablaDeValidaciones (Validaciones)
             SELECT CASE  
                        WHEN (T22.Subtotal_RC22_08 > T22.MontoTotal_RC22_07)  
                             AND (T22.MontoLiquida_RC22_09 > T22.MontoTotal_RC22_07) THEN  
@@ -806,14 +821,14 @@ BEGIN
                        WHEN T22.MontoLiquida_RC22_09 > T22.MontoTotal_RC22_07 THEN  
                            'El Monto que se Liquida es mayor que el Monto Total del comprobante de Facturación, Verificar en la Hoja RC_CONT_22_M en la columna RC22_09 Renglón: '  
                            + CONVERT(VARCHAR(2000), T22.Id_22_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_22_M AS T22  
             WHERE T22.Subtotal_RC22_08 > T22.MontoTotal_RC22_07  
-                  OR T22.MontoLiquida_RC22_09 > T22.MontoTotal_RC22_07  
-            UNION  
-  
+                  OR T22.MontoLiquida_RC22_09 > T22.MontoTotal_RC22_07 
+			ORDER BY T22.Id_22_M ASC  
             --3 _____________________________ Fecha Menor o Igual al ultimo dia Natural(2 meses extra aun para recibir) _______________--  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
                             OR T26.IdDocFacturacion_RC26_03 = 'NA' THEN  
                            'Verificar en la Hoja RC_CONT_26_M en la columna RC26_04 Renglón: '  
@@ -826,12 +841,12 @@ BEGIN
                            + CONVERT(NVARCHAR, (DATEDIFF(MONTH, T26.FechaPago_RC26_04, @Mes)))  
                            + '  meses de atraso de los 90 días (3 meses permitidos) con el ID del Documento: '  
                            + T26.IdDocFacturacion_RC26_03 + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
             WHERE DATEDIFF(MONTH, T26.FechaPago_RC26_04, @Mes) > 3  
-            UNION  
-  
-            ----------------------               
+              ORDER BY T26.Id_26_M ASC
+            ----------------------  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
             SELECT CASE  
                        WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
                             OR T26.IdDocFacturacion_RC26_03 = 'NA' THEN  
@@ -841,32 +856,31 @@ BEGIN
                            'La Fecha de Pago debe ser menor o igual al último día natural del periodo que se reporta verificar la Hoja RC_CONT_26_M en la columna RC26_04 Renglón: '  
                            + CONVERT(VARCHAR(2000), T26.Id_26_M) + ' con el ID del Documento '  
                            + T26.IdDocFacturacion_RC26_03 + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
             WHERE DATEDIFF(MONTH, @Mes, FechaPago_RC26_04) >= 1  
-            UNION  
-  
+			ORDER BY T26.Id_26_M ASC  
             --4 ________________________________________ UUID no null __________________________________--  
-            ----------------------------  
-            SELECT 'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_21_M en la columna RC21_05 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS [Validaciones]  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_21_M en la columna RC21_05 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS [Validaciones] 
             FROM #TEMPORAL_21_M T21  
             WHERE (  
                       T21.UUID_RC21_05 IS NULL  
                       OR T21.UUID_RC21_05 = 'NÚMERO NO REGISTRADO'  
                   )  
                   AND T21.TipoDocumento_RC21_04 = 'CF'  
-            UNION  
-  
-            ----------------------------  
-            SELECT 'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_22_M en la columna RC22_04 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T22.Id_22_M) + '.' AS [Validaciones]  
+			ORDER BY T21.Id_21_M ASC
+			----------------------------  
+            INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_22_M en la columna RC22_04 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T22.Id_22_M) + '.' AS [Validaciones]
             FROM #TEMPORAL_22_M T22  
-            WHERE T22.UUID_RC22_04 IS NULL  
-            UNION  
-  
+            WHERE T22.UUID_RC22_04 IS NULL
+			ORDER BY T22.Id_22_M ASC
             ----------------------------  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T23.UUID_RC23_02 IS NULL  
                             AND T23.UUID_Relacionado_C23_03 IS NULL THEN  
                            'El UUID del CFDI Principal, así como el UUID del CFDI Relacionado están vacíos, Verificar en la Hoja RC_CONT_23_M en las columnas RC23_02, RC23_03 Renglón: '  
@@ -877,21 +891,21 @@ BEGIN
                        WHEN T23.UUID_Relacionado_C23_03 IS NULL THEN  
                            'El UUID del CFDI Relacionado está vacío, Verificar en la Hoja RC_CONT_23_M en la columna RC23_03 Renglón: '  
                            + CONVERT(VARCHAR(2000), T23.Id_23_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_23_M T23  
             WHERE T23.UUID_RC23_02 IS NULL  
                   OR T23.UUID_Relacionado_C23_03 IS NULL  
-            UNION  
-  
+            ORDER BY T23.Id_23_M ASC  
             --5 _____________________________ PI y PE si son PPD _____________________________--  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T21.TipoDocumento_RC21_04 = 'PE' THEN  
                            'El Comprobante de Proveedor en el Extranjero esta Registrado como PPD en vez de PUE, Verificar en la Hoja RC_CONT_21_M en la columna RC21_04 Renglón: '  
                            + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.'  
                        WHEN T21.TipoDocumento_RC21_04 = 'PI' THEN  
                            'El Pedimento de Importación esta Registrado como PPD en vez de PUE, Verificar en la Hoja RC_CONT_21_M en la columna RC21_04 Renglón: '  
                            + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_21_M T21  
             WHERE (  
                       T21.TipoDocumento_RC21_04 = 'PE'  
@@ -901,29 +915,29 @@ BEGIN
                          T21.TipoDocumento_RC21_04 = 'PI'  
                          AND T21.MetodoPago_RC21_09 = 'PPD'  
                      )  
-            UNION  
-  
+			ORDER BY T21.Id_21_M ASC
             -- 6________________________ Datos Cuentas Contables Completos _____________________--  
-            SELECT 'El Número de Cuenta Contable o La Descripción de la Cuenta Contable se encuentra vacío, Verificar en la Hoja RC_CONT_21_M en las columnas RC21_17 o RC21_18 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS Validaciones  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El Número de Cuenta Contable o La Descripción de la Cuenta Contable se encuentra vacío, Verificar en la Hoja RC_CONT_21_M en las columnas RC21_17 o RC21_18 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS Validaciones
             FROM #TEMPORAL_21_M T21  
             WHERE T21.NumCuentContable_RC21_17 IS NULL  
                   OR T21.NumCuentContable_RC21_17 = ''  
                   OR T21.DescCuentaContable_RC21_18 IS NULL  
-                  OR T21.DescCuentaContable_RC21_18 = ''  
-            UNION  
-  
+                  OR T21.DescCuentaContable_RC21_18 = ''
+			ORDER BY T21.Id_21_M ASC
             -- 6________________________ Numero Poliza Contable _____________________--  
-            SELECT 'El Número de Póliza Contable se encuentra vacío, Verificar en la Hoja RC_CONT_21_M en la columna RC21_19 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS Validaciones  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El Número de Póliza Contable se encuentra vacío, Verificar en la Hoja RC_CONT_21_M en la columna RC21_19 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS Validaciones
             FROM #TEMPORAL_21_M T21  
             WHERE T21.NumPoliContable_RC21_19 IS NULL  
-                  OR T21.NumPoliContable_RC21_19 = ''  
-            UNION  
-  
+                  OR T21.NumPoliContable_RC21_19 = ''
+			ORDER BY T21.Id_21_M ASC
             --7 _____________________________ Verificacion del HASH _____________________________--  
             ---------------------HASH en la 22_M  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T22.UUID_RC22_04 IS NULL  
                             OR T22.UUID_RC22_04 = '' THEN  
                            'El Timbre HASH de la Hoja RC_CON_22_M en la columna RC22_03 Renglón: '  
@@ -932,44 +946,43 @@ BEGIN
                            'El Timbre HASH de la Hoja RC_CON_22_M en la columna RC22_03 Renglón: '  
                            + CONVERT(VARCHAR(2000), T22.Id_22_M) + ' se encuentra vacío con el UUID del CFDI: '  
                            + T22.UUID_RC22_04 + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_22_M T22  
             WHERE T22.TimbreHASH_XML_RC22_03 IS NULL  
-            UNION  
-  
-            -------------------HASH en la 24_M       
-            SELECT 'El Timbre HASH de la Hoja RC_CON_24_M en la columna RC24_03 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T24.Id_24_M) + ' se encuentra vacío.' AS [Validaciones]  
+			ORDER BY T22.Id_22_M ASC
+            -------------------HASH en la 24_M
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El Timbre HASH de la Hoja RC_CON_24_M en la columna RC24_03 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T24.Id_24_M) + ' se encuentra vacío.' AS [Validaciones]
             FROM #TEMPORAL_24_M T24  
             WHERE T24.TimbreHASH_PDF_RC24_03 IS NULL  
-            UNION  
-  
+			ORDER BY T24.Id_24_M ASC
             ------------------HASH en la 25_M     
-            SELECT 'El Timbre HASH de la Hoja RC_CON_25_M en la columna RC25_03 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T25.Id_25_M) + ' se encuentra vacío.' AS [Validaciones]  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El Timbre HASH de la Hoja RC_CON_25_M en la columna RC25_03 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T25.Id_25_M) + ' se encuentra vacío.' AS [Validaciones]
             FROM #TEMPORAL_25_M T25    
             WHERE T25.TimbreHASH_PDF_RC25_03 IS NULL  
-            UNION  
-  
+			ORDER BY T25.Id_25_M ASC
             ------------------HASH en la 26_M  
-            SELECT 'El Timbre HASH de la Hoja RC_CON_26_M en la columna RC26_06 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T26.Id_26_M) + ' se encuentra vacío.' AS [Validaciones]  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El Timbre HASH de la Hoja RC_CON_26_M en la columna RC26_06 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T26.Id_26_M) + ' se encuentra vacío.' AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
             WHERE T26.TimbreHASH_PDF_RC26_06 IS NULL  
-            UNION  
-  
+			ORDER BY T26.Id_26_M ASC
             --8 _________________________ RF01_01 (21 al 25) no Null y RC21_00 no null_______________________--  
-            ------------------------  
-            SELECT 'El Número de Identificación en el Presupuesto Asignado por la CNH están Vacíos, Verificar en la Hoja RC_CONT_21_M en la columna RC21_00 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS [Validaciones]  
+            INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'El Número de Identificación en el Presupuesto Asignado por la CNH están Vacíos, Verificar en la Hoja RC_CONT_21_M en la columna RC21_00 Renglón: '  
+                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + '.' AS [Validaciones]
             FROM #TEMPORAL_21_M T21  
             WHERE T21.NumeroIdentificacion_RC21_00 = ''  
                   OR T21.NumeroIdentificacion_RC21_00 IS NULL  
-            UNION  
-  
+			ORDER BY T21.Id_21_M ASC
             --9 ____________________  21_22 o 21_23 no mayor a 26_09  __________________--  
             --------------CF-----------------  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
                             OR T26.IdDocFacturacion_RC26_03 = '' THEN  
                            'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
@@ -987,7 +1000,7 @@ BEGIN
                            + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' del identificador ' + T26.IdDocFacturacion_RC26_03  
                            + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M Renglón: '  
                            + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
                 INNER JOIN #TEMPORAL_21_M T21  
                     ON T21.UUID_RC21_05 = T26.IdDocFacturacion_RC26_03  
@@ -995,11 +1008,11 @@ BEGIN
                   AND (  
                           T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09  
                           OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09  
-                      )  
-            UNION  
-  
+                      )            
+            ORDER BY T26.Id_26_M ASC
             ---------------PI--------------  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
                             OR T26.IdDocFacturacion_RC26_03 = '' THEN  
                            'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
@@ -1017,19 +1030,19 @@ BEGIN
                            + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' del identificador ' + T26.IdDocFacturacion_RC26_03  
                            + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '  
                            + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
                 INNER JOIN #TEMPORAL_21_M T21  
                     ON T21.IUC_PI_RC21_06 = T26.IdDocFacturacion_RC26_03  
-    WHERE T21.TipoDocumento_RC21_04 = 'PI'  
+			WHERE T21.TipoDocumento_RC21_04 = 'PI'  
                   AND (  
                           T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09  
                           OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09  
                       )  
-            UNION  
-  
+            ORDER BY T26.Id_26_M ASC  
             --------------------PE-----------------------  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
                             OR T26.IdDocFacturacion_RC26_03 = '' THEN  
                            'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
@@ -1047,7 +1060,7 @@ BEGIN
                            + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' del identificador ' + T26.IdDocFacturacion_RC26_03  
                            + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '  
                            + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
                 INNER JOIN #TEMPORAL_21_M T21  
                     ON T21.IUC_PE_RC21_07 = T26.IdDocFacturacion_RC26_03  
@@ -1055,26 +1068,26 @@ BEGIN
                   AND (  
                           T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09  
                           OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09  
-                      )  
-            UNION  
-  
+                      )
+			ORDER BY T26.Id_26_M ASC
             --10_____________________________ Archivos No nulos o NOTA:Falta ingresar archivo PDF o XML ______________________________________--  
             ------------RC_CONT_22_M-------  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T22.UUID_RC22_04 IS NOT NULL THEN  
                            'No se encuentra archivo XML verificar en la Hoja RC_CONT_22_M en la columna RC22_02 Renglón: '  
                            + CONVERT(VARCHAR(2000), T22.Id_22_M) + ' referente a el UUID: ' + T22.UUID_RC22_04 + '.'  
                        ELSE  
                            'No se encuentra archivo XML verificar en la Hoja RC_CONT_22_M en la columna RC22_02 Renglón: '  
                            + CONVERT(VARCHAR(2000), T22.Id_22_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_22_M T22  
             WHERE T22.NomArchivo_XML_RC22_02 IS NULL  
                   OR T22.NomArchivo_XML_RC22_02 = ''  
-            UNION  
-  
+            ORDER BY T22.Id_22_M ASC  
             -------------RC_CONT_24_M------  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T24.TimbreHASH_PDF_RC24_03 IS NOT NULL THEN  
                            'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_24_M en la columna RC24_02 Renglón: '  
                            + CONVERT(VARCHAR(2000), T24.Id_24_M) + ' referente a el Timbre HASH: '  
@@ -1082,14 +1095,14 @@ BEGIN
                        ELSE  
                            'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_24_M en la columna RC24_02 Renglón: '  
                            + CONVERT(VARCHAR(2000), T24.Id_24_M) + '.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_24_M T24  
             WHERE T24.NomArchivo_PDF_RC24_02 IS NULL  
                   OR T24.NomArchivo_PDF_RC24_02 = ''  
-            UNION  
-  
+            ORDER BY T24.Id_24_M ASC  
             -----------RC_CONT_26_M--------  
-            SELECT CASE  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
                             OR T26.IdDocFacturacion_RC26_03 = 'NA' THEN  
                            'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_26_M en la columna RC26_05 Renglón: '  
@@ -1098,23 +1111,23 @@ BEGIN
                            'Falta Ingresar Archivo PDF verificar Hoja RC_CONT_26_M en la columna RC26_05 Renglón: '  
                            + CONVERT(VARCHAR(2000), T26.Id_26_M) + ' referente al ID: ' + T26.IdDocFacturacion_RC26_03  
                            + ' del Documento de Facturación Pagado.'  
-                   END AS [Validaciones]  
+                   END AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
             WHERE T26.NomArchivo_PDF_RC26_05 = 'NOTA:Falta ingresar archivo PDF'  
-            UNION  
-  
+            ORDER BY T26.Id_26_M ASC  
             --11 ___________________________________ Folio 22_04, 22_11 sean iguales a 26_03, 26_02___________________________________________--  
-            SELECT 'La Forma de Pago en la Hoja RC_CONT_22_M en la columna RC22_11 Renglón: '  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'La Forma de Pago en la Hoja RC_CONT_22_M en la columna RC22_11 Renglón: '  
                    + CONVERT(VARCHAR(2000), T22.Id_22_M) + ' esta como "' + T22.FormPago_RC22_11  
                    + '" y en la Hoja RC_CONT_26_M en la columna RC26_02 Renglón: '  
-                   + CONVERT(VARCHAR(2000), T26.Id_26_M) + ' esta como "' + T26.FormaPago_RC26_02 + '".'  
+                   + CONVERT(VARCHAR(2000), T26.Id_26_M) + ' esta como "' + T26.FormaPago_RC26_02 + '".'
             FROM #TEMPORAL_26_M T26  
                 INNER JOIN #TEMPORAL_22_M T22  
                     ON T22.UUID_RC22_04 = T26.IdDocFacturacion_RC26_03  
             WHERE T22.FormPago_RC22_11 <> T26.FormaPago_RC26_02  
-            UNION  
-  
+            ORDER BY T22.Id_22_M ASC  
             --12 ___________________________________ UUID Repetido___________________________________________--  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
             SELECT 'Verificar la Hoja RC_CONT_22_M en la columna RC22_04 Renglones: '  
                    + STUFF(  
                      (  
@@ -1127,14 +1140,13 @@ BEGIN
                      1,  
                      2,  
                      ''  
-                          ) + ' ya que el UUID ' + T22.UUID_RC22_04 + ' se repite.'  
+                          ) + ' ya que el UUID ' + T22.UUID_RC22_04 + ' se repite.'
             FROM #TEMPORAL_22_M T22  
             GROUP BY T22.UUID_RC22_04  
             HAVING COUNT(T22.UUID_RC22_04) >= 2  
-            UNION  
-  
-            --14 ___________________________________   _______________________________--   
-            SELECT CASE  
+            --14 ___________________________________   _______________________________--
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  CASE  
                        WHEN COUNT(T26.TimbreHASH_PDF_RC26_06) > 1 THEN  
                 ('Verificar en Hoja RC_CONT_26_M en la columna RC26_05 en los renglones '  
                  + STUFF(  
@@ -1151,13 +1163,14 @@ BEGIN
                         ) + ' ya que los comprobantes de las formas de pago comparte el mismo HASH: '  
                  + T26.TimbreHASH_PDF_RC26_06 + ' en la columna RC26_06.'  
                 )  
-                   END  
+                   END
             FROM #TEMPORAL_26_MContTemp T26C  
                 JOIN #TEMPORAL_26_M T26  
-                    ON T26C.TimbreHASH = T26.TimbreHASH_PDF_RC26_06  
+                    ON T26C.TimbreHASH = T26.TimbreHASH_PDF_RC26_06
           GROUP BY T26.TimbreHASH_PDF_RC26_06  
-        ) AS Resultado  
-  where [Validaciones] IS NOT NULL;  
+
+		   SELECT Validaciones FROM #TablaDeValidaciones
+		   WHERE ISNULL([Validaciones], '') <> '';		
     END;  
 	
     IF (@Plantilla = 'CGI_2022')  
@@ -1194,7 +1207,8 @@ BEGIN
             TipoOpercion_RC21_26,  
             RegistroConAjuste_RC21_27,  
             AsociadoIncrementoPMT_RC21_28   
-			FROM #TEMPORAL_21_M;
+			FROM #TEMPORAL_21_M
+			ORDER BY #TEMPORAL_21_M.Id_21_M ASC;
 	END
 	ELSE
 	BEGIN
@@ -1228,7 +1242,8 @@ BEGIN
             ClavaMoneda_RC21_24,  
             TipCamConvetUSD_RC21_25,  
             TipoOpercion_RC21_26 
-			FROM #TEMPORAL_21_M;
+			FROM #TEMPORAL_21_M
+			ORDER BY #TEMPORAL_21_M.Id_21_M ASC;
 	END
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
@@ -1251,7 +1266,8 @@ BEGIN
 			RFC_Receptor_RC22_15,  
 			ClaveMoneda_RC22_16,  
 			ClasDocSoporte_RC22_17 
-			FROM #TEMPORAL_22_M;
+			FROM #TEMPORAL_22_M
+			ORDER BY #TEMPORAL_22_M.Id_22_M ASC;
 
 	SELECT  IdContratista_RF_00,  
 			IdContrato_RI_00,  
@@ -1261,7 +1277,8 @@ BEGIN
 			UUID_RC23_02,  
 			UUID_Relacionado_C23_03,  
 			TipoRelacion_RC23_04,  
-			NumParcialidad_RC23_05  FROM #TEMPORAL_23_M;
+			NumParcialidad_RC23_05  FROM #TEMPORAL_23_M
+			ORDER BY #TEMPORAL_23_M.Id_23_M ASC;
 
 	SELECT  IdContratista_RF_00,  
 			IdContrato_RI_00,  
@@ -1287,6 +1304,7 @@ BEGIN
 			ValMontFact_RC24_18,  
 			ValDolares_RC24_19,  
 			ClasDocSoporte_RC24_20  FROM #TEMPORAL_24_M
+			ORDER BY #TEMPORAL_24_M.Id_24_M ASC;
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
 			NumeroContrato_RF01_01,  
@@ -1308,6 +1326,7 @@ BEGIN
 			ValMontFact_RC25_15,  
 			ValDolares_RC25_16,  
 			ClasDocSoporte_RC25_17 FROM #TEMPORAL_25_M
+			ORDER BY #TEMPORAL_25_M.Id_25_M ASC;
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
 			MesReporte_RC26_00,  
@@ -1323,4 +1342,5 @@ BEGIN
 			TipoCambio_RC26_10,  
 			Beneficiario_RC26_11,  
 			ClasDocSoporte_RC26_12 FROM #TEMPORAL_26_M
+			ORDER BY #TEMPORAL_26_M.Id_26_M ASC;
 END;  
