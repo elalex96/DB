@@ -21,6 +21,10 @@ GO
 -- Create date: <05/07/2023>
 -- Description:	<Optimizacion del sp>
 -- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <10/07/2023>
+-- Description:	<Se agrega el descartado del contratista pico para que aparesca en la lsita de proveedores>
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaProveedoresPeticionOferta] --0,'',1
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
@@ -57,7 +61,9 @@ BEGIN
 	INSERT INTO #CO_CONTRATISTA (RFC)
 	SELECT RFC 
 	FROM Adinco..CO_Contratista (NOLOCK)
-	WHERE RFC IS NOT NULL AND RFC NOT LIKE 'TEN150921DA7%'
+	WHERE RFC IS NOT NULL 
+		AND RFC != 'TEN150921DA7'
+		AND RFC != 'PMS090112TB0'
 
 	INSERT INTO #LISTA_PROVEEDORES_TOTAL
 	SELECT
@@ -70,12 +76,11 @@ BEGIN
 	FROM dbo.S_Proveedor AS P WITH (NOLOCK)
 		LEFT JOIN Adinco.dbo.ListaNegra AS LN WITH (NOLOCK)
 			ON P.RFC COLLATE Modern_Spanish_CI_AS = LN.RFC COLLATE Modern_Spanish_CI_AS
-			AND P.Activo = 1
-			AND P.IdProveedor <> @IdProveedor
-			AND ISNULL(P.IsEliminado,0) = 0
-	WHERE P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM #CO_CONTRATISTA)
-		AND (P.RazonSocial LIKE '%' + @Buscar + '%' OR
-						P.RFC LIKE '%' + @Buscar + '%');
+	WHERE P.Activo = 1
+		AND P.IdProveedor <> @IdProveedor
+		AND ISNULL(P.IsEliminado,0) = 0 
+		AND P.RFC COLLATE Modern_Spanish_CI_AS NOT IN (SELECT RFC FROM #CO_CONTRATISTA)
+		AND (P.RazonSocial LIKE '%' + @Buscar + '%' OR P.RFC LIKE '%' + @Buscar + '%');
 
 	SET @RecordsByPage = 12;
 	SET @AllRecords = (SELECT COUNT(IdProveedor) FROM #LISTA_PROVEEDORES_TOTAL);
