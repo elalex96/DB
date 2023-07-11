@@ -51,7 +51,7 @@ GO
 -- Alter Date:			08 de Mayo del 2023
 -- Alter Description:	Ajuste en columna RC21_13 si es reporte en ceros se muestre vacía y no con un 0
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones] --10038, '20220401', 10216, 'CGI_2022', 0 
+CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]
     @Contrato INT,  
     @Mes DATE,  
     @IdPresupuesto INT,  
