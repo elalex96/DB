@@ -1,3 +1,15 @@
+USE [Adinco]
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SIPAC_RC_CONT_21_MConciliacion'
+)
+    DROP PROCEDURE SIPAC_RC_CONT_21_MConciliacion;
+GO
+
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_MConciliacion]  
     @Contrato      INT,  
     @IdPresupuesto INT          = 0,  
@@ -2049,7 +2061,7 @@ AS
                     RC21_01,  
                     RC21_02,  
                     ROW_NUMBER() OVER (ORDER BY  
-                                           RC21_11 ASC  
+                                           RC21_02, RC21_01,RC21_11 ASC  
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
@@ -2089,7 +2101,7 @@ AS
                     RC21_01,  
                     RC21_02,  
                     ROW_NUMBER() OVER (ORDER BY  
-                                           RC21_11 ASC  
+                                           RC21_02, RC21_01,RC21_11 ASC 
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
