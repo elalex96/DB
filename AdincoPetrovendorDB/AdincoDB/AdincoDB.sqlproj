@@ -3900,5 +3900,9 @@
     <Build Include="dbo\Stored Procedures\Procs3\Mobile_sp_TipoAprobacionesPorUsuario.sql" />
     <Build Include="dbo\User Defined Types\TY_ListaCambioDiario.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_GenerarTipoDeCambioPorSerieBanxicoMXN.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultarSubContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultaSubFamilia.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultarOT_Estatus.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_Consultar_PV_MM_MaterialUnidad.sql" />
   </ItemGroup>
 </Project>
