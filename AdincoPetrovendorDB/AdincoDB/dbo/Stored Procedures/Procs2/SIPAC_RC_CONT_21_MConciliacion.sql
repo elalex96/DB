@@ -1,4 +1,3 @@
-﻿
 IF EXISTS
 (
     SELECT 1
