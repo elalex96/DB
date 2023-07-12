@@ -245,7 +245,7 @@ AS
             )  
                     SELECT  
                         CO_Registro.IdRegistro,  
-                        ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO ') AS UUID,  
+                        ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO') AS UUID,  
                         FI_Factura.IdFactura,  
                         CO_Registro.MontoRegistro,  
                         CASE  
