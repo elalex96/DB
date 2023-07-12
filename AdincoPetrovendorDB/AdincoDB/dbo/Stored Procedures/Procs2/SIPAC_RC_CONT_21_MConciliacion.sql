@@ -1,4 +1,5 @@
-﻿IF EXISTS
+
+IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
