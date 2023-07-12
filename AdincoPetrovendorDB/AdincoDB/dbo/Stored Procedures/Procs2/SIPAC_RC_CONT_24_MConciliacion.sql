@@ -329,5 +329,5 @@ BEGIN
            ClasDocSoporte_RC24_20
     FROM #TEMPORAL_24_M_SP
     WHERE ConTransferencia = 1
-	ORDER BY AnioReporte_RC24_01, MesReporte_RC24_00 ASC
+	ORDER BY AnioReporte_RC24_01, MesReporte_RC24_00
 END;
