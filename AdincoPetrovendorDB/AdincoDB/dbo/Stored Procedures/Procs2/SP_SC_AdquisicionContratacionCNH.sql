@@ -1,4 +1,13 @@
-﻿CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] --3,'2015/09/04' ,'2021/09/04'
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_SC_AdquisicionContratacionCNH'
+)
+    DROP PROCEDURE SP_SC_AdquisicionContratacionCNH;
+GO
+
+CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] 
 @IdContrato INT, 
 @Fechainicio DATE, 
 @FechaFin DATE 
@@ -605,8 +614,7 @@ SET NOCOUNT ON
                    WHEN Mon.IdMoneda = 1          
                THEN   
                     (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
-                   ELSE   
-                       FORMAT(0, '#,#0.000')   
+                   ELSE 0
                END AS MontoMXN,   
                Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(O.FechaRegistro AS DATE)) AS TipoCambio,   
                CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS FechaTipoCambio,   
