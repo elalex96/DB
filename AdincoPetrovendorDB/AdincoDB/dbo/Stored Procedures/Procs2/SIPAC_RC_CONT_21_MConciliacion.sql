@@ -245,7 +245,7 @@ AS
             )  
                     SELECT  
                         CO_Registro.IdRegistro,  
-                        ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO') AS UUID,  
+                        ISNULL(FI_Factura.UUID, 'N�MERO NO REGISTRADO') AS UUID,  
                         FI_Factura.IdFactura,  
                         CO_Registro.MontoRegistro,  
                         CASE  
@@ -258,7 +258,7 @@ AS
                             WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'  
                                  OR FI_Factura.TipoComprobante LIKE 'T%'  
                                 THEN 'T'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'  
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%n�mina%'  
                                  OR FI_Factura.TipoComprobante LIKE 'N%'  
                                 THEN 'N'  
                             WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'  
@@ -331,7 +331,7 @@ AS
                                                                    END  
                     GROUP BY  
                         CO_Registro.IdRegistro,  
-                        ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO'),  
+                        ISNULL(FI_Factura.UUID, 'N�MERO NO REGISTRADO'),  
                         FI_Factura.IdFactura,  
                         CO_Registro.MontoRegistro,  
                         CASE  
@@ -344,7 +344,7 @@ AS
                             WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'  
                                  OR FI_Factura.TipoComprobante LIKE 'T%'  
                                 THEN 'T'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'  
+                            WHEN (FI_Factura.TipoComprobante) LIKE '%n�mina%'  
                                  OR FI_Factura.TipoComprobante LIKE 'N%'  
                                 THEN 'N'  
                             WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'  
@@ -1059,7 +1059,7 @@ AS
 								-- SOLO DE FACTURA Y SE CONFIRMA QUE ES CORRECTO QUE NO SE VISUALICE EN LA HOJA 22 NI EN EL ZIP DE ARCHIVOS   AS [RC21_04],    
                                 CASE  
                                     WHEN CO_Registro.CvTipoDocFacturacion = @TipoFactura  
-                                        THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')  
+                                        THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')  
                                     ELSE  
                                         'NA'  
                                 END                                                    AS [RC21_05],  
@@ -1254,7 +1254,7 @@ AS
                                 ISNULL(SUBSTRING(F.IdDocFacturacionSIPAC, 1, 2), 'CF'),  
                                 CASE  
                                     WHEN CO_Registro.CvTipoDocFacturacion = @TipoFactura  
-                                        THEN ISNULL(F.UUID, 'NÚMERO NO REGISTRADO')  
+                                        THEN ISNULL(F.UUID, 'N�MERO NO REGISTRADO')  
                                     ELSE  
                                         'NA'  
                                 END,  
@@ -1355,7 +1355,7 @@ AS
 								--SOLO DE FACTURA Y SE CONFIRMA QUE ES CORRECTO QUE NO SE VISUALICE EN LA HOJA 22 NI EN EL ZIP DE ARCHIVOS  
                                 CASE  
                                     WHEN CO_Registro.CvTipoDocFacturacion = @TipoFactura  
-                                        THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')  
+                                        THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')  
                                     ELSE  
                                         'NA'  
                                 END                                                      AS [RC21_05],  
@@ -1569,7 +1569,7 @@ AS
                                 ISNULL(SUBSTRING(FCP.IdDocFacturacionSIPAC, 1, 2), 'CF'),  
                                 CASE  
                                     WHEN CO_Registro.CvTipoDocFacturacion = @TipoFactura  
-                                        THEN ISNULL(FCP.UUID, 'NÚMERO NO REGISTRADO')  
+                                        THEN ISNULL(FCP.UUID, 'N�MERO NO REGISTRADO')  
                                     ELSE  
                                         'NA'  
                                 END,  
@@ -2058,7 +2058,7 @@ AS
                     RC21_01,  
                     RC21_02,  
                     ROW_NUMBER() OVER (ORDER BY  
-                                           RC21_02, RC21_01,RC21_11 ASC  
+                                           RC21_02, RC21_01,RC21_11 ASC 
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
@@ -2098,7 +2098,7 @@ AS
                     RC21_01,  
                     RC21_02,  
                     ROW_NUMBER() OVER (ORDER BY  
-                                           RC21_02, RC21_01,RC21_11 ASC 
+                                          RC21_02, RC21_01,RC21_11 ASC 
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
