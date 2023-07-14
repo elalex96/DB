@@ -1,13 +1,4 @@
-﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'fn_ObtenSubtotalPedido'
-)
-    DROP FUNCTION fn_ObtenSubtotalPedido;
-GO
-
--- =============================================
+﻿-- =============================================
 -- Author:		Luis David De La Cruz Bautista
 -- Create date: 29/21/2021
 -- Description:	Función para obtener el subtotal para issue 1489(Petrovendor)
