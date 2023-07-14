@@ -18,8 +18,8 @@ GO
 -- Description:	issue #930/ Optimización de sp
 -- =============================================
 -- Author:		Alexander Gomez
--- Update: 27/04/2023
--- Description:	se agrega validacion para usuario de amatitlan
+-- Update: 12/07/2023
+-- Description:	correccion para issue https://github.com/Adinco/petrovendor/issues/2383
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DEA_ValidarProveedor]
 	-- Add the parameters for the stored procedure here
@@ -29,15 +29,24 @@ AS
 BEGIN
 	DECLARE @RFC_ACTUAL NVARCHAR(200), @EXISTE_RFC INT;
 
-	set @RFC_ACTUAL = (SELECT RFC FROM dbo.S_Proveedor WHERE IdProveedor=@IdProveedor)
+	set @RFC_ACTUAL = (SELECT RFC FROM dbo.S_Proveedor (NOLOCK) WHERE IdProveedor=@IdProveedor)
 	set @EXISTE_RFC = (SELECT COUNT(IdProveedor) 
-						FROM DEA_Proveedor 
+						FROM DEA_Proveedor (NOLOCK)
 						WHERE RTRIM(LTRIM(RFC))=RTRIM(LTRIM(@RFC_ACTUAL)) 
 						AND Activo = 1)
 
 	IF ISNULL(@EXISTE_RFC,0)  >0 
 	BEGIN 
-		SELECT 'CAMBIAR_PROCESO'
+
+		IF @RFC_ACTUAL = 'PAM140722DK6'
+		BEGIN
+			SELECT 'AMATITLAN'
+		END
+		ELSE
+		BEGIN
+			SELECT 'CAMBIAR_PROCESO'
+		END
+
 	END 
 	ELSE 
 	BEGIN 
