@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -371,7 +371,7 @@ Permisionarios proporcionen información sobre contenido nacional en las activid
 		LEFT JOIN Adinco.dbo.CO_SAPVendor SV (NOLOCK)
 			ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS  
 		LEFT JOIN dbo.DG_Domicilio domicilio (NOLOCK)
-			ON domicilio.IdProveedor = P.IdProveedor 
+			ON P.IdProveedor = domicilio.IdProveedor 
 				AND domicilio.IdTipoDomicilio = 1 AND domicilio.Activo = 1  
     WHERE AP.IdAceptacionPedido = @IdPedido   
     GROUP BY RL.Nombre,  
@@ -407,7 +407,7 @@ BEGIN
 							P.RFC
 						FROM dbo.MM_AceptacionPedido AS AP (NOLOCK)
 						JOIN dbo.S_Proveedor AS P (NOLOCK)
-							ON P.IdProveedor = AP.IdProveedor 
+							ON AP.IdProveedor  = P.IdProveedor
 						WHERE AP.IdAceptacionPedido = @IdPedido);
 
 	set @EXISTE_RFC_DEA = (SELECT COUNT(IdProveedor) 
@@ -657,7 +657,7 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
 		LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP (NOLOCK)
 			ON PO.Plant = CP.Planta  
 		LEFT JOIN Adinco.dbo.CO_Contratista AS CON (NOLOCK)
-			ON CON.IdContratista = CP.IdContratista  
+			ON CP.IdContratista  = CON.IdContratista 
 		LEFT JOIN Adinco.dbo.CO_Contratista AS C (NOLOCK)
 			ON CAST(AP.IdProveedor AS INT) = C.IdContratista  
 		LEFT JOIN Adinco.dbo.CO_SAPVendor SV (NOLOCK)
