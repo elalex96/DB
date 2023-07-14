@@ -1,13 +1,4 @@
-﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_SC_AdquisicionContratacionCNH'
-)
-    DROP PROCEDURE SP_SC_AdquisicionContratacionCNH;
-GO
-
-CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] 
+﻿CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] 
 @IdContrato INT, 
 @Fechainicio DATE, 
 @FechaFin DATE 
