@@ -411,14 +411,14 @@ SELECT
 	@EsPC			=	IsPC,
 	@EsConsorcio	=	IsConsorcio
 FROM
-	CO_Contrato
+	CO_Contrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
 SELECT
 	@PorcPemex	=	PorcentajePemex / 100.00
 FROM
-	dbo.CO_PorcentajesContrato
+	dbo.CO_PorcentajesContrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
@@ -431,7 +431,7 @@ INSERT INTO #CostoUnitarioComercializacion
 SELECT
 	IdTipoHidrocarburo,
 	CostoUnitarioComercializacion
-FROM	COM_CostoUnitarioHidrocarburo
+FROM	COM_CostoUnitarioHidrocarburo (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 	AND	Mes		=	@MesReporte
@@ -595,18 +595,18 @@ UPDATE #Energias
 		C4Entero = ROUND(C4,0),
 		CTotalEntero = ROUND(C1,0) + ROUND(C2,0) + ROUND(C3,0) + ROUND(C4,0)
  
-IF @Debug = 1
-BEGIN
-	SELECT @VolC1 AS [VOLC1TOPE], @VolC2 AS [VOLC2TOPE], @VolC3 AS [VOLC3TOPE], @VolC4 AS [VOLC4TOPE], @VolC5 AS [VOLC5TOPEBLS]
-	SELECT
-		*
-	FROM
-		#Energias
+--IF @Debug = 1
+--BEGIN
+--	SELECT @VolC1 AS [VOLC1TOPE], @VolC2 AS [VOLC2TOPE], @VolC3 AS [VOLC3TOPE], @VolC4 AS [VOLC4TOPE], @VolC5 AS [VOLC5TOPEBLS]
+--	SELECT
+--		*
+--	FROM
+--		#Energias
 
-	SELECT SUM(C1), SUM(C2), SUM(C3), SUM(C4), SUM(C5)
-	FROM
-		#Energias
-END
+--	SELECT SUM(C1), SUM(C2), SUM(C3), SUM(C4), SUM(C5)
+--	FROM
+--		#Energias
+--END
 
 -- ---------------------------------------------------
 --Energia por componente del bloque por punto de venta
@@ -632,12 +632,12 @@ SELECT
 	SUM( CONVERT(FLOAT,[Energía C5+]) )                  AS C5Punto,
     SUM( CONVERT(FLOAT,VA.[Energía Total]) )            AS CTotalPunto
 FROM
-    PC_VentasAsignacion       VA
+    PC_VentasAsignacion       VA (NOLOCK)
 JOIN
-	PC_EquivalenciaPuntoVenta EQ
+	PC_EquivalenciaPuntoVenta EQ (NOLOCK)
     ON EQ.puntoventaa = VA.[PUNTO DE VENTA]
 JOIN
-	#Energias                 E
+	#Energias                 E 
     ON VA.[PUNTO DE VENTA] = E.PuntoVenta
 WHERE
     [PRODUCTO AGRUPA] = 'Gas'
@@ -691,30 +691,30 @@ END	-- IF @NumError <> 0
 		SUM( FC.Cantidad * @FactorConversion * (EPP.C4Punto / EPP.CTotalPunto)) AS C4Facturado,
 		SUM( FC.Cantidad * @FactorConversion * (EPP.C5Punto / EPP.CTotalPunto)) AS C5Facturado
 	FROM
-		dbo.PC_Comercializacion_V2    R8
+		dbo.PC_Comercializacion_V2    R8 (NOLOCK)
 	JOIN
-		PC_PTI_V2                     PTI
+		PC_PTI_V2                     PTI (NOLOCK)
 		ON CONVERT(INT,PTI.Factura)                  = CONVERT(INT,R8.Referencia1)
 	JOIN
-		dbo.FI_Factura                F
+		dbo.FI_Factura                F (NOLOCK)
 		ON RTRIM( PTI.UUID )            = RTRIM( F.UUID )
 	JOIN
-		dbo.PC_EquivalenciaPuntoVenta EPV
+		dbo.PC_EquivalenciaPuntoVenta EPV (NOLOCK)
 		ON EPV.[Nombre 1]               = R8.Nombre1
 	JOIN
-		dbo.PC_PtoExpedicionRecepcion PER
+		dbo.PC_PtoExpedicionRecepcion PER (NOLOCK)
 		ON PER.IdPtoExpedicionRecepcion = EPV.IdPtoExpedicionRecepcion
 	JOIN
-		dbo.PC_PuntoVentaProducto     PVP
+		dbo.PC_PuntoVentaProducto     PVP (NOLOCK)
 		ON PVP.IdPtoExpedicionRecepcion = EPV.IdPtoExpedicionRecepcion
 	JOIN
-		dbo.PC_Material               M
+		dbo.PC_Material               M (NOLOCK)
 		ON M.TextoBreve              = R8.Denominación
 	JOIN
-		#EnergiasPunto                EPP
+		#EnergiasPunto                EPP (NOLOCK)
 		ON EPP.IdPtoExpedicionRecepcion = PVP.IdPtoExpedicionRecepcion
 	JOIN
-		dbo.FI_CFDIConcepto           FC
+		dbo.FI_CFDIConcepto           FC (NOLOCK)
 		ON FC.IdFactura                 = F.IdFactura
 	WHERE
 		( R8.factura LIKE '92%'   OR   R8.Factura LIKE '93%' ) --Filtro de solo las facturas que comienzan 92 y 93
@@ -849,36 +849,36 @@ SELECT
 		ELSE	(EPP.C5Punto / @VolC5)
 	END		AS [PorcC5]
 FROM
-    dbo.PC_Comercializacion_V2    R8
+    dbo.PC_Comercializacion_V2    R8 (NOLOCK)
 JOIN
-	PC_PTI_V2                     PTI
+	PC_PTI_V2                     PTI (NOLOCK)
     ON CONVERT(INT,PTI.Factura)	= CONVERT(INT,R8.Referencia1)
 JOIN
-	dbo.FI_Factura                F
+	dbo.FI_Factura                F (NOLOCK)
     ON RTRIM( PTI.UUID )             = RTRIM( F.UUID )
 JOIN
-	dbo.PC_EquivalenciaPuntoVenta EPV
+	dbo.PC_EquivalenciaPuntoVenta EPV (NOLOCK)
     ON EPV.[Nombre 1]                = R8.Nombre1
 JOIN
-	dbo.PC_PtoExpedicionRecepcion PER
+	dbo.PC_PtoExpedicionRecepcion PER (NOLOCK)
     ON PER.IdPtoExpedicionRecepcion  = EPV.IdPtoExpedicionRecepcion
 JOIN
-	dbo.PC_PuntoVentaProducto     PVP
+	dbo.PC_PuntoVentaProducto     PVP (NOLOCK)
     ON PVP.IdPtoExpedicionRecepcion  = EPV.IdPtoExpedicionRecepcion
 JOIN
-	dbo.PC_Material               M
+	dbo.PC_Material               M (NOLOCK)
     ON M.TextoBreve                  = R8.Denominación
 JOIN
-	#EnergiasPunto                EPP
+	#EnergiasPunto                EPP (NOLOCK)
     ON EPP.IdPtoExpedicionRecepcion  = PVP.IdPtoExpedicionRecepcion
 JOIN
-	dbo.FI_CFDIConcepto      FC
+	dbo.FI_CFDIConcepto      FC (NOLOCK)
     ON FC.IdFactura                  = F.IdFactura
 JOIN
 	#Energias                     ENER
     ON ENER.IdPtoExpedicionRecepcion = EPP.IdPtoExpedicionRecepcion
 JOIN
-	dbo.CO_TipoCambioDiario       TCD
+	dbo.CO_TipoCambioDiario       TCD (NOLOCK)
 	--ON	CONVERT(DATE,SUBSTRING(PTI.FechaFactura,7,4)+SUBSTRING(PTI.FechaFactura,4,2)+SUBSTRING(PTI.FechaFactura,1,2),112)	=	TCD.Fecha
 	ON	CONVERT(DATE,SUBSTRING(R8.FechaFactura,7,4)+SUBSTRING(R8.FechaFactura,4,2)+SUBSTRING(R8.FechaFactura,1,2),112)	=	TCD.Fecha
     --ON YEAR( F.FechaTimbrado )  = YEAR( TCD.Fecha )
@@ -889,7 +889,7 @@ JOIN
 	#ComponentesFacturados        COMP
     ON COMP.IdPtoExpedicionRecepcion = PER.IdPtoExpedicionRecepcion
 JOIN
-	COM_Equivalencias             E
+	COM_Equivalencias             E (NOLOCK)
     ON FC.Unidad                     = E.Unidad
 WHERE
       ( R8.factura LIKE '92%'  OR   R8.Factura LIKE '93%'  )
@@ -1337,7 +1337,7 @@ FROM
 		CONVERT( FLOAT, CRO.IC4mol )                                                            AS IC4,
 		CONVERT( FLOAT, CRO.NC4mol )                                                            AS NC4,
 		CONVERT( FLOAT, CRO.IC5mol )                                                            AS IC5,
-		CONVERT( FLOAT, CRO.NC5mol )                                                            AS NC5,
+		CONVERT( FLOAT, CRO.NC5mol )                                 AS NC5,
 		CONVERT( FLOAT, CRO.C6mol )                                   AS C6,
 		@pcC1                                                                                 AS pcC1, -- VALORES FIJOS
 		@pcC2                            AS pcC2, -- VALORES FIJOS
@@ -1629,7 +1629,7 @@ SELECT
 							ELSE	C5
 						END
 FROM
-    PC_Volumenes
+    PC_Volumenes (NOLOCK)
 WHERE
     IdContrato = @IdContrato
     AND Mes     = @MesReporte
@@ -2082,7 +2082,7 @@ BEGIN
 			END							AS PrecioPuntoMedicion,
 			IdFactura,
 			'000000000000000'                         AS NumeroFolioPedimento, --NumeroFolioPedimento
-			1                             AS EPT, --EPT
+			1                          AS EPT, --EPT
 			1                                         AS OperacionBajoReglasMercado, --OperacionBajoReglasMercado
 			2                                         AS ClasificacionDocumentoSoporte, --ClasificacionDocumentoSoporte
 			@Usuario,

@@ -151,22 +151,7 @@ WHERE
     PVP.Aplica			= 1
     AND CC.IdContrato	= @IdContrato
     AND DI.IdMaterialPC IN ( 10011, 10012 )
-	AND -- DATEFROMPARTS( SUBSTRING( DI.MesReporte, 7, 4 ), SUBSTRING( DI.MesReporte, 4, 2 ), 1 ) 
-	DATEFROMPARTS( 
-		CASE
-		WHEN CHARINDEX('/',SUBSTRING( DI.MesReporte, 4, 2 ))=2
-		THEN
-		REPLACE(SUBSTRING(DI.MesReporte, 6, 4 ),'/','')
-		ELSE
-		SUBSTRING(DI.MesReporte, 7, 4 )
-		END, 
-		CASE
-		WHEN CHARINDEX('/',SUBSTRING( DI.MesReporte, 4, 2 ))=2
-		THEN
-		CONCAT('0',REPLACE(SUBSTRING(DI.MesReporte, 4, 2 ),'/',''))
-		ELSE
-		SUBSTRING(DI.MesReporte, 4, 2 )
-		END, 1 )= @MesReporte
+	AND DATEFROMPARTS( SUBSTRING( DI.MesReporte, 7, 4 ), SUBSTRING( DI.MesReporte, 4, 2 ), 1 ) = @MesReporte
     AND PVP.Mes                                                                                = @MesReporte
 GROUP BY
     PVP.IdPtoExpedicionRecepcion,
@@ -517,8 +502,8 @@ END
 SELECT @TotalDistribuido	=	SUM(VolumenVendido)
 FROM #ComercializacionesConde
 
-IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
-	SELECT @FechaLimite = '20220630 23:59'
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101','20220501')
+	SELECT @FechaLimite = '20231230 23:59'
 
 IF @IdContrato <> 10028 -- MISIÓN
 BEGIN
