@@ -1,7 +1,4 @@
-﻿USE [Adinco]
-GO
-
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -30,7 +27,7 @@ BEGIN
         IF
         (
             SELECT COUNT(1)
-            FROM CO_Registro
+            FROM CO_Registro (NOLOCK)
             WHERE IdRegistro = @GastoId
                   AND MesPresentacion = @MesPresentacion
         ) = 0
@@ -52,7 +49,7 @@ BEGIN
             VALUES
             (@FechaHoy,
              'Edición',
-             'Edición de Mes Presentacion de CO_Registro en la página ' + @Pantalla,
+             'Edición de Mes Presentación de CO_Registro en la página ' + @Pantalla,
              CONCAT(
                        'IdRegistro ' + CONVERT(VARCHAR, @GastoId) + ' - Mes Presentación Antes:',
                        CONVERT(VARCHAR, @MesPresentacionActual),
@@ -64,12 +61,10 @@ BEGIN
             )
         END;
         COMMIT TRAN;
-
     END TRY
     BEGIN CATCH
         ROLLBACK TRAN;
-        SELECT 'ERROR MESSAGE: ' + ERROR_MESSAGE() + ' - ERROR PROCEDURE: ' + ERROR_PROCEDURE() + ' - ERROR LINE: '
-               + CAST(ERROR_LINE() AS VARCHAR) AS Respuesta;
+        SELECT 'MENSAJE DE ERROR: ' + ERROR_MESSAGE() + ' - PROCEDURE DE ERROR: ' + ERROR_PROCEDURE() + ' - LINEA DE ERROR: ' + CAST(ERROR_LINE() AS VARCHAR) AS Respuesta;
     END CATCH
     SELECT 'CORRECTO' AS Respuesta;
 END
