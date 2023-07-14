@@ -1,12 +1,3 @@
-USE [Adinco]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'EliminarAWS_Documentos_Logico'
-)
-    DROP PROCEDURE EliminarAWS_Documentos_Logico
-GO
 CREATE PROCEDURE  [dbo].[EliminarAWS_Documentos_Logico]
 	@IdUsuario INT,
 	@IdContrato INT,

@@ -1,10 +1,11 @@
-﻿CREATE PROCEDURE  Guardar_AWS_Documentos
+﻿CREATE PROCEDURE  [dbo].[Guardar_AWS_Documentos]
 	@NombreArchivo VARCHAR(250),
     @Folder VARCHAR(100),
     @UUIDAmazon VARCHAR(500),
     @Meta VARCHAR(50)='',
     @Bucket VARCHAR(50),
-    @CreadoPor INT
+    @CreadoPor INT,
+	@IdContrato INT = 0
 AS    
 BEGIN       
 	DECLARE @AWSDocumentoId INT=0;
@@ -20,9 +21,11 @@ BEGIN
 		NombreArchivo,
 		Meta,
 		CreadoPor,
-		CreadoEl
+		CreadoEl,
+		IdContrato,
+		Activo
     )
-    VALUES(@AWSDocumentoId, @Bucket, @Folder, @UUIDAmazon, @NombreArchivo, @Meta, @CreadoPor, GETDATE());
+    VALUES(@AWSDocumentoId, @Bucket, @Folder, @UUIDAmazon, @NombreArchivo, @Meta, @CreadoPor, GETDATE(), @IdContrato, 1);
 
 	SELECT @AWSDocumentoId
 END
