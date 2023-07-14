@@ -595,18 +595,18 @@ UPDATE #Energias
 		C4Entero = ROUND(C4,0),
 		CTotalEntero = ROUND(C1,0) + ROUND(C2,0) + ROUND(C3,0) + ROUND(C4,0)
  
---IF @Debug = 1
---BEGIN
---	SELECT @VolC1 AS [VOLC1TOPE], @VolC2 AS [VOLC2TOPE], @VolC3 AS [VOLC3TOPE], @VolC4 AS [VOLC4TOPE], @VolC5 AS [VOLC5TOPEBLS]
---	SELECT
---		*
---	FROM
---		#Energias
+IF @Debug = 1
+BEGIN
+	SELECT @VolC1 AS [VOLC1TOPE], @VolC2 AS [VOLC2TOPE], @VolC3 AS [VOLC3TOPE], @VolC4 AS [VOLC4TOPE], @VolC5 AS [VOLC5TOPEBLS]
+	SELECT
+		*
+	FROM
+		#Energias
 
---	SELECT SUM(C1), SUM(C2), SUM(C3), SUM(C4), SUM(C5)
---	FROM
---		#Energias
---END
+	SELECT SUM(C1), SUM(C2), SUM(C3), SUM(C4), SUM(C5)
+	FROM
+		#Energias
+END
 
 -- ---------------------------------------------------
 --Energia por componente del bloque por punto de venta
@@ -1872,8 +1872,8 @@ JOIN
 	#PreciosGas2	P
 	ON	CPO.IdFactura	=	P.IdFactura
 
-IF @MesReporte IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01')
-	SELECT @FechaLimite = '2022-12-31'
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101','20220501')
+	SELECT @FechaLimite = '20231230 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()
