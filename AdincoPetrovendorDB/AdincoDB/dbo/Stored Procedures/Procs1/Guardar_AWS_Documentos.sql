@@ -5,7 +5,8 @@
     @Meta VARCHAR(50)='',
     @Bucket VARCHAR(50),
     @CreadoPor INT,
-	@IdContrato INT = 0
+	@IdContrato INT = 0,
+	@FueModificado BIT = 0
 AS    
 BEGIN       
 	DECLARE @AWSDocumentoId INT=0;
@@ -27,7 +28,17 @@ BEGIN
     )
     VALUES(@AWSDocumentoId, @Bucket, @Folder, @UUIDAmazon, @NombreArchivo, @Meta, @CreadoPor, GETDATE(), @IdContrato, 1);
 
+	IF(@FueModificado = 1)
+	BEGIN
+		UPDATE AWS_Documentos 
+		SET ModificadoEl = GETDATE(),
+		ModificadoPor = @CreadoPor
+		WHERE AWSDocumentoId = @AWSDocumentoId
+	END
+
 	SELECT @AWSDocumentoId
+
+
 END
 
 
