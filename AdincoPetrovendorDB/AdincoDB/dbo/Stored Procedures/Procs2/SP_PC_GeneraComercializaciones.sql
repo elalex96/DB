@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE dbo.SP_PC_GeneraComercializaciones --  10010,'01/01/2022 12:00:00 a. m.',10,0
+﻿CREATE PROCEDURE dbo.SP_PC_GeneraComercializaciones--  10010,'01/05/2022 12:00:00 a. m.',10,0
  @IdContrato INT,  
  @MesReporte VARCHAR(10),  
  @Usuario INT,  
@@ -39,7 +39,7 @@ BEGIN
  SELECT   
   @FechaLimite = IdFecha  
  FROM  
-  AP_Calendario  
+  AP_Calendario  (NOLOCK)
  WHERE  
   Descripcion = 'Recepción de Información para el cálculo de contraprestaciones'  
   AND  
@@ -63,7 +63,7 @@ BEGIN
   
 IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01')  
  SELECT @FechaLimite = '2022-12-31'  
-
+  
   
  --Calculo del volumen de crudo a vender basado en reparticion preliminar  
  IF @FechaLimite >= GETDATE()  

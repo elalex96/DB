@@ -93,7 +93,7 @@ SELECT
 	@EsPC			=	IsPC,
 	@EsConsorcio	=	IsConsorcio
 FROM
-	CO_Contrato
+	CO_Contrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 

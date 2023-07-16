@@ -243,7 +243,7 @@ SELECT
     Factura,
     UUID
 FROM
-    PC_PTI_V2
+    PC_PTI_V2 (NOLOCK)
 
 SELECT @NumError = @@ERROR
 IF @NumError <> 0

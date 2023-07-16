@@ -1519,7 +1519,7 @@ BEGIN
 			VolumenCondensableAutoconsumo = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensableAutoconsumo,
 			ModificadoEl = GETDATE(),
 			ModificadoPor = @Usuario
-			FROM PR_VolumenMensualProduccionPetroleo
+			FROM PR_VolumenMensualProduccionPetroleo	(NOLOCK)
 			INNER JOIN #Temp_PC_VolumenProduccionPeriodo 
 				ON  PR_VolumenMensualProduccionPetroleo.IdContrato = #Temp_PC_VolumenProduccionPeriodo.IdContrato
 					AND PR_VolumenMensualProduccionPetroleo.MesReporte = #Temp_PC_VolumenProduccionPeriodo.MesReporte

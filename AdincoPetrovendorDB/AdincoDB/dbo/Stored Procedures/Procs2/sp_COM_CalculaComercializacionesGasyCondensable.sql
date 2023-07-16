@@ -573,7 +573,7 @@ SELECT
 					ELSE	C5
 			END
 FROM
-	dbo.PC_Volumenes
+	dbo.PC_Volumenes	(NOLOCK)
 WHERE
 	IdContrato = @IdContrato
 	AND Mes = @MesReporte
@@ -1931,7 +1931,7 @@ BEGIN
 		JOIN
 			#PreciosGas2	P
 			ON	CP.IdFactura	=	P.IdFactura
-		CROSS JOIN	dbo.COM_CostoUnitarioHidrocarburo	CU
+		CROSS JOIN	dbo.COM_CostoUnitarioHidrocarburo	CU (NOLOCK)
 		CROSS JOIN	#SumEner	F
 		WHERE	CU.IdContrato	=	@IdContrato
 			AND	CU.Mes	=	@MesReporte
@@ -2161,7 +2161,7 @@ BEGIN
 		JOIN
 			#PreciosGas2	P
 			ON	CP.IdFactura	=	P.IdFactura
-		CROSS JOIN	dbo.COM_CostoUnitarioHidrocarburo	CU
+		CROSS JOIN	dbo.COM_CostoUnitarioHidrocarburo	CU (NOLOCK)
 		CROSS JOIN	#SumEner	F
 		WHERE	CU.IdContrato	=	@IdContrato
 			AND	CU.Mes	=	@MesReporte
