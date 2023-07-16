@@ -3899,10 +3899,11 @@
     <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_23_MConciliacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_24_MConciliacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_25_MConciliacion.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_26_MConciliacion.sql" />  
+    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_26_MConciliacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultarSubContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultaSubFamilia.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultarOT_Estatus.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_Consultar_PV_MM_MaterialUnidad.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_CambioMesPresentacionDelGasto.sql" />
   </ItemGroup>
 </Project>
