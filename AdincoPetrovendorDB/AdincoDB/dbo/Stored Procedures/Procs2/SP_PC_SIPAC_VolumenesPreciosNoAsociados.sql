@@ -12,6 +12,7 @@ BEGIN
 -- 20180801	BAAC	Se modifica para agregar el volumen de Condensable (C5+) en el Condensado
 -- 20190321	BAAC	Se modifica para que en caso de haber un btu o barril que no se puede repartir, se asigne al que tenga el porcentaje mayor del mismo
 -- =============================================
+-- 20240628	RO	Se modifica para que se filtre la información de la tabla PR_VolumenMensualProduccionPetroleo por el Activo = 1
 SET NOCOUNT ON
 -- =============================================
 CREATE TABLE #VolumenComercializado
@@ -393,6 +394,7 @@ BEGIN
 				FMP53.NuevaDistribucionProvisionalContratistaC5
          FROM PR_VolumenMensualProduccionPetroleo VMPPG
               LEFT JOIN CO_Contrato C ON VMPPG.IdContrato = C.IdContrato
+			  AND ISNULL(VMPPG.Activo,0) = 1
               LEFT JOIN CO_Contratista Ca ON C.IdContratista = Ca.IdContratista
               LEFT JOIN #Precio P ON C.IdContrato = P.IdContrato
               LEFT JOIN #Volumen V ON C.IdContrato = V.IdContrato
@@ -402,6 +404,7 @@ BEGIN
                                                    AND DATEADD(month, 1, DATEFROMPARTS(FMP53.anioreporte, FMP53.mesreporte, 1)) = @Mes
          WHERE VMPPG.IdContrato = @Contrato
                AND VMPPG.MesReporte = @Mes
+			   AND ISNULL(VMPPG.Activo,0) = 1
 
 		-- METANO
 		IF 0 <> (SELECT	VolMetanoPtoMed_RMPCT33_02 - (VolMetanoContratistaReparticion_RMPCT33_22 + 

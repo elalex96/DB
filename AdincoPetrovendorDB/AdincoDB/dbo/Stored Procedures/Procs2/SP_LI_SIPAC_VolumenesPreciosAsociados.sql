@@ -230,6 +230,7 @@ BEGIN
 				END
     FROM dbo.PR_VolumenMensualProduccionPetroleo VMPPG
         JOIN dbo.CO_Contrato C ON VMPPG.IdContrato = C.IdContrato
+		AND ISNULL(VMPPG.Activo,0) = 1
         JOIN dbo.CO_Contratista Ca ON C.IdContratista = Ca.IdContratista
         JOIN #Precio P ON C.IdContrato = P.IdContrato
         JOIN #Volumen V ON C.IdContrato = V.IdContrato
@@ -237,6 +238,7 @@ BEGIN
 			ON	VMPPG.IdContrato	=	PC.idContrato
     WHERE VMPPG.IdContrato = @Contrato
         AND VMPPG.MesReporte = @Mes
+		AND ISNULL(VMPPG.Activo,0) = 1
 
             /**/
 
@@ -359,6 +361,7 @@ BEGIN
             'NA' AS RMLCT25_45
         FROM dbo.PR_VolumenMensualProduccionPetroleo VMPPG
             JOIN dbo.CO_Contrato C ON VMPPG.IdContrato = C.IdContrato
+			AND ISNULL(VMPPG.Activo,0) = 1
             JOIN dbo.CO_Contratista Ca ON C.IdContratista = Ca.IdContratista
             JOIN #Precio P ON C.IdContrato = P.IdContrato
             JOIN #Volumen V ON C.IdContrato = V.IdContrato
@@ -366,6 +369,7 @@ BEGIN
 				ON	VMPPG.IdContrato	=	PC.idContrato
         WHERE VMPPG.IdContrato = @Contrato
             AND VMPPG.MesReporte = @Mes
+			AND ISNULL(VMPPG.Activo,0) = 1
     END
 	ELSE
 	BEGIN
@@ -447,10 +451,11 @@ BEGIN
                 'NA' AS RMLCT25_41, 
                 'NA' AS RMLCT25_42, 
                 'NA' AS RMLCT25_43, 
-      'NA' AS RMLCT25_44, 
+   'NA' AS RMLCT25_44, 
                 'NA' AS RMLCT25_45
             FROM dbo.PR_VolumenMensualProduccionPetroleo VMPPG
                 JOIN dbo.CO_Contrato C ON VMPPG.IdContrato = C.IdContrato
+				AND ISNULL(VMPPG.Activo,0) = 1
                 JOIN dbo.CO_Contratista Ca ON C.IdContratista = Ca.IdContratista
                 LEFT JOIN #Precio P ON C.IdContrato = P.IdContrato
                 LEFT JOIN #Volumen V ON C.IdContrato = V.IdContrato
@@ -458,6 +463,7 @@ BEGIN
 					ON	VMPPG.IdContrato	=	PC.idContrato
             WHERE VMPPG.IdContrato = @Contrato
                 AND VMPPG.MesReporte = @Mes
+				AND ISNULL(VMPPG.Activo,0) = 1
         END
         ELSE
         BEGIN
@@ -572,6 +578,7 @@ BEGIN
                 ROUND(ISNULL(P.[2], 0), 4) AS RMLCT25_45
             FROM dbo.PR_VolumenMensualProduccionPetroleo VMPPG
                 JOIN dbo.CO_Contrato C ON VMPPG.IdContrato = C.IdContrato
+				AND ISNULL(VMPPG.Activo,0) = 1
                 JOIN dbo.CO_Contratista Ca ON C.IdContratista = Ca.IdContratista
                 JOIN #Precio P ON C.IdContrato = P.IdContrato
                 JOIN #Volumen V ON C.IdContrato = V.IdContrato
@@ -579,6 +586,7 @@ BEGIN
 					ON	VMPPG.IdContrato	=	PC.idContrato
             WHERE VMPPG.IdContrato = @Contrato
                 AND VMPPG.MesReporte = @Mes
+				AND ISNULL(VMPPG.Activo,0) = 1
         END
 	END
 END

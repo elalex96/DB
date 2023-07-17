@@ -6,8 +6,10 @@ IF EXISTS
     FROM dbo.sysobjects
     WHERE name = 'SP_PR_MM_ListaFacturasAprobacion'
 )
-    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion;
+    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion;   
+	
 GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion]    Script Date: 26/06/2023 02:34:39 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -35,7 +37,12 @@ GO
 -- Create date: 21/06/2023
 -- Description:	optmizacion de consulta para murphy
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] --1390,2,10039,0
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 26-06-2023
+-- Description:	Se agrega columnas uuid, folio factura y fecha de timbrado
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
 @IdProveedor int,
 @Estatus int,
 @IdContrato int = NULL,
@@ -63,6 +70,9 @@ BEGIN
 		TotalPedido			money			NULL,
 		Moneda				nvarchar(100)	NULL,
 		RFC					nvarchar(100)	NULL,
+		FolioFactura		nvarchar(200)	NULL,
+		UUID				nvarchar(100)	NULL,
+		FechaTimbrado		datetime		NULL,
 		IdSolicitudPedido	nvarchar(100)	NULL,
 		span				nvarchar(100)	NULL,
 		PedirCarta			bit,
@@ -211,6 +221,9 @@ BEGIN
 			TotalPedido,
 			Moneda,
 			RFC,
+			FolioFactura,
+			UUID,
+			FechaTimbrado,
 			IdSolicitudPedido,
 			span,
 			PedirCarta,
@@ -218,7 +231,7 @@ BEGIN
 			Contrato,
 			PO)
 			SELECT 
-				AF.IdAceptacionPedido,
+			  AF.IdAceptacionPedido,
 			  CONCAT('PO Number:', AP.IdPedido COLLATE Modern_Spanish_CI_AS, ' ', '- SES Number: ', SES.SESNumber COLLATE Modern_Spanish_CI_AS, ' - Proforma Number:', CAST(PSES.IdPRESES AS nvarchar(100)) COLLATE Modern_Spanish_CI_AS),
 			  00,
 			  AF.CreadoEl,
@@ -229,7 +242,10 @@ BEGIN
 			  ELSE F.SubTotal
 			  END AS TotalPedido,
 			  APD.IdMoneda,
-			  CONCAT('RFC: ',SV.TaxID, ' - Folio: ',ISNULL(F.Folio,'-'), ' - UUID: ', ISNULL(F.UUID,'-')) AS RFC,
+			  SV.TaxID AS RFC,			 
+			  CONCAT(ISNULL(F.Serie,''),(CASE WHEN LEN(RTRIM(LTRIM(ISNULL(F.Serie,''))))>0 AND LEN(RTRIM(LTRIM(ISNULL(F.Folio,'')))) >0 THEN '-' END), ISNULL(F.Folio,'')) AS FolioFactura,
+			  ISNULL(F.UUID,'') AS UUID,
+			  F.FechaTimbrado AS FechaTimbrado,
 			  CONCAT('Reference Num:', AP.ReferenceNumber),
 			  CASE
 				WHEN E.IdEstatus = 2 THEN 'label label-success'
@@ -297,8 +313,7 @@ BEGIN
 					PSES.IdPRESES,
 					F.SubTotal,
 					F.IdMoneda,
-					F.FechaTimbrado,
-					F.FechaTimbrado,
+					F.FechaTimbrado,					
 					F.Folio,
 					F.Serie,
 					F.UUID,
@@ -435,6 +450,9 @@ BEGIN
 			TotalPedido,
 			Moneda,
 			RFC,
+			FolioFactura,
+			UUID,
+			FechaTimbrado,
 			IdSolicitudPedido,
 			span,
 			PedirCarta,
@@ -450,7 +468,10 @@ BEGIN
 			E.Nombre,
 			0,
 			TM.TipoMonedaCorto AS Moneda,
-			CONCAT('RFC: ',ISNULL(PR.RFC, 'SIN DATOS'),' - UUID:',ISNULL(fi.UUID, 'SIN DATOS')), 
+			ISNULL(PR.RFC, '') AS RFC, 			
+			CONCAT(ISNULL(FI.Serie,''),(CASE WHEN LEN(RTRIM(LTRIM(ISNULL(FI.Serie,''))))>0 AND LEN(RTRIM(LTRIM(ISNULL(FI.Folio,'')))) >0 THEN '-' END), ISNULL(FI.Folio,'')) AS FolioFactura,
+			ISNULL(FI.UUID,'') AS UUID,
+			FI.FechaTimbrado AS FechaTimbrado,
 			AF.IdSolicitudPedido,
 			CASE
 			  WHEN E.IdEstatus = 2 THEN 'label label-success'
@@ -491,7 +512,10 @@ BEGIN
 				   PR.RFC,             
 				   AF.IdSolicitudPedido,
 				   E.IdEstatus,
-				   FI.UUID,              
+				   FI.UUID, 
+				   FI.FechaTimbrado,
+				   FI.Folio,
+				   FI.Serie,
 				   c.IdContrato,
 				   C.NombreContrato			 		   
 		  ORDER BY AF.IdAceptacionPedido DESC;
@@ -535,7 +559,7 @@ BEGIN
 	Nombre,
     TotalPedido,
     Moneda,
-    RFC,
+    RFC,	
     IdSolicitudPedido,
     span,
     CASE
@@ -544,7 +568,10 @@ BEGIN
     END AS PedirCarta,
     IdOperacion,
     Contrato,
-	PO
+	PO,
+	UUID,
+	FechaTimbrado,
+	FolioFactura
   FROM #AceptacionesPedido
   GROUP BY IdAceptacionPedido,
            Pedido,
@@ -560,7 +587,10 @@ BEGIN
            PedirCarta,
            IdOperacion,
            Contrato,
-		   PO
+		   PO,
+		   UUID,
+		   FechaTimbrado,
+		   FolioFactura
   ORDER BY FechaRegistro DESC;
 
 END
@@ -580,6 +610,9 @@ BEGIN
 			TotalPedido,
 			Moneda,
 			RFC,
+			FolioFactura,
+			UUID,
+			FechaTimbrado,
 			IdSolicitudPedido,
 			span,
 			PedirCarta,
@@ -597,8 +630,11 @@ BEGIN
 				WHEN F.IdMoneda = 1 THEN dbo.FN_PesosDolaresTipoCambio(F.SubTotal, F.FechaTimbrado)
 			  ELSE F.SubTotal
 			  END AS TotalPedido,
-			  APD.IdMoneda,
-			  CONCAT('RFC: ',SV.TaxID, ' - Folio: ',ISNULL(F.Folio,'-'), ' - UUID: ', ISNULL(F.UUID,'-')) AS RFC,
+			  APD.IdMoneda,			  
+			  ISNULL(SV.TaxID, '') AS RFC, 
+			  CONCAT(ISNULL(F.Serie,''),(CASE WHEN LEN(RTRIM(LTRIM(ISNULL(F.Serie,''))))>0 AND LEN(RTRIM(LTRIM(ISNULL(F.Folio,'')))) >0 THEN '-' END), ISNULL(F.Folio,'')) AS FolioFactura,
+		      ISNULL(F.UUID,'') AS UUID,
+			  F.FechaTimbrado,
 			  CONCAT('Reference Num:', AP.ReferenceNumber),
 			  CASE
 				WHEN E.IdEstatus = 2 THEN 'label label-success'
@@ -666,8 +702,7 @@ BEGIN
 					PSES.IdPRESES,
 					F.SubTotal,
 					F.IdMoneda,
-					F.FechaTimbrado,
-					F.FechaTimbrado,
+					F.FechaTimbrado,		
 					F.Folio,
 					F.Serie,
 					F.UUID,
@@ -804,6 +839,9 @@ BEGIN
 			TotalPedido,
 			Moneda,
 			RFC,
+			FolioFactura,
+			UUID,
+			FechaTimbrado,
 			IdSolicitudPedido,
 			span,
 			PedirCarta,
@@ -819,7 +857,10 @@ BEGIN
 			E.Nombre,
 			0,
 			TM.TipoMonedaCorto AS Moneda,
-			CONCAT('RFC: ',ISNULL(PR.RFC, 'SIN DATOS'),' - UUID:',ISNULL(fi.UUID, 'SIN DATOS')), 
+			ISNULL(PR.RFC, '') AS RFC, 
+			CONCAT(ISNULL(FI.Serie,''),(CASE WHEN LEN(RTRIM(LTRIM(ISNULL(FI.Serie,''))))>0 AND LEN(RTRIM(LTRIM(ISNULL(FI.Folio,'')))) >0 THEN '-' END), ISNULL(FI.Folio,'')) AS FolioFactura,
+			ISNULL(FI.UUID,'') AS UUID,
+			FI.FechaTimbrado AS FechaTimbrado,
 			AF.IdSolicitudPedido,
 			CASE
 			  WHEN E.IdEstatus = 2 THEN 'label label-success'
@@ -860,7 +901,10 @@ BEGIN
 				   PR.RFC,             
 				   AF.IdSolicitudPedido,
 				   E.IdEstatus,
-				   FI.UUID,              
+				   FI.UUID, 
+				   FI.Folio,
+				   FI.Serie,
+				   FI.FechaTimbrado,
 				   c.IdContrato,
 				   C.NombreContrato			 		   
 		  ORDER BY AF.IdAceptacionPedido DESC;
@@ -913,7 +957,10 @@ BEGIN
     END AS PedirCarta,
     IdOperacion,
     Contrato,
-	PO
+	PO,
+	UUID,
+	FechaTimbrado,
+	FolioFactura
   FROM #AceptacionesPedido
   GROUP BY IdAceptacionPedido,
            Pedido,
@@ -929,7 +976,10 @@ BEGIN
            PedirCarta,
            IdOperacion,
            Contrato,
-		   PO
+		   PO,
+		   UUID,
+		   FechaTimbrado,
+		   FolioFactura
   ORDER BY FechaRegistro DESC;
 END
 END;
