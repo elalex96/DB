@@ -13,6 +13,7 @@ AS
 -- 20180913	BAAC	Se modifica para asignar NA a los precios si no hay volumenes producidos de los hidrocarburos
 -- 20190321	BAAC	Se modifica para que en caso de haber un btu o barril que no se puede repartir, se asigne al que tenga el porcentaje mayor del mismo
 -- ======================================================================
+-- 20240628	RO	Se modifica para que se filtre la información de la tabla PR_VolumenMensualProduccionPetroleo por el Activo = 1
 SET NOCOUNT ON
 -- ======================================================================
 CREATE TABLE #VolumenComercializado
@@ -287,7 +288,7 @@ BEGIN
 					ELSE ROUND( (VMPPG.VolumenPetroleoPuntoMedicion * (FMP53.NuevaDistribucionProvisionalContratista / 100)), 0 )
                 END AS RMPCT32_28,
                 CASE
-                    WHEN FMP53.CompensacionVolNuevoSaldoAcumuladoContratistaC1 < 0
+WHEN FMP53.CompensacionVolNuevoSaldoAcumuladoContratistaC1 < 0
                     THEN ROUND(((ROUND(VMPPG.MetanoC1,0) * (FMP53.NuevaDistribucionProvisionalContratista / 100)) + FMP53.CompensacionVolNuevoSaldoAcumuladoContratistaC1), 0)
                     ELSE ROUND(((ROUND(VMPPG.MetanoC1,0) * (FMP53.NuevaDistribucionProvisionalContratistaC1 / 100))), 0)
                 END AS RMPCT32_29,
@@ -421,6 +422,7 @@ BEGIN
          FROM PR_VolumenMensualProduccionPetroleo VMPPG
         LEFT JOIN CO_Contrato C 
 			ON VMPPG.IdContrato = C.IdContrato
+			AND ISNULL(VMPPG.Activo,0) = 1
         LEFT JOIN CO_Contratista Ca 
 			ON C.IdContratista = Ca.IdContratista
         LEFT JOIN #Precio P 
@@ -435,6 +437,7 @@ BEGIN
             AND DATEADD(month, 1, DATEFROMPARTS(FMP53.anioreporte, FMP53.mesreporte, 1)) = @Mes
         WHERE VMPPG.IdContrato = @Contrato
                AND VMPPG.MesReporte = @Mes
+			   AND ISNULL(VMPPG.Activo,0) = 1
 
 		-- SE VALIDA SI AL SUMAR LOS VALORES DE REPARTICION DEL PETROLEO, EXISTE DIFERENCIA CONTRA LA PRODUCCION
 		IF 0 <> (SELECT	VolPetroPtoMed_RMPCT32_02 - (VolPetroContratistaReparticion_RMPCT32_28 + 
@@ -864,6 +867,7 @@ BEGIN
          FROM PR_VolumenMensualProduccionPetroleo VMPPG
         LEFT JOIN CO_Contrato C 
 			ON VMPPG.IdContrato = C.IdContrato
+			AND ISNULL(VMPPG.Activo,0) = 1
         LEFT JOIN CO_Contratista Ca 
 			ON C.IdContratista = Ca.IdContratista
         LEFT JOIN #Precio P 
@@ -878,6 +882,7 @@ BEGIN
             AND DATEADD(month, 1, DATEFROMPARTS(FMP53.anioreporte, FMP53.mesreporte, 1)) = @Mes
         WHERE VMPPG.IdContrato = @Contrato
                AND VMPPG.MesReporte = @Mes
+			   AND ISNULL(VMPPG.Activo,0) = 1
 
 		-- SE VALIDA SI AL SUMAR LOS VALORES DE REPARTICION DEL PETROLEO, EXISTE DIFERENCIA CONTRA LA PRODUCCION
 		IF 0 <> (SELECT	VolPetroPtoMed_RMPCT32_02 - (VolPetroContratistaReparticion_RMPCT32_28 + 
