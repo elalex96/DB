@@ -3904,6 +3904,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultaSubFamilia.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultarOT_Estatus.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_Consultar_PV_MM_MaterialUnidad.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EliminarAWS_Documentos_Logico.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_CambioMesPresentacionDelGasto.sql" />
   </ItemGroup>
 </Project>

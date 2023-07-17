@@ -12,6 +12,8 @@
     [HashSHA256]     VARCHAR (1000)   NULL,
     [Reemplazado]    BIT              NULL,
     [Peso]           INT              NULL,
+    IdContrato      INT             NULL,
+    Activo          BIT             NULL,
     CONSTRAINT [PK_AWS_Documentos] PRIMARY KEY CLUSTERED ([AWSDocumentoId] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_AWS_Documentos_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_AWS_Documentos_AP_Usuario1] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID])
