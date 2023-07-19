@@ -976,7 +976,7 @@ AS
                                 NULL                                        AS [RC21_25],  
                                 NULL                                        AS [RC21_26],  
                                 0                                           AS [RC21_27],  
-                                0                                           AS [RC21_28]  
+                                NULL                                        AS [RC21_28]  
                             FROM  
                                 dbo.CO_Contrato WITH (NOLOCK)  
                                 JOIN  
@@ -2058,7 +2058,7 @@ AS
                     RC21_01,  
                     RC21_02,  
                     ROW_NUMBER() OVER (ORDER BY  
-                                           RC21_02, RC21_01,RC21_11 ASC 
+                                           RC21_02, RC21_01,RC21_11 ASC  
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
@@ -2098,7 +2098,7 @@ AS
                     RC21_01,  
                     RC21_02,  
                     ROW_NUMBER() OVER (ORDER BY  
-                                          RC21_02, RC21_01,RC21_11 ASC 
+                                           RC21_02, RC21_01,RC21_11 ASC 
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
