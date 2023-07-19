@@ -1,4 +1,19 @@
-﻿-- Author: DANIEL AC 
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MPY_MM_CartaProveedorDetalle_MV1_5'
+)
+    DROP PROCEDURE SP_MPY_MM_CartaProveedorDetalle_MV1_5;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author: DANIEL AC 
 -- Create date: 16-05-18
 -- Description:	Actualización agrupación de actividades 
 -- =============================================
@@ -6,6 +21,10 @@
 -- Author: Alexander Gomez 
 -- Create date: 18-02-21
 -- Description:	adecuacion para reporte DEA PROVEEDOR A PROVEEDOR
+-- =============================================
+-- Author:		Alexander Gomez
+-- Update: 19/07/2023
+-- Description:	se agregan validaciones de configuraciones issue: https://github.com/Adinco/petrovendor/issues/2388
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedorDetalle_MV1_5] --2682
     -- Add the parameters for the stored procedure here
@@ -24,14 +43,37 @@ BEGIN
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
 	SET FMTONLY OFF
-    DECLARE @IdMonedaNacional INT = 1;   
+    DECLARE @IdMonedaNacional INT = 1,
+		@RFC_ACTUAL NVARCHAR(200), 
+		@EXISTE_RFC INT, 
+		@RFC_PR NVARCHAR(100), 
+		@CONFIGURACION_CARTA NVARCHAR(100);   
     -- Insert statements for procedure here 
 	
 	CREATE TABLE #ACTIVIDAD(IdRow INT, CodigoCatalogo NVARCHAR(MAX), NombreActividad NVARCHAR(MAX), ValorFactura MONEY, PCN FLOAT, IdTipoMaterial INT, DescPartidas NVARCHAR(max))
 	CREATE TABLE #ACTIVIDAD_AGRUPADA(CodigoCatalogo NVARCHAR(MAX), NombreActividad NVARCHAR(MAX), CN FLOAT, MontoAcumulado MONEY, IdTipoMaterial INT,DescPartidas NVARCHAR(max))
 	/*OBTENER TODOS LOS MATERIALES/SERVICIOS DE UNA ACEPTACIÓN DE PEDIDO Y AGREGARLOS A LA TABLA ACTIVIDA PARA LUEGO AGRUPARLOS POR TIP0 DE MATERIAL*/
 
-	IF @IdContrato != 0
+	SELECT TOP 1
+		@RFC_ACTUAL = P.RFC,
+		@IdContrato = PD.IdContrato
+	FROM dbo.MM_AceptacionPedido AS AP (NOLOCK)
+		JOIN dbo.S_Proveedor AS P (NOLOCK) 
+			ON AP.IdProveedor = P.IdProveedor
+		JOIN MM_Pedido AS PD (NOLOCK) 
+			ON AP.IdPedido = PD.IdPedido
+	WHERE AP.IdAceptacionPedido = @IdPedido;
+
+	--SE VERIFICA EL RFC ESTE EN LA CONFIGURACION
+	SET @CONFIGURACION_CARTA = (SELECT
+									TipoConfiguracion
+								FROM PV_ConfiguracionProveedoresOperadoras (NOLOCK)
+								WHERE IdContrato = @IdContrato
+									AND TipoConfiguracion = 'CARTA_PR_PR'
+									AND Operadora = 1
+									AND Activo = 1);
+
+	IF @IdContrato != 0 OR @CONFIGURACION_CARTA = 'CARTA_PR_PR'
 	BEGIN
 		
 			INSERT INTO #ACTIVIDAD
@@ -50,14 +92,18 @@ BEGIN
 				   ISNULL(V.ValorFactura,0) AS ValorFactura,
 				   ROUND(APD.PCN, 3) AS PCN,
 				   V.IdTipoMaterialServicio AS  IdTipoMaterial,
-				   APD.Detalle
-			FROM MM_AceptacionPedidoDetalle AS APD
-				LEFT JOIN MM_AceptacionPedido AS AP
-					ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
-				LEFT JOIN dbo.MM_PCN_ValoresPesos AS V 
-				ON V.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle       
-				LEFT JOIN dbo.MM_BS_Actividad AS BSA
+				   ISNULL(POD.MaterialCotizadoTextoC,APD.Detalle)
+			FROM MM_AceptacionPedidoDetalle AS APD (NOLOCK)
+				LEFT JOIN MM_AceptacionPedido AS AP (NOLOCK)
+					ON APD.IdAceptacionPedido = AP.IdAceptacionPedido
+				LEFT JOIN dbo.MM_PCN_ValoresPesos AS V (NOLOCK)
+					ON V.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle       
+				LEFT JOIN dbo.MM_BS_Actividad AS BSA (NOLOCK)
 					ON BSA.IdActividad = V.IdCatalogoHidrocarburos
+				LEFT JOIN MM_PedidoDetalle AS PD (NOLOCK)
+					ON APD.IdPedidoDetalle = PD.IdPedidoDetalle
+				LEFT JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
+					ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
 			WHERE AP.IdAceptacionPedido = @IdPedido;
 
 	
@@ -143,12 +189,12 @@ BEGIN
 			   ROUND(APD.PCN, 3) AS PCN,
 			   V.IdTipoMaterialServicio AS  IdTipoMaterial,
 			   APD.Detalle
-		FROM MPY_MM_AceptacionPedidoDetalle AS APD
-			LEFT JOIN MPY_MM_AceptacionPedido AS AP
+		FROM MPY_MM_AceptacionPedidoDetalle AS APD (NOLOCK)
+			LEFT JOIN MPY_MM_AceptacionPedido AS AP (NOLOCK)
 				ON AP.IdAceptacionPedido = APD.IdAceptacionPedido
-			LEFT JOIN dbo.MPY_MM_PCN_ValoresPesos AS V 
+			LEFT JOIN dbo.MPY_MM_PCN_ValoresPesos AS V (NOLOCK)
 			ON V.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle       
-			LEFT JOIN dbo.MM_BS_Actividad AS BSA
+			LEFT JOIN dbo.MM_BS_Actividad AS BSA (NOLOCK)
 				ON BSA.IdActividad = V.IdCatalogoHidrocarburos
 		WHERE AP.IdAceptacionPedido = @IdPedido;
 
