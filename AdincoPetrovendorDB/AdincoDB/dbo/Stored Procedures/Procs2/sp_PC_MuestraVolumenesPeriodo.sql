@@ -1,5 +1,4 @@
-﻿
-CREATE PROCEDURE dbo.sp_PC_MuestraVolumenesPeriodo
+﻿CREATE PROCEDURE dbo.sp_PC_MuestraVolumenesPeriodo
 	@IdContrato INT,
 	@MesReporte NVARCHAR(10),
 	@IdUsuario  INT
@@ -20,7 +19,7 @@ SET LANGUAGE Español
 
 -- SI EL CONTRATO ES DE PRODUCCION COMPARTIDASE MUESTRAN LOS VOLUMENES POR PERIODO
 IF 2 = (SELECT ISNULL(IdTipoContrato,0) 
-			FROM dbo.CO_Contrato
+			FROM dbo.CO_Contrato	(NOLOCK)
 			WHERE IdContrato = @IdContrato)
 BEGIN
 		SELECT
@@ -36,9 +35,9 @@ BEGIN
 			VPP.VolumenCondensadoPuntoMedicion	AS [Condensado],
 			VPP.VolumenCondensablePuntoMedicion	AS [Condensable]
 		FROM
-			dbo.CO_Contrato	C
+			dbo.CO_Contrato	C (NOLOCK)
 		JOIN
-			PC_VolumenProduccionPeriodo	VPP
+			PC_VolumenProduccionPeriodo	VPP (NOLOCK)
 			ON	C.IdContrato	=	VPP.IdContrato
 		WHERE
 			C.IdContrato	=	@IdContrato
@@ -62,17 +61,18 @@ BEGIN
 			VPP.VolumenCondensadoPuntoMedicion	AS [Condensado],
 			VPP.VolumenCondensablePuntoMedicion	AS [Condensable]
 		FROM
-			dbo.CO_Contrato	C
+			dbo.CO_Contrato	C (NOLOCK)
 		JOIN
-			PR_VolumenMensualProduccionPetroleo	VPP
+			PR_VolumenMensualProduccionPetroleo	VPP (NOLOCK)
 			ON	C.IdContrato	=	VPP.IdContrato
+			AND ISNULL(VPP.Activo,0) = 1
 		WHERE
 			C.IdContrato	=	@IdContrato
 			AND
 			CONVERT(VARCHAR(11), VPP.MesReporte, 103)	=	@MesReporte
+			AND ISNULL(VPP.Activo,0) = 1
 		ORDER BY
 			VPP.MesReporte
 END
 
 END
-

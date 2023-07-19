@@ -234,7 +234,7 @@ DECLARE
 	@NumContrato	VARCHAR(50)
 
 SELECT @NumContrato = NumeroContrato
-FROM	dbo.CO_Contrato
+FROM	dbo.CO_Contrato (NOLOCK)
 WHERE	IdContrato	=	@IdContrato
 
 INSERT INTO #PC_VolumenProduccionPeriodo
@@ -339,7 +339,7 @@ SELECT	ROW_NUMBER() OVER (ORDER BY FechaInicio) AS Id,
 	VolumenCondensablePuntoMedicion,
 	VolumenCondensableAutoconsumo
 FROM
-	PC_VolumenProduccionPeriodo
+	PC_VolumenProduccionPeriodo (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 	AND	MesReporte	=	@MesReporte
@@ -468,7 +468,7 @@ SELECT
 	CONVERT(FLOAT, REPLACE([Nueva Distribución Provisional a favor del Estado (RM53_52)],',',''))		AS	NuevaDistribucionProvisionalEstado,
 	CONVERT(FLOAT, REPLACE([Nueva Distribución Provisional a favor del Contratista (RM53_53)],',',''))		AS	NuevaDistribucionProvisionalContratista
 FROM
-	PC_RM 
+	PC_RM  (NOLOCK)
 WHERE
 	[id del contrato asignado por CNH (RF01_01)] = @NumContrato
 	AND DATEFROMPARTS( [Año de reporte (RM53_01)], [Mes de reporte (RM53_00)], 1 ) BETWEEN DATEADD(MONTH,-2,@MesReporte) AND  DATEADD(MONTH,-1,@MesReporte)
@@ -951,6 +951,8 @@ BEGIN
 		#Totales	T
 END
 
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()
@@ -1463,7 +1465,7 @@ BEGIN
 			MesReporte
 
 
-		IF EXISTS(SELECT 1 FROM	PR_VolumenMensualProduccionPetroleo 
+		IF EXISTS(SELECT 1 FROM	PR_VolumenMensualProduccionPetroleo (NOLOCK)
 					WHERE IdContrato = @IdContrato
 						AND	MesReporte	=	@MesReporte
 						AND Activo = 1)
@@ -1517,7 +1519,7 @@ BEGIN
 			VolumenCondensableAutoconsumo = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensableAutoconsumo,
 			ModificadoEl = GETDATE(),
 			ModificadoPor = @Usuario
-			FROM PR_VolumenMensualProduccionPetroleo
+			FROM PR_VolumenMensualProduccionPetroleo	(NOLOCK)
 			INNER JOIN #Temp_PC_VolumenProduccionPeriodo 
 				ON  PR_VolumenMensualProduccionPetroleo.IdContrato = #Temp_PC_VolumenProduccionPeriodo.IdContrato
 					AND PR_VolumenMensualProduccionPetroleo.MesReporte = #Temp_PC_VolumenProduccionPeriodo.MesReporte
@@ -1578,7 +1580,9 @@ BEGIN
 				AcumuladoCostosRecuperablesInsolutos,
 				VolumenCondensablePuntoMedicion,
 				VolumenCondensableAutoconsumo,
-				Activo
+				Activo,
+				CreadoEl,
+				CreadoPor
 			)
 			SELECT
 				IdContrato,
@@ -1627,7 +1631,9 @@ BEGIN
 				AcumuladoCostosRecuperablesInsolutos,
 				VolumenCondensablePuntoMedicion,
 				VolumenCondensableAutoconsumo,
-				1
+				1,
+				GETDATE(),
+				@Usuario
 			FROM
 				 #Temp_PC_VolumenProduccionPeriodo
 

@@ -1,4 +1,7 @@
-﻿-- ====
+USE Petrovendor
+GO
+DROP PROC IF EXISTS SP_TA_ConsultarNotasDeCreditoOperadora
+GO
 -- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 11/09/2019
@@ -9,12 +12,19 @@
 -- Create date: 14-02-2023
 -- Description:	Se muestra UUID Y FOLIO FACTURA CONSULTAS MURPHY
 -- =============================================
+-- =============================================
+-- Author:		Luis David
+-- Create date: 04-08-2023
+-- Description:	Se agrega filtros de fecha general para evitar timeout por exceso de datos
+-- =============================================
 CREATE  PROCEDURE [dbo].[SP_TA_ConsultarNotasDeCreditoOperadora]--420,2205,10037
     -- Add the parameters for the stored procedure here
 	
     @IdProveedor INT,
     @IdUsuario INT,
-    @IdContrato INT
+    @IdContrato INT,
+	@FechaInicio datetime,
+	@FechaFin datetime
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
@@ -61,6 +71,7 @@ BEGIN
 	JOIN	Adinco.dbo.CO_Contrato		AS	C   (NOLOCK)
 	ON		P.IdContrato					=	C.IdContrato				
     WHERE	ISNULL(NC.IdEstatusEliminada, 0) = 0
+	AND NC.CreadoEl BETWEEN @FechaInicio AND @FechaFin
 	UNION
 	SELECT NC.IdAceptacionPedido,
 		   NC.IdAceptacionNotaCredito,	  
@@ -92,6 +103,7 @@ BEGIN
             ON NC.CreadoPor				=	UC.IdUsuario 			
     WHERE AP.IdContrato = @IdContrato
           AND ISNULL(NC.IdEstatusEliminada, 0) = 0
+		  AND NC.CreadoEl BETWEEN @FechaInicio AND @FechaFin 
      GROUP BY
              E.Nombre,
              NC.CreadoEl,
