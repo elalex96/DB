@@ -1,29 +1,14 @@
-﻿-- =============================================  
--- Author:Yazmin Glez.  
--- Create date:2017-11-28  
--- Description:Reporte de CGI - Registro de CFDIs Relacionados_CONT_23_M  
--- Modificado: Reyna Olvera  
--- Fecha Modificado: 20180625  
--- Description: Se modifico para que  solo muestre los que tengan Tipo Relacion 01,02,07 y que el numero de parcialidad si es null sea 0  
--- Modificado: Manuel Cruz  
--- Fecha Modificado: 2019-07-01  
--- Description: Cambio para mostrar la relacion del principal con el complemento de pago  
--- Modificado:       Marcos Garcia  
--- Fecha Modificado: 2020-01-13  
--- Description:     *Agregar Validacion de @IdPresupuesto = 0  
---                  *Agregar WITH (NOLOCK) en las tablas   
--- =============================================  
--- Modificado:       Reyna Olvera  
--- Fecha Modificado: 2022-08-18  
--- Description:      SE MODIFICA LA CONSULTA POR DEUDA TECNICA, SE MODIFICA LOS JOINS Y LEFT JOIS DE UBICACIÓN, SE QUITAN ALGUNOS ALIAS  
--- =============================================  
--- Modificado:       Neri del Angel  
--- Fecha Modificado: 16 de Febrero del 2023  
--- Description:      Se agrega la opción obtener el nuevo campo IDSIPAC desde la tabla CO_Contrato, si este viene vacío o nulo se obtendrá desde la tabla que ya se obtenía anteriormente CO_Contratista  
--- =============================================  
-CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_23_M]  
-    @Contrato      INT,  
-    @Mes           DATE,  
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SIPAC_RC_CONT_23_MConciliacion'
+)
+    DROP PROCEDURE SIPAC_RC_CONT_23_MConciliacion;
+GO
+
+CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_23_MConciliacion]  
+    @Contrato      INT,    
     @IdPresupuesto INT          = 0,  
     @Plantilla     VARCHAR(150) = ''  
 AS  
@@ -40,8 +25,7 @@ AS
         /*Omitir facturas en la hoja 21*/  
   
         CREATE TABLE #uuidNoReportar (UUID VARCHAR(2000));  
-        IF (@Mes = '20190801')  
-            BEGIN  
+
                 INSERT INTO #uuidNoReportar  
                     (  
                         UUID  
@@ -59,9 +43,7 @@ AS
                     (  
                         'A6344C73-4C5A-EA4A-B2F8-3378CDA24C17'  
                     );  
-            END;  
-        IF (@Mes <> '20190901')  
-            BEGIN  
+            
                 INSERT INTO #uuidNoReportar  
                     (  
                         UUID  
@@ -70,9 +52,7 @@ AS
                     (  
                         '9A159442-52BC-1E49-8190-D020953CE967'  
                     );  
-            END;  
-        IF (@Mes <> '20200101')  
-            BEGIN  
+             
                 INSERT INTO #uuidNoReportar  
                     (  
                         UUID  
@@ -84,9 +64,7 @@ AS
                     (  
                         '30EFEC90-471E-434A-87CF-EFFEEE7C48C1'  
                     );  
-            END;  
-        IF (@Mes = '20200501')  
-            BEGIN  
+             
                 INSERT INTO #uuidNoReportar  
                     (  
                         UUID  
@@ -104,10 +82,7 @@ AS
                     (  
                         '10FDC8FB-DEBB-4BD5-8C10-6B51E61B5FE6'  
                     );  
-            END;  
-  
-        /**/  
-  
+
         SELECT  
             CASE  
                 WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN  
@@ -128,7 +103,7 @@ AS
             JOIN  
                 dbo.FI_TransferFactura WITH (NOLOCK)  
                     ON FI_Transfer.IdContrato = @Contrato 
-                       AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
+					   AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
             JOIN  
                 dbo.FI_Factura WITH (NOLOCK)  
                     ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura  
@@ -162,7 +137,6 @@ AS
                        AND CO_Servicio.IdContrato = CO_Contrato.IdContrato  
         WHERE  
             CO_Contrato.IdContrato = @Contrato  
-            AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes  
             AND CO_Registro.IdEstado = @Aprobado  
             AND CO_Registro.CvTipoDocFacturacion = @TipoFactura  
             AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0  
@@ -243,7 +217,7 @@ AS
             JOIN  
                 dbo.FI_TransferFactura WITH (NOLOCK)  
                     ON FI_Transfer.IdContrato = @Contrato 
-                       AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
+					   AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
             JOIN  
                 dbo.FI_ComplementoDePago WITH (NOLOCK)  
                     ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura  
@@ -282,8 +256,7 @@ AS
                     ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio  
                        AND CO_Servicio.IdContrato = CO_Contrato.IdContrato  
         WHERE  
-            CO_Contrato.IdContrato = @Contrato  
-            AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes  
+            CO_Contrato.IdContrato = @Contrato   
             AND CO_Registro.IdEstado = @Aprobado  
             AND CO_Registro.CvTipoDocFacturacion = @TipoFactura  
             AND ISNULL(CONVERT(INT, FCP.ProcesadoSIPAC), 0) = 0  
@@ -325,5 +298,6 @@ AS
                     FCP.UUID  
             END,  
             CO_Contrato.NumeroContrato,  
-            FCP.UUID;  
+            FCP.UUID
+		ORDER BY [RC23_01], [RC23_00];
     END;  
