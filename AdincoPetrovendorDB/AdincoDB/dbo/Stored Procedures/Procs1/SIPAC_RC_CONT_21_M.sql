@@ -1046,7 +1046,7 @@ AS
                                 NULL                                        AS [RC21_25],  
                                 NULL                                        AS [RC21_26],  
                                 0                                           AS [RC21_27],  
-                                0                                           AS [RC21_28]  
+                                NULL                                        AS [RC21_28]  
                             FROM  
                                 dbo.CO_Contrato WITH (NOLOCK)  
                                 JOIN  

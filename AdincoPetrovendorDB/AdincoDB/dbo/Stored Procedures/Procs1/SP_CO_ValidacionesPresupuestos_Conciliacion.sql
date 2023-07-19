@@ -6,6 +6,7 @@ CREATE PROCEDURE [dbo].[SP_CO_ValidacionesPresupuestos_Conciliacion]
 AS
 BEGIN
     SET NOCOUNT ON;
+	DECLARE @FechaActual DATE = GETDATE();
     SELECT CASE
                WHEN ISNULL(IdPresupuestoCNH, '') = ''
                     OR IdPresupuestoCNH = 'FALTA ID' THEN
@@ -15,8 +16,10 @@ BEGIN
                    'El presupuesto: [ ' + Nombre + ' - ' + SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH) - 8, 9)
                    + ' ] con fecha fin vigencia ' + CONVERT(NVARCHAR(MAX), FinPresupuesto) + ' está fuera del periodo.'
            END AS Validaciones
-    FROM dbo.CO_Presupuesto
-    WHERE FinPresupuesto IS NOT NULL
+    FROM dbo.CO_Presupuesto (NOLOCK)
+    WHERE DATEDIFF(MONTH, FinPresupuesto, @FechaActual) >= 1
+          AND DATEDIFF(MONTH, FinPresupuesto, @FechaActual) <= 6
+		  AND FinPresupuesto IS NOT NULL
           AND IdPresupuesto = @IdPresupuesto
           AND @EsHistorico = 0
     UNION
@@ -30,8 +33,9 @@ BEGIN
                    + ' ] con fecha fin vigencia ' + CONVERT(NVARCHAR(MAX), FinPresupuesto)
                    + ' está fuera de los últimos 6 meses permitidos.'
            END AS Validaciones
-    FROM dbo.CO_Presupuesto
-    WHERE FinPresupuesto IS NOT NULL
+    FROM dbo.CO_Presupuesto (NOLOCK)
+    WHERE DATEDIFF(MONTH, FinPresupuesto, @FechaActual) >= 7
+		  AND FinPresupuesto IS NOT NULL
           AND IdPresupuesto = @IdPresupuesto
           AND @EsHistorico = 0;
 END;

@@ -670,7 +670,7 @@ BEGIN
                   AND TipCamConvetUSD_RC21_25 IS NULL  
                   AND TipoOpercion_RC21_26 IS NULL  
                   AND RegistroConAjuste_RC21_27 = 0  
-                  AND AsociadoIncrementoPMT_RC21_28 = 0  
+                  AND AsociadoIncrementoPMT_RC21_28 IS NULL 
         );  
     END  
     ELSE  
