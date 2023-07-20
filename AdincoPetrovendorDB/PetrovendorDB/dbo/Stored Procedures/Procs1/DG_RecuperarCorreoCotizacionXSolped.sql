@@ -1,34 +1,47 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'DG_RecuperarCorreoCotizacionXSolped'
+)
+    DROP PROCEDURE DG_RecuperarCorreoCotizacionXSolped;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Pedro Acuña>
 -- Create date: <22-08-2018>
 -- Description:	<Se recuperan los correos enviados en la cotizacion filtrados por la solicitud de pedido>
 -- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <19-07-2023>
+-- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
+-- =============================================
 
-CREATE PROCEDURE [dbo].[DG_RecuperarCorreoCotizacionXSolped] --20022
+CREATE PROCEDURE [dbo].[DG_RecuperarCorreoCotizacionXSolped] 
 @IdSolicitudPedido INT ,
-														/*--------------------parametros contrato  --------------------*/
-													 @IdContrato INT = NULL, @IdUsuario INT = NULL ,
-													 @FechaRegistro DATETIME = NULL
+/*--------------------parametros contrato  --------------------*/
+	@IdContrato INT = NULL, 
+	@IdUsuario INT = NULL ,
+	@FechaRegistro DATETIME = NULL
 /*-------------------------------------------------------------*/
 AS
 	BEGIN
-		--DECLARE @IdSolicitudPedido INT = 13355
 
-		--DECLARE @TablaPeticionOferta TABLE
-		--	( Fila INT IDENTITY ,
-		--	  IdPeticionOferta INT )
 		DECLARE @TablaCorreoRecuperado TABLE
 			( Correo NVARCHAR(MAX))
 
-		--DECLARE @Contador INT = 1, @CantidadPetOferta INT, @IdPetOfertaAux INT
 		INSERT INTO @TablaCorreoRecuperado
-		--			( Correo )
 		SELECT		u.Correo
-		FROM		dbo.S_Usuario u
-		INNER JOIN	dbo.S_UsuarioProveedor uProv
-			ON uProv.IdUsuario = u.IdUsuario
-		INNER JOIN	dbo.MM_PeticionOferta po
-			ON po.IdSubcontratista = uProv.IdProveedor
+		FROM		dbo.S_Usuario u (NOLOCK)
+		JOIN	dbo.S_UsuarioProveedor uProv (NOLOCK)
+			ON u.IdUsuario = uProv.IdUsuario
+		INNER JOIN	dbo.MM_PeticionOferta po (NOLOCK)
+			ON uProv.IdProveedor = po.IdSubcontratista
 		WHERE
 					u.IdTipoUsuario IN ( 4, 3 ) --ventas o administrador
 					AND u.Activo = 1
@@ -36,31 +49,13 @@ AS
 					AND u.Correo != ''
 					AND po.IdSolicitudPedido = @IdSolicitudPedido
 
-		--SELECT @CantidadPetOferta  = COUNT ( * ) FROM @TablaPeticionOferta
-
-		--WHILE ( @Contador <= @CantidadPetOferta )
-		--	BEGIN
-		--		SELECT	@IdPetOfertaAux = IdPeticionOferta
-		--		FROM	@TablaPeticionOferta
-		--		WHERE	Fila = @Contador
-
-		--		INSERT INTO @TablaCorreoRecuperado
-		--			( Correo )
-		--		SELECT	Para
-		--		FROM	Adinco.dbo.S_Notificacion
-		--		WHERE	Asunto LIKE 'Petición Oferta ' + CONVERT ( NVARCHAR(50), @IdPetOfertaAux )
-
-		--		SET @IdPetOfertaAux = NULL
-		--		SET @Contador += 1
-		--	END
-
 		--se recupera el usuario que aun no ah sido dado de alta en petrovendor
 		INSERT INTO @TablaCorreoRecuperado
 			( Correo )
 		SELECT	CorreoInvitacion
-		FROM	MM_InvitacionPeticionOferta
+		FROM	MM_InvitacionPeticionOferta (NOLOCK)
 		WHERE
-				IdSolicitudPedido = @IdSolicitudPedido
+				@IdSolicitudPedido = IdSolicitudPedido
 				AND Activo = 1
 				AND IdPeticionOferta IS NULL
 
@@ -68,12 +63,12 @@ AS
 		UPDATE		aux
 		SET			aux.correo = aux.correo + ' - ' + ISNULL ( prov.RazonSocial, 'Proveedor aún no registrado en Petrovendor (Aparecera en la oferta cuando se registre)' )
 		FROM		@TablaCorreoRecuperado aux
-		LEFT JOIN	dbo.S_Usuario u
+		LEFT JOIN	dbo.S_Usuario u (NOLOCK)
 			ON u.Correo = aux.Correo
-		LEFT JOIN	dbo.S_UsuarioProveedor uprov
-			ON uprov.IdUsuario = u.IdUsuario
-		LEFT JOIN	dbo.S_Proveedor prov
-			ON prov.IdProveedor = uprov.IdProveedor
+		LEFT JOIN	dbo.S_UsuarioProveedor uprov (NOLOCK)
+			ON u.IdUsuario = uprov.IdUsuario 
+		LEFT JOIN	dbo.S_Proveedor prov (NOLOCK)
+			ON uprov.IdProveedor = prov.IdProveedor
 			   AND	u.Activo = 1
 			   AND	ISNULL ( u.IsEliminado, 0 ) = 0
 

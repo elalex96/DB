@@ -1,12 +1,25 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_AgregarProveedoresInvitadosPeticionOferta'
+)
+    DROP PROCEDURE SP_MM_AgregarProveedoresInvitadosPeticionOferta;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <06/02/2020>
 -- Description:	<Agregar proveedores invitados cuando la peticion ya fue enviada>
 -- =============================================
--- =============================================
--- Author:		DANIEL AC
--- Create date: 03/06/2022
--- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- Author:		<Alexander Gomez>
+-- Create date: <19-07-2023>
+-- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarProveedoresInvitadosPeticionOferta] --'633,674','',20251,420,2205 
 	-- Add the parameters for the stored procedure here
@@ -20,7 +33,6 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @IDPROVEEDORINV INT;
 	DECLARE @CONTPROVEDORES INT;
 	DECLARE @IDPETICIONOFERTA INT;
@@ -37,9 +49,9 @@ BEGIN
 	DECLARE @HTMLCORREOSINV NVARCHAR(MAX);
 	DECLARE @ASUNTOPROVEEDORESINV NVARCHAR(MAX);
 	DECLARE @ASUNTOCORREOSINV NVARCHAR(MAX);
-	DECLARE @CotizacionRestringida BIT = (SELECT TOP 1 CotizacionRestringida FROM dbo.MM_PeticionOferta WHERE IdSolicitudPedido = @IdSolicitudPedido);
-	DECLARE @Descripcion NVARCHAR(MAX) = (SELECT TOP 1 ISNULL(Descripcion,'') FROM dbo.TA_Operacion WHERE IdDocumento = @IdSolicitudPedido AND IdTipoOperacion = 6);
-	DECLARE @NOMBREPROVEEDORACTUAL NVARCHAR(100) = (SELECT RazonSocial FROM dbo.S_Proveedor WHERE IdProveedor = @IdProveedorActual);
+	DECLARE @CotizacionRestringida BIT;
+	DECLARE @Descripcion NVARCHAR(MAX);
+	DECLARE @NOMBREPROVEEDORACTUAL NVARCHAR(100);
 
 	CREATE TABLE #PROVEEDORESINVITADOS
 	(
@@ -61,19 +73,16 @@ BEGIN
 		CorreoInvitado NVARCHAR(100)
 	);
 
+	SET @CotizacionRestringida  = (SELECT TOP 1 CotizacionRestringida FROM dbo.MM_PeticionOferta (NOLOCK) WHERE IdSolicitudPedido = @IdSolicitudPedido);
+	SET @Descripcion  = (SELECT TOP 1 ISNULL(Descripcion,'') FROM dbo.TA_Operacion (NOLOCK) WHERE IdDocumento = @IdSolicitudPedido AND IdTipoOperacion = 6);
+	SET @NOMBREPROVEEDORACTUAL = (SELECT RazonSocial FROM dbo.S_Proveedor (NOLOCK) WHERE IdProveedor = @IdProveedorActual);
+
 	INSERT INTO #CORREOSINVITADOS
 	SELECT 
 		Datos
 	FROM  dbo.SplitString(@CorreosInvitados,',');
 
 	SET @TOTALCORREOSINVITADOS = (SELECT COUNT(IdRow) FROM #CORREOSINVITADOS);
-
-
-	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-								FROM TA_Correo AS C
-									INNER JOIN TA_CorreoServidor AS S
-										ON C.IdServidor = S.IdServidor
-								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
 
 	WHILE @CONTCORREOSINVITADOS <= @TOTALCORREOSINVITADOS
 	BEGIN
@@ -118,7 +127,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				ISNULL(@CorreoNotificaciones,'')
+				'procura@adinco.mx'
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo
@@ -201,12 +210,6 @@ BEGIN
 	FROM dbo.SplitString(@ProveedoresInvitados,',');
 
 	SET @CONTPROVEDORES = (SELECT COUNT(IdRow) FROM #PROVEEDORESINVITADOS);
-
-	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-								FROM TA_Correo AS C
-									INNER JOIN TA_CorreoServidor AS S
-										ON C.IdServidor = S.IdServidor
-								WHERE IdCorreo = 11) --> CTE NUMERO CORREO (TA_Correo)
 
 	--ENVIO DE LA PETICIONES OFERTAS A LOS PROVEEDORES
 	WHILE @CONT <= @CONTPROVEDORES
@@ -320,11 +323,11 @@ BEGIN
 			U.Correo, 
 			U.Nombre, 
 			U.IdUsuario
-		FROM S_Usuario AS U
-			INNER JOIN S_UsuarioProveedor AS UP 
+		FROM S_Usuario AS U (NOLOCK)
+			JOIN S_UsuarioProveedor AS UP (NOLOCK)
 				ON U.IdUsuario = UP.IdUsuario
-			INNER JOIN S_Proveedor AS P 
-				ON UP.IdProveedor = P.IdProveedor 
+			JOIN S_Proveedor AS P (NOLOCK)
+				ON UP.IdProveedor = P.IdProveedor
 		WHERE P.IdProveedor = @IDPROVEEDORINV
 			AND (U.IdTipoUsuario = 4 OR U.IdTipoUsuario= 3) 
 			AND U.Activo = 1;
@@ -334,13 +337,11 @@ BEGIN
 		WHILE @CONTAD <= @CONTTOTALADMIN
 		BEGIN
 
-		    SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
+		    SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion (NOLOCK)) + 1);
 			SET @CORREOADMIN = (SELECT Correo FROM #CORREOSADMINS WHERE IdRow = @CONTAD);
-			SET @HTMLPROVEEDORESINV = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 11);
-			--SET @ASUNTOPROVEEDORESINV = (SELECT Asunto FROM dbo.TA_Correo WHERE IdCorreo = 11);
+			SET @HTMLPROVEEDORESINV = (SELECT HTML FROM dbo.TA_Correo (NOLOCK) WHERE IdCorreo = 11);
 			--ARMADO DEL HTML
 			--ASUNTO
-			--SET @ASUNTOPROVEEDORESINV = (REPLACE(@ASUNTOPROVEEDORESINV,'##NO##',CAST(@IDPETICIONOFERTA AS NVARCHAR(100))));
 			--NOMBRE USUARIO
 			SET @HTMLPROVEEDORESINV = (REPLACE(@HTMLPROVEEDORESINV,'##NOMBRE_USUARIO##',(SELECT Nombre FROM #CORREOSADMINS WHERE IdRow = @CONTAD)));
 			--DESCRIPCION
@@ -382,7 +383,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				ISNULL(@CorreoNotificaciones,'')
+				'procura@adinco.mx'
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo
