@@ -2930,6 +2930,10 @@
     <Build Include="dbo\Stored Procedures\Procs1\ObtenerContratosWDEA.sql" />
     <Build Include="dbo\Tables\DEA_Contratos.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_MM_ValidarCartasPorAceptacionExistente.sql" />
+    <Build Include="dbo\Tables\PV_ConfiguracionProveedoresOperadoras.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SP_MM_ActualizarConfiguracionCartaCNProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SP_MM_AgregarConfiguracionCartaCNProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SP_MM_ConsultaProveedoresCartaCN.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
