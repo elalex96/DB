@@ -27,7 +27,7 @@ GO
 -- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
 -- =============================================
 
-ALTER PROCEDURE [dbo].[MM_SP_DescargarDocSolPed]
+CREATE PROCEDURE [dbo].[MM_SP_DescargarDocSolPed]
 @IdDocumento INT,
 /*--------------------parametros contrato  --------------------*/
 @IdContrato INT = NULL,

@@ -48,7 +48,8 @@ BEGIN
 	SELECT @IdProveedorActual = IdProveedor
         FROM dbo.MM_SolicitudPedido
         WHERE IdSolicitudPedido = @IdSolicitudPedido
-
+	
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
     DECLARE @IDPROVEEDORINV INT;
     DECLARE @CONTPROVEDORES INT;
     DECLARE @IDPETICIONOFERTA INT;
@@ -89,6 +90,12 @@ BEGIN
     FROM dbo.SplitString(@CorreosInvitados, ',');
 
     SET @TOTALCORREOSINVITADOS = (SELECT COUNT(IdRow) FROM #CORREOSINVITADOS);
+
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S (NOLOCK)
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
 
     WHILE @CONTCORREOSINVITADOS <= @TOTALCORREOSINVITADOS
     BEGIN
@@ -131,7 +138,7 @@ BEGIN
         VALUES
         (@IdNotificacion, @CORREOINVITACIONC, 'Invitación Cotización Petrovendor ',
          @HTMLCORREOSINV, DATEADD(MINUTE, 1, GETDATE()), 0, NULL, 3, GETDATE(), NULL, NULL,
-         'procura@adinco.mx');
+         ISNULL(@CorreoNotificaciones,''));
 
         INSERT INTO dbo.TA_EnvioCorreo (IdEnvioAdinco, IdCorreo, IdIdentificacion, EnviadoPor, EnviadoEl)
         VALUES
@@ -363,7 +370,7 @@ BEGIN
             VALUES
             (@IdNotificacion, @CORREOADMIN,
              CONCAT('Petición Oferta No.', ISNULL(@IDPETICIONOFERTA, 0)), @HTMLPROVEEDORESINV,
-             DATEADD(MINUTE, 1, GETDATE()), 0, NULL, 3, GETDATE(), NULL, NULL, 'procura@adinco.mx');
+             DATEADD(MINUTE, 1, GETDATE()), 0, NULL, 3, GETDATE(), NULL, NULL, ISNULL(@CorreoNotificaciones,''));
 
             INSERT INTO dbo.TA_EnvioCorreo (IdEnvioAdinco, IdCorreo, IdIdentificacion, EnviadoPor, EnviadoEl)
             VALUES

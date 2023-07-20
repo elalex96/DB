@@ -40,6 +40,7 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @IDTIPOINVITACION INT = 0; 
 	DECLARE @IDINVITACION INT;
 	DECLARE @IDPROVEEDORINV INT;
@@ -86,6 +87,12 @@ BEGIN
 		SET @HTMLCORREOSINV = (REPLACE(@HTMLCORREOSINV,'##ANIO_ACTUAL##',YEAR(GETDATE()))); 
 		SET @HTMLCORREOSINV = (REPLACE(@HTMLCORREOSINV,'##DOMINIO##','https://petrovendor.com.mx/')); 
 		SET @HTMLCORREOSINV = (REPLACE(@HTMLCORREOSINV,'##SOLICITUD_PEDIDO##',CAST(@IdSolicitudPedido AS NVARCHAR(100))));
+
+		SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S (NOLOCK)
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
 		
 		SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion (NOLOCK)) + 1);
 
@@ -117,7 +124,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				'procura@adinco.mx'
+				ISNULL(@CorreoNotificaciones,'')
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo
@@ -364,7 +371,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				'procura@adinco.mx'
+				ISNULL(@CorreoNotificaciones,'')
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo

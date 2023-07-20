@@ -64,7 +64,7 @@ AS
 		SET			aux.correo = aux.correo + ' - ' + ISNULL ( prov.RazonSocial, 'Proveedor aún no registrado en Petrovendor (Aparecera en la oferta cuando se registre)' )
 		FROM		@TablaCorreoRecuperado aux
 		LEFT JOIN	dbo.S_Usuario u (NOLOCK)
-			ON u.Correo = aux.Correo
+			ON aux.Correo = u.Correo
 		LEFT JOIN	dbo.S_UsuarioProveedor uprov (NOLOCK)
 			ON u.IdUsuario = uprov.IdUsuario 
 		LEFT JOIN	dbo.S_Proveedor prov (NOLOCK)

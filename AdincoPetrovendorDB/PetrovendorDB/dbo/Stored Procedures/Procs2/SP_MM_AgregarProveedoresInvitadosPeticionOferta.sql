@@ -33,6 +33,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
+	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @IDPROVEEDORINV INT;
 	DECLARE @CONTPROVEDORES INT;
 	DECLARE @IDPETICIONOFERTA INT;
@@ -84,6 +85,12 @@ BEGIN
 
 	SET @TOTALCORREOSINVITADOS = (SELECT COUNT(IdRow) FROM #CORREOSINVITADOS);
 
+	SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
+								FROM TA_Correo AS C
+									INNER JOIN TA_CorreoServidor AS S (NOLOCK)
+										ON C.IdServidor = S.IdServidor
+								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
+
 	WHILE @CONTCORREOSINVITADOS <= @TOTALCORREOSINVITADOS
 	BEGIN
 		SET @CORREOINVITACIONC = (SELECT CorreoInvitado FROM #CORREOSINVITADOS WHERE IdRow = @CONTCORREOSINVITADOS);
@@ -127,7 +134,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				'procura@adinco.mx'
+				ISNULL(@CorreoNotificaciones,'')
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo
@@ -383,7 +390,7 @@ BEGIN
 				GETDATE(),
 				NULL,
 				NULL,
-				'procura@adinco.mx'
+				ISNULL(@CorreoNotificaciones,'')
 			);
 
 			INSERT INTO dbo.TA_EnvioCorreo
