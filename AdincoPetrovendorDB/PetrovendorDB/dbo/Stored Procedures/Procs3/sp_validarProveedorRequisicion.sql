@@ -1,8 +1,26 @@
-﻿-- =============================================  
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_validarProveedorRequisicion'
+)
+    DROP PROCEDURE sp_validarProveedorRequisicion;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:   Daniel AC  
 -- Create date: 26/10/2020  
 -- Description:  Obtener el proveedor actual del proveedor 
 -- ============================================= 
+-- Author:		<Alexander Gomez>
+-- Create date: <19-07-2023>
+-- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
+-- =============================================
 CREATE procedure [dbo].[sp_validarProveedorRequisicion]	
 @SolicitudPedidoId INT,
 @ProveedorId INT,
@@ -18,7 +36,7 @@ BEGIN
 	SELECT 
 	@ProveedorRequi=IdProveedor,
 	@ContratoRequi=IdContrato
-	FROM dbo.MM_SolicitudPedido 
+	FROM dbo.MM_SolicitudPedido (NOLOCK)
 	WHERE IdSolicitudPedido = @SolicitudPedidoId
 
 	IF ISNULL(@ProveedorRequi,0)=@ProveedorId
