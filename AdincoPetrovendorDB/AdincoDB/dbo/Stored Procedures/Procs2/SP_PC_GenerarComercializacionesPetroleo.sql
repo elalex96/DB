@@ -93,20 +93,20 @@ SELECT
 	@EsPC			=	IsPC,
 	@EsConsorcio	=	IsConsorcio
 FROM
-	CO_Contrato
+	CO_Contrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
 SELECT
 	@PorcPemex	=	PorcentajePemex / 100.00
 FROM
-	dbo.CO_PorcentajesContrato
+	dbo.CO_PorcentajesContrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 
 -- SE OBTIENE EL COSTO UNITARIO DEL HIDROCARBURO
 SELECT @CostoUnitarioComercializacion = CostoUnitarioComercializacion
-FROM	COM_CostoUnitarioHidrocarburo
+FROM	COM_CostoUnitarioHidrocarburo (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
 	AND	Mes		=	@MesReporte
@@ -141,22 +141,22 @@ SELECT
     CAST(0.0000 AS FLOAT)             AS VolumenFacturado,
     CAST(0.0000 AS FLOAT)             AS FactorDistribucion
 FROM
-    PC_DistribucionIngresos DI
+    PC_DistribucionIngresos DI (NOLOCK)
 JOIN
-    PC_ContratoCampo        CC
+    PC_ContratoCampo        CC (NOLOCK)
     ON CC.IdCampo                   = DI.IdCampo
 JOIN
-    PC_PuntoVentaProducto   PVP
+    PC_PuntoVentaProducto   PVP (NOLOCK)
 ON PVP.IdContrato               = CC.IdContrato
     AND PVP.IdPtoExpedicionRecepcion = DI.IdPtoExpedicionRecepcion
     AND PVP.IdMaterialPC             = DI.IdMaterialPC
 WHERE
     PVP.Aplica                     = 1 --El punto de venta esta selccionado
-    AND CC.IdContrato                                                                          = @IdContrato --Los campos ligados al contrato
+    AND CC.IdContrato = @IdContrato --Los campos ligados al contrato
     AND DI.IdMaterialPC IN ( 10000, 10001, 10002, 10003, 10004, 10005, 10006, 10007, 10008, 10009,
             10010, 10016, 10019, 10020
                             ) -- Lista de productos que son crudo
-    AND DATEFROMPARTS( SUBSTRING( DI.MesReporte, 7, 4 ), SUBSTRING( DI.MesReporte, 4, 2 ), 1 ) = @MesReporte
+AND DATEFROMPARTS( SUBSTRING( DI.MesReporte, 7, 4 ), SUBSTRING( DI.MesReporte, 4, 2 ), 1 ) = @MesReporte
     AND PVP.Mes                                                                                = @MesReporte
 GROUP BY
     PVP.IdPtoExpedicionRecepcion,
@@ -214,7 +214,7 @@ SELECT
 						ELSE	Petroleo
 						END
 FROM
-    dbo.PC_Volumenes
+    dbo.PC_Volumenes (NOLOCK)
 WHERE
     IdContrato = @IdContrato
     AND Mes     = @MesReporte
@@ -246,9 +246,9 @@ SELECT
     RF.Factura,
 	RF.UUID
 FROM
-    dbo.PC_PMI_V2  RF
+    dbo.PC_PMI_V2  RF (NOLOCK)
 JOIN
-    dbo.FI_Factura F
+    dbo.FI_Factura F (NOLOCK)
     ON F.UUID = RF.UUID
 WHERE
     DATEFROMPARTS( YEAR( F.FechaTimbrado ), MONTH( F.FechaTimbrado ), 1 ) = @MesReporte
@@ -257,9 +257,9 @@ SELECT
     RF.Factura,
 	RF.UUID
 FROM
-    dbo.PC_PTI_V2  RF
+    dbo.PC_PTI_V2  RF (NOLOCK)
 JOIN
-    dbo.FI_Factura F
+    dbo.FI_Factura F (NOLOCK)
     ON F.UUID = RF.UUID
 WHERE
     DATEFROMPARTS( YEAR( F.FechaTimbrado ), MONTH( F.FechaTimbrado ), 1 ) = @MesReporte
@@ -293,31 +293,31 @@ SELECT
     C.Cantidad,
     CAST(0.0000 AS FLOAT)        AS Factor
 FROM
-    PC_DistribucionIngresos    DI
+    PC_DistribucionIngresos    DI (NOLOCK)
 JOIN
-    PC_Material                M
+    PC_Material                M (NOLOCK)
     ON M.IdMaterialPC               = DI.IdMaterialPC
 JOIN
-    dbo.PC_Comercializacion_V2 RC
+    dbo.PC_Comercializacion_V2 RC (NOLOCK)
     ON M.TextoBreve                 = RC.Denominación
 JOIN
-    PC_EquivalenciaPuntoVenta  EPV
+    PC_EquivalenciaPuntoVenta  EPV (NOLOCK)
     ON EPV.IdPtoExpedicionRecepcion = DI.IdPtoExpedicionRecepcion
     AND EPV.[Nombre 1]               = RC.[Nombre1]
 JOIN
     #PC_Facturas               F
     ON CONCAT( '00', RC.Factura )   = F.Factura
 JOIN
-    FI_Factura                 CFDI
+    FI_Factura                 CFDI (NOLOCK)
     ON F.UUID                       = CFDI.UUID
 JOIN
-    FI_CFDIConcepto            C
+    FI_CFDIConcepto            C (NOLOCK)
     ON C.IdFactura                  = CFDI.IdFactura
 JOIN
-    PC_ContratoCampo           CC
+    PC_ContratoCampo           CC (NOLOCK)
 ON CC.IdCampo                   = DI.IdCampo
 JOIN
-    PC_PuntoVentaProducto      PVP
+    PC_PuntoVentaProducto      PVP (NOLOCK)
     ON PVP.IdContrato               = CC.IdContrato
     AND PVP.IdPtoExpedicionRecepcion = DI.IdPtoExpedicionRecepcion
     AND PVP.IdMaterialPC             = DI.IdMaterialPC
@@ -436,10 +436,10 @@ JOIN
 	FI_CFDIConcepto     C (NOLOCK)
 	ON F.IdFactura                 = C.IdFactura
 JOIN
-	COM_Equivalencias   E
+	COM_Equivalencias   E (NOLOCK)
 	ON C.Unidad                    = E.Unidad
 JOIN
-	CO_TipoCambioDiario T
+	CO_TipoCambioDiario T (NOLOCK)
 	ON F.IdMoneda                  = T.IdMoneda
 	AND CONVERT( DATE, F.Fecha )    = T.Fecha
 WHERE
@@ -673,8 +673,8 @@ BEGIN
 	SELECT * FROM #Comercializaciones
 END
 
-IF @MesReporte IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01')
-	SELECT @FechaLimite = '2022-12-31'
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
 IF @FechaLimite >= GETDATE()

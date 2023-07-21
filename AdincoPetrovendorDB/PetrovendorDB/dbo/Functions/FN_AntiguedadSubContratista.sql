@@ -1,7 +1,25 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'FN_AntiguedadSubContratista'
+)
+    DROP FUNCTION FN_AntiguedadSubContratista;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <30/01/2020>
 -- Description:	<consultar el tiempo que tiene un subcontratista en la plataforma petrovendor>
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <05/07/2023>
+-- Description:	<Optimizacion del sp>
 -- =============================================
 CREATE FUNCTION [dbo].[FN_AntiguedadSubContratista]
 (
@@ -21,11 +39,11 @@ BEGIN
 		 @MESES = DATEDIFF(MONTH,U.FechaRegistro,GETDATE()),
 		 @AÑOS = DATEDIFF(YEAR,U.FechaRegistro,GETDATE())
 	FROM dbo.S_Proveedor AS PR
-		LEFT JOIN dbo.S_UsuarioProveedor AS UP
-			ON UP.IdProveedor = PR.IdProveedor
+		LEFT JOIN dbo.S_UsuarioProveedor AS UP (NOLOCK)
+			ON PR.IdProveedor = UP.IdProveedor
 				AND UP.IsAdmin = 1
-		LEFT JOIN dbo.S_Usuario AS U
-			ON U.IdUsuario = UP.IdUsuario
+		LEFT JOIN dbo.S_Usuario AS U (NOLOCK)
+			ON UP.IdUsuario = U.IdUsuario
 				AND U.IdTipoUsuario = 3
 				AND U.Activo = 1
 	WHERE PR.IdProveedor = @IdProveedor
