@@ -2933,6 +2933,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\SP_MM_ActualizarConfiguracionCartaCNProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_MM_AgregarConfiguracionCartaCNProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_MM_ConsultaProveedoresCartaCN.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\MM_ContratosActivos.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
