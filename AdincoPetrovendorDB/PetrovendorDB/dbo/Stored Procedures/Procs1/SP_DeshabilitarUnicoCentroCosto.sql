@@ -17,12 +17,7 @@ GO
 -- Create date: <27-09-2019>
 -- Description:	<los proveedores que se encuentren en esta tabla se deshabilitara el check unico centro de costo de la solicitud de pedido>
 -- =============================================
--- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <13/07/2023>
--- Description:	<se descarta amatitlan>
--- =============================================
-ALTER PROCEDURE [dbo].[SP_DeshabilitarUnicoCentroCosto] @IdProveedor INT
+CREATE PROCEDURE [dbo].[SP_DeshabilitarUnicoCentroCosto] @IdProveedor INT
 AS
 BEGIN
     IF EXISTS
@@ -30,8 +25,7 @@ BEGIN
         SELECT 1
         FROM dbo.DEA_Proveedor (NOLOCK)
         WHERE IdProveedor = @IdProveedor
-		AND ISNULL(Activo, 0) = 1 
-		AND RFC <> 'PAM140722DK6'
+		AND ISNULL(Activo, 0) = 1
     )
         SELECT 1
     ELSE
