@@ -1,18 +1,6 @@
-﻿USE [Petrovendor]
+use Petrovendor
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_ListaFacturasAprobacion'
-)
-    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion;   
-	
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion]    Script Date: 26/06/2023 02:34:39 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROC IF EXISTS SP_PR_MM_ListaFacturasAprobacion
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -41,6 +29,11 @@ GO
 -- Author:		Daniel AC
 -- Create date: 26-06-2023
 -- Description:	Se agrega columnas uuid, folio factura y fecha de timbrado
+-- =============================================
+-- =============================================
+-- Author:		Luis David
+-- Create date: 04-08-2023
+-- Description:	Se agrega filtros de fecha general para evitar timeout por exceso de datos
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
 @IdProveedor int,
@@ -280,15 +273,15 @@ BEGIN
 				ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
 			LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK)
 				ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
-				AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS=PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS 
+				AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS 
 			LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK)
-				ON PSES.SAPPONumber=SES.PO_SAPNumer 
-				AND  PSES.SAPSESNumber=SES.SESReferenceNumber
-				AND PSES.SESN=SES.SESNumber         
+				ON PSES.SAPPONumber = SES.PO_SAPNumer 
+				AND  PSES.SAPSESNumber = SES.SESReferenceNumber
+				AND PSES.SESN = SES.SESNumber         
 			LEFT JOIN dbo.RelacionCartaCNPedido AS RC (NOLOCK)
-				ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 
+				ON AP.IdAceptacionPedido = RC.IdAceptacionPedido 
 			LEFT JOIN S_Proveedor AS PR (NOLOCK)
-				ON AP.IdSubContratista=PR.RFC
+				ON AP.IdSubContratista = PR.RFC
 				AND PR.Activo = 1  -->CTE		
 			WHERE AF.IdEstatus IN (SELECT IdEstatus FROM #Estatus)
 			AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
@@ -594,7 +587,7 @@ BEGIN
   ORDER BY FechaRegistro DESC;
 
 END
-ELSE
+ELSE -- FechaInicio y Fin No es Null
 BEGIN
 	
 	IF EXISTS (SELECT COUNT(1) FROM #PLANT)  

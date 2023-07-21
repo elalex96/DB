@@ -1,19 +1,7 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_ListaFacturasAprobacion_Bitacora'
-)
-    DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion_Bitacora;   
-	
-GO
-/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion_Bitacora]    Script Date: 26/06/2023 05:25:36 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use Petrovendor
+go
+drop procedure if exists SP_PR_MM_ListaFacturasAprobacion_Bitacora
+go
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-02-2023
@@ -24,13 +12,19 @@ GO
 -- Create date: 26-06-2023
 -- Description:	Se agrega columnas uuid, folio factura y fecha de timbrado
 -- =============================================
+-- =============================================
+-- Author:		Luis David
+-- Create date: 04-08-2023
+-- Description:	Se agrega filtros de fecha general para evitar timeout por exceso de datos
+-- =============================================
 CREATE   PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion_Bitacora]
 	@IdProveedor int,
 	@Estatus int ,	
     @IdContrato    INT = null,
     @IdUsuario     INT = null,
-    @FechaRegistro DATETIME = null
-
+    @FechaRegistro DATETIME = null,
+	@FechaInicio datetime,
+	@FechaFin datetime 
 AS
 BEGIN
 	 
@@ -199,7 +193,8 @@ BEGIN
 		JOIN	Adinco.dbo.CO_Contrato	AS	C 	 (NOLOCK)
 			ON	SV.IdContrato = C.IdContrato
 		WHERE 
-		pO.Plant = @PLANT		
+		pO.Plant = @PLANT	
+		and afb.CreadoEl BETWEEN @FechaInicio AND @FechaFin
 	    GROUP BY AF.IdAceptacionPedido,
 			AP.IdPedido,
 			PR.RazonSocial,
@@ -246,5 +241,6 @@ BEGIN
 		UUID,
 		FolioFactura,
 		FechaTimbrado
-	 FROM #AceptacionesPedido ORDER BY FechaRegistro DESC;
+	 FROM #AceptacionesPedido 
+	 ORDER BY FechaRegistro DESC;
 END
