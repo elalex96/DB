@@ -1,15 +1,7 @@
-﻿-- =============================================
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20/04/2019
 -- Description:	
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 18/11/2021
--- Description:	se agrega la programacion para entregables Trianuales y Mensuales cada septimo dia habil del mes
--- =============================================
--- Author:		Alexander Gomez
--- Create date: 18/11/2021
--- Description:	se agrega la programacion para entregables Trianuales y Mensuales cada septimo dia habil del mes
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 18/11/2021
@@ -20,7 +12,9 @@
 -- Description:	Se agrega la programación para entregables 
     --a más tardar el décimo quinto (15) Día Hábil del Periodo subsecuente.
     --Dentro de los 15 días hábiles posteriores al cumplimiento del mes a reportar.
-
+-- =============================================
+-- BAAC 20230719	Se ajusta para que los entregables trimestrales que se entregan al
+--					quince dia habil se programen en la fecha exacta
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_GeneraInstanciasFechasLimite]-- '20200110',3, 10020,17065,0,1
     @FechaLimiteFrecuencia DATE,
@@ -80,6 +74,7 @@ BEGIN
 		CE.IdContratoEntregable	=	@IdContratoEntregable AND 
 		replace(TIEMPOENTREGA,'á','a') LIKE 'dentro%7%habiles%'
 		AND IdFrecuenciaEntregable	=	10009--MENSUAL
+						
 
 	SELECT @TEQuinceDiaHabil= COUNT(1) 
 	FROM 
@@ -91,8 +86,8 @@ BEGIN
 		CE.IdContratoEntregable	=	@IdContratoEntregable AND
 		(replace(TIEMPOENTREGA,'á','a') LIKE 'dentro%15%habiles%'
 		or replace(TIEMPOENTREGA,'á','a') LIKE '%décimo quinto%')
-		AND IdFrecuenciaEntregable	=	10009--MENSUAL
-
+		AND IdFrecuenciaEntregable	IN (	10009, --MENSUAL
+						10013 ) --TRIMESTRAL
 
 
     IF (@BitProgramaImplementa = 0)
@@ -115,7 +110,8 @@ BEGIN
 			END;
 
 
-    IF @Frecuencia NOT IN ( 10000, 10003, 10003, 10004, 10005, 10008, 10010, 10011, 10014, 10016, 10018,10019 )  --SELECT * FROM EN_FrecuenciaEntregable WHERE IdFrecuenciaEntregable IN ( 10000, 10003, 10003, 10004, 10005, 10008, 10010, 10011, 10014, 10016, 10018, 10019 )
+    IF @Frecuencia NOT IN ( 10000, 10003, 10003, 10004, 10005, 10008, 10010, 10011, 10014, 10016, 10018,10019 )  
+	--SELECT * FROM EN_FrecuenciaEntregable WHERE IdFrecuenciaEntregable IN ( 10000, 10003, 10003, 10004, 10005, 10008, 10010, 10011, 10014, 10016, 10018, 10019 )
     BEGIN --Entregable Frecuencia
 			---------------------------------------------------------------------------------
 			IF (
