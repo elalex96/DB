@@ -40,7 +40,7 @@ BEGIN
 									   INNER JOIN dbo.S_UsuarioProveedor UP  (NOLOCK)
 									   ON P.IdProveedor = UP.IdProveedor 									   
 									   INNER JOIN dbo.S_Usuario U (NOLOCK)
-									   ON U.IdUsuario = UP.IdUsuario 
+									   ON  UP.IdUsuario  = U.IdUsuario
 									   AND U.Activo = 1 --> CTE debe estar activo	
 									   AND ISNULL(U.IsEliminado,0)  = 0 
 									   WHERE P.IdProveedor = @IdProveedor
@@ -70,4 +70,3 @@ BEGIN
 	
 
 END
-
