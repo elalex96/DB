@@ -17,6 +17,10 @@ GO
 -- Update: 25-01-2021
 -- Description:	issue #930/ Optimización de sp
 -- =============================================
+-- Author:		Alexander Gomez
+-- Update: 12/07/2023
+-- Description:	correccion para issue https://github.com/Adinco/petrovendor/issues/2383
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_DEA_ValidarProveedor]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor int, 
@@ -33,14 +37,18 @@ BEGIN
 
 	IF ISNULL(@EXISTE_RFC,0)  >0 
 	BEGIN 
-
-		SELECT 'CAMBIAR_PROCESO'
-
+		IF @RFC_ACTUAL = 'PAM140722DK6'
+		BEGIN
+			SELECT 'AMATITLAN'
+		END
+		ELSE
+		BEGIN
+			SELECT 'CAMBIAR_PROCESO'
+		END
 	END 
 	ELSE 
 	BEGIN 
 			SELECT 'SEGUIR_PROCESO'
 		
 	END 
-
 END

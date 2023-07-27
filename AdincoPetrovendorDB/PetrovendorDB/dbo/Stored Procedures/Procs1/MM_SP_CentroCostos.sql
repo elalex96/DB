@@ -22,6 +22,11 @@ GO
 -- Create date: 25/11/2021
 -- Description: optimizacion
 -- =============================================
+-- =============================================
+-- Author:      Alexander Gomez
+-- Create date: 13/07/20223
+-- Description: se descarta amatitlan
+-- =============================================
 CREATE PROCEDURE [dbo].[MM_SP_CentroCostos]
 -- Add the parameters for the stored procedure here
 @IdProveedor INT,
@@ -35,7 +40,7 @@ BEGIN
 
 	-- Si es de la operadora Ogarrio, DEA
 	-- Entonces hay que aplicar el filtro
-    IF EXISTS ( SELECT IdProveedor FROM dbo.DEA_Proveedor (NOLOCK) WHERE Activo = 1 AND IdProveedor = @IdProveedor)
+    IF EXISTS ( SELECT IdProveedor FROM dbo.DEA_Proveedor (NOLOCK) WHERE Activo = 1 AND IdProveedor = @IdProveedor AND RFC <> 'PAM140722DK6')
     BEGIN
 		SELECT CC.IdCentroCosto,
                CC.CentroCosto
