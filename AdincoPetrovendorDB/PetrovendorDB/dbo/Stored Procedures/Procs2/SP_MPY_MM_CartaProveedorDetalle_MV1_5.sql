@@ -26,6 +26,10 @@ GO
 -- Update: 19/07/2023
 -- Description:	se agregan validaciones de configuraciones issue: https://github.com/Adinco/petrovendor/issues/2388
 -- =============================================
+-- Author:		Alexander Gomez
+-- Update: 27/07/2023
+-- Description:	se iguala el calculo de partidas a 3 decimales sin redondear issue: https://github.com/Adinco/petrovendor/issues/2397
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedorDetalle_MV1_5] --2682
     -- Add the parameters for the stored procedure here
     @IdPedido INT,
@@ -90,7 +94,7 @@ BEGIN
 				   ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
 				   ISNULL(BSA.Nombre, 'NO CONTENIDO')AS NombreActividad,
 				   ISNULL(V.ValorFactura,0) AS ValorFactura,
-				   ROUND(APD.PCN, 3) AS PCN,
+				   APD.PCN AS PCN,
 				   V.IdTipoMaterialServicio AS  IdTipoMaterial,
 				   ISNULL(POD.MaterialCotizadoTextoC,APD.Detalle)
 			FROM MM_AceptacionPedidoDetalle AS APD (NOLOCK)
@@ -125,7 +129,7 @@ BEGIN
 			   IdTipoMaterial,
 			   '(' + NombreActividad + ') - ' +
 			   STUFF((
-					SELECT ' \ ' + SUBSTRING([DescPartidas],1,10)
+					SELECT ' \ ' + SUBSTRING([DescPartidas], 1, 50)
 					FROM #ACTIVIDAD 
 					WHERE (NombreActividad = ACT.NombreActividad) 
 					FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
@@ -143,7 +147,7 @@ BEGIN
 			   IdTipoMaterial,
 			   '(' + NombreActividad + ') - ' +
 			   STUFF((
-					SELECT ' \ ' + SUBSTRING([DescPartidas],1,10)
+					SELECT ' \ ' + SUBSTRING([DescPartidas], 1, 50)
 					FROM #ACTIVIDAD 
 					WHERE (NombreActividad = ACT.NombreActividad) 
 					FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
@@ -156,17 +160,15 @@ BEGIN
 			/*AGRUPADO POR ACTIVIDAD PCN DE CADA ACTIVIDAD*/
 			SELECT CodigoCatalogo, 
 			NombreActividad,
-			CASE WHEN  ISNULL(SUM(CN),0) > 0 THEN 
-			ROUND((SUM(CN)/SUM(MontoAcumulado)),3)
-			ELSE 
-			 0
-			END  
-			 AS PorcentajeContenidoNacional,
+			CAST(SUBSTRING(CAST(ISNULL((CASE 
+			WHEN  ISNULL(SUM(CN),0) > 0 THEN SUM(CN)/SUM(MontoAcumulado)
+			ELSE  0
+			END),0) AS nvarchar),1,5) AS nvarchar) AS PorcentajeContenidoNacional,
 			 SUM(MontoAcumulado) AS MontoFacturado,
 			 DescPartidas AS MaterialCotizadoTextoC
 			FROM #ACTIVIDAD_AGRUPADA
 			GROUP BY CodigoCatalogo,NombreActividad,DescPartidas
-			ORDER BY PorcentajeContenidoNacional DESC
+			ORDER BY CodigoCatalogo DESC
 
 	END
 	ELSE
@@ -186,7 +188,7 @@ BEGIN
 			   ISNULL(BSA.Codigo, 'NO CONTENIDO') AS CodigoCatalogo,
 			   ISNULL(BSA.Nombre, 'NO CONTENIDO')AS NombreActividad,
 			   ISNULL(V.ValorFactura,0) AS ValorFactura,
-			   ROUND(APD.PCN, 3) AS PCN,
+			   APD.PCN AS PCN,
 			   V.IdTipoMaterialServicio AS  IdTipoMaterial,
 			   APD.Detalle
 		FROM MPY_MM_AceptacionPedidoDetalle AS APD (NOLOCK)
@@ -196,7 +198,8 @@ BEGIN
 			ON V.IdAceptacionPedidoDetalle = APD.IdAceptacionPedidoDetalle       
 			LEFT JOIN dbo.MM_BS_Actividad AS BSA (NOLOCK)
 				ON BSA.IdActividad = V.IdCatalogoHidrocarburos
-		WHERE AP.IdAceptacionPedido = @IdPedido;
+		WHERE AP.IdAceptacionPedido = @IdPedido
+		ORDER BY ISNULL(BSA.Codigo, 'NO CONTENIDO') DESC;
 
 		
 	
@@ -218,7 +221,7 @@ BEGIN
 		   IdTipoMaterial,
 		   '(' + NombreActividad + ') - ' +
 		   STUFF((
-				SELECT ' \ ' + SUBSTRING([DescPartidas],1,10)
+				SELECT ' \ ' + SUBSTRING([DescPartidas], 1, 50)
 				FROM #ACTIVIDAD 
 				WHERE (NombreActividad = ACT.NombreActividad) 
 				FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
@@ -236,30 +239,29 @@ BEGIN
 		   IdTipoMaterial,
 		   '(' + NombreActividad + ') - ' +
 		   STUFF((
-				SELECT ' \ ' + SUBSTRING([DescPartidas],1,10)
+				SELECT ' \ ' + SUBSTRING([DescPartidas], 1, 50)
 				FROM #ACTIVIDAD 
 				WHERE (NombreActividad = ACT.NombreActividad) 
 				FOR XML PATH(''),TYPE).value('(./text())[1]','VARCHAR(MAX)')
 			  ,1,2,'')
 		FROM #ACTIVIDAD AS ACT
 		WHERE IdTipoMaterial =2  --> SERVICIO
-		GROUP BY CodigoCatalogo,NombreActividad, IdTipoMaterial	
+		GROUP BY CodigoCatalogo,NombreActividad, IdTipoMaterial
+		ORDER BY CodigoCatalogo DESC
 
 
 		/*AGRUPADO POR ACTIVIDAD PCN DE CADA ACTIVIDAD*/
 		SELECT CodigoCatalogo, 
 		NombreActividad,
-		CASE WHEN  ISNULL(SUM(CN),0) > 0 THEN 
-		ROUND((SUM(CN)/SUM(MontoAcumulado)),3)
-		ELSE 
-		 0
-		END  
-		 AS PorcentajeContenidoNacional,
+		CAST(SUBSTRING(CAST(ISNULL((CASE 
+			WHEN  ISNULL(SUM(CN),0) > 0 THEN SUM(CN)/SUM(MontoAcumulado)
+			ELSE  0
+		END),0) AS nvarchar),1,5) AS nvarchar) AS PorcentajeContenidoNacional,
 		 SUM(MontoAcumulado) AS MontoFacturado,
 		 DescPartidas AS MaterialCotizadoTextoC
 		FROM #ACTIVIDAD_AGRUPADA
 		GROUP BY CodigoCatalogo,NombreActividad,DescPartidas
-		ORDER BY PorcentajeContenidoNacional DESC
+		ORDER BY CodigoCatalogo DESC
 
 	END
 
