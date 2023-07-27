@@ -6,7 +6,11 @@ IF EXISTS
 )
     DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion;
 GO
-
+-- =============================================  
+-- Alter Author:        Reyna Olvera
+-- Alter Date:			25 de Julio del 23
+-- Alter Description:	Se agrega validación/alerta para mencionar al usuaario que la columna 21_22 y 21_23 tienen un valor de 0
+-- ============================================= 
 CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion]  
     @Contrato INT,  
     @IdPresupuesto INT,  
@@ -215,7 +219,7 @@ BEGIN
         TimbreHASH_PDF_RC26_06 VARCHAR(2000),  
         MontoPagado_RC26_07 MONEY,  
         ClaveMonedaFactura_RC26_08 VARCHAR(2000),  
-        MontoEquivDolare_RC26_09 FLOAT,  
+ MontoEquivDolare_RC26_09 FLOAT,  
         TipoCambio_RC26_10 FLOAT,  
         Beneficiario_RC26_11 VARCHAR(2000),  
         ClasDocSoporte_RC26_12 INT  
@@ -457,7 +461,7 @@ BEGIN
            P.Nombre,  
            P.IdPresupuestoCNH,  
            P.InicioPresupuesto,  
-           P.FinPresupuesto  
+       P.FinPresupuesto  
     FROM dbo.FI_TransferFactura TF WITH (NOLOCK)  
         JOIN dbo.CO_Registro R WITH (NOLOCK)  
             ON TF.IdFactura = R.IdFactura  
@@ -639,7 +643,7 @@ BEGIN
                   AND IUC_PE_RC21_07 IS NULL  
                   AND TipoComprobante_RC21_08 IS NULL  
                   AND MetodoPago_RC21_09 IS NULL  
-                  AND Actividad_RC21_10 IS NULL  
+     AND Actividad_RC21_10 IS NULL  
                   AND SubActividad_RC21_11 IS NULL  
                   AND Tarea_RC21_12 IS NULL  
                   AND CostAtribAdminGral_RC21_13 IS NULL  
@@ -819,6 +823,16 @@ BEGIN
 			ORDER BY T21.Id_21_M ASC
             ----------------------------  
 			INSERT INTO #TablaDeValidacionesConciliacion (Validaciones)
+            SELECT  'Los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
+                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' es 0.' AS [Validaciones] 
+            FROM #TEMPORAL_21_M T21  
+            WHERE (  
+                      ISNULL(T21.MontoAumentar_RC21_22,0) = 0
+                      AND  ISNULL(T21.MontoDisminuir_RC21_23,0) = 0
+                  )  
+			ORDER BY T21.Id_21_M ASC
+			-------------------------------
+			INSERT INTO #TablaDeValidacionesConciliacion (Validaciones)
             SELECT 'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_22_M en la columna RC22_04 Renglón: '  
                    + CONVERT(VARCHAR(2000), T22.Id_22_M) + '.' AS [Validaciones]  
             FROM #TEMPORAL_22_M T22  
@@ -827,7 +841,7 @@ BEGIN
             ----------------------------  
 			INSERT INTO #TablaDeValidacionesConciliacion (Validaciones)
             SELECT CASE  
-                       WHEN T23.UUID_RC23_02 IS NULL  
+       WHEN T23.UUID_RC23_02 IS NULL  
                             AND T23.UUID_Relacionado_C23_03 IS NULL THEN  
                            'El UUID del CFDI Principal, así como el UUID del CFDI Relacionado están vacíos, Verificar en la Hoja RC_CONT_23_M en las columnas RC23_02, RC23_03 Renglón: '  
                            + CONVERT(VARCHAR(2000), T23.Id_23_M) + '.'  
@@ -883,7 +897,7 @@ BEGIN
             --7 _____________________________ Verificacion del HASH _____________________________--  
             ---------------------HASH en la 22_M  
 			INSERT INTO #TablaDeValidacionesConciliacion (Validaciones)
-            SELECT CASE  
+            SELECT CASE 
                        WHEN T22.UUID_RC22_04 IS NULL  
                             OR T22.UUID_RC22_04 = '' THEN  
                            'El Timbre HASH de la Hoja RC_CON_22_M en la columna RC22_03 Renglón: '  
@@ -1295,4 +1309,4 @@ BEGIN
 			ClasDocSoporte_RC26_12 
 			FROM #TEMPORAL_26_M
 			ORDER BY #TEMPORAL_26_M.Id_26_M ASC
-END;  
+END; 

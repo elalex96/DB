@@ -6,7 +6,6 @@
 )
     DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversiones;
 GO
-
 -- ==============================================  
 -- Author:      Marcos Garcia  
 -- Create:      20-11-2019  
@@ -47,6 +46,10 @@ GO
 -- Alter Author:        Neri del Angel
 -- Alter Date:			08 de Mayo del 2023
 -- Alter Description:	Ajuste en columna RC21_13 si es reporte en ceros se muestre vacía y no con un 0
+-- =============================================  
+-- Alter Author:        Reyna Olvera
+-- Alter Date:			25 de Julio del 23
+-- Alter Description:	Se agrega validación/alerta para mencionar al usuaario que la columna 21_22 y 21_23 tienen un valor de 0
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]
     @Contrato INT,  
@@ -782,7 +785,7 @@ BEGIN
                            '¡Alerta! El presupuesto: [ ' + Nombre + ' ] con fecha fin vigencia '  
                            + CONVERT(VARCHAR(2000), FechaFinPresupuesto)  
                            + ' está fuera de los últimos 6 meses permitidos.'  
-                       ELSE  
+         ELSE  
                            '¡Alerta! El presupuesto: [ ' + Nombre + ' - '  
                            + SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH) - 8, 9) + ' ] con fecha fin vigencia '  
                            + CONVERT(VARCHAR(2000), FechaFinPresupuesto)  
@@ -868,7 +871,17 @@ BEGIN
                   )  
                   AND T21.TipoDocumento_RC21_04 = 'CF'  
 			ORDER BY T21.Id_21_M ASC
-			----------------------------  
+			---------------------------- 
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT  'Los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
+                   + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' es 0.' AS [Validaciones] 
+            FROM #TEMPORAL_21_M T21  
+            WHERE (  
+                      ISNULL(T21.MontoAumentar_RC21_22,0) = 0
+                      AND  ISNULL(T21.MontoDisminuir_RC21_23,0) = 0
+                  )  
+			ORDER BY T21.Id_21_M ASC
+			----------------------------
             INSERT INTO #TablaDeValidaciones (Validaciones)
             SELECT  'El UUID del CFDI está vacío, Verificar en la Hoja RC_CONT_22_M en la columna RC22_04 Renglón: '  
                    + CONVERT(VARCHAR(2000), T22.Id_22_M) + '.' AS [Validaciones]
@@ -1056,7 +1069,7 @@ BEGIN
                            'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
                            + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' del identificador ' + T26.IdDocFacturacion_RC26_03  
                            + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
+           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
                    END AS [Validaciones]
             FROM #TEMPORAL_26_M T26  
                 INNER JOIN #TEMPORAL_21_M T21  
@@ -1202,7 +1215,7 @@ BEGIN
             ClavaMoneda_RC21_24,  
             TipCamConvetUSD_RC21_25,  
             TipoOpercion_RC21_26,  
-            RegistroConAjuste_RC21_27,  
+            RegistroConAjuste_RC21_27, 
             AsociadoIncrementoPMT_RC21_28   
 			FROM #TEMPORAL_21_M
 			ORDER BY #TEMPORAL_21_M.Id_21_M ASC;
@@ -1340,4 +1353,4 @@ BEGIN
 			Beneficiario_RC26_11,  
 			ClasDocSoporte_RC26_12 FROM #TEMPORAL_26_M
 			ORDER BY #TEMPORAL_26_M.Id_26_M ASC;
-END;  
+END; 
