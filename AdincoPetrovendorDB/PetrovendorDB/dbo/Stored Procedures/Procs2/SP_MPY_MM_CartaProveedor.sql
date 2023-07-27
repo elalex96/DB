@@ -36,7 +36,11 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 12-07-2023
 -- Description:	adaptacion para carta PROVEEDOR A PROVEEDOR para Amatitlan, se aplican estandares de desarrollo
--- =============================================  
+-- ============================================= 
+-- Author:		Alexander Gomez
+-- Update: 19/07/2023
+-- Description:	se agregan validaciones de configuraciones issue: https://github.com/Adinco/petrovendor/issues/2388
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedor]   
  -- Add the parameters for the stored procedure here  
 @IdProveedor INT,  
@@ -62,7 +66,9 @@ BEGIN
  DECLARE @PROVEEDOR_DEA INT;
  DECLARE @CANT_TMAT INT;
  DECLARE @CANT_TSER INT;
- DECLARE @TIPO_MATERIAL NVARCHAR(MAX);
+ DECLARE @TIPO_MATERIAL NVARCHAR(MAX),
+		@RFC_ACTUAL NVARCHAR(200), 
+		@CONFIGURACION_CARTA NVARCHAR(100);
   
  IF(@IdProveedor = 0)  
  BEGIN  
@@ -81,8 +87,7 @@ BEGIN
   
  IF (@IdTipoRegimen = 2)  
  BEGIN  
-  SET @UsuarioFisico = (SELECT 
-												TOP 1 U.Nombre AS RepresentanteLegal  
+  SET @UsuarioFisico = (SELECT TOP 1 U.Nombre AS RepresentanteLegal  
 										  FROM S_Proveedor AS P (NOLOCK)
 											JOIN S_UsuarioProveedor UP 
 												ON P.IdProveedor = UP.IdProveedor  
@@ -91,8 +96,7 @@ BEGIN
 												AND U.Activo = 1
 												AND ISNULL(U.IsEliminado,0) = 0
 										  WHERE U.IdTipoUsuario = 3 
-											AND P.IdProveedor = @IdProveedor)  
-  
+											AND P.IdProveedor = @IdProveedor)
  END  
   
  SET @NombreOperadora = (SELECT 
@@ -415,7 +419,26 @@ BEGIN
 							WHERE RTRIM(LTRIM(RFC))=RTRIM(LTRIM(@RFC_ACTUAL_DEA)) 
 							AND Activo = 1);
 
-  IF  @EXISTE_RFC_DEA > 0
+	SELECT TOP 1
+		@RFC_ACTUAL = P.RFC,
+		@IdContrato = PD.IdContrato
+	FROM dbo.MM_AceptacionPedido AS AP (NOLOCK)
+		JOIN dbo.S_Proveedor AS P (NOLOCK) 
+			ON AP.IdProveedor = P.IdProveedor
+		JOIN MM_Pedido AS PD (NOLOCK) 
+			ON AP.IdPedido = PD.IdPedido
+	WHERE AP.IdAceptacionPedido = @IdPedido;
+
+	--SE VERIFICA EL RFC ESTE EN LA CONFIGURACION
+	SET @CONFIGURACION_CARTA = (SELECT
+									TipoConfiguracion
+								FROM PV_ConfiguracionProveedoresOperadoras (NOLOCK)
+								WHERE IdContrato = @IdContrato
+									AND TipoConfiguracion = 'CARTA_PR_PR'
+									AND Operadora = 1
+									AND Activo = 1);
+
+  IF  @EXISTE_RFC_DEA > 0 OR @CONFIGURACION_CARTA = 'CARTA_PR_PR'
   BEGIN
 		
 	SET @CANT_TMAT = (SELECT COUNT(VP.IdTipoMaterialServicio)  
@@ -815,6 +838,4 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
   END;  
 
 END;
-
-
 END;
