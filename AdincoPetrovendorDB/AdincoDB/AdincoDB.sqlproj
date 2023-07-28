@@ -3880,16 +3880,10 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_AP_ObtenerCalendarioExcepciones.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_ObtenerReguladores.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_ValidarAdministracionDeCalendarios.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_22_MConciliacion.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_MConciliacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\ObtenerContratosWDEA.sql" />
     <Build Include="dbo\Tables\Tables1\DEA_Contratos.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_RC_SIPAC_ValidarCostosGastosInversionesConciliacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_CO_ValidacionesPresupuestos_Conciliacion.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_26_MConciliacion.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_25_MConciliacion.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_24_MConciliacion.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_23_MConciliacion.sql" />
     <Build Include="dbo\Tables\Tables2\ENT_BitacoraEliminacionInstancia.sql" />
     <Build Include="dbo\Tables\Tables2\ENT_BitacoraEliminacionProgramacionDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_ENT_GuardarHistorialEliminacionProgramacion.sql" />
@@ -3900,5 +3894,17 @@
     <Build Include="dbo\Stored Procedures\Procs3\Mobile_sp_TipoAprobacionesPorUsuario.sql" />
     <Build Include="dbo\User Defined Types\TY_ListaCambioDiario.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_GenerarTipoDeCambioPorSerieBanxicoMXN.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_21_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_22_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_23_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_24_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_25_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SIPAC_RC_CONT_26_MConciliacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultarSubContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultaSubFamilia.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_ConsultarOT_Estatus.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\sp_SC_Consultar_PV_MM_MaterialUnidad.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\EliminarAWS_Documentos_Logico.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_CO_CambioMesPresentacionDelGasto.sql" />
   </ItemGroup>
 </Project>
