@@ -92,16 +92,18 @@ BEGIN
   
  IF (@IdTipoRegimen = 2)  
  BEGIN  
-  SET @UsuarioFisico = (SELECT TOP 1 U.Nombre AS RepresentanteLegal  
-										  FROM S_Proveedor AS P (NOLOCK)
-											JOIN S_UsuarioProveedor UP 
-												ON P.IdProveedor = UP.IdProveedor  
-											JOIN S_Usuario U (NOLOCK)
-												ON UP.IdUsuario = U.IdUsuario
-												AND U.Activo = 1
-												AND ISNULL(U.IsEliminado,0) = 0
-										  WHERE U.IdTipoUsuario = 3 
-											AND P.IdProveedor = @IdProveedor)
+  SET @UsuarioFisico = (SELECT 
+							TOP 1 U.Nombre AS RepresentanteLegal  
+						FROM S_Proveedor AS P (NOLOCK)
+							JOIN S_UsuarioProveedor UP 
+								ON P.IdProveedor = UP.IdProveedor  
+							JOIN S_Usuario U (NOLOCK)
+								ON UP.IdUsuario = U.IdUsuario
+									AND U.Activo = 1
+									AND ISNULL(U.IsEliminado,0) = 0
+							WHERE U.IdTipoUsuario = 3 
+									AND P.IdProveedor = @IdProveedor);
+  
  END  
   
  SET @NombreOperadora = (SELECT 
@@ -685,7 +687,7 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
 		LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP (NOLOCK)
 			ON PO.Plant = CP.Planta  
 		LEFT JOIN Adinco.dbo.CO_Contratista AS CON (NOLOCK)
-			ON CP.IdContratista  = CON.IdContratista 
+			ON CP.IdContratista = CON.IdContratista  
 		LEFT JOIN Adinco.dbo.CO_Contratista AS C (NOLOCK)
 			ON CAST(AP.IdProveedor AS INT) = C.IdContratista  
 		LEFT JOIN Adinco.dbo.CO_SAPVendor SV (NOLOCK)
@@ -843,4 +845,6 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
   END;  
 
 END;
+
+
 END;
