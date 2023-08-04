@@ -692,7 +692,7 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
 		LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS CP (NOLOCK)
 			ON PO.Plant = CP.Planta  
 		LEFT JOIN Adinco.dbo.CO_Contratista AS CON (NOLOCK)
-			ON CP.IdContratista  = CON.IdContratista 
+			ON CON.IdContratista = CP.IdContratista  
 		LEFT JOIN Adinco.dbo.CO_Contratista AS C (NOLOCK)
 			ON CAST(AP.IdProveedor AS INT) = C.IdContratista  
 		LEFT JOIN Adinco.dbo.CO_SAPVendor SV (NOLOCK)

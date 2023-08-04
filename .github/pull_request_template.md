@@ -23,7 +23,10 @@ resolves Adinco/repositorio/#
 *Anexe en esta sección scripts de base de datos, en caso de no aplicar escriba "N/A" o elimine esta sección*
 
 ### 2.2 Accesos, Rutas y Archivos. 
-*Anexe información adicional especifica como usuario (no contraseñas), contrato y/o pantalla (URL), archivos para pruebas o implementaciones en caso de no aplicar escriba "N/A"* 
+| Tipo Acceso | Detalle |
+| ------------- | -----|
+| Usuario  | [nombre_de_usuario](https://www.example.com) |
+| Contrato | *Anexe información adicional especifica como usuario (no contraseñas), contrato y/o pantalla (URL), archivos para pruebas o implementaciones en caso de no aplicar escriba "N/A"*  |
  
 ## 3. Descripción General
  *Describa de manera general las actividades que se realizaron durante el desarrollo de la propuesta. Elimine toda esta seccion en caso de no ser aplicable (ej. no es el Pull Request principal*

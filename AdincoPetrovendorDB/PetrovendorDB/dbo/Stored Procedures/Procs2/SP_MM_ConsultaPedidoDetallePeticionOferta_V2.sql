@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaPedidoDetallePeticionOferta_V2'
+)
+    DROP PROCEDURE SP_MM_ConsultaPedidoDetallePeticionOferta_V2;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/01/2020>
 -- Description:	<Consulta de todos los detalles de la solped>
@@ -7,6 +21,11 @@
 -- Author:		<Alexander Gomez>
 -- Create date: <16/02/2021>
 -- Description:	<eliminado de los campos de prioridad y tipo de gasto>
+-- =============================================
+-- ============================================= 
+-- Author:		<Alexander Gomez>
+-- Create date: <19-07-2023>
+-- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidoDetallePeticionOferta_V2]-- 20135 
 	-- Add the parameters for the stored procedure here
@@ -33,21 +52,21 @@ BEGIN
 	DECLARE @MOSTRARJUSTIFICIONPCM BIT = 0;
 	DECLARE @RFCPROVEEDORACTUAL NVARCHAR(100);
 	DECLARE @IDDOCPCM INT;
-	DECLARE @RFCPCM NVARCHAR(100)= (SELECT TOP 1 RFC FROM dbo.PCM_RFC);
+	DECLARE @RFCPCM NVARCHAR(100)= (SELECT TOP 1 RFC FROM dbo.PCM_RFC (NOLOCK));
 	DECLARE @WDEA_MecContratacion NVARCHAR(100);
 
 	SET LANGUAGE spanish; 
 
-	SET @IDPROVEEDORACTUAL = (SELECT IdProveedor FROM dbo.MM_SolicitudPedido 
+	SET @IDPROVEEDORACTUAL = (SELECT IdProveedor FROM dbo.MM_SolicitudPedido (NOLOCK)
 							WHERE IdSolicitudPedido = @IdSolicitudPedido);
-	SET @RFCPROVEEDORACTUAL = (SELECT TOP 1 RFC FROM dbo.S_Proveedor
+	SET @RFCPROVEEDORACTUAL = (SELECT TOP 1 RFC FROM dbo.S_Proveedor (NOLOCK)
 								WHERE IdProveedor = @IDPROVEEDORACTUAL);
 	
 	IF @RFCPCM = @RFCPROVEEDORACTUAL
 	BEGIN
 		
 		SET @IDDOCPCM = (SELECT TOP 1 IdDocumento
-						FROM dbo.PCMDocumentoAdjunto
+						FROM dbo.PCMDocumentoAdjunto (NOLOCK)
 						WHERE IdProveedor = @IDPROVEEDORACTUAL
 							  AND IdSolicitucPedido = @IdSolicitudPedido
 							  AND Activo = 1
@@ -138,7 +157,7 @@ BEGIN
               LEFT OUTER JOIN Adinco.dbo.CO_ClasificacionAnexo4 AS CA4  (NOLOCK)
 				ON LPM.IdAnexo4 = CA4.IdAnexo4
               LEFT OUTER JOIN Adinco.dbo.FI_Factura AS F  (NOLOCK)
-				ON F.IdFactura = R.IdFactura
+				ON R.IdFactura = F.IdFactura
               LEFT OUTER JOIN Adinco.dbo.CO_TipoCambioMensual AS TCM  (NOLOCK)
 				ON F.IdMoneda = TCM.IdMoneda 
 					AND  MONTH(R.MesPresentacion) = TCM.IdMes 
@@ -191,6 +210,7 @@ BEGIN
 		FROM		MM_SolicitudPedido AS SP WITH (NOLOCK)
 		JOIN	MM_TipoSolicitudPedido AS TSP WITH (NOLOCK)
 			ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido 
+			AND SP.IdSolicitudPedido = @IdSolicitudPedido
 		JOIN	TA_Operacion AS TAO WITH (NOLOCK)
 			ON  SP.IdSolicitudPedido = TAO.IdDocumento 
 			AND TAO.IdTipoOperacion = 2 --> CTE APROBACION DE PEDIDO
@@ -211,8 +231,7 @@ BEGIN
 		LEFT JOIN dbo.S_Proveedor AS PR WITH (NOLOCK)
 			ON SP.IdProveedor = PR.IdProveedor 
 		LEFT JOIN dbo.S_Proveedor AS OPR WITH (NOLOCK)
-			ON  OPR.IdProveedor = SP.IdProveedor 
-		WHERE SP.IdSolicitudPedido = @IdSolicitudPedido;
+			ON  SP.IdProveedor = OPR.IdProveedor;
 
 	    SELECT 
 			SPD.IdSolicitudPedidoDetalle,
@@ -242,6 +261,7 @@ BEGIN
 		FROM MM_SolicitudPedidoDetalle AS SPD WITH (NOLOCK)
 			JOIN dbo.MM_Material AS MM WITH (NOLOCK)
 				ON  SPD.IdMaterial = MM.IdMaterial 	
+				AND IdSolicitudPedido = @IdSolicitudPedido
 			LEFT JOIN PV_MM_MaterialUnidad AS U WITH (NOLOCK)
 				ON  SPD.IdUnidad = U.IdUnidad
 			LEFT JOIN DG_Domicilio AS D WITH (NOLOCK)
@@ -260,7 +280,6 @@ BEGIN
 				ON  LP.IdTareaPetrolera = T.IdTareaPetrolera 
 			LEFT JOIN dbo.MM_SolPedArchivoAdjuntoMaterial AS ADMS WITH (NOLOCK)
 				ON  SPD.IdSolicitudPedidoDetalle = ADMS.IdSolPedDetalle 
-		WHERE IdSolicitudPedido = @IdSolicitudPedido
 		GROUP BY 
                  MM.DescripcionCorta,              
                  MM.Marca,
