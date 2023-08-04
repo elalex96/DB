@@ -6,8 +6,9 @@ IF EXISTS
     FROM dbo.sysobjects
     WHERE name = 'SP_MPY_MM_CartaProveedor'
 )
-    DROP PROCEDURE SP_MPY_MM_CartaProveedor;
+    DROP PROCEDURE SP_MPY_MM_CartaProveedor; 
 GO
+/****** Object:  StoredProcedure [dbo].[SP_MPY_MM_CartaProveedor]    Script Date: 31/07/2023 07:36:06 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -40,6 +41,14 @@ GO
 -- Author:		Alexander Gomez
 -- Update: 19/07/2023
 -- Description:	se agregan validaciones de configuraciones issue: https://github.com/Adinco/petrovendor/issues/2388
+-- =============================================
+-- Author:		Alexander Gomez
+-- Update: 27/07/2023
+-- Description:	se iguala el calculo de partidas a 3 decimales sin redondear issue: https://github.com/Adinco/petrovendor/issues/2397
+-- =============================================
+-- Author:	Daniel AC
+-- Update: 31/07/2023
+-- Description:	se agregan validaciones para evitar mostrar información de mercadeo cuando es murphy https://github.com/Adinco/petrovendor/issues/2407
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedor]   
  -- Add the parameters for the stored procedure here  
@@ -87,16 +96,18 @@ BEGIN
   
  IF (@IdTipoRegimen = 2)  
  BEGIN  
-  SET @UsuarioFisico = (SELECT TOP 1 U.Nombre AS RepresentanteLegal  
-										  FROM S_Proveedor AS P (NOLOCK)
-											JOIN S_UsuarioProveedor UP 
-												ON P.IdProveedor = UP.IdProveedor  
-											JOIN S_Usuario U (NOLOCK)
-												ON UP.IdUsuario = U.IdUsuario
-												AND U.Activo = 1
-												AND ISNULL(U.IsEliminado,0) = 0
-										  WHERE U.IdTipoUsuario = 3 
-											AND P.IdProveedor = @IdProveedor)
+  SET @UsuarioFisico = (SELECT 
+							TOP 1 U.Nombre AS RepresentanteLegal  
+						FROM S_Proveedor AS P (NOLOCK)
+							JOIN S_UsuarioProveedor UP 
+								ON P.IdProveedor = UP.IdProveedor  
+							JOIN S_Usuario U (NOLOCK)
+								ON UP.IdUsuario = U.IdUsuario
+									AND U.Activo = 1
+									AND ISNULL(U.IsEliminado,0) = 0
+							WHERE U.IdTipoUsuario = 3 
+									AND P.IdProveedor = @IdProveedor);
+  
  END  
   
  SET @NombreOperadora = (SELECT 
@@ -236,7 +247,7 @@ Permisionarios proporcionen información sobre contenido nacional en las activid
 			ON P.IdProveedor = RL.IdProveedor
 			AND RL.IsActivo =1  
 		LEFT JOIN DG_ActaConstitutiva AC (NOLOCK) 
-			ON AC.IdProveedor = P.IdProveedor 
+			ON P.IdProveedor  = AC.IdProveedor
 				AND AC.IsActivo = 1  
 		LEFT JOIN S_UsuarioProveedor UP (NOLOCK) 
 			ON P.IdProveedor = UP.IdProveedor  
@@ -427,7 +438,8 @@ BEGIN
 			ON AP.IdProveedor = P.IdProveedor
 		JOIN MM_Pedido AS PD (NOLOCK) 
 			ON AP.IdPedido = PD.IdPedido
-	WHERE AP.IdAceptacionPedido = @IdPedido;
+	WHERE AP.IdAceptacionPedido = @IdPedido
+	AND PD.IdSubcontratista = @IdProveedor;
 
 	--SE VERIFICA EL RFC ESTE EN LA CONFIGURACION
 	SET @CONFIGURACION_CARTA = (SELECT
@@ -506,7 +518,7 @@ BEGIN
 			+ 'la Industria de Hidrocarburos”, y demás disposiciones jurídicas aplicables, es correcta, completa,'  
 			+' veraz y verificable.' AS PrimerInical,  
 			'1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en la forma que establezcan las disposiciones jurídicas aplicables.' AS PrimerParafo,  
-			'2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos dieciocho meses contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Operador (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
+			'2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos 5 años contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Operador (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
 			'3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidrocarburos, en particular lo previsto en los artículos 85, fracción III y 86, fracción III. ' AS TercerParrafo,  
 			'Lo anterior, de conformidad con lo dispuesto en el artículo 46, párrafo quinto de la Ley de Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
 			'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
@@ -838,4 +850,6 @@ ealicen en la Industria de Hidrocarburos (el Acuerdo).' AS CuartoParrafo,
   END;  
 
 END;
+
+
 END;
