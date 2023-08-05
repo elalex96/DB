@@ -7,7 +7,7 @@
     SubactividadPetrolera VARCHAR(1000) NULL,  
     IdTarea VARCHAR(100) NULL,                 
     Tarea VARCHAR(1000) NULL,                  
-    IdSubActividad VARCHAR(100) NULL,          
+    IdSubtarea VARCHAR(100) NULL,          
     Subtarea_Servicio VARCHAR(1000) NULL,      
     Elegible VARCHAR(100) NULL,                
     Area VARCHAR(100) NULL,                    

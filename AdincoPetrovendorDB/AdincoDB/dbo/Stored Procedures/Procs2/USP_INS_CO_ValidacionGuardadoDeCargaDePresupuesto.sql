@@ -36,12 +36,12 @@ BEGIN
 
         SELECT TOP 1
             @IdAreaContractual = IdAreaContractual
-        FROM CO_Contrato
+        FROM CO_Contrato (NOLOCK)
         WHERE IdContrato = @IdContratoSeleccionado
 
         CREATE TABLE #TablaTemporalValidacionServicio
         (
-            IdSubActividad VARCHAR(100) NULL,
+            IdSubtarea VARCHAR(100) NULL,
             Subtarea_Servicio VARCHAR(1000) NULL,
             Existe BIT NULL,
             Activo BIT NULL,
@@ -86,7 +86,7 @@ BEGIN
             SubactividadPetrolera,
             IdTarea,
             Tarea,
-            IdSubActividad,
+            IdSubtarea,
             Subtarea_Servicio,
             Elegible,
             Area,
@@ -391,7 +391,7 @@ BEGIN
                SubactividadPetrolera,
                IdTarea,
                Tarea,
-               IdSubActividad,
+               IdSubtarea,
                Subtarea_Servicio,
                Elegible,
                Area,
@@ -692,27 +692,27 @@ BEGIN
         BEGIN
 		INSERT INTO #TablaTemporalValidacionServicio
         (
-            IdSubActividad,
+            IdSubtarea,
             Subtarea_Servicio,
             Existe,
             Activo,
             NumeroRepetidas
         )
-        SELECT IdSubActividad,
+        SELECT IdSubtarea,
                Subtarea_Servicio,
                0,
                0,
                COUNT(Subtarea_Servicio)
         FROM CO_BitacoraPresupuestoDetalle (NOLOCK)
         WHERE IdCarga = @IdCarga
-        GROUP BY IdSubActividad,
+        GROUP BY IdSubtarea,
                  Subtarea_Servicio
 		END
 		ELSE
 		BEGIN
 		INSERT INTO #TablaTemporalValidacionServicio
         (
-            IdSubActividad,
+            IdSubtarea,
             Subtarea_Servicio,
             Existe,
             Activo,
@@ -752,7 +752,7 @@ BEGIN
             FROM #TablaTemporalValidacionServicio
                 JOIN CO_Servicio
                     ON LTRIM(RTRIM(CONCAT(
-                                             #TablaTemporalValidacionServicio.IdSubActividad,
+                                             #TablaTemporalValidacionServicio.IdSubtarea,
                                              '-',
                                              #TablaTemporalValidacionServicio.Subtarea_Servicio
                                          )
@@ -767,7 +767,7 @@ BEGIN
             )
             SELECT 'ALERTA_SERVICIO',
                    LTRIM(RTRIM(CONCAT(
-                                         #TablaTemporalValidacionServicio.IdSubActividad,
+                                         #TablaTemporalValidacionServicio.IdSubtarea,
                                          '-',
                                          #TablaTemporalValidacionServicio.Subtarea_Servicio,
                                          ' (',
@@ -788,7 +788,7 @@ BEGIN
             )
             SELECT 'ALERTA_SERVICIO',
                    LTRIM(RTRIM(CONCAT(
-                                         #TablaTemporalValidacionServicio.IdSubActividad,
+                                         #TablaTemporalValidacionServicio.IdSubtarea,
                                          '-',
                                          #TablaTemporalValidacionServicio.Subtarea_Servicio,
                                          ' (',
@@ -807,7 +807,7 @@ BEGIN
             SET #TablaTemporalValidacionServicio.Activo = ISNULL(CO_Servicio.Activo, 0),
                 #TablaTemporalValidacionServicio.Existe = 1
             FROM #TablaTemporalValidacionServicio
-                JOIN CO_Servicio
+                JOIN CO_Servicio 
                     ON LTRIM(RTRIM(#TablaTemporalValidacionServicio.Subtarea_Servicio)) = LTRIM(RTRIM(ISNULL(
                                                                                                                 CO_Servicio.NombreServicio,
                                                                                                                 ''

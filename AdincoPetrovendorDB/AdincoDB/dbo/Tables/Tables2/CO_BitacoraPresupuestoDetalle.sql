@@ -1,22 +1,22 @@
 ﻿CREATE TABLE CO_BitacoraPresupuestoDetalle
 (
 	Id INT IDENTITY(1, 1) NOT NULL,
-    IdCarga INT NOT NULL,                      --1
-    IdDetalle INT NULL,                        --2
-    IdActividadPetrolera VARCHAR(100) NULL,    --3
-    ActividadPetrolera VARCHAR(1000) NULL,     --4
-    IdSubactividadPetrolera VARCHAR(100) NULL, --5
-    SubactividadPetrolera VARCHAR(1000) NULL,  --6
-    IdTarea VARCHAR(100) NULL,                 --7
-    Tarea VARCHAR(1000) NULL,                  --8
-    IdSubActividad VARCHAR(100) NULL,          --9
-    Subtarea_Servicio VARCHAR(1000) NULL,      --10
-    Elegible VARCHAR(100) NULL,                --11
-    Area VARCHAR(100) NULL,                    --12
-    Campo VARCHAR(100) NULL,                   --13
-    Yacimiento VARCHAR(100) NULL,              --14
-    Pozo_Instalacion VARCHAR(100) NULL,        --15
-    CAPEX_OPEX VARCHAR(100) NULL,              --16
+    IdCarga INT NOT NULL,                      
+    IdDetalle INT NULL,                        
+    IdActividadPetrolera VARCHAR(100) NULL,    
+    ActividadPetrolera VARCHAR(1000) NULL,     
+    IdSubactividadPetrolera VARCHAR(100) NULL, 
+    SubactividadPetrolera VARCHAR(1000) NULL,  
+    IdTarea VARCHAR(100) NULL,                 
+    Tarea VARCHAR(1000) NULL,                  
+    IdSubtarea VARCHAR(100) NULL,            
+    Subtarea_Servicio VARCHAR(1000) NULL,      
+    Elegible VARCHAR(100) NULL,                
+    Area VARCHAR(100) NULL,                    
+    Campo VARCHAR(100) NULL,                   
+    Yacimiento VARCHAR(100) NULL,              
+    Pozo_Instalacion VARCHAR(100) NULL,        
+    CAPEX_OPEX VARCHAR(100) NULL,              
     PA_17 FLOAT NULL,
     PA_18 FLOAT NULL,
     PA_19 FLOAT NULL,
