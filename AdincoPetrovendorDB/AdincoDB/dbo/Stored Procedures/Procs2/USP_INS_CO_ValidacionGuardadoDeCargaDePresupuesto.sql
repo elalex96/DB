@@ -863,7 +863,7 @@ BEGIN
                    LTRIM(RTRIM(CONCAT(
                                          'Se encontraron un total de (',
                                          CONVERT(VARCHAR(10), #TablaTemporalValidacionServicio.NumeroRepetidas),
-										 ') filas con servicios vacios'
+										 ') filas con servicios vacíos'
                                      )
                               )
                         )
@@ -930,7 +930,7 @@ BEGIN
                LTRIM(RTRIM(CONCAT(
 									 'Se encontraron un total de  (',
                                      CONVERT(VARCHAR(10), #TablaTemporalValidacionInstalacion.NumeroRepetidas),
-                                     ') filas con instalaciones vacias'
+                                     ') filas con instalaciones vacías'
                                  )
                           )
                     )
@@ -1007,7 +1007,7 @@ BEGIN
                     SELECT @DetalleAnalisis
                         = CONCAT(@DetalleAnalisis, 'Existe nueva instalación (', Descripcion, ') | ')
                     FROM #TablaTemporalValidacionDetalles
-                    WHERE Tipo = 'ALERTA_SERVICIO'
+                    WHERE Tipo = 'ALERTA_INSTALACION'
                 END
                 ELSE
                 BEGIN
