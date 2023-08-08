@@ -7,7 +7,7 @@ IF EXISTS
     WHERE name = 'SP_MM_ConsultaDocumentosRequerimientosPeticionOferta'
 )
     DROP PROCEDURE SP_MM_ConsultaDocumentosRequerimientosPeticionOferta;
-GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaDocumentosRequerimientosPeticionOferta]    Script Date: 07/08/2023 05:16:28 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -17,9 +17,10 @@ GO
 -- Create date: <25/09/2020>
 -- Description:	<Consultar el conjunto de documentos como requerimientos minimos JAGUAR>
 -- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <19-07-2023>
--- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <08/08/2023>
+-- Description:	<Se agrega orden de tablas>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaDocumentosRequerimientosPeticionOferta] 
 	-- Add the parameters for the stored procedure here
@@ -110,7 +111,7 @@ BEGIN
 	FROM dbo.ConsultaDocumentos(2) AS D
 	LEFT JOIN S_Proveedor AS PR (NOLOCK)
 		ON PR.IdProveedor = @IdProveedor
-	LEFT JOIN @PROVEEDORES_DOCUMENTOS_DEFAULT AS PDD 
+	LEFT JOIN @PROVEEDORES_DOCUMENTOS_DEFAULT AS PDD
 		ON D.NombreTipoDocumento = PDD.TIPO_DOCUMENTO
 		AND PR.RFC = PDD.RFC_PROVEEDOR
 
@@ -128,7 +129,7 @@ BEGIN
 	FROM dbo.ConsultaDocumentos(3) AS D
 	LEFT JOIN S_Proveedor AS PR (NOLOCK)
 		ON PR.IdProveedor = @IdProveedor
-	LEFT JOIN @PROVEEDORES_DOCUMENTOS_DEFAULT AS PDD 
+	LEFT JOIN @PROVEEDORES_DOCUMENTOS_DEFAULT AS PDD
 		ON D.NombreTipoDocumento = PDD.TIPO_DOCUMENTO
 		AND PR.RFC = PDD.RFC_PROVEEDOR
 
