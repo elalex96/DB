@@ -3913,5 +3913,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerCatalogoDeServicios.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_ConsultarInformacionPerfilPorUsuario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_ConsultarPaisesCodigos.sql" />
   </ItemGroup>
 </Project>
