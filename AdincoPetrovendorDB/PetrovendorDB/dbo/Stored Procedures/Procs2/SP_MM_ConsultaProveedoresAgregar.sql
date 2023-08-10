@@ -21,6 +21,10 @@ GO
 -- Create date: <19-07-2023>
 -- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
 -- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <28/07/2023>
+-- Description:	se agrega limite de caracteres en la razon social y correo de contacto issue: https://github.com/Adinco/petrovendor/issues/2387
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaProveedoresAgregar]  
  -- Add the parameters for the stored procedure here  
  @IdProveedor INT,  
@@ -106,8 +110,22 @@ BEGIN
 		SELECT 
 			ROW_NUMBER() OVER(PARTITION BY LP.IdProveedor ORDER BY LP.RazonSocial ASC) AS R,
 			LP.IdProveedor,
-			LP.RazonSocial,
-			dbo.FN_MM_ObtenerCorreoProveedor(LP.IdProveedor) AS CorreoEmpresa,
+			CASE 
+				WHEN LEN(LP.RazonSocial) > 23 THEN SUBSTRING(LP.RazonSocial,1,23) + '...'
+				ELSE LP.RazonSocial
+			END AS RazonSocial,
+			ISNULL((SELECT TOP 1  
+						CASE 
+							WHEN LEN(US.Correo) > 30 THEN SUBSTRING(US.Correo,1,26) + '...'
+							ELSE US.Correo  
+						END
+					FROM dbo.S_UsuarioProveedor AS UPR (NOLOCK)
+					LEFT JOIN dbo.S_Usuario AS US (NOLOCK) ON US.IdUsuario = UPR.IdUsuario  
+					WHERE UPR.IdProveedor = LP.IdProveedor  
+						AND US.IdTipoUsuario = 3  
+						AND US.Activo = 1  
+					ORDER BY US.FechaRegistro DESC  
+			),'') AS CorreoEmpresa,
 			dbo.ObtenerEstrellasModificado(LP.IdProveedor) AS Estrellas,
 			LP.IsBlackList,
 			IMP.ImagenProveedorThumb AS ImagenProveedor,
