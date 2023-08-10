@@ -69,7 +69,7 @@
     [BitJOA]                           BIT            NULL,
     [BitMostrarMensaje]                BIT            NULL,
     [BitAwareness]                     BIT            NULL,
-    [BitRecorrerDiasAbiles]            BIT            NULL
+    [BitRecorrerDiasAbiles]            BIT            NULL,
     CONSTRAINT [PK_EN_Entregable] PRIMARY KEY CLUSTERED ([IdEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [Clasificacion_Entregable] FOREIGN KEY ([IdClasificacion]) REFERENCES [dbo].[En_Clasificacion] ([IdClasificacion]),
     CONSTRAINT [fk_En_entregableCO_Regulador] FOREIGN KEY ([IdRegulador]) REFERENCES [dbo].[CO_Regulador] ([IdRegulador]),
