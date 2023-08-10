@@ -1,3 +1,17 @@
+USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_GeneraInstanciasFechasLimite'
+)
+    DROP PROCEDURE SP_EN_GeneraInstanciasFechasLimite;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20/04/2019
@@ -13,10 +27,11 @@
     --a más tardar el décimo quinto (15) Día Hábil del Periodo subsecuente.
     --Dentro de los 15 días hábiles posteriores al cumplimiento del mes a reportar.
 -- =============================================
--- BAAC 20230719	Se ajusta para que los entregables trimestrales que se entregan al
---					quince dia habil se programen en la fecha exacta
+-- Author:		Alexander Gomez
+-- Create date: 10/08/2023
+-- Description:	se agrega la validacion y generacion de fechas en caso de no ser dia abil se recorre hasta el proximo https://github.com/Adinco/adinco-entregables/issues/1136
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_GeneraInstanciasFechasLimite]-- '20200110',3, 10020,17065,0,1
+CREATE PROCEDURE [dbo].[SP_EN_GeneraInstanciasFechasLimite]
     @FechaLimiteFrecuencia DATE,
     @ContratoID INT,
     @Frecuencia INT,
@@ -31,7 +46,8 @@ BEGIN
 			@NombreDia varchar(50),
 			@TEDecimoDiaHabil int=0,--Tiempo Entrega Decimo Dia habil
 			@TEQuinceDiaHabil int = 0,
-			@TESeptimoDiaHabil int=0;--Tiempo Entrega Decimo Dia habil
+			@TESeptimoDiaHabil int=0,
+			@BitRecorrerDiasAbiles bit;--Tiempo Entrega Decimo Dia habil
 
     IF OBJECT_ID('tempdb..#DiasFechasFinales', 'U') IS NOT NULL
         DROP TABLE #DiasFechasFinales;
@@ -41,13 +57,23 @@ BEGIN
         IdFecha DATE
     );
 
-
-	Select @FechaSIPAC= COUNT(1) 
+	Select TOP 1
+		@BitRecorrerDiasAbiles = E.BitRecorrerDiasAbiles
 	FROM 
-		EN_ContratoEntregable CE
+		EN_ContratoEntregable CE (NOLOCK)
 	JOIN 
-		EN_Entregable E 
-		ON CE.IdEntregable=E.IdEntregable
+		EN_Entregable E (NOLOCK)
+		ON CE.IdEntregable = E.IdEntregable
+	WHERE 
+		CE.IdContratoEntregable	=	@IdContratoEntregable;
+
+	Select 
+		@FechaSIPAC= COUNT(1)
+	FROM 
+		EN_ContratoEntregable CE (NOLOCK)
+	JOIN 
+		EN_Entregable E (NOLOCK)
+		ON CE.IdEntregable = E.IdEntregable
 	WHERE 
 		CE.IdContratoEntregable	=	@IdContratoEntregable 
 		AND E.DocumentoEntregable like '%SIPAC%' 
@@ -55,9 +81,9 @@ BEGIN
 
 	SELECT @TEDecimoDiaHabil=COUNT(1) 
 	FROM 
-		EN_ContratoEntregable CE
+		EN_ContratoEntregable CE (NOLOCK)
 	JOIN 
-		EN_Entregable E 
+		EN_Entregable E (NOLOCK)
 		ON	CE.IdEntregable=E.IdEntregable
 	WHERE 
 		CE.IdContratoEntregable	=	@IdContratoEntregable
@@ -66,9 +92,9 @@ BEGIN
 	
 	SELECT @TESeptimoDiaHabil= COUNT(1) 
 	FROM 
-		EN_ContratoEntregable CE
+		EN_ContratoEntregable CE (NOLOCK)
 	JOIN 
-		EN_Entregable E 
+		EN_Entregable E (NOLOCK)
 		ON	CE.IdEntregable=E.IdEntregable
 	WHERE 
 		CE.IdContratoEntregable	=	@IdContratoEntregable AND 
@@ -78,9 +104,9 @@ BEGIN
 
 	SELECT @TEQuinceDiaHabil= COUNT(1) 
 	FROM 
-		EN_ContratoEntregable CE
+		EN_ContratoEntregable CE (NOLOCK)
 	JOIN 
-		EN_Entregable E 
+		EN_Entregable E (NOLOCK)
 		ON	CE.IdEntregable=E.IdEntregable
 	WHERE 
 		CE.IdContratoEntregable	=	@IdContratoEntregable AND
@@ -94,19 +120,23 @@ BEGIN
 			BEGIN
 				SELECT @FinVigenciaContrato = --Select 
 					FinVigencia
-				FROM dbo.CO_Contrato
+				FROM dbo.CO_Contrato (NOLOCK)
 				WHERE IdContrato = @ContratoID;
 			END;
 			ELSE
 			BEGIN
 				SELECT --PI.FechaInicio,
 					@FinVigenciaContrato = PI.FechaFin
-				FROM dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPI
-				JOIN dbo.CO_ProgramaImplementaAcciones PIA ON CEPI.IdContratoEntregable = @IdContratoEntregable
-															  AND CEPI.IdProgramaImplementaAccion = PIA.IdProgramaImplementaAccion
-				JOIN dbo.CO_ProgramaImplementaElemento PIE ON PIA.IdProgramaImplementaElemento = PIE.IdProgramaImplementaElemento
-				JOIN dbo.CO_ProgramaImplementaPoliticas PIP ON PIE.IdProgramaImplementaPolitica = PIP.IdProgramaImplementaPolitica
-				JOIN dbo.CO_ProgramaImplementa PI ON PIP.IdProgramaImplementa = PI.IdProgramaImplementa;
+				FROM dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPI (NOLOCK)
+				JOIN dbo.CO_ProgramaImplementaAcciones PIA (NOLOCK) 
+					ON CEPI.IdContratoEntregable = @IdContratoEntregable
+						AND CEPI.IdProgramaImplementaAccion = PIA.IdProgramaImplementaAccion
+				JOIN dbo.CO_ProgramaImplementaElemento PIE (NOLOCK) 
+					ON PIA.IdProgramaImplementaElemento = PIE.IdProgramaImplementaElemento
+				JOIN dbo.CO_ProgramaImplementaPoliticas PIP (NOLOCK)
+					ON PIE.IdProgramaImplementaPolitica = PIP.IdProgramaImplementaPolitica
+				JOIN dbo.CO_ProgramaImplementa PI (NOLOCK)
+					ON PIP.IdProgramaImplementa = PI.IdProgramaImplementa;
 			END;
 
 
@@ -158,16 +188,38 @@ BEGIN
 
 								IF @TEQuinceDiaHabil = 0
 								BEGIN
+									--VALIDACION PARA VERIFICAR QUE LOS DIAS 
+									--DE ENTREGA REGULADOR SERAN DESPUES
+									--SI ESTE CAE EN FIN DE SEMANA
+									IF ISNULL(@BitRecorrerDiasAbiles,0) = 1
+									BEGIN
 
-									INSERT INTO #DiasFechasFinales (IdFecha)
-									SELECT TOP 1
-										   IdFecha
-									FROM dbo.AP_Calendario
-									WHERE IdFecha <= @FechaLimiteFrecuencia
-										  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
-										  AND FinDeSemana = 0
-										  AND DiaLaborable = 1
-									ORDER BY IdFecha DESC;
+										INSERT INTO #DiasFechasFinales (IdFecha)
+										SELECT TOP 1
+											   IdFecha
+										FROM dbo.AP_Calendario (NOLOCK)
+										WHERE IdFecha >= @FechaLimiteFrecuencia
+											  AND DATEADD(DAY, 5, @FechaLimiteFrecuencia) >= IdFecha
+											  AND FinDeSemana = 0
+											  AND DiaLaborable = 1
+										ORDER BY IdFecha ASC;
+
+									END
+									ELSE
+									BEGIN
+
+										INSERT INTO #DiasFechasFinales (IdFecha)
+										SELECT TOP 1
+											   IdFecha
+										FROM dbo.AP_Calendario (NOLOCK)
+										WHERE IdFecha <= @FechaLimiteFrecuencia
+											  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
+											  AND FinDeSemana = 0
+											  AND DiaLaborable = 1
+										ORDER BY IdFecha DESC;
+
+									END
+									
 
 								END
 								ELSE
@@ -179,7 +231,7 @@ BEGIN
 										SELECT 
 											IdFecha
 											FROM 
-												AP_Calendario 
+												AP_Calendario (NOLOCK)
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
@@ -193,7 +245,7 @@ BEGIN
 													IdFecha,
 													2
 												)
-											from AP_Calendario 
+											from AP_Calendario (NOLOCK)
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
@@ -214,7 +266,7 @@ BEGIN
 										SELECT 
 											IdFecha
 											FROM 
-												AP_Calendario 
+												AP_Calendario (NOLOCK)
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
@@ -228,7 +280,7 @@ BEGIN
 													IdFecha,
 													2
 												)
-											from AP_Calendario 
+											from AP_Calendario (NOLOCK)
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
@@ -247,7 +299,7 @@ BEGIN
 										SELECT 
 											IdFecha
 											FROM 
-												AP_Calendario 
+												AP_Calendario (NOLOCK)
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
@@ -261,7 +313,7 @@ BEGIN
 													IdFecha,
 													2
 												)
-											from AP_Calendario 
+											from AP_Calendario (NOLOCK)
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
@@ -301,7 +353,7 @@ BEGIN
 							INSERT INTO #DiasFechasFinales (IdFecha)
 							Select 
 							IdFecha 
-							from AP_Calendario 
+							from AP_Calendario (NOLOCK)
 							WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
 							AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
 
@@ -316,7 +368,7 @@ BEGIN
 									IdFecha,
 									2
 								)
-							from AP_Calendario 
+							from AP_Calendario (NOLOCK)
 							WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
 							AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
 
@@ -330,27 +382,52 @@ BEGIN
 
 	IF(@Frecuencia=10019) --ENTREGABLE SEMANAL
 	BEGIN
-			SELECT @NombreDia = NombreDia FROM AP_Calendario WHERE IdFecha = @FechaLimiteFrecuencia;
+			SELECT @NombreDia = NombreDia FROM AP_Calendario (NOLOCK) WHERE IdFecha = @FechaLimiteFrecuencia;
 
 			INSERT INTO #DiasFechasFinales (IdFecha)
 			SELECT IdFecha
-				FROM AP_Calendario
+				FROM AP_Calendario (NOLOCK)
 				WHERE NombreDia = @NombreDia
 					AND IdFecha >= @FechaLimiteFrecuencia
 					AND IdFecha <= @FinVigenciaContrato
 
 	END
 	ELSE
-    BEGIN ---Entregable por EVENTO
-			INSERT INTO #DiasFechasFinales (IdFecha)
-			SELECT TOP 1
-				   IdFecha
-			FROM dbo.AP_Calendario
-			WHERE IdFecha <= @FechaLimiteFrecuencia
-				  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
-				  AND FinDeSemana = 0
-				  AND DiaLaborable = 1
-			ORDER BY IdFecha DESC;
+    BEGIN 
+	---Entregable por EVENTO
+
+			--VALIDACION PARA VERIFICAR QUE LOS DIAS 
+			--DE ENTREGA REGULADOR SERAN DESPUES
+			--SI ESTE CAE EN FIN DE SEMANA
+			IF ISNULL(@BitRecorrerDiasAbiles,0) = 1
+			BEGIN
+				
+				INSERT INTO #DiasFechasFinales (IdFecha)
+				SELECT TOP 1
+					   IdFecha
+				FROM dbo.AP_Calendario (NOLOCK)
+				WHERE IdFecha >= @FechaLimiteFrecuencia
+					  AND DATEADD(DAY, 5, @FechaLimiteFrecuencia) >= IdFecha
+					  AND FinDeSemana = 0
+					  AND DiaLaborable = 1
+				ORDER BY IdFecha ASC;
+
+			END
+			ELSE
+			BEGIN
+
+				INSERT INTO #DiasFechasFinales (IdFecha)
+				SELECT TOP 1
+					   IdFecha
+				FROM dbo.AP_Calendario (NOLOCK)
+				WHERE IdFecha <= @FechaLimiteFrecuencia
+					  AND DATEADD(DAY, -5, @FechaLimiteFrecuencia) <= IdFecha
+					  AND FinDeSemana = 0
+					  AND DiaLaborable = 1
+				ORDER BY IdFecha DESC;
+
+			END
+			
     END;
 
 
