@@ -1,4 +1,4 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
 IF EXISTS
 (

@@ -6,8 +6,9 @@ IF EXISTS
     FROM dbo.sysobjects
     WHERE name = 'SP_MPY_MM_CartaProveedor'
 )
-    DROP PROCEDURE SP_MPY_MM_CartaProveedor;
+    DROP PROCEDURE SP_MPY_MM_CartaProveedor; 
 GO
+/****** Object:  StoredProcedure [dbo].[SP_MPY_MM_CartaProveedor]    Script Date: 31/07/2023 07:36:06 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -41,10 +42,13 @@ GO
 -- Update: 19/07/2023
 -- Description:	se agregan validaciones de configuraciones issue: https://github.com/Adinco/petrovendor/issues/2388
 -- =============================================
--- =============================================
 -- Author:		Alexander Gomez
 -- Update: 27/07/2023
 -- Description:	se iguala el calculo de partidas a 3 decimales sin redondear issue: https://github.com/Adinco/petrovendor/issues/2397
+-- =============================================
+-- Author:	Daniel AC
+-- Update: 31/07/2023
+-- Description:	se agregan validaciones para evitar mostrar información de mercadeo cuando es murphy https://github.com/Adinco/petrovendor/issues/2407
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedor]   
  -- Add the parameters for the stored procedure here  
@@ -243,7 +247,7 @@ Permisionarios proporcionen información sobre contenido nacional en las activid
 			ON P.IdProveedor = RL.IdProveedor
 			AND RL.IsActivo =1  
 		LEFT JOIN DG_ActaConstitutiva AC (NOLOCK) 
-			ON AC.IdProveedor = P.IdProveedor 
+			ON P.IdProveedor  = AC.IdProveedor
 				AND AC.IsActivo = 1  
 		LEFT JOIN S_UsuarioProveedor UP (NOLOCK) 
 			ON P.IdProveedor = UP.IdProveedor  
@@ -434,7 +438,8 @@ BEGIN
 			ON AP.IdProveedor = P.IdProveedor
 		JOIN MM_Pedido AS PD (NOLOCK) 
 			ON AP.IdPedido = PD.IdPedido
-	WHERE AP.IdAceptacionPedido = @IdPedido;
+	WHERE AP.IdAceptacionPedido = @IdPedido
+	AND PD.IdSubcontratista = @IdProveedor;
 
 	--SE VERIFICA EL RFC ESTE EN LA CONFIGURACION
 	SET @CONFIGURACION_CARTA = (SELECT
