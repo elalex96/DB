@@ -1,4 +1,11 @@
-﻿
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SIPAC_RC_CONT_21_M'
+)
+    DROP PROCEDURE SIPAC_RC_CONT_21_M;
+GO
 -- =============================================   
 -- Author: Manuel Cruz-Yazmin Glez.   
 -- Create date: 2017-11-24   
@@ -48,6 +55,10 @@
 -- Description:      Se agregan case cuando el tipocambio de la tabla CO_TipoCambioDiario es 0 o nulo y 
 --					 se agrega si este mismo valor es nulo se muestre como 0 para identificar en el reporte que el tipo cambio no se encuentra agregado
 -- ============================================= 
+-- Alter Author:        Reyna Olvera
+-- Alter Date:			25 de Julio del 23
+-- Alter Description:	Se agrega case en la columna 21_22 cuanto el Monto con Iva = 0  entonces el valor de monto retornado es 0, esto para que no truene en una división /0
+-- ============================================= 
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]  
     @Contrato      INT,  
     @Mes           DATE,  
@@ -56,7 +67,7 @@ CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]
 AS  
     BEGIN  
         SET NOCOUNT ON;  
-  
+
         /*SE EJECUTAN PRIMERO LOS SPS EXTERNOS, PARA QUE NO MARQUE DETALLE CON LAS TABLAS # QUE SE OCUPARÁN EN ESTE SP*/  
         EXEC [SIPAC_RC_CONT_22_M_IdDoc]  
             @Contrato,  
@@ -179,7 +190,7 @@ AS
                 Idfactura       INT,  
                 TipoComprobante VARCHAR(50),  
                 MontoDolares    FLOAT,  
-                MetodoPago      VARCHAR(50),  
+            MetodoPago      VARCHAR(50),  
                 TipoCambio      FLOAT,  
                 Fecha           DATE,  
                 IdMoneda        INT,  
@@ -291,7 +302,7 @@ AS
                     (  
                         '1091E714-CC8E-46B8-8421-37470C285BAC'  
                     ),  
-                    (  
+              (  
                         '95AB6B55-C312-4CAF-9A9E-BD7E7A2124AB'  
                     ),  
                     (  
@@ -756,7 +767,7 @@ AS
                         #Facturas.Idfactura,  
                         #Facturas.TipoComprobante,  
                         CASE    
-                            WHEN FI_Transfer.IdMoneda = @DOLAR  
+  WHEN FI_Transfer.IdMoneda = @DOLAR  
                                  AND #Facturas.IdMoneda = @PESO  
                                 THEN FI_TransferFactura.MontoPagado    
 							WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0  
@@ -912,7 +923,7 @@ AS
                                 ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio  
                         JOIN  
                             dbo.FI_TransferFactura WITH (NOLOCK)  
-                                ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante  
+   ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante  
                         JOIN  
                             dbo.FI_Transfer WITH (NOLOCK)  
                                 ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia  
@@ -1046,7 +1057,7 @@ AS
                                 NULL                                        AS [RC21_25],  
                                 NULL                                        AS [RC21_26],  
                                 0                                           AS [RC21_27],  
-                                NULL                                        AS [RC21_28]  
+               NULL                                        AS [RC21_28]  
                             FROM  
                                 dbo.CO_Contrato WITH (NOLOCK)  
                                 JOIN  
@@ -1187,7 +1198,7 @@ AS
                                 SUM(   CASE 
                                            WHEN ISNULL(TTF.TCD, 0) = 0  
                                                THEN 0   
-                                           WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  
+                                           WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  AND ISNULL(F.MontoConIva, 0) <>0 
                                                 AND TTF.TipoComprobante IN (  
                                                                                'I', 'N', 'P'  
                                                                            )  
@@ -1284,7 +1295,7 @@ AS
                                 LEFT JOIN  
                                     dbo.CO_CatalogoCuentaSH      CC WITH (NOLOCK)  
                                         ON CC.IdCatalogoCuentasSH = CO_Registro.IdCatalogoCuentasSH  
-                                LEFT JOIN  
+        LEFT JOIN  
                                     dbo.PV_TipoMoneda            TM WITH (NOLOCK)  
                                         ON F.IdMoneda = TM.IdMoneda  
                                 LEFT JOIN  
@@ -1347,7 +1358,7 @@ AS
                                     ELSE  
                                         LTRIM(RTRIM(ISNULL(CPO.NombreCampo, '-')))  
                                 END,  
-                                CASE  
+          CASE  
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
                                         THEN 'NA'  
                                     ELSE  
@@ -1419,7 +1430,7 @@ AS
                                     WHEN len(P.IdPresupuestoCNH) > 10  
                                         THEN SUBSTRING(P.IdPresupuestoCNH, 22, 10)  
                                     ELSE  
-                                        P.IdPresupuestoCNH  
+                               P.IdPresupuestoCNH  
                                 END                                                      AS [RC21_00],  
                                 MONTH(CO_Registro.MesPresentacion)                       AS [RC21_01],  
                                 YEAR(CO_Registro.MesPresentacion)                        AS [RC21_02],  
@@ -1710,7 +1721,7 @@ AS
                                 CASE @Plantilla  
                                     WHEN 'CGI_2022'  
                                         THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
-                                    ELSE  
+                                 ELSE  
                                         0  
                                 END,  
                                 CASE @Plantilla  
@@ -1770,7 +1781,7 @@ AS
                                         THEN 1  
                                     ELSE  
                                         0  
-                                END                                        AS [RC21_13],  
+                   END                                        AS [RC21_13],  
                                 CASE  
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
                                         THEN 'NA'  
@@ -1830,7 +1841,7 @@ AS
                                         THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
                                    ELSE  
                                         0  
-                                END                                        AS [RC21_27],  
+          END                                        AS [RC21_27],  
                                 CASE @Plantilla  
                                     WHEN 'CGI_2022'  
                                         THEN ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
@@ -1942,7 +1953,7 @@ AS
                                 MONTH(CO_Registro.MesPresentacion),  
                                 YEAR(CO_Registro.MesPresentacion),  
                                 SUBSTRING(PC.IdDocFacturacionSIPAC, 1, 2),  
-                                CASE  
+                       CASE  
                                     WHEN CO_Registro.CvTipoDocFacturacion = @TipoFactura  
                                         THEN 'NA'  
                                     WHEN CO_Registro.CvTipoDocFacturacion = @TipoComprobanteExtranjero  
@@ -2008,7 +2019,7 @@ AS
                                 TM.TipoMonedaCorto,  
                                 CAST(ISNULL(MP.TCD, 0) AS DECIMAL(15, 4)),  
                                 CASE  
-                                    WHEN ISNULL(RE.IdRelacionada, 2) <> 2  
+                               WHEN ISNULL(RE.IdRelacionada, 2) <> 2  
                                         THEN 1  
                                     ELSE  
                                         2  
@@ -2088,7 +2099,7 @@ AS
                                 NULL                                               AS [RC21_07],  
                                 NULL                                               AS [RC21_08],  
                                 NULL                                               AS [RC21_09],  
-                                NULL                                               AS [RC21_10],  
+                         NULL                                               AS [RC21_10],  
                                 NULL                                               AS [RC21_11],  
                                 NULL                                               AS [RC21_12],  
                                 NULL                                               AS [RC21_13],  
@@ -2144,7 +2155,7 @@ AS
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
-                    RC21_06,  
+            RC21_06,  
                     RC21_07,  
                     RC21_08,  
                     RC21_09,  
