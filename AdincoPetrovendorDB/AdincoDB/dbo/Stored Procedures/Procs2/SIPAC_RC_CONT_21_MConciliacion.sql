@@ -6,7 +6,11 @@
 )
     DROP PROCEDURE SIPAC_RC_CONT_21_MConciliacion;
 GO
-
+-- ============================================= 
+-- Alter Author:        Reyna Olvera
+-- Alter Date:			25 de Julio del 23
+-- Alter Description:	Se agrega case en la columna 21_22 cuanto el Monto con Iva = 0  entonces el valor de monto retornado es 0, esto para que no truene en una división /0
+-- ============================================= 
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_MConciliacion]  
     @Contrato      INT,  
     @IdPresupuesto INT          = 0,  
@@ -224,7 +228,7 @@ AS
                         '1091E714-CC8E-46B8-8421-37470C285BAC'  
                     ),  
                     (  
-                        '95AB6B55-C312-4CAF-9A9E-BD7E7A2124AB'  
+              '95AB6B55-C312-4CAF-9A9E-BD7E7A2124AB'  
                     ),  
                     (  
                         '10FDC8FB-DEBB-4BD5-8C10-6B51E61B5FE6'  
@@ -298,7 +302,7 @@ AS
                         END                                             AS MetodoPago,  
                         FI_Factura.Fecha,  
                         FI_Factura.IdMoneda  
-                    FROM  
+                   FROM  
 						dbo.CO_Contrato WITH (NOLOCK)
 						INNER JOIN dbo.CO_Servicio WITH (NOLOCK) 
 							ON CO_Contrato.IdContrato = CO_Servicio.IdContrato
@@ -359,7 +363,7 @@ AS
                                  OR FI_Factura.FormaPago LIKE '%exhibi%'  
                                  OR FI_Factura.FormaPago LIKE '%PUE%'  
                                 THEN 'PUE'  
-                            WHEN FI_Factura.MetodoPago LIKE '%parcia%'  
+  WHEN FI_Factura.MetodoPago LIKE '%parcia%'  
                                  OR FI_Factura.MetodoPago LIKE '%dife%'  
                                  OR FI_Factura.MetodoPago LIKE '%PPD%'  
                                  OR FI_Factura.FormaPago LIKE '%parcia%'  
@@ -546,7 +550,7 @@ AS
                         FI_ComplementoDePago.MonedaP                    AS MonedaCP,  
                         CAST((SUM(   CASE  
                                          WHEN PV_TipoMoneda.IdMoneda = @DOLAR  
-                                              AND FCPDR.IdMoneda = @PESO  
+         AND FCPDR.IdMoneda = @PESO  
                                              THEN FI_CPDocRelacionado.ImpPagado * 1  
                                      END  
                                  )  
@@ -774,7 +778,7 @@ AS
                 FechaTCD,  
                 IdMoneda  
             )  
-                    SELECT DISTINCT  
+             SELECT DISTINCT  
                         #Facturas.IdRegistro,  
                         #Facturas.UUID,  
                         #Facturas.Idfactura,  
@@ -931,7 +935,7 @@ AS
                         RC21_24,  
                         RC21_25,  
                         RC21_26,  
-                        RC21_27,  
+             RC21_27,  
                         RC21_28  
                     )  
                             SELECT DISTINCT  
@@ -1105,7 +1109,7 @@ AS
                                                      THEN 1  
                                                  ELSE  
                                                      2  
-                                             END  
+                           END  
                                     ELSE  
                                         CASE  
                                             WHEN CC.Operacion = 1  
@@ -1117,7 +1121,7 @@ AS
                                 SUM(   CASE 
                                            WHEN ISNULL(TTF.TCD, 0) = 0  
                                                THEN 0   
-                                           WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  
+                                           WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  AND ISNULL(F.MontoConIva, 0) <> 0  
                                                 AND TTF.TipoComprobante IN (  
                                                                                'I', 'N', 'P'  
                                                                            )  
@@ -1284,7 +1288,7 @@ AS
                                         THEN 'NA'  
                                     ELSE  
                                         LTRIM(RTRIM(I.NombreInstalacion))  
-                                END,  
+            END,  
                                 CASE  
                                     WHEN CO_Registro.CapexOpexEdicion IS NOT NULL  
                                         THEN CASE  
@@ -1404,7 +1408,7 @@ AS
                                              END  
                                     ELSE  
                                         CASE  
-                                            WHEN CC.Operacion = 1  
+                       WHEN CC.Operacion = 1  
                                                 THEN 1  
                                             ELSE  
                                                 2  
@@ -1413,7 +1417,7 @@ AS
                                 SUM(   CASE   
                                            WHEN ISNULL(TTF.TipoCambioCP, 0) = 0  
                                                THEN 0  
-                                           WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  
+                                           WHEN ISNULL(TTF.MontoRegistro, 0) <> 0 
                                                 AND TTF.TipoComprobante IN (  
                                                                                'I', 'N', 'P'  
                                                                            )  
@@ -1461,7 +1465,7 @@ AS
                                         ON CO_Registro.IdFactura = F.IdFactura  
                                            AND CO_Registro.IdEstado = @Aprobado  
                                            AND CO_Registro.CvTipoDocFacturacion = @TipoFactura  
-                                JOIN  
+         JOIN  
                                     dbo.FI_CPDocRelacionado      CPDR WITH (NOLOCK)  
                                         ON F.UUID = CPDR.IdDocumento  
                                 JOIN  
@@ -1518,7 +1522,7 @@ AS
                                         ON CC.IdCatalogoCuentasSH = CO_Registro.IdCatalogoCuentasSH  
                                 LEFT JOIN  
                                     dbo.PV_TipoMoneda            TM WITH (NOLOCK)  
-                                        ON F.IdMoneda = TM.IdMoneda  
+                             ON F.IdMoneda = TM.IdMoneda  
                                 LEFT JOIN  
                                     dbo.CO_RelacionEmpresas      RE WITH (NOLOCK)  
                                         ON RE.IdContratista = CON.IdContratista  
@@ -1578,7 +1582,7 @@ AS
                                 LTRIM(RTRIM(TP.id_Tarea)),  
                                 CASE  
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
-                                        THEN 1  
+       THEN 1  
                                     ELSE  
                                         0  
                                 END,  
@@ -1652,7 +1656,7 @@ AS
                                         THEN LTRIM(RTRIM(C.IDSIPAC))  
                                     ELSE  
                                         LTRIM(RTRIM(CON.IDSIPAC))  
-                                END                                        AS [RF_00],  
+                                END                     AS [RF_00],  
                                 LTRIM(RTRIM(C.IDRegFiducidiario))          AS [RI_00],  
                                 C.NumeroContrato                           AS [RF01_01],  
                                 CASE  
@@ -1706,7 +1710,7 @@ AS
                                         LTRIM(RTRIM(ISNULL(Y.NombreYacimiento, '-')))  
                                 END                                        AS [RC21_15],  
                                 CASE  
-                                    WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
+          WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
                                         THEN 'NA'  
                                     ELSE  
                                         LTRIM(RTRIM(I.NombreInstalacion))  
@@ -1878,7 +1882,7 @@ AS
                                 END,  
                                 LTRIM(RTRIM(APCNH.id_Actividad)),  
                                 LTRIM(RTRIM(SP.[id_Sub-actividad])),  
-                                LTRIM(RTRIM(TP.id_Tarea)),  
+                    LTRIM(RTRIM(TP.id_Tarea)),  
                                 CASE  
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
                                         THEN 1  
@@ -1957,7 +1961,7 @@ AS
                         RF_00,  
                         RI_00,  
                         RF01_01,  
-                        RC21_00,  
+                RC21_00,  
                         RC21_01,  
                         RC21_02,  
                         RC21_03,  
@@ -2019,7 +2023,7 @@ AS
                                 NULL                                               AS [RC21_20],  
                                 NULL                                               AS [RC21_21],  
                                 0                                                  AS [RC21_22],  
-                                0                                                  AS [RC21_23],  
+                                0                   AS [RC21_23],  
                                 NULL                                               AS [RC21_24],  
                                 NULL                                               AS [RC21_25],  
                                 NULL                                               AS [RC21_26],  
@@ -2102,7 +2106,7 @@ AS
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
-                    RC21_06,  
+        RC21_06,  
                     RC21_07,  
                     RC21_08,  
                     RC21_09,  
@@ -2127,3 +2131,4 @@ AS
                     #ResultadosGastos;  
             END  
     END;
+
