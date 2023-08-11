@@ -1,4 +1,23 @@
-﻿CREATE PROCEDURE [dbo].[p_EN_InsertarEntregable]
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'p_EN_InsertarEntregable'
+)
+    DROP PROCEDURE p_EN_InsertarEntregable;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--======================================================
+-- Author:		Alexander Gomez
+-- Create date: 10/08/2023
+-- Description:	se agrega la validacion y generacion de fechas en caso de no ser dia abil se recorre hasta el proximo https://github.com/Adinco/adinco-entregables/issues/1136
+-- =============================================
+CREATE PROCEDURE [dbo].[p_EN_InsertarEntregable]
 	@pIdEntregable	int out,
 	@pDocumentoEntregable	nvarchar(max),
 	@pDocumentoEntregableIngles	nvarchar(max) = null,
@@ -60,14 +79,14 @@
 	@Formato varchar(500),
 	@Actividad varchar(500),
 	@Proceso varchar (500),
-	--@FichaTecnica varchar(500),
 	@Idclasificacion int,
 	@pDesarrollo bit,
 	@pExploracion bit,
 	@pEvaluacion bit,
 	@pTransicion bit,
 	@pAbandonoArea bit,
-	@pAbandonoPozo bit
+	@pAbandonoPozo bit,
+	@BitRecorrerDiasAbiles bit
 AS
 BEGIN
 
@@ -135,9 +154,9 @@ INSERT INTO [dbo].[EN_Entregable]
 		   Formato,
 		   Actividad,
 		   Proceso,
-		 --FichaTecnica,
 		   Idclasificacion,
-		   BitJOA
+		   BitJOA,
+		   BitRecorrerDiasAbiles
 		   )
      VALUES
            (
@@ -200,9 +219,9 @@ INSERT INTO [dbo].[EN_Entregable]
            ,@pAPReparacionMenor
            ,@pAPTransporteHidrocarburos
            ,@pAPQuemaGas,0,@RequiereRespuesta,@Formato,@Actividad,@Proceso,
-		 --  @FichaTecnica,
 		   @Idclasificacion, 
-		   0)
+		   0,
+		   @BitRecorrerDiasAbiles)
 
 		set @pIdEntregable = SCOPE_IDENTITY();
 		
@@ -218,7 +237,7 @@ INSERT INTO [dbo].[EN_Entregable]
 		                                       Activo,
 		                                       Entrega,
 		                                       DiasElaboracion)
-	SELECT IdContrato,@pIdEntregable,0,0,0,@pCreadoPor,GETDATE(),@pCreadoPor,GETDATE(),1,0,0 FROM dbo.CO_Contrato;
+	SELECT IdContrato,@pIdEntregable,0,0,0,@pCreadoPor,GETDATE(),@pCreadoPor,GETDATE(),1,0,0 FROM dbo.CO_Contrato (NOLOCK);
 	
 	INSERT INTO EN_Entregable_ConfigAdicional
 				(IdEntregable, Desarrollo, Exploracion,Evaluacion,Transicion,AbandonoArea,AbandonoPozo)

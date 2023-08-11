@@ -1,4 +1,23 @@
-﻿CREATE Proc [dbo].[p_EN_ActualizarEntregable]
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'p_EN_ActualizarEntregable'
+)
+    DROP PROCEDURE p_EN_ActualizarEntregable;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--======================================================
+-- Author:		Alexander Gomez
+-- Create date: 10/08/2023
+-- Description:	se agrega la validacion y generacion de fechas en caso de no ser dia abil se recorre hasta el proximo https://github.com/Adinco/adinco-entregables/issues/1136
+-- =============================================
+CREATE PROCEDURE [dbo].[p_EN_ActualizarEntregable]
 @pIdEntregable	int ,
 @pDocumentoEntregable	nvarchar(max),
 @pDocumentoEntregableIngles	nvarchar(max) = null,
@@ -60,14 +79,14 @@
 @Formato varchar(500),
 @Actividad varchar(500),
 @Proceso varchar (500),
---@FichaTecnica varchar(500),
 @Idclasificacion int,
 @pDesarrollo bit,
 @pExploracion bit,
 @pEvaluacion bit,
 @pTransicion bit,
 @pAbandonoArea bit,
-@pAbandonoPozo bit
+@pAbandonoPozo bit,
+@BitRecorrerDiasAbiles bit
 as
 
 			UPDATE [dbo].[EN_Entregable]
@@ -133,11 +152,11 @@ as
 			Formato =@Formato,
 			Actividad =@Actividad,
 			Proceso =@Proceso,
-			--FichaTecnica =@FichaTecnica,
-			Idclasificacion= @Idclasificacion
+			Idclasificacion= @Idclasificacion,
+			BitRecorrerDiasAbiles = @BitRecorrerDiasAbiles
 		   WHERE IDENTREGABLE = @pIdEntregable
 
-		   IF EXISTS (select 1 from EN_Entregable_ConfigAdicional where IdEntregable = @pIdEntregable)
+		   IF EXISTS (select 1 from EN_Entregable_ConfigAdicional (NOLOCK) where IdEntregable = @pIdEntregable)
 		   BEGIN 
 			   update EN_Entregable_ConfigAdicional
 			   SET
