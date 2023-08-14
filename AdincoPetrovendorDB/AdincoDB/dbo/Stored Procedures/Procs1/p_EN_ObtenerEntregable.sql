@@ -1,6 +1,25 @@
-﻿--======================================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'p_EN_ObtenerEntregable'
+)
+    DROP PROCEDURE p_EN_ObtenerEntregable;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+--======================================================
 -- LUIS DAVID
 -- SE CONTROLA LOS NULOS PARA NO GENERAR ERROR EN LA CONSULTA
+--======================================================
+-- Author:		Alexander Gomez
+-- Create date: 10/08/2023
+-- Description:	se agrega la validacion y generacion de fechas en caso de no ser dia abil se recorre hasta el proximo https://github.com/Adinco/adinco-entregables/issues/1136
+-- =============================================
 CREATE PROCEDURE [dbo].[p_EN_ObtenerEntregable]
 	@pIdEntregable INT
 AS
@@ -126,10 +145,11 @@ SELECT e.IdRegulador,
 		Actividad ,
 		Proceso ,
 		ISNULL(DFI.IdFormatoFichaTecnica,0) as Fichatecnica,--Fichatecnica
-		ISNULL(DF.IdFormatoFichaTecnica,0) as FormatoArchivo--Formato,
+		ISNULL(DF.IdFormatoFichaTecnica,0) as FormatoArchivo,--Formato,
+		ISNULL(e.BitRecorrerDiasAbiles,0) AS BitRecorrerDiasAbiles
 	FROM EN_Entregable e
 	INNER JOIN EN_MarcoLegal ml (NOLOCK)
-		ON ml.IdMarcoLegal = e.IdMarcoLegal
+		ON e.IdMarcoLegal = ml.IdMarcoLegal
 		AND E.BITJOA = 0
 	INNER JOIN EN_FrecuenciaEntregable (NOLOCK)
 		ON e.IdFrecuenciaEntregable = EN_FrecuenciaEntregable.IdFrecuenciaEntregable
@@ -146,6 +166,5 @@ SELECT e.IdRegulador,
 	LEFT JOIN EN_Entregable_ConfigAdicional AS CA
 		on e.IdEntregable = CA.IdEntregable
 	WHERE @pIdEntregable IN ( 0, e.IdEntregable )
---		  AND ISNULL(e.IsEliminado, 0) = 0
 	ORDER BY IdEntregable DESC;
 END
