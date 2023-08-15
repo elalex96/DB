@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE Petrovendor
+GO
+DROP PROCEDURE IF EXISTS SP_MM_WDEA_ProcesamientoSAP_Procura
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/092021
 -- Description:	Procesamiento Interfaz SAP-Procura
@@ -6,6 +10,10 @@
 -- Author:		LUIS DAVID
 -- Create date: 26/10/2022
 -- Description:	Se evita el reprocesamiento de pedidos ya procesados, eliminación de SELECT INTOS... Petrovendor(#2094)
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 26/10/2022
+-- Description:	Se agrega espaciado para mejor formato en mensaje de procesamiento
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]
 	-- Add the parameters for the stored procedure here.
@@ -98,7 +106,6 @@ BEGIN TRY
 			PD.IDCONTRATO;
 
 	SET @CONTTOTAL = (SELECT COUNT(RN) FROM #PENDIENTES_PROCESAR);
-
 	WHILE @CONT <= @CONTTOTAL
 	BEGIN
 
@@ -118,7 +125,6 @@ BEGIN TRY
 		SET @CONT = @CONT + 1;
 
 	END
-
 	INSERT INTO #REGISTROSGUARDADOS(Purchasing_Document)
 	SELECT
 		Purchasing_Document
@@ -202,7 +208,7 @@ BEGIN TRY
 		ELSE 'No se generó pedido en ADINCO' end as 'Pedido',
 		CASE WHEN BAS.IsImportacionExitosa = 1
 		THEN AC.NombreAreaContractual
-		ELSE '' end as 'Contrato',
+		ELSE ' ' end as 'Contrato',
 		CASE WHEN BAS.IsImportacionExitosa = 1
 		THEN 'Pedido generado exitosamente'
 		ELSE Petrovendor.dbo.WDEA_MensajesError_Purchasing(BAS.Purchasing_Document,@IDBITACORA) end as 'Mensaje'
@@ -233,11 +239,11 @@ BEGIN TRY
 	</tr>' +
 	CAST ( (
 	SELECT 
-	'td' = POSAP,'',
-	'td' = ESTATUS,'',
-	'td' = Pedido,'',
-	'td' = Contrato ,'',
-	'td' = Mensaje ,''
+	'td' = ISNULL(POSAP,' - '),'',
+	'td' = ISNULL(ESTATUS,' - '),'',
+	'td' = ISNULL(Pedido,' - '),'',
+	'td' = ISNULL(Contrato,' - '),'',
+	'td' = isnull(Mensaje,' -' ),''
 	FROM #TablaFinal
 	group by POSAP,
 	ESTATUS,
