@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+﻿USE [Adinco]
 GO
 IF EXISTS
 (
