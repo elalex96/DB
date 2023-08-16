@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_CambiarEstatusTareaPedimentoComprobante_CD'
+)
+    DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/09/2020>
 -- Description:	<Cambio de estatus de de la tarea de la aprobacion de comprobante extranjero>
@@ -8,6 +22,11 @@
 -- Create date: <01/09/2023>
 -- Description:	<se pasa el importe total en el campo de precio unitario para adinco>
 -- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 16-08-2023
+-- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
@@ -16,7 +35,8 @@ CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	@IdEstatus INT,
 	@NoSecuencia INT,
 	@Comentario NVARCHAR(MAX),
-	@IdPedimentoComprobante INT
+	@IdPedimentoComprobante INT,
+	@updateByApp BIT = NULL
 
 AS
 BEGIN
@@ -40,21 +60,21 @@ BEGIN
 	DECLARE @IDSIGAPROBADOR INT;
 	SET @NOMBRESUBCONTRATISTA = (SELECT TOP 1
 														PVS.RazonSocial
-													FROM dbo.FI_PedimentoComprobante AS PC
-														JOIN Adinco.dbo.PV_Subcontratista AS PVS
+													FROM dbo.FI_PedimentoComprobante AS PC (NOLOCK)
+														JOIN Adinco.dbo.PV_Subcontratista AS PVS (NOLOCK)
 															ON PVS.IdSubcontratista = PC.IdSubcontratistaExportador
 													WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante);
 	SET @TIPOFLUJO = (SELECT TOP 1
 									TFT.IdTipoFlujoTarea
-								FROM dbo.TA_Operacion AS OP
-									JOIN dbo.TA_FlujoTarea AS FT
-										ON FT.IdFlujoTarea = OP.IdFlujoTarea
-									JOIN dbo.TA_TipoFlujoTarea AS TFT
-										ON TFT.IdTipoFlujoTarea = FT.IdTipoFlujo
+								FROM dbo.TA_Operacion AS OP (NOLOCK)
+									JOIN dbo.TA_FlujoTarea AS FT (NOLOCK)
+										ON OP.IdFlujoTarea = FT.IdFlujoTarea
+									JOIN dbo.TA_TipoFlujoTarea AS TFT (NOLOCK)
+										ON FT.IdTipoFlujo = TFT.IdTipoFlujoTarea
 								WHERE OP.IdOperacion = @IdOperacion);
 	SET @IDSIGAPROBADOR = (SELECT TOP 1
 										IdAprobador
-									FROM dbo.TA_Tarea
+									FROM dbo.TA_Tarea (NOLOCK)
 									WHERE IdOperacion = @IdOperacion
 										AND Activo = 1
 										AND NoSecuencia = @SIGNSECUENCIA);
@@ -65,7 +85,8 @@ BEGIN
 		UPDATE dbo.TA_Tarea 
 		SET IdEstatus = @IdEstatus,
 			Comentario = @Comentario,
-			FechaCambioEstatus = GETDATE()
+			FechaCambioEstatus = GETDATE(),
+			updateByApp = @updateByApp
 		WHERE IdAprobador = @IdUsuario
 			AND NoSecuencia = @NoSecuencia
 			AND IdOperacion = @IdOperacion
@@ -80,7 +101,8 @@ BEGIN
 		UPDATE dbo.TA_Tarea 
 		SET IdEstatus = @IdEstatus,
 			Comentario = @Comentario,
-			FechaCambioEstatus = GETDATE()
+			FechaCambioEstatus = GETDATE(),
+			updateByApp = @updateByApp
 		WHERE IdAprobador = @IdUsuario
 			--AND NoSecuencia = @NoSecuencia
 			AND IdOperacion = @IdOperacion
@@ -92,21 +114,23 @@ BEGIN
 	UPDATE dbo.TA_Tarea 
 	SET IdEstatus = @IdEstatus,
 		Comentario = @Comentario,
-		FechaCambioEstatus = GETDATE()
+		FechaCambioEstatus = GETDATE(),
+		updateByApp = @updateByApp
 	WHERE IdAprobador = @IdUsuario
 		AND NoSecuencia = @NoSecuencia
 		AND IdOperacion = @IdOperacion;
 
 	IF @IdEstatus = 3
 	BEGIN
-		SET @DescripcionH = 'El Usuario ' +(SELECT Nombre FROM S_USuario WHERE IdUsuario = @IdUsuario)+ ' ha Rechazado la Tarea de ' + (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion= 19)
+		SET @DescripcionH = 'El Usuario ' +(SELECT Nombre FROM S_USuario (NOLOCK) WHERE IdUsuario = @IdUsuario)+ ' ha Rechazado la Tarea de ' + (SELECT NombreOperacion FROM TA_TipoOperacion (NOLOCK) WHERE IdTipoOperacion= 19)
 
 		INSERT INTO TA_HistorialFlujoTarea(IdOperacion, Fecha,Descripcion, IdEstadoFlujo)
 		VALUES(@IdOperacion,GETDATE(),@DescripcionH,2)
 		
 	    --CANCELAR TODAS LAS TAREAS PENDIENTES
 		UPDATE dbo.TA_Tarea 
-		SET IdEstatus = 4
+		SET IdEstatus = 4,
+			updateByApp = @updateByApp
 		WHERE IdOperacion = @IdOperacion
 			AND IdEstatus = 1;
 
@@ -126,7 +150,7 @@ BEGIN
 	IF @IdEstatus = 2
 	BEGIN
 		--AGREGADO DEL HISTORIAL
-		SET @DescripcionH = 'El Usuario ' +(SELECT Nombre FROM S_USuario WHERE IdUsuario = @IdUsuario)+ ' ha Aprobado la Tarea de ' + (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion= 19)
+		SET @DescripcionH = 'El Usuario ' +(SELECT Nombre FROM S_USuario (NOLOCK) WHERE IdUsuario = @IdUsuario)+ ' ha Aprobado la Tarea de ' + (SELECT NombreOperacion FROM TA_TipoOperacion (NOLOCK) WHERE IdTipoOperacion= 19)
 
 		INSERT INTO TA_HistorialFlujoTarea(IdOperacion, Fecha,Descripcion, IdEstadoFlujo)
 		VALUES(@IdOperacion,GETDATE(),@DescripcionH,2)
@@ -137,9 +161,9 @@ BEGIN
 			IF @IDSIGAPROBADOR IS NOT NULL
 			BEGIN
 			    
-				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
-				SET @CORREOSIGAPROBADOR = (SELECT Correo FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
-				SET @CORREOSIG = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 107);
+				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario (NOLOCK) WHERE IdUsuario = @IDSIGAPROBADOR);
+				SET @CORREOSIGAPROBADOR = (SELECT Correo FROM dbo.S_Usuario (NOLOCK) WHERE IdUsuario = @IDSIGAPROBADOR);
+				SET @CORREOSIG = (SELECT HTML FROM dbo.TA_Correo (NOLOCK) WHERE IdCorreo = 107);
 
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_USUARIO##',@NOMBRESIGAPROBADOR));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_CLIENTE##',@NOMBRESUBCONTRATISTA));
@@ -224,9 +248,9 @@ BEGIN
 		END
 
 	    --CONSULTAR EL TOTAL DE TAREAS
-		SET @TOTAL_APROBADORES = (SELECT COUNT(IdTarea) FROM dbo.TA_Tarea WHERE IdOperacion = @IdOperacion AND Activo = 1);
+		SET @TOTAL_APROBADORES = (SELECT COUNT(IdTarea) FROM dbo.TA_Tarea (NOLOCK) WHERE IdOperacion = @IdOperacion AND Activo = 1);
 		--CONSULTAR EL TOTAL DE TAREAS APROBADAS
-		SET @TOTAL_APROBADOS = (SELECT COUNT(IdTarea) FROM dbo.TA_Tarea WHERE IdOperacion = @IdOperacion AND Activo = 1 AND IdEstatus = 2);
+		SET @TOTAL_APROBADOS = (SELECT COUNT(IdTarea) FROM dbo.TA_Tarea (NOLOCK) WHERE IdOperacion = @IdOperacion AND Activo = 1 AND IdEstatus = 2);
 
 		--APROBAR LA OPERACION
 		IF @TOTAL_APROBADORES = @TOTAL_APROBADOS
@@ -238,12 +262,12 @@ BEGIN
 			WHERE IdOperacion = @IdOperacion
 				AND IdProveedor = @IdProveedor;
 
-			SET @DescripcionH = 'Se ha Finalizado la ' + (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion= 19)
+			SET @DescripcionH = 'Se ha Finalizado la ' + (SELECT NombreOperacion FROM TA_TipoOperacion (NOLOCK) WHERE IdTipoOperacion= 19)
 
 			INSERT INTO TA_HistorialFlujoTarea(IdOperacion, Fecha,Descripcion, IdEstadoFlujo)
 			VALUES(@IdOperacion,GETDATE(),@DescripcionH,7)
 
-			SET @ID_DOCUMENTO_FI = (SELECT TOP 1 IdDocumento FROM dbo.FI_Documento WHERE IdPedimentoComprobante = @IdPedimentoComprobante);
+			SET @ID_DOCUMENTO_FI = (SELECT TOP 1 IdDocumento FROM dbo.FI_Documento (NOLOCK) WHERE IdPedimentoComprobante = @IdPedimentoComprobante);
 
 			--SE VERIFICA QUE EL PEDI/COMP EXISTA EN LA TABLA FI_DOCUMENTO(QUIERES DECIR QUE ES UN PDF)
 			IF ISNULL(@ID_DOCUMENTO_FI,0) <> 0
@@ -290,8 +314,8 @@ BEGIN
 					PC.RazonSocialP,
 					PC.CuentaBancaria,
 					PC.IdPedimentoComprobante
-				FROM Petrovendor.dbo.FI_PedimentoComprobante AS PC
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PC.CreadoPor
+				FROM Petrovendor.dbo.FI_PedimentoComprobante AS PC (NOLOCK)
+				LEFT JOIN dbo.S_Usuario AS US (NOLOCK) ON US.IdUsuario = PC.CreadoPor
 				WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				SET @IdPedimentoComprobante_ADINCO = SCOPE_IDENTITY();
@@ -326,9 +350,9 @@ BEGIN
 						ELSE SUM(PCD.ImporteTotal)
 					END,
 					1
-				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor
-					JOIN Petrovendor.dbo.FI_PedimentoComprobante AS PC
+				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD (NOLOCK)
+				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor (NOLOCK)
+					JOIN Petrovendor.dbo.FI_PedimentoComprobante AS PC (NOLOCK)
 						ON PCD.IdPedimentoComprobante = PC.IdPedimentoComprobante
 				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante
 				GROUP BY PC.IdPedimentoComprobante,
@@ -353,8 +377,8 @@ BEGIN
 					FID.FechaCarga,
 					FID.IsEliminado,
 					FID.DocumentoByte
-				FROM Petrovendor.dbo.FI_Documento AS FID
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = FID.IdUsuario
+				FROM Petrovendor.dbo.FI_Documento AS FID (NOLOCK)
+				LEFT JOIN dbo.S_Usuario AS US (NOLOCK) ON US.IdUsuario = FID.IdUsuario
 				WHERE FID.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				INSERT INTO dbo.FI_RelacionAdincoPedimentoComprobante
