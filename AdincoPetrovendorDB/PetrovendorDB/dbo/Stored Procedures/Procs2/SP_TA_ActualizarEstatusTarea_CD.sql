@@ -139,6 +139,14 @@ BEGIN
                   AND T.IdEstatus = 3
         );
 
+        SELECT @IdFactura = IdDocumento
+        FROM TA_Operacion (NOLOCK)
+        WHERE IdOperacion = @IdOperacion;
+
+        SELECT @IdAsignador = IdAsignador
+        FROM TA_Operacion (NOLOCK)
+        WHERE IdOperacion = @IdOperacion;
+
 
         BEGIN
             IF (@CountEstRech > 0)
@@ -151,21 +159,15 @@ BEGIN
                     TA_Tarea.Comentario = '',
 					updateByApp = @updateByApp
                 WHERE IdTarea = @IdTarea;
-                SELECT  'CONTINUAR_APROBACION_GENERAL';
+                SELECT  'CONTINUAR_APROBACION_GENERAL',
+                        ISNULL(@IdFactura, 0),
+                        ISNULL(@IdAsignador, 0);
             END;
             ELSE IF (@CountEstApr = @CountTarea)
             BEGIN
                 -- LA APROBACION GRAL FUE ACEPTADA               
                 -- SET @ESTATUS_TEMPORAL = 'DETENER_APROBACION_GENERAL'   
                 -- SE CANCELA POR QUE SE TIENE QUE ENVIAR PRIMERO LA FACTURA A LA BD DE ADINCO 
-
-                SELECT @IdFactura = IdDocumento
-                FROM TA_Operacion (NOLOCK)
-                WHERE IdOperacion = @IdOperacion;
-
-                SELECT @IdAsignador = IdAsignador
-                FROM TA_Operacion (NOLOCK)
-                WHERE IdOperacion = @IdOperacion;
 
                 -- REGRESAR EL ESTATUS A 1 PARA CAMBIAR ESTATUS EN EN EL SP SP_TA_ActualizarEstatusTarea
                 UPDATE TA_Tarea
@@ -191,7 +193,9 @@ BEGIN
 					updateByApp = @updateByApp
                 WHERE IdTarea = @IdTarea;
 
-               SELECT  'CONTINUAR_APROBACION_GENERAL';
+               SELECT  'CONTINUAR_APROBACION_GENERAL',
+                        ISNULL(@IdFactura, 0),
+                        ISNULL(@IdAsignador, 0);
             END;
         END;
     END;
@@ -206,7 +210,9 @@ BEGIN
             TA_Tarea.Comentario = '',
 			updateByApp = @updateByApp
         WHERE IdTarea = @IdTarea;
-        SELECT 'SUCCESS';
+        SELECT 'SUCCESS',
+                ISNULL(@IdFactura, 0),
+                ISNULL(@IdAsignador, 0);
     END;
 END;
 
