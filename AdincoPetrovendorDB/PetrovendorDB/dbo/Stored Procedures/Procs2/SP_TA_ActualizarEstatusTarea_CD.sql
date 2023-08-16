@@ -1,10 +1,27 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ActualizarEstatusTarea_CD'
+)
+    DROP PROCEDURE SP_TA_ActualizarEstatusTarea_CD;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 12-02-18
 -- Description: Actualizar Estutus aprobador de compra directa temporal
 --Temporal por que solo actualiza el estatus del aprobador y no el del estutus general esperando una respuesta si se envia la factura de adinco procede a ejecutar el 
 -- SP SP_TA_ActualizarEstatusTarea
+-- =============================================
+-- Modified:		Alexander Gomez
+-- Create date: 16-08-2023
+-- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusTarea_CD]
     -- Add the parameters for the stored procedure here
@@ -16,8 +33,8 @@ CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusTarea_CD]
     @ACCION NVARCHAR(200),
     @IdFirma NVARCHAR(200),
     @IdContrato INT = 0,
-    @FechaRegistro DATETIME = '12-02-2018'
---- SP_FI_ActualizarEstatusAceptacionFactura_RF 420,2205,48,'ejemplo', 1,2400
+    @FechaRegistro DATETIME = '12-02-2018',
+	@updateByApp BIT = NULL
 
 AS
 BEGIN
@@ -40,7 +57,7 @@ BEGIN
     SET @IdTarea =
     (
         SELECT T.IdTarea
-        FROM TA_Tarea AS T
+        FROM TA_Tarea AS T (NOLOCK)
         WHERE IdAprobador = @IdUsuario
               AND T.IdOperacion = @IdOperacion
     );
@@ -57,7 +74,8 @@ BEGIN
         UPDATE TA_Tarea
         SET IdEstatus = @IdEstatus,
             FechaCambioEstatus = @FECHA_CAMBIO_ESTATUS,
-            TA_Tarea.Comentario = @Comentario
+            TA_Tarea.Comentario = @Comentario,
+			updateByApp = @updateByApp
         WHERE IdTarea = @IdTarea;
 
 
@@ -81,9 +99,9 @@ BEGIN
         SET @CountTarea =
         (
             SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+            FROM TA_Operacion TAO (NOLOCK)
+                INNER JOIN TA_Tarea AS T (NOLOCK)
+                    ON TAO.IdOperacion = T.IdOperacion
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus <> 7
         );
@@ -93,9 +111,9 @@ BEGIN
         SET @CountEstPen =
         (
             SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+            FROM TA_Operacion TAO (NOLOCK)
+                INNER JOIN TA_Tarea AS T (NOLOCK)
+                    ON TAO.IdOperacion = T.IdOperacion
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 1
         );
@@ -103,9 +121,9 @@ BEGIN
         SET @CountEstApr =
         (
             SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+            FROM TA_Operacion TAO (NOLOCK)
+                INNER JOIN TA_Tarea AS T (NOLOCK)
+                    ON TAO.IdOperacion = T.IdOperacion 
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 2
         );
@@ -114,9 +132,9 @@ BEGIN
         SET @CountEstRech =
         (
             SELECT COUNT(IdEstatus) AS TOTAL
-            FROM TA_Operacion TAO
-                INNER JOIN TA_Tarea AS T
-                    ON T.IdOperacion = TAO.IdOperacion
+            FROM TA_Operacion TAO (NOLOCK)
+                INNER JOIN TA_Tarea AS T (NOLOCK)
+                    ON TAO.IdOperacion = T.IdOperacion
             WHERE TAO.IdOperacion = @IdOperacion
                   AND T.IdEstatus = 3
         );
@@ -130,7 +148,8 @@ BEGIN
                 UPDATE TA_Tarea
                 SET IdEstatus = 1,
                     FechaCambioEstatus = NULL,
-                    TA_Tarea.Comentario = ''
+                    TA_Tarea.Comentario = '',
+					updateByApp = @updateByApp
                 WHERE IdTarea = @IdTarea;
                 SELECT  'CONTINUAR_APROBACION_GENERAL';
             END;
@@ -141,18 +160,19 @@ BEGIN
                 -- SE CANCELA POR QUE SE TIENE QUE ENVIAR PRIMERO LA FACTURA A LA BD DE ADINCO 
 
                 SELECT @IdFactura = IdDocumento
-                FROM TA_Operacion
+                FROM TA_Operacion (NOLOCK)
                 WHERE IdOperacion = @IdOperacion;
 
                 SELECT @IdAsignador = IdAsignador
-                FROM TA_Operacion
+                FROM TA_Operacion (NOLOCK)
                 WHERE IdOperacion = @IdOperacion;
 
                 -- REGRESAR EL ESTATUS A 1 PARA CAMBIAR ESTATUS EN EN EL SP SP_TA_ActualizarEstatusTarea
                 UPDATE TA_Tarea
                 SET IdEstatus = 1,
                     FechaCambioEstatus = NULL,
-                    TA_Tarea.Comentario = ''
+                    TA_Tarea.Comentario = '',
+					updateByApp = @updateByApp
                 WHERE IdTarea = @IdTarea;
 
                 SELECT 'ENVIAR_FACTURA',
@@ -167,7 +187,8 @@ BEGIN
                 UPDATE TA_Tarea
                 SET IdEstatus = 1,
                     FechaCambioEstatus = NULL,
-                    TA_Tarea.Comentario = ''
+                    TA_Tarea.Comentario = '',
+					updateByApp = @updateByApp
                 WHERE IdTarea = @IdTarea;
 
                SELECT  'CONTINUAR_APROBACION_GENERAL';
@@ -182,7 +203,8 @@ BEGIN
         UPDATE TA_Tarea
         SET IdEstatus = 1,
             FechaCambioEstatus = NULL,
-            TA_Tarea.Comentario = ''
+            TA_Tarea.Comentario = '',
+			updateByApp = @updateByApp
         WHERE IdTarea = @IdTarea;
         SELECT 'SUCCESS';
     END;

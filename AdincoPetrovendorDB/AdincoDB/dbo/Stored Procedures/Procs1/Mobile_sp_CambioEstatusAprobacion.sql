@@ -1,9 +1,27 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Mobile_sp_CambioEstatusAprobacion'
+)
+    DROP PROCEDURE Mobile_sp_CambioEstatusAprobacion;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Luis David
 -- Create date: 23-03-2022
--- Description:	Se actualiza el sp para aprobación de pedimento comprobante
+-- Description:	Se actualiza el sp para aprobaci�n de pedimento comprobante  updateByApp
 -- =============================================
-CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] --25374,3,2,12,'APROBANDO DESDE EL SP DE LA APP',0,14
+-- Author:		Alexander Gomez
+-- Create date: 16-08-2023
+-- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
+-- =============================================
+CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] 
 @IdAprobacion INT ,	--APP
 @IdContrato Int ,		--APP
 @IdStatus INT ,			--APP
@@ -27,9 +45,10 @@ DECLARE @IdFirma nvarchar(max),
 		@IdPedidoCD INT,
 		@IdFacturaAdinco INT,
 		@Secuencia INT,
-		@IdPedimentoComprobante INT;
+		@IdPedimentoComprobante INT,
+		@updateByAppPC BIT = 1;
 	---- Se obtiene el id usuario  de petrovendor
-	SET @IdAprobador = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuarioADINCO = @IdUsuario)
+	SET @IdAprobador = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario (NOLOCK) WHERE IdUsuarioADINCO = @IdUsuario)
 	--- HISTORIAL
 	INSERT INTO Petrovendor..APP_BitacoraAprobacionesApp(IdTarea,IdTipoPedido,IdEstatus,Fecha,App)
 	VALUES (@IdAprobacion,@TipoPedido,@IdStatus,GETDATE(),'V2')
@@ -40,15 +59,15 @@ DECLARE @IdFirma nvarchar(max),
 	begin
 		set @Estatus = (SELECT TOP 1
 						PTA.IdEstatus AS 'Estatus Petrovendor' 
-						from Petrovendor.dbo.TA_Tarea AS PTA 
-						JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
+						from Petrovendor.dbo.TA_Tarea AS PTA (NOLOCK)
+						JOIN Petrovendor.dbo.TA_Operacion AS OP (NOLOCK) ON PTA.IdOperacion = OP.IdOperacion 
 						WHERE PTA.IdTarea = @IdAprobacion)
 		if @Estatus = 1
 		begin
 		-- se obtiene la firma y el operador
 			SELECT TOP 1 @IdFirma =  idfirma,
 					@IdOperacion  =  IdOperacion
-			FROM Petrovendor.dbo.TA_Tarea 
+			FROM Petrovendor.dbo.TA_Tarea (NOLOCK)
 			WHERE IdTarea = @IdAprobacion
 			EXEC Petrovendor.dbo.SP_TA_ActualizarEstatusTarea	@IdOperacion = @IdOperacion,-- int
 													@IdEstatus = @IdStatus,                        -- int
@@ -56,7 +75,8 @@ DECLARE @IdFirma nvarchar(max),
 													@Comentario = @Comentario,                     -- nvarchar(max)
 													@IdFirma = @IdFirma,                        -- nvarchar(max)
 													@IdContrato = @IdContrato,                       -- int
-													@FechaRegistro = @fecha -- datetime
+													@FechaRegistro = @fecha, -- datetime
+													@updateByApp = 1
 		-- Se registra en la bitacora de aprobados 
 			exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,
 																@IdContrato = @IdContrato,
@@ -77,9 +97,9 @@ DECLARE @IdFirma nvarchar(max),
 	IF @TipoPedido = 9
 	begin
 		set @Estatus = (	SELECT TOP 1 TA.IdEstatus
-							FROM Petrovendor.dbo.TA_Tarea AS TA
-							JOIN Petrovendor.dbo.TA_Operacion AS TAO ON TAO.IdOperacion = TA.IdOperacion
-							INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON P.IdSolicitudPedido = TAO.IdDocumento
+							FROM Petrovendor.dbo.TA_Tarea AS TA (NOLOCK)
+							JOIN Petrovendor.dbo.TA_Operacion AS TAO (NOLOCK) ON TA.IdOperacion = TAO.IdOperacion
+							INNER JOIN Petrovendor.dbo.MM_Pedido AS P (NOLOCK) ON TAO.IdDocumento = P.IdSolicitudPedido
 							AND TAO.NoVersion = P.Version
 							WHERE TAO.IdTipoOperacion = 9 AND
 							TA.IdTarea =  @IdAprobacion)
@@ -87,9 +107,9 @@ DECLARE @IdFirma nvarchar(max),
 		begin
 							SELECT top 1 @SolicitudPedido = P.IdSolicitudPedido,
 							@IdFirma = TA.IdFirma
-							FROM Petrovendor.dbo.TA_Tarea AS TA
-							JOIN Petrovendor.dbo.TA_Operacion AS TAO ON TAO.IdOperacion = TA.IdOperacion
-							INNER JOIN Petrovendor.dbo.MM_Pedido AS P ON TAO.IdDocumento = P.IdSolicitudPedido   AND TAO.NoVersion = P.Version
+							FROM Petrovendor.dbo.TA_Tarea AS TA (NOLOCK)
+							JOIN Petrovendor.dbo.TA_Operacion AS TAO (NOLOCK) ON TA.IdOperacion = TAO.IdOperacion
+							INNER JOIN Petrovendor.dbo.MM_Pedido AS P (NOLOCK) ON P.IdSolicitudPedido = TAO.IdDocumento AND TAO.NoVersion = P.Version
 							WHERE TAO.IdTipoOperacion = 9 AND TA.IdTarea = @IdAprobacion
 			--------
 			EXEC Petrovendor.dbo.SP_TA_ActualizarEstatusPedidoAprobacion	@IdEstatus = @IdStatus,  
@@ -97,7 +117,8 @@ DECLARE @IdFirma nvarchar(max),
 																			@IdAprobador = @IdAprobador,
 																			@Comentario = @Comentario,     
 																			@Version = @NoVersion,      
-																			@IdFirma = @IdFirma
+																			@IdFirma = @IdFirma,
+																			@updateByApp = 1
 			-- Se registra en la bitacora de aprobados 
 			exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,
 																@IdContrato = @IdContrato,
@@ -107,7 +128,7 @@ DECLARE @IdFirma nvarchar(max),
 																@AprobadorAdinco = @IdUsuario,
 																@FechaAprobacion = @fecha;
 																
-			/*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobación SERIAL*/
+			/*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobaci�n SERIAL*/
 			EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion,@Origen='Mobile_sp_CambioEstatusAprobacion'   	
 			
 			
@@ -127,22 +148,22 @@ DECLARE @IdFirma nvarchar(max),
 		--OBTENCION DEL ESTATUS ORIGINAL
 		set @Estatus = (SELECT TOP 1
 						PTA.IdEstatus AS 'Estatus Petrovendor' 
-						from Petrovendor.dbo.TA_Tarea AS PTA 
-						JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
+						from Petrovendor.dbo.TA_Tarea AS PTA (NOLOCK)
+						JOIN Petrovendor.dbo.TA_Operacion AS OP (NOLOCK) ON PTA.IdOperacion = OP.IdOperacion
 						WHERE PTA.IdTarea = @IdAprobacion);
 
 		--OBTENCION DE LA OPERACION
 		set @IdOperacion = (SELECT TOP 1
 								OP.IdOperacion
-							from Petrovendor.dbo.TA_Tarea AS PTA 
-							JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
+							from Petrovendor.dbo.TA_Tarea AS PTA (NOLOCK)
+							JOIN Petrovendor.dbo.TA_Operacion AS OP (NOLOCK) ON PTA.IdOperacion = OP.IdOperacion
 							WHERE PTA.IdTarea = @IdAprobacion);
 
 		--OBTENCION DEL IDPROVEEDOR DE LA OPERACION
 		set @IdProveedor = (SELECT TOP 1
 								OP.IdProveedor
-							from Petrovendor.dbo.TA_Tarea AS PTA 
-							JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
+							from Petrovendor.dbo.TA_Tarea AS PTA (NOLOCK)
+							JOIN Petrovendor.dbo.TA_Operacion AS OP (NOLOCK) ON PTA.IdOperacion = OP.IdOperacion
 							WHERE PTA.IdTarea = @IdAprobacion);
 
 		--EVALUACION DEL VALOR ORIGINAL
@@ -167,7 +188,8 @@ DECLARE @IdFirma nvarchar(max),
 																	@ACCION = 'CAMBIAR_ESTATUS_APROBADOR',
 																	@IdFirma = '',
 																	@IdContrato = @IdContrato,
-																	@FechaRegistro = @fecha;
+																	@FechaRegistro = @fecha,
+																	@updateByApp = 1;
 
 				exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,
 																@IdContrato = @IdContrato,
@@ -180,13 +202,13 @@ DECLARE @IdFirma nvarchar(max),
 				--SE CONSULTA EL NUMERO DE APROBADORES DE LA OPERACION
 				set @NumAprobadores = (SELECT
 									COUNT(1)
-							from Petrovendor.dbo.TA_Tarea AS PTA 
+							from Petrovendor.dbo.TA_Tarea AS PTA (NOLOCK)
 							WHERE PTA.IdTarea = @IdOperacion and PTA.Activo = 1);
 
 				--SE CONSULTA EL NUMERO DE APROBADORES QUE APROBARON LA OPERACION
 				set @NumAprobados = (SELECT
 									COUNT(1)
-							from Petrovendor.dbo.TA_Tarea AS PTA 
+							from Petrovendor.dbo.TA_Tarea AS PTA (NOLOCK)
 							WHERE PTA.IdTarea = @IdOperacion and PTA.Activo = 1 and PTA.IdEstatus = 2);--APROBADO
 
 				--SE VALIDA EL NUMERO DE APROBACIONES
@@ -200,17 +222,18 @@ DECLARE @IdFirma nvarchar(max),
 																		@Comentario = @Comentario,
 																		@IdFirma = @IdFirma,
 																		@IdContrato = @IdContrato,
-																		@FechaRegistro = @fecha;
+																		@FechaRegistro = @fecha,
+																		@updateByApp = 1;
 
 					--BUSQUEDA DE FACTURA EN PETRO
 					set @IdFacturaPetro =  (SELECT TOP 1
 											OP.IdDocumento
-										from Petrovendor.dbo.TA_Operacion AS OP
+										from Petrovendor.dbo.TA_Operacion AS OP (NOLOCK)
 										WHERE OP.IdTipoOperacion = 14
 												AND OP.IdOperacion = @IdOperacion);
-					SET @UUID = (SELECT TOP 1 UUID FROM Petrovendor.dbo.FI_Factura WHERE IdFactura = @IdFacturaPetro);
+					SET @UUID = (SELECT TOP 1 UUID FROM Petrovendor.dbo.FI_Factura (NOLOCK) WHERE IdFactura = @IdFacturaPetro);
 
-					IF NOT EXISTS(SELECT IdFactura FROM Adinco.dbo.FI_Factura WHERE UUID = @UUID)--VALIDAR SI LA FACTURA EXISTE EN ADINCO
+					IF NOT EXISTS(SELECT IdFactura FROM Adinco.dbo.FI_Factura (NOLOCK) WHERE UUID = @UUID)--VALIDAR SI LA FACTURA EXISTE EN ADINCO
 					BEGIN
 
 						--PASE DE FACTURA PETRO-ADINCO
@@ -291,7 +314,7 @@ DECLARE @IdFirma nvarchar(max),
 							NombreXML,
 							IdEstudioPrecioTransfer,
 							ProcesadoSIPAC
-						FROM Petrovendor.dbo.FI_Factura
+						FROM Petrovendor.dbo.FI_Factura (NOLOCK)
 						WHERE IdFactura = @IdFacturaPetro
 
 						--OBTENCION DEL ID FACTURA EN ADINCO
@@ -308,7 +331,7 @@ DECLARE @IdFirma nvarchar(max),
 							Importe,
 							NoIdentificacion,
 							Descuento
-						FROM Petrovendor.dbo.FI_CFDIConcepto
+						FROM Petrovendor.dbo.FI_CFDIConcepto (NOLOCK)
 						WHERE IdFactura = @IdFacturaPetro;
 
 						--PASE DE IMPUESTOS PETRO-ADINCO
@@ -319,7 +342,7 @@ DECLARE @IdFirma nvarchar(max),
 							Impuesto,
 							Tasa,
 							Importe
-						FROM Petrovendor.dbo.FI_CFDIImpuesto
+						FROM Petrovendor.dbo.FI_CFDIImpuesto (NOLOCK)
 						WHERE IdFactura = @IdFacturaPetro;
 
 						--GUARDADO DE LA RELACION PETRO-ADINCO
@@ -355,8 +378,8 @@ DECLARE @IdFirma nvarchar(max),
 		--OBTENCION DEL ESTATUS ORIGINAL
 		set @Estatus = (SELECT TOP 1
 						PTA.IdEstatus AS 'Estatus Petrovendor' 
-						from Petrovendor.dbo.TA_Tarea AS PTA 
-						JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
+						from Petrovendor.dbo.TA_Tarea AS PTA  (NOLOCK)
+						JOIN Petrovendor.dbo.TA_Operacion AS OP (NOLOCK) ON PTA.IdOperacion = OP.IdOperacion 
 						WHERE PTA.IdTarea = @IdAprobacion);
 
 		IF @Estatus = 1
@@ -367,9 +390,9 @@ DECLARE @IdFirma nvarchar(max),
 				@IdProveedor = OP.IdProveedor,
 				@Secuencia = PTA.NoSecuencia,
 				@IdPedimentoComprobante = APC.IdPedimentoComprobante
-			from Petrovendor.dbo.TA_Tarea AS PTA 
-			JOIN Petrovendor.dbo.TA_Operacion AS OP ON OP.IdOperacion = PTA.IdOperacion
-			JOIN Petrovendor.dbo.FI_AceptacionPedido_PedimentoComprobante AS APC ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento
+			from Petrovendor.dbo.TA_Tarea AS PTA (NOLOCK)
+			JOIN Petrovendor.dbo.TA_Operacion AS OP (NOLOCK) ON PTA.IdOperacion = OP.IdOperacion
+			JOIN Petrovendor.dbo.FI_AceptacionPedido_PedimentoComprobante AS APC (NOLOCK) ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
 			WHERE PTA.IdTarea = @IdAprobacion;
 
 			CREATE TABLE #RESULTADOAPROBACIONPC (RESPUESTA NVARCHAR(200));
@@ -381,7 +404,8 @@ DECLARE @IdFirma nvarchar(max),
 																								@IdStatus,
 																								@Secuencia,
 																								@Comentario,
-																								@IdPedimentoComprobante;
+																								@IdPedimentoComprobante,
+																								@updateByAppPC;
 
 
 				SELECT DISTINCT
@@ -403,17 +427,17 @@ DECLARE @IdFirma nvarchar(max),
 				   TOO.IdProveedor,
 				   ISNULL(T.Comentario, '') AS Comentario,
 				   TAE.Name
-			FROM Petrovendor.dbo.TA_Tarea AS T
-				LEFT JOIN Petrovendor.dbo.TA_Operacion AS TOO
-					ON TOO.IdOperacion = T.IdOperacion
-				LEFT JOIN Petrovendor.dbo.TA_FlujoTarea AS FT
-					ON FT.IdFlujoTarea = TOO.IdFlujoTarea
-				LEFT JOIN Petrovendor.dbo.S_Usuario AS U
-					ON U.IdUsuario = T.IdAprobador
-				LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO
-					ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
-				LEFT JOIN Petrovendor.dbo.TA_Estatus AS TAE
-					ON TAE.IdEstatus = TOO.IdEstatusOperacion
+			FROM Petrovendor.dbo.TA_Tarea AS T (NOLOCK)
+				LEFT JOIN Petrovendor.dbo.TA_Operacion AS TOO (NOLOCK)
+					ON T.IdOperacion = TOO.IdOperacion
+				LEFT JOIN Petrovendor.dbo.TA_FlujoTarea AS FT (NOLOCK)
+					ON TOO.IdFlujoTarea = FT.IdFlujoTarea
+				LEFT JOIN Petrovendor.dbo.S_Usuario AS U (NOLOCK)
+					ON T.IdAprobador = U.IdUsuario
+				LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO (NOLOCK)
+					ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
+				LEFT JOIN Petrovendor.dbo.TA_Estatus AS TAE (NOLOCK)
+					ON TOO.IdEstatusOperacion = TAE.IdEstatus
 			WHERE TOO.IdOperacion = @IdOperacion
 			ORDER BY NoSecuencia ASC
 			
