@@ -104,21 +104,11 @@ BEGIN
 			FechaCambioEstatus = GETDATE(),
 			updateByApp = @updateByApp
 		WHERE IdAprobador = @IdUsuario
-			--AND NoSecuencia = @NoSecuencia
 			AND IdOperacion = @IdOperacion
 			AND Activo = 1
 			AND FechaCambioEstatus IS NULL;
 
 	END
-
-	UPDATE dbo.TA_Tarea 
-	SET IdEstatus = @IdEstatus,
-		Comentario = @Comentario,
-		FechaCambioEstatus = GETDATE(),
-		updateByApp = @updateByApp
-	WHERE IdAprobador = @IdUsuario
-		AND NoSecuencia = @NoSecuencia
-		AND IdOperacion = @IdOperacion;
 
 	IF @IdEstatus = 3
 	BEGIN
@@ -129,8 +119,7 @@ BEGIN
 		
 	    --CANCELAR TODAS LAS TAREAS PENDIENTES
 		UPDATE dbo.TA_Tarea 
-		SET IdEstatus = 4,
-			updateByApp = @updateByApp
+		SET IdEstatus = 4
 		WHERE IdOperacion = @IdOperacion
 			AND IdEstatus = 1;
 
@@ -351,8 +340,9 @@ BEGIN
 					END,
 					1
 				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD (NOLOCK)
-				LEFT JOIN dbo.S_Usuario AS US ON US.IdUsuario = PCD.CreadoPor (NOLOCK)
-					JOIN Petrovendor.dbo.FI_PedimentoComprobante AS PC (NOLOCK)
+				JOIN Petrovendor.dbo.S_Usuario AS US (NOLOCK)
+					ON PCD.CreadoPor = US.IdUsuario 
+				JOIN Petrovendor.dbo.FI_PedimentoComprobante AS PC (NOLOCK)
 						ON PCD.IdPedimentoComprobante = PC.IdPedimentoComprobante
 				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante
 				GROUP BY PC.IdPedimentoComprobante,

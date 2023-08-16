@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+﻿USE [Adinco]
 GO
 IF EXISTS
 (
@@ -15,7 +15,7 @@ GO
 -- =============================================
 -- Author:		Luis David
 -- Create date: 23-03-2022
--- Description:	Se actualiza el sp para aprobación de pedimento comprobante  updateByApp
+-- Description:	Se actualiza el sp para aprobaci�n de pedimento comprobante  updateByApp
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 16-08-2023
@@ -45,7 +45,8 @@ DECLARE @IdFirma nvarchar(max),
 		@IdPedidoCD INT,
 		@IdFacturaAdinco INT,
 		@Secuencia INT,
-		@IdPedimentoComprobante INT;
+		@IdPedimentoComprobante INT,
+		@updateByAppPC BIT = 1;
 	---- Se obtiene el id usuario  de petrovendor
 	SET @IdAprobador = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario (NOLOCK) WHERE IdUsuarioADINCO = @IdUsuario)
 	--- HISTORIAL
@@ -127,7 +128,7 @@ DECLARE @IdFirma nvarchar(max),
 																@AprobadorAdinco = @IdUsuario,
 																@FechaAprobacion = @fecha;
 																
-			/*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobación SERIAL*/
+			/*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobaci�n SERIAL*/
 			EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion,@Origen='Mobile_sp_CambioEstatusAprobacion'   	
 			
 			
@@ -187,7 +188,8 @@ DECLARE @IdFirma nvarchar(max),
 																	@ACCION = 'CAMBIAR_ESTATUS_APROBADOR',
 																	@IdFirma = '',
 																	@IdContrato = @IdContrato,
-																	@FechaRegistro = @fecha;
+																	@FechaRegistro = @fecha,
+																	@updateByApp = 1;
 
 				exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,
 																@IdContrato = @IdContrato,
@@ -220,7 +222,8 @@ DECLARE @IdFirma nvarchar(max),
 																		@Comentario = @Comentario,
 																		@IdFirma = @IdFirma,
 																		@IdContrato = @IdContrato,
-																		@FechaRegistro = @fecha;
+																		@FechaRegistro = @fecha,
+																		@updateByApp = 1;
 
 					--BUSQUEDA DE FACTURA EN PETRO
 					set @IdFacturaPetro =  (SELECT TOP 1
@@ -401,7 +404,8 @@ DECLARE @IdFirma nvarchar(max),
 																								@IdStatus,
 																								@Secuencia,
 																								@Comentario,
-																								@IdPedimentoComprobante;
+																								@IdPedimentoComprobante,
+																								@updateByAppPC;
 
 
 				SELECT DISTINCT
