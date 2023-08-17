@@ -1,4 +1,18 @@
-﻿-- =============================================  
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ActualizarEstatusTarea'
+)
+    DROP PROCEDURE SP_TA_ActualizarEstatusTarea;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:  Daniel A Cruz  
 -- Create date: 04-01-17  
 -- Description:  Actualiza el Estatus de la Tarea y   
@@ -28,6 +42,10 @@
 -- Updated date: 22/02/2022
 -- Description: Se agrega el idusuarioAdinco para notificaciones push
 --************************************************************** 
+-- Modified:		Alexander Gomez
+-- Create date: 16-08-2023
+-- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
+--**************************************************************
 CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusTarea]
 -- Add the parameters for the stored procedure here  
 @IdOperacion INT,
@@ -36,7 +54,8 @@ CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusTarea]
 @Comentario NVARCHAR(MAX),
 @IdFirma NVARCHAR(MAX),
 @IdContrato INT = NULL,
-@FechaRegistro DATETIME = NULL
+@FechaRegistro DATETIME = NULL,
+@updateByApp BIT = NULL
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from  
@@ -55,11 +74,11 @@ BEGIN
 
 	--SE OBTIENE EL FLUJO DE LA OPERACION
 	DECLARE @IDFLUJOTAREA INT = (SELECT IdFlujoTarea 
-								FROM dbo.TA_Operacion 
+								FROM dbo.TA_Operacion (NOLOCK)
 								WHERE IdOperacion = @IdOperacion);
 	--SE OBTIENE EL TIPO DE FLUJO(SERIAL O PARALELO)
 	DECLARE @IDTIPOFLUJO INT = (SELECT IdTipoFlujo 
-								FROM dbo.TA_FlujoTarea 
+								FROM dbo.TA_FlujoTarea (NOLOCK)
 								WHERE IdFlujoTarea = @IDFLUJOTAREA);
 	DECLARE @IDSIGAPROBADOR INT;
 	
@@ -68,7 +87,7 @@ BEGIN
 	BEGIN
 		--SE OBTIENE EL SIG APROBADOR EN EL FLUJO
 		SET @IDSIGAPROBADOR = (SELECT TOP 1 IdAprobador 
-								FROM dbo.TA_Tarea 
+								FROM dbo.TA_Tarea (NOLOCK)
 								WHERE IdEstatus = 1 
 									AND IdOperacion = @IdOperacion 
 								ORDER BY NoSecuencia ASC);
@@ -84,21 +103,21 @@ BEGIN
     SET @IdTarea =
     (   SELECT T.IdTarea
         FROM TA_Tarea AS T
-            INNER JOIN TA_TareaOperacion AS TA
-                ON TA.IdTarea = T.IdTarea
+            INNER JOIN TA_TareaOperacion AS TA (NOLOCK)
+                ON T.IdTarea = TA.IdTarea
         WHERE IdAprobador = @IdUsuario
               AND TA.IdOperacion = @IdOperacion)
 
     SELECT @IdEstatusOperacionAntesUpdate = IdEstatusOperacion,
            @IdTipoOperacionAux = IdTipoOperacion
-    FROM dbo.TA_Operacion
+    FROM dbo.TA_Operacion (NOLOCK)
     WHERE IdOperacion = @IdOperacion
 
 	--SE VALIDA QUE EL SIGUIENTE APROBADOR SE LE MISMO AL QUE DESEA APROBAR
 	IF @IdUsuario = @IDSIGAPROBADOR
 	BEGIN
     ---Validar que la Tarea Tenga un Estatus Pendiente para poder actualizar   
-    IF (SELECT IdEstatus FROM TA_Tarea WHERE IdTarea = @IdTarea) = 1
+    IF (SELECT IdEstatus FROM TA_Tarea (NOLOCK) WHERE IdTarea = @IdTarea) = 1
     BEGIN
 
  -- Actualizar Estatus de Tarea ---  
@@ -106,14 +125,15 @@ BEGIN
         SET IdEstatus = @IdEstatus,
             FechaCambioEstatus = GETDATE(),
             TA_Tarea.Comentario = @Comentario,
-           IdFirma = @IdFirma
+           IdFirma = @IdFirma,
+		   updateByApp = @updateByApp
         WHERE IdTarea = @IdTarea
 
 
 
         ----Agregar Evento al Historial  ---  
         DECLARE @ESTATUSTA NVARCHAR(MAX)
-            =   (SELECT Nombre FROM TA_Estatus WHERE IdEstatus = @IdEstatus)
+            =   (SELECT Nombre FROM TA_Estatus (NOLOCK) WHERE IdEstatus = @IdEstatus)
 
         IF @ESTATUSTA = 'Aprobada'
         BEGIN
@@ -126,7 +146,7 @@ BEGIN
         END
 
         SET @DescripcionH
-            = N'El Usuario ' + (SELECT Nombre FROM S_Usuario WHERE IdUsuario = @IdUsuario)
+            = N'El Usuario ' + (SELECT Nombre FROM S_Usuario (NOLOCK) WHERE IdUsuario = @IdUsuario)
               + N' ha ' + @ESTATUSTA + N' la Tarea'
 
         INSERT INTO TA_HistorialFlujoTarea (IdOperacion, Fecha, Descripcion, IdEstadoFlujo)
@@ -162,20 +182,19 @@ BEGIN
                TAE.Name,
 			   U.IdUsuarioADINCO,
 			   UA.IdUsuarioADINCO as 'AsignadorId'
-        FROM TA_Tarea AS T
-            --INNER JOIN TA_TareaOperacion AS TAO ON TAO.IdTarea =T.IdTarea  
-            LEFT JOIN TA_Operacion AS TOO
-                ON TOO.IdOperacion = T.IdOperacion
-            LEFT JOIN TA_FlujoTarea AS FT
-                ON FT.IdFlujoTarea = TOO.IdFlujoTarea
-            LEFT JOIN S_Usuario AS U
-                ON U.IdUsuario = T.IdAprobador
-            LEFT JOIN TA_TipoOperacion AS TTO
-                ON TTO.IdTipoOperacion = TOO.IdTipoOperacion
-            LEFT JOIN TA_Estatus AS TAE
-                ON TAE.IdEstatus = TOO.IdEstatusOperacion
-			LEFT JOIN S_Usuario UA
-				ON TOO.IdAsignador = UA.IdUsuario
+        FROM TA_Tarea AS T (NOLOCK) 
+            LEFT JOIN TA_Operacion AS TOO (NOLOCK)
+                ON T.IdOperacion = TOO.IdOperacion
+            LEFT JOIN TA_FlujoTarea AS FT (NOLOCK)
+                ON TOO.IdFlujoTarea = FT.IdFlujoTarea
+            LEFT JOIN S_Usuario AS U (NOLOCK)
+                ON T.IdAprobador = U.IdUsuario
+            LEFT JOIN TA_TipoOperacion AS TTO (NOLOCK)
+                ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
+            LEFT JOIN TA_Estatus AS TAE (NOLOCK)
+                ON TOO.IdEstatusOperacion = TAE.IdEstatus
+			LEFT JOIN S_Usuario UA (NOLOCK)
+				ON UA.IdUsuario = TOO.IdAsignador 
         WHERE TOO.IdOperacion = @IdOperacion
         ORDER BY NoSecuencia ASC
 
@@ -211,11 +230,11 @@ BEGIN
             INSERT INTO #CentrosCostos (IdCentroCosto, IdProveedor)
             SELECT SPDL.IdCentroCosto,
                    SP.IdProveedor
-            FROM dbo.MM_SolicitudPedido SP
-                INNER JOIN dbo.MM_SolicitudPedidoDetalle SPD
-                    ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido
-                INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL
-                    ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+            FROM dbo.MM_SolicitudPedido SP (NOLOCK)
+                INNER JOIN dbo.MM_SolicitudPedidoDetalle SPD (NOLOCK)
+                    ON SP.IdSolicitudPedido = SPD.IdSolicitudPedido
+                INNER JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL (NOLOCK)
+                    ON SPD.IdSolicitudPedidoDetalle = SPDL.IdSolicitudPedidoDetalle
             WHERE SP.IdSolicitudPedido = @IdSolicutPedido_SO
             GROUP BY SPDL.IdCentroCosto,
                      SP.IdProveedor
@@ -235,11 +254,11 @@ BEGIN
                    @IdUsuario,
                    GETDATE(),
                    1
-            FROM dbo.CC_CentroCostoGrupoCompras CG
-                INNER JOIN #CentrosCostos CC
-                    ON CC.IdCentroCosto = CG.IdCentroCosto
-                INNER JOIN dbo.S_Usuario U
-                    ON U.IdUsuario = CG.IdUsuario
+            FROM dbo.CC_CentroCostoGrupoCompras CG (NOLOCK)
+                INNER JOIN #CentrosCostos CC (NOLOCK)
+                    ON CG.IdCentroCosto = CC.IdCentroCosto
+                INNER JOIN dbo.S_Usuario U (NOLOCK)
+                    ON CG.IdUsuario = U.IdUsuario
             WHERE CG.Activo = 1 --> RELACIÓN ACTIVA 
                   AND U.Activo = 1 --> USUARIO ACTIVO
             GROUP BY CG.IdUsuario
@@ -248,7 +267,7 @@ BEGIN
     --END
     --Actualizar en versión móvil  
 
-    IF EXISTS (SELECT 1 FROM Adinco.dbo.AM_Aprobacion WHERE IdTareaOrigen = @IdTarea)
+    IF EXISTS (SELECT 1 FROM Adinco.dbo.AM_Aprobacion (NOLOCK) WHERE IdTareaOrigen = @IdTarea)
     BEGIN
         --1 Pendiente  
         --2 Aprobada  
@@ -321,27 +340,27 @@ BEGIN
                @Estatus = t.Nombre,
 			   @EstatusEnglish = t.Name,
                @IdDocumento = tao.IdDocumento
-        FROM dbo.TA_Operacion tao
-            INNER JOIN dbo.TA_Estatus t
-                ON t.IdEstatus = tao.IdEstatusOperacion
+        FROM dbo.TA_Operacion tao (NOLOCK)
+            INNER JOIN dbo.TA_Estatus t (NOLOCK)
+                ON tao.IdEstatusOperacion = t.IdEstatus
         WHERE tao.IdOperacion = @IdOperacion
              AND tao.IdTipoOperacion = 14
 
         SELECT @IdContratoAux = f.IdContrato,
                @Justificacion = r.Comentarios
-        FROM dbo.FI_Factura f
-            INNER JOIN dbo.CO_Registro r
-        ON r.IdFactura = f.IdFactura
+        FROM dbo.FI_Factura f (NOLOCK)
+            INNER JOIN dbo.CO_Registro r (NOLOCK)
+        ON f.IdFactura = r.IdFactura
         WHERE f.IdFactura = @Num_Factura
 
         SELECT @AreaContractual = a.NombreAreaContractual
-        FROM Adinco.dbo.CO_Contrato c
-            INNER JOIN Adinco.dbo.CO_AreaContractual a
-                ON a.IdAreaContractual = c.IdAreaContractual
+        FROM Adinco.dbo.CO_Contrato c (NOLOCK)
+            INNER JOIN Adinco.dbo.CO_AreaContractual a (NOLOCK)
+                ON c.IdAreaContractual = a.IdAreaContractual
         WHERE c.IdContrato = @IdContratoAux
 
         SELECT @NumCompraDirecta = ps.IdPedido
-        FROM dbo.MM_Pedidos ps
+        FROM dbo.MM_Pedidos ps (NOLOCK)
         WHERE ps.IdProveedorCliente = @IdProveedor
               AND ps.IdTipoPedido = 1
               AND ps.IdIdentificador = @Num_Factura
@@ -349,19 +368,19 @@ BEGIN
         SELECT @Asunto = C.Asunto,
                @Html = C.HTML,
                @De = S.CuentaRegistro
-        FROM dbo.TA_Correo AS C
-            INNER JOIN dbo.TA_CorreoServidor AS S
-                ON S.IdServidor = C.IdServidor
+        FROM dbo.TA_Correo AS C (NOLOCK)
+            INNER JOIN dbo.TA_CorreoServidor AS S (NOLOCK)
+                ON C.IdServidor = S.IdServidor
         WHERE C.IdCorreo = 2
 
         SELECT @NombreCreadorCompraDirecta = Nombre,
                @Para = Correo,
 			   @TipoUsuario = LTRIM(IdTipoUsuario)
-        FROM dbo.S_Usuario
+        FROM dbo.S_Usuario (NOLOCK)
         WHERE IdUsuario = @CreadorCompra
 
         SELECT @Url = Url
-        FROM dbo.TA_Dominios
+        FROM dbo.TA_Dominios (NOLOCK)
         WHERE IdDominio = 2
 
         SELECT @Url += CONCAT(
