@@ -27,9 +27,6 @@ GO
 -- Update: 19/07/2023
 -- Description:	se agregan validaciones de configuraciones issue: https://github.com/Adinco/petrovendor/issues/2388
 -- =============================================
--- Author:		Alexander Gomez
--- Update: 27/07/2023
--- Description:	se iguala el calculo de partidas a 3 decimales sin redondear issue: https://github.com/Adinco/petrovendor/issues/2397
 -- =============================================
 -- Author:	Daniel AC
 -- Update: 31/07/2023
