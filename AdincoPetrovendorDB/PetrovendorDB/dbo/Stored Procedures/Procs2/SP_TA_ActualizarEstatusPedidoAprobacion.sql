@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ActualizarEstatusPedidoAprobacion'
+)
+    DROP PROCEDURE SP_TA_ActualizarEstatusPedidoAprobacion;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 13-11-2019
 -- Description:	 Se agrega validación DEA para aprobaciones desde la APP
@@ -7,7 +21,10 @@
 -- Updated date: <24/04/2018>									
 -- Description: <Se agrega el guardado de firma electronica>
 --**************************************************************
-
+-- Modified:		Alexander Gomez
+-- Create date: 16-08-2023
+-- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
+--**************************************************************
 CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusPedidoAprobacion] 
 -- Add the parameters for the stored procedure here
 ----execute  SP_TA_ActualizarEstatusPedidoAprobacion 2,12417, 2221, '',2
@@ -16,7 +33,8 @@ CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusPedidoAprobacion]
 @IdAprobador      INT, 
 @Comentario       NVARCHAR(MAX), 
 @Version          INT, 
-@IdFirma          VARCHAR(50)
+@IdFirma          VARCHAR(50),
+@updateByApp BIT = NULL
 ---@Comentario NVARCHAR(MAX)
 
 AS
@@ -34,8 +52,8 @@ AS
         (
             SELECT TOP 1 O.IdOperacion
             FROM TA_Operacion AS O
-                 INNER JOIN MM_Pedido AS P ON P.IdSolicitudPedido = O.IdDocumento
-                 INNER JOIN TA_Tarea AS TA ON TA.IdOperacion = O.IdOperacion
+                 INNER JOIN MM_Pedido AS P (NOLOCK) ON O.IdDocumento = P.IdSolicitudPedido
+                 INNER JOIN TA_Tarea AS TA (NOLOCK) ON O.IdOperacion = TA.IdOperacion
             WHERE TA.IdAprobador = @IdAprobador
                   AND P.IdSolicitudPedido = @IdSoliciudPedido
                   AND P.Version = O.NoVersion
@@ -46,7 +64,7 @@ AS
         SET @IdTarea =
         (
             SELECT T.IdTarea
-            FROM TA_Tarea AS T
+            FROM TA_Tarea AS T (NOLOCK)
             WHERE T.IdAprobador = @IdAprobador
                   AND T.IdOperacion = @IdOperacion
                   AND T.Activo = 1
@@ -57,7 +75,7 @@ AS
         IF
         (
             SELECT IdEstatus
-            FROM TA_Tarea
+            FROM TA_Tarea (NOLOCK)
             WHERE IdTarea = @IdTarea
         ) = 1
             BEGIN 
@@ -68,7 +86,8 @@ AS
                       IdEstatus = @IdEstatus, 
                       FechaCambioEstatus = GETDATE(), 
                       Comentario = @Comentario, 
-                      IdFirma = @IdFirma
+                      IdFirma = @IdFirma,
+					  updateByApp = @updateByApp
                 WHERE IdTarea = @IdTarea;
                 IF @IdEstatus = 3 ---AGREGAR COMENTARIO DE CANCELACIÓN DE PEDIDO
                     BEGIN
@@ -127,9 +146,9 @@ AS
                 SET @IdAprobacionMobile =
                 (
                     SELECT TOP 1 TA.IdTarea
-                    FROM dbo.TA_Tarea AS TA
-                         JOIN dbo.TA_Operacion AS TAO ON TAO.IdOperacion = TA.IdOperacion
-                         INNER JOIN MM_Pedido AS P ON P.IdSolicitudPedido = TAO.IdDocumento
+                    FROM dbo.TA_Tarea AS TA (NOLOCK)
+                         JOIN dbo.TA_Operacion AS TAO (NOLOCK) ON TA.IdOperacion = TAO.IdOperacion 
+                         INNER JOIN MM_Pedido AS P (NOLOCK) ON TAO.IdDocumento = P.IdSolicitudPedido
                     WHERE TAO.IdTipoOperacion = 9
                           AND P.IdSolicitudPedido = @IdSoliciudPedido
                 );
@@ -176,12 +195,12 @@ AS
                        T.NoSecuencia, 
                        T.IdEstatus, 
                        E.Name
-                FROM TA_Operacion AS O
-                     INNER JOIN MM_Pedido AS P ON P.IdSolicitudPedido = O.IdDocumento
-                     INNER JOIN TA_Tarea AS T ON T.IdOperacion = O.IdOperacion
-                     INNER JOIN S_Usuario AS U ON U.IdUsuario = T.IdAprobador
-                     INNER JOIN TA_FlujoTarea AS FT ON FT.IdFlujoTarea = O.IdFlujoTarea
-                     INNER JOIN TA_Estatus AS E ON E.IdEstatus = O.IdEstatusOperacion
+                FROM TA_Operacion AS O (NOLOCK)
+                     INNER JOIN MM_Pedido AS P (NOLOCK) ON O.IdDocumento = P.IdSolicitudPedido
+                     INNER JOIN TA_Tarea AS T (NOLOCK) ON O.IdOperacion = T.IdOperacion
+                     INNER JOIN S_Usuario AS U (NOLOCK) ON T.IdAprobador = U.IdUsuario
+                     INNER JOIN TA_FlujoTarea AS FT (NOLOCK) ON O.IdFlujoTarea = FT.IdFlujoTarea
+                     INNER JOIN TA_Estatus AS E (NOLOCK) ON O.IdEstatusOperacion = E.IdEstatus
                 WHERE O.IdOperacion = @IdOperacion
                       AND P.Version = @Version
                 GROUP BY O.IdOperacion, 

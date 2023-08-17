@@ -1,4 +1,18 @@
-﻿CREATE PROCEDURE [dbo].[SP_EN_GeneraInstancias10000] --'20200718',3,'20200720',1,2,1,18777,3,10061,13047
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_GeneraInstancias10000'
+)
+    DROP PROCEDURE SP_EN_GeneraInstancias10000;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[SP_EN_GeneraInstancias10000] --'20200718',3,'20200720',1,2,1,18777,3,10061,13047
     @FechaLimiteint DATE,
     @DiasElaboracion INT,
     @FechaLimiteEntregaRegulador DATE,
@@ -18,6 +32,11 @@ BEGIN
 -- Description:	
 -- =============================================
 -- 20200716	BAAC Se modifica para considerar mas de una fecha de entregable por evento en el mismo mes
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 10/08/2023
+-- Description:	correccion para contemplar los entregables que tienen cargados urls
 -- =============================================
     SET NOCOUNT ON;
     -----------------------------------------------
@@ -94,21 +113,21 @@ BEGIN
     IF (@BitProgramaImplementa = 0)
     BEGIN
         SELECT @FechaFinFlujo = FinVigencia
-								FROM dbo.CO_Contrato
+								FROM dbo.CO_Contrato (NOLOCK)
 								WHERE IdContrato = @idContrato;
     END;
     ELSE
     BEGIN
         SELECT  @FechaFinFlujo = PI.FechaFin
-        FROM dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPI
-            JOIN dbo.CO_ProgramaImplementaAcciones PIA
+        FROM dbo.EN_ContratoEntregableProgramaImplementaAcciones CEPI (NOLOCK)
+            JOIN dbo.CO_ProgramaImplementaAcciones PIA (NOLOCK)
                 ON CEPI.IdContratoEntregable = @IdContratoEntregable
                    AND CEPI.IdProgramaImplementaAccion = PIA.IdProgramaImplementaAccion
-            JOIN dbo.CO_ProgramaImplementaElemento PIE
+            JOIN dbo.CO_ProgramaImplementaElemento PIE (NOLOCK)
                 ON PIA.IdProgramaImplementaElemento = PIE.IdProgramaImplementaElemento
-            JOIN dbo.CO_ProgramaImplementaPoliticas PIP
+            JOIN dbo.CO_ProgramaImplementaPoliticas PIP (NOLOCK)
                 ON PIE.IdProgramaImplementaPolitica = PIP.IdProgramaImplementaPolitica
-            JOIN dbo.CO_ProgramaImplementa PI
+            JOIN dbo.CO_ProgramaImplementa PI (NOLOCK)
                 ON PIP.IdProgramaImplementa = PI.IdProgramaImplementa;
     END;
 
@@ -118,17 +137,17 @@ BEGIN
         IF (@Frecuencia NOT IN ( 10005 ))--Diaria
         BEGIN
             SELECT @idActividadElab = ActividadID
-            FROM dbo.EN_Actividad
+            FROM dbo.EN_Actividad (NOLOCK)
             WHERE IdContratoEntregable = @IdContratoEntregable --16622
                   AND EstadoID = 10000; --Para elaboración o corrección
 
             SELECT TOP 1 @idActividadRevi = ActividadID
-            FROM dbo.EN_Actividad
+            FROM dbo.EN_Actividad (NOLOCK)
             WHERE IdContratoEntregable = @IdContratoEntregable --16622
                   AND EstadoID = 10001; --Para Revisión
 
             SELECT @idActividadAprob = ActividadID
-            FROM dbo.EN_Actividad
+            FROM dbo.EN_Actividad (NOLOCK)
             WHERE IdContratoEntregable = @IdContratoEntregable --16622
                   AND EstadoID = 10002; --Para Aprobación
 
@@ -222,7 +241,7 @@ BEGIN
 								IdFecha
 							)
 							SELECT IdFecha
-							FROM dbo.AP_Calendario
+							FROM dbo.AP_Calendario (NOLOCK)
 							WHERE IdFecha < @FechaInicialSig
 								  AND DATEADD(YEAR, -3, @FechaInicialSig) <= IdFecha
 								  AND FinDeSemana = 0
@@ -255,7 +274,7 @@ BEGIN
 								LEFT JOIN #DiasHabiles DH
 									ON @FechaInicialSig >= DH.IdFecha
 									   AND CE.dias = DH.Id
-								LEFT JOIN dbo.AP_Calendario C2
+								LEFT JOIN dbo.AP_Calendario C2 (NOLOCK)
 									ON @FechaInicialSig >= C2.IdFecha
 									   AND C2.IdFecha > DATEADD(YEAR, -1, @FechaInicialSig)
 									   AND C2.FinDeSemana = 0
@@ -270,7 +289,7 @@ BEGIN
 									LEFT JOIN #DiasHabiles DH
 										ON @FechaInicialSig >= DH.IdFecha
 										   AND @DiasElaboracion = DH.Id
-									LEFT JOIN dbo.AP_Calendario C2
+									LEFT JOIN dbo.AP_Calendario C2 (NOLOCK)
 										ON @FechaInicialSig >= C2.IdFecha
 										   AND C2.IdFecha > DATEADD(YEAR, -3, @FechaInicialSig)
 										   AND C2.FinDeSemana = 0
@@ -286,7 +305,7 @@ BEGIN
 								LEFT JOIN #DiasHabiles DH
 									ON @FechaInicialSig >= DH.IdFecha
 									AND CE.dias = DH.Id
-								LEFT JOIN dbo.AP_Calendario C2
+								LEFT JOIN dbo.AP_Calendario C2 (NOLOCK)
 									ON @FechaInicialSig >= C2.IdFecha
 									   AND C2.IdFecha > DATEADD(YEAR, -1, @FechaInicialSig)
 									   AND C2.FinDeSemana = 0
@@ -310,14 +329,17 @@ BEGIN
 						   IE.FechasLimiteAprobacion,
 						   ISNULL(A.EstadoID, 10000),
 						   ISNULL(COUNT(ED.DocumentoEntregableId), 0)
-					FROM dbo.EN_InstanciasEntregable IE
-						LEFT JOIN dbo.EN_Actividad A
-							ON A.ActividadID = IE.ActividadID
-							   AND A.IdContratoEntregable = IE.IdContratoEntregable
-						LEFT JOIN EN_EntregableDocumento ED
-							ON ED.idInstanciaEntregable = IE.idInstanciaEntregable
+					FROM dbo.EN_InstanciasEntregable IE (NOLOCK)
+						LEFT JOIN dbo.EN_Actividad A (NOLOCK)
+							ON IE.ActividadID = A.ActividadID
+							   AND IE.IdContratoEntregable = A.IdContratoEntregable
+						LEFT JOIN EN_EntregableDocumento ED (NOLOCK)
+							ON IE.idInstanciaEntregable = ED.idInstanciaEntregable
+						LEFT JOIN EN_HistorialAprobacionesLineaTiempo HALT (NOLOCK)
+							ON IE.idInstanciaEntregable = HALT.idInstanciaEntregable
 					WHERE IE.IdContratoEntregable = @IdContratoEntregable
 						AND IE.Activo = 1
+						AND HALT.IdHistorialAprobacionesVersion IS NULL
 					GROUP BY IE.idInstanciaEntregable,
 							 IE.FechasLimiteAprobacion,
 							 ISNULL(A.EstadoID, 10000);
@@ -335,9 +357,10 @@ BEGIN
 									OR IE.TieneArchivo <> 0
 						  );
 
--- SI ES UN ENTREGABLE POR EVENTO, NO SE ELIMINAN LOS ENTREGABLES QUE YA ESTEN PROGRAMADOS
+					-- SI ES UN ENTREGABLE POR EVENTO, NO SE ELIMINAN LOS ENTREGABLES QUE YA ESTEN PROGRAMADOS
 					IF @Frecuencia <> 10011
 					BEGIN
+
 						DELETE dbo.EN_InstanciasEntregable
 						WHERE idInstanciaEntregable IN
 						  (
@@ -347,6 +370,7 @@ BEGIN
 									AND TieneArchivo = 0
 						  )
 						  AND IdContratoEntregable = @IdContratoEntregable;
+
 					END
 
 				INSERT INTO dbo.EN_InstanciasEntregable
@@ -454,13 +478,17 @@ BEGIN
 							   IE.FechasLimiteAprobacion,
 							   ISNULL(A.EstadoID, 10000),
 							   ISNULL(COUNT(ED.DocumentoEntregableId), 0)
-						FROM dbo.EN_InstanciasEntregable IE
+						FROM dbo.EN_InstanciasEntregable IE (NOLOCK)
 							LEFT JOIN dbo.EN_Actividad A
-								ON A.ActividadID = IE.ActividadID
-								   AND A.IdContratoEntregable = IE.IdContratoEntregable
-							LEFT JOIN EN_EntregableDocumento ED
-								ON ED.idInstanciaEntregable = IE.idInstanciaEntregable
+								ON IE.ActividadID = A.ActividadID
+								   AND IE.IdContratoEntregable = A.IdContratoEntregable
+							LEFT JOIN EN_EntregableDocumento ED (NOLOCK)
+								ON IE.idInstanciaEntregable = ED.idInstanciaEntregable
+							LEFT JOIN EN_HistorialAprobacionesLineaTiempo HALT (NOLOCK)
+								ON IE.idInstanciaEntregable = HALT.idInstanciaEntregable
 						WHERE IE.IdContratoEntregable = @IdContratoEntregable
+							AND IE.Activo = 1
+							AND HALT.IdHistorialAprobacionesVersion IS NULL
 						GROUP BY IE.idInstanciaEntregable,
 								 IE.FechasLimiteAprobacion,
 								 ISNULL(A.EstadoID, 10000);
