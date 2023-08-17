@@ -3906,5 +3906,11 @@
     <Build Include="dbo\Stored Procedures\Procs2\sp_SC_Consultar_PV_MM_MaterialUnidad.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\EliminarAWS_Documentos_Logico.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_CambioMesPresentacionDelGasto.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_BitacoraPresupuesto.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_BitacoraPresupuestoDetalle.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_BitacoraPresupuestoDetalle.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerContratosCargaPresupuestos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto.sql" />
   </ItemGroup>
 </Project>
