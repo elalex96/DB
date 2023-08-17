@@ -1,4 +1,13 @@
-﻿-- =============================================
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_CO_InsertaRegistroCEE'
+)
+    DROP PROCEDURE sp_CO_InsertaRegistroCEE;
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:		Miguel Gomez
 -- Create date: Diciembre 2014
 -- Description:	Inserta un nuevo registro
@@ -16,6 +25,10 @@
 -- Descripción:				Se agregan los campos de Ajuste,DescripcionPartidaServicio,OrdenServicioOrdenCompra,Partida,
 --							UnidadMedidaId,PrecioUnitario,CantidadReal
 -- =============================================
+-- Author Alter: RO
+-- Create date: 20230816
+-- Description: Se modifica el parametro de poliza por un BIGINT para que pueda recibir valores mayores al int
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_CO_InsertaRegistroCEE]
     @IdPrograma INT,
     @IdFactura INT,
@@ -30,7 +43,7 @@ CREATE PROCEDURE [dbo].[sp_CO_InsertaRegistroCEE]
     @FecMovto DATETIME,
     @IdInstalacion INT,
     @IdCuentaCSH INT,
-    @Poliza INT,
+    @Poliza BIGINT,
     @IdPedimentoComprobante INT,
     @CvTipoDoc INT,
     @CostoAtrib BIT,
@@ -64,12 +77,14 @@ BEGIN
                                           @IdPedimentoComprobante
                                   END;
     SET NOCOUNT ON;
+
     DECLARE @insertado INT;
     /*Seleccionar el mes de presentación del gasto*/
     SELECT @MesPresentacion = MesPresentacionCGI
-    FROM dbo.CO_Contrato
+    FROM dbo.CO_Contrato	(NOLOCK)
     WHERE IdContrato = @IdContrato;
     /**/
+
     INSERT INTO CO_Registro
     (
         [IdPrograma],
