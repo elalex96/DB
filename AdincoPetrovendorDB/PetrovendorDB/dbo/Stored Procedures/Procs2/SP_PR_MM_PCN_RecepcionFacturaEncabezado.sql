@@ -1,7 +1,21 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_PCN_RecepcionFacturaEncabezado'
+)
+    DROP PROCEDURE SP_PR_MM_PCN_RecepcionFacturaEncabezado;
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_RecepcionFacturaEncabezado]    Script Date: 22/08/2023 04:40:43 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel Cruz
--- Create date: 14-10-2019
--- Description:	Agregue Columna ErrorSAT y IdTipoLectorXML y 
+-- Create date: 22-08-2023
+-- Description:	Agregue Columna ErrorSAT y IdTipoLectorXML y validación si aplica actualización de lectura ErrorSAT Issue#2426
 -- =============================================
 -- =============================================
 -- Author:		Daniel AC
@@ -74,30 +88,39 @@ BEGIN
 		   FT.Nombre,
 		   TF.Nombre,
 		   ISNULL(F.IdLectorXMLSAT,1) AS IdLectorXMLSAT,
-		   REPLACE(ISNULL(F.ErroSAT,''),'Error SAT:','') AS ErrorSAT,
+		   CASE WHEN UPPER(ISNULL(F.ErroSAT,'')) LIKE '%CANCELADO%' THEN 
+				'Estado CFDI: Cancelado'
+			ELSE
+				REPLACE(ISNULL(F.ErroSAT,''),'Error SAT:','')
+		   END AS ErrorSAT,
 		   ISNULL(ISAT.DireccionWeb,'') AS DireccionWeb,
 		   ISNULL(F.UUID,'') AS UUID,
 		   ISNULL(F.Emisor,'') AS RFC_Emisor,
 		   ISNULL(F.Receptor,'') AS RFC_Receptor,
-		   RCN.PedirCarta
-    FROM MM_AceptacionFactura AS AF
-         JOIN FI_Factura AS F
+		   RCN.PedirCarta,
+		   CASE WHEN O.IdEstatusOperacion IN (1,2) --> CTE EN APROBACIÓN Y APROBADOS Y SIEMPRE Y CUANDO TENGAN ERROR SAT EN FI_FACTURA
+		   AND ISNULL(F.ErroSAT,'') <> '' THEN 
+		   1 
+		   ELSE 0 
+		   END AplicaRevalidacionSAT
+    FROM MM_AceptacionFactura AS AF (NOLOCK)
+         JOIN FI_Factura AS F (NOLOCK)
             ON AF.IdFactura = F.IdFactura 
-         JOIN TA_Operacion AS O 
+         JOIN TA_Operacion AS O  (NOLOCK)
             ON AF.IdAceptacionFactura = O.IdDocumento 
 			AND O.IdTipoOperacion = 10 -->CTE Aprobación Factura           
          JOIN TA_Estatus AS E (NOLOCK)
             ON O.IdEstatusOperacion = E.IdEstatus 
          JOIN MM_AceptacionPedido AS AP 
-            ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+            ON AF.IdAceptacionPedido = AP.IdAceptacionPedido 
 			AND AP.IdEliminado IS NULL  
-         JOIN MM_Pedido AS PE
+         JOIN MM_Pedido AS PE (NOLOCK)
             ON  AP.IdPedido = PE.IdPedido 
-         JOIN MM_Pedidos AS PG
+         JOIN MM_Pedidos AS PG (NOLOCK)
             ON PE.IdPedido = PG.IdIdentificador
 			AND PE.IdProveedorCompras	=	PG.IdProveedorCliente
             AND PG.IdProveedorCliente = @IdProveedor
-			 AND PG.IdTipoPedido in (2,4,6) --> CTES 
+			 AND PG.IdTipoPedido in (2,4,6) --> CTES  MERCADEO, AD DIRECTA Y LICITACIÓN
          JOIN S_Proveedor AS PR (NOLOCK)
             ON PE.IdSubcontratista = PR.IdProveedor 
          JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
@@ -108,7 +131,7 @@ BEGIN
 			ON FT.IdTipoFlujo = TF.IdTipoFlujoTarea
 		LEFT JOIN dbo.InfoSAT ISAT (NOLOCK)
 			ON ISAT.Id = 1
-		LEFT JOIN dbo.RelacionCartaCNPedido RCN 
+		LEFT JOIN dbo.RelacionCartaCNPedido RCN (NOLOCK)
 			ON AP.IdAceptacionPedido = RCN.IdAceptacionPedido 
     WHERE PE.IdProveedorCompras = @IdProveedor
           AND AF.IdAceptacionPedido =@IdAceptacionPedido 
@@ -117,6 +140,7 @@ BEGIN
              AF.IdAceptacionPedido,
              PE.IdPedido,
              O.FechaRegistro,
+			 O.IdEstatusOperacion,
              PR.RazonSocial,
              PR.RegimenCapital,
              E.Nombre,
