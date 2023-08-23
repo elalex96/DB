@@ -42,11 +42,11 @@ INSERT INTO #TablaTemporalValidaciones
 	PeriodoActivo
 )
 SELECT ISNULL(CO_ProgramaActividad.NombrePrograma, ''),
-       ISNULL(CO_ProgramaActividad.Activo, 1),
+       ISNULL(CO_ProgramaActividad.Activo, 0),
        ISNULL(CO_Presupuesto.Nombre, ''),
-       ISNULL(CO_Presupuesto.Activo, 1),
+       ISNULL(CO_Presupuesto.Activo, 0),
 	   ISNULL(CO_PeriodoContrato.NombrePeriodo, ''),
-	   ISNULL(CO_PeriodoContrato.Activo, 1)
+	   ISNULL(CO_PeriodoContrato.Activo, 0)
 FROM CO_ProgramaActividad (NOLOCK)
     JOIN CO_PeriodoContrato (NOLOCK)
         ON CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
