@@ -12,20 +12,24 @@ CREATE PROCEDURE USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto
     @ContratoId INT,
     @IdContratoSeleccionado INT,
     @Programa VARCHAR(100),
-    @Presupuesto VARCHAR(100)
+    @Presupuesto VARCHAR(100),
+	@Periodo VARCHAR(100)
 AS
 SET NOCOUNT ON;
 
 DECLARE @Resultado VARCHAR(100) = '',
         @SeRepitePrograma INT = 0,
-        @SeRepitePresupuesto INT = 0;
+        @SeRepitePresupuesto INT = 0,
+		@SeRepitePeriodo INT = 0;
 
 CREATE TABLE #TablaTemporalValidaciones
 (
     Programa VARCHAR(100),
     ProgramaActivo BIT,
     Presupuesto VARCHAR(100),
-    PresupuestoActivo BIT
+    PresupuestoActivo BIT,
+	Periodo VARCHAR(100),
+    PeriodoActivo BIT
 )
 
 INSERT INTO #TablaTemporalValidaciones
@@ -33,12 +37,16 @@ INSERT INTO #TablaTemporalValidaciones
     Programa,
     ProgramaActivo,
     Presupuesto,
-    PresupuestoActivo
+    PresupuestoActivo,
+	Periodo,
+	PeriodoActivo
 )
-SELECT CO_ProgramaActividad.NombrePrograma,
-       CO_ProgramaActividad.Activo,
-       CO_Presupuesto.Nombre,
-       CO_Presupuesto.Activo
+SELECT ISNULL(CO_ProgramaActividad.NombrePrograma, ''),
+       ISNULL(CO_ProgramaActividad.Activo, 0),
+       ISNULL(CO_Presupuesto.Nombre, ''),
+       ISNULL(CO_Presupuesto.Activo, 0),
+	   ISNULL(CO_PeriodoContrato.NombrePeriodo, ''),
+	   ISNULL(CO_PeriodoContrato.Activo, 0)
 FROM CO_ProgramaActividad (NOLOCK)
     JOIN CO_PeriodoContrato (NOLOCK)
         ON CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
@@ -54,14 +62,29 @@ SELECT @SeRepitePresupuesto = COUNT(1)
 FROM #TablaTemporalValidaciones
 WHERE LTRIM(RTRIM(UPPER(Presupuesto))) = LTRIM(RTRIM(UPPER(@Presupuesto)))
 
+SELECT @SeRepitePeriodo = COUNT(1)
+FROM #TablaTemporalValidaciones
+WHERE LTRIM(RTRIM(UPPER(Periodo))) = LTRIM(RTRIM(UPPER(@Periodo)))
 
-IF (@SeRepitePrograma > 0 AND @SeRepitePresupuesto = 0)
+IF (@SeRepitePrograma > 0 AND @SeRepitePresupuesto = 0 AND @SeRepitePeriodo = 0)
     SET @Resultado = 'ALERTA_PROGRAMA';
 
-IF (@SeRepitePrograma = 0 AND @SeRepitePresupuesto > 0)
+IF (@SeRepitePrograma = 0 AND @SeRepitePresupuesto > 0 AND @SeRepitePeriodo = 0)
    SET @Resultado = 'ALERTA_PRESUPUESTO';
 
-IF (@SeRepitePrograma > 0 AND @SeRepitePresupuesto > 0)
+IF (@SeRepitePrograma = 0 AND @SeRepitePresupuesto = 0 AND @SeRepitePeriodo > 0)
+   SET @Resultado = 'ALERTA_PERIODO';
+
+IF (@SeRepitePrograma > 0 AND @SeRepitePresupuesto > 0 AND @SeRepitePeriodo = 0)
    SET @Resultado = 'ALERTA_PROGRAMA_PRESUPUESTO';
+
+IF (@SeRepitePrograma = 0 AND @SeRepitePresupuesto > 0 AND @SeRepitePeriodo > 0)
+   SET @Resultado = 'ALERTA_PRESUPUESTO_PERIODO';
+
+IF (@SeRepitePrograma > 0 AND @SeRepitePresupuesto = 0 AND @SeRepitePeriodo > 0)
+   SET @Resultado = 'ALERTA_PROGRAMA_PERIODO';
+
+IF (@SeRepitePrograma > 0 AND @SeRepitePresupuesto > 0 AND @SeRepitePeriodo > 0)
+   SET @Resultado = 'ALERTA_PROGRAMA_PRESUPUESTO_PERIODO';
 
 SELECT @Resultado AS Resultado
