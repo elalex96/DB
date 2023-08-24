@@ -15,7 +15,7 @@ GO
 --╔═════════════════════════════════════════════════════════════╗
 --║Create Author: Daniel AC			     						║
 --║Create date:   2023-08-23									║
---║Description:	  Eliminar Imagen en AP_BannerOperadoras		║
+--║Description:	  Desactivar Imagen en AP_BannerOperadoras		║
 --╚═════════════════════════════════════════════════════════════╝
 CREATE PROCEDURE [dbo].[AP_EliminarImagenBannerOperadoras] 
 -- Add the parameters for the stored procedure here
@@ -27,6 +27,7 @@ AS
      BEGIN
          SET NOCOUNT ON;	
 		 
-         DELETE FROM AP_BannerOperadoras         
+         UPDATE AP_BannerOperadoras   
+		 SET Activo = 0
          WHERE IdBanner= @IdBanner    
 END;
