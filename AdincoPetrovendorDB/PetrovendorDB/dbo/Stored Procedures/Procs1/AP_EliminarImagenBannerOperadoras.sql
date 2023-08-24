@@ -28,6 +28,8 @@ AS
          SET NOCOUNT ON;	
 		 
          UPDATE AP_BannerOperadoras   
-		 SET Activo = 0
+		 SET Activo = 0,
+		 ModificadoEn = GETDATE(),
+		 ModificadoPor = @IdUsuario
          WHERE IdBanner= @IdBanner    
 END;
