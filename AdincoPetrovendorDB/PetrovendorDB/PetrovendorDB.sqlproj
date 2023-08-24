@@ -2941,6 +2941,9 @@
     <Build Include="dbo\Stored Procedures\Procs1\FI_ActualizarErrorSATFactura.sql" />
     <Build Include="dbo\Tables\AP_BannerOperadoras.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AP_ConsultaBannerOperadoras.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_ActualizarImagenBannerOperadoras.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_InsertImagenBannerOperadoras.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\AP_EliminarImagenBannerOperadoras.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
