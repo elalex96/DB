@@ -1,4 +1,13 @@
-﻿-- =============================================  
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_CO_ActualizarRegistroCEE'
+)
+    DROP PROCEDURE sp_CO_ActualizarRegistroCEE;
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================  
 -- Author:  Miguel Gomez  
 -- Create date: Diciembre 2014  
 -- Description: Inserta un nuevo registro  
@@ -16,6 +25,10 @@
 -- Descripción:				Se agregan los campos de Ajuste,DescripcionPartidaServicio,OrdenServicioOrdenCompra,Partida,
 --							UnidadMedidaId,PrecioUnitario,CantidadReal
 -- =============================================
+-- Author Alter: RO
+-- Create date: 20230816
+-- Description: Se modifica el parametro de poliza por un BIGINT para que pueda recibir valores mayores al int
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_CO_ActualizarRegistroCEE]
     @IdRegistro INT,
     @IdPrograma INT,
@@ -31,7 +44,7 @@ CREATE PROCEDURE [dbo].[sp_CO_ActualizarRegistroCEE]
     @FecMovto DATETIME,
     @IdInstalacion INT,
     @IdCuentaCSH INT,
-    @Poliza INT,
+    @Poliza BIGINT,
     @IdPedimentoComprobante INT,
     @CvTipoDoc INT,
     @CostoAtrib BIT,
@@ -56,11 +69,11 @@ BEGIN
     /*Seleccionar el mes de presentación del gasto*/
     DECLARE @RegistroConAjusteActual BIT = 0;
     SELECT @MesPresentacion = MesPresentacionCGI
-    FROM dbo.CO_Contrato
+    FROM dbo.CO_Contrato	(NOLOCK)
     WHERE IdContrato = @IdContrato;
 
     SELECT @RegistroConAjusteActual = ISNULL(RegistroConAjuste, 0)
-    FROM CO_Registro
+    FROM CO_Registro	(NOLOCK)
     WHERE IdRegistro = @IdRegistro;
     /**/
 
@@ -104,7 +117,7 @@ BEGIN
                                WHEN @CapexOpex = 1 THEN
                                    1
                                ELSE
-                                   0
+                             0
                            END,
         RegistroConAjuste = CASE
                                 WHEN @RegistroConAjusteActual = 0 THEN
