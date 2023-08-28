@@ -385,7 +385,7 @@ BEGIN
             Fin,
             CreadoEl,
             CreadoPor,
-            AdjuntarClaveDeSubtarea
+            chkAdjuntaClaveSubTarea
         )
         VALUES
         (@IdArchivoAWS, @IdContratoSeleccionado, @FechaInicio, @FechaFin, GETDATE(), @UsuarioId, @AdjuntarClaveSubtarea)
