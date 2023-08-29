@@ -45,27 +45,39 @@ BEGIN
     IF (@Error LIKE '%existe%')
     BEGIN
         SET @ErrorUUID
-            = LTRIM(RTRIM(REPLACE(@Error, 'Error:Excepción: La factura que desea insertar ya existe UUID: ', '')));
+            = LTRIM(RTRIM(REPLACE(@Error, 'Excepción: La factura que desea insertar ya existe UUID: ', '')));
         SET @ErrorUUID
             = ISNULL(
                         NULLIF(SUBSTRING(@ErrorUUID, 0, CHARINDEX(' ', @ErrorUUID, PATINDEX('% [^ ]%', @ErrorUUID))), ''),
                         @ErrorUUID
                     )
 
-        SELECT '<div class="alert alert-danger alert-dismissable">
+        SELECT '<div class="alert alert-warning alert-dismissable">
 					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                 <strong>Alerta! </strong>' + REPLACE(@Error, 'Excepción:', '') + ', en el contrato'
+                                 <strong>Alerta! </strong>' + REPLACE(@Error, 'Excepción:', '') + ', en el contrato '
                + CO_Contrato.NumeroContrato + ' </div>' AS error
         FROM FI_Factura (NOLOCK)
             JOIN CO_Contrato (NOLOCK)
                 ON FI_Factura.IdContrato = CO_Contrato.IdContrato
         WHERE FI_Factura.UUID = @ErrorUUID;
+
     END
     /**/
     ELSE
     BEGIN
-        SELECT '<div class="alert alert-danger alert-dismissable">
+        IF (@Error LIKE '%Verifique sus datos%' OR @Error LIKE '%no es un XML%')
+        BEGIN
+            SELECT '<div class="alert alert-warning alert-dismissable">
 					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                 <strong>Alerta! </strong>' + REPLACE(@Error, 'Excepción:', '') + ' </div>' AS error;
+                                 <strong>Alerta! </strong>' + @Error + ' </div>' AS error;
+        END
+        /**/
+        ELSE
+        BEGIN
+            SELECT '<div class="alert alert-danger alert-dismissable">
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
+                                 <strong>Error! </strong>' + REPLACE(REPLACE(@Error, 'Excepción:', ''), 'Error:', '')
+                   + ' </div>' AS error;
+        END;
     END;
 END;
