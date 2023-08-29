@@ -1,4 +1,13 @@
-﻿-- =============================================
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_FI_ExtraeErroresFacturas'
+)
+    DROP PROCEDURE sp_FI_ExtraeErroresFacturas;
+GO
+
+-- =============================================
 -- Author:	Reyna Olvera
 -- Create date:25/06
 -- Description:	Extrae las actividades
@@ -14,7 +23,11 @@ CREATE PROCEDURE [dbo].[sp_FI_ExtraeErroresFacturas]
 AS
 BEGIN
     SET NOCOUNT ON;
-	/**/
+
+    /**/
+    DECLARE @ErrorUUID VARCHAR(1000)
+
+    /**/
     INSERT INTO FI_ErroresCargaFactura
     (
         Error,
@@ -26,18 +39,18 @@ BEGIN
         Activo
     )
     VALUES
-    (
-		@Error, 
-		@idContrato,
-		@idUsuario, 
-		GETDATE(), 
-		@idUsuario, 
-		GETDATE(), 
-		1
-	);
-	/**/
+    (@Error, @idContrato, @idUsuario, GETDATE(), @idUsuario, GETDATE(), 1);
+
+    /**/
     IF (@Error LIKE '%existe%')
     BEGIN
+        SET @ErrorUUID
+            = LTRIM(RTRIM(REPLACE(@Error, 'Error:Excepción: La factura que desea insertar ya existe UUID: ', '')));
+        SET @ErrorUUID
+            = ISNULL(
+                        NULLIF(SUBSTRING(@ErrorUUID, 0, CHARINDEX(' ', @ErrorUUID, PATINDEX('% [^ ]%', @ErrorUUID))), ''),
+                        @ErrorUUID
+                    )
 
         SELECT '<div class="alert alert-danger alert-dismissable">
 					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
@@ -46,10 +59,9 @@ BEGIN
         FROM FI_Factura (NOLOCK)
             JOIN CO_Contrato (NOLOCK)
                 ON FI_Factura.IdContrato = CO_Contrato.IdContrato
-        WHERE FI_Factura.UUID = REPLACE(@Error, 'Error:Excepción: La factura que desea insertar ya existe UUID: ', '');
-
+        WHERE FI_Factura.UUID = @ErrorUUID;
     END
-	/**/
+    /**/
     ELSE
     BEGIN
         SELECT '<div class="alert alert-danger alert-dismissable">
