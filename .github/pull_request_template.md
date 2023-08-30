@@ -22,7 +22,13 @@ resolves Adinco/repositorio/#
 ### 2.1 Scripts de base de datos 
 *Anexe en esta sección scripts de base de datos, en caso de no aplicar escriba "N/A" o elimine esta sección*
 
-### 2.2 Accesos, Rutas y Archivos. 
+### 2.2 Consideraciones para publicación. 
+*Describa o enliste consideraciones especificas para publicación en productivo (Consolas, Modificaciones en el WebConfig, etc).*
+
+### 2.3 Consideraciones de configuración en productivo
+*Describa o enliste consideraciones especificas de configuración en productivo (Preferencias, Permisos, Flujos de Trabajo, etc).*
+
+### 2.4 Accesos, Rutas y Archivos. 
 | Tipo Acceso | Detalle |
 | ------------- | -----|
 | Usuario  | [nombre_de_usuario](https://www.example.com) |
@@ -36,6 +42,3 @@ resolves Adinco/repositorio/#
  
 ## 4. Casos de uso
 *Describe los casos de prueba y anexe sus evidencias*
-
-### 5. Consideraciones Adicionales para publicación. 
-*Describa o enliste consideraciones especificas para publicaciones que se consideren para publicaciones (Consolas, Modificaciones en el WebConfig, etc).*
