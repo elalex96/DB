@@ -54,7 +54,7 @@ BEGIN
 
         SELECT '<div class="alert alert-warning alert-dismissable">
 					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                 <strong>Alerta! </strong>' + REPLACE(@Error, 'Excepción:', '') + ', en el contrato '
+                                 <strong>¡Alerta! </strong>' + REPLACE(@Error, 'Excepción:', '') + ', en el contrato '
                + CO_Contrato.NumeroContrato + ' </div>' AS error
         FROM FI_Factura (NOLOCK)
             JOIN CO_Contrato (NOLOCK)
@@ -69,15 +69,14 @@ BEGIN
         BEGIN
             SELECT '<div class="alert alert-warning alert-dismissable">
 					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                 <strong>Alerta! </strong>' + @Error + ' </div>' AS error;
+                                 <strong>¡Alerta! </strong>' + @Error + ' </div>' AS error;
         END
         /**/
         ELSE
         BEGIN
             SELECT '<div class="alert alert-danger alert-dismissable">
 					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-                                 <strong>Error! </strong>' + REPLACE(REPLACE(@Error, 'Excepción:', ''), 'Error:', '')
-                   + ' </div>' AS error;
+                                 <strong>¡Error! </strong>' + REPLACE(REPLACE(@Error, 'Excepción:', ''), 'Error:', '') + ' </div>' AS error;
         END;
     END;
 END;
