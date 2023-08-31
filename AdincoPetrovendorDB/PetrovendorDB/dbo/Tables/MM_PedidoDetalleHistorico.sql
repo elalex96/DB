@@ -28,6 +28,7 @@
     [IdMoneda]                      INT            NULL,
     [IdMaterialVendedor]            INT            NULL,
     [IdUnidad]                      INT            NULL,
-    [IdUnidadProveedor]             INT            NULL
+    [IdUnidadProveedor]             INT            NULL,
+    [NuevaCantidad]                 FLOAT (53)     NULL
 );
 
