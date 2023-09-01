@@ -1,12 +1,3 @@
-USE [Adinco]
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'RPT_ControlPresupuestal'
-)
-    DROP PROCEDURE RPT_ControlPresupuestal
-GO
 CREATE PROCEDURE  [dbo].[RPT_ControlPresupuestal]
 	@IdUsuario INT,
 	@IdPresupuesto INT,
