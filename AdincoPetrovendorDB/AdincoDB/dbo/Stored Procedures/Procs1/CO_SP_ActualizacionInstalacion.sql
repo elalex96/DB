@@ -69,4 +69,4 @@ BEGIN
 		WHERE I.IdInstalacion = @IdInstalacion
 		AND I.WelIID IS NOT NULL 
 		AND I.WelIID > 0
-END 
+END
