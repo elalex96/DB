@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -78,6 +77,7 @@ BEGIN
                                           @IdPedimentoComprobante
                                   END;
     SET NOCOUNT ON;
+
     DECLARE @insertado INT;
     /*Seleccionar el mes de presentación del gasto*/
     SELECT @MesPresentacion = MesPresentacionCGI
