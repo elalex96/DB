@@ -1,10 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ModificarPedidoDetalle'
+)
+    DROP PROCEDURE SP_ModificarPedidoDetalle;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 09/04/2018
 -- Description:	ya que vencio la vigencia del pedido se deben de actualizar los materiales, que tenga disponibles y no la que solicito anteriormente
 -- =============================================
-
-CREATE PROCEDURE SP_ModificarPedidoDetalle
+-- Author:		Alexander Gomez
+-- Create date: 31/08/2023
+-- Description:	se guarda el historico de la nueva cantidad modificada, la anterior, cuando y quien modifico el detalle del pedido
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_ModificarPedidoDetalle]
 	( @IdSolicitudPedidoDetalle INT ,
 	  @Cantidad FLOAT ,
 	  @ASolicitar FLOAT ,
@@ -22,7 +39,7 @@ AS
 					  RecepcionPedido , FechaAceptacionServicio, IdUsuarioAceptacionServicio, FechaRecepcionPedido ,
 					  IdUsuarioRecepcionServicio , ComentarioAceptacionServicio, PorcentajeContenidoNacional ,
 					  PorcentajeContenidoExtranjero , IsBienServicioNacional, CreadoPor, CreadoEl, ModificadoPor ,
-					  ModificadoEl , IdMoneda, IdMaterialVendedor, IdUnidad, IdUnidadProveedor
+					  ModificadoEl , IdMoneda, IdMaterialVendedor, IdUnidad, IdUnidadProveedor, NuevaCantidad
 				)
 				SELECT pedidoDetalle.IdPedidoDetalle, pedidoDetalle.IdPedido, pedidoDetalle.IdMaterial ,
 					   pedidoDetalle.IdPeticionOfertaDetalle, pedidoDetalle.Posicion, pedidoDetalle.PrecioUnitario ,
@@ -33,9 +50,9 @@ AS
 					   pedidoDetalle.FechaRecepcionPedido, pedidoDetalle.IdUsuarioRecepcionServicio ,
 					   pedidoDetalle.ComentarioAceptacionServicio, pedidoDetalle.PorcentajeContenidoNacional ,
 					   pedidoDetalle.PorcentajeContenidoExtranjero, pedidoDetalle.IsBienServicioNacional ,
-					   pedidoDetalle.CreadoPor, pedidoDetalle.CreadoEl, pedidoDetalle.ModificadoPor ,
-					   pedidoDetalle.ModificadoEl, pedidoDetalle.IdMoneda, pedidoDetalle.IdMaterialVendedor ,
-					   pedidoDetalle.IdUnidad, pedidoDetalle.IdUnidadProveedor
+					   pedidoDetalle.CreadoPor, pedidoDetalle.CreadoEl, @IdUsuario ,
+					   GETDATE(), pedidoDetalle.IdMoneda, pedidoDetalle.IdMaterialVendedor ,
+					   pedidoDetalle.IdUnidad, pedidoDetalle.IdUnidadProveedor, @ASolicitar
 				FROM   dbo.MM_SolicitudPedidoDetalle solPedDetalle
 				INNER JOIN dbo.MM_PedidoDetalle pedidoDetalle
 					ON pedidoDetalle.IdMaterial = solPedDetalle.IdMaterial
