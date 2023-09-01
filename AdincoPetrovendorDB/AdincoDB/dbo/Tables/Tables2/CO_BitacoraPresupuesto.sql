@@ -10,6 +10,7 @@
     CreadoPor INT NOT NULL,
     DetalleInsercion VARCHAR(8000),
     IdPresupuesto INT NULL,
+    chkAdjuntaClaveSubTarea BIT NOT NULL, 
     CONSTRAINT PK_CO_BitacoraPresupuesto
         PRIMARY KEY CLUSTERED (IdCarga ASC),
     CONSTRAINT FK_CO_BitacoraPresupuesto_ArchivoAWS
