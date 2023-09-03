@@ -33,6 +33,8 @@ BEGIN
 
 	CREATE TABLE #TMP_AgrupadoMensualReal(AC_PRESUP_MES date, IdLineaPresupuestoMes INT, NombreTipoServicio NVARCHAR(4000), NombreActividad NVARCHAR(4000), NombreServicio NVARCHAR(4000), MontoReal DECIMAL(30, 4))
 
+	CREATE TABLE #TMP_Retorno(Fila INT, IdLineaPresupuestoMes INT, NombreTipoServicio NVARCHAR(4000), NombreActividad NVARCHAR(4000), NombreServicio NVARCHAR(4000), AC_PRESUP_MES DATE, MontoPresupuestado DECIMAL(30, 4), [Real] DECIMAL(30, 4), [Var] DECIMAL(30 ,4))
+
 	INSERT INTO #TMP_GastosAmamtitlan(IdRegistro, Servicio, InstalacionPresupuestada, FechaInicio, FechaFin, TipoDocumento, Numero, FechaDocumento, 
 	MontoUSD, MontoUSDConMarkup, Subcontratista, InstalacionRegistro, InicioEjecucion, FinEjecucion,
 	CreadoPor, MontoRegistro, Moneda, MesPresentacion, TipoDeServicio, Actividad, SubActividad, EstadoValidacion, Area, Comentarios, Anexo4, 
@@ -57,19 +59,29 @@ BEGIN
 	SELECT DATEADD(DAY,1,EOMONTH(FinEjecucion,-1)), LineaPresupuesto, TipoDeServicio, Actividad, Servicio, SUM(MontoUSD)
 	FROM #TMP_GastosAmamtitlan
 	GROUP BY DATEADD(DAY,1,EOMONTH(FinEjecucion,-1)), LineaPresupuesto, TipoDeServicio, Actividad, Servicio
-	
 
-	SELECT #TMP_AgrupadoMensualPresupuestado.AC_PRESUP_MES, #TMP_AgrupadoMensualPresupuestado.IdLineaPresupuestoMes, #TMP_AgrupadoMensualPresupuestado.NombreActividad, 
-	#TMP_AgrupadoMensualPresupuestado.NombreServicio, #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio, #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio,
-	#TMP_AgrupadoMensualPresupuestado.MontoPresupuestado AS Presupuesto,
+	
+	INSERT INTO #TMP_Retorno([Fila], AC_PRESUP_MES, IdLineaPresupuestoMes, NombreActividad, NombreServicio, NombreTipoServicio, [Real], MontoPresupuestado, [Var])
+	SELECT ROW_NUMBER() OVER(PARTITION BY  #TMP_AgrupadoMensualPresupuestado.AC_PRESUP_MES, #TMP_AgrupadoMensualPresupuestado.IdLineaPresupuestoMes, #TMP_AgrupadoMensualPresupuestado.NombreActividad, 
+	#TMP_AgrupadoMensualPresupuestado.NombreServicio, #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio ORDER BY #TMP_AgrupadoMensualPresupuestado.AC_PRESUP_MES),
+	#TMP_AgrupadoMensualPresupuestado.AC_PRESUP_MES, #TMP_AgrupadoMensualPresupuestado.IdLineaPresupuestoMes, #TMP_AgrupadoMensualPresupuestado.NombreActividad, 
+	#TMP_AgrupadoMensualPresupuestado.NombreServicio, #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio,
 	#TMP_AgrupadoMensualReal.MontoReal as [Real],
-	#TMP_AgrupadoMensualPresupuestado.MontoPresupuestado - #TMP_AgrupadoMensualReal.MontoReal as [Var]
+	#TMP_AgrupadoMensualPresupuestado.MontoPresupuestado,
+	#TMP_AgrupadoMensualPresupuestado.MontoPresupuestado - #TMP_AgrupadoMensualReal.MontoReal
 	FROM #TMP_AgrupadoMensualPresupuestado
 	LEFT JOIN #TMP_AgrupadoMensualReal 
 		ON #TMP_AgrupadoMensualPresupuestado.AC_PRESUP_MES = #TMP_AgrupadoMensualReal.AC_PRESUP_MES
 		AND #TMP_AgrupadoMensualPresupuestado.NombreActividad = #TMP_AgrupadoMensualReal.NombreActividad
 		AND #TMP_AgrupadoMensualPresupuestado.NombreServicio = #TMP_AgrupadoMensualReal.NombreServicio
 		AND #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio = #TMP_AgrupadoMensualReal.NombreTipoServicio
+
+	-- Para que el monto no se duplique cuando haya mas de una linea
+	UPDATE #TMP_Retorno
+	SET MontoPresupuestado = 0
+	WHERE Fila > 1
+
+	SELECT * FROM #TMP_Retorno
 END
 
 
