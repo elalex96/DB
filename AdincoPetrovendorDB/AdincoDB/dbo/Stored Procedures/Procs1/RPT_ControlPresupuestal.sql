@@ -4,11 +4,19 @@ CREATE PROCEDURE  [dbo].[RPT_ControlPresupuestal]
 	@IdContrato INT
 AS    
 BEGIN      
-	IF OBJECT_ID(N'tempdb..#TMP_GastosAmamtitlan') IS NOT NULL
-	BEGIN
-	DROP TABLE #TMP_GastosAmamtitlan
-	END
 
+	CREATE TABLE #TMP_DetallePresupuestadoCIEP(
+	IdLineaPresupuestoMes INT, Presupuesto NVARCHAR(4000), ID_TIPOSER INT, NombreTipoServicio NVARCHAR(4000),
+	Orden INT, ID_CATACTIV NVARCHAR(4000), NombreActividad NVARCHAR(4000), ID_CATSUBACTIV NVARCHAR(4000),
+	NombreSubactividad NVARCHAR(4000), NombreClasificacion NVARCHAR(4000), AC_TERMINADO BIT, 
+	IdInstalacionPemex NVARCHAR(4000), NombreInstalacion NVARCHAR(4000), EsBolsa BIT, AC_PRESUP_MES DATE,
+	NombreServicio VARCHAR(8000), Unidad NVARCHAR(4000), AC_FEC_INI DATE, AC_FEC_FIN DATE, 
+	ID_CATACTHC INT, NombreActividadHidrocarburo NVARCHAR(100), ID_PADRE NVARCHAR(100),
+	NombreArea NVARCHAR(4000), ID_RUBRO1 NVARCHAR(4000), ID_RUBRO2 NVARCHAR(4000), ID_RUBRO3 NVARCHAR(4000),
+	CLAVE_RUBRO NVARCHAR(4000), NombreRubro NVARCHAR(4000), Volumetria REAL, PrecioUnitario DECIMAL(18, 4),
+	Monto DECIMAL(30, 4), ClasificacionAnexo4 NVARCHAR(4000), Clave NVARCHAR(4000), RubroInterno NVARCHAR(4000),
+	Expr2 NVARCHAR(4000), CPXOPX NCHAR(10),  IdLineaProgramaActividadMes INT
+	)
 	CREATE TABLE #TMP_GastosAmamtitlan(
 	IdRegistro INT, Servicio VARCHAR(8000), InstalacionPresupuestada VARCHAR(8000), 
 	FechaInicio Date, FechaFin Date, TipoDocumento VARCHAR(2), Numero VARCHAR(8000), FechaDocumento DATETIME, 
@@ -21,73 +29,47 @@ BEGIN
 	Porcentaje FLOAT, [Estatus Certificado] VARCHAR(8000), [CGE Aprobado Pemex] VARCHAR(24),
 	ImporteEstimadoParcialUSD DECIMAL(36, 2))
 
-	CREATE TABLE #TMP_AgrupadoMensual(AC_PRESUP_MES date, [Real] DECIMAL(30, 8))
+	CREATE TABLE #TMP_AgrupadoMensualPresupuestado(AC_PRESUP_MES date, IdLineaPresupuestoMes INT, NombreTipoServicio NVARCHAR(4000), NombreActividad NVARCHAR(4000), NombreServicio NVARCHAR(4000), MontoPresupuestado DECIMAL(30, 4))
 
-	INSERT INTO #TMP_GastosAmamtitlan(IdRegistro, Servicio, InstalacionPresupuestada, FechaInicio, FechaFin, TipoDocumento, Numero, FechaDocumento, MontoUSD, MontoUSDConMarkup, Subcontratista, InstalacionRegistro, InicioEjecucion, FinEjecucion,
-	CreadoPor, MontoRegistro, Moneda, MesPresentacion, TipoDeServicio, Actividad, SubActividad, EstadoValidacion, Area, Comentarios, Anexo4, Identificador, LineaPresupuesto, Presupuesto, TipoCambio, [UUID FACTURA PROVEEDOR PRIMARIO], Porcentaje,
+	CREATE TABLE #TMP_AgrupadoMensualReal(AC_PRESUP_MES date, IdLineaPresupuestoMes INT, NombreTipoServicio NVARCHAR(4000), NombreActividad NVARCHAR(4000), NombreServicio NVARCHAR(4000), MontoReal DECIMAL(30, 4))
+
+	INSERT INTO #TMP_GastosAmamtitlan(IdRegistro, Servicio, InstalacionPresupuestada, FechaInicio, FechaFin, TipoDocumento, Numero, FechaDocumento, 
+	MontoUSD, MontoUSDConMarkup, Subcontratista, InstalacionRegistro, InicioEjecucion, FinEjecucion,
+	CreadoPor, MontoRegistro, Moneda, MesPresentacion, TipoDeServicio, Actividad, SubActividad, EstadoValidacion, Area, Comentarios, Anexo4, 
+	Identificador, LineaPresupuesto, Presupuesto, TipoCambio, [UUID FACTURA PROVEEDOR PRIMARIO], Porcentaje,
 	[Estatus Certificado], [CGE Aprobado Pemex], ImporteEstimadoParcialUSD)
 	EXEC p_GastosAmatitlan2020_SEL @IdContrato, @IdUsuario
 
-	INSERT INTO #TMP_AgrupadoMensual(AC_PRESUP_MES, [Real])
-	SELECT DATEADD(DAY,1,EOMONTH(#TMP_GastosAmamtitlan.FinEjecucion,-1)),  SUM(#TMP_GastosAmamtitlan.MontoUSD)
+
+	INSERT INTO #TMP_DetallePresupuestadoCIEP(IdLineaPresupuestoMes, Presupuesto, ID_TIPOSER, NombreTipoServicio, Orden, ID_CATACTIV, NombreActividad, 
+	ID_CATSUBACTIV, NombreSubactividad, NombreClasificacion, AC_TERMINADO, IdInstalacionPemex,
+	NombreInstalacion, EsBolsa, AC_PRESUP_MES, NombreServicio, Unidad, AC_FEC_INI, AC_FEC_FIN, ID_CATACTHC, NombreActividadHidrocarburo, ID_PADRE, 
+	NombreArea, ID_RUBRO1, ID_RUBRO2, ID_RUBRO3, CLAVE_RUBRO, NombreRubro, Volumetria,
+	PrecioUnitario, Monto, ClasificacionAnexo4, Clave, RubroInterno, Expr2, CPXOPX, IdLineaProgramaActividadMes)
+	EXEC sp_CO_ConsultaDetallePresupuestoCIEP @IdPresupuesto
+
+	INSERT INTO #TMP_AgrupadoMensualPresupuestado(AC_PRESUP_MES, IdLineaPresupuestoMes, NombreTipoServicio, NombreActividad, NombreServicio, MontoPresupuestado)
+	SELECT AC_PRESUP_MES, IdLineaPresupuestoMes, NombreTipoServicio, NombreActividad, NombreServicio, SUM(#TMP_DetallePresupuestadoCIEP.Monto)
+	FROM #TMP_DetallePresupuestadoCIEP
+	GROUP BY AC_PRESUP_MES, IdLineaPresupuestoMes, NombreTipoServicio, NombreActividad, NombreServicio
+
+	INSERT INTO #TMP_AgrupadoMensualReal(AC_PRESUP_MES, IdLineaPresupuestoMes, NombreTipoServicio, NombreActividad, NombreServicio, MontoReal)
+	SELECT DATEADD(DAY,1,EOMONTH(FinEjecucion,-1)), LineaPresupuesto, TipoDeServicio, Actividad, Servicio, SUM(MontoUSD)
 	FROM #TMP_GastosAmamtitlan
-	GROUP BY DATEADD(DAY,1,EOMONTH(#TMP_GastosAmamtitlan.FinEjecucion,-1))
+	GROUP BY DATEADD(DAY,1,EOMONTH(FinEjecucion,-1)), LineaPresupuesto, TipoDeServicio, Actividad, Servicio
+	
 
-
-	SELECT CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
-		   CO_Presupuesto.IdPresupuesto,
-		   CASE
-			   WHEN CO_Contrato.IdTipoContrato = 1 THEN
-				   CO_TipoServicio.NombreTipoServicio
-			   ELSE
-				   CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
-		   END AS NombreTipoServicio,
-		   CASE
-			   WHEN CO_Contrato.IdTipoContrato = 1 THEN
-				   CO_ActividadCIEP.NombreActividad
-			   ELSE
-				   CO_SubactividadPetrolera.SubactividadPetrolera
-		   END AS NombreActividad,
-		   CASE
-			   WHEN CO_Contrato.IdTipoContrato = 1 THEN
-				   CO_RubroInterno.NombreRubro
-			   ELSE
-				   CO_TareaPetrolera.TareaPetrolera
-		   END AS RubroInterno,
-		   CO_Instalacion.NombreInstalacion,
-		   #TMP_AgrupadoMensual.AC_PRESUP_MES,
-		   #TMP_GastosAmamtitlan.MontoUSD AS Presupuesto,
-		   #TMP_AgrupadoMensual.[Real],
-		   #TMP_AgrupadoMensual.[Real] - #TMP_GastosAmamtitlan.MontoUSD AS [Var],
-		   #TMP_GastosAmamtitlan.Servicio
-	FROM CO_LineaPresupuestoMes (NOLOCK)
-		LEFT JOIN CO_Instalacion (NOLOCK)
-			ON CO_LineaPresupuestoMes.IdInstalacion = CO_Instalacion.IdInstalacion
-		LEFT JOIN CO_RubroInterno (NOLOCK)
-			ON CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
-		LEFT JOIN CO_ActividadCIEP (NOLOCK)
-			ON CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad
-			   AND CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad
-		LEFT JOIN CO_Presupuesto (NOLOCK)
-			ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
-		LEFT JOIN CO_TipoServicio (NOLOCK)
-			ON CO_LineaPresupuestoMes.IdTipoServicio = CO_TipoServicio.IdTipoServicio
-		LEFT JOIN dbo.CO_ActividadPetroleraCNH (NOLOCK)
-			ON CO_ActividadPetroleraCNH.IdActividadPetrolera = dbo.CO_LineaPresupuestoMes.IdActividadPetrolera
-		LEFT JOIN dbo.CO_SubactividadPetrolera (NOLOCK)
-			ON CO_SubactividadPetrolera.IdSubactividadPetrolera = dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera
-		LEFT JOIN dbo.CO_TareaPetrolera (NOLOCK)
-			ON CO_TareaPetrolera.IdTareaPetrolera = dbo.CO_LineaPresupuestoMes.IdTareaPetrolera
-		LEFT JOIN dbo.CO_AnioContractual (NOLOCK)
-			ON CO_AnioContractual.IdAnioContractual = CO_Presupuesto.IdAnioContractual
-		LEFT JOIN dbo.CO_Contrato (NOLOCK)
-			ON CO_Contrato.IdContrato = CO_AnioContractual.IdContrato
-		INNER JOIN #TMP_GastosAmamtitlan
-			ON CO_LineaPresupuestoMes.IdLineaPresupuestoMes = #TMP_GastosAmamtitlan.LineaPresupuesto
-		INNER JOIN #TMP_AgrupadoMensual
-			ON DATEADD(DAY, 1, EOMONTH(#TMP_GastosAmamtitlan.FinEjecucion, -1)) = #TMP_AgrupadoMensual.AC_PRESUP_MES
-	WHERE CO_LineaPresupuestoMes.IdPresupuesto = @IdPresupuesto
-
+	SELECT #TMP_AgrupadoMensualPresupuestado.AC_PRESUP_MES, #TMP_AgrupadoMensualPresupuestado.IdLineaPresupuestoMes, #TMP_AgrupadoMensualPresupuestado.NombreActividad, 
+	#TMP_AgrupadoMensualPresupuestado.NombreServicio, #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio, #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio,
+	#TMP_AgrupadoMensualPresupuestado.MontoPresupuestado AS Presupuesto,
+	#TMP_AgrupadoMensualReal.MontoReal as [Real],
+	#TMP_AgrupadoMensualPresupuestado.MontoPresupuestado - #TMP_AgrupadoMensualReal.MontoReal as [Var]
+	FROM #TMP_AgrupadoMensualPresupuestado
+	LEFT JOIN #TMP_AgrupadoMensualReal 
+		ON #TMP_AgrupadoMensualPresupuestado.AC_PRESUP_MES = #TMP_AgrupadoMensualReal.AC_PRESUP_MES
+		AND #TMP_AgrupadoMensualPresupuestado.NombreActividad = #TMP_AgrupadoMensualReal.NombreActividad
+		AND #TMP_AgrupadoMensualPresupuestado.NombreServicio = #TMP_AgrupadoMensualReal.NombreServicio
+		AND #TMP_AgrupadoMensualPresupuestado.NombreTipoServicio = #TMP_AgrupadoMensualReal.NombreTipoServicio
 END
 
 
