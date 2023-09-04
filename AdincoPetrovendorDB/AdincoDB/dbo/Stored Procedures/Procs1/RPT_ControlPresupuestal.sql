@@ -95,7 +95,9 @@ BEGIN
 	SET MontoPresupuestado = 0
 	WHERE Fila > 1
 
-	SELECT * FROM #TMP_Retorno
+	SELECT #TMP_Retorno.AC_PRESUP_MES, #TMP_Retorno.IdLineaPresupuestoMes, ISNULL(#TMP_Retorno.MontoPresupuestado, 0) MontoPresupuestado, 
+	#TMP_Retorno.NombreActividad, #TMP_Retorno.NombreServicio, #TMP_Retorno.NombreTipoServicio, ISNULL(#TMP_Retorno.Real, 0) [Real]
+	FROM #TMP_Retorno
 END
 
 
