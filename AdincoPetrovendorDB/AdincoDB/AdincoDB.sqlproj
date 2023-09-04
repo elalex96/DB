@@ -3916,5 +3916,6 @@
     <Build Include="dbo\Stored Procedures\Procs1\AP_ConsultarInformacionPerfilPorUsuario.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AP_ConsultarPaisesCodigos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_AP_ObtenerDiasMesConDescripcion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\RPT_ControlPresupuestal.sql" />
   </ItemGroup>
 </Project>
