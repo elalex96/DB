@@ -50,6 +50,13 @@ BEGIN
 	[Estatus Certificado], [CGE Aprobado Pemex], ImporteEstimadoParcialUSD)
 	EXEC p_GastosAmatitlan2020_SEL @IdContrato, @IdUsuario
 
+	-- SE Eliminan todos los presupuestos que no pertenecen al filtro
+	DELETE #TMP_GastosAmamtitlan
+	FROM #TMP_GastosAmamtitlan
+	INNER JOIN CO_LineaPresupuestoMes 
+		ON #TMP_GastosAmamtitlan.LineaPresupuesto = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+	WHERE IdPresupuesto <> @IdPresupuesto
+
 
 	INSERT INTO #TMP_DetallePresupuestadoCIEP(IdLineaPresupuestoMes, Presupuesto, ID_TIPOSER, NombreTipoServicio, Orden, ID_CATACTIV, NombreActividad, 
 	ID_CATSUBACTIV, NombreSubactividad, NombreClasificacion, AC_TERMINADO, IdInstalacionPemex,
