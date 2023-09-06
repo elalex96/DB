@@ -2945,6 +2945,13 @@
     <Build Include="dbo\Stored Procedures\Procs1\AP_InsertImagenBannerOperadoras.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\AP_EliminarImagenBannerOperadoras.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CD_ValidarAprobaciónTarea.sql" />
+    <Build Include="dbo\Tables\AP_Preferencias.sql" />
+    <Build Include="dbo\Tables\AP_PreferenciaContrato.sql" />
+    <Build Include="dbo\Tables\MM_Localidades.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\MM_ConsultarLocalidades.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\MM_ConsultarPreferenciaFlujoProcuraConLocalidades.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenerFlujoAprobacionxValorxLocalidades.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenerFlujoAprobacionxValorxLocalidades_1.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />

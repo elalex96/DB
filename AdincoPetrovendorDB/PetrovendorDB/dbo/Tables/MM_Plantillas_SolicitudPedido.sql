@@ -22,6 +22,7 @@
     [IdMatrizEvaluacion]         INT            NULL,
     [IdPorcentajeETEC]           INT            NULL,
     [Bitacora]                   NVARCHAR (MAX) NULL,
+    [IdLocalidad]                INT            NULL,
     CONSTRAINT [PK_MM_Plantillas_SolicitudPedido] PRIMARY KEY CLUSTERED ([IdPlantillaSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 

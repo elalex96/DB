@@ -1,7 +1,26 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_Guardar_Plantilla_SolicitudPedido_Cabecera'
+)
+    DROP PROCEDURE SP_MM_Guardar_Plantilla_SolicitudPedido_Cabecera;
+/****** Object:  StoredProcedure [dbo].[SP_MM_Guardar_Plantilla_SolicitudPedido_Cabecera]    Script Date: 05/09/2023 11:18:37 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <19/11/2019>
 -- Description:	<Guardado de plantilla de la solped>
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: <05/09/2023>
+-- Description:	<Guardado de plantilla de la solped con columna IdLocalidad>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_Guardar_Plantilla_SolicitudPedido_Cabecera]
 	-- Add the parameters for the stored procedure here
@@ -19,7 +38,8 @@ CREATE PROCEDURE [dbo].[SP_MM_Guardar_Plantilla_SolicitudPedido_Cabecera]
 		@IdPresupuesto int, --
 		@IdContrato INT,
 		@IdMatrizEvaluacion INT,
-		@IdPorcentajeETEC INT
+		@IdPorcentajeETEC INT,
+		@IdLocalidad INT 
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -46,7 +66,8 @@ BEGIN
 	    CreadoPor,
 	    CreadoEl,
 		IdMatrizEvaluacion,
-		IdPorcentajeETEC
+		IdPorcentajeETEC,
+		IdLocalidad
 	)
 	VALUES
 	(   @IdTipoSolicitudPedido,         -- IdTipoSolicitudPedido - int
@@ -66,7 +87,8 @@ BEGIN
 	    @IdUsuarioSolicitante,         -- CreadoPor - int
 	    GETDATE(),          -- CreadoEl - int
 		@IdMatrizEvaluacion,
-		@IdPorcentajeETEC
+		@IdPorcentajeETEC,
+		@IdLocalidad
 	    )
 
 	DECLARE @IDSOLPEDPLANTILLA_CABECERA INT = (SCOPE_IDENTITY());

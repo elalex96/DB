@@ -1,7 +1,26 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_Consulta_SolicitudPedido_Plantila'
+)
+    DROP PROCEDURE SP_MM_Consulta_SolicitudPedido_Plantila;
+/****** Object:  StoredProcedure [dbo].[SP_MM_Consulta_SolicitudPedido_Plantila]    Script Date: 05/09/2023 11:03:46 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 20/11/2019
 -- Description:	consultar datos de una plantilla de solicitud de pedido  
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: <05/09/2023>
+-- Description:	<Consultar de plantilla de la solped con columna IdLocalidad>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_Consulta_SolicitudPedido_Plantila] --1012
 	-- Add the parameters for the stored procedure here
@@ -26,7 +45,7 @@ BEGIN
 	INSERT INTO #tempCentroCosto
 	SELECT 
 		IdCentroCosto
-	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
+	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle  (NOLOCK)
 	WHERE IdPlantillaSolicitudPedido = @IdSolicitudPedido
 		AND Activo = 1
 	GROUP BY IdCentroCosto;
@@ -38,7 +57,7 @@ BEGIN
 		
 		SET @IDCENTROCOSTO = (SELECT 
 								IdCentroCosto 
-							FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
+							FROM dbo.MM_Plantilla_SolicitudPedidoDetalle   (NOLOCK)
 							WHERE IdPlantillaSolicitudPedido = @IdSolicitudPedido
 								AND Activo = 1
 							GROUP BY IdCentroCosto)
@@ -55,7 +74,7 @@ BEGIN
 	INSERT INTO #tempDomicilioEntrega
 	SELECT 
 		IdDomicilioEntrega 
-	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
+	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle   (NOLOCK)
 	WHERE IdPlantillaSolicitudPedido = @IdSolicitudPedido
 		AND Activo = 1
 	GROUP BY IdDomicilioEntrega;
@@ -67,7 +86,7 @@ BEGIN
 		
 		SET @IDDOMICILIOENTREGA = (SELECT 
 										IdDomicilioEntrega 
-									FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
+									FROM dbo.MM_Plantilla_SolicitudPedidoDetalle   (NOLOCK)
 									WHERE IdPlantillaSolicitudPedido = @IdSolicitudPedido
 										AND Activo = 1
 									GROUP BY IdDomicilioEntrega)
@@ -84,7 +103,7 @@ BEGIN
 	INSERT INTO #tempLineaPresupuesto
 	SELECT 
 		IdLineaPresupuesto 
-	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
+	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle   (NOLOCK)
 	WHERE IdPlantillaSolicitudPedido = @IdSolicitudPedido
 		AND Activo = 1
 	GROUP BY IdLineaPresupuesto
@@ -113,7 +132,7 @@ BEGIN
 	INSERT INTO #tempInstalacion
 	SELECT 
 		IdInstalacion 
-	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
+	FROM dbo.MM_Plantilla_SolicitudPedidoDetalle   (NOLOCK)
 	WHERE IdPlantillaSolicitudPedido = @IdSolicitudPedido
 		AND Activo = 1
 	GROUP BY IdInstalacion
@@ -125,7 +144,7 @@ BEGIN
 		
 		SET @IDINSTALACION = (SELECT 
 								IdInstalacion 
-							FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
+							FROM dbo.MM_Plantilla_SolicitudPedidoDetalle   (NOLOCK)
 							WHERE IdPlantillaSolicitudPedido = @IdSolicitudPedido
 								AND Activo = 1
 							GROUP BY IdInstalacion)
@@ -155,8 +174,9 @@ BEGIN
 	ISNULL(@IDDOMICILIOENTREGA,0) AS IdDomicilioEntrega,--15
 	ISNULL(@IDLINEAPRESUPUESTO,0) AS IdLineaPresupuesto,--16
 	SP.IdMatrizEvaluacion,
-	SP.IdPorcentajeETEC
-	FROM dbo.MM_Plantillas_SolicitudPedido AS SP
+	SP.IdPorcentajeETEC,
+	ISNULL(SP.IdLocalidad,0) AS IdLocalidad
+	FROM dbo.MM_Plantillas_SolicitudPedido AS SP   (NOLOCK)
 	WHERE SP.IdPlantillaSolicitudPedido = @IdSolicitudPedido;
 
 END
