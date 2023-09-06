@@ -2951,7 +2951,6 @@
     <Build Include="dbo\Stored Procedures\Procs1\MM_ConsultarLocalidades.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\MM_ConsultarPreferenciaFlujoProcuraConLocalidades.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenerFlujoAprobacionxValorxLocalidades.sql" />
-    <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenerFlujoAprobacionxValorxLocalidades_1.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
