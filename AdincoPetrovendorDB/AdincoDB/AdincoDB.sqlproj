@@ -3917,5 +3917,12 @@
     <Build Include="dbo\Stored Procedures\Procs1\AP_ConsultarPaisesCodigos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_AP_ObtenerDiasMesConDescripcion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\RPT_ControlPresupuestal.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_Presupuesto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenPresupuestoPorContratoId.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenPeriodoPorContratoId.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenProgramaPorContratoId.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenAnioContractualPorContratoId.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerTodosLosContratos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_ActualizarPresupuestoConBitacora.sql" />
   </ItemGroup>
 </Project>
