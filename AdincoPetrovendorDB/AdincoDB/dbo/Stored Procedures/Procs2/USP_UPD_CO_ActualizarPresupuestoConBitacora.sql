@@ -8,7 +8,7 @@
 GO
 
 CREATE PROCEDURE USP_UPD_CO_ActualizarPresupuestoConBitacora
-    @Table_CO_Type_Pressupuesto CO_Type_Pressupuesto READONLY,
+    @Table_CO_Type_Presupuesto CO_Type_Presupuesto READONLY,
     @ContratoId INT,
     @UsuarioId INT
 AS
@@ -18,8 +18,7 @@ BEGIN
 
         SET NOCOUNT ON;
 
-        DECLARE @ErrorMessage VARCHAR(4000),
-                @FechaHoy DATETIME = GETDATE(),
+        DECLARE @FechaHoy DATETIME = GETDATE(),
                 @CuentaPresupuestoCNH INT = 0,
                 @ContratoIdSeleccionado INT = 0,
                 @IdPresupuestoCNH VARCHAR(500) = '',
@@ -75,7 +74,7 @@ BEGIN
             InicioPresupuesto,
             FinPresupuesto,
             IdContratoSeleccionado
-        FROM @Table_CO_Type_Pressupuesto;
+        FROM @Table_CO_Type_Presupuesto;
 
         SELECT TOP 1
             @IdPresupuesto = IdPresupuesto,
@@ -241,7 +240,7 @@ BEGIN
                                 '], Despues [',
                                 CASE
                                     WHEN #Temporal_Presupuesto.InicioPresupuesto IS NULL THEN
-                                        'Inactivo'
+                                        'Sin Fecha'
                                     ELSE
                                         FORMAT(#Temporal_Presupuesto.InicioPresupuesto, 'dd/MM/yyyy')
                                 END,
@@ -250,7 +249,13 @@ BEGIN
             FROM #Temporal_Presupuesto
                 JOIN #Temporal_PresupuestoNoEditado
                     ON #Temporal_Presupuesto.IdPresupuesto = #Temporal_PresupuestoNoEditado.IdPresupuesto
-                       AND #Temporal_Presupuesto.InicioPresupuesto <> #Temporal_PresupuestoNoEditado.InicioPresupuesto;
+                       AND CONVERT(VARCHAR(100), ISNULL(#Temporal_Presupuesto.InicioPresupuesto, '')) <> CONVERT(
+                                                                                                                    VARCHAR(100),
+                                                                                                                    ISNULL(
+                                                                                                                              #Temporal_PresupuestoNoEditado.InicioPresupuesto,
+                                                                                                                              ''
+                                                                                                                          )
+                                                                                                                );
 
             SELECT TOP 1
                 @DetalleBitacora
@@ -266,7 +271,7 @@ BEGIN
                                 '], Despues [',
                                 CASE
                                     WHEN #Temporal_Presupuesto.FinPresupuesto IS NULL THEN
-                                        'Inactivo'
+                                        'Sin Fecha'
                                     ELSE
                                         FORMAT(#Temporal_Presupuesto.FinPresupuesto, 'dd/MM/yyyy')
                                 END,
@@ -275,7 +280,13 @@ BEGIN
             FROM #Temporal_Presupuesto
                 JOIN #Temporal_PresupuestoNoEditado
                     ON #Temporal_Presupuesto.IdPresupuesto = #Temporal_PresupuestoNoEditado.IdPresupuesto
-                       AND #Temporal_Presupuesto.FinPresupuesto <> #Temporal_PresupuestoNoEditado.FinPresupuesto;
+                       AND CONVERT(VARCHAR(100), ISNULL(#Temporal_Presupuesto.FinPresupuesto, '')) <> CONVERT(
+                                                                                                                 VARCHAR(100),
+                                                                                                                 ISNULL(
+                                                                                                                           #Temporal_PresupuestoNoEditado.FinPresupuesto,
+                                                                                                                           ''
+                                                                                                                       )
+                                                                                                             );
 
             IF (@DetalleBitacora <> '')
             BEGIN
@@ -329,10 +340,10 @@ BEGIN
         COMMIT TRAN;
     END TRY
     BEGIN CATCH
-        SELECT @ErrorMessage = CONCAT('Error: USP_UPD_CO_ActualizarPresupuestoConBitacora - ', ERROR_MESSAGE());
 
         ROLLBACK TRAN;
 
-        RAISERROR(@ErrorMessage, 17, 1);
+        SELECT CONCAT('Error: USP_UPD_CO_ActualizarPresupuestoConBitacora - ', ERROR_MESSAGE());
+
     END CATCH;
 END;

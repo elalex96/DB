@@ -66,7 +66,7 @@ BEGIN
            CO_ProgramaActividad.ModificadoPor,
            '',
            CO_ProgramaActividad.ModificadoEl,
-           CO_ProgramaActividad.Activo
+           ISNULL(CO_ProgramaActividad.Activo, 0)
     FROM CO_PeriodoContrato (NOLOCK)
         JOIN CO_ProgramaActividad (NOLOCK)
             ON CO_PeriodoContrato.IdContrato = @ContratoIdSeleccionado
@@ -93,7 +93,7 @@ BEGIN
     SELECT IdProgramaActividad,
            Periodo,
            TipoProgramaActividad,
-		   NombrePrograma,
+           NombrePrograma,
            FechaPresentacion,
            NumeroRegistroContenidoNacional,
            CreadoPor,

@@ -1,4 +1,4 @@
-﻿CREATE TYPE CO_Type_Pressupuesto AS TABLE
+﻿CREATE TYPE CO_Type_Presupuesto AS TABLE
 (
     IdPresupuesto INT NULL,
     Nombre VARCHAR(500) NULL,
