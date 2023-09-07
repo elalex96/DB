@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_AgregarPedido_V4_MV1_5'
+)
+    DROP PROCEDURE SP_MM_AgregarPedido_V4_MV1_5;
+/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarPedido_V4_MV1_5]    Script Date: 05/09/2023 02:46:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 09/07/2018
 -- Description:	ahora la aprobacion es por cada pedido y no una aprobacion para todos los pedidos generados
@@ -12,6 +26,11 @@
 -- Author:	Daniel AC
 -- Create date: 25-10-2019
 -- Description:	Se agrega personalización de días de crédito por detalle 
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 05/09/2023
+-- Description:	 CAMBIO SELECCION DE FLUJO FlujoProcuraConLocalidades
 -- =============================================
 
 CREATE PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5]
@@ -27,11 +46,9 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5]
 	@UnicaCondicionPago BIT = NULL,
 	@IdCondicionPago INT = NULL,
 	@FechaEntregaPedido DATETIME, 
-    /*--------------------parametros contrato--------------------*/
     @IdContrato INT,
     @IdUsuario INT,
     @FechaRegistro DATETIME
-/*-----------------------------------------------------------*/
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -45,6 +62,8 @@ BEGIN
     DECLARE @TotalSumaPedidos FLOAT;
     DECLARE @VERSION INT;
     DECLARE @IdMonedaDLS INT = 2;
+	DECLARE @AplicarFlujoProcuraConLocalidades BIT;
+	DECLARE @IdContratoSolicitud INT
 
     DECLARE @tablaFlujos TABLE
     (
@@ -95,6 +114,17 @@ BEGIN
         IdMoneda INT
     );
 
+	-- VALIDAR SI APLICAR LA PREFERENCIA FlujoProcuraConLocalidades
+	SET @IdContratoSolicitud = (SELECT IdContrato FROM MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido)
+	SET @AplicarFlujoProcuraConLocalidades = (SELECT CASE WHEN COUNT(P.Id)>0 THEN 1 ELSE 0 END
+												FROM AP_Preferencias P 
+												JOIN AP_PreferenciaContrato PC 
+													ON P.Id = PC.PreferenciaId
+												WHERE PC.ContratoId = @IdContratoSolicitud
+												AND PC.Activo = 1
+												AND P.Activo = 1
+												AND P.Nombre ='FlujoProcuraConLocalidades') --> CTE EN TABLA AP_Preferencias)
+
     -- Obtener los datos del Peticion Oferta para pasarlos a las Pedido e identificar  --- 
     INSERT INTO #TABLA_PROVEEDORES
     (
@@ -111,11 +141,11 @@ BEGIN
            POD.IdPeticionOferta
     FROM MM_PeticionOferta AS PO
         INNER JOIN MM_PeticionOfertaDetalle AS POD
-            ON POD.IdPeticionOferta = PO.IdPeticionOferta
+            ON PO.IdPeticionOferta = POD.IdPeticionOferta
         INNER JOIN MM_SolicitudPedido AS SP
-            ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+            ON  PO.IdSolicitudPedido = SP.IdSolicitudPedido
         INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-            ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+            ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
     WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
           AND POD.AddValidado = 1
           AND POD.Cotizado = 1
@@ -145,7 +175,7 @@ BEGIN
         (
             SELECT TOP 1
                 P.Version
-            FROM MM_Pedido AS P
+            FROM MM_Pedido AS P 
             WHERE IdSolicitudPedido = @IdSolicitudPedido
             ORDER BY Version DESC
         );
@@ -178,7 +208,7 @@ BEGIN
                                         SELECT TC.TipoCambio
                                         FROM #TABLA_PROVEEDORES AS TP
                                             LEFT JOIN #TIPO_CAMBIO AS TC
-                                                ON TC.IdMoneda = TP.idTipoMoneda
+                                                ON TP.idTipoMoneda = TC.IdMoneda
                                         WHERE idrow = @INCREMENTO
                                     );
 
@@ -186,7 +216,7 @@ BEGIN
                                            SELECT TP.sumaPedido
                                            FROM #TABLA_PROVEEDORES AS TP
                                                LEFT JOIN #TIPO_CAMBIO AS TC
-                                                   ON TC.IdMoneda = TP.idTipoMoneda
+                                                   ON  TP.idTipoMoneda = TC.IdMoneda
                                            WHERE idrow = @INCREMENTO
                                        );
 
@@ -200,7 +230,7 @@ BEGIN
                    END
             FROM #TABLA_PROVEEDORES AS TP
                 LEFT JOIN #TIPO_CAMBIO AS TC
-                    ON TC.IdMoneda = TP.idTipoMoneda
+                    ON TP.idTipoMoneda = TC.IdMoneda
             WHERE idrow = @INCREMENTO
         );
 
@@ -244,11 +274,11 @@ BEGIN
 			   @FechaEntregaPedido
         FROM MM_PeticionOferta AS PO
             INNER JOIN MM_PeticionOfertaDetalle AS POD
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta
+                ON PO.IdPeticionOferta = POD.IdPeticionOferta
             INNER JOIN MM_SolicitudPedido AS SP
-                ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido 
             INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+                ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle 
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND PO.IdSubcontratista = @ID_PROVEEDOR_VENTAS
               AND POD.AddValidado = 1
@@ -319,13 +349,13 @@ BEGIN
 				ELSE 
 				POD.DiasCreditoTemp
 				END 
-        FROM MM_PeticionOferta AS PO
-            INNER JOIN MM_PeticionOfertaDetalle AS POD
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta
-            INNER JOIN MM_SolicitudPedido AS SP
-                ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
-            INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+        FROM MM_PeticionOferta AS PO 
+            INNER JOIN MM_PeticionOfertaDetalle AS POD 
+                ON PO.IdPeticionOferta = POD.IdPeticionOferta
+            INNER JOIN MM_SolicitudPedido AS SP 
+                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido 
+            INNER JOIN MM_SolicitudPedidoDetalle AS SPD 
+                ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND PO.IdSubcontratista = @ID_PROVEEDOR_VENTAS
               AND POD.AddValidado = 1
@@ -375,15 +405,44 @@ BEGIN
         -- int
 		
         --Asignar el flujo correspondiente al monto
+		IF @AplicarFlujoProcuraConLocalidades = 1
+		BEGIN 
+			INSERT INTO @tablaFlujos
+			(
+				Fila,
+				IdFlujoTarea,
+				ValorInicial,
+				ValorFinal,
+				Predeterminado,
+				Nombre,
+				Orden
+			)
+			EXEC dbo.SP_ObtenerFlujoAprobacionxValorxLocalidades @Total = @TotalSumaPedidos,                -- float
+																 @IdProveedorCompras = @IdProveedorCompras,
+																 @IdSolicitudPedido = @IdSolicitudPedido,
+																 @IdContrato = @IdContratoSolicitud; -- int
+			
+		END
+		ELSE
+		BEGIN 
+			INSERT INTO @tablaFlujos
+			(
+				Fila,
+				IdFlujoTarea,
+				ValorInicial,
+				ValorFinal,
+				Predeterminado,
+				Nombre,
+				Orden
+			)
+			EXEC dbo.SP_ObtenerFlujoAprobacionxValor @Total = @TotalSumaPedidos,                -- float
+													 @IdProveedorCompras = @IdProveedorCompras; -- int
+			
+		END
 
-        INSERT INTO @tablaFlujos
-        EXEC dbo.SP_ObtenerFlujoAprobacionxValor @Total = @TotalSumaPedidos,                -- float
-                                                 @IdProveedorCompras = @IdProveedorCompras; -- int
-        SELECT @IdFlujo = IdFlujoTarea
-        FROM @tablaFlujos
-        WHERE Fila = 1;
-
-
+		SELECT @IdFlujo = IdFlujoTarea
+		FROM @tablaFlujos
+		WHERE Fila = 1;
         --- REALIZAR REGISTRO DE OPERACION DE APROBACION 
         INSERT INTO TA_Operacion
         (
@@ -427,7 +486,7 @@ BEGIN
               ) + N' ha registrado la operación ' +
               (
                   SELECT ISNULL(NombreOperacion, 'APROBACIÓN DE PEDIDO con valor de $' + @TotalSumaPedidos + ' USD')
-                  FROM TA_TipoOperacion
+                  FROM TA_TipoOperacion 
                   WHERE IdTipoOperacion = @IdTipoOperacion
               );
 
@@ -461,11 +520,11 @@ BEGIN
                1,
                A.NoSecuencia,
                @IdOperacionActual AS IdOperacion
-        FROM TA_Aprobador AS A
-            INNER JOIN TA_FlujoTarea AS FT
-                ON FT.IdFlujoTarea = A.IdFlujoTarea
-            INNER JOIN S_Usuario AS U
-                ON U.IdUsuario = A.IdUsuario
+        FROM TA_Aprobador AS A 
+            INNER JOIN TA_FlujoTarea AS FT 
+                ON  A.IdFlujoTarea = FT.IdFlujoTarea
+            INNER JOIN S_Usuario AS U 
+                ON  A.IdUsuario = U.IdUsuario
         WHERE A.IdFlujoTarea = @IdFlujo
         ORDER BY NoSecuencia ASC;
 	
@@ -512,9 +571,9 @@ BEGIN
                ISNULL(U.Telefono, '')
         FROM TA_Aprobador AS A
             INNER JOIN TA_FlujoTarea AS FT
-                ON FT.IdFlujoTarea = A.IdFlujoTarea
+                ON  A.IdFlujoTarea = FT.IdFlujoTarea
             INNER JOIN S_Usuario AS U
-                ON U.IdUsuario = A.IdUsuario
+                ON  A.IdUsuario = U.IdUsuario
         WHERE A.IdFlujoTarea = @IdFlujo
         GROUP BY A.IdUsuario,
                  U.Nombre,
@@ -538,9 +597,9 @@ BEGIN
             INNER JOIN MM_PeticionOferta AS PO
                 ON POD.IdPeticionOferta = PO.IdPeticionOferta
             INNER JOIN MM_SolicitudPedido AS SP
-                ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
             INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+                ON  POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND POD.AddValidado = 1
               AND POD.Cotizado = 1
@@ -568,7 +627,7 @@ BEGIN
                GETDATE()
         FROM TA_FlujoTarea AS FT
             INNER JOIN TA_FlujoTareaCondicion AS FTC
-                ON FTC.IdFlujoTarea = FT.IdFlujoTarea
+                ON FT.IdFlujoTarea = FTC.IdFlujoTarea
         WHERE FT.IdFlujoTarea = @IdFlujo;
 		
         SET @TotalSumaPedidos = 0; --Resetear el valor del pedido
@@ -576,10 +635,24 @@ BEGIN
     END;
     --Se retorna los usuarios que van a ser notificados ademas se agrego un retorno mas detallado para hacer pruebas
     --se agregaron los siguientes campos TotalEnDls, NombreFlujo, MonedaActual, SumaTotalProveedor, TipoCambio, ValorADividir (no se utilizan solo es para hacer pruebas)
-    SELECT *
+    SELECT 
+	row_group_pedido,
+    version_pedido,
+    id_usuario,
+    numero_secuencia,
+    nombre_aprobador,
+    correo_aprobador,
+    id_tipo_flujo,
+    id_operacion,
+    id_proveedor_compras,
+    IdFlujo,
+    TotalEnDls,
+    NombreFlujo,
+    MonedaActual,
+    SumaTotalProveedor,
+    TipoCambio,
+    ValorADividir,
+    Telefono
     FROM #APROBADORES_PEDIDOS
     ORDER BY row_group_pedido ASC;
 END;
-
-
-

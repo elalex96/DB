@@ -43,9 +43,11 @@
     [FechaAsignado]              DATETIME       NULL,
     [FechaComentarioMod]         DATETIME       NULL,
     [Solicitante]                INT            NULL,
+    [IdLocalidad]                INT            NULL,
     CONSTRAINT [PK_MM_SolicitudPedido] PRIMARY KEY CLUSTERED ([IdSolicitudPedido] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_MM_SolicitudPedido_MM_TipoSolicitudPedido] FOREIGN KEY ([IdTipoSolicitudPedido]) REFERENCES [dbo].[MM_TipoSolicitudPedido] ([IdTipoSolicitudPedido]),
-    CONSTRAINT [FK_MM_SolicitudPedido_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor])
+    CONSTRAINT [FK_MM_SolicitudPedido_S_Proveedor] FOREIGN KEY ([IdProveedor]) REFERENCES [dbo].[S_Proveedor] ([IdProveedor]),
+    CONSTRAINT [FK_MM_SolicitudPedido_MM_Localidades_IdLocalidad] FOREIGN KEY (IdLocalidad) REFERENCES MM_Localidades(Id)
 );
 
 

@@ -1,20 +1,30 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaSolicitudPedidoReciclaje'
+)
+    DROP PROCEDURE SP_MM_ConsultaSolicitudPedidoReciclaje;
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaSolicitudPedidoReciclaje]    Script Date: 05/09/2023 11:51:02 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-04-17
 -- Description:	Consultar Solicitudes de Pedido  
+-- 05-09-2023 Se retornar el IdLocalidad y Solicitante 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoReciclaje]
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT, 
-	 
-	 /*--------------------
-    parametros contrato
-  --------------------*/
     @IdContrato    INT,
     @IdUsuario     INT,
     @FechaRegistro DATETIME
-  /*--------------------
-  --------------------*/
+
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -39,21 +49,9 @@ BEGIN
 	SP.EntregasParciales,
 	ISNULL(SP.FechaEntregaFinRequerida, GETDATE()) AS FechaEntregaFinRequerida,
 	ISNULL(SP.IdDomicilioEntrega,0),
-	SP.IdSolicitudPedido
-
-	 --SP.FechaAlta,
-	 --TE.Nombre,PSP.Prioridad, 
-	 --TAO.IdEstatusOperacion, 
-	 --U.Nombre, 
-	 --TAO.IdOperacion, 
-	 --ISNULL(SP.PeticionEnviada, 'false') AS PeticionEnviada,
-	 --TiOp.NombreOperacion,
-	 --CC.CentroCosto,
-	 --ISNULL(TC.Termino,'No aplica') as Termino,
-	 --SP.IdLineaPresupuesto,
-	 --TG.TipoGasto,
-	 --ISNULL(SP.Fianza,'false'),
-	 --ISNULL(SP.Controlados,'false'),
+	SP.IdSolicitudPedido,
+	ISNULL(SP.IdLocalidad,0) AS IdLocalidad,
+	ISNULL(SP.Solicitante,0) AS Solicitante
 	FROM MM_SolicitudPedido AS SP (NOLOCK)
 	WHERE SP.IdSolicitudPedido=@IdSolicitudPedido
 
