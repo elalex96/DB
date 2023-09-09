@@ -2681,6 +2681,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\sp_SCOC_ExtraeDatosHasSHAGas.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_SCOC_ExtraeDatosHasSHAPetroleo.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_scoc_ExtraeInformacionMes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\SP_TA_Mobile_ObtenUsuariosNotificacionPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\sp_scoc_ExtraeInformacionMesGas.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\sp_scoc_ExtraeInformacionMesPetroleo.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\sp_SCOC_GuardaDatosContrato.sql" />
