@@ -1,4 +1,11 @@
-﻿
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MPY_PCN_AceptacionCPNProveedorVentas_Cabecera'
+)
+    DROP PROCEDURE SP_MPY_PCN_AceptacionCPNProveedorVentas_Cabecera
+GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 05-02-18
@@ -20,8 +27,8 @@ AS
 		  ---Validación de Estatus de documentos
 		  SET @IdEstatusUltimoAprobacionCN = (SELECT TOP 1 IdEstatus FROM dbo.MPY_MM_AceptacionCartaPCN WHERE IdAceptacionPedido = @IdAceptacionPedido ORDER BY CreadoEl DESC)
 		   
-		  
-		  SELECT 
+
+		  SELECT distinct
 		  AP.IdAceptacionPedido, --0
 		  AP.IdPedido,--1
 		  ISNULL(SV.RazonSocial,ISNULL(PR.RazonSocial,AP.IdProveedor)) AS Proveedor,--2
@@ -30,21 +37,23 @@ AS
 		  ISNULL(@IdEstatusUltimoAprobacionCN,0) AS Estatus,--5
 		  ACO.NombreAreaContractual + ' - ' + COC.NumeroContrato ,--6
 		  SES.SESNumber,--7
-		  SES.SESReferenceNumber,--8
-		  PSES.IdPRESES,--9
+		  CASE WHEN SES.SESReferenceNumber IS NULL THEN CO_SAPGR.GRReferenceNumber ELSE SES.SESReferenceNumber END ,--8
+		  CASE WHEN PSES.IdPRESES IS NULL THEN GrProforma.IdPRESES ELSE PSES.IdPRESES  END,--9
 		  ISNULL(AC_PCN.Editado,0) AS Editado,--10
 		  PRA.IdProveedor
-		  FROM dbo.MPY_MM_AceptacionPedido AS AP
-			  LEFT JOIN dbo.S_Proveedor AS PR ON PR.RFC = AP.IdProveedor AND PR.Activo = 1
-			  LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS AC_PCN ON AC_PCN.IdAceptacionPedido = AP.IdAceptacionPedido
-			  LEFT JOIN Adinco.dbo.CO_Contrato AS COC ON COC.IdContrato = CAST(AP.IdContrato AS INT)
-			  LEFT JOIN Adinco.dbo.CO_AreaContractual AS ACO ON ACO.IdAreaContractual = COC.IdAreaContractual
-			  LEFT JOIN Adinco.dbo.CO_SAPSES AS SES ON SES.PO_SAPNumer COLLATE Modern_Spanish_CI_AS = AP.IdPedido COLLATE Modern_Spanish_CI_AS AND SES.SESReferenceNumber COLLATE Modern_Spanish_CI_AS = AP.ReferenceNumber COLLATE Modern_Spanish_CI_AS
-			  LEFT JOIN Adinco.dbo.CO_SAPPO AS PO ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
-			  LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES ON PSES.SAPPONumber = SES.PO_SAPNumer AND PSES.SAPSESNumber = SES.SESReferenceNumber
-			  LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta AS PC ON PC.Planta = PO.Plant
-			  LEFT JOIN Adinco.dbo.CO_Contratista AS SV ON SV.IdContratista = PC.IdContratista
-			  LEFT JOIN dbo.S_Proveedor AS PRA ON PRA.RFC COLLATE Modern_Spanish_CI_AS = SV.RFC COLLATE Modern_Spanish_CI_AS
+		  FROM dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK)
+			  LEFT JOIN dbo.S_Proveedor AS PR (NOLOCK) ON PR.RFC = AP.IdProveedor AND PR.Activo = 1
+			  LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN (NOLOCK) AS AC_PCN ON AC_PCN.IdAceptacionPedido = AP.IdAceptacionPedido
+			  LEFT JOIN Adinco.dbo.CO_Contrato AS COC (NOLOCK) ON COC.IdContrato = CAST(AP.IdContrato AS INT)
+			  LEFT JOIN Adinco.dbo.CO_AreaContractual (NOLOCK) AS ACO ON ACO.IdAreaContractual = COC.IdAreaContractual
+			  LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK) ON SES.PO_SAPNumer COLLATE Modern_Spanish_CI_AS = AP.IdPedido COLLATE Modern_Spanish_CI_AS AND SES.SESReferenceNumber COLLATE Modern_Spanish_CI_AS = AP.ReferenceNumber COLLATE Modern_Spanish_CI_AS
+			  LEFT JOIN Adinco.dbo.CO_SAPPO AS PO (NOLOCK) ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
+			  LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK) ON PSES.SAPPONumber = SES.PO_SAPNumer AND PSES.SAPSESNumber = SES.SESReferenceNumber
+			  LEFT JOIN Adinco.dbo.CO_SAPGR (NOLOCK) ON CO_SAPGR.PO_SAPNumber COLLATE Modern_Spanish_CI_AS = AP.IdPedido COLLATE Modern_Spanish_CI_AS AND CO_SAPGR.GRReferenceNumber COLLATE Modern_Spanish_CI_AS = AP.ReferenceNumber COLLATE Modern_Spanish_CI_AS
+			  LEFT JOIN Adinco.dbo.CO_SAPPRESES GrProforma (NOLOCK) ON GrProforma.SAPPONumber = CO_SAPGR.PO_SAPNumber AND GrProforma.SAPSESNumber = CO_SAPGR.GRReferenceNumber
+			  LEFT JOIN Adinco.dbo.CO_SAPContratista_Planta (NOLOCK) AS PC ON PC.Planta = PO.Plant
+			  LEFT JOIN Adinco.dbo.CO_Contratista AS SV (NOLOCK) ON SV.IdContratista = PC.IdContratista
+			  LEFT JOIN dbo.S_Proveedor (NOLOCK) AS PRA ON PRA.RFC COLLATE Modern_Spanish_CI_AS = SV.RFC COLLATE Modern_Spanish_CI_AS
 		  WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
 
 		     
