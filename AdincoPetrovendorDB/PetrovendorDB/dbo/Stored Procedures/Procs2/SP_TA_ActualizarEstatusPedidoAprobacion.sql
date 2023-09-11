@@ -1,17 +1,7 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_TA_ActualizarEstatusPedidoAprobacion'
-)
-    DROP PROCEDURE SP_TA_ActualizarEstatusPedidoAprobacion;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use petrovendor
+go
+drop procedure if exists SP_TA_ActualizarEstatusPedidoAprobacion
+go
 -- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 13-11-2019
@@ -24,6 +14,10 @@ GO
 -- Modified:		Alexander Gomez
 -- Create date: 16-08-2023
 -- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
+--**************************************************************
+-- Modified:		David De La Cruz
+-- Create date: 09/09/2023
+-- Description:	Se retorna el usuario Adinco Id que se requiere para notificaciones
 --**************************************************************
 CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusPedidoAprobacion] 
 -- Add the parameters for the stored procedure here
@@ -194,7 +188,8 @@ AS
                        U.Correo, 
                        T.NoSecuencia, 
                        T.IdEstatus, 
-                       E.Name
+                       E.Name,
+					   U.IdUsuarioADINCO
                 FROM TA_Operacion AS O (NOLOCK)
                      INNER JOIN MM_Pedido AS P (NOLOCK) ON O.IdDocumento = P.IdSolicitudPedido
                      INNER JOIN TA_Tarea AS T (NOLOCK) ON O.IdOperacion = T.IdOperacion
@@ -203,7 +198,7 @@ AS
                      INNER JOIN TA_Estatus AS E (NOLOCK) ON O.IdEstatusOperacion = E.IdEstatus
                 WHERE O.IdOperacion = @IdOperacion
                       AND P.Version = @Version
-                GROUP BY O.IdOperacion, 
+            GROUP BY O.IdOperacion, 
                          FT.IdTipoFlujo, 
                          O.IdEstatusOperacion, 
                          E.Nombre, 
@@ -213,7 +208,8 @@ AS
                          U.Correo, 
                          T.NoSecuencia, 
                          T.IdEstatus, 
-                         E.Name
+                         E.Name,
+						 U.IdUsuarioADINCO
                 ORDER BY T.NoSecuencia ASC;
         END;
             ELSE

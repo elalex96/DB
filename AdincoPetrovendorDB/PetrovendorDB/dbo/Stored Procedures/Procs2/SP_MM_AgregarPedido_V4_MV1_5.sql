@@ -1,17 +1,7 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_AgregarPedido_V4_MV1_5'
-)
-    DROP PROCEDURE SP_MM_AgregarPedido_V4_MV1_5;
-/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarPedido_V4_MV1_5]    Script Date: 05/09/2023 02:46:22 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use petrovendor
+go
+drop proc if exists SP_MM_AgregarPedido_V4_MV1_5
+go
 -- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 09/07/2018
@@ -32,7 +22,10 @@ GO
 -- Create date: 05/09/2023
 -- Description:	 CAMBIO SELECCION DE FLUJO FlujoProcuraConLocalidades
 -- =============================================
-
+-- Modified:	David De La Cruz
+-- Create date: 09/09/2023
+-- Description:	Se retorna el usuario Adinco Id que se requiere para notificaciones
+--**************************************************************
 CREATE PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5]
     @IdSolicitudPedido INT,
     @Mensaje NVARCHAR(MAX),
@@ -104,7 +97,8 @@ BEGIN
         SumaTotalProveedor FLOAT,
         TipoCambio FLOAT,
         ValorADividir FLOAT,
-        Telefono NVARCHAR(100)
+        Telefono NVARCHAR(100),
+		IdUsuarioAdinco INT
     );
 
     CREATE TABLE #TIPO_CAMBIO
@@ -550,7 +544,8 @@ BEGIN
             SumaTotalProveedor,
             TipoCambio,
             ValorADividir,
-            Telefono
+            Telefono,
+			IdUsuarioAdinco
         )
         SELECT 1,
                @VERSION AS version_pedido,
@@ -568,7 +563,8 @@ BEGIN
                @SumaPedidoProveedor,
                @TipoCambio,
                @ValorDivision,
-               ISNULL(U.Telefono, '')
+               ISNULL(U.Telefono, ''),
+			   U.IdUsuarioAdinco
         FROM TA_Aprobador AS A
             INNER JOIN TA_FlujoTarea AS FT
                 ON  A.IdFlujoTarea = FT.IdFlujoTarea
@@ -581,7 +577,8 @@ BEGIN
                  A.NoSecuencia,
                  FT.IdTipoFlujo,
                  FT.Nombre,
-                 U.Telefono
+                 U.Telefono,
+				 U.IdUsuarioAdinco
         ORDER BY NoSecuencia ASC;
 
         --#REMOVER TODOS LAS CANTIDADADES DEL TEMPORAL ADD PEDIDO
@@ -594,7 +591,7 @@ BEGIN
 			POD.IdCondicionPagoTemp= NULL, -->NUEVO DIAS DE CREDITO
 			POD.DiasCreditoTemp=NULL -->NUEVO DIAS DE CREDITO
         FROM MM_PeticionOfertaDetalle AS POD
-            INNER JOIN MM_PeticionOferta AS PO
+          INNER JOIN MM_PeticionOferta AS PO
                 ON POD.IdPeticionOferta = PO.IdPeticionOferta
             INNER JOIN MM_SolicitudPedido AS SP
                 ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
@@ -652,7 +649,8 @@ BEGIN
     SumaTotalProveedor,
     TipoCambio,
     ValorADividir,
-    Telefono
+    Telefono,
+	IdUsuarioAdinco
     FROM #APROBADORES_PEDIDOS
     ORDER BY row_group_pedido ASC;
 END;

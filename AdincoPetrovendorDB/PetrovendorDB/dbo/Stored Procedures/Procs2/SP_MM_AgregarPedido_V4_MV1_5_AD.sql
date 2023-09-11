@@ -1,18 +1,7 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_AgregarPedido_V4_MV1_5_AD'
-)
-    DROP PROCEDURE SP_MM_AgregarPedido_V4_MV1_5_AD;
-/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarPedido_V4_MV1_5_AD]    Script Date: 05/09/2023 02:55:03 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+use Petrovendor
+go
+drop proc if exists SP_MM_AgregarPedido_V4_MV1_5_AD
+go
 -- Author: Pedro Acuña
 -- Create date: 12/07/2018
 -- Description: ahora la aprobacion es por cada pedido y no una aprobacion para todos los pedidos generados
@@ -36,6 +25,10 @@ GO
 -- Author:		Daniel AC
 -- Create date: 05/09/2023
 -- Description:	 CAMBIO SELECCION DE FLUJO FlujoProcuraConLocalidades
+-- =============================================
+-- Author:		David De La Cruz
+-- Create date: 11/09/2023
+-- Description:	 Se agrega el usuario adinco Id para notificaciones push
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarPedido_V4_MV1_5_AD]
 
@@ -71,7 +64,8 @@ BEGIN
     DECLARE @VERSION INT;
     DECLARE @IdMonedaDLS INT = 2;
 	DECLARE @AplicarFlujoProcuraConLocalidades BIT;
-	DECLARE @IdContratoSolicitud INT
+	DECLARE @IdContratoSolicitud INT;
+	DECLARE @AreaContractual VARCHAR(500);
     DECLARE @tablaFlujos TABLE
     (
         Fila INT,
@@ -120,7 +114,9 @@ BEGIN
         SumaTotalProveedor FLOAT,
         TipoCambio FLOAT,
         ValorADividir FLOAT,
-		Telefono NVARCHAR(100)
+		Telefono NVARCHAR(100),
+		IdUsuarioAdinco int,
+		NombreAreaContractual NVARCHAR(100)
     );
 	
     CREATE TABLE #FLUJO
@@ -212,6 +208,16 @@ BEGIN
             WHERE IdSolicitudPedido = @IdSolicitudPedido
             ORDER BY Version DESC
         );
+		SET @AreaContractual =
+        (
+            SELECT TOP 1
+                ac.NombreAreaContractual
+            FROM MM_Pedido AS P 
+			INNER JOIN Adinco..CO_Contrato as C on P.IdContrato = C.IdContrato
+			INNER JOIN adinco..CO_AreaContractual as AC on C.IdAreaContractual = AC.IdAreaContractual
+            WHERE IdSolicitudPedido = @IdSolicitudPedido
+            ORDER BY Version DESC
+        );
 
         SET @VERSION = ISNULL(@VERSION, 0) + 1;
 
@@ -262,7 +268,7 @@ BEGIN
         (
             SELECT CASE
                        WHEN TP.idTipoMoneda <> @IdMonedaDLS THEN
-                           ISNULL((TP.sumaPedido / TC.TipoCambio), 0)
+          ISNULL((TP.sumaPedido / TC.TipoCambio), 0)
                        ELSE
                            TP.sumaPedido
                    END
@@ -514,7 +520,7 @@ BEGIN
 
         IF ISNULL(@IdFlujo, 0) = 0
         BEGIN
-            -- NO SE ENCONTRO EL FLUJO EN EL SP, VOLVAMOS A BUSCARLO 
+-- NO SE ENCONTRO EL FLUJO EN EL SP, VOLVAMOS A BUSCARLO 
             SELECT @IdFlujo = IdFlujoTarea
             FROM dbo.TA_FlujoTarea 
             WHERE IdProveedor = @IdProveedorCompras
@@ -631,7 +637,9 @@ BEGIN
             SumaTotalProveedor,
             TipoCambio,
             ValorADividir,
-			Telefono
+			Telefono,
+			IdUsuarioAdinco,
+			NombreAreaContractual
         )
         SELECT 1,
                @VERSION AS version_pedido,
@@ -647,9 +655,11 @@ BEGIN
                FT.Nombre,
                @ID_MONEDA_ACTUAL,
                @SumaPedidoProveedor,
-               @TipoCambio,
+           @TipoCambio,
                @ValorDivision,
-			   U.Telefono
+			   U.Telefono,
+			   U.IdUsuarioADINCO,
+			   @AreaContractual
         FROM TA_Aprobador AS A 
             INNER JOIN TA_FlujoTarea AS FT 
                 ON A.IdFlujoTarea = FT.IdFlujoTarea 
@@ -662,7 +672,8 @@ BEGIN
                  A.NoSecuencia,
                  FT.IdTipoFlujo,
                  FT.Nombre,
-				 U.Telefono
+				 U.Telefono,
+				 U.IdUsuarioADINCO
         ORDER BY NoSecuencia ASC;
 
 
@@ -761,7 +772,9 @@ BEGIN
     SumaTotalProveedor,
     TipoCambio,
     ValorADividir,
-	Telefono
+	Telefono,
+	IdUsuarioAdinco,
+	NombreAreaContractual
     FROM #APROBADORES_PEDIDOS
     ORDER BY row_group_pedido ASC;
 
