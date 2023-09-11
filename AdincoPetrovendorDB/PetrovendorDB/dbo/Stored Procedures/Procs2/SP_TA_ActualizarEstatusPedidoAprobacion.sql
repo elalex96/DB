@@ -189,13 +189,16 @@ AS
                        T.NoSecuencia, 
                        T.IdEstatus, 
                        E.Name,
-					   U.IdUsuarioADINCO
+					   U.IdUsuarioADINCO,
+					   AC.NombreAreaContractual
                 FROM TA_Operacion AS O (NOLOCK)
                      INNER JOIN MM_Pedido AS P (NOLOCK) ON O.IdDocumento = P.IdSolicitudPedido
                      INNER JOIN TA_Tarea AS T (NOLOCK) ON O.IdOperacion = T.IdOperacion
                      INNER JOIN S_Usuario AS U (NOLOCK) ON T.IdAprobador = U.IdUsuario
                      INNER JOIN TA_FlujoTarea AS FT (NOLOCK) ON O.IdFlujoTarea = FT.IdFlujoTarea
                      INNER JOIN TA_Estatus AS E (NOLOCK) ON O.IdEstatusOperacion = E.IdEstatus
+					 INNER JOIN Adinco..CO_Contrato as C on P.IdContrato = C.IdContrato
+					 INNER JOIN adinco..CO_AreaContractual as AC on C.IdAreaContractual = AC.IdAreaContractual
                 WHERE O.IdOperacion = @IdOperacion
                       AND P.Version = @Version
             GROUP BY O.IdOperacion, 
@@ -209,7 +212,8 @@ AS
                          T.NoSecuencia, 
                          T.IdEstatus, 
                          E.Name,
-						 U.IdUsuarioADINCO
+						 U.IdUsuarioADINCO,
+						 AC.NombreAreaContractual
                 ORDER BY T.NoSecuencia ASC;
         END;
             ELSE
