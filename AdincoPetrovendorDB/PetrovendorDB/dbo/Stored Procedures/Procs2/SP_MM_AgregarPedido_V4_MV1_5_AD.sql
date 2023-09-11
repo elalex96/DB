@@ -64,7 +64,8 @@ BEGIN
     DECLARE @VERSION INT;
     DECLARE @IdMonedaDLS INT = 2;
 	DECLARE @AplicarFlujoProcuraConLocalidades BIT;
-	DECLARE @IdContratoSolicitud INT
+	DECLARE @IdContratoSolicitud INT;
+	DECLARE @AreaContractual VARCHAR(500);
     DECLARE @tablaFlujos TABLE
     (
         Fila INT,
@@ -114,7 +115,8 @@ BEGIN
         TipoCambio FLOAT,
         ValorADividir FLOAT,
 		Telefono NVARCHAR(100),
-		IdUsuarioAdinco int
+		IdUsuarioAdinco int,
+		NombreAreaContractual NVARCHAR(100)
     );
 	
     CREATE TABLE #FLUJO
@@ -203,6 +205,16 @@ BEGIN
             SELECT TOP 1
                 P.Version
             FROM MM_Pedido AS P 
+            WHERE IdSolicitudPedido = @IdSolicitudPedido
+            ORDER BY Version DESC
+        );
+		SET @AreaContractual =
+        (
+            SELECT TOP 1
+                ac.NombreAreaContractual
+            FROM MM_Pedido AS P 
+			INNER JOIN Adinco..CO_Contrato as C on P.IdContrato = C.IdContrato
+			INNER JOIN adinco..CO_AreaContractual as AC on C.IdAreaContractual = AC.IdAreaContractual
             WHERE IdSolicitudPedido = @IdSolicitudPedido
             ORDER BY Version DESC
         );
@@ -626,7 +638,8 @@ BEGIN
             TipoCambio,
             ValorADividir,
 			Telefono,
-			IdUsuarioAdinco
+			IdUsuarioAdinco,
+			NombreAreaContractual
         )
         SELECT 1,
                @VERSION AS version_pedido,
@@ -645,7 +658,8 @@ BEGIN
            @TipoCambio,
                @ValorDivision,
 			   U.Telefono,
-			   U.IdUsuarioADINCO
+			   U.IdUsuarioADINCO,
+			   @AreaContractual
         FROM TA_Aprobador AS A 
             INNER JOIN TA_FlujoTarea AS FT 
                 ON A.IdFlujoTarea = FT.IdFlujoTarea 
@@ -759,7 +773,8 @@ BEGIN
     TipoCambio,
     ValorADividir,
 	Telefono,
-	IdUsuarioAdinco
+	IdUsuarioAdinco,
+	NombreAreaContractual
     FROM #APROBADORES_PEDIDOS
     ORDER BY row_group_pedido ASC;
 
