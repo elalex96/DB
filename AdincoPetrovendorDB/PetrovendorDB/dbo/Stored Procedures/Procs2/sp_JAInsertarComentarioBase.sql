@@ -1,4 +1,7 @@
-﻿
+use petrovendor
+go
+drop proc if exists sp_JAInsertarComentarioBase
+go
 -- =============================================
 -- Modified: DANIEL AC 
 -- Updated date: 02/01/2017 
@@ -8,6 +11,10 @@
 -- Updated date: 29/04/2020
 -- Description: se agrego el sp de envio de notificacion por correo
 -- =============================================
+-- Modified: Luis David
+-- Updated date: 19/09/2023
+-- Description: Se agrega el idOferta para no duplicar correos
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_JAInsertarComentarioBase]
 (
     @IdUsuario INT,
@@ -16,8 +23,8 @@ CREATE PROCEDURE [dbo].[sp_JAInsertarComentarioBase]
     @IdSolPed INT,
     @PetrovendorProcura INT = 2, --Petrovendor 0 - Procura 1 - Adinco 2
 	@IdProveedor INT,
-	@IdContrato INT = NULL
-	
+	@IdContrato INT = NULL,
+	@IdOferta int = NULL
 
 )
 AS
@@ -60,8 +67,8 @@ BEGIN
 	EXEC dbo.SP_JA_EnviarCorreoComentarioPregunta @IdSolPed,	-- int
 	                                              @IdUsuario,   -- int
 	                                              @IdProveedor, -- int
-	                                              @Comentario   -- nvarchar(max)
-	
+	                                              @Comentario,   -- nvarchar(max)
+												  @IdOferta = @IdOferta
 	
 
     SELECT base.IdComentarioBase,
@@ -77,4 +84,3 @@ BEGIN
     WHERE base.IdComentarioBase = @IdComentario and base.IdProveedor=@IdProveedor;
 
 END
-
