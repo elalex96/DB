@@ -26,7 +26,8 @@ CREATE PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta] --20290,2199,420,'
 	@IdSolicitudPedido INT,
 	@IdUsuario INT,
 	@IdProveedor INT,
-	@Comentario NVARCHAR(MAX)
+	@Comentario NVARCHAR(MAX),
+	@IdOferta int
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -174,6 +175,7 @@ BEGIN
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4)
 			and	US.Activo = 1
 			AND isnull(TANN.IsEliminado,0) = 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion
+			AND PO.IdPeticionOferta = @IdOferta
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
