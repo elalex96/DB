@@ -3925,5 +3925,12 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenAnioContractualPorContratoId.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerTodosLosContratos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_ActualizarPresupuestoConBitacora.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_ExcepcionesReporte.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerExcepcionesReporte.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_INS_CO_InsertaExcepcionesReporte.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_ActualizaExcepcionesReporte.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_AA_ObtenTipoReporte.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_AP_ConsultaMesesAnio.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ValidarDatosDeExcepcionesReporte.sql" />
   </ItemGroup>
 </Project>
