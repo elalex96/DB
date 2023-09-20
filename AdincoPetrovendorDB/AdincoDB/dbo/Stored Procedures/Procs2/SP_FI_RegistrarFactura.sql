@@ -156,7 +156,7 @@ BEGIN
 		@CondicionesPago
     )
 
-    SET @IdFac = @@IDENTITY
+    SET @IdFac = CAST(SCOPE_IDENTITY() AS INT)
     SELECT @IdFac
 END;
 
