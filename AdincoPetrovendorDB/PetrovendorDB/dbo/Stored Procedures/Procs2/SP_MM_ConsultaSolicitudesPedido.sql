@@ -1,4 +1,18 @@
-﻿CREATE PROCEDURE SP_MM_ConsultaSolicitudesPedido
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultaSolicitudesPedido'
+)
+    DROP PROCEDURE SP_MM_ConsultaSolicitudesPedido;
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaSolicitudesPedido]    Script Date: 05/09/2023 07:01:15 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudesPedido]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor int, 
 	@IdUsuario int,
@@ -27,16 +41,27 @@ BEGIN
 		TAO.Descripcion,
 		AC.NombreAreaContractual AS AreaContractual	,
 		PR.ID_PR,
-		Contrato = c.NumeroContrato
-	FROM MM_SolicitudPedido AS SP 
-		INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido 
-		INNER JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido  
-		INNER JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion  
-		LEFT JOIN CC_CentroCosto AS CC ON SP.IdCentroCosto = CC.IdCentroCosto
-		INNER JOIN S_Usuario AS U ON SP.IdUsuarioSolicitante = U.IdUsuario
-		LEFT JOIN Adinco.dbo.CO_Contrato AS C ON SP.IdContrato = C.IdContrato    
-		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC ON C.IdAreaContractual = AC.IdAreaContractual
-		LEFT JOIN dbo.DEA_AdjuntoPR PR ON PR.IdSolicitudPedido=SP.IdSolicitudPedido
+		Contrato = c.NumeroContrato,
+		ISNULL(LC.Nombre,'') AS Localidad
+	FROM MM_SolicitudPedido AS SP (NOLOCK)
+		INNER JOIN MM_TipoSolicitudPedido AS TSP  (NOLOCK)
+			ON SP.IdTipoSolicitudPedido  = TSP.IdTipoSolicitudPedido
+		INNER JOIN TA_Operacion AS TAO  (NOLOCK)
+			ON SP.IdSolicitudPedido   = TAO.IdDocumento 
+		INNER JOIN TA_Estatus AS TE  (NOLOCK)
+			ON TAO.IdEstatusOperacion  = TE.IdEstatus  
+		LEFT JOIN CC_CentroCosto AS CC  (NOLOCK)
+			ON SP.IdCentroCosto = CC.IdCentroCosto
+		INNER JOIN S_Usuario AS U  (NOLOCK)
+			ON SP.IdUsuarioSolicitante = U.IdUsuario
+		LEFT JOIN Adinco.dbo.CO_Contrato AS C  (NOLOCK)
+			ON SP.IdContrato = C.IdContrato    
+		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC  (NOLOCK)
+			ON C.IdAreaContractual = AC.IdAreaContractual
+		LEFT JOIN dbo.DEA_AdjuntoPR PR  (NOLOCK)
+			ON SP.IdSolicitudPedido = PR.IdSolicitudPedido
+		LEFT JOIN MM_Localidades LC (NOLOCK)
+			ON SP.IdLocalidad = LC.Id
 	WHERE (SP.IdUsuarioSolicitante = @IdUsuario or @IdTipoUsuario NOT IN (9))
 		AND SP.IdProveedor = @IdProveedor 
 		AND ISNULL(TAO.IdTipoOperacion, 2)=2 
@@ -58,16 +83,27 @@ BEGIN
 		TAO.Descripcion,
 		AC.NombreAreaContractual AS AreaContractual,
 		PR.ID_PR,
-		Contrato = c.NumeroContrato
+		Contrato = c.NumeroContrato,
+		ISNULL(LC.Nombre,'') AS Localidad
 	FROM MM_SolicitudPedido AS SP 
-		INNER JOIN MM_TipoSolicitudPedido AS TSP ON TSP.IdTipoSolicitudPedido =SP.IdTipoSolicitudPedido 
-		LEFT JOIN TA_Operacion AS TAO ON TAO.IdDocumento= SP.IdSolicitudPedido  
-		LEFT JOIN TA_Estatus AS TE ON TE.IdEstatus = TAO.IdEstatusOperacion  
-		LEFT JOIN CC_CentroCosto AS CC ON SP.IdCentroCosto = CC.IdCentroCosto
-		INNER JOIN S_Usuario AS U ON SP.IdUsuarioSolicitante = U.IdUsuario
-		LEFT JOIN Adinco.dbo.CO_Contrato AS C ON SP.IdContrato = C.IdContrato    
-		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC ON C.IdAreaContractual = AC.IdAreaContractual
-		LEFT JOIN dbo.DEA_AdjuntoPR PR ON PR.IdSolicitudPedido=SP.IdSolicitudPedido
+		JOIN MM_TipoSolicitudPedido AS TSP  (NOLOCK)
+		ON SP.IdTipoSolicitudPedido  = TSP.IdTipoSolicitudPedido
+		LEFT JOIN TA_Operacion AS TAO  (NOLOCK)
+		ON SP.IdSolicitudPedido = TAO.IdDocumento   
+		LEFT JOIN TA_Estatus AS TE  (NOLOCK)
+		ON TAO.IdEstatusOperacion   = TE.IdEstatus
+		LEFT JOIN CC_CentroCosto AS CC  (NOLOCK)
+		ON SP.IdCentroCosto = CC.IdCentroCosto
+		INNER JOIN S_Usuario AS U  (NOLOCK)
+		ON SP.IdUsuarioSolicitante = U.IdUsuario
+		LEFT JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
+		ON SP.IdContrato = C.IdContrato    
+		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC  (NOLOCK)
+		ON C.IdAreaContractual = AC.IdAreaContractual
+		LEFT JOIN dbo.DEA_AdjuntoPR PR  (NOLOCK)
+		ON SP.IdSolicitudPedido = PR.IdSolicitudPedido
+		LEFT JOIN MM_Localidades LC (NOLOCK)
+			ON SP.IdLocalidad = LC.Id
 	WHERE (SP.IdUsuarioSolicitante = @IdUsuario or @IdTipoUsuario NOT IN (9))
 		AND SP.IdProveedor = @IdProveedor 
 		AND ISNULL(TAO.IdTipoOperacion, 2)=2 

@@ -1,12 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_Simulacion_AgregarPedido_V4_MV1_5'
+)
+    DROP PROCEDURE SP_MM_Simulacion_AgregarPedido_V4_MV1_5;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_Simulacion_AgregarPedido_V4_MV1_5]    Script Date: 05/09/2023 01:00:42 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Pedro Acuña
 -- Create date: 23/05/2018
 -- Description:	Simula el  agregar al PEDIDO  y al PEDIDO DETALLE
 -- =============================================
 -- =============================================
 -- Author:		Daniel AC
--- Create date: 16/05/2022
--- Description:	CAMBIO DE DECIMALES A FLOAT
+-- Create date: 05/09/2023
+-- Description:	CAMBIO DE DECIMALES A FLOAT, CAMBIO SELECCION DE FLUJO FlujoProcuraConLocalidades
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_Simulacion_AgregarPedido_V4_MV1_5]
     -- Add the parameters for the stored procedure here
@@ -33,6 +48,8 @@ BEGIN
     DECLARE @TotalSumaPedidos FLOAT;
     DECLARE @VERSION INT;
     DECLARE @IdMonedaDLS INT = 2;
+	DECLARE @AplicarFlujoProcuraConLocalidades BIT;
+	DECLARE @IdContratoSolicitud INT
 
     DECLARE @tablaFlujos TABLE
     (
@@ -75,6 +92,17 @@ BEGIN
         IdMoneda INT
     );
 
+	-- VALIDAR SI APLICAR LA PREFERENCIA FlujoProcuraConLocalidades
+	SET @IdContratoSolicitud = (SELECT IdContrato FROM MM_SolicitudPedido WHERE IdSolicitudPedido = @IdSolicitudPedido)
+	SET @AplicarFlujoProcuraConLocalidades = (SELECT CASE WHEN COUNT(P.Id)>0 THEN 1 ELSE 0 END
+												FROM AP_Preferencias P 
+												JOIN AP_PreferenciaContrato PC 
+													ON P.Id = PC.PreferenciaId
+												WHERE PC.ContratoId = @IdContratoSolicitud
+												AND PC.Activo = 1
+												AND P.Activo = 1
+												AND P.Nombre ='FlujoProcuraConLocalidades') --> CTE EN TABLA AP_Preferencias)
+
     --- Obtener los datos del Peticion Oferta para pasarlos a las Pedido e identificar  --- 
     INSERT INTO #TABLA_PROVEEDORES
     (
@@ -91,11 +119,11 @@ BEGIN
            POD.IdPeticionOferta
     FROM MM_PeticionOferta AS PO
         INNER JOIN MM_PeticionOfertaDetalle AS POD
-            ON POD.IdPeticionOferta = PO.IdPeticionOferta
+            ON PO.IdPeticionOferta = POD.IdPeticionOferta 
         INNER JOIN MM_SolicitudPedido AS SP
-            ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+            ON PO.IdSolicitudPedido = SP.IdSolicitudPedido 
         INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-            ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+            ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
     WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
           AND POD.AddValidado = 1
           AND POD.Cotizado = 1
@@ -160,7 +188,7 @@ BEGIN
     (
         SELECT TOP 1
                P.Version
-        FROM MM_Pedido AS P
+        FROM MM_Pedido AS P 
         WHERE IdSolicitudPedido = @IdSolicitudPedido
         ORDER BY Version DESC
     );
@@ -195,7 +223,7 @@ BEGIN
                     SELECT TC.TipoCambio
                     FROM #TABLA_PROVEEDORES AS TP
                         LEFT JOIN #TIPO_CAMBIO AS TC
-                            ON TC.IdMoneda = TP.idTipoMoneda
+                            ON TP.idTipoMoneda = TC.IdMoneda
                     WHERE idrow = @INCREMENTO
                 );
         DECLARE @ValorDivision FLOAT =
@@ -203,7 +231,7 @@ BEGIN
                     SELECT TP.sumaPedido
                     FROM #TABLA_PROVEEDORES AS TP
                         LEFT JOIN #TIPO_CAMBIO AS TC
-                            ON TC.IdMoneda = TP.idTipoMoneda
+                            ON  TP.idTipoMoneda = TC.IdMoneda
                     WHERE idrow = @INCREMENTO
                 );
 
@@ -217,15 +245,45 @@ BEGIN
                    END
             FROM #TABLA_PROVEEDORES AS TP
                 LEFT JOIN #TIPO_CAMBIO AS TC
-                    ON TC.IdMoneda = TP.idTipoMoneda
+                    ON  TP.idTipoMoneda = TC.IdMoneda
             WHERE idrow = @INCREMENTO
         );
         SET @TotalSumaPedidos = ISNULL(@TotalSumaPedidos, 0) + @suma;
 
         --Asignar el flujo correspondiente al monto
-        INSERT INTO @tablaFlujos
-        EXEC dbo.SP_ObtenerFlujoAprobacionxValor @Total = @TotalSumaPedidos,                -- float
+		IF @AplicarFlujoProcuraConLocalidades = 1
+		BEGIN 
+			INSERT INTO @tablaFlujos
+			(
+				Fila,
+				IdFlujoTarea,
+				ValorInicial,
+				ValorFinal,
+				Predeterminado,
+				Nombre,
+				Orden
+			)
+			EXEC dbo.SP_ObtenerFlujoAprobacionxValorxLocalidades @Total = @TotalSumaPedidos,                -- float
+																 @IdProveedorCompras = @IdProveedorCompras,
+																 @IdSolicitudPedido = @IdSolicitudPedido,
+																 @IdContrato = @IdContratoSolicitud; -- int
+			
+		END
+		ELSE
+		BEGIN 
+			INSERT INTO @tablaFlujos
+			(
+				Fila,
+				IdFlujoTarea,
+				ValorInicial,
+				ValorFinal,
+				Predeterminado,
+				Nombre,
+				Orden
+			)
+			EXEC dbo.SP_ObtenerFlujoAprobacionxValor @Total = @TotalSumaPedidos,                -- float
                                                  @IdProveedorCompras = @IdProveedorCompras; -- int
+		END 
 
         SELECT @IdFlujo = IdFlujoTarea
         FROM @tablaFlujos
@@ -268,11 +326,11 @@ BEGIN
                @TotalSumaPedidos
         FROM MM_PeticionOferta AS PO
             INNER JOIN MM_PeticionOfertaDetalle AS POD
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta
+                ON PO.IdPeticionOferta = POD.IdPeticionOferta 
             INNER JOIN MM_SolicitudPedido AS SP
-                ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
             INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+                ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND PO.IdSubcontratista = @ID_PROVEEDOR_VENTAS
               AND POD.AddValidado = 1
@@ -324,11 +382,11 @@ BEGIN
                POD.IdUnidadProveedor
         FROM MM_PeticionOferta AS PO
             INNER JOIN MM_PeticionOfertaDetalle AS POD
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta
+                ON PO.IdPeticionOferta = POD.IdPeticionOferta
             INNER JOIN MM_SolicitudPedido AS SP
-                ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+                ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
             INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-                ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+                ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
         WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
               AND PO.IdSubcontratista = @ID_PROVEEDOR_VENTAS
               AND POD.AddValidado = 1
@@ -361,15 +419,15 @@ BEGIN
         INNER JOIN @tablaAuxPedidoDetalle detalle
             ON pedido.IdPedidoSimul = detalle.IdPedido
         INNER JOIN dbo.S_Proveedor prov
-            ON prov.IdProveedor = pedido.IdSubcontratista
+            ON  pedido.IdSubcontratista = prov.IdProveedor
         INNER JOIN dbo.PV_TipoMoneda tm
-            ON tm.IdMoneda = pedido.IdMoneda
+            ON pedido.IdMoneda = tm.IdMoneda
         LEFT JOIN dbo.PV_ContratistaSubContratista contratista
-            ON contratista.IdContratista = pedido.IdSubcontratista
+            ON  pedido.IdSubcontratista = contratista.IdContratista
                AND contratista.IsActivo = 1
                AND contratista.IdSubContratista = @IdProveedorCompras
         LEFT JOIN PV_CondicionesPago condici
-            ON condici.IdContratistaSubContratista = contratista.IdRelacion		
+            ON contratista.IdRelacion = condici.IdContratistaSubContratista
     GROUP BY pedido.IdPedidoSimul,
              pedido.IdSolicitudPedido,
              pedido.CreadoEl,
@@ -387,8 +445,3 @@ BEGIN
 
 
 END;
-
-
-
-
-

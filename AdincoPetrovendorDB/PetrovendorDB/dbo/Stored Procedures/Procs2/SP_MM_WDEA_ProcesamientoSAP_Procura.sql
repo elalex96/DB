@@ -44,7 +44,8 @@ BEGIN TRY
 			@REGISTROSGUARDADOS INT,
 			@CatidadFilas Int = (select count(1) from WDEA_Layout_T where IdbitacoraLectura = @IDBITACORA),
 			@POSAPIncorrectos INT,
-			@tableHTML varchar(max);;
+			@tableHTML varchar(max),
+			@CuentaCorreo varchar(300) = (SELECT CuentaRegistro FROM S_CorreoServidor WHERE Descripcion = 'Notificaciones_Procura');
 
 
 	DROP TABLE IF EXISTS #PENDIENTES_PROCESAR
@@ -275,11 +276,8 @@ BEGIN TRY
             Mensaje,
             FechaProgramadaEnvio,
             Enviada,
-            FechaEnvio,
             CreadoPor,
             CreadoEl,
-            ModificadoPor,
-            ModificadoEl,
             De
     )
 	SELECT
@@ -289,12 +287,9 @@ BEGIN TRY
 			REPLACE(@HTML,'##NOMBRE_USUARIO##',ISNULL(Nombre,'Usuario de ADINCO')), 
 			DATEADD(MINUTE, 1, GETDATE()), 
 			0, 
-			NULL, 
-			3, 
-			GETDATE(), 
-			NULL, 
-			NULL,
-			'notificaciones@adinco.mx'
+			10380, --Usuario Soporte
+			GETDATE(),
+			@CuentaCorreo
 	FROM dbo.WDEA_CorreosResumenProcesamiento;
 
         INSERT INTO dbo.TA_EnvioCorreo 
