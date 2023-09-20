@@ -1,7 +1,26 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_AgregarSolicitudPedido_V2'
+)
+    DROP PROCEDURE SP_MM_AgregarSolicitudPedido_V2;
+/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarSolicitudPedido_V2]    Script Date: 04/09/2023 03:48:37 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:  Alexander Gomez
 -- Create date: 16/03/2023
 -- Description: Generacion de la solicitud de pedido, junto con su operacion y tareas
+-- =============================================
+-- =============================================
+-- Author:  Daniel AC
+-- Create date: 04/09/2023
+-- Description: Se agrega columna IdLocalidad para la preferencia FlujoProcuraConLocalidades 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarSolicitudPedido_V2]
         
@@ -33,7 +52,8 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarSolicitudPedido_V2]
 		@IdFlujoTarea INT,
 		@IdVigencia INT,
 		@Descripcion VARCHAR(MAX),
-		@IdsNuevosAprobadores VARCHAR(MAX)
+		@IdsNuevosAprobadores VARCHAR(MAX),
+		@IdLocalidad INT = 0
 AS
 BEGIN
     DECLARE @IdSolicitudPedido int
@@ -49,7 +69,7 @@ BEGIN
 	DECLARE @CONT_TAREAS_TOTAL INT;
 	DECLARE @ID_TAREA INT;
 	DECLARE @ID_TIPOFLUJO INT;
-	DECLARE @VALIDAR_FLUJO INT = (SELECT IdFlujoTarea FROM TA_FlujoTarea WHERE IdFlujoTarea = @IdFlujoTarea AND IdTipoOperacion = 2);--Requisición
+	DECLARE @VALIDAR_FLUJO INT = (SELECT IdFlujoTarea FROM TA_FlujoTarea (NOLOCK) WHERE IdFlujoTarea = @IdFlujoTarea AND IdTipoOperacion = 2);--Requisición
     SET NOCOUNT ON;
     --VALIDAR SI REALMENTE EXISTE EL FLUJO A SU TIPO DE OPERACION
 	IF ISNULL(@VALIDAR_FLUJO,0) = 0
@@ -100,8 +120,8 @@ BEGIN
         SET @RFC = (SELECT RFC FROM dbo.S_Proveedor WHERE IdProveedor = @IdProveedor);
         SET @IdContrato = (SELECT TOP 1
                                 IdContrato 
-                            FROM Adinco.dbo.CO_Contratista AS CON
-                            JOIN Adinco.dbo.CO_Contrato AS CO
+                            FROM Adinco.dbo.CO_Contratista AS CON (NOLOCK)
+                            JOIN Adinco.dbo.CO_Contrato AS CO (NOLOCK)
                                 ON CON.IdContratista = CO.IdContratista
                             WHERE CON.RFC = @RFC);
 		END 
@@ -134,6 +154,7 @@ BEGIN
            ,[Fianza]
            ,[Controlados]
 		   ,[Solicitante]
+		   ,[IdLocalidad]
            )
      VALUES
            (
@@ -163,6 +184,7 @@ BEGIN
             ,@Fianza
             ,@Controlados
 			,@IdSolicitante
+			,CASE WHEN ISNULL(@IdLocalidad,0) = 0 THEN NULL ELSE @IdLocalidad END
             )
     
     set @IdSolicitudPedido= (select @@IDENTITY);
@@ -171,7 +193,7 @@ BEGIN
 	--SE OBTIENE EL IDOPERACION SI ES QUE EXISTE CON LOS MISMOS DATOS
 	SET @IdOperacion = (SELECT TOP 1 
 							IdOperacion
-						FROM dbo.TA_Operacion 
+						FROM dbo.TA_Operacion  (NOLOCK)
 						WHERE IdDocumento = @IdSolicitudPedido 
 							AND IdTipoOperacion = 2
 							AND IdProveedor = @IdProveedor
@@ -209,7 +231,7 @@ BEGIN
 	END
 
 	----Agregar Evento al Historial del Flujo de Tarea----
-	SET @DescripcionH = 'El Usuario ' +(SELECT Nombre FROM S_USuario WHERE IdUsuario = @IdUsuarioSolicitante)+ ' ha registrado la Tarea de Tipo ' + (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion=2)
+	SET @DescripcionH = 'El Usuario ' +(SELECT Nombre FROM S_USuario  (NOLOCK) WHERE IdUsuario = @IdUsuarioSolicitante)+ ' ha registrado la Tarea de Tipo ' + (SELECT NombreOperacion FROM TA_TipoOperacion  (NOLOCK) WHERE IdTipoOperacion=2)
 	INSERT INTO TA_HistorialFlujoTarea(IdOperacion, Fecha,Descripcion, IdEstadoFlujo)
 	VALUES(@IdOperacion,GETDATE(),@DescripcionH,1);
 
@@ -264,13 +286,13 @@ BEGIN
 	SELECT
 		IdTarea,
 		IdOperacion
-	FROM TA_Tarea
+	FROM TA_Tarea  (NOLOCK)
 	WHERE IdOperacion = @IdOperacion;
 
 	INSERT INTO #TAREAS_CREADAS (IdTarea)
 	SELECT
 		IdTarea
-	FROM TA_Tarea
+	FROM TA_Tarea  (NOLOCK)
 	WHERE IdOperacion = @IdOperacion;
 
 	SET @CONT_TAREAS_TOTAL = (SELECT COUNT(IdRow) FROM #TAREAS_CREADAS);
@@ -283,7 +305,7 @@ BEGIN
 		SET @CONT_TAREAS = @CONT_TAREAS + 1;
 	END
 
-	SET @ID_TIPOFLUJO = (SELECT IdTipoFlujo FROM TA_FlujoTarea WHERE IdFlujoTarea = @IdFlujoTarea);
+	SET @ID_TIPOFLUJO = (SELECT IdTipoFlujo FROM TA_FlujoTarea  (NOLOCK) WHERE IdFlujoTarea = @IdFlujoTarea);
 
 	SELECT
 		'Requisición',
@@ -298,8 +320,8 @@ BEGIN
 		US.Correo,
 		@Descripcion,
 		@ID_TIPOFLUJO
-	FROM TA_Tarea AS T
-		JOIN S_Usuario AS US
+	FROM TA_Tarea AS T  (NOLOCK)
+		JOIN S_Usuario AS US  (NOLOCK)
 			ON T.IdAprobador = US.IdUsuario
 			AND US.Activo = 1
 	WHERE IdOperacion = @IdOperacion;
