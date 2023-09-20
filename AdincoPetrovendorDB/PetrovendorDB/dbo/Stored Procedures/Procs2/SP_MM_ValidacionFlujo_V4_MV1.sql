@@ -1,4 +1,23 @@
-﻿CREATE PROCEDURE SP_MM_ValidacionFlujo_V4_MV1
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ValidacionFlujo_V4_MV1'
+)
+    DROP PROCEDURE SP_MM_ValidacionFlujo_V4_MV1;
+/****** Object:  StoredProcedure [dbo].[SP_MM_ValidacionFlujo_V4_MV1]    Script Date: 05/09/2023 01:52:57 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 05/09/2023
+-- Description:	 CAMBIO SELECCION DE FLUJO FlujoProcuraConLocalidades
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_ValidacionFlujo_V4_MV1]
 @IdSolicitudPedido INT,
 @IdUsuarioCompras INT,
 @IdProveedorCompras INT
@@ -12,7 +31,8 @@ BEGIN
 	DECLARE @suma FLOAT;
     DECLARE @sumacadena NVARCHAR(MAX);
 	DECLARE @ID_MONEDA_ACTUAL INT;
-
+	DECLARE @AplicarFlujoProcuraConLocalidades BIT;
+	DECLARE @IdContratoSolicitud INT
     DECLARE @tablaFlujos TABLE
     (
         Fila INT,
@@ -39,6 +59,21 @@ BEGIN
         Fecha DATETIME,
         IdMoneda INT
     );
+
+	-- VALIDAR SI APLICAR LA PREFERENCIA FlujoProcuraConLocalidades
+	SET @IdContratoSolicitud = (SELECT IdContrato 
+								FROM MM_SolicitudPedido 
+								WHERE IdSolicitudPedido = @IdSolicitudPedido)
+	SET @AplicarFlujoProcuraConLocalidades = (SELECT CASE WHEN COUNT(P.Id)>0 THEN 1 ELSE 0 END
+												FROM AP_Preferencias P 
+												JOIN AP_PreferenciaContrato PC 
+													ON P.Id = PC.PreferenciaId
+												WHERE PC.ContratoId = @IdContratoSolicitud
+												AND PC.Activo = 1
+												AND P.Activo = 1
+												AND P.Nombre ='FlujoProcuraConLocalidades') --> CTE EN TABLA AP_Preferencias)
+
+
     INSERT INTO #TABLA_PROVEEDORES
     (
         idrow,
@@ -52,13 +87,13 @@ BEGIN
            SUM(POD.PrecioUnitario * POD.AddCantidadTemp),
            POD.IdMoneda,
            POD.IdPeticionOferta
-    FROM MM_PeticionOferta AS PO
+    FROM MM_PeticionOferta AS PO 
         INNER JOIN MM_PeticionOfertaDetalle AS POD
-            ON POD.IdPeticionOferta = PO.IdPeticionOferta
+            ON PO.IdPeticionOferta = POD.IdPeticionOferta 
         INNER JOIN MM_SolicitudPedido AS SP
-            ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
+            ON  PO.IdSolicitudPedido = SP.IdSolicitudPedido
         INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-            ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
+            ON  POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
     WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
           AND POD.AddValidado = 1
           AND POD.Cotizado = 1
@@ -100,27 +135,47 @@ BEGIN
                    END
             FROM #TABLA_PROVEEDORES AS TP
                 LEFT JOIN #TIPO_CAMBIO AS TC
-                    ON TC.IdMoneda = TP.idTipoMoneda
+                    ON TP.idTipoMoneda = TC.IdMoneda
             WHERE idrow = @INCREMENTO
         );
 
         SET @TotalSumaPedidos = ISNULL(@TotalSumaPedidos, 0) + @suma;
 
         --Asignar el flujo correspondiente al monto
+		IF @AplicarFlujoProcuraConLocalidades = 1
+		BEGIN 
+			INSERT INTO @tablaFlujos
+			(
+				Fila,
+				IdFlujoTarea,
+				ValorInicial,
+				ValorFinal,
+				Predeterminado,
+				Nombre,
+				Orden
+			)
+			EXEC dbo.SP_ObtenerFlujoAprobacionxValorxLocalidades @Total = @TotalSumaPedidos,                -- float
+																 @IdProveedorCompras = @IdProveedorCompras,
+																 @IdSolicitudPedido = @IdSolicitudPedido,
+																 @IdContrato = @IdContratoSolicitud; -- int
+			
+		END
+		ELSE
+		BEGIN 
 
-        INSERT INTO @tablaFlujos
-        (
-            Fila,
-            IdFlujoTarea,
-            ValorInicial,
-            ValorFinal,
-            Predeterminado,
-            Nombre,
-            Orden
-        )
-        EXEC dbo.SP_ObtenerFlujoAprobacionxValor @Total = @TotalSumaPedidos,                -- float
-
-                                                 @IdProveedorCompras = @IdProveedorCompras; -- int
+			INSERT INTO @tablaFlujos
+			(
+				Fila,
+				IdFlujoTarea,
+				ValorInicial,
+				ValorFinal,
+				Predeterminado,
+				Nombre,
+				Orden
+			)
+			EXEC dbo.SP_ObtenerFlujoAprobacionxValor @Total = @TotalSumaPedidos,                -- float
+													 @IdProveedorCompras = @IdProveedorCompras; -- int
+		END 
         SELECT @IdFlujo = IdFlujoTarea
         FROM @tablaFlujos
         WHERE Fila = 1;

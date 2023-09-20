@@ -27,7 +27,8 @@ CREATE PROCEDURE [dbo].[SP_AX_BitacoraLecturaCorreos]
 	@Error BIT
 AS
 BEGIN
-DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int;
+DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int,
+		@CuentaCorreo varchar(300) = (SELECT CuentaRegistro FROM S_CorreoServidor WHERE Descripcion = 'Notificaciones_Procura');
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
@@ -72,11 +73,8 @@ DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int;
             Mensaje,
             FechaProgramadaEnvio,
             Enviada,
-            FechaEnvio,
             CreadoPor,
             CreadoEl,
-            ModificadoPor,
-            ModificadoEl,
             De
     )
 	SELECT
@@ -86,12 +84,9 @@ DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int;
 			REPLACE(@HTML,'##NOMBRE_USUARIO##',ISNULL(Nombre,'Usuario de ADINCO')), 
 			DATEADD(MINUTE, 1, GETDATE()), 
 			0, 
-			NULL, 
-			3, 
+			10380, --Usuario Soporte
 			GETDATE(), 
-			NULL, 
-			NULL,
-			'notificaciones@adinco.mx'
+			@CuentaCorreo
 	FROM dbo.WDEA_CorreosResumenProcesamiento (NOLOCK);
 	end
 END
