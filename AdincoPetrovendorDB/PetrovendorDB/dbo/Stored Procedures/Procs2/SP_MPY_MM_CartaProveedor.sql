@@ -6,9 +6,8 @@ IF EXISTS
     FROM dbo.sysobjects
     WHERE name = 'SP_MPY_MM_CartaProveedor'
 )
-    DROP PROCEDURE SP_MPY_MM_CartaProveedor; 
+    DROP PROCEDURE SP_MPY_MM_CartaProveedor;
 GO
-/****** Object:  StoredProcedure [dbo].[SP_MPY_MM_CartaProveedor]    Script Date: 31/07/2023 07:36:06 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -49,6 +48,10 @@ GO
 -- Author:	Daniel AC
 -- Update: 31/07/2023
 -- Description:	se agregan validaciones para evitar mostrar información de mercadeo cuando es murphy https://github.com/Adinco/petrovendor/issues/2407
+-- =============================================
+-- Author:	Alexander Gomez
+-- Update: 19/09/2023
+-- Description: se corrige el primero parrafo de carta de proveedor a proveedor https://github.com/Adinco/petrovendor/issues/2488
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedor]   
  -- Add the parameters for the stored procedure here  
@@ -506,12 +509,12 @@ BEGIN
 			@UsuarioFisico AS RepresentanteLegal,   
 			'CARTA DE PROVEEDOR A PROVEEDOR DE LO DESTINADO A UNA ASIGNACIÓN, CONTRATO O PERMISO, DE LA INDUSTRIA DE HIDROCARBUROS' AS Titulo,  
 			'Por medio de la presente, el (la) que suscribe ' + @UsuarioFisico  
-			+' representante legal de la empresa ' + ISNULL(P.RazonSocial,'')  
-			+ case when isnull(AC.NoActaConstitutiva,'') <> '' then  ' lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
+			+', representante legal de la empresa ' + ISNULL(P.RazonSocial,'')  
+			+ case when isnull(AC.NoActaConstitutiva,'') <> '' then  ', lo que acredito con el instrumento público número ' + CAST(AC.NoActaConstitutiva AS NVARCHAR(MAX))  
 					else '' end
-			+ ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL   
-			+' declarado(s) a continuación, se suministraron y facturaron al Operador del (de la) ' + ISNULL(CON.NumeroContrato,'') COLLATE SQL_Latin1_General_CP1_CI_AS + ' en el año '
-			+ CAST(Year(GETDATE()) AS NVARCHAR(50)) + ' cuenta(n) con la Proporción de Contenido Nacional que se señala en esta carta'  
+			+ ', DECLARO BAJO PROTESTA DE DECIR VERDAD, que el (los) ' + @TIPO_MATERIAL 
+			+ ' declarado(s) a continuación, que fueron facturados por mi representada, en el año '
+			+ CAST(Year(GETDATE()) AS NVARCHAR(50)) + ', cuenta(n) con la Proporción de Contenido Nacional que se señala en esta carta'  
 			+ ' y que mi representada la obtuvo de conformidad con lo establecido en el “Acuerdo por el '  
 			+ 'que se establece la Metodología para la Medición del Contenido Nacional en Asignaciones y '  
 			+ 'Contratos para la Exploración y Extracción de Hidrocarburos, así como para los permisos en '  
