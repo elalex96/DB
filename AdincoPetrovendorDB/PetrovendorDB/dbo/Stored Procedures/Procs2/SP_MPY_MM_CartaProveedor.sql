@@ -462,7 +462,7 @@ BEGIN
 								WHERE IdContrato = @IdContrato
 									AND TipoConfiguracion = 'CARTA_PR_PR'
 									AND Operadora = 1 --> CTE
-									AND Activo = 1);--> CTE ESTE ACTIVA LA CONGIRACIÓN
+									AND Activo = 1);--> CTE ESTE ACTIVA LA CONFIGURACIÓN
 
   IF  @EXISTE_RFC_DEA > 0 OR @CONFIGURACION_CARTA = 'CARTA_PR_PR'
   BEGIN
