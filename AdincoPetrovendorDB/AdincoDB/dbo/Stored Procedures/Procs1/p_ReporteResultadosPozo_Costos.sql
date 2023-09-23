@@ -1,4 +1,5 @@
-﻿IF EXISTS
+﻿USE [Adinco]
+IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -79,15 +80,18 @@ BEGIN
            CO_Registro.MesPresentacion
     FROM CO_Registro (NOLOCK)
         inner join FI_Factura (NOLOCK)
-            ON FI_Factura.IdFactura = CO_Registro.IdFactura
+            ON CO_Registro.IdFactura = FI_Factura.IdFactura 
+			and FI_Factura.IdContrato = @pIdContrato
+			and CO_Registro.IdEstado = 10004 --Aprobado
         inner join CO_Instalacion (NOLOCK)
-            ON CO_Instalacion.IdInstalacion = CO_Registro.IdInstalacion
+            ON CO_Registro.IdInstalacion = CO_Instalacion.IdInstalacion  
         inner join PR_Pozo (NOLOCK)
-            ON PR_Pozo.Id = CO_Instalacion.WelIID
+            ON CO_Instalacion.WelIID = PR_Pozo.Id 
+			and PR_Pozo.Id = @pidPozo
         inner join CO_LineaPresupuestoMes (NOLOCK)
-            ON CO_LineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+            ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes  
         inner join CO_Servicio (NOLOCK)
-            ON CO_Servicio.idServicio = CO_LineaPresupuestoMes.IdServicio
+            ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.idServicio  
     WHERE FI_Factura.IdContrato = @pIdContrato
           and PR_Pozo.Id = @pidPozo
           and convert(varchar, CO_Registro.MesPresentacion, 112) <= convert(varchar, @pMesFinAnio, 112)
@@ -123,15 +127,18 @@ BEGIN
            CO_Registro.MesPresentacion
     from CO_Registro (NOLOCK)
         inner join FI_PedimentoComprobante (NOLOCK)
-            on FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
+            on  CO_Registro.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
+			and FI_PedimentoComprobante.IdContrato = @pIdContrato
+			and CO_Registro.IdEstado = 10004 --Aprobado
         inner join CO_Instalacion (NOLOCK)
-            on CO_Instalacion.IdInstalacion = CO_Registro.IdInstalacion
+            on CO_Registro.IdInstalacion = CO_Instalacion.IdInstalacion
         inner join PR_Pozo (NOLOCK)
-            on PR_Pozo.Id = CO_Instalacion.WelIID
+            on CO_Instalacion.WelIID = PR_Pozo.Id
+			and PR_Pozo.Id = @pidPozo
         inner join CO_LineaPresupuestoMes (NOLOCK)
-            on CO_LineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+            on CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
         inner join CO_Servicio (NOLOCK)
-            on CO_Servicio.idServicio = CO_LineaPresupuestoMes.IdServicio
+            on CO_LineaPresupuestoMes.IdServicio = CO_Servicio.idServicio
         left join PV_TipoMoneda (NOLOCK)
             on FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
     where FI_PedimentoComprobante.IdContrato = @pIdContrato
@@ -145,8 +152,8 @@ BEGIN
     set Paridad = TipoCambio
     from #tmpAcumulado_Prev prev
         inner join CO_TipoCambioDiario tc
-            on tc.IdMoneda = prev.IdMoneda
-               and convert(varchar, tc.Fecha, 112) = convert(varchar, prev.Fecha, 112)
+            on prev.IdMoneda = tc.IdMoneda
+               and convert(varchar, prev.Fecha, 112) = convert(varchar, tc.Fecha, 112)
                and tc.Activo = 1
 
     update #tmpAcumulado_Prev
@@ -181,6 +188,6 @@ BEGIN
            Acumulado = a.Acumulado
     from #tmpAcumulado a
         left join #tmpMes b
-            on b.IdServicio = a.IdServicio
+            on a.IdServicio = b.IdServicio 
 
 END
