@@ -1,4 +1,3 @@
-﻿USE [Adinco]
 IF EXISTS
 (
     SELECT 1
