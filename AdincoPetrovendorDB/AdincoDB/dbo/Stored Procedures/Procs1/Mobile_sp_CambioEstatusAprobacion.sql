@@ -15,11 +15,15 @@ GO
 -- =============================================
 -- Author:		Luis David
 -- Create date: 23-03-2022
--- Description:	Se actualiza el sp para aprobaci�n de pedimento comprobante  updateByApp
+-- Description:	Se actualiza el sp para aprobación de pedimento comprobante  updateByApp
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 16-08-2023
 -- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 27-09-2023
+-- Description:	se agrega una consulta para retornar los datos de aprobaciones de solicitud de pedido para adinco app
 -- =============================================
 CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] 
 @IdAprobacion INT ,	--APP
@@ -85,6 +89,52 @@ DECLARE @IdFirma nvarchar(max),
 																@AprobadorPetrovendor = @IdAprobador,
 																@AprobadorAdinco = @IdUsuario,
 																@FechaAprobacion = @fecha; 
+
+			--RETORNO DE LOS APROBADORES
+			SELECT DISTINCT
+               TOO.IdOperacion,
+               FT.IdFlujoTarea,
+               FT.IdTipoFlujo,
+               TOO.IdEstatusOperacion,
+               TAE.Nombre,
+               TOO.IdEstadoFlujo,
+               TOO.IdTipoOperacion,
+               TTO.NombreOperacion,
+               U.IdUsuario,
+               T.NoSecuencia,
+               U.Nombre,
+               U.Correo,
+               T.IdEstatus,
+               TOO.IdDocumento,
+               TOO.IdAsignador,
+               TOO.IdProveedor,
+               ISNULL(TOO.Descripcion, '') AS Comentario,
+               TAE.Name,
+			   U.IdUsuarioADINCO,
+			   UA.IdUsuarioADINCO as 'AsignadorId',
+			   AC.NombreAreaContractual
+        FROM Petrovendor..TA_Tarea AS T (NOLOCK) 
+            LEFT JOIN Petrovendor..TA_Operacion AS TOO (NOLOCK)
+                ON T.IdOperacion = TOO.IdOperacion
+            LEFT JOIN Petrovendor..TA_FlujoTarea AS FT (NOLOCK)
+                ON TOO.IdFlujoTarea = FT.IdFlujoTarea
+            LEFT JOIN Petrovendor..S_Usuario AS U (NOLOCK)
+                ON T.IdAprobador = U.IdUsuario
+            LEFT JOIN Petrovendor..TA_TipoOperacion AS TTO (NOLOCK)
+                ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
+            LEFT JOIN Petrovendor..TA_Estatus AS TAE (NOLOCK)
+                ON TOO.IdEstatusOperacion = TAE.IdEstatus
+			LEFT JOIN Petrovendor..S_Usuario UA (NOLOCK)
+				ON UA.IdUsuario = TOO.IdAsignador
+			LEFT JOIN Petrovendor..MM_SolicitudPedido AS SP (NOLOCK)
+				ON TOO.IdDocumento = SP.IdSolicitudPedido
+			LEFT JOIN Adinco..CO_Contrato AS CC (NOLOCK)
+				ON SP.IdContrato = CC.IdContrato
+			LEFT JOIN Adinco..CO_AreaContractual AS AC (NOLOCK)
+				ON CC.IdAreaContractual = AC.IdAreaContractual
+        WHERE TOO.IdOperacion = @IdOperacion
+        ORDER BY NoSecuencia ASC;
+
 		end
 		else
 		BEGIN
@@ -128,7 +178,7 @@ DECLARE @IdFirma nvarchar(max),
 																@AprobadorAdinco = @IdUsuario,
 																@FechaAprobacion = @fecha;
 																
-			/*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobaci�n SERIAL*/
+			/*Se valida y envia CORREO de notificacion de aprobacion  de pedido al siguiente aprobador, si es Flujo de aprobación SERIAL*/
 			EXEC Petrovendor..Mobile_EnviarNotificacionAprobacionPedido  @IdTareaActual= @IdAprobacion,@Origen='Mobile_sp_CambioEstatusAprobacion'   	
 			
 			
