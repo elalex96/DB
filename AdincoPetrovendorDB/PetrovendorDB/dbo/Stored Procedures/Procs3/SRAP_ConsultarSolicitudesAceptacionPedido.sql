@@ -1,4 +1,8 @@
-﻿-- =============================================
+use petrovendor
+go
+drop proc if exists SRAP_ConsultarSolicitudesAceptacionPedido
+go
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
 -- Description:	Consultar solicitudes de recepción de pedido
@@ -28,6 +32,10 @@
 -- Author:		Luis David
 -- Create date: 06-10-2022
 -- Description:	Issue #2056 elminación  adecuaciones para mostrar las solicitudes pendientes a los usuarios obs
+-- =============================================
+-- Author:		Luis David
+-- Create date: 27/09/2023
+-- Description:	Issue #2502 cambia el comentario a Max para no generar error de data trucated
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultarSolicitudesAceptacionPedido]
 	-- Add the parameters for the stored procedure here
@@ -61,7 +69,7 @@ AS
 		drop table if exists #AprobacionesOBSyRequisitor
 		create table #AprobacionesOBSyRequisitor(
 					IdSolicitudAceptacionPedido int,
-					Comentario varchar(1000),
+					Comentario varchar(MAX),
 					IdPedido int,    
 					IdSolicitudPedido int,    		 
 					Proveedor varchar(1000),    
