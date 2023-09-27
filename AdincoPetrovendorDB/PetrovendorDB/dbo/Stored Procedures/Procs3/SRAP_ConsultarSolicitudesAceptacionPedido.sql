@@ -144,7 +144,7 @@ AS
 		LEFT JOIN	S_Usuario								US (NOLOCK)
 		ON			SP.Solicitante							=	US.IdUsuario
 		left join	TA_Tarea								ta (NOLOCK)
-		on			ta.IdOperacion							=	O.IdOperacion
+		on			O.IdOperacion							=ta.IdOperacion
 		and			ta.IdAprobador							=	@IdUsuario
 		LEFT JOIN	DEA_Relacion_PR_PO AS RPO	(NOLOCK)
 		ON			P.IdPedido								= RPO.IdPedido
