@@ -3933,5 +3933,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_AP_ConsultaMesesAnio.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ValidarDatosDeExcepcionesReporte.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_FI_CatCFDIMetodoPago.sql" />
+    <Build Include="dbo\Views\vwRandom.sql" />
+    <Build Include="dbo\Functions\fnCustomPass.sql" />
   </ItemGroup>
 </Project>

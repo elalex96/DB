@@ -25,7 +25,7 @@ GO
 -- Create date: 27-09-2023
 -- Description:	se agrega una consulta para retornar los datos de aprobaciones de solicitud de pedido para adinco app
 -- =============================================
-CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] 
+ALTER PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] 
 @IdAprobacion INT ,	--APP
 @IdContrato Int ,		--APP
 @IdStatus INT ,			--APP
@@ -50,7 +50,48 @@ DECLARE @IdFirma nvarchar(max),
 		@IdFacturaAdinco INT,
 		@Secuencia INT,
 		@IdPedimentoComprobante INT,
-		@updateByAppPC BIT = 1;
+		@updateByAppPC BIT = 1,
+		@NOMBRESIGAPROBADOR NVARCHAR(MAX),
+		@CORREOSIGAPROBADOR NVARCHAR(MAX),
+		@CORREOSIG NVARCHAR(MAX),
+		@TIPOFLUJO INT,
+		@ESTATUS_FINAL INT,
+		@NUMERO_OPERACION NVARCHAR(MAX),
+		@TIPO_OPERACION NVARCHAR(MAX),
+		@AREA_CONTRACTUAL NVARCHAR(MAX),
+		@DESCRIPCION_TAREA NVARCHAR(MAX),
+		@URL_TAREA_ACEPTAR NVARCHAR(MAX),
+		@URL_TAREA_RECHAZAR NVARCHAR(MAX),
+		@URL_TAREA NVARCHAR(MAX),
+		@ID_OPERACION NVARCHAR(MAX),
+		@ID_SIG_APROBADOR NVARCHAR(MAX),
+		@IDNOTIFICACION INT,
+		@ASUNTO NVARCHAR(MAX),
+		@CORREO_ENVIO_NOTIF NVARCHAR(MAX);
+
+		CREATE TABLE #APROBADORES_SOLPED(
+			IdOperacion INT,
+			IdFlujoTarea INT,
+			IdTipoFlujo INT,
+			IdEstatusOperacion INT,
+			NombreEstatusOperacion NVARCHAR(MAX),
+			IdEstadoFlujo INT,
+			IdTipoOperacion INT,
+			NombreOperacion NVARCHAR(MAX),
+			IdUsuario INT,
+			NoSecuencia INT,
+			NombreUsuario NVARCHAR(MAX),
+			CorreoUsuario NVARCHAR(MAX),
+			IdEstatus INT,
+			IdDocumento INT,
+			IdAsignador INT,
+			IdProveedor INT,
+			Comentario NVARCHAR(MAX),
+			Name NVARCHAR(MAX),
+			IdUsuarioADINCO INT,
+			AsignadorId INT,
+			NombreAreaContractual NVARCHAR(MAX)
+		);
 	---- Se obtiene el id usuario  de petrovendor
 	SET @IdAprobador = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario (NOLOCK) WHERE IdUsuarioADINCO = @IdUsuario)
 	--- HISTORIAL
@@ -90,7 +131,31 @@ DECLARE @IdFirma nvarchar(max),
 																@AprobadorAdinco = @IdUsuario,
 																@FechaAprobacion = @fecha; 
 
+			
 			--RETORNO DE LOS APROBADORES
+			INSERT INTO #APROBADORES_SOLPED(
+				IdOperacion,
+				IdFlujoTarea ,
+				IdTipoFlujo ,
+				IdEstatusOperacion ,
+				NombreEstatusOperacion ,
+				IdEstadoFlujo ,
+				IdTipoOperacion ,
+				NombreOperacion ,
+				IdUsuario ,
+				NoSecuencia ,
+				NombreUsuario ,
+				CorreoUsuario ,
+				IdEstatus ,
+				IdDocumento ,
+				IdAsignador ,
+				IdProveedor ,
+				Comentario ,
+				Name ,
+				IdUsuarioADINCO ,
+				AsignadorId ,
+				NombreAreaContractual 
+			)
 			SELECT DISTINCT
                TOO.IdOperacion,
                FT.IdFlujoTarea,
@@ -134,6 +199,119 @@ DECLARE @IdFirma nvarchar(max),
 				ON CC.IdAreaContractual = AC.IdAreaContractual
         WHERE TOO.IdOperacion = @IdOperacion
         ORDER BY NoSecuencia ASC;
+
+		SET @ESTATUS_FINAL = (SELECT TOP 1 IdEstatusOperacion FROM #APROBADORES_SOLPED ORDER BY NoSecuencia ASC)
+		SET @TIPOFLUJO = (SELECT TOP 1 IdTipoFlujo FROM #APROBADORES_SOLPED ORDER BY NoSecuencia ASC)
+
+		IF @ESTATUS_FINAL = 1 AND @TIPOFLUJO = 1--SE VALIDA SI LA OPERACION SIGUE PENDIENTE Y EL FLUJO ES SERIAL PARA CONTINUAR CON LA NOTIFICACION
+		BEGIN
+			
+			--ENVIO DE NOTIFICACION DE CORREO
+			SET @NOMBRESIGAPROBADOR = (SELECT TOP 1 NombreUsuario FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @CORREOSIGAPROBADOR = (SELECT TOP 1 CorreoUsuario FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @NUMERO_OPERACION = (SELECT TOP 1 CAST(IdDocumento AS nvarchar) FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @TIPO_OPERACION = (SELECT TOP 1 NombreOperacion FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @AREA_CONTRACTUAL = (SELECT TOP 1 NombreAreaContractual FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @DESCRIPCION_TAREA = (SELECT TOP 1 Comentario FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @ID_OPERACION = (SELECT TOP 1 CAST(IdOperacion AS nvarchar) FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @ID_SIG_APROBADOR = (SELECT TOP 1 CAST(IdUsuario AS nvarchar) FROM #APROBADORES_SOLPED WHERE IdEstatus = 1 ORDER BY NoSecuencia ASC);
+			SET @URL_TAREA_ACEPTAR = 'https://procura.adinco.mx/04Tareas/aprobacion.aspx?num_operacion=' + dbo.fnCustomPass(8,'C') + @ID_OPERACION + dbo.fnCustomPass(8,'C') + '&response=2&num_tarea=&num_user=' + dbo.fnCustomPass(8,'C') + @ID_SIG_APROBADOR + dbo.fnCustomPass(8,'C');
+			SET @URL_TAREA_RECHAZAR = 'https://procura.adinco.mx/04Tareas/aprobacion.aspx?num_operacion=' + dbo.fnCustomPass(8,'C') + @ID_OPERACION + dbo.fnCustomPass(8,'C') + '&response=3&num_tarea=&num_user=' + dbo.fnCustomPass(8,'C') + @ID_SIG_APROBADOR + dbo.fnCustomPass(8,'C');
+			SET @URL_TAREA = 'https://procura.adinco.mx/01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=' + dbo.fnCustomPass(8,'C') + @NUMERO_OPERACION + dbo.fnCustomPass(8,'C') + '&num_user=' + dbo.fnCustomPass(8,'C') + @ID_SIG_APROBADOR + dbo.fnCustomPass(8,'C') + '&origin=t&tp_user=' + dbo.fnCustomPass(8,'C') + '1' + dbo.fnCustomPass(8,'C');
+			
+			SET @CORREO_ENVIO_NOTIF = (SELECT TOP 1 CuentaRegistro FROM Petrovendor..S_CorreoServidor WHERE Descripcion = 'Notificaciones_Procura');
+			SET @CORREOSIG = (SELECT HTML FROM Petrovendor.dbo.TA_Correo (NOLOCK) WHERE IdCorreo = 1);
+			SET @ASUNTO = (SELECT Asunto FROM Petrovendor.dbo.TA_Correo (NOLOCK) WHERE IdCorreo = 1);
+			SET @ASUNTO = (REPLACE(@ASUNTO,'##TIPO_OPERACION##','Requisición'));
+			SET @ASUNTO = (REPLACE(@ASUNTO,'##NO##',@NUMERO_OPERACION));
+
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_USUARIO##',@NOMBRESIGAPROBADOR));
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NUMERO_OPERACION##',@NUMERO_OPERACION));
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##TIPO_OPERACION##',@TIPO_OPERACION));
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##AREA_CONTRACTUAL##',@AREA_CONTRACTUAL));
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##DESCRIPCION_TAREA##',@DESCRIPCION_TAREA));
+
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_TAREA_ACEPTAR##',@URL_TAREA_ACEPTAR));
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_TAREA_RECHAZAR##',@URL_TAREA_RECHAZAR));
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_TAREA##',@URL_TAREA));
+			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));
+
+			SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
+
+			INSERT INTO Adinco.dbo.S_Notificacion
+				(
+				    IdNotificacion,
+				    Para,
+				    Asunto,
+				    Mensaje,
+				    FechaProgramadaEnvio,
+				    Enviada,
+				    FechaEnvio,
+				    CreadoPor,
+				    CreadoEl,
+				    ModificadoPor,
+				    ModificadoEl,
+				    De,
+				    EN_MsjEnviado
+				)
+				VALUES
+				(	@IDNOTIFICACION,         -- IdNotificacion - bigint
+				    @CORREOSIGAPROBADOR,        -- Para - varchar(1000)
+				    @ASUNTO,        -- Asunto - varchar(500)
+				    @CORREOSIG,        -- Mensaje - text
+				    DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
+				    0,      -- Enviada - bit
+				    NULL, -- FechaEnvio - datetime
+				    3,         -- CreadoPor - int
+				    GETDATE(), -- CreadoEl - datetime
+				    NULL,         -- ModificadoPor - int
+				    NULL, -- ModificadoEl - datetime
+				    @CORREO_ENVIO_NOTIF,        -- De - varchar(100)
+				    NULL       -- EN_MsjEnviado - bit
+				    );
+
+					INSERT INTO Petrovendor.dbo.TA_EnvioCorreo
+				(
+					IdEnvioAdinco,
+					IdCorreo,
+					IdIdentificacion,
+					EnviadoPor,
+					EnviadoEl
+				)
+				VALUES
+				(   @IdNotificacion, -- IdEnvioAdinco - int
+					107, -- CORREO DE PETICION OFERTA
+					CONCAT(@IdNotificacion,' - Aprobación de Requisición #', @NUMERO_OPERACION),  -- IdIdentificacion - int
+					@IdUsuario,
+					GETDATE()
+				);
+
+		END
+
+		SELECT
+			IdOperacion,
+			IdFlujoTarea ,
+			IdTipoFlujo ,
+			IdEstatusOperacion ,
+			NombreEstatusOperacion ,
+			IdEstadoFlujo ,
+			IdTipoOperacion ,
+			NombreOperacion ,
+			IdUsuario ,
+			NoSecuencia ,
+			NombreUsuario ,
+			CorreoUsuario ,
+			IdEstatus ,
+			IdDocumento ,
+			IdAsignador ,
+			IdProveedor ,
+			Comentario ,
+			Name ,
+			IdUsuarioADINCO ,
+			AsignadorId ,
+			NombreAreaContractual 
+		FROM #APROBADORES_SOLPED
+		ORDER BY NoSecuencia ASC
 
 		end
 		else
