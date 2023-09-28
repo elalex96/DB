@@ -1,4 +1,8 @@
-﻿-- =============================================
+use Petrovendor
+go
+drop proc if exists SP_PR_MM_PCN_AgregarCarta_S3
+go
+-- =============================================
 -- Author:        Marcos Neri
 -- Create date:	  20/05/2018
 -- Description:   Se agrego el contrato y el area contractual
@@ -6,6 +10,10 @@
 -- Author:        Daniel Cruz
 -- Create date:	  26-07-21
 -- Description:   Se agrega columna de Bucket
+-- ============================================= 
+-- Author:        Luis David
+-- Create date:	  12/09/2023
+-- Description:   Se agrega el isusuarioAdinco para filtrar en el envio de correo
 -- ============================================= 
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AgregarCarta_S3]
 -- Add the parameters for the stored procedure here
@@ -108,11 +116,15 @@ AS
         DECLARE @CANTIDAD_APROBADORES INT=
         (
             SELECT COUNT(U.IdUsuario)
-            FROM S_Usuario AS U
-                 INNER JOIN S_UsuarioProveedor AS UP ON UP.IdUsuario = U.IdUsuario
-                 INNER JOIN S_Proveedor AS PR ON PR.IdProveedor = UP.IdProveedor
-                 LEFT JOIN dbo.S_UsuarioRol AS UR ON UR.IdUsuario = UP.IdUsuario
-                 LEFT JOIN dbo.MM_AceptacionPedido AS AP ON AP.IdProveedor = UP.IdProveedor
+            FROM S_Usuario (NOLOCK) AS U
+                 INNER JOIN S_UsuarioProveedor (NOLOCK) AS UP 
+				 ON UP.IdUsuario = U.IdUsuario
+                 INNER JOIN S_Proveedor (NOLOCK) AS PR 
+				 ON UP.IdProveedor = PR.IdProveedor
+                 LEFT JOIN dbo.S_UsuarioRol (NOLOCK) AS UR 
+				 ON UP.IdUsuario = UR.IdUsuario
+                 LEFT JOIN dbo.MM_AceptacionPedido (NOLOCK) AS AP 
+				 ON UP.IdProveedor = AP.IdProveedor
             WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
                   AND UR.IdRol = 3
                   AND U.Activo = 1
@@ -125,7 +137,7 @@ AS
             FROM dbo.MM_AceptacionCartaPCN
             WHERE IdAceptacionPedido = @IdAceptacionPedido
                   AND IdEstatus = 3
-                  AND Editado = 1
+            AND Editado = 1
                   AND IdAceptacionCartaPCN != @IdAceptacionCartaPCN
             ORDER BY CreadoEl DESC
         );
@@ -146,32 +158,44 @@ AS
                        U.Correo, --4
                        U.IdUsuario, --5
                        PR.IdProveedor, --6
-                       ISNULL(U.Telefono, ''), --7
-                       REPLACE(CCO.NumeroContrato COLLATE Modern_Spanish_CI_AS, '', '
-		'), --8
-                       REPLACE(CAC.NombreAreaContractual COLLATE Modern_Spanish_CI_AS, '', '
-		') --9
-                FROM S_Usuario AS U
-                     INNER JOIN S_UsuarioProveedor AS UP ON UP.IdUsuario = U.IdUsuario
-                     INNER JOIN S_Proveedor AS PR ON PR.IdProveedor = UP.IdProveedor
-                     LEFT JOIN dbo.S_UsuarioRol AS UR ON UR.IdUsuario = UP.IdUsuario
-                     LEFT JOIN dbo.MM_AceptacionPedido AS AP ON AP.IdProveedor = UP.IdProveedor
-                     LEFT JOIN dbo.MM_Pedido AS P ON P.IdPedido = AP.IdPedido
-                     LEFT JOIN dbo.MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido = P.IdSolicitudPedido
-                     LEFT JOIN Adinco.dbo.CO_Contrato AS CCO ON CCO.IdContrato = P.IdContrato
-                     LEFT JOIN adinco.dbo.CO_AreaContractual AS CAC ON CAC.IdAreaContractual = CCO.IdAreaContractual
+                       ISNULL(U.Telefono, '') as Telefono, --7
+                       REPLACE(CCO.NumeroContrato COLLATE Modern_Spanish_CI_AS, '', '') as NumeroContrato, --8
+                       REPLACE(CAC.NombreAreaContractual COLLATE Modern_Spanish_CI_AS, '', '') as NombreAreaContractual, --9
+						CASE WHEN UPPER(ISNULL(U.Dominio,'')) = 'ADINCO.MX' THEN 
+							1
+						ELSE 
+							0
+						END IsCorreoAdinco --10
+                FROM S_Usuario (NOLOCK) AS U 
+                     INNER JOIN S_UsuarioProveedor (NOLOCK) AS UP 
+					 ON U.IdUsuario = UP.IdUsuario
+                     INNER JOIN S_Proveedor (NOLOCK) AS PR 
+					 ON UP.IdProveedor = PR.IdProveedor
+                     LEFT JOIN dbo.S_UsuarioRol (NOLOCK) AS UR 
+					 ON UP.IdUsuario = UR.IdUsuario
+                     LEFT JOIN dbo.MM_AceptacionPedido (NOLOCK) AS AP 
+					 ON UP.IdProveedor = AP.IdProveedor
+                     LEFT JOIN dbo.MM_Pedido (NOLOCK) AS P 
+					 ON AP.IdPedido = P.IdPedido
+                     LEFT JOIN dbo.MM_SolicitudPedido (NOLOCK) AS SP 
+					 ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+                     LEFT JOIN Adinco.dbo.CO_Contrato (NOLOCK) AS CCO 
+					 ON P.IdContrato = CCO.IdContrato
+                     LEFT JOIN adinco.dbo.CO_AreaContractual (NOLOCK) AS CAC 
+					 ON CCO.IdAreaContractual = CAC.IdAreaContractual
                 WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
                       AND UR.IdRol = 3
-                      AND U.Activo = 1
-                      AND U.IsEliminado = 0
-                      AND UR.Activo = 1
+                      AND ISNULL(U.Activo,0) = 1
+                      AND ISNULL(U.IsEliminado,0) = 0
+                      AND ISNULL(UR.Activo,0) = 1
                 GROUP BY U.IdUsuario, 
                          U.Correo, 
                          PR.IdProveedor, 
                          U.Nombre, 
                          U.Telefono, 
                          CCO.NumeroContrato, 
-                         CAC.NombreAreaContractual;
+                         CAC.NombreAreaContractual,
+						 U.Dominio;
 
                 ----- TU.IdRol = 3 Aprobador Contenido Nacional
         END;
