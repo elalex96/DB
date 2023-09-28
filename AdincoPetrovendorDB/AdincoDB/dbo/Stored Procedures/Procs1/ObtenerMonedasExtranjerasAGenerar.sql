@@ -1,23 +1,26 @@
-﻿CREATE PROCEDURE [dbo].[ObtenerMonedasExtranjerasAGenerar] 
-    @Fecha DATETIME,
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'ObtenerMonedasExtranjerasAGenerar'
+)
+    DROP PROCEDURE ObtenerMonedasExtranjerasAGenerar
+GO
+
+CREATE proc [dbo].ObtenerMonedasExtranjerasAGenerar
+    @Fecha DATE,
     @IdContrato INT
 AS
 BEGIN
-    DECLARE @Aprobado INT = 10004
-    DECLARE @DiaMaximo INT = 0
+    DECLARE @Aprobado INT = 10004,
+            @TipoPedimentoImportacion INT = 2,
+            @TipoComprobanteExtranjero INT = 3,
+            @TipoFactura INT = 1
 
     CREATE TABLE #Tabla
     (
         SerieBanxico VARCHAR(50),
-        FechaPago DATETIME
-    )
-
-    CREATE TABLE #TablaVerificacion
-    (
-        IdMoneda INT,
-        SerieBanxico VARCHAR(50),
-        FechaPago DATETIME,
-        Dias INT
+        FechaPago DATE
     )
 
     INSERT INTO #Tabla
@@ -25,184 +28,92 @@ BEGIN
         SerieBanxico,
         FechaPago
     )
-    SELECT PV_TipoMoneda.SerieBanxico,
-           DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1) AS FechaPago
-    FROM FI_PedimentoComprobante (NOLOCK)
-        INNER JOIN FI_TransferFactura (NOLOCK)
-            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante
-        INNER JOIN FI_Transfer (NOLOCK)
-            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
-        INNER JOIN CO_Registro (NOLOCK)
+    select PV_TipoMoneda.SerieBanxico,
+           DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
+    FROM dbo.CO_Registro (NOLOCK)
+        INNER JOIN dbo.FI_PedimentoComprobante (NOLOCK)
             ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
                AND FI_PedimentoComprobante.IdContrato = @IdContrato
                AND CO_Registro.IdEstado = @Aprobado
-               AND (CAST(CO_Registro.MesPresentacion AS DATE) = CAST(@Fecha AS DATE))
-               AND FI_PedimentoComprobante.IdMoneda <> 1
+               AND CO_Registro.CvTipoDocFacturacion IN ( @TipoPedimentoImportacion, @TipoComprobanteExtranjero )
+        INNER JOIN PV_TipoMoneda (NOLOCK)
+            ON PV_TipoMoneda.IdMoneda = FI_PedimentoComprobante.IdMoneda
+        INNER JOIN dbo.FI_TransferFactura (NOLOCK)
+            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante
+        JOIN dbo.FI_Transfer (NOLOCK)
+            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
+        LEFT JOIN CO_TipoCambioDiario (NOLOCK)
+            ON CAST(CO_TipoCambioDiario.Fecha AS DATE) = CAST(FI_Transfer.FechaPago AS DATE)
+               AND FI_PedimentoComprobante.IdMoneda = CO_TipoCambioDiario.IdMoneda
+    WHERE DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Fecha
+          AND PV_TipoMoneda.SerieBanxico IS NOT NULL
+    GROUP BY PV_TipoMoneda.SerieBanxico,
+             DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
+
+
+    INSERT INTO #Tabla
+    (
+        SerieBanxico,
+        FechaPago
+    )
+    select PV_TipoMoneda.SerieBanxico,
+           DATEFROMPARTS(YEAR(FI_Factura.Fecha), MONTH(FI_Factura.Fecha), 1)
+    FROM dbo.CO_Registro (NOLOCK)
+        INNER JOIN dbo.FI_Factura (NOLOCK)
+            ON CO_Registro.IdFactura = FI_Factura.IdFactura
+               AND FI_Factura.IdContrato = @IdContrato
+               AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
+               AND CO_Registro.IdEstado = @Aprobado
+               AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
+        INNER JOIN PV_TipoMoneda (NOLOCK)
+            ON FI_Factura.IdMoneda = PV_TipoMoneda.IdMoneda
+        LEFT JOIN dbo.CO_TipoCambioDiario (NOLOCK)
+            ON FI_Factura.IdMoneda = CO_TipoCambioDiario.IdMoneda
+               AND CAST(FI_Factura.Fecha AS DATE) = CAST(CO_TipoCambioDiario.Fecha AS DATE)
+    WHERE DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Fecha
+          AND PV_TipoMoneda.SerieBanxico IS NOT NULL
+    GROUP BY PV_TipoMoneda.SerieBanxico,
+             DATEFROMPARTS(YEAR(FI_Factura.Fecha), MONTH(FI_Factura.Fecha), 1)
+
+    INSERT INTO #Tabla
+    (
+        SerieBanxico,
+        FechaPago
+    )
+    SELECT PV_TipoMoneda.SerieBanxico,
+           DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
+    FROM FI_Transfer (NOLOCK)
         INNER JOIN PV_TipoMoneda (NOLOCK)
             ON FI_Transfer.IdMoneda = PV_TipoMoneda.IdMoneda
-        LEFT JOIN CO_TipoCambioDiario (NOLOCK)
-            ON CAST(CO_TipoCambioDiario.Fecha AS DATE) = CAST(FI_Transfer.FechaPago AS DATE)
-               AND FI_PedimentoComprobante.IdMoneda = CO_TipoCambioDiario.IdMoneda
-               AND CO_TipoCambioDiario.IdMoneda <> 1
-    WHERE CO_TipoCambioDiario.Fecha IS NULL
+    WHERE DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1) = @Fecha
+          AND FI_Transfer.IdContrato = @IdContrato
           AND PV_TipoMoneda.SerieBanxico IS NOT NULL
-          AND (CAST(CO_Registro.MesPresentacion AS DATE) = CAST(@Fecha AS DATE))
     GROUP BY PV_TipoMoneda.SerieBanxico,
              DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
 
-    INSERT INTO #Tabla
-    (
-        SerieBanxico,
-        FechaPago
-    )
-    SELECT PV_TipoMoneda.SerieBanxico,
-           DATEFROMPARTS(YEAR(FI_PedimentoComprobante.FechaPago), MONTH(FI_PedimentoComprobante.FechaPago), 1) AS FechaPago
-    FROM FI_PedimentoComprobante (NOLOCK)
-        INNER JOIN PV_TipoMoneda (NOLOCK)
-            ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
-        INNER JOIN CO_Registro (NOLOCK)
-            ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
-               AND FI_PedimentoComprobante.IdContrato = @IdContrato
-               AND CO_Registro.IdEstado = @Aprobado
-               AND (CAST(CO_Registro.MesPresentacion AS DATE) = CAST(@Fecha AS DATE))
-               AND FI_PedimentoComprobante.IdMoneda <> 1
-        LEFT JOIN CO_TipoCambioDiario (NOLOCK)
-            ON CAST(CO_TipoCambioDiario.Fecha AS DATE) = CAST(FI_PedimentoComprobante.FechaPago AS DATE)
-               AND FI_PedimentoComprobante.IdMoneda = CO_TipoCambioDiario.IdMoneda
-               AND CO_TipoCambioDiario.IdMoneda <> 1
-    WHERE CO_TipoCambioDiario.Fecha IS NULL
-          AND PV_TipoMoneda.SerieBanxico IS NOT NULL
-          AND (CAST(CO_Registro.MesPresentacion AS DATE) = CAST(@Fecha AS DATE))
-    GROUP BY PV_TipoMoneda.SerieBanxico,
-             DATEFROMPARTS(YEAR(FI_PedimentoComprobante.FechaPago), MONTH(FI_PedimentoComprobante.FechaPago), 1)
-
-    -- Facturas PUE
-    INSERT INTO #Tabla
-    (
-        SerieBanxico,
-        FechaPago
-    )
-    SELECT PV_TipoMoneda.SerieBanxico,
-           DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
-    FROM FI_Factura (NOLOCK)
-        INNER JOIN PV_TipoMoneda (NOLOCK)
-            ON FI_Factura.IdContrato = @IdContrato
-               AND FI_Factura.IdMoneda = PV_TipoMoneda.IdMoneda
-               AND (
-                       FI_Factura.MetodoPago LIKE '%exhibi%'
-                       OR FI_Factura.MetodoPago LIKE '%PUE%'
-                       OR FI_Factura.FormaPago LIKE '%exhibi%'
-                       OR FI_Factura.FormaPago LIKE '%PUE%'
-                   )
-        INNER JOIN FI_TransferFactura (NOLOCK)
-            ON FI_Factura.IdFactura = FI_TransferFactura.IdFactura
-        INNER JOIN FI_Transfer (NOLOCK)
-            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
-        INNER JOIN CO_Registro (NOLOCK)
-            ON FI_Factura.IdFactura = CO_Registro.IdFactura
-               AND CO_Registro.IdEstado = @Aprobado
-               AND (CAST(CO_Registro.MesPresentacion AS DATE) = CAST(@Fecha AS DATE))
-        LEFT JOIN CO_TipoCambioDiario (NOLOCK)
-            ON CAST(CO_TipoCambioDiario.Fecha AS DATE) = CAST(FI_Transfer.FechaPago AS DATE)
-               AND FI_Factura.IdMoneda = CO_TipoCambioDiario.IdMoneda
-               AND CO_TipoCambioDiario.IdMoneda <> 1
-    WHERE CO_TipoCambioDiario.Fecha IS NULL
-          AND PV_TipoMoneda.SerieBanxico IS NOT NULL
-          AND (CAST(CO_Registro.MesPresentacion AS DATE) = CAST(@Fecha AS DATE))
-          AND CO_Registro.CvTipoDocFacturacion = 1
-          AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
-    GROUP BY PV_TipoMoneda.SerieBanxico,
-             DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
-
-    -- Facturas PPD
-    INSERT INTO #Tabla
-    (
-        SerieBanxico,
-        FechaPago
-    )
-    SELECT PV_TipoMoneda.SerieBanxico,
-           DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
-    FROM dbo.FI_Transfer (NOLOCK)
-        JOIN dbo.FI_TransferFactura (NOLOCK)
-            ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-               AND FI_TransferFactura.CvTipoDocFacturacion = 6
-               AND FI_Transfer.IdContrato = @IdContrato
-        JOIN dbo.FI_ComplementoDePago (NOLOCK)
-            ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
-        JOIN dbo.FI_CPDocRelacionado (NOLOCK)
-            ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
-        JOIN dbo.FI_Factura (NOLOCK)
-            ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
-        JOIN FI_Factura FCPDR (NOLOCK)
-            ON FI_CPDocRelacionado.IdDocumento = FCPDR.UUID
-               AND FI_Factura.IdContrato = FCPDR.IdContrato
-               AND (
-                       FI_Factura.MetodoPago LIKE '%parcia%'
-                       OR FI_Factura.MetodoPago LIKE '%dife%'
-                       OR FI_Factura.MetodoPago LIKE '%PPD%'
-                       OR FI_Factura.FormaPago LIKE '%parcia%'
-                       OR FI_Factura.FormaPago LIKE '%dife%'
-                       OR FI_Factura.FormaPago LIKE '%PPD%'
-                       OR FI_Factura.TipoComprobante = 'P'
-                   )
-        JOIN dbo.PV_TipoMoneda (NOLOCK)
-            ON FI_Transfer.idmoneda = PV_TipoMoneda.idmoneda
-        INNER JOIN CO_Registro
-            ON FCPDR.IdFactura = CO_Registro.IdFactura
-        LEFT JOIN CO_TipoCambioDiario (NOLOCK)
-            ON CAST(CO_TipoCambioDiario.Fecha AS DATE) = CAST(FI_Transfer.FechaPago AS DATE)
-               AND FI_Factura.IdMoneda = CO_TipoCambioDiario.IdMoneda
-               AND CO_TipoCambioDiario.IdMoneda <> 1
-    WHERE CO_TipoCambioDiario.Fecha IS NULL
-          AND PV_TipoMoneda.SerieBanxico IS NOT NULL
-          AND (CAST(CO_Registro.MesPresentacion AS DATE) = CAST(@Fecha AS DATE))
-          AND CO_Registro.CvTipoDocFacturacion = 1
-          AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
-    GROUP BY PV_TipoMoneda.SerieBanxico,
-             DATEFROMPARTS(YEAR(FI_Transfer.FechaPago), MONTH(FI_Transfer.FechaPago), 1)
-
-    SELECT @DiaMaximo = DAY(EOMONTH(@Fecha))
-
-    INSERT INTO #TablaVerificacion
-    (
-        IdMoneda,
-        SerieBanxico,
-        FechaPago,
-        Dias
-    )
-    SELECT PV_TipoMoneda.IdMoneda,
-           PV_TipoMoneda.SerieBanxico,
-           DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1),
-           0
-    FROM PV_TipoMoneda (NOLOCK)
-        LEFT JOIN #Tabla
-            ON ISNULL(PV_TipoMoneda.Eliminado, 0) = 0
-               AND PV_TipoMoneda.SerieBanxico IS NOT NULL
-    WHERE PV_TipoMoneda.SerieBanxico NOT IN ( #Tabla.SerieBanxico )
-
-    UPDATE #TablaVerificacion
-    SET #TablaVerificacion.Dias =
-        (
-            SELECT count(IdMoneda)
-            FROM CO_TipoCambioDiario (NOLOCK)
-            WHERE #TablaVerificacion.IdMoneda = CO_TipoCambioDiario.IdMoneda
-                  AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(@Fecha)
-                  AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(@Fecha)
-        )
 
     INSERT INTO #Tabla
     (
         SerieBanxico,
         FechaPago
     )
-    SELECT #TablaVerificacion.SerieBanxico,
-           #TablaVerificacion.FechaPago
-    FROM #TablaVerificacion
-    WHERE #TablaVerificacion.Dias <> @DiaMaximo
-	
+    SELECT SerieBanxico,
+           @Fecha
+    FROM PV_TipoMoneda
+    WHERE IdMoneda = 1
+
+
+
     SELECT #Tabla.SerieBanxico,
-           DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1) AS FechaPago
+           #Tabla.FechaPago
     FROM #Tabla
-    GROUP BY SerieBanxico,
-             DATEFROMPARTS(YEAR(FechaPago), MONTH(FechaPago), 1)
+        INNER JOIN PV_TipoMoneda (NOLOCK)
+            ON #Tabla.SerieBanxico = PV_TipoMoneda.SerieBanxico
+        LEFT JOIN CO_TipoCambioDiario (NOLOCK)
+            ON #Tabla.FechaPago = DATEFROMPARTS(YEAR(CO_TipoCambioDiario.Fecha), MONTH(CO_TipoCambioDiario.Fecha), 1)
+               AND PV_TipoMoneda.IdMoneda = CO_TipoCambioDiario.IdMoneda
+    WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL
+    GROUP BY #Tabla.SerieBanxico,
+             #Tabla.FechaPago
+
 END
