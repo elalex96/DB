@@ -1,22 +1,15 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'MM_ConsultarLocalidades'
-)
-    DROP PROCEDURE MM_ConsultarLocalidades;
-/****** Object:  StoredProcedure [dbo].[MM_ConsultarLocalidades]    Script Date: 28/08/2023 03:57:11 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-
+use Petrovendor
+go
+drop proc if exists MM_ConsultarLocalidades
+go
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: <04-09-2023>
 -- Description:	Consultar las localidades del proveedor/operadora actual 
+-- =============================================
+-- Author:		Luis David
+-- Create date: <11-09-2023>
+-- Description:	Se agrega trim a izquierda y derecha del nombre de la localidad
 -- =============================================
 CREATE PROCEDURE [dbo].[MM_ConsultarLocalidades] 
 @IdProveedor INT ,
@@ -25,12 +18,10 @@ CREATE PROCEDURE [dbo].[MM_ConsultarLocalidades]
 AS
 BEGIN	
 					
-		
-	SELECT L.Id AS IdLocalidad, L.Nombre
+	SELECT L.Id AS IdLocalidad, LTRIM(RTRIM(ISNULL(L.Nombre,''))) AS Nombre
 	FROM MM_Localidades L (NOLOCK)	
 	WHERE L.IdProveedor = @IdProveedor
 	AND L.Activo = 1 --> QUE ESTE ACTIVA	
 	ORDER BY Nombre ASC
-
 
 END
