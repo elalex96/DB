@@ -2949,6 +2949,7 @@
     <Build Include="dbo\Tables\AP_PreferenciaContrato.sql" />
     <Build Include="dbo\Tables\MM_Localidades.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\MM_ConsultarLocalidades.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\MM_ConsultarPreferenciaContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\MM_ConsultarPreferenciaFlujoProcuraConLocalidades.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_ObtenerFlujoAprobacionxValorxLocalidades.sql" />
   </ItemGroup>
