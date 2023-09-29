@@ -1,7 +1,7 @@
-use petrovendor
-go
-drop procedure if exists SP_TA_ActualizarEstatusPedidoAprobacion
-go
+USE petrovendor
+GO
+DROP PROC IF EXISTS SP_TA_ActualizarEstatusPedidoAprobacion
+GO
 -- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 13-11-2019
@@ -18,6 +18,10 @@ go
 -- Modified:		David De La Cruz
 -- Create date: 09/09/2023
 -- Description:	Se retorna el usuario Adinco Id que se requiere para notificaciones
+--**************************************************************
+-- Author:        Luis David
+-- Create date:	  28/09/2023
+-- Description:   Se agrega el isusuarioAdinco para filtrar en el envio de correo
 --**************************************************************
 CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusPedidoAprobacion] 
 -- Add the parameters for the stored procedure here
@@ -104,7 +108,7 @@ AS
                     FROM TA_Estatus
                     WHERE IdEstatus = @IdEstatus
                 );
-                IF @ESTATUSTA = 'Aprobada'
+            IF @ESTATUSTA = 'Aprobada'
                     BEGIN
                         SET @ESTATUSTA = 'Aprobado';
                 END;
@@ -190,7 +194,12 @@ AS
                        T.IdEstatus, 
                        E.Name,
 					   U.IdUsuarioADINCO,
-					   AC.NombreAreaContractual
+					   AC.NombreAreaContractual,
+					   CASE WHEN UPPER(ISNULL(U.Dominio,'')) = 'ADINCO.MX' THEN 
+							1
+						ELSE 
+							0
+						END IsCorreoAdinco
                 FROM TA_Operacion AS O (NOLOCK)
                      INNER JOIN MM_Pedido AS P (NOLOCK) ON O.IdDocumento = P.IdSolicitudPedido
                      INNER JOIN TA_Tarea AS T (NOLOCK) ON O.IdOperacion = T.IdOperacion
@@ -201,6 +210,7 @@ AS
 					 INNER JOIN adinco..CO_AreaContractual as AC on C.IdAreaContractual = AC.IdAreaContractual
                 WHERE O.IdOperacion = @IdOperacion
                       AND P.Version = @Version
+					  AND U.ACTIVO = 1
             GROUP BY O.IdOperacion, 
                          FT.IdTipoFlujo, 
                          O.IdEstatusOperacion, 
@@ -213,7 +223,8 @@ AS
                          T.IdEstatus, 
                          E.Name,
 						 U.IdUsuarioADINCO,
-						 AC.NombreAreaContractual
+						 AC.NombreAreaContractual,
+						 U.Dominio
                 ORDER BY T.NoSecuencia ASC;
         END;
             ELSE
