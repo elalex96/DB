@@ -15,7 +15,8 @@ BEGIN
     DECLARE @Aprobado INT = 10004,
             @TipoPedimentoImportacion INT = 2,
             @TipoComprobanteExtranjero INT = 3,
-            @TipoFactura INT = 1
+            @TipoFactura INT = 1,
+			@Dolar INT = 2
 
     CREATE TABLE #Tabla
     (
@@ -105,11 +106,50 @@ BEGIN
 	FROM #Tabla
 	LEFT JOIN CO_TipoCambioDiario (NOLOCK)
 		ON #Tabla.FechaPago = CO_TipoCambioDiario.Fecha
-		AND CO_TipoCambioDiario.IdMoneda = 2
+		AND CO_TipoCambioDiario.IdMoneda = @Dolar
 	WHERE SerieBanxico IS NULL AND CO_TipoCambioDiario.IdTipoCambio IS NULL
 	GROUP BY FechaPago
+	
+	-- Insertar dls de PPD
+	INSERT INTO CO_TipoCambioDiario(IdMoneda, Fecha, TipoCambio, IdUsuario, Activo, CreadoPor)
+	SELECT @Dolar, FI_Transfer.FechaPago, 1, 1, 1, 1
+	FROM FI_Transfer (NOLOCK)
+	INNER JOIN FI_TransferFactura (NOLOCK)
+		ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+		AND FI_Transfer.IdMoneda = @Dolar
+		AND FI_Transfer.IdContrato = @IdContrato
+	INNER JOIN FI_ComplementoDePago (NOLOCK)
+		ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
+	INNER JOIN FI_CPDocRelacionado (NOLOCK)
+		ON FI_ComplementoDePago.IdComplementoDePago = FI_CPDocRelacionado.IdComplementoDePago
+	INNER JOIN FI_Factura (NOLOCK)
+		ON FI_CPDocRelacionado.IdDocumento = FI_Factura.UUID
+		AND FI_Factura.IdContrato = @IdContrato
+	INNER JOIN CO_Registro (NOLOCK)
+		ON FI_Factura.IdFactura = CO_Registro.IdFactura
+		AND CO_Registro.MesPresentacion = @Fecha
+	LEFT JOIN CO_TipoCambioDiario (NOLOCK)
+		ON FI_Transfer.FechaPago = CO_TipoCambioDiario.Fecha
+		AND CO_TipoCambioDiario.IdMoneda = @Dolar
+	WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL
+	GROUP BY FI_Transfer.FechaPago
 
 
+	-- Insertar DLS de PUE
+	INSERT INTO CO_TipoCambioDiario(IdMoneda, Fecha, TipoCambio, IdUsuario, Activo, CreadoPor)
+	SELECT @Dolar, FI_Transfer.FechaPago, 1, 1, 1, 1
+	FROM FI_Transfer (NOLOCK)
+	INNER JOIN FI_TransferFactura (NOLOCK)
+		ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
+		AND FI_Transfer.IdContrato = @IdContrato
+		AND FI_Transfer.IdMoneda = @Dolar
+	INNER JOIN CO_Registro (NOLOCK)
+		ON FI_TransferFactura.IdFactura = CO_Registro.IdFactura
+	LEFT JOIN CO_TipoCambioDiario (NOLOCK)
+			ON FI_Transfer.FechaPago = CO_TipoCambioDiario.Fecha
+			AND CO_TipoCambioDiario.IdMoneda = @Dolar
+	WHERE CO_Registro.MesPresentacion = @Fecha AND CO_TipoCambioDiario.IdTipoCambio IS NULL
+	GROUP BY FI_Transfer.FechaPago
 
 	-- Se retorna al usuario los tipos de cambio que hacen falta dar de alta excepto DLS
     SELECT #Tabla.SerieBanxico,
