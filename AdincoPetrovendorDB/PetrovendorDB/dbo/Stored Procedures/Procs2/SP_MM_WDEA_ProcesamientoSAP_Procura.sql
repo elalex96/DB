@@ -105,6 +105,7 @@ BEGIN TRY
 	THEN 1 ELSE 0 END AS IsCorreoAdinco,
 	C.Destinatario
 	FROM WDEA_CorreosResumenProcesamiento AS C
+	GROUP BY C.Destinatario
 	-- SE CONCATENAN Y SE AGRUPAN LOS CORREOS DEPENDIENDO EL DOMINIO
 	INSERT INTO #CorreoConcat(
 	IsCorreoAdinco,
