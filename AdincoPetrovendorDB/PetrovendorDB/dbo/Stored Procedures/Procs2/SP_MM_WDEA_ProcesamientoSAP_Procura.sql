@@ -1,7 +1,8 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_MM_WDEA_ProcesamientoSAP_Procura
-GO
+use Petrovendor
+go
+drop proc if exists SP_MM_WDEA_ProcesamientoSAP_Procura
+go
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/092021
@@ -9,11 +10,15 @@ GO
 -- =============================================
 -- Author:		LUIS DAVID
 -- Create date: 26/10/2022
--- Description:	Se evita el reprocesamiento de pedidos ya procesados, eliminación de SELECT INTOS... Petrovendor(#2094)
+--Description:	Se evita el reprocesamiento de pedidos ya procesados, eliminación de SELECT INTOS... Petrovendor(#2094)
 -- =============================================
 -- Author:		LUIS DAVID
 -- Create date: 26/10/2022
 -- Description:	Se agrega espaciado para mejor formato en mensaje de procesamiento
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 03/10/2023
+-- Description: Petrovendor/2469 Se agrupan los usuarios destinatarios
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_WDEA_ProcesamientoSAP_Procura]
 	-- Add the parameters for the stored procedure here.
@@ -29,7 +34,8 @@ BEGIN
 BEGIN TRY
     -- Insert statements for procedure here
 	DECLARE @CONT INT = 1,
-			@CONTTOTAL INT,
+	
+		@CONTTOTAL INT,
 			@PURCHASING NVARCHAR(100),
 			@CONTRATO INT,
 			@CONT_PROCESADOS INT,
@@ -37,7 +43,8 @@ BEGIN TRY
 			@MENSAJE_EXITOSOS NVARCHAR(MAX) = '',
 			@MENSAJE_FINAL NVARCHAR(MAX) = '',
 			@IdNotificacion INT,
-			@HTML NVARCHAR(MAX),
+			@HTML NVARCHAR(MAX
+),
 			@HORADIA INT = (DATEPART(hour,GETDATE())),
 			@ENVIO INT,
 			@IdPedido INT,
@@ -45,11 +52,21 @@ BEGIN TRY
 			@CatidadFilas Int = (select count(1) from WDEA_Layout_T where IdbitacoraLectura = @IDBITACORA),
 			@POSAPIncorrectos INT,
 			@tableHTML varchar(max),
-			@CuentaCorreo varchar(300);
+			@CuentaCorreo varchar(300),
+			@CorreosAdinco NVARCHAR(MAX),
+			@CorreosOperadora NVARCHAR(MAX) = NULL;
 	-- SE CAMBIA EL REMITENTE POR EL CORREO DE NOTIFICACIONES DE ADINCO,     --YA QUE DEA TIENE REGLA PARA ENVIAR A SPAM LOS CORREOS QUE PROVIENEN DE PROCURA     
-	SELECT @CuentaCorreo = CuentaRegistro      FROM Adinco.dbo.S_CorreoServidor 
+	SELECT @CuentaCorreo = CuentaRegistro      FROM Adinco.
+	dbo.S_CorreoServidor 
 	WHERE Descripcion = 'Notificaciones';
-
+	DROP TABLE IF EXISTS #CorreoConcat
+	DROP TABLE IF EXISTS #DATOSCORREO
+	CREATE TABLE #DATOSCORREO(
+	IsCorreoAdinco bit,
+	Correo VARCHAR(300))
+	CREATE TABLE #CorreoConcat(
+	IsCorreoAdinco bit,
+	Correo VARCHAR(300))
 	DROP TABLE IF EXISTS #PENDIENTES_PROCESAR
 	DROP TABLE IF EXISTS #REGISTROSGUARDADOS
 	DROP TABLE IF EXISTS #PROCESADOS
@@ -70,7 +87,8 @@ BEGIN TRY
 	CREATE TABLE #PROCESADOS(
 		IdPedidoADINCO INT,
 		PURCHASING_DOCUMENT VARCHAR(300),
-		IDCONTRATO INT,
+		IDCONTRATO INT
+,
 		IdBitacora INT
 	);
 	CREATE TABLE #TablaFinal
@@ -81,17 +99,29 @@ BEGIN TRY
 		Contrato varchar(300),
 		Mensaje varchar(max)
 	)
-	IF @HORADIA <= 13
-	BEGIN 
-		SET @ENVIO = 1;
-	END
-	ELSE
-	BEGIN
-		SET @ENVIO = 2;
-	END
 
-	
-	
+	INSERT INTO #DATOSCORREO(IsCorreoAdinco,Correo) 
+	SELECT CASE WHEN UPPER(C.Destinatario) LIKE '%ADINCO.MX%'
+	THEN 1 ELSE 0 END AS IsCorreoAdinco,
+	C.Destinatario
+	FROM WDEA_CorreosResumenProcesamiento AS C
+	-- SE CONCATENAN Y SE AGRUPAN LOS CORREOS DEPENDIENDO EL DOMINIO
+	INSERT INTO #CorreoConcat(
+	IsCorreoAdinco,
+	Correo)
+	SELECT 
+    DTC.IsCorreoAdinco, 
+    STUFF((SELECT ';'+DTS.Correo
+           FROM #DATOSCORREO DTS
+           WHERE DTS.IsCorreoAdinco = DTC.IsCorreoAdinco
+           FOR XML PATH('')), 1, 1, '') AS ParticipantNames
+	FROM #DATOSCORREO DTC
+	GROUP BY DTC.IsCorreoAdinco;
+	--SE OBTIENEN LOS USUARIOS YA CONCATENADOS
+	SET @CorreosOperadora = (SELECT Correo FROM #CorreoConcat WHERE IsCorreoAdinco = 0)
+	SET @CorreosAdinco = (SELECT Correo FROM #CorreoConcat WHERE IsCorreoAdinco = 1)
+
+
 	INSERT INTO #PENDIENTES_PROCESAR(
 	RN,
 	PURCHASING_DOCUMENT,
@@ -119,7 +149,8 @@ BEGIN TRY
 		WHERE RN = @CONT;
 
 		EXEC SP_MM_WDEA_NuevaSolicitudPedidoAutomatica_SAP @PURCHASING,
-															@CONTRATO,
+						
+									@CONTRATO,
 															@IDBITACORA;
 
 		SET @IdPedido = (SELECT TOP 1 IdPedidoADINCO FROM WDEA_PurchasingDocumentsImportados WHERE IdBitacora = @IDBITACORA AND PURCHASING_DOCUMENT = @PURCHASING);
@@ -164,6 +195,7 @@ BEGIN TRY
 
 
 	--MENSAJES EXITOSOS
+
 	IF ISNULL(@CONT_PROCESADOS,0) > 0
 	BEGIN
 		--SE CONCATENAN TODOS LOS PEDIDOS PROCESADOS EXITOSAMENTE
@@ -210,6 +242,7 @@ BEGIN TRY
 		THEN cast(PPC.IdPedidoGeneral AS varchar)
 		ELSE 'No se generó pedido en ADINCO' end as 'Pedido',
 		CASE WHEN BAS.IsImportacionExitosa = 1
+
 		THEN AC.NombreAreaContractual
 		ELSE ' ' end as 'Contrato',
 		CASE WHEN BAS.IsImportacionExitosa = 1
@@ -226,7 +259,7 @@ BEGIN TRY
 		ON PDI.IDCONTRATO = C.IdContrato
 	LEFT JOIN  ADINCO..CO_AreaContractual AS AC
 		ON C.IdAreaContractual = AC.IdAreaContractual
-	WHERE 
+		WHERE 
 		BAS.IDBITACORALECTURA = @IDBITACORA
 		and 
 		BAS.Purchasing_Document is not null
@@ -268,31 +301,32 @@ BEGIN TRY
 	SET @HTML = (REPLACE(@HTML,'##MENSAJE_ERRORES##',ISNULL(@tableHTML,'')));
 	SET @HTML = (REPLACE(@HTML,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
-	SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
+	SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
 	INSERT INTO Adinco.dbo.S_Notificacion
    (
             IdNotificacion,
             Para,
             Asunto,
-            Mensaje,
+			Mensaje,
             FechaProgramadaEnvio,
             Enviada,
             CreadoPor,
             CreadoEl,
-            De
+            De,
+			CCO
     )
 	SELECT
-			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
-			Destinatario, 
-			CAST(CAST(GETDATE() AS DATE) AS nvarchar) + ' Reporte de interfase ADINCO SAP' + ' Envió ' + CAST(@ENVIO as nvarchar) + '/2',
-			REPLACE(@HTML,'##NOMBRE_USUARIO##',ISNULL(Nombre,'Usuario de ADINCO')), 
+			@IdNotificacion,
+			ISNULL(@CorreosOperadora,@CorreosAdinco),-- Si no hay correos destinatarios se envían a los usuarios adinco, 
+			CAST(CAST(GETDATE() AS DATE) AS nvarchar) + ' Reporte de interfase ADINCO SAP',
+			@HTML, 
 			DATEADD(MINUTE, 1, GETDATE()), 
 			0, 
 			10380, --Usuario Soporte
 			GETDATE(),
-			@CuentaCorreo
-	FROM dbo.WDEA_CorreosResumenProcesamiento;
+			@CuentaCorreo,
+			ISNULL(@CorreosAdinco,'')
 
         INSERT INTO dbo.TA_EnvioCorreo 
 		(
@@ -303,19 +337,18 @@ BEGIN TRY
 			EnviadoEl
 		)
 		SELECT
-			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
+			@IdNotificacion, 
 			110, 
 			'Notificación Lectura WDEA',
 			NULL, 
 			GETDATE()
-		FROM dbo.WDEA_CorreosResumenProcesamiento;
 
 
         --BITACORA DE CORREO
         INSERT INTO dbo.TA_BitacoraCorreo
         (
             IdDocumento,
-            Detalle,
+			Detalle,
             Correo,
             Enviado,
             FechaEnvio,
@@ -324,15 +357,14 @@ BEGIN TRY
             IdUsuarioReceptor
         )
 		SELECT
-			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
+			@IdNotificacion, 
 			'Notificación Lectura WDEA', 
-			Destinatario,
+			CONCAT(@CorreosOperadora,';',@CorreosAdinco),-- Si no hay correos destinatarios se envían a los usuarios adinco
 			1,                                            -- Enviado - bit
             GETDATE(),                                    -- FechaEnvio - datetime
-            0,                                            -- IdUsuarioEnvio - int
+            0,												-- IdUsuarioEnvio - int
             0,                                            -- IdProveedorEnvio - int
             0   
-	FROM dbo.WDEA_CorreosResumenProcesamiento;
 
 	INSERT INTO WDEA_Bitacora_AdincoSAP
 	(
