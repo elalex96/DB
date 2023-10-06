@@ -7,7 +7,7 @@ IF EXISTS
     WHERE name = 'FI_ActualizarErrorSATFactura'
 )
     DROP PROCEDURE FI_ActualizarErrorSATFactura;
-/****** Object:  StoredProcedure [dbo].[FI_ActualizarErrorSATFactura]    Script Date: 07/08/2023 05:16:28 p. m. ******/
+GO
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -16,6 +16,10 @@ GO
 -- Author:		DANIEL AC
 -- Create date: <22/08/2023>
 -- Description:	Actualizar si se tiene que actualizar el error sat 
+-- =============================================
+-- Author:		Alexamder Gomez
+-- Create date: <20/09/2023>
+-- Description:	se cambia el guardado de bitacora en AP_Bitacora 
 -- =============================================
 CREATE PROCEDURE [dbo].[FI_ActualizarErrorSATFactura] 
 	-- Add the parameters for the stored procedure here
@@ -35,6 +39,7 @@ BEGIN
 	DECLARE @UUID_ NVARCHAR(MAX)
 	DECLARE @IdLectorXMLSAT_ INT
 	DECLARE @Cambios NVARCHAR(MAX)
+	DECLARE @Mensaje NVARCHAR(MAX)
 
     SELECT @ErrorSAT_ = ISNULL(ErroSAT,0),
 	@IdLectorXMLSAT_ = IdLectorXMLSAT,
@@ -53,9 +58,13 @@ BEGIN
 			WHERE IdFactura = @IdFactura
 
 			-- AGREGAR BITACORA DE REGISTRO
-			SET @Cambios = CONCAT('Contrato: ',@IdContrato,', UUID: ',@UUID_,' - [ ErrorSAT- Antes: ', @ErrorSAT_,', Después: ', @ErrorSAT,', LectorSAT- Antes: ',ISNULL(@IdLectorXMLSAT_,0), ', Después: ',@IdLectorSAT ,' ]')
-			INSERT INTO BitacoraErrores(HResult, Mensaje, StackTrace, IdUsuario, IdProveedor,FechaRegistro)
-			VALUES (@IdFactura,CONCAT('ACTUALIZACIÓN VALIDACIÓN SAT ACEPTACION #',@IdAceptacionPedido),@Cambios,@IdUsuario,@IdProveedor, GETDATE())
+			SET @Cambios = CONCAT('Contrato: ',@IdContrato,', UUID: ',@UUID_,' - [ ErrorSAT- Antes: ', @ErrorSAT_,', Después: ', @ErrorSAT,', LectorSAT- Antes: ',ISNULL(@IdLectorXMLSAT_,0), ', Después: ',@IdLectorSAT ,' ]', ' - IdFactura: ',@IdFactura)
+			SET @Mensaje = CONCAT('ACTUALIZACIÓN VALIDACIÓN SAT ACEPTACION #',@IdAceptacionPedido);
+			EXEC INS_APP_GuardarLogBitacora @Tipo = 'VALIDACION SAT',
+											@Mensaje = @Mensaje,
+											@Detalle = @Cambios,
+											@UsuarioId = @IdUsuario,
+											@ContratoId = @IdProveedor;
 
 		END 
 		ELSE
@@ -66,12 +75,13 @@ BEGIN
 			WHERE IdFactura = @IdFactura
 
 			-- AGREGAR BITACORA DE REGISTRO
-			SET @Cambios = CONCAT('Contrato: ',@IdContrato,', UUID: ',@UUID_, '- [ ErrorSAT- Antes: ', @ErrorSAT_,', Después: ', @ErrorSAT,' ]')
-			INSERT INTO BitacoraErrores(HResult, Mensaje, StackTrace, IdUsuario, IdProveedor,FechaRegistro)
-			VALUES (@IdFactura,CONCAT('ACTUALIZACIÓN VALIDACIÓN SAT ACEPTACION #',@IdAceptacionPedido),@Cambios,@IdUsuario,@IdProveedor, GETDATE())
+			SET @Cambios = CONCAT('Contrato: ',@IdContrato,', UUID: ',@UUID_,' - [ ErrorSAT- Antes: ', @ErrorSAT_,', Después: ', @ErrorSAT,', LectorSAT- Antes: ',ISNULL(@IdLectorXMLSAT_,0), ', Después: ',@IdLectorSAT ,' ]', ' - IdFactura: ',@IdFactura)
+			SET @Mensaje = CONCAT('ACTUALIZACIÓN VALIDACIÓN SAT ACEPTACION #',@IdAceptacionPedido);
+			EXEC INS_APP_GuardarLogBitacora @Tipo = 'VALIDACION SAT',
+											@Mensaje = @Mensaje,
+											@Detalle = @Cambios,
+											@UsuarioId = @IdUsuario,
+											@ContratoId = @IdProveedor;
 		END
 	END 
-
-
-
-END
+END;
