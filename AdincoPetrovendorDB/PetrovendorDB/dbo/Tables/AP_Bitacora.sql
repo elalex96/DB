@@ -1,11 +1,15 @@
-﻿CREATE TABLE [dbo].[AP_Bitacora] (
-    [IdBitacora] INT      IDENTITY (1, 1) NOT NULL,
-    [IdAccion]   INT      NULL,
-    [IdPagina]   INT      NULL,
-    [IdUsuario]  INT      NULL,
-    [Fecha]      DATETIME NULL,
-    CONSTRAINT [PK_AP_Bitacora] PRIMARY KEY CLUSTERED ([IdBitacora] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
-    CONSTRAINT [FK_AP_Bitacora_AP_Pagina] FOREIGN KEY ([IdPagina]) REFERENCES [dbo].[AP_Pagina] ([IdPaginas]),
-    CONSTRAINT [FK_AP_Bitacora_S_Usuario] FOREIGN KEY ([IdUsuario]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
-);
+﻿CREATE TABLE [dbo].[AP_Bitacora](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Fecha] [datetime] NULL,
+	[Tipo] [varchar](1000) NULL,
+	[Mensaje] [varchar](1000) NULL,
+	[Detalle] [varchar](1000) NULL,
+	[UsuarioId] [int] NULL,
+	[ContratoId] [int] NULL,
+ CONSTRAINT [PK_AP_Bitacora] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 

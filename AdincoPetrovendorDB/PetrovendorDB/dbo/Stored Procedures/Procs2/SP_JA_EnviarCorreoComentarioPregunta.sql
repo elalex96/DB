@@ -1,4 +1,8 @@
-﻿-- =============================================
+use petrovendor
+go
+drop proc if exists SP_JA_EnviarCorreoComentarioPregunta
+go
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
 -- Description:	<Envio de correo de notificacion de pregunta en la oferta>
@@ -12,47 +16,55 @@
 -- Create date: 03/06/2022
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
+-- =============================================
+-- Author:		Luis David
+-- Create date: 19/09/2023
+-- Description:	Se agrupan los correos del para y los de adinco en el cco
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta] --20290,2199,420,'PRUEBA 11'
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
 	@IdUsuario INT,
 	@IdProveedor INT,
-	@Comentario NVARCHAR(MAX)
+	@Comentario NVARCHAR(MAX),
+	@IdOferta int
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-	DECLARE @TOTALROWS INT;
-	DECLARE @CONTROWS INT = 1;
-	DECLARE @OPERADORA NVARCHAR(MAX);
-	DECLARE @USUARIOPREGUNTA NVARCHAR(100);
-	DECLARE @TIPOUSUARIOPREGUNTA NVARCHAR(100);
-	DECLARE @COMENTARIOPREGUNTA NVARCHAR(100);
-	DECLARE @HTMLCORREO NVARCHAR(MAX);
-	DECLARE @HTMLCORREOAUX NVARCHAR(MAX);
-	DECLARE @PROVEEDOR NVARCHAR(100);
-	DECLARE @USUARIOPROVEEDOR NVARCHAR(100);
-	DECLARE @CORREOUSUARIOPROVEEDOR NVARCHAR(100);
-	DECLARE @IdNotificacion INT;
-	DECLARE @URL NVARCHAR(MAX);
-	DECLARE @EnviarCorreo bit;
-	DECLARE @IdCorreo INT = (SELECT IdCorreo FROM dbo.TA_Correo WHERE Asunto = 'Comentario(Pregunta) Referente a Requisicion ');
-	DECLARE @IdUsuarioEnviarNotificacion int;
-	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
+	DECLARE @OPERADORA NVARCHAR(MAX),
+	@USUARIOPREGUNTA NVARCHAR(100),
+	@TIPOUSUARIOPREGUNTA NVARCHAR(100),
+	@COMENTARIOPREGUNTA NVARCHAR(100),
+	@HTMLCORREO NVARCHAR(MAX),
+	@CORREOUSUARIOPROVEEDOR NVARCHAR(100),
+	@IdNotificacion INT,
+	@URL NVARCHAR(MAX),
+	@IdCorreo INT = (SELECT IdCorreo FROM dbo.TA_Correo WHERE Asunto = 'Comentario(Pregunta) Referente a Requisicion '),
+	@CorreoNotificaciones NVARCHAR(MAX),
+	@CorreosAdinco NVARCHAR(MAX),
+	@CorreosOperadora NVARCHAR(MAX) = NULL;
 
 	
-	
-
+	DROP TABLE IF EXISTS #CorreoConcat
+	CREATE TABLE #CorreoConcat(
+	IsCorreoAdinco bit,
+	Correos VARCHAR(MAX)
+	)
+	DROP TABLE IF EXISTS #DATOSCORREO
 	CREATE TABLE #DATOSCORREO(
 		IdRow INT IDENTITY(1,1) PRIMARY KEY,
+		IdUsuario int,
 		NombreProveedor NVARCHAR(100),
 		NombreUsuario NVARCHAR(100),
 		Correo NVARCHAR(100),
+		IsCorreoAdinco BIT,
 		TipoUsuario NVARCHAR(100),
 		IdPeticionOferta INT,
 		IdSolicitudPedido INT,
-		URL NVARCHAR(MAX)
+		URL NVARCHAR(MAX),
+		IdUsuarioAdinco INT
 	);
 
 	--NOMBRE DE LA OPERADORA DE LA PREGUNTA
@@ -77,20 +89,32 @@ BEGIN
 
 	--LOS DATOS DE LOS USUARIOS A LOS QUE SE ENVIARAN (VENTAS Y ADMIN) DEL PROVEEDOR
 	--SE VERIDICA QUE EL QUE ENVIO EL COMENTARIO SEA LA OPERADORA O EL PROVEEDOR
-	
-
 	IF EXISTS (SELECT IdSubcontratista FROM dbo.MM_PeticionOferta WHERE IdSubcontratista = @IdProveedor AND IdSolicitudPedido = @IdSolicitudPedido)
 	BEGIN
-	    
-		INSERT INTO #DATOSCORREO
+		INSERT INTO #DATOSCORREO(
+		IdUsuario,
+		NombreProveedor,
+		NombreUsuario,
+		Correo,
+		IsCorreoAdinco,
+		TipoUsuario,
+		IdPeticionOferta,
+		IdSolicitudPedido,
+		URL,
+		IdUsuarioAdinco)
 		SELECT
+			Us.IdUsuario,
 			PR.RazonSocial,
 			US.Nombre,
 			US.Correo,
+			CASE WHEN US.Dominio = 'ADINCO.MX'
+			then 1 else 0
+			end as IsCorreoAdinco,
 			TUS.NombreTipoUsuario,
 			PO.IdPeticionOferta,
 			PO.IdSolicitudPedido,
-			CONCAT('https://petrovendor.mx/01Proveedores/CO_CotizacionDetalle.aspx?oferta=' , CAST(PO.IdPeticionOferta AS NVARCHAR(100)))
+			CONCAT('https://petrovendor.mx/01Proveedores/CO_CotizacionDetalle.aspx?oferta=' , CAST(PO.IdPeticionOferta AS NVARCHAR(100))),
+			US.IdUsuarioADINCO
 		FROM dbo.MM_PeticionOferta AS PO
 			LEFT JOIN dbo.S_Proveedor AS PR
 				ON PO.IdSubcontratista = PR.IdProveedor 
@@ -101,25 +125,37 @@ BEGIN
 				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
 				ON US.IdTipoUsuario = TUS.IdTipoUsuario 
+		LEFT JOIN Petrovendor..TA_NoNotificacion as TANN
+			on US.idUsuario = TANN.IdUsuario 
+			and  TANN.IdCorreo = @IdCorreo
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 5)
 			AND PO.IdSubcontratista <> @IdProveedor
 			and	US.Activo = 1
+			AND isnull(TANN.IsEliminado,0) = 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
 				 TUS.NombreTipoUsuario,
 				 PO.IdPeticionOferta,
-				 PO.IdSolicitudPedido
+				 PO.IdSolicitudPedido,
+				 US.Dominio,
+				 Us.IdUsuario,
+				 Us.IdUsuarioADINCO
 		UNION
 		SELECT
+			Us.IdUsuario,
 			PR.RazonSocial,
 			US.Nombre,
 			US.Correo,
+			CASE WHEN US.Dominio = 'ADINCO.MX'
+			then 1 else 0
+			end as IsCorreoAdinco,
 			TUS.NombreTipoUsuario,
 			PO.IdPeticionOferta,
 			PO.IdSolicitudPedido,
-			CONCAT('https://procura.adinco.mx/02Proveedores/DetalleOferta.aspx?solped=' , CAST(@IdSolicitudPedido AS NVARCHAR(100)))
+			CONCAT('https://procura.adinco.mx/02Proveedores/DetalleOferta.aspx?solped=' , CAST(@IdSolicitudPedido AS NVARCHAR(100))),
+			US.IdUsuarioADINCO
 		FROM dbo.MM_PeticionOferta AS PO
 			LEFT JOIN dbo.MM_SolicitudPedido AS SP 
 				ON  PO.IdSolicitudPedido = SP.IdSolicitudPedido
@@ -132,29 +168,50 @@ BEGIN
 				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
 				ON US.IdTipoUsuario = TUS.IdTipoUsuario 
+			LEFT JOIN Petrovendor..TA_NoNotificacion as TANN
+			on US.idUsuario = TANN.IdUsuario 
+			and  TANN.IdCorreo = @IdCorreo
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4)
 			and	US.Activo = 1
+			AND isnull(TANN.IsEliminado,0) = 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion
+			AND PO.IdPeticionOferta = @IdOferta
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
 				 TUS.NombreTipoUsuario,
 				 PO.IdPeticionOferta,
-				 PO.IdSolicitudPedido;
-
+				 PO.IdSolicitudPedido,
+				 US.Dominio,
+				 Us.IdUsuario,
+				 US.IdUsuarioADINCO
+		ORDER BY US.IdUsuarioADINCO ASC; -- Se agrupan primero los usuarios proveedor
 	END
 	ELSE
 	BEGIN
-	    
-		INSERT INTO #DATOSCORREO
+		INSERT INTO #DATOSCORREO(
+		IdUsuario,
+		NombreProveedor,
+		NombreUsuario,
+		Correo,
+		IsCorreoAdinco,
+		TipoUsuario,
+		IdPeticionOferta,
+		IdSolicitudPedido,
+		URL,
+		IdUsuarioAdinco)
 		SELECT
+			Us.IdUsuario,
 			PR.RazonSocial,
 			US.Nombre,
 			US.Correo,
+			CASE WHEN US.Dominio = 'ADINCO.MX'
+			then 1 else 0 end as IsCorreoAdinco,
 			TUS.NombreTipoUsuario,
 			PO.IdPeticionOferta,
 			PO.IdSolicitudPedido,
-			CONCAT('https://petrovendor.mx/01Proveedores/CO_CotizacionDetalle.aspx?oferta=' , CAST(PO.IdPeticionOferta AS NVARCHAR(100)))
+			CONCAT('https://petrovendor.mx/01Proveedores/CO_CotizacionDetalle.aspx?oferta=' , CAST(PO.IdPeticionOferta AS NVARCHAR(100))),
+			US.IdUsuarioADINCO
 		FROM dbo.MM_PeticionOferta AS PO
 			LEFT JOIN dbo.S_Proveedor AS PR
 				ON PO.IdSubcontratista = PR.IdProveedor 
@@ -165,20 +222,42 @@ BEGIN
 				and	US.Activo = 1
 			LEFT JOIN dbo.S_TipoUsuario AS TUS
 				ON US.IdTipoUsuario = TUS.IdTipoUsuario
+			LEFT JOIN Petrovendor..TA_NoNotificacion as TANN
+			on US.idUsuario = TANN.IdUsuario 
+			and  TANN.IdCorreo = @IdCorreo
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4)
 			and	US.Activo = 1
+			AND isnull(TANN.IsEliminado,0) = 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
 				 TUS.NombreTipoUsuario,
 				 PO.IdPeticionOferta,
-				 PO.IdSolicitudPedido;
-
+				 PO.IdSolicitudPedido,
+				 US.Dominio,
+				 Us.IdUsuario,
+				 US.IdUsuarioADINCO
+	ORDER BY US.IdUsuarioADINCO ASC; -- Se agrupan primero los usuarios proveedor
 	END
 
-	--CONTADOR DEL TOTAL EN LA TABLA
-	SET @TOTALROWS = (SELECT COUNT(IdRow) FROM #DATOSCORREO);
+-- SE CONCATENAN Y SE AGRUPAN LOS CORREOS DEPENDIENDO EL DOMINIO
+INSERT INTO #CorreoConcat(
+	IsCorreoAdinco,
+	Correos)
+SELECT 
+    DTC.IsCorreoAdinco, 
+    STUFF((SELECT ';'+DTS.Correo
+           FROM #DATOSCORREO DTS
+           WHERE DTS.IsCorreoAdinco = DTC.IsCorreoAdinco
+           FOR XML PATH('')), 1, 1, '') AS ParticipantNames
+FROM [dbo].#DATOSCORREO DTC
+GROUP BY DTC.IsCorreoAdinco;
+
+--SE OBTIENEN LOS USUARIOS YA CONCATENADOS
+SET @CorreosOperadora = (SELECT Correos FROM #CorreoConcat WHERE IsCorreoAdinco = 0)
+SET @CorreosAdinco = (SELECT Correos FROM #CorreoConcat WHERE IsCorreoAdinco = 1)
+
 
 	SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = @IdCorreo);
 	if(@HTMLCORREO is null)
@@ -192,23 +271,9 @@ BEGIN
 									INNER JOIN TA_CorreoServidor AS S
 										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = @IdCorreo) --> CTE NUMERO CORREO (TA_Correo)
-	--select * from #DATOSCORREO
-	--select @CONTROWS, @TOTALROWS
-	--ITERACION DE LA TABLA
-	select @HTMLCORREOAUX = @HTMLCORREO
-	--select * from #DATOSCORREO
-	WHILE @CONTROWS <= @TOTALROWS
-	BEGIN
-	    --CONSULTA PARA OBTENER EL HTML DEL CORREO
-		select @HTMLCORREO = @HTMLCORREOAUX
-		SET @EnviarCorreo = 1;
-		SET @IdUsuarioEnviarNotificacion = '';
-
-		SET @USUARIOPROVEEDOR = (SELECT NombreUsuario FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
-		SET @CORREOUSUARIOPROVEEDOR = (SELECT Correo FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
-		SET @URL = (SELECT URL FROM #DATOSCORREO WHERE IdRow = @CONTROWS);
-		SET @IdUsuarioEnviarNotificacion = (SELECT IdUsuario FROM S_Usuario WHERE Correo = @CORREOUSUARIOPROVEEDOR);
-		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@USUARIOPROVEEDOR));
+		
+		SET @URL = (SELECT top 1 URL FROM #DATOSCORREO);
+		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##','USUARIO A ELIMINAR'));
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##USUARIO##',@USUARIOPREGUNTA));
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPOUSUARIO##',@TIPOUSUARIOPREGUNTA));
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##OPERADORA##',@OPERADORA));
@@ -218,9 +283,7 @@ BEGIN
 		SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##URL_TAREA##',@URL));
 
 		SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-		SET @EnviarCorreo= (select TOP 1 IsEliminado from Petrovendor..TA_NoNotificacion where IdCorreo = @IdCorreo AND IdUsuario = @IdUsuarioEnviarNotificacion);
-		IF ISNULL(@EnviarCorreo,1) = 1
-		BEGIN
+		
 			INSERT INTO Adinco.dbo.S_Notificacion
 		(
 			IdNotificacion,
@@ -234,12 +297,13 @@ BEGIN
 			CreadoEl,
 			ModificadoPor,
 			ModificadoEl,
-			De
+			De,
+			CCO
 		)
 		VALUES
 		(
 			@IdNotificacion,
-			@CORREOUSUARIOPROVEEDOR,
+			ISNULL(@CorreosOperadora,@CorreosAdinco),-- Si no hay correos destinatarios se envían a los usuarios adinco
 			CONCAT('Comentario(Pregunta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)),
 			ISNULL(@HTMLCORREO,''),
 			DATEADD(MINUTE,1,GETDATE()),
@@ -249,9 +313,9 @@ BEGIN
 			GETDATE(),
 			NULL,
 			NULL,
-			ISNULL(@CorreoNotificaciones,'')
+			ISNULL(@CorreoNotificaciones,''),
+			@CorreosAdinco
 		);
-		END
 		if (exists(select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion) and isnull(@HTMLCORREO,'')<>'')
 		begin
 
@@ -272,9 +336,4 @@ BEGIN
 				GETDATE()
 			);
 		end
-
-		SET @CONTROWS = @CONTROWS + 1;
-
-	END
-
-END
+end
