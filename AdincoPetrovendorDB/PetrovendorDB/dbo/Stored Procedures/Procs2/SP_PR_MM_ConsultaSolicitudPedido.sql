@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ConsultaSolicitudPedido'
+)
+    DROP PROCEDURE SP_PR_MM_ConsultaSolicitudPedido;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 10-07-17
 -- Description:	LLenar reporte Solicitudes de Pedido 
@@ -10,6 +24,10 @@
 -- Author:		Alexander Gomez
 -- Create date: 20/05/2021
 -- Description:	Se agrega el campo de solicitante
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 10/10/2023
+-- Description:	se agregan estandares de desarrollo
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ConsultaSolicitudPedido]
     -- Add the parameters for the stored procedure here
@@ -44,12 +62,12 @@ BEGIN
                                  SP.SubactividadPetrolera COLLATE DATABASE_DEFAULT,
                                  ')'
                              ) AS Mes_Presupuestado
-                   FROM Adinco.dbo.CO_LineaPresupuestoMes LPM
-                       LEFT OUTER JOIN MM_SolicitudPedido PSP
-                           ON PSP.IdLineaPresupuesto = LPM.IdLineaPresupuestoMes
-                       LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AP
+                   FROM Adinco.dbo.CO_LineaPresupuestoMes LPM (NOLOCK)
+                       LEFT OUTER JOIN MM_SolicitudPedido PSP (NOLOCK)
+                           ON LPM.IdLineaPresupuestoMes = PSP.IdLineaPresupuesto
+                       LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AP (NOLOCK)
                            ON LPM.IdActividadPetrolera = AP.IdActividadPetrolera
-                       LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera SP
+                       LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera SP (NOLOCK)
                            ON LPM.IdSubactividadPetrolera = SP.IdSubactividadPetrolera
                    WHERE PSP.IdSolicitudPedido = @IdSolicitudPedido
                          AND LPM.IdPresupuesto = PSP.IdPresupuesto
@@ -159,42 +177,43 @@ BEGIN
            SP.IdFirma AS FirmaSolicitudPedido,
            ACON.NombreAreaContractual,
            CON.NumeroContrato
-    FROM MM_SolicitudPedido AS SP
-        LEFT JOIN MM_TipoSolicitudPedido AS TSP
-            ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-        LEFT JOIN TA_Operacion AS TAO
-            ON TAO.IdDocumento = SP.IdSolicitudPedido
-        LEFT JOIN TA_Estatus AS TE
-            ON TE.IdEstatus = TAO.IdEstatusOperacion
-        LEFT JOIN MM_PrioridadSolicitudPedido AS PSP
-            ON PSP.IdPrioridadSolicitudPedido = SP.IdPrioridadSolicitudPedido
-        LEFT JOIN S_Usuario AS U
-            ON U.IdUsuario = TAO.IdAsignador
-        LEFT JOIN TA_TipoOperacion AS TiOp
-            ON TiOp.IdTipoOperacion = TAO.IdTipoOperacion
-        LEFT JOIN CC_CentroCosto AS CC
-            ON CC.IdCentroCosto = SP.IdCentroCosto
-        LEFT JOIN MM_TerminoComercio AS TC
-            ON TC.IdTerminoComercio = SP.IdTerminoInternacionales
-        LEFT JOIN MM_TipoGastos AS TG
-            ON TG.IdTipoGasto = SP.IdTipoGasto
-        LEFT JOIN S_Proveedor AS Pr
+    FROM MM_SolicitudPedido AS SP (NOLOCK)
+        LEFT JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+            ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+        LEFT JOIN TA_Operacion AS TAO (NOLOCK)
+            ON SP.IdSolicitudPedido = TAO.IdDocumento
+        LEFT JOIN TA_Estatus AS TE (NOLOCK)
+            ON TAO.IdEstatusOperacion = TE.IdEstatus
+        LEFT JOIN MM_PrioridadSolicitudPedido AS PSP (NOLOCK)
+            ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
+        LEFT JOIN S_Usuario AS U (NOLOCK)
+            ON TAO.IdAsignador = U.IdUsuario
+        LEFT JOIN TA_TipoOperacion AS TiOp (NOLOCK)
+            ON TAO.IdTipoOperacion = TiOp.IdTipoOperacion
+        LEFT JOIN CC_CentroCosto AS CC (NOLOCK)
+            ON SP.IdCentroCosto = CC.IdCentroCosto
+        LEFT JOIN MM_TerminoComercio AS TC (NOLOCK)
+            ON SP.IdTerminoInternacionales = TC.IdTerminoComercio
+        LEFT JOIN MM_TipoGastos AS TG (NOLOCK)
+            ON SP.IdTipoGasto = TG.IdTipoGasto
+        LEFT JOIN S_Proveedor AS Pr (NOLOCK)
             ON SP.IdProveedor = Pr.IdProveedor
-        LEFT JOIN DG_Domicilio AS DO
-            ON DO.IdProveedor = SP.IdProveedor
+        LEFT JOIN DG_Domicilio AS DO (NOLOCK)
+            ON SP.IdProveedor = DO.IdProveedor
                AND DO.IdTipoDomicilio = 1
                AND DO.Activo = 1
-        LEFT JOIN Adinco.dbo.CO_Presupuesto AS P
+        LEFT JOIN Adinco.dbo.CO_Presupuesto AS P (NOLOCK)
             ON SP.IdPresupuesto = P.IdPresupuesto
-        LEFT JOIN Adinco.dbo.CO_PeriodoContrato AS PC
+        LEFT JOIN Adinco.dbo.CO_PeriodoContrato AS PC (NOLOCK)
             ON SP.IdPeriodo = PC.IdPeriodo
-        LEFT JOIN Adinco.dbo.CO_Contrato AS CON
-            ON CON.IdContrato = SP.IdContrato
-        LEFT JOIN Adinco.dbo.CO_AreaContractual AS ACON
-            ON ACON.IdAreaContractual = CON.IdAreaContractual
-		LEFT JOIN S_Usuario AS USO
-			ON USO.IdUsuario = SP.Solicitante
+        LEFT JOIN Adinco.dbo.CO_Contrato AS CON (NOLOCK)
+            ON SP.IdContrato = CON.IdContrato
+        LEFT JOIN Adinco.dbo.CO_AreaContractual AS ACON (NOLOCK)
+            ON CON.IdAreaContractual = ACON.IdAreaContractual
+		LEFT JOIN S_Usuario AS USO (NOLOCK)
+			ON SP.Solicitante = USO.IdUsuario
     WHERE TAO.IdTipoOperacion = 2
           AND SP.IdSolicitudPedido = @IdSolicitudPedido
           AND SP.IdProveedor = @IdProveedor;
+
 END;

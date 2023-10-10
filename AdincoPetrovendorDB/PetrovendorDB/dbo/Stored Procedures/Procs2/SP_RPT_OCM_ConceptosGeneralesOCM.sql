@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_RPT_OCM_ConceptosGeneralesOCM'
+)
+    DROP PROCEDURE SP_RPT_OCM_ConceptosGeneralesOCM;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author: Daniel AC
 -- Create date: 15-09-17
 -- Description: Consultar Pedido Detalle Encabezado
@@ -10,7 +24,11 @@
 -- Create date: 04/11/2019
 -- Description: Comente case que mostraba en 0 las cantidades cuando el estatus era aprobado, pero sin confirmación aceptada
 -- =============================================
-CREATE PROCEDURE SP_RPT_OCM_ConceptosGeneralesOCM
+-- Author:		Alexander Gomez
+-- Create date: 10/10/2023
+-- Description:	se agregan estandares de desarrollo
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_RPT_OCM_ConceptosGeneralesOCM]
     -- Add the parameters for the stored procedure here
 
     @IdPedido INT
@@ -29,15 +47,15 @@ BEGIN
     ----- IdTipoOperacion = 9--> Aprobación de pedido
     DECLARE @IdProveedor INT = (
                                    SELECT PR.IdProveedor
-                                   FROM S_Proveedor AS PR
-                                       LEFT JOIN dbo.MM_Pedido AS PE
-                                           ON PE.IdProveedorCompras = PR.IdProveedor
+                                   FROM S_Proveedor AS PR (NOLOCK)
+                                       LEFT JOIN dbo.MM_Pedido AS PE (NOLOCK)
+                                           ON PR.IdProveedor = PE.IdProveedorCompras
                                    WHERE PE.IdPedido = @IdPedido
                                );
 
     DECLARE @PROVEDORACTUAL VARCHAR(MAX) = (
                                                SELECT CONCAT(RazonSocial, RegimenCapital)
-                                               FROM S_Proveedor
+                                               FROM S_Proveedor (NOLOCK)
                                                WHERE IdProveedor = @IdProveedor
                                            );
     DECLARE @PROVEDORACTUALDOMICILIO VARCHAR(MAX)
@@ -58,9 +76,9 @@ BEGIN
                                  'CP.',
                                  DF.CodigoPostal
                              )
-                FROM S_Proveedor AS PV
-                    INNER JOIN DG_Domicilio AS DF
-                        ON DF.IdProveedor = PV.IdProveedor
+                FROM S_Proveedor AS PV (NOLOCK)
+                    INNER JOIN DG_Domicilio AS DF (NOLOCK)
+                        ON PV.IdProveedor = DF.IdProveedor
                            AND DF.IdTipoDomicilio = 1
                            AND DF.Activo = 1
                 WHERE PV.IdProveedor = @IdProveedor
@@ -69,18 +87,18 @@ BEGIN
     /*----------------- CONSULTAR CONDICIONES DE PAGO ----------------*/
     DECLARE @PROVEEDOR_VENTAS INT = (
                                         SELECT IdSubcontratista
-                                        FROM MM_Pedido P
+                                        FROM MM_Pedido P (NOLOCK)
                                         WHERE IdProveedorCompras = @IdProveedor
                                               AND IdPedido = @IdPedido
                                     );
     DECLARE @CONDICIONES_PAGO NVARCHAR(30);
     DECLARE @EXISTEN_CONDICIONES_PAGO INT = (
                                                 SELECT COUNT(CP.IdCondicionPago)
-                                                FROM PV_CondicionesPago CP
-                                                    INNER JOIN PV_ContratistaSubContratista CSC
+                                                FROM PV_CondicionesPago CP (NOLOCK)
+                                                    INNER JOIN PV_ContratistaSubContratista CSC (NOLOCK)
                                                         ON CP.IdContratistaSubContratista = CSC.IdRelacion
-                                                    INNER JOIN S_Proveedor P
-                                                        ON P.IdProveedor = CSC.IdContratista
+                                                    INNER JOIN S_Proveedor P (NOLOCK)
+                                                        ON CSC.IdContratista = P.IdProveedor
                                                 WHERE CSC.IdContratista = @PROVEEDOR_VENTAS
                                                       AND CSC.IdSubContratista = @IdProveedor
                                                       AND CSC.IsActivo = 1
@@ -89,11 +107,11 @@ BEGIN
     BEGIN
         DECLARE @TIENE_CREDITO BIT = (
                                          SELECT CP.Credito
-                                         FROM PV_CondicionesPago CP
-                                             INNER JOIN PV_ContratistaSubContratista CSC
+                                         FROM PV_CondicionesPago CP (NOLOCK)
+                                             INNER JOIN PV_ContratistaSubContratista CSC (NOLOCK)
                                                  ON CP.IdContratistaSubContratista = CSC.IdRelacion
-                                             INNER JOIN S_Proveedor P
-                                                 ON P.IdProveedor = CSC.IdContratista
+                                             INNER JOIN S_Proveedor P (NOLOCK)
+                                                 ON CSC.IdContratista = P.IdProveedor
                                          WHERE CSC.IdContratista = @PROVEEDOR_VENTAS
                                                AND CSC.IdSubContratista = @IdProveedor
                                                AND CSC.IsActivo = 1
@@ -103,11 +121,11 @@ BEGIN
             SET @CONDICIONES_PAGO =
             (
                 SELECT CP.DiasCredito
-                FROM PV_CondicionesPago CP
+                FROM PV_CondicionesPago CP (NOLOCK)
                     INNER JOIN PV_ContratistaSubContratista CSC
                         ON CP.IdContratistaSubContratista = CSC.IdRelacion
-                    INNER JOIN S_Proveedor P
-                        ON P.IdProveedor = CSC.IdContratista
+                    INNER JOIN S_Proveedor P (NOLOCK)
+                        ON CSC.IdContratista = P.IdProveedor
                 WHERE CSC.IdContratista = @PROVEEDOR_VENTAS
                       AND CSC.IdSubContratista = @IdProveedor
                       AND CSC.IsActivo = 1
@@ -134,25 +152,25 @@ PEDIDO GENERADO POR COMPRA DIRECTA
 */
     SET @IdSolicitudPedido =
     (
-        SELECT IdSolicitudPedido FROM dbo.MM_Pedido WHERE IdPedido = @IdPedido
+        SELECT IdSolicitudPedido FROM dbo.MM_Pedido (NOLOCK) WHERE IdPedido = @IdPedido
     );
 
     SET @IdFactura =
     (
         SELECT IdFactura
-        FROM dbo.CO_RegistroPedido
+        FROM dbo.CO_RegistroPedido (NOLOCK)
         WHERE IdSolicitudPedido = @IdSolicitudPedido
     );
     IF @IdFactura IS NOT NULL
     BEGIN
         SET @MONTO_FINAL =
         (
-            SELECT MontoConIva FROM dbo.FI_Factura WHERE IdFactura = @IdFactura
+            SELECT MontoConIva FROM dbo.FI_Factura (NOLOCK) WHERE IdFactura = @IdFactura
         );
         SET @IVA =
         (
             SELECT (ISNULL(MontoConIva, 0) - ISNULL(SubTotal, 0))
-            FROM dbo.FI_Factura
+            FROM dbo.FI_Factura (NOLOCK)
             WHERE IdFactura = @IdFactura
         );
 
@@ -160,17 +178,7 @@ PEDIDO GENERADO POR COMPRA DIRECTA
 
     SELECT PG.IdPedido,
            P.IdSolicitudPedido,
-           SUM(   
-				--CASE
-    --                  WHEN (
-    --                           PD.RecepcionPedido = 1
-    --                           AND P.RecepcionServicio = 1
-    --                       )
-    --                       OR O.IdEstatusOperacion = 1 THEN
-    --                      PD.Subtotal
-    --                  ELSE
-    --                      PD.Subtotal
-    --              END
+           SUM(  
 				PD.Subtotal
               ) AS SubtotalPedido,
            O.IdFlujoTarea,
@@ -233,56 +241,47 @@ PEDIDO GENERADO POR COMPRA DIRECTA
            END AS Total,
            @CONDICIONES_PAGO AS CondicionesDePago,
            dbo.CantidadConLetraReportes(SUM(   
-												--CASE
-            --                                       WHEN (
-            --                                                PD.RecepcionPedido = 1
-            --                                                AND P.RecepcionServicio = 1
-            --                                            )
-            --                                            OR O.IdEstatusOperacion = 1 THEN
-            --                                           PD.Subtotal
-            --                                       ELSE
-            --                                           PD.Subtotal
-            --                                   END
 												PD.Subtotal
                                            ),
                                         TM.TipoMonedaCorto
                                        ) AS SubtotalLetra
-    FROM MM_Pedido AS P
-        LEFT JOIN MM_PedidoDetalle AS PD
-            ON PD.IdPedido = P.IdPedido
-        LEFT JOIN MM_PeticionOferta AS PO
-            ON PO.IdPeticionOferta = P.IdPeticionOferta
-        LEFT JOIN S_Proveedor AS PV
-            ON PV.IdProveedor = P.IdSubcontratista
-        LEFT JOIN S_ImagenPerfil AS IP
-            ON IP.IdProveedor = P.IdSubcontratista
-        LEFT JOIN DG_Domicilio AS DF
-            ON DF.IdProveedor = P.IdSubcontratista
+    FROM MM_Pedido AS P (NOLOCK)
+        LEFT JOIN MM_PedidoDetalle AS PD (NOLOCK)
+            ON P.IdPedido = PD.IdPedido
+        LEFT JOIN MM_PeticionOferta AS PO (NOLOCK)
+            ON P.IdPeticionOferta = PO.IdPeticionOferta
+        LEFT JOIN S_Proveedor AS PV (NOLOCK)
+            ON P.IdSubcontratista = PV.IdProveedor
+        LEFT JOIN S_ImagenPerfil AS IP (NOLOCK)
+            ON P.IdSubcontratista = IP.IdProveedor
+        LEFT JOIN DG_Domicilio AS DF (NOLOCK)
+            ON P.IdSubcontratista = DF.IdProveedor
                AND DF.IdTipoDomicilio = 1
                AND DF.Activo = 1
-        LEFT JOIN TA_Operacion AS O
-            ON O.IdDocumento = P.IdSolicitudPedido AND o.NoVersion = p.Version
-        LEFT JOIN S_Usuario AS U
-            ON U.IdUsuario = O.IdAsignador
-        LEFT JOIN TA_Prioridad AS PR
-            ON PR.IdPrioridad = O.IdPrioridad
-        LEFT JOIN TA_Vencimiento AS V
-            ON V.IdVencimiento = O.IdVigencia
-        LEFT JOIN TA_TipoOperacion AS TTO
-            ON TTO.IdTipoOperacion = O.IdTipoOperacion
-        LEFT JOIN TA_Estatus AS E
-            ON E.IdEstatus = O.IdEstatusOperacion
-        LEFT JOIN dbo.MM_HorasVigenciaPedido AS H
-            ON H.IdPedido = P.IdPedido
-        LEFT JOIN MM_SolicitudPedido AS SP
-            ON SP.IdSolicitudPedido = P.IdSolicitudPedido
-        LEFT JOIN MM_PrioridadSolicitudPedido AS PSP
-            ON PSP.IdPrioridadSolicitudPedido = SP.IdPrioridadSolicitudPedido
-        LEFT JOIN MM_TipoSolicitudPedido AS TSP
-            ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-        LEFT JOIN PV_TipoMoneda AS TM
-            ON TM.IdMoneda = PD.IdMoneda
-        LEFT JOIN MM_Pedidos AS PG
+        LEFT JOIN TA_Operacion AS O (NOLOCK)
+            ON P.IdSolicitudPedido  = O.IdDocumento
+				AND o.NoVersion = p.Version
+        LEFT JOIN S_Usuario AS U (NOLOCK)
+            ON O.IdAsignador = U.IdUsuario
+        LEFT JOIN TA_Prioridad AS PR (NOLOCK)
+            ON O.IdPrioridad = PR.IdPrioridad
+        LEFT JOIN TA_Vencimiento AS V (NOLOCK)
+            ON O.IdVigencia = V.IdVencimiento
+        LEFT JOIN TA_TipoOperacion AS TTO (NOLOCK)
+            ON O.IdTipoOperacion = TTO.IdTipoOperacion
+        LEFT JOIN TA_Estatus AS E (NOLOCK)
+            ON O.IdEstatusOperacion = E.IdEstatus
+        LEFT JOIN dbo.MM_HorasVigenciaPedido AS H (NOLOCK)
+            ON P.IdPedido = H.IdPedido
+        LEFT JOIN MM_SolicitudPedido AS SP (NOLOCK)
+            ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+        LEFT JOIN MM_PrioridadSolicitudPedido AS PSP (NOLOCK)
+            ON SP.IdPrioridadSolicitudPedido = PSP.IdPrioridadSolicitudPedido
+        LEFT JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+            ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+        LEFT JOIN PV_TipoMoneda AS TM (NOLOCK)
+            ON PD.IdMoneda = TM.IdMoneda
+        LEFT JOIN MM_Pedidos AS PG (NOLOCK)
             ON P.IdPedido = PG.IdIdentificador
                AND PG.IdProveedorCliente = @IdProveedor
     WHERE O.IdTipoOperacion = 9
