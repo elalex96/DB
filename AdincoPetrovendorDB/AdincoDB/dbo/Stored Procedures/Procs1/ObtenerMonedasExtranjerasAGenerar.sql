@@ -16,13 +16,20 @@ BEGIN
             @TipoPedimentoImportacion INT = 2,
             @TipoComprobanteExtranjero INT = 3,
             @TipoFactura INT = 1,
-			@Dolar INT = 2
+			@Dolar INT = 2,
+			@FechaInicio DateTime,
+			@FechaFin DateTime
 
     CREATE TABLE #Tabla
     (
         SerieBanxico VARCHAR(50),
         FechaPago DATE
     )
+
+	CREATE TABLE #TablaMesSeleccionado(Fecha DATE, IdMoneda INT DEFAULT 1)
+
+
+	SELECT @FechaInicio = @Fecha, @FechaFin = EOMONTH(@Fecha);
 
 	-- Pedimento Comprobante PE PI
     INSERT INTO #Tabla
@@ -84,20 +91,26 @@ BEGIN
           AND FI_Transfer.IdContrato = @IdContrato
     GROUP BY PV_TipoMoneda.SerieBanxico,
              FI_Transfer.FechaPago
+	
+
+	;WITH FECHAS(fecha) AS (
+	SELECT @FechaInicio fecha
+	UNION ALL
+	SELECT DATEADD(day, 1, fecha) fecha
+	FROM FECHAS
+	WHERE fecha < @FechaFin
+	)
+	INSERT INTO #TablaMesSeleccionado(Fecha)
+	select fecha from FECHAS 
+	option (maxrecursion 0)
 
 
 	-- El mes Actual por en caso de que no vaya
-    INSERT INTO #Tabla
-    (
-        SerieBanxico,
-        FechaPago
-    )
-    SELECT SerieBanxico,
-           @Fecha
-    FROM PV_TipoMoneda (NOLOCK)
-    WHERE IdMoneda = 1
-
-
+    INSERT INTO #Tabla(SerieBanxico, FechaPago)
+	SELECT SerieBanxico, #TablaMesSeleccionado.Fecha 
+	FROM PV_TipoMoneda (NOLOCK)
+	INNER JOIN #TablaMesSeleccionado
+		ON PV_TipoMoneda.IdMoneda = #TablaMesSeleccionado.IdMoneda
 
 
 	-- Se insertan los tipos de cambio en DLS si es que hacen falta
@@ -152,16 +165,15 @@ BEGIN
 	GROUP BY FI_Transfer.FechaPago
 
 	-- Se retorna al usuario los tipos de cambio que hacen falta dar de alta excepto DLS
-    SELECT #Tabla.SerieBanxico,
-           DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1) FechaPago
-    FROM #Tabla
-        INNER JOIN PV_TipoMoneda (NOLOCK)
-            ON #Tabla.SerieBanxico = PV_TipoMoneda.SerieBanxico
-        LEFT JOIN CO_TipoCambioDiario (NOLOCK)
-            ON #Tabla.FechaPago = CAST(CO_TipoCambioDiario.Fecha AS DATE)
-               AND PV_TipoMoneda.IdMoneda = CO_TipoCambioDiario.IdMoneda
-    WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL
-    GROUP BY #Tabla.SerieBanxico,
-             DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1)
+
+    SELECT #Tabla.SerieBanxico, DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1) FechaPago
+	FROM #Tabla
+	INNER JOIN PV_TipoMoneda
+		ON #Tabla.SerieBanxico = PV_TipoMoneda.SerieBanxico
+	LEFT JOIN CO_TipoCambioDiario
+		ON #Tabla.FechaPago = CAST(CO_TipoCambioDiario.Fecha as date) 
+		AND PV_TipoMoneda.IdMoneda = CO_TipoCambioDiario.IdMoneda
+	WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL
+	GROUP BY #Tabla.SerieBanxico, DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1) 
 
 END
