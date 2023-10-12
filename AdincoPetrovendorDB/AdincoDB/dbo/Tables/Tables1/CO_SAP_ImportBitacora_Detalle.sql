@@ -2,7 +2,7 @@
     [Id]               INT           NOT NULL,
     [IdImportBitacora] INT           NOT NULL,
     [NombreArchivo]    VARCHAR (100) NOT NULL,
-    [Error]            VARCHAR (250) NOT NULL,
+    [Error]            VARCHAR (8000) NOT NULL,
     [TieneError]       BIT           NOT NULL,
     [CreadoEl]         DATETIME      NOT NULL,
     CONSTRAINT [PK_CO_SAP_ImportBitacora_Detalle] PRIMARY KEY CLUSTERED ([Id] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
