@@ -3935,5 +3935,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_FI_CatCFDIMetodoPago.sql" />
     <Build Include="dbo\Views\vwRandom.sql" />
     <Build Include="dbo\Functions\fnCustomPass.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_SAPVendor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_INS_UPD_CO_SAPVendor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_DesactivarSAPVendor.sql" />
   </ItemGroup>
 </Project>
