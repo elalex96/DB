@@ -1,4 +1,13 @@
-﻿CREATE Proc [dbo].[p_CO_InsUpdSAPPaymentData]
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'p_CO_InsUpdSAPPaymentData'
+)
+    DROP PROCEDURE p_CO_InsUpdSAPPaymentData
+GO
+
+CREATE Proc [dbo].[p_CO_InsUpdSAPPaymentData]
 @pIdContrato	int,
 @pSourceAccount	varchar(20),
 @pFinalAccount	varchar(20),
@@ -43,10 +52,10 @@ as
 
 		/**************SI NO EXISTE CUENTA DESTINO. GENERARLA AUTOMÁTICAMENTE**********************/
 		if not exists (
-			select 1 from CO_SAPVendor v (NOLOCK)
-			INNER JOIN PV_Subcontratista sub (NOLOCK) on sub.RFC = v.TAXID
-			inner join Petrovendor..S_Proveedor prov  (NOLOCK) on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
-			INNER JOIN PV_CuentaBancaria cb (NOLOCK) ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
+			select 1 from CO_SAPVendor v 
+			INNER JOIN PV_Subcontratista sub on sub.RFC = v.TAXID
+			inner join Petrovendor..S_Proveedor prov on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
+			INNER JOIN PV_CuentaBancaria cb ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
 											cb.IdProveedor = sub.IdSubcontratista
 			where  v.VendorIDSAP =@pSAPVendorId and
 			v.IdCOntrato = @pIdContrato
@@ -64,10 +73,10 @@ as
 			1,						null,			null,			null,			sub.RFC,
 			null,					1,				@pCreadoPor,	getdate(),		0,
 			null,					null
-			from CO_SAPVendor v (NOLOCK)
+			from CO_SAPVendor v (NOLOCK) 
 			INNER JOIN PV_Subcontratista sub (NOLOCK) on sub.RFC = v.TAXID
 			inner join Petrovendor..S_Proveedor prov (NOLOCK) on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS	
-			inner join PV_TipoMoneda m (NOLOCK) on m.TipoMonedaCorto = 	@pCurrency	
+			inner join PV_TipoMoneda m on m.TipoMonedaCorto = @pCurrency	
 			where  v.VendorIDSAP =@pSAPVendorId and
 			v.IdCOntrato = @pIdContrato
 		end
@@ -79,7 +88,7 @@ as
 
 		if not exists (
 			select 1
-			from [CO_SAPPaymentData] (NOLOCK)
+			from [CO_SAPPaymentData]
 			where IdContrato = @pIdContrato and
 			rtrim(SourceAccount) = rtrim(@pSourceAccount) and
 			rtrim(FinalAccount) = rtrim(@pFinalAccount) and
@@ -110,8 +119,6 @@ as
 
 			update CO_SAPPaymentData
 			set PaymentForm = @pPaymentForm,
-				---PaymentDate = @pPaymentDate,
-				--PaidAmount = @pPaidAmount,
 				Currency=@pCurrency,
 				Concepto=@pConcepto,
 				NumeroPolizaContable=@pNumeroPolizaContable,
@@ -127,40 +134,65 @@ as
 			PaidAmount = @pPaidAmount and
 			PaymentDate = @pPaymentDate and
 			rtrim(isnull(InvoiceNumber,'')) = rtrim(@pInvoiceNumber)
-
-
-		
-			
-
 			
 		End
 
 
-		if not exists (
-			select 1 from CO_SAPVendor v (NOLOCK)
-			INNER JOIN PV_Subcontratista sub (NOLOCK) on sub.RFC = v.TAXID
-			inner join Petrovendor..S_Proveedor prov (NOLOCK) on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
-			INNER JOIN PV_CuentaBancaria cb (NOLOCK) ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
-											cb.IdProveedor = sub.IdSubcontratista
-			where  v.VendorIDSAP =@pSAPVendorId and
-			v.IdCOntrato = @pIdContrato
-		)
-		begin
-			set @pError = 'No existe la cuenta ' + isnull(@pFinalAccount,'') +' del proveedor ' + isnull(@pNamePayee,'')+' .PaymentReference:'+@pPaymentReference
-		end
-
-		if not exists (
-			SELECT 1
-			FROM PV_CuentaBancaria C (NOLOCK)
-			INNER JOIN CO_Contrato CO (NOLOCK) on CO.IdContrato = @pIdContrato AND
-								CO.IdContratista = C.IdContratista AND
-								C.Activa = 1 AND
-								(RTRIM(C.NumeroCuenta) = RTRIM(@pSourceAccount) OR RTRIM(C.CuentaClave)  =RTRIM(@pSourceAccount))
-		)
+		IF NOT EXISTS(select 1 from CO_SAPVendor where VendorIDSAP = @pSAPVendorId)
 		BEGIN
-			set @pError = 'No existe la cuenta Origen ' + isnull(@pSourceAccount,'') +' .PaymentReference:'+@pPaymentReference
+			SELECT @pError = concat('No se encontró el proveedor: ', isnull(@pNamePayee,'NULL'), ' con el VendorIDSAP: ', ISNULL(@pSAPVendorId, 'NULL') ,' de la tabla CO_SAPVendor. ')
 		END
 
+		IF NOT EXISTS(select 1 from PV_CuentaBancaria where NumeroCuenta = @pFinalAccount or CuentaClave = @pFinalAccount)
+		BEGIN
+			SELECT @pError += CONCAT( ' No se encontró la cuenta bancaria: ', ISNULL(@pFinalAccount, 'NULL'), '. ')
+		END
+
+		DECLARE @IdSubcontratista INT
+		select @IdSubcontratista = IdProveedor from PV_CuentaBancaria where NumeroCuenta = @pFinalAccount or CuentaClave = @pFinalAccount
+		IF NOT EXISTS(select 1 from PV_Subcontratista where IdSubcontratista = @IdSubcontratista)
+		BEGIN
+			SELECT @pError += CONCAT( ' No se encontró el Subcontratista con IdSubcontratista: ', ISNULL(@IdSubcontratista, 'NULL'), ' de la tabla PV_Subcontratista. ')
+		END
+
+		DECLARE @RFC varchar(50)
+		SELECT @RFC = LTRIM(RTRIM(TaxID)) FROM CO_SAPVendor WHERE VendorIDSAP = @pSAPVendorId
+		IF NOT EXISTS(SELECT 1 FROM Petrovendor..S_Proveedor WHERE RFC = @RFC)
+		BEGIN
+			SELECT @pError += CONCAT( ' No se encontró el RFC en Petrovendor: ', ISNULL(@RFC, 'NULL'), ' de la tabla Petrovendor..S_Proveedor. ')
+		END
+
+
+
+		IF(ISNULL(@pError, '') = '')
+		BEGIN
+			if not exists (
+				select 1 from CO_SAPVendor v 
+				INNER JOIN PV_Subcontratista sub on sub.RFC = v.TAXID
+				inner join Petrovendor..S_Proveedor prov on prov.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = v.TAXID COLLATE SQL_Latin1_General_CP1_CI_AS
+				INNER JOIN PV_CuentaBancaria cb ON (cb.NumeroCuenta = @pFinalAccount	OR cb.CuentaClave = @pFinalAccount) and
+												cb.IdProveedor = sub.IdSubcontratista
+				where  v.VendorIDSAP =@pSAPVendorId and
+				v.IdCOntrato = @pIdContrato
+			)
+			begin
+				set @pError = CONCAT('No existe la cuenta ', isnull(@pFinalAccount, 'NULL'), ' del proveedor: ', isnull(@pNamePayee,' NULL'), ' .PaymentReference: ', ISNULL(@pPaymentReference, 'NULL'))
+			end
+
+			DECLARE @IdContratista INT
+			SELECT @IdContratista = IdContratista FROM CO_Contrato WHERE IdContrato = @pIdContrato
+			if not exists (
+				SELECT 1
+				FROM PV_CuentaBancaria C
+				INNER JOIN CO_Contrato CO on CO.IdContrato = @pIdContrato AND
+									CO.IdContratista = C.IdContratista AND
+									C.Activa = 1 AND
+									(RTRIM(C.NumeroCuenta) = RTRIM(@pSourceAccount) OR RTRIM(C.CuentaClave)  =RTRIM(@pSourceAccount))
+			)
+			BEGIN
+				set @pError = CONCAT('No se encontró la cuenta Origen: ', isnull(@pSourceAccount, 'NULL') , ' .PaymentReference: ', @pPaymentReference, ' en el contrato con el IdContratista: ', ISNULL(@IdContratista, 'NULL'), ' en la tabla de PV_CuentaBancaria.')
+			END
+		END
 
 
 		commit tran
