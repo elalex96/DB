@@ -281,6 +281,10 @@ BEGIN
                              CONVERT(VARCHAR(10), @IdBitacora)
                          );
         END
+		ELSE
+		BEGIN
+			SELECT '';
+		END
 
         COMMIT TRAN;
     END TRY
