@@ -240,7 +240,7 @@ BEGIN
                 ''
                      ) AS VendorIDSAP,
                 OtroContratoId
-            FROM #TablaTemporalDetalles (NOLOCK)
+            FROM #TablaTemporalDetalles
 
             SELECT @IdBitacora = ISNULL(MAX(Id), 0) + 1
             FROM CO_SAP_ImportBitacora_Detalle
