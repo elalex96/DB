@@ -45,8 +45,10 @@ BEGIN TRY
 			@CatidadFilas Int = (select count(1) from WDEA_Layout_T where IdbitacoraLectura = @IDBITACORA),
 			@POSAPIncorrectos INT,
 			@tableHTML varchar(max),
-			@CuentaCorreo varchar(300) = (SELECT CuentaRegistro FROM S_CorreoServidor WHERE Descripcion = 'Notificaciones_Procura');
-
+			@CuentaCorreo varchar(300);
+	-- SE CAMBIA EL REMITENTE POR EL CORREO DE NOTIFICACIONES DE ADINCO,     --YA QUE DEA TIENE REGLA PARA ENVIAR A SPAM LOS CORREOS QUE PROVIENEN DE PROCURA     
+	SELECT @CuentaCorreo = CuentaRegistro      FROM Adinco.dbo.S_CorreoServidor 
+	WHERE Descripcion = 'Notificaciones';
 
 	DROP TABLE IF EXISTS #PENDIENTES_PROCESAR
 	DROP TABLE IF EXISTS #REGISTROSGUARDADOS

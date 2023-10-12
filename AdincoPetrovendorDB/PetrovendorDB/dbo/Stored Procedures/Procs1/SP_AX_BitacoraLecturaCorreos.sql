@@ -28,7 +28,9 @@ CREATE PROCEDURE [dbo].[SP_AX_BitacoraLecturaCorreos]
 AS
 BEGIN
 DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int,
-		@CuentaCorreo varchar(300) = (SELECT CuentaRegistro FROM S_CorreoServidor WHERE Descripcion = 'Notificaciones_Procura');
+		@CuentaCorreo varchar(300);
+	-- SE CAMBIA EL REMITENTE POR EL CORREO DE NOTIFICACIONES DE ADINCO, --YA QUE DEA TIENE REGLA PARA ENVIAR A SPAM LOS CORREOS QUE PROVIENEN DE PROCURA 
+	SELECT @CuentaCorreo = CuentaRegistro  FROM Adinco.dbo.S_CorreoServidor  WHERE Descripcion = 'Notificaciones';
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;

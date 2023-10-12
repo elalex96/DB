@@ -25,6 +25,7 @@ BEGIN
         SerieBanxico VARCHAR(50),
         FechaPago DATE
     )
+
 	CREATE TABLE #TablaMesSeleccionado(Fecha DATE, IdMoneda INT DEFAULT 1)
 
 
@@ -112,8 +113,6 @@ BEGIN
 		ON PV_TipoMoneda.IdMoneda = #TablaMesSeleccionado.IdMoneda
 
 
-
-
 	-- Se insertan los tipos de cambio en DLS si es que hacen falta
 	INSERT INTO CO_TipoCambioDiario(IdMoneda, Fecha, TipoCambio, IdUsuario, Activo, CreadoPor)
 	SELECT 2, FechaPago, 1, 1, 1, 1
@@ -166,6 +165,7 @@ BEGIN
 	GROUP BY FI_Transfer.FechaPago
 
 	-- Se retorna al usuario los tipos de cambio que hacen falta dar de alta excepto DLS
+
     SELECT #Tabla.SerieBanxico, DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1) FechaPago
 	FROM #Tabla
 	INNER JOIN PV_TipoMoneda
