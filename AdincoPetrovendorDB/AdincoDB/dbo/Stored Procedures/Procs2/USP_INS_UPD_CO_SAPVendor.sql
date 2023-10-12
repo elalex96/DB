@@ -46,22 +46,10 @@ BEGIN
             [NumeroPrioridad] INT NULL
         );
 
-        CREATE TABLE #TablaTemporalDetalles
-        (
-            [VendorIDSAP] VARCHAR(20) NULL,
-            [OtroContratoId] INT NULL
-        );
-
         CREATE TABLE #TablaTemporalOrden
         (
             [NumeroFila] INT NULL,
             [NumeroPrioridad] INT NULL
-        );
-
-        CREATE TABLE #TablaTemporalDetallesFiltrados
-        (
-            [VendorIDSAP] VARCHAR(8000) NULL,
-            [OtroContratoId] INT NULL
         );
 
         INSERT INTO #TablaTemporalSAPVendor
@@ -83,17 +71,17 @@ BEGIN
             [ContratoId]
         )
         SELECT DISTINCT
-            [NumeroFila],
-            [VendorIDSAP],
-            [VendorName],
-            [TaxID],
-            [Country],
-            [Address],
-            [ContactName],
-            [ContactEmail],
-            [CompanyCode],
-            [VendorAccountGroup],
-            [KeyLastImport],
+            RTRIM(LTRIM(ISNULL([NumeroFila], ''))),
+            RTRIM(LTRIM(ISNULL([VendorIDSAP], ''))),
+            RTRIM(LTRIM(ISNULL([VendorName], ''))),
+            RTRIM(LTRIM(ISNULL([TaxID], ''))),
+            RTRIM(LTRIM(ISNULL([Country], ''))),
+            RTRIM(LTRIM(ISNULL([Address], ''))),
+            RTRIM(LTRIM(ISNULL([ContactName], ''))),
+            RTRIM(LTRIM(ISNULL([ContactEmail], ''))),
+            RTRIM(LTRIM(ISNULL([CompanyCode], ''))),
+            RTRIM(LTRIM(ISNULL([VendorAccountGroup], ''))),
+            RTRIM(LTRIM(ISNULL([KeyLastImport], ''))),
             0,
             0,
             @UsuarioId,
@@ -125,14 +113,6 @@ BEGIN
                 ON #TablaTemporalSAPVendor.VendorIDSAP = CO_SAPVendor.VendorIDSAP
                    AND #TablaTemporalSAPVendor.ContratoId = CO_SAPVendor.IdContrato
 
-        UPDATE #TablaTemporalSAPVendor
-        SET #TablaTemporalSAPVendor.EnOtroContrato = 1,
-            #TablaTemporalSAPVendor.OtroContratoId = CO_SAPVendor.IdContrato
-        FROM #TablaTemporalSAPVendor
-            JOIN CO_SAPVendor
-                ON #TablaTemporalSAPVendor.VendorIDSAP = CO_SAPVendor.VendorIDSAP
-                   AND #TablaTemporalSAPVendor.ContratoId <> CO_SAPVendor.IdContrato
-
         /*Insercion de Vendors*/
         INSERT INTO CO_SAPVendor
         (
@@ -154,12 +134,7 @@ BEGIN
         SELECT VendorIDSAP,
                ContratoId,
                VendorName,
-               CASE
-                   WHEN RTRIM(LTRIM(ISNULL(#TablaTemporalSAPVendor.TaxID, ''))) = '' THEN
-                       #TablaTemporalSAPVendor.TaxID
-                   ELSE
-                       RTRIM(LTRIM(ISNULL(#TablaTemporalSAPVendor.TaxID, '')))
-               END,
+               TaxID,
                Country,
                Address,
                ContactName,
@@ -178,12 +153,7 @@ BEGIN
         /*Actualizacion de Vendors*/
         UPDATE CO_SAPVendor
         SET VendorName = #TablaTemporalSAPVendor.VendorName,
-            TaxID = CASE
-                        WHEN RTRIM(LTRIM(ISNULL(#TablaTemporalSAPVendor.TaxID, ''))) = '' THEN
-                            #TablaTemporalSAPVendor.TaxID
-                        ELSE
-                            RTRIM(LTRIM(ISNULL(#TablaTemporalSAPVendor.TaxID, '')))
-                    END,
+            TaxID = #TablaTemporalSAPVendor.TaxID,
             Country = #TablaTemporalSAPVendor.Country,
             Address = #TablaTemporalSAPVendor.Address,
             ContactName = #TablaTemporalSAPVendor.ContactName,
@@ -206,85 +176,7 @@ BEGIN
         FROM #TablaTemporalSAPVendor
         WHERE ISNULL(#TablaTemporalSAPVendor.EnOtroContrato, 0) = 1;
 
-        IF (@VendorIDSAPEnOtroContrato > 0)
-        BEGIN
-            INSERT INTO #TablaTemporalDetalles
-            (
-                VendorIDSAP,
-                OtroContratoId
-            )
-            SELECT VendorIDSAP,
-                   OtroContratoId
-            FROM #TablaTemporalSAPVendor
-            WHERE ISNULL(#TablaTemporalSAPVendor.EnOtroContrato, 0) = 1
-            GROUP BY VendorIDSAP,
-                     OtroContratoId
-
-            INSERT INTO #TablaTemporalDetallesFiltrados
-            (
-                VendorIDSAP,
-                OtroContratoId
-            )
-            SELECT DISTINCT
-                STUFF(
-                (
-                    SELECT DISTINCT
-                        ', ',
-                        CONVERT(VARCHAR(20), T.VendorIDSAP)
-                    FROM #TablaTemporalDetalles T
-                    WHERE #TablaTemporalDetalles.OtroContratoId = T.OtroContratoId
-                    FOR XML PATH('')
-                ),
-                1,
-                2,
-                ''
-                     ) AS VendorIDSAP,
-                OtroContratoId
-            FROM #TablaTemporalDetalles
-
-            SELECT @IdBitacora = ISNULL(MAX(Id), 0) + 1
-            FROM CO_SAP_ImportBitacora_Detalle
-
-            SELECT @ErrorMessage = STUFF(
-                                   (
-                                       SELECT DISTINCT
-                                           ', Se detectaron que los VendorIDSAP [',
-                                           CONVERT(VARCHAR(8000), T.VendorIDSAP),
-                                           '] se encuentran agregado en el contrato (',
-                                           CONVERT(VARCHAR(20), T.OtroContratoId) + ')'
-                                       FROM #TablaTemporalDetallesFiltrados T
-                                       FOR XML PATH('')
-                                   ),
-                                   1,
-                                   2,
-                                   ''
-                                        )
-
-            INSERT INTO CO_SAP_ImportBitacora_Detalle
-            (
-                Id,
-                IdImportBitacora,
-                NombreArchivo,
-                Error,
-                TieneError,
-                CreadoEl
-            )
-            SELECT @IdBitacora,
-                   @IdImportBitacora,
-                   @NombreArchivo,
-                   @ErrorMessage,
-                   1,
-                   @FechaHoy;
-
-            SELECT CONCAT(
-                             'Se encontraron VendorIDSAP pertenecientes a otros contratos, para más detalle validar la tabla CO_SAP_ImportBitacora_Detalle con identificador: ',
-                             CONVERT(VARCHAR(10), @IdBitacora)
-                         );
-        END
-		ELSE
-		BEGIN
-			SELECT '';
-		END
+        SELECT '';
 
         COMMIT TRAN;
     END TRY
