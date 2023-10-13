@@ -1,4 +1,17 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_TA_ConsultarAsignador'
+)
+    DROP PROCEDURE SP_TA_ConsultarAsignador;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 22-05-17
@@ -14,6 +27,11 @@
 -- Create date: 19-12-19
 -- Description:	Se modifico el select ya que la consulta era incorrecta y mostraba usuarios de diferentes proveedores	
 -- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 27-09-23
+-- Description:	se agrega el usuario adinco para envio de notificaciones en adinco app
+-- =============================================
 
 CREATE PROCEDURE [dbo].[SP_TA_ConsultarAsignador]
 	-- Add the parameters for the stored procedure here
@@ -22,41 +40,31 @@ AS
 	BEGIN
 		SET NOCOUNT ON
 
-		DECLARE @IdUsuario INT, @Nombre NVARCHAR(MAX), @Correo NVARCHAR(MAX)
+		DECLARE @IdUsuario INT, @Nombre NVARCHAR(MAX), @Correo NVARCHAR(MAX), @IdUsuarioAdinco NVARCHAR(MAX)
 
-		SELECT		@IdUsuario = s.IdUsuario, @Nombre = s.Nombre, @Correo = s.Correo
-		FROM		TA_Operacion AS O
+		SELECT		@IdUsuario = s.IdUsuario, @Nombre = s.Nombre, @Correo = s.Correo, @IdUsuarioAdinco = S.IdUsuarioADINCO
+		FROM		TA_Operacion AS O (NOLOCK)
 		INNER JOIN	S_Usuario AS S
-			ON S.IdUsuario = O.IdAsignador
+			ON O.IdAsignador = S.IdUsuario
 		WHERE
 					IdOperacion = @IdOperacion
 					AND S.Activo = 1
 
 		IF ( @IdUsuario IS NULL ) -- si no esta el usuario activo tomo al primer administrador para notificarle
 			BEGIN
-				--SELECT		TOP 1
-				--			S.IdUsuario, S.Nombre, S.Correo
-				--FROM		TA_Operacion AS O
-				--INNER JOIN	S_Usuario AS S
-				--	ON S.IdUsuario = O.IdAsignador
-				--INNER JOIN	dbo.S_UsuarioProveedor uProv
-				--	ON O.IdAsignador = uProv.IdUsuario
-				--WHERE
-				--			IdOperacion = @IdOperacion
-				--			AND S.Activo = 1
-				--			OR	S.IdTipoUsuario = 3
 				SELECT TOP 1
-				S.IdUsuario, S.Nombre, S.Correo
-				FROM dbo.TA_Operacion O
-				INNER JOIN dbo.S_UsuarioProveedor UP
-					ON UP.IdProveedor = O.IdProveedor
-				INNER JOIN dbo.S_Usuario S
-					ON S.IdUsuario = UP.IdUsuario
+				S.IdUsuario, S.Nombre, S.Correo,S.IdUsuarioADINCO
+				FROM dbo.TA_Operacion O (NOLOCK)
+				INNER JOIN dbo.S_UsuarioProveedor UP (NOLOCK)
+					ON O.IdProveedor = UP.IdProveedor
+				INNER JOIN dbo.S_Usuario S (NOLOCK)
+					ON UP.IdUsuario = S.IdUsuario
 				WHERE 
 						O.IdOperacion = @IdOperacion
 						AND ( S.Activo = 1 OR S.IdTipoUsuario = 3 )
 
 			END
 
-		SELECT @IdUsuario  AS IdUsuario, @Nombre AS Nombre, @Correo AS Correo
+		SELECT @IdUsuario  AS IdUsuario, @Nombre AS Nombre, @Correo AS Correo, @IdUsuarioAdinco AS IdUsuarioAdinco
+
 	END
