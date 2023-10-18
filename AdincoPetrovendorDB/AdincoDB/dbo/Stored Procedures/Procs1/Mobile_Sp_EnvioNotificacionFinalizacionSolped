@@ -1,7 +1,12 @@
-USE Adinco
+USE ADINCO
 GO
 DROP PROC IF EXISTS Mobile_Sp_EnvioNotificacionFinalizacionSolped
 GO
+-- =============================================
+-- Author:		Luis David
+-- Create date: 18/10/2023
+-- Description:	sdk/222 - Se controla el envío de notificaciones cuando se rechaza la operación
+-- =============================================
 CREATE PROC Mobile_Sp_EnvioNotificacionFinalizacionSolped
 @IdSolicitudPedido INT,
 @IdOperacion int,
@@ -13,7 +18,18 @@ DECLARE
 @NumeroContrato NVARCHAR(MAX),
 @Contrato NVARCHAR(MAX),
 @IDNOTIFICACION INT = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion),
-@AnioActual INT = (YEAR(GETDATE()));
+@AnioActual INT = (YEAR(GETDATE())),
+@IdEstatusOperacion INT = (SELECT TOP 1 TOO.IdEstatusOperacion
+        FROM Petrovendor..TA_Tarea AS T (NOLOCK) 
+            LEFT JOIN Petrovendor..TA_Operacion AS TOO (NOLOCK)
+                ON T.IdOperacion = TOO.IdOperacion
+            LEFT JOIN Petrovendor..TA_FlujoTarea AS FT (NOLOCK)
+                ON TOO.IdFlujoTarea = FT.IdFlujoTarea
+            LEFT JOIN Petrovendor..TA_TipoOperacion AS TTO (NOLOCK)
+                ON TOO.IdTipoOperacion = TTO.IdTipoOperacion
+        WHERE TOO.IdOperacion = @IdOperacion
+		GROUP BY TOO.IdEstatusOperacion
+        ORDER BY TOO.IdEstatusOperacion DESC);
 	declare 
 	@htmlRequisitor varchar(max) = (select HTML from Petrovendor..TA_Correo where idcorreo = 2),
 	@htmlOferta varchar(max) = (select HTML from Petrovendor..TA_Correo where idcorreo = 26);
@@ -32,20 +48,21 @@ DECLARE
 	AC.NombreAreaContractual,
 	C.NumeroContrato,
 	AC.NombreAreaContractual;
-
-	--ENVIO NOTIFICACION USUARIOS COMPRAS
+	IF @IdEstatusOperacion = 2
+	BEGIN
+	--ENVIO NOTIFICACION USUARIOS COMPRAS / APLICA SOLO PARA OPERACIÓN APROBADA
 		DROP TABLE IF EXISTS #USUARIOSCOMPRAS
-DROP TABLE IF EXISTS #CentroCosto
-create table #USUARIOSCOMPRAS
-(
-	Id int primary key identity (1,1),
-	IdUsuario int,
-	Nombre varchar(300),
-	Correo varchar(300),
-	CentroCostos varchar(300),
-	Tipo varchar(300),
-)
-CREATE TABLE #CentroCosto(IdCentroCosto INT, CentroCosto NVARCHAR(MAX), IdUsuario INT, Nombre NVARCHAR(MAX), Correo NVARCHAR(MAX))
+		DROP TABLE IF EXISTS #CentroCosto
+		create table #USUARIOSCOMPRAS
+		(
+			Id int primary key identity (1,1),
+			IdUsuario int,
+			Nombre varchar(300),
+			Correo varchar(300),
+			CentroCostos varchar(300),
+			Tipo varchar(300),
+		)
+		CREATE TABLE #CentroCosto(IdCentroCosto INT, CentroCosto NVARCHAR(MAX), IdUsuario INT, Nombre NVARCHAR(MAX), Correo NVARCHAR(MAX))
 
 		INSERT INTO #CentroCosto
 		(IdCentroCosto,CentroCosto,IdUsuario,Nombre,Correo)
@@ -156,8 +173,8 @@ CREATE TABLE #CentroCosto(IdCentroCosto INT, CentroCosto NVARCHAR(MAX), IdUsuari
 			'procura@adinco.mx',        -- De - varchar(100)
 			NULL       -- EN_MsjEnviado - bit
 			from #USUARIOSCOMPRAS U
-
-	--ENVIO NOTIFICACION USUARIO REQUISITOR
+	END
+	--ENVIO NOTIFICACION USUARIO REQUISITOR / APLICA PARA OPERACIÓN APROBADA Y RECHAZADA
 	 SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 	 INSERT INTO Adinco.dbo.S_Notificacion
 			(
@@ -187,7 +204,8 @@ CREATE TABLE #CentroCosto(IdCentroCosto INT, CentroCosto NVARCHAR(MAX), IdUsuari
 			'##STATUS##',TAE.Name),
 			'##AREA_CONTRACTUAL##',@NombreAreaContractual),
 			'##NUMERO_OPERACION##',@IdSolicitudPedido),
-			'##URL_TAREA##',CONCAT('https://procura.adinco.mx/04Tareas/detalle.aspx?num_operacion=',dbo.fnCustomPass(8,'C'),@IdOperacion,dbo.fnCustomPass(8,'C'),'&num_user=',dbo.fnCustomPass(8,'C'),U.IdUsuario,dbo.fnCustomPass(8,'C'),'&tp_user=',dbo.fnCustomPass(8,'C'),'2',dbo.fnCustomPass(8,'C'))),
+			'##URL_TAREA##',CONCAT('https://procura.adinco.mx/04Tareas/detalle.aspx?num_operacion=',dbo.fnCustomPass(8,'C'),@IdOperacion,dbo.fnCustomPass(8,'C'),'&num_user=',dbo.fnCustomPass(8,'C'),U.IdUsuario,dbo.fnCustomPass(8,'C'),'&tp_user=',dbo.fnCustomPass(8
+,'C'),'2',dbo.fnCustomPass(8,'C'))),
 			'##ANIO_ACTUAL##',@AnioActual),
 			DATEADD(MINUTE,1,GETDATE()),
 			0,      -- Enviada - bit
