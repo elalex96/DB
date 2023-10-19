@@ -42,7 +42,7 @@ AS
 
 		DECLARE @IdUsuario INT, @Nombre NVARCHAR(MAX), @Correo NVARCHAR(MAX), @IdUsuarioAdinco NVARCHAR(MAX)
 
-		SELECT		@IdUsuario = s.IdUsuario, @Nombre = s.Nombre, @Correo = s.Correo, @IdUsuarioAdinco = S.IdUsuarioADINCO
+		SELECT		@IdUsuario = s.IdUsuario, @Nombre = s.Nombre, @Correo = s.Correo, @IdUsuarioAdinco = ISNULL(S.IdUsuarioADINCO,0)
 		FROM		TA_Operacion AS O (NOLOCK)
 		INNER JOIN	S_Usuario AS S
 			ON O.IdAsignador = S.IdUsuario
