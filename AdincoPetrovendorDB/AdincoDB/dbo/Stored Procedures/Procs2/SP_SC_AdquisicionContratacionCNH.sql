@@ -1,4 +1,13 @@
-﻿CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] 
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_SC_AdquisicionContratacionCNH'
+)
+    DROP PROCEDURE SP_SC_AdquisicionContratacionCNH
+GO
+CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] 
 @IdContrato INT, 
 @Fechainicio DATE, 
 @FechaFin DATE 
@@ -17,6 +26,15 @@ BEGIN
 -- 20230131 DAC     Se calcula subtotales en temporales para evitar duplicados DEA
 -- =============================================
 SET NOCOUNT ON
+
+	DECLARE @Peso INT = 1,
+	@Dolar INT = 2,
+	@CompraDirecta INT = 14,
+	@Aprobado INT = 2,
+	@EnAprobacion INT = 1,
+	@TipoPedidoCompraDirecta INT = 1,
+	@AprobacionDePedido INT = 9
+
    -- SE CREA TABLA PARA QUE NO SE REPITAN LOS DATOS EN LOS MONTOS POR HABER DUPLICADOS EN ESTA TABLA: AX_Layout
    CREATE TABLE #AX_Layout
    (
@@ -30,62 +48,62 @@ SET NOCOUNT ON
    )
    	 
     --- VALIDAR SI EL CONTRATO ES DE CARSO, EJECUTAR SP DE SP_SC_AdquisicionContratacionCNH_Carso         
-    DECLARE @TablaDEA TABLE   
+    CREATE TABLE #TablaDEA    
     (   
-        NumeroContrato NVARCHAR(MAX),   
+        NumeroContrato NVARCHAR(4000),   
         RelacionOperadoraProveedor NVARCHAR(100),   
-        Proveedor NVARCHAR(MAX),   
+        Proveedor NVARCHAR(4000),   
         MecanismoContratacion NVARCHAR(200),   
-        [Nombre Contrato C-P] NVARCHAR(MAX),   
-        [No. Contrato] NVARCHAR(MAX),   
+        [Nombre Contrato C-P] NVARCHAR(4000),   
+        [No. Contrato] NVARCHAR(4000),   
         [Fecha Inicio Contrato] DATETIME,   
         [Fecha Termino Contrato] DATETIME,   
         [Vigencia del contrato] DATETIME,   
-        [Objeto del contrato] NVARCHAR(MAX),   
+        [Objeto del contrato] NVARCHAR(4000),   
         MontoUSD FLOAT,   
         MontoMXN FLOAT,   
         TipoCambio FLOAT,   
         FechaTipoCambio DATETIME,   
-        Comentarios NVARCHAR(MAX),   
-        NombreContratista NVARCHAR(MAX),   
+        Comentarios NVARCHAR(4000),   
+        NombreContratista NVARCHAR(4000),   
         FechaEfectiva NVARCHAR(10)   
     );  
 	
-	DECLARE @Tabla TABLE   
+	CREATE TABLE #Tabla    
     (   
-        NumeroContrato NVARCHAR(MAX),   
+        NumeroContrato NVARCHAR(4000),   
         RelacionOperadoraProveedor NVARCHAR(100),   
-        Proveedor NVARCHAR(MAX),   
+        Proveedor NVARCHAR(4000),   
         MecanismoContratacion NVARCHAR(200),   
-        [Nombre Contrato C-P] NVARCHAR(MAX),   
-        [No. Contrato] NVARCHAR(MAX),   
-        [Fecha Inicio Contrato] NVARCHAR(MAX),   
-        [Fecha Termino Contrato] NVARCHAR(MAX),   
-        [Vigencia del contrato] NVARCHAR(MAX),   
-        [Objeto del contrato] NVARCHAR(MAX),   
+        [Nombre Contrato C-P] VARCHAR(8000),   
+        [No. Contrato] NVARCHAR(4000),   
+        [Fecha Inicio Contrato] NVARCHAR(4000),   
+        [Fecha Termino Contrato] NVARCHAR(4000),   
+        [Vigencia del contrato] NVARCHAR(4000),   
+        [Objeto del contrato] VARCHAR(8000),   
         MontoUSD FLOAT,   
         MontoMXN FLOAT,   
-        TipoCambio NVARCHAR(MAX),
-        FechaTipoCambio NVARCHAR(MAX),   
-        Comentarios NVARCHAR(MAX),   
-        NombreContratista NVARCHAR(MAX),   
+        TipoCambio NVARCHAR(4000),
+        FechaTipoCambio NVARCHAR(4000),   
+        Comentarios VARCHAR(8000),   
+        NombreContratista NVARCHAR(4000),   
         FechaEfectiva NVARCHAR(10)   
     ); 
 
-	 DECLARE @TablaWDEA_PurchasingDocumentsImportados TABLE   
+	 CREATE TABLE #TablaWDEA_PurchasingDocumentsImportados   
     (   
 		IdPedidoADINCO INT,
-        PURCHASING_DOCUMENT VARCHAR(MAX),  
-		CURRENCY VARCHAR(MAX),  
+        PURCHASING_DOCUMENT VARCHAR(4000),  
+		CURRENCY VARCHAR(4000),  
         NET_ORDER_VALUE FLOAT,   
 		SUM_NET_PRICE FLOAT,		
 		IDMONEDA INT,   
-		OUTLINE_AGREEMENT VARCHAR(MAX), 
-		NumeroContrato VARCHAR(MAX),
-		MECANISMO_CONTRATACION  VARCHAR(MAX)
+		OUTLINE_AGREEMENT VARCHAR(4000), 
+		NumeroContrato VARCHAR(4000),
+		MECANISMO_CONTRATACION  VARCHAR(4000)
 	);
 
-	DECLARE @MM_PedidoDetalle TABLE   
+	CREATE TABLE #MM_PedidoDetalle   
 	(   
 			IdPedido INT,    
 			SUM_Subtotal FLOAT		
@@ -129,7 +147,7 @@ SET NOCOUNT ON
 			FechaEntrega
 
         --CASO PARA COMPRAS DIRECTAS DE CARSO       
-        INSERT INTO @Tabla   
+        INSERT INTO #Tabla   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -149,94 +167,92 @@ SET NOCOUNT ON
             NombreContratista,   
             FechaEfectiva   
         )   
-        SELECT C.NumeroContrato,   
+        SELECT CO_Contrato.NumeroContrato,   
                CASE   
-                   WHEN RE.IdRelacion IS NOT NULL THEN   
+                   WHEN PV_RelacionProveedorSubcotratista.IdRelacion IS NOT NULL THEN   
                        'SI'   
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(P.RazonSocial) + ' ' + ISNULL(UPPER(P.RegimenCapital), '') AS Proveedor,   
+               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
                'ADJUDICACIÓN DIRECTA' AS MecanismoContratacion,   
-               UPPER(ISNULL(TAO.Descripcion, '')) AS 'Nombre Contrato C-P',   
-               UPPER(CONCAT(PG.IdPedido, ' CD')) AS 'No. Contrato',   
+               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Nombre Contrato C-P',   
+               UPPER(CONCAT(MM_Pedidos.IdPedido, ' CD')) AS 'No. Contrato',   
                CASE   
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
+                   WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
                        '-'   
                    ELSE   
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
+                       CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Fecha Inicio Contrato',   
                CASE   
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
+                   WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
 						'-'   
                    ELSE   
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
+                       CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Fecha Termino Contrato',                  
                CASE   
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
+                   WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
                        '-'   
                    ELSE   
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
+                       CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Vigencia del contrato',   
-               UPPER(ISNULL(TAO.Descripcion, '')) AS 'Objeto del contrato',   
+               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Objeto del contrato',   
                CASE   
-                   WHEN fiFact.IdMoneda = 1 THEN   
+                   WHEN FI_Factura.IdMoneda = @Peso THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE))  
+                       FI_Factura.SubTotal, CAST(FI_Factura.FechaTimbrado AS DATE))  
                    ELSE   
-					   fiFact.SubTotal
+					   FI_Factura.SubTotal
 				END AS MontoUSD,   
                CASE   
-                   WHEN fiFact.IdMoneda = 2 THEN     
+                   WHEN FI_Factura.IdMoneda = @Dolar THEN     
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)) 
+                       FI_Factura.SubTotal, CAST(FI_Factura.FechaTimbrado AS DATE)) 
                    ELSE   
-					   fiFact.SubTotal 
+					   FI_Factura.SubTotal 
                END AS MontoMXN,   
-               Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(TAO.FechaRegistro AS DATE)) AS TipoCambio,   
-               CONVERT(VARCHAR, TAO.FechaRegistro, 105) AS FechaTipoCambio,   
-               UPPER(ISNULL(TAO.Descripcion, '')) AS 'Comentarios',   
-               UPPER(ctista.RazonSocial) AS NombreContratista,   
+               Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(TA_Operacion.FechaRegistro AS DATE)) AS TipoCambio,   
+               CONVERT(VARCHAR, TA_Operacion.FechaRegistro, 105) AS FechaTipoCambio,   
+               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Comentarios',   
+               UPPER(CO_Contratista.RazonSocial) AS NombreContratista,   
                '' AS FechaEfectiva   
-        FROM Petrovendor.dbo.CO_Registro AS coRegistro   
-            LEFT JOIN Petrovendor.dbo.FI_Factura AS fiFact   
-                ON coRegistro.IdFactura = fiFact.IdFactura   
-            LEFT JOIN Petrovendor.dbo.TA_Operacion AS TAO   
-                ON TAO.IdDocumento = coRegistro.IdFactura   
-            LEFT JOIN Petrovendor.dbo.TA_Estatus AS TE   
-                ON TE.IdEstatus = TAO.IdEstatusOperacion   
-            LEFT JOIN Petrovendor.dbo.CC_CentroCosto centroCosto   
-                ON centroCosto.IdCentroCosto = coRegistro.CentroCostos   
-            LEFT JOIN Petrovendor.dbo.DG_CuentaContable cuentaContable   
-                ON cuentaContable.Id = coRegistro.CuentaContable   
-            LEFT JOIN Petrovendor.dbo.CO_CatalogoCuentaSH cuentaSh   
-                ON cuentaSh.IdCatalogoCuentasSH = coRegistro.IdCatalogoCuentasSH   
-            LEFT JOIN Petrovendor.dbo.CO_Instalacion instalacion   
-                ON instalacion.IdInstalacion = coRegistro.IdInstalacion   
-            LEFT JOIN Petrovendor.dbo.MM_Pedidos PG   
-                ON PG.IdIdentificador = fiFact.IdFactura   
-                   AND PG.IdTipoPedido = 1   
-                   AND TAO.IdProveedor = PG.IdProveedorCliente   
-            LEFT JOIN Petrovendor.dbo.S_Proveedor AS P   
-                ON P.RFC = fiFact.Emisor   
-            LEFT JOIN Adinco.dbo.CO_Contrato AS C   
-                ON fiFact.IdContrato = C.IdContrato   
-            LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC   
-                ON C.IdAreaContractual = AC.IdAreaContractual   
-            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-                ON RE.IdProveedor = P.IdProveedor   
-                   AND RE.IdSubcontratista = P.IdProveedor   
-            INNER JOIN Adinco.dbo.CO_Contratista ctista   
-                ON ctista.IdContratista = C.IdContratista   
-        WHERE TAO.IdTipoOperacion = 14   
-              AND TE.IdEstatus = 2   
-              AND ISNULL(fiFact.IsEliminado, 0) = 0   
-              AND C.IdContrato = @IdContrato   
-              AND CONVERT(VARCHAR, TAO.FechaRegistro, 112)   
+        FROM Petrovendor.dbo.CO_Registro (NOLOCK)   
+            INNER JOIN Petrovendor.dbo.FI_Factura (NOLOCK)   
+                ON ISNULL(FI_Factura.IsEliminado, 0) = 0    
+				AND CO_Registro.IdFactura = FI_Factura.IdFactura
+            INNER JOIN Petrovendor.dbo.TA_Operacion (NOLOCK)   
+                ON TA_Operacion.IdTipoOperacion = @CompraDirecta 
+				AND CONVERT(VARCHAR, TA_Operacion.FechaRegistro, 112)   
+						BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
+				AND CO_Registro.IdFactura = TA_Operacion.IdDocumento
+            INNER JOIN Petrovendor.dbo.TA_Estatus (NOLOCK)   
+                ON TA_Estatus.IdEstatus = @Aprobado 
+				AND TA_Estatus.IdEstatus = TA_Operacion.IdEstatusOperacion
+            INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)   
+                ON FI_Factura.IdFactura = MM_Pedidos.IdIdentificador    
+                   AND MM_Pedidos.IdTipoPedido = @TipoPedidoCompraDirecta   
+                   AND MM_Pedidos.IdProveedorCliente = TA_Operacion.IdProveedor   
+            INNER JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)   
+                ON FI_Factura.Emisor = S_Proveedor.RFC   
+            INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)   
+                ON CO_Contrato.IdContrato = @IdContrato 
+				AND FI_Factura.IdContrato = CO_Contrato.IdContrato 
+            INNER JOIN Adinco.dbo.CO_AreaContractual (NOLOCK)   
+                ON CO_Contrato.IdAreaContractual = CO_AreaContractual.IdAreaContractual   
+            INNER JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista (NOLOCK)  
+                ON S_Proveedor.IdProveedor = PV_RelacionProveedorSubcotratista.IdProveedor    
+                   AND S_Proveedor.IdProveedor = PV_RelacionProveedorSubcotratista.IdProveedor   
+            INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)   
+                ON CO_Contrato.IdContratista = CO_Contratista.IdContratista     
+        WHERE TA_Operacion.IdTipoOperacion = @CompraDirecta   
+              AND TA_Estatus.IdEstatus = @Aprobado   
+              AND ISNULL(FI_Factura.IsEliminado, 0) = 0   
+              AND CO_Contrato.IdContrato = @IdContrato   
+              AND CONVERT(VARCHAR, TA_Operacion.FechaRegistro, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112);   
    
         --#MODIFICACIÓN PARA PEDIDOS -MERCADEO - ADJ DIRECTA DE OPERADORA CARSO        
-        INSERT INTO @Tabla   
+        INSERT INTO #Tabla   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -249,148 +265,146 @@ SET NOCOUNT ON
             [Vigencia del contrato],   
             [Objeto del contrato],   
             MontoUSD,   
-       MontoMXN,   
+			MontoMXN,   
             TipoCambio,   
             FechaTipoCambio,   
             Comentarios,   
             NombreContratista,   
             FechaEfectiva   
         )   
-        SELECT c.NumeroContrato,   
+        SELECT CO_Contrato.NumeroContrato,   
                CASE   
-                   WHEN RE.IdRelacion IS NOT NULL THEN   
+                   WHEN PV_RelacionProveedorSubcotratista.IdRelacion IS NOT NULL THEN   
                        'SI'   
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,   
+               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
                CASE   
-                   WHEN TP.TipoPedido = 'Mercadeo' THEN   
+                   WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                    ELSE   
-                       UPPER(TP.TipoPedido)   
+                       UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
-               AXP.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX        
-               REPLACE(AXP.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
-               REPLACE(AXP.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
-               REPLACE(AXP.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
-               dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               #AX_Layout.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX        
+               REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
+               REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
+               REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
+               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
                CASE   
-                   WHEN Mon.IdMoneda = 1   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN  
+                   WHEN PV_TipoMoneda.IdMoneda = @Peso   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN  
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE)) 
-                   WHEN Mon.IdMoneda = 2   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-					   SUM(PD.Subtotal)
+                       SUM(MM_PedidoDetalle.Subtotal),   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) AS DATE)) 
+                   WHEN PV_TipoMoneda.IdMoneda = @Dolar   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
+					   SUM(MM_PedidoDetalle.Subtotal)
                    ELSE  
 					   0 
                END AS MontoUSD,   
                CASE   
-                   WHEN Mon.IdMoneda = 2   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
+                   WHEN PV_TipoMoneda.IdMoneda = @Dolar   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))  
-                   WHEN Mon.IdMoneda = 1 AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL 
-					THEN (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))       
+                       SUM(MM_PedidoDetalle.Subtotal),   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) AS DATE))  
+                   WHEN PV_TipoMoneda.IdMoneda = @Peso AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL 
+					THEN (DBO.fn_ObtenSubtotalPedido(PV_TipoMoneda.IdMoneda, MM_Pedido.IdPedido, @IdContrato))       
                    ELSE   
 					   0  
                END AS MontoMXN,   
                CASE   
-                   WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
+                   WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
                        Petrovendor.dbo.FN_ValorTipoCambioIterativo(   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) AS DATE))   
                    ELSE   
                        ''   
                END AS TipoCambio,   
-               REPLACE(AXP.FechaRegistroCompra, '/', '-') AS FechaTipoCambio,             --DWONG 20190712       
-               dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Comentarios', NombreContratista = UPPER(ctista.RazonSocial),   
-               FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                        --DWONG 20190712       
-        FROM Petrovendor.dbo.MM_Pedido AS P 
-			LEFT JOIN #AX_Layout AXP
-                ON CAST(AXP.NoPedidoADINCO AS NVARCHAR(MAX)) = CAST(P.IdPedido AS NVARCHAR(MAX))   
-				AND LTRIM(RTRIM(AXP.Empresa))	=	@Bloque
-            LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
-                ON PD.IdPedido = P.IdPedido   
-				AND ISNULL(P.IdEstatusEliminado,0) = 0
-            LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
-                ON P.IdPedido = PSS.IdIdentificador   
-                   AND PSS.IdProveedorCliente = P.IdProveedorCompras   
-            INNER JOIN Petrovendor.dbo.AX_ComparativaEmpresa emp   
-                ON emp.IdProveedor = PSS.IdProveedorCliente   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido solPed   
-                ON solPed.IdSolicitudPedido = P.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle SPD   
-                ON solPed.IdSolicitudPedido = SPD.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL   
-                ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOferta AS PO   
-                ON PO.IdPeticionOferta = P.IdPeticionOferta   
-                   AND PO.IdSolicitudPedido = solPed.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle POD   
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta   
-                   AND POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-                   AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle   
-            LEFT JOIN Petrovendor.dbo.S_Proveedor AS PV   
-                ON PV.IdProveedor = PO.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.TA_Operacion AS O   
-                ON O.IdDocumento = P.IdSolicitudPedido   
-                   AND P.Version = O.NoVersion   
-            LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO   
-                ON TTO.IdTipoOperacion = O.IdTipoOperacion   
-            LEFT JOIN Petrovendor.dbo.TA_Estatus AS E   
-                ON E.IdEstatus = O.IdEstatusOperacion   
-            LEFT JOIN Adinco.dbo.CO_Contrato c   
-                ON c.IdContrato = P.IdContrato   
-            INNER JOIN Adinco.dbo.CO_Contratista ctista   
-                ON ctista.IdContratista = c.IdContratista   
-            INNER JOIN Petrovendor.dbo.PV_TipoMoneda AS Mon   
-                ON P.IdMoneda = Mon.IdMoneda   
-            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-                ON RE.IdProveedor = solPed.IdProveedor   
-                   AND RE.IdSubcontratista = P.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP    
-				ON PSS.IdTipoPedido	=	TP.IdTipoPedido
-        WHERE O.IdTipoOperacion = 9   
-              AND E.IdEstatus = 2   
-              AND c.IdContrato = @IdContrato   
-              AND ISNULL(solPed.IdEstatusEliminado, 0) = 0   
-              AND ISNULL(P.IdEstatusEliminado, 0) = 0   
-              AND POD.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron       
-              AND CONVERT(DATE, dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra))   
-              BETWEEN CONVERT(DATE, @Fechainicio) AND CONVERT(DATE, @FechaFin)   
-              AND NOT EXISTS   
-        (   SELECT 1   
-            FROM SC_SubContrato sc   
-            WHERE sc.IdPedido = P.IdPedido   
-                  AND sc.IsActivo = 1)   
-              AND UPPER(LTRIM(RTRIM(AXP.Estatus))) <> UPPER('cancelado')   
-        GROUP BY RE.IdRelacion,   
-                 PV.RazonSocial,   
-                 PV.RegimenCapital,   
-                 TP.TipoPedido,   
-                 solPed.MotivoUrgencia,   
-                 c.NumeroContrato,   
-                 solPed.FechaEntregaFinRequerida,   
-                 solPed.FechaEntregaRequerida,   
-                 PO.FechaFinalizado,   
-                 c.DescripcionContrato,   
-                 Mon.IdMoneda,   
-                 solPed.IdSolicitudPedido,   
-                 P.IdPedido,   
-                 PSS.IdPedido,   
-                 ctista.RazonSocial,   
-                 c.FechaFirma,   
-                 AXP.FechaRegistroCompra,   
-                 AXP.NoOrden,   
-                 AXP.FechaEntrega   
-        ORDER BY PSS.IdPedido ASC;   
+               REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS FechaTipoCambio,             --DWONG 20190712       
+               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Comentarios', NombreContratista = UPPER(CO_Contratista.RazonSocial),   
+               FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                        --DWONG 20190712       
+        FROM Petrovendor.dbo.MM_Pedido (NOLOCK)
+			INNER JOIN #AX_Layout
+                ON	UPPER(LTRIM(RTRIM(#AX_Layout.Estatus))) <> UPPER('cancelado')
+					AND LTRIM(RTRIM(#AX_Layout.Empresa))	=	@Bloque
+					AND CAST(MM_Pedido.IdPedido AS NVARCHAR(100)) = CAST(#AX_Layout.NoPedidoADINCO AS NVARCHAR(100))     
+            INNER JOIN Petrovendor.dbo.MM_PedidoDetalle (NOLOCK)  
+                ON MM_Pedido.IdPedido = MM_PedidoDetalle.IdPedido    
+				AND ISNULL(MM_Pedido.IdEstatusEliminado,0) = 0
+            INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)   
+                ON MM_Pedido.IdPedido = MM_Pedidos.IdIdentificador   
+                   AND MM_Pedido.IdProveedorCompras = MM_Pedidos.IdProveedorCliente    
+            INNER JOIN Petrovendor.dbo.AX_ComparativaEmpresa (NOLOCK)   
+                ON MM_Pedidos.IdProveedorCliente = AX_ComparativaEmpresa.IdProveedor   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedido (NOLOCK)   
+                ON MM_Pedido.IdSolicitudPedido = MM_SolicitudPedido.IdSolicitudPedido
+				AND ISNULL(MM_SolicitudPedido.IdEstatusEliminado, 0) = 0
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle (NOLOCK)  
+                ON MM_SolicitudPedido.IdSolicitudPedido = MM_SolicitudPedidoDetalle.IdSolicitudPedido   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto (NOLOCK)   
+                ON MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_SolicitudPedidoDetalleLineaPresupuesto.IdSolicitudPedidoDetalle   
+            INNER JOIN Petrovendor.dbo.MM_PeticionOferta (NOLOCK)   
+                ON MM_Pedido.IdPeticionOferta = MM_PeticionOferta.IdPeticionOferta    
+                   AND MM_SolicitudPedido.IdSolicitudPedido = MM_PeticionOferta.IdSolicitudPedido   
+            INNER JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle (NOLOCK)   
+                ON MM_PeticionOferta.IdPeticionOferta = MM_PeticionOfertaDetalle.IdPeticionOferta   
+                   AND MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_PeticionOfertaDetalle.IdSolicitudPedidoDetalle 
+                   AND MM_PedidoDetalle.IdPeticionOfertaDetalle = MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle 
+            INNER JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)   
+                ON MM_PeticionOferta.IdSubcontratista = S_Proveedor.IdProveedor   
+            INNER JOIN Petrovendor.dbo.TA_Operacion (NOLOCK)   
+                ON MM_Pedido.IdSolicitudPedido = TA_Operacion.IdDocumento 
+				   AND TA_Operacion.IdTipoOperacion = @AprobacionDePedido 
+                   AND MM_Pedido.Version = TA_Operacion.NoVersion   
+            INNER JOIN Petrovendor.dbo.TA_TipoOperacion (NOLOCK)   
+                ON TA_Operacion.IdTipoOperacion = TA_TipoOperacion.IdTipoOperacion   
+            INNER JOIN Petrovendor.dbo.TA_Estatus (NOLOCK)  
+                ON TA_Estatus.IdEstatus = @Aprobado
+				AND TA_Operacion.IdEstatusOperacion = TA_Estatus.IdEstatus   
+            INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)  
+                ON CO_Contrato.IdContrato = @IdContrato
+				AND MM_Pedido.IdContrato = CO_Contrato.IdContrato    
+            INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)  
+                ON CO_Contrato.IdContratista = CO_Contratista.IdContratista   
+            INNER JOIN Petrovendor.dbo.PV_TipoMoneda (NOLOCK)   
+                ON MM_Pedido.IdMoneda = PV_TipoMoneda.IdMoneda   
+            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista (NOLOCK)  
+                ON MM_SolicitudPedido.IdProveedor = PV_RelacionProveedorSubcotratista.IdProveedor   
+                   AND MM_Pedido.IdSubcontratista = PV_RelacionProveedorSubcotratista.IdSubcontratista     
+            INNER JOIN Petrovendor.dbo.MM_TipoPedido (NOLOCK)    
+				ON MM_Pedidos.IdTipoPedido	=	MM_TipoPedido.IdTipoPedido
+			LEFT JOIN SC_SubContrato   
+				ON MM_Pedido.IdPedido = SC_SubContrato.IdPedido   
+                  AND SC_SubContrato.IsActivo = 1  			  
+        WHERE TA_Operacion.IdTipoOperacion = @AprobacionDePedido   
+              AND TA_Estatus.IdEstatus = @Aprobado   
+              AND CO_Contrato.IdContrato = @IdContrato   
+              AND ISNULL(MM_SolicitudPedido.IdEstatusEliminado, 0) = 0   
+              AND ISNULL(MM_Pedido.IdEstatusEliminado, 0) = 0   
+              AND MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron       
+              AND CONVERT(DATE, dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra))   
+              BETWEEN CONVERT(DATE, @Fechainicio) AND CONVERT(DATE, @FechaFin)
+			  AND UPPER(LTRIM(RTRIM(#AX_Layout.Estatus))) <> UPPER('cancelado')
+			  AND SC_SubContrato.IdSubContrato IS NULL
+        GROUP BY PV_RelacionProveedorSubcotratista.IdRelacion,   
+                 S_Proveedor.RazonSocial,   
+                 S_Proveedor.RegimenCapital,   
+                 MM_TipoPedido.TipoPedido,    
+                 CO_Contrato.NumeroContrato,      
+                 PV_TipoMoneda.IdMoneda,     
+                 MM_Pedido.IdPedido,   
+                 MM_Pedidos.IdPedido,   
+                 CO_Contratista.RazonSocial,   
+                 CO_Contrato.FechaFirma,   
+                 #AX_Layout.FechaRegistroCompra,   
+                 #AX_Layout.NoOrden,   
+                 #AX_Layout.FechaEntrega   
+  
    
         --Aqui se agregan los pedidos que estan en orden abierta       
-        INSERT INTO @Tabla   
+        INSERT INTO #Tabla   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -410,149 +424,147 @@ SET NOCOUNT ON
             NombreContratista,   
             FechaEfectiva   
         )   
-        SELECT c.NumeroContrato,   
+        SELECT CO_Contrato.NumeroContrato,   
                CASE   
-                   WHEN RE.IdRelacion IS NOT NULL THEN   
+                   WHEN PV_RelacionProveedorSubcotratista.IdRelacion IS NOT NULL THEN   
                        'SI'   
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,   
+               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
                CASE   
-                   WHEN TP.TipoPedido = 'Mercadeo' THEN   
+                   WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                    ELSE   
-                       UPPER(TP.TipoPedido)   
+                       UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
-               AXP.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX        
-               REPLACE(AXP.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
-               REPLACE(AXP.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
-               REPLACE(AXP.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
-               dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               #AX_Layout.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX        
+               REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
+               REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
+               REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
+               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
                CASE   
-                   WHEN Mon.IdMoneda = 1   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
+                   WHEN PV_TipoMoneda.IdMoneda = @Peso   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))
-                   WHEN Mon.IdMoneda = 2   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-					   SUM(PD.Subtotal)
+                       SUM(MM_PedidoDetalle.Subtotal),   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) AS DATE))
+                   WHEN PV_TipoMoneda.IdMoneda = @Dolar   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
+					   SUM(MM_PedidoDetalle.Subtotal)
                    ELSE   
 					   0
                END AS MontoUSD,   
                CASE   
-                   WHEN Mon.IdMoneda = 2   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN    
+                   WHEN PV_TipoMoneda.IdMoneda = @Dolar   
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN    
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       SUM(PD.Subtotal),   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))  
-                   WHEN Mon.IdMoneda = 1   
-                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
-                       (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
+                       SUM(MM_PedidoDetalle.Subtotal),   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) AS DATE))  
+                   WHEN PV_TipoMoneda.IdMoneda = @Peso  
+                        AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
+                       (DBO.fn_ObtenSubtotalPedido(PV_TipoMoneda.IdMoneda, MM_Pedido.IdPedido, @IdContrato))
                    ELSE 0
                END AS MontoMXN,   
                CASE   
-                   WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) IS NOT NULL THEN   
+                   WHEN dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
                        Petrovendor.dbo.FN_ValorTipoCambioIterativo(   
-                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra) AS DATE))   
+                       CAST(dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) AS DATE))   
                    ELSE   
                        ''   
                END AS TipoCambio,   
-               REPLACE(AXP.FechaRegistroCompra, '/', '-') AS FechaTipoCambio,             --DWONG 20190712       
-               dbo.fn_SC_AdquisicionMaterialesCarso(P.IdPedido) AS 'Comentarios',   
-               NombreContratista = UPPER(ctista.RazonSocial),   
-               FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                        --DWONG 20190712       
-        FROM Petrovendor.dbo.MM_Pedido AS P   
-			LEFT JOIN #AX_Layout	AXP
-                ON CAST(AXP.NoPedidoADINCO AS NVARCHAR(MAX)) = CAST(P.IdPedido AS NVARCHAR(MAX))   
-				AND LTRIM(RTRIM(AXP.Empresa))	=	@Bloque
-				AND ISNULL(P.IdEstatusEliminado,0) = 0
-            LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
-                ON PD.IdPedido = P.IdPedido   
-            LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
-                ON P.IdPedido = PSS.IdIdentificador   
-                   AND PSS.IdProveedorCliente = P.IdProveedorCompras   
-            INNER JOIN Petrovendor.dbo.AX_ComparativaEmpresa emp   
-                ON emp.IdProveedor = PSS.IdProveedorCliente   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido solPed   
-                ON solPed.IdSolicitudPedido = P.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle SPD   
-                ON solPed.IdSolicitudPedido = SPD.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL   
-                ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOferta AS PO   
-                ON PO.IdPeticionOferta = P.IdPeticionOferta   
-                   AND PO.IdSolicitudPedido = solPed.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle POD   
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta   
-                   AND POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-                   AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle   
-            LEFT JOIN Petrovendor.dbo.S_Proveedor AS PV   
-                ON PV.IdProveedor = PO.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.TA_Operacion AS O   
-                ON O.IdDocumento = P.IdSolicitudPedido   
-                   AND P.Version = O.NoVersion   
-            LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO   
-                ON TTO.IdTipoOperacion = O.IdTipoOperacion   
-            LEFT JOIN Petrovendor.dbo.TA_Estatus AS E   
-                ON E.IdEstatus = O.IdEstatusOperacion   
-            LEFT JOIN Adinco.dbo.CO_Contrato c   
-                ON c.IdContrato = P.IdContrato   
-            INNER JOIN Adinco.dbo.CO_Contratista ctista   
-                ON ctista.IdContratista = c.IdContratista   
-            INNER JOIN Petrovendor.dbo.PV_TipoMoneda AS Mon   
-                ON P.IdMoneda = Mon.IdMoneda   
-            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-                ON RE.IdProveedor = solPed.IdProveedor   
-                   AND RE.IdSubcontratista = P.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
-				ON	PSS.IdTipoPedido	=	TP.IdTipoPedido
-        WHERE O.IdTipoOperacion = 9   
-              AND E.IdEstatus = 1   
-              AND c.IdContrato = @IdContrato   
-              AND ISNULL(solPed.IdEstatusEliminado, 0) = 0   
-              AND ISNULL(P.IdEstatusEliminado, 0) = 0   
-              AND POD.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron       
-              AND CONVERT(DATE, dbo.fn_SC_AdquisicionFechaNormalizadaCarso(AXP.FechaRegistroCompra))   
-              BETWEEN CONVERT(DATE, @Fechainicio) AND CONVERT(DATE, @FechaFin)   
-              AND NOT EXISTS   
-        (   SELECT 1   
-            FROM SC_SubContrato sc   
-            WHERE sc.IdPedido = P.IdPedido   
-                  AND sc.IsActivo = 1)   
-              AND UPPER(LTRIM(RTRIM(AXP.Estatus))) = UPPER('Orden abierta')   
-        GROUP BY RE.IdRelacion,   
-                 PV.RazonSocial,   
-                 PV.RegimenCapital,   
-                 TP.TipoPedido,   
-                 solPed.MotivoUrgencia,   
-                 c.NumeroContrato,   
-                 solPed.FechaEntregaFinRequerida,   
-                 solPed.FechaEntregaRequerida,   
-                 PO.FechaFinalizado,   
-                 c.DescripcionContrato,   
-                 Mon.IdMoneda,   
-                 solPed.IdSolicitudPedido,   
-                 P.IdPedido,   
-                 PSS.IdPedido,   
-                 ctista.RazonSocial,   
-                 c.FechaFirma,   
-                 AXP.FechaRegistroCompra,   
-                 AXP.NoOrden,   
-                 AXP.FechaEntrega   
-        ORDER BY PSS.IdPedido ASC;   
+               REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS FechaTipoCambio,             --DWONG 20190712       
+               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Comentarios',   
+               NombreContratista = UPPER(CO_Contratista.RazonSocial),   
+               FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                        --DWONG 20190712       
+        FROM Petrovendor.dbo.MM_Pedido (NOLOCK)   
+			INNER JOIN #AX_Layout
+                ON  UPPER(LTRIM(RTRIM(#AX_Layout.Estatus))) = UPPER('Orden abierta')
+				AND LTRIM(RTRIM(#AX_Layout.Empresa))	=	@Bloque
+				AND CAST(MM_Pedido.IdPedido AS NVARCHAR(100)) = CAST(#AX_Layout.NoPedidoADINCO AS NVARCHAR(100))   
+				AND ISNULL(MM_Pedido.IdEstatusEliminado,0) = 0
+            INNER JOIN Petrovendor.dbo.MM_PedidoDetalle (NOLOCK)   
+                ON MM_Pedido.IdPedido = MM_PedidoDetalle.IdPedido   
+            INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)   
+                ON MM_Pedido.IdPedido = MM_Pedidos.IdIdentificador   
+                   AND MM_Pedido.IdProveedorCompras = MM_Pedidos.IdProveedorCliente  
+            INNER JOIN Petrovendor.dbo.AX_ComparativaEmpresa (NOLOCK)   
+                ON MM_Pedidos.IdProveedorCliente = AX_ComparativaEmpresa.IdProveedor   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedido (NOLOCK)   
+                ON  MM_Pedido.IdSolicitudPedido = MM_SolicitudPedido.IdSolicitudPedido
+					AND ISNULL(MM_SolicitudPedido.IdEstatusEliminado, 0) = 0
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle (NOLOCK)   
+                ON MM_SolicitudPedido.IdSolicitudPedido = MM_SolicitudPedidoDetalle.IdSolicitudPedido   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto (NOLOCK)   
+                ON MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_SolicitudPedidoDetalleLineaPresupuesto.IdSolicitudPedidoDetalle    
+            INNER JOIN Petrovendor.dbo.MM_PeticionOferta (NOLOCK)   
+                ON MM_Pedido.IdPeticionOferta = MM_PeticionOferta.IdPeticionOferta  
+                   AND MM_SolicitudPedido.IdSolicitudPedido = MM_PeticionOferta.IdSolicitudPedido    
+            INNER JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle (NOLOCK)  
+                ON MM_PeticionOferta.IdPeticionOferta = MM_PeticionOfertaDetalle.IdPeticionOferta   
+                   AND MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_PeticionOfertaDetalle.IdSolicitudPedidoDetalle    
+                   AND MM_PedidoDetalle.IdPeticionOfertaDetalle = MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle   
+            INNER JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)  
+                ON MM_PeticionOferta.IdSubcontratista = S_Proveedor.IdProveedor   
+            INNER JOIN Petrovendor.dbo.TA_Operacion (NOLOCK)  
+                ON TA_Operacion.IdTipoOperacion = @AprobacionDePedido
+					AND MM_Pedido.IdSolicitudPedido = TA_Operacion.IdDocumento   
+                    AND MM_Pedido.Version = TA_Operacion.NoVersion   
+            INNER JOIN Petrovendor.dbo.TA_TipoOperacion (NOLOCK)   
+                ON TA_Operacion.IdTipoOperacion = TA_TipoOperacion.IdTipoOperacion   
+            INNER JOIN Petrovendor.dbo.TA_Estatus (NOLOCK)  
+                ON TA_Estatus.IdEstatus = @EnAprobacion
+					AND TA_Operacion.IdEstatusOperacion = TA_Estatus.IdEstatus   
+            INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)  
+                ON CO_Contrato.IdContrato = @IdContrato
+					AND MM_Pedido.IdContrato = CO_Contrato.IdContrato   
+            INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)   
+                ON CO_Contrato.IdContratista = CO_Contratista.IdContratista   
+            INNER JOIN Petrovendor.dbo.PV_TipoMoneda (NOLOCK)   
+                ON MM_Pedido.IdMoneda = PV_TipoMoneda.IdMoneda   
+            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista (NOLOCK)   
+                ON MM_SolicitudPedido.IdProveedor= PV_RelacionProveedorSubcotratista.IdProveedor   
+                   AND MM_Pedido.IdSubcontratista = PV_RelacionProveedorSubcotratista.IdSubcontratista   
+            INNER JOIN Petrovendor.dbo.MM_TipoPedido (NOLOCK)  
+				ON	MM_Pedidos.IdTipoPedido	=	MM_TipoPedido.IdTipoPedido
+			LEFT JOIN SC_SubContrato   
+				ON MM_Pedido.IdPedido = SC_SubContrato.IdPedido  
+                  AND SC_SubContrato.IsActivo = 1
+        WHERE TA_Operacion.IdTipoOperacion = @AprobacionDePedido   
+              AND TA_Estatus.IdEstatus = @EnAprobacion   
+              AND CO_Contrato.IdContrato = @IdContrato   
+              AND ISNULL(MM_SolicitudPedido.IdEstatusEliminado, 0) = 0   
+              AND ISNULL(MM_Pedido.IdEstatusEliminado, 0) = 0   
+              AND MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron       
+              AND CONVERT(DATE, dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra))   
+              BETWEEN CONVERT(DATE, @Fechainicio) AND CONVERT(DATE, @FechaFin)
+			  AND UPPER(LTRIM(RTRIM(#AX_Layout.Estatus))) = UPPER('Orden abierta')
+			  AND SC_SubContrato.IdSubContrato IS NULL              
+        GROUP BY PV_RelacionProveedorSubcotratista.IdRelacion,   
+                 S_Proveedor.RazonSocial,   
+                 S_Proveedor.RegimenCapital,   
+                 MM_TipoPedido.TipoPedido,   
+                 CO_Contrato.NumeroContrato,      
+                 MM_PeticionOferta.FechaFinalizado,     
+                 PV_TipoMoneda.IdMoneda,    
+                 MM_Pedido.IdPedido,     
+                 CO_Contratista.RazonSocial,   
+                 CO_Contrato.FechaFirma,   
+                 #AX_Layout.FechaRegistroCompra,   
+                 #AX_Layout.NoOrden,   
+                 #AX_Layout.FechaEntrega   
+  
    
    
         -- AQUI SE AGREGAN LOS PEDIDOS QUE NO ESTAN EN EL LAYOUT DE AX_LAYOUT       
-        INSERT INTO @Tabla   
+        INSERT INTO #Tabla   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
             Proveedor,   
             MecanismoContratacion,   
-        [Nombre Contrato C-P],   
+			[Nombre Contrato C-P],   
             [No. Contrato],   
             [Fecha Inicio Contrato],   
             [Fecha Termino Contrato],   
@@ -566,130 +578,125 @@ SET NOCOUNT ON
             NombreContratista,   
             FechaEfectiva   
         )   
-        SELECT c.NumeroContrato,   
+        SELECT CO_Contrato.NumeroContrato,   
                CASE   
-                   WHEN RE.IdRelacion IS NOT NULL THEN   
+                   WHEN PV_RelacionProveedorSubcotratista.IdRelacion IS NOT NULL THEN   
                        'SI'   
 					ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,   
+               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
                CASE   
-                   WHEN TP.TipoPedido = 'Mercadeo' THEN   
+                   WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                    ELSE   
-                       UPPER(TP.TipoPedido)   
+                       UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               solPed.MotivoUrgencia AS 'Nombre Contrato C-P',   
-               UPPER(PSS.IdPedido) AS 'No. Contrato',                                  --> NUMERO DE PEDIDO DE AX        
-               CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS 'Fecha Inicio Contrato',  --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
-               CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS 'Fecha Termino Contrato', --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
-               CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS 'Vigencia del contrato',                                         --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
-               solPed.MotivoUrgencia AS 'Objeto del contrato',   
+               MM_SolicitudPedido.MotivoUrgencia AS 'Nombre Contrato C-P',   
+               UPPER(MM_Pedidos.IdPedido) AS 'No. Contrato',                                  --> NUMERO DE PEDIDO DE AX        
+               CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS 'Fecha Inicio Contrato',  --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
+               CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS 'Fecha Termino Contrato', --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
+               CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS 'Vigencia del contrato',                                         --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
+               MM_SolicitudPedido.MotivoUrgencia AS 'Objeto del contrato',   
                CASE   
-                   WHEN Mon.IdMoneda = 1          
+                   WHEN PV_TipoMoneda.IdMoneda = @Peso          
                THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       SUM(PD.Subtotal), CAST(O.FechaRegistro AS DATE))
-                   WHEN Mon.IdMoneda = 2        
+                       SUM(MM_PedidoDetalle.Subtotal), CAST(TA_Operacion.FechaRegistro AS DATE))
+                   WHEN PV_TipoMoneda.IdMoneda = @Dolar        
                THEN   
-					   SUM(PD.Subtotal) 
+					   SUM(MM_PedidoDetalle.Subtotal) 
                    ELSE   
 					   0
                END AS MontoUSD,   
                CASE   
-                   WHEN Mon.IdMoneda = 2         
+                   WHEN PV_TipoMoneda.IdMoneda = @Dolar         
                THEN   
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       SUM(PD.Subtotal), CAST(O.FechaRegistro AS DATE))
-                   WHEN Mon.IdMoneda = 1          
+                       SUM(MM_PedidoDetalle.Subtotal), CAST(TA_Operacion.FechaRegistro AS DATE))
+                   WHEN PV_TipoMoneda.IdMoneda = @Peso          
                THEN   
-                    (DBO.fn_ObtenSubtotalPedido(Mon.IdMoneda,P.IdPedido,@IdContrato))
+                    (DBO.fn_ObtenSubtotalPedido(PV_TipoMoneda.IdMoneda,MM_Pedido.IdPedido, @IdContrato))
                    ELSE 0
                END AS MontoMXN,   
-               Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(O.FechaRegistro AS DATE)) AS TipoCambio,   
-               CONVERT(VARCHAR(10), O.FechaRegistro, 105) AS FechaTipoCambio,   
-               solPed.MotivoUrgencia AS 'Comentarios',   
-               NombreContratista = UPPER(ctista.RazonSocial),   
-               FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                     --DWONG 20190712       
-        FROM Petrovendor.dbo.MM_Pedido p   
-			LEFT JOIN #AX_Layout	AXP
-                ON CAST(AXP.NoPedidoADINCO AS NVARCHAR(MAX)) = CAST(p.IdPedido AS NVARCHAR(MAX))   
-				AND LTRIM(RTRIM(AXP.Empresa))	=	@Bloque
-				AND ISNULL(P.IdEstatusEliminado,0) = 0
-            LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
-                ON PD.IdPedido = p.IdPedido   
-            LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
-                ON p.IdPedido = PSS.IdIdentificador   
-                   AND PSS.IdProveedorCliente = p.IdProveedorCompras   
-            INNER JOIN Petrovendor.dbo.AX_ComparativaEmpresa emp   
-                ON emp.IdProveedor = PSS.IdProveedorCliente   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido solPed   
-                ON solPed.IdSolicitudPedido = p.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle SPD   
-                ON solPed.IdSolicitudPedido = SPD.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL   
-                ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOferta AS PO   
-                ON PO.IdPeticionOferta = p.IdPeticionOferta   
-                   AND PO.IdSolicitudPedido = solPed.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle POD   
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta   
-                   AND POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-         AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle   
-            LEFT JOIN Petrovendor.dbo.S_Proveedor AS PV   
-                ON PV.IdProveedor = PO.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.TA_Operacion AS O   
-                ON O.IdDocumento = p.IdSolicitudPedido   
-                   AND p.Version = O.NoVersion   
-            LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO   
-                ON TTO.IdTipoOperacion = O.IdTipoOperacion   
-            LEFT JOIN Petrovendor.dbo.TA_Estatus AS E   
-                ON E.IdEstatus = O.IdEstatusOperacion   
-            LEFT JOIN Adinco.dbo.CO_Contrato c   
-                ON c.IdContrato = p.IdContrato   
-            INNER JOIN Adinco.dbo.CO_Contratista ctista   
-                ON ctista.IdContratista = c.IdContratista   
-            INNER JOIN Petrovendor.dbo.PV_TipoMoneda AS Mon   
-                ON p.IdMoneda = Mon.IdMoneda   
-            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-                ON RE.IdProveedor = solPed.IdProveedor   
-                   AND RE.IdSubcontratista = p.IdSubcontratista   
-      LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
-                --ON TP.IdTipoPedido = PO.IdTipoProceso
-				ON	PSS.IdTipoPedido	=	TP.IdTipoPedido
-        WHERE O.IdTipoOperacion = 9   
-              AND E.IdEstatus = 2   
-              AND c.IdContrato = @IdContrato   
-              AND ISNULL(solPed.IdEstatusEliminado, 0) = 0   
-              AND ISNULL(p.IdEstatusEliminado, 0) = 0   
-              AND POD.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron       
-              AND O.FechaRegistro   
+               Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(TA_Operacion.FechaRegistro AS DATE)) AS TipoCambio,   
+               CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS FechaTipoCambio,   
+               MM_SolicitudPedido.MotivoUrgencia AS 'Comentarios',   
+               NombreContratista = UPPER(CO_Contratista.RazonSocial),   
+               FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                     --DWONG 20190712       
+        FROM Petrovendor.dbo.MM_Pedido  (NOLOCK)  
+			LEFT JOIN #AX_Layout
+                ON CAST(MM_Pedido.IdPedido AS NVARCHAR(100)) = CAST(#AX_Layout.NoPedidoADINCO AS NVARCHAR(100))   
+				AND LTRIM(RTRIM(#AX_Layout.Empresa))	=	@Bloque
+				AND ISNULL(MM_Pedido.IdEstatusEliminado,0) = 0
+            INNER JOIN Petrovendor.dbo.MM_PedidoDetalle (NOLOCK)   
+                ON MM_Pedido.IdPedido = MM_PedidoDetalle.IdPedido   
+            INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)   
+                ON MM_Pedido.IdPedido = MM_Pedidos.IdIdentificador   
+                   AND MM_Pedido.IdProveedorCompras = MM_Pedidos.IdProveedorCliente   
+            INNER JOIN Petrovendor.dbo.AX_ComparativaEmpresa (NOLOCK)   
+                ON MM_Pedidos.IdProveedorCliente = AX_ComparativaEmpresa.IdProveedor    
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedido (NOLOCK)   
+                ON MM_Pedido.IdSolicitudPedido = MM_SolicitudPedido.IdSolicitudPedido
+				AND ISNULL(MM_SolicitudPedido.IdEstatusEliminado, 0) = 0
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle (NOLOCK)   
+                ON MM_SolicitudPedido.IdSolicitudPedido = MM_SolicitudPedidoDetalle.IdSolicitudPedido   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto (NOLOCK)   
+                ON MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_SolicitudPedidoDetalleLineaPresupuesto.IdSolicitudPedidoDetalle   
+            INNER JOIN Petrovendor.dbo.MM_PeticionOferta (NOLOCK)   
+                ON MM_Pedido.IdPeticionOferta = MM_PeticionOferta.IdPeticionOferta   
+                   AND MM_SolicitudPedido.IdSolicitudPedido = MM_PeticionOferta.IdSolicitudPedido  
+            INNER JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle (NOLOCK)  
+                ON MM_PeticionOferta.IdPeticionOferta = MM_PeticionOfertaDetalle.IdPeticionOferta  
+                    AND MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_PeticionOfertaDetalle.IdSolicitudPedidoDetalle   
+					AND MM_PedidoDetalle.IdPeticionOfertaDetalle = MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle   
+            INNER JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)   
+                ON MM_PeticionOferta.IdSubcontratista = S_Proveedor.IdProveedor   
+            INNER JOIN Petrovendor.dbo.TA_Operacion (NOLOCK)                
+				ON TA_Operacion.IdTipoOperacion = @AprobacionDePedido
+				AND MM_Pedido.IdSolicitudPedido = TA_Operacion.IdDocumento
+				AND MM_Pedido.Version = TA_Operacion.NoVersion
+            INNER JOIN Petrovendor.dbo.TA_TipoOperacion (NOLOCK)   
+                ON TA_Operacion.IdTipoOperacion = TA_TipoOperacion.IdTipoOperacion   
+            INNER JOIN Petrovendor.dbo.TA_Estatus (NOLOCK)   
+                ON TA_Operacion.IdEstatusOperacion = TA_Estatus.IdEstatus                        
+            INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)   
+                ON CO_Contrato.IdContrato = @IdContrato
+				AND MM_Pedido.IdContrato = CO_Contrato.IdContrato   
+            INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)   
+                ON CO_Contrato.IdContratista = CO_Contratista.IdContratista  
+            INNER JOIN Petrovendor.dbo.PV_TipoMoneda (NOLOCK)   
+                ON MM_Pedido.IdMoneda = PV_TipoMoneda.IdMoneda   
+            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista (NOLOCK)   
+                ON MM_SolicitudPedido.IdProveedor = PV_RelacionProveedorSubcotratista.IdProveedor   
+                   AND MM_Pedido.IdSubcontratista = PV_RelacionProveedorSubcotratista.IdSubcontratista   
+			INNER JOIN Petrovendor.dbo.MM_TipoPedido (NOLOCK)  
+				ON	MM_Pedidos.IdTipoPedido	=	MM_TipoPedido.IdTipoPedido
+			LEFT JOIN SC_SubContrato    
+				ON MM_Pedido.IdPedido = SC_SubContrato.IdPedido   
+                  AND SC_SubContrato.IsActivo = 1
+        WHERE TA_Operacion.IdTipoOperacion = @AprobacionDePedido   
+              AND TA_Estatus.IdEstatus = @Aprobado   
+              AND CO_Contrato.IdContrato = @IdContrato   
+              AND ISNULL(MM_SolicitudPedido.IdEstatusEliminado, 0) = 0   
+              AND ISNULL(MM_Pedido.IdEstatusEliminado, 0) = 0   
+              AND MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron       
+              AND TA_Operacion.FechaRegistro   
               BETWEEN CONVERT(DATE, @Fechainicio) AND CONVERT(DATE, @FechaFin)   
-              AND AXP.IdLayoutAX IS NULL -- esto para descartar las que estan registrados en AX_LAYOUT       
-              AND NOT EXISTS   
-        (   SELECT 1   
-            FROM SC_SubContrato sc   
-            WHERE sc.IdPedido = p.IdPedido   
-                  AND sc.IsActivo = 1)   
-        GROUP BY RE.IdRelacion,   
-                 PV.RazonSocial,   
-                 PV.RegimenCapital,   
-                 TP.TipoPedido,   
-                 solPed.MotivoUrgencia,   
-                 c.NumeroContrato,   
-                 solPed.FechaEntregaFinRequerida,   
-                 solPed.FechaEntregaRequerida,   
-                 PO.FechaFinalizado,   
-                 c.DescripcionContrato,   
-                 Mon.IdMoneda,   
-                 solPed.IdSolicitudPedido,   
-                 p.IdPedido,   
-                 PSS.IdPedido,   
-                 ctista.RazonSocial,   
-                 c.FechaFirma,   
-                 O.FechaRegistro   
-        ORDER BY PSS.IdPedido ASC   
+              AND #AX_Layout.IdLayoutAX IS NULL -- esto para descartar las que estan registrados en AX_LAYOUT    
+			  AND SC_SubContrato.IdSubContrato IS NULL  
+        GROUP BY PV_RelacionProveedorSubcotratista.IdRelacion,   
+                 S_Proveedor.RazonSocial,   
+                 S_Proveedor.RegimenCapital,   
+                 MM_TipoPedido.TipoPedido,   
+                 MM_SolicitudPedido.MotivoUrgencia,   
+                 CO_Contrato.NumeroContrato,      
+                 PV_TipoMoneda.IdMoneda,   
+                 MM_Pedido.IdPedido,   
+                 MM_Pedidos.IdPedido,   
+                 CO_Contratista.RazonSocial,   
+                 CO_Contrato.FechaFirma,   
+                 TA_Operacion.FechaRegistro   
    
    
    
@@ -703,7 +710,7 @@ SET NOCOUNT ON
                [Fecha Inicio Contrato],   
                [Fecha Termino Contrato],   
                [Vigencia del contrato],   
-  [Objeto del contrato],   
+			   [Objeto del contrato],   
                MontoUSD,   
                MontoMXN,   
                TipoCambio,   
@@ -711,7 +718,7 @@ SET NOCOUNT ON
                Comentarios,   
                NombreContratista,   
                FechaEfectiva   
-        FROM @Tabla   
+        FROM #Tabla   
         ORDER BY [No. Contrato] DESC         
     END;   
    
@@ -720,7 +727,7 @@ SET NOCOUNT ON
     BEGIN      
 		
 		--->	OBTENER SUBTOTALES DE WDEA_PurchasingDocumentsImportados POR PEDIDOS
-		INSERT INTO @TablaWDEA_PurchasingDocumentsImportados(
+		INSERT INTO #TablaWDEA_PurchasingDocumentsImportados(
 		IdPedidoADINCO,
 		PURCHASING_DOCUMENT,   
 		NET_ORDER_VALUE,   
@@ -731,53 +738,53 @@ SET NOCOUNT ON
 		NumeroContrato,
 		MECANISMO_CONTRATACION
 		)
-
 		SELECT
-		P.IdPedido,
-		PDI.PURCHASING_DOCUMENT,			
-		PDI.NET_ORDER_VALUE,
-		PDI.CURRENCY,
-		SUM(PDI.NET_PRICE) AS SUM_NET_PRICE,
-		PDI.IDMONEDA,			
-		PDI.OUTLINE_AGREEMENT,
-		CONDEA.NumeroContrato,
-		PDI.MECANISMO_CONTRATACION
-		FROM Petrovendor.dbo.MM_Pedido AS P (NOLOCK)			
-			JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados AS PDI (NOLOCK) 
-				ON P.IdPedido = PDI.IdPedidoADINCO
-				AND ISNULL(P.IdEstatusEliminado,0) = 0
-				AND P.IdContrato = @IdContrato	
-			JOIN Adinco.dbo.CO_Contrato AS CONDEA (NOLOCK)
-				ON  P.IdContrato = CONDEA.IdContrato
-		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
+		MM_Pedido.IdPedido,
+		WDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT,			
+		WDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,
+		WDEA_PurchasingDocumentsImportados.CURRENCY,
+		SUM(WDEA_PurchasingDocumentsImportados.NET_PRICE) AS SUM_NET_PRICE,
+		WDEA_PurchasingDocumentsImportados.IDMONEDA,			
+		WDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT,
+		CO_Contrato.NumeroContrato,
+		WDEA_PurchasingDocumentsImportados.MECANISMO_CONTRATACION
+		FROM Petrovendor.dbo.MM_Pedido (NOLOCK)			
+			INNER JOIN Petrovendor.dbo.WDEA_PurchasingDocumentsImportados (NOLOCK) 
+				ON MM_Pedido.IdContrato = @IdContrato
+				AND MM_Pedido.IdPedido = WDEA_PurchasingDocumentsImportados.IdPedidoADINCO
+				AND ISNULL(MM_Pedido.IdEstatusEliminado,0) = 0	
+			INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)
+				ON  MM_Pedido.IdContrato = CO_Contrato.IdContrato
+		WHERE CONVERT(VARCHAR, MM_Pedido.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112) 
 		GROUP BY
-		P.IdPedido,
-		PDI.PURCHASING_DOCUMENT,				
-		PDI.NET_ORDER_VALUE,
-		PDI.CURRENCY,
-		PDI.NET_ORDER_VALUE,
-		PDI.IDMONEDA,				
-		PDI.OUTLINE_AGREEMENT,
-		CONDEA.NumeroContrato,
-		PDI.MECANISMO_CONTRATACION
+		MM_Pedido.IdPedido,
+		WDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT,				
+		WDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,
+		WDEA_PurchasingDocumentsImportados.CURRENCY,
+		WDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,
+		WDEA_PurchasingDocumentsImportados.IDMONEDA,				
+		WDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT,
+		CO_Contrato.NumeroContrato,
+		WDEA_PurchasingDocumentsImportados.MECANISMO_CONTRATACION
+
 
 		--> OBTENER SUBTOTALES DE PEDIDOS DETALLE AGRUPADO POR PEDIDO 
-		INSERT INTO @MM_PedidoDetalle(IdPedido, SUM_Subtotal)
+		INSERT INTO #MM_PedidoDetalle(IdPedido, SUM_Subtotal)
 		SELECT 
-		P.IdPedido,
-		SUM(PD.Subtotal)
-		FROM Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
-		JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD (NOLOCK) 
-			ON P.IdPedido = PD.IdPedido
-			AND P.IdContrato = @IdContrato
-		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
+		MM_Pedido.IdPedido,
+		SUM(MM_PedidoDetalle.Subtotal)
+		FROM Petrovendor.dbo.MM_Pedido (NOLOCK)
+		INNER JOIN Petrovendor.dbo.MM_PedidoDetalle (NOLOCK) 
+			ON  MM_Pedido.IdContrato = @IdContrato
+			AND MM_Pedido.IdPedido = MM_PedidoDetalle.IdPedido
+		WHERE CONVERT(VARCHAR, MM_Pedido.CreadoEl, 112)   
 		BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)	
 		GROUP BY 
-		P.IdPedido
+		MM_Pedido.IdPedido
 
 
-        INSERT INTO @TablaDEA   
+        INSERT INTO #TablaDEA   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -798,119 +805,117 @@ SET NOCOUNT ON
             FechaEfectiva   --
         )
 		SELECT
-			ISNULL(PDI.NumeroContrato,CON.NumeroContrato) AS NumeroContrato,
+			ISNULL(#TablaWDEA_PurchasingDocumentsImportados.NumeroContrato, CO_Contrato.NumeroContrato) AS NumeroContrato,
 			CASE 
-				WHEN PROSAP.IdProveedor IS NOT NULL THEN 'SI'
+				WHEN DEA_ProveedorDescripcionSAP.IdProveedor IS NOT NULL THEN 'SI'
 				ELSE 'NO'
 			END AS RelacionOperadoraProveedor,
-			PRO.RazonSocial AS Proveedor,
-			CASE WHEN PDI.MECANISMO_CONTRATACION ='L' THEN 
+			S_Proveedor.RazonSocial AS Proveedor,
+			CASE WHEN #TablaWDEA_PurchasingDocumentsImportados.MECANISMO_CONTRATACION ='L' THEN 
 				'Licitación' --> CTE SE PONE COMO DEFAULT YA QUE LOS PEDIDOS DE LICITACIÓN SE AGREGAN COMO MERCADEO
 			ELSE 
-				TP.TipoPedido 
+				MM_TipoPedido.TipoPedido 
 			END AS MecanismoContratacion,			
-			SP.MotivoUrgencia AS NombreContratoCP,
-			ISNULL(PDI.PURCHASING_DOCUMENT,PS.IdPedido) AS NoContratoCP,
-			SP.FechaEntregaRequerida AS FechaInicio,
-			ISNULL(SP.FechaEntregaFinRequerida, SP.FechaEntregaRequerida) AS FechaFin,
-			ISNULL(SP.FechaEntregaFinRequerida, SP.FechaEntregaRequerida) AS FechaVigencia,
-			SP.MotivoUrgencia AS ObjetoContrato,
+			MM_SolicitudPedido.MotivoUrgencia AS NombreContratoCP,
+			ISNULL(#TablaWDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT, MM_Pedidos.IdPedido) AS NoContratoCP,
+			MM_SolicitudPedido.FechaEntregaRequerida AS FechaInicio,
+			ISNULL(MM_SolicitudPedido.FechaEntregaFinRequerida, MM_SolicitudPedido.FechaEntregaRequerida) AS FechaFin,
+			ISNULL(MM_SolicitudPedido.FechaEntregaFinRequerida, MM_SolicitudPedido.FechaEntregaRequerida) AS FechaVigencia,
+			MM_SolicitudPedido.MotivoUrgencia AS ObjetoContrato,
 			CASE
-				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) > 0 AND PDI.CURRENCY = 'USD' THEN PDI.NET_ORDER_VALUE
-				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) = 0 AND PDI.CURRENCY = 'USD' THEN
+				WHEN #TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO IS NOT NULL AND ISNULL(#TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,0) > 0 AND #TablaWDEA_PurchasingDocumentsImportados.CURRENCY = 'USD' THEN #TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE
+				WHEN #TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO IS NOT NULL AND ISNULL(#TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,0) = 0 AND #TablaWDEA_PurchasingDocumentsImportados.CURRENCY = 'USD' THEN
 						CASE		--PESO
-							WHEN PDI.IDMONEDA = 1 THEN 
-							Petrovendor.dbo.FN_PesosDolaresTipoCambio(PDI.SUM_NET_PRICE,SP.FechaEntregaRequerida)
+							WHEN #TablaWDEA_PurchasingDocumentsImportados.IDMONEDA = @Peso THEN 
+							Petrovendor.dbo.FN_PesosDolaresTipoCambio(#TablaWDEA_PurchasingDocumentsImportados.SUM_NET_PRICE, MM_SolicitudPedido.FechaEntregaRequerida)
 							ELSE 
-							PDI.SUM_NET_PRICE
+							#TablaWDEA_PurchasingDocumentsImportados.SUM_NET_PRICE
 						END
 				ELSE 
 					CASE 
-						WHEN P.IdMoneda = 1 THEN 
-						Petrovendor.dbo.FN_PesosDolaresTipoCambio(PD.SUM_Subtotal,ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
+						WHEN MM_Pedido.IdMoneda = @Peso THEN 
+						Petrovendor.dbo.FN_PesosDolaresTipoCambio(#MM_PedidoDetalle.SUM_Subtotal,ISNULL(MM_Pedido.FechaRecepcionServicio, MM_Pedido.CreadoEl))
 						ELSE 
-						PD.SUM_Subtotal
+						#MM_PedidoDetalle.SUM_Subtotal
 				END
 			END AS MontoUSD,
 			CASE
-				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) > 0 AND PDI.CURRENCY = 'MXN' THEN PDI.NET_ORDER_VALUE
-				WHEN PDI.IdPedidoADINCO IS NOT NULL AND ISNULL(PDI.NET_ORDER_VALUE,0) = 0 AND PDI.CURRENCY = 'MXN' THEN
+				WHEN #TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO IS NOT NULL AND ISNULL(#TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,0) > 0 AND #TablaWDEA_PurchasingDocumentsImportados.CURRENCY = 'MXN' THEN #TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE
+				WHEN #TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO IS NOT NULL AND ISNULL(#TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,0) = 0 AND #TablaWDEA_PurchasingDocumentsImportados.CURRENCY = 'MXN' THEN
 														CASE		--DOLAR
-															WHEN PDI.IDMONEDA = 2 THEN 
-															Petrovendor.dbo.Fn_dolarespesostipocambio(PDI.SUM_NET_PRICE,SP.FechaEntregaRequerida)
+															WHEN #TablaWDEA_PurchasingDocumentsImportados.IDMONEDA = @Dolar THEN 
+															Petrovendor.dbo.Fn_dolarespesostipocambio(#TablaWDEA_PurchasingDocumentsImportados.SUM_NET_PRICE, MM_SolicitudPedido.FechaEntregaRequerida)
 															ELSE 
-															PDI.SUM_NET_PRICE
+															#TablaWDEA_PurchasingDocumentsImportados.SUM_NET_PRICE
 														END
 				ELSE 
 					CASE 
 						WHEN 
-						P.IdMoneda = 2 THEN 
-						Petrovendor.dbo.Fn_dolarespesostipocambio(PD.SUM_Subtotal,ISNULL(P.FechaRecepcionServicio,P.CreadoEl))
-						ELSE PD.SUM_Subtotal
+						MM_Pedido.IdMoneda = @Dolar THEN 
+						Petrovendor.dbo.Fn_dolarespesostipocambio(#MM_PedidoDetalle.SUM_Subtotal,ISNULL(MM_Pedido.FechaRecepcionServicio, MM_Pedido.CreadoEl))
+						ELSE #MM_PedidoDetalle.SUM_Subtotal
 				END
 			END AS MontoMXN,
-			Petrovendor.dbo.FN_ValorTipoCambio(SP.FechaEntregaRequerida) AS TipoCambio,
-			SP.FechaEntregaRequerida AS FechaTipoCambio,
-			PDI.OUTLINE_AGREEMENT,
-			CT.RazonSocial,
-			CONVERT(VARCHAR, CON.FechaFirma, 103) AS FechaEfectiva 
-		FROM Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
-			JOIN Adinco.dbo.CO_Contrato AS CON (NOLOCK)
-				ON P.IdContrato = CON.IdContrato
-				AND ISNULL(P.IdEstatusEliminado,0) = 0
-				AND P.IdContrato = @IdContrato
-			JOIN @MM_PedidoDetalle AS PD 
-				ON P.IdPedido = PD.IdPedido
-			JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP (NOLOCK) 
-				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
-				AND SP.Activo = 1			
-			JOIN Petrovendor.dbo.S_Proveedor AS PRO  (NOLOCK)
-				ON P.IdSubcontratista = PRO.IdProveedor			
-			JOIN Petrovendor.dbo.MM_Pedidos AS PS (NOLOCK)
-				ON P.IdPedido = PS.IdIdentificador 
-				AND PS.IdProveedorCliente = P.IdProveedorCompras
-			JOIN Petrovendor.dbo.PV_TipoMoneda AS M (NOLOCK)
-				ON P.IdMoneda = M.IdMoneda			
-			JOIN Petrovendor.dbo.MM_TipoPedido AS TP (NOLOCK)
-				ON PS.IdTipoPedido = TP.IdTipoPedido			
-				AND PS.IdTipoPedido NOT IN (6)			
-			JOIN Adinco.dbo.CO_Contratista AS CT (NOLOCK)
-				ON CON.IdContratista = CT.IdContratista
-			LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP AS PROSAP (NOLOCK)
-				ON P.IdSubContratista = PROSAP.IdProveedor
-			LEFT JOIN @TablaWDEA_PurchasingDocumentsImportados AS PDI 
-				ON P.IdPedido = PDI.IdPedidoADINCO			
-		WHERE CONVERT(VARCHAR, P.CreadoEl, 112)   
+			Petrovendor.dbo.FN_ValorTipoCambio(MM_SolicitudPedido.FechaEntregaRequerida) AS TipoCambio,
+			MM_SolicitudPedido.FechaEntregaRequerida AS FechaTipoCambio,
+			#TablaWDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT,
+			CO_Contratista.RazonSocial,
+			CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103) AS FechaEfectiva 
+		FROM Petrovendor.dbo.MM_Pedido (NOLOCK)
+			INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)
+				ON MM_Pedido.IdContrato = CO_Contrato.IdContrato
+				AND ISNULL(MM_Pedido.IdEstatusEliminado,0) = 0
+				AND MM_Pedido.IdContrato = @IdContrato
+			INNER JOIN #MM_PedidoDetalle 
+				ON MM_Pedido.IdPedido = #MM_PedidoDetalle.IdPedido
+			INNER JOIN Petrovendor.dbo.MM_SolicitudPedido (NOLOCK) 
+				ON MM_Pedido.IdSolicitudPedido = MM_SolicitudPedido.IdSolicitudPedido 
+				AND MM_SolicitudPedido.Activo = 1			
+			INNER JOIN Petrovendor.dbo.S_Proveedor  (NOLOCK)
+				ON MM_Pedido.IdSubcontratista = S_Proveedor.IdProveedor			
+			INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)
+				ON MM_Pedido.IdPedido = MM_Pedidos.IdIdentificador 
+				AND MM_Pedido.IdProveedorCompras = MM_Pedidos.IdProveedorCliente
+			INNER JOIN Petrovendor.dbo.PV_TipoMoneda (NOLOCK)
+				ON MM_Pedido.IdMoneda = PV_TipoMoneda.IdMoneda			
+			INNER JOIN Petrovendor.dbo.MM_TipoPedido (NOLOCK)
+				ON MM_Pedidos.IdTipoPedido = MM_TipoPedido.IdTipoPedido			
+				AND MM_Pedidos.IdTipoPedido NOT IN (6)			
+			INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)
+				ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+			LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP (NOLOCK)
+				ON MM_Pedido.IdSubContratista = DEA_ProveedorDescripcionSAP.IdProveedor
+			LEFT JOIN #TablaWDEA_PurchasingDocumentsImportados 
+				ON MM_Pedido.IdPedido = #TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO			
+		WHERE CONVERT(VARCHAR, MM_Pedido.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
-			GROUP BY CON.NumeroContrato,
-				PROSAP.IdProveedor,
-				PRO.RazonSocial,
-				SP.MotivoUrgencia,
-				PDI.PURCHASING_DOCUMENT,
-				SP.FechaEntregaFinRequerida,
-				SP.MotivoUrgencia,
-				PDI.IdPedidoADINCO,
-				PDI.IDMONEDA,
-				P.FechaRecepcionServicio,
-				SP.FechaEntregaRequerida,
-				PDI.OUTLINE_AGREEMENT,
-				PS.IdPedido,
-				P.IdMoneda,
-				P.CreadoEl,
-				TP.TipoPedido,
-				CT.RazonSocial,
-				CON.FechaFirma,
-				P.IdPedido,
-				PDI.MECANISMO_CONTRATACION,
-				PDI.NumeroContrato,
-				PDI.CURRENCY,
-				PDI.NET_ORDER_VALUE,
-				PDI.NumeroContrato,
-				PDI.SUM_NET_PRICE,
-				PD.SUM_Subtotal;
+			GROUP BY CO_Contrato.NumeroContrato,
+				DEA_ProveedorDescripcionSAP.IdProveedor,
+				S_Proveedor.RazonSocial,
+				MM_SolicitudPedido.MotivoUrgencia,
+				#TablaWDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT,
+				MM_SolicitudPedido.FechaEntregaFinRequerida,
+				MM_SolicitudPedido.MotivoUrgencia,
+				#TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO,
+				#TablaWDEA_PurchasingDocumentsImportados.IDMONEDA,
+				MM_Pedido.FechaRecepcionServicio,
+				MM_SolicitudPedido.FechaEntregaRequerida,
+				#TablaWDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT,
+				MM_Pedidos.IdPedido,
+				MM_Pedido.IdMoneda,
+				MM_Pedido.CreadoEl,
+				MM_TipoPedido.TipoPedido,
+				CO_Contratista.RazonSocial,
+				CO_Contrato.FechaFirma,
+				#TablaWDEA_PurchasingDocumentsImportados.MECANISMO_CONTRATACION,
+				#TablaWDEA_PurchasingDocumentsImportados.NumeroContrato,
+				#TablaWDEA_PurchasingDocumentsImportados.CURRENCY,
+				#TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,
+				#TablaWDEA_PurchasingDocumentsImportados.SUM_NET_PRICE,
+				#MM_PedidoDetalle.SUM_Subtotal;
    
    
-        INSERT INTO @TablaDEA   
+        INSERT INTO #TablaDEA   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -931,65 +936,66 @@ SET NOCOUNT ON
             FechaEfectiva   
         )   
 	SELECT
-			CON.NumeroContrato,
+			CO_Contrato.NumeroContrato,
 			CASE 
-				WHEN PROSAP.IdProveedor IS NOT NULL THEN 'SI'
+				WHEN DEA_ProveedorDescripcionSAP.IdProveedor IS NOT NULL THEN 'SI'
 				ELSE 'NO'
 			END AS RelacionOperadoraProveedor,
-			SUB.RazonSocial AS Proveedor,
+			PV_Subcontratista.RazonSocial AS Proveedor,
 			'Licitación' AS MecanismoContratacion,
-			SC.Objeto AS NombreContratoCP,
-			SC.NumeroSubContrato AS NoContratoCP,
-			ISNULL(SC.FechaInicio,SC.CreadoEl) AS FechaInicio,
-			ISNULL(ISNULL(SC.FechaFin,SC.FechaInicio),SC.CreadoEl) AS FechaFin,
-			ISNULL(ISNULL(SC.FechaFin,SC.FechaInicio),SC.CreadoEl) AS FechaVigencia,
-			SC.Objeto AS ObjetoContrato,
+			SC_SubContrato.Objeto AS NombreContratoCP,
+			SC_SubContrato.NumeroSubContrato AS NoContratoCP,
+			ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl) AS FechaInicio,
+			ISNULL(ISNULL(SC_SubContrato.FechaFin, SC_SubContrato.FechaInicio), SC_SubContrato.CreadoEl) AS FechaFin,
+			ISNULL(ISNULL(SC_SubContrato.FechaFin, SC_SubContrato.FechaInicio), SC_SubContrato.CreadoEl) AS FechaVigencia,
+			SC_SubContrato.Objeto AS ObjetoContrato,
 			CASE
-				WHEN SC.IdMoneda = 1 THEN
-				Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(SCM.Importe),ISNULL(SC.FechaInicio,SC.CreadoEl))
+				WHEN SC_SubContrato.IdMoneda = @Peso THEN
+				Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(SC_Materiales.Importe),ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl))
 				ELSE 
-				SUM(SCM.Importe)				
+				SUM(SC_Materiales.Importe)				
 			END AS MontoUSD,
 			CASE
-				WHEN SC.IdMoneda = 2 THEN 
-				Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(SCM.Importe),ISNULL(SC.FechaInicio,SC.CreadoEl))
+				WHEN SC_SubContrato.IdMoneda = @Dolar THEN 
+				Petrovendor.dbo.Fn_dolarespesostipocambio(SUM(SC_Materiales.Importe),ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl))
 				ELSE 
-				SUM(SCM.Importe)				
+				SUM(SC_Materiales.Importe)				
 			END AS MontoMXN,
-			Petrovendor.dbo.FN_ValorTipoCambio(ISNULL(SC.FechaInicio,SC.CreadoEl)) AS TipoCambio,
-			ISNULL(SC.FechaInicio,SC.CreadoEl) AS FechaTipoCambio,
+			Petrovendor.dbo.FN_ValorTipoCambio(ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl)) AS TipoCambio,
+			ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl) AS FechaTipoCambio,
 			'ESTIMACION COMPLETA PARA OT',
-			CT.RazonSocial,
-			CONVERT(VARCHAR, CON.FechaFirma, 103) AS FechaEfectiva 
-		FROM Adinco.dbo.SC_SubContrato AS SC (NOLOCK)
-		JOIN Adinco.dbo.CO_Contrato AS CON (NOLOCK)
-			ON SC.IdContrato = CON.IdContrato AND SC.IdContrato = @IDCONTRATO
-		LEFT JOIN Adinco.dbo.PV_Subcontratista AS SUB (NOLOCK)
-			ON SC.IdSubContratista = SUB.IdSubcontratista
-		LEFT JOIN Petrovendor.dbo.S_Proveedor AS PROP (NOLOCK)
-			ON SUB.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = PROP.RFC
-		LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP AS PROSAP (NOLOCK)
-			ON PROP.IdProveedor = PROSAP.IdProveedor	
-		LEFT JOIN Adinco.dbo.SC_Materiales AS SCM (NOLOCK)
-			ON SC.IdSubContrato = SCM.IdSubContrato
-		JOIN Adinco.dbo.CO_Contratista AS CT (NOLOCK)
-				ON CON.IdContratista = CT.IdContratista
-		WHERE  CONVERT(VARCHAR, SC.CreadoEl, 112)   
+			CO_Contratista.RazonSocial,
+			CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103) AS FechaEfectiva 
+		FROM Adinco.dbo.SC_SubContrato (NOLOCK)
+		INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)
+			ON SC_SubContrato.IdContrato = @IDCONTRATO 
+			AND SC_SubContrato.IdContrato = CO_Contrato.IdContrato 
+		INNER JOIN Adinco.dbo.PV_Subcontratista (NOLOCK)
+			ON SC_SubContrato.IdSubContratista = PV_Subcontratista.IdSubcontratista
+		INNER JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)
+			ON PV_Subcontratista.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = S_Proveedor.RFC
+		LEFT JOIN Petrovendor.dbo.DEA_ProveedorDescripcionSAP (NOLOCK)
+			ON S_Proveedor.IdProveedor = DEA_ProveedorDescripcionSAP.IdProveedor	
+		INNER JOIN Adinco.dbo.SC_Materiales (NOLOCK)
+			ON SC_SubContrato.IdSubContrato = SC_Materiales.IdSubContrato
+		INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)
+				ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+		WHERE  CONVERT(VARCHAR, SC_SubContrato.CreadoEl, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112)
-			and SC.IsActivo= 1			
-		GROUP BY  CON.NumeroContrato,
-				PROSAP.IdProveedor,
-				SUB.RazonSocial,
-				SC.Objeto,
-				SC.IdPedido,
-				SC.FechaInicio,
-				SC.FechaFin,
-				SC.IdMoneda,
-				SC.FechaInicio,
-				SC.NumeroSubContrato,
-				SC.CreadoEl,
-				CT.RazonSocial,
-				CON.FechaFirma;
+				AND SC_SubContrato.IsActivo= 1			
+		GROUP BY  CO_Contrato.NumeroContrato,
+				DEA_ProveedorDescripcionSAP.IdProveedor,
+				PV_Subcontratista.RazonSocial,
+				SC_SubContrato.Objeto,
+				SC_SubContrato.IdPedido,
+				SC_SubContrato.FechaInicio,
+				SC_SubContrato.FechaFin,
+				SC_SubContrato.IdMoneda,
+				SC_SubContrato.FechaInicio,
+				SC_SubContrato.NumeroSubContrato,
+				SC_SubContrato.CreadoEl,
+				CO_Contratista.RazonSocial,
+				CO_Contrato.FechaFirma;
    
    
         SELECT NumeroContrato,   
@@ -1009,7 +1015,7 @@ SET NOCOUNT ON
                Comentarios,   
                NombreContratista,   
                FechaEfectiva
-        FROM @TablaDEA   
+        FROM #TablaDEA   
 		GROUP BY NumeroContrato,   
                RelacionOperadoraProveedor,   
                Proveedor,   
@@ -1030,7 +1036,7 @@ SET NOCOUNT ON
     --- FIN VALIDACION DEA   
     ELSE   
     BEGIN   
-        INSERT INTO @Tabla   
+        INSERT INTO #Tabla   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -1050,94 +1056,94 @@ SET NOCOUNT ON
             NombreContratista,   
             FechaEfectiva   
         )   
-        SELECT C.NumeroContrato,   
+        SELECT CO_Contrato.NumeroContrato,   
                CASE   
-			   WHEN RE.IdRelacion IS NOT NULL THEN   
+			   WHEN PV_RelacionProveedorSubcotratista.IdRelacion IS NOT NULL THEN   
                        'SI'   
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(P.RazonSocial) + ' ' + ISNULL(UPPER(P.RegimenCapital), '') AS Proveedor,   
+               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
                'ADJUDICACIÓN DIRECTA' AS MecanismoContratacion,   
-               UPPER(ISNULL(TAO.Descripcion, '')) AS 'Nombre Contrato C-P',   
-               UPPER(CONCAT(PG.IdPedido, ' CD')) AS 'No. Contrato',   
+               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Nombre Contrato C-P',   
+               UPPER(CONCAT(MM_Pedidos.IdPedido, ' CD')) AS 'No. Contrato',   
 				CASE   
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
+                   WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
                        '-'   
                    ELSE   
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
+                       CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Fecha Inicio Contrato',   
                CASE   
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
+                   WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
                        '-'   
                    ELSE   
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
+                       CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Fecha Termino Contrato',   
                 CASE   
-                   WHEN CONVERT(VARCHAR(10), TAO.FechaRegistro, 105) IS NULL THEN   
+                   WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
                        '-'   
                    ELSE   
-                       CONVERT(VARCHAR(10), TAO.FechaRegistro, 105)   
+                       CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Vigencia del contrato',   
-               UPPER(ISNULL(TAO.Descripcion, '')) AS 'Objeto del contrato',   
+               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Objeto del contrato',   
                CASE   
-                   WHEN fiFact.IdMoneda = 1 THEN   
+                   WHEN FI_Factura.IdMoneda = @Peso THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE)) 
+                       FI_Factura.SubTotal, CAST(FI_Factura.FechaTimbrado AS DATE)) 
                    ELSE   
-					   fiFact.SubTotal  
+					   FI_Factura.SubTotal  
                END AS MontoUSD,   
                CASE   
-                   WHEN fiFact.IdMoneda = 2 THEN   
+                   WHEN FI_Factura.IdMoneda = @Dolar THEN   
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       fiFact.SubTotal, CAST(fiFact.FechaTimbrado AS DATE))
+                       FI_Factura.SubTotal, CAST(FI_Factura.FechaTimbrado AS DATE))
                    ELSE   
-					   fiFact.SubTotal
+					   FI_Factura.SubTotal
                END AS MontoMXN,
-               Petrovendor.dbo.FN_ValorTipoCambio(CAST(fiFact.FechaTimbrado AS DATE)) AS TipoCambio, 
-               CONVERT(VARCHAR, fiFact.FechaTimbrado, 103) AS FechaTipoCambio,   
-               UPPER(ISNULL(TAO.Descripcion, '')) AS 'Comentarios',   
-               UPPER(ctista.RazonSocial) AS NombreContratista,   
-               CONVERT(VARCHAR, c.FechaFirma, 103) AS FechaEfectiva   
-        FROM Petrovendor.dbo.CO_Registro AS coRegistro   
-            LEFT JOIN Petrovendor.dbo.FI_Factura AS fiFact   
-                ON coRegistro.IdFactura = fiFact.IdFactura   
-            LEFT JOIN Petrovendor.dbo.TA_Operacion AS TAO   
-                ON TAO.IdDocumento = coRegistro.IdFactura   
-            LEFT JOIN Petrovendor.dbo.TA_Estatus AS TE   
-                ON TE.IdEstatus = TAO.IdEstatusOperacion   
-            LEFT JOIN Petrovendor.dbo.CC_CentroCosto centroCosto   
-                ON centroCosto.IdCentroCosto = coRegistro.CentroCostos   
-            LEFT JOIN Petrovendor.dbo.DG_CuentaContable cuentaContable   
-                ON cuentaContable.Id = coRegistro.CuentaContable   
-            LEFT JOIN Petrovendor.dbo.CO_CatalogoCuentaSH cuentaSh   
-                ON cuentaSh.IdCatalogoCuentasSH = coRegistro.IdCatalogoCuentasSH   
-            LEFT JOIN Petrovendor.dbo.CO_Instalacion instalacion   
-                ON instalacion.IdInstalacion = coRegistro.IdInstalacion   
-            LEFT JOIN Petrovendor.dbo.MM_Pedidos PG   
-                ON PG.IdIdentificador = fiFact.IdFactura   
-                   AND PG.IdTipoPedido = 1   
-                   AND TAO.IdProveedor = PG.IdProveedorCliente   
-            LEFT JOIN Petrovendor.dbo.S_Proveedor AS P   
-                ON P.RFC = fiFact.Emisor   
-            LEFT JOIN Adinco.dbo.CO_Contrato AS C   
-                ON fiFact.IdContrato = C.IdContrato   
-            LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC   
-                ON C.IdAreaContractual = AC.IdAreaContractual   
-            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-                ON RE.IdProveedor = P.IdProveedor   
-                   AND RE.IdSubcontratista = P.IdProveedor   
-            INNER JOIN Adinco.dbo.CO_Contratista ctista   
-                ON ctista.IdContratista = C.IdContratista   
-        WHERE TAO.IdTipoOperacion = 14   
-              AND TE.IdEstatus = 2   
-              AND ISNULL(fiFact.IsEliminado, 0) = 0   
-              AND C.IdContrato = @IdContrato   
-              AND CONVERT(VARCHAR, TAO.FechaRegistro, 112)   
+               Petrovendor.dbo.FN_ValorTipoCambio(CAST(FI_Factura.FechaTimbrado AS DATE)) AS TipoCambio, 
+               CONVERT(VARCHAR, FI_Factura.FechaTimbrado, 103) AS FechaTipoCambio,   
+               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Comentarios',   
+               UPPER(CO_Contratista.RazonSocial) AS NombreContratista,   
+               CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103) AS FechaEfectiva   
+        FROM Petrovendor.dbo.CO_Registro (NOLOCK)   
+            INNER JOIN Petrovendor.dbo.FI_Factura (NOLOCK)  
+                ON CO_Registro.IdFactura = FI_Factura.IdFactura  
+            INNER JOIN Petrovendor.dbo.TA_Operacion (NOLOCK)  
+                ON CO_Registro.IdFactura = TA_Operacion.IdDocumento   
+            INNER JOIN Petrovendor.dbo.TA_Estatus (NOLOCK)  
+                ON TA_Operacion.IdEstatusOperacion = TA_Estatus.IdEstatus   
+            LEFT JOIN Petrovendor.dbo.CC_CentroCosto (NOLOCK)  
+                ON CO_Registro.CentroCostos = CC_CentroCosto.IdCentroCosto   
+            LEFT JOIN Petrovendor.dbo.DG_CuentaContable (NOLOCK)  
+                ON CO_Registro.CuentaContable = DG_CuentaContable.Id    
+            LEFT JOIN Petrovendor.dbo.CO_CatalogoCuentaSH (NOLOCK)   
+                ON CO_Registro.IdCatalogoCuentasSH = CO_CatalogoCuentaSH.IdCatalogoCuentasSH   
+            LEFT JOIN Petrovendor.dbo.CO_Instalacion (NOLOCK)   
+                ON CO_Registro.IdInstalacion = CO_Instalacion.IdInstalacion   
+            INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)   
+                ON FI_Factura.IdFactura = MM_Pedidos.IdIdentificador   
+                   AND MM_Pedidos.IdTipoPedido = @TipoPedidoCompraDirecta   
+                   AND TA_Operacion.IdProveedor = MM_Pedidos.IdProveedorCliente   
+            INNER JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)   
+                ON FI_Factura.Emisor = S_Proveedor.RFC   
+            INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)  
+                ON FI_Factura.IdContrato = CO_Contrato.IdContrato   
+            INNER JOIN Adinco.dbo.CO_AreaContractual (NOLOCK)  
+                ON CO_Contrato.IdAreaContractual = CO_AreaContractual.IdAreaContractual   
+            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista (NOLOCK)   
+                ON S_Proveedor.IdProveedor = PV_RelacionProveedorSubcotratista.IdProveedor   
+                   AND S_Proveedor.IdProveedor = PV_RelacionProveedorSubcotratista.IdSubcontratista    
+            INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)   
+                ON CO_Contrato.IdContratista = CO_Contratista.IdContratista   
+        WHERE TA_Operacion.IdTipoOperacion = @CompraDirecta   
+              AND TA_Estatus.IdEstatus = @Aprobado   
+              AND ISNULL(FI_Factura.IsEliminado, 0) = 0   
+              AND CO_Contrato.IdContrato = @IdContrato   
+              AND CONVERT(VARCHAR, TA_Operacion.FechaRegistro, 112)   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112);   
    
    
-        INSERT INTO @Tabla   
+        INSERT INTO #Tabla   
         (   
             NumeroContrato,   
             RelacionOperadoraProveedor,   
@@ -1157,126 +1163,119 @@ SET NOCOUNT ON
             NombreContratista,   
             FechaEfectiva   
         )   
-        SELECT CONCAT(c.NumeroContrato, '(', periodo.NombrePeriodo, ')'),   
+        SELECT CONCAT(CO_Contrato.NumeroContrato, '(', CO_PeriodoContrato.NombrePeriodo, ')'),   
                CASE   
-                   WHEN RE.IdRelacion IS NOT NULL THEN   
+                   WHEN PV_RelacionProveedorSubcotratista.IdRelacion IS NOT NULL THEN   
 						'SI'   
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(PV.RazonSocial) + ' ' + ISNULL(UPPER(PV.RegimenCapital), '') AS Proveedor,   
+               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
                CASE   
-                   WHEN TP.TipoPedido = 'Mercadeo' THEN   
+                   WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                 ELSE   
-                       UPPER(TP.TipoPedido)   
+                       UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               UPPER(solPed.MotivoUrgencia) AS 'Nombre Contrato C-P',   
-               PSS.IdPedido AS 'No. Contrato',   
-               CONVERT(VARCHAR(10),isnull(P.FechaRecepcionServicio,solPed.FechaEntregaRequerida), 105) AS 'Fecha Inicio Contrato',   
-               CONVERT(VARCHAR(10), isnull(P.FechaRecepcionServicio,solPed.FechaEntregaRequerida), 105) AS 'Fecha Termino Contrato',   
-               CONVERT(VARCHAR(10),isnull(P.FechaRecepcionServicio,solPed.FechaEntregaRequerida), 105) AS 'Vigencia del contrato',   
-               UPPER(solPed.MotivoUrgencia) AS 'Objeto del contrato',   
+               UPPER(MM_SolicitudPedido.MotivoUrgencia) AS 'Nombre Contrato C-P',   
+               MM_Pedidos.IdPedido AS 'No. Contrato',   
+               CONVERT(VARCHAR(10),isnull(MM_Pedido.FechaRecepcionServicio, MM_SolicitudPedido.FechaEntregaRequerida), 105) AS 'Fecha Inicio Contrato',   
+               CONVERT(VARCHAR(10), isnull(MM_Pedido.FechaRecepcionServicio, MM_SolicitudPedido.FechaEntregaRequerida), 105) AS 'Fecha Termino Contrato',   
+               CONVERT(VARCHAR(10),isnull(MM_Pedido.FechaRecepcionServicio, MM_SolicitudPedido.FechaEntregaRequerida), 105) AS 'Vigencia del contrato',   
+               UPPER(MM_SolicitudPedido.MotivoUrgencia) AS 'Objeto del contrato',   
                CASE   
-                   WHEN Mon.IdMoneda = 1 THEN   
+                   WHEN PV_TipoMoneda.IdMoneda = @Peso THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
-                       SUM(PD.Subtotal), CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)) 
+                       SUM(MM_PedidoDetalle.Subtotal), CAST(ISNULL(MM_SolicitudPedido.FechaEntregaRequerida, MM_PeticionOferta.FechaFinalizado) AS DATE)) 
                    ELSE   
-					   SUM(PD.Subtotal) 
+					   SUM(MM_PedidoDetalle.Subtotal) 
                END AS MontoUSD,   
                CASE   
-                   WHEN Mon.IdMoneda = 2 THEN  
+                   WHEN PV_TipoMoneda.IdMoneda = @Dolar THEN  
                        Petrovendor.dbo.FN_DolaresPesosTipoCambio(   
-                       SUM(PD.Subtotal), ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado))  
+                       SUM(MM_PedidoDetalle.Subtotal), ISNULL(MM_SolicitudPedido.FechaEntregaRequerida, MM_PeticionOferta.FechaFinalizado))  
                    ELSE   
-					   SUM(PD.Subtotal) 
+					   SUM(MM_PedidoDetalle.Subtotal) 
                END AS MontoMXN,   
                Petrovendor.dbo.FN_ValorTipoCambio(   
-               CAST(ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado) AS DATE)) AS TipoCambio,   
-               CONVERT(VARCHAR, ISNULL(solPed.FechaEntregaRequerida, PO.FechaFinalizado), 103) AS FechaTipoCambio, --DWONG 20190712     
+               CAST(ISNULL(MM_SolicitudPedido.FechaEntregaRequerida, MM_PeticionOferta.FechaFinalizado) AS DATE)) AS TipoCambio,   
+               CONVERT(VARCHAR, ISNULL(MM_SolicitudPedido.FechaEntregaRequerida, MM_PeticionOferta.FechaFinalizado), 103) AS FechaTipoCambio, --DWONG 20190712     
    
-               UPPER(solPed.MotivoUrgencia) AS 'Comentarios',   
-               NombreContratista = UPPER(ctista.RazonSocial),                                                      --DWONG 20190712     
+               UPPER(MM_SolicitudPedido.MotivoUrgencia) AS 'Comentarios',   
+               NombreContratista = UPPER(CO_Contratista.RazonSocial),                                                      --DWONG 20190712     
    
-               FechaEfectiva = CONVERT(VARCHAR, c.FechaFirma, 103)                                                 --DWONG 20190712     
+               FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                                                 --DWONG 20190712     
    
-        FROM Petrovendor.dbo.MM_Pedido AS P   
-            LEFT JOIN Petrovendor.dbo.MM_PedidoDetalle AS PD   
-                ON PD.IdPedido = P.IdPedido   
-				AND ISNULL(P.IdEstatusEliminado,0) = 0
-            LEFT JOIN Petrovendor.dbo.MM_Pedidos PSS   
-                ON P.IdPedido = PSS.IdIdentificador   
-                   AND PSS.IdProveedorCliente = P.IdProveedorCompras   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido solPed   
-                ON solPed.IdSolicitudPedido = P.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle SPD   
-                ON solPed.IdSolicitudPedido = SPD.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPDL   
-                ON SPDL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOferta AS PO   
-                ON PO.IdPeticionOferta = P.IdPeticionOferta   
-                   AND PO.IdSolicitudPedido = solPed.IdSolicitudPedido   
-            LEFT JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle POD   
-                ON POD.IdPeticionOferta = PO.IdPeticionOferta   
-                   AND POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle   
-                   AND POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle   
-            LEFT JOIN Petrovendor.dbo.S_Proveedor AS PV   
-                ON PV.IdProveedor = PO.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.TA_Operacion AS O   
-                ON O.IdDocumento = P.IdSolicitudPedido   
-                   AND P.Version = O.NoVersion   
-            LEFT JOIN Petrovendor.dbo.TA_TipoOperacion AS TTO   
-                ON TTO.IdTipoOperacion = O.IdTipoOperacion   
-            LEFT JOIN Petrovendor.dbo.TA_Estatus AS E   
-                ON E.IdEstatus = O.IdEstatusOperacion   
-			LEFT JOIN Adinco.dbo.CO_Contrato c   
-                ON c.IdContrato = P.IdContrato   
-            INNER JOIN Adinco.dbo.CO_Contratista ctista   
-                ON ctista.IdContratista = c.IdContratista   
-            INNER JOIN Petrovendor.dbo.PV_TipoMoneda AS Mon   
-                ON P.IdMoneda = Mon.IdMoneda   
-            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista AS RE   
-                ON RE.IdProveedor = solPed.IdProveedor   
-                   AND RE.IdSubcontratista = P.IdSubcontratista   
-            LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP   
+        FROM Petrovendor.dbo.MM_Pedido (NOLOCK)   
+            INNER JOIN Petrovendor.dbo.MM_PedidoDetalle (NOLOCK)  
+                ON MM_PedidoDetalle.IdPedido = MM_Pedido.IdPedido   
+				AND ISNULL(MM_Pedido.IdEstatusEliminado,0) = 0
+            INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)   
+                ON MM_Pedido.IdPedido = MM_Pedidos.IdIdentificador   
+                   AND MM_Pedido.IdProveedorCompras = MM_Pedidos.IdProveedorCliente   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedido (NOLOCK)   
+                ON MM_Pedido.IdSolicitudPedido = MM_SolicitudPedido.IdSolicitudPedido   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalle (NOLOCK)  
+                ON MM_SolicitudPedido.IdSolicitudPedido = MM_SolicitudPedidoDetalle.IdSolicitudPedido   
+            INNER JOIN Petrovendor.dbo.MM_SolicitudPedidoDetalleLineaPresupuesto (NOLOCK)   
+                ON MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_SolicitudPedidoDetalleLineaPresupuesto.IdSolicitudPedidoDetalle   
+            INNER JOIN Petrovendor.dbo.MM_PeticionOferta (NOLOCK)   
+                ON MM_Pedido.IdPeticionOferta = MM_PeticionOferta.IdPeticionOferta   
+                   AND MM_SolicitudPedido.IdSolicitudPedido = MM_PeticionOferta.IdSolicitudPedido   
+            INNER JOIN Petrovendor.dbo.MM_PeticionOfertaDetalle (NOLOCK)   
+                ON MM_PeticionOferta.IdPeticionOferta = MM_PeticionOfertaDetalle.IdPeticionOferta   
+                   AND MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle = MM_PeticionOfertaDetalle.IdSolicitudPedidoDetalle   
+                   AND MM_PedidoDetalle.IdPeticionOfertaDetalle = MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle   
+            INNER JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)   
+                ON MM_PeticionOferta.IdSubcontratista = S_Proveedor.IdProveedor   
+            INNER JOIN Petrovendor.dbo.TA_Operacion (NOLOCK)  
+                ON MM_Pedido.IdSolicitudPedido = TA_Operacion.IdDocumento    
+                   AND MM_Pedido.Version = TA_Operacion.NoVersion   
+            INNER JOIN Petrovendor.dbo.TA_TipoOperacion (NOLOCK)   
+                ON TA_Operacion.IdTipoOperacion = TA_TipoOperacion.IdTipoOperacion    
+            INNER JOIN Petrovendor.dbo.TA_Estatus (NOLOCK)   
+                ON TA_Operacion.IdEstatusOperacion = TA_Estatus.IdEstatus   
+			INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)   
+                ON MM_Pedido.IdContrato = CO_Contrato.IdContrato   
+            INNER JOIN Adinco.dbo.CO_Contratista (NOLOCK)  
+                ON CO_Contrato.IdContratista = CO_Contratista.IdContratista   
+            INNER JOIN Petrovendor.dbo.PV_TipoMoneda (NOLOCK)   
+                ON MM_Pedido.IdMoneda = PV_TipoMoneda.IdMoneda   
+            LEFT JOIN Petrovendor.dbo.PV_RelacionProveedorSubcotratista (NOLOCK)   
+                ON MM_SolicitudPedido.IdProveedor = PV_RelacionProveedorSubcotratista.IdProveedor   
+                   AND MM_Pedido.IdSubcontratista = PV_RelacionProveedorSubcotratista.IdSubcontratista   
+            INNER JOIN Petrovendor.dbo.MM_TipoPedido (NOLOCK)  
 				/*SI ES CÁRDENAS MORA TOMAR IdTipoProceso de MM_SolicitudPedido*/ 
-                ON TP.IdTipoPedido = (CASE WHEN C.IdContratista IN (10010 ) then solPed.IdTipoProceso else  PO.IdTipoProceso END ) 
-			LEFT JOIN Adinco.dbo.CO_PeriodoContrato periodo   
-                ON periodo.IdPeriodo = solPed.IdPeriodo   
-        WHERE O.IdTipoOperacion = 9   
-              AND E.IdEstatus = 2   
-              AND c.IdContrato = @IdContrato   
-              AND ISNULL(solPed.IdEstatusEliminado, 0) = 0   
-              AND ISNULL(P.IdEstatusEliminado, 0 ) = 0   
-              AND POD.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron     
-   
-              AND P.FechaEnvioPedido   
+                ON MM_TipoPedido.IdTipoPedido = (CASE WHEN CO_Contrato.IdContratista IN ( 10010 ) then MM_SolicitudPedido.IdTipoProceso else  MM_PeticionOferta.IdTipoProceso END ) 
+			INNER JOIN Adinco.dbo.CO_PeriodoContrato (NOLOCK)  
+                ON MM_SolicitudPedido.IdPeriodo = CO_PeriodoContrato.IdPeriodo 
+			LEFT JOIN SC_SubContrato   
+				ON MM_Pedido.IdPedido = SC_SubContrato.IdPedido    
+                  AND SC_SubContrato.IsActivo = 1
+        WHERE TA_Operacion.IdTipoOperacion = @AprobacionDePedido   
+              AND TA_Estatus.IdEstatus = @Aprobado   
+              AND CO_Contrato.IdContrato = @IdContrato   
+              AND ISNULL(MM_SolicitudPedido.IdEstatusEliminado, 0) = 0   
+              AND ISNULL(MM_Pedido.IdEstatusEliminado, 0 ) = 0   
+              AND MM_PeticionOfertaDetalle.IdPeticionOfertaDetalle IS NOT NULL -- para que no se repita que solo se ligue a los que cotizaron     
+              AND MM_Pedido.FechaEnvioPedido   
               BETWEEN CONVERT(VARCHAR, @Fechainicio, 112) AND CONVERT(VARCHAR, @FechaFin, 112) --Evitar mostrar pedidos que ya tengan un subcontrato asignado     
-   
-              AND NOT EXISTS   
-        (   SELECT 1   
-            FROM SC_SubContrato sc   
-            WHERE sc.IdPedido = P.IdPedido   
-                  AND sc.IsActivo = 1)   
-        GROUP BY RE.IdRelacion,   
-                 PV.RazonSocial,   
-                 PV.RegimenCapital,   
-                 TP.TipoPedido,   
-                 solPed.MotivoUrgencia,   
-                 c.NumeroContrato,   
-                 solPed.FechaEntregaFinRequerida,   
-                 solPed.FechaEntregaRequerida,   
-                 PO.FechaFinalizado,   
-                 c.DescripcionContrato,   
-                 Mon.IdMoneda,   
-                 solPed.IdSolicitudPedido,   
-                 P.IdPedido,   
-                 PSS.IdPedido,   
-                 ctista.RazonSocial,   
-                 c.FechaFirma,   
-                 periodo.NombrePeriodo,   
-                 P.FechaRecepcionServicio   
-        ORDER BY PSS.IdPedido ASC;   
+			  AND SC_SubContrato.IdSubContrato IS NULL 
+        GROUP BY PV_RelacionProveedorSubcotratista.IdRelacion,   
+                 S_Proveedor.RazonSocial,   
+                 S_Proveedor.RegimenCapital,   
+                 MM_TipoPedido.TipoPedido,   
+                 MM_SolicitudPedido.MotivoUrgencia,   
+                 CO_Contrato.NumeroContrato,      
+                 MM_SolicitudPedido.FechaEntregaRequerida,   
+                 MM_PeticionOferta.FechaFinalizado,    
+                 PV_TipoMoneda.IdMoneda,   
+                 MM_Pedido.IdPedido,   
+                 MM_Pedidos.IdPedido,   
+                 CO_Contratista.RazonSocial,   
+                 CO_Contrato.FechaFirma,   
+                 CO_PeriodoContrato.NombrePeriodo,   
+                 MM_Pedido.FechaRecepcionServicio     
    
    
         SELECT NumeroContrato,   
@@ -1296,7 +1295,7 @@ SET NOCOUNT ON
                Comentarios,   
                NombreContratista,   
                FechaEfectiva   
-        FROM @Tabla   
+        FROM #Tabla   
 		GROUP BY NumeroContrato,   
                RelacionOperadoraProveedor,   
                Proveedor,   
