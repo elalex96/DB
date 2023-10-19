@@ -1,7 +1,7 @@
-USE Petrovendor
-GO
-DROP PROCEDURE IF EXISTS SP_AX_BitacoraLecturaCorreos
-GO
+use Petrovendor
+go
+drop proc if exists SP_AX_BitacoraLecturaCorreos
+go
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <06/12/2019>
@@ -14,6 +14,10 @@ GO
 -- Author:		<LUIS DAVID>
 -- Create date: <09/05/2023>
 -- Description:	<Se valida el bit de Error para notificar al usuario las columnas invalidas>
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 03/10/2023
+-- Description: Petrovendor/2469 Se agrupan los usuarios destinatarios
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_AX_BitacoraLecturaCorreos]
 	-- Add the parameters for the stored procedure here
@@ -28,13 +32,22 @@ CREATE PROCEDURE [dbo].[SP_AX_BitacoraLecturaCorreos]
 AS
 BEGIN
 DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int,
-		@CuentaCorreo varchar(300);
+		@CuentaCorreo varchar(300),
+		@CorreosAdinco NVARCHAR(MAX),
+		@CorreosOperadora NVARCHAR(MAX) = NULL;
 	-- SE CAMBIA EL REMITENTE POR EL CORREO DE NOTIFICACIONES DE ADINCO, --YA QUE DEA TIENE REGLA PARA ENVIAR A SPAM LOS CORREOS QUE PROVIENEN DE PROCURA 
 	SELECT @CuentaCorreo = CuentaRegistro  FROM Adinco.dbo.S_CorreoServidor  WHERE Descripcion = 'Notificaciones';
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+	DROP TABLE IF EXISTS #CorreoConcat
+	DROP TABLE IF EXISTS #DATOSCORREO
+	CREATE TABLE #DATOSCORREO(
+	IsCorreoAdinco bit,
+	Correo VARCHAR(300))
+	CREATE TABLE #CorreoConcat(
+	IsCorreoAdinco bit,
+	Correo VARCHAR(300))
     -- Insert statements for procedure here
 	INSERT INTO dbo.AX_BitacoraLecturaCorreos
 	(
@@ -59,9 +72,30 @@ DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int,
 		@Para,
 		@Error
 	    );
+
+	INSERT INTO #DATOSCORREO(IsCorreoAdinco,Correo) 
+	SELECT CASE WHEN UPPER(C.Destinatario) LIKE '%ADINCO.MX%'
+	THEN 1 ELSE 0 END AS IsCorreoAdinco,
+	C.Destinatario
+	FROM WDEA_CorreosResumenProcesamiento AS C
+	-- SE CONCATENAN Y SE AGRUPAN LOS CORREOS DEPENDIENDO EL DOMINIO
+	INSERT INTO #CorreoConcat(
+	IsCorreoAdinco,
+	Correo)
+	SELECT 
+    DTC.IsCorreoAdinco, 
+    STUFF((SELECT ';'+DTS.Correo
+           FROM #DATOSCORREO DTS
+           WHERE DTS.IsCorreoAdinco = DTC.IsCorreoAdinco
+           FOR XML PATH('')), 1, 1, '') AS ParticipantNames
+	FROM #DATOSCORREO DTC
+	GROUP BY DTC.IsCorreoAdinco;
+	--SE OBTIENEN LOS USUARIOS YA CONCATENADOS
+	SET @CorreosOperadora = (SELECT Correo FROM #CorreoConcat WHERE IsCorreoAdinco = 0)
+	SET @CorreosAdinco = (SELECT Correo FROM #CorreoConcat WHERE IsCorreoAdinco = 1)
 	if (@ServicioOperadora = 'CorreoError' OR @Error = 1)
 	begin
-	SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
+	SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 	SET @HTML = (SELECT HTML FROM dbo.TA_Correo WHERE Asunto = 'Notificación de Resumen de Lectura de WDEA');
 	SET @HTML = (REPLACE(@HTML,'##MENSAJE_GENERAL##',ISNULL(@Asunto,'')));
 	SET @HTML = (REPLACE(@HTML,'##MENSAJE_CORRECTOS##',ISNULL('','')));
@@ -77,18 +111,20 @@ DECLARE @HTML NVARCHAR(MAX),@IdNotificacion int,
             Enviada,
             CreadoPor,
             CreadoEl,
-            De
+            De,
+			CCO
     )
 	SELECT
-			(@IdNotificacion + ROW_NUMBER() over( order by Destinatario desc)), 
-			Destinatario, 
+			@IdNotificacion, 
+			ISNULL(@CorreosOperadora,@CorreosAdinco), 
 			CAST(CAST(GETDATE() AS DATE) AS nvarchar) + ' Reporte de interfase ADINCO SAP',
-			REPLACE(@HTML,'##NOMBRE_USUARIO##',ISNULL(Nombre,'Usuario de ADINCO')), 
+			@HTML,
 			DATEADD(MINUTE, 1, GETDATE()), 
 			0, 
 			10380, --Usuario Soporte
 			GETDATE(), 
-			@CuentaCorreo
-	FROM dbo.WDEA_CorreosResumenProcesamiento (NOLOCK);
+			@CuentaCorreo,
+			ISNULL(@CorreosAdinco,'')
+
 	end
 END

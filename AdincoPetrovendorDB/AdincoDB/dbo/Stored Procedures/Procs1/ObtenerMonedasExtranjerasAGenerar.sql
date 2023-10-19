@@ -25,6 +25,10 @@ BEGIN
         SerieBanxico VARCHAR(50),
         FechaPago DATE
     )
+	CREATE TABLE #TablaMesSeleccionado(Fecha DATE, IdMoneda INT DEFAULT 1)
+
+
+	SELECT @FechaInicio = @Fecha, @FechaFin = EOMONTH(@Fecha);
 
 	CREATE TABLE #TablaMesSeleccionado(Fecha DATE, IdMoneda INT DEFAULT 1)
 

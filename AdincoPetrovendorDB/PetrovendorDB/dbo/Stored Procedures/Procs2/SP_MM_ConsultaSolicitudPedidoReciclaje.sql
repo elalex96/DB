@@ -1,22 +1,16 @@
-﻿USE [Petrovendor]
+USE Petrovendor
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_ConsultaSolicitudPedidoReciclaje'
-)
-    DROP PROCEDURE SP_MM_ConsultaSolicitudPedidoReciclaje;
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaSolicitudPedidoReciclaje]    Script Date: 05/09/2023 11:51:02 a. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+DROP PROCEDURE IF EXISTS SP_MM_ConsultaSolicitudPedidoReciclaje
 GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-04-17
 -- Description:	Consultar Solicitudes de Pedido  
 -- 05-09-2023 Se retornar el IdLocalidad y Solicitante 
+-- =============================================
+-- Author:		Luis David
+-- Create date: 05/10/2023
+-- Description:	Petrovendor/2522 - Se obtiene la localidad de solped reciclada
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudPedidoReciclaje]
 	-- Add the parameters for the stored procedure here
@@ -51,8 +45,10 @@ BEGIN
 	ISNULL(SP.IdDomicilioEntrega,0),
 	SP.IdSolicitudPedido,
 	ISNULL(SP.IdLocalidad,0) AS IdLocalidad,
-	ISNULL(SP.Solicitante,0) AS Solicitante
+	ISNULL(SP.Solicitante,0) AS Solicitante,
+	L.Nombre AS 'Localidad'
 	FROM MM_SolicitudPedido AS SP (NOLOCK)
+	LEFT JOIN MM_Localidades L (NOLOCK) ON
+	SP.IdLocalidad = L.Id
 	WHERE SP.IdSolicitudPedido=@IdSolicitudPedido
-
 END
