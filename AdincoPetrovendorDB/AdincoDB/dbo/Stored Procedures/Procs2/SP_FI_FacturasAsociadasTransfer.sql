@@ -1,4 +1,12 @@
-﻿-- =============================================
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_FacturasAsociadasTransfer'
+)
+    DROP PROCEDURE SP_FI_FacturasAsociadasTransfer;
+GO
+-- =============================================
 -- Author:		Manuel CD
 -- Create date: 14-09-2017
 -- Description:	
@@ -7,7 +15,7 @@
 -- Fecha:			16 de Agosto del 2022
 -- Descripción:		Eliminación de código comentado, agregado de (NOLOCK), ajustado de orden en los join, se quitan lefts joins posibles, renombrado por tablas
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_FacturasAsociadasTransfer] --32203,1,10038
+CREATE PROCEDURE [dbo].[SP_FI_FacturasAsociadasTransfer] 
     @IdTran INT,
     @IdUsuario INT,
     @IdContrato INT
@@ -98,16 +106,16 @@ BEGIN
                   END
               ) AS MontoPagado,
            ROW_NUMBER() OVER (ORDER BY FI_Factura.IdFactura ASC) AS Row
-    FROM FI_Transfer 
-        JOIN FI_TransferFactura 
+    FROM FI_Transfer (NOLOCK)
+        JOIN FI_TransferFactura  (NOLOCK)
             ON FI_Transfer.IdTransferencia = @IdTran
                AND FI_Transfer.IdContrato = @IdContrato
                AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-        JOIN FI_Factura 
+        JOIN FI_Factura  (NOLOCK)
             ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura
-        JOIN PV_Subcontratista
+        JOIN PV_Subcontratista (NOLOCK)
             ON FI_Factura.IdSubcontratista = PV_Subcontratista.IdSubcontratista
-        LEFT JOIN FI_ComplementoDePago 
+        LEFT JOIN FI_ComplementoDePago  (NOLOCK)
             ON FI_Factura.IdFactura = FI_ComplementoDePago.IdFactura
     GROUP BY FI_Factura.IdFactura,
              FI_Factura.TipoComprobante,
@@ -161,19 +169,19 @@ BEGIN
            FI_Factura.Emisor,
            FI_CPDocRelacionado.ImpPagado AS MontoPagado,
            ROW_NUMBER() OVER (ORDER BY FI_Factura.IdFactura ASC) + @Count AS Row
-    FROM FI_CPDocRelacionado 
-        JOIN FI_ComplementoDePago
+    FROM FI_CPDocRelacionado (NOLOCK) 
+        JOIN FI_ComplementoDePago (NOLOCK)
             ON FI_CPDocRelacionado.IdComplementoDePago = FI_ComplementoDePago.IdComplementoDePago
-        JOIN FI_TransferFactura 
+        JOIN FI_TransferFactura (NOLOCK)
             ON FI_ComplementoDePago.IdFactura = FI_TransferFactura.IdFactura
-        JOIN FI_Transfer
+        JOIN FI_Transfer (NOLOCK)
             ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia 
-        JOIN FI_Factura 
+			AND FI_Transfer.IdTransferencia = @IdTran
+			AND FI_Transfer.IdContrato = @IdContrato
+        JOIN FI_Factura (NOLOCK) 
             ON FI_CPDocRelacionado.IdDocumento = FI_Factura.UUID
-        JOIN PV_Subcontratista 
+        JOIN PV_Subcontratista (NOLOCK) 
             ON FI_Factura.IdSubcontratista = PV_Subcontratista.IdSubcontratista
-    WHERE FI_Transfer.IdTransferencia = @IdTran
-          AND FI_Transfer.IdContrato = @IdContrato
     GROUP BY FI_Factura.IdFactura,
              FI_Factura.TipoComprobante,
              FI_Factura.Serie,
@@ -270,18 +278,18 @@ BEGIN
            FI_Factura.Emisor,
            FI_CPDocRelacionado.ImpPagado AS MontoPagado,
            ROW_NUMBER() OVER (ORDER BY FI_CPDocRelacionado.IdDocumento ASC) + @Count AS Row
-    FROM FI_CPDocRelacionado 
-        JOIN FI_ComplementoDePago
+    FROM FI_CPDocRelacionado (NOLOCK)
+        JOIN FI_ComplementoDePago (NOLOCK)
             ON FI_CPDocRelacionado.IdComplementoDePago = FI_ComplementoDePago.IdComplementoDePago
-        JOIN FI_TransferFactura 
+        JOIN FI_TransferFactura (NOLOCK)
             ON FI_ComplementoDePago.IdFactura = FI_TransferFactura.IdFactura
-        JOIN FI_Transfer
-            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
-        LEFT JOIN FI_Factura 
+        JOIN FI_Transfer (NOLOCK)
+            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia 
+			AND  FI_Transfer.IdTransferencia = @IdTran
+			AND FI_Transfer.IdContrato = @IdContrato
+        LEFT JOIN FI_Factura (NOLOCK)
             ON FI_CPDocRelacionado.IdDocumento = FI_Factura.UUID       
-    WHERE FI_Transfer.IdTransferencia = @IdTran
-          AND FI_Transfer.IdContrato = @IdContrato
-          AND FI_Factura.IdFactura IS NULL
+	WHERE FI_Factura.IdFactura IS NULL
     GROUP BY FI_Factura.Serie,
              FI_Factura.Folio,
              FI_Factura.Fecha,
