@@ -53,7 +53,7 @@ AS
 		IF ( @IdUsuario IS NULL ) -- si no esta el usuario activo tomo al primer administrador para notificarle
 			BEGIN
 				SELECT TOP 1
-				S.IdUsuario, S.Nombre, S.Correo,S.IdUsuarioADINCO
+				S.IdUsuario, S.Nombre, S.Correo,ISNULL(S.IdUsuarioADINCO,0) AS IdUsuarioAdinco
 				FROM dbo.TA_Operacion O (NOLOCK)
 				INNER JOIN dbo.S_UsuarioProveedor UP (NOLOCK)
 					ON O.IdProveedor = UP.IdProveedor
