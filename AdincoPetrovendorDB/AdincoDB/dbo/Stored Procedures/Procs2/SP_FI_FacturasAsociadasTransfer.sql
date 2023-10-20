@@ -176,12 +176,12 @@ BEGIN
             ON FI_ComplementoDePago.IdFactura = FI_TransferFactura.IdFactura
         JOIN FI_Transfer (NOLOCK)
             ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia 
+			AND FI_Transfer.IdTransferencia = @IdTran
+			AND FI_Transfer.IdContrato = @IdContrato
         JOIN FI_Factura (NOLOCK) 
             ON FI_CPDocRelacionado.IdDocumento = FI_Factura.UUID
         JOIN PV_Subcontratista (NOLOCK) 
             ON FI_Factura.IdSubcontratista = PV_Subcontratista.IdSubcontratista
-    WHERE FI_Transfer.IdTransferencia = @IdTran
-          AND FI_Transfer.IdContrato = @IdContrato
     GROUP BY FI_Factura.IdFactura,
              FI_Factura.TipoComprobante,
              FI_Factura.Serie,
@@ -284,12 +284,12 @@ BEGIN
         JOIN FI_TransferFactura (NOLOCK)
             ON FI_ComplementoDePago.IdFactura = FI_TransferFactura.IdFactura
         JOIN FI_Transfer (NOLOCK)
-            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
+            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia 
+			AND  FI_Transfer.IdTransferencia = @IdTran
+			AND FI_Transfer.IdContrato = @IdContrato
         LEFT JOIN FI_Factura (NOLOCK)
             ON FI_CPDocRelacionado.IdDocumento = FI_Factura.UUID       
-    WHERE FI_Transfer.IdTransferencia = @IdTran
-          AND FI_Transfer.IdContrato = @IdContrato
-          AND FI_Factura.IdFactura IS NULL
+	WHERE FI_Factura.IdFactura IS NULL
     GROUP BY FI_Factura.Serie,
              FI_Factura.Folio,
              FI_Factura.Fecha,
