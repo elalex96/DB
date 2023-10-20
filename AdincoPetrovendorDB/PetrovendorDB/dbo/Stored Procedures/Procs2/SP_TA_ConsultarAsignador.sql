@@ -42,7 +42,7 @@ AS
 
 		DECLARE @IdUsuario INT, @Nombre NVARCHAR(MAX), @Correo NVARCHAR(MAX), @IdUsuarioAdinco NVARCHAR(MAX)
 
-		SELECT		@IdUsuario = s.IdUsuario, @Nombre = s.Nombre, @Correo = s.Correo, @IdUsuarioAdinco = S.IdUsuarioADINCO
+		SELECT		@IdUsuario = s.IdUsuario, @Nombre = s.Nombre, @Correo = s.Correo, @IdUsuarioAdinco = ISNULL(S.IdUsuarioADINCO,0)
 		FROM		TA_Operacion AS O (NOLOCK)
 		INNER JOIN	S_Usuario AS S
 			ON O.IdAsignador = S.IdUsuario
@@ -53,7 +53,7 @@ AS
 		IF ( @IdUsuario IS NULL ) -- si no esta el usuario activo tomo al primer administrador para notificarle
 			BEGIN
 				SELECT TOP 1
-				S.IdUsuario, S.Nombre, S.Correo,S.IdUsuarioADINCO
+				S.IdUsuario, S.Nombre, S.Correo,ISNULL(S.IdUsuarioADINCO,0) AS IdUsuarioAdinco
 				FROM dbo.TA_Operacion O (NOLOCK)
 				INNER JOIN dbo.S_UsuarioProveedor UP (NOLOCK)
 					ON O.IdProveedor = UP.IdProveedor
