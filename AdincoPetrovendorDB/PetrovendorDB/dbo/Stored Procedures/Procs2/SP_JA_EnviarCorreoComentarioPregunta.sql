@@ -260,7 +260,7 @@ BEGIN
 			on US.idUsuario = TANN.IdUsuario 
 			AND  TANN.IdCorreo = @IdCorreo
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
-			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4) --> CTE 3 ADMIN Y 5 VENTAS
+			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 5) --> CTE 3 ADMIN Y 5 VENTAS
 			and	US.Activo = 1
 			AND ISNULL(TANN.IsEliminado,-1) <> 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion, EN LA TABLA SI ESTA 1 QUIERE DECIR QUE ESTA ACTIVO, SI ESTA EN 0 QUIERE DECIR QUE ESTA ELIMINADA  LA NOTIFICACION
 		GROUP BY PR.RazonSocial,
