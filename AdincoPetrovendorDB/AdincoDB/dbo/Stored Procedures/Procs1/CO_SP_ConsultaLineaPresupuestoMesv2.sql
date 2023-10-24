@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'CO_SP_ConsultaLineaPresupuestoMesv2'
+)
+    DROP PROCEDURE CO_SP_ConsultaLineaPresupuestoMesv2;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Miguel Gomez
 -- Create date: 10 Noviembre 2014
 -- Description:	Presupuestos
@@ -16,7 +30,11 @@
 -- Updated date: <08/01/2021>
 -- Description: Se agrego NOLOCK en tablas 
 -- =============================================
-CREATE PROCEDURE [dbo].[CO_SP_ConsultaLineaPresupuestoMesv2] --3
+-- Modified:      Alexander Gomez
+-- Updated date: <23/10/2023>
+-- Description: Se contempla la estructura para los contratos CIEP
+-- =============================================
+CREATE PROCEDURE [dbo].[CO_SP_ConsultaLineaPresupuestoMesv2] 
 -- Add the parameters for the stored procedure here
 @presupuesto INT
 AS
@@ -123,7 +141,6 @@ AS
 			ON af.IdAceptacionFactura  = op.IdDocumento AND op.IdTipoOperacion = 10 
 				AND ISNULL(op.IdEstatusOperacion, 0) <> 2 --Solo facturas que no esten aprobadas, una factura rechazada solo implica que se haran correcciones, la aceptacion y el pedido aun sigue vigente
 				AND ISNULL(op.IdEstatusEliminado, 0) = 0
-		--WHERE
 
 		--Se uniran todos los montos de las diferentes consultas realizadas, convirtiendo todos los montos de pesos a dolares
 		INSERT INTO @MontosDolaresDetalle
@@ -221,7 +238,6 @@ AS
 		 ON r.IdFactura  = f.IdFactura
 		 INNER JOIN dbo.CO_LineaPresupuestoMes lpm (NOLOCK) 
 		 ON r.IdPrograma = lpm.IdLineaPresupuestoMes AND lpm.IdPresupuesto = @presupuesto
-		 --WHERE 
 		 
 
 		 --Como paso final sumamos todos los montos por linea de presupuesto
@@ -237,39 +253,31 @@ AS
 
            SELECT dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
                 CONCAT(RIGHT('00'+CAST(MONTH(dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES) AS VARCHAR(2)), 2), ' ', DATENAME(month, dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES), ' ', YEAR(dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES)) AS Mes_Presupuestado,
-                --CO_Area.NombreArea AS Area,
                  CASE CO.IdTipoContrato
                     WHEN 1
                     THEN CONVERT(NVARCHAR(MAX), CO_TipoServicio.ID_TIPOSER )
                     ELSE
-    id_Actividad end AS ID_TIPOSER, 
+				id_Actividad end AS ID_TIPOSER, 
                 CASE CO.IdTipoContrato
                     WHEN 1
                     THEN CONVERT(NVARCHAR(MAX), CO_TipoServicio.NombreTipoServicio)
                     ELSE CONVERT(NVARCHAR(MAX), DescripcionActividadPetrolera)
                 END AS CO_TipoServicio,
-
-
-               CASE CO.IdTipoContrato
-                    WHEN 1
-                    THEN CONVERT(NVARCHAR(MAX), CO_ActividadCIEP.ID_CATACTIV)
+               CASE 
+                    WHEN CO.IdTipoContrato = 1 THEN CONVERT(NVARCHAR(MAX), CO_ActividadCIEP.ID_CATACTIV)
                     ELSE CONVERT(NVARCHAR(MAX), [id_Sub-actividad])
                 END AS ID_CATACTIV,
-                  CASE CO.IdTipoContrato
-                    WHEN 1
-                    THEN CONVERT(NVARCHAR(MAX), NombreActividad)
+                  CASE 
+                    WHEN CO.IdTipoContrato = 1 THEN CONVERT(NVARCHAR(MAX), NombreActividad)
                     ELSE CONVERT(NVARCHAR(MAX), SubactividadPetrolera)
                 END AS Actividad, 
-			 --CO_SubactividadPetrolera.SubactividadPetrolera AS Actividad,
                 CO_TareaPetrolera.id_Tarea AS ID_CATSUBACTIV,
-                CO_TareaPetrolera.TareaPetrolera AS SubActividad,
-
-
-                --CO_ClasificacionAnexo4.ClasificacionAnexo4 AS Anexo4,
-                --dbo.CO_LineaPresupuestoMes.ID_PADRE,
+				CASE 
+					WHEN P.CIEP = 1 THEN CONVERT(NVARCHAR(MAX), RU.NombreRubro)
+					ELSE CO_TareaPetrolera.TareaPetrolera
+				END AS SubActividad,
                 CO_Servicio.NombreServicio AS Servicio,
                 CO_Instalacion.NombreInstalacion AS Instalacion,
-                --CO_Instalacion.IdInstalacionPemex AS ID_PEMEX,
                 dbo.CO_LineaPresupuestoMes.Monto AS [Presupuesto_USD],
                 dbo.CO_LineaPresupuestoMes.IdExcel AS ID,
                 CO_ActividadPetroleraCNH.id_Actividad,
@@ -323,33 +331,31 @@ AS
 			  ON  P.IdAnioContractual = AC.IdAnioContractual
               JOIN Adinco.dbo.CO_Contrato CO (NOLOCK) 
 			  ON AC.IdContrato = CO.IdContrato 
-         WHERE(dbo.CO_LineaPresupuestoMes.IdPresupuesto = @presupuesto) --and MONTH ( CO_LineaPresupuestoMes.AC_FEC_INI ) = @mes 
+			  LEFT JOIN Adinco.dbo.CO_Rubro AS RU (NOLOCK)
+			  ON dbo.CO_LineaPresupuestoMes.IdRubro = RU.IdRubro
+         WHERE(dbo.CO_LineaPresupuestoMes.IdPresupuesto = @presupuesto)
          GROUP BY dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
                   dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES,
 				  CO.IdTipoContrato,
-                  --CO_Area.NombreArea,
                   CO_TipoServicio.ID_TIPOSER,
                   CO_TipoServicio.NombreTipoServicio,
                   CO_ActividadCIEP.ID_CATACTIV,
                   CO_ActividadCIEP.NombreActividad,
-                  --CO_SubactividadCIEP.ID_CATSUBACTIV,
-                  --CO_SubactividadCIEP.NombreSubactividad,
                   dbo.CO_LineaPresupuestoMes.ID_PADRE,
-                  --CO_ClasificacionAnexo4.ClasificacionAnexo4,
                   CO_Servicio.NombreServicio,
                   CO_Instalacion.NombreInstalacion,
                   CO_Instalacion.IdInstalacionPemex,
                   dbo.CO_LineaPresupuestoMes.Monto,
                   dbo.CO_LineaPresupuestoMes.IdExcel,
-                  --CO_RubroInterno.NombreRubro,
                   CO_ActividadPetroleraCNH.id_Actividad,
                   CO_ActividadPetroleraCNH.DescripcionActividadPetrolera,
                   CO_SubactividadPetrolera.[id_Sub-actividad],
                   CO_SubactividadPetrolera.SubactividadPetrolera,
                   CO_TareaPetrolera.id_Tarea,
                   CO_TareaPetrolera.TareaPetrolera,
-				  me.MontoEjercido
+				  me.MontoEjercido,
+				  P.CIEP,
+				  RU.NombreRubro
          ORDER BY Mes_Presupuestado,
-                  dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES
-                  --Area;
+                  dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES;
      END
