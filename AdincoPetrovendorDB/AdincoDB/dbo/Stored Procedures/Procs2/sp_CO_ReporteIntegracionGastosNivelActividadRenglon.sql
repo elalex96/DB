@@ -512,4 +512,4 @@ AS
             'Saldo Remanente ' + isnull(@nombrePresupuesto, '') + ' ($USD)' as Etiqueta1
         FROM
             TempReporteIntegracionGastosNivelActividadRenglon GNAR (NOLOCK);
-    END;
+        END;
