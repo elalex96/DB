@@ -1,4 +1,17 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultarPedidosDetalleComprasV2_MV1_5'
+)
+    DROP PROCEDURE SP_MM_ConsultarPedidosDetalleComprasV2_MV1_5;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 11-07-18
@@ -14,6 +27,10 @@
 -- Author: Daniel AC  
 -- Create date: 04/11/2019
 -- Description: Comente case que mostraba en 0 las cantidades cuando el estatus era aprobado, pero sin confirmación aceptada
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 10/10/2023
+-- Description:	se agregan estandares de desarrollo
 -- =============================================
 CREATE  PROCEDURE [dbo].[SP_MM_ConsultarPedidosDetalleComprasV2_MV1_5] 
     -- Add the parameters for the stored procedure here
@@ -42,16 +59,6 @@ BEGIN
 		   pd.RecepcionPedido,
 		   p.RecepcionServicio,
 		   o.IdEstatusOperacion,
-           --CASE
-           --    WHEN (
-           --             PD.RecepcionPedido = 1
-           --             AND P.RecepcionServicio = 1
-           --         )
-           --         OR O.IdEstatusOperacion = 1 THEN
-           --        PD.Cantidad
-           --    ELSE
-           --        0
-          -- END 
 		   PD.Cantidad AS Cantidad,
            TM.TipoMonedaCorto AS Moneda,
 			(PD.PrecioUnitario * PD.Cantidad) AS 
@@ -145,42 +152,44 @@ BEGIN
 			ELSE 
 			cp.CondicionPago
 			END  AS CondicionPago
-    FROM MM_Pedido AS P
-        INNER JOIN MM_PedidoDetalle AS PD
-            ON PD.IdPedido = P.IdPedido
-        INNER JOIN MM_PeticionOferta AS PO
-            ON PO.IdPeticionOferta = P.IdPeticionOferta
-        INNER JOIN MM_PeticionOfertaDetalle AS POD
-            ON POD.IdPeticionOfertaDetalle = PD.IdPeticionOfertaDetalle
-        INNER JOIN dbo.MM_SolicitudPedido AS SP
-            ON SP.IdSolicitudPedido = P.IdSolicitudPedido
-        INNER JOIN MM_SolicitudPedidoDetalle AS SPD
-            ON SPD.IdSolicitudPedidoDetalle = POD.IdSolicitudPedidoDetalle
-        INNER JOIN MM_Material AS M
-            ON M.IdMaterial = PD.IdMaterialVendedor
-        INNER JOIN TA_Operacion AS O
-            ON O.IdDocumento = P.IdSolicitudPedido AND O.NoVersion = P.Version
-        INNER JOIN TA_Prioridad AS PR
-            ON PR.IdPrioridad = O.IdPrioridad
-        INNER JOIN TA_Vencimiento AS V
-            ON V.IdVencimiento = O.IdVigencia
-        INNER JOIN TA_TipoOperacion AS TTO
-            ON TTO.IdTipoOperacion = O.IdTipoOperacion
-        INNER JOIN TA_Estatus AS E
-            ON E.IdEstatus = O.IdEstatusOperacion
-        LEFT JOIN dbo.PV_MM_MaterialUnidad AS UN
-            ON UN.IdUnidad = M.IdUnidad
-        INNER JOIN PV_TipoMoneda AS TM
-            ON TM.IdMoneda = PD.IdMoneda
-        INNER JOIN DG_Domicilio AS D
-            ON D.IdDomicilio = SPD.IdDomicilioEntrega
-        INNER JOIN dbo.MM_HorasVigenciaPedido AS HV
-            ON HV.IdPedido = P.IdPedido
-        LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPL
-            ON SPL.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
-        LEFT JOIN Adinco.dbo.CO_Instalacion AS I
-            ON I.IdInstalacion = SPL.IdInstalacion
-		LEFT JOIN dbo.MM_CondicionPago CP ON PD.IdCondicionPago=CP.IdCondicionPago
+    FROM MM_Pedido AS P (NOLOCK)
+        INNER JOIN MM_PedidoDetalle AS PD (NOLOCK)
+            ON P.IdPedido = PD.IdPedido
+        INNER JOIN MM_PeticionOferta AS PO (NOLOCK)
+            ON P.IdPeticionOferta = PO.IdPeticionOferta
+        INNER JOIN MM_PeticionOfertaDetalle AS POD (NOLOCK)
+            ON PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle
+        INNER JOIN dbo.MM_SolicitudPedido AS SP (NOLOCK)
+            ON P.IdSolicitudPedido = SP.IdSolicitudPedido
+        INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+            ON POD.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
+        INNER JOIN MM_Material AS M (NOLOCK)
+            ON PD.IdMaterialVendedor = M.IdMaterial
+        INNER JOIN TA_Operacion AS O (NOLOCK)
+            ON P.IdSolicitudPedido = O.IdDocumento 
+				AND O.NoVersion = P.Version
+        INNER JOIN TA_Prioridad AS PR (NOLOCK)
+            ON  O.IdPrioridad = PR.IdPrioridad
+        INNER JOIN TA_Vencimiento AS V (NOLOCK)
+            ON O.IdVigencia = V.IdVencimiento
+        INNER JOIN TA_TipoOperacion AS TTO (NOLOCK)
+            ON O.IdTipoOperacion = TTO.IdTipoOperacion
+        INNER JOIN TA_Estatus AS E (NOLOCK)
+            ON O.IdEstatusOperacion = E.IdEstatus
+        LEFT JOIN dbo.PV_MM_MaterialUnidad AS UN (NOLOCK)
+            ON M.IdUnidad = UN.IdUnidad
+        INNER JOIN PV_TipoMoneda AS TM (NOLOCK)
+            ON PD.IdMoneda = TM.IdMoneda
+        INNER JOIN DG_Domicilio AS D (NOLOCK)
+            ON SPD.IdDomicilioEntrega = D.IdDomicilio
+        INNER JOIN dbo.MM_HorasVigenciaPedido AS HV (NOLOCK)
+            ON P.IdPedido = HV.IdPedido
+        LEFT JOIN dbo.MM_SolicitudPedidoDetalleLineaPresupuesto SPL (NOLOCK)
+            ON SPD.IdSolicitudPedidoDetalle = SPL.IdSolicitudPedidoDetalle
+        LEFT JOIN Adinco.dbo.CO_Instalacion AS I (NOLOCK)
+            ON SPL.IdInstalacion = I.IdInstalacion
+		LEFT JOIN dbo.MM_CondicionPago CP (NOLOCK)
+			ON CP.IdCondicionPago = PD.IdCondicionPago
     WHERE O.IdTipoOperacion = 9
           AND P.IdPedido = @IdPedido
     GROUP BY PD.IdPedidoDetalle,
@@ -216,8 +225,7 @@ BEGIN
 			 O.IdEstatusOperacion,
 			 PD.IdCondicionPago,
 			 CP.CondicionPago, 
-			 PD.DiasCredito
---- IdTipoOperacion = 9--> Aprobación de pedido
+			 PD.DiasCredito;
 
 END;
 

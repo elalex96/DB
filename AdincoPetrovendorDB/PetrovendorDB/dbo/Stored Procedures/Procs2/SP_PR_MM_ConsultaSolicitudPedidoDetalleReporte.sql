@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte'
+)
+    DROP PROCEDURE SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Update date: 07-11-2018
 -- Description: se cambia el retorno de la subatividad a una concatenacion de campos
@@ -8,7 +22,10 @@
 -- Create date: 13-08-2019
 -- Description: Add Marca, Modelo, No Parte a Descripción material 
 -- =============================================
-
+-- Author:		Alexander Gomez
+-- Create date: 10/10/2023
+-- Description:	se agregan estandares de desarrollo
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte]
 	-- Add the parameters for the stored procedure here
 @IdSolicitudPedido INT,
@@ -48,17 +65,27 @@ AS
 		 CC.CentroCosto,
 		 i.NombreInstalacion, 
 		 dbo.Fn_RetornarMesProgramadoActividadConcat(lp.IdLineaPresupuestoMes) AS SubActividad 
-		FROM MM_SolicitudPedidoDetalle AS SPD
-		INNER JOIN MM_SolicitudPedido AS SP ON SP.IdSolicitudPedido=SPD.IdSolicitudPedido
-		LEFT JOIN MM_Material AS MM ON MM.IdMaterial = SPD.IdMaterial		
-		LEFT JOIN PV_MM_MaterialUnidad AS U ON U.IdUnidad = SPD.IdUnidad
-		LEFT JOIN DG_Domicilio AS D ON D.IdDomicilio=SPD.IdDomicilioEntrega		
-		LEFT JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP ON SPDLP.IdSolicitudPedidoDetalle = SPD.IdSolicitudPedidoDetalle
-		LEFT JOIN CC_CentroCosto AS CC ON CC.IdCentroCosto = SPDLP.IdCentroCosto
-		LEFT JOIN Adinco.dbo.CO_Instalacion AS i ON i.IdInstalacion = SPDLP.IdInstalacion
-		LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp ON lp.IdLineaPresupuestoMes = SPDLP.IdLineaPresupuesto
-		LEFT OUTER JOIN Adinco.dbo.CO_TareaPetrolera AS t ON t.IdTareaPetrolera = lp.IdTareaPetrolera
-		WHERE SP.IdSolicitudPedido = @IdSolicitudPedido AND SP.IdProveedor=@IdProveedor
+		FROM MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+		INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
+			ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido 
+				AND SP.IdSolicitudPedido = @IdSolicitudPedido 
+				AND SP.IdProveedor=@IdProveedor
+		LEFT JOIN MM_Material AS MM (NOLOCK)
+			ON SPD.IdMaterial = MM.IdMaterial		
+		LEFT JOIN PV_MM_MaterialUnidad AS U (NOLOCK)
+			ON SPD.IdUnidad = U.IdUnidad
+		LEFT JOIN DG_Domicilio AS D (NOLOCK)
+			ON SPD.IdDomicilioEntrega = D.IdDomicilio		
+		LEFT JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP (NOLOCK)
+			ON SPD.IdSolicitudPedidoDetalle = SPDLP.IdSolicitudPedidoDetalle
+		LEFT JOIN CC_CentroCosto AS CC (NOLOCK)
+			ON SPDLP.IdCentroCosto = CC.IdCentroCosto
+		LEFT JOIN Adinco.dbo.CO_Instalacion AS i (NOLOCK)
+			ON SPDLP.IdInstalacion = i.IdInstalacion
+		LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp (NOLOCK)
+			ON SPDLP.IdLineaPresupuesto = lp.IdLineaPresupuestoMes 
+		LEFT OUTER JOIN Adinco.dbo.CO_TareaPetrolera AS t (NOLOCK)
+			ON lp.IdTareaPetrolera = t.IdTareaPetrolera
 
 
      END;
