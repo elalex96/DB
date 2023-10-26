@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
@@ -49,7 +48,7 @@ AS
          SELECT @IdSubcontratistaImportador = CO_Contratista.IdProveedor
          FROM CO_Contrato 	(NOLOCK)
               JOIN CO_Contratista ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
-         WHERE CO_Contratista.IdContrato = @IdContrato;
+         WHERE CO_Contrato.IdContrato = @IdContrato;
          BEGIN
  
             UPDATE dbo.FI_PedimentoComprobante
