@@ -1,4 +1,15 @@
-﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_FI_Comprobantes'
+    )
+    DROP PROCEDURE SP_FI_Comprobantes
+GO
 -- =============================================  
 -- Author:  Manuel CD  
 -- Create date: 15-11-17  
@@ -9,7 +20,7 @@
 -- Description:			Optimizacion de PROCEDURE por temas de error marcado 
 --						[Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.]
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_Comprobantes]--10038,1
+CREATE PROCEDURE [dbo].[SP_FI_Comprobantes]
     @IdContrato INT,
     @IdUsuario INT
 AS
@@ -19,25 +30,25 @@ BEGIN
     (
         IdPedimentoComprobante INT,
         Archivo VARCHAR(50),
-        NumeroSerieMercancia NVARCHAR(MAX),
-        ClaseBienServicio NVARCHAR(MAX),
+        NumeroSerieMercancia VARCHAR(5000),
+        ClaseBienServicio VARCHAR(5000),
         PrecioUnitario MONEY,
         Cantidad NUMERIC,
         ImporteTotal MONEY,
         IdUnidadMedida INT,
-        IdUnidadMedidaTexto VARCHAR(MAX),
+        IdUnidadMedidaTexto VARCHAR(5000),
         IdSubcontratistaImportador INT,
-        IdSubcontratistaImportadorTexto VARCHAR(MAX),
+        IdSubcontratistaImportadorTexto VARCHAR(5000),
         IdSubcontratistaExportador INT,
-        IdSubcontratistaExportadorTexto VARCHAR(MAX),
+        IdSubcontratistaExportadorTexto VARCHAR(5000),
         IdMoneda INT,
-        IdMonedaTexto VARCHAR(MAX),
+        IdMonedaTexto VARCHAR(5000),
         IdFormaPago INT,
-        IdFormaPagoTexto VARCHAR(MAX),
+        IdFormaPagoTexto VARCHAR(5000),
         CreadoPor INT,
-        CreadoPorTexto VARCHAR(MAX),
+        CreadoPorTexto VARCHAR(5000),
         ModificadoPor INT,
-        ModificadoPorTexto VARCHAR(MAX),
+        ModificadoPorTexto VARCHAR(5000),
 		PRIMARY KEY (IdPedimentoComprobante)
     )
 
@@ -65,7 +76,7 @@ BEGIN
         ModificadoPor,
         ModificadoPorTexto
     )
-    SELECT PC.IdPedimentoComprobante,
+    SELECT FI_PedimentoComprobante.IdPedimentoComprobante,
            'NO CARGADO',
            '',
            '',
@@ -74,21 +85,21 @@ BEGIN
            NULL,
            NULL,
            NULL,
-           PC.IdSubcontratistaImportador,
+           FI_PedimentoComprobante.IdSubcontratistaImportador,
            '',
-           PC.IdSubcontratistaExportador,
+           FI_PedimentoComprobante.IdSubcontratistaExportador,
            '',
-           PC.IdMoneda,
+           FI_PedimentoComprobante.IdMoneda,
            '',
-           PC.IdFormaPago,
+           FI_PedimentoComprobante.IdFormaPago,
            '',
-           PC.CreadoPor,
+           FI_PedimentoComprobante.CreadoPor,
            '',
-           PC.ModificadoPor,
+           FI_PedimentoComprobante.ModificadoPor,
            ''
-    FROM FI_PedimentoComprobante PC (NOLOCK)
-    WHERE PC.CvTipoDocFacturacion = 3
-          AND PC.IdContrato = @IdContrato
+    FROM FI_PedimentoComprobante  (NOLOCK)
+    WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = 3
+          AND FI_PedimentoComprobante.IdContrato = @IdContrato
 
     UPDATE TEMP
     SET Archivo = CASE
@@ -98,7 +109,7 @@ BEGIN
                           'Cargado'
                   END
     FROM #FI_Comprobante TEMP
-        JOIN dbo.FI_Documento D (NOLOCK)
+        JOIN dbo.FI_Documento D 
             ON TEMP.IdPedimentoComprobante = D.IdPedimentoComprobante
                AND D.DocumentoByte IS NOT NULL
                AND ISNULL(D.IsEliminado, 0) = 0
@@ -106,39 +117,39 @@ BEGIN
     UPDATE TEMP
     SET CreadoPorTexto = UC.Nombre
     FROM #FI_Comprobante TEMP
-        JOIN dbo.AP_Usuario UC (NOLOCK)
+        JOIN dbo.AP_Usuario UC 
             ON TEMP.CreadoPor = UC.UsuarioID
 
     UPDATE TEMP
     SET ModificadoPorTexto = UM.Nombre
     FROM #FI_Comprobante TEMP
-        JOIN dbo.AP_Usuario UM (NOLOCK)
+        JOIN dbo.AP_Usuario UM 
             ON TEMP.ModificadoPor = UM.UsuarioID
 
     UPDATE TEMP
     SET IdFormaPagoTexto = L.Nombre
     FROM #FI_Comprobante TEMP
-        JOIN dbo.AP_Lista L (NOLOCK)
+        JOIN dbo.AP_Lista L
             ON TEMP.IdFormaPago = L.IdClave
                AND L.IdGrupo = 10001
 
     UPDATE TEMP
     SET IdMonedaTexto = M.TipoMonedaCorto
     FROM #FI_Comprobante TEMP
-        JOIN PV_TipoMoneda M (NOLOCK)
+        JOIN PV_TipoMoneda M 
             ON TEMP.IdMoneda = M.IdMoneda
 
 
     UPDATE TEMP
     SET IdSubcontratistaImportadorTexto = SI.RazonSocial
     FROM #FI_Comprobante TEMP
-        JOIN dbo.PV_Subcontratista SI (NOLOCK)
+        JOIN dbo.PV_Subcontratista SI 
             ON TEMP.IdSubcontratistaImportador = SI.IdSubcontratista
 
     UPDATE TEMP
     SET IdSubcontratistaExportadorTexto = SE.RazonSocial
     FROM #FI_Comprobante TEMP
-        JOIN dbo.PV_Subcontratista SE (NOLOCK)
+        JOIN dbo.PV_Subcontratista SE 
             ON TEMP.IdSubcontratistaExportador = SE.IdSubcontratista
 
     UPDATE TEMP
@@ -149,13 +160,13 @@ BEGIN
         ImporteTotal = PCD.ImporteTotal,
         IdUnidadMedida = PCD.IdUnidadMedida
     FROM #FI_Comprobante TEMP
-        JOIN FI_PedimentoComprobanteDetalle PCD (NOLOCK)
+        JOIN FI_PedimentoComprobanteDetalle PCD
             ON TEMP.IdPedimentoComprobante = PCD.IdPedimentoComprobante
 
     UPDATE TEMP
     SET IdUnidadMedidaTexto = MU.UMB
     FROM #FI_Comprobante TEMP
-        JOIN dbo.PV_MM_MaterialUnidad MU (NOLOCK)
+        JOIN dbo.PV_MM_MaterialUnidad MU 
             ON TEMP.IdUnidadMedida = MU.IdUnidad
 
     SELECT PC.IdPedimentoComprobante AS IdComprobante,
@@ -190,8 +201,10 @@ BEGIN
                    'Si'
            END AS EsnotaCredito
     FROM #FI_Comprobante TEMP
-        JOIN FI_PedimentoComprobante PC (NOLOCK)
-            ON TEMP.IdPedimentoComprobante = PC.IdPedimentoComprobante
+    JOIN 
+		FI_PedimentoComprobante PC (NOLOCK)
+    ON 
+		TEMP.IdPedimentoComprobante = PC.IdPedimentoComprobante
     GROUP BY PC.IdPedimentoComprobante,
              PC.FolioComprobante,
              PC.FechaPago,

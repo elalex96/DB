@@ -1,45 +1,59 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_FI_InsertarPedimentoComprobante'
+    )
+    DROP PROCEDURE SP_FI_InsertarPedimentoComprobante
+GO
+-- =============================================
 -- Author:		Manuel CD
 -- Create date: 04-10-17
 -- Description:	
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_InsertarPedimentoComprobante] 
-	-- Add the parameters for the stored procedure here
+
 @IdContrato                 INT,
-@NumeroPedimento            NVARCHAR(MAX),
+@NumeroPedimento            VARCHAR(3000),
 @ClavePedimento             INT,
-@FolioComprobante           NVARCHAR(MAX),
+@FolioComprobante           VARCHAR(3000),
 @FechaPago                  DATE,
-@Regimen                    NVARCHAR(MAX),
-@AduanaES                   NVARCHAR(MAX),
+@Regimen                    VARCHAR(3000),
+@AduanaES                   VARCHAR(3000),
 @IdSubcontratistaExportador INT,
 @IdMoneda                   INT,
-@AcuseElectronico           NVARCHAR(MAX),
-@DescripcionMercancia       NVARCHAR(MAX),
+@AcuseElectronico           VARCHAR(3000),
+@DescripcionMercancia       VARCHAR(5000),
 @SubTotal                   MONEY,
 @IdUsuario                  INT,
 @CvTipoDoc                  INT,
 @DocumentoPDF               IMAGE,
-@IdFiscal                   NVARCHAR(50),
-@RazonSocial                NVARCHAR(MAX),
+@IdFiscal                   VARCHAR(50),
+@RazonSocial                VARCHAR(3000),
 @ImporteInco                MONEY,
-@CuentaBancaria				NVARCHAR(500)=''
+@CuentaBancaria				VARCHAR(500)=''
 AS
          BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
+	
              SET NOCOUNT ON;
              DECLARE @idped INT;
              DECLARE @IdSubcontratistaImportador INT;
 	    
 	    /*PEDIMENTO*/
 
---Obtener proveedor importador
-             SELECT @IdSubcontratistaImportador = CC.IdProveedor
-             FROM CO_Contrato C
-                  JOIN CO_Contratista CC ON C.IdContratista = CC.IdContratista
-             WHERE C.IdContrato = @IdContrato;
-		   --
+			--Obtener proveedor importador
+             SELECT @IdSubcontratistaImportador = CO_Contratista.IdProveedor
+             FROM 
+				CO_Contrato  (NOLOCK)
+             JOIN 
+				CO_Contratista  
+				ON	CO_Contrato.IdContratista = CO_Contratista.IdContratista
+             WHERE	CO_Contrato.IdContrato = @IdContrato;
+		   
              BEGIN
                  INSERT INTO [dbo].[FI_PedimentoComprobante]
 ([IdContrato],

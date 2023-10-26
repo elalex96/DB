@@ -1,30 +1,42 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_FI_EditarPedimento'
+    )
+    DROP PROCEDURE SP_FI_EditarPedimento
+GO
+-- =============================================
 -- Author:      Marcos Garcia
 -- Create date: 15-01-2020
 -- Description: Editar Pedimento
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_EditarPedimento]
--- Add the parameters for the stored procedure here
+
 @IdPedimentoComprobante     INT, 
 @IdContrato                 INT, 
-@NumeroPedimento            NVARCHAR(MAX), 
+@NumeroPedimento            VARCHAR(5000), 
 @ClavePedimento             INT, 
-@FolioComprobante           NVARCHAR(MAX), 
-@FechaPago                  DATE, 
-@Regimen                    NVARCHAR(MAX), 
-@AduanaES                   NVARCHAR(MAX), 
+@FolioComprobante           VARCHAR(5000), 
+@FechaPago                  DATE,
+@Regimen                    VARCHAR(5000), 
+@AduanaES                   VARCHAR(5000), 
 @IdSubcontratistaExportador INT, 
 @IdMoneda                   INT, 
-@AcuseElectronico           NVARCHAR(MAX), 
-@DescripcionMercancia       NVARCHAR(MAX), 
-@SubTotal                   MONEY, 
+@AcuseElectronico           VARCHAR(5000), 
+@DescripcionMercancia       VARCHAR(5000), 
+@SubTotal					MONEY, 
 @IdUsuario                  INT, 
 @CvTipoDoc                  INT, 
 @DocumentoPDF               IMAGE, 
-@IdFiscal                   NVARCHAR(50), 
-@RazonSocial                NVARCHAR(MAX), 
+@IdFiscal                   VARCHAR(50), 
+@RazonSocial                VARCHAR(5000), 
 @ImporteInco                MONEY,
-@CuentaBancaria             NVARCHAR(500) = ''
+@CuentaBancaria             VARCHAR(500) = ''
 AS
      BEGIN
          SET NOCOUNT ON;
@@ -32,13 +44,15 @@ AS
          DECLARE @Validacion INT;
          SET @Validacion = (DATALENGTH(@DocumentoPDF));
          /*PEDIMENTO*/
-         --Obtener proveedor importador
-         SELECT @IdSubcontratistaImportador = CC.IdProveedor
-         FROM CO_Contrato C
-              JOIN CO_Contratista CC ON C.IdContratista = CC.IdContratista
-         WHERE C.IdContrato = @IdContrato;
+        
+		--Obtener proveedor importador
+         SELECT @IdSubcontratistaImportador = CO_Contratista.IdProveedor
+         FROM CO_Contrato 	(NOLOCK)
+              JOIN CO_Contratista ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+         WHERE CO_Contratista.IdContrato = @IdContrato;
          BEGIN
-             UPDATE dbo.FI_PedimentoComprobante
+ 
+            UPDATE dbo.FI_PedimentoComprobante
                SET 
                    NumeroPedimento = @NumeroPedimento, 
                    ClavePedimento = @ClavePedimento, 
@@ -60,7 +74,8 @@ AS
          END;
          --
          BEGIN
-             UPDATE dbo.FI_PedimentoComprobanteDetalle
+ 
+            UPDATE dbo.FI_PedimentoComprobanteDetalle
                SET 
                    DescripcionMercancia = @DescripcionMercancia, 
                    PrecioUnitario = @SubTotal, 
@@ -78,10 +93,13 @@ AS
                            ModificadoEn = GETDATE()
                      WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
                  END;
-         END;
+ 
+        END;
          IF @@ERROR <> 0
              SELECT 'false' AS msj;
              ELSE
          SELECT 'true' AS msj, 
                 @IdPedimentoComprobante;
      END;
+
+

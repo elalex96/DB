@@ -1,4 +1,16 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_FI_EditarComprobante'
+    )
+    DROP PROCEDURE SP_FI_EditarComprobante
+GO
+-- =============================================
 -- Author:		Marcos Garcia
 -- Create date: 15-01-2020
 -- Description:	Editar Mediante IdPedimentoComprobante
@@ -11,13 +23,13 @@ CREATE PROCEDURE [dbo].[SP_FI_EditarComprobante]
 -- Add the parameters for the stored procedure here
 @IdPedimentoComprobante     INT, 
 @IdContrato                 INT, 
-@FolioComprobante           NVARCHAR(MAX), 
+@FolioComprobante           VARCHAR(5000), 
 @FechaPago                  DATE, 
 @IdSubcontratistaExportador INT, 
 @IdMoneda                   INT, 
 @IdUnidadMedida             INT, 
-@NumFac                     NVARCHAR(50), 
-@ClaseBienServicio          NVARCHAR(MAX), 
+@NumFac                     VARCHAR(50), 
+@ClaseBienServicio          VARCHAR(5000), 
 @Subtotal                   MONEY, 
 @IdUsuario                  INT, 
 @CvTipoDoc                  INT, 
@@ -33,9 +45,9 @@ AS
          SET @Validacion = (DATALENGTH(@DocumentoPDF));
 	     BEGIN
 
-			 IF EXISTS(SELECT * FROM dbo.FI_PedimentoComprobante WHERE IdPedimentoComprobante = @IdPedimentoComprobante AND EsnotaCredito IS NOT NULL)
+			 IF EXISTS(SELECT * FROM dbo.FI_PedimentoComprobante (NOLOCK) WHERE IdPedimentoComprobante = @IdPedimentoComprobante AND EsnotaCredito IS NOT NULL)
 			 BEGIN
-				SET @IsNotaCredito = (SELECT EsnotaCredito FROM dbo.FI_PedimentoComprobante WHERE IdPedimentoComprobante = @IdPedimentoComprobante AND EsnotaCredito IS NOT NULL);
+				SET @IsNotaCredito = (SELECT EsnotaCredito FROM dbo.FI_PedimentoComprobante (NOLOCK) WHERE IdPedimentoComprobante = @IdPedimentoComprobante AND EsnotaCredito IS NOT NULL);
 			 END
 
              UPDATE dbo.FI_PedimentoComprobante
@@ -77,3 +89,5 @@ AS
          SELECT 'true' AS msj, 
                 @IdPedimentoComprobante;
      END;
+
+
