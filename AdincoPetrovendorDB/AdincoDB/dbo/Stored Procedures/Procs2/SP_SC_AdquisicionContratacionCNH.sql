@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -33,7 +32,8 @@ SET NOCOUNT ON
 	@Aprobado INT = 2,
 	@EnAprobacion INT = 1,
 	@TipoPedidoCompraDirecta INT = 1,
-	@AprobacionDePedido INT = 9
+	@AprobacionDePedido INT = 9,
+	@Bloque	VARCHAR(50)
 
    -- SE CREA TABLA PARA QUE NO SE REPITAN LOS DATOS EN LOS MONTOS POR HABER DUPLICADOS EN ESTA TABLA: AX_Layout
    CREATE TABLE #AX_Layout
@@ -109,7 +109,7 @@ SET NOCOUNT ON
 			SUM_Subtotal FLOAT		
 	);
 
-	DECLARE @Bloque	VARCHAR(50)
+
     ---AGREGAR LOS CONTRATOS QUE ESTAN INCLUIDOS EN EL REPORTE DE CARSO --         
     --##EDITAR ID'S DE CONTRATOS##         
     IF ISNULL(@IdContrato, 0) IN ( 10047, 10048 )   
@@ -1208,7 +1208,7 @@ SET NOCOUNT ON
    
         FROM Petrovendor.dbo.MM_Pedido (NOLOCK)   
             INNER JOIN Petrovendor.dbo.MM_PedidoDetalle (NOLOCK)  
-                ON MM_PedidoDetalle.IdPedido = MM_Pedido.IdPedido   
+                ON MM_Pedido.IdPedido = MM_PedidoDetalle.IdPedido  
 				AND ISNULL(MM_Pedido.IdEstatusEliminado,0) = 0
             INNER JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)   
                 ON MM_Pedido.IdPedido = MM_Pedidos.IdIdentificador   
