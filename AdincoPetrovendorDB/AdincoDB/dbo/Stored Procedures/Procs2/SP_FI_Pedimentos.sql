@@ -42,7 +42,7 @@ BEGIN
         ClavePedimentoTexto VARCHAR(5000),
 		PRIMARY KEY (IdPedimentoComprobante)
     )
-
+	DECLARE @CvTipoDocFacturacionPedimento INT =2;
     INSERT INTO #FI_PedimentoComprobante
     (
         IdPedimentoComprobante,
@@ -65,7 +65,7 @@ BEGIN
     FROM 
 		FI_PedimentoComprobante  (NOLOCK)
     WHERE 
-		FI_PedimentoComprobante.CvTipoDocFacturacion = 2
+		FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionPedimento
     AND 
 		FI_PedimentoComprobante.IdContrato = @IdContrato
 

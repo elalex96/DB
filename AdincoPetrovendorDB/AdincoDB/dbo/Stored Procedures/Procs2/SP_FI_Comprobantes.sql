@@ -50,6 +50,8 @@ BEGIN
         ModificadoPorTexto VARCHAR(5000),
 		PRIMARY KEY (IdPedimentoComprobante)
     )
+	DECLARE @CvTipoDocFacturacionComprobantes INT= 3;
+	DECLARE @GrupoId INT = 10001;
 
     INSERT INTO #FI_Comprobante
     (
@@ -97,7 +99,7 @@ BEGIN
            FI_PedimentoComprobante.ModificadoPor,
            ''
     FROM FI_PedimentoComprobante  (NOLOCK)
-    WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = 3
+    WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionComprobantes
           AND FI_PedimentoComprobante.IdContrato = @IdContrato
 
     UPDATE TEMP
@@ -130,7 +132,7 @@ BEGIN
     FROM #FI_Comprobante TEMP
         JOIN dbo.AP_Lista L
             ON TEMP.IdFormaPago = L.IdClave
-               AND L.IdGrupo = 10001
+               AND L.IdGrupo = @GrupoId
 
     UPDATE TEMP
     SET IdMonedaTexto = M.TipoMonedaCorto
