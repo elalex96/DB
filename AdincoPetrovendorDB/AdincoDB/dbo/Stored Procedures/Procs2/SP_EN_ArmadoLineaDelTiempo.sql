@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_ArmadoLineaDelTiempo'
+)
+    DROP PROCEDURE SP_EN_ArmadoLineaDelTiempo;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author: Daniel Ac
 -- Create date: 20-11-2020
 -- Description: Se actualizo filtros de entregables
@@ -6,8 +20,10 @@
 -- Author: Alexander Gomez
 -- Create date: 09/06/2021
 -- Description: Se actualizan los colores de las cards
+-- Create date: 30/10/2023
+-- Description: se ordenan las fechas en orden ascendente de acuerdo a su fecha de entrega
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --3,12
+CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --10050,10150
 -- ============================================= 
 --[dbo].[SP_EN_ArmadoLineaDelTiempo] 0,0
 -- ============================================= 
@@ -75,8 +91,6 @@ DocumentoEntregable = case
         then        'Fecha del Primer Periodo Adicional de Exploración'
         when        Consecutivo in ('ADINCO-R3L10018','ADINCO-R2L10018','ADINCO-R2L40016','ADINCO-R2L10224','ADINCO-R1L4015') 
         then        'Fecha del Segundo Periodo Adicional de Exploración'
---        when        Consecutivo in ('ADINCO-PERFO503') 
-        --then        'Fecha de Perforación del pozo '+Pozo
 		WHEN Consecutivo IN ('ADINCO-R1L2021','ADINCO-PLANES100','ADINCO-PLANES101','ADINCO-PLANES106','ENI-2185','ENI-2188')
 		THEN	DocumentoEntregable
         when        Consecutivo in ('ADINCO-R2L2028','ADINCO-R2L3028','ADINCO-R2L10230','ADINCO-R1L4022','ADINCO-R2L10024','ADINCO-R2L40022','ADINCO-R3L10024') 
@@ -96,6 +110,7 @@ DocumentoEntregable = case
 		Consecutivo
 into    #tmpEntregables
 from    #tmp 
+ORDER BY FechaEntrega ASC 
 
 --AGREGAR SOLO AQUELLOS ENTREGABLES QUE ESTAN EN LOS EN LAS CONDICIONES 
 select * 
@@ -244,7 +259,7 @@ order by FechaEntrega asc
 
     --CREAR UNA TABLA PARA GUARDAR EL COLOR DEL POPUP PERSONALIZADO POR AÑO
 	--select * from #BulletColor
-	select		Id = ROW_NUMBER() OVER (	ORDER BY Anio   ),
+	select		Id = ROW_NUMBER() OVER (	ORDER BY FechaEntrega   ),
 				Anio,
 				html = 
 				' <div class="tl-row" style="width: 50px">
@@ -254,15 +269,13 @@ order by FechaEntrega asc
 					' + CONVERT(NVARCHAR(MAX), Anio) + '
 					</div>
 					</div>
-					</div>'
+					</div>',
+				FechaEntrega
 	into		#tmpAnios
-	from		#tmpEntregablesFinal
-	group by	Anio
+	from		#tmpEntregablesFinal as tef
+	group by	FechaEntrega,Anio
+	order by FechaEntrega
 
-	--select		* 
-	--from		#tmpAnios		t1
-	--left join	#BulletColor	t2
-	--on			t1.Id			=	t2.IdBullet
 	alter table #tmpAnios add color varchar(20)
 
 	update		#tmpAnios
@@ -271,12 +284,6 @@ order by FechaEntrega asc
 	from		#tmpAnios		t1
 	left join	#BulletColor	t2
 	on			t1.Id			=	t2.IdBullet
-
-	
-	--select		* 
-	--from		#tmpAnios		t1
-	--left join	#BulletColor	t2
-	--on			t1.Id			=	t2.IdBullet
 	
 	declare @i		int, 
 			@max	int,
@@ -311,16 +318,18 @@ order by FechaEntrega asc
 					html
 		from		#tmpAnios
 		where		Id			=	@i
+		ORDER BY FechaEntrega
 		
 		select		@anio		=	Anio,
 					@color		=	color
 		from		#tmpAnios
 		where		Id			=	@i
+		ORDER BY FechaEntrega
 
 		
 		insert into #tmpHtml
 		select		top 5
-					ROW_NUMBER() OVER (	ORDER BY Id   )+@row+1,
+					ROW_NUMBER() OVER (	ORDER BY FechaEntrega   )+@row+1,
 					html = 
 					case when Id%2 > 0 then 
 							'<div class="tl-row" style="width: 300px"><div class="tl-item float-right"><div class="popover bottom"><div class="arrow"></div><div class="popover-content" style="background-color:'+ @color+';">
@@ -342,6 +351,7 @@ order by FechaEntrega asc
 					end
 		from		#tmpEntregablesFinal
 		where		Anio = @anio
+		ORDER BY FechaEntrega ASC
 		
 		select	@i = @i + 1
 	end
