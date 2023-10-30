@@ -33,7 +33,7 @@ BEGIN
 		U.Nombre, 
 		T.FechaCambioEstatus, 
 		T.IdTarea,
-		CASE WHEN T.IdEstatus <> 1 THEN T.IdFirma ELSE '' END IdFirma,
+		CASE WHEN T.IdEstatus IN (2,3) THEN T.IdFirma ELSE '' END IdFirma,
 		tae.Nombre as Estatus
 	FROM TA_Tarea AS T		
 		INNER JOIN TA_Operacion AS TOO (NOLOCK)
