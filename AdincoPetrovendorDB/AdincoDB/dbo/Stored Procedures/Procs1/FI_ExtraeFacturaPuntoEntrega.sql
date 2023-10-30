@@ -41,6 +41,7 @@ AS
             JOIN
                 FI_Factura                           F	(NOLOCK)
                     on FP.idFactura = f.idFactura
+					AND  f.IdContrato =  @idcontrato
             JOIN
                 [CO_ClasificacionProductoNominacion] CP	(NOLOCK)
                     on FP.ProductoId = CP.ProductoNominacionId
@@ -48,7 +49,7 @@ AS
                 AP_USUARIO U	(NOLOCK)
                     on FP.CREADOPOR = U.UsuarioID
         Where
-            idContrato =  @idcontrato
+            f.IdContrato =  @idcontrato
         order by
             FP.idfacturaPuntoEntrega desc
     END

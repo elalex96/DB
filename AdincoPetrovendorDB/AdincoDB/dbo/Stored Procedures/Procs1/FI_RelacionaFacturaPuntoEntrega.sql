@@ -44,7 +44,8 @@ AS
         DECLARE
             @HidrocarburoAceite INT = 1001, -- Aceite
             @HidrocarburoGas    INT = 1000; -- Gas
-
+		DECLARE @GuardadoCorrecto INT = 1;
+		DECLARE @GuardadoIncorrecto INT = 2;
 
         select
             @GasNoAsociado = GasNoAsociado
@@ -133,7 +134,7 @@ AS
         IF (@ContProduct >= 1) --Checa si ya hay producto facturado para esa fecha y ese punto de entrega, si no hay puede entrar para insertar con la factura
             BEGIN
                 SELECT
-                    2
+                    @GuardadoIncorrecto
             END
         ELSE
             BEGIN
@@ -162,7 +163,7 @@ AS
                         WHERE
                             idFactura = @idFactura
                         SELECT
-                            1
+                            @GuardadoCorrecto
                     END
                 ELSE
                     BEGIN
@@ -181,7 +182,7 @@ AS
                                 @idFactura, @idPuntoEntrega, @hidrocarburo, @fechaMesDiaAnio, @idUsuario, GETDATE(), 1
                             );
                         SELECT
-                            1
+                            @GuardadoCorrecto
                     END
             END
 
@@ -195,6 +196,8 @@ AS
             JOIN
                 #TipoHidrocarburo         T
                     ON C.IdTipoHidrocarburo = T.IdTipoHidrocarburo
+					AND   C.IdContrato = @idContrato
+					   AND C.MesReporte = @fechaMesDiaAnio
             JOIN
                 FI_FacturaPuntoEntrega    FP
                     ON C.PuntoEntregaID = FP.PuntoEntregaId
@@ -216,6 +219,8 @@ AS
                     ON C.PuntoEntregaID = FP.PuntoEntregaId
                        AND C.MesReporte = FP.MesReporte
                        AND FP.ProductoId = 1000
+					   AND  C.IdContrato = @idContrato
+						AND C.MesReporte = @fechaMesDiaAnio
         WHERE
             C.IdContrato = @idContrato
             AND C.MesReporte = @fechaMesDiaAnio
