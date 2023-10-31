@@ -1,4 +1,16 @@
-﻿-- =============================================
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_FI_Pedimentos'
+    )
+    DROP PROCEDURE SP_FI_Pedimentos
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- =============================================
 -- Author:		Manuel CD
 -- Create date: 15-11-17
 -- Description:	
@@ -23,14 +35,14 @@ BEGIN
         IdPedimentoComprobante INT,
         Archivo VARCHAR(50),
         CreadoPor INT,
-        CreadoPorTexto VARCHAR(MAX),
+        CreadoPorTexto VARCHAR(5000),
         ModificadoPor INT,
-        ModificadoPorTexto VARCHAR(MAX),
+        ModificadoPorTexto VARCHAR(5000),
         ClavePedimento INT,
-        ClavePedimentoTexto VARCHAR(MAX),
+        ClavePedimentoTexto VARCHAR(5000),
 		PRIMARY KEY (IdPedimentoComprobante)
     )
-
+	DECLARE @CvTipoDocFacturacionPedimento INT =2;
     INSERT INTO #FI_PedimentoComprobante
     (
         IdPedimentoComprobante,
@@ -42,80 +54,86 @@ BEGIN
         ClavePedimento,
         ClavePedimentoTexto
     )
-    SELECT PC.IdPedimentoComprobante,
+    SELECT FI_PedimentoComprobante.IdPedimentoComprobante,
            'NO CARGADO',
-           PC.CreadoPor,
+           FI_PedimentoComprobante.CreadoPor,
            '',
-           PC.ModificadoPor,
+           FI_PedimentoComprobante.ModificadoPor,
            '',
            ClavePedimento,
            ''
-    FROM FI_PedimentoComprobante PC (NOLOCK)
-    WHERE PC.CvTipoDocFacturacion = 2
-          AND PC.IdContrato = @IdContrato
+    FROM 
+		FI_PedimentoComprobante  (NOLOCK)
+    WHERE 
+		FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionPedimento
+    AND 
+		FI_PedimentoComprobante.IdContrato = @IdContrato
 
     UPDATE TEMP
     SET Archivo = CASE
-                      WHEN D.DocumentoByte LIKE 0x THEN
+                      WHEN FI_Documento.DocumentoByte LIKE 0x THEN
                           'NO CARGADO'
                       ELSE
                           'Cargado'
                   END
     FROM #FI_PedimentoComprobante TEMP
-        JOIN dbo.FI_Documento D (NOLOCK)
-            ON TEMP.IdPedimentoComprobante = D.IdPedimentoComprobante
-               AND D.DocumentoByte IS NOT NULL
-               AND ISNULL(D.IsEliminado, 0) = 0
+	JOIN 
+		dbo.FI_Documento 
+	ON 
+		TEMP.IdPedimentoComprobante = FI_Documento.IdPedimentoComprobante
+               AND FI_Documento.DocumentoByte IS NOT NULL
+               AND ISNULL(FI_Documento.IsEliminado, 0) = 0
 
     UPDATE TEMP
-    SET CreadoPorTexto = UC.Nombre
+    SET CreadoPorTexto = AP_Usuario.Nombre
     FROM #FI_PedimentoComprobante TEMP
-        JOIN dbo.AP_Usuario UC (NOLOCK)
-            ON TEMP.CreadoPor = UC.UsuarioID
+        JOIN dbo.AP_Usuario 
+            ON TEMP.CreadoPor = AP_Usuario.UsuarioID
 
     UPDATE TEMP
-    SET ModificadoPorTexto = UM.Nombre
+    SET ModificadoPorTexto = AP_Usuario.Nombre
     FROM #FI_PedimentoComprobante TEMP
-        JOIN dbo.AP_Usuario UM (NOLOCK)
-            ON TEMP.ModificadoPor = UM.UsuarioID
+        JOIN dbo.AP_Usuario  
+            ON TEMP.ModificadoPor = AP_Usuario.UsuarioID
 
     UPDATE TEMP
-    SET ClavePedimentoTexto = CP.Clave
+    SET ClavePedimentoTexto = FI_ClavesPedimento.Clave
     FROM #FI_PedimentoComprobante TEMP
-        JOIN dbo.FI_ClavesPedimento CP (NOLOCK)
-            ON TEMP.ClavePedimento = CP.IdPedimento
+        JOIN dbo.FI_ClavesPedimento  
+            ON TEMP.ClavePedimento = FI_ClavesPedimento.IdPedimento
 
-    SELECT PC.IdPedimentoComprobante AS IdPedimento,
-           PC.NumeroPedimento,
+    SELECT FI_PedimentoComprobante.IdPedimentoComprobante AS IdPedimento,
+           FI_PedimentoComprobante.NumeroPedimento,
            TEMP.ClavePedimentoTexto AS ClavePedimento,
-           PC.FolioComprobante,
-           PC.FechaPago,
-           PC.Regimen,
+           FI_PedimentoComprobante.FolioComprobante,
+           FI_PedimentoComprobante.FechaPago,
+           FI_PedimentoComprobante.Regimen,
            SI.RazonSocial AS Importador,
-           PC.AduanaES,
+           FI_PedimentoComprobante.AduanaES,
            SUBSTRING(SE.RazonSocial, 0, 30) AS Exportador,
-           PC.AcuseElectronico,
-           PCD.DescripcionMercancia,
-           TM.TipoMonedaCorto,
-           PCD.PrecioUnitario,
-           PCD.Cantidad,
+           FI_PedimentoComprobante.AcuseElectronico,
+           FI_PedimentoComprobanteDetalle.DescripcionMercancia,
+           PV_TipoMoneda.TipoMonedaCorto,
+           FI_PedimentoComprobanteDetalle.PrecioUnitario,
+           FI_PedimentoComprobanteDetalle.Cantidad,
            TEMP.Archivo AS 'Archivo',
            TEMP.CreadoPorTexto AS CreadoPor,
-           PC.CreadoEn,
+           FI_PedimentoComprobante.CreadoEn,
            TEMP.ModificadoPorTexto AS ModificadoPor,
-           PC.ModificadoEn,
-           ISNULL(pc.CuentaBancaria, '') CuentaBancaria,
-		   PCD.ImporteTotal
+           FI_PedimentoComprobante.ModificadoEn,
+           ISNULL(FI_PedimentoComprobante.CuentaBancaria, '') CuentaBancaria,
+		   FI_PedimentoComprobanteDetalle.ImporteTotal
     FROM #FI_PedimentoComprobante TEMP
-        JOIN FI_PedimentoComprobante PC (NOLOCK)
-            ON TEMP.IdPedimentoComprobante = PC.IdPedimentoComprobante
-        INNER JOIN FI_PedimentoComprobanteDetalle AS PCD (NOLOCK)
-            ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
+        JOIN FI_PedimentoComprobante (NOLOCK)
+            ON TEMP.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
+        INNER JOIN FI_PedimentoComprobanteDetalle (NOLOCK)
+            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
         INNER JOIN dbo.PV_Subcontratista SI (NOLOCK)
-            ON PC.IdSubcontratistaImportador = SI.IdSubcontratista
+            ON FI_PedimentoComprobante.IdSubcontratistaImportador = SI.IdSubcontratista
         INNER JOIN dbo.PV_Subcontratista SE (NOLOCK)
-            ON PC.IdSubcontratistaExportador = SE.IdSubcontratista
-        INNER JOIN dbo.PV_TipoMoneda TM (NOLOCK)
-  ON PC.IdMoneda = TM.IdMoneda
-    ORDER BY TEMP.ClavePedimento DESC;
+            ON FI_PedimentoComprobante.IdSubcontratistaExportador = SE.IdSubcontratista
+        INNER JOIN dbo.PV_TipoMoneda  (NOLOCK)
+			ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
+    ORDER BY TEMP.IdPedimentoComprobante DESC;
 END;
+

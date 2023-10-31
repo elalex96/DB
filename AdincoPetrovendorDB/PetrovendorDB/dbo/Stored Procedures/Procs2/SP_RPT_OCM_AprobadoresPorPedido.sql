@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
