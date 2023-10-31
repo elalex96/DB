@@ -513,5 +513,5 @@ AS
         FROM
             TempReporteIntegracionGastosNivelActividadRenglon GNAR (NOLOCK);
 
-    END;
+END;
 

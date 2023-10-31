@@ -1,4 +1,6 @@
-﻿IF EXISTS
+USE Adinco;
+GO
+IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects

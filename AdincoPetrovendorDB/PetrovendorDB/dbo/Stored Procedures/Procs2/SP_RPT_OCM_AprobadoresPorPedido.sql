@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -22,6 +22,10 @@ GO
 -- Author: Daniel AC
 -- Create date: 30-10-2023
 -- Description:	 Se cambian los aprobadores mostrados por los aprobadores de pedido, mostrando la columna Estatus y que se muestren aunque este en aprobación
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 10/10/2023
+-- Description:	se agregan estandares de desarrollo
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_RPT_OCM_AprobadoresPorPedido]
 	@IdPedido INT
