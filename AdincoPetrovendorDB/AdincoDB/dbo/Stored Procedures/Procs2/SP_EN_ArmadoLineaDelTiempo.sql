@@ -1,4 +1,18 @@
-﻿-- =============================================
+USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_ArmadoLineaDelTiempo'
+)
+    DROP PROCEDURE SP_EN_ArmadoLineaDelTiempo;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author: Daniel Ac
 -- Create date: 20-11-2020
 -- Description: Se actualizo filtros de entregables
@@ -7,10 +21,7 @@
 -- Create date: 09/06/2021
 -- Description: Se actualizan los colores de las cards
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --3,12
--- ============================================= 
---[dbo].[SP_EN_ArmadoLineaDelTiempo] 0,0
--- ============================================= 
+CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] 
 	@IdContrato INT, 
 	@IdUsuario  INT
 AS
@@ -75,8 +86,6 @@ DocumentoEntregable = case
         then        'Fecha del Primer Periodo Adicional de Exploración'
         when        Consecutivo in ('ADINCO-R3L10018','ADINCO-R2L10018','ADINCO-R2L40016','ADINCO-R2L10224','ADINCO-R1L4015') 
         then        'Fecha del Segundo Periodo Adicional de Exploración'
---        when        Consecutivo in ('ADINCO-PERFO503') 
-        --then        'Fecha de Perforación del pozo '+Pozo
 		WHEN Consecutivo IN ('ADINCO-R1L2021','ADINCO-PLANES100','ADINCO-PLANES101','ADINCO-PLANES106','ENI-2185','ENI-2188')
 		THEN	DocumentoEntregable
         when        Consecutivo in ('ADINCO-R2L2028','ADINCO-R2L3028','ADINCO-R2L10230','ADINCO-R1L4022','ADINCO-R2L10024','ADINCO-R2L40022','ADINCO-R3L10024') 
@@ -243,7 +252,6 @@ order by FechaEntrega asc
 		(11, '#73B1FF');--AZUL
 
     --CREAR UNA TABLA PARA GUARDAR EL COLOR DEL POPUP PERSONALIZADO POR AÑO
-	--select * from #BulletColor
 	select		Id = ROW_NUMBER() OVER (	ORDER BY Anio   ),
 				Anio,
 				html = 
@@ -259,10 +267,6 @@ order by FechaEntrega asc
 	from		#tmpEntregablesFinal
 	group by	Anio
 
-	--select		* 
-	--from		#tmpAnios		t1
-	--left join	#BulletColor	t2
-	--on			t1.Id			=	t2.IdBullet
 	alter table #tmpAnios add color varchar(20)
 
 	update		#tmpAnios
@@ -271,12 +275,6 @@ order by FechaEntrega asc
 	from		#tmpAnios		t1
 	left join	#BulletColor	t2
 	on			t1.Id			=	t2.IdBullet
-
-	
-	--select		* 
-	--from		#tmpAnios		t1
-	--left join	#BulletColor	t2
-	--on			t1.Id			=	t2.IdBullet
 	
 	declare @i		int, 
 			@max	int,
@@ -320,7 +318,7 @@ order by FechaEntrega asc
 		
 		insert into #tmpHtml
 		select		top 5
-					ROW_NUMBER() OVER (	ORDER BY Id   )+@row+1,
+					ROW_NUMBER() OVER (	ORDER BY FechaEntrega   )+@row+1,
 					html = 
 					case when Id%2 > 0 then 
 							'<div class="tl-row" style="width: 300px"><div class="tl-item float-right"><div class="popover bottom"><div class="arrow"></div><div class="popover-content" style="background-color:'+ @color+';">
