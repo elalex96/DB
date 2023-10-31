@@ -1,4 +1,4 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
 IF EXISTS
 (
@@ -20,13 +20,8 @@ GO
 -- Author: Alexander Gomez
 -- Create date: 09/06/2021
 -- Description: Se actualizan los colores de las cards
--- Create date: 30/10/2023
--- Description: se ordenan las fechas en orden ascendente de acuerdo a su fecha de entrega
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] --10050,10150
--- ============================================= 
---[dbo].[SP_EN_ArmadoLineaDelTiempo] 0,0
--- ============================================= 
+CREATE PROCEDURE [dbo].[SP_EN_ArmadoLineaDelTiempo] 
 	@IdContrato INT, 
 	@IdUsuario  INT
 AS
@@ -110,7 +105,6 @@ DocumentoEntregable = case
 		Consecutivo
 into    #tmpEntregables
 from    #tmp 
-ORDER BY FechaEntrega ASC 
 
 --AGREGAR SOLO AQUELLOS ENTREGABLES QUE ESTAN EN LOS EN LAS CONDICIONES 
 select * 
@@ -258,8 +252,7 @@ order by FechaEntrega asc
 		(11, '#73B1FF');--AZUL
 
     --CREAR UNA TABLA PARA GUARDAR EL COLOR DEL POPUP PERSONALIZADO POR AÑO
-	--select * from #BulletColor
-	select		Id = ROW_NUMBER() OVER (	ORDER BY FechaEntrega   ),
+	select		Id = ROW_NUMBER() OVER (	ORDER BY Anio   ),
 				Anio,
 				html = 
 				' <div class="tl-row" style="width: 50px">
@@ -269,12 +262,10 @@ order by FechaEntrega asc
 					' + CONVERT(NVARCHAR(MAX), Anio) + '
 					</div>
 					</div>
-					</div>',
-				FechaEntrega
+					</div>'
 	into		#tmpAnios
-	from		#tmpEntregablesFinal as tef
-	group by	FechaEntrega,Anio
-	order by FechaEntrega
+	from		#tmpEntregablesFinal
+	group by	Anio
 
 	alter table #tmpAnios add color varchar(20)
 
@@ -318,13 +309,11 @@ order by FechaEntrega asc
 					html
 		from		#tmpAnios
 		where		Id			=	@i
-		ORDER BY FechaEntrega
 		
 		select		@anio		=	Anio,
 					@color		=	color
 		from		#tmpAnios
 		where		Id			=	@i
-		ORDER BY FechaEntrega
 
 		
 		insert into #tmpHtml
@@ -351,7 +340,6 @@ order by FechaEntrega asc
 					end
 		from		#tmpEntregablesFinal
 		where		Anio = @anio
-		ORDER BY FechaEntrega ASC
 		
 		select	@i = @i + 1
 	end
