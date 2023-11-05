@@ -30,7 +30,7 @@ GO
 -- Create date: 30 de Enero del 2023
 -- Description:	Ajustes de agrupado para no repetir varias facturas
 -- =============================================
-CRATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
+CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
     @IdContrato INT = 0,
     @IdUsuario INT = 0,
     @FechaInicio DATETIME = NULL,
