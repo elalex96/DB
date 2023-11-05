@@ -21,7 +21,7 @@ AS
 
          SELECT DISTINCT 
                 S.IdSubcontratista, 
-                UPPER(S.RazonSocial) AS RazonSocial, 
+                LTRIM(RTRIM(UPPER(S.RazonSocial))) AS RazonSocial, 
                 S.RFC
          FROM PV_Subcontratista AS S (NOLOCK)
          WHERE S.RazonSocial <> ''
@@ -31,5 +31,5 @@ AS
                AND S.RFC <> ''
                AND S.IsEliminado = 0
                AND S.IsActivo = 1
-         ORDER BY UPPER(S.RazonSocial);
+         ORDER BY LTRIM(RTRIM(UPPER(S.RazonSocial)));
      END;
