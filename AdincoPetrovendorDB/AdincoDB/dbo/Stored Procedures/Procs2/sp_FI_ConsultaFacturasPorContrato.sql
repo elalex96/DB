@@ -1,4 +1,13 @@
-﻿-- =============================================  
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_FI_ConsultaFacturasPorContrato'
+)
+    DROP PROCEDURE sp_FI_ConsultaFacturasPorContrato
+GO
+-- =============================================  
 -- Author: Miguel Gomez  
 -- Create date: 14-01-2017  
 -- Description: Lista las facturas de un contrato  
@@ -21,7 +30,7 @@
 -- Create date: 30 de Enero del 2023
 -- Description:	Ajustes de agrupado para no repetir varias facturas
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
+CRATE PROCEDURE [dbo].[sp_FI_ConsultaFacturasPorContrato]
     @IdContrato INT = 0,
     @IdUsuario INT = 0,
     @FechaInicio DATETIME = NULL,
@@ -84,9 +93,9 @@ BEGIN
         RFC_Receptor NVARCHAR(1000),
         UUID NVARCHAR(1000),
         FechaTimbrado DATETIME,
-        SelloCFD NVARCHAR(MAX),
-        NoCertificadoSAT NVARCHAR(MAX),
-        SelloSAT NVARCHAR(MAX),
+        SelloCFD VARCHAR(8000),
+        NoCertificadoSAT VARCHAR(8000),
+        SelloSAT VARCHAR(8000),
         Tipo NVARCHAR(250),
         FechaRecepcion DATETIME,
         Año INT,
@@ -98,15 +107,15 @@ BEGIN
         CCN BIT,
         CRCCN NVARCHAR(1000),
         CreadoEn DATE,
-        CreadoPor NVARCHAR(MAX),
+        CreadoPor VARCHAR(8000),
         TieneArchivos BIT,
         FacturaRelacionadaDropbox BIT,
         IdMoneda INT,
-        TipoMonedaCorto VARCHAR(MAX),
+        TipoMonedaCorto VARCHAR(8000),
         CreadoPorID INT,
-        Nombre VARCHAR(MAX),
+        Nombre VARCHAR(8000),
         IdSubcontratista INT,
-        Emisor VARCHAR(MAX),
+        Emisor VARCHAR(8000),
         PRIMARY KEY (IdFactura)
     );
 
@@ -120,26 +129,26 @@ BEGIN
         FP.UUID COLLATE SQL_Latin1_General_CP1_CI_AS
     FROM Petrovendor.dbo.MM_AceptacionCartaPCN AS AC WITH (NOLOCK)
         JOIN Petrovendor.dbo.S_Documento_S3 AS D WITH (NOLOCK)
-            ON D.IdDocumento = AC.IdDocumento
+            ON AC.IdDocumento = D.IdDocumento 
                AND AC.IdEstatus = 2
                AND ISNULL(AC.IdEstatusEliminado, 0) <> 1
         JOIN Petrovendor.dbo.MM_AceptacionPedido AS AP WITH (NOLOCK)
-            ON AP.IdAceptacionPedido = AC.IdAceptacionPedido
+            ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
         JOIN Petrovendor.dbo.MM_Pedido AS P WITH (NOLOCK)
-            ON P.IdPedido = AP.IdPedido
-               AND P.IdContrato = @IdContrato
+            ON P.IdContrato = @IdContrato
+			AND AP.IdPedido = P.IdPedido 
         JOIN Petrovendor.dbo.S_Proveedor AS PR WITH (NOLOCK)
-            ON PR.IdProveedor = P.IdSubcontratista
+            ON P.IdSubcontratista = PR.IdProveedor
         JOIN Petrovendor.dbo.S_TipoValidacionDoc AS TD WITH (NOLOCK)
-            ON TD.IdTipoValidacionDoc = AC.IdEstatus
+            ON AC.IdEstatus = TD.IdTipoValidacionDoc
         JOIN Petrovendor.dbo.MM_Pedidos AS PG WITH (NOLOCK)
             ON P.IdPedido = PG.IdIdentificador
         LEFT JOIN Petrovendor.dbo.MM_TipoPedido AS TP WITH (NOLOCK)
-            ON TP.IdTipoPedido = PG.IdTipoPedido
+            ON PG.IdTipoPedido = TP.IdTipoPedido
         LEFT JOIN Petrovendor.dbo.MM_AceptacionFactura AF WITH (NOLOCK)
-            ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+            ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
         LEFT JOIN Petrovendor.dbo.FI_Factura FP WITH (NOLOCK)
-            ON FP.IdFactura = AF.IdFactura
+            ON AF.IdFactura = FP.IdFactura 
                AND FP.UUID IS NOT NULL
                AND FP.Activa = 1
                AND ISNULL(FP.IsEliminado, 0) <> 1
@@ -373,7 +382,7 @@ BEGIN
                 ON F.IdContrato = C.IdContrato
             LEFT JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
-                   AND CC.RFC <> F.Receptor
+                   AND F.Receptor <> CC.RFC 
 			GROUP BY F.IdFactura,
                S.RazonSocial,
                S.RFC,
@@ -503,8 +512,8 @@ BEGIN
                 ON F.IdContrato = C.IdContrato
             LEFT JOIN dbo.CO_Contratista CC WITH (NOLOCK)
                 ON C.IdContratista = CC.IdContratista
-                   AND CC.RFC <> F.Receptor
-			 LEFT JOIN #Facturas TEMP2 WITH (NOLOCK)
+                   AND F.Receptor <> CC.RFC
+			 LEFT JOIN #Facturas TEMP2 
                 ON FC.IdFactura = TEMP2.IdFactura
 			WHERE
 				TEMP2.IdFactura IS NULL
@@ -583,7 +592,7 @@ BEGIN
     SET CreadoPor = UM.Nombre
     FROM #Facturas TEMP
         JOIN dbo.AP_Usuario UM WITH (NOLOCK)
-            ON TEMP.CreadoPorID = UM.UsuarioID
+            ON UM.UsuarioID = TEMP.CreadoPorID 
 
     /*Importes de Facturas*/
     INSERT INTO #Importes
@@ -609,8 +618,9 @@ BEGIN
     SET CCN = 1
   FROM #Facturas F
         JOIN #CartasProcura CP
-            ON CP.UUID = F.UUID
+            ON F.UUID = CP.UUID  
     WHERE F.UUID = CP.UUID;
+
     /**/
     INSERT INTO #tmpFiles
     (
@@ -642,7 +652,7 @@ BEGIN
                                     END
     FROM #Facturas F
         JOIN APP_RelacionRutaDropboxFactura DF (NOLOCK)
-            ON DF.IdFactura = F.IdFactura
+            ON F.IdFactura = DF.IdFactura  
 
     SELECT F.IdFactura,
            F.NombreEmisor AS NombreEmisor,
