@@ -27,7 +27,7 @@ BEGIN
     IF EXISTS
     (
         SELECT 1
-        FROM dbo.FI_TransferFactura
+        FROM dbo.FI_TransferFactura 
         WHERE IdFactura = @IdFactura
     )
        OR EXISTS
@@ -36,6 +36,11 @@ BEGIN
         FROM dbo.CO_Registro
         WHERE IdFactura = @IdFactura
     )
+	OR EXISTS(
+		SELECT 1 
+		FROM FI_FacturaPuntoEntrega
+		WHERE IdFactura =  @IdFactura
+	 )
         SELECT 1 AS Relacion;
     ELSE
         SELECT 0 AS Relacion;
