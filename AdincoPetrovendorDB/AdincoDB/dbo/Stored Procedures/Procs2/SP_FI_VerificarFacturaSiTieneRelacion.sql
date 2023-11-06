@@ -21,8 +21,6 @@ AS
 BEGIN
 
     SET NOCOUNT ON;
-    DECLARE @IdTransfer INT;
-    DECLARE @IdRegistro INT;
 
     IF EXISTS
     (
