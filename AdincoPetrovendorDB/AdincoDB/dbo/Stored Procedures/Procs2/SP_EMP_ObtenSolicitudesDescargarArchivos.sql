@@ -1,4 +1,12 @@
 ﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EMP_ObtenSolicitudesDescargarArchivos'
+)
+    DROP PROCEDURE SP_EMP_ObtenSolicitudesDescargarArchivos
+GO
 -- ================================================================================
 -- Autor:				Neri Garcia del Angel
 -- Fecha de Creación:	13 de Febrero del 2023
@@ -39,7 +47,9 @@ BEGIN
 		EMP_SolicitudDescargaArchivos.FechaInicio,
 		EMP_SolicitudDescargaArchivos.FechaFin
 	FROM EMP_SolicitudDescargaArchivos(NOLOCK)
-	JOIN AP_Usuario(NOLOCK) ON EMP_SolicitudDescargaArchivos.UsuarioId = AP_Usuario.UsuarioID
+	JOIN AP_Usuario(NOLOCK) 
+		ON EMP_SolicitudDescargaArchivos.ContratoId = @ContratoId
+		AND EMP_SolicitudDescargaArchivos.UsuarioId = AP_Usuario.UsuarioID
 	WHERE EMP_SolicitudDescargaArchivos.ContratoId = @ContratoId
 		AND LTRIM(RTRIM(EMP_SolicitudDescargaArchivos.TipoSolicitud)) IN (
 			'Facturas Emitidas',

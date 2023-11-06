@@ -1,4 +1,13 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ConsultaDetallesFactura'
+)
+    DROP PROCEDURE SP_FI_ConsultaDetallesFactura
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 11/05/2018
 -- Description:	Consulta de detalles de la Factura
