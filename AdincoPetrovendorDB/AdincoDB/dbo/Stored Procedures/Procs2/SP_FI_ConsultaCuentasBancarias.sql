@@ -31,9 +31,10 @@ AS
                     CB.TipoMonedaID
              FROM CO_Contratista AS C (NOLOCK)
                   INNER JOIN PV_Subcontratista AS S (NOLOCK) 
-					ON S.IdSubcontratista = C.IdProveedor
+					ON C.IdContratista = @IdContratista
+					AND C.IdProveedor = S.IdSubcontratista 
                   INNER JOIN PV_CuentaBancaria AS CB (NOLOCK)
-					ON CB.IdProveedor = S.IdSubcontratista
+					ON S.IdSubcontratista = CB.IdProveedor
              WHERE C.IdContratista = @IdContratista
 			 ORDER BY S.RazonSocial
          END;
