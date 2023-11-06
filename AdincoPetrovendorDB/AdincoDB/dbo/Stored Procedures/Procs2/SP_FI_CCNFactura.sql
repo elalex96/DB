@@ -96,11 +96,12 @@ AS
                         F.UUID
                  FROM dbo.FI_Factura F (NOLOCK)
                       JOIN dbo.AWS_DocAwsDocAdinco DA (NOLOCK)
-						ON F.IdFactura = DA.IdDocAdinco
+						ON F.IdFactura = @IdFactura
+						AND F.IdFactura = DA.IdDocAdinco
                       JOIN dbo.AWS_Documentos D (NOLOCK)
-						ON D.AWSDocumentoId = DA.AWSDocumentoId
+						ON DA.AWSDocumentoId = D.AWSDocumentoId
                       JOIN dbo.PV_Subcontratista S (NOLOCK)
-						ON S.IdSubcontratista = F.IdSubcontratista
+						ON F.IdSubcontratista = S.IdSubcontratista
                  WHERE F.IdFactura = @IdFactura;
              END;
      END;
