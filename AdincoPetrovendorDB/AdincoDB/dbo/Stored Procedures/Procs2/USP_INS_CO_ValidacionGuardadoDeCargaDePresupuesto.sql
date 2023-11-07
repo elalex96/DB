@@ -1,12 +1,14 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto'
-)
-    DROP PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto;
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto'
+    )
+    DROP PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto
 GO
-
 CREATE PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto
     @UsuarioId INT,
     @ContratoId INT,
@@ -17,7 +19,8 @@ CREATE PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto
     @Programa VARCHAR(100),
     @Presupuesto VARCHAR(100),
     @AdjuntarClaveSubtarea BIT = 0,
-    @Table_CO_Type_BitacoraPresupuestoDetalle CO_Type_BitacoraPresupuestoDetalle READONLY
+    @Table_CO_Type_BitacoraPresupuestoDetalle CO_Type_BitacoraPresupuestoDetalle READONLY,
+	@IdTipoProgramaActividad  INT
 AS
 BEGIN
     BEGIN TRY
@@ -252,7 +255,7 @@ BEGIN
             PA_181 FLOAT NULL,
             PA_182 FLOAT NULL,
             PA_183 FLOAT NULL,
-            PA_184 FLOAT NULL,
+        PA_184 FLOAT NULL,
             PA_185 FLOAT NULL,
             PA_186 FLOAT NULL,
             PA_187 FLOAT NULL,
@@ -379,16 +382,17 @@ BEGIN
 
         INSERT INTO CO_BitacoraPresupuesto
         (
-            IdArchivoAWS,
+       IdArchivoAWS,
             IdContrato,
             Inicio,
             Fin,
             CreadoEl,
             CreadoPor,
-            chkAdjuntaClaveSubTarea
+            chkAdjuntaClaveSubTarea,
+			IdTipoProgramaActividad 
         )
         VALUES
-        (@IdArchivoAWS, @IdContratoSeleccionado, @FechaInicio, @FechaFin, GETDATE(), @UsuarioId, @AdjuntarClaveSubtarea)
+        (@IdArchivoAWS, @IdContratoSeleccionado, @FechaInicio, @FechaFin, GETDATE(), @UsuarioId, @AdjuntarClaveSubtarea, @IdTipoProgramaActividad)
 
         SELECT @IdCarga = SCOPE_IDENTITY()
 
@@ -563,7 +567,7 @@ BEGIN
             PA_167,
             PA_168,
             PA_169,
-            PA_170,
+ PA_170,
             PA_171,
             PA_172,
             PA_173,
@@ -1279,7 +1283,7 @@ BEGIN
             PA_271,
             PA_272,
             PA_273,
-            PA_274,
+       PA_274,
             PA_275,
             PA_276,
             PA_277,
@@ -1450,7 +1454,7 @@ BEGIN
                PA_136,
                PA_137,
                PA_138,
-               PA_139,
+        PA_139,
                PA_140,
                PA_141,
                PA_142,
@@ -1804,7 +1808,7 @@ BEGIN
                                                                                                                 ''
                                                                                                             )
                                                                                                      )
-                                                                                               )
+                                                                                        )
             WHERE CO_Servicio.IdContrato = @IdContratoSeleccionado
 
             INSERT INTO #TablaTemporalValidacionDetalles
@@ -1987,7 +1991,7 @@ BEGIN
                             )
                 SELECT @NumeroAlertasDatosGenerales = COUNT(1)
                 FROM #TablaTemporalBitacoraPresupuestoDetalle
-                WHERE ISNULL(IdActividadPetrolera, '') = ''
+       WHERE ISNULL(IdActividadPetrolera, '') = ''
 
                 INSERT INTO #TablaTemporalValidacionDetalles
                 (
@@ -2197,7 +2201,7 @@ BEGIN
                     NumeroDeDetalles
                 )
                 SELECT 'ALERTA_DATOSGENERALES',
-                       CONCAT('Renglón: ', CONVERT(VARCHAR(10), #TablaTemporalBitacoraPresupuestoDetalle.NumeroRenglon)),
+    CONCAT('Renglón: ', CONVERT(VARCHAR(10), #TablaTemporalBitacoraPresupuestoDetalle.NumeroRenglon)),
                        'SubactividadPetrolera',
                        0,
                        1
@@ -2755,7 +2759,7 @@ BEGIN
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'IdTarea'
                       AND MultiplesDetalles = 0
-                SELECT @DetalleAnalisis
+          SELECT @DetalleAnalisis
                     = CONCAT(
                                 @DetalleAnalisis,
                                 'Existen (',
