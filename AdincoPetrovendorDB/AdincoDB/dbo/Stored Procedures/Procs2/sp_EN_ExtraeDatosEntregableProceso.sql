@@ -1,16 +1,42 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_EN_ExtraeDatosEntregableProceso'
+)
+    DROP PROCEDURE sp_EN_ExtraeDatosEntregableProceso;
+/****** Object:  StoredProcedure [dbo].[sp_EN_ExtraeDatosEntregableProceso]    Script Date: 06/11/2023 06:36:43 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:  	Reyna Olvera
 -- Create date: 20200424
 -- =============================================
-CREATE PROCEDURE sp_EN_ExtraeDatosEntregableProceso --3,10061,309927
+-- =============================================
+-- Author:  	Daniel AC
+-- Create date: 07/11/2023
+-- Se agrega la columna NoRecalcular a la consulta
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_EN_ExtraeDatosEntregableProceso] --3,10061,309927
 @IdContrato int,
 @IdUsuario int,
 @IdInstanciaEntregable	 INT
 AS
 BEGIN
 
-DECLARE @IsEntregableProceso INT	=	0, @IdInstanciaActividad INT	=	0, @IdProceso INT = 0, @IdInstanciaProceso	INT = 0, @OrdenActividad INT, @EntregablesFaltantes INT = 0, @ActividadesFaltantes INT =0,
-		@ActividadesSiguientesConFechas INT = 0;
+DECLARE @IsEntregableProceso INT	=	0, 
+		@IdInstanciaActividad INT	=	0, 
+		@IdProceso INT = 0, 
+		@IdInstanciaProceso	INT = 0, 
+		@OrdenActividad INT, 
+		@EntregablesFaltantes INT = 0, 
+		@ActividadesFaltantes INT =0,
+		@ActividadesSiguientesConFechas INT = 0,
+		@NoRecalculo BIT;
 
 SELECT @IsEntregableProceso = COUNT(1), 
 		@IdInstanciaActividad	=	IA.idInstanciaActividad,
@@ -44,7 +70,7 @@ JOIN
 	AND PA.IdContrato	=	@IdContrato
 	AND PA.Orden >= 0
 GROUP BY IA.idInstanciaActividad,IPF.IdProceso,IA.IdInstanciasProcesos,PA.Orden
---SELECT @IsEntregableProceso AS IsEntregableProceso , @IdInstanciaActividad AS IdInstanciaActividad , @IdProceso AS IdProceso, @IdInstanciaProceso AS IdInstanciaProceso, @OrdenActividad
+
 
 SELECT   DISTINCT @EntregablesFaltantes= COUNT(1)  
 FROM EN_InstanciasEntregable IE	(NOLOCK)
@@ -96,13 +122,19 @@ AND ORDEN	>= 0
 AND FechaRealActividad IS NOT NULL
 
 
+SET @NoRecalculo  = (SELECT NoRecalculo 
+					FROM EN_InstanciasProcesosFecha (NOLOCK)
+					WHERE IdInstanciasProcesos = @IdInstanciaProceso);
+
+
 SELECT @IsEntregableProceso AS IsEntregableProceso , 
 	@IdInstanciaActividad AS IdInstanciaActividad , 
 	@IdProceso AS IdProceso, 
 	@IdInstanciaProceso AS IdInstanciaProceso, 
 	@EntregablesFaltantes AS EntregablesFaltantes , 
 	@ActividadesFaltantes AS ActividadesFaltantes,
-	@ActividadesSiguientesConFechas AS ActividadesSiguientesConFechas;
+	@ActividadesSiguientesConFechas AS ActividadesSiguientesConFechas,
+	ISNULL(@NoRecalculo,0) AS NoRecalculo;
 
 END
 
