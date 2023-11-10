@@ -20,10 +20,10 @@ AS
 
 		SELECT PV_Subcontratista.IdSubcontratista, concat (PV_Subcontratista.RFC, '-', PV_Subcontratista.RazonSocial) AS Empresa
 		FROM CO_Contrato
-		INNER JOIN CO_RelacionEmpresas
+		INNER JOIN CO_RelacionEmpresas (NOLOCK)
 			ON CO_Contrato.IdContratista = CO_RelacionEmpresas.IdContratista
 			AND CO_Contrato.IdContrato = @IdContrato
-		INNER JOIN PV_Subcontratista
+		INNER JOIN PV_Subcontratista (NOLOCK)
 			ON CO_RelacionEmpresas.IdRelacionada = PV_Subcontratista.IdSubcontratista
 		WHERE CO_Contrato.IdContrato = @IdContrato
 
