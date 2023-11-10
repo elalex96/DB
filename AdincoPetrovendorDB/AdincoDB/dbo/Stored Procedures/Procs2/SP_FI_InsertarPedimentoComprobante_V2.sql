@@ -1,18 +1,27 @@
-﻿-- =============================================  
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_FI_InsertarPedimentoComprobante_V2'
+    )
+    DROP PROCEDURE SP_FI_InsertarPedimentoComprobante_V2
+GO-- =============================================  
 -- Author:  Manuel CD  
 -- Create date: 06-10-17  
 -- Description:   
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_FI_InsertarPedimentoComprobante_V2]   
--- Add the parameters for the stored procedure here  
 @IdContrato                 INT, 
-@FolioComprobante           NVARCHAR(MAX), 
+@FolioComprobante           VARCHAR(500), 
 @FechaPago                  DATE, 
 @IdSubcontratistaExportador INT, 
 @IdMoneda                   INT, 
 @IdUnidadMedida             INT, 
-@NumFac                     NVARCHAR(50), 
-@ClaseBienServicio          NVARCHAR(MAX), 
+@NumFac                     VARCHAR(50), 
+@ClaseBienServicio          VARCHAR(1000), 
 @Subtotal                   MONEY, 
 @IdUsuario                  INT, 
 @CvTipoDoc                  INT, 
@@ -20,8 +29,7 @@ CREATE PROCEDURE [dbo].[SP_FI_InsertarPedimentoComprobante_V2]
 @IsNotaCredito              BIT = NULL
 AS
      BEGIN  
-         -- SET NOCOUNT ON added to prevent extra result sets from  
-         -- interfering with SELECT statements.  
+        
          SET NOCOUNT ON;
          DECLARE @idped INT;
 
@@ -52,6 +60,7 @@ AS
               @NumFac, 
               @IsNotaCredito
              );
+
          END;
          SET @idped = @@IDENTITY;
          BEGIN
