@@ -1,22 +1,27 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ConsultaEstudioPrecios'
+)
+    DROP PROCEDURE SP_FI_ConsultaEstudioPrecios
+GO
+-- =============================================
 -- Author:		Manuel CD
 -- Create date: 12-10-17
 -- Description:	
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ConsultaEstudioPrecios]
--- Add the parameters for the stored procedure here
 @IdContrato INT, 
 @IdUsuario  INT = 0
 AS
      BEGIN
-         -- SET NOCOUNT ON added to prevent extra result sets from
-         -- interfering with SELECT statements.
+
          SET NOCOUNT ON;
 
-         -- Insert statements for procedure here
-
          SELECT IdEstudioPrecioTransfer, 
-                EPT.Nombre, 
+                FI_EstudioPreciosTransfer.Nombre, 
                 SUBSTRING(Descripcion, 0, 30) AS Descripcion, 
                 FolioOperacion,
                 CASE
@@ -24,21 +29,24 @@ AS
                     THEN 'NO'
                     ELSE 'SI'
                 END AS Presentado, 
-                EPT.FechaInicioVigencia, 
-                EPT.FechaFinVigencia, 
-                EPT.FechaCargaSIPAC, 
+                FI_EstudioPreciosTransfer.FechaInicioVigencia, 
+                FI_EstudioPreciosTransfer.FechaFinVigencia, 
+                FI_EstudioPreciosTransfer.FechaCargaSIPAC, 
                 S.RazonSocial AS EmpresaRelacionada, 
-                U.Nombre AS CreadoPor, 
-                EPT.CreadoEn,
+                AP_Usuario.Nombre AS CreadoPor, 
+                FI_EstudioPreciosTransfer.CreadoEn,
                 CASE
-                    WHEN EPT.Archivo LIKE 0x
-                         OR EPT.Archivo IS NULL
+                    WHEN FI_EstudioPreciosTransfer.Archivo LIKE 0x
+                         OR FI_EstudioPreciosTransfer.Archivo IS NULL
                     THEN '¡PDF NO CARGADO!'
                     ELSE 'Pdf Cargado'
                 END AS Archivo
-         FROM FI_EstudioPreciosTransfer EPT
-              JOIN AP_Usuario U ON EPT.CreadoPor = U.UsuarioID
-              JOIN dbo.PV_Subcontratista S ON S.IdSubcontratista = EPT.IdSubcontratista
-         WHERE(IdContrato = @IdContrato)
+         FROM FI_EstudioPreciosTransfer (NOLOCK)
+              JOIN AP_Usuario (NOLOCK) 
+				ON FI_EstudioPreciosTransfer.CreadoPor = AP_Usuario.UsuarioID
+				AND FI_EstudioPreciosTransfer.IdContrato = @IdContrato
+              JOIN dbo.PV_Subcontratista S (NOLOCK)
+				ON FI_EstudioPreciosTransfer.IdSubcontratista = S.IdSubcontratista
+         WHERE FI_EstudioPreciosTransfer.IdContrato = @IdContrato
          ORDER BY IdEstudioPrecioTransfer DESC;
      END;
