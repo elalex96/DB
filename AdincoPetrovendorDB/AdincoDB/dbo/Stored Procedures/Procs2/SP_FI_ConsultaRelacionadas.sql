@@ -1,21 +1,30 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ConsultaRelacionadas'
+)
+    DROP PROCEDURE SP_FI_ConsultaRelacionadas
+GO
+-- =============================================
 -- Author:		Miguel
 -- Create date: 
 -- Description:	
 -- =============================================
-CREATE PROCEDURE SP_FI_ConsultaRelacionadas 
-	-- Add the parameters for the stored procedure here
+CREATE PROCEDURE [dbo].[SP_FI_ConsultaRelacionadas] 
 @IdContrato INT = 0
 AS
      BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
          SET NOCOUNT ON;
-SELECT        S.IdSubcontratista, concat (S.RFC, '-',S.RazonSocial) AS Empresa
-FROM            CO_Contrato AS C INNER JOIN
-                         CO_RelacionEmpresas AS RE ON RE.IdContratista = C.IdContratista INNER JOIN
-                         PV_Subcontratista AS S ON S.IdSubcontratista = RE.IdRelacionada
-					WHERE c.IdContrato= @IdContrato
-    -- Insert statements for procedure here
+
+		SELECT PV_Subcontratista.IdSubcontratista, concat (PV_Subcontratista.RFC, '-', PV_Subcontratista.RazonSocial) AS Empresa
+		FROM CO_Contrato
+		INNER JOIN CO_RelacionEmpresas (NOLOCK)
+			ON CO_Contrato.IdContratista = CO_RelacionEmpresas.IdContratista
+			AND CO_Contrato.IdContrato = @IdContrato
+		INNER JOIN PV_Subcontratista (NOLOCK)
+			ON CO_RelacionEmpresas.IdRelacionada = PV_Subcontratista.IdSubcontratista
+		WHERE CO_Contrato.IdContrato = @IdContrato
 
      END;
