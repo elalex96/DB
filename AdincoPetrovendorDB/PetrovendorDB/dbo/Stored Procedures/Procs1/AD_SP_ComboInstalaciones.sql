@@ -21,16 +21,16 @@ GO
 
 CREATE PROCEDURE [dbo].[AD_SP_ComboInstalaciones]
 	@IdContrato INT,
-	@IdCentroCosto NVARCHAR(100) = NULL
+	@IdCentroCosto NVARCHAR(300)
 AS
 BEGIN
 	
 	DECLARE @PreferenciaId INT = (SELECT Id FROM [AP_Preferencias] WHERE [Nombre]='FiltroInstalacionesPorCentroCosto')
 
 
-	IF EXISTS (SELECT COUNT(1) FROM AP_PreferenciaContrato
-	WHERE ContratoId=@IdContrato
-	AND PreferenciaId = @PreferenciaId)
+	IF EXISTS (SELECT 1 FROM AP_PreferenciaContrato
+	WHERE ContratoId= @IdContrato
+	AND PreferenciaId = ISNULL(@PreferenciaId,0))
 	BEGIN 
 	 
 		SELECT
@@ -44,7 +44,7 @@ BEGIN
 		 AND CCI.IdContrato = @IdContrato		 
 		WHERE CAST(ISNULL(CCI.IdCentroCosto,'') AS NVARCHAR(MAX)) = ISNULL(@IdCentroCosto,'')
 		AND CCI.Activo = 1 
-
+		ORDER BY I.NombreInstalacion ASC
 	END 
 	ELSE
 	BEGIN 
@@ -57,7 +57,7 @@ BEGIN
 		 ON I.IdAreaContractual = C.IdAreaContractual 
 		 AND C.IdContrato = @IdContrato
 		WHERE ISNULL(I.Activo,0) = 1
-
+		ORDER BY I.NombreInstalacion ASC
 	END 
 
 END
