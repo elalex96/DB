@@ -373,11 +373,11 @@ FROM @AceptacionPedido acepta
 INSERT INTO @AceptacionFactura(IdAceptacionPedido, IdAceptacionFactura, UUID)
 SELECT AF.IdAceptacionPedido,AF.IdAceptacionFactura, F.UUID
 FROM @AceptacionPedido AP
-JOIN MM_AceptacionFactura AF
+JOIN MM_AceptacionFactura AF (NOLOCK)
 	ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-JOIN FI_Factura F 
+JOIN FI_Factura F (NOLOCK)
 	ON AF.IdFactura = F.IdFactura
-JOIN TA_Operacion O
+JOIN TA_Operacion O (NOLOCK)
 ON AF.IdAceptacionFactura = O.IdDocumento
 AND O.IdTipoOperacion = 10 --> CTE APROBACIÓN DE FACTURA 
 AND O.IdEstatusOperacion = 2 --> CTE FACTURA APROBADA
@@ -398,7 +398,7 @@ WHERE ContieneFactura  IS NULL
 UPDATE acepta
 SET acepta.Instalacion =  I.NombreInstalacion
 FROM @AceptacionPedido acepta
-JOIN Adinco..CO_Instalacion I	
+JOIN Adinco..CO_Instalacion I (NOLOCK)
 	ON acepta.IdInstalacion = I.IdInstalacion
 
 
