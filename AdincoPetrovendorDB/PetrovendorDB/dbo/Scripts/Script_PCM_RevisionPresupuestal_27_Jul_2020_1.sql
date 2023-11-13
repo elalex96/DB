@@ -1,14 +1,15 @@
 ﻿USE Petrovendor
 --> SCRIPT Script_PCM_RevisionPresupuestal_27_Jul_2020_1 
 --> CAMBIAR LOS VALORES SEGUN LOS PRESUPUESTOS QUE SE DESEA REVISAR
-DECLARE @IdPresupuesto INT = 10061 -- 2018 AÑO CAMBIAR DE ACUERDO AL PRESUPUESTO DESEADO
+--DECLARE @IdPresupuesto INT = 10061 -- 2018 AÑO CAMBIAR DE ACUERDO AL PRESUPUESTO DESEADO
+DECLARE @IdPresupuesto INT = 10215 -- 2022 AÑO CAMBIAR DE ACUERDO AL PRESUPUESTO DESEADO
+
 DECLARE @Presupuesto NVARCHAR(MAX),
-        @IdContrato INT = 10036 --> CAMBIAR DE ACUERDO AL CONTRATO DESEADO
+        @IdContrato INT = 10036 --> CAMBIAR DE ACUERDO AL CONTRATO [CNH-A3.CÁRDENAS-MORA/2018] DESEADO
 
 SELECT @Presupuesto = Nombre
 FROM Adinco.dbo.CO_Presupuesto (NOLOCK)
 WHERE IdPresupuesto = @IdPresupuesto
-
 
 DECLARE @TablaRequisicion TABLE
 (
@@ -59,7 +60,9 @@ DECLARE @AceptacionPedido TABLE
     IdLineaAceptacion INT,
     LineaAceptacion NVARCHAR(MAX),
 	UUID NVARCHAR(MAX),
-	ContieneFactura VARCHAR(10)
+	ContieneFactura VARCHAR(10),
+	IdInstalacion INT,
+	Instalacion NVARCHAR(MAX)
 )
 
 DECLARE @CantidadAceptadaMontos TABLE
@@ -232,14 +235,16 @@ INSERT INTO @AceptacionPedido
     IdAceptacionPedidoDetalle,
     IdPedidoDetalle,
     CantidadAceptacion,
-    IdLineaAceptacion
+    IdLineaAceptacion,
+	IdInstalacion
 )
 SELECT req.IdPedido,
        ap.IdAceptacionPedido,
        apd.IdAceptacionPedidoDetalle,
        req.IdPedidoDetalle,
        apdi.Cantidad,
-       apdi.IdLineaPresupuesto
+       apdi.IdLineaPresupuesto,
+	   apdi.IdInstalacion
 FROM dbo.MM_AceptacionPedido ap WITH (NOLOCK)
     INNER JOIN dbo.MM_AceptacionPedidoDetalle apd WITH (NOLOCK)
         ON ap.IdAceptacionPedido = apd.IdAceptacionPedido 
@@ -389,6 +394,14 @@ SET ContieneFactura = 'NO',
 UUID=''
 WHERE ContieneFactura  IS NULL 
 
+-- SE ACTUALIZA LA INSTALACIÓN RELACIONA A LA ACEPTACIÓN PEDIDO DETALLE 
+UPDATE acepta
+SET acepta.Instalacion =  I.NombreInstalacion
+FROM @AceptacionPedido acepta
+JOIN Adinco..CO_Instalacion I	
+	ON acepta.IdInstalacion = I.IdInstalacion
+
+
 SELECT @Presupuesto Presupuesto,
        IdSolicitudPedido,
        NombreUsuarioSolped,
@@ -447,7 +460,8 @@ SELECT @Presupuesto Presupuesto,
        montoAcept.MontoRestante,
        montoAcept.MontoRestanteDls,
        ap.IdLineaAceptacion,
-       ap.LineaAceptacion
+       ap.LineaAceptacion,
+	   ISNULL(ap.Instalacion,'') AS [Instalación aceptación]
 FROM @TablaRequisicion req
     LEFT JOIN @CantidadAceptadaMontos montoAcept
         ON montoAcept.IdPedidoDetalle = req.IdPedidoDetalle
