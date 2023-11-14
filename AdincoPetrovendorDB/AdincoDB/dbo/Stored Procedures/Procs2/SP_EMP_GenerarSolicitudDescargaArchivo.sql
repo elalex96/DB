@@ -1,4 +1,12 @@
 ﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EMP_GenerarSolicitudDescargaArchivo'
+)
+    DROP PROCEDURE SP_EMP_GenerarSolicitudDescargaArchivo
+GO
 -- ================================================================================
 -- Autor:				Neri Garcia del Angel
 -- Fecha de Creación:	13 de Febrero del 2023
@@ -6,7 +14,7 @@
 --						Seguido genera la solitud en la tabla correspondiente para proceder cuando se ejecute la tarea de consola
 -- ================================================================================
 CREATE PROCEDURE [dbo].[SP_EMP_GenerarSolicitudDescargaArchivo]
-	@Tipo VARCHAR(MAX),
+	@Tipo VARCHAR(8000),
 	@Inicio DATE,
 	@Fin DATE,
 	@UsuarioId INT,
@@ -19,33 +27,40 @@ BEGIN
 
 	IF (@Tipo = 'Facturas Recibidas')
 	BEGIN
-		SELECT DISTINCT @Cuenta = COUNT(*)
+		SELECT DISTINCT @Cuenta = COUNT(1)
 		FROM FI_Factura(NOLOCK)
-		LEFT JOIN FI_FacturaContrato(NOLOCK) ON FI_Factura.IdFactura = FI_FacturaContrato.IdFactura
-		JOIN PV_Subcontratista(NOLOCK) ON FI_Factura.IdSubcontratista = PV_Subcontratista.IdSubcontratista
-		JOIN CO_Contrato(NOLOCK) ON FI_Factura.IdContrato = CO_Contrato.IdContrato
+		LEFT JOIN FI_FacturaContrato(NOLOCK) 
+			ON FI_Factura.IdFactura = FI_FacturaContrato.IdFactura
+		JOIN PV_Subcontratista(NOLOCK) 
+			ON FI_Factura.IdSubcontratista = PV_Subcontratista.IdSubcontratista
+		JOIN CO_Contrato(NOLOCK) 
+			ON FI_Factura.IdContrato = CO_Contrato.IdContrato
 			AND (
 				FI_Factura.IdContrato = @ContratoId
 				OR FI_FacturaContrato.IdContrato = @ContratoId
 				)
-		JOIN CO_Contratista(NOLOCK) ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+		JOIN CO_Contratista(NOLOCK) 
+			ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
 			AND CO_Contratista.RFC <> FI_Factura.Emisor
-		WHERE CONVERT(DATE,FI_Factura.Fecha) BETWEEN @Inicio
-				AND @Fin
+		WHERE CONVERT(DATE,FI_Factura.Fecha) 
+				BETWEEN @Inicio AND @Fin
 			AND FI_Factura.TipoComprobante IS NOT NULL
 			AND FI_Factura.UUID IS NOT NULL;
 	END;
 
 	IF (@Tipo = 'Facturas Emitidas')
 	BEGIN
-		SELECT DISTINCT @Cuenta = COUNT(*)
+		SELECT DISTINCT @Cuenta = COUNT(1)
 		FROM FI_Factura(NOLOCK)
-		JOIN CO_Contrato(NOLOCK) ON FI_Factura.IdContrato = CO_Contrato.IdContrato
-		JOIN CO_Contratista(NOLOCK) ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
+		JOIN CO_Contrato(NOLOCK) 
+			ON FI_Factura.IdContrato = @ContratoId
+			AND FI_Factura.IdContrato = CO_Contrato.IdContrato
+		JOIN CO_Contratista(NOLOCK) 
+			ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
 			AND FI_Factura.Emisor = CO_Contratista.RFC
 		WHERE FI_Factura.IdContrato = @ContratoId
-			AND CONVERT(DATE,FI_Factura.Fecha) BETWEEN @Inicio
-				AND @Fin
+			AND CONVERT(DATE,FI_Factura.Fecha) 
+				BETWEEN @Inicio AND @Fin
 			AND FI_Factura.TipoComprobante IS NOT NULL
 			AND FI_Factura.UUID IS NOT NULL;
 	END;

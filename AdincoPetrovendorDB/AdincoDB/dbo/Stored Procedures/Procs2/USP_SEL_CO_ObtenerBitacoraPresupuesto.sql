@@ -1,12 +1,14 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'USP_SEL_CO_ObtenerBitacoraPresupuesto'
-)
-    DROP PROCEDURE USP_SEL_CO_ObtenerBitacoraPresupuesto;
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_SEL_CO_ObtenerBitacoraPresupuesto'
+    )
+    DROP PROCEDURE USP_SEL_CO_ObtenerBitacoraPresupuesto
 GO
-
 CREATE PROCEDURE USP_SEL_CO_ObtenerBitacoraPresupuesto
     @UsuarioId INT,
     @ContratoId INT
@@ -19,7 +21,8 @@ SELECT CO_BitacoraPresupuesto.IdCarga,
        CO_BitacoraPresupuesto.CreadoEl,
        AP_Usuario.Nombre AS CreadoPor,
        ISNULL(CO_BitacoraPresupuesto.DetalleInsercion, 'NA') AS DetalleInsercion,
-       'NA' AS Presupuesto
+       'NA' AS Presupuesto,
+	   ISNULL(CO_TipoProgramaActividad.TipoPrograma, '') AS TipoPrograma
 FROM CO_BitacoraPresupuesto (NOLOCK)
     JOIN CO_Contrato (NOLOCK)
         ON CO_BitacoraPresupuesto.IdCOntrato = CO_Contrato.IdContrato
@@ -29,4 +32,7 @@ FROM CO_BitacoraPresupuesto (NOLOCK)
         ON CO_BitacoraPresupuesto.IdArchivoAWS = AWS_Documentos.AWSDocumentoId
     JOIN AP_Usuario (NOLOCK)
         ON CO_BitacoraPresupuesto.CreadoPor = AP_Usuario.UsuarioID
+	LEFT JOIN
+		CO_TipoProgramaActividad (NOLOCK)
+		ON CO_BitacoraPresupuesto.IdTipoProgramaActividad = CO_TipoProgramaActividad.IdTipoProgramaActividad
 ORDER BY CO_BitacoraPresupuesto.IdCarga DESC

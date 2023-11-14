@@ -1,4 +1,13 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_FI_ConsultaFacturasPorContratoEmitidas'
+)
+    DROP PROCEDURE sp_FI_ConsultaFacturasPorContratoEmitidas
+GO
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 21-06-2018
 -- Description:	
@@ -48,9 +57,9 @@ BEGIN
         RFC_Receptor NVARCHAR(1000),
         UUID NVARCHAR(1000),
         FechaTimbrado DATETIME,
-        SelloCFD NVARCHAR(MAX),
-        NoCertificadoSAT NVARCHAR(MAX),
-        SelloSAT NVARCHAR(MAX),
+        SelloCFD VARCHAR(8000),
+        NoCertificadoSAT VARCHAR(8000),
+        SelloSAT VARCHAR(8000),
         Tipo NVARCHAR(250),
         FechaRecepcion DATETIME,
         Año INT,
@@ -60,11 +69,11 @@ BEGIN
         IVA FLOAT,
         IdContrato INT,
         CreadoEn DATE,
-        CreadoPor NVARCHAR(MAX),
+        CreadoPor VARCHAR(8000),
         IdMoneda INT,
         CreadoPorID INT,
         IdSubcontratista INT,
-        Receptor VARCHAR(MAX),
+        Receptor VARCHAR(8000),
         PRIMARY KEY (IdFactura)
     );
    
@@ -161,7 +170,7 @@ BEGIN
     )
     SELECT FIM.IdFactura,
            SUM(FIM.Importe)
-    FROM #Facturas F WITH (NOLOCK)
+    FROM #Facturas F 
         INNER JOIN FI_CFDIImpuesto FIM WITH (NOLOCK)
             ON F.IdFactura = FIM.IdFactura
     GROUP BY FIM.IdFactura
@@ -175,7 +184,7 @@ BEGIN
                                1
                        END
     FROM #Facturas TEMP
-        JOIN dbo.FI_Documento D (NOLOCK)
+        JOIN dbo.FI_Documento D 
             ON TEMP.IdFactura = D.IdFactura
                AND D.DocumentoByte IS NOT NULL
                AND D.IdTipoDocumento = 1
@@ -184,26 +193,26 @@ BEGIN
     UPDATE TEMP
     SET Moneda = M.TipoMonedaCorto
     FROM #Facturas TEMP
-        JOIN dbo.PV_TipoMoneda M (NOLOCK)
+        JOIN dbo.PV_TipoMoneda M 
             ON TEMP.IdMoneda = M.IdMoneda
 
     UPDATE TEMP
     SET NombreEmisor = S.RazonSocial,
         RFC_Emisor = S.RFC
     FROM #Facturas TEMP
-        JOIN PV_Subcontratista S (NOLOCK)
+        JOIN PV_Subcontratista S 
             ON TEMP.IdSubcontratista = S.IdSubcontratista
 
     UPDATE TEMP
     SET NombreReceptor = SR.RazonSocial
     FROM #Facturas TEMP
-        JOIN dbo.PV_Subcontratista SR WITH (NOLOCK)
+        JOIN dbo.PV_Subcontratista SR 
             ON TEMP.Receptor = SR.RFC
 
     UPDATE TEMP
     SET CreadoPor = UM.Nombre
     FROM #Facturas TEMP
-        JOIN dbo.AP_Usuario UM WITH (NOLOCK)
+        JOIN dbo.AP_Usuario UM 
             ON TEMP.CreadoPorID = UM.UsuarioID
 
     UPDATE TEMP

@@ -3939,5 +3939,7 @@
     <Build Include="dbo\User Defined Types\CO_Type_SAPVendor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_INS_UPD_CO_SAPVendor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_DesactivarSAPVendor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerBitacoraPresupuesto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_TipoProgramaActividad.sql" />
   </ItemGroup>
 </Project>
