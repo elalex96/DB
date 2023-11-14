@@ -514,4 +514,3 @@ AS
             TempReporteIntegracionGastosNivelActividadRenglon GNAR (NOLOCK);
 
 END;
-
