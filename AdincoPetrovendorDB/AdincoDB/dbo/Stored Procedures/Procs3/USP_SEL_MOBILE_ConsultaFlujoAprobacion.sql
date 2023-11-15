@@ -1,4 +1,4 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
 IF EXISTS
 (
@@ -31,11 +31,11 @@ BEGIN
 	SELECT
 		EFT.Nombre AS EstatusOperacion,
 		CASE
-			WHEN T.IdEstatus = 1 THEN '#f4d03f'
-			WHEN T.IdEstatus = 2 THEN '#2ecc71'
-			WHEN T.IdEstatus = 3 THEN '#c0392b'
-			WHEN T.IdEstatus = 4 THEN '#c0392b'
-			ELSE '#ebedef'
+			WHEN OP.IdEstatusOperacion = 1 THEN '#e6ca5c'
+			WHEN OP.IdEstatusOperacion = 2 THEN '#36eb83'
+			WHEN OP.IdEstatusOperacion = 3 THEN '#ed594a'
+			WHEN OP.IdEstatusOperacion = 4 THEN '#c0392b'
+			ELSE '#ebede'
 		END AS ColorBackground,
 		T.IdTarea,
 		OP.IdEstatusOperacion,
@@ -44,11 +44,11 @@ BEGIN
 		T.IdEstatus,
 		E.Nombre AS Estatus,
 		CASE
-			WHEN OP.IdEstatusOperacion = 1 THEN '#e6ca5c'
-			WHEN OP.IdEstatusOperacion = 2 THEN '#36eb83'
-			WHEN OP.IdEstatusOperacion = 3 THEN '#ed594a'
-			WHEN OP.IdEstatusOperacion = 4 THEN '#c0392b'
-			ELSE '#ebede'
+			WHEN T.IdEstatus = 1 THEN '#f4d03f'
+			WHEN T.IdEstatus = 2 THEN '#2ecc71'
+			WHEN T.IdEstatus = 3 THEN '#c0392b'
+			WHEN T.IdEstatus = 4 THEN '#c0392b'
+			ELSE '#ebedef'
 		END AS Color,
 		CASE
 			WHEN T.IdEstatus = 1 THEN 'estatus_enaprobacion.png'
