@@ -1793,6 +1793,10 @@
     <Build Include="dbo\Stored Procedures\Procs1\sp_IN_AL_EliminarRecepcion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_IN_AL_EliminarRecepcionDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\sp_IN_AL_EliminarReingreso.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_CC_Inst_DesactivaCentroCostoInstalacion" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_CC_Inst_GuardaRelacionCentroCostoIntalacion" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_CC_INST_ObtenCentrosCostosInstalacion" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_Inst_ObtenInstalacionesPorContrato" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_IN_AL_EliminarReingresoDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_IN_AL_EliminarReservaDetalle.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_IN_AL_EntregaAplicarMovimiento.sql" />
