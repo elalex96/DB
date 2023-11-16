@@ -75,6 +75,7 @@ SELECT @TieneExcepcionVigente = 1
   WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
 		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
 		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
 		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 
  -- Verificamos que no haya ocurrido ningun Error  

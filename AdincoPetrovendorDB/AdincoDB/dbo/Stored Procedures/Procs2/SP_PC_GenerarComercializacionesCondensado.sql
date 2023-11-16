@@ -128,6 +128,7 @@ SELECT @TieneExcepcionVigente = 1
   WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
 		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
 		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
 		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 -- SE OBTIENE EL COSTO UNITARIO DEL HIDROCARBURO
 SELECT @CostoUnitarioComercializacion = CostoUnitarioComercializacion
