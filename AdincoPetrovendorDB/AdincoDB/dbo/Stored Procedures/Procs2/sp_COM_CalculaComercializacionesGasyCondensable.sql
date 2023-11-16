@@ -1,4 +1,16 @@
-﻿CREATE PROCEDURE dbo.sp_COM_CalculaComercializacionesGasyCondensable
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'sp_COM_CalculaComercializacionesGasyCondensable'
+    )
+    DROP PROCEDURE sp_COM_CalculaComercializacionesGasyCondensable
+GO
+
+CREATE PROCEDURE dbo.sp_COM_CalculaComercializacionesGasyCondensable
     @IdContrato INT,
     @MesReporte    DATE,
 	@Usuario	INT,
@@ -388,7 +400,8 @@ DECLARE
 	@sumaC5			FLOAT,
 	@SumEnerC5		FLOAT,
 	@sumtotal		FLOAT,
-	@TotalDistribuido	FLOAT
+	@TotalDistribuido	FLOAT,
+	@TieneExcepcionVigente bit = 0; 
 
 SELECT
     @FactorConversion              = 0.947817,
@@ -421,6 +434,22 @@ FROM
 	dbo.CO_PorcentajesContrato (NOLOCK)
 WHERE
 	IdContrato	=	@IdContrato
+
+-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+  FROM 
+	CO_ExcepcionesReporte (NOLOCK)
+  JOIN
+	AA_TipoReporte (NOLOCK)
+	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+	AND CO_ExcepcionesReporte.MesReporte = @MesReporte  
+	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+	AND CO_ExcepcionesReporte.Activo = 1
+  WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
+		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 
 -- SE OBTIENE EL COSTO UNITARIO DEL HIDROCARBURO
 INSERT INTO #CostoUnitarioComercializacion
@@ -1336,7 +1365,7 @@ FROM
 		CONVERT( FLOAT, CRO.C3mol )                                                             AS C3,
 		CONVERT( FLOAT, CRO.IC4mol )                                                            AS IC4,
 		CONVERT( FLOAT, CRO.NC4mol )                                                            AS NC4,
-		CONVERT( FLOAT, CRO.IC5mol )                                                            AS IC5,
+		CONVERT( FLOAT, CRO.IC5mol )                                                     AS IC5,
 		CONVERT( FLOAT, CRO.NC5mol )                                 AS NC5,
 		CONVERT( FLOAT, CRO.C6mol )                                   AS C6,
 		@pcC1                                                                                 AS pcC1, -- VALORES FIJOS
@@ -1425,7 +1454,7 @@ INSERT INTO #PreciosGas2
     PuntoVenta,
     MPC,
     MMPC,
-    MMPC60F,
+   MMPC60F,
     Ingreso,
     C1,
     C2,
@@ -1872,11 +1901,11 @@ JOIN
 	#PreciosGas2	P
 	ON	CPO.IdFactura	=	P.IdFactura
 
-IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101','20220501')
-	SELECT @FechaLimite = '20231230 23:59'
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
-IF @FechaLimite >= GETDATE()
+ IF((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
 BEGIN
 	IF @Debug = 1
 	BEGIN

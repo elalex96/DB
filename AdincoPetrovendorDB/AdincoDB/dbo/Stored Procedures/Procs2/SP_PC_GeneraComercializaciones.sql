@@ -1,4 +1,16 @@
-﻿CREATE PROCEDURE dbo.SP_PC_GeneraComercializaciones--  10010,'01/05/2022 12:00:00 a. m.',10,0
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_PC_GeneraComercializaciones'
+    )
+    DROP PROCEDURE SP_PC_GeneraComercializaciones
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE PROCEDURE dbo.SP_PC_GeneraComercializaciones--  10010,'01/05/2022 12:00:00 a. m.',10,0
  @IdContrato INT,  
  @MesReporte VARCHAR(10),  
  @Usuario INT,  
@@ -26,7 +38,9 @@ DECLARE
  @FechaLimite DATETIME,  
  @NumError INT,  
  @MensajeError VARCHAR(500),  
- @Mes DATE  
+ @Mes DATE ,
+ @TieneExcepcionVigente bit = 0;  
+
   
 SELECT @Mes = DATEFROMPARTS( SUBSTRING( @MesReporte, 7, 4 ), SUBSTRING( @MesReporte, 4, 2 ), SUBSTRING( @MesReporte, 1, 2 ) )  
   
@@ -47,6 +61,22 @@ BEGIN
   AND   
   Mes = MONTH( DATEADD( MONTH, 1, @Mes ))  
   
+-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+  FROM 
+	CO_ExcepcionesReporte (NOLOCK)
+  JOIN
+	AA_TipoReporte (NOLOCK)
+	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+	AND CO_ExcepcionesReporte.MesReporte = @MesReporte  
+	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+	AND CO_ExcepcionesReporte.Activo = 1
+  WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
+		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
+
  -- Verificamos que no haya ocurrido ningun Error  
  SELECT @NumError = @@ERROR  
  IF @NumError <> 0  
@@ -60,13 +90,13 @@ BEGIN
  SELECT  
   @FechaLimite = DATEADD (MINUTE, 59, DATEADD(HOUR, 23, @FechaLimite))  
   
-  
+ 
 IF @Mes IN ( '2022-06-01', '2022-07-01', '2022-08-01', '2022-09-01', '2022-10-01')  
- SELECT @FechaLimite = '2022-12-31'  
+ SELECT @FechaLimite = '2022-06-30'  
   
   
  --Calculo del volumen de crudo a vender basado en reparticion preliminar  
- IF @FechaLimite >= GETDATE()  
+ IF((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
  BEGIN  
   
   DELETE FROM PC_Volumenes  

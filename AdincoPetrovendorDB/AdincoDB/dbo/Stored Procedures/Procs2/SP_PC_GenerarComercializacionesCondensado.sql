@@ -1,4 +1,15 @@
-﻿CREATE PROCEDURE dbo.SP_PC_GenerarComercializacionesCondensado
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_PC_GenerarComercializacionesCondensado'
+    )
+    DROP PROCEDURE SP_PC_GenerarComercializacionesCondensado
+GO
+CREATE PROCEDURE dbo.SP_PC_GenerarComercializacionesCondensado
     @IdContrato INT,
     @MesReporte DATE,
 	@Usuario	INT,
@@ -82,7 +93,8 @@ DECLARE
 	@TotalADistribuir	INT,
 	@TotalDistribuido	INT,
 	@Precio			FLOAT,
-	@SumEner		FLOAT
+	@SumEner		FLOAT,
+	@TieneExcepcionVigente bit = 0;  
 
 SELECT
 	@FechaInicioContrato = InicioVigencia,
@@ -100,8 +112,23 @@ FROM
 WHERE
 	IdContrato	=	@IdContrato
 
-SELECT 	@Param = 6.2898
+SELECT 	@Param = 6.2898;
 
+-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+  FROM 
+	CO_ExcepcionesReporte (NOLOCK)
+  JOIN
+	AA_TipoReporte (NOLOCK)
+	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+	AND CO_ExcepcionesReporte.MesReporte = @MesReporte  
+	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+	AND CO_ExcepcionesReporte.Activo = 1
+  WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
+		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 -- SE OBTIENE EL COSTO UNITARIO DEL HIDROCARBURO
 SELECT @CostoUnitarioComercializacion = CostoUnitarioComercializacion
 FROM	COM_CostoUnitarioHidrocarburo  (NOLOCK)
@@ -141,7 +168,7 @@ FROM
     PC_DistribucionIngresos DI  (NOLOCK)
 JOIN
     PC_ContratoCampo        CC  (NOLOCK)
-    ON CC.IdCampo                   = DI.IdCampo
+    ON CC.IdCampo  = DI.IdCampo
 JOIN
     PC_PuntoVentaProducto   PVP  (NOLOCK)
     ON PVP.IdContrato               = CC.IdContrato
@@ -502,8 +529,8 @@ END
 SELECT @TotalDistribuido	=	SUM(VolumenVendido)
 FROM #ComercializacionesConde
 
-IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101','20220501')
-	SELECT @FechaLimite = '20231230 23:59'
+IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
+	SELECT @FechaLimite = '20220630 23:59'
 
 IF @IdContrato <> 10028 -- MISIÓN
 BEGIN
@@ -579,7 +606,7 @@ BEGIN
 END
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
-IF @FechaLimite >= GETDATE()
+ IF((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
 BEGIN
 	IF @Debug = 1
 	BEGIN
@@ -703,3 +730,5 @@ FIN:
 SELECT	'true' AS msj
 --RETURN 0
 END
+
+
