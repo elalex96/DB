@@ -385,7 +385,7 @@ ORDER BY
 	Dia
 
 SELECT
-	@FechaLimite = '20230830'--DATEADD( MINUTE, 59, DATEADD( HOUR, 23, Fecha ))
+	@FechaLimite = DATEADD( MINUTE, 59, DATEADD( HOUR, 23, Fecha ))
 FROM
 	#DiasHabiles
 WHERE
