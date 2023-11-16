@@ -243,28 +243,45 @@ CREATE TABLE #NuevaDistribucionProvisional
 )
 
 DECLARE 
-	@NumContrato	VARCHAR(50),@TieneExcepcionVigente bit = 0;  
+	@NumContrato	VARCHAR(50),@TieneExcepcionVigente bit = 0, @EsENI BIT = 0, @TipoReporte VARCHAR(300)='Volúmenes_Precios_PEMEX';  
 
 SELECT @NumContrato = NumeroContrato
 FROM	dbo.CO_Contrato (NOLOCK)
 WHERE	IdContrato	=	@IdContrato
+  
+SELECT @EsENI = 1
+FROM	CO_Contrato	(NOLOCK)
+JOIN	CO_Contratista (NOLOCK)
+ON CO_Contrato.IdContratista	=	CO_Contratista.IdContratista
+AND CO_Contrato.IdContrato	=	@IdContrato
+WHERE	CO_Contrato.IdContrato	=	@IdContrato
+AND CO_Contratista.NombreContratista = 'ENI MÉXICO, S. DE R.L. DE C.V.';
 
--- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+IF(@EsENI = 1)
+BEGIN
+	SET @TipoReporte = 'Volúmenes_Precios_SOCIO';
+END
+ELSE
+BEGIN
+	SET @TipoReporte =  'Volúmenes_Precios_PEMEX';
+END
+
+	-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
 SELECT @TieneExcepcionVigente = 1
-  FROM 
-	CO_ExcepcionesReporte (NOLOCK)
-  JOIN
-	AA_TipoReporte (NOLOCK)
-	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
-	AND CO_ExcepcionesReporte.MesReporte = @MesReporte  
-	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
-	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
-	AND CO_ExcepcionesReporte.Activo = 1
-  WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
-		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+	  FROM 
+		CO_ExcepcionesReporte (NOLOCK)
+	  JOIN
+		AA_TipoReporte (NOLOCK)
+		ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+		AND CO_ExcepcionesReporte.MesReporte = @MesReporte  
 		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+		AND AA_TipoReporte.NombreReporte	=  @TipoReporte
 		AND CO_ExcepcionesReporte.Activo = 1
-		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
+	  WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
+			AND AA_TipoReporte.NombreReporte	=  @TipoReporte
+			AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+			AND CO_ExcepcionesReporte.Activo = 1
+			AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 
 INSERT INTO #PC_VolumenProduccionPeriodo
 (

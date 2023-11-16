@@ -1,4 +1,15 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_SipacProduccionCalcular_PC]
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_CO_SipacProduccionCalcular_PC'
+    )
+    DROP PROCEDURE SP_CO_SipacProduccionCalcular_PC
+GO
+CREATE PROCEDURE [dbo].[SP_CO_SipacProduccionCalcular_PC]
     @Idcontrato      INT,
     @fechaMesDiaAnio DATE,
     @puntoEntrega    INT,
@@ -338,7 +349,8 @@ DECLARE
 	@GasVTA_20	FLOAT,
 	@CondensadoVTA_20	FLOAT,
 	@VTA_PrecioPromPonCondensado	FLOAT,
-	@AplicaFactorCompresibilidad	BIT
+	@AplicaFactorCompresibilidad	BIT,
+	@TieneExcepcionVigente bit = 0;  
 
 -- SE VERIFICA SI AL CONTRATO LE APLICA EL FACTOR DE COMPRESIBILIDAD EN EL CALCULO DEL GAS
 SELECT
@@ -373,11 +385,29 @@ ORDER BY
 	Dia
 
 SELECT
-	@FechaLimite = DATEADD( MINUTE, 59, DATEADD( HOUR, 23, Fecha ))
+	@FechaLimite = '20230830'--DATEADD( MINUTE, 59, DATEADD( HOUR, 23, Fecha ))
 FROM
 	#DiasHabiles
 WHERE
 	NumDiaHabil = 10
+
+-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+  FROM 
+	CO_ExcepcionesReporte (NOLOCK)
+  JOIN
+	AA_TipoReporte (NOLOCK)
+	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+	AND CO_ExcepcionesReporte.MesReporte = @fechaMesDiaAnio  
+	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_SOCIO'
+	AND CO_ExcepcionesReporte.Activo = 1
+  WHERE CO_ExcepcionesReporte.MesReporte = @fechaMesDiaAnio  
+		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_SOCIO'
+		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
+
 
 -- SE EJECUTA SP QUE GENERA LA TABLA SIPAC_RM_FMP_53_M
 EXEC PC_Generar_VolMensualProduccion_RM53 @Idcontrato, @fechaMesDiaAnio, @Usuario, @FechaLimite, 0
@@ -1148,7 +1178,7 @@ BEGIN
 
 END
 
-IF @FechaLimite >= GETDATE()
+IF((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
 BEGIN
 	-- SE GUARDA UN REGISTRO DE LOS VALORES UTILIZADOS EN EL CALCULO ( CROMATOGRAFIA Y VOLUMENES )
 	-- SI YA EXISTE UN REGISTRO CON LOS MISMO VALORES, SOLO SE ACTUALIZA LA FECHA Y EL USUARIO
