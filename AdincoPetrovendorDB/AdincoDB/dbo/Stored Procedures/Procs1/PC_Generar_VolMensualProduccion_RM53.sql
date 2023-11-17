@@ -1,4 +1,16 @@
-﻿CREATE PROCEDURE [dbo].[PC_Generar_VolMensualProduccion_RM53]
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'PC_Generar_VolMensualProduccion_RM53'
+    )
+    DROP PROCEDURE PC_Generar_VolMensualProduccion_RM53
+GO
+
+CREATE PROCEDURE [dbo].[PC_Generar_VolMensualProduccion_RM53]
 	@IdContrato INT,
     @MesReporte DATE,
 	@Usuario	INT,
@@ -231,11 +243,45 @@ CREATE TABLE #NuevaDistribucionProvisional
 )
 
 DECLARE 
-	@NumContrato	VARCHAR(50)
+	@NumContrato	VARCHAR(50),@TieneExcepcionVigente bit = 0, @EsENI BIT = 0, @TipoReporte VARCHAR(300)='Volúmenes_Precios_PEMEX';  
 
 SELECT @NumContrato = NumeroContrato
 FROM	dbo.CO_Contrato (NOLOCK)
 WHERE	IdContrato	=	@IdContrato
+  
+SELECT @EsENI = 1
+FROM	CO_Contrato	(NOLOCK)
+JOIN	CO_Contratista (NOLOCK)
+ON CO_Contrato.IdContratista	=	CO_Contratista.IdContratista
+AND CO_Contrato.IdContrato	=	@IdContrato
+WHERE	CO_Contrato.IdContrato	=	@IdContrato
+AND CO_Contratista.NombreContratista = 'ENI MÉXICO, S. DE R.L. DE C.V.';
+
+IF(@EsENI = 1)
+BEGIN
+	SET @TipoReporte = 'Volúmenes_Precios_SOCIO';
+END
+ELSE
+BEGIN
+	SET @TipoReporte =  'Volúmenes_Precios_PEMEX';
+END
+
+	-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+	  FROM 
+		CO_ExcepcionesReporte (NOLOCK)
+	  JOIN
+		AA_TipoReporte (NOLOCK)
+		ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+		AND CO_ExcepcionesReporte.MesReporte = @MesReporte  
+		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+		AND AA_TipoReporte.NombreReporte	=  @TipoReporte
+		AND CO_ExcepcionesReporte.Activo = 1
+	  WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
+			AND AA_TipoReporte.NombreReporte	=  @TipoReporte
+			AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+			AND CO_ExcepcionesReporte.Activo = 1
+			AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 
 INSERT INTO #PC_VolumenProduccionPeriodo
 (
@@ -502,7 +548,7 @@ INSERT INTO #Totales
     Total_Dist_Oper_Condensado,
     Total_Dist_Estado_Condensado,
     Total_Vol_Oper_Condensado,
-    Total_Vol_Estado_Condensado,
+  Total_Vol_Estado_Condensado,
 	Total_Produccion_Condensable
 )
 SELECT
@@ -955,7 +1001,7 @@ IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
 	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
-IF @FechaLimite >= GETDATE()
+ IF((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
 BEGIN
 	IF @Debug = 1
 	BEGIN
