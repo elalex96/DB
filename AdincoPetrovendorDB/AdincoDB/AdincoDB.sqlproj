@@ -3942,5 +3942,6 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerBitacoraPresupuesto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_TipoProgramaActividad.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MOBILE_ConsultaFlujoAprobacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_FMP_CalculadoraGasPorMes.sql" />
   </ItemGroup>
 </Project>
