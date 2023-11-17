@@ -1,4 +1,15 @@
-﻿CREATE PROCEDURE dbo.SP_PC_GenerarComercializacionesPetroleo
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_PC_GenerarComercializacionesPetroleo'
+    )
+    DROP PROCEDURE SP_PC_GenerarComercializacionesPetroleo
+GO
+CREATE PROCEDURE dbo.SP_PC_GenerarComercializacionesPetroleo
     @IdContrato INT,
     @MesReporte DATE,
 	@Usuario	INT,
@@ -86,7 +97,7 @@ DECLARE
 	@Prop01		FLOAT,
 	@Prop02		FLOAT,
 	@Tarifa01		FLOAT,
-	@Tarifa02		FLOAT
+	@Tarifa02		FLOAT,@TieneExcepcionVigente bit = 0;  
 
 SELECT
 	@FechaInicioContrato = InicioVigencia,
@@ -95,7 +106,24 @@ SELECT
 FROM
 	CO_Contrato (NOLOCK)
 WHERE
-	IdContrato	=	@IdContrato
+	IdContrato	=	@IdContrato;
+
+  -- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+  FROM 
+	CO_ExcepcionesReporte (NOLOCK)
+  JOIN
+	AA_TipoReporte (NOLOCK)
+	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+	AND CO_ExcepcionesReporte.MesReporte = @MesReporte  
+	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+	AND CO_ExcepcionesReporte.Activo = 1
+  WHERE CO_ExcepcionesReporte.MesReporte = @MesReporte  
+		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_PEMEX'
+		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 
 SELECT
 	@PorcPemex	=	PorcentajePemex / 100.00
@@ -677,7 +705,8 @@ IF @MesReporte IN ( '20211001', '20211101', '20211201', '20220101')
 	SELECT @FechaLimite = '20220630 23:59'
 
 -- SE VALIDA SI EL REPORTE GENERADO ES DEL MES ANTERIOR, EN CUYO CASO SE BORRA LA INFORMACIÓN, SI ES MAS ANTIGUO SOLO SE MUESTRA LA INFORMACION YA GENERADA
-IF @FechaLimite >= GETDATE()
+IF((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
+
 BEGIN
 	IF @Debug = 1
 	BEGIN
@@ -799,3 +828,5 @@ FIN:
 SELECT	'true' AS msj
 --RETURN 0
 END
+
+
