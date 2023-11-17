@@ -1563,7 +1563,7 @@ BEGIN
 		    AcumuladoCostosRecuperablesInsolutos = #Temp_PC_VolumenProduccionPeriodo.AcumuladoCostosRecuperablesInsolutos,
 			VolumenCondensablePuntoMedicion = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensablePuntoMedicion,
 			VolumenCondensableAutoconsumo = #Temp_PC_VolumenProduccionPeriodo.VolumenCondensableAutoconsumo,
-			ModificadoEl = dateadd(month,1, GETDATE()),
+			ModificadoEl = GETDATE(),
 			ModificadoPor = @Usuario
 			FROM PR_VolumenMensualProduccionPetroleo	(NOLOCK)
 			INNER JOIN #Temp_PC_VolumenProduccionPeriodo 
