@@ -1,12 +1,20 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_FI_InsertaArchivoXml'
+)
+    DROP PROCEDURE sp_FI_InsertaArchivoXml
+GO
+-- =============================================
 -- Author:        Reyna Olvera
 -- Create date: 27/06/2018
 -- Description:    Guarda el archivo xml de la factura
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_FI_InsertaArchivoXml]
-    -- Add the parameters for the stored procedure here
     @ArchivoXml IMAGE,
-    @Hash256 NVARCHAR(MAX),
+    @Hash256 VARCHAR(8000),
     @IdOper INT,
     @IdContrato INT,
     @IdUsuario INT
@@ -18,7 +26,7 @@ BEGIN
     DECLARE @facturas INT;
  
     SELECT @facturas = COUNT(IdFactura)
-    FROM FI_ArchivoXml
+    FROM FI_ArchivoXml (NOLOCK)
     WHERE IdFactura = @IdOper;
  
     IF @facturas = 0
