@@ -1,21 +1,26 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ViewPdfEstudio'
+)
+    DROP PROCEDURE SP_FI_ViewPdfEstudio
+GO
+-- =============================================
 -- Author:		Manuel CD
 -- Create date: 12-10-17
 -- Description:	
 -- =============================================
-create PROCEDURE [dbo].[SP_FI_ViewPdfEstudio] 
-	-- Add the parameters for the stored procedure here
+CREATE PROCEDURE [dbo].[SP_FI_ViewPdfEstudio] 
 @IdEstudio INT
 AS
      BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
          SET NOCOUNT ON;
 
-    -- Insert statements for procedure here
 
          SELECT E.IdEstudioPrecioTransfer,
                 E.Archivo
-         FROM FI_EstudioPreciosTransfer E
+         FROM FI_EstudioPreciosTransfer E (NOLOCK)
          WHERE E.IdEstudioPrecioTransfer = @IdEstudio;
      END;

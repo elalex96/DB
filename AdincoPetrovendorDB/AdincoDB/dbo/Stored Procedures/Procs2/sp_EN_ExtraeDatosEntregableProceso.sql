@@ -137,4 +137,3 @@ SELECT @IsEntregableProceso AS IsEntregableProceso ,
 	ISNULL(@NoRecalculo,0) AS NoRecalculo;
 
 END
-
