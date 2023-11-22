@@ -7,12 +7,22 @@ IF EXISTS
     WHERE name = 'sp_RecalculaFechasProcesos'
 )
     DROP PROCEDURE sp_RecalculaFechasProcesos;
-GO
+/****** Object:  StoredProcedure [dbo].[sp_EN_ExtraeDatosEntregableProceso]    Script Date: 06/11/2023 06:36:43 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[sp_RecalculaFechasProcesos]--  3,10061,'20200319',12784,12310,11443
+/****** Object:  StoredProcedure [dbo].[sp_RecalculaFechasProcesos]    Script Date: 07/11/2023 02:25:12 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:  	Daniel AC
+-- Create date: 07/11/2023
+-- Se agrega CAMBIA condicion si es 0 se recalcule y si es 1 no haga nada
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_RecalculaFechasProcesos]--  3,10061,'20200319',12784,12310,11443
     @idContrato         INT,
     @idUsuario          INT,
     @FechaInicial       DATE,
@@ -23,10 +33,12 @@ AS
     BEGIN
         SET NOCOUNT ON;
 
-	--VALIDACION DE RECALCULO
-	DECLARE @NO_RECALCULO INT = (SELECT NoRecalculo FROM EN_InstanciasProcesosFecha WHERE IdInstanciasProcesos = @idInstanciaProceso);
+	--VALIDACION DE RECALCULO 0 SI SE RECALCULA Y 1 NO SE RECALCULA
+	DECLARE @NO_RECALCULO INT = (SELECT NoRecalculo 
+								FROM EN_InstanciasProcesosFecha 
+								WHERE IdInstanciasProcesos = @idInstanciaProceso);
 	
-	IF ISNULL(@NO_RECALCULO,0) = 1
+	IF ISNULL(@NO_RECALCULO,0) = 0
 	BEGIN
 		
 		IF OBJECT_ID('tempdb.dbo.#Actividades', 'U') IS NOT NULL
