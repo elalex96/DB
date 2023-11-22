@@ -1,11 +1,16 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_RC_SIPAC_ValidarCostosGastosInversiones'
-)
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_RC_SIPAC_ValidarCostosGastosInversiones'
+    )
     DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversiones;
 GO
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ==============================================  
 -- Author:      Marcos Garcia  
 -- Create:      20-11-2019  
@@ -60,7 +65,7 @@ CREATE PROCEDURE [dbo].[SP_RC_SIPAC_ValidarCostosGastosInversiones]
 AS  
 BEGIN  
     SET NOCOUNT ON;  
-  
+
     --________________________________________ Verificacion de Tablas Temporales ________________________________________--  
     IF OBJECT_ID('tempdb..#TEMPORAL_21_M', 'U') IS NOT NULL  
         DROP TABLE #TEMPORAL_21_M;  
@@ -286,6 +291,19 @@ BEGIN
         TimbreHASH VARCHAR(2000)  
     );  
   
+     CREATE TABLE #TEMPORAL_Montos_CFDI_Hoja21
+    (  
+        IdDocFacturacion VARCHAR(2000),  
+	    MontoSUMAumentar_RC21_22_Disminuir_RC21_23 FLOAT,
+		  TipoDocumento VARCHAR(2000)
+    );  
+
+   CREATE TABLE #TEMPORAL_Montos_CFDI_Hoja26
+    (  
+        IdDocFacturacion VARCHAR(2000),  
+		MontoSUMEquivDolare_RC26_09 FLOAT
+    )
+
  DECLARE @Count INT;  
  DECLARE @Reporte INT;  
   
@@ -304,7 +322,7 @@ BEGIN
             NumeroConsecutivo_RC21_03,  
             TipoDocumento_RC21_04,  
             UUID_RC21_05,  
-            IUC_PI_RC21_06,  
+          IUC_PI_RC21_06,  
             IUC_PE_RC21_07,  
             TipoComprobante_RC21_08,  
             MetodoPago_RC21_09,  
@@ -422,7 +440,7 @@ BEGIN
         TimbreHASH_PDF_RC24_03,  
         IDPedimentoImportacion_RC24_04,  
         AcuseElecValidacion_RC24_05,  
-        ValorDolares_RC24_06,  
+        ValorDolares_RC24_06, 
         PrecioPagado_ValorComercial_RC24_07,  
         ClavePedimento_RC24_08,  
         FormaPago_RC24_09,  
@@ -530,7 +548,7 @@ BEGIN
                                     LPM.IdPresupuesto  
                                 ELSE  
                                     @IdPresupuesto  
-                            END  
+                END  
     GROUP BY P.IdPresupuesto,  
              P.Nombre,  
              P.IdPresupuestoCNH,  
@@ -713,7 +731,7 @@ BEGIN
     BEGIN  
         SELECT ' La plantilla se reportará en 0 ya que no se encontró ningún gasto en el mes seleccionado' AS Validacion,  
                @Reporte AS [Contador];  
-    END;  
+END;  
     ELSE  
     BEGIN  
            --________________________________________ Validaciones ________________________________________--          
@@ -782,7 +800,7 @@ BEGIN
                        WHEN IdPresupuestoCNH IS NULL  
                             OR IdPresupuestoCNH = ''  
                             OR IdPresupuestoCNH = 'FALTA ID' THEN  
-                           '¡Alerta! El presupuesto: [ ' + Nombre + ' ] con fecha fin vigencia '  
+         '¡Alerta! El presupuesto: [ ' + Nombre + ' ] con fecha fin vigencia '  
                            + CONVERT(VARCHAR(2000), FechaFinPresupuesto)  
                            + ' está fuera de los últimos 6 meses permitidos.'  
          ELSE  
@@ -989,97 +1007,83 @@ BEGIN
             WHERE T21.NumeroIdentificacion_RC21_00 = ''  
                   OR T21.NumeroIdentificacion_RC21_00 IS NULL  
 			ORDER BY T21.Id_21_M ASC
-            --9 ____________________  21_22 o 21_23 no mayor a 26_09  __________________--  
-            --------------CF-----------------  
+            --9 ____________________  21_22 o 21_23 no mayor a 26_09  __________________--
+	
+	--------------------MONTO GASTOS USD-----------
+	INSERT INTO  #TEMPORAL_Montos_CFDI_Hoja21(MontoSUMAumentar_RC21_22_Disminuir_RC21_23,IdDocFacturacion ,TipoDocumento)
+	SELECT  SUM( T21.MontoAumentar_RC21_22 + T21.MontoDisminuir_RC21_23)  , T21.UUID_RC21_05,T21.TipoDocumento_RC21_04
+	FROM  #TEMPORAL_21_M T21  
+	WHERE T21.TipoDocumento_RC21_04 = 'CF'     
+			GROUP BY T21.UUID_RC21_05 ,T21.TipoDocumento_RC21_04
+	ORDER BY  T21.UUID_RC21_05 ASC
+	---------------PI--------------  
+	INSERT INTO  #TEMPORAL_Montos_CFDI_Hoja21(MontoSUMAumentar_RC21_22_Disminuir_RC21_23,IdDocFacturacion  ,TipoDocumento)
+	SELECT   SUM( T21.MontoAumentar_RC21_22 + T21.MontoDisminuir_RC21_23)  , T21.IUC_PI_RC21_06,T21.TipoDocumento_RC21_04
+	FROM  #TEMPORAL_21_M T21  
+	WHERE T21.TipoDocumento_RC21_04 = 'PI'  
+			GROUP BY  T21.IUC_PI_RC21_06,T21.TipoDocumento_RC21_04
+	ORDER BY  T21.IUC_PI_RC21_06 ASC 
+	--------------------PE-----------------------  
+	INSERT INTO  #TEMPORAL_Montos_CFDI_Hoja21(MontoSUMAumentar_RC21_22_Disminuir_RC21_23,IdDocFacturacion  ,TipoDocumento)
+	SELECT   SUM( T21.MontoAumentar_RC21_22 + T21.MontoDisminuir_RC21_23)  , T21.IUC_PE_RC21_07,T21.TipoDocumento_RC21_04
+	FROM #TEMPORAL_21_M T21  
+	WHERE T21.TipoDocumento_RC21_04 = 'PE'  
+			GROUP BY  T21.IUC_PE_RC21_07,T21.TipoDocumento_RC21_04
+	ORDER BY  T21.IUC_PE_RC21_07 ASC 
+
+
+		--------------------MONTO TRANSFERENCIAS USD-----------
+	INSERT INTO  #TEMPORAL_Montos_CFDI_Hoja26(MontoSUMEquivDolare_RC26_09,IdDocFacturacion )
+	SELECT  SUM(T26.MontoEquivDolare_RC26_09   )  ,  T26.IdDocFacturacion_RC26_03
+	 FROM #TEMPORAL_26_M T26  
+             INNER JOIN #TEMPORAL_Montos_CFDI_Hoja21 T21  
+             ON T21.IdDocFacturacion = T26.IdDocFacturacion_RC26_03   
+            GROUP BY  T26.IdDocFacturacion_RC26_03
+            ORDER BY T26.IdDocFacturacion_RC26_03 ASC
+	
+	----------------------------VALIDACIONES DE MONTOS POR DOCUMENTOS FACTURACIÓN------------------------------------
 			INSERT INTO #TablaDeValidaciones (Validaciones)
-            SELECT  CASE  
-                       WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
-                            OR T26.IdDocFacturacion_RC26_03 = '' THEN  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M)  
-                           + ', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                       WHEN T21.UUID_RC21_05 IS NULL  
-                            OR T21.UUID_RC21_05 = '' THEN  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M)  
-                           + ', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                       ELSE  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' del identificador ' + T26.IdDocFacturacion_RC26_03  
-                           + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                   END AS [Validaciones]
-            FROM #TEMPORAL_26_M T26  
-                INNER JOIN #TEMPORAL_21_M T21  
-                    ON T21.UUID_RC21_05 = T26.IdDocFacturacion_RC26_03  
-            WHERE T21.TipoDocumento_RC21_04 = 'CF'  
+            SELECT  
+                     'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M  de la factura con identificador ' + T26.IdDocFacturacion  
+                           + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M '
+                    AS [Validaciones]
+            FROM #TEMPORAL_Montos_CFDI_Hoja26 T26  
+                INNER JOIN #TEMPORAL_Montos_CFDI_Hoja21 T21  
+                    ON T26.IdDocFacturacion = T21.IdDocFacturacion  
+            WHERE T21.TipoDocumento = 'CF'  
                   AND (  
-                          T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09  
-                          OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09  
+                          T21.MontoSUMAumentar_RC21_22_Disminuir_RC21_23>T26.MontoSUMEquivDolare_RC26_09
                       )            
-            ORDER BY T26.Id_26_M ASC
-            ---------------PI--------------  
+            ORDER BY T26.IdDocFacturacion ASC
+
 			INSERT INTO #TablaDeValidaciones (Validaciones)
-            SELECT  CASE  
-                       WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
-                            OR T26.IdDocFacturacion_RC26_03 = '' THEN  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M)  
-                           + ', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                       WHEN T21.IUC_PI_RC21_06 IS NULL  
-                            OR T21.IUC_PI_RC21_06 = '' THEN  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M)  
-                           + ', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                       ELSE  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' del identificador ' + T26.IdDocFacturacion_RC26_03  
-                           + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares)  en la Hoja RC_CONT_26_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                   END AS [Validaciones]
-            FROM #TEMPORAL_26_M T26  
-                INNER JOIN #TEMPORAL_21_M T21  
-                    ON T21.IUC_PI_RC21_06 = T26.IdDocFacturacion_RC26_03  
-			WHERE T21.TipoDocumento_RC21_04 = 'PI'  
+			 SELECT  
+                     'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M  del PI con identificador ' + T26.IdDocFacturacion  
+                           + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M '
+                    AS [Validaciones]
+            FROM #TEMPORAL_Montos_CFDI_Hoja26 T26  
+                INNER JOIN #TEMPORAL_Montos_CFDI_Hoja21 T21  
+                    ON T26.IdDocFacturacion = T21.IdDocFacturacion  
+            WHERE T21.TipoDocumento = 'PI'  
                   AND (  
-                          T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09  
-                          OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09  
-                      )  
-            ORDER BY T26.Id_26_M ASC  
-            --------------------PE-----------------------  
+                          T21.MontoSUMAumentar_RC21_22_Disminuir_RC21_23>T26.MontoSUMEquivDolare_RC26_09
+                      )            
+            ORDER BY T26.IdDocFacturacion ASC
+
 			INSERT INTO #TablaDeValidaciones (Validaciones)
-            SELECT  CASE  
-                       WHEN T26.IdDocFacturacion_RC26_03 IS NULL  
-                            OR T26.IdDocFacturacion_RC26_03 = '' THEN  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M)  
-                           + ', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                       WHEN T21.IUC_PE_RC21_07 IS NULL  
-                            OR T21.IUC_PE_RC21_07 = '' THEN  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M)  
-                           + ', no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '  
-                           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                       ELSE  
-                           'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M Renglón: '  
-                           + CONVERT(VARCHAR(2000), T21.Id_21_M) + ' del identificador ' + T26.IdDocFacturacion_RC26_03  
-                           + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M del Renglón: '  
-           + CONVERT(VARCHAR(2000), T26.Id_26_M) + '.'  
-                   END AS [Validaciones]
-            FROM #TEMPORAL_26_M T26  
-                INNER JOIN #TEMPORAL_21_M T21  
-                    ON T21.IUC_PE_RC21_07 = T26.IdDocFacturacion_RC26_03  
-            WHERE T21.TipoDocumento_RC21_04 = 'PE'  
+				 SELECT  
+                     'La suma de los montos en las columnas RC21_22 (Aumentar)/RC21_23 (Disminuir) en la Hoja RC_CONT_21_M  del PE con identificador ' + T26.IdDocFacturacion  
+                           + ' no puede ser mayor a su suma de los valores en la columna RC26_09 (Monto Equivalente en Dólares) en la Hoja RC_CONT_26_M '
+                    AS [Validaciones]
+            FROM #TEMPORAL_Montos_CFDI_Hoja26 T26  
+                INNER JOIN #TEMPORAL_Montos_CFDI_Hoja21 T21  
+                    ON T26.IdDocFacturacion = T21.IdDocFacturacion  
+            WHERE T21.TipoDocumento = 'PE'  
                   AND (  
-                          T21.MontoAumentar_RC21_22 > T26.MontoEquivDolare_RC26_09  
-                          OR T21.MontoDisminuir_RC21_23 > T26.MontoEquivDolare_RC26_09  
-                      )
-			ORDER BY T26.Id_26_M ASC
+                          T21.MontoSUMAumentar_RC21_22_Disminuir_RC21_23>T26.MontoSUMEquivDolare_RC26_09
+                      )            
+            ORDER BY T26.IdDocFacturacion ASC
+            
             --10_____________________________ Archivos No nulos o NOTA:Falta ingresar archivo PDF o XML ______________________________________--  
             ------------RC_CONT_22_M-------  
 			INSERT INTO #TablaDeValidaciones (Validaciones)
@@ -1198,7 +1202,7 @@ BEGIN
             IUC_PE_RC21_07,  
             TipoComprobante_RC21_08,  
             MetodoPago_RC21_09,  
-            Actividad_RC21_10,  
+    Actividad_RC21_10,  
             SubActividad_RC21_11,  
             Tarea_RC21_12,  
             CASE WHEN CostAtribAdminGral_RC21_13 IS NULL THEN NULL WHEN CostAtribAdminGral_RC21_13 = 1 THEN 1 ELSE 0 END AS CostAtribAdminGral_RC21_13,  
@@ -1354,3 +1358,4 @@ BEGIN
 			ClasDocSoporte_RC26_12 FROM #TEMPORAL_26_M
 			ORDER BY #TEMPORAL_26_M.Id_26_M ASC;
 END; 
+
