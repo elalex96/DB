@@ -1,4 +1,13 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_EliminarEPT'
+)
+    DROP PROCEDURE SP_FI_EliminarEPT
+GO
+-- =============================================
 -- Author:		Marcos Garcia
 -- Create date: 15-02-2020
 -- Description:	Validaciones del Estudio de Precio de Transfer
@@ -13,6 +22,7 @@ AS
         SET NOCOUNT ON;
         DELETE FROM dbo.FI_EstudioPreciosTransfer
         WHERE IdEstudioPrecioTransfer = @IdEPT;
+
         IF @@ERROR <> 0
             SELECT 'false' AS msj;
             ELSE
