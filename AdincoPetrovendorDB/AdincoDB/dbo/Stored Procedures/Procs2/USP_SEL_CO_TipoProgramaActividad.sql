@@ -17,4 +17,5 @@ CREATE PROCEDURE [dbo].[USP_SEL_CO_TipoProgramaActividad]
         SET NOCOUNT ON
 
 		SELECT * FROM CO_TipoProgramaActividad (NOLOCK) WHERE ACTIVO = 1 ORDER BY IdTipoProgramaActividad DESC;
+
 	END;
