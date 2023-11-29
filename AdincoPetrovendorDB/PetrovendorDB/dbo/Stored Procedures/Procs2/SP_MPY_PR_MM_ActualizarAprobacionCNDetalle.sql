@@ -40,6 +40,7 @@ AS
         DECLARE @Idaceptacionservi INT;
         DECLARE @statusnombre NVARCHAR(MAX);
         DECLARE @statusNombreEn NVARCHAR(MAX);
+		DECLARE @IdEstatusAceptado INT = 2;
         -- Insert statements for procedure here
 
         UPDATE dbo.MPY_MM_AceptacionCartaPCN
@@ -84,7 +85,7 @@ AS
                  JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
 						AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-						AND AP.IdAceptacionPedido = @Idaceptacionservi
+						AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
         DECLARE @IDSES INT=
         (
@@ -96,7 +97,7 @@ AS
                  JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
                     AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-					AND AP.IdAceptacionPedido = @Idaceptacionservi
+					AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
         DECLARE @REFERENCE NVARCHAR(100)=
         (
@@ -108,7 +109,7 @@ AS
                  JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
                     AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-					AND AP.IdAceptacionPedido = @Idaceptacionservi
+					AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
         DECLARE @PO NVARCHAR(100)=
         (
@@ -120,7 +121,7 @@ AS
                  JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
                     AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-					AND AP.IdAceptacionPedido = @Idaceptacionservi
+					AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
 (
     SELECT usuario.nombre, 
