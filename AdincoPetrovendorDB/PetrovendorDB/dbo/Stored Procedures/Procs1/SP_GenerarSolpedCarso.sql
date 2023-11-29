@@ -1,4 +1,18 @@
-﻿/****** Object:  StoredProcedure [dbo].[SP_GenerarSolpedCarso]    Script Date: 15/09/2020 04:04:46 p. m. ******/
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_GenerarSolpedCarso'
+)
+    DROP PROCEDURE SP_GenerarSolpedCarso;
+/****** Object:  StoredProcedure [dbo].[SP_GenerarSolpedCarso]    Script Date: 06/11/2023 06:36:43 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  StoredProcedure [dbo].[SP_GenerarSolpedCarso]    Script Date: 15/09/2020 04:04:46 p. m. ******/
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 11/09/2020
@@ -20,6 +34,11 @@
 -- * Seccion de Alta de nuevo material, pero de una solped ya creada anteriormente  
 -- * ACTUALIZACION DE TODOS LOS REGISTROS  
 -- *   
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 28/11/2023
+-- Description:	SE CORRIGE LA ORTOGRAFÍA 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_GenerarSolpedCarso]
 AS
@@ -202,8 +221,7 @@ BEGIN --EMPIEZA STORE
             IdDinamicsAx INT
         );
 
-        -- Son los registros que ya existen en la solicitud de pedido y son los que se deben de actualizar para estar constantemente     
-
+        -- Son los registros que ya existen en la solicitud de pedido y son los que se deben de actualizar para estar constantemente  
         -- actualizados ya que el web service puede actualizar en cualquier momento los registros    
 
         INSERT INTO @TablaIdDinamicsAxExistentes
@@ -294,28 +312,29 @@ BEGIN --EMPIEZA STORE
             comp.IdInstalacionPetrov = NULL
         FROM @TablaComparativa comp
             LEFT JOIN Adinco.dbo.CO_Instalacion AS i
-                ON UPPER(i.NombreInstalacion) COLLATE DATABASE_DEFAULT = UPPER(comp.Instalacion)
+                ON UPPER(comp.Instalacion) COLLATE DATABASE_DEFAULT = UPPER(i.NombreInstalacion) 
             LEFT JOIN Adinco.dbo.CO_ActividadCIEP ciep
-                ON ciep.IdActividad = i.IdActividad
+                ON i.IdActividad = ciep.IdActividad
         WHERE ciep.IdActividad IS NULL;
 
+		
         -- se actualiza el id de la instalacion
         UPDATE comp
         SET comp.IdInstalacionPetrov = i.IdInstalacion
         FROM @TablaComparativa comp
             LEFT JOIN Adinco.dbo.CO_Instalacion AS i
-                ON UPPER(i.NombreInstalacion) COLLATE DATABASE_DEFAULT = UPPER(comp.Instalacion)
+                ON UPPER(comp.Instalacion) COLLATE DATABASE_DEFAULT = UPPER(i.NombreInstalacion) 
             LEFT JOIN Adinco.dbo.CO_ActividadCIEP ciep
-                ON ciep.IdActividad = i.IdActividad
+                ON i.IdActividad = ciep.IdActividad
         WHERE ciep.IdActividad IS NOT NULL;
-
+		
         -- se actualiza el IdProveedor por el del catalogo    
 
         UPDATE comparativa
         SET comparativa.IdProveedor = empresa.IdProveedor
         FROM @TablaComparativa comparativa
             INNER JOIN dbo.AX_ComparativaEmpresa empresa
-                ON empresa.DataAreaID = comparativa.DataAreaId;
+                ON comparativa.DataAreaId = empresa.DataAreaID 
 				
         -- Se inserta cuales son los Ids de la comparativa para saber cuales son las solicitudes que se van a crear    
         -- primero se obtiene las comparativas que ya tienen una solped asociada    
@@ -339,7 +358,7 @@ BEGIN --EMPIEZA STORE
         SELECT comp.IdComparativa
         FROM dbo.AX_Comparativa comp
             LEFT JOIN @TablaComparativaConSolped solped
-                ON solped.IdComparativa = comp.IdComparativa
+                ON comp.IdComparativa = solped.IdComparativa
         WHERE solped.IdComparativa IS NULL
         GROUP BY comp.IdComparativa;
 
@@ -457,24 +476,24 @@ BEGIN --EMPIEZA STORE
         SET comp.IdUsuarioPetrov = u.IdUsuario
         FROM @TablaComparativa comp
             INNER JOIN @TablaUsuariosAInsertar t
-                ON UPPER(t.IdDinamicsAx) = UPPER(comp.IdDinamicsAx)
+                ON UPPER(comp.IdDinamicsAx) = UPPER(t.IdDinamicsAx)
             INNER JOIN @TablaUsuario tu
-                ON tu.IdDinamicsAx = t.IdDinamicsAx
+                ON t.IdDinamicsAx = tu.IdDinamicsAx
                    AND UPPER(t.NombreUsuarios) = UPPER(tu.NombreUsuarios)
             INNER JOIN dbo.S_Usuario u
-                ON UPPER(u.Nombre) = UPPER(t.NombreUsuarios)
+                ON UPPER(t.NombreUsuarios) = UPPER(u.Nombre) 
         WHERE tu.TipoUsuario = 'Creador';
 		
         UPDATE comp
         SET comp.IdUsuarioAprobador = u.IdUsuario
         FROM @TablaComparativa comp
             INNER JOIN @TablaUsuariosAInsertar t
-                ON UPPER(t.IdDinamicsAx) = UPPER(comp.IdDinamicsAx)
+                ON UPPER(comp.IdDinamicsAx) = UPPER(t.IdDinamicsAx) 
             INNER JOIN @TablaUsuario tu
-                ON tu.IdDinamicsAx = t.IdDinamicsAx
+                ON t.IdDinamicsAx = tu.IdDinamicsAx 
                    AND UPPER(t.NombreUsuarios) = UPPER(tu.NombreUsuarios)
             INNER JOIN dbo.S_Usuario u
-                ON UPPER(u.Nombre) = UPPER(t.NombreUsuarios)
+                ON UPPER(t.NombreUsuarios) = UPPER(u.Nombre) 
         WHERE tu.TipoUsuario = 'Aprobador';
 		
         -- En caso de que tenga la logica anterior y sea el creador el mismo sea el aprobador entonces    
@@ -490,21 +509,21 @@ BEGIN --EMPIEZA STORE
         SET comp.IdUsuarioPetrov = u.IdUsuario
         FROM @TablaComparativa comp
             INNER JOIN dbo.S_Usuario u
-                ON UPPER(u.Nombre) = UPPER(comp.NombreUsuarioPetrov);
+                ON UPPER(comp.NombreUsuarioPetrov) = UPPER(u.Nombre);
 
         UPDATE comp
         SET comp.IdUsuarioAprobador = u.IdUsuario
         FROM @TablaComparativa comp
             INNER JOIN dbo.S_Usuario u
-                ON UPPER(u.Nombre) = UPPER(comp.NombreUsuarioAprobador);		
+                ON  UPPER(comp.NombreUsuarioAprobador) = UPPER(u.Nombre);		
 
     END;
 	
-    -- FIN SECCION DE USUARIO    
+    -- FIN SECCIÓN DE USUARIO    
 	
-    --1 La linea de  presupuesto va a existir un catalogo hay que buscarlo en ese catalogo   	
-    --2 Los materiales revisar si existen si no hay que agregarlos a su catalogo    
-    -- Obtener los materiales que no existen en el catalogo de materiales esto incluye la unidad    
+    --1 La línea de  presupuesto va a existir un catálogo hay que buscarlo en ese catálogo   	
+    --2 Los materiales revisar si existen si no hay que agregarlos a su catálogo    
+    -- Obtener los materiales que no existen en el catálogo de materiales esto incluye la unidad    
 
     BEGIN -- // INICIO MATERIALES    
 
@@ -536,7 +555,7 @@ BEGIN --EMPIEZA STORE
                material.IdProveedor
         FROM @TablaMaterialesAgregar material
             LEFT JOIN dbo.PV_MM_MaterialUnidad unidad
-                ON unidad.Unidad = material.Unidad
+                ON material.Unidad = unidad.Unidad
         WHERE unidad.IdUnidad IS NULL;
 		
         -- Se insertan las unidades que no existen    
@@ -565,7 +584,7 @@ BEGIN --EMPIEZA STORE
         SET mat.IdUnidad = unidad.IdUnidad
         FROM @TablaMaterialesAgregar mat
             INNER JOIN dbo.PV_MM_MaterialUnidad unidad
-                ON unidad.Unidad = mat.Unidad;
+                ON mat.Unidad = unidad.Unidad;
 
 		 ---UNA VEZ QUE SE AGREGARON LAS NUEVAS UNIDADES OBTENER LA CLASIFICACIÓN DE LA UNIDAD (SERVICIO -->2/MATERIAL-->1) TABLA 
 	     --SI LA UNIDAD ES NUEVA NO ESTARA EN LA TABLA CLASIFICACIÓN, PERO EN EL INSERT SE AGREGARIA POR DEFAUL COMO MATERIAL 
@@ -625,18 +644,18 @@ BEGIN --EMPIEZA STORE
         SET t.IdMaterial = m.IdMaterial
         FROM @TablaMaterialesAgregar t
             INNER JOIN dbo.MM_Material m
-                ON UPPER(m.DescripcionCorta) = UPPER(t.DescripcionCorta)
+                ON UPPER(t.DescripcionCorta) = UPPER(m.DescripcionCorta)
                    AND t.IdProveedor = m.IdProveedor
         WHERE m.DescripcionCorta != '';
 		
-        -- se actualiza la tabla de relacion    
+        -- se actualiza la tabla de relación    
 
         UPDATE comp
         SET comp.IdMaterialPetrov = t.IdMaterial
         FROM @TablaComparativa comp
             INNER JOIN @TablaMaterialesAgregar t
-                ON t.IdProveedor = comp.IdProveedor
-                   AND UPPER(t.DescripcionCorta) = UPPER(DescripcionMaterialSplit)
+                ON comp.IdProveedor = t.IdProveedor
+                   AND UPPER(comp.DescripcionMaterialSplit) = UPPER(t.DescripcionCorta)
         WHERE t.IdMaterial IS NOT NULL;
 		
         --se agrega a la tabla comparativa la unidad que esta en petrovendor    
@@ -645,7 +664,7 @@ BEGIN --EMPIEZA STORE
         SET comp.IdUnidadPetrov = u.IdUnidad
         FROM dbo.PV_MM_MaterialUnidad u
             INNER JOIN @TablaComparativa comp
-                ON comp.Unidad = u.Unidad;
+                ON u.Unidad = comp.Unidad;
 				
         INSERT INTO dbo.AX_MATERIAL
         (
@@ -656,7 +675,7 @@ BEGIN --EMPIEZA STORE
                comp.IdMaterialPetrov
         FROM @TablaComparativa comp
             LEFT JOIN dbo.AX_MATERIAL m
-                ON m.IdMaterialPetrov = comp.IdMaterialPetrov
+                ON comp.IdMaterialPetrov = m.IdMaterialPetrov 
         WHERE m.IdMaterialAx IS NULL
               AND comp.IdMaterialPetrov IS NOT NULL
               AND comp.IdMaterialSplit IS NOT NULL
@@ -712,7 +731,7 @@ BEGIN --EMPIEZA STORE
         SET dom.IdDomicilioPetrov = dgDom.IdDomicilio
         FROM @TablaDomicilioAInsertar dom
             INNER JOIN dbo.DG_Domicilio dgDom
-                ON dgDom.IdProveedor = dom.IdProveedor
+                ON dom.IdProveedor = dgDom.IdProveedor
                    AND UPPER(dom.IdDomicilioAx) = UPPER(dgDom.Calle)
         WHERE dom.IdDomicilioAx <> '';
 
@@ -741,13 +760,13 @@ BEGIN --EMPIEZA STORE
         SET comp.IdCentroCostoPetrov = costo.IdCentroCostoPetrov
         FROM @TablaComparativa comp
             INNER JOIN dbo.AX_ComparativaEmpresa emp
-                ON UPPER(emp.DataAreaID) = UPPER(comp.DataAreaId)
-                   AND emp.IdProveedor = comp.IdProveedor
+                ON UPPER(comp.DataAreaId) = UPPER(emp.DataAreaID) 
+                   AND comp.IdProveedor = emp.IdProveedor 
             INNER JOIN dbo.CC_CentroCosto cost
-                ON cost.IdProveedor = emp.IdProveedor
+                ON emp.IdProveedor = cost.IdProveedor 
             INNER JOIN dbo.AX_CENTROCOSTO costo
-                ON costo.IdCentroCostoAx = comp.CentroCosto
-                   AND costo.IdCentroCostoPetrov = cost.IdCentroCosto;
+                ON comp.CentroCosto = costo.IdCentroCostoAx 
+                   AND cost.IdCentroCosto = costo.IdCentroCostoPetrov
 				   
 
         -- centros de costos que solo estan dados de alta en CENTRO_COSTO pero no en AX_CENTROCOSTO    
@@ -761,7 +780,7 @@ BEGIN --EMPIEZA STORE
                comp.CentroCosto
         FROM @TablaComparativa comp
             LEFT JOIN dbo.AX_CENTROCOSTO costo
-                ON costo.IdCentroCostoPetrov = comp.IdCentroCostoPetrov
+                ON comp.IdCentroCostoPetrov = costo.IdCentroCostoPetrov
         WHERE costo.IdCentroCostoAx IS NULL
         GROUP BY comp.IdProveedor,
                  comp.CentroCosto;
@@ -776,26 +795,20 @@ BEGIN --EMPIEZA STORE
                centro.IdCentroCosto
         FROM @TablaCentroCostoAInsertar costo
             INNER JOIN dbo.CC_CentroCosto centro
-                ON centro.IdProveedor = costo.IdProveedor
+                ON costo.IdProveedor = centro.IdProveedor
                    AND UPPER(costo.IdCentroCostoAx) = UPPER(centro.CentroCosto);
-
-
-
-
+				   					 				  
 
         UPDATE costo
         SET costo.IdCentroCostoPetrov = centro.IdCentroCosto
         FROM @TablaCentroCostoAInsertar costo
             INNER JOIN dbo.CC_CentroCosto centro
-                ON centro.IdProveedor = costo.IdProveedor
+                ON costo.IdProveedor = centro.IdProveedor
                    AND UPPER(costo.IdCentroCostoAx) = UPPER(centro.CentroCosto);
 
     END; -- // FIN CENTRO DE COSTOS    
 
-
-
-
-
+	   	 
     BEGIN -- // INICIO BUSQUEDA DE LINEAS DE PRESUPUESTO    
 
         --UPDATE    
@@ -824,39 +837,30 @@ BEGIN --EMPIEZA STORE
             tComp.IdPresupuestoPetrov = presupuesto.IdPresupuesto
         FROM @TablaComparativa tComp
             INNER JOIN dbo.AX_Comparativa comp
-                ON comp.IdDinamicsAx = tComp.IdDinamicsAx
+                ON tComp.IdDinamicsAx = comp.IdDinamicsAx
             INNER JOIN Adinco.dbo.CO_LineaPresupuestoMes linea
                 ON comp.IdLineaPresupuesto = linea.IdLineaPresupuestoMes
             INNER JOIN Adinco.dbo.CO_Presupuesto presupuesto
-                ON presupuesto.IdPresupuesto = linea.IdPresupuesto
+                ON linea.IdPresupuesto = presupuesto.IdPresupuesto 
             INNER JOIN Adinco.dbo.CO_ProgramaActividad actividad
-                ON actividad.IdProgramaActividad = presupuesto.IdProgramaActividad
+                ON presupuesto.IdProgramaActividad = actividad.IdProgramaActividad
             INNER JOIN Adinco.dbo.CO_PeriodoContrato periodo
                 ON actividad.IdPeriodoContrato = periodo.IdPeriodo;
 
     END; -- // FIN PRESUPUESTO    
+		   
 
-
-
-
-
-    BEGIN --SECCION VALIDACION DE DATOS    
-
-
-
+    BEGIN --SECCIÓN VALIDACION DE DATOS    
+	   
         -- se eliminan los registros que ya fueron dados de alta    
 
         UPDATE tComp
         SET tComp.ExisteSolpedDetalle = 1
         FROM @TablaComparativa tComp
             INNER JOIN dbo.AX_Comparativa comp
-                ON comp.IdDinamicsAx = tComp.IdDinamicsAx
+                ON tComp.IdDinamicsAx = comp.IdDinamicsAx 
         WHERE comp.IdSolicitudPedidoDetalle IS NOT NULL;
-
-
-
-
-
+		
         UPDATE comp
         SET comp.EliminadoError = 1
         FROM @TablaComparativa comp
@@ -871,18 +875,10 @@ BEGIN --EMPIEZA STORE
                   OR comp.IdLineaPresupuestoPetrov IS NULL
                   OR comp.IdUsuarioPetrov IS NULL
                   OR comp.IdUsuarioAprobador IS NULL
-              );
-
-
-
-    --SELECT 'validacion', * FROM @TablaComparativa    
+              );    
 
     END;
-
-
-
-
-
+		   	 
     BEGIN -- // INICIO GUARDADO ENCABEZADO DE LA SOLPED    
 
         INSERT INTO @TablaSolicitudPedido
@@ -969,17 +965,12 @@ BEGIN --EMPIEZA STORE
                    comp.IdMaterialPetrov
             FROM @TablaComparativa comp
                 INNER JOIN @TablaAgrupacionSolpedCrearNuevas agrup
-                    ON agrup.IdComparativa = comp.IdComparativa
-            WHERE ISNULL(comp.EliminadoError, 0) = 0
-
-        --            AND ISNULL(comp.ExisteSolpedDetalle, 0) = 0 )    
+                    ON comp.IdComparativa = agrup.IdComparativa
+            WHERE ISNULL(comp.EliminadoError, 0) = 0 
 
         ) temp
         WHERE temp.rn = 1
               AND temp.IdMaterialPetrov IS NOT NULL;
-
-
-
 
 
         -- Se inserta el encabezado    
@@ -1042,10 +1033,7 @@ BEGIN --EMPIEZA STORE
         FROM @TablaSolicitudPedido;
 
     END; -- // FIN GUARDADO ENCABEZADO DE LA SOLPED    
-
-
-
-
+	   	 
 
     BEGIN -- // INICIO GUARDADO DETALLE DE LA SOLPED    
 
@@ -1057,11 +1045,7 @@ BEGIN --EMPIEZA STORE
         SET tSolped.IdSolicitudPedido = solped.IdSolicitudPedido
         FROM @TablaSolicitudPedido tSolped
             INNER JOIN dbo.MM_SolicitudPedido solped
-                ON solped.IdDinamicsAx = tSolped.IdDinamicsAx;
-
-
-
-
+                ON tSolped.IdDinamicsAx = solped.IdDinamicsAx;
 
         -- despues se actualiza la tabla temporal donde estan los encabezados y el detalle    
 
@@ -1069,17 +1053,14 @@ BEGIN --EMPIEZA STORE
         SET comp.IdSolicitudPedido = solped.IdSolicitudPedido
         FROM @TablaComparativa comp
             INNER JOIN @TablaSolicitudPedido solped
-                ON solped.IdComparativa = comp.IdComparativa
+                ON comp.IdComparativa = solped.IdComparativa
         WHERE comp.IdSolicitudPedido IS NULL
               AND
               (
                   ISNULL(comp.EliminadoError, 0) = 0
                   AND ISNULL(comp.ExisteSolpedDetalle, 0) = 0
               );
-
-
-
-
+			  			   			   
 
         -- Se actualiza la tabla para saber cuales son los detalles que se van a crear    
 
@@ -1088,11 +1069,7 @@ BEGIN --EMPIEZA STORE
             solped.IdProveedor = comp.IdProveedor
         FROM @TablaAgrupacionSolpedCrearNuevas solped
             INNER JOIN @TablaComparativa comp
-                ON comp.IdComparativa = solped.IdComparativa;
-
-
-
-
+                ON solped.IdComparativa = comp.IdComparativa;
 
         -- Se inserta el detalle de la solped    
 
@@ -1121,51 +1098,25 @@ BEGIN --EMPIEZA STORE
                comp.IdDinamicsAx
         FROM @TablaComparativa comp
             INNER JOIN @TablaAgrupacionSolpedCrearNuevas filtro -- solo se insertan las solped nuevas creadas    
-
-                ON filtro.IdSolicitudPedido = comp.IdSolicitudPedido
+                ON comp.IdSolicitudPedido = filtro.IdSolicitudPedido
         WHERE (
                   ISNULL(comp.EliminadoError, 0) = 0
                   AND ISNULL(comp.ExisteSolpedDetalle, 0) = 0
               );
 
-
-
-
-
         -- Se actualiza el campo de la solicitud pedido detalle para saber cuales son los detalles que se insertaron    
 
         UPDATE comp
-        SET comp.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle,
-
-            --comp.IdDomicilioPetrov = dom.IdDomicilio,    
-
+        SET comp.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle, 
             comp.IdCentroCostoPetrov = costo.IdCentroCosto
         FROM @TablaComparativa comp
-            LEFT JOIN dbo.MM_SolicitudPedidoDetalle spd -- para que se inserte en todas las comparativas la solped que le corresponde    
-
-                ON spd.IdDinamicsAx = comp.IdDinamicsAx
+            LEFT JOIN dbo.MM_SolicitudPedidoDetalle spd -- para que se inserte en todas las comparativas la solped que le corresponde   
+                ON comp.IdDinamicsAx = spd.IdDinamicsAx
             INNER JOIN dbo.CC_CentroCosto costo
-                ON costo.IdCentroCosto = comp.IdCentroCostoPetrov;
+                ON comp.IdCentroCostoPetrov = costo.IdCentroCosto;
 
 
-
-
-
-        --INNER JOIN    
-
-        --    dbo.DG_Domicilio              dom    
-
-        --        ON UPPER(dom.Calle) = UPPER(comp.LugarEntrega)    
-
-
-
-        --SELECT 'nuevas',* FROM @TablaAgrupacionSolpedCrearNuevas    
-
-        --SELECT 'comp',* FROM @TablaComparativa    
-
-
-
-        -- Insercion de las lineas, centro de costo e instalaciones    
+        -- Inserción de las líneas, centro de costo e instalaciones    
 
         INSERT INTO dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
         (
@@ -1180,7 +1131,7 @@ BEGIN --EMPIEZA STORE
                comp.IdLineaPresupuestoPetrov
         FROM @TablaComparativa comp
             INNER JOIN @TablaAgrupacionSolpedCrearNuevas filtro
-                ON filtro.IdSolicitudPedido = comp.IdSolicitudPedido
+                ON comp.IdSolicitudPedido = filtro.IdSolicitudPedido
         WHERE comp.IdCentroCostoPetrov IS NOT NULL
               AND comp.IdInstalacionPetrov IS NOT NULL
               AND comp.IdLineaPresupuestoPetrov IS NOT NULL
@@ -1197,11 +1148,7 @@ BEGIN --EMPIEZA STORE
                  filtro.IdProveedor;
 
     END; -- // FIN GUARDADO DETALLE DE LA SOLPED    
-
-
-
-
-
+	   	  
     BEGIN --ACTUALIZACION DE LA TABLA AX_COMPARATIVA    
 
         UPDATE axComp
@@ -1209,13 +1156,9 @@ BEGIN --EMPIEZA STORE
             axComp.IdSolicitudPedidoDetalle = comp.IdSolicitudPedidoDetalle
         FROM @TablaComparativa comp
             INNER JOIN dbo.AX_Comparativa axComp
-                ON axComp.IdDinamicsAx = comp.IdDinamicsAx;
+                ON comp.IdDinamicsAx = axComp.IdDinamicsAx;
 
     END;
-
-
-
-
 
     BEGIN -- // INICIO DE LA OPERACION Creacion de la Operacion y marcada como Aprobada    
 
@@ -1256,16 +1199,13 @@ BEGIN --EMPIEZA STORE
                    Descripcion
             FROM TA_FlujoTarea AS FT
                 INNER JOIN TA_TipoOperacion AS TO_
-                    ON TO_.IdTipoOperacion = FT.IdTipoOperacion
+                    ON FT.IdTipoOperacion = TO_.IdTipoOperacion
                 INNER JOIN @TablaComparativa comp
-                    ON comp.IdProveedor = FT.IdProveedor
+                    ON FT.IdProveedor = comp.IdProveedor 
             WHERE ISNULL(comp.EliminadoError, 0) <> 1
         ) AS temp
         WHERE temp.rn = 1
-              AND temp.IdTipoOperacion = 2; -- Requisicion    
-
-
-
+              AND temp.IdTipoOperacion = 2; -- Requisición    
 
 
         UPDATE solped
@@ -1274,14 +1214,11 @@ BEGIN --EMPIEZA STORE
             solped.IdAsignador = comp.IdUsuarioPetrov
         FROM @TablaAgrupacionSolpedCrearNuevas solped
             INNER JOIN @TablaComparativa comp
-                ON comp.IdComparativa = solped.IdComparativa
+                ON solped.IdComparativa = comp.IdComparativa
             INNER JOIN @TablaFlujos flujo
-                ON flujo.IdProveedor = comp.IdProveedor
+                ON comp.IdProveedor = flujo.IdProveedor
         WHERE ISNULL(comp.EliminadoError, 0) <> 1;
-
-
-
-
+			   		 	  
 
         INSERT INTO dbo.TA_Operacion
         (
@@ -1310,26 +1247,20 @@ BEGIN --EMPIEZA STORE
                2
         FROM @TablaAgrupacionSolpedCrearNuevas solped
             INNER JOIN @TablaComparativa comp
-                ON comp.IdSolicitudPedido = solped.IdSolicitudPedido
+                ON solped.IdSolicitudPedido = comp.IdSolicitudPedido
         GROUP BY solped.IdSolicitudPedido,
                  solped.IdFlujo,
                  solped.IdProveedor,
                  solped.IdAsignador;
 
-
-
-
         UPDATE solped
         SET solped.IdOperacion = tao.IdOperacion
         FROM @TablaAgrupacionSolpedCrearNuevas solped
             INNER JOIN dbo.TA_Operacion tao
-                ON tao.IdDocumento = solped.IdSolicitudPedido
+                ON solped.IdSolicitudPedido = tao.IdDocumento
                    AND tao.IdTipoOperacion = 2;
 
-
-
-
-
+				   					 				  
         INSERT INTO dbo.TA_Tarea
         (
             NombreTarea,
@@ -1355,14 +1286,10 @@ BEGIN --EMPIEZA STORE
             INNER JOIN @TablaAgrupacionSolpedCrearNuevas solped
                 ON flujo.IdFLujoTarea = solped.IdFlujo
             INNER JOIN @TablaComparativa comp
-                ON comp.IdSolicitudPedido = solped.IdSolicitudPedido
+                ON solped.IdSolicitudPedido = comp.IdSolicitudPedido
         WHERE ISNULL(comp.EliminadoError, 0) <> 1;
 
-
-
-
-
-        --relacion tarea operacion    
+        --relación tarea operación    
 
         INSERT INTO dbo.TA_TareaOperacion
         (
@@ -1373,13 +1300,9 @@ BEGIN --EMPIEZA STORE
                solped.IdOperacion
         FROM @TablaAgrupacionSolpedCrearNuevas solped
             INNER JOIN dbo.TA_Tarea t
-                ON t.IdOperacion = solped.IdOperacion;
-
-
-
-
-
-        -- se aprueba la solicitud de pedido    
+                ON solped.IdOperacion = t.IdOperacion;
+							   				 			  
+        -- Se aprueba la solicitud de pedido    
 
         UPDATE t
         SET t.IdEstatus = 2,
@@ -1387,23 +1310,15 @@ BEGIN --EMPIEZA STORE
             t.Comentario = ''
         FROM dbo.TA_Tarea t
             INNER JOIN @TablaAgrupacionSolpedCrearNuevas solped
-                ON solped.IdOperacion = t.IdOperacion;
-
-
-
-
+                ON t.IdOperacion = solped.IdOperacion;
 
         UPDATE tao
         SET tao.IdEstatusOperacion = 2,
             tao.IdEstadoFlujo = 3
         FROM dbo.TA_Operacion tao
             INNER JOIN @TablaAgrupacionSolpedCrearNuevas solped
-                ON solped.IdOperacion = tao.IdOperacion
-                   AND solped.IdProveedor = tao.IdProveedor;
-
-
-
-
+                ON tao.IdOperacion = solped.IdOperacion
+                   AND tao.IdProveedor = solped.IdProveedor;
 
         -- GUARDADO DEL HISTORIAL DE LA SOLPED    
 
@@ -1426,20 +1341,15 @@ BEGIN --EMPIEZA STORE
             INNER JOIN dbo.S_Usuario u
                 ON solped.IdAsignador = u.IdUsuario;
 
-
-
-
-
-        -- ya que lo toma del historial entonces actualizo nuevamente el usuario para que aparezca como aprobador    
+        -- Ya que lo toma del historial entonces actualizó nuevamente el usuario para que aparezca como aprobador    
 
         UPDATE solped
         SET solped.IdAsignador = comp.IdUsuarioAprobador
         FROM @TablaAgrupacionSolpedCrearNuevas solped
             INNER JOIN @TablaComparativa comp
-                ON comp.IdComparativa = solped.IdComparativa
+                ON solped.IdComparativa = comp.IdComparativa
             INNER JOIN @TablaFlujos flujo
-                ON flujo.IdProveedor = comp.IdProveedor;
-
+                ON comp.IdProveedor = flujo.IdProveedor;
 
 
         INSERT INTO dbo.TA_HistorialFlujoTarea
@@ -1457,10 +1367,6 @@ BEGIN --EMPIEZA STORE
             INNER JOIN dbo.S_Usuario u
                 ON solped.IdAsignador = u.IdUsuario;
 
-
-
-
-
         INSERT INTO dbo.TA_HistorialFlujoTarea
         (
             IdOperacion,
@@ -1474,26 +1380,19 @@ BEGIN --EMPIEZA STORE
                7
         FROM @TablaAgrupacionSolpedCrearNuevas solped;
 
-    END; -- FIN DE LA OPERACION    
+    END; -- FIN DE LA OPERACIÓN    
+	   	 
 
-
-
-
-
-    BEGIN -- Seccion de Alta de nuevo material, pero de una solped ya creada anteriormente    
+    BEGIN -- Sección de Alta de nuevo material, pero de una solped ya creada anteriormente    
 
         UPDATE comp2
         SET comp2.IdSolicitudPedido = comp.IdSolicitudPedido
         FROM dbo.AX_Comparativa comp
             INNER JOIN dbo.AX_Comparativa comp2
-                ON comp2.IdComparativa = comp.IdComparativa
+                ON comp.IdComparativa = comp2.IdComparativa
         WHERE comp.IdSolicitudPedido IS NOT NULL;
 
-
-
-
-
-        -- saber cuales son los materiales que se van agregar    
+        -- Saber cuales son los materiales que se van agregar    
 
         INSERT INTO @TablaAgrupacionSolpedExistenteAgregarMaterial
         (
@@ -1506,18 +1405,14 @@ BEGIN --EMPIEZA STORE
                comp.IdSolicitudPedidoDetalle
         FROM dbo.AX_Comparativa comp
             INNER JOIN @TablaComparativa filtro
-                ON filtro.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = filtro.IdDinamicsAx
         WHERE comp.IdSolicitudPedidoDetalle IS NULL
               AND
               (
                   ISNULL(filtro.EliminadoError, 0) = 0
                   AND ISNULL(filtro.ExisteSolpedDetalle, 0) = 0
               );
-
-
-
-
-
+			  			   			   			  
         -- Se inserta el detalle de la solped del material a agregar    
 
         INSERT INTO dbo.MM_SolicitudPedidoDetalle
@@ -1545,7 +1440,7 @@ BEGIN --EMPIEZA STORE
                comp.IdDinamicsAx
         FROM dbo.AX_Comparativa comp
             INNER JOIN @TablaComparativa filtro
-                ON filtro.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = filtro.IdDinamicsAx
         WHERE comp.IdSolicitudPedidoDetalle IS NULL
               AND
               (
@@ -1553,33 +1448,23 @@ BEGIN --EMPIEZA STORE
                   AND ISNULL(filtro.ExisteSolpedDetalle, 0) = 0
               );
 
-
-
-
-
+			  			   			   
         -- Se actualiza el campo de la solicitud pedido detalle para saber cuales son los detalles que se insertaron    
 
         UPDATE comp
         SET comp.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
         FROM dbo.AX_Comparativa comp
             INNER JOIN dbo.MM_SolicitudPedidoDetalle spd
-                ON spd.IdDinamicsAx = comp.IdDinamicsAx;
-
-
-
-
+                ON comp.IdDinamicsAx = spd.IdDinamicsAx;
 
         UPDATE det
         SET det.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
         FROM @TablaAgrupacionSolpedExistenteAgregarMaterial det
             INNER JOIN dbo.MM_SolicitudPedidoDetalle spd
-                ON spd.IdDinamicsAx = det.IdDinamicsAx;
+                ON det.IdDinamicsAx = spd.IdDinamicsAx;
 
 
-
-
-
-        --Insercion de las lineas, centro de costo e instalaciones    
+        --Insercion de las líneas, centro de costo e instalaciones    
 
         INSERT INTO dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
         (
@@ -1594,7 +1479,7 @@ BEGIN --EMPIEZA STORE
                comp.IdLineaPresupuestoPetrov
         FROM @TablaComparativa comp
             INNER JOIN @TablaAgrupacionSolpedExistenteAgregarMaterial m
-                ON m.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = m.IdDinamicsAx
         WHERE comp.IdCentroCostoPetrov IS NOT NULL
               AND
               (
@@ -1603,9 +1488,6 @@ BEGIN --EMPIEZA STORE
               );
 
     END;
-
-
-
 
 
     BEGIN -- ACTUALIZACION DE TODOS LOS REGISTROS    
@@ -1621,60 +1503,8 @@ BEGIN --EMPIEZA STORE
                IdDinamicsAx
         FROM dbo.AX_Comparativa
         WHERE Editado = 1;
-
-
-
-
-
-        --INSERT INTO    
-
-        --    @TablaComparativasExistenteSoloActualizar ( IdDinamicsAx, IdComparativa )    
-
-        --SELECT    
-
-        --        comp.IdDinamicsAx, comp.IdComparativa    
-
-        --FROM    
-
-        --        dbo.AX_Comparativa                comp    
-
-        --    LEFT JOIN    
-
-        --        @TablaAgrupacionSolpedCrearNuevas nueva    
-
-        --            ON comp.IdComparativa = nueva.IdComparativa    
-
-        --WHERE    
-
-        --        nueva.IdComparativa IS NULL    
-
-
-
-        --INSERT INTO    
-
-        --    @TablaComparativasExistenteSoloActualizar ( IdDinamicsAx, IdComparativa )    
-
-        --SELECT    
-
-        --        comp.IdDinamicsAx, comp.IdComparativa    
-
-        --FROM    
-
-        --        dbo.AX_Comparativa                             comp    
-
-        --    LEFT JOIN    
-
-        --        @TablaAgrupacionSolpedExistenteAgregarMaterial mat    
-
-        --            ON mat.IdComparativa = comp.IdComparativa    
-
-        --WHERE    
-
-        --        mat.IdComparativa IS NULL    
-
-
-
-        --se tiene que actualizar la tabla comparativa ya que es de donde se van a tomar todos los datos    
+			   		       
+        --Se tiene que actualizar la tabla comparativa ya que es de donde se van a tomar todos los datos    
 
         UPDATE tComp
         SET tComp.IdMaterialPetrov = ISNULL(m.IdMaterialPetrov, tComp.Item),
@@ -1691,19 +1521,19 @@ BEGIN --EMPIEZA STORE
             tComp.IdContrato = ISNULL(comp.IdContrato, tComp.IdContrato)
         FROM @TablaComparativa tComp
             INNER JOIN dbo.AX_Comparativa comp
-                ON comp.IdDinamicsAx = tComp.IdDinamicsAx
+                ON tComp.IdDinamicsAx = comp.IdDinamicsAx
             INNER JOIN @TablaRegistrosActualizar act
-                ON act.IdDinamicsAx = comp.IdDinamicsAx --filtro    
+                ON comp.IdDinamicsAx = act.IdDinamicsAx  --filtro    
             LEFT JOIN dbo.AX_CENTROCOSTO costo
-                ON costo.IdCentroCostoAx = tComp.CentroCosto
+                ON tComp.CentroCosto = costo.IdCentroCostoAx 
             LEFT JOIN dbo.AX_DOMICILIO dom
-                ON dom.IdDomicilioAx = tComp.LugarEntrega
+                ON tComp.LugarEntrega = dom.IdDomicilioAx
             LEFT JOIN dbo.AX_MATERIAL m
-                ON m.IdMaterialAx = tComp.IdMaterialSplit
+                ON tComp.IdMaterialSplit = m.IdMaterialAx 
             LEFT JOIN dbo.PV_MM_MaterialUnidad unidad
-                ON unidad.Unidad = comp.Unidad
+                ON comp.Unidad = unidad.Unidad
             LEFT JOIN Adinco.dbo.CO_Instalacion inst
-                ON UPPER(comp.Instalacion) COLLATE DATABASE_DEFAULT = UPPER(inst.NombreInstalacion)
+                ON UPPER(inst.NombreInstalacion)  COLLATE DATABASE_DEFAULT = UPPER(comp.Instalacion)
         WHERE ISNULL(tComp.EliminadoError, 0) <> 1;
 
 
@@ -1717,12 +1547,10 @@ BEGIN --EMPIEZA STORE
             sp.IdPresupuesto = comp.IdPresupuestoPetrov
         FROM @TablaComparativa comp
             INNER JOIN @TablaRegistrosActualizar act
-                ON act.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = act.IdDinamicsAx
             INNER JOIN dbo.MM_SolicitudPedido sp
-                ON sp.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = sp.IdDinamicsAx
         WHERE ISNULL(comp.EliminadoError, 0) <> 1;
-
-
 
 
         UPDATE spd
@@ -1733,60 +1561,35 @@ BEGIN --EMPIEZA STORE
             spd.IdDomicilioEntrega = comp.IdDomicilioPetrov
         FROM dbo.MM_SolicitudPedidoDetalle spd
             INNER JOIN @TablaComparativa comp
-                ON comp.IdDinamicsAx = spd.IdDinamicsAx
+                ON spd.IdDinamicsAx = comp.IdDinamicsAx
             INNER JOIN @TablaRegistrosActualizar act
-                ON act.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = act.IdDinamicsAx
         WHERE ISNULL(comp.EliminadoError, 0) <> 1;
 
-
-
-
+			   
         UPDATE spdl
         SET spdl.IdCentroCosto = comp.IdCentroCostoPetrov,
             spdl.IdInstalacion = comp.IdInstalacionPetrov,
             spdl.IdLineaPresupuesto = comp.IdLineaPresupuestoPetrov
         FROM dbo.MM_SolicitudPedidoDetalleLineaPresupuesto spdl
             INNER JOIN dbo.MM_SolicitudPedidoDetalle spd
-                ON spd.IdSolicitudPedidoDetalle = spdl.IdSolicitudPedidoDetalle
+                ON spdl.IdSolicitudPedidoDetalle = spd.IdSolicitudPedidoDetalle
             INNER JOIN @TablaComparativa comp
-                ON comp.IdDinamicsAx = spd.IdDinamicsAx
+                ON spd.IdDinamicsAx = comp.IdDinamicsAx
             INNER JOIN @TablaRegistrosActualizar act
-                ON act.IdDinamicsAx = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = act.IdDinamicsAx
         WHERE ISNULL(comp.EliminadoError, 0) <> 1;
 
-
-
-
-        -- Ya que se actualizo el dato volver a setearlo a no editado    
+        -- Ya que se actualizó el dato, volver a setearlo a no editado    
 
         UPDATE comp
         SET comp.Editado = 0
         FROM @TablaRegistrosActualizar act
             INNER JOIN dbo.AX_Comparativa comp
-                ON comp.IdDinamicsAx = act.IdDinamicsAx;
-
-
-
-    --SELECT * FROM @TablaRegistrosActualizar    
-
-    --SELECT * FROM dbo.MM_SolicitudPedido     
-
-    --SELECT * FROM dbo.AX_ComparativaEmpresa    
-
-    --SELECT * FROM dbo.AX_Comparativa    
-
-
-
-    --SELECT 'antes del rollback',* FROM @TablaComparativa    
+                ON act.IdDinamicsAx = comp.IdDinamicsAx;
 
     END;
-
-
-
-
-
-
-
+		   	  
     --Retorno de tabla incorrectos    
 
     INSERT INTO dbo.Ax_Incorrectos
@@ -1802,7 +1605,7 @@ BEGIN --EMPIEZA STORE
            GETDATE()
     FROM @TablaComparativa comp
         LEFT JOIN dbo.Ax_Incorrectos i
-            ON i.IdDocumento = comp.IdDinamicsAx
+            ON comp.IdDinamicsAx = i.IdDocumento
                AND i.IdTipoOperacion = 2
                AND ISNULL(i.Enviado, 0) = 0
     WHERE i.IdTipoOperacion IS NULL
@@ -1812,10 +1615,7 @@ BEGIN --EMPIEZA STORE
               OR comp.IdSolicitudPedidoDetalle IS NULL
           );
 
-
-
-
-
+		  		   		   
     -- Motivo por el cual no se creo    
 
     UPDATE i
@@ -1857,13 +1657,13 @@ BEGIN --EMPIEZA STORE
                              END,
                              CASE
                                  WHEN comp.IdInstalacionPetrov IS NULL THEN
-                                     ' Instalacion No Registrado '
+                                     ' Instalación No Registrada '
                                  ELSE
                                      ''
                              END,
                              CASE
                                  WHEN comp.IdLineaPresupuestoPetrov IS NULL THEN
-                                     ' Linea No Registrado -'
+                                     ' Línea No Registrada -'
                                  ELSE
                                      ''
                              END,
@@ -1882,11 +1682,9 @@ BEGIN --EMPIEZA STORE
                          )
     FROM @TablaComparativa comp
         INNER JOIN dbo.Ax_Incorrectos i
-            ON i.IdDocumento = comp.IdDinamicsAx
+            ON comp.IdDinamicsAx = i.IdDocumento
                AND i.IdTipoOperacion = 2;
-
-
-
+			   				 
     -- Retorno cuales no se crearon y por que    
 
     INSERT INTO dbo.Ax_ComparativaErrorLog
@@ -1910,22 +1708,20 @@ BEGIN --EMPIEZA STORE
               OR comp.IdSolicitudPedidoDetalle IS NULL
           ); -- filtrar en caso de que ya se haya creado    
 
-
-
-    --ENVIO DE LOS CORREOS DE LAS SOLPEDS CREADAS  
+		  
+    --ENVIÓ DE LOS CORREOS DE LAS SOLPEDS CREADAS  
 
     UPDATE comp
     SET comp.EnvioCorreo = 1
     FROM @TablaAgrupacionSolpedCrearNuevas solped
         INNER JOIN dbo.AX_Comparativa comp
-            ON comp.IdComparativa = solped.IdComparativa
+            ON solped.IdComparativa = comp.IdComparativa
     WHERE solped.IdSolicitudPedido IS NOT NULL;
-
 
 
     EXEC dbo.EnviarCorreoSolpedAprobadaCarso;
 
-    --retorno los que tuvieron error
+    --Retorno los que tuvieron error
     SELECT IdDinamicsAx,
            LineaPresupuesto,
            Item,
