@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_Ax_WsCarso_NewComparativa'
+)
+    DROP PROCEDURE SP_Ax_WsCarso_NewComparativa;
+/****** Object:  StoredProcedure [dbo].[SP_Ax_WsCarso_NewComparativa]    Script Date: 06/11/2023 06:36:43 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 15/10/2018
 -- Description:	AGREGAR DETALLE DE UNA COMPARATIVA
@@ -6,6 +20,11 @@
 -- Author:		Luis David
 -- Create date: 27/10/2021
 -- Description:	Se corrige la ortografía 
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 28/11/2023
+-- Description:	SE CORRIGE LA ORTOGRAFÍA 
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_Ax_WsCarso_NewComparativa]
     -- Add the parameters for the stored procedure here
@@ -47,7 +66,7 @@ BEGIN
             @ErrorRetorno NVARCHAR(MAX),
             @MensajeCorrecto NVARCHAR(MAX),
             @Stored NVARCHAR(500) = N'SP_Ax_WsCarso_NewComparativa'
-
+			
     DECLARE @TablaComparativa TABLE
     (
         IdDinamicsAx INT,
@@ -96,6 +115,10 @@ BEGIN
         NombreUsuarioAprobador NVARCHAR(2000)
     )
 
+	DECLARE @IdProveedorEmp INT,
+        @IdUsuarioEmp INT,
+        @IdContrato INT,
+        @InsertaroActualizar NVARCHAR(400)
 
     INSERT INTO dbo.AX_ComparativaLog
     (
@@ -134,12 +157,6 @@ BEGIN
      @TipoAdjudicacion, @JustificacionPedido, @CentroCosto, @Aprobadores, @MensajeAprobacion, @IdComparativa,
      @IdPosicion, @DataAreaID, @FechaEntregaExist, @IdProveedor, @IdUsuario, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8,
      @p9, @p10)
-
-    DECLARE @IdProveedorEmp INT,
-            @IdUsuarioEmp INT,
-            @IdContrato INT,
-            @InsertaroActualizar NVARCHAR(400)
-
 
 
     SELECT @IdProveedorEmp = IdProveedor,
@@ -433,7 +450,7 @@ BEGIN
 			   GETDATE()
         FROM @TablaComparativa comp
             INNER JOIN dbo.Ax_Incorrectos i
-                ON i.IdDocumento = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = i.IdDocumento
                    AND LTRIM(RTRIM(i.Motivo)) <> ''
         WHERE comp.IdDinamicsAx = @IdInsertado
 
@@ -448,7 +465,7 @@ BEGIN
             SELECT 1
             FROM @TablaComparativa comp
                 INNER JOIN dbo.Ax_Incorrectos i
-                    ON i.IdDocumento = comp.IdDinamicsAx
+                    ON comp.IdDinamicsAx = i.IdDocumento 
                        AND LTRIM(RTRIM(i.Motivo)) <> ''
             WHERE comp.IdDinamicsAx = @IdInsertado
         )
@@ -469,8 +486,7 @@ BEGIN
         BEGIN
             SELECT CONCAT('Actualización exitosa ', @IdComparativa),
                    'UPDATE',
-   'Actualizacion'
-            FROM dbo.AX_Comparativa
+				   'Actualizacion'           			
         END
     END
 
@@ -495,7 +511,7 @@ BEGIN
 			   GETDATE()
         FROM @TablaComparativa comp
             INNER JOIN dbo.Ax_Incorrectos i
-                ON i.IdDocumento = comp.IdDinamicsAx
+                ON comp.IdDinamicsAx = i.IdDocumento
                    AND LTRIM(RTRIM(i.Motivo)) <> ''
         WHERE comp.IdDinamicsAx = @IdInsertado
 
@@ -510,14 +526,14 @@ BEGIN
             SELECT 1
             FROM @TablaComparativa comp
                 INNER JOIN dbo.Ax_Incorrectos i
-                    ON i.IdDocumento = comp.IdDinamicsAx
+                    ON comp.IdDinamicsAx = i.IdDocumento
                        AND LTRIM(RTRIM(i.Motivo)) <> ''
             WHERE comp.IdDinamicsAx = @IdInsertado
         )
         BEGIN
             SELECT 
                    CONCAT(
-                             'Fallo Inserción de comparativa:',
+                             'Falló Inserción de comparativa:',
                              @IdComparativa,
                              ' RecId: ',
                              @IdPosicion,
