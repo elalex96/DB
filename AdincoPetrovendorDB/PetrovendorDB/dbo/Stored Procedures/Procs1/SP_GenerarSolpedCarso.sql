@@ -810,26 +810,8 @@ BEGIN --EMPIEZA STORE
 
 	   	 
     BEGIN -- // INICIO BUSQUEDA DE LINEAS DE PRESUPUESTO    
-
-        --UPDATE    
-
-        --    comp    
-
-        --SET --idperiodo = 10093, idpresupuesto = 10086, idlinea = 205850    
-
-        --    comp.IdPresupuestoPetrov = 3,    
-
-        --    comp.IdPeriodoPetrov = 10011,    
-
-        --    comp.IdLineaPresupuestoPetrov = 14783    
-
-        --FROM    
-
-        --    @TablaComparativa comp    
-
-
-
-        -- esta seccion se descomenta si la funcion ya se termino para buscar las lineas de presupuesto    
+	        		
+        -- En esta seccion se descomenta si la funcion ya se termino para buscar las lineas de presupuesto    
 
         UPDATE tComp
         SET tComp.IdLineaPresupuestoPetrov = IdLineaPresupuesto,
@@ -1464,7 +1446,7 @@ BEGIN --EMPIEZA STORE
                 ON det.IdDinamicsAx = spd.IdDinamicsAx;
 
 
-        --Insercion de las líneas, centro de costo e instalaciones    
+        --Inserción de las líneas, centro de costo e instalaciones    
 
         INSERT INTO dbo.MM_SolicitudPedidoDetalleLineaPresupuesto
         (

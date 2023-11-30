@@ -66,7 +66,7 @@ BEGIN
             @ErrorRetorno NVARCHAR(MAX),
             @MensajeCorrecto NVARCHAR(MAX),
             @Stored NVARCHAR(500) = N'SP_Ax_WsCarso_NewComparativa'
-
+			
     DECLARE @TablaComparativa TABLE
     (
         IdDinamicsAx INT,
@@ -486,8 +486,7 @@ BEGIN
         BEGIN
             SELECT CONCAT('Actualización exitosa ', @IdComparativa),
                    'UPDATE',
-					'Actualizacion'
-            FROM dbo.AX_Comparativa
+				   'Actualizacion'           			
         END
     END
 
