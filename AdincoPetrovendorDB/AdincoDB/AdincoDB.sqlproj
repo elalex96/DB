@@ -3941,8 +3941,5 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_DesactivarSAPVendor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_ObtenerBitacoraPresupuesto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_TipoProgramaActividad.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_UnidadesContratoUno.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_NombreServicioExiste.sql" />
-    <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_CatalogoDeServicios.sql" />
   </ItemGroup>
 </Project>

@@ -7,7 +7,7 @@
     DROP PROCEDURE USP_SEL_CO_ObtenerCatalogoDeServicios;
 GO
 
-CREATE PROCEDURE [dbo].[USP_SEL_CO_ObtenerCatalogoDeServicios] 
+CREATE PROCEDURE USP_SEL_CO_ObtenerCatalogoDeServicios
     @UsuarioId INT,
     @ContratoId INT
 AS
@@ -19,12 +19,10 @@ CREATE TABLE #T_Servicio
     [Contrato] VARCHAR(100) NULL,
     [NombreDelServicio] VARCHAR(8000) NULL,
     [IdUnidad] INT NULL,
+    [Unidad] VARCHAR(100) NULL,
     [CreadoPor] INT NULL,
     [Usuario] VARCHAR(100) NULL,
     [CreadoEn] DATETIME NULL,
-	[ModificadoPor] INT NULL,
-    [UsuarioModificador] VARCHAR(100) NULL,
-    [ModificadoEl] DATETIME NULL,
     [Activo] BIT NULL
 );
 
@@ -36,12 +34,10 @@ INSERT INTO #T_Servicio
     IdUnidad,
     CreadoPor,
     CreadoEn,
-	ModificadoPor,
-	ModificadoEl,
     Activo,
     Contrato,
-    Usuario,
-	UsuarioModificador
+    Unidad,
+    Usuario
 )
 SELECT IdServicio,
        IdContrato,
@@ -49,8 +45,6 @@ SELECT IdServicio,
        IdUnidad,
        CreadoPor,
        FecMovto,
-	   ModificadoPor,
-	   ModificadoEl,
        Activo,
        '',
        '',
@@ -58,23 +52,16 @@ SELECT IdServicio,
 FROM CO_Servicio (NOLOCK)
 
 UPDATE #T_Servicio
-SET #T_Servicio.IdUnidad = NULL
+SET #T_Servicio.Unidad = ISNULL(CO_Unidad.Unidad, '')
 FROM #T_Servicio
     JOIN CO_Unidad
         ON #T_Servicio.IdUnidad = CO_Unidad.IdUnidad
-		AND CO_Unidad.IdContrato <> 1
 
 UPDATE #T_Servicio
 SET #T_Servicio.Usuario = ISNULL(AP_Usuario.Nombre, '')
 FROM #T_Servicio
     JOIN AP_Usuario
         ON #T_Servicio.CreadoPor = AP_Usuario.UsuarioID
-
-UPDATE #T_Servicio
-SET #T_Servicio.UsuarioModificador = ISNULL(AP_Usuario.Nombre, '')
-FROM #T_Servicio
-    JOIN AP_Usuario
-        ON #T_Servicio.ModificadoPor = AP_Usuario.UsuarioID
 
 UPDATE #T_Servicio
 SET #T_Servicio.Contrato = CO_Contrato.NumeroContrato + ' - ' + ISNULL(CO_AreaContractual.NombreAreaContractual, '')
@@ -87,11 +74,9 @@ FROM #T_Servicio
 SELECT IdServicio,
        Contrato,
        NombreDelServicio,
-       IdUnidad,
+       Unidad,
        Usuario,
        CreadoEn,
-	   UsuarioModificador,
-	   ModificadoEl,
        Activo
 FROM #T_Servicio 
 ORDER BY Contrato ASC
