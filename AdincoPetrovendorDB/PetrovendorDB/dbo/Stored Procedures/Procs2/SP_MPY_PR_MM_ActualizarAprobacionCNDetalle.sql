@@ -1,16 +1,10 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
     WHERE name = 'SP_MPY_PR_MM_ActualizarAprobacionCNDetalle'
 )
     DROP PROCEDURE SP_MPY_PR_MM_ActualizarAprobacionCNDetalle;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		DANIEL Cruz
@@ -46,6 +40,7 @@ AS
         DECLARE @Idaceptacionservi INT;
         DECLARE @statusnombre NVARCHAR(MAX);
         DECLARE @statusNombreEn NVARCHAR(MAX);
+		DECLARE @IdEstatusAceptado INT = 2;
         -- Insert statements for procedure here
 
         UPDATE dbo.MPY_MM_AceptacionCartaPCN
@@ -87,10 +82,10 @@ AS
                  LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK) 
 					ON PSES.SAPPONumber = SES.PO_SAPNumer
                      AND PSES.SAPSESNumber = SES.SESReferenceNumber
-                 LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
+                 JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
 						AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-						AND AP.IdAceptacionPedido = @Idaceptacionservi
+						AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
         DECLARE @IDSES INT=
         (
@@ -99,10 +94,10 @@ AS
                  LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK) 
 					ON PSES.SAPPONumber = SES.PO_SAPNumer
 						AND PSES.SAPSESNumber = SES.SESReferenceNumber
-                 LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
+                 JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
                     AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-					AND AP.IdAceptacionPedido = @Idaceptacionservi
+					AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
         DECLARE @REFERENCE NVARCHAR(100)=
         (
@@ -111,10 +106,10 @@ AS
                  LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK) 
 					ON PSES.SAPPONumber = SES.PO_SAPNumer
                      AND PSES.SAPSESNumber = SES.SESReferenceNumber
-                 LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
+                 JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
                     AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-					AND AP.IdAceptacionPedido = @Idaceptacionservi
+					AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
         DECLARE @PO NVARCHAR(100)=
         (
@@ -123,10 +118,10 @@ AS
                  LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK)
 					ON PSES.SAPPONumber = SES.PO_SAPNumer
                     AND PSES.SAPSESNumber = SES.SESReferenceNumber
-                 LEFT JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
+                 JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK) 
 					ON SES.PO_SAPNumer COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
                     AND SES.SESReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS
-					AND AP.IdAceptacionPedido = @Idaceptacionservi
+					AND AP.IdAceptacionPedido = @Idaceptacionservi AND PSES.IdEstatus = @IdEstatusAceptado  
         );
 (
     SELECT usuario.nombre, 
