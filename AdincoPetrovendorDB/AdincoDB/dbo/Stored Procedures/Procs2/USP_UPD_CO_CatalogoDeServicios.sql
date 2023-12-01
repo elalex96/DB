@@ -43,7 +43,7 @@ BEGIN
                         @DetalleBitacora,
                         ' Nombre del Servicio: Antes [',
                         LTRIM(RTRIM(ISNULL(CO_Servicio.NombreServicio, ''))),
-                        '], Despues [',
+                        '], Después [',
                         LTRIM(RTRIM(ISNULL(@NombreDelServicio, ''))),
                         ']'
                     )
@@ -59,7 +59,7 @@ BEGIN
                         CONVERT(VARCHAR(10), CO_Servicio.IdUnidad),
                         ' - ',
                         @UnidadAntes,
-                        '], Despues [',
+                        '], Después [',
                         CONVERT(VARCHAR(10), @IdUnidad),
                         ' - ',
                         @UnidadDespues,
@@ -79,7 +79,7 @@ BEGIN
                             ELSE
                                 'Activo'
                         END,
-                        '], Despues [',
+                        '], Después [',
                         CASE
                             WHEN ISNULL(@Activo, 0) = 0 THEN
                                 'Inactivo'
