@@ -1,4 +1,12 @@
-﻿-- =============================================
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ListaAprobacionCN_S3'
+)
+    DROP PROCEDURE SP_PR_MM_ListaAprobacionCN_S3;
+GO
+-- =============================================
 -- Author:		DANIEL AC
 -- Update date: 07/02/2018
 -- Description:	agregue filtro para todos los estatus de carta de contenido nacional y cambio tipo pedido
@@ -55,7 +63,7 @@ AS
 	Contrato varchar(50),
 	PO varchar(300)
 	);
-
+	DECLARE @IdEstatusAceptado INT = 2;
 	DECLARE @PLANT NVARCHAR(10) = (SELECT TOP 1
 										P.Planta
 										FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
@@ -160,6 +168,7 @@ AS
 			ON	AP.IdContrato = C.IdContrato
 		WHERE 
 		PO.Plant = @PLANT
+		AND PSES.IdEstatus = @IdEstatusAceptado  
 		AND AC.IdAceptacionCartaPCN IS NOT NULL
 		AND AC.IdEstatus = @Estado
 		AND ISNULL(AC.IdEstatusEliminado,0) <> 1  --> QUE NO ESTEN ELIMINADOS
@@ -252,7 +261,7 @@ AS
 			AC.IdDocumento,
 			00, 
 			AP.Creado AS CreadoEl,
-			ISNULL(TD.TipoValidacion, 'Sin Iniciar Aprobaci�n') AS TipoValidacion,
+			ISNULL(TD.TipoValidacion, 'Sin Iniciar Aprobación') AS TipoValidacion,
 			ISNULL(SPV.VendorName,PR.RazonSocial) AS Proveedor,
 			00,
 			'N/A',
@@ -288,6 +297,7 @@ AS
 			ON AP.IdContrato = C.IdContrato
 		WHERE 
 		PO.Plant = @PLANT
+		AND PSES.IdEstatus = @IdEstatusAceptado  
 		AND AC.IdAceptacionCartaPCN IS NOT NULL
 		AND ISNULL(AC.IdEstatusEliminado,0) <> 1  --> QUE NO ESTEN ELIMINADOS
 		GROUP BY CONCAT(
@@ -299,7 +309,7 @@ AS
                  ' - Proforma Number:',
                  CAST(PSES.IdPRESES AS NVARCHAR(100)) COLLATE Modern_Spanish_CI_AS
                  ),
-                 ISNULL(TD.TipoValidacion, 'Sin Iniciar Aprobaci�n'),
+                 ISNULL(TD.TipoValidacion, 'Sin Iniciar Aprobación'),
                  ISNULL(SPV.VendorName, PR.RazonSocial),
                  CASE
                  WHEN TD.IdTipoValidacionDoc = 2 THEN
