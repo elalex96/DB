@@ -3943,5 +3943,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_TipoProgramaActividad.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MOBILE_ConsultaFlujoAprobacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_FMP_CalculadoraGasPorMes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_UnidadesContratoUno.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_NombreServicioExiste.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_CatalogoDeServicios.sql" />
   </ItemGroup>
 </Project>
