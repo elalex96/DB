@@ -13,7 +13,7 @@ GO
 -- =============================================
 CREATE PROCEDURE [dbo].[AD_SP_ComboInstalaciones]
 	@IdContrato INT,
-	@IdUsuario INT,
+	@IdUsuario INT = null,
 	@IdCentroCosto NVARCHAR(300),
 	@IsSolpedGuardado bit = NULL
 AS
