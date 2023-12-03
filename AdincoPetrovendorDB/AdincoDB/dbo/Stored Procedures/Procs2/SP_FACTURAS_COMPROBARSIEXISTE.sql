@@ -1,9 +1,21 @@
-﻿CREATE PROCEDURE [dbo].[SP_FACTURAS_COMPROBARSIEXISTE]
-@idFacturaHijo int
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FACTURAS_COMPROBARSIEXISTE'
+)
+    DROP PROCEDURE SP_FACTURAS_COMPROBARSIEXISTE;
+GO
+
+CREATE PROCEDURE [dbo].[SP_FACTURAS_COMPROBARSIEXISTE]
+	@idFacturaHijo INT
 AS
 BEGIN
-	SELECT 
-	*
-	FROM FI_RelacionRefacturas 
-	WHERE idFacturaHijo = @idFacturaHijo
+    SET NOCOUNT ON;
+
+    --
+    SELECT TOP 1
+        idFacturaHijo
+    FROM FI_RelacionRefacturas (NOLOCK)
+    WHERE idFacturaHijo = @idFacturaHijo
 END;
