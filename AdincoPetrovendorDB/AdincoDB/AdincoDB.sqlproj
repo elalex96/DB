@@ -3946,5 +3946,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_UnidadesContratoUno.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_CO_NombreServicioExiste.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_CatalogoDeServicios.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_INS_UPD_CO_SAPMaterial.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_DesactivarSAPMaterial.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_SAPMaterial.sql" />
   </ItemGroup>
 </Project>
