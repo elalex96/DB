@@ -258,18 +258,14 @@ BEGIN
                            WHEN POActivo IS NULL THEN
                                1
                        END,
-		CancaladoPor = CASE
-                           WHEN POActivo IS NOT NULL THEN
-                               CancaladoPor
-                           WHEN POActivo IS NULL THEN
-                               @UsuarioId
-                       END,
-		CancaladoEl =  CASE
-                           WHEN POActivo IS NOT NULL THEN
-                               CancaladoEl
-                           WHEN POActivo IS NULL THEN
-                               @FechaHoy
-                       END
+			CancaladoPor = CASE
+							   WHEN POActivo IS NOT NULL THEN
+								   CancaladoPor								   
+						   END,
+			CancaladoEl =  CASE
+							   WHEN POActivo IS NOT NULL THEN
+								   CancaladoEl
+						   END
         FROM CO_SAPPO
             JOIN #TablaTemporalSAPPO
                 ON CO_SAPPO.SAPPONumber = #TablaTemporalSAPPO.SAPPONumber
