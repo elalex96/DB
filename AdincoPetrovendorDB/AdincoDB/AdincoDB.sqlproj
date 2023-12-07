@@ -3949,5 +3949,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_INS_UPD_CO_SAPMaterial.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_UPD_CO_DesactivarSAPMaterial.sql" />
     <Build Include="dbo\User Defined Types\CO_Type_SAPMaterial.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_INS_UPD_CO_SAPPO.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_SAPPO.sql" />
   </ItemGroup>
 </Project>
