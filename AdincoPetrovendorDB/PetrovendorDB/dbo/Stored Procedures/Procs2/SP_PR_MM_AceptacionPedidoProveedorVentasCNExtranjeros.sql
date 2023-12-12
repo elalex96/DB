@@ -225,12 +225,12 @@ BEGIN
 		   GROUP BY IdAceptacionPedido
 		 
 
-		   -- ELIMINAR LAS VERSIONES MAS ANTGUAS Y DEJAR LA MAS RECIENTE 
+		   -- ELIMINAR LAS VERSIONES MAS ANTIGUAS Y DEJAR LA MAS RECIENTE 
 		   DELETE APE
 		   FROM #AceptacionesPedidoExtranjeros APE  (NOLOCK)
 		   LEFT JOIN #AceptacionCartaUltimaVersion ACUV (NOLOCK)
-				ON APE.IdAceptacionCartaPCN = APE.IdAceptacionCartaPCN
-		   WHERE APE.IdAceptacionCartaPCN IS NULL
+				ON APE.IdAceptacionCartaPCN = ACUV.IdAceptacionCartaPCN
+		   WHERE ACUV.IdAceptacionCartaPCN IS NULL
 
 	END 
 			
@@ -322,9 +322,9 @@ BEGIN
 		   DELETE APE
 		   FROM #AceptacionesPedidoExtranjeros APE  (NOLOCK)
 		   LEFT JOIN #AceptacionCartaUltimaVersion ACUV  (NOLOCK)
-				ON APE.IdAceptacionCartaPCN = APE.IdAceptacionCartaPCN
+				ON APE.IdAceptacionCartaPCN = ACUV.IdAceptacionCartaPCN
 				AND APE.IdAceptacionPedido = ACUV.IdAceptacionPedido
-		   WHERE APE.IdAceptacionCartaPCN IS NULL 
+		   WHERE ACUV.IdAceptacionCartaPCN IS NULL 
 		   AND APE.EstatusAprobacion <> 'Sin iniciar aprobación'
 	 END 
 
