@@ -1,4 +1,13 @@
-﻿-- =============================================
+﻿
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_CO_ConsultaInstalaciones'
+)
+    DROP PROCEDURE sp_CO_ConsultaInstalaciones
+GO
+-- =============================================
 -- Author:		Miguel
 -- Create date: 
 -- Description:	
@@ -26,4 +35,5 @@ BEGIN
         INNER JOIN dbo.CO_ActividadCIEP (NOLOCK)
             ON dbo.CO_Instalacion.IdAreaContractual = @IdAreaContractual
                AND dbo.CO_Instalacion.IdActividad = dbo.CO_ActividadCIEP.IdActividad
+		ORDER BY CO_Instalacion.NombreInstalacion, CO_ActividadCIEP.NombreActividad
 END;
