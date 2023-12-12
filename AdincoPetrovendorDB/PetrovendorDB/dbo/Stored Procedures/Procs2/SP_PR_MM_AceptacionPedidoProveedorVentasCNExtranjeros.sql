@@ -14,8 +14,9 @@ SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Daniel Cruz
--- Update date:	15-11-2023
+-- Update date:	11-12-2023
 -- Description:	Se agrego mejoras en consulta sql
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros]
 @Estatus		INT,  
 @ProveedorId INT = 0
