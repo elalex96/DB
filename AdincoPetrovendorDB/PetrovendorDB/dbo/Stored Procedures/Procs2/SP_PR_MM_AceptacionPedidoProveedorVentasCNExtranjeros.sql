@@ -14,8 +14,9 @@ SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Daniel Cruz
--- Update date:	15-11-2023
+-- Update date:	11-12-2023
 -- Description:	Se agrego mejoras en consulta sql
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros]
 @Estatus		INT,  
 @ProveedorId INT = 0
@@ -224,12 +225,12 @@ BEGIN
 		   GROUP BY IdAceptacionPedido
 		 
 
-		   -- ELIMINAR LAS VERSIONES MAS ANTGUAS Y DEJAR LA MAS RECIENTE 
+		   -- ELIMINAR LAS VERSIONES MAS ANTIGUAS Y DEJAR LA MAS RECIENTE 
 		   DELETE APE
 		   FROM #AceptacionesPedidoExtranjeros APE  (NOLOCK)
 		   LEFT JOIN #AceptacionCartaUltimaVersion ACUV (NOLOCK)
-				ON APE.IdAceptacionCartaPCN = APE.IdAceptacionCartaPCN
-		   WHERE APE.IdAceptacionCartaPCN IS NULL
+				ON APE.IdAceptacionCartaPCN = ACUV.IdAceptacionCartaPCN
+		   WHERE ACUV.IdAceptacionCartaPCN IS NULL
 
 	END 
 			
@@ -321,9 +322,9 @@ BEGIN
 		   DELETE APE
 		   FROM #AceptacionesPedidoExtranjeros APE  (NOLOCK)
 		   LEFT JOIN #AceptacionCartaUltimaVersion ACUV  (NOLOCK)
-				ON APE.IdAceptacionCartaPCN = APE.IdAceptacionCartaPCN
+				ON APE.IdAceptacionCartaPCN = ACUV.IdAceptacionCartaPCN
 				AND APE.IdAceptacionPedido = ACUV.IdAceptacionPedido
-		   WHERE APE.IdAceptacionCartaPCN IS NULL 
+		   WHERE ACUV.IdAceptacionCartaPCN IS NULL 
 		   AND APE.EstatusAprobacion <> 'Sin iniciar aprobación'
 	 END 
 
