@@ -6,7 +6,7 @@
 )
     DROP PROCEDURE USP_SEL_CNH_FormatoPlanes_InversionActividades2023;
 GO
-CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoPlanes_InversionActividades2023]
+CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoPlanes_InversionActividades2023]--3,10,'20230301',10124
 @IdContrato          INT,   
 @IdUsuario           INT,   
 @Mes                 DATE,   
@@ -16,26 +16,26 @@ AS
          SET NOCOUNT ON; 
 		 
 	SELECT
-    CO_ProgramaActividad.NombrePrograma AS PlanPrograma,
+    ISNULL(CO_ProgramaActividad.NombrePrograma,'') AS PlanPrograma,
     CASE
         WHEN CO_Contrato.IdTipoContrato = 1
-            THEN CO_TipoServicio.NombreTipoServicio
+            THEN  ISNULL(CO_TipoServicio.NombreTipoServicio,'')
         ELSE
-            CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
+             ISNULL(CO_ActividadPetroleraCNH.DescripcionActividadPetrolera,'')
     END                                 AS ActividadPetrolera,
     CASE
         WHEN CO_Contrato.IdTipoContrato = 1
-            THEN CO_ActividadCIEP.NombreActividad
+            THEN  ISNULL( CO_ActividadCIEP.NombreActividad,'')
         ELSE
-            CO_SubactividadPetrolera.SubactividadPetrolera
+             ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera,'')
     END                                 AS SubActividadPetrolera,
     CASE
         WHEN CO_Presupuesto.CIEP = 1
-            THEN CO_Rubro.NombreRubro
+            THEN  ISNULL(CO_Rubro.NombreRubro,'')
         ELSE
-            CO_TareaPetrolera.TareaPetrolera
+            ISNULL(CO_TareaPetrolera.TareaPetrolera,'')
     END                                 AS Tarea,
-	CO_Servicio.NombreServicio AS Descripcion
+	 ISNULL(CO_Servicio.NombreServicio,'') AS Descripcion
 FROM
     CO_ProgramaActividad	(NOLOCK)
     JOIN
@@ -79,45 +79,45 @@ WHERE
 	AND CO_AnioContractual.IdContrato = @IdContrato
 	AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'  
 GROUP BY
-    CO_ProgramaActividad.NombrePrograma,
+     ISNULL(CO_ProgramaActividad.NombrePrograma,''),
     CASE
         WHEN CO_Contrato.IdTipoContrato = 1
-            THEN CO_TipoServicio.NombreTipoServicio
+            THEN  ISNULL(CO_TipoServicio.NombreTipoServicio,'')
         ELSE
-            CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
+             ISNULL(CO_ActividadPetroleraCNH.DescripcionActividadPetrolera,'')
     END,
     CASE
         WHEN CO_Contrato.IdTipoContrato = 1
-            THEN CO_ActividadCIEP.NombreActividad
+            THEN  ISNULL(CO_ActividadCIEP.NombreActividad,'')
         ELSE
-            CO_SubactividadPetrolera.SubactividadPetrolera
+             ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera,'')
     END,
     CASE
         WHEN CO_Presupuesto.CIEP = 1
-            THEN CO_Rubro.NombreRubro
+            THEN  ISNULL(CO_Rubro.NombreRubro,'')
         ELSE
-            CO_TareaPetrolera.TareaPetrolera
-    END,CO_Servicio.NombreServicio
+             ISNULL(CO_TareaPetrolera.TareaPetrolera,'')
+    END, ISNULL(CO_Servicio.NombreServicio,'')
 	ORDER BY 
-	CO_ProgramaActividad.NombrePrograma,
+	ISNULL(CO_ProgramaActividad.NombrePrograma,''),
     CASE
         WHEN CO_Contrato.IdTipoContrato = 1
-            THEN CO_TipoServicio.NombreTipoServicio
+            THEN ISNULL(CO_TipoServicio.NombreTipoServicio,'')
         ELSE
-            CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
+           ISNULL( CO_ActividadPetroleraCNH.DescripcionActividadPetrolera,'')
     END,
     CASE
         WHEN CO_Contrato.IdTipoContrato = 1
-            THEN CO_ActividadCIEP.NombreActividad
+            THEN ISNULL(CO_ActividadCIEP.NombreActividad,'')
         ELSE
-            CO_SubactividadPetrolera.SubactividadPetrolera
+            ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera,'')
     END,
     CASE
         WHEN CO_Presupuesto.CIEP = 1
-            THEN CO_Rubro.NombreRubro
+            THEN ISNULL(CO_Rubro.NombreRubro,'')
         ELSE
-            CO_TareaPetrolera.TareaPetrolera
-    END,CO_Servicio.NombreServicio
+            ISNULL(CO_TareaPetrolera.TareaPetrolera,'')
+    END,ISNULL(CO_Servicio.NombreServicio,'')
 
 	
 END
