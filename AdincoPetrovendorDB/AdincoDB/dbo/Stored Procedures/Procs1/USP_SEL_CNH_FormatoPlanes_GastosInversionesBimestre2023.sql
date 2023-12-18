@@ -1,6 +1,4 @@
-﻿USE ADINCO;
-GO
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -1163,6 +1161,9 @@ INSERT INTO #ResultadoMontos
                 LEFT JOIN
                     CO_TipoServicio (NOLOCK)
                         ON LPM.IdTipoServicio = CO_TipoServicio.IdTipoServicio
+				LEFT JOIN
+					FI_ControlPPDComplementos ControlF(NOLOCK)
+					ON  FCP.UUID	=     ControlF.UUID
             WHERE
                 AC.IdContrato = @IdContrato
                 AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
@@ -1171,14 +1172,7 @@ INSERT INTO #ResultadoMontos
                 AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
                 AND ISNULL(CONVERT(INT, F.ProcesadoSIPAC), 0) = 0
                 AND S.NombreServicio NOT LIKE '%No elegibles%'
-                AND FCP.UUID NOT IN (
-                                        SELECT
-                                            ControlF.UUID
-                                        FROM
-                                            dbo.FI_ControlPPDComplementos ControlF
-                                        WHERE
-                                            ControlF.IdContrato = @IdContrato
-                                    )
+				AND ControlF.IdControlPPDC IS NULL
                 AND P.IdPresupuesto = CASE
                                           WHEN @IdPresupuesto = 0
                                               THEN LPM.IdPresupuesto
