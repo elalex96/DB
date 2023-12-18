@@ -14,6 +14,7 @@ CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoPlanes_InversionActividades2023]
 AS  
      BEGIN  
          SET NOCOUNT ON; 
+		 
 	SELECT
     CO_ProgramaActividad.NombrePrograma AS PlanPrograma,
     CASE
@@ -34,7 +35,7 @@ AS
         ELSE
             CO_TareaPetrolera.TareaPetrolera
     END                                 AS Tarea,
-	'Servicio' AS Descripcion
+	CO_Servicio.NombreServicio AS Descripcion
 FROM
     CO_ProgramaActividad	(NOLOCK)
     JOIN
@@ -96,7 +97,7 @@ GROUP BY
             THEN CO_Rubro.NombreRubro
         ELSE
             CO_TareaPetrolera.TareaPetrolera
-    END
+    END,CO_Servicio.NombreServicio
 	ORDER BY 
 	CO_ProgramaActividad.NombrePrograma,
     CASE
@@ -116,5 +117,7 @@ GROUP BY
             THEN CO_Rubro.NombreRubro
         ELSE
             CO_TareaPetrolera.TareaPetrolera
-    END
+    END,CO_Servicio.NombreServicio
+
+	
 END
