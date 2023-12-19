@@ -3951,5 +3951,8 @@
     <Build Include="dbo\User Defined Types\CO_Type_SAPMaterial.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_INS_UPD_CO_SAPPO.sql" />
     <Build Include="dbo\User Defined Types\CO_Type_SAPPO.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CNH_FormatoPlanes_GastosInversionesAcumulado2023.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CNH_FormatoPlanes_InversionActividades2023.sql" />
   </ItemGroup>
 </Project>
