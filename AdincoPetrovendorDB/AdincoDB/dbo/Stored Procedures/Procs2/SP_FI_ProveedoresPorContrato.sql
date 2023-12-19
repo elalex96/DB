@@ -1,4 +1,12 @@
-﻿--╔════════════════════════════════════════════╗
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ProveedoresPorContrato'
+)
+    DROP PROCEDURE SP_FI_ProveedoresPorContrato;
+GO
+--╔════════════════════════════════════════════╗
 --║Uso de SP en Sistema de ADINCO y PETROVENDOR║
 --╚════════════════════════════════════════════╝
 -- =============================================
