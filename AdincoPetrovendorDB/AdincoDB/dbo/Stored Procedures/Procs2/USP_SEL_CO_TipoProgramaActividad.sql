@@ -19,4 +19,3 @@ CREATE PROCEDURE [dbo].[USP_SEL_CO_TipoProgramaActividad]
 		SELECT * FROM CO_TipoProgramaActividad (NOLOCK) WHERE ACTIVO = 1 ORDER BY IdTipoProgramaActividad DESC;
 
 	END;
-

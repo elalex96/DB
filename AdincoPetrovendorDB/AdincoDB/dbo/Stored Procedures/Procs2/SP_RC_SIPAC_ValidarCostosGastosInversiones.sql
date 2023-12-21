@@ -7,7 +7,8 @@
         WHERE
             name = 'SP_RC_SIPAC_ValidarCostosGastosInversiones'
     )
-    DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversiones
+
+    DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversiones;
 GO
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

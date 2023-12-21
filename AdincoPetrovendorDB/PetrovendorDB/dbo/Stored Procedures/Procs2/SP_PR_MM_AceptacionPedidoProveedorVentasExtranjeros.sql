@@ -29,7 +29,7 @@ GO
 -- =============================================
 -- =============================================
 -- Author:		Daniel Cruz
--- Update date:	15-11-2023
+-- Update date:	11-12-2023
 -- Description:	Se agrego mejoras en consulta nolocks y evitar subconsultas
 -- =============================================
 CREATE  PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentasExtranjeros]
@@ -45,21 +45,34 @@ BEGIN
     -- Insert statements for procedure here
 
 	 CREATE TABLE #AceptacionesPedidoExtranjeros(  
-	 IdAceptacionPedido INT null,  
-	 Pedido NVARCHAR(max) null,  
-	 IdPedido INT null,  
-	 Creado DATETIME null,  
-	 NombreUsuarioEntrega NVARCHAR(max) null,  
-	 Cliente NVARCHAR(max) null,  
-	 IdPedidoGeneral INT null,  
-	 IdAceptacionCartaPCN INT null,  
-	 IdTipoPedido INT null,  
+	 IdAceptacionPedido INT NULL,  
+	 Pedido NVARCHAR(MAX) NULL,  
+	 IdPedido INT NULL,  
+	 Creado DATETIME NULL,  
+	 NombreUsuarioEntrega NVARCHAR(MAX) NULL,  
+	 Cliente NVARCHAR(MAX) NULL,  
+	 IdPedidoGeneral INT NULL,  
+	 IdAceptacionCartaPCN INT NULL,  
+	 IdTipoPedido INT NULL,  
 	 EstatusAprobacion NVARCHAR(100) NULL,  
 	 span NVARCHAR(500) NULL  
 	);  
 
+	CREATE TABLE #PedimentosExtranjeros(  
+	 IdAceptacionPedido INT NULL,  
+	 IdPedido INT NULL,  
+	 Creado NVARCHAR(MAX),  
+	 NombreUsuarioEntrega NVARCHAR(MAX) NULL,  
+	 Cliente NVARCHAR(MAX) NULL, 	  
+	 IdPedidoGeneral INT NULL, 	
+	 IdTipoPedido INT NULL, 	
+	 IdPedimentoComprobante INT NULL,
+	 TipoPedido  NVARCHAR(MAX) NULL,
+	 Estatus NVARCHAR(100) NULL
+	);  
+
    
-   -- OBTENER LAS ACEPTACIONES DE PEDIDO QUE SON DE PROVEEDORES EXTRANJERAS Y QUE SE LES ESTA SOLICITANDO CARTA Y AUN NO ESTAN APROBADAS
+   -- OBTENER LAS ACEPTACIONES DE PEDIDO QUE SON DE PROVEEDORES EXTRANJERAS Y QUE SE LES ESTA SOLICITANDO CARTA Y AUN NO ESTAN APROBADAS SUS CCN
 	IF (@Estatus =0 OR @Estatus =4)
 	BEGIN 
 		 INSERT INTO #AceptacionesPedidoExtranjeros(
@@ -74,12 +87,23 @@ BEGIN
 		 IdTipoPedido,  
 		 EstatusAprobacion,  
 		 span) 
-		 EXEC [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros] 4,@IdProveedor
+		 EXEC [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentasCNExtranjeros] 4, @IdProveedor
 	END 
 
     IF @Estatus = 0
     BEGIN
-
+		
+		INSERT INTO #PedimentosExtranjeros(  
+			IdAceptacionPedido,  
+			IdPedido,  
+			Creado,  
+			NombreUsuarioEntrega,  
+			Cliente, 	  
+			IdPedidoGeneral, 	
+			IdTipoPedido, 	
+			IdPedimentoComprobante,
+			TipoPedido
+		)  
 		SELECT 
 		AP.IdAceptacionPedido,
         AP.IdPedido,
@@ -96,7 +120,7 @@ BEGIN
 		 JOIN MM_Pedidos AS PG (NOLOCK)
              ON P.IdPedido = PG.IdIdentificador
              AND P.IdProveedorCompras = PG.IdProveedorCliente 		
-			 AND PG.IdTipoPedido in (2,4,6) --> CTE PEDIDOS
+			 AND PG.IdTipoPedido IN (2,4,6) --> CTE PEDIDOS
 		 JOIN dbo.MM_TipoPedido AS TP (NOLOCK)
              ON  PG.IdTipoPedido = TP.IdTipoPedido
 		 JOIN dbo.S_Proveedor PR (NOLOCK)
@@ -108,13 +132,10 @@ BEGIN
 		 LEFT JOIN dbo.TA_Operacion O (NOLOCK)
 			ON PC.IdPedimentoComprobante = O.IdDocumento
 			AND O.IdTipoOperacion=16 		 -->CTE APROBACIÓN DE COMPROBANTE EXTRANJERO
-		  LEFT JOIN #AceptacionesPedidoExtranjeros APE
-				ON APE.EstatusAprobacion <> 'Aprobada'	
 		 WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> CTE NACIONALIDAD EXTRANJERA		
 		 AND P.IdSubcontratista=@IdProveedor
-		 AND O.IdOperacion IS NULL
-		 AND ISNULL(AP.IdEstatusEliminado,0)<>1 --> NO MOSTRAR SOLICITUD DE COMPROBANTES CON ESTATUS ELIMINADO
-		 AND AP.IdAceptacionPedido  <> APE.IdAceptacionPedido
+		 AND O.IdOperacion IS NULL		 
+		 AND ISNULL(AP.IdEstatusEliminado,0)<>1 --> NO MOSTRAR SOLICITUD DE COMPROBANTES CON ESTATUS ELIMINADO	
 		 GROUP BY AP.IdAceptacionPedido,
                  AP.IdPedido,
                  AP.Creado,
@@ -127,6 +148,14 @@ BEGIN
                  TP.TipoPedido 
         ORDER BY AP.IdAceptacionPedido DESC;	
 
+		-- SE ELIMINAN LAS ACEPTACIONES DE PEDIDO QUE AUN NO TIENE CARTA DE CONTENIDO NACIONAL SI EL PROVEEDOR TIENE ACTIVA LA SOLICITUD DE CCN
+
+		DELETE PE
+		FROM #PedimentosExtranjeros PE
+		JOIN #AceptacionesPedidoExtranjeros APE
+			ON PE.IdAceptacionPedido = APE.IdAceptacionPedido
+			AND APE.EstatusAprobacion <> 'Aprobada'
+
 		/*CUANDO EN PROCURA SE REALIZA UNA ACEPTACIÓN DE PEDIDO, DEL LADO DEL PETROVEENDOR SE INICIA LA SOLICITUD DE COMPROBANTE EXTRANJERO 
 		QUE ES PARA LOS PROVEEDORES CON NACIONALIDAD EXTRANJERA
 		EL ESTATUS SIN INICIAR APROBACIÓN SON TODAS AQUELLAS ACEPTACIONES DE PEDIDO DONDE TODAVIA NO SE TIENE NiNGUNA RELACIÓN 
@@ -138,7 +167,18 @@ BEGIN
 
     IF @Estatus IN ( 1, 2, 3 )
     BEGIN
-
+		
+		INSERT INTO #PedimentosExtranjeros(  
+			IdAceptacionPedido,  
+			IdPedido,  
+			Creado,  
+			NombreUsuarioEntrega,  
+			Cliente, 	  
+			IdPedidoGeneral, 	
+			IdTipoPedido, 	
+			IdPedimentoComprobante,
+			TipoPedido
+		)  
 		SELECT 
 		AP.IdAceptacionPedido,
         AP.IdPedido,
@@ -190,7 +230,19 @@ BEGIN
     IF @Estatus = 4
     BEGIN
 
-        -- MOSTRAR TODOS LOS ULTIMOS ESTATUS DE LA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL	
+        -- MOSTRAR TODOS LOS ULTIMOS ESTATUS DE LA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL
+		INSERT INTO #PedimentosExtranjeros(  
+			IdAceptacionPedido,  
+			IdPedido,  
+			Creado,  
+			NombreUsuarioEntrega,  
+			Cliente, 	  
+			IdPedidoGeneral, 	
+			IdTipoPedido, 	
+			IdPedimentoComprobante,
+			TipoPedido,
+			Estatus
+		)  
 		SELECT 
 		AP.IdAceptacionPedido,
         AP.IdPedido,
@@ -229,11 +281,8 @@ BEGIN
 			AND O.IdTipoOperacion=16 -->CTE APROBACIÓN DE COMPROBANTE EXTRANJERO
 		 LEFT JOIN dbo.TA_Estatus AS E (NOLOCK)
                 ON O.IdEstatusOperacion = E.IdEstatus 	
-		 LEFT JOIN #AceptacionesPedidoExtranjeros APE
-				ON APE.EstatusAprobacion <> 'Aprobada'				
 		 WHERE ISNULL(AP.IdNacionalidadProveedor, 0) = 2 --> NACIONALIDAD EXTRANJERA		
-		 AND P.IdSubcontratista=@IdProveedor	
-		 AND AP.IdAceptacionPedido  <> APE.IdAceptacionPedido
+		 AND P.IdSubcontratista=@IdProveedor			
 		 GROUP BY AP.IdAceptacionPedido,
                  AP.IdPedido,
                  AP.Creado,
@@ -249,7 +298,26 @@ BEGIN
 				 PC.IdEstatusEliminado,
 				 AP.IdEstatusEliminado
         ORDER BY AP.IdAceptacionPedido DESC;
-			      
+		
+		-- SE ELIMINAN LAS ACEPTACIONES DE PEDIDO QUE AUN NO TIENE CARTA DE CONTENIDO NACIONAL SI EL PROVEEDOR TIENE ACTIVA LA SOLICITUD DE CCN
+		DELETE PE
+		FROM #PedimentosExtranjeros PE
+		JOIN #AceptacionesPedidoExtranjeros APE
+			ON PE.IdAceptacionPedido = APE.IdAceptacionPedido
+			AND APE.EstatusAprobacion <> 'Aprobada'
     END;
+	
+	SELECT  
+	IdAceptacionPedido,  
+	IdPedido,  
+	Creado,  
+	NombreUsuarioEntrega,  
+	Cliente, 	  
+	IdPedidoGeneral, 	
+	IdTipoPedido, 	
+	IdPedimentoComprobante,
+	TipoPedido,
+	Estatus
+	FROM #PedimentosExtranjeros
 
 END;
