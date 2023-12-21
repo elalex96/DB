@@ -1,4 +1,17 @@
-﻿
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_ConsultarDomiciliosEntrega'
+)
+    DROP PROCEDURE SP_MM_ConsultarDomiciliosEntrega;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Daniel A Cruz
 -- Create date: 12-05-17
@@ -12,7 +25,7 @@
 -- Updated date: <26/11/2021>                                   
 -- Description: <optimzacion>            
 --**************************************************************
-CREATE  PROCEDURE [dbo].[SP_MM_ConsultarDomiciliosEntrega] 
+CREATE PROCEDURE [dbo].[SP_MM_ConsultarDomiciliosEntrega] 
     @IdProveedor INT,
     /*--------------------parametros contrato  --------------------*/
     @IdContrato    INT = null,
@@ -28,14 +41,17 @@ BEGIN
     CREATE TABLE #DOMICILIOS(IdDomicilio int, Domicilio nvarchar(MAX))
     DECLARE @NUM_DOMICILIOS INT
     SET @NUM_DOMICILIOS = (SELECT COUNT([IdDomicilio])
-                            FROM [dbo].[DG_Domicilio]
+                            FROM [dbo].[DG_Domicilio] (NOLOCK)
                             WHERE IdProveedor = @IdProveedor)
     IF @NUM_DOMICILIOS > 0 
         BEGIN 
+			INSERT INTO #DOMICILIOS(IdDomicilio, Domicilio)
+            VALUES(0, '--Selecciona un lugar de entrega--')
+
             INSERT INTO  #DOMICILIOS(IdDomicilio, Domicilio)
             SELECT [IdDomicilio], CONCAT([Calle], ' ', [NoExterior] , ' ', [NoInterior], ' ',[Colonia] , ' ',[Municipio], ' ', [Estado],' ',[CodigoPostal] , ' (', CAST(TD.TipoDomicilio AS NVARCHAR(MAX)),')') AS Domicilio
             FROM  [dbo].[DG_Domicilio] AS D (NOLOCK)
-            INNER JOIN DG_TipoDomicilio AS TD (NOLOCK) ON TD.IdTipoDomicilio = D.IdTipoDomicilio
+            INNER JOIN DG_TipoDomicilio AS TD (NOLOCK) ON D.IdTipoDomicilio = TD.IdTipoDomicilio
             WHERE D.IdProveedor = @IdProveedor AND D.Activo = 1
         END 
     ELSE 
