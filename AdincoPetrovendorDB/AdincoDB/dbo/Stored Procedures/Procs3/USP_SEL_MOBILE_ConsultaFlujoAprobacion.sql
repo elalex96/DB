@@ -94,7 +94,7 @@ BEGIN
 				WHEN T.IdEstatus = 3 THEN '#c0392b'
 				WHEN T.IdEstatus = 4 THEN '#c0392b'
 				ELSE '#ebedef'
-			END AS ColorBackground,
+			END AS Color,
 			T.IdTarea,
 			OP.IdEstatusOperacion,
 			US.Nombre,
@@ -107,7 +107,7 @@ BEGIN
 				WHEN OP.IdEstatusOperacion = 3 THEN '#ed594a'
 				WHEN OP.IdEstatusOperacion = 4 THEN '#c0392b'
 				ELSE '#ebede'
-			END AS Color,
+			END AS ColorBackground,
 			CASE
 				WHEN T.IdEstatus = 1 THEN 'estatus_enaprobacion.png'
 				WHEN T.IdEstatus = 2 THEN 'estatus_aprobado.png'
@@ -144,7 +144,7 @@ BEGIN
 				WHEN T.IdEstatus = 3 THEN '#c0392b'
 				WHEN T.IdEstatus = 4 THEN '#c0392b'
 				ELSE '#ebedef'
-			END AS ColorBackground,
+			END AS Color,
 			T.IdTarea,
 			OP.IdEstatusOperacion,
 			US.Nombre,
@@ -157,7 +157,7 @@ BEGIN
 				WHEN OP.IdEstatusOperacion = 3 THEN '#ed594a'
 				WHEN OP.IdEstatusOperacion = 4 THEN '#c0392b'
 				ELSE '#ebede'
-			END AS Color,
+			END AS ColorBackground,
 			CASE
 				WHEN T.IdEstatus = 1 THEN 'estatus_enaprobacion.png'
 				WHEN T.IdEstatus = 2 THEN 'estatus_aprobado.png'
