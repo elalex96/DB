@@ -1,4 +1,16 @@
-﻿CREATE PROCEDURE dbo.SP_CO_SipacProduccionCalcular_V2
+﻿USE Adinco
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_CO_SipacProduccionCalcular_V2'
+)
+    DROP PROCEDURE SP_CO_SipacProduccionCalcular_V2;
+GO
+
+CREATE PROCEDURE [dbo].[SP_CO_SipacProduccionCalcular_V2]
     @Idcontrato      INT,
     @fechaMesDiaAnio DATE,
     @puntoEntrega    INT,
@@ -269,7 +281,25 @@ DECLARE
 	@VTA_PrecioPromPonCondensado	FLOAT,
 	@Mil FLOAT = 1000,
 	@Cien	FLOAT = 100,
-	@IdReporteVolumenesProduccionPetroleoTEMP INT = 0;
+	@IdReporteVolumenesProduccionPetroleoTEMP INT = 0,
+	@TieneExcepcionVigente BIT = 0;
+
+-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+  FROM 
+	CO_ExcepcionesReporte (NOLOCK)
+  JOIN
+	AA_TipoReporte (NOLOCK)
+	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+	AND CO_ExcepcionesReporte.MesReporte = @fechaMesDiaAnio  
+	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_LIC'
+	AND CO_ExcepcionesReporte.Activo = 1
+  WHERE CO_ExcepcionesReporte.MesReporte = @fechaMesDiaAnio  
+		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_LIC'
+		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 
 -- SE VALIDA QUE EL REPORTE SE ESTE GENERANDO DURANTE LOS PRIMEROS 10 DIAS HABILES DEL SIGUIENTE MES
 INSERT INTO #DiasHabiles
@@ -739,11 +769,11 @@ SELECT
 FROM
 	#CalculosGPA
 
-IF @Idcontrato = 3 OR @Idcontrato = 10036 
-	SELECT @FechaLimite = DATEADD(day,1,getdate())
+--IF @Idcontrato = 3 OR @Idcontrato = 10036 
+--SELECT @FechaLimite = DATEADD(day,1,getdate())
 
 
-IF @FechaLimite >= GETDATE()
+IF ((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
 BEGIN
 	-- SE GUARDA UN REGISTRO DE LOS VALORES UTILIZADOS EN EL CALCULO ( CROMATOGRAFIA Y VOLUMENES )
 	-- SI YA EXISTE UN REGISTRO CON LOS MISMO VALORES, SOLO SE ACTUALIZA LA FECHA Y EL USUARIO
