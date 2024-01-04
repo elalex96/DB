@@ -1,4 +1,16 @@
-﻿CREATE PROCEDURE dbo.SP_CO_SipacProduccionCalcular_V2
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_CO_SipacProduccionCalcular_V2'
+    )
+    DROP PROCEDURE SP_CO_SipacProduccionCalcular_V2
+GO
+
+CREATE PROCEDURE [dbo].[SP_CO_SipacProduccionCalcular_V2]
     @Idcontrato      INT,
     @fechaMesDiaAnio DATE,
     @puntoEntrega    INT,
@@ -186,7 +198,9 @@ CREATE TABLE #CalculosGPA
 	BN_MMBTU_IC4_20	FLOAT,
 	BN_MMBTU_NC4_20	FLOAT,
 	BN_MMBTU_C5_20		FLOAT,
-	BN_Bll_C5_Equiv	FLOAT
+	BN_Bll_C5_Equiv	FLOAT,
+	IdArchivoGas INT NULL,
+	IdArchivoPetroleo INT NULL
 )
 
 CREATE TABLE #TipoHidrocarburo
@@ -269,7 +283,25 @@ DECLARE
 	@VTA_PrecioPromPonCondensado	FLOAT,
 	@Mil FLOAT = 1000,
 	@Cien	FLOAT = 100,
-	@IdReporteVolumenesProduccionPetroleoTEMP INT = 0;
+	@IdReporteVolumenesProduccionPetroleoTEMP INT = 0,
+	@TieneExcepcionVigente BIT = 0;
+
+-- SE VERIFICA SI CONTIENE EXEPCIÓN VIGENTE PARA EJECUTAR EL REGISTRO DE COMERCIALIZACIONES
+SELECT @TieneExcepcionVigente = 1
+  FROM 
+	CO_ExcepcionesReporte (NOLOCK)
+  JOIN
+	AA_TipoReporte (NOLOCK)
+	ON CO_ExcepcionesReporte.IdTipoReporte	=	AA_TipoReporte.IdTipoReporte
+	AND CO_ExcepcionesReporte.MesReporte = @fechaMesDiaAnio  
+	AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+	AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_LIC'
+	AND CO_ExcepcionesReporte.Activo = 1
+  WHERE CO_ExcepcionesReporte.MesReporte = @fechaMesDiaAnio  
+		AND AA_TipoReporte.NombreReporte	=  'Volúmenes_Precios_LIC'
+		AND CO_ExcepcionesReporte.IdContrato	=	@IdContrato
+		AND CO_ExcepcionesReporte.Activo = 1
+		AND CO_ExcepcionesReporte.FechaFin >= GETDATE();
 
 -- SE VALIDA QUE EL REPORTE SE ESTE GENERANDO DURANTE LOS PRIMEROS 10 DIAS HABILES DEL SIGUIENTE MES
 INSERT INTO #DiasHabiles
@@ -335,7 +367,9 @@ INSERT INTO #CalculosGPA
 	Azufre,
 	ImporteGas,
 	ImportePetroleo,
-	ImporteCondensado
+	ImporteCondensado,
+	IdArchivoGas,
+	IdArchivoPetroleo
 )
 SELECT
 	C.IdContrato,
@@ -360,7 +394,9 @@ SELECT
 	ISNULL(CV.Azufre,0),
     ISNULL(CV.PrecioGas,0),
 	ISNULL(CV.PrecioPetroleo,0),
-	ISNULL(CV.PrecioCondensado,0)
+	ISNULL(CV.PrecioCondensado,0),
+	C.IdArchivoGas,
+	C.IdArchivoPetroleo
 FROM
     CO_Cromatografia             C
 JOIN
@@ -739,17 +775,15 @@ SELECT
 FROM
 	#CalculosGPA
 
-IF @Idcontrato = 3 OR @Idcontrato = 10036 
-	SELECT @FechaLimite = DATEADD(day,1,getdate())
-
-
-IF @FechaLimite >= GETDATE()
+IF ((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
 BEGIN
 	-- SE GUARDA UN REGISTRO DE LOS VALORES UTILIZADOS EN EL CALCULO ( CROMATOGRAFIA Y VOLUMENES )
 	-- SI YA EXISTE UN REGISTRO CON LOS MISMO VALORES, SOLO SE ACTUALIZA LA FECHA Y EL USUARIO
 	UPDATE LG
 		SET UsuarioID	=	@Usuario,
-			FecMovto	=	GETDATE()
+			FecMovto	=	GETDATE(),
+			IdArchivoGas = C.IdArchivoGas,
+			IdArchivoPetroleo = C.IdArchivoPetroleo
 	FROM
 		#CalculosGPA	C
 	JOIN
@@ -812,7 +846,9 @@ BEGIN
 			Cromatografia_C7,
 			Cromatografia_C8,
 			Cromatografia_C9,
-			Cromatografia_C10
+			Cromatografia_C10,
+			IdArchivoGas,
+			IdArchivoPetroleo
 		)
 		SELECT
 			IdContrato,
@@ -841,7 +877,9 @@ BEGIN
 			C7,
 			C8,
 			C9,
-			C10
+			C10,
+			IdArchivoGas,
+			IdArchivoPetroleo
 		FROM
 			#CalculosGPA
 	END
@@ -961,7 +999,8 @@ BEGIN
 	    PVUAnterior,
 	    PPMAnterior,
 		PuntoEntregaID,
-		EsCondensable
+		EsCondensable,
+		IdCromatografiaArchivo
 	)
 	SELECT
 		C.idContrato,
@@ -1007,7 +1046,15 @@ BEGIN
 		0,
 		0,
 		C.PuntoEntregaID,
-		0				
+		0,
+		CASE TH.IdTipoHidrocarburo
+			WHEN 10000	THEN C.IdArchivoPetroleo	
+			WHEN 10001	THEN C.IdArchivoGas	
+			WHEN 10002	THEN C.IdArchivoGas		
+			WHEN 10003	THEN C.IdArchivoGas		
+			WHEN 10004	THEN C.IdArchivoGas		
+			WHEN 10005	THEN C.IdArchivoGas		
+		END	AS	IdCromatografiaArchivo
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
@@ -1066,7 +1113,8 @@ BEGIN
 			0,
 			0,
 			PuntoEntregaID,
-			1				
+			1,
+			IdArchivoGas AS	IdCromatografiaArchivo			
 		FROM
 			#CalculosGPA
 
