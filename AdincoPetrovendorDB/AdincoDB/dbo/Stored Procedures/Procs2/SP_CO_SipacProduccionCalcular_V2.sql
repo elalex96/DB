@@ -769,10 +769,6 @@ SELECT
 FROM
 	#CalculosGPA
 
---IF @Idcontrato = 3 OR @Idcontrato = 10036 
---SELECT @FechaLimite = DATEADD(day,1,getdate())
-
-
 IF ((@FechaLimite >= GETDATE()) OR @TieneExcepcionVigente = 1)
 BEGIN
 	-- SE GUARDA UN REGISTRO DE LOS VALORES UTILIZADOS EN EL CALCULO ( CROMATOGRAFIA Y VOLUMENES )
