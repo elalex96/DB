@@ -1,4 +1,4 @@
-﻿IF EXISTS
+IF EXISTS
     (
         SELECT
             1
@@ -9,7 +9,6 @@
     )
     DROP PROCEDURE SP_CO_SipacProduccionCalcular_V2
 GO
-
 CREATE PROCEDURE [dbo].[SP_CO_SipacProduccionCalcular_V2]
     @Idcontrato      INT,
     @fechaMesDiaAnio DATE,
