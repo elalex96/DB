@@ -1,4 +1,5 @@
-﻿
+﻿USE Adinco;
+GO
 IF EXISTS
     (
         SELECT
@@ -1829,9 +1830,7 @@ PA_79,
         FROM #TablaTemporalValidacionInstalacion
         WHERE ISNULL(Pozo_Instalacion, '') = '';
 
-      /*======================================*/
-        /*Verificacion de Id Actividad Petrolera*/
-        /*======================================*/
+     
         IF (
            (
                SELECT COUNT(1)
@@ -2103,7 +2102,7 @@ PA_79,
                 SELECT  
 						'ALERTA_DATOSGENERALES',
                           LTRIM(RTRIM(CONCAT(
-                                     'Combinación no valida 
+                                     'Combinación no válida 
 									 (',
                                      CONCAT( #TablaTemporalValidacionActividadSubActividadTarea.IdActividad,' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdSubActividad, ' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdTarea),
                                      ') '
@@ -2128,7 +2127,7 @@ PA_79,
 		WHERE IdTareaTabla IS NOT NULL AND IdActividadTabla IS NOT NULL	AND IdSubActividadTabla IS NOT NULL
 		AND IdAST IS NULL
 		GROUP BY  LTRIM(RTRIM(CONCAT(
-                                     'Combinación no valida 
+                                     'Combinación no válida 
 									 (',
                                      CONCAT( #TablaTemporalValidacionActividadSubActividadTarea.IdActividad,' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdSubActividad, ' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdTarea),
                                      ') '
