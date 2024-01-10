@@ -1,21 +1,16 @@
-﻿USE [Adinco]
+USE Adinco
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Mobile_sp_TipoAprobacionesPorUsuario'
-)
-    DROP PROCEDURE Mobile_sp_TipoAprobacionesPorUsuario;
+DROP PROC IF EXISTS Mobile_sp_TipoAprobacionesPorUsuario
 GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:		Alexander Gomez 
 -- Create date: 27/06/2023
 -- Description:	Consultar los tipos de aprobaciones por usuario
+-- =============================================
+-- Author:		LUIS DAVID
+-- Create date: 10/01/2024
+-- Description:	Issue #268, se cambian las descripciones a Max para no tener error de truncated
 -- =============================================
 CREATE PROCEDURE Mobile_sp_TipoAprobacionesPorUsuario --10203
 	-- Add the parameters for the stored procedure here
@@ -31,12 +26,12 @@ BEGIN
 	CREATE TABLE #OperacionesUsuario(
 		IdOperacion INT,
 		IdContrato INT,
-		NumeroContrato NVARCHAR(200),
+		NumeroContrato NVARCHAR(MAX),
 		TipoAprobacion NVARCHAR(100),
 		idTipoAprobacion INT,
 		FechaCreacion NVARCHAR(100),
-		ComentarioDoc NVARCHAR(1000),
-		ComentarioApr NVARCHAR(1000),
+		ComentarioDoc NVARCHAR(MAX),
+		ComentarioApr NVARCHAR(MAX),
 		Estatus NVARCHAR(100),
 		IdStatusAprobacionM INT,
 		IdTareaOrigen INT,
@@ -154,4 +149,3 @@ BEGIN
 	FROM #Mobile_TipoAprobaciones;
 
 END
-GO
