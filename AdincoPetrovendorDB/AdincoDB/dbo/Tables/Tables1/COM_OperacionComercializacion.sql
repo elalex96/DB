@@ -24,6 +24,7 @@
     [PuntoEntregaID]                INT           NULL,
     [EsCondensable]                 BIT           DEFAULT ((0)) NULL,
     [PenaEconomica]                 FLOAT (53)    NULL,
+    [IdCromatografiaArchivo]        INT           NULL,
     CONSTRAINT [PK_COM_OperacionComercializacion] PRIMARY KEY CLUSTERED ([IdOperacionComercializacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_COM_OperacionComercializacion_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_COM_OperacionComercializacion_CO_TipoHidrocarburo] FOREIGN KEY ([IdTipoHidrocarburo]) REFERENCES [dbo].[CO_TipoHidrocarburo] ([IdTipoHidrocarburo])
