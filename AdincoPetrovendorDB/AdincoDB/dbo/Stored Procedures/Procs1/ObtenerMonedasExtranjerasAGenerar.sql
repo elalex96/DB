@@ -1,4 +1,5 @@
-﻿IF EXISTS
+﻿use adinco
+IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -18,8 +19,7 @@ BEGIN
             @TipoFactura INT = 1,
 			@Dolar INT = 2,
 			@FechaInicio DateTime,
-			@FechaFin DateTime,
-			@Peso INT = 1
+			@FechaFin DateTime
 
     CREATE TABLE #Tabla
     (
@@ -28,8 +28,9 @@ BEGIN
     )
 	CREATE TABLE #TablaMesSeleccionado(Fecha DATE, IdMoneda INT DEFAULT 1)
 
-
-	SELECT @FechaInicio = @Fecha, @FechaFin = EOMONTH(@Fecha);
+	-- SE OBTIENE EL DIA 1RO DEL ANIO Y EL DIA ULTIMO DEL ANIO
+	SELECT @FechaInicio = DATEADD(yy, DATEDIFF(yy, 0, @Fecha), 0),
+			@FechaFin = DATEADD(yy, DATEDIFF(yy, 0, @Fecha) + 1, -1)
 
 	-- Pedimento Comprobante PE PI
 	INSERT INTO #Tabla
@@ -67,7 +68,6 @@ BEGIN
 	FROM FI_PedimentoComprobante (NOLOCK)
 	LEFT JOIN CO_TipoCambioDiario (NOLOCK)
 			ON FI_PedimentoComprobante.FechaPago = CO_TipoCambioDiario.Fecha
-			AND CO_TipoCambioDiario.IdMoneda = @Peso
 	INNER JOIN PV_TipoMoneda (NOLOCK)
             ON PV_TipoMoneda.IdMoneda = FI_PedimentoComprobante.IdMoneda
 	WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL AND SerieBanxico IS NOT NULL
@@ -185,6 +185,15 @@ BEGIN
 			AND CO_TipoCambioDiario.IdMoneda = @Dolar
 	WHERE CO_Registro.MesPresentacion = @Fecha AND CO_TipoCambioDiario.IdTipoCambio IS NULL
 	GROUP BY FI_Transfer.FechaPago
+	
+	--Se inserta lo que hace falta de dls en el año de la fecha
+	INSERT INTO CO_TipoCambioDiario(IdMoneda, Fecha, TipoCambio, IdUsuario, Activo, CreadoPor)
+	SELECT @Dolar, #TablaMesSeleccionado.Fecha, 1, 1, 1, 1 
+	FROM #TablaMesSeleccionado
+	LEFT JOIN CO_TipoCambioDiario 
+		ON #TablaMesSeleccionado.Fecha = CO_TipoCambioDiario.Fecha
+		AND CO_TipoCambioDiario.IdMoneda = @Dolar
+	WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL
 
 	-- Se retorna al usuario los tipos de cambio que hacen falta dar de alta excepto DLS
     SELECT #Tabla.SerieBanxico, DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1) FechaPago
