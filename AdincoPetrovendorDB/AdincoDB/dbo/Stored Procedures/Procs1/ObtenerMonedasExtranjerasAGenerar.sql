@@ -7,7 +7,7 @@
     DROP PROCEDURE ObtenerMonedasExtranjerasAGenerar
 GO
 
-CREATE proc [dbo].ObtenerMonedasExtranjerasAGenerar
+CREATE proc [dbo].[ObtenerMonedasExtranjerasAGenerar]
     @Fecha DATE,
     @IdContrato INT
 AS
@@ -18,7 +18,8 @@ BEGIN
             @TipoFactura INT = 1,
 			@Dolar INT = 2,
 			@FechaInicio DateTime,
-			@FechaFin DateTime
+			@FechaFin DateTime,
+			@Peso INT = 1
 
     CREATE TABLE #Tabla
     (
@@ -30,34 +31,27 @@ BEGIN
 
 	SELECT @FechaInicio = @Fecha, @FechaFin = EOMONTH(@Fecha);
 
-	CREATE TABLE #TablaMesSeleccionado(Fecha DATE, IdMoneda INT DEFAULT 1)
-
-
-	SELECT @FechaInicio = @Fecha, @FechaFin = EOMONTH(@Fecha);
-
 	-- Pedimento Comprobante PE PI
-    INSERT INTO #Tabla
+	
+	-- Se insertan todos los comprobantes tanto PE como PI que esten pendientes de
+	-- Fecha de tipo de cambio
+	INSERT INTO #Tabla
     (
         SerieBanxico,
         FechaPago
     )
-    select PV_TipoMoneda.SerieBanxico,
-           FI_Transfer.FechaPago
-    FROM dbo.CO_Registro WITH (NOLOCK)
-        INNER JOIN dbo.FI_PedimentoComprobante WITH (NOLOCK)
-            ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
-               AND FI_PedimentoComprobante.IdContrato = @IdContrato
-               AND CO_Registro.IdEstado = @Aprobado
-               AND CO_Registro.CvTipoDocFacturacion IN ( @TipoPedimentoImportacion, @TipoComprobanteExtranjero )
-        INNER JOIN PV_TipoMoneda (NOLOCK)
+	SELECT PV_TipoMoneda.SerieBanxico,
+			FI_PedimentoComprobante.FechaPago
+	FROM FI_PedimentoComprobante (NOLOCK)
+	LEFT JOIN CO_TipoCambioDiario (NOLOCK)
+			ON FI_PedimentoComprobante.FechaPago = CO_TipoCambioDiario.Fecha
+			AND CO_TipoCambioDiario.IdMoneda = @Peso
+	INNER JOIN PV_TipoMoneda (NOLOCK)
             ON PV_TipoMoneda.IdMoneda = FI_PedimentoComprobante.IdMoneda
-        INNER JOIN dbo.FI_TransferFactura WITH (NOLOCK)
-            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante
-        JOIN dbo.FI_Transfer WITH (NOLOCK)
-            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
-    WHERE DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Fecha
-    GROUP BY PV_TipoMoneda.SerieBanxico,
-             FI_Transfer.FechaPago
+	WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL AND SerieBanxico IS NOT NULL
+	AND FI_PedimentoComprobante.IdContrato = @IdContrato
+	GROUP BY PV_TipoMoneda.SerieBanxico,
+			FI_PedimentoComprobante.FechaPago
 
 	-- PUE, PPD
     INSERT INTO #Tabla
@@ -117,6 +111,8 @@ BEGIN
 		ON PV_TipoMoneda.IdMoneda = #TablaMesSeleccionado.IdMoneda
 
 
+
+
 	-- Se insertan los tipos de cambio en DLS si es que hacen falta
 	INSERT INTO CO_TipoCambioDiario(IdMoneda, Fecha, TipoCambio, IdUsuario, Activo, CreadoPor)
 	SELECT 2, FechaPago, 1, 1, 1, 1
@@ -169,7 +165,6 @@ BEGIN
 	GROUP BY FI_Transfer.FechaPago
 
 	-- Se retorna al usuario los tipos de cambio que hacen falta dar de alta excepto DLS
-
     SELECT #Tabla.SerieBanxico, DATEFROMPARTS(YEAR(#Tabla.FechaPago), MONTH(#Tabla.FechaPago), 1) FechaPago
 	FROM #Tabla
 	INNER JOIN PV_TipoMoneda
