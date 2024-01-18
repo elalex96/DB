@@ -32,7 +32,29 @@ BEGIN
 	SELECT @FechaInicio = @Fecha, @FechaFin = EOMONTH(@Fecha);
 
 	-- Pedimento Comprobante PE PI
-	
+	INSERT INTO #Tabla
+    (
+        SerieBanxico,
+        FechaPago
+    )
+    select PV_TipoMoneda.SerieBanxico,
+           FI_Transfer.FechaPago
+    FROM dbo.CO_Registro WITH (NOLOCK)
+        INNER JOIN dbo.FI_PedimentoComprobante WITH (NOLOCK)
+            ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
+               AND FI_PedimentoComprobante.IdContrato = @IdContrato
+               AND CO_Registro.IdEstado = @Aprobado
+               AND CO_Registro.CvTipoDocFacturacion IN ( @TipoPedimentoImportacion, @TipoComprobanteExtranjero )
+        INNER JOIN PV_TipoMoneda (NOLOCK)
+            ON PV_TipoMoneda.IdMoneda = FI_PedimentoComprobante.IdMoneda
+        INNER JOIN dbo.FI_TransferFactura WITH (NOLOCK)
+            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante
+        JOIN dbo.FI_Transfer WITH (NOLOCK)
+            ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
+    WHERE DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Fecha
+    GROUP BY PV_TipoMoneda.SerieBanxico,
+             FI_Transfer.FechaPago
+
 	-- Se insertan todos los comprobantes tanto PE como PI que esten pendientes de
 	-- Fecha de tipo de cambio
 	INSERT INTO #Tabla
