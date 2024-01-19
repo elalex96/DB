@@ -1,4 +1,18 @@
-﻿CREATE PROC RFCPermitirFacturasAnteriores 
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'RFCPermitirFacturasAnteriores'
+)
+    DROP PROCEDURE RFCPermitirFacturasAnteriores;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROC [dbo].[RFCPermitirFacturasAnteriores] 
 (
     @RFC NVARCHAR(MAX),
     @FechaTimbrado DATETIME
@@ -23,9 +37,11 @@ BEGIN
                 IF EXISTS
                 (
                     SELECT 1
-                    FROM FacturasExcluirRestriccionAnioFiscal
+                    FROM FacturasExcluirRestriccionAnioFiscal (NOLOCK)
                     WHERE UPPER(RFCOperadora) = UPPER(@RFC)
                           AND Activo = 1
+						  AND FechaVigencia >= GETDATE()
+						  AND AnioExclucion = YEAR(@FechaTimbrado)
                 )
                 BEGIN					
                     SELECT 1
