@@ -1,5 +1,4 @@
-﻿use adinco
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -66,10 +65,10 @@ BEGIN
 	SELECT PV_TipoMoneda.SerieBanxico,
 			FI_PedimentoComprobante.FechaPago
 	FROM FI_PedimentoComprobante (NOLOCK)
-	LEFT JOIN CO_TipoCambioDiario (NOLOCK)
-			ON FI_PedimentoComprobante.FechaPago = CO_TipoCambioDiario.Fecha
 	INNER JOIN PV_TipoMoneda (NOLOCK)
-            ON PV_TipoMoneda.IdMoneda = FI_PedimentoComprobante.IdMoneda
+            ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda 
+	LEFT JOIN CO_TipoCambioDiario (NOLOCK)
+			ON FI_PedimentoComprobante.FechaPago = CO_TipoCambioDiario.Fecha	
 	WHERE CO_TipoCambioDiario.IdTipoCambio IS NULL AND SerieBanxico IS NOT NULL
 	AND FI_PedimentoComprobante.IdContrato = @IdContrato
 	GROUP BY PV_TipoMoneda.SerieBanxico,
