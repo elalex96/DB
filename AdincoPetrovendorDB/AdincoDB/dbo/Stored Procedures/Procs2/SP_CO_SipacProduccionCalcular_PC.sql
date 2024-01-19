@@ -266,7 +266,9 @@ CREATE TABLE #CalculosGPA
 	PrecioUnitario_Petroleo	FLOAT,
 	PrecioUnitario_Gas	FLOAT,
 	PrecioUnitario_Condensado	FLOAT,
-	PrecioVTA_Condensado	FLOAT
+	PrecioVTA_Condensado	FLOAT,
+	IdArchivoGas INT NULL,
+	IdArchivoPetroleo INT NULL
 )
 
 CREATE TABLE #Temp_PR_VolumenMensualProduccionPetroleo
@@ -468,7 +470,9 @@ INSERT INTO #CalculosGPA
 	Azufre,
 	ImporteGas,
 	ImportePetroleo,
-	ImporteCondensado
+	ImporteCondensado,
+	IdArchivoGas,
+	IdArchivoPetroleo
 )
 SELECT
 	C.IdContrato,
@@ -493,7 +497,10 @@ SELECT
 	ISNULL(CV.Azufre,0),
     ISNULL(CV.PrecioGas,0),
 	ISNULL(CV.PrecioPetroleo,0),
-	ISNULL(CV.PrecioCondensado,0)
+	ISNULL(CV.PrecioCondensado,0),
+	C.IdArchivoGas,
+	C.IdArchivoPetroleo
+	
 FROM
     CO_Cromatografia             C (NOLOCK)
 JOIN
@@ -1184,7 +1191,9 @@ BEGIN
 	-- SI YA EXISTE UN REGISTRO CON LOS MISMO VALORES, SOLO SE ACTUALIZA LA FECHA Y EL USUARIO
 	UPDATE LG
 		SET UsuarioID	=	@Usuario,
-			FecMovto	=	GETDATE()
+			FecMovto	=	GETDATE(),
+			IdArchivoGas = C.IdArchivoGas,
+			IdArchivoPetroleo = C.IdArchivoPetroleo
 	FROM
 		#CalculosGPA	C
 	JOIN
@@ -1247,7 +1256,9 @@ BEGIN
 			Cromatografia_C7,
 			Cromatografia_C8,
 			Cromatografia_C9,
-			Cromatografia_C10
+			Cromatografia_C10,
+			IdArchivoGas,
+			IdArchivoPetroleo
 		)
 		SELECT
 			IdContrato,
@@ -1276,7 +1287,9 @@ BEGIN
 			C7,
 			C8,
 			C9,
-			C10
+			C10,
+			IdArchivoGas,
+			IdArchivoPetroleo
 		FROM
 			#CalculosGPA
 	END
@@ -1390,7 +1403,8 @@ BEGIN
 	    PVUAnterior,
 	    PPMAnterior,
 		PuntoEntregaID,
-		EsCondensable
+		EsCondensable, 
+		IdCromatografiaArchivo
 	)
 	SELECT
 		C.idContrato,
@@ -1436,7 +1450,15 @@ BEGIN
 		0,
 		0,
 		C.PuntoEntregaID,
-		0				
+		0,
+		CASE TH.IdTipoHidrocarburo
+			WHEN 10000	THEN C.IdArchivoPetroleo	
+			WHEN 10001	THEN C.IdArchivoGas	
+			WHEN 10002	THEN C.IdArchivoGas		
+			WHEN 10003	THEN C.IdArchivoGas		
+			WHEN 10004	THEN C.IdArchivoGas		
+			WHEN 10005	THEN C.IdArchivoGas		
+		END	AS	IdCromatografiaArchivo
 	FROM
 		#CalculosGPA	C
 	CROSS JOIN
@@ -1470,7 +1492,8 @@ BEGIN
 			PVUAnterior,
 			PPMAnterior,
 			PuntoEntregaID,
-			EsCondensable
+			EsCondensable,
+			IdCromatografiaArchivo
 		)
 		SELECT
 			idContrato,
@@ -1495,9 +1518,11 @@ BEGIN
 			0,
 			0,
 			PuntoEntregaID,
-			1				
+			1,
+			IdArchivoGas AS	IdCromatografiaArchivo
 		FROM
 			#CalculosGPA
+
 
 	END
 

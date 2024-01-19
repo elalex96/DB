@@ -12,6 +12,9 @@
     IdPresupuesto INT NULL,
     chkAdjuntaClaveSubTarea BIT NOT NULL, 
     IdTipoProgramaActividad  INT,
+    Programa VARCHAR(8000),
+    Presupuesto VARCHAR(8000),
+    Periodo VARCHAR(8000),
     CONSTRAINT PK_CO_BitacoraPresupuesto
         PRIMARY KEY CLUSTERED (IdCarga ASC),
     CONSTRAINT FK_CO_BitacoraPresupuesto_ArchivoAWS
