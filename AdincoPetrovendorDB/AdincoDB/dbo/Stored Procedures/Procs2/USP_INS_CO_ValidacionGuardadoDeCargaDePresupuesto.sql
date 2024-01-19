@@ -18,6 +18,7 @@ CREATE PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto
     @FechaFin DATE,
     @Programa VARCHAR(100),
     @Presupuesto VARCHAR(100),
+	@Periodo VARCHAR(100),
     @AdjuntarClaveSubtarea BIT = 0,
     @Table_CO_Type_BitacoraPresupuestoDetalle CO_Type_BitacoraPresupuestoDetalle READONLY,
 	@IdTipoProgramaActividad  INT
@@ -60,6 +61,38 @@ BEGIN
             Existe BIT NULL,
             Activo BIT NULL,
             NumeroRepetidas INT NULL
+        )
+
+		  CREATE TABLE #TablaTemporalValidacionTarea
+        (
+            IdTarea VARCHAR(100) NULL,
+			IdTareaTabla INT NULL,
+            NumeroRepetidas INT NULL
+        )
+
+		  CREATE TABLE #TablaTemporalValidacionActividad
+        (
+            IdActividad VARCHAR(100) NULL,
+            IdActividadTabla INT NULL,
+            NumeroRepetidas INT NULL
+        )
+		  CREATE TABLE #TablaTemporalValidacionSubActividad
+        (
+            IdSubActividad VARCHAR(100) NULL,
+            IdSubActividadTabla INT NULL,
+            NumeroRepetidas INT NULL
+        )
+
+		 CREATE TABLE #TablaTemporalValidacionActividadSubActividadTarea
+        (
+			IdActividad VARCHAR(100) NULL,
+            IdActividadTabla INT NULL,
+			IdSubActividad VARCHAR(100) NULL,
+            IdSubActividadTabla INT NULL,
+			IdTarea VARCHAR(100) NULL,
+			IdTareaTabla INT NULL,
+			NumeroRenglon INT NULL,
+			Valido BIT NULL,
         )
 
         CREATE TABLE #TablaTemporalValidacionDetalles
@@ -254,7 +287,7 @@ BEGIN
             PA_180 FLOAT NULL,
             PA_181 FLOAT NULL,
             PA_182 FLOAT NULL,
-       PA_183 FLOAT NULL,
+  PA_183 FLOAT NULL,
         PA_184 FLOAT NULL,
             PA_185 FLOAT NULL,
             PA_186 FLOAT NULL,
@@ -334,17 +367,20 @@ BEGIN
 
         INSERT INTO CO_BitacoraPresupuesto
         (
-       IdArchivoAWS,
+			IdArchivoAWS,
             IdContrato,
             Inicio,
             Fin,
             CreadoEl,
             CreadoPor,
             chkAdjuntaClaveSubTarea,
-			IdTipoProgramaActividad 
+			IdTipoProgramaActividad ,
+			Programa,
+			Presupuesto,
+			Periodo
         )
         VALUES
-        (@IdArchivoAWS, @IdContratoSeleccionado, @FechaInicio, @FechaFin, GETDATE(), @UsuarioId, @AdjuntarClaveSubtarea, @IdTipoProgramaActividad)
+        (@IdArchivoAWS, @IdContratoSeleccionado, @FechaInicio, @FechaFin, GETDATE(), @UsuarioId, @AdjuntarClaveSubtarea, @IdTipoProgramaActividad,@Programa,@Presupuesto,@Periodo)
 
         SELECT @IdCarga = SCOPE_IDENTITY()
 
@@ -396,7 +432,7 @@ BEGIN
             PA_44,
             PA_45,
             PA_46,
-            PA_47,
+        PA_47,
             PA_48,
             PA_49,
             PA_50,
@@ -757,7 +793,7 @@ BEGIN
                PA_149,
                PA_150,
                PA_151,
-               PA_152,
+ PA_152,
                PA_153,
                PA_154,
                PA_155,
@@ -1121,7 +1157,7 @@ PA_79,
             PA_254,
             PA_255,
             PA_256,
-            MONTO,
+  MONTO,
 			NumeroRenglon
         )
         SELECT IdDetalle,
@@ -1485,6 +1521,115 @@ PA_79,
         WHERE IdCarga = @IdCarga
         GROUP BY Pozo_Instalacion
 
+
+		
+        /*=======================================*/
+        /*Verificacion de Actividad, SubActividad y Tarea */
+        /*=========================*/
+		INSERT INTO #TablaTemporalValidacionActividadSubActividadTarea(
+			IdActividad ,
+			IdSubActividad ,
+			IdTarea ,
+			NumeroRenglon 
+			 )
+		SELECT	
+		LTRIM(RTRIM(ISNULL(IdActividadPetrolera, ''))),
+		LTRIM(RTRIM(ISNULL(IdSubactividadPetrolera, ''))),
+		LTRIM(RTRIM(ISNULL(IdTarea, ''))),
+		NumeroRenglon
+		FROM #TablaTemporalBitacoraPresupuestoDetalle;
+
+		INSERT INTO #TablaTemporalValidacionActividad(IdActividad,NumeroRepetidas)
+		SELECT IdActividad, COUNT(1)
+		FROM
+			#TablaTemporalValidacionActividadSubActividadTarea
+			WHERE IdActividad <> ''
+		GROUP BY IdActividad;
+
+		INSERT INTO #TablaTemporalValidacionSubActividad(IdSubActividad,NumeroRepetidas)
+		SELECT IdSubActividad, COUNT(1)
+		FROM
+			#TablaTemporalValidacionActividadSubActividadTarea
+			WHERE IdSubActividad <> ''
+		GROUP BY IdSubActividad;
+
+		INSERT INTO #TablaTemporalValidacionTarea( IdTarea,NumeroRepetidas)
+		SELECT IdTarea, COUNT(1)
+		FROM
+			#TablaTemporalValidacionActividadSubActividadTarea
+			WHERE IdTarea <> ''
+		GROUP BY IdTarea;
+
+	UPDATE
+		#TablaTemporalValidacionTarea
+	SET
+    #TablaTemporalValidacionTarea.IdTareaTabla = CO_TareaPetrolera.IdTareaPetrolera
+	FROM
+		#TablaTemporalValidacionTarea
+		  JOIN
+        CO_TareaPetrolera
+            ON LTRIM(RTRIM(#TablaTemporalValidacionTarea.IdTarea)) = LTRIM(RTRIM(ISNULL(
+                                                                                              CO_TareaPetrolera.ID_TAREA,
+                                                                                              ''
+                                                                                          )
+                                                                                   )
+                                                                             );
+
+
+		UPDATE
+			#TablaTemporalValidacionActividad
+		SET
+			#TablaTemporalValidacionActividad.IdActividadTabla = CO_ActividadPetroleraCNH.IdActividadPetrolera
+		from
+			#TablaTemporalValidacionActividad
+			JOIN
+				CO_ActividadPetroleraCNH
+					ON LTRIM(RTRIM(#TablaTemporalValidacionActividad.IdActividad)) = LTRIM(RTRIM(ISNULL(
+																												   CO_ActividadPetroleraCNH.id_Actividad,
+																												   ''
+																											   )
+																										)
+																								  );
+	UPDATE
+		#TablaTemporalValidacionSubActividad
+	SET
+		#TablaTemporalValidacionSubActividad.IdSubActividadTabla = CO_SubactividadPetrolera.IdSubactividadPetrolera
+	from
+		#TablaTemporalValidacionSubActividad
+		JOIN
+			CO_SubactividadPetrolera
+				ON LTRIM(RTRIM(#TablaTemporalValidacionSubActividad.IdSubActividad)) = LTRIM(RTRIM(ISNULL(
+																												  CO_SubactividadPetrolera.[id_Sub-actividad],
+																												  ''
+																											  )
+																									   )
+																								 );
+
+		UPDATE	#TablaTemporalValidacionActividadSubActividadTarea
+		SET #TablaTemporalValidacionActividadSubActividadTarea.IdTareaTabla = #TablaTemporalValidacionTarea.IdTareaTabla
+		FROM
+			#TablaTemporalValidacionActividadSubActividadTarea
+		JOIN
+			#TablaTemporalValidacionTarea
+			ON	#TablaTemporalValidacionActividadSubActividadTarea.IdTarea	=	#TablaTemporalValidacionTarea.IdTarea
+
+	
+		UPDATE	#TablaTemporalValidacionActividadSubActividadTarea
+		SET #TablaTemporalValidacionActividadSubActividadTarea.IdActividadTabla = #TablaTemporalValidacionActividad.IdActividadTabla
+		FROM
+			#TablaTemporalValidacionActividadSubActividadTarea
+		JOIN
+			#TablaTemporalValidacionActividad
+			ON	#TablaTemporalValidacionActividadSubActividadTarea.IdActividad	=	#TablaTemporalValidacionActividad.IdActividad;
+
+		UPDATE	#TablaTemporalValidacionActividadSubActividadTarea
+		SET #TablaTemporalValidacionActividadSubActividadTarea.IdSubActividadTabla = #TablaTemporalValidacionSubActividad.IdSubActividadTabla
+		FROM
+			#TablaTemporalValidacionActividadSubActividadTarea
+		JOIN
+			#TablaTemporalValidacionSubActividad
+			ON	#TablaTemporalValidacionActividadSubActividadTarea.IdSubActividad	=	#TablaTemporalValidacionSubActividad.IdSubActividad
+
         /*=========================*/
         /*Verificacion de Servicios*/
         /*=========================*/
@@ -1540,7 +1685,7 @@ PA_79,
                                          ')'
                                      )
                               )
-                        )
+  )
             FROM #TablaTemporalValidacionServicio
             WHERE Existe = 0
                   AND Subtarea_Servicio <> ''
@@ -1622,7 +1767,7 @@ PA_79,
                 ON LTRIM(RTRIM(#TablaTemporalValidacionInstalacion.Pozo_Instalacion)) = LTRIM(RTRIM(ISNULL(
                                                                                                               CO_Instalacion.NombreInstalacion,
                                                                                                               ''
-                                                                                                          )
+                                                                                                     )
                                                                                                    )
                                                                                              )
         WHERE CO_Instalacion.IdAreaContractual = @IdAreaContractual
@@ -1683,9 +1828,7 @@ PA_79,
         FROM #TablaTemporalValidacionInstalacion
         WHERE ISNULL(Pozo_Instalacion, '') = '';
 
-        /*======================================*/
-        /*Verificacion de Id Actividad Petrolera*/
-        /*======================================*/
+     
         IF (
            (
                SELECT COUNT(1)
@@ -1842,6 +1985,153 @@ PA_79,
                 SET @NumeroAlertasDatosGenerales = 0;
             END
         END
+
+		  /*===================================*/
+        /*Verificacion EXISTENCIA de Actividad Petrolera*/
+        /*===================================*/
+         
+                INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion,
+                    TipoDetalle,
+                    MultiplesDetalles,
+                    NumeroDeDetalles
+                )
+                SELECT DISTINCT 
+						'ALERTA_DATOSGENERALES',
+                        LTRIM(RTRIM(CONCAT(
+                                     #TablaTemporalValidacionActividad.IdActividad,
+                                     ' (',
+                                     CONVERT(VARCHAR(10), #TablaTemporalValidacionActividad.NumeroRepetidas),
+                                     ') '
+                                 )
+                          )
+                    ),
+                       'NoExisteActividadPetrolera',
+                      CASE 
+					  WHEN #TablaTemporalValidacionActividad.NumeroRepetidas = 1
+					  THEN 0
+					  ELSE 1
+					  END,
+                      #TablaTemporalValidacionActividad.NumeroRepetidas
+                FROM #TablaTemporalValidacionActividad
+				WHERE IdActividadTabla IS NULL
+              AND IdActividad <> '';
+           
+		     /*===================================*/
+        /*Verificacion EXISTENCIA de sUBActividad Petrolera*/
+        /*===================================*/
+         
+                INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion,
+                    TipoDetalle,
+                    MultiplesDetalles,
+                    NumeroDeDetalles
+                )
+                SELECT DISTINCT 
+						'ALERTA_DATOSGENERALES',
+                        LTRIM(RTRIM(CONCAT(
+                                     #TablaTemporalValidacionSubActividad.IdSubActividad,
+                                     ' (',
+                                     CONVERT(VARCHAR(10), #TablaTemporalValidacionSubActividad.NumeroRepetidas),
+                                     ') '
+                                 )
+                          )
+                    ),
+                       'NoExisteSubActividadPetrolera',
+                      CASE 
+					  WHEN #TablaTemporalValidacionSubActividad.NumeroRepetidas = 1
+					  THEN 0
+					  ELSE 1
+					  END,
+                      #TablaTemporalValidacionSubActividad.NumeroRepetidas
+                       FROM #TablaTemporalValidacionSubActividad
+							WHERE IdSubActividadTabla IS NULL
+							AND IdSubActividad <> ''
+             
+		     /*===================================*/
+        /*Verificacion EXISTENCIA de Tarea Petrolera*/
+        /*===================================*/
+		   
+                INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion,
+                    TipoDetalle,
+                    MultiplesDetalles,
+                    NumeroDeDetalles
+                )
+                SELECT DISTINCT 
+						'ALERTA_DATOSGENERALES',
+                        LTRIM(RTRIM(CONCAT(
+                                     #TablaTemporalValidacionTarea.IdTarea,
+                                     ' (',
+                                     CONVERT(VARCHAR(10), #TablaTemporalValidacionTarea.NumeroRepetidas),
+                                     ') '
+                                 )
+                          )
+                    ),
+                       'NoExisteTareaPetrolera',
+                      CASE 
+					  WHEN #TablaTemporalValidacionTarea.NumeroRepetidas = 1
+					  THEN 0
+					  ELSE 1
+					  END,
+                      #TablaTemporalValidacionTarea.NumeroRepetidas
+                       FROM #TablaTemporalValidacionTarea
+						WHERE IdTareaTabla IS NULL
+						AND IdTarea <> ''
+           
+		   /*===================================*/
+        /*Verificacion NO EXISTENCIA de COMBINACIÓN ACTIVIDAD-SUBACTIVIDAD-TAREA*/
+        /*===================================*/
+		   
+                INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion,
+                    TipoDetalle,
+					MultiplesDetalles,
+                    NumeroDeDetalles
+                )
+                SELECT  
+						'ALERTA_DATOSGENERALES',
+                          LTRIM(RTRIM(CONCAT(
+                                     'Combinación no válida 
+									 (',
+                                     CONCAT( #TablaTemporalValidacionActividadSubActividadTarea.IdActividad,' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdSubActividad, ' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdTarea),
+                                     ') '
+                                 )
+                          )
+                    ),
+                       'NoExisteCombinacionActividadSubActividadTareaPetrolera',
+					   CASE 
+					   WHEN COUNT(1)>1
+					   THEN
+					   1
+					   ELSE
+					   0 END,
+					    COUNT(1) 
+                     FROM 
+			#TablaTemporalValidacionActividadSubActividadTarea
+		LEFT JOIN	
+			CO_ActSubTareaPetroleraCNH  
+		ON  #TablaTemporalValidacionActividadSubActividadTarea.IdTareaTabla  =	  CO_ActSubTareaPetroleraCNH.IdTareaPetrolera
+			AND		 #TablaTemporalValidacionActividadSubActividadTarea.IdActividadTabla  =	  CO_ActSubTareaPetroleraCNH.IdActividadPetrolera
+			AND		 #TablaTemporalValidacionActividadSubActividadTarea.IdSubActividadTabla  =	  CO_ActSubTareaPetroleraCNH.IdSubactividadPetrolera
+		WHERE IdTareaTabla IS NOT NULL AND IdActividadTabla IS NOT NULL	AND IdSubActividadTabla IS NOT NULL
+		AND IdAST IS NULL
+		GROUP BY  LTRIM(RTRIM(CONCAT(
+                                     'Combinación no válida 
+									 (',
+                                     CONCAT( #TablaTemporalValidacionActividadSubActividadTarea.IdActividad,' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdSubActividad, ' - ', #TablaTemporalValidacionActividadSubActividadTarea.IdTarea),
+                                     ') '
+                                 )
+                          )
+                    )
         /*=========================================*/
         /*Verificacion de Id Subactividad Petrolera*/
         /*=========================================*/
@@ -1922,7 +2212,7 @@ PA_79,
                 SET @NumeroAlertasDatosGenerales = 0;
             END
         END
-        /*======================================*/
+ /*======================================*/
         /*Verificacion de Subactividad Petrolera*/
         /*======================================*/
         IF (
@@ -2126,7 +2416,7 @@ PA_79,
                                     WHERE ISNULL(Tarea, '') = ''
                                     ORDER BY IdDetalle ASC
                                     FOR XML PATH('')
-                                ),
+               ),
                                 1,
                                 2,
                                 ''
@@ -2386,6 +2676,66 @@ PA_79,
 
             IF (@NumeroAlertasDatosGenerales > 0)
             BEGIN
+			/*============================*/
+			/*NO EXISTE Actividad Petrolera*/
+			/*============================*/
+			SELECT
+				@DetalleAnalisis
+				= CONCAT(
+							@DetalleAnalisis, 'No fue encontrada la Actividad Petrolera con Id: ',
+							ISNULL(#TablaTemporalValidacionDetalles.Descripcion, ''), ' | '
+						)
+			FROM
+				#TablaTemporalValidacionDetalles
+			WHERE
+				Tipo = 'ALERTA_DATOSGENERALES'
+				AND TipoDetalle = 'NoExisteActividadPetrolera';
+
+
+			/*============================*/
+			/*NO EXISTE SUBActividad Petrolera*/
+			/*============================*/
+			SELECT
+				@DetalleAnalisis
+				= CONCAT(
+							@DetalleAnalisis, 'No fue encontrada la SubActividad Petrolera con Id: ',
+							ISNULL(#TablaTemporalValidacionDetalles.Descripcion, ''), ' | '
+						)
+			FROM
+				#TablaTemporalValidacionDetalles
+			WHERE
+				Tipo = 'ALERTA_DATOSGENERALES'
+				AND TipoDetalle = 'NoExisteSubActividadPetrolera';
+			/*============================*/
+			/*NO EXISTE Tarea Petrolera*/
+			/*============================*/
+			SELECT
+				@DetalleAnalisis
+				= CONCAT(
+							@DetalleAnalisis, 'No fue encontrada ls Tarea Petrolera con Id: ',
+							ISNULL(#TablaTemporalValidacionDetalles.Descripcion, ''), ' | '
+						)
+			FROM
+				#TablaTemporalValidacionDetalles
+			WHERE
+				Tipo = 'ALERTA_DATOSGENERALES'
+				AND TipoDetalle = 'NoExisteTareaPetrolera';
+
+
+			/*============================*/
+			/*NO EXISTE Combinación de Actividad-Subactividad-Tarea Petrolera*/
+			/*============================*/
+			SELECT
+				@DetalleAnalisis
+				= CONCAT(
+							@DetalleAnalisis, 'No fue encontrada la combinación de la Actividad-Subactividad-Tarea con Id: ',
+							ISNULL(#TablaTemporalValidacionDetalles.Descripcion, ''), ' | '
+						)
+			FROM
+				#TablaTemporalValidacionDetalles
+			WHERE
+				Tipo = 'ALERTA_DATOSGENERALES'
+				AND TipoDetalle = 'NoExisteCombinacionActividadSubActividadTareaPetrolera';
                 /*===============================*/
                 /*Bitácora Id Actividad Petrolera*/
                 /*===============================*/
@@ -2399,7 +2749,8 @@ PA_79,
                 FROM #TablaTemporalValidacionDetalles
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'IdActividadPetrolera'
-                      AND MultiplesDetalles = 0
+                      AND MultiplesDetalles = 0;
+
                 SELECT @DetalleAnalisis
                     = CONCAT(
                                 @DetalleAnalisis,
@@ -2413,11 +2764,12 @@ PA_79,
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'IdActividadPetrolera'
                       AND MultiplesDetalles = 1
+
                 /*============================*/
                 /*Bitácora Actividad Petrolera*/
                 /*============================*/
                 SELECT @DetalleAnalisis
-                    = CONCAT(
+               = CONCAT(
                                 @DetalleAnalisis,
                                 'Existe un registro sin Actividad Petrolera en ',
                                 ISNULL(#TablaTemporalValidacionDetalles.Descripcion, ''),
@@ -2439,7 +2791,8 @@ PA_79,
                 FROM #TablaTemporalValidacionDetalles
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'ActividadPetrolera'
-                      AND MultiplesDetalles = 1
+                      AND MultiplesDetalles = 1;
+
                 /*===============================*/
                 /*Bitácora Id Subactividad Petrolera*/
                 /*===============================*/
@@ -2466,7 +2819,8 @@ PA_79,
                 FROM #TablaTemporalValidacionDetalles
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'IdSubactividadPetrolera'
-                      AND MultiplesDetalles = 1
+                      AND MultiplesDetalles = 1;
+
                 /*===============================*/
                 /*Bitácora Subactividad Petrolera*/
                 /*===============================*/
@@ -2488,15 +2842,18 @@ PA_79,
                                 CONVERT(VARCHAR(10), #TablaTemporalValidacionDetalles.NumeroDeDetalles),
                                 ') registros sin Subactividad Petrolera en ',
                                 ISNULL(#TablaTemporalValidacionDetalles.Descripcion, ''),
-                                ' | '
+     ' | '
                             )
                 FROM #TablaTemporalValidacionDetalles
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'SubactividadPetrolera'
-                      AND MultiplesDetalles = 1
+                      AND MultiplesDetalles = 1;
+
+				
                 /*=================*/
                 /*Bitácora Id Tarea*/
                 /*=================*/
+
                 SELECT @DetalleAnalisis
                     = CONCAT(
                                 @DetalleAnalisis,
@@ -2507,7 +2864,8 @@ PA_79,
                 FROM #TablaTemporalValidacionDetalles
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'IdTarea'
-                      AND MultiplesDetalles = 0
+                      AND MultiplesDetalles = 0;
+
           SELECT @DetalleAnalisis
                     = CONCAT(
                                 @DetalleAnalisis,
@@ -2521,9 +2879,11 @@ PA_79,
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'IdTarea'
                       AND MultiplesDetalles = 1
+
                 /*==============*/
                 /*Bitácora Tarea*/
                 /*==============*/
+
                 SELECT @DetalleAnalisis
                     = CONCAT(
                                 @DetalleAnalisis,
@@ -2535,6 +2895,7 @@ PA_79,
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'Tarea'
                       AND MultiplesDetalles = 0
+
                 SELECT @DetalleAnalisis
                     = CONCAT(
                                 @DetalleAnalisis,
@@ -2548,6 +2909,8 @@ PA_79,
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'Tarea'
                       AND MultiplesDetalles = 1
+
+				
 
                 /*==============*/
                 /*Bitácora MONTO*/
@@ -2563,12 +2926,13 @@ PA_79,
                 WHERE Tipo = 'ALERTA_DATOSGENERALES'
                       AND TipoDetalle = 'MONTO'
                       AND MultiplesDetalles = 0
+
                 SELECT @DetalleAnalisis
                     = CONCAT(
                                 @DetalleAnalisis,
                                 'Existen (',
                                 CONVERT(VARCHAR(10), #TablaTemporalValidacionDetalles.NumeroDeDetalles),
-                                ') registros sin Monto Presupuestado en ',
+                ') registros sin Monto Presupuestado en ',
                                 ISNULL(#TablaTemporalValidacionDetalles.Descripcion, ''),
                                 ' | '
                             )
@@ -2601,3 +2965,4 @@ PA_79,
         RAISERROR(@ErrorMessage, 17, 1)
     END CATCH;
 END
+
