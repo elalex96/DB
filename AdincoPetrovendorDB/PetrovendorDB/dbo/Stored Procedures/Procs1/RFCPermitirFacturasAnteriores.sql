@@ -37,7 +37,7 @@ BEGIN
                 IF EXISTS
                 (
                     SELECT 1
-                    FROM FacturasExcluirRestriccionAnioFiscal
+                    FROM FacturasExcluirRestriccionAnioFiscal (NOLOCK)
                     WHERE UPPER(RFCOperadora) = UPPER(@RFC)
                           AND Activo = 1
 						  AND FechaVigencia >= GETDATE()
