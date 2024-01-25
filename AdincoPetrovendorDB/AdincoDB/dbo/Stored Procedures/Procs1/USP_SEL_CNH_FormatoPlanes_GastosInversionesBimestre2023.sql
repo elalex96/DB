@@ -4,7 +4,7 @@
     FROM dbo.sysobjects
     WHERE name = 'USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023'
 )
-    DROP PROCEDURE USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023;
+    DROP PROCEDURE USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023
 GO
 CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023]
 @IdContrato          INT,   
@@ -36,6 +36,8 @@ IF OBJECT_ID('tempdb..#SumaDePagosDolaresBase', 'U') IS NOT NULL
 
 IF OBJECT_ID('tempdb..#ResultadoMontos', 'U') IS NOT NULL
     DROP TABLE #ResultadoMontos;
+IF OBJECT_ID('tempdb..#TEMPORAL_21_M', 'U') IS NOT NULL  
+	DROP TABLE #TEMPORAL_21_M; 
 
 CREATE TABLE #ResultadoMontos
     (
@@ -121,13 +123,55 @@ CREATE TABLE #SumaDePagosDolaresBase
         MonedaTran      INT,
         IdTransferencia INT,
     )
+	
+	CREATE TABLE #TEMPORAL_21_M  
+    (  
+        Id_21_M INT IDENTITY(11, 1),  
+        IdContratista_RF_00 VARCHAR(2000),  
+        IdContrato_RI_00 VARCHAR(2000),  
+        NumeroContrato_RF01_01 VARCHAR(2000),  
+        NumeroIdentificacion_RC21_00 VARCHAR(2000),  
+        MesReporte_RC21_01 INT,  
+        AnioReporte_RC21_02 INT,  
+        NumeroConsecutivo_RC21_03 INT,  
+        TipoDocumento_RC21_04 VARCHAR(2000),  
+        UUID_RC21_05 VARCHAR(2000),  
+        IUC_PI_RC21_06 VARCHAR(2000),  
+        IUC_PE_RC21_07 VARCHAR(2000),  
+        TipoComprobante_RC21_08 VARCHAR(2000),  
+        MetodoPago_RC21_09 VARCHAR(2000),  
+        Actividad_RC21_10 VARCHAR(2000),  
+        SubActividad_RC21_11 VARCHAR(2000),  
+        Tarea_RC21_12 VARCHAR(2000),  
+        CostAtribAdminGral_RC21_13 BIT,  
+        Campo_RC21_14 VARCHAR(2000),  
+        Yacimiento_RC21_15 VARCHAR(2000),  
+        Pozo_RC21_16 VARCHAR(2000),  
+        NumCuentContable_RC21_17 VARCHAR(2000),  
+        DescCuentaContable_RC21_18 VARCHAR(2000),  
+        NumPoliContable_RC21_19 VARCHAR(2000),  
+        ConcepOp_RC21_20 VARCHAR(2000),  
+        GastoOpInver_RC21_21 INT,  
+        MontoAumentar_RC21_22 FLOAT,  
+        MontoDisminuir_RC21_23 FLOAT,  
+        ClavaMoneda_RC21_24 VARCHAR(2000),  
+        TipCamConvetUSD_RC21_25 FLOAT,  
+        TipoOpercion_RC21_26 INT,
+		RegistroConAjuste_RC21_27 INT NULL,  
+        AsociadoIncrementoPMT_RC21_28 INT NULL
+    );  
 
 DECLARE
     @IdPresupuesto     INT = 0,
     @MesInicio         DATE,
     @MesFin            Date,
     @NombrePresupuesto VARCHAR(500),
-    @IdTipoContrato    INT;
+    @IdTipoContrato    INT,
+	@MontoParaDisminuirCapex DECIMAL(20, 4),
+	@MontoParaDisminuirOpex DECIMAL(20, 4),
+	@Capex INT = 2,
+	@Opex INT = 1
+
 DECLARE
     @Aprobado                  INT = 10004,
     @TipoFactura               INT = 1,
@@ -137,6 +181,7 @@ DECLARE
     @TipoPedimentoImportacion  INT = 2,
     @TipoComprobanteExtranjero INT = 3
 DECLARE @MontoUSDInversion FLOAT = 0, @MontoUSDOperativo FLOAT = 0, @MontoUSDAbandono FLOAT = 0;
+
 
 SELECT
     @IdPresupuesto     = IdPresupuesto,
@@ -152,6 +197,51 @@ FROM
     CO_Contrato
 WHERE
     IdContrato = @IdContrato;
+
+ 
+
+INSERT INTO #TEMPORAL_21_M  
+        (  
+            IdContratista_RF_00,  
+            IdContrato_RI_00,  
+            NumeroContrato_RF01_01,  
+            NumeroIdentificacion_RC21_00,  
+            MesReporte_RC21_01,  
+            AnioReporte_RC21_02,  
+            NumeroConsecutivo_RC21_03,  
+            TipoDocumento_RC21_04,  
+            UUID_RC21_05,  
+			IUC_PI_RC21_06,  
+            IUC_PE_RC21_07,  
+            TipoComprobante_RC21_08,  
+            MetodoPago_RC21_09,  
+            Actividad_RC21_10,  
+            SubActividad_RC21_11,  
+            Tarea_RC21_12,  
+            CostAtribAdminGral_RC21_13,  
+            Campo_RC21_14,  
+            Yacimiento_RC21_15,  
+            Pozo_RC21_16,  
+            NumCuentContable_RC21_17,  
+            DescCuentaContable_RC21_18,  
+            NumPoliContable_RC21_19,  
+            ConcepOp_RC21_20,  
+            GastoOpInver_RC21_21,  
+            MontoAumentar_RC21_22,  
+            MontoDisminuir_RC21_23,  
+            ClavaMoneda_RC21_24,  
+            TipCamConvetUSD_RC21_25,  
+            TipoOpercion_RC21_26,  
+            RegistroConAjuste_RC21_27,  
+            AsociadoIncrementoPMT_RC21_28  
+        )  
+        EXEC dbo.SIPAC_RC_CONT_21_M @IdContrato, @Mes, @IdPresupuesto, 'CGI_2022'; 
+
+		SELECT @MontoParaDisminuirCapex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
+		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> '' AND GastoOpInver_RC21_21 = @Capex
+
+		SELECT @MontoParaDisminuirOpex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
+		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> ''  AND GastoOpInver_RC21_21 = @Opex 
 
 SELECT
     @MesInicio = CASE
@@ -1429,6 +1519,6 @@ FROM
     #ResultadoMontos WHERE Actividad = 'Abandono';
 END
 
-SELECT @MontoUSDInversion as MontoUSDInversion, @MontoUSDOperativo as MontoUSDOperativo, @MontoUSDAbandono as MontoUSDAbandono
+SELECT (@MontoUSDInversion - @MontoParaDisminuirOpex) as MontoUSDInversion, (@MontoUSDOperativo- @MontoParaDisminuirCapex) as MontoUSDOperativo, @MontoUSDAbandono as MontoUSDAbandono
 
 END;
