@@ -44,7 +44,8 @@ CREATE TABLE #ResultadoMontos
         MontoUSD         FLOAT,
         CAPEX            BIT,
         OPEX             BIT,
-        Actividad        Varchar(500)
+        Actividad        Varchar(500),
+		MontoNotaCreditoUSD DECIMAL(20, 4)
     );
 
 CREATE TABLE #MontosTotalTransferenciaPUE
@@ -168,9 +169,7 @@ DECLARE
     @NombrePresupuesto VARCHAR(500),
     @IdTipoContrato    INT,
 	@MontoParaDisminuirCapex DECIMAL(20, 4),
-	@MontoParaDisminuirOpex DECIMAL(20, 4),
-	@Capex INT = 2,
-	@Opex INT = 1
+	@MontoParaDisminuirOpex DECIMAL(20, 4)
 
 DECLARE
     @Aprobado                  INT = 10004,
@@ -180,7 +179,9 @@ DECLARE
     @TipoComplementoPago       INT = 6,
     @TipoPedimentoImportacion  INT = 2,
     @TipoComprobanteExtranjero INT = 3
-DECLARE @MontoUSDInversion FLOAT = 0, @MontoUSDOperativo FLOAT = 0, @MontoUSDAbandono FLOAT = 0;
+DECLARE @MontoUSDInversion FLOAT = 0, @MontoUSDOperativo FLOAT = 0, @MontoUSDAbandono FLOAT = 0,
+	@MontoUSDNotaCreditoCapex DECIMAL(20, 4), @MontoUSDNotaCreditoOpex DECIMAL(20 ,4),
+	@MontoUSDNotaCredito DECIMAL(20, 4)
 
 
 SELECT
@@ -244,87 +245,8 @@ SELECT
                       THEN EOMONTH(DATEFROMPARTS(YEAR(@Mes), 12, 1))
               END;
 
-		INSERT INTO #TEMPORAL_21_M  
-        (  
-            IdContratista_RF_00,  
-            IdContrato_RI_00,  
-            NumeroContrato_RF01_01,  
-            NumeroIdentificacion_RC21_00,  
-            MesReporte_RC21_01,  
-            AnioReporte_RC21_02,  
-            NumeroConsecutivo_RC21_03,  
-            TipoDocumento_RC21_04,  
-            UUID_RC21_05,  
-			IUC_PI_RC21_06,  
-            IUC_PE_RC21_07,  
-            TipoComprobante_RC21_08,  
-            MetodoPago_RC21_09,  
-            Actividad_RC21_10,  
-            SubActividad_RC21_11,  
-            Tarea_RC21_12,  
-            CostAtribAdminGral_RC21_13,  
-            Campo_RC21_14,  
-            Yacimiento_RC21_15,  
-            Pozo_RC21_16,  
-            NumCuentContable_RC21_17,  
-            DescCuentaContable_RC21_18,  
-            NumPoliContable_RC21_19,  
-            ConcepOp_RC21_20,  
-            GastoOpInver_RC21_21,  
-            MontoAumentar_RC21_22,  
-            MontoDisminuir_RC21_23,  
-            ClavaMoneda_RC21_24,  
-            TipCamConvetUSD_RC21_25,  
-            TipoOpercion_RC21_26,  
-            RegistroConAjuste_RC21_27,  
-            AsociadoIncrementoPMT_RC21_28  
-        )  
-        EXEC dbo.SIPAC_RC_CONT_21_M @IdContrato, @MesInicio, @IdPresupuesto, 'CGI_2022'; 
 
-		INSERT INTO #TEMPORAL_21_M  
-        (  
-            IdContratista_RF_00,  
-            IdContrato_RI_00,  
-            NumeroContrato_RF01_01,  
-            NumeroIdentificacion_RC21_00,  
-            MesReporte_RC21_01,  
-            AnioReporte_RC21_02,  
-            NumeroConsecutivo_RC21_03,  
-            TipoDocumento_RC21_04,  
-            UUID_RC21_05,  
-			IUC_PI_RC21_06,  
-            IUC_PE_RC21_07,  
-            TipoComprobante_RC21_08,  
-            MetodoPago_RC21_09,  
-            Actividad_RC21_10,  
-            SubActividad_RC21_11,  
-            Tarea_RC21_12,  
-            CostAtribAdminGral_RC21_13,  
-            Campo_RC21_14,  
-            Yacimiento_RC21_15,  
-            Pozo_RC21_16,  
-            NumCuentContable_RC21_17,  
-            DescCuentaContable_RC21_18,  
-            NumPoliContable_RC21_19,  
-            ConcepOp_RC21_20,  
-            GastoOpInver_RC21_21,  
-            MontoAumentar_RC21_22,  
-            MontoDisminuir_RC21_23,  
-            ClavaMoneda_RC21_24,  
-            TipCamConvetUSD_RC21_25,  
-            TipoOpercion_RC21_26,  
-            RegistroConAjuste_RC21_27,  
-            AsociadoIncrementoPMT_RC21_28  
-        )  
-        EXEC dbo.SIPAC_RC_CONT_21_M @IdContrato, @MesFin, @IdPresupuesto, 'CGI_2022';
-
-		SELECT @MontoParaDisminuirCapex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
-		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> '' AND GastoOpInver_RC21_21 = @Capex
-
-		SELECT @MontoParaDisminuirOpex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
-		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> ''  AND GastoOpInver_RC21_21 = @Opex 
-
-INSERT INTO #Facturas
+	INSERT INTO #Facturas
     (
         IdRegistro,
         UUID,
@@ -995,7 +917,8 @@ INSERT INTO #ResultadoMontos
         MontoUSD,
         CAPEX,
         OPEX,
-        Actividad
+        Actividad,
+		MontoNotaCreditoUSD
     )
             SELECT
                 SUM(   CASE
@@ -1059,7 +982,21 @@ INSERT INTO #ResultadoMontos
                         THEN CO_TipoServicio.NombreTipoServicio
                     ELSE
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
-                END
+                END,
+				SUM(ABS(   CASE  
+									WHEN ISNULL(TTF.TCD, 0) = 0  
+                                        THEN 0  
+                                    WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  
+                                        AND TTF.TipoComprobante IN (  
+                                                                        'E'  
+                                                                    )  
+                                        THEN CAST((TTF.MontoRegistro / TTF.TCD)  
+                                                    * (TTF.RC2122 / (F.MontoConIva / TTF.TCD)) AS DECIMAL(15, 2))  
+                                    ELSE  
+                                        0  
+                                END  
+                            )  
+                        ) AS [RC21_23] -- Nota de credito
             FROM
                 dbo.CO_Registro WITH (NOLOCK)
                 JOIN
@@ -1234,7 +1171,18 @@ INSERT INTO #ResultadoMontos
                         THEN CO_TipoServicio.NombreTipoServicio
                     ELSE
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
-                END
+                END,
+				SUM(ABS(   CASE  
+                                WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  
+                                    AND TTF.TipoComprobante IN (  
+                                                                    'E'  
+                                                                )  
+                                    THEN CAST(TTF.MontoDolares AS DECIMAL(15, 2))  
+                                ELSE  
+                                    0  
+                            END  
+                        )  
+                    ) AS [RC21_23] --Nota de credito
             FROM
                 dbo.CO_Registro WITH (NOLOCK)
                 JOIN
@@ -1417,7 +1365,8 @@ INSERT INTO #ResultadoMontos
                         THEN CO_TipoServicio.NombreTipoServicio
                     ELSE
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
-                END
+                END,
+				0 AS [RC21_23] --Nota de credito
             FROM
                 dbo.FI_Transfer                     TR WITH (NOLOCK)
                 JOIN
@@ -1538,24 +1487,29 @@ INSERT INTO #ResultadoMontos
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
                 END
 
+
 SELECT
-    @MontoUSDInversion = ISNULL(SUM(ISNULL(MontoUSD,0)),0) --as MontoUSDInversion
+    @MontoUSDInversion = ISNULL(SUM(ISNULL(MontoUSD,0)),0), --as MontoUSDInversion
+	@MontoUSDNotaCreditoCapex = ISNULL(SUM(ISNULL(MontoNotaCreditoUSD,0)),0)
 FROM
     #ResultadoMontos WHERE CAPEX = 1;
 
 SELECT
-     @MontoUSDOperativo= ISNULL(SUM(ISNULL(MontoUSD,0)),0) --as MontoUSDOperativo
+     @MontoUSDOperativo= ISNULL(SUM(ISNULL(MontoUSD,0)),0), --as MontoUSDOperativo
+	 @MontoUSDNotaCreditoOpex = ISNULL(SUM(ISNULL(MontoNotaCreditoUSD,0)),0)
 FROM
     #ResultadoMontos WHERE OPEX = 1;
 
 IF((SELECT PATINDEX('%Desarrollo%',@NombrePresupuesto) ) >0)
 BEGIN
 	SELECT
-     @MontoUSDAbandono = ISNULL(SUM(ISNULL(MontoUSD,0)),0) --as MontoUSDAbandono
+     @MontoUSDAbandono = ISNULL(SUM(ISNULL(MontoUSD,0)),0), --as MontoUSDAbandono
+	 @MontoUSDNotaCredito = ISNULL(SUM(ISNULL(MontoNotaCreditoUSD,0)),0)
 FROM
     #ResultadoMontos WHERE Actividad = 'Abandono';
 END
 
-SELECT (@MontoUSDInversion - @MontoParaDisminuirOpex) as MontoUSDInversion, (@MontoUSDOperativo- @MontoParaDisminuirCapex) as MontoUSDOperativo, @MontoUSDAbandono as MontoUSDAbandono
+
+SELECT (@MontoUSDInversion - @MontoUSDNotaCreditoCapex) as MontoUSDInversion, (@MontoUSDOperativo- @MontoUSDNotaCreditoOpex) as MontoUSDOperativo, (@MontoUSDAbandono - @MontoUSDNotaCredito) as MontoUSDAbandono
 
 END;
