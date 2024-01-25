@@ -200,49 +200,6 @@ WHERE
 
  
 
-INSERT INTO #TEMPORAL_21_M  
-        (  
-            IdContratista_RF_00,  
-            IdContrato_RI_00,  
-            NumeroContrato_RF01_01,  
-            NumeroIdentificacion_RC21_00,  
-            MesReporte_RC21_01,  
-            AnioReporte_RC21_02,  
-            NumeroConsecutivo_RC21_03,  
-            TipoDocumento_RC21_04,  
-            UUID_RC21_05,  
-			IUC_PI_RC21_06,  
-            IUC_PE_RC21_07,  
-            TipoComprobante_RC21_08,  
-            MetodoPago_RC21_09,  
-            Actividad_RC21_10,  
-            SubActividad_RC21_11,  
-            Tarea_RC21_12,  
-            CostAtribAdminGral_RC21_13,  
-            Campo_RC21_14,  
-            Yacimiento_RC21_15,  
-            Pozo_RC21_16,  
-            NumCuentContable_RC21_17,  
-            DescCuentaContable_RC21_18,  
-            NumPoliContable_RC21_19,  
-            ConcepOp_RC21_20,  
-            GastoOpInver_RC21_21,  
-            MontoAumentar_RC21_22,  
-            MontoDisminuir_RC21_23,  
-            ClavaMoneda_RC21_24,  
-            TipCamConvetUSD_RC21_25,  
-            TipoOpercion_RC21_26,  
-            RegistroConAjuste_RC21_27,  
-            AsociadoIncrementoPMT_RC21_28  
-        )  
-        EXEC dbo.SIPAC_RC_CONT_21_M @IdContrato, @Mes, @IdPresupuesto, 'CGI_2022'; 
-
-		SELECT @MontoParaDisminuirCapex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
-		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> '' AND GastoOpInver_RC21_21 = @Capex
-
-		SELECT @MontoParaDisminuirOpex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
-		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> ''  AND GastoOpInver_RC21_21 = @Opex 
-
 SELECT
     @MesInicio = CASE
                      WHEN MONTH(@Mes) = 1
@@ -286,6 +243,86 @@ SELECT
                        OR MONTH(@Mes) = 12
                       THEN EOMONTH(DATEFROMPARTS(YEAR(@Mes), 12, 1))
               END;
+
+		INSERT INTO #TEMPORAL_21_M  
+        (  
+            IdContratista_RF_00,  
+            IdContrato_RI_00,  
+            NumeroContrato_RF01_01,  
+            NumeroIdentificacion_RC21_00,  
+            MesReporte_RC21_01,  
+            AnioReporte_RC21_02,  
+            NumeroConsecutivo_RC21_03,  
+            TipoDocumento_RC21_04,  
+            UUID_RC21_05,  
+			IUC_PI_RC21_06,  
+            IUC_PE_RC21_07,  
+            TipoComprobante_RC21_08,  
+            MetodoPago_RC21_09,  
+            Actividad_RC21_10,  
+            SubActividad_RC21_11,  
+            Tarea_RC21_12,  
+            CostAtribAdminGral_RC21_13,  
+            Campo_RC21_14,  
+            Yacimiento_RC21_15,  
+            Pozo_RC21_16,  
+            NumCuentContable_RC21_17,  
+            DescCuentaContable_RC21_18,  
+            NumPoliContable_RC21_19,  
+            ConcepOp_RC21_20,  
+            GastoOpInver_RC21_21,  
+            MontoAumentar_RC21_22,  
+            MontoDisminuir_RC21_23,  
+            ClavaMoneda_RC21_24,  
+            TipCamConvetUSD_RC21_25,  
+            TipoOpercion_RC21_26,  
+            RegistroConAjuste_RC21_27,  
+            AsociadoIncrementoPMT_RC21_28  
+        )  
+        EXEC dbo.SIPAC_RC_CONT_21_M @IdContrato, @MesInicio, @IdPresupuesto, 'CGI_2022'; 
+
+		INSERT INTO #TEMPORAL_21_M  
+        (  
+            IdContratista_RF_00,  
+            IdContrato_RI_00,  
+            NumeroContrato_RF01_01,  
+            NumeroIdentificacion_RC21_00,  
+            MesReporte_RC21_01,  
+            AnioReporte_RC21_02,  
+            NumeroConsecutivo_RC21_03,  
+            TipoDocumento_RC21_04,  
+            UUID_RC21_05,  
+			IUC_PI_RC21_06,  
+            IUC_PE_RC21_07,  
+            TipoComprobante_RC21_08,  
+            MetodoPago_RC21_09,  
+            Actividad_RC21_10,  
+            SubActividad_RC21_11,  
+            Tarea_RC21_12,  
+            CostAtribAdminGral_RC21_13,  
+            Campo_RC21_14,  
+            Yacimiento_RC21_15,  
+            Pozo_RC21_16,  
+            NumCuentContable_RC21_17,  
+            DescCuentaContable_RC21_18,  
+            NumPoliContable_RC21_19,  
+            ConcepOp_RC21_20,  
+            GastoOpInver_RC21_21,  
+            MontoAumentar_RC21_22,  
+            MontoDisminuir_RC21_23,  
+            ClavaMoneda_RC21_24,  
+            TipCamConvetUSD_RC21_25,  
+            TipoOpercion_RC21_26,  
+            RegistroConAjuste_RC21_27,  
+            AsociadoIncrementoPMT_RC21_28  
+        )  
+        EXEC dbo.SIPAC_RC_CONT_21_M @IdContrato, @MesFin, @IdPresupuesto, 'CGI_2022';
+
+		SELECT @MontoParaDisminuirCapex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
+		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> '' AND GastoOpInver_RC21_21 = @Capex
+
+		SELECT @MontoParaDisminuirOpex = SUM(MontoDisminuir_RC21_23) FROM #TEMPORAL_21_M
+		WHERE ISNULL(NumCuentContable_RC21_17, '') <> '' AND ISNULL(NumPoliContable_RC21_19, '') <> ''  AND GastoOpInver_RC21_21 = @Opex 
 
 INSERT INTO #Facturas
     (
