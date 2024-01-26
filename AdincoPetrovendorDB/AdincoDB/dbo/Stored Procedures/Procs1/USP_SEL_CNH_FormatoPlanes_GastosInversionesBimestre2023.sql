@@ -124,43 +124,7 @@ CREATE TABLE #SumaDePagosDolaresBase
         MonedaTran      INT,
         IdTransferencia INT,
     )
-	
-	CREATE TABLE #TEMPORAL_21_M  
-    (  
-        Id_21_M INT IDENTITY(11, 1),  
-        IdContratista_RF_00 VARCHAR(2000),  
-        IdContrato_RI_00 VARCHAR(2000),  
-        NumeroContrato_RF01_01 VARCHAR(2000),  
-        NumeroIdentificacion_RC21_00 VARCHAR(2000),  
-        MesReporte_RC21_01 INT,  
-        AnioReporte_RC21_02 INT,  
-        NumeroConsecutivo_RC21_03 INT,  
-        TipoDocumento_RC21_04 VARCHAR(2000),  
-        UUID_RC21_05 VARCHAR(2000),  
-        IUC_PI_RC21_06 VARCHAR(2000),  
-        IUC_PE_RC21_07 VARCHAR(2000),  
-        TipoComprobante_RC21_08 VARCHAR(2000),  
-        MetodoPago_RC21_09 VARCHAR(2000),  
-        Actividad_RC21_10 VARCHAR(2000),  
-        SubActividad_RC21_11 VARCHAR(2000),  
-        Tarea_RC21_12 VARCHAR(2000),  
-        CostAtribAdminGral_RC21_13 BIT,  
-        Campo_RC21_14 VARCHAR(2000),  
-        Yacimiento_RC21_15 VARCHAR(2000),  
-        Pozo_RC21_16 VARCHAR(2000),  
-        NumCuentContable_RC21_17 VARCHAR(2000),  
-        DescCuentaContable_RC21_18 VARCHAR(2000),  
-        NumPoliContable_RC21_19 VARCHAR(2000),  
-        ConcepOp_RC21_20 VARCHAR(2000),  
-        GastoOpInver_RC21_21 INT,  
-        MontoAumentar_RC21_22 FLOAT,  
-        MontoDisminuir_RC21_23 FLOAT,  
-        ClavaMoneda_RC21_24 VARCHAR(2000),  
-        TipCamConvetUSD_RC21_25 FLOAT,  
-        TipoOpercion_RC21_26 INT,
-		RegistroConAjuste_RC21_27 INT NULL,  
-        AsociadoIncrementoPMT_RC21_28 INT NULL
-    );  
+	 
 
 DECLARE
     @IdPresupuesto     INT = 0,
