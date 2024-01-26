@@ -36,8 +36,7 @@ IF OBJECT_ID('tempdb..#SumaDePagosDolaresBase', 'U') IS NOT NULL
 
 IF OBJECT_ID('tempdb..#ResultadoMontos', 'U') IS NOT NULL
     DROP TABLE #ResultadoMontos;
-IF OBJECT_ID('tempdb..#TEMPORAL_21_M', 'U') IS NOT NULL  
-	DROP TABLE #TEMPORAL_21_M; 
+
 
 CREATE TABLE #ResultadoMontos
     (
