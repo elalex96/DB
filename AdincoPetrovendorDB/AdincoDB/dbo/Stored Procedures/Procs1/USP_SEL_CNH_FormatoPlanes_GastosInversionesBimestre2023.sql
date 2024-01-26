@@ -45,7 +45,7 @@ CREATE TABLE #ResultadoMontos
         CAPEX            BIT,
         OPEX             BIT,
         Actividad        Varchar(500),
-		MontoNotaCreditoUSD DECIMAL(20, 4)
+		MontoNotaCreditoUSD FLOAT
     );
 
 CREATE TABLE #MontosTotalTransferenciaPUE
@@ -132,8 +132,8 @@ DECLARE
     @MesFin            Date,
     @NombrePresupuesto VARCHAR(500),
     @IdTipoContrato    INT,
-	@MontoParaDisminuirCapex DECIMAL(20, 4),
-	@MontoParaDisminuirOpex DECIMAL(20, 4)
+	@MontoParaDisminuirCapex FLOAT,
+	@MontoParaDisminuirOpex FLOAT
 
 DECLARE
     @Aprobado                  INT = 10004,
@@ -144,8 +144,8 @@ DECLARE
     @TipoPedimentoImportacion  INT = 2,
     @TipoComprobanteExtranjero INT = 3
 DECLARE @MontoUSDInversion FLOAT = 0, @MontoUSDOperativo FLOAT = 0, @MontoUSDAbandono FLOAT = 0,
-	@MontoUSDNotaCreditoCapex DECIMAL(20, 4), @MontoUSDNotaCreditoOpex DECIMAL(20 ,4),
-	@MontoUSDNotaCredito DECIMAL(20, 4)
+	@MontoUSDNotaCreditoCapex FLOAT, @MontoUSDNotaCreditoOpex FLOAT,
+	@MontoUSDNotaCredito FLOAT
 
 
 SELECT
@@ -955,7 +955,7 @@ INSERT INTO #ResultadoMontos
                                                                         'E'  
                                                                     )  
                                         THEN CAST((TTF.MontoRegistro / TTF.TCD)  
-                                                    * (TTF.RC2122 / (F.MontoConIva / TTF.TCD)) AS DECIMAL(15, 2))  
+                                                    * (TTF.RC2122 / (F.MontoConIva / TTF.TCD)) AS FLOAT)  
                                     ELSE  
                                         0  
                                 END  
@@ -1141,7 +1141,7 @@ INSERT INTO #ResultadoMontos
                                     AND TTF.TipoComprobante IN (  
                                                                     'E'  
                                                                 )  
-                                    THEN CAST(TTF.MontoDolares AS DECIMAL(15, 2))  
+                                    THEN CAST(TTF.MontoDolares AS FLOAT)  
                                 ELSE  
                                     0  
                             END  
@@ -1474,6 +1474,8 @@ FROM
 END
 
 
-SELECT (@MontoUSDInversion - @MontoUSDNotaCreditoCapex) as MontoUSDInversion, (@MontoUSDOperativo- @MontoUSDNotaCreditoOpex) as MontoUSDOperativo, (@MontoUSDAbandono - @MontoUSDNotaCredito) as MontoUSDAbandono
+SELECT (ISNULL(@MontoUSDInversion, 0) - ISNULL(@MontoUSDNotaCreditoCapex, 0)) as MontoUSDInversion, 
+		(ISNULL(@MontoUSDOperativo, 0)- ISNULL(@MontoUSDNotaCreditoOpex, 0)) as MontoUSDOperativo, 
+		(ISNULL(@MontoUSDAbandono, 0) - ISNULL(@MontoUSDNotaCredito, 0)) as MontoUSDAbandono
 
 END;
