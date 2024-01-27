@@ -4,7 +4,7 @@
     FROM dbo.sysobjects
     WHERE name = 'USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023'
 )
-    DROP PROCEDURE USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023;
+    DROP PROCEDURE USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023
 GO
 CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoPlanes_GastosInversionesBimestre2023]
 @IdContrato          INT,   
@@ -37,12 +37,14 @@ IF OBJECT_ID('tempdb..#SumaDePagosDolaresBase', 'U') IS NOT NULL
 IF OBJECT_ID('tempdb..#ResultadoMontos', 'U') IS NOT NULL
     DROP TABLE #ResultadoMontos;
 
+
 CREATE TABLE #ResultadoMontos
     (
         MontoUSD         FLOAT,
         CAPEX            BIT,
         OPEX             BIT,
-        Actividad        Varchar(500)
+        Actividad        Varchar(500),
+		MontoNotaCreditoUSD FLOAT
     );
 
 CREATE TABLE #MontosTotalTransferenciaPUE
@@ -121,13 +123,17 @@ CREATE TABLE #SumaDePagosDolaresBase
         MonedaTran      INT,
         IdTransferencia INT,
     )
+	 
 
 DECLARE
     @IdPresupuesto     INT = 0,
     @MesInicio         DATE,
     @MesFin            Date,
     @NombrePresupuesto VARCHAR(500),
-    @IdTipoContrato    INT;
+    @IdTipoContrato    INT,
+	@MontoParaDisminuirCapex FLOAT,
+	@MontoParaDisminuirOpex FLOAT
+
 DECLARE
     @Aprobado                  INT = 10004,
     @TipoFactura               INT = 1,
@@ -136,7 +142,10 @@ DECLARE
     @TipoComplementoPago       INT = 6,
     @TipoPedimentoImportacion  INT = 2,
     @TipoComprobanteExtranjero INT = 3
-DECLARE @MontoUSDInversion FLOAT = 0, @MontoUSDOperativo FLOAT = 0, @MontoUSDAbandono FLOAT = 0;
+DECLARE @MontoUSDInversion FLOAT = 0, @MontoUSDOperativo FLOAT = 0, @MontoUSDAbandono FLOAT = 0,
+	@MontoUSDNotaCreditoCapex FLOAT, @MontoUSDNotaCreditoOpex FLOAT,
+	@MontoUSDNotaCredito FLOAT
+
 
 SELECT
     @IdPresupuesto     = IdPresupuesto,
@@ -152,6 +161,8 @@ FROM
     CO_Contrato
 WHERE
     IdContrato = @IdContrato;
+
+ 
 
 SELECT
     @MesInicio = CASE
@@ -197,7 +208,8 @@ SELECT
                       THEN EOMONTH(DATEFROMPARTS(YEAR(@Mes), 12, 1))
               END;
 
-INSERT INTO #Facturas
+
+	INSERT INTO #Facturas
     (
         IdRegistro,
         UUID,
@@ -868,7 +880,8 @@ INSERT INTO #ResultadoMontos
         MontoUSD,
         CAPEX,
         OPEX,
-        Actividad
+        Actividad,
+		MontoNotaCreditoUSD
     )
             SELECT
                 SUM(   CASE
@@ -932,7 +945,21 @@ INSERT INTO #ResultadoMontos
                         THEN CO_TipoServicio.NombreTipoServicio
                     ELSE
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
-                END
+                END,
+				SUM(ABS(   CASE  
+									WHEN ISNULL(TTF.TCD, 0) = 0  
+                                        THEN 0  
+                                    WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  
+                                        AND TTF.TipoComprobante IN (  
+                                                                        'E'  
+                                                                    )  
+                                        THEN CAST((TTF.MontoRegistro / TTF.TCD)  
+                                                    * (TTF.RC2122 / (F.MontoConIva / TTF.TCD)) AS DECIMAL(15, 2))  
+                                    ELSE  
+                                        0  
+                                END  
+                            )  
+                        ) AS [RC21_23] -- Nota de credito
             FROM
                 dbo.CO_Registro WITH (NOLOCK)
                 JOIN
@@ -1107,7 +1134,18 @@ INSERT INTO #ResultadoMontos
                         THEN CO_TipoServicio.NombreTipoServicio
                     ELSE
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
-                END
+                END,
+				SUM(ABS(   CASE  
+                                WHEN ISNULL(TTF.MontoRegistro, 0) <> 0  
+                                    AND TTF.TipoComprobante IN (  
+                                                                    'E'  
+                                                                )  
+                                    THEN CAST(TTF.MontoDolares AS DECIMAL(15, 2))  
+                                ELSE  
+                                    0  
+                            END  
+                        )  
+                    ) AS [RC21_23] --Nota de credito
             FROM
                 dbo.CO_Registro WITH (NOLOCK)
                 JOIN
@@ -1290,7 +1328,8 @@ INSERT INTO #ResultadoMontos
                         THEN CO_TipoServicio.NombreTipoServicio
                     ELSE
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
-                END
+                END,
+				0 AS [RC21_23] --Nota de credito
             FROM
                 dbo.FI_Transfer                     TR WITH (NOLOCK)
                 JOIN
@@ -1411,24 +1450,31 @@ INSERT INTO #ResultadoMontos
                         CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
                 END
 
+
 SELECT
-    @MontoUSDInversion = ISNULL(SUM(ISNULL(MontoUSD,0)),0) --as MontoUSDInversion
+    @MontoUSDInversion = ISNULL(SUM(ISNULL(MontoUSD,0)),0), --as MontoUSDInversion
+	@MontoUSDNotaCreditoCapex = ISNULL(SUM(ISNULL(MontoNotaCreditoUSD,0)),0)
 FROM
     #ResultadoMontos WHERE CAPEX = 1;
 
 SELECT
-     @MontoUSDOperativo= ISNULL(SUM(ISNULL(MontoUSD,0)),0) --as MontoUSDOperativo
+     @MontoUSDOperativo= ISNULL(SUM(ISNULL(MontoUSD,0)),0), --as MontoUSDOperativo
+	 @MontoUSDNotaCreditoOpex = ISNULL(SUM(ISNULL(MontoNotaCreditoUSD,0)),0)
 FROM
     #ResultadoMontos WHERE OPEX = 1;
 
 IF((SELECT PATINDEX('%Desarrollo%',@NombrePresupuesto) ) >0)
 BEGIN
 	SELECT
-     @MontoUSDAbandono = ISNULL(SUM(ISNULL(MontoUSD,0)),0) --as MontoUSDAbandono
+     @MontoUSDAbandono = ISNULL(SUM(ISNULL(MontoUSD,0)),0), --as MontoUSDAbandono
+	 @MontoUSDNotaCredito = ISNULL(SUM(ISNULL(MontoNotaCreditoUSD,0)),0)
 FROM
     #ResultadoMontos WHERE Actividad = 'Abandono';
 END
 
-SELECT @MontoUSDInversion as MontoUSDInversion, @MontoUSDOperativo as MontoUSDOperativo, @MontoUSDAbandono as MontoUSDAbandono
+
+SELECT (ISNULL(@MontoUSDInversion, 0) - ISNULL(@MontoUSDNotaCreditoCapex, 0)) as MontoUSDInversion, 
+		(ISNULL(@MontoUSDOperativo, 0)- ISNULL(@MontoUSDNotaCreditoOpex, 0)) as MontoUSDOperativo, 
+		(ISNULL(@MontoUSDAbandono, 0) - ISNULL(@MontoUSDNotaCredito, 0)) as MontoUSDAbandono
 
 END;
