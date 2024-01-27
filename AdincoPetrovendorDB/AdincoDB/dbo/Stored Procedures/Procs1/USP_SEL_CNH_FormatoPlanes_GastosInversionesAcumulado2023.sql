@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -919,7 +918,7 @@ INSERT INTO #ResultadoMontos
                                                                                    'E'  
                                                                                )  
                                                    THEN CAST((TTF.MontoRegistro / TTF.TCD)  
-                                                             * (TTF.RC2122 / (F.MontoConIva / TTF.TCD)) AS FLOAT)  
+                                                             * (TTF.RC2122 / (F.MontoConIva / TTF.TCD)) AS DECIMAL(15, 2))  
                                                ELSE  
                                                    0  
                                            END  
@@ -1103,7 +1102,7 @@ INSERT INTO #ResultadoMontos
                                                     AND TTF.TipoComprobante IN (  
                                                                                    'E'  
                                                                                )  
-                                                   THEN CAST(TTF.MontoDolares AS FLOAT)  
+                                                   THEN CAST(TTF.MontoDolares AS DECIMAL(15, 2))  
                                                ELSE  
                                                    0  
                                            END  
