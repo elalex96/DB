@@ -350,7 +350,7 @@ AS
         UPDATE
             #TempGinBDCN
         SET
-            HOMOLMXN = CAST(HOMOLMXN * TipoCambio AS decimal(20, 2))
+            HOMOLMXN = CAST((HOMOLMXN * TipoCambio) AS decimal(20, 2))
         FROM
             #TempGinBDCN
             JOIN
