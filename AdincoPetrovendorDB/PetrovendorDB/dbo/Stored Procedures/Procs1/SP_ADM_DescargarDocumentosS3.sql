@@ -1,4 +1,8 @@
-﻿-- =============================================
+use petrovendor
+go
+drop proc if exists SP_ADM_DescargarDocumentosS3
+go
+-- =============================================
 -- Author: Pedro Acuña
 -- Create date: 18/09/2018
 -- Description:	Descarga de los documentos cargados en procura Tipo Documento (ADM_TipoDocumentosS3)
@@ -20,13 +24,17 @@
 -- Create date: 06/01/2022
 -- Description:	Revision del sp, ya que se mando un sp fix con variables estaticas a PR
 -- =============================================
+-- Author:	Luis David
+-- Create date: 30/Ene/2024
+-- Description:	Se agrega la extensión para mejora de descarga
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ADM_DescargarDocumentosS3] @TipoDocumento INT, @IdDocumento INT
 AS
 	BEGIN
 		--1 Documentos por material SolPed
 		IF(@TipoDocumento=1)
 			BEGIN
-				SELECT	Carpeta, Identificador, Mime, NombreArchivoAdjunto,ISNULL(Bucket,'') AS Bucket
+				SELECT	Carpeta, Identificador, Mime, NombreArchivoAdjunto,ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	MM_SolPedArchivoAdjuntoMaterial
 				WHERE	IdSolPedMaterialDocumentoAdj=@IdDocumento
 			END
@@ -34,7 +42,7 @@ AS
 		--2 Documentos Anexos SolPed 
 		IF(@TipoDocumento=2)
 			BEGIN
-				SELECT	Carpeta, Identificador, Mime, NombreDoc, ISNULL(Bucket,'') AS Bucket
+				SELECT	Carpeta, Identificador, Mime, NombreDoc, ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	MM_DocumentosSolPed
 				WHERE	IdDocumento=@IdDocumento
 			END
@@ -42,7 +50,7 @@ AS
 		--3 Fianza solOferta
 		IF(@TipoDocumento=3)
 			BEGIN
-				SELECT	Carpeta, Identificador, Mime, NombreDoc,ISNULL(Bucket,'') AS Bucket
+				SELECT	Carpeta, Identificador, Mime, NombreDoc,ISNULL(Bucket,'') AS Bucket,Extension
 				FROM	TA_DocFianzaOperacion
 				WHERE	IdDocFianza=@IdDocumento
 			END
@@ -50,7 +58,7 @@ AS
 		--4 Bases solOferta
 		IF(@TipoDocumento=4)
 			BEGIN
-				SELECT	Carpeta, Identificador, Mime, NombreDoc, ISNULL(Bucket,'') AS Bucket
+				SELECT	Carpeta, Identificador, Mime, NombreDoc, ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	TA_DocBasesOperacion
 				WHERE	IdDocBases=@IdDocumento
 			END
@@ -58,7 +66,7 @@ AS
 		--5 Adj Directa Justificacion solOferta
 		IF(@TipoDocumento=5)
 			BEGIN
-				SELECT	Carpeta, Identificador, Mime, NombreDocumento, ISNULL(Bucket,'') AS Bucket
+				SELECT	Carpeta, Identificador, Mime, NombreDocumento, ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	MM_PeticionOfertaADAdjunto
 				WHERE	IdDocumento=@IdDocumento
 			END
@@ -66,7 +74,7 @@ AS
 		--6 Mercadeo Justificacion solOferta
 		IF(@TipoDocumento=6)
 			BEGIN
-				SELECT	Carpeta, Identificador, Mime, NombreDocumento,ISNULL(Bucket,'') AS Bucket
+				SELECT	Carpeta, Identificador, Mime, NombreDocumento,ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	MM_PeticionOfertaMercadeoAdjunto
 				WHERE	Id=@IdDocumento
 			END
@@ -77,14 +85,14 @@ AS
 				-- DW Se agregó columna Buccket
 				SELECT	doc.Carpeta, doc.Identificador, doc.Mime, doc.NombreDocumento,isnull(doc.Bucket,''), doc.Extension
 				FROM	MM_AceptacionDocumento acep
-						INNER JOIN dbo.S_Documento_S3 doc ON doc.IdDocumento=acep.IdDocumento
+						INNER JOIN dbo.S_Documento_S3 doc ON acep.IdDocumento = doc.IdDocumento
 				WHERE	doc.IdDocumento=@IdDocumento
 			END
 
 		--8 Cotizacion/Oferta por Material
 		IF(@TipoDocumento=8)
 			BEGIN
-				SELECT	doc.Carpeta, doc.Identificador, doc.Mime, doc.Nombre, ISNULL(Bucket,'') AS Bucket
+				SELECT	doc.Carpeta, doc.Identificador, doc.Mime, doc.Nombre, ISNULL(Bucket,'') AS Bucket,Extension
 				FROM	MM_DocumentosAnexos doc
 				WHERE	doc.IdDocumentoAnexo=@IdDocumento
 			END
@@ -92,7 +100,7 @@ AS
 		--9 Cotizacion/Oferta Anexos
 		IF(@TipoDocumento=9)
 			BEGIN
-				SELECT	doc.Carpeta, doc.Identificador, doc.Mime, doc.NomDocumento,ISNULL(Bucket,'') AS Bucket
+				SELECT	doc.Carpeta, doc.Identificador, doc.Mime, doc.NomDocumento,ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	MM_DocAnexosPeticionOferta doc
 				WHERE	doc.IdDocAnexoPeticionOferta=@IdDocumento
 			END
@@ -100,7 +108,7 @@ AS
 		--10 Documentos Anexos Pedido
 		IF(@TipoDocumento=10)
 			BEGIN
-				SELECT	doc.Carpeta, doc.Identificador, doc.Mime, doc.NombreDocumento,ISNULL(Bucket,'') AS Bucket
+				SELECT	doc.Carpeta, doc.Identificador, doc.Mime, doc.NombreDocumento,ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	dbo.DocumentosPedido doc
 				WHERE	doc.Id=@IdDocumento
 			END
@@ -108,7 +116,7 @@ AS
 		-- 11 Adjudicacion directa desde la requisicion PCM
 		IF(@TipoDocumento=11)
 			BEGIN
-				SELECT	Carpeta, Identificador, Mime, NombreDocumento,ISNULL(Bucket,'') AS Bucket
+				SELECT	Carpeta, Identificador, Mime, NombreDocumento,ISNULL(Bucket,'') AS Bucket, Extension
 				FROM	dbo.PCMDocumentoAdjunto
 				WHERE	IdDocumento=@IdDocumento
 			END
