@@ -170,7 +170,7 @@ AS
 							UPPER(CO_GastosRubro.Descripcion) = 'BIENES'
 									THEN '-CNB' 
 							WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'CAPACITACION' AND UPPER (CO_Servicio.NombreServicio) = UPPER('Capacitación a personal de PEP')
+							UPPER(CO_GastosRubro.Descripcion) = 'CAPACITACION'
 									THEN '-CNC'
 							WHEN 
 							UPPER(CO_GastosRubro.Descripcion) = 'SERVICIOS' AND CO_Registro.CvTipoDocFacturacion IN (2, 3)
@@ -179,7 +179,7 @@ AS
 							UPPER(CO_GastosRubro.Descripcion) = 'SERVICIOS'
 									THEN '-CNS'
 							WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'INFRAESTRUCTURA (SOCIAL)' AND UPPER(CO_ActividadCIEP.NombreActividad) = UPPER('Desarrollo Sustentable')
+							UPPER(CO_GastosRubro.Descripcion) = 'INFRAESTRUCTURA (SOCIAL)'
 									THEN '-I'
 							ELSE
 								''
