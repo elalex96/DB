@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE USP_SEL_CO_ReporteGINBDCN
 GO
-CREATE PROCEDURE USP_SEL_CO_ReporteGINBDCN -- 10,10007,'20231201'
+CREATE PROCEDURE [dbo].[USP_SEL_CO_ReporteGINBDCN] -- 10,10007,'20231201'
     @UsuarioId  INT,
     @ContratoId INT,
     @Fecha      DATE
@@ -34,7 +34,8 @@ AS
                 TCBANXICOCN    FLOAT,
                 HOMOLMXN       FLOAT,
                 IdMoneda       INT,
-                IdRegistro     int
+                IdRegistro     int,
+				UUID VARCHAR   (500)
             )
 
         INSERT INTO #TempGinBDCN
@@ -53,7 +54,8 @@ AS
                 IDCN,
                 HOMOLMXN,
                 IdMoneda,
-                IdRegistro
+                IdRegistro,
+				UUID
             )
                     SELECT
                         CO_Presupuesto.Nombre                     AS PPTO,
@@ -163,7 +165,26 @@ AS
                                          END
                                         ) AS DECIMAL(15, 2))
                            )                                      AS 'MontoGE (USD)',
-                        ''                                        as 'ID CN',
+                        CONCAT('CN-', YEAR(@Fecha),
+						CASE  WHEN 
+							UPPER(CO_GastosRubro.Descripcion) = 'BIENES'
+									THEN '-CNB' 
+							WHEN 
+							UPPER(CO_GastosRubro.Descripcion) = 'CAPACITACION' AND UPPER (CO_Servicio.NombreServicio) = UPPER('Capacitación a personal de PEP')
+									THEN '-CNC'
+							WHEN 
+							UPPER(CO_GastosRubro.Descripcion) = 'SERVICIOS' AND CO_Registro.CvTipoDocFacturacion IN (2, 3)
+									THEN '-S-E'
+							WHEN 
+							UPPER(CO_GastosRubro.Descripcion) = 'SERVICIOS'
+									THEN '-CNS'
+							WHEN 
+							UPPER(CO_GastosRubro.Descripcion) = 'INFRAESTRUCTURA (SOCIAL)' AND UPPER(CO_ActividadCIEP.NombreActividad) = UPPER('Desarrollo Sustentable')
+									THEN '-I'
+							ELSE
+								''
+							END
+							) AS IDCN,
                         SUM(   CAST((CASE
                                          WHEN CO_Registro.CvTipoDocFacturacion = 1
                                              THEN (CASE
@@ -206,7 +227,8 @@ AS
                             ELSE
                                 FI_PedimentoComprobante.IdMoneda
                         END                                       AS IdMoneda,
-                        IdRegistro
+                        IdRegistro,
+						FI_Factura.UUID
                     FROM
                         CO_AnioContractual (NOLOCK)
                         JOIN
@@ -262,6 +284,8 @@ AS
                         LEFT JOIN
                             CO_RegistroMarkup            (NOLOCK)
                                 ON CO_Registro.IdRegistro = CO_RegistroMarkup.GastoId
+						LEFT JOIN dbo.CO_GastosRubro (NOLOCK)
+							ON CO_Registro.IdGastoRubro = CO_GastosRubro.IdGastoRubro
                     WHERE
                         (
                             (YEAR(FI_Factura.Fecha) = YEAR(@Fecha))
@@ -343,7 +367,10 @@ AS
                             ELSE
                                 FI_PedimentoComprobante.IdMoneda
                         END,
-                        co_registro.IdRegistro
+                        co_registro.IdRegistro,
+						CO_GastosRubro.Descripcion,
+						CO_Registro.CvTipoDocFacturacion,
+						FI_Factura.UUID
 
 
         --SELECT * FROM #TempGinBDCN
@@ -387,7 +414,8 @@ AS
             MontoGEUSD,
             IDCN,
             TCBANXICOCN,
-            HOMOLMXN
+            HOMOLMXN,
+			UUID
         FROM
             #TempGinBDCN;
 
