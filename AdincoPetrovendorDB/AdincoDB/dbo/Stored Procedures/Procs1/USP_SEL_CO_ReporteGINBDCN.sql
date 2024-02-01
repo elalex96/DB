@@ -405,6 +405,7 @@ AS
             TipoDeServicio,
             Actividad,
             Servicio,
+			UUID,
             NumeroFactura,
             Subcontratista,
             FechaFactura,
@@ -414,8 +415,7 @@ AS
             MontoGEUSD,
             IDCN,
             TCBANXICOCN,
-            HOMOLMXN,
-			UUID
+            HOMOLMXN		
         FROM
             #TempGinBDCN;
 
