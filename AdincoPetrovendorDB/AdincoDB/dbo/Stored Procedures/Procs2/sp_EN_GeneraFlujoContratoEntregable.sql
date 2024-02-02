@@ -18,7 +18,7 @@ GO
 -- Description:Guarda Elaboradores
 -- =============================================
 -- =============================================
--- Author:		Reyna Olvera
+-- Author:		Daniel AC
 -- Create date: 02/02/2024
 -- Description: Se agrega validación para que se ejecute la actualización del flujo siempre y cuando exista un elaborador, revisor y aprobador
 -- =============================================
