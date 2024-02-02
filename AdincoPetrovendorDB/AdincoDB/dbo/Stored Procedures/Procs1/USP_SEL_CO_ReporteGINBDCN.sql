@@ -167,7 +167,7 @@ AS
                            )                                      AS 'MontoGE (USD)',
                         CONCAT('CN-', YEAR(@Fecha),
 						CASE  WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'BIENES'
+							UPPER(CO_GastosRubro.Descripcion) = 'BIENES' OR UPPER(CO_GastosRubro.Descripcion) = 'MANO DE OBRA'
 									THEN '-CNB' 
 							WHEN 
 							UPPER(CO_GastosRubro.Descripcion) = 'CAPACITACION'
