@@ -1,4 +1,18 @@
-﻿
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ENT_ImportacionEntregables_INS_ADINCO'
+)
+    DROP PROCEDURE SP_ENT_ImportacionEntregables_INS_ADINCO;
+/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]    Script Date: 01/02/2024 10:28:46 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <06/12/2019>  
@@ -9,22 +23,65 @@
 -- Create date: <04/05/2022>  
 -- Description: Se actualiza modificación de revisores usando sps existentes en la pantalla EditaContratoEntreagble.aspx
 -- =============================================  
+-- =============================================
+-- Author: Daniel AC
+-- Create date: 31/01/2023
+-- Description:	Se agrega consulta para TOMAR en cuente la lista de usuarios por grupo
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO] 
 @Layout dbo.Entregables_Importacion_01 READONLY,
 @IdContrato INT,
 @IdUsuario INT
 AS
 BEGIN
-	set nocount on
-	create table #tmp
+	SET NOCOUNT ON
+	CREATE TABLE #tmp
 	(
 		Activo int
 	)
 
+	CREATE TABLE #TB_EXCEL(
+	[R] INT,
+	[IdEntregable] [nvarchar](50) NULL,
+	[Area] [nvarchar](500) NULL,
+	[DiasAlertaPrevia] [nvarchar](50) NULL,
+	[DiasElaboracion] [nvarchar](50) NULL,
+	[DiasRevicion] [nvarchar](50) NULL,
+	[DiasAprobacion] [nvarchar](50) NULL,
+	[Activo] [nvarchar](50) NULL,
+	[Elaborador] [nvarchar](500) NULL,
+	[Revisor] [nvarchar](500) NULL,
+	[Aprobador] [nvarchar](500) NULL,
+	[ReceptorAlerta] [nvarchar](500) NULL
+	)
+
+	INSERT INTO #TB_EXCEL(
+	R,
+	IdEntregable,
+	Area,
+	DiasAlertaPrevia,
+	DiasElaboracion,
+	DiasRevicion,
+	DiasAprobacion,
+	Activo,
+	Elaborador,
+	Revisor,
+	Aprobador,
+	ReceptorAlerta)
+
 	SELECT
-		ROW_NUMBER() OVER (ORDER BY IdEntregable DESC) AS R,
-		*
-	INTO #TB_EXCEL
+	ROW_NUMBER() OVER (ORDER BY IdEntregable DESC) AS R,		
+	IdEntregable,
+	Area,
+	DiasAlertaPrevia,
+	DiasElaboracion,
+	DiasRevicion,
+	DiasAprobacion,
+	Activo,
+	Elaborador,
+	Revisor,
+	Aprobador,
+	ReceptorAlerta
 	FROM @Layout;
 
     DECLARE @CONT INT = 1;
@@ -50,9 +107,14 @@ BEGIN
 	declare @masDeUnRevisor bit
 	select @masDeUnRevisor = 0;
 
-	create table #responseAccionesResponsable(response nvarchar(max))	
-	create table #Revisores(IdRow int identity(1,1), IdRevisor int, activo bit)	
+	CREATE TABLE #responseAccionesResponsable(response nvarchar(max))	
+	CREATE TABLE #Revisores(IdRow int identity(1,1), IdRevisor int, activo bit)	
 	DECLARE @CantidadRevisores INT, @UsuarioActualEsRevisor INT,@RevisorIsActivo BIT, @IndRevidores int , @IdRevisorRow INT
+    CREATE TABLE #UsuariosContrato(UsuarioId INT,Usuario NVARCHAR(MAX),Nombre NVARCHAR(MAX))
+
+	-- OBTENER LOS USUARIOS DEL CONTRATO
+	INSERT INTO #UsuariosContrato(UsuarioId,Usuario,Nombre)
+	EXEC sp_Ap_Usuario_Cmb @IdContrato
 
 	WHILE @CONT <= @CONTTOTAL
 	BEGIN
@@ -64,11 +126,11 @@ BEGIN
 
 		--BUSQUEDA DE USUARIO ELABORADOR SELECCIONADO
 		SET @USUARIOELABORADOR = (SELECT TOP 1 Elaborador FROM #TB_EXCEL WHERE R = @CONT);
-		SET @IDUSUARIOELABORADOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOELABORADOR);
+		SET @IDUSUARIOELABORADOR = (SELECT TOP 1 UsuarioId FROM #UsuariosContrato WHERE Nombre = @USUARIOELABORADOR);
 
 		--BUSQUEDA DE USUARIO REVISOR SELECCIONADO
 		SET @USUARIOREVISOR = (SELECT TOP 1 Revisor FROM #TB_EXCEL WHERE R = @CONT);
-		SET @IDUSUARIOREVISOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOREVISOR);
+		SET @IDUSUARIOREVISOR = (SELECT TOP 1 UsuarioId FROM #UsuariosContrato WHERE Nombre = @USUARIOREVISOR);
 
 		--select @USUARIOREVISOR, @IDUSUARIOREVISOR
 		
@@ -80,7 +142,7 @@ BEGIN
 
 		--BUSQUEDA DE USUARIO APROBADOR SELECCIONADO
 		SET @USUARIOAPROBADOR = (SELECT TOP 1 Aprobador FROM #TB_EXCEL WHERE R = @CONT);
-		SET @IDUSUARIOAPROBADOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOAPROBADOR);
+		SET @IDUSUARIOAPROBADOR = (SELECT TOP 1 UsuarioId FROM #UsuariosContrato WHERE Nombre = @USUARIOAPROBADOR);
 
 		--ASIGNACION DE ACTIVO
 		SELECT
@@ -309,7 +371,7 @@ BEGIN
 
 				IF ISNULL(@DIASELABORACION,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de elaboracion deben ser mayor a 0.</li>';
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de elaboración deben ser mayor a 0.</li>';
 				END
 
 				IF ISNULL(@DIASREVISION,0) = 0
