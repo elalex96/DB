@@ -1,8 +1,27 @@
-﻿
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_FiltrosImportacion'
+)
+    DROP PROCEDURE SP_EN_FiltrosImportacion;
+/****** Object:  StoredProcedure [dbo].[SP_EN_FiltrosImportacion]    Script Date: 01/02/2024 04:35:49 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <01/06/2021>
 -- Description:	<Consulta de filtros de importacion de entregables>
+-- =============================================
+-- =============================================
+-- Author:	Daniel Ac 
+-- Create date: <01/02/2024>
+-- Description:	<Se agrega los usuarios de grupos a la lista de elaboradores>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_FiltrosImportacion] 
 	-- Add the parameters for the stored procedure here
@@ -74,13 +93,25 @@ BEGIN
 		on			u.UsuarioID			=	pu.UsuarioID 
 		and			u.IsActivo			=	1
 		inner join	AP_Perfil			p  
-		on			p.IdPerfil			=	pu.PerfilID  
+		on			pu.PerfilID  		=	 p.IdPerfil
 		where		p.IdContrato		=	@IdContrato  
 		and			ISNULL(IsGrupo,0)	=	0
 		union		
 		select		Id,
 					Descripcion
 		from		#todos
+
+		union 
+
+		SELECT DISTINCT
+	    UG.UsuarioID,		
+		UG.Nombre
+		FROM	EN_GruposUsuarios GU
+		JOIN	AP_Usuario AS UG
+			ON	GU.IdGrupo	=	UG.UsuarioID
+		WHERE	GU.Activo	=	1
+			AND	UG.IsActivo	=	1
+			AND	GU.IdContrato	= @IdContrato
 
 
 	END
