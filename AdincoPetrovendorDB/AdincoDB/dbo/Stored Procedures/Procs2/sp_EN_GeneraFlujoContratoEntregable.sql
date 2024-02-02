@@ -1,10 +1,28 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_EN_GeneraFlujoContratoEntregable'
+)
+    DROP PROCEDURE sp_EN_GeneraFlujoContratoEntregable;
+/****** Object:  StoredProcedure [dbo].[sp_EN_GeneraFlujoContratoEntregable]    Script Date: 02/02/2024 12:29:21 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 2019/02/14
 -- Description:Guarda Elaboradores
 -- =============================================
-
-CREATE PROCEDURE [dbo].[sp_EN_GeneraFlujoContratoEntregable]--16904,10061,3-- 16841,10061,3
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 02/02/2024
+-- Description: Se agrega validación para que se ejecute la actualización del flujo siempre y cuando exista un elaborador, revisor y aprobador
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_EN_GeneraFlujoContratoEntregable] 
     @IdContratoEntregable INT,
     @idUsuario INT,
     @idContrato INT
@@ -43,20 +61,36 @@ BEGIN
                                           SiguienteActividadID INT,
                                           IdContratoEntregable INT);
     -------------------------------------------------
-    --SELECT * FROM EN_Accion
-    --SELECT * FROM dbo.EN_Actividad;
-    --SELECT * FROM EN_transicion
+ 
     DECLARE @idActividadInicial       INT,
             @idActividadFinal         INT,
-            @Count                    INT,
+            @CountElaboradores        INT,
+			@CountAprobadores         INT,
+			@CountRevisores           INT,
             @idActividadElaboracion   INT,
-            @idActividadUltimoRevisor INT;
+            @idActividadUltimoRevisor INT,
+			@ErrorActividades VARCHAR(MAX) ='';
+	
+	-->DEBE HABER AL MENOS UNA ACTIVIDAD DE LOS SIGUIENTES ESTATUS 10002= ESTADO EN APROBACIÓN,10001 =ESTADO EN REVISIÓN, 10000 = ESTADO EN ELABORACIÓN, NA-->  10003 = ESTADO APROBADO INTERNAMENTE
+     SELECT @CountElaboradores = COUNT(ActividadID)
+     FROM EN_Actividad
+     WHERE IdContratoEntregable = @IdContratoEntregable
+	 AND Activo=1
+	 AND EstadoID IN (10000); 
 
-    SELECT @Count = COUNT(ActividadID)
-      FROM EN_Actividad
-     WHERE @IdContratoEntregable = @IdContratoEntregable
-	 AND Activo=1;
-    IF @Count >= 3 -- Que contenga un elaborador, revisor y aprobador final
+	 SELECT @CountRevisores = COUNT(ActividadID)
+     FROM EN_Actividad
+     WHERE IdContratoEntregable = @IdContratoEntregable
+	 AND Activo=1
+	 AND EstadoID IN (10001); 
+
+	 SELECT @CountAprobadores = COUNT(ActividadID)
+     FROM EN_Actividad
+     WHERE IdContratoEntregable = @IdContratoEntregable
+	 AND Activo=1
+	 AND EstadoID IN (10002); 
+
+    IF @CountElaboradores >= 1 AND @CountRevisores >=  1 AND @CountAprobadores >=  1 -- Que contenga un elaborador, revisor y aprobador final
     BEGIN
         SELECT TOP 1 @idActividadFinal = ActividadID --PRIMER Revisor
           FROM En_ACTIVIDAD
@@ -128,8 +162,7 @@ BEGIN
 		   AND A.Activo = 1
          ORDER BY A.ModificadoEN ASC;
 
-        DELETE tf
-          --SELECT * 
+        DELETE tf         
           FROM #TempFlujo tf
           JOIN En_ACTIVIDAD A
             ON tf.ActividadInicialID = A.ActividadID
@@ -168,11 +201,7 @@ BEGIN
             ON APF.EstadoID             = 10002
            AND APF.IdContratoEntregable = @IdContratoEntregable
 		   AND  APF.Activo=1;
-
-        --SELECT *
-        --FROM #TempFlujo
-        --ORDER BY ModificadoEn ASC;
-
+		         
         -------------------------------------------------------
 
         INSERT INTO #TempRevisores (ActividadID,
@@ -192,8 +221,8 @@ BEGIN
         ----------------------------------------------------------------------
         INSERT INTO #TempAsignaSiguienteAct (ActividadInicialID,
                                              AccionID,
- SiguienteActividadID,
-                                             IdContratoEntregable)
+											SiguienteActividadID,
+                                            IdContratoEntregable)
         SELECT      ActividadInicialID,
                     AccionID,
                     MIN(ActividadID),
@@ -208,7 +237,6 @@ BEGIN
                   #TempFlujo.IdContratoEntregable
          ORDER BY ActividadInicialID ASC;
 
-        --SELECT 	* FROM #TempAsignaSiguienteAct
         UPDATE tf
            SET SiguienteActividadID = CASE tf.AccionID
                                            WHEN 10001 THEN CASE tf.SiguienteActividadID
@@ -240,12 +268,31 @@ BEGIN
                                    ModificadoPor,
                                    ModificadoEn,
                                    Activo
-          FROM #TempFlujo;
+          FROM #TempFlujo
 
-		 	  IF @@ERROR <> 0
-        SELECT ERROR_MESSAGE() AS error
-    ELSE
-		SELECT '' AS error
-    END;
-END;
+		IF @@ERROR <> 0
+			SELECT ERROR_MESSAGE() AS error
+		ELSE
+			SELECT '' AS error
+    END
+	ELSE 
+	BEGIN 
+
+		IF @CountElaboradores = 0
+			SET @ErrorActividades =  @ErrorActividades +'Se debe seleccionar un Elaborador. '
+		
+		IF @CountRevisores = 0
+			SET @ErrorActividades =  @ErrorActividades +'Se debe seleccionar al menos un Revisor. '
+
+		IF @CountAprobadores = 0
+			SET @ErrorActividades =  @ErrorActividades +'Se debe seleccionar un Aprobador. '
+
+		IF LEN(@ErrorActividades)>0 
+		BEGIN 
+			SELECT @ErrorActividades AS error 
+		END 
+		ELSE
+			SELECT '' AS error
+		END
+	END
 
