@@ -25,7 +25,8 @@ GO
 
 CREATE PROCEDURE [dbo].[sp_Ap_Usuario_Cmb] 
 (  
-	@IdContrato  int  
+	@IdContrato  int,
+	@Filtro NVARCHAR(10) = ''
 )  
 AS  
 BEGIN  
@@ -45,18 +46,20 @@ BEGIN
 	WHERE		p.IdContrato		=	@IdContrato  
 	AND			ISNULL(IsGrupo,0)	=	0
 
-
-	INSERT INTO #UsuariosContratoActual(UsuarioID,Usuario,Nombre)
-	SELECT DISTINCT
-	   UG.UsuarioID,
-		UG.Nombre AS Usuario,
-		UG.Nombre
-		FROM	EN_GruposUsuarios GU
-		JOIN	AP_Usuario AS UG
-			ON	GU.IdGrupo	=	UG.UsuarioID
-		WHERE	GU.Activo	=	1
-			AND	UG.IsActivo	=	1
-			AND	GU.IdContrato	= @IdContrato
+	IF @Filtro = 'CON_GRUPOS' 
+	BEGIN 
+		INSERT INTO #UsuariosContratoActual(UsuarioID,Usuario,Nombre)
+		SELECT DISTINCT
+		   UG.UsuarioID,
+			UG.Nombre AS Usuario,
+			UG.Nombre
+			FROM	EN_GruposUsuarios GU
+			JOIN	AP_Usuario AS UG
+				ON	GU.IdGrupo	=	UG.UsuarioID
+			WHERE	GU.Activo	=	1
+				AND	UG.IsActivo	=	1
+				AND	GU.IdContrato	= @IdContrato
+	END 
 
 	SELECT UsuarioID,  
 		   Usuario,  

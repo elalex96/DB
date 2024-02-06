@@ -113,7 +113,7 @@ BEGIN
 
 	-- OBTENER LOS USUARIOS DEL CONTRATO
 	INSERT INTO #UsuariosContrato(UsuarioId,Usuario,Nombre)
-	EXEC sp_Ap_Usuario_Cmb @IdContrato
+	EXEC sp_Ap_Usuario_Cmb @IdContrato,'CON_GRUPOS'
 
 
 	WHILE @CONT <= @CONTTOTAL
