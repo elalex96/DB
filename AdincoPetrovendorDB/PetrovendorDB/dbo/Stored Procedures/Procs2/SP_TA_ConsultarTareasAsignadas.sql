@@ -44,7 +44,7 @@ BEGIN
           AND O.IdProveedor = @IdProveedor
           AND ISNULL(O.IdEstatusEliminado, 0) <> 1 --> que no esten eliminadas
 		  AND O.IdOperacion NOT IN (SELECT IdOperacion FROM dbo.FN_FlujoSerialNoAprobados(@IdUsuario,@IdProveedor,2))
-		  AND O.FechaRegistro BETWEEN @FechaInicio and @FechaFin
+			AND cast(O.FechaRegistro as date) BETWEEN cast(@FechaInicio as date) and cast(@FechaFin as date)
     ORDER BY O.IdOperacion DESC;
 
 
