@@ -42,7 +42,7 @@ BEGIN
 			AND O.IdProveedor = @IdProveedor
 			AND ISNULL(O.IdEstatusEliminado, 0) <> 1  --> MOSTRAR NO ELIMINADAS 
 			AND O.IdOperacion NOT IN (SELECT IdOperacion FROM dbo.FN_FlujoSerialNoAprobados(@IdUsuario,@IdProveedor,2))
-			AND O.FechaRegistro BETWEEN @FechaInicio and @FechaFin
+			AND cast(O.FechaRegistro as date) BETWEEN cast(@FechaInicio as date) and cast(@FechaFin as date)
 AND T.idestatus = 1 -->No mostrar si ya se aprobo MG 
     GROUP BY O.IdOperacion,
 			O.IdDocumento,
