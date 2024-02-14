@@ -9,6 +9,7 @@
     )
     DROP PROCEDURE USP_SEL_CO_ReporteGINBDCN
 GO
+
 CREATE PROCEDURE [dbo].[USP_SEL_CO_ReporteGINBDCN] -- 10,10007,'20231201'
     @UsuarioId  INT,
     @ContratoId INT,
@@ -165,6 +166,7 @@ AS
                                          END
                                         ) AS DECIMAL(15, 2))
                            )                                      AS 'MontoGE (USD)',
+
                         CONCAT('CN-', YEAR(@Fecha),
 						CASE  WHEN 
 							UPPER(CO_GastosRubro.Descripcion) = 'BIENES' OR UPPER(CO_GastosRubro.Descripcion) = 'MANO DE OBRA'
@@ -229,6 +231,7 @@ AS
                         END                                       AS IdMoneda,
                         IdRegistro,
 						FI_Factura.UUID
+
                     FROM
                         CO_AnioContractual (NOLOCK)
                         JOIN
@@ -286,6 +289,7 @@ AS
                                 ON CO_Registro.IdRegistro = CO_RegistroMarkup.GastoId
 						LEFT JOIN dbo.CO_GastosRubro (NOLOCK)
 							ON CO_Registro.IdGastoRubro = CO_GastosRubro.IdGastoRubro
+
                     WHERE
                         (
                             (YEAR(FI_Factura.Fecha) = YEAR(@Fecha))
@@ -415,7 +419,7 @@ AS
             MontoGEUSD,
             IDCN,
             TCBANXICOCN,
-            HOMOLMXN		
+            HOMOLMXN
         FROM
             #TempGinBDCN;
 
