@@ -5,12 +5,11 @@
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_SEL_CO_ReporteGINBDCN'
+            name = 'USP_SEL_CO_ReporteGINBDCNPorMesPresentacion'
     )
-    DROP PROCEDURE USP_SEL_CO_ReporteGINBDCN
+    DROP PROCEDURE USP_SEL_CO_ReporteGINBDCNPorMesPresentacion
 GO
-
-CREATE PROCEDURE [dbo].[USP_SEL_CO_ReporteGINBDCN] -- 10,10007,'20231201'
+CREATE PROCEDURE [dbo].[USP_SEL_CO_ReporteGINBDCNPorMesPresentacion]
     @UsuarioId  INT,
     @ContratoId INT,
     @Fecha      DATE
@@ -32,8 +31,6 @@ AS
                 MesGE          DATE,
                 MontoGEUSD     FLOAT,
                 IDCN           VARCHAR(5000),
-                TCBANXICOCN    FLOAT,
-                HOMOLMXN       FLOAT,
                 IdMoneda       INT,
                 IdRegistro     int,
 				UUID VARCHAR   (500)
@@ -53,7 +50,6 @@ AS
                 MesGE,
                 MontoGEUSD,
                 IDCN,
-                HOMOLMXN,
                 IdMoneda,
                 IdRegistro,
 				UUID
@@ -166,63 +162,38 @@ AS
                                          END
                                         ) AS DECIMAL(15, 2))
                            )                                      AS 'MontoGE (USD)',
-
-                        CONCAT('CN-', YEAR(@Fecha),
+                     
 						CASE  WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'BIENES' OR UPPER(CO_GastosRubro.Descripcion) = 'MANO DE OBRA'
-									THEN '-CNB' 
+						UPPER(CO_GastosRubro.Descripcion) = 'MANO DE OBRA' AND CO_Registro.CvTipoDocFacturacion = 1
+								THEN 'I'
 							WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'CAPACITACION'
-									THEN '-CNC'
+							UPPER(CO_GastosRubro.Descripcion) = 'BIENES'
+								THEN 
+									CASE  
+										WHEN CO_Registro.CvTipoDocFacturacion IN (2, 3)
+										THEN 'T-E'
+										ELSE 'T'
+									END
 							WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'SERVICIOS' AND CO_Registro.CvTipoDocFacturacion IN (2, 3)
-									THEN '-S-E'
+							UPPER(CO_GastosRubro.Descripcion) = 'CAPACITACION' AND CO_Registro.CvTipoDocFacturacion = 1
+									THEN 'I'
 							WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'SERVICIOS'
-									THEN '-CNS'
+							UPPER(CO_GastosRubro.Descripcion) = 'SERVICIOS' 
+									THEN 
+									CASE  
+										WHEN CO_Registro.CvTipoDocFacturacion IN (2, 3)
+										THEN 'I-E'
+										ELSE 'I'
+									END
 							WHEN 
-							UPPER(CO_GastosRubro.Descripcion) = 'INFRAESTRUCTURA (SOCIAL)'
-									THEN '-I'
+							UPPER(CO_GastosRubro.Descripcion) = 'INFRAESTRUCTURA (SOCIAL)'  AND CO_Registro.CvTipoDocFacturacion = 1
+									THEN 'I'
+								WHEN
+							UPPER(CO_GastosRubro.Descripcion) = 'TRANSFERENCIA DE TECNOLOGÍA'  AND CO_Registro.CvTipoDocFacturacion = 1
+								THEN 'I'
 							ELSE
-								''
-							END
-							) AS IDCN,
-                        SUM(   CAST((CASE
-                                         WHEN CO_Registro.CvTipoDocFacturacion = 1
-                                             THEN (CASE
-                                                       WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                                                            OR FI_Factura.TipoComprobante LIKE 'E%'
-                                                           THEN ISNULL(
-                                                                          (ABS(ISNULL(
-                                                                                         ABS(ISNULL(
-                                                                                                       CO_RegistroMarkup.MontoGasto,
-                                                                                                       CO_Registro.MontoRegistro
-                                                                                                   )
-                                                                                            )
-                                                                                         + ABS(ISNULL(
-                                                                                                         CO_RegistroMarkup.MontoEquivalente,
-                                                                                                         0
-                                                                                                     )
-                                                                                              ), 0
-                                                                                     )
-                                                                              ) * -1
-                                                                          ), 0
-                                                                      )
-                                                       ELSE
-                                                           ISNULL(
-                                                                     ISNULL(CO_RegistroMarkup.MontoGasto, CO_Registro.MontoRegistro)
-                                                                     + ISNULL(CO_RegistroMarkup.MontoEquivalente, 0), 0
-                                                                 )
-                                                   END
-                                                  )
-                                         ELSE
-                                             ISNULL(
-                                                       ISNULL(CO_RegistroMarkup.MontoGasto, CO_Registro.MontoRegistro)
-                                                       + ISNULL(CO_RegistroMarkup.MontoEquivalente, 0), 0
-                                                   )
-                                     END
-                                    ) AS DECIMAL(15, 2))
-                           )                                      AS HOMOLMXN,
+								'Excepción'
+							END AS IDCN,
                         CASE
                             WHEN CO_Registro.CvTipoDocFacturacion = 1
                                 THEN FI_Factura.IdMoneda
@@ -231,7 +202,6 @@ AS
                         END                                       AS IdMoneda,
                         IdRegistro,
 						FI_Factura.UUID
-
                     FROM
                         CO_AnioContractual (NOLOCK)
                         JOIN
@@ -244,6 +214,7 @@ AS
                         JOIN
                             CO_Registro (NOLOCK)
                                 ON CO_LineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
+								AND YEAR(CO_Registro.MesPresentacion) = YEAR(@Fecha)
                         LEFT JOIN
                             dbo.CO_Servicio (NOLOCK)
                                 ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
@@ -289,11 +260,9 @@ AS
                                 ON CO_Registro.IdRegistro = CO_RegistroMarkup.GastoId
 						LEFT JOIN dbo.CO_GastosRubro (NOLOCK)
 							ON CO_Registro.IdGastoRubro = CO_GastosRubro.IdGastoRubro
-
                     WHERE
                         (
-                            (YEAR(FI_Factura.Fecha) = YEAR(@Fecha))
-                            OR (YEAR(FI_PedimentoComprobante.FechaPago) = YEAR(@Fecha))
+                            YEAR(CO_Registro.MesPresentacion) = YEAR(@Fecha)
                         )
                     group by
                         CO_Presupuesto.Nombre,
@@ -378,32 +347,7 @@ AS
 
 
         --SELECT * FROM #TempGinBDCN
-        UPDATE
-            #TempGinBDCN
-        SET
-            HOMOLMXN = CAST((HOMOLMXN * TipoCambio) AS decimal(20, 2))
-        FROM
-            #TempGinBDCN
-            JOIN
-                CO_TipoCambioDiario
-                    ON CAST(#TempGinBDCN.FechaFactura AS date) = CAST(CO_TipoCambioDiario.Fecha AS date)
-                       AND CO_TipoCambioDiario.IdMoneda = @Peso
-                       AND #TempGinBDCN.IdMoneda <> @Peso
-        WHERE
-            #TempGinBDCN.IdMoneda <> @Peso
-
-        UPDATE
-            #TempGinBDCN
-        SET
-            TCBANXICOCN = TipoCambio
-        FROM
-            #TempGinBDCN
-            JOIN
-                CO_TipoCambioDiario
-                    ON CAST(#TempGinBDCN.FechaFactura AS date) = CAST(CO_TipoCambioDiario.Fecha AS date)
-                       AND CO_TipoCambioDiario.IdMoneda = @Peso
-
-
+     
         SELECT
             PPTO,
             TipoDeServicio,
@@ -417,9 +361,7 @@ AS
             Moneda,
             MesGE,
             MontoGEUSD,
-            IDCN,
-            TCBANXICOCN,
-            HOMOLMXN
+            IDCN
         FROM
             #TempGinBDCN;
 
