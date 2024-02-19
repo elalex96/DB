@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5'
+)
+    DROP PROCEDURE SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5; 
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5]    Script Date: 16/02/2024 04:32:35 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:      Daniel AC
 -- Update date: 17-04-18
 -- Description: Actualice IdMaterial a IdMaterialVendedor
@@ -24,6 +39,11 @@
 -- Update date: 19/05/2022
 -- Description: se recorta a 3 digitos sin redondear del PCN segun la SE y se optimiza
 -- =============================================
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: 16/02/2024
+-- Description: Regresar el formato de PCN en 3 decimales 0.000 --> 0.600
+-- =============================================  
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5] 
     -- Add the parameters for the stored procedure here
     @IdProveedor        INT,
@@ -34,6 +54,9 @@ CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorVentas_MV1_5]
 AS
     BEGIN
         SET NOCOUNT ON;
+
+	    --> PCN: Primero se corta a 3 decimales para evitar redondeo, luego se pasa a decimal con 3 decimales, para luego retornarlo como string con formato 3 decimales #.###
+
         SELECT
                 APD.IdAceptacionPedidoDetalle,
                 PD.IdMaterialVendedor           AS IdMaterial,
@@ -47,7 +70,7 @@ AS
                 APD.Cantidad,
                 APD.Excedente,
                 PD.PrecioUnitario,
-				CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar),1,5) AS nvarchar) AS PCN,
+				FORMAT(CAST(CAST(SUBSTRING(CAST(ISNULL(APD.PCN,0) AS nvarchar),1,5) AS nvarchar) AS decimal(12,3)),'0.000') AS PCN,
                 TM.TipoMonedaCorto              AS Moneda
         FROM
                 MM_AceptacionPedidoDetalle AS APD
