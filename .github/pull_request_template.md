@@ -12,6 +12,7 @@
 - [ ] En caso de encontrar hallazgos en el Pull Request, ¿se tiene un registrazon en la lista de [SharePoint](https://smpsadinco.sharepoint.com/sites/ProyectosADINCO/Lists/RevisionPares/AllItems.aspx)?
 - [ ] En caso de aplicarse, ¿se encuentra asignado el Milestone correspondiente en el Pull Request?
 - [ ] En caso de aplicarse, ¿se encuentran asignadas las etiquetas correspondientes en el Pull Request? (ej. Task Scheduler, Contiene Scripts)
+- [ ] ¿Se realizo la revisión por pares en la documentación?
 
 ## 2. Información Adicional
 ### 2.1 Propuesta relacionada

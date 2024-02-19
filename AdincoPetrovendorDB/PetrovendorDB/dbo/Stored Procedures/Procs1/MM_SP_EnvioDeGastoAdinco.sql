@@ -1,4 +1,18 @@
-﻿-- Author:  <DANIEL AC>  
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'MM_SP_EnvioDeGastoAdinco'
+)
+    DROP PROCEDURE MM_SP_EnvioDeGastoAdinco;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- Author:  <DANIEL AC>  
 -- Create date: 01/10/2019  
 -- Description: Se  removio insertado de XML en Adinco   
 -- =============================================  
@@ -22,6 +36,10 @@
 -- Create date: <28/07/2022>
 -- Description:	<Se agrega la cuenta de sector de hidrocarburos para amatitlan (Issue#1954)>
 -- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <12/02/2024>
+-- Description:	<Se eliminan los datos fijos del pase de gasto de amatitlan y optimizaciones (Issue#2673)>
+-- =============================================
 CREATE PROCEDURE [dbo].[MM_SP_EnvioDeGastoAdinco]
 @idFacturaP INT,
 @IdFacturaAdinco INT,
@@ -40,49 +58,38 @@ BEGIN
             @XMLAdinco INT,
             @XMLPetrovendor INT,
             @EstatusAprobacionFactura INT,
-			@IdCatalogoCuentasSH_Amatitlan INT,
 			@MontoRegistro FLOAT,
 			@IdUsuarioADINCO INT;
 
-	DECLARE @RFC VARCHAR(300) = (SELECT TOP 1 CTA.RFC FROM Adinco..CO_CONTRATO AS CTO
-									JOIN ADINCO..CO_CONTRATISTA AS CTA
+	DECLARE @RFC VARCHAR(300) = (SELECT TOP 1 CTA.RFC FROM Adinco..CO_CONTRATO AS CTO (NOLOCK)
+									JOIN ADINCO..CO_CONTRATISTA AS CTA (NOLOCK)
 										ON CTO.IDCONTRATISTA = CTA.IDCONTRATISTA 
-									JOIN FI_FACTURA AS F
+									JOIN FI_FACTURA AS F (NOLOCK)
 										ON CTO.IDCONTRATO = F.IDCONTRATO
 									WHERE F.IDFACTURA = @idFacturaP);
-	DECLARE @IdCatalogoCuentasSH INT = (SELECT TOP 1 LTRIM(IdCatalogoCuentasSH) 
-						FROM Adinco..CO_CatalogoCuentaSH CC
-						JOIN Adinco..CO_VersionCatalogoCuentasSH VCC 
-						ON CC.IdVersion = VCC.IdVersion
-						WHERE vcc.IdVersion = 10002
-						and Nivel3 like '5003.001.000')
+
 	DECLARE @Tabla TABLE (Id INT IDENTITY, idRegistro INT);
 
-	SET @IdUsuarioADINCO = (SELECT IdUsuarioADINCO FROM S_Usuario WHERE IdUsuario = @IdUsuario);
+	SET @IdUsuarioADINCO = (SELECT IdUsuarioADINCO FROM S_Usuario (NOLOCK) WHERE IdUsuario = @IdUsuario);
 
     ---ESTATUS DE APROBACION DE LA FACTURA
 	
     SELECT TOP 1
            @EstatusAprobacionFactura = TA.IdEstatusOperacion
-    FROM dbo.MM_AceptacionFactura AS AF
-        LEFT JOIN dbo.TA_Operacion AS TA
-            ON TA.IdDocumento = AF.IdAceptacionFactura
+    FROM dbo.MM_AceptacionFactura AS AF (NOLOCK)
+        LEFT JOIN dbo.TA_Operacion AS TA (NOLOCK)
+            ON AF.IdAceptacionFactura = TA.IdDocumento
                AND TA.IdTipoOperacion = 10
     WHERE AF.IdFactura = @idFacturaP
     ORDER BY AF.CreadoEl DESC
 
     INSERT INTO @Tabla (idRegistro)
     SELECT pr.IdRegistro
-    FROM Petrovendor.dbo.CO_Registro pr
+    FROM Petrovendor.dbo.CO_Registro pr (NOLOCK)
     WHERE pr.IdFactura = @idFacturaP;
 
     SELECT @Cuenta = COUNT(1)
     FROM @Tabla;
-
-    --SE VALIDA EL ESTATUS DE LA FACTURA
-    --****SE COMENTA ESTE CODIGO YA QUE CUANDO SE EJECUTA ESTE SP AUN NO SE CAMBIA EL ESTATUS DE LA OPERACION *** 
-    --IF @EstatusAprobacionFactura = 2 --APROBADA
-    --BEGIN
 
     --Se copian todos los registros de gastos con los que cuenta esta factura  
     WHILE (@Contador <= @Cuenta)
@@ -93,8 +100,8 @@ BEGIN
 
         --VALIDACION DE VERIFICACION DE EXISTENCIA DE GASTO POR ACEPTACION DE PEDIDO DETALLE
         SELECT @IdRegistroAdinco = ar.IdRegistro
-        FROM Adinco.dbo.CO_Registro ar
-            INNER JOIN dbo.CO_Registro r
+        FROM Adinco.dbo.CO_Registro ar (NOLOCK)
+            INNER JOIN dbo.CO_Registro r (NOLOCK)
                 ON ar.IdAceptacionPedidoDetalle = r.IdAceptacionPedidoDetalle
         WHERE r.IdRegistro = @IdRegistro
 
@@ -103,15 +110,6 @@ BEGIN
 			--SE COMPARA EL RFC(AMATITLÁN) PARA CLASIFICAR SU GASTO EN EL MES PRESENTACIÓN CORRIENTE
 			IF @RFC = 'PAM140722DK6'
 			BEGIN
-
-				SET @IdCatalogoCuentasSH_Amatitlan = (SELECT TOP 1
-															IdCatalogoCuentasSH
-														FROM Adinco..CO_CatalogoCuentaSH AS CCH
-															JOIN Adinco..CO_VersionCatalogoCuentasSH AS VCCH
-																ON CCH.IdVersion = VCCH.IdVersion
-														WHERE VCCH.Activo = 1	
-															AND CCH.Descripcion = 'Gastos pre operativos' 
-															AND CCH.Nivel2 = '1302.001');
 
 				INSERT INTO Adinco.dbo.CO_Registro
 				(
@@ -152,22 +150,22 @@ BEGIN
 					   @IdUsuario,
 					   GETDATE(),
 					   pr.IdInstalacion,
-					   @IdCatalogoCuentasSH_Amatitlan,
+					   pr.IdCatalogoCuentasSH,
 					   1,
 					   1,
 					   pr.CostosAtribuiblesAdministracion,
-					   0,
+					   SUBSTRING(CAST(pr.PCN AS NVARCHAR(50)), 1, 5),
 					   pr.IdGastoRubro,
-					   @IdCatalogoCuentasSH,
+					   pr.IdCBSISH,
 					   pr.IdAceptacionPedidoDetalle
-				FROM Petrovendor.dbo.CO_Registro pr
+				FROM Petrovendor.dbo.CO_Registro pr (NOLOCK)
 				JOIN FI_Factura f 
 					ON pr.IdFactura = f.IdFactura
 				WHERE pr.IdRegistro = @IdRegistro;
 
 				SELECT @IdRegistroAdinco = SCOPE_IDENTITY();
 
-				SET @MontoRegistro = (SELECT TOP 1 MontoRegistro FROM Adinco.dbo.CO_Registro WHERE IdRegistro = @IdRegistroAdinco);
+				SET @MontoRegistro = (SELECT TOP 1 MontoRegistro FROM Adinco.dbo.CO_Registro (NOLOCK) WHERE IdRegistro = @IdRegistroAdinco);
 
 				INSERT INTO dbo.CO_RelacionRegistroAdinco (IdRegistroPetrovendor, IdRegistroAdinco)
 				VALUES
@@ -246,7 +244,7 @@ BEGIN
 					   pr.IdGastoRubro,
 					   pr.IdCBSISH,
 					   pr.IdAceptacionPedidoDetalle
-				FROM Petrovendor.dbo.CO_Registro pr
+				FROM Petrovendor.dbo.CO_Registro pr (NOLOCK)
 				WHERE pr.IdRegistro = @IdRegistro;
 				SELECT @IdRegistroAdinco = SCOPE_IDENTITY();
 				INSERT INTO dbo.CO_RelacionRegistroAdinco (IdRegistroPetrovendor, IdRegistroAdinco)
@@ -271,6 +269,5 @@ BEGIN
         SET @Contador += 1;
 
     END;
--- END;
 
 END
