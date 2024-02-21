@@ -12,33 +12,31 @@
 - [ ] En caso de encontrar hallazgos en el Pull Request, ¿se tiene un registrazon en la lista de [SharePoint](https://smpsadinco.sharepoint.com/sites/ProyectosADINCO/Lists/RevisionPares/AllItems.aspx)?
 - [ ] En caso de aplicarse, ¿se encuentra asignado el Milestone correspondiente en el Pull Request?
 - [ ] En caso de aplicarse, ¿se encuentran asignadas las etiquetas correspondientes en el Pull Request? (ej. Task Scheduler, Contiene Scripts)
+- [ ] ¿Se realizo la revisión por pares en la documentación?
 
 ## 2. Información Adicional
-### Propuesta relacionada
+### 2.1 Propuesta relacionada
 *Agregue en esta sección el issue relación en caso de aplicar con el siguiente formato o elimine esta sección:*
 
 resolves Adinco/repositorio/#
 
-### 2.1 Scripts de base de datos 
+### 2.2 Scripts de base de datos 
 *Anexe en esta sección scripts de base de datos, en caso de no aplicar escriba "N/A" o elimine esta sección*
 
-### 2.2 Consideraciones para publicación. 
+### 2.3 Consideraciones para publicación y/o configuración en productivo
 *Describa o enliste consideraciones especificas para publicación en productivo (Consolas, Modificaciones en el WebConfig, etc).*
 
-### 2.3 Consideraciones de configuración en productivo
-*Describa o enliste consideraciones especificas de configuración en productivo (Preferencias, Permisos, Flujos de Trabajo, etc).*
-
-### 2.4 Accesos, Rutas y Archivos. 
-| Tipo Acceso | Detalle |
-| ------------- | -----|
-| Usuario  | [nombre_de_usuario](https://www.example.com) |
-| Contrato | *Anexe información adicional especifica como usuario (no contraseñas), contrato y/o pantalla (URL), archivos para pruebas o implementaciones en caso de no aplicar escriba "N/A"*  |
+### 2.4  Rutas y Archivos
+*Anexe información breve de las consideraciones de configuración usuario. Evita mencionar el uso de usuarios o contratos específicos, menciónelos solo para casos necesarios (ej. replicación de un bug)*
  
 ## 3. Descripción General
  *Describa de manera general las actividades que se realizaron durante el desarrollo de la propuesta. Elimine toda esta seccion en caso de no ser aplicable (ej. no es el Pull Request principal*
+
+### 3.1 Documentación
+ *Agregue la liga en donde se encuentre la documentación aplicable* 
  
-### 3.1 Consideraciones y mejoras 
+### 3.2 Consideraciones y mejoras 
  *Enliste las consideraciones y mejoras aplicables al Pull Request o parámetros adicionales al caso de uso*  
  
 ## 4. Casos de uso
-*Describe los casos de prueba y anexe sus evidencias*
+**Caso 1: [Al realizar accion en general] se [cumpla criterio de aceptacion/objetivo]**

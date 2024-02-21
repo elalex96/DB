@@ -10,6 +10,7 @@ BEGIN
 SET NOCOUNT ON
 SET LANGUAGE Spanish
 
+	
 CREATE TABLE #NotificacionesProximas
 (
 	Destinatario	VARCHAR(250),

@@ -1,10 +1,13 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SIPAC_RC_CONT_21_M'
-)
-    DROP PROCEDURE SIPAC_RC_CONT_21_M;
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_21_M'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_21_M
 GO
 -- =============================================   
 -- Author: Manuel Cruz-Yazmin Glez.   
@@ -59,7 +62,7 @@ GO
 -- Alter Date:			25 de Julio del 23
 -- Alter Description:	Se agrega case en la columna 21_22 cuanto el Monto con Iva = 0  entonces el valor de monto retornado es 0, esto para que no truene en una división /0
 -- ============================================= 
-CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]  
+CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_21_M]
     @Contrato      INT,  
     @Mes           DATE,  
     @IdPresupuesto INT          = 0,  
@@ -1179,22 +1182,28 @@ AS
                                 CC.Descripcion                                         AS [RC21_18],  
                                 CO_Registro.Poliza                                     AS [RC21_19],  
                                 SUBSTRING(CO_Registro.Comentarios, 0, 299)             AS [RC21_20],  
-                                CASE  
-                                    WHEN CO_Registro.CapexOpexEdicion IS NOT NULL  
-                                        THEN CASE  
-                                                 WHEN CO_Registro.CapexOpexEdicion = 1  
-                                                     THEN 1  
-                                                 ELSE  
-                                                     2  
-                                             END  
-                                    ELSE  
-                                        CASE  
-                                            WHEN CC.Operacion = 1  
-                                                THEN 1  
-                                            ELSE  
-                                                2  
-                                        END  
-                                END                                                    AS [RC21_21],  
+                                CASE 
+									WHEN CO_Registro.CapexOpexEdicion IS NOT NULL
+										THEN CASE 
+												WHEN CO_Registro.CapexOpexEdicion = 0
+													THEN 2
+												ELSE 1
+												END
+									ELSE CASE 
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 2
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											END
+								END                                                    AS [RC21_21],  
                                 SUM(   CASE 
                                            WHEN ISNULL(TTF.TCD, 0) = 0  
                                                THEN 0   
@@ -1370,22 +1379,28 @@ AS
                                     ELSE  
                                         LTRIM(RTRIM(I.NombreInstalacion))  
                                 END,  
-                                CASE  
-                                    WHEN CO_Registro.CapexOpexEdicion IS NOT NULL  
-                                        THEN CASE  
-                                                 WHEN CO_Registro.CapexOpexEdicion = 1  
-                                                     THEN 1  
-                                                 ELSE  
-                                                     2  
-                                             END  
-                                    ELSE  
-                                        CASE  
-                                            WHEN CC.Operacion = 1  
-                                                THEN 1  
-                                            ELSE  
-                                                2  
-                                        END  
-                                END,  
+                                CASE 
+									WHEN CO_Registro.CapexOpexEdicion IS NOT NULL
+										THEN CASE 
+												WHEN CO_Registro.CapexOpexEdicion = 0
+													THEN 2
+												ELSE 1
+												END
+									ELSE CASE 
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 2
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											END
+								END,  
                                 CASE  
                                     WHEN ISNULL(RE.IdRelacionada, 2) <> 2  
                                         THEN 1  
@@ -1479,22 +1494,28 @@ AS
                                 CC.Descripcion                                           AS [RC21_18],  
                                 CO_Registro.Poliza                                       AS [RC21_19],  
                                 SUBSTRING(CO_Registro.Comentarios, 0, 299)               AS [RC21_20],  
-                                CASE  
-                                    WHEN CO_Registro.CapexOpexEdicion IS NOT NULL  
-                                        THEN CASE  
-                                                 WHEN CO_Registro.CapexOpexEdicion = 1  
-                                                     THEN 1  
-                                                 ELSE  
-                                                     2  
-                                             END  
-                                    ELSE  
-                                        CASE  
-                                            WHEN CC.Operacion = 1  
-                                                THEN 1  
-                                            ELSE  
-                                                2  
-                                        END  
-                                END                                                      AS [RC21_21],  
+                                CASE 
+									WHEN CO_Registro.CapexOpexEdicion IS NOT NULL
+										THEN CASE 
+												WHEN CO_Registro.CapexOpexEdicion = 0
+													THEN 2
+												ELSE 1
+												END
+									ELSE CASE 
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 2
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											END
+								END                                                      AS [RC21_21],  
                                 SUM(   CASE   
                                            WHEN ISNULL(TTF.TipoCambioCP, 0) = 0  
                                                THEN 0  
@@ -1689,22 +1710,28 @@ AS
                                     ELSE  
                                         LTRIM(RTRIM(I.NombreInstalacion))  
                                 END,  
-                                CASE  
-                                    WHEN CO_Registro.CapexOpexEdicion IS NOT NULL  
-                                        THEN CASE  
-                                                 WHEN CO_Registro.CapexOpexEdicion = 1  
-                                                     THEN 1  
-                                                 ELSE  
-                                                     2  
-                                             END  
-                                    ELSE  
-                                        CASE  
-                                            WHEN CC.Operacion = 1  
-                                                THEN 1  
-                                            ELSE  
-                                                2  
-                                        END  
-                                END,  
+                                CASE 
+									WHEN CO_Registro.CapexOpexEdicion IS NOT NULL
+										THEN CASE 
+												WHEN CO_Registro.CapexOpexEdicion = 0
+													THEN 2
+												ELSE 1
+												END
+									ELSE CASE 
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 2
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											END
+								END,  
                                 CASE  
                                     WHEN ISNULL(RE.IdRelacionada, 2) <> 2  
                                         THEN 1  
@@ -1804,22 +1831,28 @@ AS
                                 CC.Descripcion                             AS [RC21_18],  
                                 CO_Registro.Poliza                         AS [RC21_19],  
                                 SUBSTRING(CO_Registro.Comentarios, 0, 299) AS [RC21_20],  
-                                CASE  
-                                    WHEN CO_Registro.CapexOpexEdicion IS NOT NULL  
-                                        THEN CASE  
-                                                 WHEN CO_Registro.CapexOpexEdicion = 1  
-                                                     THEN 1  
-                                                 ELSE  
-                                                     2  
-                                             END  
-                                    ELSE  
-                                        CASE  
-                                            WHEN CC.Operacion = 1  
-                                                THEN 1  
-                                            ELSE  
-                                                2  
-                                        END  
-                                END                                        AS [RC21_21],  
+                                CASE 
+									WHEN CO_Registro.CapexOpexEdicion IS NOT NULL
+										THEN CASE 
+												WHEN CO_Registro.CapexOpexEdicion = 0
+													THEN 2
+												ELSE 1
+												END
+									ELSE CASE 
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 2
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											END
+								END                                        AS [RC21_21],  
                                 SUM(   CASE  
                                            WHEN ISNULL(MP.MontoRegistro, 0) <> 0  
                                                THEN MP.RC2122  
@@ -2000,22 +2033,28 @@ AS
                                 CC.Descripcion,  
                                 CO_Registro.Poliza,  
                                 SUBSTRING(CO_Registro.Comentarios, 0, 299),  
-                                CASE  
-                                    WHEN CO_Registro.CapexOpexEdicion IS NOT NULL  
-                                        THEN CASE  
-                                                 WHEN CO_Registro.CapexOpexEdicion = 1  
-                                                     THEN 1  
-                                                 ELSE  
-                                                     2  
-                                             END  
-                                    ELSE  
-                                        CASE  
-                                            WHEN CC.Operacion = 1  
-                                                THEN 1  
-                                            ELSE  
-                                                2  
-                                        END  
-                                END,  
+                                CASE 
+									WHEN CO_Registro.CapexOpexEdicion IS NOT NULL
+										THEN CASE 
+												WHEN CO_Registro.CapexOpexEdicion = 0
+													THEN 2
+												ELSE 1
+												END
+									ELSE CASE 
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 0
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 0
+												THEN 2
+											WHEN ISNULL(CC.Inversion, 0) = 1
+												AND ISNULL(CC.Operacion, 0) = 1
+												THEN 1
+											END
+								END,  
                                 TM.TipoMonedaCorto,  
                                 CAST(ISNULL(MP.TCD, 0) AS DECIMAL(15, 4)),  
                                 CASE  
