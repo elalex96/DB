@@ -3959,5 +3959,6 @@
     <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_FI_FacturasMetodoPago.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ReporteGINBDCN.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ConsultaAñosPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ReporteGINBDCNPorMesPresentacion.sql" />
   </ItemGroup>
 </Project>

@@ -30,7 +30,11 @@ GO
 -- Update:		27/04/2023
 -- Description:	se agrega el monto de la aceptacion ligada al pedido para los usuarios de amatitlan
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosCliente] --570,'TODOS',2507
+-- Author:		Alexander Gomez
+-- Update:		27/04/2023
+-- Description:	se eliminan tags inecesarios
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_MM_ConsultaPedidosCliente] --570,'EN_APROBACION',2507
     -- Add the parameters for the stored procedure here
     @IdProveedor INT,
     @Filtro NVARCHAR(100),
@@ -135,8 +139,8 @@ BEGIN
 	-- FILTRAR TODOS LOS PEDIDOS DEL PROVEEDOR ACTUAL
 	INSERT INTO #WDEA_PurchasingDocumentsImportados(IdPedidoADINCO,MECANISMO_CONTRATACION)
 	SELECT PDI.IdPedidoADINCO,MAX(PDI.MECANISMO_CONTRATACION)
-	FROM MM_Pedido P
-	JOIN  WDEA_PurchasingDocumentsImportados PDI
+	FROM MM_Pedido P (NOLOCK)
+	JOIN  WDEA_PurchasingDocumentsImportados PDI (NOLOCK)
 		ON P.IdPedido = PDI.IdPedidoADINCO
 	WHERE P.IdProveedorCompras= @IdProveedor
 	GROUP BY PDI.IdPedidoADINCO
@@ -160,13 +164,13 @@ BEGIN
 				TP.TipoPedido
 			   END AS TipoPedido,
                TP.IdTipoPedido,
-               (
+               REPLACE((REPLACE((
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, '')),
                                      Contrato = c.NumeroContrato
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -177,7 +181,7 @@ BEGIN
                           1,
                           ''
                                )
-               ) AS Asignados,
+               ),'<Contrato>',' - Contrato: ')),'</Contrato>','') AS Asignados,
                Contrato = C.NumeroContrato
         FROM MM_Pedido AS P (NOLOCK)
             JOIN MM_PedidoDetalle AS PD (NOLOCK)
@@ -271,8 +275,8 @@ BEGIN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -379,8 +383,8 @@ BEGIN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -486,8 +490,8 @@ BEGIN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -600,8 +604,8 @@ BEGIN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -714,8 +718,8 @@ BEGIN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -822,8 +826,8 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                              FROM dbo.MM_SolicitudPedidoComprador SPC
-                                  INNER JOIN dbo.S_Usuario U
+                              FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                                  INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
@@ -946,8 +950,8 @@ AND HV.FechaVigencia IS NOT NULL --> DEBE HABER UNA FECHA LIMITE DE RECEPCIÓN
                    SELECT STUFF(
                           (
                               SELECT CAST(', ' AS VARCHAR(MAX)) + CONVERT(NVARCHAR(MAX), ISNULL(U.Nombre, ''))
-                       FROM dbo.MM_SolicitudPedidoComprador SPC
-                    INNER JOIN dbo.S_Usuario U
+                       FROM dbo.MM_SolicitudPedidoComprador SPC (NOLOCK)
+                    INNER JOIN dbo.S_Usuario U (NOLOCK)
                                       ON SPC.IdAsignadoA = U.IdUsuario
                               WHERE SPC.IdSolicitudPedido = P.IdSolicitudPedido
                                     AND SPC.Activo = 1
