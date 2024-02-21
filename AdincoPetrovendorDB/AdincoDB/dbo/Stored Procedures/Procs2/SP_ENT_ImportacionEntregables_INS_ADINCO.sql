@@ -1,18 +1,7 @@
-﻿USE [Adinco]
+USE Adinco
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_ENT_ImportacionEntregables_INS_ADINCO'
-)
-    DROP PROCEDURE SP_ENT_ImportacionEntregables_INS_ADINCO;
-/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]    Script Date: 01/02/2024 10:28:46 a. m. ******/
-SET ANSI_NULLS ON
+DROP PROCEDURE IF EXISTS SP_ENT_ImportacionEntregables_INS_ADINCO
 GO
-SET QUOTED_IDENTIFIER ON
-GO
-
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <06/12/2019>  
@@ -28,7 +17,11 @@ GO
 -- Create date: 31/01/2023
 -- Description:	Se agrega consulta para TOMAR en cuente la lista de usuarios por grupo
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO] 
+-- Author: DAVID DE LA CRUZ
+-- Create date: 02/19/2024
+-- Description:	Se actualiza el aprobador del estado 10003 
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]
 @Layout dbo.Entregables_Importacion_01 READONLY,
 @IdContrato INT,
 @IdUsuario INT
@@ -181,13 +174,13 @@ BEGIN
 				CE.ReceptorAlerta = TE.ReceptorAlerta,
 				CE.ModificadoEl = GETDATE(),
 				CE.ModificadoPor = @IdUsuario
-			FROM dbo.EN_ContratoEntregable AS CE
-			JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
+			FROM dbo.EN_ContratoEntregable AS CE (NOLOCK)
+			JOIN #TB_EXCEL AS TE (NOLOCK) ON CE.IdContratoEntregable = TE.IdEntregable
 			WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
 
 			--BUSQUEDA EL APROBADOR
 			SET @IDACTIVIDADACTUAL = (SELECT TOP 1 ActividadID FROM dbo.EN_Actividad WHERE IdContratoEntregable = @IDENTREGABLE AND Activo = 1 AND EstadoID = 10002 ORDER BY CreadoEn ASC);
-			--ACTUALIZACION DEL APROBADOR
+			--ACTUALIZACION DEL APROBADOR(10002) Y APROBADO INTERNAMENTE(10003)
 			IF @IDACTIVIDADACTUAL IS NOT NULL
 			BEGIN
 			
@@ -196,13 +189,28 @@ BEGIN
 							ACAPROB.ModificadoEn		=		GETDATE(),
 							ACAPROB.ModificadoPor		=		@IdUsuario
 				FROM		dbo.EN_ContratoEntregable	CE
-				JOIN		#TB_EXCEL					TE	
+				JOIN		#TB_EXCEL					TE	(NOLOCK)
 				ON			CE.IdContratoEntregable		=		TE.IdEntregable
-				LEFT JOIN	EN_Actividad				ACAPROB 
+				LEFT JOIN	EN_Actividad				ACAPROB (NOLOCK)
 				ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
 				AND			ACAPROB.EstadoID			=		10002 --> CTE Aprobación
 				WHERE		TE.R						=		@CONT 
 				AND			CE.IdContrato				=		@IdContrato;
+
+				UPDATE		ACAPROB
+				SET			ACAPROB.idUsuario			=		@IDUSUARIOAPROBADOR,
+							ACAPROB.ModificadoEn		=		GETDATE(),
+							ACAPROB.ModificadoPor		=		@IdUsuario
+				FROM		dbo.EN_ContratoEntregable	CE
+				JOIN		#TB_EXCEL					TE	(NOLOCK)
+				ON			CE.IdContratoEntregable		=		TE.IdEntregable
+				LEFT JOIN	EN_Actividad				ACAPROB (NOLOCK)
+				ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+				AND			ACAPROB.EstadoID			=		10003 --> Aprobado Internamente 
+				WHERE		TE.R						=		@CONT 
+				AND			CE.IdContrato				=		@IdContrato;
+
+
 			END
 			ELSE
 			BEGIN
@@ -296,9 +304,9 @@ BEGIN
 				SET ACAPROB.idUsuario = @IDUSUARIOELABORADOR,
 					ACAPROB.ModificadoEn = GETDATE(),
 					ACAPROB.ModificadoPor = @IdUsuario
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS ACAPROB 
+				FROM dbo.EN_ContratoEntregable AS CE(NOLOCK)
+				JOIN #TB_EXCEL AS TE (NOLOCK) ON CE.IdContratoEntregable = TE.IdEntregable
+				LEFT JOIN EN_Actividad AS ACAPROB (NOLOCK)
 				ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10000 --> CTE Elaboración ó Correción
 				WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
 			END
@@ -324,7 +332,7 @@ BEGIN
 				--VALIDACION DE DATOS ERRONES Y AGREGADO DE TEXTO DESCRIPTIVO DEL ERROR
 				IF ISNULL(@IDENTREGABLE,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Se detecto que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señalo el entregable a editar. </li>'; 
+					SET @ERRORES = @ERRORES + '<li>Se detectó que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señaló el entregable a editar. </li>'; 
 				END
 
 				IF ISNULL(@IDAREA,0) = 0
@@ -384,8 +392,13 @@ BEGIN
 			end
 		END
 
-		SET @CONT = @CONT + 1;
+		--EJECUTAMOS EL SP PARA ACTUALIZAR EL FLUJO
+		DROP TABLE IF EXISTS #TempResult
+		CREATE TABLE #TempResult (ErrorMessage VARCHAR(MAX));
+		INSERT INTO #TempResult
+		EXEC sp_EN_GeneraFlujoContratoEntregable @IDENTREGABLE, @idUsuario, @idContrato;
 
+		SET @CONT = @CONT + 1;
 	END
 
 	SELECT @CONTADORERRORES AS ERRORES,
@@ -394,4 +407,3 @@ BEGIN
 
 
 END
-
