@@ -210,6 +210,7 @@ BEGIN
 				WHERE		TE.R						=		@CONT 
 				AND			CE.IdContrato				=		@IdContrato;
 
+
 			END
 			ELSE
 			BEGIN
@@ -331,7 +332,7 @@ BEGIN
 				--VALIDACION DE DATOS ERRONES Y AGREGADO DE TEXTO DESCRIPTIVO DEL ERROR
 				IF ISNULL(@IDENTREGABLE,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Se detecto que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señalo el entregable a editar. </li>'; 
+					SET @ERRORES = @ERRORES + '<li>Se detectó que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señaló el entregable a editar. </li>'; 
 				END
 
 				IF ISNULL(@IDAREA,0) = 0
@@ -391,8 +392,13 @@ BEGIN
 			end
 		END
 
-		SET @CONT = @CONT + 1;
+		--EJECUTAMOS EL SP PARA ACTUALIZAR EL FLUJO
+		DROP TABLE IF EXISTS #TempResult
+		CREATE TABLE #TempResult (ErrorMessage VARCHAR(MAX));
+		INSERT INTO #TempResult
+		EXEC sp_EN_GeneraFlujoContratoEntregable @IDENTREGABLE, @idUsuario, @idContrato;
 
+		SET @CONT = @CONT + 1;
 	END
 
 	SELECT @CONTADORERRORES AS ERRORES,
