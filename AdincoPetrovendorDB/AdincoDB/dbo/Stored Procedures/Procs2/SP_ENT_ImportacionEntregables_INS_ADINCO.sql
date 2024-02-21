@@ -1,4 +1,7 @@
-﻿
+USE Adinco
+GO
+DROP PROCEDURE IF EXISTS SP_ENT_ImportacionEntregables_INS_ADINCO
+GO
 -- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <06/12/2019>  
@@ -9,22 +12,69 @@
 -- Create date: <04/05/2022>  
 -- Description: Se actualiza modificación de revisores usando sps existentes en la pantalla EditaContratoEntreagble.aspx
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO] 
+-- =============================================
+-- Author: Daniel AC
+-- Create date: 31/01/2023
+-- Description:	Se agrega consulta para TOMAR en cuente la lista de usuarios por grupo
+-- =============================================
+-- Author: DAVID DE LA CRUZ
+-- Create date: 02/19/2024
+-- Description:	Se actualiza el aprobador del estado 10003 
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_ADINCO]
 @Layout dbo.Entregables_Importacion_01 READONLY,
 @IdContrato INT,
 @IdUsuario INT
 AS
 BEGIN
-	set nocount on
-	create table #tmp
+	SET NOCOUNT ON
+	CREATE TABLE #tmp
 	(
 		Activo int
 	)
 
+	CREATE TABLE #TB_EXCEL(
+	[R] INT,
+	[IdEntregable] [nvarchar](50) NULL,
+	[Area] [nvarchar](500) NULL,
+	[DiasAlertaPrevia] [nvarchar](50) NULL,
+	[DiasElaboracion] [nvarchar](50) NULL,
+	[DiasRevicion] [nvarchar](50) NULL,
+	[DiasAprobacion] [nvarchar](50) NULL,
+	[Activo] [nvarchar](50) NULL,
+	[Elaborador] [nvarchar](500) NULL,
+	[Revisor] [nvarchar](500) NULL,
+	[Aprobador] [nvarchar](500) NULL,
+	[ReceptorAlerta] [nvarchar](500) NULL
+	)
+
+	INSERT INTO #TB_EXCEL(
+	R,
+	IdEntregable,
+	Area,
+	DiasAlertaPrevia,
+	DiasElaboracion,
+	DiasRevicion,
+	DiasAprobacion,
+	Activo,
+	Elaborador,
+	Revisor,
+	Aprobador,
+	ReceptorAlerta)
+
 	SELECT
-		ROW_NUMBER() OVER (ORDER BY IdEntregable DESC) AS R,
-		*
-	INTO #TB_EXCEL
+	ROW_NUMBER() OVER (ORDER BY IdEntregable DESC) AS R,		
+	IdEntregable,
+	Area,
+	DiasAlertaPrevia,
+	DiasElaboracion,
+	DiasRevicion,
+	DiasAprobacion,
+	Activo,
+	Elaborador,
+	Revisor,
+	Aprobador,
+	ReceptorAlerta
 	FROM @Layout;
 
     DECLARE @CONT INT = 1;
@@ -50,9 +100,14 @@ BEGIN
 	declare @masDeUnRevisor bit
 	select @masDeUnRevisor = 0;
 
-	create table #responseAccionesResponsable(response nvarchar(max))	
-	create table #Revisores(IdRow int identity(1,1), IdRevisor int, activo bit)	
+	CREATE TABLE #responseAccionesResponsable(response nvarchar(max))	
+	CREATE TABLE #Revisores(IdRow int identity(1,1), IdRevisor int, activo bit)	
 	DECLARE @CantidadRevisores INT, @UsuarioActualEsRevisor INT,@RevisorIsActivo BIT, @IndRevidores int , @IdRevisorRow INT
+    CREATE TABLE #UsuariosContrato(UsuarioId INT,Usuario NVARCHAR(MAX),Nombre NVARCHAR(MAX))
+
+	-- OBTENER LOS USUARIOS DEL CONTRATO
+	INSERT INTO #UsuariosContrato(UsuarioId,Usuario,Nombre)
+	EXEC sp_Ap_Usuario_Cmb @IdContrato,'CON_GRUPOS'
 
 	WHILE @CONT <= @CONTTOTAL
 	BEGIN
@@ -64,11 +119,11 @@ BEGIN
 
 		--BUSQUEDA DE USUARIO ELABORADOR SELECCIONADO
 		SET @USUARIOELABORADOR = (SELECT TOP 1 Elaborador FROM #TB_EXCEL WHERE R = @CONT);
-		SET @IDUSUARIOELABORADOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOELABORADOR);
+		SET @IDUSUARIOELABORADOR = (SELECT TOP 1 UsuarioId FROM #UsuariosContrato WHERE Nombre = @USUARIOELABORADOR);
 
 		--BUSQUEDA DE USUARIO REVISOR SELECCIONADO
 		SET @USUARIOREVISOR = (SELECT TOP 1 Revisor FROM #TB_EXCEL WHERE R = @CONT);
-		SET @IDUSUARIOREVISOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOREVISOR);
+		SET @IDUSUARIOREVISOR = (SELECT TOP 1 UsuarioId FROM #UsuariosContrato WHERE Nombre = @USUARIOREVISOR);
 
 		--select @USUARIOREVISOR, @IDUSUARIOREVISOR
 		
@@ -80,7 +135,7 @@ BEGIN
 
 		--BUSQUEDA DE USUARIO APROBADOR SELECCIONADO
 		SET @USUARIOAPROBADOR = (SELECT TOP 1 Aprobador FROM #TB_EXCEL WHERE R = @CONT);
-		SET @IDUSUARIOAPROBADOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOAPROBADOR);
+		SET @IDUSUARIOAPROBADOR = (SELECT TOP 1 UsuarioId FROM #UsuariosContrato WHERE Nombre = @USUARIOAPROBADOR);
 
 		--ASIGNACION DE ACTIVO
 		SELECT
@@ -119,13 +174,13 @@ BEGIN
 				CE.ReceptorAlerta = TE.ReceptorAlerta,
 				CE.ModificadoEl = GETDATE(),
 				CE.ModificadoPor = @IdUsuario
-			FROM dbo.EN_ContratoEntregable AS CE
-			JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
+			FROM dbo.EN_ContratoEntregable AS CE (NOLOCK)
+			JOIN #TB_EXCEL AS TE (NOLOCK) ON CE.IdContratoEntregable = TE.IdEntregable
 			WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
 
 			--BUSQUEDA EL APROBADOR
 			SET @IDACTIVIDADACTUAL = (SELECT TOP 1 ActividadID FROM dbo.EN_Actividad WHERE IdContratoEntregable = @IDENTREGABLE AND Activo = 1 AND EstadoID = 10002 ORDER BY CreadoEn ASC);
-			--ACTUALIZACION DEL APROBADOR
+			--ACTUALIZACION DEL APROBADOR(10002) Y APROBADO INTERNAMENTE(10003)
 			IF @IDACTIVIDADACTUAL IS NOT NULL
 			BEGIN
 			
@@ -134,13 +189,28 @@ BEGIN
 							ACAPROB.ModificadoEn		=		GETDATE(),
 							ACAPROB.ModificadoPor		=		@IdUsuario
 				FROM		dbo.EN_ContratoEntregable	CE
-				JOIN		#TB_EXCEL					TE	
+				JOIN		#TB_EXCEL					TE	(NOLOCK)
 				ON			CE.IdContratoEntregable		=		TE.IdEntregable
-				LEFT JOIN	EN_Actividad				ACAPROB 
+				LEFT JOIN	EN_Actividad				ACAPROB (NOLOCK)
 				ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
 				AND			ACAPROB.EstadoID			=		10002 --> CTE Aprobación
 				WHERE		TE.R						=		@CONT 
 				AND			CE.IdContrato				=		@IdContrato;
+
+				UPDATE		ACAPROB
+				SET			ACAPROB.idUsuario			=		@IDUSUARIOAPROBADOR,
+							ACAPROB.ModificadoEn		=		GETDATE(),
+							ACAPROB.ModificadoPor		=		@IdUsuario
+				FROM		dbo.EN_ContratoEntregable	CE
+				JOIN		#TB_EXCEL					TE	(NOLOCK)
+				ON			CE.IdContratoEntregable		=		TE.IdEntregable
+				LEFT JOIN	EN_Actividad				ACAPROB (NOLOCK)
+				ON			CE.IdContratoEntregable		=		ACAPROB.IdContratoEntregable 
+				AND			ACAPROB.EstadoID			=		10003 --> Aprobado Internamente 
+				WHERE		TE.R						=		@CONT 
+				AND			CE.IdContrato				=		@IdContrato;
+
+
 			END
 			ELSE
 			BEGIN
@@ -234,9 +304,9 @@ BEGIN
 				SET ACAPROB.idUsuario = @IDUSUARIOELABORADOR,
 					ACAPROB.ModificadoEn = GETDATE(),
 					ACAPROB.ModificadoPor = @IdUsuario
-				FROM dbo.EN_ContratoEntregable AS CE
-				JOIN #TB_EXCEL AS TE ON CE.IdContratoEntregable = TE.IdEntregable
-				LEFT JOIN EN_Actividad AS ACAPROB 
+				FROM dbo.EN_ContratoEntregable AS CE(NOLOCK)
+				JOIN #TB_EXCEL AS TE (NOLOCK) ON CE.IdContratoEntregable = TE.IdEntregable
+				LEFT JOIN EN_Actividad AS ACAPROB (NOLOCK)
 				ON CE.IdContratoEntregable = ACAPROB.IdContratoEntregable AND ACAPROB.EstadoID = 10000 --> CTE Elaboración ó Correción
 				WHERE TE.R = @CONT AND CE.IdContrato = @IdContrato;
 			END
@@ -262,7 +332,7 @@ BEGIN
 				--VALIDACION DE DATOS ERRONES Y AGREGADO DE TEXTO DESCRIPTIVO DEL ERROR
 				IF ISNULL(@IDENTREGABLE,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Se detecto que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señalo el entregable a editar. </li>'; 
+					SET @ERRORES = @ERRORES + '<li>Se detectó que en la fila <strong>#' + CAST((@CONT + 1) AS NVARCHAR) + '</strong> no se señaló el entregable a editar. </li>'; 
 				END
 
 				IF ISNULL(@IDAREA,0) = 0
@@ -309,7 +379,7 @@ BEGIN
 
 				IF ISNULL(@DIASELABORACION,0) = 0
 				BEGIN
-					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de elaboracion deben ser mayor a 0.</li>';
+					SET @ERRORES = @ERRORES + '<li>Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de elaboración deben ser mayor a 0.</li>';
 				END
 
 				IF ISNULL(@DIASREVISION,0) = 0
@@ -322,8 +392,13 @@ BEGIN
 			end
 		END
 
-		SET @CONT = @CONT + 1;
+		--EJECUTAMOS EL SP PARA ACTUALIZAR EL FLUJO
+		DROP TABLE IF EXISTS #TempResult
+		CREATE TABLE #TempResult (ErrorMessage VARCHAR(MAX));
+		INSERT INTO #TempResult
+		EXEC sp_EN_GeneraFlujoContratoEntregable @IDENTREGABLE, @idUsuario, @idContrato;
 
+		SET @CONT = @CONT + 1;
 	END
 
 	SELECT @CONTADORERRORES AS ERRORES,
@@ -332,4 +407,3 @@ BEGIN
 
 
 END
-
