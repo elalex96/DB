@@ -1,147 +1,68 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_PV_AltaSubcontratista'
+)
+    DROP PROCEDURE sp_PV_AltaSubcontratista;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Miguel
 -- Create date: 
 -- Description:	
 -- =============================================
+-- Author:  <Alexander Gomez>  
+-- Create date: 22/02/2024
+-- Description: se agregan estandares de desarrollo y mejoras
+-- =============================================  
 CREATE PROCEDURE [dbo].[sp_PV_AltaSubcontratista] 
 	-- Add the parameters for the stored procedure here
 	
 	@RFC	nvarchar(MAX) ,
 	@RazonSocial	nvarchar(MAX) ,
-	--@RepresentanteLegal	nvarchar(MAX) ,
-	--@DiasCreditoID	int ,
-	--@Giro	nvarchar(MAX) ,
-	--@PatronalIMSS	nvarchar(MAX) ,
-	--@TipoPersonaFiscalID	int ,
 	@NacionalidadID	int ,
-	--@ClasificacionID	int ,
-	--@Capital	nvarchar(MAX) ,
-	--@IdStatusValidacion	int ,
-	--@MotivoRechazo	nvarchar(MAX) ,
 	@NombreComercial	nvarchar(MAX)
-	--@CURP	nvarchar(MAX) ,
-	--@FormaPagoID	int ,
-	--@GrupoCuentasID	int ,
-	--@UsuarioID	int --,
-
---@Entidad	nvarchar(MAX) ,
---@Municipio	nvarchar(MAX) ,
----@Colonia	nvarchar(MAX) ,
---@NombreVialidad	nvarchar(MAX) ,
---@NumExterior	nvarchar(MAX) ,
---@NumInterior	nvarchar(MAX) ,
---@CodigoPostal	nvarchar(MAX) 
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
-    -- Insert statements for procedure here
+    DECLARE @ENCONTRADOS AS INT
+	
+	SELECT   @ENCONTRADOS =  count  (*)  
+	FROM            S_Proveedor S (NOLOCK)
+	WHERE UPPER(RTRIM(S.RFC)) =UPPER(RTRIM(@RFC));
 
-
---INSERT INTO [dbo].[PV_Subcontratista]
---           ([RFC]
---           ,[RazonSocial]
---           ,[RepresentanteLegal]
---           ,[DiasCreditoID]
---           ,[Giro]
---           ,[PatronalIMSS]
---           ,[TipoPersonaFiscalID]
-           --,[NacionalidadID]
---           ,[ClasificacionID]
---           ,[Capital]
---           ,[IdStatusValidacion]
---           ,[MotivoRechazo]
---           ,[NombreComercial]
---           ,[CURP]
---           ,[FormaPagoID]
---           ,[GrupoCuentasID]
---           ,[UsuarioID]
---           ,[Entidad]
---           ,[Municipio]
---           ,[Colonia]
---           ,[NombreVialidad]
---           ,[NumExterior]
---           ,[NumInterior]
---           ,[CodigoPostal]
---           ,[IsEliminado])
---     VALUES
---           (
---			@RFC,
---			@RazonSocial,
---			@RepresentanteLegal,
---			@DiasCreditoID,
---			@Giro,
---			@PatronalIMSS,
---			@TipoPersonaFiscalID,
-			--@NacionalidadID
---			@ClasificacionID,
---			@Capital,
---			@IdStatusValidacion,
---			@MotivoRechazo,
---			@NombreComercial,
---			@CURP,
---			@FormaPagoID,
---			@GrupoCuentasID,
---			@UsuarioID,
---@Entidad,
---@Municipio,
---@Colonia,
---@NombreVialidad,
---@NumExterior,
---@NumInterior,
---@CodigoPostal,
---0)
-
-INSERT INTO [dbo].[S_Proveedor]
+	IF (ISNULL(@ENCONTRADOS,0) > 0) 
+	BEGIN
+		
+		INSERT INTO [dbo].[S_Proveedor]
            ([RFC]
            ,[RazonSocial]
-           --,[RepresentanteLegal]
-           --,[DiasCreditoID]
-           --,[Giro]
-           --,[PatronalIMSS]
-           --,[TipoPersonaFiscalID]
            ,[IdNacionalidad]
-           --,[ClasificacionID]
-           --,[Capital]
-           --,[IdStatusValidacion]
-           --,[MotivoRechazo]
            ,[Alias],
-           --,[CURP]
-           --,[FormaPagoID]
-           --,[GrupoCuentasID]
-           --,[UsuarioID]
 		   IsEliminado
 )
      VALUES
            (
 			@RFC,
 			@RazonSocial,
-			--@RepresentanteLegal,
-			--@DiasCreditoID,
-			--@Giro,
-			--@PatronalIMSS,
-			--@TipoPersonaFiscalID,
 			@NacionalidadID,
-			--@ClasificacionID,
-			--@Capital,
-			--@IdStatusValidacion,
-			--@MotivoRechazo,
 			@NombreComercial,
 			0
-			)
-			
-			--@CURP,
-			--@FormaPagoID,
-			--@GrupoCuentasID,
-			--@UsuarioID)
-SELECT @@IDENTITY  AS ID , concat('El proveedor se ha actualizado exitosamente con el id ' , @@IDENTITY)  as MSG
+			);
+
+	END
+
+	SELECT @@IDENTITY  AS ID , 
+			concat('El proveedor se ha actualizado exitosamente con el id ' , @@IDENTITY)  as MSG
 
 
 END
-
-
-
-/****** Object:  StoredProcedure [dbo].[SP_SegInsertarContactoPA]    Script Date: 11/8/2017 12:57:52 PM ******/
-SET ANSI_NULLS ON
