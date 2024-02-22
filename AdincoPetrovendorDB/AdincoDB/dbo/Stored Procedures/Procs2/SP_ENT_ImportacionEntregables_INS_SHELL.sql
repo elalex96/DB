@@ -1,4 +1,19 @@
-﻿-- =============================================  
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_ENT_ImportacionEntregables_INS_SHELL'
+)
+
+    DROP PROCEDURE SP_ENT_ImportacionEntregables_INS_SHELL;
+/****** Object:  StoredProcedure [dbo].[SP_ENT_ImportacionEntregables_INS_SHELL]    Script Date: 01/02/2024 02:01:22 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================  
 -- Author:  <Luis David De La Cruz>  
 -- Create date: <26/08/2021>  
 -- Description: <Actualizacion de los registros existentes>  
@@ -8,18 +23,62 @@
 -- Create date: <12/05/2022>  
 -- Description: <descarte de elementos vacios, incertado en en_Actividad en caso de que el entregable no tenga registros en esta tabla>  
 -- =============================================  
+-- =============================================
+-- Author:	Daniel Ac 
+-- Create date: <01/02/2024>
+-- Description:	<Se CONSIDERA los usuarios de grupos a la lista de elaboradores>
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_ENT_ImportacionEntregables_INS_SHELL] 
 @Layout dbo.Entregables_Importacion_SHELL READONLY,
 @IdContrato INT,
 @IdUsuario INT
 AS
 BEGIN
+
+	CREATE TABLE #TB_EXCEL(
+	[R] INT,
+	[IdEntregable] [nvarchar](500) NULL,
+	[Funcion] [nvarchar](500) NULL,
+	[Subfuncion] [nvarchar](500) NULL,
+	[DiasAlertaPrevia] [nvarchar](500) NULL,
+	[DiasElaboracion] [nvarchar](500) NULL,
+	[Activo] [nvarchar](500) NULL,
+	[Elaborador] [nvarchar](500) NULL,
+	[FocalPoint] [nvarchar](500) NULL,
+	[Accountable] [nvarchar](500) NULL,
+	[AccountableCompliance] [nvarchar](500) NULL,
+	[Column16] [nvarchar](500) NULL
+	)
+
+	INSERT INTO #TB_EXCEL(
+	R,
+	IdEntregable,
+	Funcion,
+	Subfuncion,
+	DiasAlertaPrevia,
+	DiasElaboracion,
+	Activo,
+	Elaborador,
+	FocalPoint,
+	Accountable,
+	AccountableCompliance,
+	Column16)
 	SELECT
 		ROW_NUMBER() OVER (ORDER BY IdEntregable DESC) AS R,
-		*
-	INTO #TB_EXCEL
+		IdEntregable,
+		Funcion,
+		Subfuncion,
+		DiasAlertaPrevia,
+		DiasElaboracion,
+		Activo,
+		Elaborador,
+		FocalPoint,
+		Accountable,
+		AccountableCompliance,
+		Column16
 	FROM @Layout
 	WHERE IdEntregable <> '';
+
 	DECLARE @CONT INT = 1;
 	DECLARE @CONTTOTAL INT = (SELECT COUNT(R) FROM #TB_EXCEL);
 	DECLARE @FUNCION NVARCHAR(500);
@@ -50,6 +109,12 @@ BEGIN
 	DECLARE @CONTADORAFECTADOS INT = 0;
 	DECLARE @CONTADORERRORES INT = 0;
 
+	CREATE TABLE #UsuariosContrato(UsuarioId INT,Usuario NVARCHAR(MAX),Nombre NVARCHAR(MAX))
+
+	-- OBTENER LOS USUARIOS DEL CONTRATO
+	INSERT INTO #UsuariosContrato(UsuarioId,Usuario,Nombre)
+	EXEC sp_Ap_Usuario_Cmb @IdContrato,'CON_GRUPOS'
+
 
 	WHILE @CONT <= @CONTTOTAL
 	BEGIN
@@ -65,7 +130,7 @@ BEGIN
 					END AS ACTIVO FROM #TB_EXCEL WHERE R = @CONT);
 
 		SET @USUARIOELABORADOR = (SELECT TOP 1 Elaborador FROM #TB_EXCEL WHERE R = @CONT);
-		SET @IDUSUARIOELABORADOR = (SELECT TOP 1 UsuarioID FROM AP_Usuario WHERE Nombre = @USUARIOELABORADOR);
+		SET @IDUSUARIOELABORADOR = (SELECT TOP 1 UsuarioID FROM #UsuariosContrato WHERE Nombre = @USUARIOELABORADOR);
 		SET @IDUSUARIOREVISOR = @IDUSUARIOELABORADOR
 		SET @IDUSUARIOAPROBADOR = @IDUSUARIOELABORADOR
 
@@ -151,11 +216,11 @@ BEGIN
 			END
 			IF ISNULL(@DIASALERTAPREVIO,0) = 0
 			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de alerta previa deben ser mayor a 0.</li>';
+				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de alerta previa deben ser mayor a 0.</li>';
 			END
 			IF ISNULL(@DIASELABORACION,0) = 0
 			BEGIN
-				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los dias de elaboracion deben ser mayor a 0.</li>';
+				SET @ERRORES = @ERRORES + '<li>En el Entregable <strong>#'+ CAST(@IDENTREGABLE AS nvarchar) + '</strong> los días de elaboración deben ser mayor a 0.</li>';
 			END
 			IF @ACTIVO IS NULL
 			BEGIN
