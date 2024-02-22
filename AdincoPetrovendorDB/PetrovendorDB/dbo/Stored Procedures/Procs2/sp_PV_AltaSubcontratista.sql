@@ -40,7 +40,7 @@ BEGIN
 	FROM            S_Proveedor S (NOLOCK)
 	WHERE UPPER(RTRIM(S.RFC)) =UPPER(RTRIM(@RFC));
 
-	IF (ISNULL(@ENCONTRADOS,0) > 0) 
+	IF (ISNULL(@ENCONTRADOS,0) = 0) 
 	BEGIN
 		
 		INSERT INTO [dbo].[S_Proveedor]
