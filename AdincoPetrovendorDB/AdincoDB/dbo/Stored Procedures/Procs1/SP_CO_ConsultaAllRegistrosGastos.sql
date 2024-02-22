@@ -1,4 +1,15 @@
-﻿-- =============================================
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_CO_ConsultaAllRegistrosGastos'
+    )
+    DROP PROCEDURE SP_CO_ConsultaAllRegistrosGastos
+GO
+-- =============================================
 -- Author:		Marcos Neri
 -- Create date: 10-01-2020
 -- Description:	*Agregar columna IdEstado
@@ -16,576 +27,580 @@
 -- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 
 -- de la tabla al inicio de procedure, se eliminan algunos Left y Joins innecesarios
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos]
-@IdContrato INT, 
-@IdUsuario  INT,
-@FechaDel DATETIME = NULL,
-@FechaAl DATETIME = NULL
+CREATE PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos] 
+    @IdContrato INT,
+    @IdUsuario  INT,
+    @UUIDFolios VARCHAR(MAX)
 AS
-     BEGIN
-         -- =============================================
-         -- Author:			Marcos Garcia
-         -- Create date:	06-01-2020
-         -- Description:	Seleciona todos los registro de gastos del Contrato
-         -- =============================================
-         SET NOCOUNT ON;
-         --=====================================================
-         IF OBJECT_ID('tempdb..#TPeriodos', 'U') IS NOT NULL
-             DROP TABLE #TPeriodos;
-         IF OBJECT_ID('tempdb..#TPresuspuestos', 'U') IS NOT NULL
-             DROP TABLE #TPresuspuestos;
-         IF OBJECT_ID('tempdb..#CartasProcura', 'U') IS NOT NULL
-             DROP TABLE #CartasProcura;
-         IF OBJECT_ID('tempdb..#Datos', 'U') IS NOT NULL
-             DROP TABLE #Datos;
-         --=====================================================
-         CREATE TABLE #TPeriodos
-         (IdPeriodo         INT, 
-          NombreParaMostrar VARCHAR(1500)
-         );
-         /**/
-         CREATE TABLE #TPresuspuestos
-         (IdProgramaActividad     INT, 
-          IdPeriodoContrato       INT, 
-          IdTipoProgramaActividad INT, 
-          NombrePrograma          VARCHAR(1500), 
-          IdContrato              INT, 
-          NombrePeriodo			  VARCHAR(1500), 
-          Inicio                  DATE, 
-          Fin                     DATE, 
-          IdPresupuesto           INT, 
-          Nombre                  VARCHAR(1500)
-         );
-         --=====================================================
-         CREATE TABLE #CartasProcura
-         (IdFacutraP INT, 
-          UUID       VARCHAR(150), 
-          IdFacutraA INT);
+    BEGIN
 
-         /**/
-         CREATE TABLE #Datos
-         (IdRegistro               INT, 
-          Servicio                 VARCHAR(1000), 
-          InstalacionPresupuestada VARCHAR(1000), 
-          FechaInicio              DATE, 
-          FechaFin                 DATE, 
-          TipoDocumento            VARCHAR(100), 
-          Numero                   VARCHAR(500), 
-          FechaDocumento           DATETIME, 
-          MontoUSD                 FLOAT, 
-          Subcontratista           VARCHAR(1000), 
-          InstalacionRegistro      VARCHAR(500), 
-          InicioEjecucion          DATE, 
-          FinEjecucion             DATE, 
-          CreadoPor                VARCHAR(500), 
-          MontoRegistro            FLOAT, 
-          Moneda                   VARCHAR(50), 
-          MesPresentacion          DATE, 
-          TipoDeServicio           VARCHAR(500), 
-          Actividad                VARCHAR(1000), 
-          SubActividad             VARCHAR(1000), 
-          EstadoValidacion         VARCHAR(500), 
-          Area                     VARCHAR(500), 
-          Comentarios              VARCHAR(5000), 
-          Anexo4                   VARCHAR(500), 
-          Identificador            INT, 
-          LineaPresupuesto         INT, 
-          Presupuesto              VARCHAR(1000), 
-          NombrePresupuesto        VARCHAR(1000), 
-          Rubro                    VARCHAR(500),
-		  CatManoObra			   VARCHAR(500), 
-          PCN                      FLOAT, 
-          CAA                       VARCHAR(500), 
-          CCN                       VARCHAR(500), 
-          ModificadoPor             VARCHAR(500), 
-          CreacionGasto            DATE, 
-          IdEstado                 INT,
-		  UUID						VARCHAR(200)
-         );
+        SET NOCOUNT ON;
 
-         /**/
-        INSERT INTO #TPeriodos
-         (IdPeriodo, 
-          NombreParaMostrar
-         )
-                SELECT IdPeriodo, 
-                       NombrePeriodo AS NombreParaMostrar
-                FROM 
-					CO_PeriodoContrato
-                WHERE
-					(IdContrato = @IdContrato);
-         /**/
+        IF OBJECT_ID('tempdb..#CartasProcura', 'U') IS NOT NULL
+            DROP TABLE #CartasProcura;
+        IF OBJECT_ID('tempdb..#Datos', 'U') IS NOT NULL
+            DROP TABLE #Datos;
 
-        INSERT INTO #TPresuspuestos
-         (IdProgramaActividad, 
-          IdPeriodoContrato, 
-          IdTipoProgramaActividad, 
-          NombrePrograma, 
-          IdContrato, 
-          NombrePeriodo, 
-          Inicio, 
-          Fin, 
-          IdPresupuesto, 
-          Nombre
-         )
-                SELECT CO_ProgramaActividad.IdProgramaActividad, 
-                       CO_ProgramaActividad.IdPeriodoContrato, 
-                       CO_ProgramaActividad.IdTipoProgramaActividad, 
-                       CO_ProgramaActividad.NombrePrograma, 
-                       CO_PeriodoContrato.IdContrato, 
-                       CO_PeriodoContrato.NombrePeriodo, 
-                       CO_PeriodoContrato.Inicio, 
-                       CO_PeriodoContrato.Fin, 
-                       CO_Presupuesto.IdPresupuesto, 
-                       CO_Presupuesto.Nombre+'['+CO_Presupuesto.IdPresupuestoCNH+']' AS Nombre
-                FROM 
-					CO_ProgramaActividad	(NOLOCK)
-				INNER JOIN 
-					CO_PeriodoContrato	(NOLOCK)
-					ON CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
-				INNER JOIN 
-					#TPeriodos			(NOLOCK)
-					ON #TPeriodos.IdPeriodo = CO_PeriodoContrato.IdPeriodo
-				INNER JOIN 
-					CO_Presupuesto		(NOLOCK)
-					ON CO_ProgramaActividad.IdProgramaActividad = CO_Presupuesto.IdProgramaActividad
-                WHERE 
-					CO_Presupuesto.Activo = 1;
-        
-         /**/
-        INSERT INTO #Datos
-         (IdRegistro, 
-          Servicio, 
-          InstalacionPresupuestada, 
-          FechaInicio, 
-          FechaFin, 
-          TipoDocumento, 
-          Numero, 
-          FechaDocumento, 
-          MontoUSD, 
-          Subcontratista, 
-          InstalacionRegistro, 
-          InicioEjecucion, 
-          FinEjecucion, 
-          CreadoPor, 
-          MontoRegistro, 
-          Moneda, 
-          MesPresentacion, 
-          TipoDeServicio, 
-          Actividad, 
-         SubActividad, 
-          EstadoValidacion, 
-          Area, 
-          Comentarios, 
-          Anexo4, 
-          Identificador, 
-          LineaPresupuesto, 
-          Presupuesto, 
-          NombrePresupuesto, 
-          Rubro, 
-		  CatManoObra,
-          PCN, 
-          CAA, 
-          CCN, 
-          ModificadoPor, 
-          CreacionGasto, 
-          IdEstado,
-		  UUID
-         )
-                SELECT 
-					   R.IdRegistro, 
-                       S.NombreServicio AS Servicio, 
-                       F.UUID,
-                       LPM.AC_FEC_INI AS FechaInicio, 
-                       LPM.AC_FEC_FIN AS FechaFin,
-                       CASE
-                           WHEN R.CvTipoDocFacturacion = 1
-                           THEN 'CF'
-                           WHEN R.CvTipoDocFacturacion = 2
-                           THEN 'PI'
-                           WHEN R.CvTipoDocFacturacion = 3
-                           THEN 'PE'
-                       END AS TipoDocumento,
-                       CASE
-                           WHEN R.CvTipoDocFacturacion = 1
-                           THEN LTRIM(RTRIM(F.Serie+' '+F.Folio))
-                           WHEN R.CvTipoDocFacturacion = 2
-                           THEN PC.NumeroPedimento
-                           WHEN R.CvTipoDocFacturacion = 3
-                           THEN PC.FolioComprobante
-                 END AS Numero,
-                       CASE
-                           WHEN R.CvTipoDocFacturacion = 1
-                           THEN F.Fecha
-                           WHEN R.CvTipoDocFacturacion IN(2, 3)
-                           THEN PC.FechaPago
-                       END AS FechaDocumento,
-                       CASE
-                           WHEN R.CvTipoDocFacturacion = 1
-                           THEN SUM(CASE
-                                        WHEN ISNULL(R.MontoRegistro, 0) <> 0
-                                        THEN ISNULL(R.MontoRegistro, 0) / TCDF.TipoCambio
-                                        ELSE 0
-                                    END)
-                           WHEN R.CvTipoDocFacturacion IN(2, 3)
-                           THEN SUM(CASE
-                                        WHEN ISNULL(R.MontoRegistro, 0) <> 0
-                                        THEN ISNULL(R.MontoRegistro, 0) / TCDPC.TipoCambio
-                                        ELSE 0
-                                    END)
-                       END AS MontoUSD,
-                       CASE
-                           WHEN R.CvTipoDocFacturacion = 1
-                           THEN SF.RazonSocial
-                           WHEN R.CvTipoDocFacturacion IN(2, 3)
-                           THEN SPC.RazonSocial
-                       END AS Subcontratista, 
-                       IR.NombreInstalacion AS InstalacionRegistro, 
-                       R.InicioEjecucion, 
-                       R.FinEjecucion, 
-                       U.Nombre AS CreadoPor, 
-                       R.MontoRegistro,
-                       CASE
-                           WHEN R.CvTipoDocFacturacion = 1
-                           THEN TMF.TipoMonedaCorto
-                           WHEN R.CvTipoDocFacturacion IN(2, 3)
-                           THEN TMPC.TipoMonedaCorto
-                       END AS Moneda, 
-                       R.MesPresentacion AS MesPresentacion,
-                       CASE
-                           WHEN P.CIEP = 1
-                           THEN TS.NombreTipoServicio
-                           ELSE ACNH.DescripcionActividadPetrolera
-                       END AS TipoDeServicio,
-                       CASE
-                           WHEN P.CIEP = 1
-                           THEN ACIEP.NombreActividad
-                           ELSE SAP.SubactividadPetrolera
-                       END AS Actividad,
-                       CASE
-						   WHEN P.CIEP = 1
-                           THEN RI.NombreRubro
-                           ELSE TP.TareaPetrolera
-                       END AS SubActividad, 
-                       ER.NombreEstado AS EstadoValidacion, 
-                       A.NombreArea AS Area, 
-                       R.Comentarios, 
-                       CA.ClasificacionAnexo4 AS Anexo4,
-                       CASE
-                           WHEN R.CvTipoDocFacturacion = 1
-                           THEN F.IdFactura
-                           WHEN R.CvTipoDocFacturacion IN(2, 3)
-                           THEN PC.IdPedimentoComprobante
-                       END AS Identificador, 
-                       LPM.IdLineaPresupuestoMes AS LineaPresupuesto, 
-                       P.Nombre AS Presupuesto, 
-                       TPre.Nombre AS NombrePresupuesto, 
-                       rubro.Descripcion AS Rubro, 
-					   catmo.Nombre AS CatManoObra, 
-                       R.PCN,
-                       CASE
-                           WHEN R.CostosAtribuiblesAdministracion = 1
-                           THEN 'SI'
-                           ELSE 'NO'
-                       END AS CAA,
-                       CASE
-                           WHEN WA.IdDocAwsDocAdinco IS NULL
-                                AND R.CvTipoDocFacturacion = 1
-                           THEN 'NO'
-                           WHEN WA.IdDocAwsDocAdinco IS NULL
-								AND R.CvTipoDocFacturacion IN(2, 3)
-                           THEN 'NA'
-                           ELSE 'SI'
-                       END AS CCN, 
-                       UM.Nombre AS ModificadoPor, 
-                       CAST(R.FecMovto AS DATE) AS CreacionGasto, 
-                       R.IdEstado,
-					    F.UUID
-                FROM 
-						#TPresuspuestos TPre	
-				INNER JOIN	
-						dbo.CO_LineaPresupuestoMes LPM		(NOLOCK)	
-						ON TPre.IdPresupuesto = LPM.IdPresupuesto			 					 
-				INNER JOIN 
-						dbo.CO_Registro R					(NOLOCK)
-						ON	
-							(
-								(@FechaDel IS NOT NULL AND @FechaAl IS NOT NULL AND R.MesPresentacion BETWEEN @FechaDel AND @FechaAl)
-								OR
-								(@FechaDel IS NULL AND @FechaAl IS NULL)
-							) AND
-							R.IdPrograma = LPM.IdLineaPresupuestoMes AND 
-							R.IdRegistro IS NOT NULL  AND
-							(
-								(
-									R.IdEstado = 10004
-									AND TPre.IdPresupuesto = 10000
-								)
-								OR 
-								(
-									R.IdEstado IN(10000, 10001, 10002, 10003, 10004, 10005, 10006)
-									AND TPre.IdPresupuesto <> 10000
-								)
-							) 
-					 INNER JOIN 
-							dbo.CO_Presupuesto P				(NOLOCK)
-							ON LPM.IdPresupuesto = P.IdPresupuesto					 
-                     LEFT JOIN 
-							dbo.CO_Servicio S					(NOLOCK)
-							ON LPM.IdServicio = S.IdServicio
-                     LEFT JOIN 
-							dbo.CO_Instalacion I				(NOLOCK)
-							ON LPM.IdInstalacion = I.IdInstalacion
-                     LEFT JOIN 
-							dbo.CO_GastosRubro rubro			(NOLOCK)
-							ON rubro.IdGastoRubro = R.IdGastoRubro
-					 LEFT JOIN 
-							dbo.CO_CAT_ManoDeObra catmo			(NOLOCK) 
-							ON catmo.Id = R.IdCatManoObra
-                     LEFT JOIN 
-							dbo.FI_Factura F					(NOLOCK)
-							ON F.IdFactura = R.IdFactura
-                     LEFT JOIN 
-							dbo.FI_PedimentoComprobante PC		(NOLOCK)
-							ON PC.IdPedimentoComprobante = R.IdPedimentoComprobante
-                     LEFT JOIN 
-							dbo.PV_Subcontratista SF			(NOLOCK)
-							ON F.IdSubcontratista = SF.IdSubcontratista
-                     LEFT JOIN 
-							dbo.PV_Subcontratista SPC			(NOLOCK)
-							ON SPC.IdSubcontratista = PC.IdSubcontratistaExportador
-                     LEFT JOIN 
-							dbo.CO_Instalacion IR				(NOLOCK)
-							ON R.IdInstalacion = IR.IdInstalacion
-                     LEFT JOIN 
-							dbo.AP_Usuario U					(NOLOCK)
-							ON R.IdUsuarioCreadoPor = U.UsuarioID
-                     LEFT JOIN 
-							dbo.CO_TipoServicio TS				(NOLOCK)
-							ON LPM.IdTipoServicio = TS.IdTipoServicio
-                     LEFT JOIN 
-							dbo.CO_ActividadCIEP ACIEP			(NOLOCK)
-							ON LPM.IdActividad = ACIEP.IdActividad
-                     LEFT JOIN 
-							dbo.CO_SubactividadCIEP SCIEP		(NOLOCK)
-							ON LPM.IdSubactividad = SCIEP.IdSubactividad
-                     LEFT JOIN 
-							dbo.CO_EstadoRegistro ER			(NOLOCK)
-							ON R.IdEstado = ER.IdEstadoRegistro
-                     LEFT JOIN 
-							dbo.CO_Area A						(NOLOCK)
-							ON A.IdArea = LPM.IdArea
-                     LEFT JOIN 
-							dbo.PV_TipoMoneda TMF				(NOLOCK)
-							ON TMF.IdMoneda = F.IdMoneda
-                     LEFT JOIN 
-							dbo.CO_TipoCambioDiario TCDF		(NOLOCK)
-							ON TCDF.IdMoneda = TMF.IdMoneda
-							AND DAY(TCDF.Fecha) = DAY(F.Fecha)
-							AND MONTH(TCDF.Fecha) = MONTH(F.Fecha)
-							AND YEAR(TCDF.Fecha) = YEAR(F.Fecha)
-                     LEFT JOIN 
-							dbo.PV_TipoMoneda TMPC				(NOLOCK)
-							ON TMPC.IdMoneda = PC.IdMoneda
-                     LEFT JOIN 
-							dbo.CO_TipoCambioDiario TCDPC		(NOLOCK)
-							ON TCDPC.IdMoneda = TMPC.IdMoneda
-							AND DAY(TCDPC.Fecha) = DAY(PC.FechaPago)
-							AND MONTH(TCDPC.Fecha) = MONTH(PC.FechaPago)
-							AND YEAR(TCDPC.Fecha) = YEAR(PC.FechaPago)
-                     LEFT JOIN 
-							dbo.CO_ClasificacionAnexo4 CA		(NOLOCK)
-							ON LPM.IdAnexo4 = CA.IdAnexo4                    
-                     LEFT JOIN 
-							dbo.CO_ActividadPetroleraCNH ACNH	(NOLOCK)
-							ON LPM.IdActividadPetrolera = ACNH.IdActividadPetrolera
-                     LEFT JOIN 
-							dbo.CO_SubactividadPetrolera SAP	(NOLOCK)
-							ON LPM.IdSubactividadPetrolera = SAP.IdSubactividadPetrolera
-                     LEFT JOIN 
-							dbo.CO_RubroInterno RI				(NOLOCK)
-							ON LPM.IdRubroInterno = RI.IdRubroInterno
-                     LEFT JOIN 
-							dbo.CO_TareaPetrolera TP			(NOLOCK)
-							ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera
-                     LEFT JOIN 
-							dbo.AWS_DocAwsDocAdinco WA			(NOLOCK)
-							ON F.IdFactura = WA.IdDocAdinco
-                     LEFT JOIN 
-							dbo.AP_Usuario UM					(NOLOCK)
-							ON R.IdUsuarioModPor = UM.UsuarioID
-				
-                GROUP BY PC.NumeroPedimento, 
-                         S.NombreServicio, 
-                         F.UUID,  
-                         LPM.AC_FEC_INI, 
-                         LPM.AC_FEC_FIN, 
-                         F.Fecha, 
-                         LTRIM(RTRIM(F.Serie+' '+F.Folio)), 
-                         SF.RazonSocial, 
-                         IR.NombreInstalacion, 
-                         R.InicioEjecucion, 
-                         R.FinEjecucion, 
-                         F.Fecha, 
-                         U.Nombre, 
-                         R.MontoRegistro, 
-                         TMF.TipoMonedaCorto, 
-                         R.MesPresentacion,
-                         CASE
-                             WHEN P.CIEP = 1
-                             THEN TS.NombreTipoServicio
-                             ELSE ACNH.DescripcionActividadPetrolera
-                         END,
-                         CASE
-                             WHEN P.CIEP = 1
-                             THEN ACIEP.NombreActividad
-                             ELSE SAP.SubactividadPetrolera
-                         END,
-                         CASE
-                             WHEN P.CIEP = 1
-                             THEN RI.NombreRubro
-                             ELSE TP.TareaPetrolera
-                         END, 
-                         R.IdRegistro, 
-                         ER.NombreEstado, 
-                         A.NombreArea, 
-                         R.Comentarios, 
-                         CA.ClasificacionAnexo4, 
-                         F.IdFactura, 
-                         PC.IdPedimentoComprobante, 
-                         IR.CUIP, 
-                         IR.WelIID, 
-                         LPM.IdLineaPresupuestoMes, 
-                         IR.IdInstalacion, 
-                         P.Nombre, 
-                         TPre.Nombre, 
-                         R.CvTipoDocFacturacion, 
-                         PC.FechaPago, 
-                         PC.IdMoneda, 
-                         R.IdRegistro, 
-                         PC.FolioComprobante, 
-                         SPC.RazonSocial, 
-                         TMPC.TipoMonedaCorto, 
-                         rubro.Descripcion,
-						 catmo.Nombre,
-                         R.PCN,
-                         CASE
-                             WHEN R.CostosAtribuiblesAdministracion = 1
-                             THEN 'SI'
-                             ELSE 'NO'
-                         END,
-                         CASE
-                             WHEN WA.IdDocAwsDocAdinco IS NULL
-                                  AND R.CvTipoDocFacturacion = 1
-                             THEN 'NO'
-                             WHEN WA.IdDocAwsDocAdinco IS NULL
-                                  AND R.CvTipoDocFacturacion IN(2, 3)
-                             THEN 'NA'
-                             ELSE 'SI'
-                         END, 
-                         UM.Nombre, 
-                         CAST(R.FecMovto AS DATE), 
-                         R.IdEstado
-                ORDER BY R.IdRegistro DESC;
-		/**/
-		INSERT INTO #CartasProcura
-         (IdFacutraP, 
-          UUID, 
-          IdFacutraA
-         )
-                SELECT DISTINCT 
-                       FP.IdFactura, 
-                       FP.UUID, 
-                       FA.IdFactura
-                FROM 
-					#Datos datos	
-				JOIN 
-					Petrovendor.dbo.FI_Factura FP	(NOLOCK)
-					ON FP.UUID = datos.UUID COLLATE DATABASE_DEFAULT	 AND
-													FP.UUID IS NOT NULL AND 
-													FP.Activa = 1 AND
-													ISNULL(FP.IsEliminado, 0) <> 1
-				JOIN 
-					Adinco.dbo.FI_Factura FA	(NOLOCK)
-					ON FP.UUID = FA.UUID COLLATE DATABASE_DEFAULT	 
-				JOIN 
-					Petrovendor.dbo.MM_AceptacionFactura AF	(NOLOCK)
-					ON AF.IdFactura = FP.IdFactura
-				JOIN 
-					Petrovendor.dbo.MM_AceptacionPedido AS AP	(NOLOCK)
-					ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-				JOIN 
-					Petrovendor.dbo.MM_AceptacionCartaPCN AS AC	(NOLOCK)
-					ON AC.IdAceptacionPedido = AP.IdAceptacionPedido AND 
-					AC.IdEstatus = 2 AND
-					ISNULL(AC.IdEstatusEliminado, 0) <> 1
-				JOIN 
-					Petrovendor.dbo.S_Documento_S3 AS D	(NOLOCK)
-					ON D.IdDocumento = AC.IdDocumento
-				JOIN 
-					Petrovendor.dbo.MM_Pedido AS P	(NOLOCK)
-					ON P.IdPedido = AP.IdPedido AND 
-					P.IdContrato = @IdContrato
-				JOIN 
-					Petrovendor.dbo.S_Proveedor AS PR	(NOLOCK)
-					ON PR.IdProveedor = P.IdSubcontratista
-				JOIN 
-					Petrovendor.dbo.S_TipoValidacionDoc AS TD	(NOLOCK)
-					ON TD.IdTipoValidacionDoc = AC.IdEstatus
-				JOIN 
-					Petrovendor.dbo.MM_Pedidos AS PG	(NOLOCK)
-					ON P.IdPedido = PG.IdIdentificador	
-				JOIN 
-					Petrovendor.dbo.MM_TipoPedido AS TP	(NOLOCK)
-					ON TP.IdTipoPedido = PG.IdTipoPedido                     					 
+        IF OBJECT_ID('tempdb..#UUIDFolios', 'U') IS NOT NULL
+            DROP TABLE #UUIDFolios;
+
+        IF OBJECT_ID('tempdb..#Temp_UUIDFacturas', 'U') IS NOT NULL
+            DROP TABLE #Temp_UUIDFacturas;
+
+
+        CREATE TABLE #UUIDFolios (UUIDFolios VARCHAR(MAX));
+        CREATE TABLE #Temp_UUIDFacturas
+            (
+                Id                INT IDENTITY(1, 1) PRIMARY KEY,
+                CFDIAdincoId      INT,
+                CFDIPetrovendorId INT,
+                UUID              VARCHAR(150),
+                FolioFactura      VARCHAR(150),
+                NumeroPedimento   VARCHAR(150),
+                FolioComprobante  VARCHAR(150),
+                SistemaCartas     VARCHAR(150),
+                FechaDocumento    DATE, --FECHA Factura, FECHAPAGO PE PI
+                IdSubcontratista  INT,
+                IdMoneda          INT,
+                EsFactura         Bit
+            );
+        --=====================================================
+        CREATE TABLE #CartasProcura
+            (
+                IdFacutraP INT,
+                UUID       VARCHAR(150),
+                IdFacutraA INT
+            );
+
         /**/
-         UPDATE D
-           SET 
-               D.CCN = 'SI'
-         FROM #Datos D	
-              JOIN 
-				#CartasProcura CP	
-				ON D.Identificador = CP.IdFacutraA
-         WHERE D.Identificador = CP.IdFacutraA
-               AND D.TipoDocumento = 'CF';
-         /**/
-         SELECT IdRegistro, 
-                Servicio, 
-                InstalacionPresupuestada, 
-                FechaInicio, 
-                FechaFin, 
-                TipoDocumento, 
-                Numero, 
-                FechaDocumento, 
-                MontoUSD, 
-                Subcontratista, 
-                InstalacionRegistro, 
-                InicioEjecucion, 
-                FinEjecucion, 
-                CreadoPor, 
-                MontoRegistro, 
-                Moneda, 
-                MesPresentacion, 
-                TipoDeServicio, 
-                Actividad, 
-                SubActividad, 
-                EstadoValidacion, 
-                Area, 
-                Comentarios, 
-                Anexo4, 
-                Identificador, 
-                LineaPresupuesto, 
-                Presupuesto, 
-                NombrePresupuesto, 
-                Rubro, 
-			    CatManoObra,
-                PCN, 
-                CAA, 
-                CCN, 
-                ModificadoPor, 
-                CreacionGasto, 
-                IdEstado
-         FROM #Datos
-		 ORDER BY MesPresentacion DESC;
-     END;
+        CREATE TABLE #Datos
+            (
+                IdRegistro               INT,
+                Servicio                 VARCHAR(1000),
+                InstalacionPresupuestada VARCHAR(1000),
+                FechaInicio              DATE,
+                FechaFin                 DATE,
+                TipoDocumento            VARCHAR(100),
+                Numero                   VARCHAR(500),
+                FechaDocumento           DATETIME,
+                MontoUSD                 FLOAT,
+                Subcontratista           VARCHAR(1000),
+                InstalacionRegistro      VARCHAR(500),
+                InicioEjecucion          DATE,
+                FinEjecucion             DATE,
+                CreadoPor                VARCHAR(500),
+                MontoRegistro            FLOAT,
+                Moneda                   VARCHAR(50),
+                MesPresentacion          DATE,
+                TipoDeServicio           VARCHAR(500),
+                Actividad                VARCHAR(1000),
+                SubActividad             VARCHAR(1000),
+                EstadoValidacion         VARCHAR(500),
+                Area                     VARCHAR(500),
+                Comentarios              VARCHAR(5000),
+                Anexo4                   VARCHAR(500),
+                Identificador            INT,
+                LineaPresupuesto         INT,
+                Presupuesto              VARCHAR(1000),
+                NombrePresupuesto        VARCHAR(1000),
+                Rubro                    VARCHAR(500),
+                CatManoObra              VARCHAR(500),
+                PCN                      FLOAT,
+                CAA                      VARCHAR(500),
+                CCN                      VARCHAR(500),
+                ModificadoPor            VARCHAR(500),
+                CreacionGasto            DATE,
+                IdEstado                 INT,
+                UUID                     VARCHAR(200)
+            );
+        --------------
+        IF (
+               (
+                   SELECT
+                       LEN(@UUIDFolios)
+               ) > 0
+           )
+            BEGIN
+
+                INSERT INTO #UUIDFolios
+                    (
+                        UUIDFolios
+                    )
+                            SELECT DISTINCT
+                                *
+                            from
+                                [dbo].[fnSplitString](@UUIDFolios, ',');
+
+                UPDATE
+                    #UUIDFolios
+                SET
+                    UUIDFolios = REPLACE(
+                                            RTRIM(LTRIM(REPLACE(REPLACE(UUIDFolios, CHAR(10), ''), CHAR(13), ''))),
+                                            '	',''
+                                        );
+
+                --Eliminación de vacios o null para que en el select no se incrementen facturas equivocadas
+                DELETE #UUIDFolios
+                WHERE
+                    UUIDFolios IS NULL
+                    OR UUIDFolios = '';
+
+                --UUIDS
+                INSERT INTO #Temp_UUIDFacturas
+                    (
+                        CFDIAdincoId,
+                        UUID,
+                        FolioFactura,
+                        FechaDocumento,
+                        IdSubcontratista,
+                        IdMoneda,
+                        EsFactura
+                    )
+                            SELECT DISTINCT
+                                FI_FACTURA.IdFactura,
+                                U.UUIDFolios,
+                                LTRIM(RTRIM(FI_FACTURA.Serie + ' ' + FI_FACTURA.Folio)),
+                                FI_FACTURA.Fecha,
+                                FI_FACTURA.IdSubcontratista,
+                                FI_FACTURA.IdMoneda,
+                                1
+                            FROM
+                                #UUIDFolios U
+                                JOIN
+                                    FI_FACTURA	(NOLOCK)
+                                        ON U.UUIDFolios = FI_FACTURA.UUID COLLATE DATABASE_DEFAULT
+                                           AND FI_FACTURA.IdContrato = @IdContrato;
+
+                DELETE UF
+                FROM
+                    #UUIDFolios            UF
+                    LEFT JOIN
+                        #Temp_UUIDFacturas TUF
+                            ON UF.UUIDFolios = TUF.UUID
+                WHERE
+                    TUF.Id IS NOT NULL
+
+                --Pedimentos Comprobantes
+                INSERT INTO #Temp_UUIDFacturas
+                    (
+                        CFDIAdincoId,
+                        FechaDocumento,
+                        NumeroPedimento,
+                        FolioComprobante,
+                        IdSubcontratista,
+                        IdMoneda,
+                        EsFactura
+                    )
+                            SELECT DISTINCT
+                                FI_PedimentoComprobante.IdPedimentoComprobante,
+                                FI_PedimentoComprobante.FechaPago,
+                                FI_PedimentoComprobante.NumeroPedimento,
+                                FI_PedimentoComprobante.FolioComprobante,
+                                FI_PedimentoComprobante.IdSubcontratistaExportador,
+                                FI_PedimentoComprobante.IdMoneda,
+                                0
+                            FROM
+                                #UUIDFolios U
+                                JOIN
+                                    FI_PedimentoComprobante	(NOLOCK)
+                                        ON U.UUIDFolios = FI_PedimentoComprobante.NumeroPedimento COLLATE DATABASE_DEFAULT
+                                           AND FI_PedimentoComprobante.IdContrato = @IdContrato
+                            UNION ALL
+                            SELECT DISTINCT
+                                FI_PedimentoComprobante.IdPedimentoComprobante,
+                                FI_PedimentoComprobante.FechaPago,
+                                FI_PedimentoComprobante.NumeroPedimento,
+                                FI_PedimentoComprobante.FolioComprobante,
+                                FI_PedimentoComprobante.IdSubcontratistaExportador,
+                                FI_PedimentoComprobante.IdMoneda,
+                                0
+                            FROM
+                                #UUIDFolios U
+                                JOIN
+                                    FI_PedimentoComprobante	(NOLOCK)
+                                        ON U.UUIDFolios = FI_PedimentoComprobante.FolioComprobante COLLATE DATABASE_DEFAULT
+                                           AND FI_PedimentoComprobante.IdContrato = @IdContrato;
+
+            END
+
+
+        INSERT INTO #Datos
+            (
+                IdRegistro,
+                Servicio,
+                InstalacionPresupuestada,
+                FechaInicio,
+                FechaFin,
+                TipoDocumento,
+                Numero,
+                FechaDocumento,
+                MontoUSD,
+                Subcontratista,
+                InstalacionRegistro,
+                InicioEjecucion,
+                FinEjecucion,
+                CreadoPor,
+                MontoRegistro,
+                Moneda,
+                MesPresentacion,
+                TipoDeServicio,
+                Actividad,
+                SubActividad,
+                EstadoValidacion,
+                Area,
+                Comentarios,
+                Anexo4,
+                Identificador,
+                LineaPresupuesto,
+                Presupuesto,
+                NombrePresupuesto,
+                Rubro,
+                CatManoObra,
+                PCN,
+                CAA,
+                CCN,
+                ModificadoPor,
+                CreacionGasto,
+                IdEstado,
+                UUID
+            )
+                    SELECT
+                        CO_Registro.IdRegistro,
+                        CO_Servicio.NombreServicio                                          AS Servicio,
+                        TF.UUID,
+                        CO_LineaPresupuestoMes.AC_FEC_INI                                   AS FechaInicio,
+                        CO_LineaPresupuestoMes.AC_FEC_FIN                                   AS FechaFin,
+                        CASE
+                            WHEN CO_Registro.CvTipoDocFacturacion = 1
+                                THEN 'CF'
+                            WHEN CO_Registro.CvTipoDocFacturacion = 2
+                                THEN 'PI'
+                            WHEN CO_Registro.CvTipoDocFacturacion = 3
+                                THEN 'PE'
+                        END                                                                 AS TipoDocumento,
+                        CASE
+                            WHEN CO_Registro.CvTipoDocFacturacion = 1
+                                THEN TF.FolioFactura
+                            WHEN CO_Registro.CvTipoDocFacturacion = 2
+                                THEN TF.NumeroPedimento
+                            WHEN CO_Registro.CvTipoDocFacturacion = 3
+                                THEN TF.FolioComprobante
+                        END                                                                 AS Numero,
+                        TF.FechaDocumento                                                   AS FechaDocumento,
+                        SUM(   CASE
+                                   WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0
+                                       THEN ISNULL(CO_Registro.MontoRegistro, 0) / TCD.TipoCambio
+                                   ELSE
+                                       0
+                               END
+                           )                                                                AS MontoUSD,
+                        PV_Subcontratista.RazonSocial                                       AS Subcontratista,
+                        IR.NombreInstalacion                                                AS InstalacionRegistro,
+                        CO_Registro.InicioEjecucion,
+                        CO_Registro.FinEjecucion,
+                        U.Nombre                                                            AS CreadoPor,
+                        CO_Registro.MontoRegistro,
+                        TM.TipoMonedaCorto                                                  AS Moneda,
+                        CO_Registro.MesPresentacion                                         AS MesPresentacion,
+                        CASE
+                            WHEN CO_Presupuesto.CIEP = 1
+                                THEN CO_TipoServicio.NombreTipoServicio
+                            ELSE
+                                CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
+                        END                                                                 AS TipoDeServicio,
+                        CASE
+                            WHEN CO_Presupuesto.CIEP = 1
+                                THEN CO_ActividadCIEP.NombreActividad
+                            ELSE
+                                CO_SubactividadPetrolera.SubactividadPetrolera
+                        END                                                                 AS Actividad,
+                        CASE
+                            WHEN CO_Presupuesto.CIEP = 1
+                                THEN CO_RubroInterno.NombreRubro
+                            ELSE
+                                CO_TareaPetrolera.TareaPetrolera
+                        END                                                                 AS SubActividad,
+                        CO_EstadoRegistro.NombreEstado                                      AS EstadoValidacion,
+                        CO_Area.NombreArea                                                  AS Area,
+                        CO_Registro.Comentarios,
+                        CO_ClasificacionAnexo4.ClasificacionAnexo4                          AS Anexo4,
+                        TF.CFDIAdincoId                                                     AS Identificador,
+                        CO_LineaPresupuestoMes.IdLineaPresupuestoMes                        AS LineaPresupuesto,
+                        CO_Presupuesto.Nombre                                               AS Presupuesto,
+                        CO_Presupuesto.Nombre + '[' + CO_Presupuesto.IdPresupuestoCNH + ']' AS NombrePresupuesto,
+                        CO_GastosRubro.Descripcion                                          AS Rubro,
+                        CO_CAT_ManoDeObra.Nombre                                            AS CatManoObra,
+                        CO_Registro.PCN,
+                        CASE
+                            WHEN CO_Registro.CostosAtribuiblesAdministracion = 1
+                                THEN 'SI'
+                            ELSE
+                                'NO'
+                        END                                                                 AS CAA,
+                        CASE
+                            WHEN AWS_DocAwsDocAdinco.IdDocAwsDocAdinco IS NULL
+                                 AND CO_Registro.CvTipoDocFacturacion = 1
+                                THEN 'NO'
+                            WHEN AWS_DocAwsDocAdinco.IdDocAwsDocAdinco IS NULL
+                                 AND CO_Registro.CvTipoDocFacturacion IN (
+                                                                             2, 3
+                                                                         )
+                                THEN 'NA'
+                            ELSE
+                                'SI'
+                        END                                                                 AS CCN,
+                        UM.Nombre                                                           AS ModificadoPor,
+                        CAST(CO_Registro.FecMovto AS DATE)                                  AS CreacionGasto,
+                        CO_Registro.IdEstado,
+                        TF.UUID
+                    FROM
+                        #Temp_UUIDFacturas          TF
+                        JOIN
+                            dbo.CO_Registro (NOLOCK)
+                                ON TF.CFDIAdincoId = CO_Registro.IdFactura
+                                   OR TF.CFDIAdincoId = CO_Registro.IdPedimentoComprobante
+                        INNER JOIN
+                            dbo.CO_LineaPresupuestoMes (NOLOCK)
+                                ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+                        INNER JOIN
+                            dbo.CO_Presupuesto (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
+                        LEFT JOIN
+                            dbo.CO_Servicio (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
+                        LEFT JOIN
+                            dbo.CO_Instalacion (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdInstalacion = CO_Instalacion.IdInstalacion
+                        LEFT JOIN
+                            dbo.CO_GastosRubro (NOLOCK)
+                                ON CO_Registro.IdGastoRubro = CO_GastosRubro.IdGastoRubro
+                        LEFT JOIN
+                            dbo.CO_CAT_ManoDeObra (NOLOCK)
+                                ON CO_Registro.IdCatManoObra = CO_CAT_ManoDeObra.Id
+                        LEFT JOIN
+                            dbo.PV_Subcontratista (NOLOCK)
+                                ON TF.IdSubcontratista = PV_Subcontratista.IdSubcontratista
+                        LEFT JOIN
+                            dbo.CO_Instalacion      IR (NOLOCK)
+                                ON CO_Registro.IdInstalacion = IR.IdInstalacion
+                        LEFT JOIN
+                            dbo.AP_Usuario          U (NOLOCK)
+                                ON CO_Registro.IdUsuarioCreadoPor = U.UsuarioID
+                        LEFT JOIN
+                            dbo.CO_TipoServicio (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdTipoServicio = CO_TipoServicio.IdTipoServicio
+                        LEFT JOIN
+                            dbo.CO_ActividadCIEP (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad
+                        LEFT JOIN
+                            dbo.CO_SubactividadCIEP (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdSubactividad = CO_SubactividadCIEP.IdSubactividad
+                        LEFT JOIN
+                            dbo.CO_EstadoRegistro (NOLOCK)
+                                ON CO_Registro.IdEstado = CO_EstadoRegistro.IdEstadoRegistro
+                        LEFT JOIN
+                            dbo.CO_Area (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdArea = CO_Area.IdArea
+                        LEFT JOIN
+                            dbo.PV_TipoMoneda       TM (NOLOCK)
+                                ON TF.IdMoneda = TM.IdMoneda
+                        LEFT JOIN
+                            dbo.CO_TipoCambioDiario TCD (NOLOCK)
+                                ON TCD.IdMoneda = TM.IdMoneda
+                                   AND DAY(TCD.Fecha) = DAY(TF.FechaDocumento)
+                                   AND MONTH(TCD.Fecha) = MONTH(TF.FechaDocumento)
+                                   AND YEAR(TCD.Fecha) = YEAR(TF.FechaDocumento)
+                        LEFT JOIN
+                            dbo.CO_ClasificacionAnexo4 (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdAnexo4 = CO_ClasificacionAnexo4.IdAnexo4
+                        LEFT JOIN
+                            dbo.CO_ActividadPetroleraCNH (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
+                        LEFT JOIN
+                            dbo.CO_SubactividadPetrolera (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
+                        LEFT JOIN
+                            dbo.CO_RubroInterno (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
+                        LEFT JOIN
+                            dbo.CO_TareaPetrolera (NOLOCK)
+                                ON CO_LineaPresupuestoMes.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
+                        LEFT JOIN
+                            dbo.AWS_DocAwsDocAdinco (NOLOCK)
+                                ON TF.CFDIAdincoId = AWS_DocAwsDocAdinco.IdDocAdinco
+                        LEFT JOIN
+                            dbo.AP_Usuario          UM (NOLOCK)
+                                ON CO_Registro.IdUsuarioModPor = UM.UsuarioID
+                    GROUP BY
+                        TF.NumeroPedimento,
+                        CO_Servicio.NombreServicio,
+                        TF.UUID,
+                        CO_LineaPresupuestoMes.AC_FEC_INI,
+                        CO_LineaPresupuestoMes.AC_FEC_FIN,
+                        TF.FechaDocumento,
+                        TF.FolioFactura,
+                        PV_Subcontratista.RazonSocial,
+                        IR.NombreInstalacion,
+                        CO_Registro.InicioEjecucion,
+                        CO_Registro.FinEjecucion,
+                        U.Nombre,
+                        CO_Registro.MontoRegistro,
+                        TM.TipoMonedaCorto,
+                        CO_Registro.MesPresentacion,
+                        CASE
+                            WHEN CO_Presupuesto.CIEP = 1
+                                THEN CO_TipoServicio.NombreTipoServicio
+                            ELSE
+                                CO_ActividadPetroleraCNH.DescripcionActividadPetrolera
+                        END,
+                        CASE
+                            WHEN CO_Presupuesto.CIEP = 1
+                                THEN CO_ActividadCIEP.NombreActividad
+                            ELSE
+                                CO_SubactividadPetrolera.SubactividadPetrolera
+                        END,
+                        CASE
+                            WHEN CO_Presupuesto.CIEP = 1
+                                THEN CO_RubroInterno.NombreRubro
+                            ELSE
+                                CO_TareaPetrolera.TareaPetrolera
+                        END,
+                        CO_Registro.IdRegistro,
+                        CO_EstadoRegistro.NombreEstado,
+                        CO_Area.NombreArea,
+                        CO_Registro.Comentarios,
+                        CO_ClasificacionAnexo4.ClasificacionAnexo4,
+                        TF.CFDIAdincoId,
+                        IR.CUIP,
+                        IR.WelIID,
+                        CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
+                        IR.IdInstalacion,
+                        CO_Presupuesto.Nombre,
+                        CO_Presupuesto.IdPresupuestoCNH,
+                        CO_Registro.CvTipoDocFacturacion,
+                        TF.IdMoneda,
+                        CO_Registro.IdRegistro,
+                        TF.FolioComprobante,
+                        PV_Subcontratista.RazonSocial,
+                        TM.TipoMonedaCorto,
+                        CO_GastosRubro.Descripcion,
+                        CO_CAT_ManoDeObra.Nombre,
+                        CO_Registro.PCN,
+                        CASE
+                            WHEN CO_Registro.CostosAtribuiblesAdministracion = 1
+                                THEN 'SI'
+                            ELSE
+                                'NO'
+                        END,
+                        CASE
+                            WHEN AWS_DocAwsDocAdinco.IdDocAwsDocAdinco IS NULL
+                                 AND CO_Registro.CvTipoDocFacturacion = 1
+                                THEN 'NO'
+                            WHEN AWS_DocAwsDocAdinco.IdDocAwsDocAdinco IS NULL
+                                 AND CO_Registro.CvTipoDocFacturacion IN (
+                                                                             2, 3
+                                                                         )
+                                THEN 'NA'
+                            ELSE
+                                'SI'
+                        END,
+                        UM.Nombre,
+                        CAST(CO_Registro.FecMovto AS DATE),
+                        CO_Registro.IdEstado
+                    ORDER BY
+                        CO_Registro.IdRegistro DESC;
+
+        INSERT INTO #CartasProcura
+            (
+                IdFacutraP,
+                UUID,
+                IdFacutraA
+            )
+                    SELECT DISTINCT
+                        FP.IdFactura,
+                        FP.UUID,
+                        datos.Identificador
+                    FROM
+                        #Datos                                    datos
+                        JOIN
+                            Petrovendor.dbo.FI_Factura            FP (NOLOCK)
+                                ON FP.UUID = datos.UUID COLLATE DATABASE_DEFAULT
+                                   AND FP.UUID IS NOT NULL
+                                   AND FP.Activa = 1
+                                   AND ISNULL(FP.IsEliminado, 0) <> 1
+                        JOIN
+                            Petrovendor.dbo.MM_AceptacionFactura  AF (NOLOCK)
+                                ON AF.IdFactura = FP.IdFactura
+                        JOIN
+                            Petrovendor.dbo.MM_AceptacionPedido   AS AP (NOLOCK)
+                                ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
+                        JOIN
+                            Petrovendor.dbo.MM_AceptacionCartaPCN AS AC (NOLOCK)
+                                ON AC.IdAceptacionPedido = AP.IdAceptacionPedido
+                                   AND AC.IdEstatus = 2
+                                   AND ISNULL(AC.IdEstatusEliminado, 0) <> 1
+                        JOIN
+                            Petrovendor.dbo.S_Documento_S3        AS D (NOLOCK)
+                                ON D.IdDocumento = AC.IdDocumento
+                        JOIN
+                            Petrovendor.dbo.MM_Pedido             AS P (NOLOCK)
+                                ON P.IdPedido = AP.IdPedido
+                                   AND P.IdContrato = @IdContrato;
+
+        UPDATE
+            D
+        SET
+            D.CCN = 'SI'
+        FROM
+            #Datos             D
+            JOIN
+                #CartasProcura CP
+                    ON D.Identificador = CP.IdFacutraA
+        WHERE
+            D.Identificador = CP.IdFacutraA
+            AND D.TipoDocumento = 'CF';
+
+
+        SELECT
+            IdRegistro,
+            Servicio,
+            InstalacionPresupuestada,
+            FechaInicio,
+            FechaFin,
+            TipoDocumento,
+            Numero,
+            FechaDocumento,
+            MontoUSD,
+            Subcontratista,
+            InstalacionRegistro,
+            InicioEjecucion,
+            FinEjecucion,
+            CreadoPor,
+            MontoRegistro,
+            Moneda,
+            MesPresentacion,
+            TipoDeServicio,
+            Actividad,
+            SubActividad,
+            EstadoValidacion,
+            Area,
+            Comentarios,
+            Anexo4,
+            Identificador,
+            LineaPresupuesto,
+            Presupuesto,
+            NombrePresupuesto,
+            Rubro,
+            CatManoObra,
+            PCN,
+            CAA,
+            CCN,
+            ModificadoPor,
+            CreacionGasto,
+            IdEstado
+        FROM
+            #Datos
+        ORDER BY
+            MesPresentacion DESC;
+    END;
 
