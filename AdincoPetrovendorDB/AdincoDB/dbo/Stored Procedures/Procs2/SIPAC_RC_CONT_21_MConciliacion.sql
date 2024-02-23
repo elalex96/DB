@@ -1,10 +1,13 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SIPAC_RC_CONT_21_MConciliacion'
-)
-    DROP PROCEDURE SIPAC_RC_CONT_21_MConciliacion;
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_21_MConciliacion'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_21_MConciliacion
 GO
 -- ============================================= 
 -- Alter Author:        Reyna Olvera
@@ -252,25 +255,7 @@ AS
                         ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO') AS UUID,  
                         FI_Factura.IdFactura,  
                         CO_Registro.MontoRegistro,  
-                        CASE  
-                            WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'I%'  
-                                THEN 'I'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'E%'  
-                                THEN 'E'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'T%'  
-                                THEN 'T'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'N%'  
-                                THEN 'N'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'P%'  
-                                THEN 'P'  
-                            ELSE  
-                                'NA'  
-                        END                                             AS TipoComprobante,  
+                        ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA') AS TipoComprobante,  
                         SUM(   CASE    
 								   WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0  
 									   THEN 0
@@ -284,22 +269,7 @@ AS
                                        0  
                                END  
                            )                                            AS [RC21_22],  
-                        CASE  
-                            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'  
-                                 OR FI_Factura.MetodoPago LIKE '%PUE%'  
-                                 OR FI_Factura.FormaPago LIKE '%exhibi%'  
-                                 OR FI_Factura.FormaPago LIKE '%PUE%'  
-                                THEN 'PUE'  
-                            WHEN FI_Factura.MetodoPago LIKE '%parcia%'  
-                                 OR FI_Factura.MetodoPago LIKE '%dife%'  
-                                 OR FI_Factura.MetodoPago LIKE '%PPD%'  
-                                 OR FI_Factura.FormaPago LIKE '%parcia%'  
-                                 OR FI_Factura.FormaPago LIKE '%dife%'  
-                                 OR FI_Factura.FormaPago LIKE '%PPD%'  
-                                THEN 'PPD'  
-                            WHEN FI_Factura.TipoComprobante = 'P'  
-                                THEN 'PPD'  
-                        END                                             AS MetodoPago,  
+                        ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD') AS MetodoPago,  
                         FI_Factura.Fecha,  
                         FI_Factura.IdMoneda  
                    FROM  
@@ -338,41 +308,8 @@ AS
                         ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO'),  
                         FI_Factura.IdFactura,  
                         CO_Registro.MontoRegistro,  
-                        CASE  
-                            WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'I%'  
-                                THEN 'I'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'E%'  
-                                THEN 'E'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'T%'  
-                                THEN 'T'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'N%'  
-                                THEN 'N'  
-                            WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'  
-                                 OR FI_Factura.TipoComprobante LIKE 'P%'  
-                                THEN 'P'  
-                            ELSE  
-                                'NA'  
-                        END,  
-                        CASE  
-                            WHEN FI_Factura.MetodoPago LIKE '%exhibi%'  
-                                 OR FI_Factura.MetodoPago LIKE '%PUE%'  
-                                 OR FI_Factura.FormaPago LIKE '%exhibi%'  
-                                 OR FI_Factura.FormaPago LIKE '%PUE%'  
-                                THEN 'PUE'  
-  WHEN FI_Factura.MetodoPago LIKE '%parcia%'  
-                                 OR FI_Factura.MetodoPago LIKE '%dife%'  
-                                 OR FI_Factura.MetodoPago LIKE '%PPD%'  
-                                 OR FI_Factura.FormaPago LIKE '%parcia%'  
-                                 OR FI_Factura.FormaPago LIKE '%dife%'  
-                                 OR FI_Factura.FormaPago LIKE '%PPD%'  
-                                THEN 'PPD'  
-                            WHEN FI_Factura.TipoComprobante = 'P'  
-								THEN 'PPD'  
-                        END,  
+                        FI_Factura.TipoComprobanteEstandarizado,  
+                        FI_Factura.MetodoPagoEstandarizado,  
                         FI_Factura.Fecha,  
                         FI_Factura.IdMoneda;
   
@@ -397,7 +334,7 @@ AS
                         FI_Factura.UUID                                                                  AS UUIDCP,  
                         FI_ComplementoDePago.FormaDePagoP                                                AS FormaPagoCP,  
                         SUM(FI_CPDocRelacionado.ImpPagado)                                               AS MontoCP,  
-                        ISNULL(CO_TipoCambioDiario.TipoCambio, 0)                                                   AS TipoCambioCP,  
+                        ISNULL(CO_TipoCambioDiario.TipoCambio, 0)                                        AS TipoCambioCP,  
                         FI_ComplementoDePago.MonedaP                                                     AS MonedaCP,  
                         CAST(SUM(FI_CPDocRelacionado.ImpPagado) AS DECIMAL(15, 2))                       AS MontoPesos,  
                         CAST(SUM(   CASE  
@@ -550,7 +487,7 @@ AS
                         FI_ComplementoDePago.MonedaP                    AS MonedaCP,  
                         CAST((SUM(   CASE  
                                          WHEN PV_TipoMoneda.IdMoneda = @DOLAR  
-         AND FCPDR.IdMoneda = @PESO  
+												AND FCPDR.IdMoneda = @PESO  
                                              THEN FI_CPDocRelacionado.ImpPagado * 1  
                                      END  
                                  )  
@@ -935,7 +872,7 @@ AS
                         RC21_24,  
                         RC21_25,  
                         RC21_26,  
-             RC21_27,  
+						RC21_27,  
                         RC21_28  
                     )  
                             SELECT DISTINCT  
@@ -1407,8 +1344,8 @@ AS
                                                      2  
                                              END  
                                     ELSE  
-                                        CASE  
-                       WHEN CC.Operacion = 1  
+                                CASE  
+									WHEN CC.Operacion = 1  
                                                 THEN 1  
                                             ELSE  
                                                 2  
@@ -1465,7 +1402,7 @@ AS
                                         ON CO_Registro.IdFactura = F.IdFactura  
                                            AND CO_Registro.IdEstado = @Aprobado  
                                            AND CO_Registro.CvTipoDocFacturacion = @TipoFactura  
-         JOIN  
+								JOIN  
                                     dbo.FI_CPDocRelacionado      CPDR WITH (NOLOCK)  
                                         ON F.UUID = CPDR.IdDocumento  
                                 JOIN  
@@ -1582,7 +1519,7 @@ AS
                                 LTRIM(RTRIM(TP.id_Tarea)),  
                                 CASE  
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
-       THEN 1  
+										THEN 1  
                                     ELSE  
                                         0  
                                 END,  
@@ -1710,7 +1647,7 @@ AS
                                         LTRIM(RTRIM(ISNULL(Y.NombreYacimiento, '-')))  
                                 END                                        AS [RC21_15],  
                                 CASE  
-          WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
+									WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
                                         THEN 'NA'  
                                     ELSE  
                                         LTRIM(RTRIM(I.NombreInstalacion))  
@@ -1882,7 +1819,7 @@ AS
                                 END,  
                                 LTRIM(RTRIM(APCNH.id_Actividad)),  
                                 LTRIM(RTRIM(SP.[id_Sub-actividad])),  
-                    LTRIM(RTRIM(TP.id_Tarea)),  
+								LTRIM(RTRIM(TP.id_Tarea)),  
                                 CASE  
                                     WHEN CO_Registro.CostosAtribuiblesAdministracion = 1  
                                         THEN 1  
@@ -1961,7 +1898,7 @@ AS
                         RF_00,  
                         RI_00,  
                         RF01_01,  
-                RC21_00,  
+						RC21_00,  
                         RC21_01,  
                         RC21_02,  
                         RC21_03,  
@@ -2106,7 +2043,7 @@ AS
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
-        RC21_06,  
+					RC21_06,  
                     RC21_07,  
                     RC21_08,  
                     RC21_09,  
