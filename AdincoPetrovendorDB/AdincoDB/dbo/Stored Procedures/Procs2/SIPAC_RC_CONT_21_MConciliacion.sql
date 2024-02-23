@@ -308,8 +308,8 @@ AS
                         ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO'),  
                         FI_Factura.IdFactura,  
                         CO_Registro.MontoRegistro,  
-                        FI_Factura.TipoComprobanteEstandarizado,  
-                        FI_Factura.MetodoPagoEstandarizado,  
+                        ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA'),  
+                        ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD'),  
                         FI_Factura.Fecha,  
                         FI_Factura.IdMoneda;
   
