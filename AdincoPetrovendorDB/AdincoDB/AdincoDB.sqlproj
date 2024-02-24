@@ -3623,7 +3623,11 @@
     <Build Include="dbo\Stored Procedures\Procs1\SG_ServiciosGeneradosCabeceraADINCO.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SG_ServiciosGeneradosMensualesContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_M.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_M_CM.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_M_DEBUG.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_M_M.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_M_MG.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_21_M_Yaz.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_22_M.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_22_M_IdDoc.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SIPAC_RC_CONT_23_M.sql" />
