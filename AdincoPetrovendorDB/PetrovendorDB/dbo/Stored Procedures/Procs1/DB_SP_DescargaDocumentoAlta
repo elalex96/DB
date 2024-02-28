@@ -1,0 +1,11 @@
+CREATE PROCEDURE dbo.DB_SP_DescargaDocumentoAlta
+	@IdDocCuentaBancaria INT
+AS
+BEGIN
+-- SE CREA SP PARA QUE NO MARQUE ERROR MIENTRAS AVERIGUAMOS PORQUE NO EXISTE ESTE SP
+	SET NOCOUNT ON
+	SELECT	Documento, FileNameDoc
+	FROM PV_DocumentoCuentaBancaria (NOLOCK)
+	WHERE IdDocCuentaBancaria = @IdDocCuentaBancaria
+
+END
