@@ -1,9 +1,29 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5'
+)
+    DROP PROCEDURE SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5; 
+GO
+/****** Object:  StoredProcedure [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5]    Script Date: 01/03/2024 04:03:48 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:	Daniel AC
 -- Create date:29-11-2019
 -- Description:	Se agrego detalle de los días de crédito y detalle de la aceptación, Add Linea presupuesto mes
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 29/02/2023
+-- Description:	Se agrega detalle de clasificación de criterios de FuncionalidadDetallePresupuestoAceptacionServicio
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_PCN_AceptacionProveedorCompras_MV1_5] 
 	-- Add the parameters for the stored procedure here
@@ -47,21 +67,41 @@ BEGIN
 				DetalleAPD					=		CONCAT((CASE WHEN LEN(APD.Detalle)>0 THEN CONCAT(APD.Detalle,'| ') ELSE '' END)
 													,ISNULL('Instalación: ' + INS.NombreInstalacion  COLLATE Modern_Spanish_CI_AS,''),
 													ISNULL(' | Yacimiento: ' + Y.NombreYacimiento  COLLATE Modern_Spanish_CI_AS,''),
-													ISNULL(' | Linea de presupuesto: '+dbo.Fn_RetornarMesProgramadoActividadConcat(lp.IdLineaPresupuestoMes),''))
-	FROM		MM_AceptacionPedidoDetalle					APD
-	INNER JOIN	MM_AceptacionPedido							A		ON	A.IdAceptacionPedido			=	APD.IdAceptacionPedido
-	INNER JOIN	MM_PedidoDetalle							PD		ON	PD.IdPedidoDetalle				=	APD.IdPedidoDetalle
-	INNER JOIN	dbo.MM_PeticionOfertaDetalle				POD		ON	POD.IdPeticionOfertaDetalle		=	PD.IdPeticionOfertaDetalle
-	--left join	PV_MM_MaterialUnidad						mu		on	pod.IdUnidad				=		mu.IdUnidad
-	INNER JOIN	MM_Pedido									P		ON	P.IdPedido						=	A.IdPedido	
-	INNER JOIN	PV_TipoMoneda								TM		ON	TM.IdMoneda						=	PD.IdMoneda 
-	LEFT JOIN	dbo.MM_CondicionPago						CP		ON	PD.IdCondicionPago				=	CP.IdCondicionPago
-	LEFT JOIN	dbo.MM_AceptacionPedidoDetalleInstalacion	APDI	ON	APDI.IdAceptacionPedido			=	A.IdAceptacionPedido
-																	AND APDI.IdAceptacionPedidoDetalle	=	APD.IdAceptacionPedidoDetalle
-	LEFT JOIN	Adinco.dbo.CO_Instalacion					INS		ON INS.IdInstalacion				=	APDI.IdInstalacion	
-	LEFT JOIN	Adinco.dbo.CO_LineaPresupuestoMes			lp 		ON lp.IdLineaPresupuestoMes			=	APDI.IdLineaPresupuesto	
-	LEFT JOIN Adinco..CO_Yacimiento							Y       ON INS.IdYacimiento=Y.IdYacimiento
-	--LEFT JOIN MM_SolicitudAceptacionPedidoDetalle AS S
+													ISNULL(' | Linea de presupuesto: '+dbo.Fn_RetornarMesProgramadoActividadConcat(lp.IdLineaPresupuestoMes),''),
+													CASE WHEN ISNULL(APCP.Nombre,'')<>'' THEN ' | Cliente/Proyecto: '+ ISNULL(APCP.Nombre,'') ELSE '' END,
+													CASE WHEN ISNULL(APACG.Nombre,'')<>'' THEN ' | Actividad/Clasificación/Gasto: '+ ISNULL(APACG.Nombre,'') ELSE '' END ,
+													CASE WHEN ISNULL(APACG.Nombre,'')<>'' THEN ' | Actividad/Clasificación/Gasto(2): '+ ISNULL(APACG2.Nombre,'--') ELSE '' END 
+													)				
+	FROM		MM_AceptacionPedidoDetalle APD (NOLOCK)
+	INNER JOIN	MM_AceptacionPedido	A (NOLOCK)		
+		ON	APD.IdAceptacionPedido	= A.IdAceptacionPedido	
+	INNER JOIN	MM_PedidoDetalle PD	 (NOLOCK)	
+		ON	APD.IdPedidoDetalle  = PD.IdPedidoDetalle
+	INNER JOIN	dbo.MM_PeticionOfertaDetalle POD		
+	ON	PD.IdPeticionOfertaDetalle = POD.IdPeticionOfertaDetalle	
+	INNER JOIN	MM_Pedido P		 (NOLOCK)
+	ON	A.IdPedido = P.IdPedido		
+	INNER JOIN	PV_TipoMoneda TM (NOLOCK)		
+	ON	PD.IdMoneda  = TM.IdMoneda	
+	LEFT JOIN	dbo.MM_CondicionPago CP	 (NOLOCK)	
+	ON	PD.IdCondicionPago = CP.IdCondicionPago
+	LEFT JOIN	dbo.MM_AceptacionPedidoDetalleInstalacion APDI (NOLOCK)	
+	ON	A.IdAceptacionPedido = APDI.IdAceptacionPedido																
+		AND APD.IdAceptacionPedidoDetalle = APDI.IdAceptacionPedidoDetalle	
+	LEFT JOIN	Adinco.dbo.CO_Instalacion INS (NOLOCK)		
+		ON APDI.IdInstalacion = INS.IdInstalacion
+	LEFT JOIN	Adinco.dbo.CO_LineaPresupuestoMes lp  (NOLOCK)		
+		ON APDI.IdLineaPresupuesto	 = lp.IdLineaPresupuestoMes
+	LEFT JOIN Adinco..CO_Yacimiento	Y  (NOLOCK)      
+		ON INS.IdYacimiento = Y.IdYacimiento
+	LEFT JOIN MM_AceptacionPedidoDetalleCriterios APC(NOLOCK)     
+		ON APD.IdAceptacionPedidoDetalle = APC.AceptacionPedidoDetalleId
+	LEFT JOIN MM_ClienteProyecto APCP(NOLOCK)     
+		ON APC.ClienteProyectoId = APCP.Id
+	LEFT JOIN MM_ActividadClasificacionGasto APACG (NOLOCK)
+		On APC.ActividadClasificacionGastoId = APACG.Id
+	LEFT JOIN MM_ActividadClasificacionGasto APACG2 (NOLOCK)
+		On APC.ActividadClasificacionGasto2Id = APACG2.Id
 	WHERE		P.IdProveedorCompras						=		@IdProveedor  
 	AND			A.IdAceptacionPedido						=		@IdAceptacionPedido
 	GROUP BY 
@@ -70,7 +110,6 @@ BEGIN
 	POD.MaterialCotizadoTextoC,
 	POD.MaterialCotizadoTextoL,
 	POD.UnidadProveedor,
-	--mu.Unidad,
 	APD.Cantidad,
 	APD.Excedente, 
 	PD.PrecioUnitario,
@@ -84,8 +123,10 @@ BEGIN
 	INS.NombreInstalacion,
 	lp.IdLineaPresupuestoMes,
 	Y.NombreYacimiento,
-	APD.PrecioUnitario
-	--order by POD.UnidadProveedor
+	APD.PrecioUnitario,
+	APCP.Nombre,
+	APACG.Nombre,
+	APACG2.Nombre
+
 
 END;
-
