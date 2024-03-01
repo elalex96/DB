@@ -100,7 +100,7 @@ BEGIN
 		ON APC.ClienteProyectoId = APCP.Id
 	LEFT JOIN MM_ActividadClasificacionGasto APACG (NOLOCK)
 		On APC.ActividadClasificacionGastoId = APACG.Id
-	LEFT JOIN MM_ActividadClasificacionGasto APACG2 (NOLOCK)
+	LEFT JOIN MM_ActividadClasificacionGasto2 APACG2 (NOLOCK)
 		On APC.ActividadClasificacionGasto2Id = APACG2.Id
 	WHERE		P.IdProveedorCompras						=		@IdProveedor  
 	AND			A.IdAceptacionPedido						=		@IdAceptacionPedido
@@ -130,3 +130,4 @@ BEGIN
 
 
 END;
+
