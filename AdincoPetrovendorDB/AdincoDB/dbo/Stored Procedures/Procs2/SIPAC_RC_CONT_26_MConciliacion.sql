@@ -1,12 +1,14 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SIPAC_RC_CONT_26_MConciliacion'
-)
-    DROP PROCEDURE SIPAC_RC_CONT_26_MConciliacion;
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_26_MConciliacion'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_26_MConciliacion
 GO
-
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_26_MConciliacion]
     @Contrato INT,
     @IdPresupuesto INT = 0,
@@ -112,41 +114,8 @@ BEGIN
     )
     SELECT FI_Factura.IdFactura,
            FI_Factura.UUID,
-           CASE
-               WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'I%' THEN
-                   'I'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'E%' THEN
-                   'E'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                    OR FI_Factura.TipoComprobante LIKE 'T%' THEN
-                   'T'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                    OR FI_Factura.TipoComprobante LIKE 'N%' THEN
-                   'N'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                    OR FI_Factura.TipoComprobante LIKE 'P%' THEN
-                   'P'
-               ELSE
-                   'NA'
-           END AS TipoComprobante,
-           CASE
-               WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                    OR FI_Factura.MetodoPago LIKE '%PUE%'
-                    OR FI_Factura.FormaPago LIKE '%exhibi%'
-                    OR FI_Factura.FormaPago LIKE '%PUE%' THEN
-                   'PUE'
-               WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                    OR FI_Factura.MetodoPago LIKE '%dife%'
-                    OR FI_Factura.MetodoPago LIKE '%PPD%'
-                    OR FI_Factura.FormaPago LIKE '%parcia%'
-                    OR FI_Factura.FormaPago LIKE '%dife%'
-                    OR FI_Factura.FormaPago LIKE '%PPD%' THEN
-                   'PPD'
-               WHEN FI_Factura.TipoComprobante = 'P' THEN
-                   'PPD'
-           END AS MetodoPago,
+           ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA') AS TipoComprobante,
+           ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD') AS MetodoPago,
            FI_Factura.IdMoneda
     FROM dbo.CO_Registro WITH (NOLOCK)
         JOIN dbo.FI_Factura WITH (NOLOCK)
@@ -177,41 +146,9 @@ BEGIN
                                                          ELSE
                                                              @IdPresupuesto
                                                      END
-    GROUP BY CASE
-                 WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                      OR FI_Factura.TipoComprobante LIKE 'I%' THEN
-                     'I'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                      OR FI_Factura.TipoComprobante LIKE 'E%' THEN
-                     'E'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                      OR FI_Factura.TipoComprobante LIKE 'T%' THEN
-                     'T'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                      OR FI_Factura.TipoComprobante LIKE 'N%' THEN
-                     'N'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                      OR FI_Factura.TipoComprobante LIKE 'P%' THEN
-                     'P'
-                 ELSE
-                     'NA'
-             END,
-             CASE
-                 WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                      OR FI_Factura.MetodoPago LIKE '%PUE%'
-                      OR FI_Factura.FormaPago LIKE '%exhibi%'
-                      OR FI_Factura.FormaPago LIKE '%PUE%' THEN
-                     'PUE'
-                 WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                      OR FI_Factura.MetodoPago LIKE '%dife%'
-                      OR FI_Factura.MetodoPago LIKE '%PPD%'
-                      OR FI_Factura.FormaPago LIKE '%parcia%'
-                      OR FI_Factura.FormaPago LIKE '%dife%'
-                      OR FI_Factura.FormaPago LIKE '%PPD%' THEN
-                     'PPD'
-                 WHEN FI_Factura.TipoComprobante = 'P' THEN
-                     'PPD'
-             END,
+    GROUP BY 
+             ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA'),
+             ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD'),
              FI_Factura.IdFactura,
              FI_Factura.UUID,
              FI_Factura.IdMoneda
@@ -686,9 +623,8 @@ BEGIN
            CAST(MTT.MontoDolares AS DECIMAL(15, 2)) AS [RC26_09],
            CAST(ISNULL(MTT.TipoCambio, 0) AS DECIMAL(15, 4)) AS [RC26_10],
            CASE
-               WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                    OR FI_Factura.TipoComprobante LIKE 'N%' THEN
-                   LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+               WHEN (FI_Factura.TipoComprobanteEstandarizado)= 'N'
+                   THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
                ELSE
                    LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
            END AS [RC26_11],
@@ -754,9 +690,8 @@ BEGIN
              CAST(MTT.MontoDivisaOriginal AS DECIMAL(15, 2)),
              CAST(MTT.MontoDolares AS DECIMAL(15, 2)),
              CASE
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                      OR FI_Factura.TipoComprobante LIKE 'N%' THEN
-                     LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+                 WHEN (FI_Factura.TipoComprobanteEstandarizado) = 'N'
+                      THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
                  ELSE
                      LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
              END,
@@ -793,9 +728,8 @@ BEGIN
            CAST(MTT.MontoDolares AS DECIMAL(15, 2)) AS [RC26_09],
            CAST(ISNULL(MTT.TipoCambioCP, 0) AS DECIMAL(15, 4)) AS [RC26_10],
            CASE
-               WHEN (FCPDR.TipoComprobante) LIKE '%nómina%'
-                    OR FCPDR.TipoComprobante LIKE 'N%' THEN
-                   LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+               WHEN (FCPDR.TipoComprobanteEstandarizado) = 'N'
+                    THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
                ELSE
                    LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
            END AS [RC26_11],
@@ -874,9 +808,8 @@ BEGIN
              CAST(MTT.MontoDivisaOriginal AS DECIMAL(15, 2)),
              CAST(MTT.MontoDolares AS DECIMAL(15, 2)),
              CASE
-                 WHEN (FCPDR.TipoComprobante) LIKE '%nómina%'
-                      OR FCPDR.TipoComprobante LIKE 'N%' THEN
-                     LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
+                 WHEN (FCPDR.TipoComprobanteEstandarizado) = 'N' 
+				 THEN LTRIM(RTRIM(SUBSTRING(PV_SubcontratistaNomina.RazonSocial, 0, 119)))
                  ELSE
                      LTRIM(RTRIM(SUBSTRING(PV_Subcontratista.RazonSocial, 0, 119)))
              END,

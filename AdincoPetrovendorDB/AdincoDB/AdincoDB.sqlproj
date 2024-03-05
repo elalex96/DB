@@ -1675,6 +1675,7 @@
     <Build Include="dbo\Functions\Partir.sql" />
     <Build Include="dbo\Functions\fnSplitString.sql" />
     <Build Include="dbo\Functions\DelimitedSplit.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\AP_Actualiza_Grupos.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_CO_EliminaRegistroGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\sp_CO_EliminarRegistroCEE.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_CO_EsDocumentoFacturacionDePetrovendor.sql" />
