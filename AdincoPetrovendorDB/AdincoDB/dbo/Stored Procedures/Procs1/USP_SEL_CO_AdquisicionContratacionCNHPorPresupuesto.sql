@@ -733,7 +733,7 @@ AS
                                         ON TTLineasPresupuesto.IdLineaPresupuestoMes = MM_SolicitudPedidoDetalleLineaPresupuesto.IdLineaPresupuesto
                                 JOIN
                                     Petrovendor.dbo.MM_SolicitudPedidoDetalle                 AS MM_SolicitudPedidoDetalle (NOLOCK)
-                                        ON MM_SolicitudPedidoDetalleLineaPresupuesto.IdSolicitudPedidoDetalle = MM_SolicitudPedidoDetalle.IdSolicitudPedido
+                                        ON MM_SolicitudPedidoDetalleLineaPresupuesto.IdSolicitudPedidoDetalle = MM_SolicitudPedidoDetalle.IdSolicitudPedidoDetalle
                                 JOIN
                                     Petrovendor.dbo.MM_SolicitudPedido                        AS MM_SolicitudPedido (NOLOCK)
                                         ON MM_SolicitudPedidoDetalle.IdSolicitudPedido = MM_SolicitudPedido.IdSolicitudPedido
