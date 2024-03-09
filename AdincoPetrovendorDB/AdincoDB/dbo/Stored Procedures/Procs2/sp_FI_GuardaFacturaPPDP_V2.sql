@@ -1,4 +1,12 @@
-﻿-- =============================================
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_FI_GuardaFacturaPPDP_V2'
+)
+    DROP PROCEDURE sp_FI_GuardaFacturaPPDP_V2
+GO
+-- =============================================
 -- Author:		Reyna Olvera
 -- Create date: 20181023
 -- Description:	Guarda las facturas PPD o P para realizar la busqueda de los ppd y complementos de pago para el reporte de CGI
@@ -13,53 +21,30 @@ CREATE PROCEDURE [dbo].[sp_FI_GuardaFacturaPPDP_V2] --3,10061,66739
 AS
      BEGIN
          DECLARE @TipoComprobante NVARCHAR(150), @MetodoPago NVARCHAR(150), @MesPresentacionCGI DATE, @error NVARCHAR(MAX)= '';
-         SELECT --f.IdFactura,
-         @TipoComprobante = CASE
-                                WHEN f.TipoComprobante LIKE '%ingreso%'
-                                     OR f.TipoComprobante LIKE 'I%'
-                                THEN 'I'
-                                WHEN(f.TipoComprobante) LIKE '%egreso%'
-                                    OR f.TipoComprobante LIKE 'E%'
-                                THEN 'E'
-                                WHEN(f.TipoComprobante) LIKE '%traslado%'
-                                    OR f.TipoComprobante LIKE 'T%'
-                                THEN 'T'
-                                WHEN(f.TipoComprobante) LIKE '%nómina%'
-                                    OR f.TipoComprobante LIKE 'N%'
-                                THEN 'N'
-                                WHEN(f.TipoComprobante) LIKE '%pago%'
-                                    OR f.TipoComprobante LIKE 'P%'
-                                THEN 'P'
-                                ELSE 'NA'
-                            END, 
-         @MetodoPago = CASE
-                           WHEN f.MetodoPago LIKE '%exhibi%'
-                                OR f.MetodoPago LIKE '%PUE%'
-                                OR f.FormaPago LIKE '%exhibi%'
-                                OR f.FormaPago LIKE '%PUE%'
-                           THEN 'PUE'
-                           WHEN f.MetodoPago LIKE '%parcia%'
-                                OR f.MetodoPago LIKE '%dife%'
-                                OR f.MetodoPago LIKE '%PPD%'
-                                OR f.FormaPago LIKE '%parcia%'
-                                OR f.FormaPago LIKE '%dife%'
-                                OR f.FormaPago LIKE '%PPD%'
-                           THEN 'PPD'
-                       END, 
-         @MesPresentacionCGI = c.MesPresentacionCGI
-         FROM dbo.FI_Factura f
-              JOIN dbo.CO_Contrato c ON f.IdContrato = c.IdContrato
-         WHERE f.IdFactura = @idFactura
-               AND f.IdContrato = @idContrato;
-         IF(@TipoComprobante = 'P')
-             BEGIN
-                 -- Identificar las facturas principales PPD relacionadas a los complementos con la tabla anterior
-                 -- DROP TABLE #FacturasPrincipales; DROP TABLE #TransferenciaCP;
-                 CREATE TABLE #FacturasPrincipales
+		 DECLARE @TipoComplementoPago INT = 6
+
+		 CREATE TABLE #TransferenciaCP
+                 (IdTransfer INT
+                 );
+		CREATE TABLE #FacturasPrincipales
                  (IdFacturaPPD INT, 
                   UUID         NVARCHAR(300), 
                   IdFacturaCP  INT
                  );
+
+         SELECT 
+         @TipoComprobante = ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA'), 
+         @MetodoPago = ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD'),
+         @MesPresentacionCGI = c.MesPresentacionCGI
+         FROM dbo.FI_Factura 
+              JOIN dbo.CO_Contrato c ON FI_Factura.IdContrato = c.IdContrato
+         WHERE FI_Factura.IdFactura = @idFactura
+               AND FI_Factura.IdContrato = @idContrato;
+
+         IF(@TipoComprobante = 'P')
+             BEGIN
+                 -- Identificar las facturas principales PPD relacionadas a los complementos con la tabla anterior
+                 -- DROP TABLE #FacturasPrincipales; DROP TABLE #TransferenciaCP;                
                  --
                  INSERT INTO #FacturasPrincipales
                  (IdFacturaPPD, 
@@ -73,6 +58,7 @@ AS
                              JOIN dbo.FI_CPDocRelacionado CPDR ON CP.IdComplementoDePago = CPDR.IdComplementoDePago
                              JOIN dbo.FI_Factura F ON CPDR.IdDocumento = F.UUID
                         WHERE CP.IdFactura = @idFactura;
+
                  -- Identificar las transferencias relacionadas directamente con las facturas PPD de la tabla anterior, para posteriormente eliminarla, se creo una tabla para guardar respaldo de las relaciones
                  INSERT INTO dbo.FI_TransferFacturaPPD
                  (IdTransfer, 
@@ -94,24 +80,26 @@ AS
                                GETDATE()
                         FROM dbo.FI_TransferFactura TF
                              JOIN #FacturasPrincipales FP ON TF.IdFactura = FP.IdFacturaPPD;
+
                  -- Eliomiar relacion existente entre la factura principal PPD y la transferencia
-                 CREATE TABLE #TransferenciaCP
-                 (IdTransfer INT
-                 );
+                 
+
                  --
                  INSERT INTO #TransferenciaCP(IdTransfer)
                         SELECT DISTINCT 
-                               TFPPD.IdTransfer
-                        FROM dbo.FI_TransferFacturaPPD TFPPD
-                             JOIN #FacturasPrincipales FP ON TFPPD.IdFactura = FP.IdFacturaPPD
-                        WHERE FP.IdFacturaCP = @idFactura;
-                 -- Eliminar
+                               FI_TransferFacturaPPD.IdTransfer
+                        FROM dbo.FI_TransferFacturaPPD 
+                             JOIN #FacturasPrincipales  ON FI_TransferFacturaPPD.IdFactura = #FacturasPrincipales.IdFacturaPPD
+                        WHERE #FacturasPrincipales.IdFacturaCP = @idFactura;
+                 
+				 -- Eliminar
                  DELETE dbo.FI_TransferFactura
                  WHERE IdTransfer IN
                  (
                      SELECT IdTransfer
                      FROM #TransferenciaCP
                  );
+
                  -- Actualizar en FI_Transfer IdFormaPago = 2 ya que indica que el metodo de pago es PPD
                  UPDATE dbo.FI_Transfer
                    SET 
@@ -121,6 +109,7 @@ AS
                      SELECT IdTransfer
                      FROM #TransferenciaCP
                  );
+
                  -- Insertar la nueva relacion del complemento de pago con la transferencia.
                  INSERT INTO dbo.FI_TransferFactura
                  (IdTransfer, 
@@ -130,17 +119,19 @@ AS
                   CreadoPor, 
                   CreadoEn
                  )
-                        SELECT DISTINCT 
-                               TFPPD.IdTransfer, 
-                               FP.IdFacturaCP, 
-                               0, 
-                               6, 
-                               @idUsuario, 
-                               GETDATE()
-                        FROM #FacturasPrincipales FP
-                             JOIN dbo.FI_TransferFacturaPPD TFPPD ON FP.IdFacturaPPD = TFPPD.IdFactura
-                        WHERE FP.IdFacturaCP = @idFactura;
+                    SELECT DISTINCT 
+                            FI_TransferFacturaPPD.IdTransfer, 
+                            #FacturasPrincipales.IdFacturaCP, 
+                            0, 
+                            @TipoComplementoPago, 
+                            @idUsuario, 
+                            GETDATE()
+                    FROM #FacturasPrincipales 
+                            JOIN dbo.FI_TransferFacturaPPD 
+							ON #FacturasPrincipales.IdFacturaPPD = FI_TransferFacturaPPD.IdFactura
+                    WHERE #FacturasPrincipales.IdFacturaCP = @idFactura;
              END;
+
          IF @@ERROR <> 0
              BEGIN
                  SET @error = 'Inconveniente encontrado en el sp: sp_FI_GuardaFacturaPPDP, CodigoError: '+CAST(@@ERROR AS NVARCHAR(8));
