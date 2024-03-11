@@ -135,13 +135,14 @@ DECLARE
 	@MontoParaDisminuirOpex FLOAT
 
 DECLARE
-    @Aprobado                  INT = 10004,
-    @TipoFactura               INT = 1,
+    @Aprobado                  INT = 10004, 
     @PESO                      INT = 1,
     @DOLAR                     INT = 2,
-    @TipoComplementoPago       INT = 6,
+	@TipoFactura               INT = 1,
     @TipoPedimentoImportacion  INT = 2,
-    @TipoComprobanteExtranjero INT = 3
+    @TipoComprobanteExtranjero INT = 3,
+	@TipoComplementoPago       INT = 6
+
 DECLARE @MontoUSDInversion FLOAT = 0, @MontoUSDOperativo FLOAT = 0, @MontoUSDAbandono FLOAT = 0,
 	@MontoUSDNotaCreditoCapex FLOAT, @MontoUSDNotaCreditoOpex FLOAT,
 	@MontoUSDNotaCredito FLOAT
@@ -226,25 +227,7 @@ SELECT
                 ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO') AS UUID,
                 FI_Factura.IdFactura,
                 CO_Registro.MontoRegistro,
-                CASE
-                    WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                         OR FI_Factura.TipoComprobante LIKE 'I%'
-                        THEN 'I'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                         OR FI_Factura.TipoComprobante LIKE 'E%'
-                        THEN 'E'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                         OR FI_Factura.TipoComprobante LIKE 'T%'
-                        THEN 'T'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                         OR FI_Factura.TipoComprobante LIKE 'N%'
-                        THEN 'N'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                         OR FI_Factura.TipoComprobante LIKE 'P%'
-                        THEN 'P'
-                    ELSE
-                        'NA'
-                END                                             AS TipoComprobante,
+                ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA') AS TipoComprobante,
                 SUM(   CASE
                            WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0
                                THEN 0
@@ -258,22 +241,7 @@ SELECT
                                0
                        END
                    )                                            AS [RC21_22],
-                CASE
-                    WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                         OR FI_Factura.MetodoPago LIKE '%PUE%'
-                         OR FI_Factura.FormaPago LIKE '%exhibi%'
-                         OR FI_Factura.FormaPago LIKE '%PUE%'
-                        THEN 'PUE'
-                    WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                         OR FI_Factura.MetodoPago LIKE '%dife%'
-                         OR FI_Factura.MetodoPago LIKE '%PPD%'
-                         OR FI_Factura.FormaPago LIKE '%parcia%'
-                         OR FI_Factura.FormaPago LIKE '%dife%'
-                         OR FI_Factura.FormaPago LIKE '%PPD%'
-                        THEN 'PPD'
-                    WHEN FI_Factura.TipoComprobante = 'P'
-                        THEN 'PPD'
-                END                                             AS MetodoPago,
+                ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD') AS MetodoPago,
                 FI_Factura.Fecha,
                 FI_Factura.IdMoneda
             FROM
@@ -324,41 +292,8 @@ SELECT
                 ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO'),
                 FI_Factura.IdFactura,
                 CO_Registro.MontoRegistro,
-                CASE
-                    WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                         OR FI_Factura.TipoComprobante LIKE 'I%'
-                        THEN 'I'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                         OR FI_Factura.TipoComprobante LIKE 'E%'
-                        THEN 'E'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                         OR FI_Factura.TipoComprobante LIKE 'T%'
-                        THEN 'T'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                         OR FI_Factura.TipoComprobante LIKE 'N%'
-                        THEN 'N'
-                    WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                         OR FI_Factura.TipoComprobante LIKE 'P%'
-                        THEN 'P'
-                    ELSE
-                        'NA'
-                END,
-                CASE
-                    WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                         OR FI_Factura.MetodoPago LIKE '%PUE%'
-                         OR FI_Factura.FormaPago LIKE '%exhibi%'
-                         OR FI_Factura.FormaPago LIKE '%PUE%'
-                        THEN 'PUE'
-                    WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                         OR FI_Factura.MetodoPago LIKE '%dife%'
-                         OR FI_Factura.MetodoPago LIKE '%PPD%'
-                         OR FI_Factura.FormaPago LIKE '%parcia%'
-                         OR FI_Factura.FormaPago LIKE '%dife%'
-                         OR FI_Factura.FormaPago LIKE '%PPD%'
-                        THEN 'PPD'
-                    WHEN FI_Factura.TipoComprobante = 'P'
-                        THEN 'PPD'
-                END,
+                ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA'),
+                ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD'),
                 FI_Factura.Fecha,
                 FI_Factura.IdMoneda;
 
