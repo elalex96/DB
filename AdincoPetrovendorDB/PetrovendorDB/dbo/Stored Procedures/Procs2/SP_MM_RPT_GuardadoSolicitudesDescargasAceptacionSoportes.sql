@@ -1,6 +1,5 @@
 ﻿USE [Petrovendor]
 GO
-GO
 IF EXISTS
 (
     SELECT 1
@@ -26,6 +25,11 @@ GO
 -- Create date: 12/05/2023
 -- Description:	se agrega el filtrado por contrato en las aceptaciones
 -- =============================================
+-- =============================================
+-- Author:  <Alexander Gomez>  
+-- Create date: 12/03/2024
+-- Description: Adecuacion para consultar todos los contratos
+-- =============================================  
 CREATE PROCEDURE [dbo].[SP_MM_RPT_GuardadoSolicitudesDescargasAceptacionSoportes]
 	-- Add the parameters for the stored procedure here
 	@FechaInicio DATE,
@@ -74,33 +78,72 @@ BEGIN
 	END
 	IF @Tipo = 'PEDIDO'
 	BEGIN
-	INSERT INTO @DESCARGAR(
-		[Tipo],
-		[FechaInicio],
-		[FechaFin],
-		[IdContrato]
-	)
-	SELECT
-		@Tipo,
-		@FechaInicio,
-		@FechaFin,
-		P.IdContrato
-	FROM MM_Pedido AS P (NOLOCK)
-	INNER JOIN mm_pedidos AS pg (nolock)
-    ON         p.idpedido = pg.ididentificador
-    AND        pg.idtipopedido IN ( 2,
-                                   4,
-                                   6 ) -->(Mer, AD, OT)
-	INNER JOIN ta_operacion AS o (nolock)
-    ON         p.idsolicitudpedido = o.iddocumento
-			where P.IdContrato IN (10045,10044,10046,10038,10144)
-			AND (p.fechaenviopedido >= @FechaInicio and p.fechaenviopedido <= @FechaFin)
-			AND Isnull(p.idestatuseliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
-			AND Isnull(p.cerrado, 0) = 0             --> PEDIDOS NO CERRADOS
-			AND o.idtipooperacion = 9
-			AND p.recepcionservicio = 1              --> RECEPCIÓN ACEPTADA
-			AND o.idestatusoperacion = 2
-	GROUP BY P.IdContrato
+
+		IF ISNULL(@IdContrato,0) = 0
+		BEGIN
+		
+			INSERT INTO @DESCARGAR(
+			[Tipo],
+			[FechaInicio],
+			[FechaFin],
+			[IdContrato]
+			)
+			SELECT
+				@Tipo,
+				@FechaInicio,
+				@FechaFin,
+				P.IdContrato
+			FROM MM_Pedido AS P (NOLOCK)
+			INNER JOIN mm_pedidos AS pg (nolock)
+			ON         p.idpedido = pg.ididentificador
+			AND        pg.idtipopedido IN ( 2,
+										   4,
+										   6 ) -->(Mer, AD, OT)
+			INNER JOIN ta_operacion AS o (nolock)
+			ON         p.idsolicitudpedido = o.iddocumento
+					where P.IdContrato IN (10045,10044,10046,10038,10144)
+					AND (p.fechaenviopedido >= @FechaInicio and p.fechaenviopedido <= @FechaFin)
+					AND Isnull(p.idestatuseliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
+					AND Isnull(p.cerrado, 0) = 0             --> PEDIDOS NO CERRADOS
+					AND o.idtipooperacion = 9
+					AND p.recepcionservicio = 1              --> RECEPCIÓN ACEPTADA
+					AND o.idestatusoperacion = 2
+			GROUP BY P.IdContrato
+
+		END
+		ELSE
+		BEGIN
+		
+			INSERT INTO @DESCARGAR(
+			[Tipo],
+			[FechaInicio],
+			[FechaFin],
+			[IdContrato]
+			)
+			SELECT
+				@Tipo,
+				@FechaInicio,
+				@FechaFin,
+				P.IdContrato
+			FROM MM_Pedido AS P (NOLOCK)
+			INNER JOIN mm_pedidos AS pg (nolock)
+			ON         p.idpedido = pg.ididentificador
+			AND        pg.idtipopedido IN ( 2,
+										   4,
+										   6 ) -->(Mer, AD, OT)
+			INNER JOIN ta_operacion AS o (nolock)
+			ON         p.idsolicitudpedido = o.iddocumento
+					where P.IdContrato = @IdContrato
+					AND (p.fechaenviopedido >= @FechaInicio and p.fechaenviopedido <= @FechaFin)
+					AND Isnull(p.idestatuseliminado, 0) <> 1 --> QUE NO ESTE ELIMINADO EL PEDIDO
+					AND Isnull(p.cerrado, 0) = 0             --> PEDIDOS NO CERRADOS
+					AND o.idtipooperacion = 9
+					AND p.recepcionservicio = 1              --> RECEPCIÓN ACEPTADA
+					AND o.idestatusoperacion = 2
+			GROUP BY P.IdContrato
+
+		END
+	
 	END
 	SET @CANT_REGISTROS = (SELECT COUNT(1) FROM @DESCARGAR);
 
