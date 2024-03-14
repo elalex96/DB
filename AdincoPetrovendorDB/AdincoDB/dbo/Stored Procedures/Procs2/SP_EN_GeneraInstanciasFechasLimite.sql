@@ -235,7 +235,7 @@ BEGIN
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
-											AND Descripcion='Dia 15 habil';
+											AND Descripcion LIKE '%Dia 15 habil%';
 
 									END
 									ELSE
@@ -249,7 +249,7 @@ BEGIN
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
-											AND Descripcion='Dia 15 habil';
+											AND Descripcion LIKE '%Dia 15 habil%';
 									END
 
 								END
@@ -270,7 +270,7 @@ BEGIN
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
-											AND Descripcion='Dia 7 hábil';
+											AND Descripcion LIKE '%Dia 7 hábil%';
 
 									END
 									ELSE
@@ -284,7 +284,7 @@ BEGIN
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
-											AND Descripcion='Dia 7 hábil';
+											AND Descripcion LIKE '%Dia 7 hábil%';
 									END
 
 							END
@@ -303,7 +303,7 @@ BEGIN
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
-											AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
+											AND Descripcion LIKE '%Recepción de Información para el cálculo de contraprestaciones%';
 
 									END
 									ELSE
@@ -317,7 +317,7 @@ BEGIN
 											WHERE 
 												Mes	=	MONTH(@FechaLimiteFrecuencia)
 												AND	Anio	=	YEAR(@FechaLimiteFrecuencia)
-											AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
+											AND Descripcion LIKE '%Recepción de Información para el cálculo de contraprestaciones%';
 									END
 						END
 
@@ -355,7 +355,7 @@ BEGIN
 							IdFecha 
 							from AP_Calendario (NOLOCK)
 							WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
-							AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
+							AND Descripcion LIKE '%Recepción de Información para el cálculo de contraprestaciones%';
 
 
 					END
@@ -370,7 +370,7 @@ BEGIN
 								)
 							from AP_Calendario (NOLOCK)
 							WHERE IdFecha BETWEEN Ltrim (Year(@FechaLimiteFrecuencia))+'-'+Ltrim (Month(@FechaLimiteFrecuencia))+'-'+'01' AND  Ltrim (Year(@FinVigenciaContrato))+'-'+Ltrim (Month(@FinVigenciaContrato))+'-'+'01' 
-							AND Descripcion='Recepción de Información para el cálculo de contraprestaciones';
+							AND Descripcion LIKE '%Recepción de Información para el cálculo de contraprestaciones%';
 
 						
 

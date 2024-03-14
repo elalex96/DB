@@ -1,7 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_AgregarAceptacionPedidoDetalle'
+)
+    DROP PROCEDURE SP_MM_AgregarAceptacionPedidoDetalle; 
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_AgregarAceptacionPedidoDetalle]    Script Date: 01/03/2024 02:27:15 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		DANIEL AC
 -- Create date: 03/07/2017
 -- Description:	ALTA ACEPTACION DE PEDIDO 
+-- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 29/02/2023
+-- Description:	FUNCIONALIDAD PARA PREFERENCIA DE CONTRATO FuncionalidadDetallePresupuestoAceptacionServicio
 -- =============================================
 
 CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionPedidoDetalle]
@@ -13,11 +33,13 @@ CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionPedidoDetalle]
     @Excedente FLOAT,
     @IdInstalacion INT = NULL,
     @IdLineaPresupuesto INT = NULL,
-    /*--------------------parametros contrato  --------------------*/
     @IdContrato INT = NULL,
     @IdUsuario INT = NULL,
-    @FechaRegistro DATETIME = NULL
-/*-------------------------------------------------------------*/
+    @FechaRegistro DATETIME = NULL,
+	@IdClienteProyecto INT  = NULL,
+	@IdActividadClasificacionGasto INT  = NULL,
+	@IdActividadClasificacionGasto2 INT  = NULL,
+	@AplicaFuncDetallePresupuestoAP BIT = NULL
 AS
 BEGIN
     DECLARE @IdAceptacionPedidoDetalle INT,
@@ -73,6 +95,24 @@ BEGIN
         )
 
 
+
+	IF ISNULL(@AplicaFuncDetallePresupuestoAP,0) = 1
+	BEGIN 
+		INSERT INTO MM_AceptacionPedidoDetalleCriterios(
+		AceptacionPedidoDetalleId, 
+		ClienteProyectoId, 
+		ActividadClasificacionGastoId, 
+		ActividadClasificacionGasto2Id, 
+		CreadoEl 
+		)
+		VALUES(
+		@IdAceptacionPedidoDetalle,
+		@IdClienteProyecto,
+		@IdActividadClasificacionGasto,
+		CASE WHEN ISNULL(@IdActividadClasificacionGasto2,0)=0 THEN NULL ELSE @IdActividadClasificacionGasto2 END,
+		GETDATE()
+		)
+	END 
     IF NOT EXISTS
     (
         SELECT 1

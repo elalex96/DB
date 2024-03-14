@@ -1,4 +1,8 @@
-﻿-- =============================================
+use Petrovendor
+GO
+DROP PROC IF EXISTS sp_ConsultaDeInsercionCompraDirecta
+GO
+-- =============================================
 -- Author:		PEDRO 
 -- Create date: 29/12/2017
 -- Description: Consulta de compras directas 
@@ -31,16 +35,16 @@
 -- Update date: 19/02/2021
 -- Description: se selecciona la fecha máxima de la bitacora de la operación
 -- =============================================
+-- Author:		Luis Davi De La Cruz
+-- Update date: 29/02/2024
+-- Description: Se agrega mejoras de estándares issue #2662
+-- =============================================
 CREATE PROCEDURE [dbo].[sp_ConsultaDeInsercionCompraDirecta] -- 0,2,420
     @idUsuario			INT,
     @aprobadaRechazada	INT,
 	@IdProveedor		INT,
-	/*--------------------parametros contrato  --------------------*/
     @IdContrato			INT = null,
-    --@IdUsuario		INT = null,
     @FechaRegistro		DATETIME = null
-	/*-------------------------------------------------------------*/
-
 AS
 BEGIN
 	
@@ -59,13 +63,6 @@ BEGIN
 	ON tarea.IdOperacion = tao.IdOperacion
 	where tao.IdProveedor = @IdProveedor AND tao.IdTipoOperacion = 14
 	ORDER BY tarea.fecha DESC
-	--SELECT tao.IdOperacion, FORMAT(tarea.Fecha,'dd/MM/yy hh:mm:ss tt')  
-	--FROM dbo.TA_Operacion tao 
-	--INNER JOIN dbo.TA_HistorialFlujoTarea tarea ON tarea.IdOperacion = tao.IdOperacion
-	--WHERE tarea.IdEstadoFlujo = 7 AND tao.IdProveedor = @IdProveedor AND tao.IdTipoOperacion = 14
-	--GROUP BY tarea.Fecha,
- --            tao.IdOperacion
-	--ORDER BY tarea.Fecha DESC	
  
     IF (@aprobadaRechazada IN ( 1, 2))
     BEGIN
@@ -111,29 +108,33 @@ BEGIN
 			   PG.IdPedido AS IdPedidoGeneral,
 			   AC.NombreAreaContractual AS AreaContractual,
 			   fiFact.Moneda
-        FROM dbo.CO_Registro AS coRegistro
-            LEFT JOIN dbo.FI_Factura AS fiFact
+        FROM dbo.CO_Registro AS coRegistro (NOLOCK)
+            LEFT JOIN dbo.FI_Factura AS fiFact (NOLOCK)
                 ON coRegistro.IdFactura = fiFact.IdFactura
-            LEFT JOIN dbo.TA_Operacion AS TAO
-                ON TAO.IdDocumento = coRegistro.IdFactura
-            LEFT JOIN dbo.TA_Estatus AS TE
-                ON TE.IdEstatus = TAO.IdEstatusOperacion
-            LEFT JOIN dbo.CC_CentroCosto centroCosto
-                ON centroCosto.IdCentroCosto = coRegistro.CentroCostos
-            LEFT JOIN dbo.DG_CuentaContable cuentaContable
-                ON cuentaContable.Id = coRegistro.CuentaContable            
-            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh
-                ON cuentaSh.IdCatalogoCuentasSH = coRegistro.IdCatalogoCuentasSH
-            LEFT JOIN dbo.CO_Instalacion instalacion
-                ON instalacion.IdInstalacion = coRegistro.IdInstalacion
-			LEFT JOIN dbo.MM_Pedidos PG
-				ON PG.IdIdentificador = fiFact.IdFactura AND PG.IdTipoPedido=1 AND TAO.IdProveedor=PG.IdProveedorCliente
-			LEFT JOIN dbo.S_Proveedor AS P ON P.RFC = fiFact.Emisor
-			LEFT JOIN Adinco.dbo.CO_Contrato AS C
-			ON fiFact.IdContrato = C.IdContrato    
-			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
-			ON C.IdAreaContractual = AC.IdAreaContractual
-			LEFT JOIN @TablaFecha fecha ON fecha.IdOperacion = TAO.IdOperacion
+            LEFT JOIN dbo.TA_Operacion AS TAO (NOLOCK)
+                ON coRegistro.IdFactura = TAO.IdDocumento
+            LEFT JOIN dbo.TA_Estatus AS TE (NOLOCK)
+                ON TAO.IdEstatusOperacion = TE.IdEstatus
+            LEFT JOIN dbo.CC_CentroCosto centroCosto (NOLOCK)
+                ON coRegistro.CentroCostos = centroCosto.IdCentroCosto
+            LEFT JOIN dbo.DG_CuentaContable cuentaContable (NOLOCK)
+                ON coRegistro.CuentaContable = cuentaContable.Id
+            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh (NOLOCK)
+                ON coRegistro.IdCatalogoCuentasSH = cuentaSh.IdCatalogoCuentasSH
+            LEFT JOIN dbo.CO_Instalacion instalacion (NOLOCK)
+                ON coRegistro.IdInstalacion = instalacion.IdInstalacion
+			LEFT JOIN dbo.MM_Pedidos PG (NOLOCK)
+				ON fiFact.IdFactura = PG.IdIdentificador
+				AND TAO.IdProveedor = PG.IdProveedorCliente
+				AND PG.IdTipoPedido=1 
+			LEFT JOIN dbo.S_Proveedor AS P (NOLOCK)
+				ON fiFact.Emisor = P.RFC
+			LEFT JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
+				ON C.IdContrato = fiFact.IdContrato
+			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC (NOLOCK)
+				ON C.IdAreaContractual = AC.IdAreaContractual
+			LEFT JOIN @TablaFecha fecha
+				ON TAO.IdOperacion = fecha.IdOperacion
         WHERE TAO.IdTipoOperacion = 14
               AND TAO.idproveedor = @IdProveedor
               AND TE.IdEstatus = @aprobadaRechazada
@@ -186,29 +187,33 @@ BEGIN
 			   PG.IdPedido AS IdPedidoGeneral,
 			   AC.NombreAreaContractual AS AreaContractual ,
 			   fiFact.Moneda
-        FROM dbo.CO_Registro AS coRegistro
-            LEFT JOIN dbo.FI_Factura AS fiFact
+        FROM dbo.CO_Registro AS coRegistro (NOLOCK)
+            LEFT JOIN dbo.FI_Factura AS fiFact (NOLOCK)
                 ON coRegistro.IdFactura = fiFact.IdFactura
-            LEFT JOIN TA_Operacion AS TAO
-                ON TAO.IdDocumento = coRegistro.IdFactura
-            LEFT JOIN TA_Estatus AS TE
-                ON TE.IdEstatus = TAO.IdEstatusOperacion
-            LEFT JOIN dbo.CC_CentroCosto centroCosto
-                ON centroCosto.IdCentroCosto = coRegistro.CentroCostos
-            LEFT JOIN dbo.DG_CuentaContable cuentaContable
-                ON cuentaContable.Id = coRegistro.CuentaContable            
-            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh
-                ON cuentaSh.IdCatalogoCuentasSH = coRegistro.IdCatalogoCuentasSH
-            LEFT JOIN dbo.CO_Instalacion instalacion
-                ON instalacion.IdInstalacion = coRegistro.IdInstalacion
-			LEFT JOIN dbo.MM_Pedidos PG
-				ON PG.IdIdentificador = fiFact.IdFactura AND PG.IdTipoPedido=1 AND TAO.IdProveedor=PG.IdProveedorCliente
-			LEFT JOIN dbo.S_Proveedor AS P ON P.RFC = fiFact.Emisor
-			LEFT JOIN Adinco.dbo.CO_Contrato AS C
-			ON fiFact.IdContrato = C.IdContrato    
-			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
-			ON C.IdAreaContractual = AC.IdAreaContractual
-			LEFT JOIN @TablaFecha fecha ON fecha.IdOperacion = TAO.IdOperacion
+            LEFT JOIN TA_Operacion AS TAO (NOLOCK)
+                ON coRegistro.IdFactura = TAO.IdDocumento
+            LEFT JOIN TA_Estatus AS TE (NOLOCK)
+                ON TAO.IdEstatusOperacion = TE.IdEstatus
+            LEFT JOIN dbo.CC_CentroCosto centroCosto (NOLOCK)
+                ON coRegistro.CentroCostos = centroCosto.IdCentroCosto
+            LEFT JOIN dbo.DG_CuentaContable cuentaContable (NOLOCK)
+                ON coRegistro.CuentaContable = cuentaContable.Id
+            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh (NOLOCK)
+                ON coRegistro.IdCatalogoCuentasSH = cuentaSh.IdCatalogoCuentasSH
+            LEFT JOIN dbo.CO_Instalacion instalacion (NOLOCK)
+                ON coRegistro.IdInstalacion = instalacion.IdInstalacion
+			LEFT JOIN dbo.MM_Pedidos PG (NOLOCK)
+				ON fiFact.IdFactura = PG.IdIdentificador
+				AND TAO.IdProveedor = PG.IdProveedorCliente
+				AND PG.IdTipoPedido=1 
+			LEFT JOIN dbo.S_Proveedor AS P (NOLOCK)
+				ON fiFact.Emisor = P.RFC
+			LEFT JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
+				ON C.IdContrato = fiFact.IdContrato
+			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC (NOLOCK)
+				ON C.IdAreaContractual = AC.IdAreaContractual
+			LEFT JOIN @TablaFecha fecha 
+				ON TAO.IdOperacion = fecha.IdOperacion
         WHERE TAO.IdTipoOperacion = 14
               AND TAO.idproveedor = @IdProveedor
               AND TE.IdEstatus = @aprobadaRechazada
@@ -262,33 +267,34 @@ BEGIN
 			    PG.IdPedido AS IdPedidoGeneral,
 				AC.NombreAreaContractual AS AreaContractual,
 			   fiFact.Moneda
-        FROM dbo.CO_Registro AS coRegistro
-            LEFT JOIN dbo.FI_Factura AS fiFact
+        FROM dbo.CO_Registro AS coRegistro (NOLOCK)
+            LEFT JOIN dbo.FI_Factura AS fiFact (NOLOCK)
                 ON coRegistro.IdFactura = fiFact.IdFactura
-            LEFT JOIN TA_Operacion AS TAO
-                ON TAO.IdDocumento = coRegistro.IdFactura
-            LEFT JOIN TA_Estatus AS TE
-                ON TE.IdEstatus = TAO.IdEstatusOperacion
-            LEFT JOIN dbo.CC_CentroCosto centroCosto
-                ON centroCosto.IdCentroCosto = coRegistro.CentroCostos
-            LEFT JOIN dbo.DG_CuentaContable cuentaContable
-                ON cuentaContable.Id = coRegistro.CuentaContable
-            --LEFT JOIN dbo.CO_LineaPresupuestoMes linea
-            --    ON linea.IdLineaPresupuestoMes = coRegistro.IdLineaPresupuestoMes
-            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh
-                ON cuentaSh.IdCatalogoCuentasSH = coRegistro.IdCatalogoCuentasSH
-            LEFT JOIN dbo.CO_Instalacion instalacion
-                ON instalacion.IdInstalacion = coRegistro.IdInstalacion
-				LEFT JOIN dbo.S_Proveedor AS P ON P.RFC = fiFact.Emisor
-			LEFT JOIN dbo.MM_Pedidos PG
-				ON PG.IdIdentificador = fiFact.IdFactura AND PG.IdTipoPedido=1 AND TAO.IdProveedor=PG.IdProveedorCliente
-			LEFT JOIN Adinco.dbo.CO_Contrato AS C
-			ON fiFact.IdContrato = C.IdContrato    
-			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
-			ON C.IdAreaContractual = AC.IdAreaContractual
-			LEFT JOIN @TablaFecha fecha ON fecha.IdOperacion = TAO.IdOperacion
+            LEFT JOIN TA_Operacion AS TAO (NOLOCK)
+                ON coRegistro.IdFactura = TAO.IdDocumento
+            LEFT JOIN TA_Estatus AS TE (NOLOCK)
+                ON TAO.IdEstatusOperacion = TE.IdEstatus
+            LEFT JOIN dbo.CC_CentroCosto centroCosto (NOLOCK)
+                ON coRegistro.CentroCostos = centroCosto.IdCentroCosto
+            LEFT JOIN dbo.DG_CuentaContable cuentaContable (NOLOCK)
+                ON coRegistro.CuentaContable = cuentaContable.Id
+            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh (NOLOCK)
+                ON coRegistro.IdCatalogoCuentasSH = cuentaSh.IdCatalogoCuentasSH
+            LEFT JOIN dbo.CO_Instalacion instalacion (NOLOCK)
+                ON coRegistro.IdInstalacion = instalacion.IdInstalacion
+			LEFT JOIN dbo.S_Proveedor AS P (NOLOCK)
+				ON fiFact.Emisor = P.RFC
+			LEFT JOIN dbo.MM_Pedidos PG (NOLOCK)
+				ON fiFact.IdFactura = PG.IdIdentificador
+				AND TAO.IdProveedor = PG.IdProveedorCliente
+				AND PG.IdTipoPedido=1 
+			LEFT JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
+				ON fiFact.IdContrato = C.IdContrato    
+			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC (NOLOCK)
+				ON C.IdAreaContractual = AC.IdAreaContractual
+			LEFT JOIN @TablaFecha fecha 
+				ON TAO.IdOperacion = fecha.IdOperacion
         WHERE TAO.IdTipoOperacion = 14
-			  --AND fiFact.IsEliminado != 1
               AND TAO.idproveedor = @IdProveedor
               AND TE.IdEstatus NOT IN ( 1, 2 )
 			  AND fiFact.IsEliminado IS NULL
@@ -342,31 +348,33 @@ BEGIN
 				 PG.IdPedido AS IdPedidoGeneral,
 				  AC.NombreAreaContractual AS AreaContractual,
 			   fiFact.Moneda 
-        FROM dbo.CO_Registro AS coRegistro
-            LEFT JOIN dbo.FI_Factura AS fiFact
+        FROM dbo.CO_Registro AS coRegistro (NOLOCK)
+            LEFT JOIN dbo.FI_Factura AS fiFact (NOLOCK)
                 ON coRegistro.IdFactura = fiFact.IdFactura
-            LEFT JOIN TA_Operacion AS TAO
-                ON TAO.IdDocumento = coRegistro.IdFactura
-            LEFT JOIN TA_Estatus AS TE
-                ON TE.IdEstatus = TAO.IdEstatusOperacion
-            LEFT JOIN dbo.CC_CentroCosto centroCosto
-                ON centroCosto.IdCentroCosto = coRegistro.CentroCostos
- LEFT JOIN dbo.DG_CuentaContable cuentaContable
-                ON cuentaContable.Id = coRegistro.CuentaContable
-            --LEFT JOIN dbo.CO_LineaPresupuestoMes linea
-            --    ON linea.IdLineaPresupuestoMes = coRegistro.IdLineaPresupuestoMes
-            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh
-                ON cuentaSh.IdCatalogoCuentasSH = coRegistro.IdCatalogoCuentasSH
-            LEFT JOIN dbo.CO_Instalacion instalacion
-                ON instalacion.IdInstalacion = coRegistro.IdInstalacion
-				LEFT JOIN dbo.S_Proveedor AS P ON P.RFC = fiFact.Emisor
-			LEFT JOIN dbo.MM_Pedidos PG
-				ON PG.IdIdentificador = fiFact.IdFactura AND PG.IdTipoPedido=1 AND TAO.IdProveedor=PG.IdProveedorCliente
-			LEFT JOIN Adinco.dbo.CO_Contrato AS C
-			ON fiFact.IdContrato = C.IdContrato    
-			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
-			ON C.IdAreaContractual = AC.IdAreaContractual
-			LEFT JOIN @TablaFecha fecha ON fecha.IdOperacion = TAO.IdOperacion
+            LEFT JOIN TA_Operacion AS TAO (NOLOCK)
+                ON coRegistro.IdFactura = TAO.IdDocumento
+            LEFT JOIN TA_Estatus AS TE (NOLOCK)
+                ON TAO.IdEstatusOperacion = TE.IdEstatus
+            LEFT JOIN dbo.CC_CentroCosto centroCosto (NOLOCK)
+                ON coRegistro.CentroCostos = centroCosto.IdCentroCosto
+			LEFT JOIN dbo.DG_CuentaContable cuentaContable (NOLOCK)
+                ON coRegistro.CuentaContable = cuentaContable.Id
+            LEFT JOIN dbo.CO_CatalogoCuentaSH cuentaSh (NOLOCK)
+                ON coRegistro.IdCatalogoCuentasSH = cuentaSh.IdCatalogoCuentasSH
+            LEFT JOIN dbo.CO_Instalacion instalacion (NOLOCK)
+                ON coRegistro.IdInstalacion= instalacion.IdInstalacion
+			LEFT JOIN dbo.S_Proveedor AS P (NOLOCK)
+				ON fiFact.Emisor = P.RFC
+			LEFT JOIN dbo.MM_Pedidos PG (NOLOCK)
+				ON fiFact.IdFactura = PG.IdIdentificador
+				AND TAO.IdProveedor = PG.IdProveedorCliente
+				AND PG.IdTipoPedido = 1 
+			LEFT JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
+				ON fiFact.IdContrato = C.IdContrato    
+			LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC (NOLOCK)
+				ON C.IdAreaContractual = AC.IdAreaContractual
+			LEFT JOIN @TablaFecha fecha 
+				ON TAO.IdOperacion = fecha.IdOperacion
         WHERE TAO.IdTipoOperacion = 14
                AND TAO.idproveedor = @IdProveedor          
         ORDER BY coRegistro.IdRegistro DESC
