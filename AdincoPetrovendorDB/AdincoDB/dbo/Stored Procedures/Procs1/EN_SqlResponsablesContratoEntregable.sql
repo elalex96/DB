@@ -1,7 +1,25 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'EN_SqlResponsablesContratoEntregable'
+)
+    DROP PROCEDURE EN_SqlResponsablesContratoEntregable;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- 24/11/2021 MC quitar prints ISSUE 383 adincopetrodb
 -- =============================================
-CREATE PROCEDURE [dbo].[EN_SqlResponsablesContratoEntregable] -- 16841,10061,3,10002,10001
+-- Author:  <Alexander Gomez>  
+-- Create date: 09/03/2024
+-- Description: validacion de responsables de entregables
+-- =============================================  
+CREATE PROCEDURE [dbo].[EN_SqlResponsablesContratoEntregable] 
     @IdContratoEntregable INT,
     @idUsuarioSession INT,
     @idContrato INT,
@@ -10,6 +28,13 @@ CREATE PROCEDURE [dbo].[EN_SqlResponsablesContratoEntregable] -- 16841,10061,3,1
 AS
 BEGIN
     SET NOCOUNT ON;
+
+	IF @idUsuario IS NULL
+	BEGIN
+		RAISERROR (N'SE DEBE SELECCIONAR UN REVISOR.',11,1);
+	END
+	ELSE
+	BEGIN
 
     IF OBJECT_ID('tempdb..#InstanciasEstatus') IS NOT NULL
         DROP TABLE #InstanciasEstatus;
@@ -195,5 +220,7 @@ BEGIN
   
     SET @Error = N'NOHAYERROR: Existen ' + LTRIM(@CountInstRevAprob)+ N' entregables Pendientes de Revisar/Aprobar a los cuales se aplicó el mismo cambio.';
     SELECT @Error AS error;
+
+	END
 
 END;

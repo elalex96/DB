@@ -3961,5 +3961,6 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ReporteGINBDCN.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ConsultaAñosPorContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ReporteGINBDCNPorMesPresentacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_AdquisicionContratacionCNHPorPresupuesto.sql" />
   </ItemGroup>
 </Project>
