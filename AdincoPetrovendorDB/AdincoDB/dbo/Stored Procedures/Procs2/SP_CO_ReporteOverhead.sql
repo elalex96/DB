@@ -1,4 +1,12 @@
-﻿CREATE PROCEDURE [dbo].[SP_CO_ReporteOverhead] 
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_CO_ReporteOverhead'
+)
+    DROP PROCEDURE SP_CO_ReporteOverhead
+GO
+CREATE PROCEDURE [dbo].[SP_CO_ReporteOverhead] 
     @ContratoId INT,
     @UsuarioId INT,
     @MesInicio DATE,
@@ -25,6 +33,15 @@ BEGIN
     DECLARE @GastosConFacturaPPD INT,
             @GastosConFacturaPUE INT,
             @GastosConPedCom INT
+
+	DECLARE @Aprobado INT = 10004,
+		@TipoFactura INT = 1,
+		@TipoPedimentoImportacion INT = 2,
+		@TipoComprobanteExtranjero INT = 3,
+		@TipoComplementoPago INT = 6,
+		@PESO INT = 1,
+		@DOLAR INT = 2
+
     --
     CREATE TABLE #SumaDePagosDolares
     (
@@ -125,25 +142,7 @@ BEGIN
            ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO') AS UUID,
            FI_Factura.IdFactura,
            CO_Registro.MontoRegistro,
-           CASE
-               WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'I%' THEN
-                   'I'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                    OR FI_Factura.TipoComprobante LIKE 'E%' THEN
-                   'E'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                    OR FI_Factura.TipoComprobante LIKE 'T%' THEN
-                   'T'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                    OR FI_Factura.TipoComprobante LIKE 'N%' THEN
-                   'N'
-               WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                    OR FI_Factura.TipoComprobante LIKE 'P%' THEN
-                   'P'
-               ELSE
-                   'NA'
-           END AS TipoComprobante,
+           ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA') AS TipoComprobante,
            SUM(   CASE
                       WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0 THEN
                           CAST(ROUND((ISNULL(CO_Registro.MontoRegistro, 0) / CO_TipoCambioDiario.TipoCambio), 2) AS DECIMAL(15, 2))
@@ -151,29 +150,14 @@ BEGIN
                           0
                   END
               ) AS [RC21_22],
-           CASE
-               WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                    OR FI_Factura.MetodoPago LIKE '%PUE%'
-                    OR FI_Factura.FormaPago LIKE '%exhibi%'
-                    OR FI_Factura.FormaPago LIKE '%PUE%' THEN
-                   'PUE'
-               WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                    OR FI_Factura.MetodoPago LIKE '%dife%'
-                    OR FI_Factura.MetodoPago LIKE '%PPD%'
-                    OR FI_Factura.FormaPago LIKE '%parcia%'
-                    OR FI_Factura.FormaPago LIKE '%dife%'
-                    OR FI_Factura.FormaPago LIKE '%PPD%' THEN
-                   'PPD'
-               WHEN FI_Factura.TipoComprobante = 'P' THEN
-                   'PPD'
-           END AS MetodoPago,
+           ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD') AS MetodoPago,
            FI_Factura.Fecha,
            FI_Factura.IdMoneda
     FROM CO_Registro (NOLOCK)
         JOIN FI_Factura (NOLOCK)
             ON CO_Registro.IdFactura = FI_Factura.IdFactura
-               AND CO_Registro.IdEstado = 10004
-               AND CO_Registro.CvTipoDocFacturacion = 1
+               AND CO_Registro.IdEstado = @Aprobado
+               AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
         JOIN CO_Contrato (NOLOCK)
             ON CO_Contrato.IdContrato = FI_Factura.IdContrato
         JOIN CO_LineaPresupuestoMes (NOLOCK)
@@ -192,51 +176,19 @@ BEGIN
                                1
                            )
           BETWEEN @MesInicio AND @MesFin
-          AND CO_Registro.IdEstado = 10004
-          AND CO_Registro.CvTipoDocFacturacion = 1
+          AND CO_Registro.IdEstado = @Aprobado
+          AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
           AND CO_Servicio.NombreServicio LIKE '%overhead%'
           AND CO_LineaPresupuestoMes.IdPresupuesto = CO_LineaPresupuestoMes.IdPresupuesto
     GROUP BY CO_Registro.IdRegistro,
              ISNULL(FI_Factura.UUID, 'NÚMERO NO REGISTRADO'),
              FI_Factura.IdFactura,
              CO_Registro.MontoRegistro,
-             CASE
-                 WHEN FI_Factura.TipoComprobante LIKE '%ingreso%'
-                      OR FI_Factura.TipoComprobante LIKE 'I%' THEN
-                     'I'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%egreso%'
-                      OR FI_Factura.TipoComprobante LIKE 'E%' THEN
-                     'E'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%traslado%'
-                      OR FI_Factura.TipoComprobante LIKE 'T%' THEN
-                     'T'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%nómina%'
-                      OR FI_Factura.TipoComprobante LIKE 'N%' THEN
-                     'N'
-                 WHEN (FI_Factura.TipoComprobante) LIKE '%pago%'
-                      OR FI_Factura.TipoComprobante LIKE 'P%' THEN
-                     'P'
-                 ELSE
-                     'NA'
-             END,
-             CASE
-                 WHEN FI_Factura.MetodoPago LIKE '%exhibi%'
-                      OR FI_Factura.MetodoPago LIKE '%PUE%'
-                      OR FI_Factura.FormaPago LIKE '%exhibi%'
-                      OR FI_Factura.FormaPago LIKE '%PUE%' THEN
-                     'PUE'
-                 WHEN FI_Factura.MetodoPago LIKE '%parcia%'
-                      OR FI_Factura.MetodoPago LIKE '%dife%'
-                      OR FI_Factura.MetodoPago LIKE '%PPD%'
-                      OR FI_Factura.FormaPago LIKE '%parcia%'
-                      OR FI_Factura.FormaPago LIKE '%dife%'
-                      OR FI_Factura.FormaPago LIKE '%PPD%' THEN
-                     'PPD'
-                 WHEN FI_Factura.TipoComprobante = 'P' THEN
-                     'PPD'
-             END,
+             ISNULL(FI_Factura.TipoComprobanteEstandarizado, 'NA'), 
+             ISNULL(FI_Factura.MetodoPagoEstandarizado, 'PPD'),
              FI_Factura.Fecha,
              FI_Factura.IdMoneda
+
     /*Facturas Con Tipo de Cambio de Transferencia*/
     INSERT INTO #MontosTotalTransferenciaPPD
     (
@@ -272,7 +224,7 @@ BEGIN
     FROM FI_Transfer (NOLOCK)
         JOIN FI_TransferFactura (NOLOCK)
             ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-               AND FI_TransferFactura.CvTipoDocFacturacion = 6
+               AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
         JOIN FI_ComplementoDePago (NOLOCK)
             ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
         JOIN FI_Factura (NOLOCK)
@@ -297,7 +249,7 @@ BEGIN
                AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
     WHERE #Facturas.MetodoPago = 'PPD'
           AND #Facturas.TipoComprobante = 'I'
-          AND FI_TransferFactura.CvTipoDocFacturacion = 6
+          AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
           AND CO_TipoCambioDiario.IdMoneda = FI_Factura_CPDR.IdMoneda
     GROUP BY FI_Factura.IdFactura,
              FI_Factura.UUID,
@@ -316,7 +268,7 @@ BEGIN
            FI_ComplementoDePago.MonedaP AS MonedaCP,
            CAST((SUM(FI_CPDocRelacionado.ImpPagado * CO_TipoCambioDiario.TipoCambio)) AS DECIMAL(15, 2)) AS MontoPesos,
            CAST((SUM(   CASE
-                            WHEN PV_TipoMoneda.IdMoneda = 2 THEN
+                            WHEN PV_TipoMoneda.IdMoneda = @DOLAR THEN
                                 FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
                             ELSE
                                 FI_CPDocRelacionado.ImpPagado
@@ -329,7 +281,7 @@ BEGIN
     FROM FI_Transfer (NOLOCK)
         JOIN FI_TransferFactura (NOLOCK)
             ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-               AND FI_TransferFactura.CvTipoDocFacturacion = 6
+               AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
         JOIN FI_ComplementoDePago (NOLOCK)
             ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
         JOIN FI_Factura (NOLOCK)
@@ -352,7 +304,7 @@ BEGIN
                AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
     WHERE #Facturas.MetodoPago = 'PPD'
           AND #Facturas.TipoComprobante = 'I'
-          AND FI_TransferFactura.CvTipoDocFacturacion = 6
+          AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
           AND FI_Transfer.IdMoneda <> PV_TipoMoneda.IdMoneda
           AND PV_TipoMoneda.IdMoneda = FI_Factura_CPDR.IdMoneda
     GROUP BY FI_Factura.IdFactura,
@@ -373,15 +325,15 @@ BEGIN
            1,
            FI_ComplementoDePago.MonedaP AS MonedaCP,
            CAST((SUM(   CASE
-                            WHEN PV_TipoMoneda.IdMoneda = 2
-                                 AND FI_Factura_CPDR.IdMoneda = 1 THEN
+                            WHEN PV_TipoMoneda.IdMoneda = @DOLAR
+                                 AND FI_Factura_CPDR.IdMoneda = @PESO THEN
                                 FI_CPDocRelacionado.ImpPagado * 1
                         END
                     )
                 ) AS DECIMAL(15, 2)) AS MontoPesos,
            CAST((SUM(   CASE
-                            WHEN PV_TipoMoneda.IdMoneda = 2
-                                 AND FI_Factura_CPDR.IdMoneda = 1 THEN
+                            WHEN PV_TipoMoneda.IdMoneda = @DOLAR
+                                 AND FI_Factura_CPDR.IdMoneda = @PESO THEN
                                 FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
                             ELSE
                                 FI_CPDocRelacionado.ImpPagado
@@ -394,7 +346,7 @@ BEGIN
     FROM FI_Transfer (NOLOCK)
         JOIN FI_TransferFactura (NOLOCK)
             ON FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer
-               AND FI_TransferFactura.CvTipoDocFacturacion = 6
+               AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
         JOIN FI_ComplementoDePago (NOLOCK)
             ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura
         JOIN FI_Factura (NOLOCK)
@@ -417,7 +369,7 @@ BEGIN
                AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
     WHERE #Facturas.MetodoPago = 'PPD'
           AND #Facturas.TipoComprobante = 'I'
-          AND FI_TransferFactura.CvTipoDocFacturacion = 6
+          AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
           AND FI_Transfer.IdMoneda = PV_TipoMoneda.IdMoneda
           AND PV_TipoMoneda.IdMoneda <> FI_Factura_CPDR.IdMoneda
     GROUP BY FI_Factura.IdFactura,
@@ -473,6 +425,7 @@ BEGIN
     WHERE #Facturas.MetodoPago = 'PUE'
           AND #Facturas.TipoComprobante = 'I'
           AND CO_TipoCambioDiario.IdMoneda = #Facturas.IdMoneda;
+
     INSERT INTO #SumaDePagosDolares
     (
         UUID,
@@ -528,6 +481,7 @@ BEGIN
             ON #Facturas.Idfactura = #SumaDePagosDolares.Idfactura
     WHERE #Facturas.MetodoPago = 'PUE'
           AND #Facturas.TipoComprobante = 'I';
+
     /*PEDIMENTO COMPROBANTE*/
     INSERT INTO #MontosConvertidosPedimentosCom
     (
@@ -551,8 +505,8 @@ BEGIN
     FROM CO_Registro (NOLOCK)
         JOIN FI_PedimentoComprobante (NOLOCK)
             ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
-               AND CO_Registro.IdEstado = 10004
-               AND CO_Registro.CvTipoDocFacturacion IN ( 2, 3 )
+               AND CO_Registro.IdEstado = @Aprobado
+               AND CO_Registro.CvTipoDocFacturacion IN ( @TipoPedimentoImportacion, @TipoComprobanteExtranjero )
                AND FI_PedimentoComprobante.IdContrato = @ContratoId
         JOIN CO_Contrato (NOLOCK)
             ON FI_PedimentoComprobante.IdContrato = CO_Contrato.IdContrato
@@ -577,8 +531,8 @@ BEGIN
                                1
                            )
           BETWEEN @MesInicio AND @MesFin
-          AND CO_Registro.IdEstado = 10004
-          AND CO_Registro.CvTipoDocFacturacion IN ( 2, 3 )
+          AND CO_Registro.IdEstado = @Aprobado
+          AND CO_Registro.CvTipoDocFacturacion IN ( @TipoPedimentoImportacion, @TipoComprobanteExtranjero )
           AND CO_Servicio.NombreServicio LIKE '%overhead%'
     GROUP BY CO_Registro.IdRegistro,
              FI_PedimentoComprobante.IdPedimentoComprobante,
@@ -632,7 +586,7 @@ BEGIN
         FROM CO_Registro (NOLOCK)
             JOIN FI_Factura FI_Factura_F (NOLOCK)
                 ON CO_Registro.IdFactura = FI_Factura_F.IdFactura
-                   AND CO_Registro.IdEstado = 10004
+                   AND CO_Registro.IdEstado = @Aprobado
             JOIN #MontosTotalTransferenciaPUE
                 ON #MontosTotalTransferenciaPUE.Idfactura = CO_Registro.IdFactura
                    AND #MontosTotalTransferenciaPUE.IdRegistro = CO_Registro.IdRegistro
@@ -667,8 +621,8 @@ BEGIN
                                    1
                                )
               BETWEEN @MesInicio AND @MesFin
-              AND CO_Registro.IdEstado = 10004
-              AND CO_Registro.CvTipoDocFacturacion = 1
+              AND CO_Registro.IdEstado = @Aprobado
+              AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
               AND ISNULL(CONVERT(INT, FI_Factura_F.ProcesadoSIPAC), 0) = 0
               AND CO_Servicio.NombreServicio LIKE '%overhead%'
               AND #MontosTotalTransferenciaPUE.MetodoPago = 'PUE'
@@ -704,8 +658,8 @@ BEGIN
         FROM CO_Registro (NOLOCK)
             JOIN FI_Factura FI_Factura_F (NOLOCK)
                 ON CO_Registro.IdFactura = FI_Factura_F.IdFactura
-                   AND CO_Registro.IdEstado = 10004
-                   AND CO_Registro.CvTipoDocFacturacion = 1
+                   AND CO_Registro.IdEstado = @Aprobado
+                   AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
             JOIN FI_CPDocRelacionado (NOLOCK)
                 ON FI_Factura_F.UUID = FI_CPDocRelacionado.IdDocumento
             JOIN FI_ComplementoDePago (NOLOCK)
@@ -745,8 +699,8 @@ BEGIN
                                    1
                                )
               BETWEEN @MesInicio AND @MesFin
-              AND CO_Registro.IdEstado = 10004
-              AND CO_Registro.CvTipoDocFacturacion = 1
+              AND CO_Registro.IdEstado = @Aprobado
+              AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
               AND ISNULL(CONVERT(INT, FI_Factura_F.ProcesadoSIPAC), 0) = 0
               AND CO_Servicio.NombreServicio LIKE '%overhead%'
               AND FI_Factura.UUID NOT IN (
@@ -787,8 +741,8 @@ BEGIN
                    AND FI_Transfer.IdContrato = FI_PedimentoComprobante.IdContrato
             JOIN CO_Registro (NOLOCK)
                 ON CO_Registro.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
-                   AND CO_Registro.IdEstado = 10004
-                   AND CO_Registro.CvTipoDocFacturacion IN ( 2, 3 )
+                   AND CO_Registro.IdEstado = @Aprobado
+                   AND CO_Registro.CvTipoDocFacturacion IN ( @TipoPedimentoImportacion, @TipoComprobanteExtranjero )
             JOIN CO_LineaPresupuestoMes (NOLOCK)
                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
             JOIN CO_Presupuesto (NOLOCK)
@@ -821,8 +775,8 @@ BEGIN
                                    1
                                )
               BETWEEN @MesInicio AND @MesFin
-              AND CO_Registro.IdEstado = 10004
-              AND CO_Registro.CvTipoDocFacturacion IN ( 2, 3 )
+              AND CO_Registro.IdEstado = @Aprobado
+              AND CO_Registro.CvTipoDocFacturacion IN ( @TipoPedimentoImportacion, @TipoComprobanteExtranjero )
               AND ISNULL(CONVERT(INT, FI_PedimentoComprobante.ProcesadoSIPAC), 0) = 0
               AND CO_Servicio.NombreServicio LIKE '%overhead%'
               AND ISNULL(FI_PedimentoComprobante.EsnotaCredito, 0) <> 1
@@ -835,6 +789,7 @@ BEGIN
                  SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10),
                  ISNULL(CO_Presupuesto.IdPresupuesto, 0)        
     END;
+
 	SELECT [RF_00],
                [RI_00],
                [RF01_01],
