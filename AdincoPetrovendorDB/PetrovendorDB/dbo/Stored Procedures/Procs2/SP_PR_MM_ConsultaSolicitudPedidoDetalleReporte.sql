@@ -49,8 +49,8 @@ AS
 		ON SPD.IdSolicitudPedidoDetalle = SPDLP.IdSolicitudPedidoDetalle
 	LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp (NOLOCK)
 		ON SPDLP.IdLineaPresupuesto = lp.IdLineaPresupuestoMes
-	WHERE SP.IdSolicitudPedido = 39253
-		AND SP.IdProveedor = 999;
+	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido
+		AND SP.IdProveedor = @IdProveedor;
 
     -- Insert statements for procedure here
 
