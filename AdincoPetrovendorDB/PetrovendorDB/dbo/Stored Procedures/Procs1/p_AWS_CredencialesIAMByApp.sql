@@ -1,4 +1,10 @@
-﻿
+USE PETROVENDOR
+DROP PROC IF EXISTS p_AWS_CredencialesIAMByApp
+GO
+-- Author:		David
+-- Create date: marzo 31 24
+-- Description:	Se optimiza sp Issue #2686 petrovendor
+-- =============================================
 CREATE PROCEDURE p_AWS_CredencialesIAMByApp
 (
 	@IdAplicacion int
@@ -6,16 +12,14 @@ CREATE PROCEDURE p_AWS_CredencialesIAMByApp
 as
 BEGIN
 
-
-EXEC Adinco.dbo.p_AWS_CredencialesIAMByAplication @IdAplicacion = @IdAplicacion -- int
-
-		--SELECT	aws.Id,
-		--		aws.AccessKey,
-		--		aws.SecretKey,
-		--		aws.ServiceUrl,
-		--		aws.DefaultBucket
-		--FROM	ADINCO..Amazon_Credenciales aws 
-		--WHERE	IdAplicacion				=	2
-		--and		aws.Esactivo				=	1
+SELECT 
+	aws.Id
+	,aws.AccessKey
+	,aws.SecretKey
+	,aws.ServiceUrl
+	,aws.DefaultBucket
+	FROM ADINCO..Amazon_Credenciales aws 
+		WHERE IdAplicacion = @IdAplicacion
+		and aws.Esactivo =1
 
 end
