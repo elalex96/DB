@@ -1,7 +1,25 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_CF_SolicitudesDescarga'
+)
+    DROP PROCEDURE SP_EN_CF_SolicitudesDescarga;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <22/02/2023>
 -- Description:	<Consulta de las solicitudes de descarga de PROCRUA>
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <12/03/2024>
+-- Description:	<filtro de contratos>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_CF_SolicitudesDescarga]
 	-- Add the parameters for the stored procedure here
@@ -41,6 +59,7 @@ BEGIN
 	JOIN Adinco..CO_AreaContractual AS A (NOLOCK)
 		ON C.IdAreaContractual = A.IdAreaContractual
 	WHERE SD.Tipo = @Tipo
+		AND SD.IdContrato = @IdContrato
 	ORDER BY FechaRegistroSolicitud DESC;
 
 END
