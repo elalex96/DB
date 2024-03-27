@@ -188,6 +188,9 @@ DECLARE
 			NULL       -- EN_MsjEnviado - bit
 			from #USUARIOSCOMPRAS U
 	END
+
+	IF @IdEstatusOperacion != 1
+	BEGIN
 	--ENVIO NOTIFICACION USUARIO REQUISITOR / APLICA PARA OPERACIÓN APROBADA Y RECHAZADA
 	 SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
 	 INSERT INTO Adinco.dbo.S_Notificacion
@@ -245,4 +248,7 @@ DECLARE
 				ON UA.IdUsuario = TOO.IdAsignador 
         WHERE TOO.IdOperacion = @IdOperacion
         ORDER BY NoSecuencia ASC
+
+	END
 END
+GO
