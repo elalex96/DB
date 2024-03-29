@@ -1,13 +1,27 @@
-USE ADINCO
+USE [Adinco]
 GO
-DROP PROC IF EXISTS Mobile_Sp_EnvioNotificacionFinalizacionSolped
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'Mobile_Sp_EnvioNotificacionFinalizacionSolped'
+)
+    DROP PROCEDURE Mobile_Sp_EnvioNotificacionFinalizacionSolped;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		Luis David
 -- Create date: 18/10/2023
 -- Description:	sdk/222 - Se controla el envío de notificaciones cuando se rechaza la operación
 -- =============================================
-CREATE PROC Mobile_Sp_EnvioNotificacionFinalizacionSolped
+-- Author:		Alexander Gomez
+-- Create date: 25/03/2024
+-- Description:	Se corrige la duplicación en envio de notificaciones
+-- =============================================
+CREATE PROC [dbo].[Mobile_Sp_EnvioNotificacionFinalizacionSolped] 
 @IdSolicitudPedido INT,
 @IdOperacion int,
 @SolpedEncriptada varchar(max)
@@ -153,7 +167,7 @@ DECLARE
 				EN_MsjEnviado
 			)
 			select 
-			@IDNOTIFICACION + Id,
+			(@IDNOTIFICACION + Id),
 			U.Correo,
 			CONCAT('Solicitud Oferta ',@IdSolicitudPedido,' Aprobada'),
 			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(@htmlOferta,
@@ -174,8 +188,11 @@ DECLARE
 			NULL       -- EN_MsjEnviado - bit
 			from #USUARIOSCOMPRAS U
 	END
+
+	IF @IdEstatusOperacion != 1
+	BEGIN
 	--ENVIO NOTIFICACION USUARIO REQUISITOR / APLICA PARA OPERACIÓN APROBADA Y RECHAZADA
-	 SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
+	 SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
 	 INSERT INTO Adinco.dbo.S_Notificacion
 			(
 				    IdNotificacion,
@@ -192,7 +209,8 @@ DECLARE
 				    De,
 				    EN_MsjEnviado
 			)
-			SELECT @IDNOTIFICACION,
+			SELECT 
+			ROW_NUMBER() OVER(ORDER BY NoSecuencia ASC) + @IDNOTIFICACION,
 			U.Correo,
 			CONCAT('Fin Aprobación ',TTO.NombreOperacion,' ',@IdSolicitudPedido),
 			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
@@ -204,8 +222,7 @@ DECLARE
 			'##STATUS##',TAE.Name),
 			'##AREA_CONTRACTUAL##',@NombreAreaContractual),
 			'##NUMERO_OPERACION##',@IdSolicitudPedido),
-			'##URL_TAREA##',CONCAT('https://procura.adinco.mx/04Tareas/detalle.aspx?num_operacion=',dbo.fnCustomPass(8,'C'),@IdOperacion,dbo.fnCustomPass(8,'C'),'&num_user=',dbo.fnCustomPass(8,'C'),U.IdUsuario,dbo.fnCustomPass(8,'C'),'&tp_user=',dbo.fnCustomPass(8
-,'C'),'2',dbo.fnCustomPass(8,'C'))),
+			'##URL_TAREA##',CONCAT('https://procura.adinco.mx/04Tareas/detalle.aspx?num_operacion=',dbo.fnCustomPass(8,'C'),@IdOperacion,dbo.fnCustomPass(8,'C'),'&num_user=',dbo.fnCustomPass(8,'C'),U.IdUsuario,dbo.fnCustomPass(8,'C'),'&tp_user=',dbo.fnCustomPass(8,'C'),'2',dbo.fnCustomPass(8,'C'))),
 			'##ANIO_ACTUAL##',@AnioActual),
 			DATEADD(MINUTE,1,GETDATE()),
 			0,      -- Enviada - bit
@@ -231,4 +248,7 @@ DECLARE
 				ON UA.IdUsuario = TOO.IdAsignador 
         WHERE TOO.IdOperacion = @IdOperacion
         ORDER BY NoSecuencia ASC
+
+	END
 END
+GO
