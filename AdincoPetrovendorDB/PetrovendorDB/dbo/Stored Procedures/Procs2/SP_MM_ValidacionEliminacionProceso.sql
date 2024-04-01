@@ -1,4 +1,8 @@
-﻿-- =============================================
+use petrovendor
+go
+drop proc if exists SP_MM_ValidacionEliminacionProceso
+go
+-- =============================================
 -- Author:		Daniel Cruz
 -- Create date: 31-05-2018
 -- Description:	/*CONSULTAR ESTATUS DE PROCESOS*/
@@ -12,6 +16,10 @@
 -- Create date: <25/08/2022>
 -- Description:	Optimización de sp
 -- =============================================
+-- Author:		David
+-- Create date: marzo 31 24
+-- Description:	Se optimiza sp Issue #2686 petrovendor
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ValidacionEliminacionProceso] 
     -- Add the parameters for the stored procedure here
     @IdProceso INT,
@@ -20,170 +28,148 @@ CREATE PROCEDURE [dbo].[SP_MM_ValidacionEliminacionProceso]
 AS
 BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
-    -- interfering with SELECT statements.
     SET NOCOUNT ON;
-	DECLARE @IDELIMINADO INT = 0
 
-	IF @Proceso='ACEPTACION_FACTURA' 
-	BEGIN 
-		/*VALIDAR EXISTE UNA ACEPTACIÓN DE FACTURA OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM dbo.MM_AceptacionFactura  (NOLOCK)
-		WHERE IdAceptacionPedido = @IdProceso
+    DECLARE @IDELIMINADO INT = 0
 
-		/*NO EXISTE ACEPTACION DE FACTURA OBTENER EL IDELIMINADO DE LA ULTIMA APROBACIÓN DE ACEPTACION CARTA CONTENIDO NACIONAL */
-		/*PARA LLEGAR A ESTE PUNTO SE TIENE QUE HABER TENIDO UNA CARTA DE CONTENIDO NACIONAL APROBADA*/
-		IF ISNULL(@IDELIMINADO,0) =0  		
-			SELECT TOP 1 @IDELIMINADO= IdEliminado 
-			FROM dbo.MM_AceptacionCartaPCN  (NOLOCK)
-			WHERE IdAceptacionPedido = @IdProceso 
-			ORDER BY CreadoEl DESC 
+    IF @Proceso = 'ACEPTACION_FACTURA' 
+    BEGIN 
+        /* VALIDAR EXISTE UNA ACEPTACIÓN DE FACTURA OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM dbo.MM_AceptacionFactura (NOLOCK)
+        WHERE IdAceptacionPedido = @IdProceso
 
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
+        /* NO EXISTE ACEPTACION DE FACTURA OBTENER EL IDELIMINADO DE LA ULTIMA APROBACIÓN DE ACEPTACION CARTA CONTENIDO NACIONAL */
+        /* PARA LLEGAR A ESTE PUNTO SE TIENE QUE HABER TENIDO UNA CARTA DE CONTENIDO NACIONAL APROBADA */
+        IF ISNULL(@IDELIMINADO,0) = 0
+        BEGIN
+            SELECT TOP 1 @IDELIMINADO = IdEliminado 
+            FROM dbo.MM_AceptacionCartaPCN (NOLOCK)
+            WHERE IdAceptacionPedido = @IdProceso 
+            ORDER BY CreadoEl DESC 
+        END
 
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END
 
-	END 
+    IF @Proceso = 'ACEPTACION_CARTA_CN' 
+    BEGIN 
+        /* VALIDAR EXISTE UNA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM dbo.MM_AceptacionCartaPCN (NOLOCK)
+        WHERE IdAceptacionPedido = @IdProceso
 
-	IF @Proceso='ACEPTACION_CARTA_CN' 
-	BEGIN 
-		/*VALIDAR EXISTE UNA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM dbo.MM_AceptacionCartaPCN (NOLOCK)
-		WHERE IdAceptacionPedido = @IdProceso
+        /* NO EXISTE ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINADO DE LA ACEPTACION PEDIDO */
+        /* PARA LLEGAR A ESTE PUNTO TIENE QUE EXISTIR UNA ACEPTACIÓN DE PEDIDO */
+        IF ISNULL(@IDELIMINADO,0) = 0
+        BEGIN
+            SELECT @IDELIMINADO = IdEliminado 
+            FROM dbo.MM_AceptacionPedido (NOLOCK)
+            WHERE IdAceptacionPedido = @IdProceso 
+        END
 
-		/*NO EXISTE ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINADO DE LA ACEPTACION PEDIDO */
-		/*PARA LLEGAR A ESTE PUNTO TIENE QUE EXISTIR UNA ACEPTACIÓN DE PEDIDO*/
-		IF ISNULL(@IDELIMINADO,0) =0  		
-			SELECT @IDELIMINADO= IdEliminado 
-			FROM dbo.MM_AceptacionPedido (NOLOCK)
-			WHERE IdAceptacionPedido = @IdProceso 
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END
 
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
+    /* USO EN ORDEN DE COMPRA (PETROVENDOR) Y PEDIDO (PROCURA) */
+    IF @Proceso = 'PEDIDO' 
+    BEGIN 
+        /* VALIDAR EXISTE UNA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM dbo.MM_Pedido (NOLOCK)
+        WHERE IdPedido = @IdProceso
 
-	END 
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END
 
-	/*USO EN ORDEN DE COMPRA (PETROVENDOR) Y PEDIDO (PROCURA)*/
-	IF @Proceso='PEDIDO' 
-	BEGIN 
-		/*VALIDAR EXISTE UNA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM dbo.MM_Pedido (NOLOCK)
-		WHERE IdPedido = @IdProceso
-				 
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
+    IF @Proceso = 'COTIZACION' 
+    BEGIN 
+        /* VALIDAR EXISTE UNA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM dbo.MM_PeticionOferta (NOLOCK)
+        WHERE IdPeticionOferta = @IdProceso
 
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK) 
+        WHERE IdEliminacion = @IDELIMINADO
+    END
 
-	END 
+    IF @Proceso = 'COMPROBANTE_EXTRANJERO' 
+    BEGIN 
+        /* VALIDAR EXISTE UN PEDIMENTO EXTRANJERO OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = PC.IdEliminado 
+        FROM dbo.FI_PedimentoComprobante PC (NOLOCK)
+        JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC (NOLOCK) ON PC.IdPedimentoComprobante = APC.IdPedimentoComprobante
+        JOIN dbo.MM_AceptacionPedido AP (NOLOCK) ON APC.IdAceptacionPedido = AP.IdAceptacionPedido
+        WHERE AP.IdAceptacionPedido = @IdProceso
 
-	IF @Proceso='COTIZACION' 
-	BEGIN 
-		/*VALIDAR EXISTE UNA ACEPTACIÓN DE CARTA DE CONTENIDO NACIONAL OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM dbo.MM_PeticionOferta (NOLOCK)
-		WHERE IdPeticionOferta = @IdProceso
-				 
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion (NOLOCK) 
-		WHERE IdEliminacion=@IDELIMINADO
+        /* NO EXISTE PEDIMENTO EXTRANJERO OBTENER EL IDELIMINADO DE LA ACEPTACION PEDIDO */
+        /* PARA LLEGAR A ESTE PUNTO TIENE QUE EXISTIR UNA ACEPTACIÓN DE PEDIDO */
+        IF ISNULL(@IDELIMINADO,0) = 0
+        BEGIN
+            SELECT @IDELIMINADO = IdEliminado 
+            FROM dbo.MM_AceptacionPedido (NOLOCK)
+            WHERE IdAceptacionPedido = @IdProceso 
+        END
 
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END 
 
-	END 
+    IF @Proceso = 'ACEPTACION_PEDIDO' 
+    BEGIN 
+        /* VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM dbo.MM_AceptacionPedido (NOLOCK)
+        WHERE IdAceptacionPedido = @IdProceso 
 
-	IF @Proceso='COMPROBANTE_EXTRANJERO' 
-	BEGIN 
-		/*VALIDAR EXISTE UN PEDIMENTO EXTRANJERO OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= PC.IdEliminado 
-		FROM dbo.FI_PedimentoComprobante  PC  (NOLOCK)
-		JOIN dbo.FI_AceptacionPedido_PedimentoComprobante APC (NOLOCK)
-		ON PC.IdPedimentoComprobante = APC.IdPedimentoComprobante
-		JOIN dbo.MM_AceptacionPedido AP (NOLOCK)
-		ON APC.IdAceptacionPedido = AP.IdAceptacionPedido
-		WHERE AP.IdAceptacionPedido = @IdProceso
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END 
 
-		/*NO EXISTE PEDIMENTO EXTRANJERO OBTENER EL IDELIMINADO DE LA ACEPTACION PEDIDO */
-		/*PARA LLEGAR A ESTE PUNTO TIENE QUE EXISTIR UNA ACEPTACIÓN DE PEDIDO*/
-		IF ISNULL(@IDELIMINADO,0) =0  		
-			SELECT @IDELIMINADO= IdEliminado 
-			FROM dbo.MM_AceptacionPedido  (NOLOCK)
-			WHERE IdAceptacionPedido = @IdProceso 
+    IF @Proceso = 'OFERTA' 
+    BEGIN 
+        /* VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM Ta_Operacion (NOLOCK)
+        WHERE IdDocumento = @IdProceso 
+        AND IdTipoOperacion = 6 -- Operacion de cotización
+        GROUP BY IdEliminado 
 
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END 
 
-	END 
+    IF @Proceso = 'SOLICITUD_PEDIDO' 
+    BEGIN 
+        /* VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM dbo.MM_SolicitudPedido (NOLOCK)
+        WHERE IdSolicitudPedido = @IdProceso  
 
-	IF @Proceso='ACEPTACION_PEDIDO' 
-	BEGIN 
-		/*VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM dbo.MM_AceptacionPedido (NOLOCK)
-		WHERE IdAceptacionPedido = @IdProceso 
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END 
 
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion  (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
+    IF @Proceso = 'APROBACION' 
+    BEGIN 
+        /* VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION */
+        SELECT @IDELIMINADO = IdEliminado 
+        FROM dbo.TA_Operacion (NOLOCK)
+        WHERE IdOperacion = @IdProceso  
 
-	END 
-
-	IF @Proceso='OFERTA' 
-	BEGIN 
-		/*VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM  Ta_Operacion  (NOLOCK)
-		WHERE IdDocumento = @IdProceso 
-		AND IdTipoOperacion = 6 --> Operacion de cotización
-		GROUP BY IdEliminado 
-		
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion  (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
-
-	END 
-
-	IF @Proceso='SOLICITUD_PEDIDO' 
-	BEGIN 
-		/*VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION*/
-		
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM  dbo.MM_SolicitudPedido  (NOLOCK)
-		WHERE IdSolicitudPedido = @IdProceso  
-		 
-		
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion  (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
-
-	END 
-	
-
-	IF @Proceso='APROBACION' 
-	BEGIN 
-		/*VALIDAR EXISTE UN ACEPTACIÓN PEDIDO OBTENER EL IDELIMINACION*/
-		 
-		SELECT @IDELIMINADO= IdEliminado 
-		FROM  dbo.TA_Operacion  (NOLOCK)
-		WHERE IdOperacion = @IdProceso  
-		 
-		
-		SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
-		FROM dbo.AD_RegistroEliminacion  (NOLOCK)
-		WHERE IdEliminacion=@IDELIMINADO
-
-	END 
-	
-
+        SELECT IdEliminacion, ComentarioExterno, FechaRegistro, ComentarioInterno 
+        FROM dbo.AD_RegistroEliminacion (NOLOCK)
+        WHERE IdEliminacion = @IDELIMINADO
+    END 
 END 
