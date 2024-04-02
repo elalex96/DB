@@ -1,17 +1,7 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_ConsultaSolicitudPedido'
-)
-    DROP PROCEDURE SP_PR_MM_ConsultaSolicitudPedido;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use petrovendor
+go
+drop proc if exists SP_PR_MM_ConsultaSolicitudPedido
+go
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 10-07-17
@@ -28,6 +18,10 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 10/10/2023
 -- Description:	se agregan estandares de desarrollo
+-- =============================================
+-- Author:		David
+-- Create date: marzo 31 24
+-- Description:	Se optimiza sp Issue #2686 petrovendor
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ConsultaSolicitudPedido]
     -- Add the parameters for the stored procedure here
@@ -117,7 +111,7 @@ BEGIN
            CASE SP.Fianza
                WHEN 1 THEN
                    'SI'
-               ELSE
+  ELSE
                    'NO'
            END AS Fianza,
            CASE SP.Controlados
@@ -157,9 +151,9 @@ BEGIN
                      DO.Colonia,
                      ' Calle: ',
                      DO.Calle,
-                     ' N�Ext: ',
+                     ' No. Ext: ',
                      DO.NoExterior,
-                     ' N�Int: ',
+                     ' No. Int: ',
                      DO.NoInterior,
                      ' C.P. ',
                      DO.CodigoPostal,
