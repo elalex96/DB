@@ -3961,6 +3961,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ConsultaAñosPorContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ReporteGINBDCNPorMesPresentacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_AdquisicionContratacionCNHPorPresupuesto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\SP_CNH_FormatoPlanes_Inversion_2019.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\Mobile_Sp_EnvioNotificacionFinalizacionSolped.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\SP_CNH_FormatoPlanes_Inversion_2019.sql" />
   </ItemGroup>
