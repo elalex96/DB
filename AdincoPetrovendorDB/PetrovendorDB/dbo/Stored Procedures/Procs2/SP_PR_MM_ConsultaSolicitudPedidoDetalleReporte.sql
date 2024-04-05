@@ -1,17 +1,7 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte'
-)
-    DROP PROCEDURE SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use petrovendor
+go
+drop proc if exists SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte
+go
 -- =============================================
 -- Author:		Daniel AC
 -- Update date: 07-11-2018
@@ -26,6 +16,10 @@ GO
 -- Create date: 10/10/2023
 -- Description:	se agregan estandares de desarrollo
 -- =============================================
+-- Author:		David
+-- Create date: marzo 31 24
+-- Description:	Se optimiza sp Issue #2686 petrovendor
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte]
 	-- Add the parameters for the stored procedure here
 @IdSolicitudPedido INT,
@@ -39,6 +33,24 @@ AS
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
          SET NOCOUNT ON;
+
+	CREATE TABLE #tmpSubActividad (
+		IdLineaPresupuestoMes INT,
+		SubActividad NVARCHAR(MAX)
+	);
+
+
+	INSERT INTO #tmpSubActividad (IdLineaPresupuestoMes, SubActividad)
+	SELECT lp.IdLineaPresupuestoMes, dbo.Fn_RetornarMesProgramadoActividadConcat(IdLineaPresupuestoMes)
+	FROM MM_SolicitudPedido AS SP (NOLOCK)
+	INNER JOIN MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+		ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido 
+	LEFT JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP (NOLOCK)
+		ON SPD.IdSolicitudPedidoDetalle = SPDLP.IdSolicitudPedidoDetalle
+	LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp (NOLOCK)
+		ON SPDLP.IdLineaPresupuesto = lp.IdLineaPresupuestoMes
+	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido
+		AND SP.IdProveedor = @IdProveedor;
 
     -- Insert statements for procedure here
 
@@ -64,7 +76,7 @@ AS
 		 ISNULL(D.CodigoPostal,'')) AS DireccionEntrega,
 		 CC.CentroCosto,
 		 i.NombreInstalacion, 
-		 dbo.Fn_RetornarMesProgramadoActividadConcat(lp.IdLineaPresupuestoMes) AS SubActividad 
+		 sv.SubActividad AS SubActividad
 		FROM MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
 		INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
 			ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido 
@@ -86,7 +98,6 @@ AS
 			ON SPDLP.IdLineaPresupuesto = lp.IdLineaPresupuestoMes 
 		LEFT OUTER JOIN Adinco.dbo.CO_TareaPetrolera AS t (NOLOCK)
 			ON lp.IdTareaPetrolera = t.IdTareaPetrolera
-
+		LEFT JOIN #tmpSubActividad AS sv ON SPDLP.IdLineaPresupuesto = sv.IdLineaPresupuestoMes
 
      END;
-
