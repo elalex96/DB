@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Adinco]
+
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_SE_A2'
+    )
+    DROP PROCEDURE SP_SE_A2
+GO 
+
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
@@ -51,6 +65,7 @@ BEGIN
     CREATE TABLE #RFC (RFC VARCHAR(25));
 	CREATE TABLE #DATOS
             (
+				IdRegistro INT,
                 Codigo VARCHAR(50),
                 Descripcion VARCHAR(300),
                 RazonSocial VARCHAR(300),
@@ -271,6 +286,7 @@ BEGIN
         BEGIN
             INSERT INTO #DATOS
             (
+				IdRegistro,
                 Codigo,
                 Descripcion,
                 RazonSocial,
@@ -284,7 +300,8 @@ BEGIN
 				FechaFactura,
 				MontoRegistro
             )
-            SELECT ISNULL(MM_BS_Actividad.Codigo, 'SinClasificar') AS Codigo,
+            SELECT CO_Registro.IdRegistro,
+                   ISNULL(MM_BS_Actividad.Codigo, 'SinClasificar') AS Codigo,
                    ISNULL(MM_BS_Actividad.Nombre, 'SinClasificar') AS Descripcion,
                    PV_Subcontratista.RazonSocial AS RazonSocial,
                    PV_Subcontratista.RFC AS RFC,
@@ -331,7 +348,8 @@ BEGIN
             --    
             UNION
             --    
-            SELECT ISNULL(MM_BS_Actividad.Codigo, 'SinClasificar') AS Codigo,
+            SELECT CO_Registro.IdRegistro,
+                   ISNULL(MM_BS_Actividad.Codigo, 'SinClasificar') AS Codigo,
                    ISNULL(MM_BS_Actividad.Nombre, 'SinClasificar') AS Descripcion,
                    PV_Subcontratista.RazonSocial AS RazonSocial,
                    PV_Subcontratista.RFC AS RFC,
@@ -382,7 +400,8 @@ BEGIN
 			--
 			UNION
 			--
-			SELECT DISTINCT 
+			SELECT DISTINCT
+				    CO_Registro.IdRegistro,
 					ISNULL(MM_BS_Actividad.Codigo, 'SinClasificar') AS Codigo,
 					ISNULL(MM_BS_Actividad.Nombre, 'SinClasificar') AS Descripcion,
 					PV_Subcontratista.RazonSocial AS RazonSocial,
