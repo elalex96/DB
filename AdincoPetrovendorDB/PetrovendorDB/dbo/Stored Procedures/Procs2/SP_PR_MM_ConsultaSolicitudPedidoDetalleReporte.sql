@@ -1,7 +1,17 @@
-use petrovendor
-go
-drop proc if exists SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte
-go
+USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte'
+)
+    DROP PROCEDURE SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Daniel AC
 -- Update date: 07-11-2018
@@ -19,6 +29,10 @@ go
 -- Author:		David
 -- Create date: marzo 31 24
 -- Description:	Se optimiza sp Issue #2686 petrovendor
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 09/04/2024
+-- Description:	se agrega group by para evitar duplicados
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ConsultaSolicitudPedidoDetalleReporte]
 	-- Add the parameters for the stored procedure here
@@ -52,9 +66,7 @@ AS
 	WHERE SP.IdSolicitudPedido = @IdSolicitudPedido
 		AND SP.IdProveedor = @IdProveedor;
 
-    -- Insert statements for procedure here
-
-		 SELECT 
+	SELECT 
 		 ROW_NUMBER() OVER(ORDER BY  MM.DescripcionCorta ASC)  AS IdPartida,
 		 sp.IdSolicitudPedido,
 		 SPD.IdSolicitudPedidoDetalle,		 
@@ -78,26 +90,46 @@ AS
 		 i.NombreInstalacion, 
 		 sv.SubActividad AS SubActividad
 		FROM MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
-		INNER JOIN MM_SolicitudPedido AS SP (NOLOCK)
+		JOIN MM_SolicitudPedido AS SP (NOLOCK)
 			ON SPD.IdSolicitudPedido = SP.IdSolicitudPedido 
 				AND SP.IdSolicitudPedido = @IdSolicitudPedido 
 				AND SP.IdProveedor=@IdProveedor
-		LEFT JOIN MM_Material AS MM (NOLOCK)
+		JOIN MM_Material AS MM (NOLOCK)
 			ON SPD.IdMaterial = MM.IdMaterial		
-		LEFT JOIN PV_MM_MaterialUnidad AS U (NOLOCK)
+		JOIN PV_MM_MaterialUnidad AS U (NOLOCK)
 			ON SPD.IdUnidad = U.IdUnidad
-		LEFT JOIN DG_Domicilio AS D (NOLOCK)
+		JOIN DG_Domicilio AS D (NOLOCK)
 			ON SPD.IdDomicilioEntrega = D.IdDomicilio		
-		LEFT JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP (NOLOCK)
+		JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS SPDLP (NOLOCK)
 			ON SPD.IdSolicitudPedidoDetalle = SPDLP.IdSolicitudPedidoDetalle
-		LEFT JOIN CC_CentroCosto AS CC (NOLOCK)
+		JOIN CC_CentroCosto AS CC (NOLOCK)
 			ON SPDLP.IdCentroCosto = CC.IdCentroCosto
-		LEFT JOIN Adinco.dbo.CO_Instalacion AS i (NOLOCK)
+		JOIN Adinco.dbo.CO_Instalacion AS i (NOLOCK)
 			ON SPDLP.IdInstalacion = i.IdInstalacion
-		LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp (NOLOCK)
-			ON SPDLP.IdLineaPresupuesto = lp.IdLineaPresupuestoMes 
-		LEFT OUTER JOIN Adinco.dbo.CO_TareaPetrolera AS t (NOLOCK)
-			ON lp.IdTareaPetrolera = t.IdTareaPetrolera
-		LEFT JOIN #tmpSubActividad AS sv ON SPDLP.IdLineaPresupuesto = sv.IdLineaPresupuestoMes
+		JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp (NOLOCK)
+			ON SPDLP.IdLineaPresupuesto = lp.IdLineaPresupuestoMes
+		JOIN #tmpSubActividad AS sv ON SPDLP.IdLineaPresupuesto = sv.IdLineaPresupuestoMes
+		GROUP BY sp.IdSolicitudPedido,
+				 SPD.IdSolicitudPedidoDetalle,		 
+				 CONCAT(' Descripción: ', MM.DescripcionCorta,
+						 ' Marca: ', CASE WHEN ISNULL(LEN(MM.Marca),0)>0 THEN MM.Marca ELSE ' S/M' END,
+						 ' Modelo: ', CASE WHEN ISNULL(LEN(MM.Modelo),0)>0 THEN MM.Modelo ELSE ' S/M' END,
+						 ' No. Parte: ',CASE WHEN ISNULL(LEN(MM.NumeroParte),0)>0 THEN MM.NumeroParte  ELSE ' S/NP' END),
+				 MM.IdMaterial,
+				 SPD.Cantidad, 		
+				 SPD.Observaciones, 
+				 U.Unidad,
+				 D.Calle,
+				 D.NoExterior,
+				 D.NoInterior,
+				 D.Colonia,
+				 D.Municipio,
+				 D.Estado,
+				 D.Pais,
+				 D.CodigoPostal,
+				 CC.CentroCosto,
+				 i.NombreInstalacion, 
+				 sv.SubActividad,
+				 MM.DescripcionCorta;
 
-     END;
+END;
