@@ -1,4 +1,4 @@
-﻿CREATE PROCEDURE [dbo].[sp_CP_CalculaCuotaFaseExpLic]  
+CREATE PROCEDURE [dbo].[sp_CP_CalculaCuotaFaseExpLic]  
 -- Add the parameters for the stored procedure here  
 @IdContrato INT  = 0,  
 @Periodo    DATE  
@@ -62,7 +62,11 @@ AS
 				 THEN 1669.53  
 				 WHEN YEAR(@Periodo) = 2023  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
 					THEN 3992.39
-                 ELSE 1669.53 
+			WHEN YEAR(@Periodo) = 2024  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) <= 5
+				 THEN 1741.65  
+				 WHEN YEAR(@Periodo) = 2024  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
+					THEN 4164.86
+           ELSE 1741.65 
                 END AS CuotaKm2,  
                 AC.SuperficieKm2,  
                 CASE 
@@ -90,7 +94,11 @@ AS
 				 THEN 1669.53  * AC.SuperficieKm2  
 				  WHEN YEAR(@Periodo)  = 2023 AND DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
 				  THEN 3992.39 * AC.SuperficieKm2 
-				   ELSE 1669.53 * AC.SuperficieKm2
+				  WHEN YEAR(@Periodo)  = 2024  and DATEDIFF(YEAR, C.FechaFirma, @Periodo) <= 5
+				 THEN 1741.65  * AC.SuperficieKm2  
+				  WHEN YEAR(@Periodo)  = 2024 AND DATEDIFF(YEAR, C.FechaFirma, @Periodo) > 5 
+				  THEN 4164.86 * AC.SuperficieKm2 
+				   ELSE 1741.65 * AC.SuperficieKm2
                 END AS Cuota  
          FROM CO_AreaContractual AC  
               JOIN co_contrato C ON c.IdAreaContractual = AC.IdAreaContractual  
