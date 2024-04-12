@@ -10,7 +10,7 @@ IF EXISTS
     )
     DROP PROCEDURE SP_SE_A2_MPY
 GO
-CREATE PROCEDURE [dbo].[SP_SE_A2_MPY] --10039,10380,10273,'20230101','20231201',10275,'Exploración'
+CREATE PROCEDURE [dbo].[SP_SE_A2_MPY]
     @IdContrato    INT,
     @IdUsuario     INT,
     @IdPresupuesto INT,
