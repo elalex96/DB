@@ -2974,7 +2974,7 @@
     <Build Include="dbo\Tables\MM_AceptacionPedidoDetalleCriterios.sql" />
     <Build Include="dbo\Tables\PV_PerfilPalabraClave.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\DEL_PV_EliminarPalabraClaveProveedor.sql" />
-    <Build Include="dbo\Stored Procedures\Procs3\INS_PV_ConsultarPalabrasClavesProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\INS_PV_GuardarPalabrasClavesProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SEL_PV_ConsultarPalabrasClavesProveedor.sql" />
   </ItemGroup>
   <ItemGroup>

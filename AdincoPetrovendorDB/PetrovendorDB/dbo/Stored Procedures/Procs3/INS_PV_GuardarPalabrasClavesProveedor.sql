@@ -4,9 +4,9 @@ IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
-    WHERE name = 'INS_PV_ConsultarPalabrasClavesProveedor'
+    WHERE name = 'INS_PV_GuardarPalabrasClavesProveedor'
 )
-    DROP PROCEDURE INS_PV_ConsultarPalabrasClavesProveedor; 
+    DROP PROCEDURE INS_PV_GuardarPalabrasClavesProveedor; 
 GO
 SET ANSI_NULLS ON
 GO
@@ -17,7 +17,7 @@ GO
 -- Create date: 16-04-2024
 -- Description: Agregar nueva palabra clave al proveedor
 -- =============================================
-CREATE PROCEDURE [dbo].[INS_PV_ConsultarPalabrasClavesProveedor] 
+CREATE PROCEDURE [dbo].[INS_PV_GuardarPalabrasClavesProveedor] 
 -- Add the parameters for the stored procedure here
 @IdProveedor  INT,
 @IdCategoria INT,
