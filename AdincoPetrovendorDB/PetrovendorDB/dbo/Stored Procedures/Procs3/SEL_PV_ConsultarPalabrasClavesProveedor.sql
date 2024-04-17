@@ -25,7 +25,7 @@ AS
 BEGIN
 
 SELECT Id,IdCategoria,PalabraClave
-FROM PV_PerfilPalabraClave
+FROM PV_PerfilPalabraClave (NOLOCK)
 WHERE Activo = 1
 ORDER BY PalabraClave ASC
 
