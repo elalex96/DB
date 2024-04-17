@@ -40,5 +40,5 @@ END
 SELECT Id FROM PV_PerfilPalabraClave
 WHERE IdCategoria =@IdCategoria
 AND IdProveedor = @IdProveedor
-
+AND Activo=1
 END;
