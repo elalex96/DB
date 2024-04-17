@@ -27,6 +27,7 @@ BEGIN
 SELECT Id,IdCategoria,PalabraClave
 FROM PV_PerfilPalabraClave (NOLOCK)
 WHERE Activo = 1
+AND IdProveedor = @IdProveedor
 ORDER BY PalabraClave ASC
 
 END;
