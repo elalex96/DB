@@ -2972,6 +2972,10 @@
     <Build Include="dbo\Tables\MM_ActividadClasificacionGasto.sql" />
     <Build Include="dbo\Tables\MM_ActividadClasificacionGasto2.sql" />
     <Build Include="dbo\Tables\MM_AceptacionPedidoDetalleCriterios.sql" />
+    <Build Include="dbo\Tables\PV_PerfilPalabraClave.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\DEL_PV_EliminarPalabraClaveProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\INS_PV_ConsultarPalabrasClavesProveedor.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SEL_PV_ConsultarPalabrasClavesProveedor.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
