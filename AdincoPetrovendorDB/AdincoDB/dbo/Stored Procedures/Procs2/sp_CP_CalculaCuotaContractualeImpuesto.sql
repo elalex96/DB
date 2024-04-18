@@ -37,7 +37,8 @@ GROUP BY
 		M.Fecha	AS [Mes],
 		CO.NumeroContrato,
 		CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1150
+            WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 THEN 4164.86
+			WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1150
             WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1175.42
             WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1214.20
 			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1294.71
@@ -46,8 +47,8 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1442.58
 			WHEN YEAR(M.Fecha) = 2022 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1548.88
 			WHEN YEAR(M.Fecha) = 2023 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1669.53
-			WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 THEN 3992.39
-            ELSE 1669.53
+			WHEN YEAR(M.Fecha) = 2024 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1741.65
+            ELSE 1741.65
         END AS CuotaContractual,
         AC.SuperficieKm2,
         CASE 
@@ -60,43 +61,47 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1548.88 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1669.53 * AC.SuperficieKm2,2)
-			WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(3992.39 * AC.SuperficieKm2,2)
-            ELSE ROUND(1669.53 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2024 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1741.65 * AC.SuperficieKm2,2)
+			WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(4164.86 * AC.SuperficieKm2,2)
+            ELSE ROUND(1741.65 * AC.SuperficieKm2,2)
         END AS TotalCuotaContractual,
 		CASE 
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1583.74
 			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1583.74
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1688.74
-			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1768.45
-			WHEN YEAR(M.Fecha) = 2020 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2020 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2021 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2021 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1881.60
-			WHEN YEAR(M.Fecha) = 2022 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2022 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 2020.27
-			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 2177.64
-
+			WHEN YEAR(M.Fecha) = 2024 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
+				THEN 2271.71
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6334.98
 			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6334.98
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6754.99
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 7073.83
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 7526.47
-			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 8081.17
-			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 8710.69
+			WHEN YEAR(M.Fecha) = 2024 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
+				THEN 9086.99
 		END AS Impuesto,	-- Art. 55
 		CASE 
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
@@ -113,9 +118,10 @@ GROUP BY
 				THEN ROUND(1881.60 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2022 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
 				THEN ROUND(2020.27 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN ROUND(2177.64 * AC.SuperficieKm2,2)
-
+			WHEN YEAR(M.Fecha) = 2024 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
+				THEN ROUND(2271.71 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6334.98 * AC.SuperficieKm2
 			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
@@ -130,8 +136,10 @@ GROUP BY
 				THEN ROUND(7526.47 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma = 'Plan Desarrollo'
 				THEN ROUND(8081.17 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN ROUND(8710.69 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2024 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
+				THEN ROUND(9086.99 * AC.SuperficieKm2,2)
 		END AS TotalImpuesto
     FROM
 		#Meses	M
@@ -156,7 +164,8 @@ GROUP BY
 		M.Fecha,
 		CO.NumeroContrato,
 		CASE 
-            WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1150
+            WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 THEN 4164.86
+			WHEN YEAR(M.Fecha) = 2015 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1150
             WHEN YEAR(M.Fecha) = 2016 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1175.42
             WHEN YEAR(M.Fecha) = 2017 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1214.20
 			WHEN YEAR(M.Fecha) = 2018 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1294.71
@@ -165,8 +174,8 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2021 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1442.58
 			WHEN YEAR(M.Fecha) = 2022 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1548.88
 			WHEN YEAR(M.Fecha) = 2023 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1669.53
-			WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 THEN 3992.39
-            ELSE 1669.53
+			WHEN YEAR(M.Fecha) = 2024 AND DATEDIFF(month, CO.FechaFirma, M.Fecha) < 61	THEN 1741.65
+            ELSE 1741.65
         END,
         AC.SuperficieKm2,
         CASE 
@@ -179,43 +188,47 @@ GROUP BY
 			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1442.58 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1548.88 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1669.53 * AC.SuperficieKm2,2)
-			WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(3992.39 * AC.SuperficieKm2,2)
-            ELSE ROUND(1669.53 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2024 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(1741.65 * AC.SuperficieKm2,2)
+			WHEN DATEDIFF(month, CO.FechaFirma, M.Fecha) >= 61 AND TIPO.TipoPrograma <> 'Plan Desarrollo' THEN ROUND(4164.86 * AC.SuperficieKm2,2)
+            ELSE ROUND(1741.65 * AC.SuperficieKm2,2)
         END,
 		CASE 
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1583.74
 			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1583.74
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1688.74
-			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2019 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1768.45
-			WHEN YEAR(M.Fecha) = 2020 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2020 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2021 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2021 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 1881.60
-			WHEN YEAR(M.Fecha) = 2022 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2022 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 2020.27
-			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN 2177.64
-
+			WHEN YEAR(M.Fecha) = 2024 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
+				THEN 2271.71
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6334.98
 			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6334.98
-			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2018 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6754.99
-			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2019 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 7073.83
-			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2020 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6850.3
-			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2021 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 7526.47
-			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 8081.17
-			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 8710.69
+			WHEN YEAR(M.Fecha) = 2024 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
+				THEN 9086.99
 		END,	-- Art. 55
 		CASE 
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma <> 'Plan Desarrollo'	-- FASE EXPLORACION
@@ -232,9 +245,10 @@ GROUP BY
 				THEN ROUND(1881.60 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2022 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
 				THEN ROUND(2020.27 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
 				THEN ROUND(2177.64 * AC.SuperficieKm2,2)
-
+			WHEN YEAR(M.Fecha) = 2024 AND ISNULL(TIPO.TipoPrograma,'') <> 'Plan Desarrollo'	-- FASE EXPLORACION
+				THEN ROUND(2271.71 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2016 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN 6334.98 * AC.SuperficieKm2
 			WHEN YEAR(M.Fecha) = 2017 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
@@ -249,11 +263,12 @@ GROUP BY
 				THEN ROUND(7526.47 * AC.SuperficieKm2,2)
 			WHEN YEAR(M.Fecha) = 2022 AND TIPO.TipoPrograma = 'Plan Desarrollo'
 				THEN ROUND(8081.17 * AC.SuperficieKm2,2)
-			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'
+			WHEN YEAR(M.Fecha) = 2023 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
 				THEN ROUND(8710.69 * AC.SuperficieKm2,2)
+			WHEN YEAR(M.Fecha) = 2024 AND TIPO.TipoPrograma = 'Plan Desarrollo'	-- FASE EXTRACCION
+				THEN ROUND(9086.99 * AC.SuperficieKm2,2)
 		END
 	ORDER BY
 		M.Fecha,
 		CO.NumeroContrato
 END
-
