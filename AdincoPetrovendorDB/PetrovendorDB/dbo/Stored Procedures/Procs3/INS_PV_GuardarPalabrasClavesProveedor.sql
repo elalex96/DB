@@ -29,7 +29,7 @@ AS
 BEGIN
 
 IF NOT EXISTS(SELECT * FROM PV_PerfilPalabraClave
-WHERE IdCategoria =@IdCategoria AND IdProveedor = @IdProveedor)
+WHERE IdCategoria =@IdCategoria AND IdProveedor = @IdProveedor AND Activo=1)
 BEGIN
 
 	INSERT INTO PV_PerfilPalabraClave(IdCategoria,PalabraClave,Activo,IdProveedor,CreadoPor,CreadoEl)
