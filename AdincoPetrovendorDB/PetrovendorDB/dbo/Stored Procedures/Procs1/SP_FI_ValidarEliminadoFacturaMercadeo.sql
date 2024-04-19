@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+USE [Petrovendor]
 GO
 IF EXISTS
 (
@@ -40,8 +40,13 @@ BEGIN
 	DECLARE @IDFACTURA INT = (SELECT IdFactura FROM dbo.MM_AceptacionFactura WHERE IdAceptacionPedido = @IdAceptacionPedido);
 	DECLARE @UUID NVARCHAR(MAX) = (SELECT UUID FROM dbo.FI_Factura WHERE IdFactura = @IDFACTURA);
 	DECLARE @IDFACADINCO INT = (SELECT IdFactura FROM Adinco.dbo.FI_Factura WHERE UUID = @UUID);
-	DECLARE @GASTO INT = (SELECT TOP 1 IdRegistro FROM Adinco.dbo.CO_Registro WHERE IdFactura = @IDFACADINCO);
-	DECLARE @GASTO_MARKUP INT = (SELECT TOP 1 Id FROM Adinco.dbo.CO_RegistroMarkup WHERE GastoId = @GASTO);
+	DECLARE @GASTO INT = (SELECT COUNT(IdRegistro) FROM Adinco.dbo.CO_Registro WHERE IdFactura = @IDFACADINCO);
+	DECLARE @GASTO_MARKUP INT = (SELECT 
+									COUNT(RM.Id) 
+								FROM Adinco.dbo.CO_RegistroMarkup AS RM
+								LEFT JOIN Adinco..CO_Registro AS R
+									ON RM.GastoId = R.IdRegistro
+								WHERE R.IdFactura = @IDFACADINCO);
 	DECLARE @TRANSFERFACTURA INT = (SELECT COUNT(IdTransferFactura) FROM Adinco.dbo.FI_TransferFactura WHERE IdFactura = @IDFACADINCO);
 	DECLARE @RESPONSE NVARCHAR(100);
 
