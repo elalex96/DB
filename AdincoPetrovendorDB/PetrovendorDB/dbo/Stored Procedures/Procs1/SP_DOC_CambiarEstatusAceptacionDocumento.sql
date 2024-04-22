@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_DOC_CambiarEstatusAceptacionDocumento'
+)
+    DROP PROCEDURE SP_DOC_CambiarEstatusAceptacionDocumento;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/07/2020>
 -- Description:	<Cambiar de estatus la revision del documento>
@@ -8,7 +22,11 @@
 -- Create date: 03/06/2022
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_DOC_CambiarEstatusAceptacionDocumento] --4,2,'Documento Correcto solicitado',420,2205,2
+-- Author:		Alexander Gomez
+-- Create date: 17/04/2024
+-- Description:	se corrige el envio de notificacion al aprobador
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_DOC_CambiarEstatusAceptacionDocumento] 
 	-- Add the parameters for the stored procedure here
 	@IdAceptacionDocumento INT,
 	@IdEstatus INT,
@@ -22,42 +40,42 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
-	DECLARE @HTMLCORREO NVARCHAR(MAX) = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 101);
+	DECLARE @HTMLCORREO NVARCHAR(MAX) = (SELECT HTML FROM dbo.TA_Correo (NOLOCK) WHERE Asunto = 'Notificacion de Cambio de estatus de la revision de documento solicitados al Proveedor');
     -- Insert statements for procedure here
 	DECLARE @IDNOTIFICACION INT;
-	DECLARE @NOMBREAPROBADOR NVARCHAR(100) = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IdUsuario);
+	DECLARE @NOMBREAPROBADOR NVARCHAR(100) = (SELECT Nombre FROM dbo.S_Usuario (NOLOCK) WHERE IdUsuario = @IdUsuario);
 	DECLARE @CORREOAPROBADOR NVARCHAR(100);
 	DECLARE @NOMBRETIPODOCUMENTO NVARCHAR(MAX) = (SELECT 
 													DPO.NombreDocumentoObligatorio
-												FROM dbo.S_DocumentoPlantillaOperadora AS DPO
-													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
+												FROM dbo.S_DocumentoPlantillaOperadora AS DPO (NOLOCK)
+													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP (NOLOCK)
 														ON DPO.IdDocumentoPlantilla = ADP.IdTipoDocumentoOperadora
 												WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento);
 
 	DECLARE @NOMBREPROVEEDOR NVARCHAR(MAX) = (SELECT 
 													PR.RazonSocial
-												FROM dbo.S_Proveedor AS PR
-													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
+												FROM dbo.S_Proveedor AS PR (NOLOCK)
+													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP (NOLOCK)
 														ON PR.IdProveedor = ADP.IdProveedor
 												WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento);
 
 	DECLARE @NOMBREOPERADORA NVARCHAR(MAX) = (SELECT 
 													PR.RazonSocial
-												FROM dbo.S_Proveedor AS PR
-													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
+												FROM dbo.S_Proveedor AS PR (NOLOCK)
+													LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP (NOLOCK)
 														ON PR.IdProveedor = ADP.IdOperadora
 												WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento);
 	--SE OBTIENE LA OPERACION
 	DECLARE @IDOPERACION INT = (SELECT
 									IdOperacion
-								FROM dbo.TA_Operacion 
+								FROM dbo.TA_Operacion (NOLOCK)
 								WHERE IdDocumento = @IdAceptacionDocumento 
 									AND IdTipoOperacion = 18
 									AND IdProveedor = @IdProveedor);
 
 	DECLARE @SIGUIENTETAREA INT = (SELECT 
 										IdTarea
-									FROM dbo.TA_Tarea
+									FROM dbo.TA_Tarea (NOLOCK)
 									WHERE IdOperacion = @IDOPERACION
 									AND NoSecuencia = (@IdSecuencia + 1)
 									AND Activo = 1);
@@ -75,14 +93,14 @@ BEGIN
 	--SE OBTIENE EL TOTAL DE APROBADORES EN LA TAREA
 	DECLARE @TOTALAPROBADORES INT = (SELECT
 										COUNT(IdTarea)
-									FROM dbo.TA_Tarea
+									FROM dbo.TA_Tarea (NOLOCK)
 									WHERE IdOperacion = @IDOPERACION
 										AND Activo = 1);
 
 	--SE OBTIENE EL TOTAL DE APROBADOS
 	DECLARE @TOTALAPROBADOS INT = (SELECT
 										COUNT(IdTarea)
-									FROM dbo.TA_Tarea
+									FROM dbo.TA_Tarea (NOLOCK)
 									WHERE IdOperacion = @IDOPERACION
 									AND IdEstatus = 2
 									AND Activo = 1);
@@ -90,7 +108,7 @@ BEGIN
 	--SE OBTIENE EL TOTAL DE RECHAZADOS
 	DECLARE @TOTALRECHAZADOS INT = (SELECT
 										COUNT(IdTarea)
-									FROM dbo.TA_Tarea
+									FROM dbo.TA_Tarea (NOLOCK)
 									WHERE IdOperacion = @IDOPERACION
 									AND IdEstatus = 3
 									AND Activo = 1);
@@ -98,7 +116,7 @@ BEGIN
 	--SE OBTIENE EL TOTAL EN APROBACION
 	DECLARE @TOTALENAPROBACION INT = (SELECT
 										COUNT(IdTarea)
-									FROM dbo.TA_Tarea
+									FROM dbo.TA_Tarea (NOLOCK)
 									WHERE IdOperacion = @IDOPERACION
 									AND IdEstatus = 1
 									AND Activo = 1);
@@ -127,27 +145,27 @@ BEGIN
 				--SE NOTIFICA AL PRIMER APROBADOR
 				SET @NOMBREAPROBADOR = (SELECT
 											US.Nombre
-										FROM dbo.S_Usuario AS US
-											LEFT JOIN dbo.TA_Tarea AS T
+										FROM dbo.S_Usuario AS US (NOLOCK)
+											LEFT JOIN dbo.TA_Tarea AS T (NOLOCK)
 												ON US.IdUsuario = T.IdAprobador
 										WHERE T.IdTarea = @SIGUIENTETAREA
 										GROUP BY US.Nombre);
 
 				SET @CORREOAPROBADOR = (SELECT
 											US.Correo
-										FROM dbo.S_Usuario AS US
-											LEFT JOIN dbo.TA_Tarea AS T
+										FROM dbo.S_Usuario AS US (NOLOCK)
+											LEFT JOIN dbo.TA_Tarea AS T (NOLOCK)
 												ON US.IdUsuario = T.IdAprobador
 										WHERE T.IdTarea = @SIGUIENTETAREA
 										GROUP BY US.Correo)
 
 				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-								FROM TA_Correo AS C
-									INNER JOIN TA_CorreoServidor AS S
+								FROM TA_Correo AS C (NOLOCK)
+									INNER JOIN TA_CorreoServidor AS S (NOLOCK)
 										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 102) --> CTE NUMERO CORREO (TA_Correo)
 
-				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 102);
+				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo (NOLOCK) WHERE IdCorreo = 102);
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@NOMBREAPROBADOR));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPO_DOCUMENTO##',@NOMBRETIPODOCUMENTO));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_PROVEEDOR##',@NOMBREPROVEEDOR));
@@ -276,23 +294,23 @@ BEGIN
 				--SE NOTIFICA AL PRIMER APROBADOR
 				SET @NOMBREAPROBADOR = (SELECT
 											US.Nombre
-										FROM dbo.S_Usuario AS US
-											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
+										FROM dbo.S_Usuario AS US (NOLOCK)
+											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP (NOLOCK)
 												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre);
 
 				SET @CORREOAPROBADOR = (SELECT
-											US.Nombre
-										FROM dbo.S_Usuario AS US
-											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
+											US.Correo
+										FROM dbo.S_Usuario AS US (NOLOCK)
+											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP (NOLOCK)
 												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
-										GROUP BY US.Nombre)
+										GROUP BY US.Correo)
 
 				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-								FROM TA_Correo AS C
-									INNER JOIN TA_CorreoServidor AS S
+								FROM TA_Correo AS C (NOLOCK)
+									INNER JOIN TA_CorreoServidor AS S (NOLOCK)
 										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 101) --> CTE NUMERO CORREO (TA_Correo)
 
@@ -433,27 +451,27 @@ BEGIN
 
 			SET @NOMBREAPROBADOR = (SELECT
 											US.Nombre
-										FROM dbo.S_Usuario AS US
-											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
+										FROM dbo.S_Usuario AS US (NOLOCK)
+											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP (NOLOCK)
 												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
 										GROUP BY US.Nombre);
 
 			SET @CORREOAPROBADOR = (SELECT
-											US.Nombre
-										FROM dbo.S_Usuario AS US
-											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP
+											US.Correo
+										FROM dbo.S_Usuario AS US (NOLOCK)
+											LEFT JOIN dbo.MM_AceptacionDocumento_Proveedor AS ADP (NOLOCK)
 												ON US.IdUsuario = ADP.CreadoPor
 										WHERE ADP.IdAceptacionDocumento = @IdAceptacionDocumento
-										GROUP BY US.Nombre)
+										GROUP BY US.Correo)
 
 				SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-								FROM TA_Correo AS C
-									INNER JOIN TA_CorreoServidor AS S
+								FROM TA_Correo AS C (NOLOCK)
+									INNER JOIN TA_CorreoServidor AS S (NOLOCK)
 										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 101) --> CTE NUMERO CORREO (TA_Correo)
 
-				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 101);
+				SET @HTMLCORREO = (SELECT HTML FROM dbo.TA_Correo (NOLOCK) WHERE IdCorreo = 101);
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##',@NOMBREAPROBADOR));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPO_DOCUMENTO##',@NOMBRETIPODOCUMENTO));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_OPERADORA##',@NOMBREOPERADORA));
@@ -465,7 +483,7 @@ BEGIN
 
 				
 
-				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
+				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion (NOLOCK)) + 1);
 				
 				INSERT INTO Adinco.dbo.S_Notificacion
 				(
