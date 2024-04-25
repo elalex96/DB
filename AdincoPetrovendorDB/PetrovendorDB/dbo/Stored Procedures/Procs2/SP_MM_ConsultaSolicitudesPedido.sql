@@ -1,17 +1,12 @@
-﻿USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_MM_ConsultaSolicitudesPedido'
-)
-    DROP PROCEDURE SP_MM_ConsultaSolicitudesPedido;
-/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultaSolicitudesPedido]    Script Date: 05/09/2023 07:01:15 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+use Petrovendor
+go
+drop proc if exists SP_MM_ConsultaSolicitudesPedido
+go
+-- =============================================
+-- Author:		<Luis David>
+-- Create date: <02/24/2024>
+-- Description:	<Se agrega el filtro por @FechaInicio y @FechaFin, Petrovendor #2737>
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudesPedido]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor int, 
@@ -19,8 +14,9 @@ CREATE PROCEDURE [dbo].[SP_MM_ConsultaSolicitudesPedido]
 	@Estatus int,
 	@IdTipoUsuario INT,	
     @IdContrato    INT = null,
-    @FechaRegistro DATETIME = null
-	
+    @FechaRegistro DATETIME = null,
+	@FechaInicio datetime,
+	@FechaFin datetime
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -68,6 +64,7 @@ BEGIN
 		AND ISNULL(SP.Visible,1)=1
 		AND ISNULL(SP.IdEstatusEliminado,0)<>1
 		AND (ISNULL(TE.IdEstatus,9) = @Estatus OR @Estatus = 0)
+		AND CAST(SP.FechaAlta AS date) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date)
 	ORDER BY SP.FechaAlta DESC     
   END
   ELSE
@@ -110,6 +107,7 @@ BEGIN
 		AND ISNULL(SP.Visible,1)=1
 		AND ISNULL(SP.IdEstatusEliminado,0)<>1
 		AND (ISNULL(TE.IdEstatus,9) = @Estatus OR @Estatus = 0)
+		AND CAST(SP.FechaAlta AS date) BETWEEN CAST(@FechaInicio AS date) AND CAST(@FechaFin AS date)
 	ORDER BY SP.FechaAlta DESC      
   END
 
