@@ -195,7 +195,7 @@ BEGIN
 	UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
-        ErrorDesc = ISNULL(ErrorDesc, '') + 'La Linea Presupuesto no existe. '
+        ErrorDesc = ISNULL(ErrorDesc, '') + 'La Línea Presupuesto no existe. '
     FROM CO_GastosActualizar 
         INNER JOIN #Gastos gastos
             ON CO_GastosActualizar.Id = gastos.Id 
@@ -210,7 +210,7 @@ BEGIN
     UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
-        ErrorDesc = ISNULL(ErrorDesc, '') + 'La Linea Presupuesto no corresponde al contrato. '
+        ErrorDesc = ISNULL(ErrorDesc, '') + 'La Línea Presupuesto no corresponde al contrato. '
     FROM CO_GastosActualizar 
         INNER JOIN #Gastos gastos
             ON CO_GastosActualizar.Id = gastos.Id 
