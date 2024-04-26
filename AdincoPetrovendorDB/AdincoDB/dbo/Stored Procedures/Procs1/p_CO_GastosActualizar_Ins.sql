@@ -180,13 +180,14 @@ BEGIN
     UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
-        ErrorDesc = ISNULL(ErrorDesc, '') + 'La cuenta S-H no existe. '
+        ErrorDesc = ISNULL(ErrorDesc, '') + 'La cuenta contable no existe. '
     FROM CO_GastosActualizar 
         INNER JOIN #Gastos gastos
             ON CO_GastosActualizar.Id = gastos.Id  
                AND CO_GastosActualizar.UUIDImport = @UUIDImport
                AND CO_GastosActualizar.UUIDImport = gastos.UUIDImport 
                AND UPPER(CO_GastosActualizar.UUID) = UPPER(gastos.UUID)
+			   AND ISNULL(CO_GastosActualizar.CuentaContable, '') <> ''
         LEFT JOIN CO_CatalogoCuentaSH
             ON rtrim(CO_CatalogoCuentaSH.Nivel3) = rtrim(CO_GastosActualizar.CuentaContable)
     WHERE CO_CatalogoCuentaSH.IdCatalogoCuentasSH IS NULL
@@ -195,7 +196,7 @@ BEGIN
 	UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
-        ErrorDesc = ISNULL(ErrorDesc, '') + 'La Línea Presupuesto no existe. '
+        ErrorDesc = ISNULL(ErrorDesc, '') + 'La línea presupuesto no existe. '
     FROM CO_GastosActualizar 
         INNER JOIN #Gastos gastos
             ON CO_GastosActualizar.Id = gastos.Id 
@@ -210,7 +211,7 @@ BEGIN
     UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
-        ErrorDesc = ISNULL(ErrorDesc, '') + 'La Línea Presupuesto no corresponde al contrato. '
+        ErrorDesc = ISNULL(ErrorDesc, '') + 'La línea presupuesto no corresponde al contrato. '
     FROM CO_GastosActualizar 
         INNER JOIN #Gastos gastos
             ON CO_GastosActualizar.Id = gastos.Id 
