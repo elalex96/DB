@@ -1,4 +1,6 @@
-﻿IF EXISTS
+﻿USE Adinco;
+GO
+IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -190,8 +192,10 @@ BEGIN
 			   AND ISNULL(CO_GastosActualizar.CuentaContable, '') <> ''
         LEFT JOIN CO_CatalogoCuentaSH
             ON rtrim(CO_CatalogoCuentaSH.Nivel3) = rtrim(CO_GastosActualizar.CuentaContable)
-    WHERE CO_CatalogoCuentaSH.IdCatalogoCuentasSH IS NULL
-
+		INNER JOIN CO_VersionCatalogoCuentasSH
+			ON CO_CatalogoCuentaSH.IdVersion = CO_VersionCatalogoCuentasSH.IdVersion
+				AND CO_VersionCatalogoCuentasSH.Activo = 1
+    WHERE CO_CatalogoCuentaSH.IdCatalogoCuentasSH IS NULL AND CO_VersionCatalogoCuentasSH.Activo = 1
 
 	UPDATE CO_GastosActualizar
     SET Error = 1,
