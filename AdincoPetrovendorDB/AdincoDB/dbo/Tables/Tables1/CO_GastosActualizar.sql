@@ -8,7 +8,7 @@
     [GastoAdmon]         BIT           NOT NULL,
     [Procesado]          BIT           NOT NULL,
     [Error]              BIT           NULL,
-    [ErrorDesc]          VARCHAR (150) NULL,
+    [ErrorDesc]          VARCHAR (8000) NULL,
     [CreadoEl]           DATETIME      NOT NULL,
     [CreadoPor]          INT           NOT NULL,
     [IdLineaPresupuesto] INT           NULL,
