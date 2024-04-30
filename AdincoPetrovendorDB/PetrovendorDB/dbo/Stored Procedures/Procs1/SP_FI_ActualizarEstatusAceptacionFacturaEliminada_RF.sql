@@ -1,4 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ActualizarEstatusAceptacionFacturaEliminada_RF'
+)
+    DROP PROCEDURE SP_FI_ActualizarEstatusAceptacionFacturaEliminada_RF;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Update date: 31-05-2019
 -- Description: Modificación de la lógica de eliminación
@@ -6,6 +20,10 @@
 -- Author:		Daniel AC
 -- Update date: 01-10-2020
 -- Description: Se agrego eliminación de CO_Registro del lado de petrovendor y se corrigió eliminación de ta_tareas 
+-- =============================================
+-- Author:		Alexander Gomez
+-- Update date: 17-04-2024
+-- Description: Se agrega la eliminación del registro markup
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ActualizarEstatusAceptacionFacturaEliminada_RF]
     -- Add the parameters for the stored procedure here
@@ -36,19 +54,19 @@ BEGIN
     DECLARE @COMENTARIO_INTERNO NVARCHAR(MAX);
 
     SELECT @IDFACTURA = IdFactura
-    FROM dbo.MM_AceptacionFactura
+    FROM dbo.MM_AceptacionFactura (NOLOCK)
     WHERE IdAceptacionPedido = @IdAceptacionPedido;
 
     SELECT @UUID = UUID
-    FROM dbo.FI_Factura
+    FROM dbo.FI_Factura (NOLOCK)
     WHERE IdFactura = @IDFACTURA;
 
     SELECT @IDFACTURAAD = IdFactura
-    FROM Adinco.dbo.FI_Factura
+    FROM Adinco.dbo.FI_Factura (NOLOCK)
     WHERE UUID = @UUID;
 
     SELECT @IDFACTPETRO = IdFactura
-    FROM dbo.FI_Factura
+    FROM dbo.FI_Factura (NOLOCK)
     WHERE UUID = @UUID;
 	   
     /*OBTENER APROBACIÓN DE ACEPTACIÓN DE FACTURA ACTUAL*/
@@ -60,13 +78,13 @@ BEGIN
         IdOperacion
     )
     SELECT O.IdOperacion
-    FROM dbo.MM_AceptacionFactura AF
-        JOIN dbo.TA_Operacion O
+    FROM dbo.MM_AceptacionFactura AF (NOLOCK)
+        JOIN dbo.TA_Operacion O (NOLOCK)
             ON AF.IdAceptacionFactura = O.IdDocumento
                AND O.IdTipoOperacion = 10 --> APROBACIÓN DE FACTURA 	
-        JOIN dbo.MM_AceptacionPedido AP
+        JOIN dbo.MM_AceptacionPedido AP (NOLOCK)
             ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
-        JOIN dbo.MM_Pedido P
+        JOIN dbo.MM_Pedido P (NOLOCK)
             ON AP.IdPedido = P.IdPedido
                AND O.IdProveedor = P.IdSubcontratista --> ES EL PROVEEDOR QUE CARGA LA FACTURA 
     WHERE AF.IdAceptacionPedido = @IdAceptacionPedido;
@@ -75,7 +93,7 @@ BEGIN
     SELECT @COMENTARIO_INTERNO = (STUFF(
     (
         SELECT ',' + QUOTENAME(CONCAT(F.Descripcion, ':', FORMAT(F.Fecha, 'dd/MM/yyyy hh:mm tt')))
-        FROM TA_HistorialFlujoTarea F
+        FROM TA_HistorialFlujoTarea F (NOLOCK)
             JOIN @TA_OPERACION O
                 ON F.IdOperacion = O.IdOperacion
         ORDER BY Fecha ASC
@@ -142,11 +160,11 @@ BEGIN
            Tasa,
            Importe,
            @IDELIMINACION
-    FROM Adinco.dbo.FI_CFDIConceptoImpuesto
+    FROM Adinco.dbo.FI_CFDIConceptoImpuesto (NOLOCK)
     WHERE IdFacturaConcepto IN
           (
               SELECT CF.IdFacturaConcepto
-              FROM Adinco.dbo.FI_CFDIConcepto AS CF
+              FROM Adinco.dbo.FI_CFDIConcepto AS CF (NOLOCK)
               WHERE CF.IdFactura = @IDFACTURAAD
           );
 
@@ -154,7 +172,7 @@ BEGIN
     WHERE IdFacturaConcepto IN
           (
               SELECT CF.IdFacturaConcepto
-              FROM Adinco.dbo.FI_CFDIConcepto AS CF
+              FROM Adinco.dbo.FI_CFDIConcepto AS CF (NOLOCK)
               WHERE CF.IdFactura = @IDFACTURAAD
           );
 
@@ -183,7 +201,7 @@ BEGIN
            Importe,
            NoIdentificacion,
            @IDELIMINACION
-    FROM Adinco.dbo.FI_CFDIConcepto
+    FROM Adinco.dbo.FI_CFDIConcepto (NOLOCK)
     WHERE IdFactura IN ( @IDFACTURAAD );
 
     DELETE Adinco.dbo.FI_CFDIConcepto
@@ -208,7 +226,7 @@ BEGIN
            Tasa,
            Importe,
            @IDELIMINACION
-    FROM Adinco.dbo.FI_CFDIImpuesto
+    FROM Adinco.dbo.FI_CFDIImpuesto (NOLOCK)
     WHERE IdFactura IN ( @IDFACTURAAD );
 
     DELETE Adinco.dbo.FI_CFDIImpuesto
@@ -241,7 +259,7 @@ BEGIN
            IsEliminado,
            DocumentoByte,
            @IDELIMINACION
-    FROM Adinco.dbo.FI_Documento
+    FROM Adinco.dbo.FI_Documento (NOLOCK)
     WHERE IdFactura IN ( @IDFACTURAAD )
           AND IdTipoDocumento = 1; --> ES TIPO FACTURA --> FI_TipoDocumento 
 
@@ -273,11 +291,15 @@ BEGIN
            ModificadoEl,
            Activo,
            @IDELIMINACION
-    FROM Adinco.dbo.FI_ArchivoXml
+    FROM Adinco.dbo.FI_ArchivoXml (NOLOCK)
     WHERE IdFactura IN ( @IDFACTURAAD );
 
     DELETE Adinco.dbo.FI_ArchivoXml
     WHERE IdFactura IN ( @IDFACTURAAD );
+
+	--ELIMINACION DE GASTOS MARKUP DE ADINCO
+    DELETE Adinco.dbo.CO_RegistroMarkup
+    WHERE GastoId IN ( SELECT IdRegistro FROM Adinco.dbo.CO_Registro (NOLOCK) WHERE IdFactura IN ( @IDFACTURAAD ));
 
     --ELIMINACION DE GASTOS DE ADINCO
     DELETE Adinco.dbo.CO_Registro
@@ -330,21 +352,13 @@ BEGIN
         CreadoEn,
         ModificadoPor,
         ModificadoEn,
-        --PDF,
-        --IdReceptor,
-        --IdentificadorSIPAC,
         NombreXML,
         IdEstudioPrecioTransfer,
         IdDocFacturacionSIPAC,
         ProcesadoSIPAC,
-        --ClaveFormaPago,
         RegimenFiscal,
         UsoCFDI,
         VersionCFDI,
-        --HashSHA256,
-        --UUIDRelacionado,
-        --TipoRelacion,
-        --NoParcialidad,
         IdEliminacion
     )
     SELECT IdFactura,
@@ -385,23 +399,15 @@ BEGIN
            CreadoEn,
            ModificadoPor,
            ModificadoEn,
-           --PDF,
-           --IdReceptor,
-           --IdentificadorSIPAC,
            NombreXML,
            IdEstudioPrecioTransfer,
            IdDocFacturacionSIPAC,
            ProcesadoSIPAC,
-           --ClaveFormaPago,
            RegimenFiscal,
            UsoCFDI,
            VersionCFDI,
-           --HashSHA256,
-           --UUIDRelacionado,
-           --TipoRelacion,
-           --NoParcialidad,
            @IDELIMINACION
-    FROM Adinco.dbo.FI_Factura
+    FROM Adinco.dbo.FI_Factura (NOLOCK)
     WHERE IdFactura IN ( @IDFACTURAAD );
 
 	DELETE Adinco.dbo.FI_Factura
@@ -409,7 +415,7 @@ BEGIN
 
 	--ELIMINACIÓN DE GASTOS DE PETROVENDOR
 	DELETE dbo.CO_RelacionRegistroAdinco
-	WHERE IdRegistroPetrovendor IN (SELECT IdRegistro FROM dbo.CO_Registro WHERE IdFactura=@IDFACTPETRO)
+	WHERE IdRegistroPetrovendor IN (SELECT IdRegistro FROM dbo.CO_Registro (NOLOCK) WHERE IdFactura=@IDFACTPETRO)
 
     DELETE dbo.CO_Registro
     WHERE IdFactura = @IDFACTPETRO;
@@ -429,7 +435,7 @@ BEGIN
     DELETE dbo.FI_RelacionArchivoXMLAdinco
     WHERE IdArchivoXML IN
           (
-              SELECT IdArchivoXml FROM dbo.FI_ArchivoXml WHERE IdFactura = @IDFACTPETRO
+              SELECT IdArchivoXml FROM dbo.FI_ArchivoXml (NOLOCK) WHERE IdFactura = @IDFACTPETRO
           );
 
     DELETE dbo.FI_ArchivoXml
@@ -487,7 +493,7 @@ BEGIN
           (
               SELECT TOP 1
                      IdAceptacionFactura
-              FROM dbo.MM_AceptacionFactura
+              FROM dbo.MM_AceptacionFactura (NOLOCK)
               WHERE IdAceptacionPedido = @IdAceptacionPedido
           );
 
@@ -495,7 +501,7 @@ BEGIN
     IF
     (
         SELECT IdAceptacionFactura
-        FROM dbo.MM_AceptacionFactura
+        FROM dbo.MM_AceptacionFactura (NOLOCK)
         WHERE IdAceptacionPedido = @IdAceptacionPedido
     ) IS NOT NULL
     BEGIN
