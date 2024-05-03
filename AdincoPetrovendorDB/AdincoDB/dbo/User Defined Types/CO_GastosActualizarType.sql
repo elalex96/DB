@@ -10,4 +10,3 @@
 		IdLineaPresupuesto INT,
 		Error VARCHAR(8000)
 	);
-
