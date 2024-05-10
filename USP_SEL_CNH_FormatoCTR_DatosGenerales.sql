@@ -24,9 +24,9 @@ BEGIN
 	'' AS FechaReporte,
 	'' AS TipoContrato
 	FROM 
-		CO_Contrato
+		CO_Contrato  (NOLOCK)
 	JOIN
-		CO_Contratista	
+		CO_Contratista	 (NOLOCK)
 		ON	CO_Contrato.IdContratista	=	CO_Contratista.IdContratista
 		WHERE CO_Contrato.IdContrato = @IdContrato;
 END;
