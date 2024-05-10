@@ -1,4 +1,7 @@
-﻿-- =============================================
+USE petrovendor
+DROP PROC IF EXISTS SRAP_ConsultaDetalleAprobacionSolicitudRecepcion
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
 -- Description:	Consultar detalle de solicitud de recepción de pedido
@@ -18,6 +21,10 @@
 -- Author:		Alexander Gomez
 -- Create date: 26/07/2022
 -- Description:	Se agrega el subtotal por partida, moneda y total de la solicitud
+-- =============================================
+-- Author:		Luis David
+-- Create date: 8/May/2024
+-- Description:	Se cambia la descripción de OBS a Aprobador SAS
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
@@ -273,7 +280,7 @@ AS
 		ELSE 
 		BEGIN
 			INSERT INTO @tbUsuarioOBS(IdUsuario,Nombre)
-			VALUES(-1,'OBS')
+			VALUES(-1,'APROBADOR SAS')
 		END 
 
 		/*OBTENER ESTATUS ACTUAL DE LA APROBACION GRAL*/

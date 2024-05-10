@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE PETROVENDOR
+GO
+DROP PROC IF EXISTS SRAP_GuardarNuevaSolicitudRecepcion
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 25-05-2021
 -- Description:	Guardar detalle de solicitud de recepción de pedido -Aprobación Gral
@@ -22,6 +26,10 @@
 -- Author:		Alexander Gomez
 -- Create date: 12/10/2022
 -- Description:	Se agrega el precio unitario cuando se realiza la solicitud de servicio
+-- =============================================
+-- Author:		Luis David
+-- Create date: 8/May/2024
+-- Description:	Se descomenta el envío al solicitante requerido en el issue ISSUE 1765
 -- =============================================
 CREATE PROCEDURE [dbo].[SRAP_GuardarNuevaSolicitudRecepcion] 
 	-- Add the parameters for the stored procedure here
@@ -208,19 +216,18 @@ AS
 			ON P.IdSolicitudPedido = SP.IdSolicitudPedido
 		WHERE P.IdPedido=@IdPedido
 
-		--NO  ELIMINAR EL SIGUIENTE CODIGO COMENTADO ESTO FUE COMENTADO TEMPORALMENTE PARA EL ISSUE 1765
 		/*AGREGAR AL APROBADOR --> 
 		-->NUMERO DE SECUENCIA DEFAULT EN 1 POR QUE SOLO ES UN APROBADOR*/
-	  -- INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion)
-	  -- VALUES ('Solicitud Aceptación pedido', @IdSolicitanteRequisicion,@IdEstatusEnAprobacion,0,'','',GETDATE(),1,1,@IdOperacion)
+	   INSERT INTO TA_Tarea(NombreTarea,IdAprobador,IdEstatus,Visto,Comentario,Descripcion,FechaRegistro,Activo,NoSecuencia,IdOperacion)
+	   VALUES ('Solicitud Aceptación pedido', @IdSolicitanteRequisicion,@IdEstatusEnAprobacion,0,'','',GETDATE(),1,1,@IdOperacion)
 	  
 
-	  --SET @Descripcion_historial = CONCAT('El Usuario',
-			--						(SELECT Nombre FROM S_USuario WHERE IdUsuario = @UsuarioId), 
-			--						' ha registrado la ', (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = @TipoOperacionId))
+	  SET @Descripcion_historial = CONCAT('El Usuario',
+									(SELECT Nombre FROM S_USuario WHERE IdUsuario = @UsuarioId), 
+									' ha registrado la ', (SELECT NombreOperacion FROM TA_TipoOperacion WHERE IdTipoOperacion = @TipoOperacionId))
 
-	  -- INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
-	  -- VALUES (@Descripcion_historial,@IdOperacion,GETDATE(),1)
+	   INSERT INTO TA_HistorialFlujoTarea(Descripcion,IdOperacion,Fecha,IdEstadoFlujo)
+	   VALUES (@Descripcion_historial,@IdOperacion,GETDATE(),1)
 
 	   END 
 
