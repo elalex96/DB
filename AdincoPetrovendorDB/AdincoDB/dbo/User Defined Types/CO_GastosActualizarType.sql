@@ -1,4 +1,4 @@
-﻿	CREATE TYPE CO_GastosActualizarType AS TABLE
+	CREATE TYPE CO_GastosActualizarType AS TABLE
 	(
 		Id INT,
 		UUIDImport VARCHAR(100),
