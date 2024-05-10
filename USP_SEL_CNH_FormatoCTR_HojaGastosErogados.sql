@@ -1,4 +1,3 @@
-GO
 IF EXISTS
     (
         SELECT
@@ -10,6 +9,7 @@ IF EXISTS
     )
     DROP PROCEDURE USP_SEL_CNH_FormatoCTR_HojaGastosErogados
 GO
+
 CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoCTR_HojaGastosErogados] 
     @IdContrato          INT,
     @IdUsuario           INT,
@@ -241,7 +241,7 @@ AS
                                                         YEAR(CO_Registro.MesPresentacion),
                                                         MONTH(CO_Registro.MesPresentacion), 1
                                                     )
-                                   BETWEEN @MesInicio AND @MesFin --= @Mes
+                                   BETWEEN @MesInicio AND @MesFin 
                         INNER JOIN
                             dbo.FI_Factura WITH (NOLOCK)
                                 ON CO_Registro.IdFactura = FI_Factura.IdFactura
@@ -254,7 +254,7 @@ AS
                     WHERE
                         CO_Servicio.IdContrato = @IdContrato
                         AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
-                        BETWEEN @MesInicio AND @MesFin --= @Mes
+                        BETWEEN @MesInicio AND @MesFin 
                         AND CO_Registro.IdEstado = @Aprobado
                         AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
                         AND ISNULL(CONVERT(INT, FI_Factura.ProcesadoSIPAC), 0) = 0
@@ -593,7 +593,7 @@ AS
                 MonedaTran,
                 IdTransferencia
             )
-                    --     
+                      
                     SELECT DISTINCT
                         #Facturas.UUID,
                         #Facturas.Idfactura,
@@ -674,7 +674,7 @@ AS
                         TipoComprobante,
                         MetodoPago,
                         IdMoneda;
-        --     
+           
         INSERT INTO #MontosTotalTransferenciaPUE
             (
                 IdRegistro,
@@ -708,7 +708,7 @@ AS
                         #Facturas.MetodoPago = 'PUE';
 
         /*PEDIMENTO COMPROBANTE*/
-        --     
+           
         INSERT INTO #MontosConvertidosPedimentosCom
             (
                 IdRegistro,
@@ -750,7 +750,7 @@ AS
                                                         YEAR(CO_Registro.MesPresentacion),
                                                         MONTH(CO_Registro.MesPresentacion), 1
                                                     )
-                                   BETWEEN @MesInicio AND @MesFin --= @Mes
+                                   BETWEEN @MesInicio AND @MesFin 
                         JOIN
                             dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
                                 ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
@@ -779,7 +779,7 @@ AS
                     WHERE
                         FI_PedimentoComprobante.IdContrato = @IdContrato
                         AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1)
-                        BETWEEN @MesInicio AND @MesFin --= @Mes
+                        BETWEEN @MesInicio AND @MesFin 
                         AND CO_Registro.IdEstado = @Aprobado
                         AND CO_Registro.CvTipoDocFacturacion IN (
                                                                     @TipoPedimentoImportacion,
@@ -1029,11 +1029,11 @@ AS
                                           ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera, '')
                                       )
                         END
-                    --     
+                       
 
                     UNION
 
-                    --     
+                      
                     SELECT
                         SUM(   CASE
                                    WHEN ISNULL(TTF.TipoCambioCP, 0) = 0
@@ -1131,7 +1131,7 @@ AS
                                                         YEAR(CO_Registro.MesPresentacion),
                                                         MONTH(CO_Registro.MesPresentacion), 1
                                                     )
-                                   BETWEEN @MesInicio AND @MesFin --@Mes
+                                   BETWEEN @MesInicio AND @MesFin 
                                    AND CO_Registro.IdEstado = @Aprobado
                                    AND CO_Registro.CvTipoDocFacturacion = @TipoFactura
                         JOIN
@@ -1263,11 +1263,11 @@ AS
                                           ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera, '')
                                       )
                         END
-                    --     
+                      
 
                     UNION
 
-                    --     
+                       
                     SELECT
                         SUM(   CASE
                                    WHEN ISNULL(MP.MontoRegistro, 0) <> 0
