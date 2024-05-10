@@ -1,4 +1,15 @@
-
+GO
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_SEL_CNH_FormatoCTR_HojaGastosErogados'
+    )
+    DROP PROCEDURE USP_SEL_CNH_FormatoCTR_HojaGastosErogados
+GO
 CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoCTR_HojaGastosErogados] 
     @IdContrato          INT,
     @IdUsuario           INT,
