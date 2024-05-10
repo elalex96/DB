@@ -1,3 +1,14 @@
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_SEL_CNH_FormatoCTR_DatosGenerales'
+    )
+    DROP PROCEDURE USP_SEL_CNH_FormatoCTR_DatosGenerales
+GO
 
 CREATE PROCEDURE [dbo].[USP_SEL_CNH_FormatoCTR_DatosGenerales] 
     @IdContrato          INT,
