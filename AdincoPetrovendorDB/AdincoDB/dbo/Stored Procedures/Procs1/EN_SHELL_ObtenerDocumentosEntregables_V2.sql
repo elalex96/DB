@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'EN_SHELL_ObtenerDocumentosEntregables_V2'
+)
+    DROP PROCEDURE EN_SHELL_ObtenerDocumentosEntregables_V2; 
+GO
+/****** Object:  StoredProcedure [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2]    Script Date: 11/05/2024 12:26:06 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <04/01/2022>
 -- Description:	<Consulta de archivos contract files>
@@ -7,6 +22,11 @@
 -- Author:		Daniel AC
 -- Create date: <01/12/2022>
 -- Description:	Se agrega filtro para etapa por contrato de las carpetas por niveles, se agrega contratoId faltante  27/03/2023
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <10/05/2024>
+-- Description:	Se elimina saltos de linea al final de la ruta ya que generaban error en el método de js Issue #1343
 -- =============================================
 CREATE PROCEDURE [dbo].[EN_SHELL_ObtenerDocumentosEntregables_V2] 
     -- Add the parameters for the stored procedure here
@@ -34,7 +54,7 @@ BEGIN
             @ANIOMES_INT VARCHAR(10),
             @LIMITADOR INT = (SELECT TOP 1
                                     Limitador
-                                FROM EN_CarpetasArchivosVisor 
+                                FROM EN_CarpetasArchivosVisor (NOLOCK)
                                 WHERE IdElemento = @IdCarpeta
                                 AND IsCarpeta = 1
                                 AND IdContrato = @ContratoId);
@@ -157,7 +177,7 @@ BEGIN
             ON CE.IdContratoEntregable          =   EI.IdContratoEntregable 
             AND CE.IdContrato                   =   @ContratoId
             AND EI.Activo                       =   1   --> EN_InstanciasEntregable ACTIVA
-            AND CE.Activo                       = 1
+            AND CE.Activo                       =   1
     JOIN EN_Entregable E    (NOLOCK)
             ON CE.IdEntregable                     =   E.IdEntregable      
             AND ISNULL(E.IsActivo,0)            =   1   --> EN_Entregable ACTIVA  
@@ -201,6 +221,7 @@ BEGIN
             ON P.IdInstalacion = COI.IdInstalacion
     WHERE
         ED.Activo = 1;
+
     INSERT INTO #DocumentosVersion
     (
         EntregableInstanciaId,
@@ -212,6 +233,7 @@ BEGIN
     FROM #Documentos
     GROUP BY
         EntregableInstanciaId;
+
     /*ELIMINAR LOS DOCUMENTOS DE LA TABLA TEMPORAL QUE NO SON PARTE DE LA ULTIMA VERSIÓN DE LOS DOCUMENTOS*/
     DELETE D
     FROM #Documentos D
@@ -345,9 +367,6 @@ BEGIN
             SC.RutaAnterior,
             1
         FROM #Documentos D    
-            --LEFT JOIN EN_ReceptorEntregable RE 
-            --    ON D.IdReceptorEntregable  =   RE.IdReceptorEntregable AND
-            --        D.EsDeProceso = 1 -->QUE NO SEA DOCUMENTO DE UN PROCESO
             JOIN CO_ContratoEtapas CE   (NOLOCK)
                 ON D.FechaProgramadaEntrega BETWEEN CE.FechaInicio AND CE.FechaFin
                 AND CE.EtapaId = @IdCarpeta
@@ -1638,12 +1657,11 @@ Frecuencia)
     SELECT DISTINCT
         IdRow,
         CF.Nivel,
-        --REPLACE(Nombre,'"','') AS NombreLabel,
         CASE 
             WHEN LEN(Nombre) > 20 THEN '<marquee behavior="scroll" direction="left" style="width: 70%;">' + REPLACE(Nombre,'"','') + '</marquee>'
             ELSE REPLACE(Nombre,'"','')
         END AS NombreLabel,
-        REPLACE(REPLACE(Nombre,'"',''),'/','-') AS Nombre,
+        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Nombre,'"',''),'/','-')  ,CHAR(9),''),CHAR(10),''),CHAR(13),'') AS Nombre,
         CF.IdCarpeta,
         IdDocumento,
         Tipo,
@@ -1681,7 +1699,7 @@ Frecuencia)
         ISNULL((SELECT TOP 1 AnioMes FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1 AND IdContrato =@ContratoId),'') AS AnioMesAnterior,
         ISNULL(Limitador,0) AS Limitador,
         ISNULL(IdEntregable,0) AS IdEntregable,
-        ISNULL(Alias, REPLACE(Nombre,'/','-')) AS Alias,
+        REPLACE(REPLACE(REPLACE( ISNULL(Alias, REPLACE(Nombre,'/','-')) ,CHAR(9),''),CHAR(10),''),CHAR(13),'')  AS Alias,
 		ISNULL(CF.IdEtapaContrato,0) AS IdEtapaContrato,
 		ISNULL((SELECT TOP 1 IdEtapaContrato FROM EN_SecuenciaCarpetas WHERE Ruta = CF.RutaAnterior AND Activo = 1 AND IdContrato =@ContratoId),'') AS IdEtapaContratoAnterior
     FROM @CONTRACT_FILES AS CF

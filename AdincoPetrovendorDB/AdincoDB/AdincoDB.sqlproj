@@ -9,7 +9,7 @@
     <ProjectGuid>{324f1c08-df20-4a76-9e57-7b7d4d59408e}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
-    <RootPath><
+    <RootPath>
     </RootPath>
     <RootNamespace>AdincoDB</RootNamespace>
     <AssemblyName>AdincoDB</AssemblyName>
