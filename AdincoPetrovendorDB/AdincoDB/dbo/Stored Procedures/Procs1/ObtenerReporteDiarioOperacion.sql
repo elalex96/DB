@@ -1,4 +1,12 @@
-﻿CREATE PROCEDURE [dbo].[ObtenerReporteDiarioOperacion]
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'ObtenerReporteDiarioOperacion'
+)
+    DROP PROCEDURE ObtenerReporteDiarioOperacion
+GO
+CREATE PROCEDURE [dbo].[ObtenerReporteDiarioOperacion]
     @IdContrato INT,
     @FechaInicio DATETIME,
     @FechaFin DATETIME
@@ -20,7 +28,7 @@ BEGIN
            PR_ProdDiariaPozo_Previo.EPM,
            PR_ProdDiariaPozo_Previo.NombreEstacion as SuministroGas,
            PR_ProdDiariaPozo_Previo.Nominal as Consumo,
-           ISNULL(PR_Tanque.Clave, '-') as Fluye,
+           PR_Tanque.Nombre as Fluye,
            PR_ProdDiariaPozo_Previo.Comentarios,
 		   PR_ProdDiariaPozo_Previo.ProgramaInmediato,
 		   PR_ProdDiariaPozo_Previo.Seguimiento
@@ -30,11 +38,11 @@ BEGIN
                AND PR_BLOQUE.IdContrato = @IdContrato
         INNER JOIN PR_ProdDiariaPozo_Previo (NOLOCK)
             ON PR_ProdDiaria_Previo.Id = PR_ProdDiariaPozo_Previo.ProdDiaria
-        INNER JOIN CO_Instalacion (NOLOCK)
+        LEFT JOIN CO_Instalacion (NOLOCK)
             ON PR_ProdDiariaPozo_Previo.Pozo = CO_Instalacion.WelIID
-        INNER JOIN PR_Unidades (NOLOCK)
+        LEFT JOIN PR_Unidades (NOLOCK)
             ON PR_ProdDiariaPozo_Previo.IdUnidad = PR_Unidades.IdUnidad
-        INNER JOIN PR_Sistemas (NOLOCK)
+        LEFT JOIN PR_Sistemas (NOLOCK)
             ON PR_ProdDiariaPozo_Previo.IdSistema = PR_Sistemas.IdSistema
 		LEFT JOIN PR_Tanque (NOLOCK)
 			ON PR_ProdDiariaPozo_Previo.Estacion = PR_Tanque.Id
