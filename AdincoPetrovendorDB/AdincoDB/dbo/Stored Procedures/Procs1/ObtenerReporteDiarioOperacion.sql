@@ -21,11 +21,11 @@ BEGIN
            Round(PR_ProdDiariaPozo_Previo.ProdPetroleoBruto, 1) as BrutaBPD,
            Round(PR_ProdDiariaPozo_Previo.Agua, 1) as Agua,
            Round(PR_ProdDiariaPozo_Previo.ProdAceiteNeto, 1) as NetaBPD,
-           PR_ProdDiariaPozo_Previo.GastoGas,
-           PR_ProdDiariaPozo_Previo.Cabeza as TP,
-           PR_ProdDiariaPozo_Previo.Linea as TR,
-           PR_ProdDiariaPozo_Previo.Est_64Plg as Carrera,
-           PR_ProdDiariaPozo_Previo.EPM,
+           Round(PR_ProdDiariaPozo_Previo.GastoGas, 1) as GastoGas,
+           Round(PR_ProdDiariaPozo_Previo.Cabeza, 1) as TP,
+           Round(PR_ProdDiariaPozo_Previo.Linea, 1) as TR,
+           Round(PR_ProdDiariaPozo_Previo.Est_64Plg, 1) as Carrera,
+           Round(PR_ProdDiariaPozo_Previo.EPM, 1) as EPM,
            PR_ProdDiariaPozo_Previo.NombreEstacion as SuministroGas,
            PR_ProdDiariaPozo_Previo.Nominal as Consumo,
            PR_Tanque.Nombre as Fluye,
@@ -35,7 +35,7 @@ BEGIN
     FROM PR_ProdDiaria_Previo (NOLOCK)
         INNER JOIN PR_BLOQUE (NOLOCK)
             ON PR_ProdDiaria_Previo.Bloque = PR_BLOQUE.Id
-               AND PR_BLOQUE.IdContrato = @IdContrato
+               --AND PR_BLOQUE.IdContrato = @IdContrato
         INNER JOIN PR_ProdDiariaPozo_Previo (NOLOCK)
             ON PR_ProdDiaria_Previo.Id = PR_ProdDiariaPozo_Previo.ProdDiaria
         LEFT JOIN CO_Instalacion (NOLOCK)
@@ -52,4 +52,7 @@ BEGIN
     BETWEEN DATEADD(DAY, -1, @FechaInicio) AND  @FechaFin
 	ORDER BY PR_ProdDiariaPozo_Previo.Fecha, PD_Campo.NombreCampo, CO_Instalacion.NombreInstalacion
 END
+
+
+
 
