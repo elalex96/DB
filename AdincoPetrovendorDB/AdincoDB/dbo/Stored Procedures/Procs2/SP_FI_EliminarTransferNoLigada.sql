@@ -45,37 +45,35 @@ BEGIN
 
 	UNION
 
-	SELECT (SELECT 'Petrovendor..Ax_Pagos' AS Tabla, IdPago, FormaPago, CuentaOrigen, BancoOrigen, TitularOrigen, CuentaDestino, BancoDestino, 
-			TitularDestino, ReferenciaPago, FechaPago, MontoPagado, Interes, Moneda, Concepto, NoPolizaContable, 
-			UUIDFacturaPagada, MontoPagadoFactura, ComplementoPagoUUID, RECID, IdTransferencia, RFC, Editado
+	SELECT (SELECT 'Petrovendor..Ax_Pagos' AS Tabla, IdPago, IdTransferencia
     FROM Petrovendor..Ax_Pagos 
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
 	UNION
 
-	SELECT (SELECT 'CO_SAPPaymentData' AS Tabla, IdContrato, SourceAccount, FinalAccount, PaymentReference, 
-			PaymentForm, PaymentDate, PaidAmount, Currency, Concepto, NumeroPolizaContable, PDF, 
-			Interest, NamePayee, SAPVendorId, VendorBankName, IdTransferencia, InvoiceNumber
+	SELECT (SELECT 'CO_SAPPaymentData' AS Tabla, IdContrato, SourceAccount, FinalAccount, PaymentReference, IdTransferencia
 	FROM CO_SAPPaymentData 
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
 	UNION
 
-	SELECT (SELECT 'FI_TransferFacturaPPD' AS Tabla, IdTransferFacturaPPD, IdTransfer, IdFactura, MontoPagado, 
-			CvTipoDocFacturacion, CreadoPor, CreadoEn, ModificadoPor, ModificadoEn
+	SELECT (SELECT 'FI_TransferFacturaPPD' AS Tabla, IdTransferFacturaPPD, IdTransfer, IdFactura
 	FROM FI_TransferFacturaPPD  
     WHERE IdTransfer = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
-	DELETE Petrovendor..Ax_Pagos 
+	UPDATE Petrovendor..Ax_Pagos 
+	SET IdTransferencia = NULL
 	WHERE IdTransferencia = @IdTransfer
 
-	DELETE CO_SAPPaymentData
+	UPDATE CO_SAPPaymentData
+	SET IdTransferencia = NULL
 	WHERE IdTransferencia = @IdTransfer
 
-	DELETE FI_TransferFacturaPPD
+	UPDATE FI_TransferFacturaPPD
+	SET IdTransfer = NULL
 	WHERE IdTransfer = @IdTransfer 
 
     DELETE dbo.FI_TransferFactura
@@ -101,7 +99,7 @@ BEGIN
     VALUES
     (GETDATE(),
      'Eliminación',
-     CONCAT('Eliminación de registro en las tablas', @NombreTablas, ' en la página MisTransferencias.aspx'),
+     CONCAT('Eliminación de registro en las tablas ', @NombreTablas, ' en la página MisTransferencias.aspx'),
      CONCAT('Se eliminó transferencia con identificador: ', CONVERT(VARCHAR(10), @IdTransfer)),
      @IdUsuario,
      @IdContrato
