@@ -35,7 +35,7 @@ BEGIN
     FROM PR_ProdDiaria_Previo (NOLOCK)
         INNER JOIN PR_BLOQUE (NOLOCK)
             ON PR_ProdDiaria_Previo.Bloque = PR_BLOQUE.Id
-               --AND PR_BLOQUE.IdContrato = @IdContrato
+               AND PR_BLOQUE.IdContrato = @IdContrato
         INNER JOIN PR_ProdDiariaPozo_Previo (NOLOCK)
             ON PR_ProdDiaria_Previo.Id = PR_ProdDiariaPozo_Previo.ProdDiaria
         LEFT JOIN CO_Instalacion (NOLOCK)
