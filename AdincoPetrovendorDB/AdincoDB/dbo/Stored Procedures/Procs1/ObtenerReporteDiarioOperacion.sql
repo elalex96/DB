@@ -18,9 +18,9 @@ BEGIN
            PR_Unidades.NombreUnidad,
            PR_ProdDiariaPozo_Previo.Fuente AS Estado,
            PR_Sistemas.NombreSistema,
-           PR_ProdDiariaPozo_Previo.ProdPetroleoBruto as BrutaBPD,
-           PR_ProdDiariaPozo_Previo.Agua,
-           Round(PR_ProdDiariaPozo_Previo.ProdAceiteNeto, 0) as NetaBPD,
+           Round(PR_ProdDiariaPozo_Previo.ProdPetroleoBruto, 1) as BrutaBPD,
+           Round(PR_ProdDiariaPozo_Previo.Agua, 1) as Agua,
+           Round(PR_ProdDiariaPozo_Previo.ProdAceiteNeto, 1) as NetaBPD,
            PR_ProdDiariaPozo_Previo.GastoGas,
            PR_ProdDiariaPozo_Previo.Cabeza as TP,
            PR_ProdDiariaPozo_Previo.Linea as TR,
@@ -52,12 +52,4 @@ BEGIN
     BETWEEN DATEADD(DAY, -1, @FechaInicio) AND  @FechaFin
 	ORDER BY PR_ProdDiariaPozo_Previo.Fecha, PD_Campo.NombreCampo, CO_Instalacion.NombreInstalacion
 END
-
-
-
-
-
-
-
-
 
