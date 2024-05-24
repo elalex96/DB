@@ -28,7 +28,7 @@ BEGIN
 	SELECT (SELECT 'FI_TransferFactura' AS Tabla, IdTransferFactura, IdTransfer, IdFactura, 
 			IdPedimentoComprobante, MontoPagado, CvTipoDocFacturacion, CreadoPor, CreadoEn, 
 			ModificadoPor, ModificadoEn
-	FROM FI_TransferFactura 
+	FROM FI_TransferFactura (NOLOCK)
     WHERE IdTransfer = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
@@ -39,28 +39,28 @@ BEGIN
 			MontoPagado, IdMoneda, IdClasificacionDocumento, Concepto, IdMetodoPago, ProcesadoSIPAC, 
 			NumeroPolizaContable, Intereses, PDF, CreadoPor, CreadoEn, ModificadoPor, ModificadoEn, 
 			HashSHA256, IdFacturaPago, AWSPDFId, IdFormaPago, IdTransferenciaImportacion 
-	FROM FI_Transfer 
+	FROM FI_Transfer (NOLOCK)
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
 	UNION
 
 	SELECT (SELECT 'Petrovendor..Ax_Pagos' AS Tabla, IdPago, IdTransferencia
-    FROM Petrovendor..Ax_Pagos 
+    FROM Petrovendor..Ax_Pagos (NOLOCK)
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
 	UNION
 
 	SELECT (SELECT 'CO_SAPPaymentData' AS Tabla, IdContrato, SourceAccount, FinalAccount, PaymentReference, IdTransferencia
-	FROM CO_SAPPaymentData 
+	FROM CO_SAPPaymentData (NOLOCK)
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
 	UNION
 
 	SELECT (SELECT 'FI_TransferFacturaPPD' AS Tabla, IdTransferFacturaPPD, IdTransfer, IdFactura
-	FROM FI_TransferFacturaPPD  
+	FROM FI_TransferFacturaPPD (NOLOCK) 
     WHERE IdTransfer = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
