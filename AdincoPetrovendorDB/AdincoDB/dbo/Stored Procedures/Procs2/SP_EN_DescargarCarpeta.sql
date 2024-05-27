@@ -1,4 +1,19 @@
-﻿-- =============================================
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_EN_DescargarCarpeta'
+)
+    DROP PROCEDURE SP_EN_DescargarCarpeta; 
+GO
+/****** Object:  StoredProcedure [dbo].[SP_EN_DescargarCarpeta]    Script Date: 10/05/2024 12:13:01 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:      <Alexander Gomez>
 -- Create date: <13/02/2022>
 -- Description: <Descarga de carpetas etapas, reguladores, marcos legales, frecuencias, años y entregables>
@@ -19,6 +34,10 @@
 -- Create date: <09/12/2022>
 -- Description: Se hace la conjuncion de nombres para archivo descarga issue # Entregables 857
 -- =============================================
+-- Author:      Daniel AC
+-- Create date: <10/05/2024>
+-- Description: Se agrega replace en la busqueda de la información Issue #1343 Entregables 
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_EN_DescargarCarpeta] --[SP_EN_DescargarCarpeta] 'Exploración/SENER (Secretaría de Energía)/(Resolutivo EvIS) Oficio 117.-DGAEISyCP.4237-18 referente a la Evaluación de Impacto Social/',10103,1000
 
     -- Add the parameters for the stored procedure here
@@ -30,44 +49,20 @@ BEGIN
     -- SET NOCOUNT ON added to prevent extra result sets from
     -- interfering with SELECT statements.
     SET NOCOUNT ON;
-    CREATE TABLE #tabla (dato varchar(500), esEntregable BIT)
-    DECLARE @maxNivel int, @i int, @query varchar(max), @maxIds int,@size int=20, 
+
+    CREATE TABLE #tabla (
+	dato varchar(max),
+	esEntregable BIT)
+
+    DECLARE @maxNivel int,
+	@i int, 
+	@query varchar(max),
+	@maxIds int,
+	@size int=20, 
 	@NuevaRuta VARCHAR(MAX) = '', 
 	@TableConjunciones TableConjunciones;
 	
-	INSERT INTO @TableConjunciones (palabra,sustitucion)
-	SELECT palabra,sustitucion from EN_ConjuncionesDocumentos where activo = 1
-    
-	INSERT INTO #tabla(dato)
-    SELECT 
-	splitdata as Ruta
-    FROM [dbo].[fnSplitString](@Ruta,'/')
-
-	--SE AGREGA JOIN A MARCOS LEGALES PARA SUSTITUIR POR EL ALIAS
-	UPDATE t
-	set dato = isnull(ML.alias,ML.MarcoLegal)
-	FROM #tabla T
-	JOIN EN_MARCOLEGAL ML
-		ON T.dato = ML.MarcoLegal
-	
-	UPDATE T
-	SET esEntregable = 1
-	FROM #tabla T
-	JOIN EN_ENTREGABLE E (NOLOCK)
-		ON T.dato = E.DocumentoEntregable
-
-    SELECT 
-		@NuevaRuta = @NuevaRuta + CASE
-									WHEN CHARINDEX('- (',dato,1) > 0 THEN substring(LTRIM(RTRIM(SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)))),0,20) + '/'
-									WHEN esEntregable = 1 THEN substring(LTRIM(RTRIM(dato)),0,30) + '/'
-									ELSE substring(LTRIM(RTRIM(dato)),0,20) + '/'
-								END
-    FROM #tabla;
-
-	SET @NuevaRuta = REPLACE(REPLACE(@NuevaRuta,':',''),' ','');
-
-    -- Insert statements for procedure here
-    create table #Rutas
+    CREATE TABLE #Rutas
     (
         Id                      int,
         IdPadre                 int,
@@ -96,7 +91,7 @@ BEGIN
         FechaInicioEtapa        date,
         FechaFinEtapa           date
     )
-    create table #tmpResultado
+    CREATE TABLE #tmpResultado
     (
         Id                      int,
         IdPadre                 int,
@@ -106,13 +101,13 @@ BEGIN
         DocumentoEntregableId   int,
         RutaCompleta            nvarchar(max)
     )
-    create table #tmpResultadoRuta
+    CREATE TABLE #tmpResultadoRuta
     (
         Id                      int,
         Ruta                    varchar(max),
         Titulo                  varchar(max)
     )
-    create table #tmpResultadoVisor
+    CREATE TABLE #tmpResultadoVisor
     (
         Id                      int,
         Ruta                    varchar(max),
@@ -120,31 +115,117 @@ BEGIN
         Titulo                  varchar(max),
 		RutaCarpetas			varchar(max),
     )
-    insert into #Rutas
-    exec EN_SHELL_ObtenerDocumentosEntregablesDescarga @IdContrato, @IdUsuario
-    insert
-    into    #tmpResultado
-    select  Id, IdPadre, Nivel, Titulo, Titulo, DocumentoEntregableId,Titulo
-    from    #Rutas 
-    select @maxNivel = max(Nivel), @i = 0 from #Rutas
 
-    while(@i < @maxNivel)
-    begin
-        update      #tmpResultado   
-        set         #tmpResultado.Ruta      =    CASE WHEN E.IdEntregable IS NOT NULL THEN CONCAT(substring(RTRIM(LTRIM(r.Titulo)),0,@size+10),'/',tr.Ruta)
+	INSERT INTO @TableConjunciones (
+	palabra,
+	sustitucion)
+	SELECT palabra,
+	sustitucion 
+	FROM EN_ConjuncionesDocumentos 
+	WHERE activo = 1
+    
+	INSERT INTO #tabla(dato)
+    SELECT 
+	splitdata as Ruta
+    FROM [dbo].[fnSplitString](@Ruta,'/')
+
+	--SE AGREGA JOIN A MARCOS LEGALES PARA SUSTITUIR POR EL ALIAS
+	UPDATE t
+	SET dato = isnull(ML.alias,ML.MarcoLegal)
+	FROM #tabla T
+	JOIN EN_MARCOLEGAL ML (NOLOCK)
+		ON T.dato = ML.MarcoLegal
+	
+	UPDATE T
+	SET esEntregable = 1
+	FROM #tabla T
+	JOIN EN_ENTREGABLE E (NOLOCK)
+		ON T.dato = E.DocumentoEntregable
+
+    SELECT 
+		@NuevaRuta = @NuevaRuta + CASE
+									WHEN CHARINDEX('- (',dato,1) > 0 THEN substring(LTRIM(RTRIM(SUBSTRING((SUBSTRING(dato,CHARINDEX('- (',dato,1)+3,30)),1,(len(SUBSTRING(dato,CHARINDEX('- (',dato,2)+3,30)) - 1)))),0,20) + '/'
+									WHEN esEntregable = 1 THEN substring(LTRIM(RTRIM(dato)),0,30) + '/'
+									ELSE substring(LTRIM(RTRIM(dato)),0,20) + '/'
+								END
+    FROM #tabla;
+
+	SET @NuevaRuta = REPLACE(REPLACE(@NuevaRuta,':',''),' ','');
+	  
+	INSERT INTO #Rutas(
+	Id                      ,
+    IdPadre                 ,
+    Titulo                  ,
+    EtapaId                 ,
+    ReceptorEntregableId    ,
+    PozoInstalacionId       ,
+    MarcoLegalId            ,
+    EtapaPozoId             ,
+    EntregableId            ,
+    FrecuenciaId            ,
+    Frecuencia              ,
+    FechaEntregaAnioMes     ,
+    FechaProgramadaEntrega  ,
+    DocumentoEntregableId   ,
+    CantidadArchivos        ,
+    Detalle                 ,
+    Icono                   ,
+    Acciones                ,
+    Mime                    ,
+    Nivel                   ,
+    TipoArchivo             ,
+    FechaCarga              ,
+    CargadoPor              ,
+    Origen                  ,
+    FechaInicioEtapa        ,
+    FechaFinEtapa           
+	)
+    EXEC EN_SHELL_ObtenerDocumentosEntregablesDescarga 
+	@IdContrato, 
+	@IdUsuario
+    
+	INSERT INTO    #tmpResultado(
+	Id                   ,
+    IdPadre              ,
+    Nivel                ,
+    Ruta                 ,
+    Titulo               ,
+    DocumentoEntregableId,
+    RutaCompleta)
+    SELECT  Id,
+	IdPadre,
+	Nivel,
+	Titulo, 
+	Titulo,
+	DocumentoEntregableId,
+	Titulo
+    FROM    #Rutas 
+
+
+    SELECT @maxNivel = max(Nivel),
+	@i = 0 
+	from #Rutas
+
+    WHILE(@i < @maxNivel)
+    BEGIN
+        UPDATE      #tmpResultado   
+        SET         #tmpResultado.Ruta      =    CASE WHEN E.IdEntregable IS NOT NULL THEN CONCAT(substring(RTRIM(LTRIM(r.Titulo)),0,@size+10),'/',tr.Ruta)
 													ELSE CONCAT(substring(RTRIM(LTRIM(r.Titulo)),0,@size),'/',tr.Ruta) END ,
                     #tmpResultado.RutaCompleta      =  CONCAT(RTRIM(LTRIM(r.Titulo)),'/',tr.Ruta),
                     #tmpResultado.IdPadre   =   r.IdPadre
-        from        #tmpResultado   tr
-        inner join  #Rutas          r
-        on          tr.IdPadre      =   r.Id
-		left join EN_Entregable E
+        FROM        #tmpResultado   tr
+        INNER JOIN  #Rutas          r
+        ON          tr.IdPadre      =   r.Id
+		LEFT JOIN EN_Entregable E (NOLOCK)
 			ON r.Titulo = E.DocumentoEntregable
-        select @i = @i  + 1
-    end
-    select @maxIds = MAX(Id)
-    from #tmpResultado
-    insert into #tmpResultadoVisor
+        SELECT @i = @i  + 1
+
+    END
+
+    SELECT @maxIds = MAX(Id)
+    FROM #tmpResultado
+
+    INSERT INTO #tmpResultadoVisor
 	(Id,
 	Ruta,
 	RutaCompleta,
@@ -155,23 +236,27 @@ BEGIN
         [dbo].[fn_ent_RutaArchivo_CF](Ruta,@size),
         Ruta,
         Nombre,
-		REPLACE(REPLACE(reverse(stuff(reverse([dbo].[fn_ent_RutaArchivo_CF](Ruta,@size)), 1, LEN(Nombre), '')),'//','/'),'///','/')
+		REPLACE(REPLACE(REVERSE(STUFF(REVERSE([dbo].[fn_ent_RutaArchivo_CF](Ruta,@size)), 1, LEN(Nombre), '')),'//','/'),'///','/')
     FROM EN_CarpetasArchivosVisor (NOLOCK)
     WHERE IdContrato = @IdContrato
     AND Ruta IS NOT NULL
     AND Activo = 1;
 
     --TODAS LAS RUTAS
-    select  Id,
+    SELECT  Id,
             REPLACE(Ruta,':','') AS Ruta,
             Titulo
-    from    #tmpResultado 
-    where   DocumentoEntregableId is not null
+    FROM    #tmpResultado 
+    WHERE   DocumentoEntregableId IS NOT NULL
+
     UNION ALL
-    select Id,
+
+    SELECT Id,
     REPLACE(Ruta,':',''),
     Titulo
-    from #tmpResultadoVisor
+    FROM #tmpResultadoVisor
+
+
     --RUTAS DE LA CARPETA QUE SE DESEA DESCARGAR
     select  R.Id,
             REPLACE(Ruta,':','') AS Ruta,
@@ -191,13 +276,14 @@ BEGIN
 			from    #tmpResultado AS R
     JOIN EN_EntregableDocumento AS DE (NOLOCK)
         ON R.DocumentoEntregableId = DE.DocumentoEntregableId
-    where   R.DocumentoEntregableId is not null
-        AND REPLACE(R.RutaCompleta,':','') LIKE '%' + @NuevaRuta + '%'
+    WHERE   R.DocumentoEntregableId IS NOT NULL
+        AND REPLACE(REPLACE(R.RutaCompleta,':',''),' ','') LIKE '%' + @NuevaRuta + '%'
         AND Activo = 1
+
     UNION ALL
+
     SELECT
         (V.IdElemento + @maxIds) AS Id,
-        --REPLACE(REPLACE(RV.Ruta,'//','/'),'///','/') AS Ruta,
 		CONCAT(RV.RutaCarpetas,dbo.fn_EN_getNombreDocumentoConjuncion(@TableConjunciones,CONCAT(' ',V.Nombre,' '))) as Ruta,
         V.Nombre AS Titulo,
         V.IdElemento as DocumentoEntregableId,
