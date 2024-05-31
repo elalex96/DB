@@ -29,7 +29,7 @@ BEGIN
 					FROM dbo.TA_NoNotificacion N
 					JOIN S_Usuario U
 					ON N.IdUsuario = U.IdUsuario
-					WHERE	U.Correo = @Destinatario							
+					WHERE	UPPER(RTRIM(LTRIM(U.Correo))) = UPPER(RTRIM(LTRIM(@Destinatario)))					
 					AND N.IdCorreo = @TipoCorreo
 					AND N.IsEliminado = 0)
 		BEGIN
