@@ -35,7 +35,7 @@ as
 	where SAPPONumber = @pSAPPONumber and
 	ItemNumber = @pItemNumber and
 	IdCOntrato = @pIdContrato
-	select * from Adinco..CO_SAPVendor
+
 	select top 10
 		Destinatario = ISNULL(u.Correo,'')+';',
 		NombreUsuario = prov.RazonSocial,
