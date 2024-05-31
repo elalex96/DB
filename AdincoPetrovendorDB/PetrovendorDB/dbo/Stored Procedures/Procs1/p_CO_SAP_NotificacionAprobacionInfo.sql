@@ -6,8 +6,9 @@ IF EXISTS
     FROM dbo.sysobjects
     WHERE name = 'p_CO_SAP_NotificacionAprobacionInfo'
 )
-    DROP PROCEDURE p_CO_SAP_NotificacionAprobacionInfo;
+    DROP PROCEDURE p_CO_SAP_NotificacionAprobacionInfo; 
 GO
+/****** Object:  StoredProcedure [dbo].[p_CO_SAP_NotificacionAprobacionInfo]    Script Date: 29/05/2024 12:02:25 p. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -16,6 +17,11 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 10/05/2023
 -- Description:	se agrega el filtrado por usuario activo, nolocks y reacomodo de joins
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 10/05/2024
+-- Description:	se agrega agrupado en el filtrado por usuario activo, nolocks y reacomodo de joins
 -- =============================================
 CREATE proc [dbo].[p_CO_SAP_NotificacionAprobacionInfo]
 @pIdContrato int,
@@ -29,8 +35,8 @@ as
 	where SAPPONumber = @pSAPPONumber and
 	ItemNumber = @pItemNumber and
 	IdCOntrato = @pIdContrato
-
-	select top 10 
+	select * from Adinco..CO_SAPVendor
+	select top 10
 		Destinatario = ISNULL(u.Correo,'')+';',
 		NombreUsuario = prov.RazonSocial,
 		IdUsuario = u.idUsuario,
@@ -43,11 +49,16 @@ as
 		on prov.IdProveedor = up.idProveedor
 	INNER JOIN S_Usuario u (NOLOCK)
 		on up.IdUsuario = u.idUsuario
-			AND u.Activo = 1
+			AND u.Activo = 1 --> CTE Usuario debe estar activo
 	INNER JOIN Adinco..Co_Contrato c (NOLOCK)
 		on c.IdCOntrato = @pIdContrato
 	INNER JOIN Adinco..CO_AreaContractual ac (NOLOCK)
 		on c.IdAreaContractual = ac.IdAreaContractual
 	where VendorIDSAP = @pVendorIDSAP
+	GROUP BY 
+	u.Correo,
+	prov.RazonSocial,
+	u.idUsuario,
+	ac.NombreAreaContractual
 
 
