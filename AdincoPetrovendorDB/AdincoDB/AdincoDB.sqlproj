@@ -3965,4 +3965,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\Mobile_Sp_EnvioNotificacionFinalizacionSolped.sql" />
     <Build Include="dbo\Tables\Tables1\AP_BitacoraEliminados.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="dbo\Stored Procedures\Procs1\Mobile_Sp_EnvioNotificacionFinalizacionSolped" />
+  </ItemGroup>
 </Project>

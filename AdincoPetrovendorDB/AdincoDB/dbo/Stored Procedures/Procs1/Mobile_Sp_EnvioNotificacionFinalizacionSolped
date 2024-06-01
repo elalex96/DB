@@ -21,17 +21,52 @@ GO
 -- Create date: 25/03/2024
 -- Description:	Se corrige la duplicación en envio de notificaciones
 -- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: 01/06/2024
+-- Description:	Se concatenan los correos de solicitud oferta aprobada
+-- =============================================
 CREATE PROC [dbo].[Mobile_Sp_EnvioNotificacionFinalizacionSolped] 
 @IdSolicitudPedido INT,
 @IdOperacion int,
 @SolpedEncriptada varchar(max)
 AS
 BEGIN
+SET NOCOUNT ON;
+CREATE TABLE #USUARIOSCOMPRAS
+(
+	Id int primary key identity (1,1),
+	IdUsuario int,
+	Nombre varchar(300),
+	Correo varchar(300),
+	CentroCostos varchar(300),
+	Tipo varchar(300),
+)
+
+CREATE TABLE #USUARIOSCOMPRASxCentroCosto
+(   Id int primary key identity (1,1),
+	CentroCostos varchar(300),
+)
+
+CREATE TABLE #CentroCosto(IdCentroCosto INT, 
+CentroCosto NVARCHAR(MAX),
+IdUsuario INT, 
+Nombre NVARCHAR(MAX), 
+Correo NVARCHAR(MAX))
+
 DECLARE 
+@COUNTCC INT,
+@CorreoRemitente NVARCHAR(MAX) ='procura@adinco.mx',
 @NombreAreaContractual NVARCHAR(MAX), 
 @NumeroContrato NVARCHAR(MAX),
 @Contrato NVARCHAR(MAX),
-@IDNOTIFICACION INT = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion),
+@IDNOTIFICACION INT = 0,
+@IdCorreoSolicitudOferta INT= (SELECT top 1 IdCorreo 
+								from Petrovendor..TA_Correo (nolock) 
+								where Descripcion ='Correo notificación Solicitud Oferta'),
+@IdCorreoCambioAprobacion INT= (SELECT top 1 IdCorreo 
+								from Petrovendor..TA_Correo (nolock)
+								where Descripcion ='HTML para notificación Cambio de Estado de una Tarea'),
 @AnioActual INT = (YEAR(GETDATE())),
 @IdEstatusOperacion INT = (SELECT TOP 1 TOO.IdEstatusOperacion
         FROM Petrovendor..TA_Tarea AS T (NOLOCK) 
@@ -44,10 +79,24 @@ DECLARE
         WHERE TOO.IdOperacion = @IdOperacion
 		GROUP BY TOO.IdEstatusOperacion
         ORDER BY TOO.IdEstatusOperacion DESC);
-	declare 
-	@htmlRequisitor varchar(max) = (select HTML from Petrovendor..TA_Correo where idcorreo = 2),
-	@htmlOferta varchar(max) = (select HTML from Petrovendor..TA_Correo where idcorreo = 26);
-	--CONTRATO
+
+	DECLARE 
+	@htmlRequisitor varchar(max) = (select top 1 HTML 
+									from Petrovendor..TA_Correo (NOLOCK)
+									where idcorreo = @IdCorreoCambioAprobacion),
+	@htmlOferta varchar(max) = (select top 1 HTML 
+								from Petrovendor..TA_Correo (NOLOCK)
+								where idcorreo = @IdCorreoSolicitudOferta);
+
+	DECLARE @ConteoCC INT = 1 
+	DECLARE @TotalCC INT = 0
+	DECLARE @DestinatariosxCC NVARCHAR(MAX) =''
+	DECLARE @SinDestinatariosxCC NVARCHAR(MAX) =''
+	DECLARE @DominioProcura NVARCHAR(MAX) = (SELECT Url 
+											FROM Petrovendor..TA_Dominios 
+											WHERE IdDominio= 2) --> CTE PARA DOMINIO PROCURA
+
+	--OBTENER EL CONTRATO
 	SELECT
         @NombreAreaContractual=ISNULL(AC.NombreAreaContractual,''),  
         @NumeroContrato=ISNULL(C.NumeroContrato,''),  
@@ -56,49 +105,44 @@ DECLARE
         INNER JOIN Adinco.dbo.CO_AreaContractual AC (NOLOCK) 
             ON C.IdAreaContractual = AC.IdAreaContractual
 		INNER JOIN Petrovendor.dbo.MM_SolicitudPedido SP (NOLOCK) 
-			ON C.IdContrato = sp.IdContrato
+			ON C.IdContrato = SP.IdContrato
     WHERE (SP.IdSolicitudPedido = @IdSolicitudPedido)
 	GROUP BY 
 	AC.NombreAreaContractual,
 	C.NumeroContrato,
 	AC.NombreAreaContractual;
-	IF @IdEstatusOperacion = 2
-	BEGIN
-	--ENVIO NOTIFICACION USUARIOS COMPRAS / APLICA SOLO PARA OPERACIÓN APROBADA
-		DROP TABLE IF EXISTS #USUARIOSCOMPRAS
-		DROP TABLE IF EXISTS #CentroCosto
-		create table #USUARIOSCOMPRAS
-		(
-			Id int primary key identity (1,1),
-			IdUsuario int,
-			Nombre varchar(300),
-			Correo varchar(300),
-			CentroCostos varchar(300),
-			Tipo varchar(300),
-		)
-		CREATE TABLE #CentroCosto(IdCentroCosto INT, CentroCosto NVARCHAR(MAX), IdUsuario INT, Nombre NVARCHAR(MAX), Correo NVARCHAR(MAX))
 
+	IF @IdEstatusOperacion = 2 --> CTE ESTATUS APROBADO
+
+	BEGIN
+	--ENVIAR NOTIFICACION A USUARIOS COMPRAS / APLICA SOLO PARA OPERACIÓN APROBADA
+
+		-- OBTENER LOS CENTROS DE COSTO RELACIONADOS A GRUPOS DE USUARIOS DE LA REQUISICION
 		INSERT INTO #CentroCosto
 		(IdCentroCosto,CentroCosto,IdUsuario,Nombre,Correo)
 		
 		SELECT SPLP.IdCentroCosto, CC.CentroCosto,U.IdUsuario, U.Nombre, U.Correo
-		FROM Petrovendor..MM_SolicitudPedidoDetalle SPD
-		INNER JOIN Petrovendor..MM_SolicitudPedidoDetalleLineaPresupuesto SPLP 
-			ON SPLP.IdSolicitudPedidoDetalle=SPD.IdSolicitudPedidoDetalle
-		INNER JOIN Petrovendor..CC_CentroCosto CC ON CC.IdCentroCosto=SPLP.IdCentroCosto
-		INNER JOIN Petrovendor..CC_CentroCostoGrupoCompras CCG ON CCG.IdCentroCosto=CC.IdCentroCosto
-		INNER JOIN Petrovendor..S_Usuario U ON U.IdUsuario=CCG.IdUsuario
-		WHERE IdSolicitudPedido=@IdSolicitudPedido
-		AND U.Activo=1
-		AND CCG.Activo=1
+		FROM Petrovendor..MM_SolicitudPedidoDetalle SPD (NOLOCK) 
+		INNER JOIN Petrovendor..MM_SolicitudPedidoDetalleLineaPresupuesto SPLP (NOLOCK) 
+			ON SPD.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
+		INNER JOIN Petrovendor..CC_CentroCosto CC (NOLOCK) 
+			ON SPLP.IdCentroCosto = CC.IdCentroCosto
+		INNER JOIN Petrovendor..CC_CentroCostoGrupoCompras CCG  (NOLOCK) 
+			ON CC.IdCentroCosto = CCG.IdCentroCosto
+		INNER JOIN Petrovendor..S_Usuario U (NOLOCK) 
+			ON CCG.IdUsuario = U.IdUsuario
+		WHERE SPD.IdSolicitudPedido = @IdSolicitudPedido
+		AND U.Activo=1 --> USUARIOS ACTIVOS
+		AND CCG.Activo=1 --> RELACION CC - USUARIO ACTIVA
 		GROUP BY SPLP.IdCentroCosto, CC.CentroCosto,U.IdUsuario, U.Nombre, U.Correo
-
-		DECLARE @COUNTCC INT 
+		
 
 		SELECT @COUNTCC = COUNT(1) FROM #CentroCosto
 		
 		IF @COUNTCC > 0 
 		BEGIN 
+
+			-- AGRUPAR LOS CENTROS DE COSTO POR USUARIO
 			INSERT INTO #USUARIOSCOMPRAS(IdUsuario,Nombre,Correo,CentroCostos,Tipo)
 			SELECT CC.IdUsuario,
 			CC.Nombre, 
@@ -117,24 +161,36 @@ DECLARE
 
 		END 
 		ELSE 
-
 		BEGIN
-			-- NO HAY NINGUN COMPRADOR EL LOS CENTROS DE COSTOS RELACIONADOS AA LA REQUISCION
-			-- ENTONCES ENVIAR A TODOS LOS COMPRADORES 
+			-- NO HAY NINGUN COMPRADOR EL LOS CENTROS DE COSTOS RELACIONADOS A LA REQUISICION
+			-- ENTONCES ENVIAR A TODOS LOS COMPRADORES RELACIONADOS AL CENTRO DE COSTO
 			INSERT INTO #CentroCosto
-			(IdCentroCosto,CentroCosto,IdUsuario,Nombre,Correo)
-			SELECT SPLP.IdCentroCosto, CC.CentroCosto,U.IdUsuario, U.Nombre, U.Correo
-			FROM Petrovendor..MM_SolicitudPedidoDetalle SPD
-			INNER JOIN Petrovendor..MM_SolicitudPedidoDetalleLineaPresupuesto SPLP 
-				ON SPLP.IdSolicitudPedidoDetalle=SPD.IdSolicitudPedidoDetalle
-			INNER JOIN Petrovendor..CC_CentroCosto CC ON CC.IdCentroCosto=SPLP.IdCentroCosto
-			INNER JOIN Petrovendor..CC_AdministradorCompras CCA ON CCA.IdProveedor=CC.IdProveedor
-			INNER JOIN Petrovendor..S_Usuario U ON U.IdUsuario=CCA.IdUsuario
-			WHERE SPD.IdSolicitudPedido= @IdSolicitudPedido --16537	
-			AND U.Activo=1
-			AND CCA.Activo=1
+			(IdCentroCosto,
+			CentroCosto,
+			IdUsuario,
+			Nombre,
+			Correo)
+			SELECT
+			SPLP.IdCentroCosto, 
+			CC.CentroCosto,
+			U.IdUsuario,
+			U.Nombre, 
+			U.Correo
+			FROM Petrovendor..MM_SolicitudPedidoDetalle SPD (NOLOCK) 
+			INNER JOIN Petrovendor..MM_SolicitudPedidoDetalleLineaPresupuesto SPLP (NOLOCK) 
+				ON SPD.IdSolicitudPedidoDetalle = SPLP.IdSolicitudPedidoDetalle
+			INNER JOIN Petrovendor..CC_CentroCosto CC (NOLOCK) 
+				ON SPLP.IdCentroCosto = CC.IdCentroCosto
+			INNER JOIN Petrovendor..CC_AdministradorCompras CCA (NOLOCK) 
+				ON CC.IdProveedor = CCA.IdProveedor
+			INNER JOIN Petrovendor..S_Usuario U (NOLOCK) 
+				ON CCA.IdUsuario = U.IdUsuario
+			WHERE SPD.IdSolicitudPedido= @IdSolicitudPedido 	
+			AND U.Activo=1 --> CTE USUARIO ACTIVO
+			AND CCA.Activo=1 --> CTE RELACION CENTRO COSTO-USUARIO ACTIVO
 			GROUP BY SPLP.IdCentroCosto, CC.CentroCosto,U.IdUsuario, U.Nombre, U.Correo
 			
+			-- SE CONCATENAN LOS CENTROS DE COSTO QUE TIENE USUARIOS 
 			INSERT INTO #USUARIOSCOMPRAS(IdUsuario,Nombre,Correo,CentroCostos,Tipo)
 			SELECT CC.IdUsuario,
 			CC.Nombre, 
@@ -150,6 +206,51 @@ DECLARE
 			FROM  #CentroCosto CC
 			GROUP BY CC.IdUsuario,Nombre,Correo
 		END
+
+		-- REMOVER A LOS USUARIOS QUE NO SE LES DEBE ENVIAR NOTIFICACION
+		DELETE UC
+		FROM #USUARIOSCOMPRAS UC
+		JOIN Petrovendor..TA_NoNotificacion NN
+			ON UC.IdUsuario = NN.IdUsuario
+		AND NN.IdCorreo = @IdCorreoSolicitudOferta --> CTE CORREO DE NOTIFICACIÓN 
+		AND NN.IsEliminado = 0 --> NO ESTE ELIMINADA LA EXCEPCIÓN DE CORREO
+
+		INSERT INTO #USUARIOSCOMPRASxCentroCosto(CentroCostos)
+		SELECT CentroCostos
+		FROM #USUARIOSCOMPRAS
+		GROUP BY CentroCostos
+
+		SET @ConteoCC  = 1 -->CTE INICIO DEL CONTEO
+		SET @TotalCC  = (SELECT COUNT(1) FROM #USUARIOSCOMPRASxCentroCosto)
+		SET @DestinatariosxCC =''
+		SET @SinDestinatariosxCC =''
+
+		WHILE @TotalCC  >= @ConteoCC
+		BEGIN 
+
+		 SET @SinDestinatariosxCC = ''
+		 SET @DestinatariosxCC = ''
+		
+		SET @DestinatariosxCC = ((SELECT STUFF (
+								(	SELECT		CAST(';' AS VARCHAR(MAX)) + CONVERT ( NVARCHAR(MAX), U.Correo)
+									FROM	#USUARIOSCOMPRAS AS U	
+									JOIN #USUARIOSCOMPRASxCentroCosto Ucc
+										ON	Ucc.CentroCostos = U.CentroCostos
+									WHERE Ucc.Id = @ConteoCC
+									FOR XML PATH ( '' )), 1, 1, '' ) )
+							) 
+
+	
+		 IF ISNULL(@DestinatariosxCC,'')=''
+		 BEGIN 
+			-- SI NO SE ENCONTRO NINGÚN DESTINATARIO ENVIARSE A SOPORTE
+			SET @DestinatariosxCC ='soporte@adinco.mx'
+			SET @SinDestinatariosxCC ='(Sin destinatarios)'
+		 END 
+
+		  SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion)
+									FROM Adinco.dbo.S_Notificacion)
+
 		 INSERT INTO Adinco.dbo.S_Notificacion
 			(
 				IdNotificacion,
@@ -167,33 +268,125 @@ DECLARE
 				EN_MsjEnviado
 			)
 			select 
-			(@IDNOTIFICACION + Id),
-			U.Correo,
-			CONCAT('Solicitud Oferta ',@IdSolicitudPedido,' Aprobada'),
+			(@IDNOTIFICACION + 1),
+			@DestinatariosxCC,
+			CONCAT('Solicitud Oferta ',@IdSolicitudPedido,' Aprobada')+@SinDestinatariosxCC,
 			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(@htmlOferta,
-			'##NOMBRE_USUARIO##',U.Nombre),
+			'##NOMBRE_USUARIO##','Estimado usuario'),
 			'##NO_SOLICITUDPEDIDO##',@IdSolicitudPedido),
 			'##CONTRATO## ',@Contrato),
-			'##CENTROSCOSTOS##',U.CentroCostos),
+			'##CENTROSCOSTOS##',Ucc.CentroCostos),
 			'##ANIO_ACTUAL##',@AnioActual),
-			'##URL_TAREA##',CONCAT('https://procura.adinco.mx/02Proveedores/DetalleSolicitudOferta.aspx?solped=',@SolpedEncriptada)),
+			'##URL_TAREA##',CONCAT(@DominioProcura,'01Proveedores/DetallePeticionOfertav2.aspx?solped=',@SolpedEncriptada)),
 			DATEADD(MINUTE,1,GETDATE()),
 			0,      -- Enviada - bit
 			NULL, -- FechaEnvio - datetime
-			3,         -- CreadoPor - int
+			1,         -- CreadoPor - int --> CTE USUARIO ADMINISTRADOR
 			GETDATE(), -- CreadoEl - datetime
 			NULL,         -- ModificadoPor - int
 			NULL, -- ModificadoEl - datetime
-			'procura@adinco.mx',        -- De - varchar(100)
+			@CorreoRemitente,        -- De - varchar(100)
 			NULL       -- EN_MsjEnviado - bit
-			from #USUARIOSCOMPRAS U
+			from #USUARIOSCOMPRASxCentroCosto Ucc
+			WHERE Ucc.Id = @ConteoCC
+			
+			INSERT INTO Petrovendor..TA_EnvioCorreo
+			(
+				IdEnvioAdinco,
+				IdCorreo,
+				IdIdentificacion,
+				EnviadoPor,
+				EnviadoEl
+			)
+			VALUES
+			(   (@IDNOTIFICACION + 1), -- IdEnvioAdinco - int
+				@IdCorreoSolicitudOferta, -- IdCorreo - int
+				CONCAT(@IdOperacion,' - Nueva Solicitud de oferta ',@IdSolicitudPedido,' Envió desde AppMovil'),  -- IdIdentificacion - int
+				1, --> USUARIO ADMINISTRADOR
+				GETDATE()
+			);
+
+			SET @ConteoCC = @ConteoCC+ 1
+		END 
+
+		IF @TotalCC = 0 
+		-- NOTIFICAR A SOPORTE 
+		BEGIN
+			
+			SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion)
+									FROM Adinco.dbo.S_Notificacion)
+			SET @SinDestinatariosxCC = (SELECT TOP 1 CC.CentroCosto
+					FROM Petrovendor..MM_SolicitudPedidoDetalle SPD (NOLOCK)
+					INNER JOIN Petrovendor..MM_SolicitudPedidoDetalleLineaPresupuesto SPLP   (NOLOCK)
+						ON SPD.IdSolicitudPedidoDetalle  = SPLP.IdSolicitudPedidoDetalle
+					INNER JOIN Petrovendor..CC_CentroCosto CC (NOLOCK)
+						ON SPLP.IdCentroCosto = CC.IdCentroCosto 
+					WHERE SPD.IdSolicitudPedido= @IdSolicitudPedido
+					GROUP BY CC.CentroCosto
+					ORDER BY  CC.CentroCosto ASC)
+
+			 INSERT INTO Adinco.dbo.S_Notificacion
+				(
+					IdNotificacion,
+					Para,
+					Asunto,
+					Mensaje,
+					FechaProgramadaEnvio,
+					Enviada,
+					FechaEnvio,
+					CreadoPor,
+					CreadoEl,
+					ModificadoPor,
+					ModificadoEl,
+					De,
+					EN_MsjEnviado
+				)
+				VALUES( 
+				(@IDNOTIFICACION + 1),
+				'soporte.adinco.mx',
+				CONCAT('Solicitud Oferta ',@IdSolicitudPedido,' Aprobada')+'(Sin destinarios)',
+				REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(@htmlOferta,
+				'##NOMBRE_USUARIO##','Estimado usuario'),
+				'##NO_SOLICITUDPEDIDO##',@IdSolicitudPedido),
+				'##CONTRATO## ',@Contrato),
+				'##CENTROSCOSTOS##',ISNULL(@SinDestinatariosxCC,'N/A')),
+				'##ANIO_ACTUAL##',@AnioActual),
+				'##URL_TAREA##',CONCAT(@DominioProcura,'01Proveedores/DetallePeticionOfertav2.aspx?solped=',@SolpedEncriptada)),
+				DATEADD(MINUTE,1,GETDATE()),
+				0,      -- Enviada - bit
+				NULL, -- FechaEnvio - datetime
+				1,         -- CreadoPor - int --> CTE USUARIO ADMINISTRADOR
+				GETDATE(), -- CreadoEl - datetime
+				NULL,         -- ModificadoPor - int
+				NULL, -- ModificadoEl - datetime
+				@CorreoRemitente,        -- De - varchar(100)
+				NULL       -- EN_MsjEnviado - bit
+				)
+
+				INSERT INTO Petrovendor..TA_EnvioCorreo
+				(
+					IdEnvioAdinco,
+					IdCorreo,
+					IdIdentificacion,
+					EnviadoPor,
+					EnviadoEl
+				)
+				VALUES
+				(   (@IDNOTIFICACION + 1), -- IdEnvioAdinco - int
+					@IdCorreoSolicitudOferta, -- IdCorreo - int
+				    CONCAT(@IdOperacion,' - Nueva Solicitud de oferta ',@IdSolicitudPedido,' Envió desde AppMovil'),  -- IdIdentificacion - int
+					1, --> USUARIO ADMINISTRADOR
+					GETDATE()
+				);
+			END 
 	END
 
 	IF @IdEstatusOperacion != 1
 	BEGIN
 	--ENVIO NOTIFICACION USUARIO REQUISITOR / APLICA PARA OPERACIÓN APROBADA Y RECHAZADA
-	 SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion);
-	 INSERT INTO Adinco.dbo.S_Notificacion
+	   SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion)
+							FROM Adinco.dbo.S_Notificacion (NOLOCK));
+			INSERT INTO Adinco.dbo.S_Notificacion
 			(
 				    IdNotificacion,
 				    Para,
@@ -227,11 +420,11 @@ DECLARE
 			DATEADD(MINUTE,1,GETDATE()),
 			0,      -- Enviada - bit
 			NULL, -- FechaEnvio - datetime
-			3,         -- CreadoPor - int
+			1,         -- CreadoPor - int
 			GETDATE(), -- CreadoEl - datetime
 			NULL,         -- ModificadoPor - int
 			NULL, -- ModificadoEl - datetime
-			'procura@adinco.mx',        -- De - varchar(100)
+			@CorreoRemitente,        -- De - varchar(100)
 			NULL       -- EN_MsjEnviado - bit
 	FROM Petrovendor..TA_Tarea AS T (NOLOCK) 
             LEFT JOIN Petrovendor..TA_Operacion AS TOO (NOLOCK)
@@ -245,7 +438,7 @@ DECLARE
             LEFT JOIN Petrovendor..TA_Estatus AS TAE (NOLOCK)
                 ON TOO.IdEstatusOperacion = TAE.IdEstatus
 			LEFT JOIN Petrovendor..S_Usuario UA (NOLOCK)
-				ON UA.IdUsuario = TOO.IdAsignador 
+				ON TOO.IdAsignador  = UA.IdUsuario 
         WHERE TOO.IdOperacion = @IdOperacion
         ORDER BY NoSecuencia ASC
 
