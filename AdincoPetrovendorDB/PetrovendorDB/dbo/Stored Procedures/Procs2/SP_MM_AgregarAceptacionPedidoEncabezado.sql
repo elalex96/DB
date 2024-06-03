@@ -1,6 +1,16 @@
-use Petrovendor
-go
-DROP PROC IF EXISTS SP_MM_AgregarAceptacionPedidoEncabezado
+USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_AgregarAceptacionPedidoEncabezado'
+)
+    DROP PROCEDURE SP_MM_AgregarAceptacionPedidoEncabezado;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		DANIEL AC
@@ -25,6 +35,10 @@ GO
 -- Author:		DAVID DE LA CRUZ
 -- Create date: 03/05/2'23
 -- Description:	Se guarda la fecha inicio y fin de ejecución para AMATITLAN
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 21/05/2023
+-- Description:	Se valida si la operadora requiere carta cn
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_AgregarAceptacionPedidoEncabezado]
     @IdPedido INT,
@@ -88,8 +102,10 @@ BEGIN
     -- En caso de que el bit PedirCarta = 1 no pedir carta
 	--EN CASO DE SER WD ADMIN AGREGARLO COMO PedirCarta = 1
 	--IF @IDCONTRATO = 3
-	IF @IDCONTRATO = 10145--CNH-WD ADMIN
-	BEGIN 
+	--CNH-WD ADMIN
+	--VERIFICAR QUE LA OPERADORA NO REQUIERE CARTA
+	IF EXISTS (SELECT * FROM CN_OperadorasExcluidas WHERE IdContrato = @IDCONTRATO AND IdProveedor = @IdProveedor AND Activo = 1) 
+	BEGIN
 		INSERT INTO dbo.RelacionCartaCNPedido
 		(
 			IdPedido,
