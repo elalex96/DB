@@ -32,33 +32,34 @@ BEGIN
     WHERE IdTransfer = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
-	UNION
-
+	
+	INSERT INTO #TablaIntermedia (Datos)
 	SELECT (SELECT 'FI_Transfer' AS Tabla, IdTransferencia, IdContrato, IdComprobantePago, 
 			NombreExtencionArchivo, ReferenciaBancaria, FechaPago, IdCuentaOrigen, IdCuentaDestino, 
 			MontoPagado, IdMoneda, IdClasificacionDocumento, Concepto, IdMetodoPago, ProcesadoSIPAC, 
-			NumeroPolizaContable, Intereses, PDF, CreadoPor, CreadoEn, ModificadoPor, ModificadoEn, 
+			NumeroPolizaContable, Intereses, CreadoPor, CreadoEn, ModificadoPor, ModificadoEn, 
 			HashSHA256, IdFacturaPago, AWSPDFId, IdFormaPago, IdTransferenciaImportacion 
 	FROM FI_Transfer (NOLOCK)
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
-	UNION
-
+	
+	INSERT INTO #TablaIntermedia (Datos)
 	SELECT (SELECT 'Petrovendor..Ax_Pagos' AS Tabla, IdPago, IdTransferencia
     FROM Petrovendor..Ax_Pagos (NOLOCK)
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
-	UNION
-
-	SELECT (SELECT 'CO_SAPPaymentData' AS Tabla, IdContrato, SourceAccount, FinalAccount, PaymentReference, IdTransferencia
+	
+	INSERT INTO #TablaIntermedia (Datos)
+	SELECT (SELECT 'CO_SAPPaymentData' AS Tabla, IdTransferencia, IdContrato, SourceAccount, 
+	FinalAccount, PaymentReference, PaymentDate, PaidAmount, InvoiceNumber
 	FROM CO_SAPPaymentData (NOLOCK)
     WHERE IdTransferencia = @IdTransfer
     FOR JSON PATH, WITHOUT_ARRAY_WRAPPER)
 
-	UNION
-
+	
+	INSERT INTO #TablaIntermedia (Datos)
 	SELECT (SELECT 'FI_TransferFacturaPPD' AS Tabla, IdTransferFacturaPPD, IdTransfer, IdFactura
 	FROM FI_TransferFacturaPPD (NOLOCK) 
     WHERE IdTransfer = @IdTransfer
@@ -107,8 +108,8 @@ BEGIN
 
 	SELECT @IdBitacora = SCOPE_IDENTITY()
 
-	INSERT INTO AP_BitacoraEliminados(IdBitacora, Datos)
-	SELECT @IdBitacora, Datos FROM #TablaIntermedia
+	INSERT INTO AP_BitacoraEliminados(IdBitacora, Datos, CreadoEl)
+	SELECT @IdBitacora, Datos, GETDATE() FROM #TablaIntermedia
 	WHERE Datos IS NOT NULL
 
     --
