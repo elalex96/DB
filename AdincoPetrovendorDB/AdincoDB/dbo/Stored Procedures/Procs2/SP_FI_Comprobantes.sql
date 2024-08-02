@@ -1,4 +1,12 @@
-﻿-- =============================================  
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_Comprobantes'
+)
+    DROP PROCEDURE SP_FI_Comprobantes
+GO
+-- =============================================  
 -- Author:  Manuel CD  
 -- Create date: 15-11-17  
 -- Description:   
@@ -80,13 +88,11 @@ BEGIN
                           'Cargado'
                   END
     FROM FI_PedimentoComprobante  (NOLOCK)
-	LEFT JOIN AP_Usuario Creado	 (NOLOCK)
-		ON FI_PedimentoComprobante.CreadoPor = Creado.UsuarioID
-	LEFT JOIN AP_Usuario Modificado	(NOLOCK)
-		ON FI_PedimentoComprobante.CreadoPor = Modificado.UsuarioID
-	LEFT JOIN PV_TipoMoneda  (NOLOCK)
+	INNER JOIN PV_TipoMoneda  (NOLOCK)
             ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
-	LEFT JOIN dbo.PV_Subcontratista Exportador 	(NOLOCK)
+			AND FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionComprobantes
+            AND FI_PedimentoComprobante.IdContrato = @IdContrato
+	INNER JOIN dbo.PV_Subcontratista Exportador 	(NOLOCK)
             ON FI_PedimentoComprobante.IdSubcontratistaExportador = Exportador.IdSubcontratista
 	LEFT JOIN dbo.AP_Lista	(NOLOCK)
             ON AP_Lista.IdGrupo = @GrupoId 
@@ -95,6 +101,10 @@ BEGIN
             ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_Documento.IdPedimentoComprobante
                AND FI_Documento.DocumentoByte IS NOT NULL
                AND ISNULL(FI_Documento.IsEliminado, 0) = 0 
+	LEFT JOIN AP_Usuario Creado	 (NOLOCK)
+		ON FI_PedimentoComprobante.CreadoPor = Creado.UsuarioID
+	LEFT JOIN AP_Usuario Modificado	(NOLOCK)
+		ON FI_PedimentoComprobante.ModificadoPor = Modificado.UsuarioID
     WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionComprobantes
           AND FI_PedimentoComprobante.IdContrato = @IdContrato
  

@@ -1,4 +1,12 @@
-﻿-- =============================================
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_EditarComprobante'
+)
+    DROP PROCEDURE SP_FI_EditarComprobante
+GO
+-- =============================================
 -- Author:		Marcos Garcia
 -- Create date: 15-01-2020
 -- Description:	Editar Mediante IdPedimentoComprobante
