@@ -1,12 +1,9 @@
 ﻿IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'SP_FI_Comprobantes'
-    )
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_Comprobantes'
+)
     DROP PROCEDURE SP_FI_Comprobantes
 GO
 -- =============================================  
@@ -25,133 +22,92 @@ CREATE PROCEDURE [dbo].[SP_FI_Comprobantes]
 AS
 BEGIN
     SET NOCOUNT ON;
-    CREATE TABLE #FI_Comprobante
+
+     CREATE TABLE #FI_Comprobante
     (
-        IdPedimentoComprobante INT,
-        Archivo VARCHAR(50),
-        NumeroSerieMercancia VARCHAR(5000),
-        ClaseBienServicio VARCHAR(5000),
+        IdPedimentoComprobante INT PRIMARY KEY,
+        Archivo VARCHAR(50) DEFAULT 'NO CARGADO',
+        NumeroSerieMercancia VARCHAR(5000) DEFAULT '',
+        ClaseBienServicio VARCHAR(5000) DEFAULT '',
         PrecioUnitario MONEY,
         Cantidad NUMERIC,
         ImporteTotal MONEY,
         IdUnidadMedida INT,
-        IdUnidadMedidaTexto VARCHAR(5000),
-        IdSubcontratistaImportador INT,
-        IdSubcontratistaImportadorTexto VARCHAR(5000),
+        IdUnidadMedidaTexto VARCHAR(5000) DEFAULT '',
         IdSubcontratistaExportador INT,
-        IdSubcontratistaExportadorTexto VARCHAR(5000),
-        IdMoneda INT,
-        IdMonedaTexto VARCHAR(5000),
-        IdFormaPago INT,
-        IdFormaPagoTexto VARCHAR(5000),
+        IdSubcontratistaExportadorTexto VARCHAR(5000) DEFAULT '',
+        IdMonedaTexto VARCHAR(5000) DEFAULT '',
+        IdFormaPagoTexto VARCHAR(5000) DEFAULT '',
         CreadoPor INT,
-        CreadoPorTexto VARCHAR(5000),
+        CreadoPorTexto VARCHAR(5000) DEFAULT '',
         ModificadoPor INT,
-        ModificadoPorTexto VARCHAR(5000),
-		PRIMARY KEY (IdPedimentoComprobante)
-    )
+        ModificadoPorTexto VARCHAR(5000) DEFAULT '',
+		FolioComprobante NVARCHAR(100),
+		FechaPago DATE,
+		CreadoEn Datetime,
+		ModificadoEn Datetime,
+		NumFacturaC  NVARCHAR(100),
+		EsnotaCredito BIT
+    );
+
 	DECLARE @CvTipoDocFacturacionComprobantes INT= 3;
 	DECLARE @GrupoId INT = 10001;
 
     INSERT INTO #FI_Comprobante
     (
         IdPedimentoComprobante,
-        Archivo,
-        NumeroSerieMercancia,
-        ClaseBienServicio,
-        PrecioUnitario,
-        Cantidad,
-        ImporteTotal,
-        IdUnidadMedida,
-        IdUnidadMedidaTexto,
-        IdSubcontratistaImportador,
-        IdSubcontratistaImportadorTexto,
-        IdSubcontratistaExportador,
-        IdSubcontratistaExportadorTexto,
-        IdMoneda,
-        IdMonedaTexto,
-        IdFormaPago,
-        IdFormaPagoTexto,
-        CreadoPor,
-        CreadoPorTexto,
-        ModificadoPor,
-        ModificadoPorTexto
+		FolioComprobante,
+		FechaPago,
+		CreadoEn,
+		ModificadoEn,
+		NumFacturaC,
+		EsnotaCredito,
+		CreadoPorTexto,
+		ModificadoPorTexto,
+		IdMonedaTexto,
+		IdSubcontratistaExportadorTexto,
+		IdFormaPagoTexto ,
+		Archivo
     )
     SELECT FI_PedimentoComprobante.IdPedimentoComprobante,
-           'NO CARGADO',
-           '',
-           '',
-           NULL,
-           NULL,
-           NULL,
-           NULL,
-           NULL,
-           FI_PedimentoComprobante.IdSubcontratistaImportador,
-           '',
-           FI_PedimentoComprobante.IdSubcontratistaExportador,
-           '',
-           FI_PedimentoComprobante.IdMoneda,
-           '',
-           FI_PedimentoComprobante.IdFormaPago,
-           '',
-           FI_PedimentoComprobante.CreadoPor,
-           '',
-           FI_PedimentoComprobante.ModificadoPor,
-           ''
-    FROM FI_PedimentoComprobante  (NOLOCK)
-    WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionComprobantes
-          AND FI_PedimentoComprobante.IdContrato = @IdContrato
-
-    UPDATE TEMP
-    SET Archivo = CASE
-                      WHEN D.DocumentoByte LIKE 0x THEN
+		   FI_PedimentoComprobante. FolioComprobante,
+		   FI_PedimentoComprobante.FechaPago,
+		   FI_PedimentoComprobante.CreadoEn,
+		   FI_PedimentoComprobante.ModificadoEn,
+		   FI_PedimentoComprobante.NumFacturaC,
+		   FI_PedimentoComprobante.EsnotaCredito,
+		   ISNULL(Creado.Nombre, ''),
+		   ISNULL(Modificado.Nombre, ''),
+		   ISNULL(PV_TipoMoneda.TipoMonedaCorto, ''),
+		   ISNULL(Exportador.RazonSocial, ''),
+		   ISNULL(AP_Lista.Nombre, ''),
+		   CASE
+                      WHEN FI_Documento.DocumentoByte LIKE 0x OR FI_Documento.IdDocumento IS NULL  THEN
                           'NO CARGADO'
                       ELSE
                           'Cargado'
                   END
-    FROM #FI_Comprobante TEMP
-        JOIN dbo.FI_Documento D 
-            ON TEMP.IdPedimentoComprobante = D.IdPedimentoComprobante
-               AND D.DocumentoByte IS NOT NULL
-               AND ISNULL(D.IsEliminado, 0) = 0
-
-    UPDATE TEMP
-    SET CreadoPorTexto = UC.Nombre
-    FROM #FI_Comprobante TEMP
-        JOIN dbo.AP_Usuario UC 
-            ON TEMP.CreadoPor = UC.UsuarioID
-
-    UPDATE TEMP
-    SET ModificadoPorTexto = UM.Nombre
-    FROM #FI_Comprobante TEMP
-        JOIN dbo.AP_Usuario UM 
-            ON TEMP.ModificadoPor = UM.UsuarioID
-
-    UPDATE TEMP
-    SET IdFormaPagoTexto = L.Nombre
-    FROM #FI_Comprobante TEMP
-        JOIN dbo.AP_Lista L
-            ON TEMP.IdFormaPago = L.IdClave
-               AND L.IdGrupo = @GrupoId
-
-    UPDATE TEMP
-    SET IdMonedaTexto = M.TipoMonedaCorto
-    FROM #FI_Comprobante TEMP
-        JOIN PV_TipoMoneda M 
-            ON TEMP.IdMoneda = M.IdMoneda
-
-
-    UPDATE TEMP
-    SET IdSubcontratistaImportadorTexto = SI.RazonSocial
-    FROM #FI_Comprobante TEMP
-        JOIN dbo.PV_Subcontratista SI 
-            ON TEMP.IdSubcontratistaImportador = SI.IdSubcontratista
-
-    UPDATE TEMP
-    SET IdSubcontratistaExportadorTexto = SE.RazonSocial
-    FROM #FI_Comprobante TEMP
-        JOIN dbo.PV_Subcontratista SE 
-            ON TEMP.IdSubcontratistaExportador = SE.IdSubcontratista
+    FROM FI_PedimentoComprobante  (NOLOCK)
+	INNER JOIN PV_TipoMoneda  (NOLOCK)
+            ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
+			AND FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionComprobantes
+            AND FI_PedimentoComprobante.IdContrato = @IdContrato
+	INNER JOIN dbo.PV_Subcontratista Exportador 	(NOLOCK)
+            ON FI_PedimentoComprobante.IdSubcontratistaExportador = Exportador.IdSubcontratista
+	LEFT JOIN dbo.AP_Lista	(NOLOCK)
+            ON AP_Lista.IdGrupo = @GrupoId 
+               AND FI_PedimentoComprobante.IdFormaPago = AP_Lista.IdClave
+	LEFT JOIN dbo.FI_Documento (NOLOCK)
+            ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_Documento.IdPedimentoComprobante
+               AND FI_Documento.DocumentoByte IS NOT NULL
+               AND ISNULL(FI_Documento.IsEliminado, 0) = 0 
+	LEFT JOIN AP_Usuario Creado	 (NOLOCK)
+		ON FI_PedimentoComprobante.CreadoPor = Creado.UsuarioID
+	LEFT JOIN AP_Usuario Modificado	(NOLOCK)
+		ON FI_PedimentoComprobante.ModificadoPor = Modificado.UsuarioID
+    WHERE FI_PedimentoComprobante.CvTipoDocFacturacion = @CvTipoDocFacturacionComprobantes
+          AND FI_PedimentoComprobante.IdContrato = @IdContrato
+ 
 
     UPDATE TEMP
     SET NumeroSerieMercancia = PCD.NumeroSerieMercancia,
@@ -170,9 +126,9 @@ BEGIN
         JOIN dbo.PV_MM_MaterialUnidad MU 
             ON TEMP.IdUnidadMedida = MU.IdUnidad
 
-    SELECT PC.IdPedimentoComprobante AS IdComprobante,
-           PC.FolioComprobante,
-           PC.FechaPago,
+    SELECT TEMP.IdPedimentoComprobante AS IdComprobante,
+           TEMP.FolioComprobante,
+           TEMP.FechaPago,
            SUBSTRING(TEMP.IdSubcontratistaExportadorTexto, 0, 30) AS Exportador,
            TEMP.NumeroSerieMercancia,
            TEMP.ClaseBienServicio,
@@ -191,24 +147,20 @@ BEGIN
            TEMP.IdFormaPagoTexto AS FormaDePago,
            Archivo AS 'Archivo',
            TEMP.CreadoPorTexto AS CreadoPor,
-           PC.CreadoEn,
+           TEMP.CreadoEn,
            TEMP.ModificadoPorTexto AS ModificadoPor,
-           PC.ModificadoEn,
-           PC.NumFacturaC,
+           TEMP.ModificadoEn,
+           TEMP.NumFacturaC,
            CASE
-               WHEN ISNULL(PC.EsnotaCredito, 0) = 0 THEN
+               WHEN ISNULL(TEMP.EsnotaCredito, 0) = 0 THEN
                    'No'
                ELSE
                    'Si'
            END AS EsnotaCredito
     FROM #FI_Comprobante TEMP
-    JOIN 
-		FI_PedimentoComprobante PC (NOLOCK)
-    ON 
-		TEMP.IdPedimentoComprobante = PC.IdPedimentoComprobante
-    GROUP BY PC.IdPedimentoComprobante,
-             PC.FolioComprobante,
-             PC.FechaPago,
+    GROUP BY TEMP.IdPedimentoComprobante,
+             TEMP.FolioComprobante,
+             TEMP.FechaPago,
              SUBSTRING(TEMP.IdSubcontratistaExportadorTexto, 0, 30),
              TEMP.NumeroSerieMercancia,
              TEMP.ClaseBienServicio,
@@ -218,16 +170,12 @@ BEGIN
              TEMP.IdFormaPagoTexto,
              Archivo,
              TEMP.CreadoPorTexto,
-             PC.CreadoEn,
+             TEMP.CreadoEn,
              TEMP.ModificadoPorTexto,
-             PC.ModificadoEn,
-             PC.NumFacturaC,
-             CASE
-                 WHEN ISNULL(PC.EsnotaCredito, 0) = 0 THEN
-                     'No'
-                 ELSE
-                     'Si'
-             END,
+             TEMP.ModificadoEn,
+             TEMP.NumFacturaC,
+             ISNULL(TEMP.EsnotaCredito, 0),
 			 TEMP.ImporteTotal
     ORDER BY IdComprobante DESC;
+
 END;
