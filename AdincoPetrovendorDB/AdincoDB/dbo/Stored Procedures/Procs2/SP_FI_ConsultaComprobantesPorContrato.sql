@@ -1,4 +1,11 @@
-﻿
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ConsultaComprobantesPorContrato'
+)
+    DROP PROCEDURE SP_FI_ConsultaComprobantesPorContrato
+GO
 -- =============================================
 -- Author:		Manuel CD
 -- Create date: 05-12-17
@@ -27,9 +34,9 @@ BEGIN
         IdComprobante INT,
         FolioComprobante VARCHAR(100),
         FechaPago DATE,
-        Exportador VARCHAR(150),
+        Exportador VARCHAR(2000),
         NumeroSerieMercancia VARCHAR(100),
-        ClaseBienServicio VARCHAR(1000),
+        ClaseBienServicio VARCHAR(2000),
         UnidadMedida VARCHAR(50),
         TipoMonedaCorto VARCHAR(10),
         PrecioUnitario MONEY,
