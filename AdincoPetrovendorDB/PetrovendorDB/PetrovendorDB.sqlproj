@@ -2799,6 +2799,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_TA_UsuariosPorTipoOperacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidaCURPCartaCNProveedorProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_RPT_MM_ConsultaSolicitudesPedido_MasterDetail.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\S_HistorialBibliotecaDocumentos" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosRolAprobacionFactura.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_ValidacionFlujoTareaProveedorDEA.sql" />
