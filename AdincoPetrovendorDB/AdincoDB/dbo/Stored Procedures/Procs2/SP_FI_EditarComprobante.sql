@@ -1,12 +1,9 @@
 ﻿IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'SP_FI_EditarComprobante'
-    )
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_EditarComprobante'
+)
     DROP PROCEDURE SP_FI_EditarComprobante
 GO
 -- =============================================
@@ -63,6 +60,8 @@ AS
              WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
          END;
          BEGIN
+			IF EXISTS (SELECT 1 FROM FI_PedimentoComprobanteDetalle WHERE IdPedimentoComprobante = @IdPedimentoComprobante	)
+			BEGIN
              UPDATE dbo.FI_PedimentoComprobanteDetalle
                SET 
                    IdUnidadMedida = @IdUnidadMedida, 
@@ -71,6 +70,12 @@ AS
                    ModificadoPor = @IdUsuario, 
                    ModificadoEn = GETDATE()
              WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
+			 END
+			 ELSE
+			 BEGIN
+				INSERT INTO FI_PedimentoComprobanteDetalle(IdPedimentoComprobante, IdUnidadMedida, ClaseBienServicio, PrecioUnitario, ModificadoPor, ModificadoEn, CreadoPor, CreadoEn)
+				SELECT @IdPedimentoComprobante, @IdUnidadMedida, @ClaseBienServicio, @Subtotal, @IdUsuario, GETDATE(), @IdUsuario, GETDATE()
+			 END
          END;
          BEGIN
              IF(@Validacion <> 0)
