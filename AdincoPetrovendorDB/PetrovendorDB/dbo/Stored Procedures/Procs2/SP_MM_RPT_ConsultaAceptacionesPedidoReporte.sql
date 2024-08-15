@@ -1,6 +1,5 @@
 ﻿USE [Petrovendor]
 GO
-GO
 IF EXISTS
 (
     SELECT 1
@@ -21,6 +20,10 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 11/05/2023
 -- Description:	se agrega el filtro por contrato
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 14/08/2024
+-- Description:	se agrega left en MM_SolicitudAceptacionPedido para los proceso que no aplica
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_RPT_ConsultaAceptacionesPedidoReporte]
 	-- Add the parameters for the stored procedure here
@@ -51,7 +54,7 @@ BEGIN
 			AND ISNULL(AP.IdEliminado,0) = 0		
 		JOIN Adinco..CO_Contrato  AS CON  (NOLOCK)
 			ON P.IdContrato = CON.IdContrato
-		JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
+		LEFT JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
 			ON AP.IdAceptacionPedido = SAP.IdAceptacionPedido
 			AND SAP.Activo = 1
 		JOIN S_Proveedor AS PR (NOLOCK)

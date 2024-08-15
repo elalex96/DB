@@ -25,11 +25,10 @@ GO
 -- Create date: 12/05/2023
 -- Description:	se agrega el filtrado por contrato en las aceptaciones
 -- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 14/08/2024
+-- Description:	se agrega left en MM_SolicitudAceptacionPedido para los proceso que no aplica
 -- =============================================
--- Author:  <Alexander Gomez>  
--- Create date: 12/03/2024
--- Description: Adecuacion para consultar todos los contratos
--- =============================================  
 CREATE PROCEDURE [dbo].[SP_MM_RPT_GuardadoSolicitudesDescargasAceptacionSoportes]
 	-- Add the parameters for the stored procedure here
 	@FechaInicio DATE,
@@ -71,7 +70,7 @@ BEGIN
 			AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 			AND AP.Activo = 1
 			AND ISNULL(AP.IdEliminado,0) = 0
-		JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
+		LEFT JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
 			ON AP.IdAceptacionPedido = SAP.IdAceptacionPedido
 			AND SAP.Activo = 1
 	GROUP BY P.IdContrato;

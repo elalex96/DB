@@ -1,7 +1,25 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_RPT_ConsultaAceptacionesPedidoReportePorContrato'
+)
+    DROP PROCEDURE SP_MM_RPT_ConsultaAceptacionesPedidoReportePorContrato;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 21/02/2023
 -- Description:	Consultar aceptaciones para descarga de informacion
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 14/08/2024
+-- Description:	se agrega left en MM_SolicitudAceptacionPedido para los proceso que no aplica
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_RPT_ConsultaAceptacionesPedidoReportePorContrato]
 	-- Add the parameters for the stored procedure here
@@ -32,7 +50,7 @@ BEGIN
 			AND ISNULL(AP.IdEliminado,0) = 0		
 		JOIN Adinco..CO_Contrato  AS CON  (NOLOCK)
 			ON P.IdContrato = CON.IdContrato
-		JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
+		LEFT JOIN MM_SolicitudAceptacionPedido AS SAP (NOLOCK)
 			ON P.IdPedido = SAP.IdPedido
 			AND SAP.Activo = 1
 		JOIN S_Proveedor AS PR (NOLOCK)
