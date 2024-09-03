@@ -2966,6 +2966,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AD_ConsultaExclicionesAnioFiscalFacturas.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AD_ConsultaUsuarios.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_AD_ActualizarExclucionAnioFiscalFacturas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\INS_PV_EnviaInvitacionPetrovendor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ConsultarCentroCostoSolicitudPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_MM_ConsultarActividadClasificacionGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_MM_ConsultarClientesProyectos.sql" />
