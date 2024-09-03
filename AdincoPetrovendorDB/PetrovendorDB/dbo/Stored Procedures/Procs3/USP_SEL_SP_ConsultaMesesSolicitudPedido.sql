@@ -4,16 +4,16 @@ IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
-    WHERE name = 'SP_MM_ConsultaMesesSolicitudPedido'
+    WHERE name = 'USP_SEL_SP_ConsultaMesesSolicitudPedido'
 )
-    DROP PROCEDURE SP_MM_ConsultaMesesSolicitudPedido;
+    DROP PROCEDURE USP_SEL_SP_ConsultaMesesSolicitudPedido;
 GO
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 02/09/2024
 -- Description:	Obtención de meses en los que se tienen solicitudes de pedido
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_MM_ConsultaMesesSolicitudPedido] --573,0,1
+CREATE PROCEDURE [dbo].[USP_SEL_SP_ConsultaMesesSolicitudPedido] --573,0,1
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
 	@IdUsuario INT,
