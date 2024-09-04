@@ -34,6 +34,7 @@ DECLARE @HTMLCORREOSINV NVARCHAR(MAX) = (SELECT HTML FROM TA_CORREO WHERE ASUNTO
 
         SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
+		--Envio de notificacion
         INSERT INTO Adinco.dbo.S_Notificacion
         (
             IdNotificacion,
@@ -53,4 +54,14 @@ DECLARE @HTMLCORREOSINV NVARCHAR(MAX) = (SELECT HTML FROM TA_CORREO WHERE ASUNTO
         (@IdNotificacion, @CorreoInvitado, @ASUNTOCORREO,
          @HTMLCORREOSINV, DATEADD(MINUTE, 1, GETDATE()), 0, NULL, 3, GETDATE(), NULL, NULL,
          ISNULL(@CorreoNotificaciones,''));
+
+		--Guardado de bitácora
+		---
+		INSERT INTO dbo.TA_EnvioCorreo (IdEnvioAdinco, IdCorreo, IdIdentificacion, EnviadoPor, EnviadoEl)
+        VALUES
+        (   @IdNotificacion,                                                          -- IdEnvioAdinco - int
+            @IDCORREO,                                                                -- CORREO DE INVITACIÓN
+            'Invitación para unirse a Petrovendor.',
+            1, GETDATE());
+
 END
