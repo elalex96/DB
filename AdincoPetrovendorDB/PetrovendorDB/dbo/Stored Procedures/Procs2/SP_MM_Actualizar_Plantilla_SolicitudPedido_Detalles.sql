@@ -1,7 +1,21 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_MM_Actualizar_Plantilla_SolicitudPedido_Detalles'
+)
+    DROP PROCEDURE SP_MM_Actualizar_Plantilla_SolicitudPedido_Detalles;
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <25/11/2019>
 -- Description:	<Actualizar los datos de una plantilla de solicitud de pedido en las partidas>
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <05/09/2024>
+-- Description:	<Actualizar los datos de una plantilla de solicitud de pedido en las partidas contemplando la cabecera>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_Actualizar_Plantilla_SolicitudPedido_Detalles]
 	-- Add the parameters for the stored procedure here
@@ -26,7 +40,8 @@ BEGIN
 	DECLARE @IDSOLICITUDPEDIDODETALLEB INT = (SELECT
 												IdPlantillaSolicitudPedidoDetalle
 											FROM dbo.MM_Plantilla_SolicitudPedidoDetalle 
-											WHERE IdPlantillaSolicitudPedidoDetalle = @IdSolicitudPedidoDetalle);
+											WHERE IdPlantillaSolicitudPedidoDetalle = @IdSolicitudPedidoDetalle
+												AND IdPlantillaSolicitudPedido = @IdSolicitudPedido);
 
 	IF ISNULL(@IDSOLICITUDPEDIDODETALLEB,0) > 0
 	BEGIN
