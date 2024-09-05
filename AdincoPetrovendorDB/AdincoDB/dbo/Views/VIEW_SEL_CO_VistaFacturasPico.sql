@@ -20,20 +20,7 @@ AS
         F.Moneda,
         F.MontoConIva,
         F.TipoComprobante,
-        CASE
-            WHEN F.MetodoPago LIKE '%exhibi%'
-                 OR F.MetodoPago LIKE '%PUE%'
-                 OR F.FormaPago LIKE '%exhibi%'
-                 OR F.FormaPago LIKE '%PUE%'
-                THEN 'PUE'
-            WHEN F.MetodoPago LIKE '%parcia%'
-                 OR F.MetodoPago LIKE '%dife%'
-                 OR F.MetodoPago LIKE '%PPD%'
-                 OR F.FormaPago LIKE '%parcia%'
-                 OR F.FormaPago LIKE '%dife%'
-                 OR F.FormaPago LIKE '%PPD%'
-                THEN 'PPD'
-        END                            AS MetodoPago,
+        F.MetodoPagoEstandarizado AS MetodoPago,
         CASE
             WHEN F.MetodoPago LIKE '%exhibi%'
                  OR F.MetodoPago LIKE '%PUE%'
