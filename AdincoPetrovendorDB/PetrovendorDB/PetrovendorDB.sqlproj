@@ -2966,6 +2966,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AD_ConsultaExclicionesAnioFiscalFacturas.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AD_ConsultaUsuarios.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_AD_ActualizarExclucionAnioFiscalFacturas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\INS_PV_EnviaInvitacionPetrovendor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ConsultarCentroCostoSolicitudPedido.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_MM_ConsultarActividadClasificacionGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_MM_ConsultarClientesProyectos.sql" />
@@ -2980,6 +2981,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\SEL_PV_ConsultarPalabrasClavesProveedor.sql" />
     <Build Include="dbo\Tables\CN_OperadorasExcluidas.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_TA_BuscarSinNotificacionPorCorreoAdinco.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_SP_ConsultaMesesSolicitudPedido.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
