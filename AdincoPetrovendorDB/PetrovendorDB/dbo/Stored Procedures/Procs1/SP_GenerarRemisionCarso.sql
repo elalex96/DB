@@ -1,4 +1,14 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_GenerarRemisionCarso'
+)
+    DROP PROCEDURE SP_GenerarRemisionCarso;
+GO
+-- =============================================
 -- Author:		Daniel AC
 -- Create date: 14/03/2022
 -- Description: Se agrega condicion para que no se tomen las aceptaciones de pedido eliminadas
@@ -12,6 +22,10 @@
 -- Author:		Luis David
 -- Create date: 26/02/2022
 -- Description: Se agrega la validación para el pedido eliminado
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 04/09/2024
+-- Description: Se agrega el IdNacionalidadProveedor en la aceptacion
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_GenerarRemisionCarso]
 @IdOC VARCHAR(8000),
@@ -37,7 +51,8 @@ BEGIN --EMPIEZA STORE
         IdPedidoDetalle INT,
         IdOperacion INT,
         FechaRegistroRemision DATETIME,
-        IdMaterialPetrov INT
+        IdMaterialPetrov INT,
+		IdNacionalidadProveedor INT
     )
 	DECLARE @Retorno NVARCHAR(MAX)
 
@@ -55,7 +70,8 @@ BEGIN --EMPIEZA STORE
         IdDomicilioEntrega INT,
         IdPedidoDetalle INT,
         IdMaterialPetrov INT,
-        FechaRegistroRemision DATETIME
+        FechaRegistroRemision DATETIME,
+		IdNacionalidadProveedor INT
     )
 
     DECLARE @Usuario NVARCHAR(100) = N'Registro Automático'
@@ -75,7 +91,8 @@ BEGIN --EMPIEZA STORE
         IdDomicilioEntrega,
         IdOperacion,
         FechaRegistroRemision,
-        IdMaterialPetrov
+        IdMaterialPetrov,
+		IdNacionalidadProveedor
     )
     SELECT r.IdOC,
            r.RECID,
@@ -90,7 +107,8 @@ BEGIN --EMPIEZA STORE
            spd.IdDomicilioEntrega,
            O.IdOperacion,
            r.fecharegistro,
-           pd.IdMaterial
+           pd.IdMaterial,
+		   PROV.IdNacionalidad
     FROM dbo.MM_SolicitudPedido sp
         INNER JOIN dbo.AX_Comparativa comp
             ON  sp.IdSolicitudPedido = comp.IdSolicitudPedido 
@@ -113,6 +131,8 @@ BEGIN --EMPIEZA STORE
                AND  O.NoVersion = p.Version 
                AND  pod.IdPeticionOferta = p.IdPeticionOferta
 			   AND  R.IdPedido = P.IdPedido
+		LEFT JOIN S_Proveedor AS PROV
+			ON p.IdSubcontratista = PROV.IdProveedor
     WHERE UPPER(r.RECID) = UPPER(@RecId)
           AND r.IdPedido = @IdPedido
           AND UPPER(r.IdOC) = UPPER(@IdOC)
@@ -242,7 +262,8 @@ BEGIN --EMPIEZA STORE
             IdDomicilioEntrega,
             IdPedidoDetalle,
             FechaRegistroRemision,
-            IdMaterialPetrov
+            IdMaterialPetrov,
+			IdNacionalidadProveedor
         )
         SELECT IdOC,
                RECID,
@@ -256,7 +277,8 @@ BEGIN --EMPIEZA STORE
                IdDomicilioEntrega,
                IdPedidoDetalle,
                FechaRegistroRemision,
-               IdMaterialPetrov
+               IdMaterialPetrov,
+			   IdNacionalidadProveedor
         FROM @TablaRemision
         GROUP BY IdOC,
                  RECID,
@@ -270,7 +292,8 @@ BEGIN --EMPIEZA STORE
                  IdDomicilioEntrega,
                  IdPedidoDetalle,
                  FechaRegistroRemision,
-                 IdMaterialPetrov
+                 IdMaterialPetrov,
+				 IdNacionalidadProveedor
 
         UPDATE tr
         SET tr.IdMaterialPetrov = am.IdMaterialPetrov
@@ -318,7 +341,8 @@ BEGIN --EMPIEZA STORE
                 IdDomicilioEntrega,
                 NombreRecibidoPor,
                 IdOcCarso,
-                Asiento
+                Asiento,
+				IdNacionalidadProveedor
             )
             SELECT IdProveedor,
                    IdPedido,
@@ -329,14 +353,16 @@ BEGIN --EMPIEZA STORE
                    IdDomicilioEntrega,
                    LTRIM(@Usuario),
                    IdOC,
-                   Asiento
+                   Asiento,
+				   IdNacionalidadProveedor
             FROM @TablaRemisionSinOperacion
             GROUP BY IdProveedor,
                      IdPedido,
                      RECID,
                      IdOC,
                      IdDomicilioEntrega,
-                     Asiento
+                     Asiento,
+					 IdNacionalidadProveedor
 
             SELECT @IdAceptacionPedidoAux = SCOPE_IDENTITY()
 
