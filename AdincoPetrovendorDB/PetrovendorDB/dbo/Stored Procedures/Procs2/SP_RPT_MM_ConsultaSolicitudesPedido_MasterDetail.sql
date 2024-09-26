@@ -31,17 +31,17 @@ AS
 			insert into #SolpedProveedor
 			SELECT 
 				SP.IdSolicitudPedido
-			FROM MM_SolicitudPedido AS SP
-			JOIN MM_TipoSolicitudPedido AS TSP
-				ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-			JOIN TA_Operacion AS TAO
-				ON TAO.IdDocumento = SP.IdSolicitudPedido
+			FROM MM_SolicitudPedido AS SP (NOLOCK)
+			JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+				ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+			JOIN TA_Operacion AS TAO (NOLOCK)
+				ON SP.IdSolicitudPedido = TAO.IdDocumento
 				AND TAO.IdTipoOperacion = 2 -- Operación Requisición
-			JOIN TA_Estatus AS TE
-				ON TE.IdEstatus = TAO.IdEstatusOperacion
-			JOIN S_Usuario AS U
+			JOIN TA_Estatus AS TE (NOLOCK)
+				ON TAO.IdEstatusOperacion = TE.IdEstatus
+			JOIN S_Usuario AS U (NOLOCK)
 				ON SP.IdUsuarioSolicitante = U.IdUsuario
-			LEFT JOIN MM_Localidades AS L
+			LEFT JOIN MM_Localidades AS L (NOLOCK)
 				ON SP.IdLocalidad = L.Id
 			WHERE
 				SP.IdProveedor = @IdProveedor
@@ -74,17 +74,17 @@ AS
 				ELSE 'Eliminado'
 			END AS Activo,
 			ISNULL(L.Nombre,'') AS 'Localidad'
-		FROM MM_SolicitudPedido AS SP
-		JOIN MM_TipoSolicitudPedido AS TSP     
-			ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-		JOIN TA_Operacion AS TAO
-			ON TAO.IdDocumento = SP.IdSolicitudPedido
+		FROM MM_SolicitudPedido AS SP (NOLOCK)
+		JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+			ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+		JOIN TA_Operacion AS TAO (NOLOCK)
+			ON SP.IdSolicitudPedido = TAO.IdDocumento
 			AND TAO.IdTipoOperacion = 2 -- Operación Requisición
-		JOIN TA_Estatus AS TE
-			ON TE.IdEstatus = TAO.IdEstatusOperacion
-		JOIN S_Usuario AS U
+		JOIN TA_Estatus AS TE (NOLOCK)
+			ON TAO.IdEstatusOperacion = TE.IdEstatus
+		JOIN S_Usuario AS U (NOLOCK)
 			ON SP.IdUsuarioSolicitante = U.IdUsuario
-		LEFT JOIN MM_Localidades AS L
+		LEFT JOIN MM_Localidades AS L (NOLOCK)
 			ON SP.IdLocalidad = L.Id
 		WHERE
 			SP.IdProveedor = @IdProveedor
@@ -111,18 +111,18 @@ AS
 			insert into #SolpedProveedor
 			SELECT 
 				SP.IdSolicitudPedido
-			FROM MM_SolicitudPedido AS SP
-			JOIN MM_TipoSolicitudPedido AS TSP
-				ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-			JOIN TA_Operacion AS TAO
-				ON TAO.IdDocumento = SP.IdSolicitudPedido
+			FROM MM_SolicitudPedido AS SP (NOLOCK)
+			JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+				ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+			JOIN TA_Operacion AS TAO (NOLOCK)
+				ON SP.IdSolicitudPedido = TAO.IdDocumento
 				AND TAO.IdTipoOperacion = 2
-			JOIN TA_Estatus AS TE
-				ON TE.IdEstatus = TAO.IdEstatusOperacion
-			JOIN S_Usuario AS U
-						ON SP.IdUsuarioSolicitante = U.IdUsuario
-			JOIN dbo.MM_PeticionOferta PO
-				ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
+			JOIN TA_Estatus AS TE (NOLOCK)
+				ON TAO.IdEstatusOperacion = TE.IdEstatus
+			JOIN S_Usuario AS U (NOLOCK)
+				ON SP.IdUsuarioSolicitante = U.IdUsuario
+			JOIN dbo.MM_PeticionOferta PO (NOLOCK)
+				ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 			WHERE
 				SP.IdProveedor = @IdProveedor
 				AND ISNULL ( SP.Visible, 1 ) = 1
@@ -151,18 +151,18 @@ AS
 				WHEN ISNULL(SP.IdEstatusEliminado,0) <> 1 THEN 'Activo'
 				ELSE 'Eliminado'
 			END AS Activo
-		FROM MM_SolicitudPedido AS SP
-		JOIN MM_TipoSolicitudPedido AS TSP
-			ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-		JOIN TA_Operacion AS TAO
-			ON TAO.IdDocumento = SP.IdSolicitudPedido
+		FROM MM_SolicitudPedido AS SP (NOLOCK)
+		JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+			ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+		JOIN TA_Operacion AS TAO (NOLOCK)
+			ON SP.IdSolicitudPedido = TAO.IdDocumento
 			AND TAO.IdTipoOperacion = 2
-		JOIN TA_Estatus AS TE
-			ON TE.IdEstatus = TAO.IdEstatusOperacion
-		JOIN S_Usuario AS U
+		JOIN TA_Estatus AS TE (NOLOCK)
+			ON TAO.IdEstatusOperacion = TE.IdEstatus
+		JOIN S_Usuario AS U (NOLOCK)
 					ON SP.IdUsuarioSolicitante = U.IdUsuario
-		JOIN dbo.MM_PeticionOferta PO
-			ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
+		JOIN dbo.MM_PeticionOferta PO (NOLOCK)
+			ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 		WHERE
 			SP.IdProveedor = @IdProveedor
 			AND ISNULL ( SP.Visible, 1 ) = 1
@@ -190,25 +190,25 @@ AS
 					MM.DescripcionLarga AS TextoLargo, ISNULL ( SPD.IdUnidad, 0 ) AS IdUnidad, cc.CentroCosto ,
 				i.NombreInstalacion ,
 				dbo.Fn_RetornarMesProgramadoActividadConcat ( lp.IdLineaPresupuestoMes ) AS SubActividad
-		  FROM	MM_SolicitudPedidoDetalle AS SPD
-				INNER JOIN dbo.MM_Material AS MM
-						   ON MM.IdMaterial = SPD.IdMaterial
-				LEFT JOIN PV_MM_MaterialUnidad AS U
-						  ON U.IdUnidad = SPD.IdUnidad
-				LEFT JOIN DG_Domicilio AS D
-						  ON D.IdDomicilio = SPD.IdDomicilioEntrega
-				LEFT JOIN dbo.DG_TipoDomicilio TD
-						  ON TD.IdTipoDomicilio = D.IdTipoDomicilio
-				INNER JOIN MM_SolicitudPedidoDetalleLineaPresupuesto spdl
+		  FROM	MM_SolicitudPedidoDetalle AS SPD (NOLOCK)
+				INNER JOIN dbo.MM_Material AS MM (NOLOCK)
+						   ON SPD.IdMaterial = MM.IdMaterial
+				LEFT JOIN PV_MM_MaterialUnidad AS U (NOLOCK)
+						  ON SPD.IdUnidad= U.IdUnidad
+				LEFT JOIN DG_Domicilio AS D (NOLOCK)
+						  ON SPD.IdDomicilioEntrega = D.IdDomicilio
+				LEFT JOIN dbo.DG_TipoDomicilio AS TD (NOLOCK)
+						  ON D.IdTipoDomicilio = TD.IdTipoDomicilio
+				INNER JOIN MM_SolicitudPedidoDetalleLineaPresupuesto AS spdl  (NOLOCK)
 						   ON SPD.IdSolicitudPedidoDetalle = spdl.IdSolicitudPedidoDetalle
-				LEFT JOIN Petrovendor.dbo.CC_CentroCosto AS cc
-						  ON cc.IdCentroCosto = spdl.IdCentroCosto
-				LEFT JOIN Adinco.dbo.CO_Instalacion AS i
-						  ON i.IdInstalacion = spdl.IdInstalacion
-				LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp
-						  ON lp.IdLineaPresupuestoMes = spdl.IdLineaPresupuesto
-				LEFT JOIN Adinco.dbo.CO_TareaPetrolera AS t
-						  ON t.IdTareaPetrolera = lp.IdTareaPetrolera
+				LEFT JOIN Petrovendor.dbo.CC_CentroCosto AS cc (NOLOCK)
+						  ON spdl.IdCentroCosto = cc.IdCentroCosto
+				LEFT JOIN Adinco.dbo.CO_Instalacion AS i (NOLOCK)
+						  ON spdl.IdInstalacion = i.IdInstalacion
+				LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes AS lp (NOLOCK)
+						  ON spdl.IdLineaPresupuesto = lp.IdLineaPresupuestoMes
+				LEFT JOIN Adinco.dbo.CO_TareaPetrolera AS t (NOLOCK)
+						  ON lp.IdTareaPetrolera = t.IdTareaPetrolera 
 				WHERE	SPD.IdSolicitudPedido in (select IdSolicituidPedido from #SolpedProveedor)
 
 
