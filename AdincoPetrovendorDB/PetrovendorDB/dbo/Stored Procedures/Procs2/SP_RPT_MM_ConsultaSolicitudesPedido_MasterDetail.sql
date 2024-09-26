@@ -90,6 +90,7 @@ AS
 			SP.IdProveedor = @IdProveedor
 			AND ISNULL ( SP.Visible, 1 ) = 1
 			AND TE.IdEstatus IN (1,2) -- Estatus En Aprobación(1) y Aprobado(2)
+			AND ISNULL(SP.IdEstatusEliminado,0)<>1
 		GROUP BY	
 			SP.IdSolicitudPedido, 
 			SP.MotivoUrgencia, 
