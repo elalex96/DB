@@ -49,17 +49,17 @@ AS
 				ELSE 'Eliminado'
 			END AS Activo,
 			ISNULL(L.Nombre,'') AS 'Localidad'
-		FROM MM_SolicitudPedido AS SP
-		JOIN MM_TipoSolicitudPedido AS TSP
-			ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-		JOIN TA_Operacion AS TAO
-			ON TAO.IdDocumento = SP.IdSolicitudPedido
+		FROM MM_SolicitudPedido AS SP (NOLOCK)
+		JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+			ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido
+		JOIN TA_Operacion AS TAO (NOLOCK)
+			ON SP.IdSolicitudPedido = TAO.IdDocumento
 			AND TAO.IdTipoOperacion = 2 -- Operación Requisición
-		JOIN TA_Estatus AS TE
-			ON TE.IdEstatus = TAO.IdEstatusOperacion
-		JOIN S_Usuario AS U
+		JOIN TA_Estatus AS TE (NOLOCK)
+			ON TAO.IdEstatusOperacion = TE.IdEstatus
+		JOIN S_Usuario AS U (NOLOCK)
 			ON SP.IdUsuarioSolicitante = U.IdUsuario
-		LEFT JOIN MM_Localidades AS L
+		LEFT JOIN MM_Localidades AS L (NOLOCK)
 			ON SP.IdLocalidad = L.Id
 		WHERE
 			SP.IdProveedor = @IdProveedor
@@ -96,18 +96,18 @@ AS
 				ELSE 'Eliminado'
 			END AS Activo,
 			ISNULL(L.Nombre,'') AS 'Localidad'
-			FROM MM_SolicitudPedido AS SP
-			JOIN MM_TipoSolicitudPedido AS TSP
-				ON TSP.IdTipoSolicitudPedido = SP.IdTipoSolicitudPedido
-			JOIN TA_Operacion AS TAO
-				ON TAO.IdDocumento = SP.IdSolicitudPedido
+			FROM MM_SolicitudPedido AS SP (NOLOCK)
+			JOIN MM_TipoSolicitudPedido AS TSP (NOLOCK)
+				ON SP.IdTipoSolicitudPedido = TSP.IdTipoSolicitudPedido 
+			JOIN TA_Operacion AS TAO(NOLOCK)
+				ON SP.IdSolicitudPedido = TAO.IdDocumento
 				AND TAO.IdTipoOperacion = 2
-			JOIN TA_Estatus AS TE
-				ON TE.IdEstatus = TAO.IdEstatusOperacion
-			JOIN S_Usuario AS U
+			JOIN TA_Estatus AS TE (NOLOCK)
+				ON TAO.IdEstatusOperacion = TE.IdEstatus
+			JOIN S_Usuario AS U (NOLOCK)
 						ON SP.IdUsuarioSolicitante = U.IdUsuario
-			JOIN dbo.MM_PeticionOferta PO
-				ON PO.IdSolicitudPedido = SP.IdSolicitudPedido
+			JOIN dbo.MM_PeticionOferta PO (NOLOCK)
+				ON SP.IdSolicitudPedido = PO.IdSolicitudPedido
 			LEFT JOIN MM_Localidades AS L
 					ON SP.IdLocalidad = L.Id
 			WHERE
