@@ -624,6 +624,7 @@
     <Build Include="dbo\Tables\PerfilModulo.sql" />
     <Build Include="dbo\Tables\TA_EnvioCorreoPersonalizado.sql" />
     <Build Include="dbo\Tables\PCM_RFC.sql" />
+    <Build Include="dbo\Tables\AP_BitacoraArchivos" />
     <Build Include="dbo\Views\ReporteDeSolicitudesDePedido.sql" />
     <Build Include="dbo\Views\ReporteProcesoDEA_ACEPTACIONES.sql" />
     <Build Include="dbo\Views\VistaDocsProveedoresJaguar.sql" />
@@ -2800,6 +2801,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_MM_ValidaCURPCartaCNProveedorProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\SP_RPT_MM_ConsultaSolicitudesPedido_MasterDetail.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\S_HistorialBibliotecaDocumentos" />
+    <Build Include="dbo\Stored Procedures\Procs2\INS_AP_BitacoraArchivos" />
+    <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenControlPresupuestalContrato" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosRolAprobacionFactura.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_ValidacionFlujoTareaProveedorDEA.sql" />
