@@ -54,6 +54,8 @@ BEGIN
 	WHERE PE.IdSolicitudPedido = @IdSolicitudPedido
 		AND PE.Version = @Version
 	GROUP BY
+		POD.MaterialCotizadoTextoC,
+		M.DescripcionCorta,
 		PE.IdSubcontratista, 
 		PG.IdPedido,
 		PD.PrecioUnitario,
