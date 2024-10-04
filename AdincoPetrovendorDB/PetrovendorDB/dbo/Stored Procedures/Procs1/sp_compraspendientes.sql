@@ -162,7 +162,7 @@ BEGIN
 	 LEFT JOIN Adinco.dbo.CO_Instalacion I   (NOLOCK)
 				ON  R.IdInstalacion = I.IdInstalacion 
 	 LEFT JOIN dbo.S_UsuarioProveedor UP   (NOLOCK)
-				ON UP.IdUsuario = U.IdUsuario
+				ON U.IdUsuario = UP.IdUsuario 
 	WHERE UP.IdProveedor = @IdProveedor
 		AND F.IdContrato = UP.idContrato
 	GROUP BY R.IdRegistro,
