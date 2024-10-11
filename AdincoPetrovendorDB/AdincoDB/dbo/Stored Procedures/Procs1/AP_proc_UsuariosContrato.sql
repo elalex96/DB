@@ -1,12 +1,20 @@
-﻿--USE ADINCO
---GO
-CREATE PROCEDURE AP_proc_UsuariosContrato
+﻿USE [Adinco]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'AP_proc_UsuariosContrato'
+)
+    DROP PROCEDURE AP_proc_UsuariosContrato;
+GO
+CREATE PROCEDURE [dbo].[AP_proc_UsuariosContrato]-- 3
 @IdContrato INT
 as
 begin
 	SELECT	DISTINCT
 				AP_Usuario.UsuarioID,
-				AP_Usuario.Nombre
+				AP_Usuario.Nombre,AP_Usuario.Usuario
 		  FROM	AP_PerfilUsuario AS PU
 				INNER JOIN AP_Usuario
 						   ON PU.UsuarioID = AP_Usuario.UsuarioID
