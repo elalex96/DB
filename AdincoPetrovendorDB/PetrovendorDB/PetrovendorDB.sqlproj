@@ -2803,6 +2803,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\S_HistorialBibliotecaDocumentos" />
     <Build Include="dbo\Stored Procedures\Procs2\INS_AP_BitacoraArchivos" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenControlPresupuestalContrato" />
+    <Build Include="dbo\Stored Procedures\Procs2\SEL_MM_MostrarLocalidad" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosRolAprobacionFactura.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_ValidacionFlujoTareaProveedorDEA.sql" />
