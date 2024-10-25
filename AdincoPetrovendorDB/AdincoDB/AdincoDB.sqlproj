@@ -3965,5 +3965,8 @@
     <Build Include="dbo\Tables\Tables1\AP_BitacoraEliminados.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\Mobile_Sp_EnvioNotificacionFinalizacionSolped.sql" />
     <Build Include="dbo\Views\VIEW_SEL_CO_VistaFacturasPico.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_ENT_ActividadesUsuarioContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_ENT_ConsultarGrupoUsuarioSeleccionado.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_ENT_ActualizarUsuarioActividad.sql" />
   </ItemGroup>
 </Project>

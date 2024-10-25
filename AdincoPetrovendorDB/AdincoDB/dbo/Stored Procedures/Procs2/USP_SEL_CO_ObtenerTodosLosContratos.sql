@@ -1,4 +1,6 @@
-﻿IF EXISTS
+﻿USE [Adinco]
+GO
+IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -6,8 +8,7 @@
 )
     DROP PROCEDURE USP_SEL_CO_ObtenerTodosLosContratos;
 GO
-
-CREATE PROCEDURE USP_SEL_CO_ObtenerTodosLosContratos
+CREATE PROCEDURE [dbo].[USP_SEL_CO_ObtenerTodosLosContratos]
     @ContratoId INT,
     @UsuarioId INT
 AS
