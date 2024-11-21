@@ -1,4 +1,20 @@
-﻿-- =============================================
+﻿--USE [Petrovendor]
+--GO
+--IF EXISTS
+--(
+--    SELECT 1
+--    FROM dbo.sysobjects
+--    WHERE name = 'SP_MM_Eliminar_AceptacionPedido'
+--)
+--    DROP PROCEDURE SP_MM_Eliminar_AceptacionPedido;   
+	
+--GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_Eliminar_AceptacionPedido]    Script Date: 06/11/2024 12:09:42 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:	DANIEL AC
 -- Create date: 08/03/2018
 -- Description: CONSULTAR PROCESO DE PROCURA PARA POSIBLE ELIMINACIÓN -MODIFICACIÓN
@@ -11,6 +27,12 @@
 -- Create date: 27/02/2023
 -- Description: se agrega el bit 0 en activo al eliminar el proceso
 -- =============================================
+-- =============================================
+-- Author:	DANIEL AC
+-- Create date: 07/11/2024
+-- Description: SE AGREGA CONSULTA PARA TOMAR EN CUENTA CUANDO UNA CARTA CN ES EXCLUIDA Y LA ACEPTACIÓN TIENE FACTURA
+-- =============================================
+
 CREATE PROCEDURE [dbo].[SP_MM_Eliminar_AceptacionPedido]
     @IDACEPTACIONPEDIDO INT,
     @IDPROVEEDOR INT,
@@ -28,31 +50,8 @@ BEGIN
     BEGIN TRAN tran1;
     BEGIN TRY
 
-
-        --DECLARE @IDACEPTACIONPEDIDO INT =256
-        --   DECLARE @IDPROVEEDOR INT=420
         /*CREACIÓN DE TABLA QUE LLEVARA LA JERARQUIA DE LOS PROCESOS DE PROCURA*/
-        /* 
-	DROP TABLE #PROCESO 
-	DROP TABLE #VALIDACION_FACTURA
-	DROP TABLE #VALIDACION_PEDIMENTO
-	DROP TABLE #FACTURAS_GASTOS
-	DROP TABLE #FACTURAS_TRANFERENCIAS
-	*/
-
-        DECLARE @DISPONIBLE_ELIMINACION INT = (
-                                                  SELECT COUNT(IdAceptacionPedido)
-                                                  FROM dbo.MM_AceptacionPedido (NOLOCK)
-                                                  WHERE IdAceptacionPedido = @IDACEPTACIONPEDIDO
-                                                        AND IdProveedor = @IDPROVEEDOR
-                                                        AND ISNULL(IdEstatusEliminado, 0) = 0
-                                              );
-
-        IF @DISPONIBLE_ELIMINACION > 0
-        BEGIN
-            /*INICIA PROCESO DE ELIMINACION DE ACEPTACIÓN DE PEDIDO*/
-
-            CREATE TABLE #PROCESO
+		CREATE TABLE #PROCESO
             (
                 ID INT IDENTITY(1, 1),
                 ID_PADRE INT,
@@ -64,7 +63,61 @@ BEGIN
                 ACCION_EJECUTAR NVARCHAR(300),
                 ID_PROCESO INT
             );
+		    CREATE TABLE #VALIDACION_PEDIMENTO
+            (
+                IdValidacion INT IDENTITY(1, 1),
+                IdAceptacionPedido INT,
+                IdPedimentoPetrovendor INT,
+                IdPedimentoAdinco INT,
+                TieneGastos INT,
+                TieneTransferencias INT
+            );
+			CREATE TABLE #PEDIMENTO_GASTOS
+            (
+                IdValidacion INT,
+                Gastos INT
+            );
+			CREATE TABLE #PEDIMENTO_TRANFERENCIAS
+            (
+                IdValidacion INT,
+                Tranferencias INT
+            );
+			CREATE TABLE #VALIDACION_FACTURA
+            (
+                IdValidacion INT IDENTITY(1, 1),
+                IdAceptacionPedido INT,
+                IdAceptacionFactura INT,
+                IdFacturaPetronvendor INT,
+                IdFacturaAdinco INT,
+                TieneGastos INT,
+                TieneTransferencias INT
+            );
+			CREATE TABLE #FACTURAS_GASTOS
+            (
+                IdValidacion INT,
+                Gastos INT
+            );
+			 CREATE TABLE #FACTURAS_TRANFERENCIAS
+            (
+                IdValidacion INT,
+                Tranferencias INT
+            );
+		DECLARE @TIENE_GASTOS INT
+		DECLARE @TIENE_TRANSFERERENCIAS INT
+		DECLARE @TIENE_GASTOS_PEDIMENTO INT 
+		DECLARE @TIENE_TRANSFERERENCIAS_PEDIMENTO INT
+		DECLARE @IDELIMINACION INT
+        DECLARE @DISPONIBLE_ELIMINACION INT = (
+                                                  SELECT COUNT(IdAceptacionPedido)
+                                                  FROM dbo.MM_AceptacionPedido (NOLOCK)
+                                                  WHERE IdAceptacionPedido = @IDACEPTACIONPEDIDO
+                                                        AND IdProveedor = @IDPROVEEDOR
+                                                        AND ISNULL(IdEstatusEliminado, 0) = 0
+                                              );
 
+        IF @DISPONIBLE_ELIMINACION > 0
+        BEGIN
+            /*INICIA PROCESO DE ELIMINACION DE ACEPTACIÓN DE PEDIDO*/
             /*ACEPTACIONES DE CARTA CONTENIDO NACIONAL*/
             /*CONSULTA DE ACEPTACIONES DE PEDIDO DE LAS CONFIRMACIONES DE PEDIDO ACEPTADAS Y CARTA DE CONTENIDO NACIONAL SI EL PROVEEDOR ES NACIONAL*/
             INSERT INTO #PROCESO
@@ -105,7 +158,7 @@ BEGIN
                      AP.IdAceptacionPedido,
                      AC.IdEstatus;
 
-            /*RECEPCIÓN DE FACTURA DE PETROVENDOR*/
+            /*RECEPCIÓN DE FACTURA DE PETROVENDOR CON CARTA*/
             INSERT INTO #PROCESO
             (
                 ID_PADRE,
@@ -124,7 +177,8 @@ BEGIN
             FROM MM_AceptacionFactura AS AF (NOLOCK)
                 INNER JOIN TA_Operacion AS O (NOLOCK)
                     ON AF.IdAceptacionFactura = O.IdDocumento 
-					AND O.IdTipoOperacion = 10
+					AND O.IdTipoOperacion = 10 --> CTE APROBACIÓND DE FACTURA
+				    AND ISNULL(O.IdFlujoTarea, 0) <> 0
 					AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
                 INNER JOIN TA_Estatus AS E (NOLOCK)
                     ON O.IdEstatusOperacion = E.IdEstatus
@@ -149,6 +203,46 @@ BEGIN
                 LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
                     ON PG.IdTipoPedido = TP.IdTipoPedido;
                   
+			/*RECEPCIÓN DE FACTURA DE PETROVENDOR SIN CARTA*/
+            INSERT INTO #PROCESO
+            (
+                ID_PADRE,
+                PROCESO,
+                ESTATUS,
+                IDESTATUS,
+                CLAVE_PROCESO,
+                ID_PROCESO
+            )
+            SELECT 0,
+                   CONCAT('Recepción de factura No.', AP.IdAceptacionPedido),
+                   E.Nombre,
+                   O.IdEstatusOperacion,
+                   'aceptacionfactura',
+                   AF.IdAceptacionFactura
+            FROM MM_AceptacionFactura AS AF (NOLOCK)
+                INNER JOIN TA_Operacion AS O (NOLOCK)
+                    ON AF.IdAceptacionFactura = O.IdDocumento 
+					AND O.IdTipoOperacion = 10 --> CTE APROBACIÓND DE FACTURA
+				    AND ISNULL(O.IdFlujoTarea, 0) <> 0
+					AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> QUE NO SE ENCUENTREN ELIMINADAS 
+                INNER JOIN TA_Estatus AS E (NOLOCK)
+                    ON O.IdEstatusOperacion = E.IdEstatus
+                INNER JOIN MM_AceptacionPedido AS AP (NOLOCK)
+                    ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
+					AND AP.IdAceptacionPedido = @IDACEPTACIONPEDIDO
+                INNER JOIN MM_Pedido AS P (NOLOCK)
+                    ON AP.IdPedido = P.IdPedido
+                INNER JOIN RelacionCartaCNPedido RCN (NOLOCK)
+					ON RCN.IdAceptacionPedido = RCN.IdAceptacionPedido
+					AND RCN.IdPedido = RCN.IdPedido
+					AND RCN.PedirCarta = 0
+                INNER JOIN S_Proveedor AS PV (NOLOCK)
+                    ON P.IdSubcontratista = PV.IdProveedor
+                INNER JOIN MM_Pedidos AS PG (NOLOCK)
+                    ON P.IdPedido = PG.IdIdentificador
+                       AND PG.IdProveedorCliente = @IDPROVEEDOR                
+                LEFT JOIN MM_TipoPedido AS TP (NOLOCK)
+                    ON PG.IdTipoPedido = TP.IdTipoPedido;
 
             /*COMPROBANTE EXTRANJERO*/
             INSERT INTO #PROCESO
@@ -192,16 +286,6 @@ BEGIN
                   
 
             /*VALIDACION DE COMPROBANTES EXTRANJERO DE ADINCO*/
-            CREATE TABLE #VALIDACION_PEDIMENTO
-            (
-                IdValidacion INT IDENTITY(1, 1),
-                IdAceptacionPedido INT,
-                IdPedimentoPetrovendor INT,
-                IdPedimentoAdinco INT,
-                TieneGastos INT,
-                TieneTransferencias INT
-            );
-
             INSERT INTO #VALIDACION_PEDIMENTO
             (
                 IdAceptacionPedido,
@@ -231,11 +315,6 @@ BEGIN
                      PA.IdPedimentoComprobante;
 
             /*VALIDACIÓN DE CANTIDAD DE GASTOS DE UN PEDIMENTO*/
-            CREATE TABLE #PEDIMENTO_GASTOS
-            (
-                IdValidacion INT,
-                Gastos INT
-            );
             INSERT INTO #PEDIMENTO_GASTOS
             (
                 IdValidacion,
@@ -243,7 +322,7 @@ BEGIN
             )
             SELECT VP.IdValidacion,
                    COUNT(R.IdPedimentoComprobante)
-            FROM #VALIDACION_PEDIMENTO VP
+            FROM #VALIDACION_PEDIMENTO VP (NOLOCK)
                 INNER JOIN Adinco.dbo.CO_Registro R (NOLOCK)
                     ON VP.IdPedimentoAdinco = R.IdPedimentoComprobante
             GROUP BY VP.IdValidacion;
@@ -254,12 +333,7 @@ BEGIN
                 INNER JOIN #PEDIMENTO_GASTOS PG
                     ON VP.IdValidacion = PG.IdValidacion;
 
-            /*VALIDACIÓN DE CANTIDAD DE TRANFERENCIAS DE UN PEDIMENTO*/
-            CREATE TABLE #PEDIMENTO_TRANFERENCIAS
-            (
-                IdValidacion INT,
-                Tranferencias INT
-            );
+            /*VALIDACIÓN DE CANTIDAD DE TRANFERENCIAS DE UN PEDIMENTO*/            
             INSERT INTO #PEDIMENTO_TRANFERENCIAS
             (
                 IdValidacion,
@@ -279,18 +353,7 @@ BEGIN
                     ON VP.IdValidacion = PT.IdValidacion;
 
 
-            /*VALIDACIÓN DE FACTURAS CON FACTURAS DE ADINCO*/
-            CREATE TABLE #VALIDACION_FACTURA
-            (
-                IdValidacion INT IDENTITY(1, 1),
-                IdAceptacionPedido INT,
-                IdAceptacionFactura INT,
-                IdFacturaPetronvendor INT,
-                IdFacturaAdinco INT,
-                TieneGastos INT,
-                TieneTransferencias INT
-            );
-
+            /*VALIDACIÓN DE FACTURAS CON FACTURAS DE ADINCO*/            
             INSERT INTO #VALIDACION_FACTURA
             (
                 IdAceptacionPedido,
@@ -320,12 +383,7 @@ BEGIN
                      AF.IdFactura,
                      FA.IdFactura;
 
-            /*VALIDACION DE GASTOS CONTRA FACTURAS DE ADINCO*/
-            CREATE TABLE #FACTURAS_GASTOS
-            (
-                IdValidacion INT,
-                Gastos INT
-            );
+            /*VALIDACION DE GASTOS CONTRA FACTURAS DE ADINCO*/            
             INSERT INTO #FACTURAS_GASTOS
             (
                 IdValidacion,
@@ -346,12 +404,7 @@ BEGIN
                 INNER JOIN #FACTURAS_GASTOS FG
                     ON VF.IdValidacion = FG.IdValidacion;
 
-            /*VALIDACION DE TRANFERENCIAS CONTRA FACTURAS DE ADINCO*/
-            CREATE TABLE #FACTURAS_TRANFERENCIAS
-            (
-                IdValidacion INT,
-                Tranferencias INT
-            );
+            /*VALIDACION DE TRANFERENCIAS CONTRA FACTURAS DE ADINCO*/           
             INSERT INTO #FACTURAS_TRANFERENCIAS
             (
                 IdValidacion,
@@ -359,7 +412,7 @@ BEGIN
             )
             SELECT VF.IdValidacion,
                    COUNT(T.IdTransferFactura)
-            FROM #VALIDACION_FACTURA AS VF
+            FROM #VALIDACION_FACTURA AS VF(NOLOCK)
                 INNER JOIN Adinco.dbo.FI_TransferFactura T (NOLOCK)
                     ON VF.IdFacturaAdinco = T.IdFactura
 					AND VF.IdFacturaAdinco IS NOT NULL
@@ -372,32 +425,28 @@ BEGIN
                 INNER JOIN #FACTURAS_TRANFERENCIAS FT
                     ON VF.IdValidacion = FT.IdValidacion;
 
-            ----SELECT * FROM #PROCESO
-            --SELECT * FROM #VALIDACION_FACTURA 
-
-
             /*VALIDACIÓN DE GASTOS Y TRANFERENCIAS*/
-            DECLARE @TIENE_GASTOS INT = (
+            SET @TIENE_GASTOS = (
+                                    SELECT COUNT(IdValidacion)
+                                    FROM #VALIDACION_FACTURA
+                                    WHERE TieneGastos <> 0
+                                );
+            SET @TIENE_TRANSFERERENCIAS = (
                                             SELECT COUNT(IdValidacion)
                                             FROM #VALIDACION_FACTURA
+                                            WHERE TieneTransferencias <> 0
+                                          );
+
+            SET @TIENE_GASTOS_PEDIMENTO = (
+                                            SELECT COUNT(IdValidacion)
+                                            FROM #VALIDACION_PEDIMENTO
                                             WHERE TieneGastos <> 0
                                         );
-            DECLARE @TIENE_TRANSFERERENCIAS INT = (
-                                                      SELECT COUNT(IdValidacion)
-                                                      FROM #VALIDACION_FACTURA
-                                                      WHERE TieneTransferencias <> 0
-                                                  );
-
-            DECLARE @TIENE_GASTOS_PEDIMENTO INT = (
-                                                      SELECT COUNT(IdValidacion)
-                                                      FROM #VALIDACION_PEDIMENTO
-                                                      WHERE TieneGastos <> 0
-                                                  );
-            DECLARE @TIENE_TRANSFERERENCIAS_PEDIMENTO INT = (
-                                                                SELECT COUNT(IdValidacion)
-                                                                FROM #VALIDACION_PEDIMENTO
-                                                                WHERE TieneTransferencias <> 0
-                                                            );
+            SET @TIENE_TRANSFERERENCIAS_PEDIMENTO = (
+                                                        SELECT COUNT(IdValidacion)
+                                                        FROM #VALIDACION_PEDIMENTO
+                                                        WHERE TieneTransferencias <> 0
+                                                    );
 
             IF @TIENE_GASTOS = 0
                AND @TIENE_TRANSFERERENCIAS = 0
@@ -432,11 +481,10 @@ BEGIN
                     @CONFIRMACION        --Confirmacion bit
                 );
 
-                DECLARE @IDELIMINACION INT = (
+                SET @IDELIMINACION = (
                                                  SELECT @@IDENTITY
                                              );
 
-                --SELECT * FROM #VALIDACION_FACTURA 
 				INSERT INTO dbo.PR_FI_CFDIConceptoImpuesto
 				(
 				    IdFacturaConcepto,
@@ -950,5 +998,3 @@ BEGIN
 
 
 END;
-
-
