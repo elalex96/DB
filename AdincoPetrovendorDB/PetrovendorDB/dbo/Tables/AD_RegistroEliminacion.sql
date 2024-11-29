@@ -12,6 +12,10 @@
     [IdContrato]        INT            NULL,
     [IdProceso]         INT            NULL,
     [Confirmacion]      BIT            NULL,
+    [FechaRecuperacion] DATETIME       NULL,
+    [RecuperadoPor]     INT            NULL,
+    [ComentarioRecuperacion]            NVARCHAR(MAX)  NULL,
+    [HistorialRecuperacion] NVARCHAR(MAX) NULL,
     PRIMARY KEY CLUSTERED ([IdEliminacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
 );
 
