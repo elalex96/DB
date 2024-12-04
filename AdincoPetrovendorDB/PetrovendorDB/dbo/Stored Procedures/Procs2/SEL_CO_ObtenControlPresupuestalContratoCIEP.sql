@@ -1,23 +1,19 @@
 USE Petrovendor
 DROP PROC IF EXISTS SEL_CO_ObtenControlPresupuestalContratoCIEP
 GO
+-- =============================================
+-- Author:		Luis David
+-- Create date: 4/12/2024
+-- Description:	Obtiene el control presupuestal para contratos CIEP
+-- =============================================
 CREATE PROC SEL_CO_ObtenControlPresupuestalContratoCIEP
 @IdContrato INT,
 @IdPresupuesto INT,
-@IdUsuario INT
+@IdUsuario INT,
+@IdProveedor INT
 AS
 BEGIN
 DECLARE @Presupuesto NVARCHAR(MAX);
-        /*@IdContrato INT =(SELECT IdContrato
-						   FROM Adinco..CO_Contrato  (NOLOCK)
-						   WHERE NumeroContrato ='424102854')*/ --> CPA:424102854, AMATITLAN: 424104804 CAMBIAR DE ACUERDO AL CONTRATO DESEADO
-DECLARE @IdProveedor INT = (SELECT IdProveedor 
-							FROM S_Proveedor  (NOLOCK)
-							WHERE RFC ='PAL120710ID0') --> CPA:PAL120710ID0, AMATITLAN: PAM140722DK6  CAMBIAR DE ACUERDO AL PROVEEDOR DESEADO
-
---DECLARE @IdPresupuesto INT = 10267  --> CPA:10267, AMATITLAN: 10239  CAMBIAR DE ACUERDO AL PROVEEDOR DESEADO
-
-	
 
 SELECT @Presupuesto = Nombre
 FROM Adinco.dbo.CO_Presupuesto (NOLOCK)
@@ -230,7 +226,7 @@ FROM dbo.MM_SolicitudPedido sp WITH (NOLOCK)
     INNER JOIN dbo.TA_Operacion taoPedido WITH (NOLOCK)
         ON p.IdSolicitudPedido = taoPedido.IdDocumento  
            AND taoPedido.NoVersion = p.Version 
-           AND taoPedido.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
+           AND taoPedido.IdTipoOperacion = 9 --> CTE APROBACIÃ“N DE PEDIDO
            AND taoPedido.IdEstatusOperacion = 2 --> CTE PEDIDO APROBADOR
     INNER JOIN dbo.MM_Pedidos ps WITH (NOLOCK)
         ON p.IdPedido = ps.IdIdentificador 
@@ -442,9 +438,9 @@ JOIN FI_Factura F (NOLOCK)
 	ON AF.IdFactura = F.IdFactura
 JOIN TA_Operacion O (NOLOCK)
 ON AF.IdAceptacionFactura = O.IdDocumento
-AND O.IdTipoOperacion = 10 --> CTE APROBACIÓN DE FACTURA 
+AND O.IdTipoOperacion = 10 --> CTE APROBACIÃ“N DE FACTURA 
 AND O.IdEstatusOperacion = 2 --> CTE FACTURA APROBADA
-AND ISNULL(O.IdFlujoTarea,0) <> 0 --> CTE DEBE TENER UN FLUJO DE APORBACIÓN
+AND ISNULL(O.IdFlujoTarea,0) <> 0 --> CTE DEBE TENER UN FLUJO DE APORBACIÃ“N
 
 UPDATE AP
 SET AP.ContieneFactura =  'SI',
@@ -458,7 +454,7 @@ SET ContieneFactura = 'NO',
 UUID=''
 WHERE ContieneFactura  IS NULL 
 
--- SE ACTUALIZA LA INSTALACIÓN RELACIONA A LA ACEPTACIÓN PEDIDO DETALLE 
+-- SE ACTUALIZA LA INSTALACIÃ“N RELACIONA A LA ACEPTACIÃ“N PEDIDO DETALLE 
 UPDATE acepta
 SET acepta.Instalacion =  I.NombreInstalacion
 FROM @AceptacionPedido acepta
