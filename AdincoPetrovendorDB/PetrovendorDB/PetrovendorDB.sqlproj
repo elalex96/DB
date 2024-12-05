@@ -2802,6 +2802,8 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_RPT_MM_ConsultaSolicitudesPedido_MasterDetail.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\S_HistorialBibliotecaDocumentos" />
     <Build Include="dbo\Stored Procedures\Procs2\INS_AP_BitacoraArchivos" />
+    <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenControlPresupuestalContratoCIEP" />
+    <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenInformacionContrato" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenControlPresupuestalContrato" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_MM_MostrarLocalidad" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosProveedor.sql" />
