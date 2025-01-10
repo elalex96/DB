@@ -1,6 +1,6 @@
 ﻿USE [Adinco]
 GO
-IF OBJECT_ID('Adinco..USP_SEL_AP_S_ConsultarNotificaciones') IS NOT NULL
+IF OBJECT_ID('Adinco..USP_SEL_AP_ConsultarNotificaciones') IS NOT NULL
 BEGIN
 DROP PROCEDURE USP_SEL_AP_ConsultarNotificaciones;
 END
