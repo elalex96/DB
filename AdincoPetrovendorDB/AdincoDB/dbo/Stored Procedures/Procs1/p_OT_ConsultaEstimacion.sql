@@ -11,6 +11,7 @@
 GO
 CREATE PROCEDURE [dbo].[p_OT_ConsultaEstimacion] @pIdOTSolicitud int
 as
+BEGIN
     select
         IdOTSolicitud,
         IdOTEstimacion,
@@ -42,5 +43,4 @@ as
         Presupuesto,
         Subcontratista,
         vw.Moneda
-
 END
