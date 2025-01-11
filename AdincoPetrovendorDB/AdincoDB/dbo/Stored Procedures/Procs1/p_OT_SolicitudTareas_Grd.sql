@@ -21,7 +21,7 @@ GO
 --					se eliminan tablas que no se encuentran en uso, se ajustan algunos left joins, 
 --					se quita el uso de funciones, ajuste de orden de llamado en los joins (ON)
 -- =============================================
-CREATE PROCEDURE [p_OT_SolicitudTareas_Grd] --10038,10,0,1,0
+CREATE PROCEDURE [p_OT_SolicitudTareas_Grd]
     @pIdContrato      INT,
     @pUsuarioAdincoId INT,
     @pUsuarioPetroId  INT,
@@ -204,15 +204,16 @@ AS
         DECLARE @emailUsuario VARCHAR(50);
 
         /*PRODUCCIÓN*/
-        DECLARE
-            @dominioAdinco      VARCHAR(100) = 'https://adinco.mx',
-            @dominioPetrovendor VARCHAR(100) = 'https://petrovendor.com.mx',
-            @dominioProcura     VARCHAR(100) = 'https://procura.adinco.mx'
-        /*QA
-	DECLARE @dominioAdinco VARCHAR(100)='http://mpyadinco.adinco.mx',
-			@dominioPetrovendor VARCHAR(100)='http://mpypetrovendor.adinco.mx',
-			@dominioProcura VARCHAR(100)= 'https://MPYprocura.adinco.mx'
-	*/
+        --DECLARE
+        --    @dominioAdinco      VARCHAR(100) = 'https://adinco.mx',
+        --    @dominioPetrovendor VARCHAR(100) = 'https://petrovendor.com.mx',
+        --    @dominioProcura     VARCHAR(100) = 'https://procura.adinco.mx'
+        
+		-- CALIDAD
+	DECLARE @dominioAdinco VARCHAR(100)='http://calidad.adinco.mx/',
+			@dominioPetrovendor VARCHAR(100)='http://calidad2.petrovendor.com.mx/',
+			@dominioProcura VARCHAR(100)= 'http://calidad2procura.adinco.mx/'
+	
         --DESARROLLO
         /*
 	DECLARE @dominioAdinco VARCHAR(100)='http://desarrollo.adinco.mx',

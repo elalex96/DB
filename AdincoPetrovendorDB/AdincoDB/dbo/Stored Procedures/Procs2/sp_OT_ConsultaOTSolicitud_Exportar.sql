@@ -9,7 +9,6 @@
     )
     DROP PROCEDURE sp_OT_ConsultaOTSolicitud_Exportar;
 GO
--- sp_OT_ConsultaOTSolicitud_Exportar 10038,10
 CREATE PROCEDURE [dbo].[sp_OT_ConsultaOTSolicitud_Exportar]
     @pIdContrato int,
     @pIdUsuario  int

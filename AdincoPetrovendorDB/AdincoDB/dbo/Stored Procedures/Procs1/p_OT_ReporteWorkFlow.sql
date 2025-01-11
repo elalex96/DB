@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE p_OT_ReporteWorkFlow;
 GO
-CREATE PROCEDURE [dbo].[p_OT_ReporteWorkFlow]--10038,10
+CREATE PROCEDURE [dbo].[p_OT_ReporteWorkFlow]
     @pIdContrato INT,
     @pUsuarioID  INT
 AS

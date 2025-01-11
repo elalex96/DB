@@ -33,7 +33,6 @@ As
             (
                 IdSubcontrato int,
                 IdSCMaterial  int,
-                --IdOTSM int,
                 CantidadSC    float,
                 CantidadOT    float
             )

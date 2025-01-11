@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE p_OT_ConsultaOTSolicitud;
 GO
-CREATE PROCEDURE p_OT_ConsultaOTSolicitud-- 10013,10038,0,1,0,1,0,0,1,0,10,'20190101','20220810'
+CREATE PROCEDURE p_OT_ConsultaOTSolicitud
     @pIdContratista    int,
     @pIdContrato       int,
     @pPendientes       bit,
@@ -25,7 +25,6 @@ CREATE PROCEDURE p_OT_ConsultaOTSolicitud-- 10013,10038,0,1,0,1,0,0,1,0,10,'2019
     @Hasta             datetime = null
 as
     BEGIN
-	
         CREATE TABLE #tmpEstimacion (IdOTSolicitud INT)
         CREATE TABLE #tmpProgramaCaptura
             (
@@ -37,6 +36,7 @@ as
 			(
 				IdOTSolicitud       INT PRIMARY KEY,
 				IdOTEstatus         INT,
+				IdOTEstatusAnt INT,
 				IsActivo            bit,
 				isEliminado bit,
 				IdSubContrato       int,
@@ -66,6 +66,7 @@ as
 			(
 				IdOTSolicitud ,
 				IdOTEstatus,
+				IdOTEstatusAnt,
 				IsActivo,
 				isEliminado,
 				IdSubContrato,
@@ -93,6 +94,7 @@ as
 			SELECT 
 				DISTINCT OT_Solicitud.IdOTSolicitud ,
 				OT_Solicitud.IdOTEstatus,
+				OT_Solicitud.IdOTEstatusAnt,
 				OT_Solicitud.IsActivo,
 				OT_Solicitud.isEliminado,
 				OT_Solicitud.IdSubContrato,
@@ -304,7 +306,7 @@ as
                     #OT_SolicitudDelContrato.Objeto,
                     IdOTEstatus,
                     FechaFinExtendida,
-                    IdOTEstatusAnt,
+                    #OT_SolicitudDelContrato.IdOTEstatusAnt,
                     NombrePresupuesto                = #OT_SolicitudDelContrato.PresupuestoNombre,
                     PuedeEstimar                     = case
                                                            when est.IdOTSolicitud is not null
@@ -413,10 +415,10 @@ as
                     #OT_SolicitudDelContrato.Objeto,
                     IdOTEstatus,
                     FechaFinExtendida,
-                    IdOTEstatusAnt,
-                    pre.Nombre,
+                    #OT_SolicitudDelContrato.IdOTEstatusAnt,
+                    #OT_SolicitudDelContrato.PresupuestoNombre,
                     mon.TipoMonedaCorto,
-                    pv.RazonSocial,
+                    #OT_SolicitudDelContrato.SubcontratistaRazonSocial,
                     est.IdOTSolicitud,
                     cc.CentroCosto,
                     #OT_SolicitudDelContrato.SAPPR,

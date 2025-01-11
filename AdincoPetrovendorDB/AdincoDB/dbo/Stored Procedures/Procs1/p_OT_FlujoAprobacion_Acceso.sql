@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE p_OT_FlujoAprobacion_Acceso;
 GO
-CREATE PROCEDURE p_OT_FlujoAprobacion_Acceso --1,10038,10,334
+CREATE PROCEDURE p_OT_FlujoAprobacion_Acceso 
     @pTipoFlujoAprobacionId int,
     @pIdContrato            int,
     @pUsuarioId             int,

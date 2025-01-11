@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE p_OT_Solicitud_Upd;
 GO
-CREATE proc p_OT_Solicitud_Upd --2883	,'(REYNA) OGARRIO 1423 RMA CON EQUIPO DE WOPROVEEDOR: PGBSERVICIO DE TRANSPORTE DE TUBERIA. LIMPIEZA E INSPECCION WBS: MX-OGAD-DR-TBD096.A000NC ','10388166',''
+CREATE proc p_OT_Solicitud_Upd 
     @pIdOTSolicitud int,
     @pObjeto        varchar(600),
     @pSAPPR         varchar(15),

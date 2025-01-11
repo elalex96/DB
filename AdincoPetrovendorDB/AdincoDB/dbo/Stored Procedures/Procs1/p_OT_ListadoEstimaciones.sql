@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE p_OT_ListadoEstimaciones;
 GO
-CREATE PROCEDURE p_OT_ListadoEstimaciones -- 10,10038,1
+CREATE PROCEDURE p_OT_ListadoEstimaciones 
     @pIdUsuario      int,
     @pIdContrato     int = 0,
     @pIdCentroCostos int = 0
