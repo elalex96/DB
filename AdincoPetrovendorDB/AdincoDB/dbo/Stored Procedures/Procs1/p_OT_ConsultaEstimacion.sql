@@ -43,5 +43,4 @@ BEGIN
         Presupuesto,
         Subcontratista,
         vw.Moneda
-
 END
