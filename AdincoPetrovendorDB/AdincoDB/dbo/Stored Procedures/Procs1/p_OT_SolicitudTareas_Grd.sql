@@ -204,15 +204,15 @@ AS
         DECLARE @emailUsuario VARCHAR(50);
 
         /*PRODUCCIÓN*/
-        --DECLARE
-        --    @dominioAdinco      VARCHAR(100) = 'https://adinco.mx',
-        --    @dominioPetrovendor VARCHAR(100) = 'https://petrovendor.com.mx',
-        --    @dominioProcura     VARCHAR(100) = 'https://procura.adinco.mx'
+        DECLARE
+            @dominioAdinco      VARCHAR(100) = 'https://adinco.mx',
+            @dominioPetrovendor VARCHAR(100) = 'https://petrovendor.com.mx',
+            @dominioProcura     VARCHAR(100) = 'https://procura.adinco.mx'
         
 		-- CALIDAD
-	DECLARE @dominioAdinco VARCHAR(100)='http://calidad.adinco.mx/',
-			@dominioPetrovendor VARCHAR(100)='http://calidad2.petrovendor.com.mx/',
-			@dominioProcura VARCHAR(100)= 'http://calidad2procura.adinco.mx/'
+	--DECLARE @dominioAdinco VARCHAR(100)='http://calidad.adinco.mx/',
+	--		@dominioPetrovendor VARCHAR(100)='http://calidad2.petrovendor.com.mx/',
+	--		@dominioProcura VARCHAR(100)= 'http://calidad2procura.adinco.mx/'
 	
         --DESARROLLO
         /*
