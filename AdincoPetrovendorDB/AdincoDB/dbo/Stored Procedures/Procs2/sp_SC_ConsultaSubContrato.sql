@@ -1,74 +1,71 @@
-﻿USE [Adinco]
-GO
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
     WHERE name = 'sp_SC_ConsultaSubContrato'
 )
-    DROP PROCEDURE sp_SC_ConsultaSubContrato; 
-	GO 
-/****** Object:  StoredProcedure [dbo].[sp_SC_ConsultaSubContrato]    Script Date: 10/07/2023 09:23:54 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+    DROP PROCEDURE sp_SC_ConsultaSubContrato
 GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: <11/07/202>
 -- Description:	SP SE USA EN PAGINA ConsultaOTConvenio DE PETROVENDOR
 -- =============================================|
-CREATE Proc [dbo].[sp_SC_ConsultaSubContrato]
-@pIdSubContrato int
-As
+CREATE PROC sp_SC_ConsultaSubContrato
+@pIdSubContrato INT
+AS
+BEGIN
 SET NOCOUNT ON;
-	select sc.IdSubContrato,
-			sc.IdSubContratista,
-			sc.IdContratista,
-			sc.NumeroSubContrato,
-			c.NombreContratista,
-			NombreSubContratista = psc.RazonSocial,
-			FechaRegistro = sc.CreadoEl,
-			sc.Objeto,
-			IdPedido = ISNULL(sc.IdPedido,0),
-			PrefijoOT = ISNULL(sc.PrefijoOT,''),
-			FolioOTSig =ISNULL(sc.PrefijoOT,'') +'-'+ CAST(ISNULL(COUNT(DISTINCT otSol.IdOTSolicitud),0) + 1 AS varchar) ,
-			IdPresupuesto = ISNULL(pre.IdPresupuesto,0),
-			IdProveedor = prov.IdProveedor,
-			FolioPedido = folio.IdPedido,
-			sc.FechaInicio,
-			sc.FechaFin,
-			sc.IdCentroCosto,
-			sc.IdMoneda
-	from SC_Subcontrato sc (NOLOCK)
-	INNER JOIN CO_Contratista c (NOLOCK)
-		on sc.IdContratista = c.IdContratista
-	INNER JOIN pv_Subcontratista psc (NOLOCK)
-		on sc.IdSubContratista = psc.IdSubContratista 
-	LEFT JOIN dbo.SC_Presupuesto PRE (NOLOCK)
-		ON SC.IdSubContrato = PRE.IdSubContrato
-	LEFT JOIN dbo.OT_Solicitud otSol  (NOLOCK)
-		ON sc.IdSubContrato = otSol.IdSubContrato
-	LEFT join Petrovendor.dbo.S_Proveedor prov  (NOLOCK)
-		on psc.RFC collate SQL_Latin1_General_CP1_CI_AS = prov.RFC collate SQL_Latin1_General_CP1_CI_AS
-	LEFT join Petrovendor.dbo.MM_Pedidos folio  (NOLOCK)
-		on sc.IdPedido = folio.IdIdentificador
-	where sc.IdSubContrato = @pIdSubContrato
-	GROUP BY sc.IdSubContrato,
-			sc.IdSubContratista,
-			sc.IdContratista,
-			sc.NumeroSubContrato,
-			c.NombreContratista,
-			psc.RazonSocial,
-			sc.CreadoEl,
-			sc.Objeto,
-			sc.IdPedido,
-			sc.PrefijoOT,
-			pre.IdPresupuesto,
-			prov.IdProveedor,
-			folio.IdPedido,
-			sc.FechaInicio,
-			sc.FechaFin,
-			sc.IdCentroCosto,
-			sc.IdMoneda
+	SELECT  SC_Subcontrato.IdSubContrato,
+			SC_Subcontrato.IdSubContratista,
+			SC_Subcontrato.IdContratista,
+			SC_Subcontrato.NumeroSubContrato,
+			CO_Contratista.NombreContratista,
+			NombreSubContratista = pv_Subcontratista.RazonSocial,
+			FechaRegistro = SC_Subcontrato.CreadoEl,
+			SC_Subcontrato.Objeto,
+			IdPedido = ISNULL(SC_Subcontrato.IdPedido, 0),
+			PrefijoOT = ISNULL(SC_Subcontrato.PrefijoOT, ''),
+			FolioOTSig =ISNULL(SC_Subcontrato.PrefijoOT, '') + '-' + CAST(ISNULL(COUNT(DISTINCT OT_Solicitud.IdOTSolicitud), 0) + 1 AS VARCHAR) ,
+			IdPresupuesto = ISNULL(SC_Presupuesto.IdPresupuesto, 0),
+			IdProveedor = S_Proveedor.IdProveedor,
+			FolioPedido = MM_Pedidos.IdPedido,
+			SC_Subcontrato.FechaInicio,
+			SC_Subcontrato.FechaFin,
+			SC_Subcontrato.IdCentroCosto,
+			SC_Subcontrato.IdMoneda
+	FROM SC_Subcontrato (NOLOCK)
+	INNER JOIN CO_Contratista (NOLOCK)
+		ON SC_Subcontrato.IdContratista = CO_Contratista.IdContratista
+			AND SC_Subcontrato.IdSubContrato = @pIdSubContrato
+	INNER JOIN pv_Subcontratista (NOLOCK)
+		ON SC_Subcontrato.IdSubContratista = pv_Subcontratista.IdSubContratista 
+	LEFT JOIN dbo.SC_Presupuesto (NOLOCK)
+		ON SC_Subcontrato.IdSubContrato = SC_Presupuesto.IdSubContrato
+	LEFT JOIN dbo.OT_Solicitud  (NOLOCK)
+		ON SC_Subcontrato.IdSubContrato = OT_Solicitud.IdSubContrato
+	LEFT JOIN Petrovendor.dbo.S_Proveedor (NOLOCK)
+		ON pv_Subcontratista.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = S_Proveedor.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+	LEFT JOIN Petrovendor.dbo.MM_Pedidos (NOLOCK)
+		ON SC_Subcontrato.IdPedido = MM_Pedidos.IdIdentificador
+	WHERE SC_Subcontrato.IdSubContrato = @pIdSubContrato
+	GROUP BY SC_Subcontrato.IdSubContrato,
+			SC_Subcontrato.IdSubContratista,
+			SC_Subcontrato.IdContratista,
+			SC_Subcontrato.NumeroSubContrato,
+			CO_Contratista.NombreContratista,
+			pv_Subcontratista.RazonSocial,
+			SC_Subcontrato.CreadoEl,
+			SC_Subcontrato.Objeto,
+			SC_Subcontrato.IdPedido,
+			SC_Subcontrato.PrefijoOT,
+			SC_Presupuesto.IdPresupuesto,
+			S_Proveedor.IdProveedor,
+			MM_Pedidos.IdPedido,
+			SC_Subcontrato.FechaInicio,
+			SC_Subcontrato.FechaFin,
+			SC_Subcontrato.IdCentroCosto,
+			SC_Subcontrato.IdMoneda
+
+END
 
