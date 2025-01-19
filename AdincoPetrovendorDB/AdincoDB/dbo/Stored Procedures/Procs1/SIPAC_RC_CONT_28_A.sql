@@ -1,12 +1,9 @@
 IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'SIPAC_RC_CONT_28_A'
-    )
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SIPAC_RC_CONT_28_A'
+)
     DROP PROCEDURE SIPAC_RC_CONT_28_A
 GO
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_28_A]
@@ -44,14 +41,15 @@ AS
 
         SELECT
             @IdTipoContrato = CO_CONTRATO.IdTipoContrato,
-			@IDRegFiducidiario = CO_CONTRATO.IDRegFiducidiario,
-			@IDSIPAC = CO_Contratista.IDSIPAC,
+			@IDRegFiducidiario = LTRIM(RTRIM(CO_CONTRATO.IDRegFiducidiario)),
+			@IDSIPAC = LTRIM(RTRIM(CO_Contratista.IDSIPAC)),
 			@NumeroContrato = CO_CONTRATO.NumeroContrato
         FROM
-				CO_CONTRATO
+				CO_CONTRATO (NOLOCK)
 		JOIN
-				dbo.CO_Contratista 
-				ON  CO_CONTRATO.IdContratista	=	CO_Contratista.IdContratista
+				dbo.CO_Contratista (NOLOCK) 
+				ON  CO_CONTRATO.IdContrato = @Contrato
+				AND CO_CONTRATO.IdContratista	=	CO_Contratista.IdContratista
         WHERE
             CO_CONTRATO.IdContrato = @Contrato;
 
@@ -76,27 +74,27 @@ AS
             (
                 --EPT ligadas a facturas PUE
                 SELECT
-                    LTRIM(RTRIM(@IDSIPAC))                                   AS [RF_00],
-                    LTRIM(RTRIM(@IDRegFiducidiario))                          AS [RI_00],
-                   @NumeroContrato                                           AS [RC11_01],
-                    EPT.IdDocFacturacionSIPAC                                  AS [RF01_01],
-                    ISNULL(F.UUID, 'NA')                                       AS [RC28_01],
-                    REPLACE(CONCAT(F.IdDocFacturacionSIPAC, '.xml'), '-', '_') AS [RC28_02],
-                    MONTH(R.MesPresentacion)                                   AS [RC28_03],
-                    YEAR(R.MesPresentacion)                                    AS [RC28_04],
-                    2                                                          AS [RC28_05],
+                    @IDSIPAC													AS [RF_00],
+                    @IDRegFiducidiario											AS [RI_00],
+					@NumeroContrato												AS [RC11_01],
+                    EPT.IdDocFacturacionSIPAC									AS [RF01_01],
+                    ISNULL(F.UUID, 'NA')										AS [RC28_01],
+                    REPLACE(CONCAT(F.IdDocFacturacionSIPAC, '.xml'), '-', '_')	AS [RC28_02],
+                    MONTH(R.MesPresentacion)									AS [RC28_03],
+                    YEAR(R.MesPresentacion)										AS [RC28_04],
+                    2															AS [RC28_05],
                     CASE
                         WHEN @IdTipoContrato = 1
                             THEN ISNULL(CO_ActividadCIEP.NombreActividad, '')
                         ELSE
                             ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera, '')
                     END                                                        AS [RC28_07], --Concepto de operación SUBACTIVIDAD
-                    SUM(   CASE
-                               WHEN f.IdMoneda <> @USD
-                                   then CAST(R.MontoRegistro / CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2))
-                               ELSE
-                                   CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2))
-                           END
+                    SUM(   
+						CASE
+                            WHEN F.IdMoneda = @USD THEN CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2)) -- Dólar
+							WHEN F.IdMoneda = @Peso THEN CAST(R.MontoRegistro * CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2)) -- Peso
+							ELSE CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas
+                        END
                        )                                                       AS RC28_08,   --Importe en factura (CFDI o Invoice)
                     CO_TipoCambioDiario.TipoCambio                             as RC28_09,   --Tipo de cambio (pesos por USD)
                     CO_AnioContractual.Anio                                    AS RC28_10,   --Año del Estudio de Precios de Transferencia
@@ -106,44 +104,39 @@ AS
                         ELSE
                             ISNULL(CO_TareaPetrolera.TareaPetrolera, '')
                     END                                                        AS RC28_11,   --Tipo de operación conforme al Estudio de Precios de Transferencia
-                    SUM(   CASE
-                               WHEN f.IdMoneda = @Peso
-                                   then CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2))
-                               ELSE
-                                   CAST(R.MontoRegistro * CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2))
-                           END
-                       )                                                       AS RC28_12,
-                    ''                                                         AS RC28_13    --Metodología utilizada
+                    SUM(
+						CASE
+							WHEN F.IdMoneda = 1 -- Pesos (MXN)
+								THEN CAST(R.MontoRegistro AS DECIMAL(20, 2)) -- Ya esta en pesos
+							WHEN F.IdMoneda = 2 -- Dolar Americano (USD)
+								THEN CAST(R.MontoRegistro * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- USD a Pesos
+							ELSE
+								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
+						END
+                       )                                                       AS RC28_12,--Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
+                    ''                                                         AS RC28_13 --Metodología utilizada
                 FROM
-                    dbo.FI_EstudioPreciosTransfer  EPT
+                    dbo.FI_EstudioPreciosTransfer  EPT (NOLOCK)
                     JOIN
                         dbo.FI_Factura             F
                             ON EPT.IdEstudioPrecioTransfer	=	F.IdEstudioPrecioTransfer 
-                 AND  EPT.IdContrato = @Contrato
+								AND  EPT.IdContrato = @Contrato
                     JOIN
-                        dbo.CO_Registro            R
+                        dbo.CO_Registro            R (NOLOCK)
                             ON  F.IdFactura	=	R.IdFactura
                                AND R.IdEstado = @EstadoAprobado
                                AND R.CvTipoDocFacturacion = @CvTipoDocFacturacionFactura
                     JOIN
-                        dbo.CO_LineaPresupuestoMes L
+                        dbo.CO_LineaPresupuestoMes L (NOLOCK)
                             ON R.IdPrograma	=	 L.IdLineaPresupuestoMes
                     JOIN
-                        dbo.CO_Presupuesto         P
+                        dbo.CO_Presupuesto         P (NOLOCK)
                             ON  L.IdPresupuesto	=	P.IdPresupuesto
                     JOIN
-                        dbo.FI_TransferFactura     TF
-                            ON  F.IdFactura	=	TF.IdFactura
-                    JOIN
-                        dbo.FI_Transfer            T
-                            ON  TF.IdTransfer	=	T.IdTransferencia
-                               AND F.IdContrato = T.IdContrato
-                               AND F.IdDocFacturacionSIPAC IS NOT NULL
-                    JOIN
-                        CO_AnioContractual
+                        CO_AnioContractual (NOLOCK)
                             ON P.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                     LEFT JOIN
-                        CO_TipoCambioDiario
+                        CO_TipoCambioDiario (NOLOCK)
                             ON convert(Date, F.FechaTimbrado) = CO_TipoCambioDiario.Fecha
                                AND CO_TipoCambioDiario.IdMoneda = @Peso
                     LEFT JOIN
@@ -159,12 +152,34 @@ AS
                         CO_ActividadCIEP (NOLOCK)
                             ON l.IdActividad = CO_ActividadCIEP.IdActividad
                                AND l.IdActividad = CO_ActividadCIEP.IdActividad
+					LEFT JOIN
+                        CO_TipoCambioDiario (NOLOCK) otraMoneda
+                            ON CONVERT(Date, F.FechaTimbrado) = otraMoneda.Fecha
+                               AND F.IdMoneda = otraMoneda.IdMoneda 
                 WHERE
                     EPT.IdContrato = @Contrato
                     AND R.IdEstado = @EstadoAprobado
                     AND EPT.FechaCargaSIPAC = @Mes
                     AND R.CvTipoDocFacturacion = @CvTipoDocFacturacionFactura
                     AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
+					-- Validar existencia en FI_TransferFactura
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_TransferFactura TF (NOLOCK)
+						WHERE F.IdFactura = TF.IdFactura
+					)
+					-- Validar existencia en FI_Transfer
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_Transfer T (NOLOCK)
+						WHERE T.IdTransferencia = (
+							SELECT TOP 1 TF2.IdTransfer
+							FROM dbo.FI_TransferFactura TF2 (NOLOCK)
+							WHERE TF2.IdFactura = F.IdFactura
+						)
+						  AND T.IdContrato = F.IdContrato
+						  AND F.IdDocFacturacionSIPAC IS NOT NULL
+					)
                 GROUP BY
                     EPT.IdDocFacturacionSIPAC,
                     ISNULL(F.UUID, 'NA'),
@@ -174,20 +189,21 @@ AS
                     CO_ActividadCIEP.NombreActividad,
                     CO_SubactividadPetrolera.SubactividadPetrolera,
                     F.IdMoneda,
-                    f.FechaTimbrado,
+                    F.FechaTimbrado,
                     CO_TipoCambioDiario.TipoCambio,
                     CO_AnioContractual.Anio,
                     P.CIEP,
                     CO_Rubro.NombreRubro,
-                    CO_TareaPetrolera.TareaPetrolera
+                    CO_TareaPetrolera.TareaPetrolera,
+					otraMoneda.TipoCambio
                 --EPT ligado a Pedimentos de Importación o Complemento de Proveedor Extranjero
                 UNION
                 --
                 SELECT
-                    LTRIM(RTRIM(@IDSIPAC))          AS [RF_00],
-                    LTRIM(RTRIM(@IDRegFiducidiario)) AS [RI_00],
-                   @NumeroContrato                  AS [RC11_01],
-                    EPT.IdDocFacturacionSIPAC         AS [RF01_01],
+                    @IDSIPAC							AS [RF_00],
+                    @IDRegFiducidiario					AS [RI_00],
+					@NumeroContrato						AS [RC11_01],
+                    EPT.IdDocFacturacionSIPAC			AS [RF01_01],
                     CASE
                         WHEN R.CvTipoDocFacturacion = @CvTipoDocFacturacionPedimento
                             THEN ISNULL(PC.NumeroPedimento, 'NA')
@@ -209,12 +225,12 @@ AS
                         ELSE
                             ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera, '')
                     END                               AS [RC28_07], --Concepto de operación SUBACTIVIDAD
-                    SUM(   CASE
-                               WHEN PC.IdMoneda <> @USD
-                                   then CAST(R.MontoRegistro / CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2))
-                               ELSE
-                                   CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2))
-                           END
+                    SUM(   
+						CASE
+							WHEN PC.IdMoneda = @USD THEN CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2)) -- Dólar
+							WHEN PC.IdMoneda = @Peso THEN CAST(R.MontoRegistro * CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2)) -- Peso
+							ELSE CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas
+                        END
                        )                              AS RC28_08,   --Importe en factura (CFDI o Invoice), USD
                     CO_TipoCambioDiario.TipoCambio    as RC28_09,   --Tipo de cambio (pesos por USD)
                     CO_AnioContractual.Anio           AS RC28_10,   --Año del Estudio de Precios de Transferencia
@@ -224,47 +240,42 @@ AS
                         ELSE
                             ISNULL(CO_TareaPetrolera.TareaPetrolera, '')
                     END                               AS RC28_11,   --Tipo de operación conforme al Estudio de Precios de Transferencia
-                    SUM(   CASE
-                               WHEN PC.IdMoneda = @Peso
-                                   then CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2))
-                               ELSE
-                                   CAST(R.MontoRegistro * CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2))
-                           END
-                       )                              AS RC28_12,
+                    SUM(
+						CASE
+							WHEN PC.IdMoneda = 1 -- Pesos (MXN)
+								THEN CAST(R.MontoRegistro AS DECIMAL(20, 2)) -- Ya esta en pesos
+							WHEN PC.IdMoneda = 2 -- Dolar Americano (USD)
+								THEN CAST(R.MontoRegistro * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- USD a Pesos
+							ELSE
+								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
+						END
+                       )                              AS RC28_12,	-- Monto en pesos Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
                     ''                                AS RC28_13    --Metodología utilizada
                 FROM
-                    dbo.FI_EstudioPreciosTransfer   EPT
+                    dbo.FI_EstudioPreciosTransfer   EPT (NOLOCK)
                     JOIN
-                        dbo.FI_PedimentoComprobante PC
+                        dbo.FI_PedimentoComprobante PC (NOLOCK)
                             ON EPT.IdEstudioPrecioTransfer	=	PC.IdEstudioPrecioTransfer 
-                    AND  EPT.IdContrato = @Contrato
-					AND EPT.FechaCargaSIPAC = @Mes
+								AND  EPT.IdContrato = @Contrato
+								AND EPT.FechaCargaSIPAC = @Mes
                     JOIN
-                        dbo.CO_Registro             R
+                        dbo.CO_Registro             R (NOLOCK)
                             ON	PC.IdPedimentoComprobante	=	R.IdPedimentoComprobante 
                                AND R.IdEstado = @EstadoAprobado
                                AND R.CvTipoDocFacturacion IN (
                                                                  @CvTipoDocFacturacionPedimento, @CvTipoDocFacturacionComprobante
                                                              )
                     JOIN
-                        dbo.CO_LineaPresupuestoMes  L
+                        dbo.CO_LineaPresupuestoMes  L (NOLOCK)
                             ON R.IdPrograma	=	L.IdLineaPresupuestoMes 
                     JOIN
-                        dbo.CO_Presupuesto          P
-                            ON L.IdPresupuesto	=	P.IdPresupuesto 
+                        dbo.CO_Presupuesto          P (NOLOCK)
+                            ON L.IdPresupuesto	=	P.IdPresupuesto
                     JOIN
-                        dbo.FI_TransferFactura      TF
-                            ON PC.IdPedimentoComprobante	=	TF.IdPedimentoComprobante 
-                    JOIN
-                        dbo.FI_Transfer             T
-                            ON TF.IdTransfer	=	T.IdTransferencia 
-                               AND PC.IdContrato = T.IdContrato
-                               AND PC.IdDocFacturacionSIPAC IS NOT NULL
-                    JOIN
-                        CO_AnioContractual
+                        CO_AnioContractual (NOLOCK)
                             ON P.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                     LEFT JOIN
-                        CO_TipoCambioDiario
+                        CO_TipoCambioDiario (NOLOCK)
                             ON PC.FechaPago = CO_TipoCambioDiario.Fecha
                                AND CO_TipoCambioDiario.IdMoneda = @Peso
                     LEFT JOIN
@@ -280,14 +291,36 @@ AS
                         CO_ActividadCIEP (NOLOCK)
                             ON l.IdActividad = CO_ActividadCIEP.IdActividad
                                AND l.IdActividad = CO_ActividadCIEP.IdActividad
+					LEFT JOIN
+                        CO_TipoCambioDiario (NOLOCK) otraMoneda
+                            ON PC.FechaPago = otraMoneda.Fecha
+                               AND PC.IdMoneda = otraMoneda.IdMoneda 
                 WHERE
-                      EPT.IdContrato = @Contrato
+                    EPT.IdContrato = @Contrato
                     AND R.IdEstado = @EstadoAprobado
                     AND EPT.FechaCargaSIPAC = @Mes
                     AND R.CvTipoDocFacturacion IN (
                                                    @CvTipoDocFacturacionPedimento,   @CvTipoDocFacturacionComprobante
                                                   )
-                    AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
+                    AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0		 
+					-- Validar la existencia en FI_TransferFactura
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_TransferFactura TF (NOLOCK)
+						WHERE PC.IdPedimentoComprobante = TF.IdPedimentoComprobante
+					)
+					-- Validar la existencia en FI_Transfer
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_Transfer T (NOLOCK)
+						WHERE T.IdTransferencia = (
+							SELECT TOP 1 TF2.IdTransfer
+							FROM dbo.FI_TransferFactura TF2 (NOLOCK)
+							WHERE TF2.IdPedimentoComprobante = PC.IdPedimentoComprobante
+						)
+						  AND T.IdContrato = PC.IdContrato
+						  AND PC.IdDocFacturacionSIPAC IS NOT NULL
+					)
                 GROUP BY
                     
                     EPT.IdDocFacturacionSIPAC,
@@ -307,41 +340,44 @@ AS
                     YEAR(R.MesPresentacion),
                     CO_ActividadCIEP.NombreActividad,
                     CO_SubactividadPetrolera.SubactividadPetrolera,
-                    pc.IdMoneda,
+                    PC.IdMoneda,
                     PC.FechaPago,
                     CO_TipoCambioDiario.TipoCambio,
                     CO_AnioContractual.anio,
                     P.CIEP,
                     CO_Rubro.NombreRubro,
-                    CO_TareaPetrolera.TareaPetrolera
-
+                    CO_TareaPetrolera.TareaPetrolera,
+					otraMoneda.TipoCambio
                 --EPT ligado al Complemento de Pago de la factura PPD principal relacionado al gasto
                 UNION
                 --
                 SELECT
-                    LTRIM(RTRIM(@IDSIPAC))                                   AS [RF_00],
-                    LTRIM(RTRIM(@IDRegFiducidiario))                          AS [RI_00],
-                   @NumeroContrato                                           AS [RC11_01],
-                    EPT.IdDocFacturacionSIPAC                                  AS [RF01_01],
-                    ISNULL(F.UUID, 'NA')                                       AS [RC28_01],
-                    REPLACE(CONCAT(F.IdDocFacturacionSIPAC, '.xml'), '-', '_') AS [RC28_02],
-                    MONTH(R.MesPresentacion)                                   AS [RC28_03],
-                    YEAR(R.MesPresentacion)                                    AS [RC28_04],
-                    2                                                          AS [RC28_05],
+                    @IDSIPAC													AS [RF_00],
+                    @IDRegFiducidiario											AS [RI_00],
+					@NumeroContrato												AS [RC11_01],
+                    EPT.IdDocFacturacionSIPAC									AS [RF01_01],
+                    ISNULL(F.UUID, 'NA')										AS [RC28_01],
+                    REPLACE(CONCAT(F.IdDocFacturacionSIPAC, '.xml'), '-', '_')	AS [RC28_02],
+                    MONTH(R.MesPresentacion)									AS [RC28_03],
+                    YEAR(R.MesPresentacion)										AS [RC28_04],
+                    2															AS [RC28_05],
                     CASE
                         WHEN @IdTipoContrato = 1
                             THEN ISNULL(CO_ActividadCIEP.NombreActividad, '')
                         ELSE
                             ISNULL(CO_SubactividadPetrolera.SubactividadPetrolera, '')
                     END                                                        AS [RC28_07], --Concepto de operación SUBACTIVIDAD
-                    SUM(   CASE
-                               WHEN FDR.IdMoneda <> @USD
-                                   then CAST((R.MontoRegistro / CO_TipoCambioDiario.TipoCambio) AS DECIMAL(20, 2))
-                               ELSE
-                                   CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2))
-                           END
-                       )                                                       AS RC28_08,   --Importe en factura (CFDI o Invoice),USD
-                    CO_TipoCambioDiario.TipoCambio                             as RC28_09,   --Tipo de cambio (pesos por USD)
+                    SUM(
+						CASE
+							WHEN FDR.IdMoneda = 1 -- Pesos (MXN)
+								THEN CAST(R.MontoRegistro / CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2)) -- Pesos a USD
+							WHEN FDR.IdMoneda = 2 -- Dolar Americano (USD)
+								THEN CAST(R.MontoRegistro AS DECIMAL(20, 2)) -- Ya esta en dolares
+							ELSE
+								CAST(R.MontoRegistro * otraMoneda.TipoCambio AS DECIMAL(20, 2)) -- Otras monedas a USD
+						END
+					)														   AS RC28_08,    --Importe en factura (CFDI o Invoice),USD
+                    CO_TipoCambioDiario.TipoCambio                             AS RC28_09,   --Tipo de cambio (pesos por USD)
                     CO_AnioContractual.Anio                                    AS RC28_10,   --Año del Estudio de Precios de Transferencia
                     CASE
                         WHEN P.CIEP = @EsCiep
@@ -349,55 +385,50 @@ AS
                         ELSE
                             ISNULL(CO_TareaPetrolera.TareaPetrolera, '')
                     END                                                        AS RC28_11,   --" Tipo de operación conforme al Estudio de Precios de Transferencia"
-                    SUM(   CASE
-                               WHEN FDR.IdMoneda = @Peso
-                                   then CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2))
-                               ELSE
-                                   CAST(R.MontoRegistro * CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2))
-                           END
-                       )                                                       AS RC28_12,
-                    ''                                                         AS RC28_13    --Metodología utilizada
+                    SUM(
+						CASE
+							WHEN FDR.IdMoneda = 1 -- Pesos (MXN)
+								THEN CAST(R.MontoRegistro AS DECIMAL(20, 2)) -- Ya esta en pesos
+							WHEN FDR.IdMoneda = 2 -- Dolar Americano (USD)
+								THEN CAST(R.MontoRegistro * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- USD a Pesos
+							ELSE
+								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
+						END
+					)														   AS RC28_12,   -- Monto en pesos Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
+                    ''                                                         AS RC28_13    -- Metodología utilizada
                 FROM
-                    dbo.FI_EstudioPreciosTransfer  EPT
+                    dbo.FI_EstudioPreciosTransfer  EPT (NOLOCK)
                     JOIN
-                        dbo.FI_Factura             F
+                        dbo.FI_Factura             F (NOLOCK)
                             ON  EPT.IdEstudioPrecioTransfer	=	F.IdEstudioPrecioTransfer
 							AND  EPT.IdContrato = @Contrato
 							 AND EPT.FechaCargaSIPAC = @Mes
                     JOIN
-                        dbo.FI_ComplementoDePago   CP
+                        dbo.FI_ComplementoDePago   CP (NOLOCK)
                             ON CP.IdFactura = F.IdFactura
                     JOIN
-                        dbo.FI_CPDocRelacionado    DR
+                        dbo.FI_CPDocRelacionado    DR (NOLOCK)
                             ON CP.IdComplementoDePago = DR.IdComplementoDePago
                     JOIN
-                        dbo.FI_Factura             FDR
+                        dbo.FI_Factura             FDR (NOLOCK)
                             ON FDR.UUID = DR.IdDocumento
                    
                     JOIN
-                        dbo.CO_Registro            R
+                        dbo.CO_Registro            R (NOLOCK)
                             ON R.IdFactura = FDR.IdFactura
                                AND R.IdEstado = @EstadoAprobado
                                AND R.CvTipoDocFacturacion = @CvTipoDocFacturacionFactura
                     JOIN
-                        dbo.CO_LineaPresupuestoMes L
+                        dbo.CO_LineaPresupuestoMes L (NOLOCK)
                             ON L.IdLineaPresupuestoMes = R.IdPrograma
                     JOIN
-                        dbo.CO_Presupuesto         P
+                        dbo.CO_Presupuesto         P (NOLOCK)
                             ON P.IdPresupuesto = L.IdPresupuesto
                     JOIN
-                        dbo.FI_TransferFactura     TF
-                            ON TF.IdFactura = F.IdFactura
-                    JOIN
-                        dbo.FI_Transfer            T
-                            ON T.IdTransferencia = TF.IdTransfer
-                               AND F.IdContrato = T.IdContrato
-                               AND F.IdDocFacturacionSIPAC IS NOT NULL
-                    JOIN
-                        CO_AnioContractual
+                        CO_AnioContractual (NOLOCK)
                             ON P.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                     LEFT JOIN
-                        CO_TipoCambioDiario
+                        CO_TipoCambioDiario	(NOLOCK)
                             ON convert(Date, FDR.FechaTimbrado) = CO_TipoCambioDiario.Fecha
                                AND CO_TipoCambioDiario.IdMoneda = @Peso
                     LEFT JOIN
@@ -413,16 +444,37 @@ AS
                         CO_ActividadCIEP (NOLOCK)
                             ON l.IdActividad = CO_ActividadCIEP.IdActividad
                                AND l.IdActividad = CO_ActividadCIEP.IdActividad
+					LEFT JOIN
+                        CO_TipoCambioDiario (NOLOCK) otraMoneda
+                            ON convert(Date, FDR.FechaTimbrado) = otraMoneda.Fecha
+                               AND FDR.IdMoneda = otraMoneda.IdMoneda
                 WHERE
-                      EPT.IdContrato = @Contrato
+                    EPT.IdContrato = @Contrato
                     AND R.IdEstado = @EstadoAprobado
                     AND EPT.FechaCargaSIPAC = @Mes
                     AND R.CvTipoDocFacturacion = @CvTipoDocFacturacionFactura
                     AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
                     AND F.IdDocFacturacionSIPAC IS NOT NULL
-                    AND F.IdDocFacturacionSIPAC NOT LIKE '%2018%'
-                GROUP BY
-                    
+                    AND F.IdDocFacturacionSIPAC NOT LIKE '%2018%' 
+					-- Validar existencia en FI_TransferFactura
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_TransferFactura TF (NOLOCK)
+						WHERE TF.IdFactura = F.IdFactura
+					)
+					-- Validar existencia en FI_Transfer
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_Transfer T (NOLOCK)
+						WHERE T.IdTransferencia = (
+							SELECT TOP 1 TF2.IdTransfer
+							FROM dbo.FI_TransferFactura TF2 (NOLOCK)
+							WHERE TF2.IdFactura = F.IdFactura
+						)
+						  AND T.IdContrato = F.IdContrato
+						  AND F.IdDocFacturacionSIPAC IS NOT NULL
+					)
+                GROUP BY  
                     EPT.IdDocFacturacionSIPAC,
                     ISNULL(F.UUID, 'NA'),
                     REPLACE(CONCAT(F.IdDocFacturacionSIPAC, '.xml'), '-', '_'),
@@ -436,7 +488,8 @@ AS
                     CO_AnioContractual.Anio,
                     P.CIEP,
                     CO_Rubro.NombreRubro,
-                    CO_TareaPetrolera.TareaPetrolera
+                    CO_TareaPetrolera.TareaPetrolera,
+					otraMoneda.TipoCambio
             ) AS ResultUnion
         ORDER BY
             ResultUnion.RC28_03;
