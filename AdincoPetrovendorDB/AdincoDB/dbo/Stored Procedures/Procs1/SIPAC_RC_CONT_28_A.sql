@@ -133,14 +133,6 @@ AS
                         dbo.CO_Presupuesto         P (NOLOCK)
                             ON  L.IdPresupuesto	=	P.IdPresupuesto
                     JOIN
-                        dbo.FI_TransferFactura     TF (NOLOCK)
-                            ON  F.IdFactura	=	TF.IdFactura
-                    JOIN
-                        dbo.FI_Transfer            T (NOLOCK)
-                            ON  TF.IdTransfer	=	T.IdTransferencia
-                               AND F.IdContrato = T.IdContrato
-                               AND F.IdDocFacturacionSIPAC IS NOT NULL
-                    JOIN
                         CO_AnioContractual (NOLOCK)
                             ON P.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                     LEFT JOIN
@@ -170,6 +162,24 @@ AS
                     AND EPT.FechaCargaSIPAC = @Mes
                     AND R.CvTipoDocFacturacion = @CvTipoDocFacturacionFactura
                     AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
+					-- Validar existencia en FI_TransferFactura
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_TransferFactura TF (NOLOCK)
+						WHERE F.IdFactura = TF.IdFactura
+					)
+					-- Validar existencia en FI_Transfer
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_Transfer T (NOLOCK)
+						WHERE T.IdTransferencia = (
+							SELECT TOP 1 TF2.IdTransfer
+							FROM dbo.FI_TransferFactura TF2 (NOLOCK)
+							WHERE TF2.IdFactura = F.IdFactura
+						)
+						  AND T.IdContrato = F.IdContrato
+						  AND F.IdDocFacturacionSIPAC IS NOT NULL
+					)
                 GROUP BY
                     EPT.IdDocFacturacionSIPAC,
                     ISNULL(F.UUID, 'NA'),
@@ -260,15 +270,7 @@ AS
                             ON R.IdPrograma	=	L.IdLineaPresupuestoMes 
                     JOIN
                         dbo.CO_Presupuesto          P (NOLOCK)
-                            ON L.IdPresupuesto	=	P.IdPresupuesto 
-                    JOIN
-                        dbo.FI_TransferFactura      TF (NOLOCK)
-                            ON PC.IdPedimentoComprobante	=	TF.IdPedimentoComprobante 
-                    JOIN
-                        dbo.FI_Transfer             T (NOLOCK)
-                            ON TF.IdTransfer	=	T.IdTransferencia 
-                               AND PC.IdContrato = T.IdContrato
-                               AND PC.IdDocFacturacionSIPAC IS NOT NULL
+                            ON L.IdPresupuesto	=	P.IdPresupuesto
                     JOIN
                         CO_AnioContractual (NOLOCK)
                             ON P.IdAnioContractual = CO_AnioContractual.IdAnioContractual
@@ -294,13 +296,31 @@ AS
                             ON PC.FechaPago = otraMoneda.Fecha
                                AND PC.IdMoneda = otraMoneda.IdMoneda 
                 WHERE
-                      EPT.IdContrato = @Contrato
+                    EPT.IdContrato = @Contrato
                     AND R.IdEstado = @EstadoAprobado
                     AND EPT.FechaCargaSIPAC = @Mes
                     AND R.CvTipoDocFacturacion IN (
                                                    @CvTipoDocFacturacionPedimento,   @CvTipoDocFacturacionComprobante
                                                   )
-                    AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
+                    AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0		 
+					-- Validar la existencia en FI_TransferFactura
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_TransferFactura TF (NOLOCK)
+						WHERE PC.IdPedimentoComprobante = TF.IdPedimentoComprobante
+					)
+					-- Validar la existencia en FI_Transfer
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_Transfer T (NOLOCK)
+						WHERE T.IdTransferencia = (
+							SELECT TOP 1 TF2.IdTransfer
+							FROM dbo.FI_TransferFactura TF2 (NOLOCK)
+							WHERE TF2.IdPedimentoComprobante = PC.IdPedimentoComprobante
+						)
+						  AND T.IdContrato = PC.IdContrato
+						  AND PC.IdDocFacturacionSIPAC IS NOT NULL
+					)
                 GROUP BY
                     
                     EPT.IdDocFacturacionSIPAC,
@@ -405,14 +425,6 @@ AS
                         dbo.CO_Presupuesto         P (NOLOCK)
                             ON P.IdPresupuesto = L.IdPresupuesto
                     JOIN
-                        dbo.FI_TransferFactura     TF (NOLOCK)
-                            ON TF.IdFactura = F.IdFactura
-                    JOIN
-                        dbo.FI_Transfer            T (NOLOCK)
-                            ON T.IdTransferencia = TF.IdTransfer
-                               AND F.IdContrato = T.IdContrato
-                               AND F.IdDocFacturacionSIPAC IS NOT NULL
-                    JOIN
                         CO_AnioContractual (NOLOCK)
                             ON P.IdAnioContractual = CO_AnioContractual.IdAnioContractual
                     LEFT JOIN
@@ -437,13 +449,31 @@ AS
                             ON convert(Date, FDR.FechaTimbrado) = otraMoneda.Fecha
                                AND FDR.IdMoneda = otraMoneda.IdMoneda
                 WHERE
-                      EPT.IdContrato = @Contrato
+                    EPT.IdContrato = @Contrato
                     AND R.IdEstado = @EstadoAprobado
                     AND EPT.FechaCargaSIPAC = @Mes
                     AND R.CvTipoDocFacturacion = @CvTipoDocFacturacionFactura
                     AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0
                     AND F.IdDocFacturacionSIPAC IS NOT NULL
-                    AND F.IdDocFacturacionSIPAC NOT LIKE '%2018%'
+                    AND F.IdDocFacturacionSIPAC NOT LIKE '%2018%' 
+					-- Validar existencia en FI_TransferFactura
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_TransferFactura TF (NOLOCK)
+						WHERE TF.IdFactura = F.IdFactura
+					)
+					-- Validar existencia en FI_Transfer
+					AND EXISTS (
+						SELECT 1
+						FROM dbo.FI_Transfer T (NOLOCK)
+						WHERE T.IdTransferencia = (
+							SELECT TOP 1 TF2.IdTransfer
+							FROM dbo.FI_TransferFactura TF2 (NOLOCK)
+							WHERE TF2.IdFactura = F.IdFactura
+						)
+						  AND T.IdContrato = F.IdContrato
+						  AND F.IdDocFacturacionSIPAC IS NOT NULL
+					)
                 GROUP BY  
                     EPT.IdDocFacturacionSIPAC,
                     ISNULL(F.UUID, 'NA'),
