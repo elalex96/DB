@@ -92,7 +92,7 @@ AS
                     SUM(   
 						CASE
                             WHEN F.IdMoneda = @USD THEN CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2)) -- Dólar
-							WHEN F.IdMoneda = @Peso THEN CAST(R.MontoRegistro * CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2)) -- Peso
+							WHEN F.IdMoneda = @Peso THEN CAST(R.MontoRegistro / CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2)) -- Peso
 							ELSE CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas
                         END
                        )                                                       AS RC28_08,   --Importe en factura (CFDI o Invoice)
@@ -228,7 +228,7 @@ AS
                     SUM(   
 						CASE
 							WHEN PC.IdMoneda = @USD THEN CAST(ISNULL(R.MontoRegistro, 0) AS DECIMAL(20, 2)) -- Dólar
-							WHEN PC.IdMoneda = @Peso THEN CAST(R.MontoRegistro * CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2)) -- Peso
+							WHEN PC.IdMoneda = @Peso THEN CAST(R.MontoRegistro / CO_TipoCambioDiario.TipoCambio AS DECIMAL(20, 2)) -- Peso
 							ELSE CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas
                         END
                        )                              AS RC28_08,   --Importe en factura (CFDI o Invoice), USD
