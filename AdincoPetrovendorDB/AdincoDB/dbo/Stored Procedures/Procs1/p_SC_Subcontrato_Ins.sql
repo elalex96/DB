@@ -1,79 +1,79 @@
-﻿
-CREATE proc p_SC_Subcontrato_Ins
+﻿USE [Adinco]
+GO
+
+IF OBJECT_ID('[dbo].[p_SC_Subcontrato_Ins]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[p_SC_Subcontrato_Ins]
+GO
+
+CREATE PROCEDURE [dbo].[p_SC_Subcontrato_Ins]
 (
-	@pIdSubcontrato int out,
-	@pIdSubContratista	int,
-	@pIdContratista		int,
-	@pNumeroSubContrato	varchar(max),
-	@pIdContrato		int,
-	@pIdUsuario			int,
-	@pIdCentroCostos	int,
-	@pIdMoneda			int,
-	@pPrefijoOT			varchar(13),
-	@pObjeto			varchar(300),
-	@pFechaInicio		DateTime=null,
-	@pFechaFin			DateTime=null,
-	@pError				varchar(250)='' out
+    @pIdSubcontrato     INT OUT,
+    @pIdSubContratista  INT,
+    @pIdContratista     INT,
+    @pNumeroSubContrato VARCHAR(MAX),
+    @pIdContrato        INT,
+    @pIdUsuario         INT,
+    @pIdCentroCostos    INT,
+    @pIdMoneda          INT,
+    @pPrefijoOT         VARCHAR(13),
+    @pObjeto            VARCHAR(300),
+    @pFechaInicio       DATETIME = NULL,
+    @pFechaFin          DATETIME = NULL,
+    @pError             VARCHAR(250) = '' OUT
 )
-as
-begin
-	
-	select @pIdSubcontrato = isnull(max(IdSubContrato),0)+1 from SC_Subcontrato
+AS
+BEGIN
+    SELECT @pIdSubcontrato = ISNULL(MAX(IdSubContrato), 0) + 1
+    FROM SC_Subcontrato (NOLOCK);
 
-	if not exists (
-		select * 
-		from SC_SubContrato 
-		where NumeroSubContrato = @pNumeroSubContrato 
-		and IdContratista = @pIdContratista 
-		and IsActivo = 1
-	)	
-	begin
-		insert into SC_SubContrato
-								(
-									IdSubContrato,
-									IdSubContratista,
-									IdContratista,
-									NumeroSubContrato,
-									IdContrato,
-									CreadoPor,
-									CreadoEl,
-									IdCentroCosto,
-									IsEliminado,
-									IsActivo,
-									IdMoneda,
-									PrefijoOT,
-									Objeto,
-									FechaInicio,
-									FechaFin
-								)
-							values
-								(
-									@pIdSubcontrato,
-									@pIdSubContratista,
-									@pIdContratista,
-									@pNumeroSubContrato,
-									@pIdContrato,
-									@pIdUsuario,
-									GETDATE(),
-									@pIdCentroCostos,
-									0,
-									1,
-									@pIdMoneda,
-									'OT-'+@pPrefijoOT,
-									@pObjeto ,
-									@pFechaInicio,
-									@pFechaFin
-								)
-	end
-	else
-	begin
-		set @pIdSubcontrato = 0;
-		set @pError = '[ALERTA] El número de contrato ya existe'
-	end
-
-	
-
-end
-
-
-
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM SC_SubContrato (NOLOCK)
+        WHERE NumeroSubContrato = @pNumeroSubContrato
+          AND IdContratista = @pIdContratista
+          AND IsActivo = 1
+    )
+    BEGIN
+        INSERT INTO SC_SubContrato
+        (
+            IdSubContrato,
+            IdSubContratista,
+            IdContratista,
+            NumeroSubContrato,
+            IdContrato,
+            CreadoPor,
+            CreadoEl,
+            IdCentroCosto,
+            IsEliminado,
+            IsActivo,
+            IdMoneda,
+            PrefijoOT,
+            Objeto,
+            FechaInicio,
+            FechaFin
+        )
+        VALUES
+        (
+            @pIdSubcontrato,
+            @pIdSubContratista,
+            @pIdContratista,
+            @pNumeroSubContrato,
+            @pIdContrato,
+            @pIdUsuario,
+            GETDATE(),
+            @pIdCentroCostos,
+            0,
+            1,
+            @pIdMoneda,
+            'OT-' + @pPrefijoOT,
+            @pObjeto,
+            @pFechaInicio,
+            @pFechaFin
+        );
+    END
+    ELSE
+    BEGIN
+        SET @pIdSubcontrato = 0;
+        SET @pError = '[ALERTA] El número del subcontrato ya existe';
+    END
+END

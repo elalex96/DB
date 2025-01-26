@@ -1,25 +1,31 @@
-﻿
-create proc p_SC_Materiales_Grd
-(
-	@pIdSubContrato		int
-)
-as
-begin
-	select		m.IdSCMaterial,
-				m.IdSubContrato,
-				m.Concepto,
-				m.IdMaestro,
-				m.IdUnidad,
-				mu.Unidad,
-				m.Cantidad,
-				m.PrecioUnitario,
-				m.Importe,
-				m.Descripcion,
-				m.DescripcionCorta,
-				m.IdServicio
-	from		SC_Materiales						m
-	inner join	Petrovendor..PV_MM_MaterialUnidad	mu
-	on			mu.IdUnidad							=	m.IdUnidad
-	where		IdSubContrato						=	@pIdSubContrato
-end
+﻿IF OBJECT_ID('[dbo].[p_SC_Materiales_Grd]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[p_SC_Materiales_Grd]
+GO
 
+CREATE PROCEDURE [dbo].[p_SC_Materiales_Grd]
+(
+    @pIdSubContrato INT
+)
+AS
+BEGIN
+    SELECT
+        m.IdSCMaterial,
+        m.IdSubContrato,
+        m.Concepto,
+        m.IdMaestro,
+        m.IdUnidad,
+        mu.Unidad,
+        m.Cantidad,
+        m.PrecioUnitario,
+        m.Importe,
+        m.Descripcion,
+        m.DescripcionCorta,
+        m.IdServicio
+    FROM
+        SC_Materiales (NOLOCK) m
+    INNER JOIN
+        Petrovendor..PV_MM_MaterialUnidad (NOLOCK) mu
+        ON mu.IdUnidad = m.IdUnidad
+    WHERE
+        m.IdSubContrato = @pIdSubContrato
+END
