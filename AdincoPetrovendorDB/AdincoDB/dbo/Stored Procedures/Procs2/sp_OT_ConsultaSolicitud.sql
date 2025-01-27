@@ -1,67 +1,89 @@
-﻿-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- sp_OT_ConsultaSolicitud 12
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'sp_OT_ConsultaSolicitud'
+    )
+    DROP PROCEDURE sp_OT_ConsultaSolicitud;
+GO
 
-CREATE proc [dbo].[sp_OT_ConsultaSolicitud]
-@pIdOTSolicitud int
-As
-	select 
-			sol.IdOTSolicitud,
-			sol.IdSubContrato,
-			sc.NumeroSubContrato,
-			NombreContratista = c.NombreContratista,
-			NombreSubContratista  = psc.RazonSocial,
-			--NombreActividad = act.NombreActividad,
-			sol.IdPresupuesto,
-			FolioOT=sol.Folio,
-			--sol.IdInstalacion,
-			--co.NombreInstalacion,
-			sol.FechaInicio,
-			sol.FechaFin,
-			sol.PlazoEjecucion,
-			sol.CreadoPor,
-			sol.CreadoEl,
-			sol.ModificadoPor,
-			sol.ModificadoEl,
-			sol.IsActivo,
-			sol.IsEliminado,
-			Objeto = ISNULL(sol.Objeto,''),
-			Estatus = est.Descripcion,
-			est.IdOTEstatus,
-			PSC.IdSubcontratista,
-			sc.IdContratista,
-			FechaFinExtendida,
-			ProgarmaInicialPorOperador = cast(isnull(case when sol.ProgIniPorProveedor = 1 then 0 else 1 end,0) as bit),
-			Moneda = isnull([TipoMonedaCorto],'NO DEFINIDO'),			
-			sol.IdCentroCosto,
-			CentroCosto = CentroCosto,
-			sol.CapturaManual,
-			SAPPR = isnull(sol.SAPPR,''),
-			sol.IdTerminos,
-			t.Documento,
-			PermitirAprobarProv = isnull(conf.PermitirAprobarSubcontratista,0),
-			Decimales= isnull(conf.Decimales,0)
+CREATE PROCEDURE [dbo].[sp_OT_ConsultaSolicitud] @pIdOTSolicitud int
+AS
+    BEGIN
+        SELECT
+            sol.IdOTSolicitud,
+            sol.IdSubContrato,
+            sc.NumeroSubContrato,
+            NombreContratista          = c.NombreContratista,
+            NombreSubContratista       = psc.RazonSocial,
+            sol.IdPresupuesto,
+            FolioOT                    = sol.Folio,
+            sol.FechaInicio,
+            sol.FechaFin,
+            sol.PlazoEjecucion,
+            sol.CreadoPor,
+            sol.CreadoEl,
+            sol.ModificadoPor,
+            sol.ModificadoEl,
+            sol.IsActivo,
+            sol.IsEliminado,
+            Objeto                     = ISNULL(sol.Objeto, ''),
+            Estatus                    = est.Descripcion,
+            est.IdOTEstatus,
+            PSC.IdSubcontratista,
+            sc.IdContratista,
+            FechaFinExtendida,
+            ProgarmaInicialPorOperador = cast(isnull(   case
+                                                            when sol.ProgIniPorProveedor = 1
+                                                                then 0
+                                                            else
+                                                                1
+                                                        end, 0
+                                                    ) as bit),
+            Moneda                     = isnull([TipoMonedaCorto], 'NO DEFINIDO'),
+            sol.IdCentroCosto,
+            CentroCosto                = CentroCosto,
+            sol.CapturaManual,
+            SAPPR                      = isnull(sol.SAPPR, ''),
+            sol.IdTerminos,
+            t.Documento,
+            PermitirAprobarProv        = isnull(conf.PermitirAprobarSubcontratista, 0),
+            Decimales                  = isnull(conf.Decimales, 0)
+        FROM
+            OT_Solicitud                                  sol (NOLOCK)
+            JOIN
+                SC_SubContrato                            sc (NOLOCK)
+                    on sc.idSubContrato = sol.IdSubContrato
+                       AND sol.IdOTSolicitud = @pIdOTSolicitud
+            JOIN
+                Petrovendor..CC_CentroCosto               cc (NOLOCK)
+                    on cc.IdCentroCosto = sol.IdCentroCosto
+            JOIN
+                CO_Contratista                            c (NOLOCK)
+                    on sc.IdContratista = c.idContratista
+            JOIN
+                PV_Subcontratista                         psc (NOLOCK)
+                    on sc.IdSubcontratista = psc.IdSubcontratista
+            JOIN
+                OT_Estatus                                est (NOLOCK)
+                    ON sol.IdOTEstatus = est.IdOTEstatus
+            LEFT JOIN
+                Petrovendor.dbo.MM_Pedido                 ped (NOLOCK)
+                    on sc.idPedido = ped.IdPedido
+            LEFT JOIN
+                Petrovendor.dbo.[PV_TipoMoneda]           mon (NOLOCK)
+                    on ped.idMoneda = mon.IdMOneda
+            LEFT JOIN
+                OT_Configurador                           conf (NOLOCK)
+                    on sc.IdContratista = conf.IdContratista
+                       and sc.IdContrato = conf.IdContrato
+            LEFT JOIN
+                PEtrovendor..TC_TerminosYCondicionesDocV2 t (NOLOCK)
+                    on sol.IdTerminos = t.IdTerminosYCondiciones
+        WHERE
+            sol.IdOTSolicitud = @pIdOTSolicitud;
 
-	from OT_Solicitud sol
-	inner join SC_SubContrato sc on sc.idSubContrato = sol.IdSubContrato
-	inner join Petrovendor..CC_CentroCosto cc on cc.IdCentroCosto = sol.IdCentroCosto
-	inner join CO_Contratista c on c.idContratista = sc.IdContratista
-	inner join PV_Subcontratista psc on psc.IdSubcontratista = sc.IdSubcontratista
-	INNER JOIN OT_Estatus est ON est.IdOTEstatus = sol.IdOTEstatus
-	left join Petrovendor.dbo.MM_Pedido ped on ped.IdPedido = sc.idPedido
-	LEFT join Petrovendor.dbo.[PV_TipoMoneda] mon on mon.IdMOneda = ped.idMoneda
-	--inner join CO_Instalacion co on co.IdInstalacion = sol.IdInstalacion
-	
-	
-	LEFT JOIN OT_Configurador conf on conf.IdContratista = sc.IdContratista and
-										conf.IdContrato = sc.IdContrato
-	--inner join co_actividadCIEP act on act.idActividad = co.IdActividad
-	left join PEtrovendor..TC_TerminosYCondicionesDocV2 t on t.IdTerminosYCondiciones = sol.IdTerminos
-	where sol.IdOTSolicitud = @pIdOTSolicitud
-
-
-
-
-
-
-
-
+    END

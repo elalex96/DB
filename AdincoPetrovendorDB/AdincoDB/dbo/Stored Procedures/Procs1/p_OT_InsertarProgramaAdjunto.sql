@@ -1,17 +1,25 @@
-﻿
-CREATE PROC p_OT_InsertarProgramaAdjunto
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'p_OT_InsertarProgramaAdjunto'
+    )
+    DROP PROCEDURE p_OT_InsertarProgramaAdjunto;
+GO
+CREATE PROCEDURE p_OT_InsertarProgramaAdjunto
 	@pIdOTSolicitud		INT,
-	--@pNombreAdjunto	VARCHAR(250),
-	--@pAdjunto			IMAGE,
 	@pCreadoPor			VARCHAR(100),
 	@pAWSDocumentoId	int
 AS
 begin
-	DECLARE @id INT
+	DECLARE @id INT;
     
 	SELECT @id = ISNULL(MAX(ID),0) + 1
-	FROM [OT_ProgramaAdjunto]
-	
+	FROM [OT_ProgramaAdjunto] (NOLOCK);
+
 	INSERT INTO [dbo].[OT_ProgramaAdjunto]
 				(
 					ID,		
@@ -27,5 +35,6 @@ begin
 					@pCreadoPor,	
 					GETDATE(),
 					@pAWSDocumentoId
-				)
+				);
 end
+
