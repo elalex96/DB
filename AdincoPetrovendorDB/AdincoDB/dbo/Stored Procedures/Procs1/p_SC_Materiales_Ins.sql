@@ -1,71 +1,93 @@
-﻿CREATE proc p_SC_Materiales_Ins
+﻿IF OBJECT_ID('[dbo].[p_SC_Materiales_Ins]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[p_SC_Materiales_Ins]
+GO
+
+CREATE PROCEDURE [dbo].[p_SC_Materiales_Ins]
 (
-	@pIdSubContrato		int,
-	@pConcepto			varchar(max),
-	@pIdUnidad			int,
-	@pCantidad			decimal(14,5),
-	@pPrecioUnitario	money,
-	@pDescripcion		varchar(max),
-	@pDescripcionCorta	varchar(max),
-	@pIdUsuario			int,
-	@pError				varchar(250) out
+    @pIdSubContrato     INT,
+    @pConcepto          VARCHAR(MAX),
+    @pIdUnidad          INT,
+    @pCantidad          DECIMAL(14,5),
+    @pPrecioUnitario    MONEY,
+    @pDescripcion       VARCHAR(MAX),
+    @pDescripcionCorta  VARCHAR(MAX),
+    @pIdUsuario         INT,
+    @pError             VARCHAR(250) OUT
 )
-as
-begin
+AS
+BEGIN
+    DECLARE @pIdSCMaterial INT,
+            @idBitacora INT;
 
-	declare @pIdSCMaterial		int,
-		@idBitacora int
+    -- Obtener el próximo IdSCMaterial
+    SELECT @pIdSCMaterial = ISNULL(MAX(IdSCMaterial), 0) + 1 
+    FROM SC_Materiales (NOLOCK);
 
-	select @pIdSCMaterial = isnull(max(IdSCMaterial),0)+1 from SC_Materiales
+    BEGIN TRY
+        BEGIN TRAN;
 
-	begin try
+        INSERT INTO SC_Materiales 
+        (
+            IdSCMaterial,
+            Concepto,
+            IdUnidad,
+            Cantidad,
+            PrecioUnitario,
+            Descripcion,
+            DescripcionCorta,
+            IdSubContrato,
+            IdMaestro,
+            Importe,
+            CreadoPor,
+            CreadoEl
+        )
+        VALUES
+        (
+            @pIdSCMaterial,
+            @pConcepto,
+            @pIdUnidad,
+            @pCantidad,
+            @pPrecioUnitario,
+            @pDescripcion,
+            @pDescripcionCorta,
+            @pIdSubContrato,
+            NULL,
+            @pCantidad * @pPrecioUnitario,
+            @pIdUsuario,
+            GETDATE()
+        );
 
-		begin tran
+        -- Obtener el próximo IdSCBitacora
+        SELECT @idBitacora = ISNULL(MAX(IdSCBitacora), 0) + 1 
+        FROM SC_MaterialesBitacora (NOLOCK);
 
-			insert into SC_Materiales 
-						(
-							IdSCMaterial,
-							Concepto,
-							IdUnidad,
-							Cantidad,
-							PrecioUnitario,
-							Descripcion,
-							DescripcionCorta,
-							IdSubContrato,
-							IdMaestro,
-							Importe,
-							CreadoPor,
-							CreadoEl
-						)
-					values
-						(
-							@pIdSCMaterial,
-							@pConcepto,
-							@pIdUnidad,
-							@pCantidad,
-							@pPrecioUnitario,
-							@pDescripcion,
-							@pDescripcionCorta,
-							@pIdSubContrato,
-							null,
-							@pCantidad*@pPrecioUnitario,
-							@pIdUsuario,
-							GETDATE()
-						)
-		
+        INSERT INTO SC_MaterialesBitacora
+        (
+            IdSCBitacora,
+            IdSCMaterial,
+            CantidadRespaldo,
+            FechaRespaldo,
+            ModificadoPor,
+            Cantidad,
+            PrecioUnitario
+        )
+        SELECT 
+            @idBitacora,
+            @pIdSCMaterial,
+            @pCantidad,
+            GETDATE(),
+            @pIdUsuario,
+            @pCantidad,
+            @pPrecioUnitario;
 
-			select @idBitacora = isnull(max(IdSCBitacora),0)+1
-			from SC_MaterialesBitacora
+        -- Ejecutar procedimiento para generar materiales
+        EXEC [dbo].[p_SC_Materiales_Gen] @pIdSubContrato, '';
 
-			insert into SC_MaterialesBitacora(IdSCBitacora,IdSCMaterial,CantidadRespaldo,FechaRespaldo,ModificadoPor,Cantidad,PrecioUnitario)
-			select @idBitacora,@pIdSCMaterial,@pCantidad,getdate(),@pIdUsuario,@pCantidad,@pPrecioUnitario
-
-			EXEC [dbo].[p_SC_Materiales_Gen] @pIdSubContrato,''
-
-		commit tran
-	end try
-	begin catch
-		rollback tran
-		set @pError = 'Ocurrió un error inesperado'+ERROR_MESSAGE()
-	end catch
-end
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRAN;
+        SET @pError = 'Ocurrió un error inesperado: ' + ERROR_MESSAGE();
+    END CATCH;
+END
+GO

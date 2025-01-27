@@ -1,37 +1,52 @@
-﻿
-create proc p_Presupuestos_grd
+﻿IF EXISTS
 (
-	@pIdSubContrato		int
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'p_Presupuestos_grd'
 )
-as
-begin
+    DROP PROCEDURE p_Presupuestos_grd
+GO
 
-	--select * from SC_Presupuesto where IdSubContrato = @pIdSubContrato
-
-	select		s.idSubcontrato,
-				pre.IdPresupuesto,
-				pre.IdAnioContractual,
-				pre.IdProgramaActividad,
-				pre.Version,
-				pre.Nombre,
-				pre.Comentario,
-				pre.FechaAprobacionPEP,
-				pre.Activo,
-				pre.IdPresupuestoCNH,
-				pre.Actual,
-				pre.CIEP,
-				pre.ActivoProcura,
-				Seleccionado			=	case when p.IdPresupuesto is null then cast(0 as bit) else cast(1 as bit) end
-	from		SC_Subcontrato			s
-	inner join	CO_PeriodoContrato		pc 
-	on			pc.IdContrato			=	s.IdContrato
-	inner join	CO_ProgramaActividad	pa 
-	on			pa.IdPeriodoContrato	=	pc.IdPeriodo
-	inner join	CO_Presupuesto			pre 
-	on			pre.IdProgramaActividad =	pa.IdProgramaActividad
-	left join	SC_Presupuesto			p
-	on			pre.IdPresupuesto		=	p.IdPresupuesto
-	and			s.IdSubContrato			=	p.IdSubContrato
-	where		s.idSubcontrato			=	@pIdSubContrato --1
-end
+CREATE PROCEDURE [dbo].[p_Presupuestos_grd]
+(
+    @pIdSubContrato INT
+)
+AS
+BEGIN
+    SELECT
+        s.idSubcontrato,
+        pre.IdPresupuesto,
+        pre.IdAnioContractual,
+        pre.IdProgramaActividad,
+        pre.Version,
+        pre.Nombre,
+        pre.Comentario,
+        pre.FechaAprobacionPEP,
+        pre.Activo,
+        pre.IdPresupuestoCNH,
+        pre.Actual,
+        pre.CIEP,
+        pre.ActivoProcura,
+        Seleccionado = CASE 
+                           WHEN p.IdPresupuesto IS NULL THEN CAST(0 AS BIT) 
+                           ELSE CAST(1 AS BIT) 
+                       END
+    FROM
+        SC_Subcontrato (NOLOCK) s
+    INNER JOIN
+        CO_PeriodoContrato (NOLOCK) pc 
+        ON pc.IdContrato = s.IdContrato
+    INNER JOIN
+        CO_ProgramaActividad (NOLOCK) pa 
+        ON pa.IdPeriodoContrato = pc.IdPeriodo
+    INNER JOIN
+        CO_Presupuesto (NOLOCK) pre 
+        ON pre.IdProgramaActividad = pa.IdProgramaActividad
+    LEFT JOIN
+        SC_Presupuesto (NOLOCK) p
+        ON pre.IdPresupuesto = p.IdPresupuesto
+        AND s.IdSubContrato = p.IdSubContrato
+    WHERE
+        s.idSubcontrato = @pIdSubContrato 
+END
 
