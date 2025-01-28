@@ -9,11 +9,11 @@
     )
     DROP PROCEDURE p_OT_ObtenerProgramaBitacoraSemana;
 GO
--- p_OT_ObtenerProgramaBitacoraSemana 2918,'20250101-20250105'
 CREATE PROCEDURE [dbo].[p_OT_ObtenerProgramaBitacoraSemana]
     @pIdOTSolicitud int,
     @pSemanaID      varchar(21)
-as
+AS
+BEGIN
     SELECT
         OT_ProgramaBitacoraSemana.IdOTProgramaBitacoraSemana,
         OT_ProgramaBitacoraSemana.IdOTSolicitud,
@@ -45,19 +45,20 @@ as
         OT_ProgramaBitacoraSemana (NOLOCK)
         LEFT JOIN
             OT_ProgramaSemanaCerrada (NOLOCK)
-                on OT_ProgramaSemanaCerrada.IdOTSolicitud = OT_ProgramaBitacoraSemana.IdOTSolicitud
+                on  OT_ProgramaBitacoraSemana.IdOTSolicitud	= OT_ProgramaSemanaCerrada.IdOTSolicitud
 				AND OT_ProgramaBitacoraSemana.IdOTSolicitud = @pIdOTSolicitud
 				AND OT_ProgramaBitacoraSemana.SemanaID = @pSemanaID
                 AND OT_ProgramaSemanaCerrada.SemanaId = OT_ProgramaBitacoraSemana.SemanaId
                 AND OT_ProgramaSemanaCerrada.isActivo = 1
         LEFT JOIN
-            Petrovendor.dbo.S_Usuario (NOLOCK)
-                on S_Usuario.IdUsuario = OT_ProgramaBitacoraSemana.UsuarioPetrovendorID
+            Petrovendor.dbo.S_Usuario	AS S_Usuario (NOLOCK)
+                on	OT_ProgramaBitacoraSemana.UsuarioPetrovendorID	=	S_Usuario.IdUsuario
         LEFT JOIN
             AP_Usuario (NOLOCK)
-                on AP_Usuario.UsuarioId = OT_ProgramaBitacoraSemana.UsuarioAdincoID
+                on OT_ProgramaBitacoraSemana.UsuarioAdincoID	=	AP_Usuario.UsuarioId 
     where
         OT_ProgramaBitacoraSemana.IdOTSolicitud = @pIdOTSolicitud
         and OT_ProgramaBitacoraSemana.SemanaID = @pSemanaID
     order by
         OT_ProgramaBitacoraSemana.FechaRegistro desc
+END

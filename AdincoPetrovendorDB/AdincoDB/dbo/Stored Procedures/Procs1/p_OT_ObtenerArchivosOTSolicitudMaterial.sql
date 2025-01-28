@@ -7,7 +7,7 @@
         WHERE
             name = 'p_OT_ObtenerArchivosOTSolicitudMaterial'
     )
-    DROP PROCEDURE p_OT_ObtenerArchivosOTSolicitudMaterial	
+    DROP PROCEDURE p_OT_ObtenerArchivosOTSolicitudMaterial
 GO
 CREATE proc p_OT_ObtenerArchivosOTSolicitudMaterial
     (

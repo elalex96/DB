@@ -9,56 +9,90 @@
     )
     DROP PROCEDURE p_OT_AbrirCapturaPrograma;
 GO
-CREATE PROCEDURE p_OT_AbrirCapturaPrograma
+CREATE PROCEDURE p_OT_AbrirCapturaPrograma 
     @pSemanaID       varchar(50),
     @pIdOTSolicitud  int,
     @pModificadoPor  varchar(50),
     @pMotivoApertura varchar(250),
-    @pError          varchar(250) = '' out
+    @pError          varchar(500) OUT
 as
     BEGIN
+		CREATE TABLE #CalendarioDiasSemana(IdFecha DATE);
 
+		CREATE TABLE #CalendarioDiasEstimaciones(IdFecha DATE);
 
         /***********Validar que la semana que se quiere abrir no esté ya en una estimación**************/
         declare
-            @fechaAux      datetime,
-            @fechaFinCiclo datetime,
-            @usuarioid     int,
-			@descripcionTarea varchar(150),
-		    @id int
+            @fechaInicioSemana        datetime,
+            @fechaFinCiclo            datetime,
+            @fechaInicioEstimaciones  datetime,
+            @fechaFinEstimaciones     datetime,
+            @usuarioid                int,
+            @descripcionTarea         varchar(150),
+            @id                       int,
+            @DiasConsideradasEnSemana INT = 0;
 
         select
-            @fechaAux      = min(FechaSemanaIni),
-            @fechaFinCiclo = max(FechaSemanaFin)
+            @fechaInicioSemana = min(FechaSemanaIni),
+            @fechaFinCiclo     = max(FechaSemanaFin)
         from
             OT_ProgramaSemanaCerrada (NOLOCK)
         where
             idOTSolicitud = @pIdOTSolicitud
             and SemanaID = @pSemanaID
-            and isActivo = 1
+            and isActivo = 1;
 
+        --DIAS DE LA SEMANA INVOLUCRADA
 
-        while @fechaAux <= @fechaFinCiclo
+        INSERT INTO #CalendarioDiasSemana
+            (
+                IdFecha
+            )
+                    SELECT
+                        IdFecha
+                    FROM
+                        AP_Calendario
+                    where
+                        IdFecha >= @fechaInicioSemana
+                        AND IdFecha <= @fechaFinCiclo;
+
+        --Inicio de las estimaciones generadas de la ot
+        select
+            @fechaInicioEstimaciones = MIN(FechaCorteInicio),
+			@fechaFinEstimaciones = MAX(FechaCorteFin)
+        from
+            OT_Estimacion (NOLOCK)
+        where
+            IdOTSolicitud = @pIdOTSolicitud
+            and isnull(Cancelada, 0) = 0;
+
+        -- DÍAS ANTERIORES A LA FECHA FIN DE SEMANA QUE PUEDEN ESTAR INVOLUCRADOS EN ALGUNA ESTIMACION DE LA OT
+        INSERT INTO #CalendarioDiasEstimaciones
+            (
+                IdFecha
+            )
+                    SELECT
+                        IdFecha
+                    FROM
+                        AP_Calendario
+                    where
+                        IdFecha >= @fechaInicioEstimaciones
+                        AND IdFecha <= @fechaFinEstimaciones;
+
+        SELECT
+            @DiasConsideradasEnSemana = COUNT(1)
+        FROM
+            #CalendarioDiasSemana           AS semana
+            JOIN
+                #CalendarioDiasEstimaciones estimaciones
+                    ON semana.IdFecha = estimaciones.IdFecha;
+
+        if (@DiasConsideradasEnSemana > 0)
             begin
-                if exists
-                    (
-                        select
-                            1
-                        from
-                            OT_Estimacion (NOLOCK)
-                        where
-                            IdOTSolicitud = @pIdOTSolicitud
-                            and convert(varchar, @fechaAux, 112)
-                            between convert(varchar, FechaCorteInicio, 112) and convert(varchar, FechaCorteFin, 112)
-                            and isnull(Cancelada, 0) = 0
-                    )
-                    begin
-                        set @pError = 'No es posible abrir la semana, ya se encuentra considerada en una estimación'
-                        return
-                    end
-
-                set @fechaAux = dateadd(dd, 1, @fechaAux)
+                SET @pError ='No es posible abrir la semana, ya se encuentra considerada en una estimación';
+                RETURN;
             end
+
 
         begin tran
 
@@ -90,7 +124,6 @@ as
             AP_Usuario (NOLOCK)
         where
             Usuario = @pModificadoPor;
-
         insert into [dbo].[OT_ProgramaBitacoraSemana]
             (
                 IdOTProgramaBitacoraSemana,
@@ -145,4 +178,5 @@ as
             103 /*ABRIR*/
 
         fin:
+		
     END;

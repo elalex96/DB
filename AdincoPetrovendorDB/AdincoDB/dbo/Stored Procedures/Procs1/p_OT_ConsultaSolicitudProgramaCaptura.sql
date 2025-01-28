@@ -24,11 +24,6 @@ CREATE PROCEDURE p_OT_ConsultaSolicitudProgramaCaptura
 AS
     BEGIN
 
-        DECLARE
-            @fechaIniFiltro DATETIME = NULL,
-            @fechaFinFiltro DATETIME = NULL,
-            @semanaCerrada  BIT      = 0
-
         CREATE TABLE #tmpResult
             (
                 IdOTSolicitudMaterial INT,
@@ -139,6 +134,11 @@ AS
                 SabadoVoBoSC    BIT,
                 DomingoVoBoSC   BIT,
             );
+
+		  DECLARE
+            @fechaIniFiltro DATETIME = NULL,
+            @fechaFinFiltro DATETIME = NULL,
+            @semanaCerrada  BIT      = 0;
 
         IF (@pSemana <> '')
             BEGIN
@@ -273,7 +273,7 @@ AS
                         OT_ProgramaAdjuntoSemana.IdOTSolicitudMaterial
                     FROM
                         OT_ProgramaAdjuntoSemana (NOLOCK)
-                        INNER JOIN
+                    JOIN
                             AWS_Documentos (NOLOCK)
                                 ON OT_ProgramaAdjuntoSemana.AWSDocumentoId = AWS_Documentos.AWSDocumentoId
                     WHERE
@@ -389,7 +389,7 @@ AS
         FROM
             #tmpResult
             INNER JOIN
-                dbo.OT_SolicitudPrograma (NOLOCK)
+            dbo.OT_SolicitudPrograma (NOLOCK)
                     ON #tmpResult.IdOTSolicitudMaterial = OT_SolicitudPrograma.IdOTSolicitudMaterial;
 
         INSERT INTO #tmpDatos

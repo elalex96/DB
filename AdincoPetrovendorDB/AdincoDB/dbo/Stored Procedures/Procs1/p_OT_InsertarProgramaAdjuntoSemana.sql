@@ -1,6 +1,4 @@
-﻿USE ADINCO;
-GO
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
