@@ -1,12 +1,32 @@
-﻿create proc p_AP_UsuarioMenuAccion_Sel
-@pUrl varchar(250),
-@pUsuarioId int
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'p_AP_UsuarioMenuAccion_Sel'
+    )
+    DROP PROCEDURE p_AP_UsuarioMenuAccion_Sel;
+GO
+CREATE PROCEDURE p_AP_UsuarioMenuAccion_Sel 
+    @pUrl       varchar(250),
+    @pUsuarioId int
 as
+    BEGIN
+        SELECT
+            ma.IdUsuario,
+            ma.MenuDId,
+            ma.IdAccion,
+            ma.Permitir,URL
+        FROM
+            [dbo].[AP_UsuarioMenuAccion] ma (NOLOCK)
+        JOIN
+            [dbo].[AP_MenuD]         m (NOLOCK)
+            ON  ma.IdUsuario = @pUsuarioId
+            AND 
+				ma.MenuDId = m.MenuId
+        WHERE
+            Url LIKE '%' + isnull(@pUrl, '') + '%';
 
-
-	select 
-		ma.IdUsuario,ma.MenuDId,ma.IdAccion,ma.Permitir
-	from [dbo].[AP_MenuD] m
-	inner join [dbo].[AP_UsuarioMenuAccion]  ma on ma.MenuDId = m.MenuId and ma.IdUsuario = @pUsuarioId
-	inner join AP_Acciones a on a.IdAccion = ma.IdAccion
-	where Url like '%'+isnull(@pUrl,'')+'%'
+    END
