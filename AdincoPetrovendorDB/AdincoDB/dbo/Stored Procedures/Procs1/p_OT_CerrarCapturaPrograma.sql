@@ -15,17 +15,18 @@ CREATE PROC [dbo].[p_OT_CerrarCapturaPrograma]
     @pUsuarioId     INT
 AS
     BEGIN
-	    CREATE TABLE #tmpSemana (Fecha VARCHAR(10));
+        CREATE TABLE #tmpSemana (Fecha VARCHAR(10));
 
         DECLARE
-            @fechaIni         DATETIME,
-            @fechaFin         DATETIME,
-            @usuario          VARCHAR(100),
-            @idAux            INT,
-            @para             VARCHAR(500),
-            @mensaje          VARCHAR(500),
-            @pError           VARCHAR(250),
-            @descripcionTarea VARCHAR(150);
+            @fechaIni                      DATETIME,
+            @fechaFin                      DATETIME,
+            @usuario                       VARCHAR(100),
+            @idAux                         INT,
+            @para                          VARCHAR(500),
+            @mensaje                       VARCHAR(500),
+            @pError                        VARCHAR(250),
+            @descripcionTarea              VARCHAR(150),
+            @IdOTProgramaBitacoraSemanaMAX INT = 0;
 
         SELECT
             @usuario = Usuario
@@ -74,11 +75,11 @@ AS
                 SELECT
                     1
                 FROM
-					OT_SolicitudMaterial    sm (NOLOCK)
-                JOIN
-					OT_SolicitudProgramaCaptura spc (NOLOCK)
-                    ON sm.IdOTSolicitudMaterial = spc.IdOTSolicitudMaterial
-					AND	sm.IdOTSolicitud = @pIdOTSolicitud
+                    OT_SolicitudMaterial            sm (NOLOCK)
+                    JOIN
+                        OT_SolicitudProgramaCaptura spc (NOLOCK)
+                            ON sm.IdOTSolicitudMaterial = spc.IdOTSolicitudMaterial
+                               AND sm.IdOTSolicitud = @pIdOTSolicitud
                 WHERE
                     sm.IdOTSolicitud = @pIdOTSolicitud
             )
@@ -143,15 +144,45 @@ AS
             FechaCierre = GETDATE(),
             CerradoPor = @pUsuarioId
         FROM
-			dbo.OT_SolicitudMaterial sm
-        JOIN
-             OT_SolicitudProgramaCaptura  SP 
-			 ON sm.IdOTSolicitudMaterial = sp.IdOTSolicitudMaterial
-			 AND sm.IdOTSolicitud = @pIdOTSolicitud
+            dbo.OT_SolicitudMaterial        sm
+            JOIN
+                OT_SolicitudProgramaCaptura SP
+                    ON sm.IdOTSolicitudMaterial = sp.IdOTSolicitudMaterial
+                       AND sm.IdOTSolicitud = @pIdOTSolicitud
         WHERE
             CONVERT(VARCHAR, sp.Fecha, 112)
             BETWEEN CONVERT(VARCHAR, @fechaIni, 112) AND CONVERT(VARCHAR, @fechaFin, 112)
             AND sm.IdOTSolicitud = @pIdOTSolicitud;
+
+        select
+            @IdOTProgramaBitacoraSemanaMAX = isnull(max(IdOTProgramaBitacoraSemana), 0) + 1
+        from
+            [OT_ProgramaBitacoraSemana] (NOLOCK);
+
+        insert into [dbo].[OT_ProgramaBitacoraSemana]
+            (
+                IdOTProgramaBitacoraSemana,
+                IdOTSolicitud,
+                SemanaID,
+                FechaRegistro,
+                Comentarios,
+                CreadoPor,
+                UsuarioPetrovendorID,
+                UsuarioAdincoID,
+                TipoUsuario
+            )
+        values
+            (
+                @IdOTProgramaBitacoraSemanaMAX,
+                @pIdOTSolicitud,
+                @pSemana,
+                getdate(),
+                'Se realiza cierre de semana',
+                @pUsuarioId,
+                null,
+                @pUsuarioId,
+                1
+            )
 
         IF @@error <> 0
             BEGIN
@@ -187,19 +218,19 @@ AS
             JOIN
                 SC_Subcontrato                     sc (NOLOCK)
                     ON sc.IdSubcontrato = ot.IdSubcontrato
-					AND  ot.IdOTSolicitud = @pIdOTSolicitud
-           JOIN
+                       AND ot.IdOTSolicitud = @pIdOTSolicitud
+            JOIN
                 PV_Subcontratista                  sub (NOLOCK)
-                    ON sc.IdSubContratista	=	sub.IdSubContratista
-           JOIN
+                    ON sc.IdSubContratista = sub.IdSubContratista
+            JOIN
                 Petrovendor.dbo.S_Proveedor        pro (NOLOCK)
-                    ON  sub.RFC COLLATE SQL_Latin1_General_CP1_CI_AS	=	pro.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
-           JOIN
+                    ON sub.RFC COLLATE SQL_Latin1_General_CP1_CI_AS = pro.RFC COLLATE SQL_Latin1_General_CP1_CI_AS
+            JOIN
                 Petrovendor.dbo.S_UsuarioProveedor up (NOLOCK)
-                    ON  pro.IdProveedor	=	up.IdProveedor
-           JOIN
+                    ON pro.IdProveedor = up.IdProveedor
+            JOIN
                 Petrovendor.dbo.S_Usuario          u (NOLOCK)
-                    ON up.IdUsuario	=	u.IdUsuario
+                    ON up.IdUsuario = u.IdUsuario
         WHERE
             ot.IdOTSolicitud = @pIdOTSolicitud;
 

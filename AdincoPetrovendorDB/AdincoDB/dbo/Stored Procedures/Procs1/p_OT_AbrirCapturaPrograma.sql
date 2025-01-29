@@ -142,7 +142,7 @@ as
                 @pIdOTSolicitud,
                 @pSemanaID,
                 getdate(),
-                'Apertura de semana por motivo de:' + isnull(@pMotivoApertura, ''),
+                'Apertura de semana por motivo de: ' + isnull(@pMotivoApertura, ''),
                 @pModificadoPor,
                 null,
                 @usuarioid,
