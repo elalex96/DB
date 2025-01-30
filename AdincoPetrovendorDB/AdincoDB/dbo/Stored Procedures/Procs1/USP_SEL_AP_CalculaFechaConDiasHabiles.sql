@@ -22,6 +22,7 @@ SET NOCOUNT ON
 		Id	INT IDENTITY (1,1),
 		IdFecha	DATE
 	)
+
 	INSERT INTO #DiasHabiles
 	(
 		IdFecha
@@ -29,9 +30,9 @@ SET NOCOUNT ON
 	SELECT
 		A.IdFecha
 	FROM 
-		dbo.AP_Calendario A
+		dbo.AP_Calendario A (NOLOCK)
 	WHERE
-		A.IdFecha	>=	@FechaInicial
+		A.IdFecha	>	@FechaInicial
 		AND	DATEADD(MONTH, 1,@FechaInicial)	>=	A.IdFecha
 		AND FinDeSemana		=	0
 		AND DiaLaborable	=	1
