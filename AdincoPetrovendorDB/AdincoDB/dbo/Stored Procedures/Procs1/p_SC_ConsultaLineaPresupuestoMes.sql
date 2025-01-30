@@ -1,4 +1,11 @@
-﻿
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'p_SC_ConsultaLineaPresupuestoMes'
+)
+    DROP PROCEDURE p_SC_ConsultaLineaPresupuestoMes
+GO
 CREATE PROCEDURE [dbo].[p_SC_ConsultaLineaPresupuestoMes]
     @presupuesto varchar(250),
     @pIdSubcontrato int
@@ -10,21 +17,20 @@ BEGIN
     SET LANGUAGE spanish;
     -- =============================================
 
-    select IdPresupuesto = cast(splitdata as int)
-    into #tmpResult
-    from [dbo].[fnSplitString](@presupuesto, ',')
+    SELECT IdPresupuesto = CAST(splitdata AS INT)
+    INTO #tmpResult
+    FROM [dbo].[fnSplitString](@presupuesto, ',')
 
 
-    SELECT dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
+    SELECT CO_LineaPresupuestoMes.IdLineaPresupuestoMes,
            CONCAT(
-                     RIGHT('00' + CAST(MONTH(dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES) AS VARCHAR(2)), 2),
+                     RIGHT('00' + CAST(MONTH(CO_LineaPresupuestoMes.AC_PRESUP_MES) AS VARCHAR(2)), 2),
                      ' ',
-                     DATENAME(month, dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES),
+                     DATENAME(MONTH, CO_LineaPresupuestoMes.AC_PRESUP_MES),
                      ' ',
-                     YEAR(dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES)
+                     YEAR(CO_LineaPresupuestoMes.AC_PRESUP_MES)
                  ) AS Mes_Presupuestado,
            CO_Area.NombreArea AS Area,
-           --CO_TipoServicio.ID_TIPOSER,
            CASE
                WHEN CO_Presupuesto.ciep = 1 THEN
                    CO_TipoServicio.ID_TIPOSER
@@ -74,7 +80,7 @@ BEGIN
                           0
                   END
               ) AS [Registrado (USD)],
-           dbo.CO_LineaPresupuestoMes.Monto
+           CO_LineaPresupuestoMes.Monto
            - SUM(   CASE
                         WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0 THEN
                             ISNULL(CO_Registro.MontoRegistro, 0) / CO_TipoCambioMensual.TipoCambio
@@ -92,12 +98,12 @@ BEGIN
            CO_TareaPetrolera.TareaPetrolera,
            PresupuestoNombre = p.Nombre
     FROM dbo.CO_LineaPresupuestoMes (NOLOCK)
-        inner join CO_Presupuesto p (NOLOCK)
-            on CO_LineaPresupuestoMes.IdPresupuesto = p.IdPresupuesto 
-        inner join #tmpResult tmp
-            on tmp.IdPresupuesto = dbo.CO_LineaPresupuestoMes.IdPresupuesto
+        INNER JOIN CO_Presupuesto p (NOLOCK)
+            ON CO_LineaPresupuestoMes.IdPresupuesto = p.IdPresupuesto 
+        INNER JOIN #tmpResult tmp
+            ON CO_LineaPresupuestoMes.IdPresupuesto = tmp.IdPresupuesto 
         LEFT OUTER JOIN CO_ActividadPetroleraCNH (NOLOCK)
-            ON CO_ActividadPetroleraCNH.IdActividadPetrolera = CO_LineaPresupuestoMes.IdActividadPetrolera  
+            ON CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera  
         LEFT OUTER JOIN CO_SubactividadPetrolera (NOLOCK)
             ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
         LEFT OUTER JOIN CO_TareaPetrolera (NOLOCK)
@@ -125,7 +131,7 @@ BEGIN
                AND MONTH(CO_Registro.MesPresentacion) = CO_TipoCambioMensual.IdMes 
                AND YEAR(CO_Registro.MesPresentacion) = CO_TipoCambioMensual.Anio 
         LEFT OUTER JOIN CO_RubroInterno (NOLOCK)
-            ON dbo.CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
+            ON CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
         LEFT JOIN CO_Presupuesto (NOLOCK)
             ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.idpresupuesto 
     GROUP BY dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes,

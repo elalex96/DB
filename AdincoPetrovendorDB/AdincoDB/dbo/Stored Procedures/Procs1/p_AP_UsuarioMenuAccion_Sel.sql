@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE p_AP_UsuarioMenuAccion_Sel;
 GO
-CREATE PROCEDURE p_AP_UsuarioMenuAccion_Sel 
+CREATE PROCEDURE p_AP_UsuarioMenuAccion_Sel --'../../2/Subcontratos/ConsultaSubcontrato.aspx', 10527
     @pUrl       varchar(250),
     @pUsuarioId int
 as

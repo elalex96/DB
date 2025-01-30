@@ -1,33 +1,40 @@
-﻿CREATE Proc [dbo].[sp_OT_InsertarOrdenTrabajo]
-@pIdOTSolicitud	int OUT,
-@pIdSubContrato	int,
-@pFolio	varchar(30),
-@pIdLineasPresupuesto varchar(300),
-@pIdInstalacion	varchar(300),
-@pFechaInicio	datetime,
-@pFechaFin	datetime,
---@pPlazoEjecucion	int,
-@pIdPresupuesto int,
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_OT_InsertarOrdenTrabajo'
+)
+    DROP PROCEDURE sp_OT_InsertarOrdenTrabajo
+GO
+CREATE Proc [dbo].[sp_OT_InsertarOrdenTrabajo]
+@pIdOTSolicitud	INT OUT,
+@pIdSubContrato	INT,
+@pFolio	VARCHAR(30),
+@pIdLineasPresupuesto VARCHAR(300),
+@pIdInstalacion	VARCHAR(300),
+@pFechaInicio	DATETIME,
+@pFechaFin	DATETIME,
+@pIdPresupuesto INT,
 @pCreadoPor	INT,
 @pObjeto VARCHAR(600),
-@pIdCentroCosto int,
-@pProgIniPorProveedor bit,
-@pCapturaManual bit=0
-as
+@pIdCentroCosto INT,
+@pProgIniPorProveedor BIT,
+@pCapturaManual BIT = 0
+AS
+BEGIN
+	DECLARE @IdMoneda INT,
+			@error BIT = 0,
+			@mError VARCHAR(150) = '',
+			@IdContrato INT = 0,
+			@filasSubcontrato INT = 0
 
-	declare @IdMoneda int,
-		@error bit=0,
-		@mError varchar(150)='',
-		@IdContrato int=0,
-		@filasSubcontrato int=0
+	SELECT @filasSubcontrato = COUNT(DISTINCT IdSCMaterial)
+	FROM dbo.SC_Materiales 
+	WHERE IdSubContrato = @pIdSubContrato
 
-	SELECT @filasSubcontrato = count(distinct IdSCMaterial)
-	FROM dbo.SC_Materiales MAT 
-	WHERE MAT.IdSubContrato = @pIdSubContrato
-
-	select @IdContrato = IdContrato
-	from SC_Subcontrato
-	where IdSubcontrato =  @pIdSubContrato
+	SELECT @IdContrato = IdContrato
+	FROM SC_Subcontrato
+	WHERE IdSubcontrato =  @pIdSubContrato
 
 	SELECT * 
 	INTO #tmpInstalaciones
@@ -37,52 +44,46 @@ as
 	INTO #tmpPresupuesto
 	FROM dbo.fnSplitString(@pIdLineasPresupuesto,',')
 
-	select @pIdOTSolicitud = isnull(max(IdOTSolicitud),0)+1
-	from OT_Solicitud
+	SELECT @pIdOTSolicitud = ISNULL(MAX(IdOTSolicitud), 0) + 1
+	FROM OT_Solicitud
 
-	select @IdMoneda = isnull(sc.IdMoneda,mae.IdMoneda)
-	from SC_Subcontrato sc 
-	inner join SC_Materiales scMat on scMat.IdSubcontrato = sc.IdSubcontrato
-	inner join Petrovendor..MM_Material mat on mat.IdMaterial = scMat.IdMaestro
-	left join Petrovendor..MM_Maestro mae on mae.IdMaestro = mat.IdMaestro
-	where sc.IdSubcontrato = @pIdSubContrato
+	SELECT @IdMoneda = ISNULL(SC_Subcontrato.IdMoneda, MM_Maestro.IdMoneda)
+	FROM SC_Subcontrato 
+	INNER JOIN SC_Materiales ON SC_Subcontrato.IdSubcontrato = SC_Materiales.IdSubcontrato
+	INNER JOIN Petrovendor..MM_Material ON SC_Materiales.IdMaestro = MM_Material.IdMaterial
+	LEFT JOIN Petrovendor..MM_Maestro ON MM_Material.IdMaestro = MM_Maestro.IdMaestro
+	WHERE SC_Subcontrato.IdSubcontrato = @pIdSubContrato
 
-	select fe.Descripcion,feu.UsuarioId
-	into #tmpUsuariosFlujo
-	from [dbo].[AP_FlujoAprobacionEstatus] fe
-	
-	inner join [dbo].[AP_FlujoAprobacionContratos] fac on /*fac.FlujoAprobacionId = fa.FlujoAprobacionId and */
-												fac.IdContrato = @IdContrato
-
-	inner join [dbo].[AP_FlujoAprobacion] fa on fa.FlujoAprobacionId = fac.FlujoAprobacionId and
-												fa.TipoFlujoAprobacionId = fe.TipoFlujoAprobacionId
-
-
-	inner join [dbo].[AP_FlujoAprobacionTipos] ft on ft.TipoFlujoAprobacionId = fe.TipoFlujoAprobacionId	
-	left join (
-				select st1.FlujoAprobacionEstatusId,st1.UsuarioId
-				from [dbo].[AP_FlujoAprobacionEstatusUsuarios] st1
-				inner join [dbo].[AP_UsuarioCentroCosto] ucc on ucc.IdUsuario = st1.UsuarioId
-				where ucc.IdCentroCosto = @pIdCentroCosto
-				group by st1.FlujoAprobacionEstatusId,st1.UsuarioId
+	SELECT AP_FlujoAprobacionEstatus.Descripcion, 
+			feu.UsuarioId
+	INTO #tmpUsuariosFlujo
+	FROM AP_FlujoAprobacionEstatus	
+	INNER JOIN AP_FlujoAprobacionContratos ON AP_FlujoAprobacionContratos.IdContrato = @IdContrato
+	INNER JOIN AP_FlujoAprobacion ON AP_FlujoAprobacionContratos.FlujoAprobacionId = AP_FlujoAprobacion.FlujoAprobacionId AND
+									AP_FlujoAprobacionEstatus.TipoFlujoAprobacionId = AP_FlujoAprobacion.TipoFlujoAprobacionId 
+	INNER JOIN AP_FlujoAprobacionTipos ON AP_FlujoAprobacionEstatus.TipoFlujoAprobacionId = AP_FlujoAprobacionTipos.TipoFlujoAprobacionId 	
+	LEFT JOIN (
+				SELECT AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId, AP_FlujoAprobacionEstatusUsuarios.UsuarioId
+				FROM AP_FlujoAprobacionEstatusUsuarios
+				INNER JOIN AP_UsuarioCentroCosto ON AP_FlujoAprobacionEstatusUsuarios.UsuarioId = AP_UsuarioCentroCosto.IdUsuario 
+				WHERE AP_UsuarioCentroCosto.IdCentroCosto = @pIdCentroCosto
+				GROUP BY AP_FlujoAprobacionEstatusUsuarios.FlujoAprobacionEstatusId, AP_FlujoAprobacionEstatusUsuarios.UsuarioId
 				)
 				
-				 feu on feu.FlujoAprobacionEstatusId = fe.FlujoAprobacionEstatusId
-	where ft.TipoFlujoAprobacionId = 1 --Control de Obra
-	group by fe.Descripcion,feu.UsuarioId
+				 feu on AP_FlujoAprobacionEstatus.FlujoAprobacionEstatusId = feu.FlujoAprobacionEstatusId 
+	WHERE AP_FlujoAprobacionTipos.TipoFlujoAprobacionId = 1 --Control de Obra
+	GROUP BY AP_FlujoAprobacionEstatus.Descripcion,feu.UsuarioId
 
-	select @mError = @mError + ','+ Descripcion
-	from #tmpUsuariosFlujo tmp
-	where UsuarioId is null
+	SELECT @mError = @mError + ','+ Descripcion
+	FROM #tmpUsuariosFlujo
+	WHERE UsuarioId is null
 
-
-
-	if @mError <> ''	
-	begin
-		set @mError = 'Falta definir los usuarios: '+@mError +' por favor realice esta configuración';
-		RAISERROR (15600,-1,-1, @mError); 
-		return
-	end
+	IF @mError <> ''	
+	BEGIN
+		SET @mError = 'Falta definir los usuarios: '+ @mError +' por favor realice esta configuración';
+		RAISERROR (15600, -1, -1, @mError); 
+		RETURN
+	END
 	
 
 
@@ -91,53 +92,52 @@ as
 	BEGIN TRAN
 
 	--Asegurarse de tener generados los materiales del operador y del proveedor
-	exec [p_SC_Materiales_Gen] @pIdSubContrato,@error out
+	EXEC [p_SC_Materiales_Gen] @pIdSubContrato, @error OUT
 
 	if(@error = 1)
-	begin
-		RAISERROR (15600,-1,-1, 'Ocurrió un error al intentar generar los materiales'); 
-		return
-	end
+	BEGIN
+		RAISERROR (15600, -1, -1, 'Ocurrió un error al intentar generar los materiales'); 
+		RETURN
+	END
 
 
-	insert into OT_Solicitud(IdOTSolicitud,IdSubContrato,Folio,FechaInicio,
+	INSERT INTO OT_Solicitud(IdOTSolicitud,IdSubContrato,Folio,FechaInicio,
 	FechaFin,PlazoEjecucion,CreadoPor,CreadoEl,ModificadoPor,ModificadoEl,IsActivo,IsEliminado,IdPresupuesto,
 	Objeto,IdOTEstatus,IdCentroCosto,ProgIniPorProveedor,IdMoneda,CapturaManual)
-	values(@pIdOTSolicitud,@pIdSubContrato,@pFolio,@pFechaInicio,
-	@pFechaFin,0,@pCreadoPor,getdate(),null,null,1,0,@pIdPresupuesto,@pObjeto,1 /*registrada por contratista*/,@pIdCentroCosto,@pProgIniPorProveedor,@IdMoneda,0)
+	VALUES(@pIdOTSolicitud, @pIdSubContrato, @pFolio, @pFechaInicio,
+	@pFechaFin, 0, @pCreadoPor, getdate(), null, null, 1, 0, @pIdPresupuesto, @pObjeto,1 /*registrada por contratista*/,
+	@pIdCentroCosto, @pProgIniPorProveedor, @IdMoneda, 0)
 
 
-	INSERT INTO [dbo].[OT_LineaPresupuesto](IdOTSolicitud,IdLineaPresupuestoMes,CreadoPor,CreadoEl)
-	select @pIdOTSolicitud,splitdata,@pCreadoPor,GETDATE()
-	from  #tmpPresupuesto lp
+	INSERT INTO [dbo].[OT_LineaPresupuesto](IdOTSolicitud, IdLineaPresupuestoMes, CreadoPor, CreadoEl)
+	SELECT @pIdOTSolicitud, splitdata, @pCreadoPor, GETDATE()
+	FROM  #tmpPresupuesto lp
 
-
-
-	INSERT INTO OT_SolicitudInstalacion(IdOTSolicitud,IdInstalacion,CreadoPor,CreadoEl)
-	SELECT @pIdOTSolicitud,lp2.IdInstalacion,@pCreadoPor,GETDATE()
-	FROM #tmpPresupuesto lp
-	inner join CO_LineaPresupuestoMes lp2 on lp2.IdLineaPresupuestoMes = splitdata
-	where lp2.IdInstalacion is not null
-	group by lp2.IdInstalacion
+	INSERT INTO OT_SolicitudInstalacion(IdOTSolicitud, IdInstalacion, CreadoPor, CreadoEl)
+	SELECT @pIdOTSolicitud, CO_LineaPresupuestoMes.IdInstalacion, @pCreadoPor, GETDATE()
+	FROM #tmpPresupuesto
+	INNER JOIN CO_LineaPresupuestoMes on #tmpPresupuesto.splitdata = CO_LineaPresupuestoMes.IdLineaPresupuestoMes 
+	WHERE CO_LineaPresupuestoMes.IdInstalacion IS NOT NULL
+	GROUP BY CO_LineaPresupuestoMes.IdInstalacion
 
 	/***************Actualizar plazo ejecución**************/
-	update OT_Solicitud
-	set PlazoEjecucion = isnull(Datediff(dd,FechaInicio,FechaFin),0)
-	where IdOTSolicitud = @pIdOTSolicitud
+	UPDATE OT_Solicitud
+	SET PlazoEjecucion = ISNULL(DATEDIFF(dd, FechaInicio, FechaFin), 0)
+	WHERE IdOTSolicitud = @pIdOTSolicitud
 
 
 	/************Insertar los materiales****************/
 
 	DECLARE @IdOTSolicitudMaterial INT
     
-	SELECT @IdOTSolicitudMaterial = ISNULL(MAX(IdOTSolicitudMaterial),0)
+	SELECT @IdOTSolicitudMaterial = ISNULL(MAX(IdOTSolicitudMaterial), 0)
 	FROM OT_SolicitudMaterial
 
 	--Si son mas de 50 filas, capturar manualmente
-	if isnull(@pCapturaManual,0)  = 0
-	begin
+	IF ISNULL(@pCapturaManual,0)  = 0
+	BEGIN
 
-		INSERT INTO dbo.OT_SolicitudMaterial
+	INSERT INTO dbo.OT_SolicitudMaterial
 	(
 	    IdOTSolicitudMaterial,
 	    IdOTSolicitud,
@@ -153,7 +153,7 @@ as
 	)
 	SELECT  ROW_NUMBER() OVER( ORDER BY IdSCMaterial ASC) + @IdOTSolicitudMaterial,
 		@pIdOTSolicitud,
-		MAT.IdSCMaterial,
+		IdSCMaterial,
 		0,
 		@pCreadoPor,
 		GETDATE(),
@@ -162,19 +162,19 @@ as
 		NULL,
 		NULL,
 		NULL
-	FROM dbo.SC_Materiales MAT 
-	WHERE MAT.IdSubContrato = @pIdSubContrato
+	FROM dbo.SC_Materiales 
+	WHERE IdSubContrato = @pIdSubContrato
 
-	end
-	else
-	begin
-		update OT_Solicitud
-		set CapturaManual = @pCapturaManual
-		where IdOTSolicitud = @pIdOTSolicitud
-	end
+	END
+	ELSE
+	BEGIN
+		UPDATE OT_Solicitud
+		SET CapturaManual = @pCapturaManual
+		WHERE IdOTSolicitud = @pIdOTSolicitud
+	END
 
 	
-	exec p_OT_SolicitudBitacora_ins @pIdOTSolicitud,1,'Creación de OT',@pCreadoPor,null
+	EXEC p_OT_SolicitudBitacora_ins @pIdOTSolicitud, 1, 'Creación de OT', @pCreadoPor, null
 
 
 	COMMIT TRAN
@@ -183,7 +183,7 @@ as
 		ROLLBACK TRAN
 		
 	END CATCH  
-
+END
 
 
 
