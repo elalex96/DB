@@ -1,32 +1,50 @@
-﻿CREATE proc p_OT_ObtenerArchivosOTSolicitudMaterial --5245,'20200601','20200607'
-(
-	@pIdOTSolicitudMaterial int,
-	@del datetime,
-	@al datetime
-)
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'p_OT_ObtenerArchivosOTSolicitudMaterial'
+    )
+    DROP PROCEDURE p_OT_ObtenerArchivosOTSolicitudMaterial
+GO
+CREATE proc p_OT_ObtenerArchivosOTSolicitudMaterial
+    (
+        @pIdOTSolicitudMaterial int,
+        @del                    datetime,
+        @al                     datetime
+    )
 as
-begin
+    BEGIN
 
-	select		PA.ID,
-				sm.IdOTSolicitud,
-				awsd.Bucket,
-				awsd.Folder,
-				awsd.UUIDAmazon,
-				awsd.NombreArchivo,
-				awsd.Meta
-	from		OT_ProgramaAdjuntoSemana		pa
-	inner join	AWS_Documentos					awsd
-	on			pa.AWSDocumentoId				=	awsd.AWSDocumentoId
-	inner join	OT_SolicitudMaterial			sm
-	on			sm.IdOTSolicitudMaterial		=	pa.IdOTSolicitudMaterial
-	inner join	OT_Solicitud					s
-	on			s.IdOTSolicitud					=	sm.IdOTSolicitud
-	where		PA.IdOTSolicitudMaterial		=	@pIdOTSolicitudMaterial
-	AND
-		PA.FechaInicioSemana	=	@del
-	AND
-		PA.FechaFinSemana	=	@al
+        SELECT
+            PA.ID,
+            sm.IdOTSolicitud,
+            awsd.Bucket,
+            awsd.Folder,
+            awsd.UUIDAmazon,
+            awsd.NombreArchivo,
+            awsd.Meta,
+            PA.FechaInicioSemana,
+            PA.FechaFinSemana
+        from
+            OT_ProgramaAdjuntoSemana pa (NOLOCK)
+            JOIN
+                AWS_Documentos       awsd (NOLOCK)
+                    on pa.AWSDocumentoId = awsd.AWSDocumentoId
+                       AND PA.IdOTSolicitudMaterial = @pIdOTSolicitudMaterial
+                       AND PA.FechaInicioSemana = @del
+                       AND PA.FechaFinSemana = @al
+            JOIN
+                OT_SolicitudMaterial sm (NOLOCK)
+                    on sm.IdOTSolicitudMaterial = pa.IdOTSolicitudMaterial
+            JOIN
+                OT_Solicitud         s (NOLOCK)
+                    on s.IdOTSolicitud = sm.IdOTSolicitud
+        WHERE
+            PA.IdOTSolicitudMaterial = @pIdOTSolicitudMaterial
+            AND PA.FechaInicioSemana = @del
+            AND PA.FechaFinSemana = @al
 
-end
-
-
+    end
