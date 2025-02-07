@@ -3969,5 +3969,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_ENT_ConsultarGrupoUsuarioSeleccionado.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_ENT_ActualizarUsuarioActividad.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_CalculaFechaConDiasHabiles.sql" />
+    <Build Include="dbo\User Defined Types\SC_Type_Subcontratos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_UPD_SC_Subcontrato.sql" />
   </ItemGroup>
 </Project>
