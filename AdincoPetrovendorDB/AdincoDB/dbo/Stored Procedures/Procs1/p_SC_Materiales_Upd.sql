@@ -1,67 +1,81 @@
-﻿CREATE proc p_SC_Materiales_Upd
+﻿IF OBJECT_ID('[dbo].[p_SC_Materiales_Upd]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[p_SC_Materiales_Upd]
+GO
+
+CREATE PROCEDURE [dbo].[p_SC_Materiales_Upd]
 (
-    @pIdSCMaterial      int,
-    @pConcepto          varchar(max),
-    @pIdUnidad          int,
-    @pCantidad          decimal(14,5),
-    @pPrecioUnitario    money,
-    @pDescripcion       varchar(max),
-    @pDescripcionCorta  varchar(max),
-	@pModificadoPor int,
-	@pError				varchar(250) out
+    @pIdSCMaterial      INT,
+    @pConcepto          VARCHAR(MAX),
+    @pIdUnidad          INT,
+    @pCantidad          DECIMAL(14,5),
+    @pPrecioUnitario    MONEY,
+    @pDescripcion       VARCHAR(MAX),
+    @pDescripcionCorta  VARCHAR(MAX),
+    @pModificadoPor     INT,
+    @pError             VARCHAR(250) OUT
 )
-as
-begin
+AS
+BEGIN
+    DECLARE @IdSubcontrato INT,
+            @idBitacora INT;
 
-	declare @IdSubcontrato int,
-	@idBitacora int
+    SELECT @IdSubcontrato = IdSubContrato
+    FROM SC_Materiales (NOLOCK)
+    WHERE IdSCMaterial = @pIdSCMaterial;
 
-	select @IdSubcontrato = IdSubContrato
-	from SC_Materiales
-	where IdSCMaterial = @pIdSCMaterial
-
-	
-
-	 if exists (
-        select 1
-        from OT_Solicitud 
-        where IdSubcontrato = @IdSubcontrato and
-        isactivo = 1 and
-        IDOTEstatus = 9
+    IF EXISTS (
+        SELECT 1
+        FROM OT_Solicitud (NOLOCK)
+        WHERE IdSubcontrato = @IdSubcontrato 
+          AND IsActivo = 1 
+          AND IDOTEstatus = 9
     )
-    begin
-		set @pError = '[ALERTA] Hay CONVENIOS pendientes de aprobar para este contrato,no es posible actualizar esta partida. Es necesario  ir a PROCURA a la sección de convenios para subcontratos';         
-        return  
-    end
+    BEGIN
+        SET @pError = '[ALERTA] Hay CONVENIOS pendientes de aprobar para este contrato, no es posible actualizar esta partida. Es necesario ir a PROCURA a la sección de convenios para subcontratos';         
+        RETURN;
+    END
 
-	begin try
+    BEGIN TRY
+        BEGIN TRAN;
 
-		begin tran
+        UPDATE SC_Materiales
+        SET     Concepto        =   @pConcepto,
+                IdUnidad        =   @pIdUnidad,
+                Cantidad        =   @pCantidad,
+                PrecioUnitario  =   @pPrecioUnitario,
+                Importe         =   @pPrecioUnitario * @pCantidad,
+                Descripcion     =   @pDescripcion,
+                DescripcionCorta =  @pDescripcionCorta
+        WHERE   IdSCMaterial    =   @pIdSCMaterial;
 
-		update  SC_Materiales
-		set     Concepto        =   @pConcepto,
-				IdUnidad        =   @pIdUnidad,
-				Cantidad        =   @pCantidad
-,
-				PrecioUnitario  =   @pPrecioUnitario,
-				Importe         =   @pPrecioUnitario * @pCantidad,
-				Descripcion = @pDescripcion,
-				DescripcionCorta = @pDescripcionCorta
-		where   IdSCMaterial    =   @pIdSCMaterial
+        -- Obtener el proximo IdSCBitacora
+        SELECT @idBitacora = ISNULL(MAX(IdSCBitacora), 0) + 1
+        FROM SC_MaterialesBitacora (NOLOCK);
 
-		select @idBitacora = isnull(max(IdSCBitacora),0)+1
-		from SC_MaterialesBitacora
+        INSERT INTO SC_MaterialesBitacora
+        (
+            IdSCBitacora,
+            IdSCMaterial,
+            CantidadRespaldo,
+            FechaRespaldo,
+            ModificadoPor,
+            Cantidad,
+            PrecioUnitario
+        )
+        SELECT 
+            @idBitacora,
+            @pIdSCMaterial,
+            @pCantidad,
+            GETDATE(),
+            @pModificadoPor,
+            @pCantidad,
+            @pPrecioUnitario;
 
-		insert into SC_MaterialesBitacora(IdSCBitacora,IdSCMaterial,CantidadRespaldo,FechaRespaldo,ModificadoPor,Cantidad,PrecioUnitario)
-		select @idBitacora,@pIdSCMaterial,@pCantidad,getdate(),@pModificadoPor,@pCantidad,@pPrecioUnitario
-
-
-		
-
-		commit tran
-	end try
-	begin catch
-		rollback tran
-		set @pError = 'Ocurrió un error inesperado'   
-	end catch
-end
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRAN;
+        SET @pError = 'Ocurrió un error inesperado: ' + ERROR_MESSAGE();
+    END CATCH;
+END
+GO

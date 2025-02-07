@@ -1,43 +1,50 @@
-﻿CREATE proc sp_SC_Materiales_Del
-(
-	
-	@IdSCMaterial	int,
-	@pError varchar(250) out
+﻿IF EXISTS (
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_SC_Materiales_Del'
 )
-as
-begin
-	set @pError = ''
-	if not exists(
-		select	1 
-		from	OT_SolicitudMaterial
-		where	IdSCMaterial = @IdSCMaterial
-	)
-	begin
+    DROP PROCEDURE [dbo].[sp_SC_Materiales_Del]
+GO
 
-		BEGIN TRY   
-			delete 
-            from        SC_MaterialesBitacora
-            where       IdSCMaterial    =   @IdSCMaterial
-            --====
-			delete 
-			from		SC_Materiales
-			where		IdSCMaterial	=	@IdSCMaterial
-		
-			select result = ''
-		END TRY  
-		BEGIN CATCH  
-			 if( ERROR_NUMBER() = 547)
-			 begin
-				set @pError = 'No se puede eliminar el registro por que esta siendo utilizado'
-			 end
-			 else
-			 begin
-				set @pError = ERROR_NUMBER();
-			 end
-		END CATCH
-	end
-	else
-	begin
-		set @pError = 'No se puede eliminar el registro por que esta siendo utilizado'
-	end		
-end
+CREATE PROCEDURE [dbo].[sp_SC_Materiales_Del]
+(
+    @IdSCMaterial INT,
+    @pError VARCHAR(250) OUT
+)
+AS
+BEGIN
+    SET @pError = '';
+
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM OT_SolicitudMaterial WITH (NOLOCK)
+        WHERE IdSCMaterial = @IdSCMaterial
+    )
+    BEGIN
+        BEGIN TRY
+            DELETE 
+            FROM SC_MaterialesBitacora
+            WHERE IdSCMaterial = @IdSCMaterial;
+
+            DELETE 
+            FROM SC_Materiales
+            WHERE IdSCMaterial = @IdSCMaterial;
+
+            SELECT result = '';
+        END TRY  
+        BEGIN CATCH
+            IF (ERROR_NUMBER() = 547)
+            BEGIN
+                SET @pError = 'No se puede eliminar el registro porque está siendo utilizado';
+            END
+            ELSE
+            BEGIN
+                SET @pError = CAST(ERROR_NUMBER() AS VARCHAR);
+            END
+        END CATCH
+    END
+    ELSE
+    BEGIN
+        SET @pError = 'No se puede eliminar el registro porque está siendo utilizado';
+    END
+END
