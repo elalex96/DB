@@ -1,19 +1,21 @@
-﻿
-create proc p_SC_Presupuesto_Del
+﻿IF OBJECT_ID('[dbo].[p_SC_Presupuesto_Del]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[p_SC_Presupuesto_Del]
+GO
+
+CREATE PROCEDURE [dbo].[p_SC_Presupuesto_Del]
 (
-	@pIdSubContrato	int
+    @pIdSubContrato INT
 )
-as
-begin
-	begin try
-		delete 
-		from	SC_Presupuesto 
-		where	IdSubContrato	=	 @pIdSubContrato
+AS
+BEGIN
+    BEGIN TRY
+        DELETE FROM SC_Presupuesto
+        WHERE IdSubContrato = @pIdSubContrato
 
-		select Error = cast(1 as bit)
+        SELECT Error = CAST(1 AS BIT)
+    END TRY
+    BEGIN CATCH
+        SELECT Error = CAST(0 AS BIT)
+    END CATCH
+END
 
-	end try
-	begin catch
-		select Error = cast(0 as bit)
-	end catch
-end

@@ -1,31 +1,33 @@
-﻿
-create proc p_SC_Presupuesto_Ins
+﻿IF OBJECT_ID('[dbo].[p_SC_Presupuesto_Ins]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[p_SC_Presupuesto_Ins]
+GO
+
+CREATE PROCEDURE [dbo].[p_SC_Presupuesto_Ins]
 (
-	@pIdSubContrato	int,
-	@pIdPresupuesto	int,
-	@pCreadoPor		int
+    @pIdSubContrato INT,
+    @pIdPresupuesto INT,
+    @pCreadoPor INT
 )
-as
-begin
-	begin try
+AS
+BEGIN
+    BEGIN TRY
+        DECLARE @IdSubContratoPresupuesto INT
+        SELECT @IdSubContratoPresupuesto = ISNULL(MAX(IdSubContratoPresupuesto), 0) + 1
+        FROM SC_Presupuesto (NOLOCK)
 
-	declare @IdSubContratoPresupuesto int
-	select @IdSubContratoPresupuesto = isnull(max(IdSubContratoPresupuesto),0)+1 from SC_Presupuesto
+        INSERT INTO SC_Presupuesto
+        VALUES (
+            @IdSubContratoPresupuesto,
+            @pIdSubContrato,
+            @pIdPresupuesto,
+            @pCreadoPor,
+            GETDATE()
+        )
 
-	insert	into	SC_Presupuesto 
-			values	(
-						@IdSubContratoPresupuesto,
-						@pIdSubContrato,
-						@pIdPresupuesto,
-						@pCreadoPor,
-						getdate()
-					)
-
-		select Error = cast(1 as bit)
-
-	end try
-	begin catch
-		select Error = cast(0 as bit)
-	end catch
-
-end
+        SELECT Error = CAST(1 AS BIT)
+    END TRY
+    BEGIN CATCH
+        SELECT Error = CAST(0 AS BIT)
+    END CATCH
+END
+GO

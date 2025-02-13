@@ -1,32 +1,36 @@
-﻿
-create proc p_SC_Subcontrato_Del
+﻿IF OBJECT_ID('[dbo].[p_SC_Subcontrato_Del]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[p_SC_Subcontrato_Del]
+GO
+
+CREATE PROCEDURE [dbo].[p_SC_Subcontrato_Del]
 (
-	@IdSubContrato	int
+    @IdSubContrato INT
 )
-as
-begin
+AS
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 
+        FROM OT_Solicitud (NOLOCK)
+        WHERE IdOTEstatus IN (2, 3, 4, 5, 6, 9, 10, 11) 
+        AND IdSubcontrato = @IdSubContrato
+    )
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM OT_Solicitud (NOLOCK)
+            WHERE IdSubcontrato = @IdSubContrato 
+            AND ISNULL(IsActivo, 0) = 1
+        )
+        BEGIN
+            UPDATE SC_SubContrato
+            SET IsEliminado = 1
+            WHERE IdSubContrato = @IdSubContrato
+        END
+        SELECT Error = 0
+    END
+    ELSE
+    BEGIN
+        SELECT Error = 2
+    END
+END
 
-	if not exists(
-		select	1 
-		from	OT_Solicitud
-		where	IdOTEstatus		in (2,3,4,5,6,9,10,11) 
-		and		IdSubcontrato	= @IdSubcontrato
-		)
-	begin
-		if not exists (
-			select 1
-			from OT_Solicitud
-			where IdSubcontrato = @IdSubContrato and
-			isnull(IsActivo,0) = 1
-		)
-		begin
-		
-
-			update	SC_SubContrato 
-			set		IsEliminado		=	1
-			where	IdSubContrato	=	@IdSubContrato
-		end
-		select	Error = 0
-	end
-	select Error = 2
-end
