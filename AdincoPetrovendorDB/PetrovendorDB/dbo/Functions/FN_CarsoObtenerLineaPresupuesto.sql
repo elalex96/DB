@@ -1,4 +1,23 @@
-﻿CREATE FUNCTION [dbo].[FN_CarsoObtenerLineaPresupuesto]
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'FN_CarsoObtenerLineaPresupuesto'
+)
+    DROP FUNCTION FN_CarsoObtenerLineaPresupuesto;
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+/****** Object:  UserDefinedFunction [dbo].[FN_CarsoObtenerLineaPresupuesto]    Script Date: 13/02/2025 09:21:39 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[FN_CarsoObtenerLineaPresupuesto]
 (
     @LP VARCHAR(150),
     @Mes VARCHAR(50),
@@ -10,6 +29,8 @@
 -- Description: Retorna la linea de presupuesto mes
 -- =============================================
 -- 2021/ENERO	BAAC	Optimización
+-- =============================================
+-- 2025/FEBRERO	DAC	Se agrega que tome el presupuesto del mes y del año actual, si no se encuentra que tome el default
 -- =============================================
 RETURNS INT
 AS
@@ -127,27 +148,59 @@ DECLARE @CONTPUNTOS INT ,
             JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS AP	(NOLOCK)
                 ON LP.Actividad COLLATE DATABASE_DEFAULT = AP.id_Actividad
             JOIN Adinco.dbo.CO_SubactividadPetrolera AS SP	(NOLOCK)
-                ON SP.[id_Sub-actividad] COLLATE DATABASE_DEFAULT = LP.SubActividad
+                ON LP.SubActividad COLLATE DATABASE_DEFAULT = SP.[id_Sub-actividad]
             JOIN Adinco.dbo.CO_TareaPetrolera AS TP	(NOLOCK)
-                ON TP.id_Tarea = LP.Tarea COLLATE DATABASE_DEFAULT
+                ON LP.Tarea = TP.id_Tarea  COLLATE DATABASE_DEFAULT
             JOIN Adinco.dbo.CO_Servicio AS CS	(NOLOCK)
                 ON LP.SubTarea COLLATE DATABASE_DEFAULT = SUBSTRING(CS.NombreServicio, 1, @LONGITUD)
                    AND CS.IdContrato = @IdContrato
 			 JOIN Adinco.dbo.CO_Presupuesto P	(NOLOCK)
                 ON LP.IdPresupuesto	=	P.IdPresupuesto
             JOIN Adinco.dbo.CO_LineaPresupuestoMes AS LPM	(NOLOCK)
-                ON LPM.IdPresupuesto = P.IdPresupuesto
-				AND	LPM.IdActividadPetrolera = AP.IdActividadPetrolera
-                   AND LPM.IdSubactividadPetrolera = SP.IdSubactividadPetrolera
-                   AND LPM.IdTareaPetrolera = TP.IdTareaPetrolera
-                   AND LPM.IdServicio = CS.IdServicio
+                ON P.IdPresupuesto = LPM.IdPresupuesto
+				AND	AP.IdActividadPetrolera = LPM.IdActividadPetrolera
+                   AND SP.IdSubactividadPetrolera = LPM.IdSubactividadPetrolera 
+                   AND TP.IdTareaPetrolera = LPM.IdTareaPetrolera 
+                   AND CS.IdServicio = LPM.IdServicio 
                    AND MONTH(LPM.AC_PRESUP_MES) = @Mes
+				   AND YEAR(LPM.AC_PRESUP_MES) =  YEAR(GETDATE()) --> CTE DEBE SER DEL AÑO ACTUAL
             JOIN Adinco.dbo.CO_AnioContractual AC	(NOLOCK)
                 ON P.IdAnioContractual = AC.IdAnioContractual
                    AND AC.IdContrato = @IdContrato
         WHERE AC.Anio = LP.AnioContractual
               AND LPM.IdPresupuesto = LP.IdPresupuesto
 			  AND P.Actual = 1
+		
+		IF ISNULL(@IdLineaRetorno,0) = 0
+		BEGIN 
+		--> SI NO SE ENCONTRO LA DEL AÑO ACTUAL ENTONCES TRATAR DE IR LA LA DEFAULT
+			SELECT @IdLineaRetorno = LPM.IdLineaPresupuestoMes
+			FROM @TablaLP AS LP
+				JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS AP	(NOLOCK)
+					ON LP.Actividad COLLATE DATABASE_DEFAULT = AP.id_Actividad
+				JOIN Adinco.dbo.CO_SubactividadPetrolera AS SP	(NOLOCK)
+					ON LP.SubActividad COLLATE DATABASE_DEFAULT = SP.[id_Sub-actividad]
+				JOIN Adinco.dbo.CO_TareaPetrolera AS TP	(NOLOCK)
+					ON LP.Tarea = TP.id_Tarea  COLLATE DATABASE_DEFAULT
+				JOIN Adinco.dbo.CO_Servicio AS CS	(NOLOCK)
+					ON LP.SubTarea COLLATE DATABASE_DEFAULT = SUBSTRING(CS.NombreServicio, 1, @LONGITUD)
+					   AND CS.IdContrato = @IdContrato
+				 JOIN Adinco.dbo.CO_Presupuesto P	(NOLOCK)
+					ON LP.IdPresupuesto	=	P.IdPresupuesto
+				JOIN Adinco.dbo.CO_LineaPresupuestoMes AS LPM	(NOLOCK)
+					ON P.IdPresupuesto = LPM.IdPresupuesto
+					AND	AP.IdActividadPetrolera = LPM.IdActividadPetrolera
+					   AND SP.IdSubactividadPetrolera = LPM.IdSubactividadPetrolera 
+					   AND TP.IdTareaPetrolera = LPM.IdTareaPetrolera 
+					   AND CS.IdServicio = LPM.IdServicio 
+					   AND MONTH(LPM.AC_PRESUP_MES) = @Mes
+				JOIN Adinco.dbo.CO_AnioContractual AC	(NOLOCK)
+					ON P.IdAnioContractual = AC.IdAnioContractual
+					   AND AC.IdContrato = @IdContrato
+			  WHERE AC.Anio = LP.AnioContractual
+				  AND LPM.IdPresupuesto = LP.IdPresupuesto
+				  AND P.Actual = 1
+		END
     END
 
     RETURN @IdLineaRetorno
