@@ -1,28 +1,49 @@
-﻿--******************************************************************
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'p_OT_SemanasPrograma'
+    )
+    DROP PROCEDURE p_OT_SemanasPrograma;
+GO
+--******************************************************************
 -- ESTE SP TAMBIEN SE UTILIZA DENTRO DE p_OT_Estimacion_Cerrar_Semana EN ADINCO
 --******************************************************************
--- p_OT_SemanasPrograma 1
-CREATE PROC [dbo].[p_OT_SemanasPrograma] @pIdOTSolicitud INT
+CREATE PROC [dbo].[p_OT_SemanasPrograma] 
+@pIdOTSolicitud INT
 AS
 BEGIN
-    DECLARE @fechaIni DATETIME,
-            @fechafin DATETIME,
-            @fechaIndice DATETIME,
-            @fechaIniSemana DATETIME,
-            @fechaFinSemana DATETIME,
-            @diaindice INT,
-            @fechaFinExtendida DATETIME
-
-    SELECT @fechaFinExtendida = FechaFinExtendida
-    FROM dbo.OT_Solicitud (NOLOCK)
-    WHERE IdOTSolicitud = @pIdOTSolicitud
-
-    CREATE TABLE #tmpSemanas
+ CREATE TABLE #tmpSemanas
     (
         ID varchar(21),
         FechaIni DATETIME,
         FechaFin datetime
     )
+
+	CREATE TABLE #tmpSemanasInicio
+    (
+		Id INT IDENTITY(1,1),
+        FechaInicio DATETIME
+    )
+
+	CREATE TABLE #tmpSemanasFin
+    (
+		Id INT IDENTITY(1,1),
+        FechaFin DATETIME
+    )
+
+	CREATE TABLE #AP_CalendarioDias(IdFecha	date,DiaDeSemana tinyint, NombreDia	varchar(60));
+
+    DECLARE @fechaIni DATETIME,
+            @fechafin DATETIME,
+            @fechaFinExtendida DATETIME
+
+    SELECT @fechaFinExtendida = FechaFinExtendida
+    FROM dbo.OT_Solicitud (NOLOCK)
+    WHERE IdOTSolicitud = @pIdOTSolicitud;
 
     SELECT @fechaIni = MIN(OT_SolicitudMaterial.FechaProgramaInicio),
            @fechafin = CASE
@@ -30,37 +51,36 @@ BEGIN
                                MAX(OT_SolicitudMaterial.FechaProgramaFin)
                            ELSE
                                @fechaFinExtendida
-                       end,
-           @fechaIndice = MIN(OT_SolicitudMaterial.FechaProgramaInicio),
-           @fechaIniSemana = MIN(OT_SolicitudMaterial.FechaProgramaInicio)
+                       end
     FROM OT_SolicitudMaterial (NOLOCK)
-    WHERE IdOTSolicitud = @pIdOTSolicitud
+    WHERE IdOTSolicitud = @pIdOTSolicitud;
 
-    WHILE @fechaIndice <= @fechafin
-    BEGIN
 
-        SELECT @diaindice = DiaDeSemana
-        FROM ap_calendario (NOLOCK)
-        WHERE convert(VARCHAR, InicioDia, 112) = convert(VARCHAR, @fechaIndice, 112)
-        IF (@diaindice = 7 OR DATEADD(dd, 1, @fechaIndice) > @fechafin)
-        BEGIN
-            SET @fechaFinSemana = @fechaIndice
-            INSERT INTO #tmpSemanas
-            (
-                ID,
-                FechaIni,
-                FechaFin
-            )
-            SELECT CONVERT(VARCHAR, @fechaIniSemana, 112) + '-' + CONVERT(VARCHAR, @fechaFinSemana, 112),
-                   @fechaIniSemana,
-                   @fechaFinSemana
+	INSERT INTO #AP_CalendarioDias(IdFecha,DiaDeSemana,NombreDia)
+	SELECT IdFecha,DiaDeSemana,NombreDia FROM AP_CALENDARIO WHERE IdFecha	BETWEEN @fechaIni AND @fechafin;
 
-            SET @fechaIniSemana = DATEADD(dd, 1, @fechaIndice)
-        END
+	/*INICIOS*/
+	INSERT INTO #tmpSemanasInicio(FechaInicio) VALUES (@fechaIni);
 
-        SET @fechaIndice = DATEADD(dd, 1, @fechaIndice)
+	INSERT INTO #tmpSemanasInicio(FechaInicio)
+	SELECT IdFecha FROM #AP_CalendarioDias WHERE DiaDeSemana = 1 AND IdFecha <> @fechaIni  ORDER BY IdFecha ASC;
+	--______________________________________________
+	/*FINALES*/
+	INSERT INTO #tmpSemanasFin(FechaFin) 
+	SELECT IdFecha FROM #AP_CalendarioDias WHERE DiaDeSemana = 7 AND IdFecha <> @fechafin ORDER BY IdFecha ASC;
 
-    END
+	INSERT INTO #tmpSemanasFin(FechaFin) VALUES (@fechafin);
+	--______________________________________________
+
+	INSERT INTO #tmpSemanas(ID,FechaIni,FechaFin)
+	SELECT  CONVERT(VARCHAR, Inicio.FechaInicio, 112) + '-' + CONVERT(VARCHAR, Fin.FechaFin, 112),
+		Inicio.FechaInicio, Fin.FechaFin
+	FROM
+		#tmpSemanasInicio AS Inicio
+	JOIN
+		#tmpSemanasFin AS Fin
+		ON Inicio.Id	=	Fin.Id;
+
 
     SELECT ID,
            FechaIniText = CONVERT(VARCHAR, FechaIni, 103),
@@ -81,11 +101,8 @@ BEGIN
                     end
     FROM #tmpSemanas
         LEFT JOIN OT_ProgramaSemanaCerrada (NOLOCK)
-            on OT_ProgramaSemanaCerrada.SemanaID = #tmpSemanas.ID
+            ON OT_ProgramaSemanaCerrada.SemanaID = #tmpSemanas.ID
                and OT_ProgramaSemanaCerrada.IdOTSolicitud = @pIdOTSolicitud
                and OT_ProgramaSemanaCerrada.isActivo = 1
---WHERE FechaFin >= DATEADD(dd,-15,GETDATE())
---Solo mostrar semanas que no excedan los 15 días de tolerancia
-
 
 END

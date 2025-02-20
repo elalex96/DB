@@ -1,4 +1,14 @@
-﻿-- p_OT_MaterialesProgramaSinAsignar 4
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'p_OT_MaterialesProgramaSinAsignar'
+    )
+    DROP PROCEDURE p_OT_MaterialesProgramaSinAsignar;
+GO
 CREATE PROC [dbo].[p_OT_MaterialesProgramaSinAsignar] @pIdOTSolicitud INT
 AS
 SELECT OT_SolicitudMaterial.IdOTSolicitudMaterial,
