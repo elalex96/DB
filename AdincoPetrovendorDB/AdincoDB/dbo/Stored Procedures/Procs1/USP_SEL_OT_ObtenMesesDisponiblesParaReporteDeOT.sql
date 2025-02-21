@@ -1,108 +1,48 @@
-﻿
--- =============================================
--- Autor:				Neri Garcia del Angel
--- Fecha de Edición:	02 de Marzo del 2023
--- Descripción:			Se agregan LTRIM y RTRIM correspondientes
--- =============================================
-CREATE PROCEDURE [dbo].[ActualizarInsertarPozosAmat]
-    @IdUsuario INT,
-    @IdAreaContractual INT,
-    @IdInstalacion INT = 0, --> Cuando es 0 es Insert y cuando es mayor a 0 es update
-    @NombreInstalacion VARCHAR(4000),
-    @NombreInstalacionAlterno VARCHAR(4000),
-    @IdCatalogoSCIEP INT,
-    @IdCampo INT,
-    @Activo BIT
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_SEL_OT_ObtenMesesDisponiblesParaReporteDeOT'
+    )
+    DROP PROCEDURE USP_SEL_OT_ObtenMesesDisponiblesParaReporteDeOT
+GO
+CREATE PROCEDURE [dbo].[USP_SEL_OT_ObtenMesesDisponiblesParaReporteDeOT] --3,10,2867
+    @ContratoId    INT,
+    @UsuarioId     INT,
+    @OTSolicitudId INT
 AS
-BEGIN
-    DECLARE @IdActividad INT,
-            @IdEstatus INT,
-            @IdYacimiento INT
-
-    SELECT TOP 1
-        @IdActividad = IdActividad
-    FROM CO_ActividadCIEP
-    WHERE LTRIM(RTRIM(UPPER(NombreActividad))) = 'POZOS'
-
-    SELECT TOP 1
-        @IdEstatus = idEstatus
-    FROM CO_EstadoPozos
-    WHERE LTRIM(RTRIM(UPPER(TipoEstatus))) = 'ACTIVO'
-
-    SELECT TOP 1
-        @IdYacimiento = IdYacimiento
-    FROM CO_AreaContractualYacimiento
-    WHERE IdAreaContractual = @IdAreaContractual
-
-    IF (ISNULL(@IdInstalacion, 0) <> 0)
     BEGIN
-        UPDATE CO_Instalacion
-        SET NombreInstalacion =  LTRIM(RTRIM(@NombreInstalacion)),
-            IdInstalacionPemex = NULL,
-            EsBolsa = 0,
-            IdActividad = @IdActividad,             --> Asignar el id correspondiente a pozos
-            IdUsuario = @IdUsuario,
-            FecMovto = GETDATE(),
-            NombreInstalacionAlterno =  LTRIM(RTRIM(@NombreInstalacionAlterno)),
-            IdCatalogoSCIEP = @IdCatalogoSCIEP,
-            IdAreaContractual = @IdAreaContractual, --> Dato interno que no se muestra en pantalla
-            Activo = @Activo,
-            CUIP = NULL,
-            IdYacimiento = @IdYacimiento,           --> Id del yacimiento default del area contractual
-            IdCampo = @IdCampo,
-            UTMX = 0,
-            UTMY = 0,
-            IdEstatus = @IdEstatus,                 --> id del estatus activo de la tabla co_estadopozos
-            ModificadoPor = @IdUsuario,
-            ModificadoEn = GETDATE(),
-            ComodinBolsa = 0
-        WHERE IdInstalacion = @IdInstalacion
-    END
+        SET NOCOUNT ON
 
-    IF (ISNULL(@IdInstalacion, 0) = 0)
-    BEGIN
-        INSERT INTO CO_Instalacion
-        (
-            NombreInstalacion,
-            IdInstalacionPemex,
-            EsBolsa,
-            IdActividad,              --> Asignar el id correspondiente a pozos
-            IdUsuario,                --> Dato interno que no se muestra en pantalla
-            FecMovto,                 --> Dato interno que no se muestra en pantalla
-            NombreInstalacionAlterno, --> Nombre alterno que ingresa el usuario
-            IdCatalogoSCIEP,          --> ID SCIEP que ingresa el usuario
-            IdAreaContractual,        --> Dato interno que no se muestra en pantalla
-            Activo,                   --> Indicador si el pozo esta activo o no
-            CUIP,                     --> NULL
-            WelIID,                   --> Id del pozo en caso de existir, NULL para registros nuevos
-            IdYacimiento,             --> Id del yacimiento default del area contractual
-            IdCampo,                  --> Id de la macropera (mostrar combo)
-            UTMX,                     --> 0
-            UTMY,                     --> 0
-            IdEstatus,                --> id del estatus activo de la tabla co_estadopozos
-            CreadoPor,                --> Dato interno que no se muestra en pantalla
-            CreadoEn,                 --> Dato interno que no se muestra en pantalla
-            ComodinBolsa              --> 0)
-        )
-        SELECT  LTRIM(RTRIM(@NombreInstalacion)),
-               NULL,
-               0,
-               @IdActividad,
-               @IdUsuario,
-               GETDATE(),
-                LTRIM(RTRIM(@NombreInstalacionAlterno)),
-               @IdCatalogoSCIEP,
-               @IdAreaContractual,
-               @Activo,
-               NULL,
-               NULL,
-               @IdYacimiento,
-               @IdCampo,
-               0,
-               0,
-               @IdEstatus,
-               @IdUsuario,
-               GETDATE(),
-               0
+        SELECT
+            PrimerDiaMes                 as IdFecha,
+            CONCAT(NombreMes, '-', Anio) AS Fecha
+        FROM
+            [dbo].[OT_SolicitudMaterial] (NOLOCK)
+            JOIN
+                SC_Materiales (NOLOCK)
+                    on OT_SolicitudMaterial.IdOTSolicitud = @OTSolicitudId
+                       AND OT_SolicitudMaterial.IdSCMaterial = SC_Materiales.IdSCMaterial
+            JOIN
+                [dbo].[OT_SolicitudProgramaCaptura] (NOLOCK)
+                    ON OT_SolicitudMaterial.IdOTSolicitudMaterial = OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial
+                       AND [OT_SolicitudProgramaCaptura].VoBoContratista = 1
+                       AND [OT_SolicitudProgramaCaptura].VoBoSubcontratista = 1
+            JOIN
+                OT_ProgramaSemanaCerrada (NOLOCK)
+                    ON OT_ProgramaSemanaCerrada.IdOTSolicitud = @OTSolicitudId
+                       AND OT_SolicitudProgramaCaptura.Fecha
+                       BETWEEN OT_ProgramaSemanaCerrada.FechaSemanaIni AND OT_ProgramaSemanaCerrada.FechaSemanaFin
+                       AND OT_ProgramaSemanaCerrada.isActivo = 1
+            JOIN
+                AP_Calendario (NOLOCK)
+                    ON OT_SolicitudProgramaCaptura.Fecha = AP_Calendario.IdFecha
+        WHERE
+            OT_ProgramaSemanaCerrada.IdOTSolicitud = @OTSolicitudId
+        GROUP BY
+            PrimerDiaMes,
+            CONCAT(NombreMes, '-', Anio);
     END
-END
