@@ -9,7 +9,7 @@
 - [ ] ¿El código fuente generado es reutilizable y de fácil mantenimiento? (se generan métodos que son fácil de identificar y consumir para otras funcionalidades)
 - [ ] ¿La(s) evidencia(s) es(son) lo suficientemente legibles?
 - [ ] En caso de aplicarse, ¿las interfaces mantienen una buena ortografía?
-- [ ] En caso de encontrar hallazgos en el Pull Request, ¿se tiene un registrazon en la lista de [SharePoint](https://smpsadinco.sharepoint.com/sites/ProyectosADINCO/Lists/RevisionPares/AllItems.aspx)?
+- [ ] En caso de encontrar hallazgos en el Pull Request, ¿tiene su registro en SharePoint?
 - [ ] En caso de aplicarse, ¿se encuentra asignado el Milestone correspondiente en el Pull Request?
 - [ ] En caso de aplicarse, ¿se encuentran asignadas las etiquetas correspondientes en el Pull Request? (ej. Task Scheduler, Contiene Scripts)
 - [ ] ¿Se realizo la revisión por pares en la documentación?
