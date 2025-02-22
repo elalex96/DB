@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE USP_SEL_OT_ObtenMesesDisponiblesParaReporteDeOT
 GO
-CREATE PROCEDURE [dbo].[USP_SEL_OT_ObtenMesesDisponiblesParaReporteDeOT] --3,10,2867
+CREATE PROCEDURE [dbo].[USP_SEL_OT_ObtenMesesDisponiblesParaReporteDeOT] 
     @ContratoId    INT,
     @UsuarioId     INT,
     @OTSolicitudId INT
@@ -17,10 +17,24 @@ AS
     BEGIN
         SET NOCOUNT ON
 
+		DECLARE     @EsDelContrato INT = 0;
+
+		SELECT @EsDelContrato =  
+		COUNT(1) from 
+			SC_SubContrato
+		JOIN 
+			OT_Solicitud
+		ON	SC_SubContrato.IdSubContrato	=	OT_Solicitud.IdSubContrato
+		AND OT_Solicitud.IdOTSolicitud = @OTSolicitudId
+		WHERE IdContrato = @ContratoId;
+
+
+		IF(@EsDelContrato>0)
+		BEGIN
         SELECT
             PrimerDiaMes                 as IdFecha,
             CONCAT(NombreMes, '-', Anio) AS Fecha
-        FROM
+        FROM 
             [dbo].[OT_SolicitudMaterial] (NOLOCK)
             JOIN
                 SC_Materiales (NOLOCK)
@@ -46,3 +60,4 @@ AS
             PrimerDiaMes,
             CONCAT(NombreMes, '-', Anio);
     END
+END
