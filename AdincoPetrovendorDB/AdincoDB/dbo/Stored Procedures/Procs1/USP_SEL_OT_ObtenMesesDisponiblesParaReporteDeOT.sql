@@ -21,9 +21,9 @@ AS
 
 		SELECT @EsDelContrato =  
 		COUNT(1) from 
-			SC_SubContrato
+			SC_SubContrato	(NOLOCK)
 		JOIN 
-			OT_Solicitud
+			OT_Solicitud	(NOLOCK)
 		ON	SC_SubContrato.IdSubContrato	=	OT_Solicitud.IdSubContrato
 		AND OT_Solicitud.IdOTSolicitud = @OTSolicitudId
 		WHERE IdContrato = @ContratoId;
