@@ -3975,5 +3975,9 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_ActualizarProgramaConBitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\UPS_UPD_AP_ActualizarFinNotificacionTareaBitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_CalculaFechaConDiasHabiles.sql" />
+    <Build Include="dbo\User Defined Types\SC_Type_Subcontratos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_UPD_SC_Subcontrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_ActualizarPeriodoConBitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_ActualizarProgramaConBitacora.sql" />
   </ItemGroup>
 </Project>
