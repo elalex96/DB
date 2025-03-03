@@ -166,7 +166,7 @@ BEGIN
 			ELSE ' El estudio de precio de transferencia (EPT) ya fue asignado anteriormente. '
 		END,
 		' [', CAST(FI_EstudioPreciosTransfer.IdEstudioPrecioTransfer AS NVARCHAR), '] ',
-		' [ ', ISNULL(FI_EstudioPreciosTransfer.Nombre, ''), ' ]'
+		' [', ISNULL(FI_EstudioPreciosTransfer.Nombre, ''), ']'
 	) 
 	FROM #Data datos 
 	LEFT JOIN FI_PedimentoComprobante
