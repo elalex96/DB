@@ -36,7 +36,8 @@ AS
 			 CantidadDiasMes INT,
 			 Dia29 INT NULL,
 			 Dia30 INT NULL,
-			 Dia31 INT NULL
+			 Dia31 INT NULL,
+			 Documento VARCHAR(150)
 		);
 
 		INSERT INTO @TempDatos(Subcontratista,
@@ -53,7 +54,8 @@ AS
 			 NombreElaboro,
 			 Logo,
 			 NombreMesAnio,
-			 CantidadDiasMes)
+			 CantidadDiasMes,
+			 Documento)
 		SELECT 
 			CO_Contratista.RazonSocial,
 			PV_Subcontratista.RazonSocial,
@@ -69,7 +71,8 @@ AS
 			AP_Usuario.Nombre,
 			CO_Contratista.Logo,
 			UPPER(FORMAT(@Mes, 'MMMM - yyyy', 'es-ES')),
-			DAY(EOMONTH(@Mes))
+			DAY(EOMONTH(@Mes)),
+			'PAB.009.FO.05.R2'
 		FROM  
 			OT_Solicitud  (NOLOCK)
 		JOIN
@@ -108,5 +111,7 @@ AS
 		SELECT * FROM @TempDatos;
 
     END;
+
+	
 
 	
