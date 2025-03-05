@@ -18,13 +18,6 @@ AS
     BEGIN
         SET NOCOUNT ON
 		
-   	DECLARE @TotalSinIvaMXP FLOAT,
-		    @TotalSinIvaUSD FLOAT,
-			@IvaMXP FLOAT,
-			@IvaUSD FLOAT,
-			@TotalConIvaMXP FLOAT,
-			@TotalConIvaUSD FLOAT;
-
         DECLARE @DiasMes TABLE
             (
                 IdFecha DATE,
@@ -43,7 +36,9 @@ AS
 				FechaInicioRentaServ DATE,
 				TotalDiasHH FLOAT,
 				CostoTotalMXP FLOAT,
-				CostoTotalUSD FLOAT
+				CostoTotalUSD FLOAT,
+				Moneda varchar(50),
+				MonedaId INT
             );
 
         DECLARE @DiasMesCapturaMaterial TABLE
@@ -63,6 +58,14 @@ AS
 				CostoTotalUSD FLOAT
             );
 
+			   	DECLARE @TotalSinIvaMXP FLOAT ,
+		    @TotalSinIvaUSD FLOAT ,
+			@IvaMXP FLOAT ,
+			@IvaUSD FLOAT ,
+			@TotalConIvaMXP FLOAT ,
+			@TotalConIvaUSD FLOAT ;
+
+		
         INSERT INTO @DiasMes
             (
                 IdFecha,
@@ -87,7 +90,8 @@ AS
                 SeriePersonal,
                 Marca,
                 PrecioUnitario,
-                TextoPosicion
+                TextoPosicion,
+				MonedaId
             )
                     SELECT
                         OT_SolicitudProgramaCaptura.IdOTSolicitudMaterial,
@@ -97,17 +101,14 @@ AS
                                              )
                                    )
                              )                         AS Posicion,
-                        CASE
-                            WHEN LEN(CAST(SC_Materiales.Concepto AS VARCHAR(300))) <= 3
-                                THEN UPPER(CAST(SC_Materiales.Descripcion AS VARCHAR(300)))
-                            ELSE
-                                UPPER(CAST(SC_Materiales.Concepto AS VARCHAR(300)))
-                        END                            AS Concepto,
+                                UPPER( CAST('[' + SC_Materiales.Concepto + ']' + SC_Materiales.Descripcion AS VARCHAR(200)))                        
+					   AS Concepto,
                        UPPER( CAST(U.Unidad AS VARCHAR(300)) ) AS Unidad,
                         ''                             AS SeriePersonal,
                         ''                            AS Marca,
                         SC_Materiales.PrecioUnitario   AS PrecioUnitario,
-                        [OT_SolicitudMaterial].Comentarios                           AS TextoPosicion
+                        [OT_SolicitudMaterial].Comentarios                           AS TextoPosicion,
+						SC_SubContrato.IdMoneda
                     FROM
                         [dbo].[OT_SolicitudMaterial] (NOLOCK)
                         JOIN
@@ -129,6 +130,10 @@ AS
                                    AND OT_SolicitudProgramaCaptura.Fecha
                                    BETWEEN OT_ProgramaSemanaCerrada.FechaSemanaIni AND OT_ProgramaSemanaCerrada.FechaSemanaFin
                                    AND OT_ProgramaSemanaCerrada.isActivo = 1
+						JOIN
+							SC_SubContrato	(NOLOCK)
+							ON	
+								SC_Materiales.IdSubContrato	=	SC_SubContrato.IdSubContrato
                         JOIN
                             Petrovendor.dbo.[PV_MM_MaterialUnidad] u (NOLOCK)
                                 on SC_Materiales.IdUnidad = u.IdUnidad
@@ -148,16 +153,21 @@ AS
                                              )
                                    )
                              ),
-                        CASE
-                            WHEN LEN(CAST(SC_Materiales.Concepto AS VARCHAR(300))) <= 3
-                                THEN UPPER( CAST(SC_Materiales.Descripcion AS VARCHAR(300)))
-                            ELSE
-                               UPPER( CAST(SC_Materiales.Concepto AS VARCHAR(300)))
-                        END,
+                               UPPER(  CAST('[' + SC_Materiales.Concepto + ']' + SC_Materiales.Descripcion AS VARCHAR(200))),
                        UPPER( CAST(U.Unidad AS VARCHAR(300))),
                         SC_Materiales.PrecioUnitario,
-						OT_SolicitudMaterial.Comentarios;
+						OT_SolicitudMaterial.Comentarios,
+						SC_SubContrato.IdMoneda;
 
+			
+			UPDATE Materiales
+			SET	Moneda = TipoMonedaCorto
+			FROM 
+				@Materiales	AS Materiales
+			JOIN
+				PV_TipoMoneda (NOLOCK)
+				ON
+					Materiales.MonedaId	=	PV_TipoMoneda.IdMoneda;
 
         INSERT INTO @DiasMesCapturaMaterial
             (
@@ -196,6 +206,8 @@ AS
             VoBoContratista = 1
             AND VoBoSubcontratista = 1;
 
+		
+
 			INSERT INTO @FechaInicialCapturaMateriales 
             (
 				IdOTSolicitudMaterial ,
@@ -208,8 +220,24 @@ AS
 				Materiales.IdOTSolicitudMaterial,
 				FechaInicioRentaServ = MIN(DiasMesCapturaMaterial.IdFecha),
 				TotalDiasHH = SUM(ISNULL(DiasMesCapturaMaterial.Captura,0)),
-				CostoTotalMXP = SUM(ISNULL(DiasMesCapturaMaterial.Captura,0)) * Materiales.PrecioUnitario,
-				CostoTotalUSD = SUM(ISNULL(DiasMesCapturaMaterial.Captura,0)) * Materiales.PrecioUnitario
+				CostoTotalMXP = 
+				CASE
+				WHEN
+					Materiales.MONEDA = 'MXN'
+				THEN 
+					SUM(ISNULL(DiasMesCapturaMaterial.Captura,0)) * Materiales.PrecioUnitario
+					ELSE
+					NULL
+				END,
+				CostoTotalUSD = 
+				CASE 
+				WHEN 
+					Materiales.MONEDA = 'USD'
+				THEN 
+					SUM(ISNULL(DiasMesCapturaMaterial.Captura,0)) * Materiales.PrecioUnitario
+				ELSE 
+					NULL
+				END
 			   FROM
             @Materiales                 AS Materiales
             JOIN
@@ -219,7 +247,8 @@ AS
 			GROUP BY 
 				Materiales.IdOTSolicitudMaterial,
 				Materiales.PrecioUnitario,
-				Materiales.PrecioUnitario;
+				Materiales.PrecioUnitario,
+				Materiales.MONEDA;
 
 				UPDATE Materiales
 					SET 
@@ -234,12 +263,19 @@ AS
 					ON 
 						FechaInicialCapturaMateriales.IdOTSolicitudMaterial	=      Materiales.IdOTSolicitudMaterial;
 
-		SELECT @TotalSinIvaMXP = SUM(CostoTotalMXP) FROM @Materiales;
-		SELECT @TotalSinIvaUSD = SUM(CostoTotalMXP) FROM @Materiales;
-		SELECT @IvaMXP = @TotalSinIvaMXP * .16;
-		SELECT @IvaUSD = @TotalSinIvaUSD * .16;
-		SELECT @TotalConIvaMXP = @TotalSinIvaMXP	+	@IvaMXP;
-		SELECT @TotalConIvaUSD = @TotalSinIvaUSD	+	@IvaUSD;
+		IF((SELECT TOP 1 MONEDA FROM @Materiales ) = 'MXN')
+		BEGIN
+			SELECT @TotalSinIvaMXP = SUM(CostoTotalMXP) FROM @Materiales;
+			SELECT @IvaMXP = @TotalSinIvaMXP * .16;
+			SELECT @TotalConIvaMXP = @TotalSinIvaMXP	+	@IvaMXP;
+		END
+
+		IF((SELECT TOP 1 MONEDA FROM @Materiales ) = 'USD')
+		BEGIN
+			SELECT @TotalSinIvaUSD = SUM(CostoTotalMXP) FROM @Materiales;
+			SELECT @IvaUSD = @TotalSinIvaUSD * .16;
+			SELECT @TotalConIvaUSD = @TotalSinIvaUSD	+	@IvaUSD;
+		END
 		   
 
         SELECT
