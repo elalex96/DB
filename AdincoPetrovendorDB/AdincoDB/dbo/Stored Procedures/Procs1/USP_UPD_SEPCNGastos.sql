@@ -104,7 +104,7 @@ BEGIN
                AND #Data.IdContrato = FI_Factura.IdContrato;
 
     UPDATE #Data
-    SET Observaciones = Observaciones + ' | UUID no se encuentra en el sistema o en el contrato.',
+    SET Observaciones = Observaciones + ' | La factura no se encuentra registrada en el sistema o en el contrato.',
         ConDetalle = 1
     WHERE #Data.ConDetalleUUID = 0
           AND #Data.IdFactura IS NULL;
@@ -199,10 +199,29 @@ BEGIN
         JOIN CO_Registro (NOLOCK)
             ON #DataGasto.IdRegistro = CO_Registro.IdRegistro;
 
+    UPDATE #Data
+    SET #Data.Observaciones = CASE
+                                  WHEN #DataGasto.IdFactura IS NULL THEN
+                                      #Data.Observaciones + ' | La factura no cuenta con registros de gastos.'
+                                  ELSE
+                                      #Data.Observaciones
+                              END,
+        #Data.ConDetalle = CASE
+                               WHEN #DataGasto.IdFactura IS NULL THEN
+                                   1
+                               ELSE
+                                   #Data.ConDetalle
+                           END
+    FROM #Data
+        LEFT JOIN #DataGasto
+            ON #Data.IdFactura = #DataGasto.IdFactura
+    WHERE ConDetalle = 0
+          AND #DataGasto.IdFactura IS NULL
+
     -- Actualizar las observaciones en #Data con los registros actualizados
     UPDATE d
     SET Observaciones = CAST(Observaciones AS NVARCHAR(MAX)) + N' | Se actualizaron los registros ' + registros
-                        + N' relacionados a este UUID.'
+                        + N' relacionados con esta Factura.'
     FROM #Data d
         JOIN
         (
