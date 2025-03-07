@@ -220,7 +220,7 @@ BEGIN
 
     -- Actualizar las observaciones en #Data con los registros actualizados
     UPDATE d
-    SET Observaciones = CAST(Observaciones AS NVARCHAR(MAX)) + N' | Se actualizaron los registros ' + registros
+    SET Observaciones = CAST(Observaciones AS NVARCHAR(MAX)) + N' | Se actualizaron los registros con identificador: ' + registros
                         + N' relacionados con esta Factura.'
     FROM #Data d
         JOIN
