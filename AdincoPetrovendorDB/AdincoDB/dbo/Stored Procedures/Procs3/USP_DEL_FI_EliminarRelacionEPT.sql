@@ -1,8 +1,8 @@
-IF OBJECT_ID('[dbo].[SP_FI_EliminarRelacionEPT]', 'P') IS NOT NULL
-    DROP PROCEDURE [dbo].SP_FI_EliminarRelacionEPT
+IF OBJECT_ID('[dbo].[USP_DEL_FI_EliminarRelacionEPT]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].USP_DEL_FI_EliminarRelacionEPT
 GO
 
-CREATE PROCEDURE [dbo].SP_FI_EliminarRelacionEPT
+CREATE PROCEDURE [dbo].USP_DEL_FI_EliminarRelacionEPT
 @IdContrato INT, 
 @IdUsuario  INT, 
 @IdEPT      INT,
