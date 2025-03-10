@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operations Version="1.0" xmlns="http://schemas.microsoft.com/sqlserver/dac/Serialization/2012/02">
+  <Operation Name="Rename Refactor" Key="419b9a84-9213-455a-973b-387fc7a562ba" ChangeDateTime="03/09/2025 01:20:57">
+    <Property Name="ElementName" Value="[dbo].[USP_SEL_FI_RelacionadosEPT]" />
+    <Property Name="ElementType" Value="SqlProcedure" />
+    <Property Name="ParentElementName" Value="[dbo]" />
+    <Property Name="ParentElementType" Value="SqlSchema" />
+    <Property Name="NewName" Value="USP_SEL_FI_RelacionadosEPT" />
+  </Operation>
+</Operations>
