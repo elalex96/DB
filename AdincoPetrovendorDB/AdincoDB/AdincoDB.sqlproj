@@ -3982,5 +3982,7 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_ObtenNotification2FAServicio.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_REL_Fact_EPT.sql" />
     <Build Include="dbo\User Defined Types\TY_REL_Fact_EPT.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_INS_CO_ValidacionGuardadoDeCargaDePresupuestoCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP.sql" />
   </ItemGroup>
 </Project>
