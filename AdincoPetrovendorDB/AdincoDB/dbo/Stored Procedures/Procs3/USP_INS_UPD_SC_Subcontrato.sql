@@ -1,12 +1,14 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'USP_INS_UPD_SC_Subcontrato'
-)
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_INS_UPD_SC_Subcontrato'
+    )
     DROP PROCEDURE USP_INS_UPD_SC_Subcontrato;
 GO
-
 CREATE PROCEDURE USP_INS_UPD_SC_Subcontrato
     @Table_SC_Type_Subcontratos SC_Type_Subcontratos READONLY,
     @UsuarioId INT,
@@ -133,7 +135,7 @@ BEGIN
                'CSD-' + DocumentoCompras,
                CASE
                    WHEN TRY_CAST(LEFT(ProveedorCentroSuministrador, CHARINDEX(' ', ProveedorCentroSuministrador + ' ')
-                                                                    - 1)AS INT) IS NOT NULL THEN
+                                   - 1)AS INT) IS NOT NULL THEN
                        SUBSTRING(
                                     ProveedorCentroSuministrador,
                                     CHARINDEX(' ', ProveedorCentroSuministrador) + 1,
@@ -232,7 +234,7 @@ BEGIN
             IdStatusValidacion
         )
         SELECT LTRIM(RTRIM(#TablaTemporalSubcontratos.SubContratista)),
-               1,
+           1,
                0,
                0
         FROM #TablaTemporalSubcontratos
@@ -372,7 +374,7 @@ BEGIN
                 ON #TablaTemporalSubcontratos_Materiales_Agrupado.IdSubcontrato = SC_Materiales.IdSubContrato
                    AND #TablaTemporalSubcontratos_Materiales_Agrupado.MaterialConcepto = SC_Materiales.MaterialConceptoDocumento
 
-        SELECT @NumeroSubcontratos = COUNT(*)
+        SELECT @NumeroSubcontratos = COUNT(1)
         FROM #TablaTemporalSubcontratos_Agrupado
 
         WHILE @CuentaSubcontratos <= @NumeroSubcontratos
@@ -398,6 +400,7 @@ BEGIN
 
                 INSERT INTO SC_Subcontrato
                 (
+					IdContrato,
                     IdSubContrato,
                     IdSubContratista,
                     IdContratista,
@@ -416,11 +419,12 @@ BEGIN
                     IdCentroCosto
                 )
                 SELECT TOP 1
+					@ContratoId,
                     @IdSubcontrato,
                     #TablaTemporalSubcontratos.IdSubContratista,
                     @ContratistaId,
                     #TablaTemporalSubcontratos.DocumentoCompras,
-                    @UsuarioId,
+   @UsuarioId,
                     @FechaHoy,
                     1,
                     0,
@@ -497,7 +501,7 @@ BEGIN
             INSERT INTO SC_MaterialesBitacora
             (
                 IdSCBitacora,
-                IdSCMaterial,
+              IdSCMaterial,
                 CantidadRespaldo,
                 FechaRespaldo,
                 ModificadoPor,
