@@ -3984,5 +3984,12 @@
     <Build Include="dbo\User Defined Types\TY_REL_Fact_EPT.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USP_INS_CO_ValidacionGuardadoDeCargaDePresupuestoCIEP.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_BitacoraPresupuestoDetalleCIEP.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_BitacoraPresupuestoDetalleCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_UPD_CO_ActividadesPresupuestoCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_UPD_CO_TipoServicioPresupuestoCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_UPD_CO_ServiciosPresupuestoCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_UPD_CO_RubrosPresupuestoCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_UPD_CO_ClasificacionesPresupuestoCIEP.sql" />
   </ItemGroup>
 </Project>

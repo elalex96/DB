@@ -5,11 +5,11 @@
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_INS_UPD_CO_ActividadesPresupuestoCIEP'
+            name = 'USP_INS_UPD_CO_ClasificacionesPresupuestoCIEP'
     )
-    DROP PROCEDURE USP_INS_UPD_CO_ActividadesPresupuestoCIEP;
+    DROP PROCEDURE USP_INS_UPD_CO_ClasificacionesPresupuestoCIEP;
 GO
-CREATE PROCEDURE USP_INS_UPD_CO_ActividadesPresupuestoCIEP
+CREATE PROCEDURE USP_INS_UPD_CO_ClasificacionesPresupuestoCIEP
     @UsuarioId INT,
     @ContratoId INT,
     @IdArchivoAWS INT
@@ -43,7 +43,7 @@ INSERT INTO #TablaTemporalValidacion
         Nombre
     )
             SELECT
-              DISTINCT RTRIM(LTRIM(Actividad))
+              DISTINCT RTRIM(LTRIM(Clasificacion))
             FROM
                 CO_BitacoraPresupuestoDetalleCIEP (NOLOCK)
             WHERE
@@ -53,27 +53,20 @@ INSERT INTO #TablaTemporalValidacion
 UPDATE
     #TablaTemporalValidacion
 SET
-    #TablaTemporalValidacion.Id = CO_ActividadCIEP.IdActividad
+    #TablaTemporalValidacion.Id = CO_Clasificacion.IdClasificacion
 FROM
     #TablaTemporalValidacion
     JOIN
-        CO_ActividadCIEP
-            ON UPPER(#TablaTemporalValidacion.Nombre) = UPPER(LTRIM(RTRIM(ISNULL(CO_ActividadCIEP.NombreActividad, ''))))
-			AND CO_ActividadCIEP.IdContrato = @IdContratoSeleccionado
+        CO_Clasificacion
+            ON UPPER(#TablaTemporalValidacion.Nombre) = UPPER(LTRIM(RTRIM(ISNULL(CO_Clasificacion.NombreClasificacion, ''))));
 
-INSERT INTO CO_ActividadCIEP
+INSERT INTO CO_Clasificacion
     (
-NombreActividad,
-IdContrato,
-IdUsuarioCreadoPor,
-Creado,
-CreadoPor
+		NombreClasificacion,
+		CreadoPor
     )
            Select
                 Nombre,
-                @IdContratoSeleccionado,
-				@UsuarioId,
-                GETDATE(),
                 @UsuarioId
             from
                 #TablaTemporalValidacion

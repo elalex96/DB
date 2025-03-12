@@ -5,308 +5,1510 @@
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP'
+            name = 'USP_INS_CO_ValidacionGuardadoDeCargaDePresupuestoCIEP'
     )
-    DROP PROCEDURE USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP;
+    DROP PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuestoCIEP;
 GO
-CREATE PROCEDURE USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP --10,10007,99076
-    @UsuarioId INT,
-    @ContratoId INT,
-    @IdArchivoAWS INT
+CREATE PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuestoCIEP
+    @UsuarioId                                    INT,
+    @ContratoId                                   INT,
+    @IdArchivoAWS                                 INT,
+    @IdContratoSeleccionado                       INT,
+    @FechaInicio                                  DATE,
+    @FechaFin                                     DATE,
+    @Programa                                     VARCHAR(100),
+    @Presupuesto                                  VARCHAR(100),
+    @Periodo                                      VARCHAR(100),
+    @AdjuntarClaveSubtarea                        BIT                                    = 0,
+    @Table_CO_Type_BitacoraPresupuestoDetalleCIEP CO_Type_BitacoraPresupuestoDetalleCIEP READONLY,
+    @IdTipoProgramaActividad                      INT,
+    @Tipo                                         VARCHAR(100)
 AS
-BEGIN
-DECLARE @ErrorMessage VARCHAR(4000);
-    BEGIN TRY
-        BEGIN TRAN
-        SET NOCOUNT ON;
+    BEGIN
+        BEGIN TRY
+            BEGIN TRAN
 
+            SET NOCOUNT ON;
 
-CREATE TABLE #Meses
-    (
-        Numero      int IDENTITY(1,1),
-        FechaInicio DATE NULL,
-        FechaFin    DATE NULL
-    );
-CREATE TABLE #LineasPresupuestoMesInformacion
-    (
-        Id                               INT          IDENTITY(1, 1),
-        NumeroDeMes                      INT,
-        FechaInicio                      DATE,
-        FechaFin                         DATE,
-        IdBitacoraPresupuestoDetalle     INT,
-        IdCarga                          INT,
-        IdExcel                        INT,
-		IdArea	INT,
-		IdTipoServicio	INT,
-		TipoServicio VARCHAR(1000),
-		IdActividad	INT,
-		Actividad VARCHAR(1000),
-		IdClasificacion INT,
-		Clasificacion VARCHAR(1000),
-		IdServicio INT ,
-		Servicio VARCHAR(1000),
-		IdRubro	INT,
-		Rubro  VARCHAR(1000),
-		FecMovto DATE,
-        Monto     FLOAT        NULL
-    );
+            CREATE TABLE #TablaTemporalValidacionTipoServicio
+                (
+                    NombreTipoServicio  VARCHAR(1000) NULL,
+                    IdTipoServicioTabla INT           NULL,
+                    NumeroRepetidas     INT           NULL,
+                    Activo              BIT           NULL
+                )
 
-DECLARE
-    @IdCarga                 INT          = 0,
-    @AdjuntarClaveSubtarea   INT          = 0,
-    @IdContratoSeleccionado  INT          = 0,
-    @IdPeriodoContrato       INT          = 0,
-    @NombrePeriodo           VARCHAR(8000),
-    @Inicio                  DATE,
-    @Fin                     DATE,
-    @IdProgramaActividad     INT          = 0,
-    @NombreProgramaActividad VARCHAR(8000),
-    @IdPresupuesto           INT          = 0,
-    @NombrePresupuesto       VARCHAR(8000),
-    @IdTipoProgramaActividad INT,
-    @IdAnioContractual       INT,
-    @Version                 INT          = 1,
-    @Comentario              VARCHAR(500) = 'Carga por pantalla',
-    @IdAreaContractual       INT,
-	@IdAreaDesarrollo INT ;
+            CREATE TABLE #TablaTemporalValidacionActividadCIEP
+                (
+                    NombreActividad VARCHAR(1000) NULL,
+                    IdActividad     INT           NULL,
+                    NumeroRepetidas INT           NULL
+                )
 
-Select
-    @IdCarga                 = IdCarga,
-    @IdContratoSeleccionado  = IdContrato,
-    @NombrePeriodo           = Periodo,
-    @Inicio                  = Inicio,
-    @Fin                     = Fin,
-    @NombreProgramaActividad = Programa,
-    @IdTipoProgramaActividad = IdTipoProgramaActividad,
-    @NombrePresupuesto       = Presupuesto
-FROM
-    CO_BitacoraPresupuesto
-where
-    IdArchivoAWS = @IdArchivoAWS;
+            CREATE TABLE #TablaTemporalValidacionServicioCIEP
+                (
+                    NombreServicio  VARCHAR(1000) NULL,
+                    IdServicio      INT           NULL,
+                    NumeroRepetidas INT           NULL,
+                    Activo          BIT           NULL
+                )
 
-SELECT TOP 1
-    @IdAreaContractual = IdAreaContractual
-FROM
-    CO_Contrato (NOLOCK)
-WHERE
-    IdContrato = @IdContratoSeleccionado;
+            CREATE TABLE #TablaTemporalValidacionRubroCIEP
+                (
+                    NombreRubro     VARCHAR(1000) NULL,
+                    IdRubro         INT           NULL,
+                    NumeroRepetidas INT           NULL,
+                    Activo          BIT           NULL
+                )
 
-SELECT @IdAreaDesarrollo = IdArea FROM CO_Area WHERE NombreArea = 'Desarrollo Software';
+            CREATE TABLE #TablaTemporalValidacionClasificacionCIEP
+                (
+                    NombreClasificacion VARCHAR(1000) NULL,
+                    IdClasificacion     INT           NULL,
+                    NumeroRepetidas     INT           NULL
+                )
 
-INSERT INTO #Meses
-    (
-       FechaInicio,
-       FechaFin
-    )
-SELECT TOP 24 IdFecha, UltimoDiaMes FROM AP_Calendario WHERE IdFecha >=  @Inicio AND Dia = 1;
+            CREATE TABLE #TablaTemporalValidacionDetalles
+                (
+                    Tipo                  VARCHAR(1000) NULL,
+                    Descripcion           VARCHAR(1000) NULL,
+                    TipoDetalle           VARCHAR(100)  NULL,
+                    NombreDetallePantalla VARCHAR(100)  NULL,
+                    MultiplesDetalles     BIT           NULL,
+                    NumeroDeDetalles      INT           NULL
+                )
 
-INSERT INTO #LineasPresupuestoMesInformacion
-    (
-         
-        NumeroDeMes                      ,
-        FechaInicio                      ,
-        FechaFin                         ,
-        IdBitacoraPresupuestoDetalle     ,
-        IdCarga                          ,
-        IdExcel                        ,
-		IdArea	,
-		TipoServicio ,
-		Actividad,
-		Clasificacion,
-		Servicio,
-		Rubro,
-		FecMovto ,
-        Monto
-    )
-            SELECT
-                #Meses.Numero,
-                #Meses.FechaInicio,
-                #Meses.FechaFin,
-                CO_BitacoraPresupuestoDetalleCIEP.Id,
-                CO_BitacoraPresupuestoDetalleCIEP.IdCarga,
-                CO_BitacoraPresupuestoDetalleCIEP.IdExcel,
-				@IdAreaDesarrollo,
-				CuentaOperativa,
-				Actividad,
-				Clasificacion,
-				Servicios,
-				Rubro,
-				getdate(),
-				CASE #Meses.Numero
-				WHEN 1 THEN MES1
-				WHEN 2 THEN MES2
-				WHEN 3 THEN MES3
-				WHEN 4 THEN MES4
-				WHEN 5 THEN MES5
-				WHEN 6 THEN MES6
-				WHEN 7 THEN MES7
-				WHEN 8 THEN MES8
-				WHEN 9 THEN MES9
-				WHEN 10 THEN MES10
-				WHEN 11 THEN MES11
-				WHEN 12 THEN MES12
-				WHEN 13 THEN MES13
-				WHEN 14 THEN MES14
-				WHEN 15 THEN MES15
-				WHEN 16 THEN MES16
-				WHEN 17 THEN MES17
-				WHEN 18 THEN MES18
-				WHEN 19 THEN MES19
-				WHEN 20 THEN MES20
-				WHEN 21 THEN MES21
-				WHEN 22 THEN MES22
-				WHEN 23 THEN MES23
-				WHEN 24 THEN MES24
-				END
+            CREATE TABLE #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                (
+                    IdExcel         int,
+                    CuentaOperativa VARCHAR(1000),
+                    Actividad       VARCHAR(1000),
+                    Rubro           VARCHAR(1000),
+                    Servicios       VARCHAR(1000),
+                    Clasificacion   VARCHAR(1000),
+                    Unidad          VARCHAR(1000),
+                    MES1            FLOAT,
+                    MES2            FLOAT,
+                    MES3            FLOAT,
+                    MES4            FLOAT,
+                    MES5            FLOAT,
+                    MES6            FLOAT,
+                    MES7            FLOAT,
+                    MES8            FLOAT,
+                    MES9            FLOAT,
+                    MES10           FLOAT,
+                    MES11           FLOAT,
+                    MES12           FLOAT,
+                    MES13           FLOAT,
+                    MES14           FLOAT,
+                    MES15           FLOAT,
+                    MES16           FLOAT,
+                    MES17           FLOAT,
+                    MES18           FLOAT,
+                    MES19           FLOAT,
+                    MES20           FLOAT,
+                    MES21           FLOAT,
+                    MES22           FLOAT,
+                    MES23           FLOAT,
+                    MES24           FLOAT,
+                    Monto           FLOAT,
+                    NumeroRenglon   INT NULL
+                );
+
+            DECLARE
+                @ErrorMessage                       VARCHAR(4000),
+                @DetalleAnalisis                    VARCHAR(8000),
+                @DetalleAnalisisServicios           VARCHAR(8000),
+                @DetalleAnalisisCuentaOperativa      VARCHAR(8000),
+				@DetalleAnalisisActividad      VARCHAR(8000),
+				@DetalleAnalisisRubro     VARCHAR(8000),
+				@DetalleAnalisisClasificacion    VARCHAR(8000),
+                @DetalleAnalisisDatosGenerales      VARCHAR(8000),
+                @IdCarga                            INT         = 0,
+                @IdAreaContractual                  INT         = 0,
+                @NumeroAlertasDatosGenerales        INT         = 0,
+                @NumeroAlertasCuentaOperativa       INT         = 0,
+                @NumeroAlertasActividad             INT         = 0,
+                @NumeroAlertasServicio              INT         = 0,
+                @NumeroAlertasRubro                 INT         = 0,
+                @NumeroAlertasClasificacion         INT         = 0,
+                @Mensaje                            VARCHAR(50) = '',
+                @NumeroAlertasCuentaOperativaVacios INT         = 0,
+                @NumeroAlertasActividadVacios       INT         = 0,
+                @NumeroAlertasServicioVacios        INT         = 0,
+                @NumeroAlertasRubroVacios           INT         = 0,
+                @NumeroAlertasClasificacionVacios   INT         = 0;
+
+            SELECT TOP 1
+                @IdAreaContractual = IdAreaContractual
             FROM
-                CO_BitacoraPresupuestoDetalleCIEP
-                CROSS JOIN #Meses
+                CO_Contrato (NOLOCK)
             WHERE
-                CO_BitacoraPresupuestoDetalleCIEP.IdCarga = @IdCarga
+                IdContrato = @IdContratoSeleccionado
+
+            INSERT INTO CO_BitacoraPresupuesto
+                (
+                    IdArchivoAWS,
+                    IdContrato,
+                    Inicio,
+                    Fin,
+                    CreadoEl,
+                    CreadoPor,
+                    chkAdjuntaClaveSubTarea,
+                    IdTipoProgramaActividad,
+                    Programa,
+                    Presupuesto,
+                    Periodo,
+                    Tipo
+                )
+            VALUES
+                (
+                    @IdArchivoAWS,
+                    @IdContratoSeleccionado,
+                    @FechaInicio,
+                    @FechaFin,
+                    GETDATE(),
+                    @UsuarioId,
+                    @AdjuntarClaveSubtarea,
+                    @IdTipoProgramaActividad,
+                    @Programa,
+                    @Presupuesto,
+                    @Periodo,
+                    @Tipo
+                )
+
+            SELECT
+                @IdCarga = SCOPE_IDENTITY();
+
+            INSERT INTO CO_BitacoraPresupuestoDetalleCIEP
+                (
+                    IdCarga,
+                    IdExcel,
+                    CuentaOperativa,
+                    Actividad,
+                    Rubro,
+                    Servicios,
+                    Clasificacion,
+                    Unidad,
+                    MES1,
+                    MES2,
+                    MES3,
+                    MES4,
+                    MES5,
+                    MES6,
+                    MES7,
+                    MES8,
+                    MES9,
+                    MES10,
+                    MES11,
+                    MES12,
+                    MES13,
+                    MES14,
+                    MES15,
+                    MES16,
+                    MES17,
+                    MES18,
+                    MES19,
+                    MES20,
+                    MES21,
+                    MES22,
+                    MES23,
+                    MES24
+                )
+                        SELECT
+                            @IdCarga,
+                            IdExcel,
+                            CuentaOperativa,
+                            Actividad,
+                            Rubro,
+                            Servicios,
+                            Clasificacion,
+                            Unidad,
+                            MES1,
+                            MES2,
+                            MES3,
+                            MES4,
+                            MES5,
+                            MES6,
+                            MES7,
+                            MES8,
+                            MES9,
+                            MES10,
+                            MES11,
+                            MES12,
+                            MES13,
+                            MES14,
+                            MES15,
+                            MES16,
+                            MES17,
+                            MES18,
+                            MES19,
+                            MES20,
+                            MES21,
+                            MES22,
+                            MES23,
+                            MES24
+                        FROM
+                            @Table_CO_Type_BitacoraPresupuestoDetalleCIEP;
+
+            INSERT INTO #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                (
+                    IdExcel,
+                    CuentaOperativa,
+                    Actividad,
+                    Rubro,
+                    Servicios,
+                    Clasificacion,
+                    Unidad,
+                    MES1,
+                    MES2,
+                    MES3,
+                    MES4,
+                    MES5,
+                    MES6,
+                    MES7,
+                    MES8,
+                    MES9,
+                    MES10,
+                    MES11,
+                    MES12,
+                    MES13,
+                    MES14,
+                    MES15,
+                    MES16,
+                    MES17,
+                    MES18,
+                    MES19,
+                    MES20,
+                    MES21,
+                    MES22,
+                    MES23,
+                    MES24,
+                    Monto,
+                    NumeroRenglon
+                )
+                        SELECT
+                            IdExcel,
+                            CuentaOperativa,
+                            Actividad,
+                            Rubro,
+                            Servicios,
+                            Clasificacion,
+                            Unidad,
+                            MES1,
+                            MES2,
+                            MES3,
+                            MES4,
+                            MES5,
+                            MES6,
+                            MES7,
+                            MES8,
+                            MES9,
+                            MES10,
+                            MES11,
+                            MES12,
+                            MES13,
+                            MES14,
+                            MES15,
+                            MES16,
+                            MES17,
+                            MES18,
+                            MES19,
+                            MES20,
+                            MES21,
+                            MES22,
+                            MES23,
+                            MES24,
+                            (ISNULL(MES1, 0) + ISNULL(MES2, 0) + ISNULL(MES3, 0) + ISNULL(MES4, 0) + ISNULL(MES5, 0)
+                             + ISNULL(MES6, 0) + ISNULL(MES7, 0) + ISNULL(MES8, 0) + ISNULL(MES9, 0) + ISNULL(MES10, 0)
+                             + ISNULL(MES11, 0) + ISNULL(MES12, 0) + ISNULL(MES13, 0) + ISNULL(MES14, 0)
+                             + ISNULL(MES15, 0) + ISNULL(MES16, 0) + ISNULL(MES17, 0) + ISNULL(MES18, 0)
+                             + ISNULL(MES19, 0) + ISNULL(MES20, 0) + ISNULL(MES21, 0) + ISNULL(MES22, 0)
+                             + ISNULL(MES23, 0) + ISNULL(MES24, 0)
+                            ),
+                            NumeroRenglon
+                        FROM
+                            @Table_CO_Type_BitacoraPresupuestoDetalleCIEP;
+
+            INSERT INTO #TablaTemporalValidacionTipoServicio
+                (
+                    NombreTipoServicio,
+                    NumeroRepetidas
+                )
+                        SELECT
+                            CuentaOperativa,
+                            COUNT(1)
+                        FROM
+                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                        GROUP BY
+                            CuentaOperativa;
+
+            INSERT INTO #TablaTemporalValidacionActividadCIEP
+                (
+                    NombreActividad,
+                    NumeroRepetidas
+                )
+                        SELECT
+                            Actividad,
+                            COUNT(1)
+                        FROM
+                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                        GROUP BY
+                            Actividad;
+
+            INSERT INTO #TablaTemporalValidacionServicioCIEP
+                (
+                    NombreServicio,
+                    NumeroRepetidas
+                )
+                        SELECT
+                            Servicios,
+                            COUNT(1)
+                        FROM
+                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                        GROUP BY
+                            Servicios;
+
+            INSERT INTO #TablaTemporalValidacionRubroCIEP
+                (
+                    NombreRubro,
+                    NumeroRepetidas
+                )
+                        SELECT
+                            Rubro,
+                            COUNT(1)
+                        FROM
+                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                        GROUP BY
+                            Rubro;
+
+            INSERT INTO #TablaTemporalValidacionClasificacionCIEP
+                (
+                    NombreClasificacion,
+                    NumeroRepetidas
+                )
+                        SELECT
+                            Clasificacion,
+                            COUNT(1)
+                        FROM
+                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                        GROUP BY
+                            Clasificacion;
+
+            UPDATE
+                #TablaTemporalValidacionTipoServicio
+            SET
+                #TablaTemporalValidacionTipoServicio.IdTipoServicioTabla = CO_TipoServicio.IdTipoServicio,
+                #TablaTemporalValidacionTipoServicio.Activo = CO_TipoServicio.Activo
+            from
+                #TablaTemporalValidacionTipoServicio
+                JOIN
+                    CO_TipoServicio
+                        ON UPPER(LTRIM(RTRIM(ISNULL(#TablaTemporalValidacionTipoServicio.NombreTipoServicio, '')))) = 
+						   UPPER(LTRIM(RTRIM(ISNULL(CO_TipoServicio.NombreTipoServicio, ''))))
+            WHERE
+                #TablaTemporalValidacionTipoServicio.NombreTipoServicio <> '';
+
+            UPDATE
+                #TablaTemporalValidacionActividadCIEP
+            SET
+                #TablaTemporalValidacionActividadCIEP.IdActividad = CO_ActividadCIEP.IdActividad
+            from
+                #TablaTemporalValidacionActividadCIEP
+                JOIN
+                    CO_ActividadCIEP
+                        ON UPPER(LTRIM(RTRIM(ISNULL(#TablaTemporalValidacionActividadCIEP.NombreActividad, '')))) = 
+						   UPPER(LTRIM(RTRIM(ISNULL(CO_ActividadCIEP.NombreActividad, ''))))
+						   AND CO_ActividadCIEP.IdContrato = @IdContratoSeleccionado
+            WHERE
+                #TablaTemporalValidacionActividadCIEP.NombreActividad <> '';
+
+            UPDATE
+                #TablaTemporalValidacionServicioCIEP
+            SET
+                #TablaTemporalValidacionServicioCIEP.IdServicio = CO_Servicio.IdServicio,
+                #TablaTemporalValidacionServicioCIEP.Activo = CO_Servicio.Activo,
+				#TablaTemporalValidacionServicioCIEP.NombreServicio = #TablaTemporalValidacionServicioCIEP.NombreServicio
+            from
+                #TablaTemporalValidacionServicioCIEP
+                JOIN
+                    CO_Servicio
+                        ON UPPER(LTRIM(RTRIM(ISNULL(#TablaTemporalValidacionServicioCIEP.NombreServicio, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_Servicio.NombreServicio, ''))))
+            WHERE
+                CO_Servicio.IdContrato = @IdContratoSeleccionado
+                AND #TablaTemporalValidacionServicioCIEP.NombreServicio <> '';
+
+            UPDATE
+                #TablaTemporalValidacionRubroCIEP
+            SET
+                #TablaTemporalValidacionRubroCIEP.IdRubro = CO_Rubro.IdRubro,
+                #TablaTemporalValidacionRubroCIEP.Activo = CO_Rubro.Activo
+            from
+                #TablaTemporalValidacionRubroCIEP
+                JOIN
+                    CO_Rubro
+                        ON UPPER(LTRIM(RTRIM(ISNULL(#TablaTemporalValidacionRubroCIEP.NombreRubro, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_Rubro.NombreRubro, ''))))
+            WHERE
+                #TablaTemporalValidacionRubroCIEP.NombreRubro <> '';
+
+            UPDATE
+                #TablaTemporalValidacionClasificacionCIEP
+            SET
+                #TablaTemporalValidacionClasificacionCIEP.IdClasificacion = CO_Clasificacion.IdClasificacion
+            from
+                #TablaTemporalValidacionClasificacionCIEP
+                JOIN
+                    CO_Clasificacion
+                        ON UPPER(LTRIM(RTRIM(ISNULL(#TablaTemporalValidacionClasificacionCIEP.NombreClasificacion, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_Clasificacion.NombreClasificacion, ''))))
+            WHERE
+                #TablaTemporalValidacionClasificacionCIEP.NombreClasificacion <> '';
 
 
-UPDATE
-    #LineasPresupuestoMesInformacion
-SET
-    #LineasPresupuestoMesInformacion.IdTipoServicio = CO_TipoServicio.IdTipoServicio
-FROM
-    #LineasPresupuestoMesInformacion
-    JOIN
-        CO_TipoServicio
-            ON UPPER(LTRIM(RTRIM(ISNULL(#LineasPresupuestoMesInformacion.TipoServicio, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_TipoServicio.NombreTipoServicio, ''))))
-			AND  ISNULL(CO_TipoServicio.Activo, 0) = 1;
+            /*=========================*/
+            /*Verificacion de CO_TipoServicio*/
+            /*=========================*/
+
+            SELECT
+                @NumeroAlertasCuentaOperativaVacios = COUNT(1)
+            FROM
+                #TablaTemporalBitacoraPresupuestoDetalleCIEP
+            WHERE
+                ISNULL(CuentaOperativa, '') = ''
+
+            IF (@NumeroAlertasCuentaOperativaVacios > 0)
+                BEGIN
+                    IF (@NumeroAlertasCuentaOperativaVacios = 1)
+                        BEGIN
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                                        SELECT
+                                            'ALERTA_DATOSGENERALES',
+                                            CONCAT(
+                                                      'Renglón: ',
+                                                      CONVERT(
+                                                                 VARCHAR(10),
+                                                                 #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                             )
+                                                  ),
+                                            'CuentaOperativa',
+                                            'Cuenta Operativa',
+                                            0,
+                                            1
+                                        FROM
+                                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                        WHERE
+                                            ISNULL(CuentaOperativa, '') = ''
+                                        ORDER BY
+                                            IdExcel ASC
+                        END
+                    ELSE
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisDatosGenerales
+                                = CONCAT(
+                                            'Renglones: ',
+                                            STUFF(
+                                                (
+                                                    SELECT
+                                                        ', '
+                                                        + CONVERT(
+                                                                     VARCHAR(10),
+                                                                     #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                                 )
+                                                    FROM
+                                                        #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                                    WHERE
+                                                        ISNULL(CuentaOperativa, '') = ''
+                                                    ORDER BY
+                                                        IdExcel ASC
+                                                    FOR XML PATH('')
+                                                ), 1, 2, ''
+                                                 )
+                                        )
+
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                            VALUES
+                                (
+                                    'ALERTA_DATOSGENERALES',
+                                    @DetalleAnalisisDatosGenerales,
+                                    'CuentaOperativa',
+                                    'Cuenta Operativa',
+                                    1,
+                                    @NumeroAlertasCuentaOperativaVacios
+                                )
+
+                            SET @DetalleAnalisisDatosGenerales = '';
+                        END
+                END
 
 
-UPDATE
-    #LineasPresupuestoMesInformacion
-SET
-    #LineasPresupuestoMesInformacion.IdActividad = CO_ActividadCIEP.IdActividad
-FROM
-    #LineasPresupuestoMesInformacion
-    JOIN
-        CO_ActividadCIEP
-            ON UPPER(LTRIM(RTRIM(ISNULL(#LineasPresupuestoMesInformacion.Actividad, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_ActividadCIEP.NombreActividad, ''))));
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_CUENTA_OPERATIVA',
+                            LTRIM(RTRIM(CONCAT(
+                                                  NombreTipoServicio, ' (', CONVERT(VARCHAR(10), NumeroRepetidas),
+                                                  ') [NO ACTIVO]'
+                                              )
+                                       )
+                                 )
+                        FROM
+                            #TablaTemporalValidacionTipoServicio
+                        WHERE
+                            Activo = 0
+                            AND IdTipoServicioTabla IS NOT NULL
+                            AND NombreTipoServicio <> ''
 
-UPDATE
-    #LineasPresupuestoMesInformacion
-SET
-    #LineasPresupuestoMesInformacion.IdServicio = CO_Servicio.IdServicio
-FROM
-    #LineasPresupuestoMesInformacion
-    JOIN
-        CO_Servicio
-            ON UPPER(LTRIM(RTRIM(ISNULL(#LineasPresupuestoMesInformacion.Servicio, '')))) =UPPER(LTRIM(RTRIM(ISNULL(CO_Servicio.NombreServicio, ''))))
-WHERE
-    CO_Servicio.IdContrato = @IdContratoSeleccionado
-    AND ISNULL(CO_Servicio.Activo, 0) = 1;
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_CUENTA_OPERATIVA',
+                            LTRIM(RTRIM(CONCAT(NombreTipoServicio, ' (', CONVERT(VARCHAR(10), NumeroRepetidas), ')')))
+                        FROM
+                            #TablaTemporalValidacionTipoServicio
+                        WHERE
+                            IdTipoServicioTabla IS NULL
+                            AND NombreTipoServicio <> ''
+
+            /*=========================*/
+            /*Verificacion de CO_Servicio*/
+            /*=========================*/
+
+            SELECT
+                @NumeroAlertasServicioVacios = COUNT(1)
+            FROM
+                #TablaTemporalBitacoraPresupuestoDetalleCIEP
+            WHERE
+                ISNULL(Servicios, '') = ''
+
+            IF (@NumeroAlertasServicioVacios > 0)
+                BEGIN
+                    IF (@NumeroAlertasServicioVacios = 1)
+                        BEGIN
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                                        SELECT
+                                            'ALERTA_DATOSGENERALES',
+                                            CONCAT(
+                                                      'Renglón: ',
+                                                      CONVERT(
+                                                                 VARCHAR(10),
+                                                                 #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                             )
+                                                  ),
+                                            'Servicios',
+                                            'Servicio',
+                                            0,
+                                            1
+                                        FROM
+                                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                        WHERE
+                                            ISNULL(Servicios, '') = ''
+                                        ORDER BY
+                                            IdExcel ASC
+                        END
+                    ELSE
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisDatosGenerales
+                                = CONCAT(
+                                            'Renglones: ',
+                                            STUFF(
+                                                (
+                                                    SELECT
+                                                        ', '
+                                                        + CONVERT(
+                                                                     VARCHAR(10),
+                                                                     #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                                 )
+                                                    FROM
+                                                        #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                                    WHERE
+                                                        ISNULL(Servicios, '') = ''
+                                                    ORDER BY
+                                                        IdExcel ASC
+                                                    FOR XML PATH('')
+                                                ), 1, 2, ''
+                                                 )
+                                        )
+
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                            VALUES
+                                (
+                                    'ALERTA_DATOSGENERALES',
+                                    @DetalleAnalisisDatosGenerales,
+                                    'Servicios',
+                                    'Servicio',
+                                    1,
+                                    @NumeroAlertasServicioVacios
+                                )
+
+                            SET @DetalleAnalisisDatosGenerales = '';
+                        END
+                END
 
 
-UPDATE
-    #LineasPresupuestoMesInformacion
-SET
-    #LineasPresupuestoMesInformacion.IdRubro = CO_Rubro.IdRubro
-FROM
-    #LineasPresupuestoMesInformacion
-    JOIN
-        CO_Rubro
-            ON UPPER(LTRIM(RTRIM(ISNULL(#LineasPresupuestoMesInformacion.Rubro, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_Rubro.NombreRubro, ''))))
-			AND  ISNULL(CO_Rubro.Activo, 0) = 1;
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_SERVICIO',
+                            LTRIM(RTRIM(CONCAT(
+                                                  NombreServicio, ' (', CONVERT(VARCHAR(10), NumeroRepetidas),
+                                                  ') [NO ACTIVO]'
+                                              )
+                                       )
+                                 )
+                        FROM
+                            #TablaTemporalValidacionServicioCIEP
+                        WHERE
+                            Activo = 0
+                            AND IdServicio IS NOT NULL
+                            AND NombreServicio <> ''
 
-UPDATE
-    #LineasPresupuestoMesInformacion
-SET
-    #LineasPresupuestoMesInformacion.IdClasificacion = CO_Clasificacion.IdClasificacion
-FROM
-    #LineasPresupuestoMesInformacion
-    JOIN
-        CO_Clasificacion
-            ON UPPER(LTRIM(RTRIM(ISNULL(#LineasPresupuestoMesInformacion.Clasificacion, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_Clasificacion.NombreClasificacion, ''))))
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_SERVICIO',
+                            LTRIM(RTRIM(CONCAT(NombreServicio, ' (', CONVERT(VARCHAR(10), NumeroRepetidas), ') ')))
+                        FROM
+                            #TablaTemporalValidacionServicioCIEP
+                        WHERE
+                            IdServicio IS NULL
+                            AND NombreServicio <> ''
 
-IF((SELECT
-    COUNT(1)
-FROM
-    #LineasPresupuestoMesInformacion
-WHERE
-    monto > 0) > 0)
-BEGIN
-		INSERT INTO CO_PERIODOCONTRATO (IdContrato,NombrePeriodo,Inicio,Fin,CreadoPor,CreadoEl,Activo)
-		SELECT @IdContratoSeleccionado, @NombrePeriodo,@Inicio,@Fin,@UsuarioId,GETDATE(),1;
+            /*=========================*/
+            /*Verificacion de CO_ActividadCIEP */
+            /*=========================*/
 
-		SELECT @IdPeriodoContrato = SCOPE_IDENTITY()
+            SELECT
+                @NumeroAlertasActividadVacios = COUNT(1)
+            FROM
+                #TablaTemporalBitacoraPresupuestoDetalleCIEP
+            WHERE
+                ISNULL(Actividad, '') = ''
 
-		INSERT INTO CO_ProgramaActividad(IdPeriodoContrato,IdTipoProgramaActividad,NombrePrograma,CreadoPor,CreadoEl,Activo)
-		SELECT @IdPeriodoContrato,@IdTipoProgramaActividad, @NombreProgramaActividad,@UsuarioId, GETDATE(),1;
+            IF (@NumeroAlertasActividadVacios > 0)
+                BEGIN
+                    IF (@NumeroAlertasActividadVacios = 1)
+                        BEGIN
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                                        SELECT
+                                            'ALERTA_DATOSGENERALES',
+                                            CONCAT(
+                                                      'Renglón: ',
+                                                      CONVERT(
+                                                                 VARCHAR(10),
+                                                                 #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                             )
+                                                  ),
+                                            'Actividades',
+                                            'Actividad',
+                                            0,
+                                            1
+                                        FROM
+                                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                        WHERE
+                                            ISNULL(Actividad, '') = ''
+                                        ORDER BY
+                                            IdExcel ASC
+                        END
+                    ELSE
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisDatosGenerales
+                                = CONCAT(
+                                            'Renglones: ',
+                                            STUFF(
+                                                (
+                                                    SELECT
+                                                        ', '
+                                                        + CONVERT(
+                                                                     VARCHAR(10),
+                                                                     #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                                 )
+                                                    FROM
+                                                        #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                                    WHERE
+                                                        ISNULL(Actividad, '') = ''
+                                                    ORDER BY
+                                                        IdExcel ASC
+                                                    FOR XML PATH('')
+                                                ), 1, 2, ''
+                                                 )
+                                        )
 
-        SELECT @IdProgramaActividad = SCOPE_IDENTITY();
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                            VALUES
+                                (
+                                    'ALERTA_DATOSGENERALES',
+                                    @DetalleAnalisisDatosGenerales,
+                                    'Actividades',
+                                    'Actividad',
+                                    1,
+                                    @NumeroAlertasActividadVacios
+                                )
 
-		INSERT INTO CO_AnioContractual (Anio,Inicio,Termino,IdContrato,CreadoPor)
-		SELECT YEAR(@Inicio),@Inicio,@Fin,@IdContratoSeleccionado,@UsuarioId;
+                            SET @DetalleAnalisisDatosGenerales = '';
+                        END
+                END
 
-		SELECT @IdAnioContractual = SCOPE_IDENTITY();
-		
-		INSERT INTO	CO_Presupuesto(IdAnioContractual,IdProgramaActividad,Version,Nombre,Comentario,CreadoPor,CreadoEl,Activo,IdPresupuestoCNH,Actual,CIEP,ActivoProcura)
-		SELECT	@IdAnioContractual,@IdProgramaActividad,@Version,@NombrePresupuesto, @Comentario,@UsuarioId, GETDATE(),1,'',1,1,1
 
-		SELECT @IdPresupuesto	= SCOPE_IDENTITY();
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_ACTIVIDAD',
+                            LTRIM(RTRIM(CONCAT(NombreActividad, ' (', CONVERT(VARCHAR(10), NumeroRepetidas), ') ')))
+                        FROM
+                            #TablaTemporalValidacionActividadCIEP
+                        WHERE
+                            IdActividad IS NULL
+                            AND NombreActividad <> ''
 
-		-- REGISTRO DE LINEAS PRESUPUESTO MESES:
-		INSERT INTO CO_LineaPresupuestoMes(
-								IdPresupuesto,
-								IdTipoServicio,
-								IdActividad,
-								 IdClasificacion, 
-								AC_PRESUP_MES,
-								IdServicio,
-								AC_FEC_INI,
-								AC_FEC_FIN,
-								IdArea,
-								IdRubro,
-								Volumetria,
-								PrecioUnitario,
-								Monto,
-								IdUsuario,
-								FecMovto,
-								IdExcel)
-						SELECT  @IdPresupuesto, 
-						IdTipoServicio,
-						IdActividad,
-						IdClasificacion,
-						FechaInicio,
-						IdServicio,
-						FechaInicio,
-						FechaFin,
-						IdArea,
-						IdRubro,
-						1,
-						0,
-						Monto,
-						@UsuarioId, 
-						GETDATE(),
-						IdExcel
-						FROM
-							#LineasPresupuestoMesInformacion
-						WHERE
-							ISNULL(#LineasPresupuestoMesInformacion.Monto,0 ) > 0
-					   ORDER BY IdExcel;
-						
+            /*=========================*/
+            /*Verificacion de CO_Rubro*/
+            /*=========================*/
+            SELECT
+                @NumeroAlertasRubroVacios = COUNT(1)
+            FROM
+                #TablaTemporalBitacoraPresupuestoDetalleCIEP
+            WHERE
+                ISNULL(Rubro, '') = ''
 
-						UPDATE CO_BitacoraPresupuesto
-						SET	
-							CO_BitacoraPresupuesto.IdPresupuesto = @IdPresupuesto,
-							CO_BitacoraPresupuesto.DetalleInsercion = CONCAT('Presupuesto ',@NombrePresupuesto, ' registrado correctamente')
-						FROM
-							CO_BitacoraPresupuesto
-						WHERE
-							IdArchivoAWS = @IdArchivoAWS;
+            IF (@NumeroAlertasRubroVacios > 0)
+                BEGIN
+                    IF (@NumeroAlertasRubroVacios = 1)
+                        BEGIN
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                                        SELECT
+                                            'ALERTA_DATOSGENERALES',
+                                            CONCAT(
+                                                      'Renglón: ',
+                                                      CONVERT(
+                                                                 VARCHAR(10),
+                                                                 #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                             )
+                                                  ),
+                                            'Rubros',
+                                            'Rubro',
+                                            0,
+                                            1
+                                        FROM
+                                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                        WHERE
+                                            ISNULL(Rubro, '') = ''
+                                        ORDER BY
+                                            IdExcel ASC
+                        END
+                    ELSE
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisDatosGenerales
+                                = CONCAT(
+                                            'Renglones: ',
+                                            STUFF(
+                                                (
+                                                    SELECT
+                                                        ', '
+                                                        + CONVERT(
+                                                                     VARCHAR(10),
+                                                                     #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                                 )
+                                                    FROM
+                                                        #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                                    WHERE
+                                                        ISNULL(Rubro, '') = ''
+                                                    ORDER BY
+                                                        IdExcel ASC
+                                                    FOR XML PATH('')
+                                                ), 1, 2, ''
+                                                 )
+                                        )
 
-	END	
- COMMIT TRAN
-    END TRY
-    BEGIN CATCH
-        SELECT @ErrorMessage = ERROR_MESSAGE()
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                            VALUES
+                                (
+                                    'ALERTA_DATOSGENERALES',
+                                    @DetalleAnalisisDatosGenerales,
+                                    'Rubros',
+                                    'Rubro',
+                                    1,
+                                    @NumeroAlertasActividadVacios
+                                )
 
-        ROLLBACK TRAN
+                            SET @DetalleAnalisisDatosGenerales = '';
+                        END
+                END
 
-        RAISERROR(@ErrorMessage, 17, 1)
-    END CATCH;
-END
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_RUBRO',
+                            LTRIM(RTRIM(CONCAT(
+                                                  NombreRubro, ' (', CONVERT(VARCHAR(10), NumeroRepetidas),
+                                                  ') [NO ACTIVO]'
+                                              )
+                                       )
+                                 )
+                        FROM
+                            #TablaTemporalValidacionRubroCIEP
+                        WHERE
+                            Activo = 0
+                            AND IdRubro IS NOT NULL
+                            AND NombreRubro <> ''
+
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_RUBRO',
+                            LTRIM(RTRIM(CONCAT(NombreRubro, ' (', CONVERT(VARCHAR(10), NumeroRepetidas), ') ')))
+                        FROM
+                            #TablaTemporalValidacionRubroCIEP
+                        WHERE
+                            IdRubro IS NULL
+                            AND NombreRubro <> ''
+
+            /*=========================*/
+            /*Verificacion de CO_Clasificacion */
+            /*=========================*/
+
+            SELECT
+                @NumeroAlertasClasificacionVacios = COUNT(1)
+            FROM
+                #TablaTemporalBitacoraPresupuestoDetalleCIEP
+            WHERE
+                ISNULL(Clasificacion, '') = ''
+
+            IF (@NumeroAlertasClasificacionVacios > 0)
+                BEGIN
+                    IF (@NumeroAlertasClasificacionVacios = 1)
+                        BEGIN
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                                        SELECT
+                                            'ALERTA_DATOSGENERALES',
+                                            CONCAT(
+                                                      'Renglón: ',
+                                                      CONVERT(
+                                                                 VARCHAR(10),
+                                                                 #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                             )
+                                                  ),
+                                            'Clasificaciones',
+                                            'Clasificacion',
+                                            0,
+                                            1
+                                        FROM
+                                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                        WHERE
+                                            ISNULL(Clasificacion, '') = ''
+                                        ORDER BY
+                                            IdExcel ASC
+                        END
+                    ELSE
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisDatosGenerales
+                                = CONCAT(
+                                            'Renglones: ',
+                                            STUFF(
+                                                (
+                                                    SELECT
+                                                        ', '
+                                                        + CONVERT(
+                                                                     VARCHAR(10),
+                                                                     #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                                 )
+                                                    FROM
+                                                        #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                                    WHERE
+                                                        ISNULL(Clasificacion, '') = ''
+                                                    ORDER BY
+                                                        IdExcel ASC
+                                                    FOR XML PATH('')
+                                                ), 1, 2, ''
+                                                 )
+                                        )
+
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                            VALUES
+                                (
+                                    'ALERTA_DATOSGENERALES',
+                                    @DetalleAnalisisDatosGenerales,
+                                    'Clasificaciones',
+                                    'Clasificacion',
+                                    1,
+                                    @NumeroAlertasClasificacionVacios
+                                )
+
+                            SET @DetalleAnalisisDatosGenerales = '';
+                        END
+                END
+
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_CLASIFICACION',
+                            LTRIM(RTRIM(CONCAT(NombreClasificacion, ' (', CONVERT(VARCHAR(10), NumeroRepetidas), ') ')))
+                        FROM
+                            #TablaTemporalValidacionClasificacionCIEP
+                        WHERE
+                            IdClasificacion IS NULL
+                            AND NombreClasificacion <> ''
+
+            /*===========================*/
+            /*Verificacion de Monto = 0*/
+            /*===========================*/
+            IF (
+                   (
+                       SELECT
+                           COUNT(1)
+                       FROM
+                           #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                       WHERE
+                           ISNULL(MONTO, 0) = 0
+                   ) > 0
+               )
+                BEGIN
+                    IF (
+                           (
+                               SELECT
+                                   COUNT(1)
+                               FROM
+                                   #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                               WHERE
+                                   ISNULL(MONTO, 0) = 0
+                           ) = 1
+                       )
+                        BEGIN
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                                        SELECT
+                                            'ALERTA_DATOSGENERALES',
+                                            CONCAT(
+                                                      'Renglón: ',
+                                                      CONVERT(
+                                                                 VARCHAR(10),
+                                                                 #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                             )
+                                                  ),
+                                            'MONTO',
+                                            'Monto Presupuestado',
+                                            0,
+                                            1
+                                        FROM
+                                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                        WHERE
+                                            ISNULL(MONTO, 0) = 0
+                                        ORDER BY
+                                            IdExcel ASC
+                        END
+                    ELSE
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisDatosGenerales
+                                = CONCAT(
+                                            'Renglones: ',
+                                            STUFF(
+                                                (
+                                                    SELECT
+                                                        ', '
+                                                        + CONVERT(
+                                                                     VARCHAR(10),
+                                                                     #TablaTemporalBitacoraPresupuestoDetalleCIEP.NumeroRenglon
+                                                                 )
+                                                    FROM
+                                                        #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                                                    WHERE
+                                                        ISNULL(MONTO, 0) = 0
+                                                    ORDER BY
+                                                        IdExcel ASC
+                                                    FOR XML PATH('')
+                                                ), 1, 2, ''
+                                                 )
+                                        )
+
+                            SELECT
+                                @NumeroAlertasDatosGenerales = COUNT(1)
+                            FROM
+                                #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                            WHERE
+                                ISNULL(MONTO, 0) = 0;
+
+                            INSERT INTO #TablaTemporalValidacionDetalles
+                                (
+                                    Tipo,
+                                    Descripcion,
+                                    TipoDetalle,
+                                    NombreDetallePantalla,
+                                    MultiplesDetalles,
+                                    NumeroDeDetalles
+                                )
+                            VALUES
+                                (
+                                    'ALERTA_DATOSGENERALES',
+                                    @DetalleAnalisisDatosGenerales,
+                                    'MONTO',
+                                    'Monto Presupuestado',
+                                    1,
+                                    @NumeroAlertasDatosGenerales
+                                )
+
+                            SET @DetalleAnalisisDatosGenerales = '';
+                            SET @NumeroAlertasDatosGenerales = 0;
+                        END
+                END
+
+            /*===========================*/
+            /*RETORNO DE MENSAJES A PANTALLA*/
+            /*===========================*/
+
+            SELECT
+                @NumeroAlertasDatosGenerales = COUNT(1)
+            FROM
+                #TablaTemporalValidacionDetalles
+            WHERE
+                Tipo = 'ALERTA_DATOSGENERALES';
+
+            SELECT
+                @NumeroAlertasCuentaOperativa = COUNT(1)
+            FROM
+                #TablaTemporalValidacionDetalles
+            WHERE
+                Tipo = 'ALERTA_CUENTA_OPERATIVA';
+
+            SELECT
+                @NumeroAlertasActividad = COUNT(1)
+            FROM
+                #TablaTemporalValidacionDetalles
+            WHERE
+                Tipo = 'ALERTA_ACTIVIDAD';
+
+            SELECT
+                @NumeroAlertasServicio = COUNT(1)
+            FROM
+                #TablaTemporalValidacionDetalles
+            WHERE
+                Tipo = 'ALERTA_SERVICIO';
+
+            SELECT
+                @NumeroAlertasRubro = COUNT(1)
+            FROM
+                #TablaTemporalValidacionDetalles
+            WHERE
+                Tipo = 'ALERTA_RUBRO';
+
+            SELECT
+                @NumeroAlertasClasificacion = COUNT(1)
+            FROM
+                #TablaTemporalValidacionDetalles
+            WHERE
+                Tipo = 'ALERTA_CLASIFICACION';
+
+            IF (
+                   @NumeroAlertasDatosGenerales = 0
+                   AND @NumeroAlertasCuentaOperativa = 0
+                   AND @NumeroAlertasActividad = 0
+                   AND @NumeroAlertasServicio = 0
+                   AND @NumeroAlertasRubro = 0
+                   AND @NumeroAlertasClasificacion = 0
+               )
+                SELECT
+                    @Mensaje = 'VALIDACION_EXITOSA';
+
+            IF (
+                   @NumeroAlertasDatosGenerales > 0
+                   AND @NumeroAlertasCuentaOperativa > 0
+                   AND @NumeroAlertasActividad > 0
+                   AND @NumeroAlertasServicio > 0
+                   AND @NumeroAlertasRubro > 0
+                   AND @NumeroAlertasClasificacion > 0
+               )
+                SELECT
+                    @Mensaje = 'ALERTA_TODAS_ALERTAS'
+
+            SELECT
+                @Mensaje AS MENSAJE; -- 0
+
+
+            IF (@Mensaje <> 'VALIDACION_EXITOSA')
+                BEGIN
+                    SELECT
+                        Descripcion
+                    FROM
+                        #TablaTemporalValidacionDetalles -- 1
+                    WHERE
+                        Tipo = 'ALERTA_SERVICIO';
+
+                    SELECT
+                        Descripcion
+                    FROM
+                        #TablaTemporalValidacionDetalles -- 2
+                    WHERE
+                        Tipo = 'ALERTA_CUENTA_OPERATIVA'
+
+                    SELECT
+                        Descripcion,
+                        TipoDetalle,
+                        NumeroDeDetalles,
+                        NombreDetallePantalla
+                    FROM
+                        #TablaTemporalValidacionDetalles -- 3 
+                    WHERE
+                        Tipo = 'ALERTA_DATOSGENERALES';
+
+                    SELECT
+                        Descripcion
+                    FROM
+                        #TablaTemporalValidacionDetalles -- 4
+                    WHERE
+                        Tipo = 'ALERTA_ACTIVIDAD'
+
+
+                    SELECT
+                        Descripcion
+                    FROM
+                        #TablaTemporalValidacionDetalles -- 5
+                    WHERE
+                        Tipo = 'ALERTA_RUBRO';
+
+                    SELECT
+                        Descripcion
+                    FROM
+                        #TablaTemporalValidacionDetalles -- 6
+                    WHERE
+                        Tipo = 'ALERTA_CLASIFICACION';
+
+                    IF (@NumeroAlertasServicio > 0)
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisServicios = STUFF(
+                                                                (
+                                                                    SELECT
+                                                                        ', ' + Descripcion
+                                                                    FROM
+                                                                        #TablaTemporalValidacionDetalles
+                                                                    WHERE
+                                                                        Tipo = 'ALERTA_SERVICIO'
+                                                                    FOR XML PATH('')
+                                                                ), 1, 2, ''
+                                                                 );
+
+                            SELECT
+                                @DetalleAnalisis
+                                = CONCAT(
+                                            @DetalleAnalisis,
+                                            (CASE
+                                                 WHEN @NumeroAlertasServicio > 1
+                                                     THEN 'Existen ' + CONVERT(VARCHAR(10), @NumeroAlertasServicio)
+                                                          + ' nuevos servicios ( ' + @DetalleAnalisisServicios + ' )	|'
+                                                 ELSE
+                                                     'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasServicio)
+                                                     + ' nuevo servicio ( ' + @DetalleAnalisisServicios + ' )	|'
+                                             END
+                                            )
+                                        );
+                            SET @DetalleAnalisis = REPLACE(@DetalleAnalisis, '&amp;', '&');
+
+                        END
+
+					 IF (@NumeroAlertasCuentaOperativa > 0)
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisCuentaOperativa = STUFF(
+                                                                (
+                                                                    SELECT
+                                                                        ', ' + Descripcion
+                                                                    FROM
+                                                                        #TablaTemporalValidacionDetalles
+                                                                    WHERE
+                                                                        Tipo = 'ALERTA_CUENTA_OPERATIVA'
+                                                                    FOR XML PATH('')
+                                                                ), 1, 2, ''
+                                                                 );
+
+                            SELECT
+                                @DetalleAnalisis
+                                = CONCAT(
+                                            @DetalleAnalisis,
+                                            (CASE
+                                                 WHEN @NumeroAlertasCuentaOperativa > 1
+                                                     THEN 'Existen ' + CONVERT(VARCHAR(10), @NumeroAlertasCuentaOperativa)
+                                                          + ' nuevas cuentas operativas ( ' + @DetalleAnalisisCuentaOperativa + ' )	|'
+                                                 ELSE
+                                                     'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasCuentaOperativa)
+                                                     + ' nueva cuenta operativa ( ' + @DetalleAnalisisCuentaOperativa + ' )	|'
+                                             END
+                                            )
+                                        );
+                            SET @DetalleAnalisis = REPLACE(@DetalleAnalisis, '&amp;', '&');
+
+                        END
+
+					IF (@NumeroAlertasActividad > 0)
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisActividad = STUFF(
+                                                                (
+                                                                    SELECT
+                                                                        ', ' + Descripcion
+                                                                    FROM
+                                                                        #TablaTemporalValidacionDetalles
+                                                                    WHERE
+                                                                        Tipo = 'ALERTA_ACTIVIDAD'
+                                                                    FOR XML PATH('')
+                                                                ), 1, 2, ''
+                                                                 );
+
+                            SELECT
+                                @DetalleAnalisis
+                                = CONCAT(
+                                            @DetalleAnalisis,
+                                            (CASE
+                                                 WHEN @NumeroAlertasActividad > 1
+                                                     THEN 'Existen ' + CONVERT(VARCHAR(10), @NumeroAlertasActividad)
+                                                          + ' nuevas actividades ( ' + @DetalleAnalisisActividad + ' )	|'
+                                                 ELSE
+                                                     'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasActividad)
+                                                     + ' nueva actividad ( ' + @DetalleAnalisisActividad + ' )	|'
+                                             END
+                                            )
+                                        );
+                            SET @DetalleAnalisis = REPLACE(@DetalleAnalisis, '&amp;', '&');
+
+                        END
+
+					IF (@NumeroAlertasRubro > 0)
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisRubro = STUFF(
+                                                                (
+                                                                    SELECT
+                                                                        ', ' + Descripcion
+                                                                    FROM
+                                                                        #TablaTemporalValidacionDetalles
+                                                                    WHERE
+                                                                        Tipo = 'ALERTA_RUBRO'
+                                                                    FOR XML PATH('')
+                                                                ), 1, 2, ''
+                                                                 );
+
+                            SELECT
+                                @DetalleAnalisis
+                                = CONCAT(
+                                            @DetalleAnalisis,
+                                            (CASE
+                                                 WHEN @NumeroAlertasRubro > 1
+                                                     THEN 'Existen ' + CONVERT(VARCHAR(10), @NumeroAlertasRubro)
+                                                          + ' nuevos rubros ( ' + @DetalleAnalisisRubro + ' )	|'
+                                                 ELSE
+                                                     'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasRubro)
+                                                     + ' nuevo rubro ( ' + @DetalleAnalisisRubro + ' )	|'
+                                             END
+                                            )
+                                        );
+                            SET @DetalleAnalisis = REPLACE(@DetalleAnalisis, '&amp;', '&');
+
+                        END
+
+					IF (@NumeroAlertasClasificacion > 0)
+                        BEGIN
+                            SELECT
+                                @DetalleAnalisisClasificacion = STUFF(
+                                                                (
+                                                                    SELECT
+                                                                        ', ' + Descripcion
+                                                                    FROM
+                                                                        #TablaTemporalValidacionDetalles
+                                                                    WHERE
+                                                                        Tipo = 'ALERTA_CLASIFICACION'
+                                                                    FOR XML PATH('')
+                                                                ), 1, 2, ''
+                                                                 );
+
+                            SELECT
+                                @DetalleAnalisis
+                                = CONCAT(
+                                            @DetalleAnalisis,
+                                            (CASE
+                                                 WHEN @NumeroAlertasClasificacion > 1
+                                                     THEN 'Existen ' + CONVERT(VARCHAR(10), @NumeroAlertasClasificacion)
+                                                          + ' nuevas clasificaciones ( ' + @DetalleAnalisisClasificacion + ' )	|'
+                                                 ELSE
+                                                     'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasClasificacion)
+                                                     + ' nueva clasificación ( ' + @DetalleAnalisisClasificacion + ' )	|'
+                                             END
+                                            )
+                                        );
+                            SET @DetalleAnalisis = REPLACE(@DetalleAnalisis, '&amp;', '&');
+
+                        END
+
+                    IF (@NumeroAlertasDatosGenerales > 0)
+                        BEGIN
+
+                            -- Seleccionar y concatenar los resultados de múltiples tipos de detalle en un solo paso
+                            SELECT
+                                @DetalleAnalisis
+                                = CONCAT(
+                                            @DetalleAnalisis,
+                                            CASE
+                                                WHEN MultiplesDetalles = 0
+                                                    THEN 'Existe un registro sin ' + NombreDetallePantalla + ' en '
+                                                         + ISNULL(Descripcion, '') + ' | '
+                                                WHEN MultiplesDetalles = 1
+                                                    THEN 'Existen (' + CONVERT(VARCHAR(10), NumeroDeDetalles)
+                                                         + ') registros sin ' + NombreDetallePantalla + ' en '
+                                                         + ISNULL(Descripcion, '') + ' | '
+                                            END
+                                        )
+                            FROM
+                                #TablaTemporalValidacionDetalles
+                            WHERE
+                                Tipo = 'ALERTA_DATOSGENERALES'
+                            group by
+                                TipoDetalle,
+                                MultiplesDetalles,
+                                NombreDetallePantalla,
+                                Descripcion,
+                                NumeroDeDetalles
+
+                        END
+
+                    SET @DetalleAnalisis = REPLACE(@DetalleAnalisis, '&amp;', '&');
+
+                    UPDATE
+                        CO_BitacoraPresupuesto
+                    SET
+                        DetalleAnalisis = LEFT(@DetalleAnalisis, LEN(@DetalleAnalisis) - 2)
+                    WHERE
+                        IdCarga = @Idcarga
+                END
+            ELSE
+                BEGIN
+                    UPDATE
+                        CO_BitacoraPresupuesto
+                    SET
+                        DetalleAnalisis = 'Validación Exitosa'
+                    WHERE
+                        IdCarga = @Idcarga
+                END
+
+            COMMIT TRAN
+        END TRY
+        BEGIN CATCH
+            SELECT
+                @ErrorMessage = ERROR_MESSAGE()
+
+            ROLLBACK TRAN
+
+            RAISERROR(@ErrorMessage, 17, 1)
+        END CATCH;
+    END

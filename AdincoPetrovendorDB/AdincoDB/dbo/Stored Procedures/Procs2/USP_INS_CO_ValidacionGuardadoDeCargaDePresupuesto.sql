@@ -7,7 +7,7 @@
         WHERE
             name = 'USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto'
     )
-    DROP PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto
+    DROP PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto;
 GO
 CREATE PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto
     @UsuarioId INT,
@@ -21,7 +21,8 @@ CREATE PROCEDURE USP_INS_CO_ValidacionGuardadoDeCargaDePresupuesto
 	@Periodo VARCHAR(100),
     @AdjuntarClaveSubtarea BIT = 0,
     @Table_CO_Type_BitacoraPresupuestoDetalle CO_Type_BitacoraPresupuestoDetalle READONLY,
-	@IdTipoProgramaActividad  INT
+	@IdTipoProgramaActividad  INT,
+	@Tipo                                         VARCHAR(100)
 AS
 BEGIN
     BEGIN TRY
@@ -257,7 +258,7 @@ BEGIN
             PA_150 FLOAT NULL,
             PA_151 FLOAT NULL,
             PA_152 FLOAT NULL,
-            PA_153 FLOAT NULL,
+       PA_153 FLOAT NULL,
             PA_154 FLOAT NULL,
             PA_155 FLOAT NULL,
             PA_156 FLOAT NULL,
@@ -377,16 +378,17 @@ BEGIN
 			IdTipoProgramaActividad ,
 			Programa,
 			Presupuesto,
-			Periodo
+			Periodo,
+			Tipo
         )
         VALUES
-        (@IdArchivoAWS, @IdContratoSeleccionado, @FechaInicio, @FechaFin, GETDATE(), @UsuarioId, @AdjuntarClaveSubtarea, @IdTipoProgramaActividad,@Programa,@Presupuesto,@Periodo)
+        (@IdArchivoAWS, @IdContratoSeleccionado, @FechaInicio, @FechaFin, GETDATE(), @UsuarioId, @AdjuntarClaveSubtarea, @IdTipoProgramaActividad,@Programa,@Presupuesto,@Periodo, @Tipo)
 
         SELECT @IdCarga = SCOPE_IDENTITY()
 
         INSERT INTO CO_BitacoraPresupuestoDetalle
         (
-            IdCarga,
+     IdCarga,
             IdDetalle,
             IdActividadPetrolera,
             ActividadPetrolera,
@@ -915,7 +917,7 @@ BEGIN
             Area,
             Campo,
             Yacimiento,
-            Pozo_Instalacion,
+          Pozo_Instalacion,
             CAPEX_OPEX,
             PA_17,
             PA_18,
@@ -1109,7 +1111,7 @@ PA_79,
             PA_206,
             PA_207,
             PA_208,
-            PA_209,
+   PA_209,
             PA_210,
             PA_211,
             PA_212,
@@ -1570,7 +1572,7 @@ PA_79,
         CO_TareaPetrolera
             ON LTRIM(RTRIM(#TablaTemporalValidacionTarea.IdTarea)) = LTRIM(RTRIM(ISNULL(
                                                                                               CO_TareaPetrolera.ID_TAREA,
-                                                                                              ''
+                                                              ''
                                                                                           )
                                                                                    )
                                                                              );
@@ -1658,7 +1660,7 @@ PA_79,
                    LTRIM(RTRIM(CONCAT(
                                          #TablaTemporalValidacionServicio.IdSubtarea,
                                          '-',
-                                         #TablaTemporalValidacionServicio.Subtarea_Servicio,
+                                       #TablaTemporalValidacionServicio.Subtarea_Servicio,
                                          ' (',
                                          CONVERT(VARCHAR(10), #TablaTemporalValidacionServicio.NumeroRepetidas),
                                          ') [NO ACTIVO]'
@@ -1833,7 +1835,7 @@ PA_79,
            (
                SELECT COUNT(1)
                FROM #TablaTemporalBitacoraPresupuestoDetalle
-               WHERE ISNULL(IdActividadPetrolera, '') = ''
+              WHERE ISNULL(IdActividadPetrolera, '') = ''
            ) > 0
            )
         BEGIN
@@ -2036,7 +2038,7 @@ PA_79,
                         LTRIM(RTRIM(CONCAT(
                                      #TablaTemporalValidacionSubActividad.IdSubActividad,
                                      ' (',
-                                     CONVERT(VARCHAR(10), #TablaTemporalValidacionSubActividad.NumeroRepetidas),
+                              CONVERT(VARCHAR(10), #TablaTemporalValidacionSubActividad.NumeroRepetidas),
                                      ') '
                                  )
                           )
@@ -2227,7 +2229,7 @@ PA_79,
                (
                    SELECT COUNT(1)
                    FROM #TablaTemporalBitacoraPresupuestoDetalle
-                   WHERE ISNULL(SubactividadPetrolera, '') = ''
+       WHERE ISNULL(SubactividadPetrolera, '') = ''
                ) = 1
                )
             BEGIN
@@ -2332,7 +2334,7 @@ PA_79,
             BEGIN
                 SELECT @DetalleAnalisisDatosGenerales
                     = CONCAT(
-                                'Renglones: ',
+                            'Renglones: ',
                                 STUFF(
                                 (
                                     SELECT ', '
@@ -2538,7 +2540,7 @@ PA_79,
             SELECT @Mensaje = 'ALERTA_SERVICIO_INSTALACION_DATOSGENERALES'
 
         IF (
-               @NumeroAlertasServicio > 0
+      @NumeroAlertasServicio > 0
                AND @NumeroAlertasInstalacion > 0
                AND @NumeroAlertasDatosGenerales = 0
            )
@@ -2965,4 +2967,3 @@ PA_79,
         RAISERROR(@ErrorMessage, 17, 1)
     END CATCH;
 END
-

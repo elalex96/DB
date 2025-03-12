@@ -15,6 +15,7 @@
     Programa VARCHAR(8000),
     Presupuesto VARCHAR(8000),
     Periodo VARCHAR(8000),
+    Tipo VARCHAR(20),
     CONSTRAINT PK_CO_BitacoraPresupuesto
         PRIMARY KEY CLUSTERED (IdCarga ASC),
     CONSTRAINT FK_CO_BitacoraPresupuesto_ArchivoAWS

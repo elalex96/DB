@@ -1,16 +1,15 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_INS_UPD_CO_TipoServicioPresupuestoCIEP'
+            name = 'USP_INS_UPD_CO_ServiciosPresupuestoCIEP'
     )
-    DROP PROCEDURE USP_INS_UPD_CO_TipoServicioPresupuestoCIEP;
+    DROP PROCEDURE USP_INS_UPD_CO_ServiciosPresupuestoCIEP;
 GO
-CREATE PROCEDURE USP_INS_UPD_CO_TipoServicioPresupuestoCIEP
+CREATE PROCEDURE USP_INS_UPD_CO_ServiciosPresupuestoCIEP
     @UsuarioId INT,
     @ContratoId INT,
     @IdArchivoAWS INT
@@ -19,17 +18,18 @@ BEGIN
   
 SET NOCOUNT ON;
  
-CREATE TABLE #TablaTemporalValidacion
+CREATE TABLE #TablaTemporalValidacionServicio
     (
-       Nombre  VARCHAR(1000) NULL,
-		Id INT           NULL,
-		Activo              BIT           NULL
+        NombreServicio    VARCHAR(3000) NULL,
+        Activo            BIT           NULL,
+        IdServicio        INT           NULL
     )
 
 DECLARE
     @IdCarga                INT = 0,
     @IdContratoSeleccionado INT = 0,
-	@ErrorMessage VARCHAR(8000) =''
+	@ErrorMessage VARCHAR(8000) ='',
+	@IdUnidad INT = 13;
 
 BEGIN TRY
 Select
@@ -41,64 +41,74 @@ where
     IdArchivoAWS = @IdArchivoAWS;
 
 -- SERVICIOS DE LA CARGA DEL LAYOUT
-INSERT INTO #TablaTemporalValidacion
+INSERT INTO #TablaTemporalValidacionServicio
     (
-        Nombre
+        NombreServicio
     )
             SELECT
-              DISTINCT RTRIM(LTRIM(CuentaOperativa))
+              DISTINCT RTRIM(LTRIM(Servicios))
             FROM
                 CO_BitacoraPresupuestoDetalleCIEP (NOLOCK)
             WHERE
                 IdCarga = @IdCarga;
 
+
+
 -- VERIFICACIÓN DE EXISTRENCIA DE SERVICIOS 
 UPDATE
-    #TablaTemporalValidacion
+    #TablaTemporalValidacionServicio
 SET
-    #TablaTemporalValidacion.Activo = ISNULL(CO_TipoServicio.Activo, 0),
-    #TablaTemporalValidacion.Id = CO_TipoServicio.IdTipoServicio
+    #TablaTemporalValidacionServicio.Activo = ISNULL(CO_Servicio.Activo, 0),
+    #TablaTemporalValidacionServicio.IdServicio = CO_Servicio.IdServicio
 FROM
-    #TablaTemporalValidacion
+    #TablaTemporalValidacionServicio
     JOIN
-        CO_TipoServicio
-            ON UPPER(#TablaTemporalValidacion.Nombre) = UPPER(LTRIM(RTRIM(ISNULL(CO_TipoServicio.NombreTipoServicio, ''))))
+        CO_Servicio
+            ON UPPER(#TablaTemporalValidacionServicio.NombreServicio) = UPPER(LTRIM(RTRIM(ISNULL(CO_Servicio.NombreServicio, ''))))
+WHERE
+    CO_Servicio.IdContrato = @IdContratoSeleccionado;
 
 -- SERVICIOS ACTIVACIÓN 
 UPDATE
-    CO_TipoServicio
+    CO_Servicio
 SET
-    CO_TipoServicio.Activo = 1,
-    IdUsuario = @UsuarioId,
-    FecMovto = GETDATE()
+    CO_Servicio.Activo = 1,
+    ModificadoPor = @UsuarioId,
+    ModificadoEl = GETDATE()
 FROM
-    #TablaTemporalValidacion
+    #TablaTemporalValidacionServicio
     JOIN
-        CO_TipoServicio
-            ON #TablaTemporalValidacion.Id = CO_TipoServicio.IdTipoServicio
+        CO_Servicio
+            ON #TablaTemporalValidacionServicio.IdServicio = CO_Servicio.IdServicio
 where
-    #TablaTemporalValidacion.Id IS NOT NULL
-    AND #TablaTemporalValidacion.Activo = 0;
+    #TablaTemporalValidacionServicio.IdServicio IS NOT NULL
+    AND #TablaTemporalValidacionServicio.Activo = 0;
 
-INSERT INTO CO_TipoServicio
+	-- REGSTRO DE SERVICIOS NUEVOS
+
+INSERT INTO CO_Servicio
     (
-	NombreTipoServicio,
-	IdUsuario,
-	FecMovto,
-	Activo,
-	CreadoPor
+        IdContrato,
+        NombreServicio,
+        IdUnidad,
+        IdUsuario,
+        FecMovto,
+        Activo,
+        CreadoPor
     )
            Select
-                Nombre,
+                @IdContratoSeleccionado,
+                NombreServicio,
+                @IdUnidad,
                 @UsuarioId,
                 GETDATE(),
                 1,
                 @UsuarioId
             from
-                #TablaTemporalValidacion
+                #TablaTemporalValidacionServicio
             where
-                Id IS NULL
-				AND RTRIM(LTRIM(Nombre) ) <> '' AND  RTRIM(LTRIM(Nombre) ) <> '-';
+                IdServicio IS NULL
+				AND RTRIM(LTRIM(NombreServicio) ) <> '' AND  RTRIM(LTRIM(NombreServicio) ) <> '-';
  END TRY
     BEGIN CATCH
 	

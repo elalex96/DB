@@ -1,16 +1,15 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_INS_UPD_CO_ServiciosPresupuesto'
+            name = 'USP_INS_UPD_CO_ActividadesPresupuestoCIEP'
     )
-    DROP PROCEDURE USP_INS_UPD_CO_ServiciosPresupuesto
+    DROP PROCEDURE USP_INS_UPD_CO_ActividadesPresupuestoCIEP;
 GO
-CREATE PROCEDURE USP_INS_UPD_CO_ServiciosPresupuesto
+CREATE PROCEDURE USP_INS_UPD_CO_ActividadesPresupuestoCIEP
     @UsuarioId INT,
     @ContratoId INT,
     @IdArchivoAWS INT
@@ -19,140 +18,68 @@ BEGIN
   
 SET NOCOUNT ON;
  
-CREATE TABLE #TablaTemporalValidacionServicio
+CREATE TABLE #TablaTemporalValidacion
     (
-        IdSubtarea        VARCHAR(100)  NULL,
-        Subtarea_Servicio VARCHAR(1000) NULL,
-        NombreServicio    VARCHAR(3000) NULL,
-        Activo            BIT           NULL,
-        IdServicio        INT           NULL
+       Nombre  VARCHAR(1000) NULL,
+		Id INT           NULL
     )
 
 DECLARE
     @IdCarga                INT = 0,
-    @AdjuntarClaveSubtarea  INT = 0,
     @IdContratoSeleccionado INT = 0,
-    @IdUnidad               INT = 13,
-	@ErrorMessage VARCHAR(8000) ='';
+	@ErrorMessage VARCHAR(8000) =''
 
 BEGIN TRY
 Select
     @IdCarga                = IdCarga,
-    @AdjuntarClaveSubtarea  = chkAdjuntaClaveSubTarea,
     @IdContratoSeleccionado = IdContrato
 FROM
     CO_BitacoraPresupuesto
 where
     IdArchivoAWS = @IdArchivoAWS;
 
--- SERVICIOS DE LA CARGA DEL LAYOUT
-INSERT INTO #TablaTemporalValidacionServicio
+INSERT INTO #TablaTemporalValidacion
     (
-        IdSubtarea,
-        Subtarea_Servicio,
-        NombreServicio,
-        Activo
+        Nombre
     )
             SELECT
-                CASE
-                    WHEN @AdjuntarClaveSubtarea = 1
-                        THEN IdSubtarea
-                    ELSE
-                        ''
-                END,
-                Subtarea_Servicio,
-                CASE
-                    WHEN @AdjuntarClaveSubtarea = 1
-                        THEN LTRIM(RTRIM(CONCAT(
-                                                   CO_BitacoraPresupuestoDetalle.IdSubtarea, '-',
-                                                   CO_BitacoraPresupuestoDetalle.Subtarea_Servicio
-                                               )
-                                        )
-                                  )
-                    ELSE
-                        Subtarea_Servicio
-                END,
-                0
+              DISTINCT RTRIM(LTRIM(Actividad))
             FROM
-                CO_BitacoraPresupuestoDetalle (NOLOCK)
+                CO_BitacoraPresupuestoDetalleCIEP (NOLOCK)
             WHERE
-                IdCarga = @IdCarga
-            GROUP BY
-                CASE
-                    WHEN @AdjuntarClaveSubtarea = 1
-                        THEN IdSubtarea
-                    ELSE
-                        ''
-                END,
-                Subtarea_Servicio,
-                CASE
-                    WHEN @AdjuntarClaveSubtarea = 1
-                        THEN LTRIM(RTRIM(CONCAT(
-                                                   CO_BitacoraPresupuestoDetalle.IdSubtarea, '-',
-                                                   CO_BitacoraPresupuestoDetalle.Subtarea_Servicio
-                                               )
-                                        )
-                                  )
-                    ELSE
-                        Subtarea_Servicio
-                END
-
-
+                IdCarga = @IdCarga;
 
 -- VERIFICACIÓN DE EXISTRENCIA DE SERVICIOS 
 UPDATE
-    #TablaTemporalValidacionServicio
+    #TablaTemporalValidacion
 SET
-    #TablaTemporalValidacionServicio.Activo = ISNULL(CO_Servicio.Activo, 0),
-    #TablaTemporalValidacionServicio.IdServicio = CO_Servicio.IdServicio
+    #TablaTemporalValidacion.Id = CO_ActividadCIEP.IdActividad
 FROM
-    #TablaTemporalValidacionServicio
+    #TablaTemporalValidacion
     JOIN
-        CO_Servicio
-            ON #TablaTemporalValidacionServicio.NombreServicio = LTRIM(RTRIM(ISNULL(CO_Servicio.NombreServicio, '')))
-WHERE
-    CO_Servicio.IdContrato = @IdContratoSeleccionado;
+        CO_ActividadCIEP
+            ON UPPER(#TablaTemporalValidacion.Nombre) = UPPER(LTRIM(RTRIM(ISNULL(CO_ActividadCIEP.NombreActividad, ''))))
+			AND CO_ActividadCIEP.IdContrato = @IdContratoSeleccionado
 
--- SERVICIOS ACTIVACIÓN 
-UPDATE
-    CO_Servicio
-SET
-    CO_Servicio.Activo = 1,
-    ModificadoPor = @UsuarioId,
-    ModificadoEl = GETDATE()
-FROM
-    #TablaTemporalValidacionServicio
-    JOIN
-        CO_Servicio
-            ON #TablaTemporalValidacionServicio.IdServicio = CO_Servicio.IdServicio
-where
-    #TablaTemporalValidacionServicio.IdServicio IS NOT NULL
-    AND #TablaTemporalValidacionServicio.Activo = 0;
-
-	-- REGSTRO DE SERVICIOS NUEVOS
-INSERT INTO CO_Servicio
+INSERT INTO CO_ActividadCIEP
     (
-        IdContrato,
-        NombreServicio,
-        IdUnidad,
-        IdUsuario,
-        FecMovto,
-        Activo,
-        CreadoPor
+NombreActividad,
+IdContrato,
+IdUsuarioCreadoPor,
+Creado,
+CreadoPor
     )
-            Select
+           Select
+                Nombre,
                 @IdContratoSeleccionado,
-                NombreServicio,
-                @IdUnidad,
-                @UsuarioId,
+				@UsuarioId,
                 GETDATE(),
-                1,
                 @UsuarioId
             from
-                #TablaTemporalValidacionServicio
+                #TablaTemporalValidacion
             where
-                IdServicio IS NULL
-				AND RTRIM(LTRIM(NombreServicio) ) <> '' AND  RTRIM(LTRIM(NombreServicio) ) <> '-';
+                Id IS NULL
+				AND RTRIM(LTRIM(Nombre) ) <> '' AND  RTRIM(LTRIM(Nombre) ) <> '-';
  END TRY
     BEGIN CATCH
 	
