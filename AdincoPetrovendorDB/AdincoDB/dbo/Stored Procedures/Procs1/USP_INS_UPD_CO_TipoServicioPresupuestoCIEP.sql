@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
@@ -36,7 +35,7 @@ Select
     @IdCarga                = IdCarga,
     @IdContratoSeleccionado = IdContrato
 FROM
-    CO_BitacoraPresupuesto
+    CO_BitacoraPresupuesto (NOLOCK)
 where
     IdArchivoAWS = @IdArchivoAWS;
 
