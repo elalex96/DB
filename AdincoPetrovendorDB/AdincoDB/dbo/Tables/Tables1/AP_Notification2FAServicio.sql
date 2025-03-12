@@ -1,0 +1,7 @@
+﻿CREATE TABLE AP_Notification2FAServicio (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Url VARCHAR(500) NOT NULL,
+    Correo VARCHAR(255) NOT NULL,
+    Modulo VARCHAR(100) NOT NULL
+);
+
