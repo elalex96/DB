@@ -120,7 +120,7 @@ BEGIN
             MaterialConcepto
         )
         SELECT NumeroFila,
-               DocumentoCompras,
+               REPLACE(DocumentoCompras,'?',''),
                Posicion,
                CentroDeBeneficio,
                FechaDocumento,
@@ -132,7 +132,7 @@ BEGIN
                UnidadMedidaPedido,
                PrecioNeto,
                Moneda,
-               'CSD-' + DocumentoCompras,
+               'CSD-' + REPLACE(DocumentoCompras,'?',''),
                CASE
                    WHEN TRY_CAST(LEFT(ProveedorCentroSuministrador, CHARINDEX(' ', ProveedorCentroSuministrador + ' ')
                                    - 1)AS INT) IS NOT NULL THEN
