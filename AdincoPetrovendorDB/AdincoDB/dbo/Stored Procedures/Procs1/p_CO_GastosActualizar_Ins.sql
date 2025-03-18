@@ -117,9 +117,21 @@ BEGIN
 	UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
+        ErrorDesc = CONCAT(ISNULL(ErrorDesc, ''), ' Los CP no están permitidos.')
+    FROM CO_GastosActualizar
+	INNER JOIN FI_Factura
+		ON UPPER(CO_GastosActualizar.UUID) = UPPER(FI_Factura.UUID)
+    WHERE CO_GastosActualizar.UUIDImport = @UUIDImport AND FI_Factura.TipoComprobanteEstandarizado = 'P'
+
+
+	UPDATE CO_GastosActualizar
+    SET Error = 1,
+        Procesado = 1,
         ErrorDesc = ISNULL(ErrorDesc, '') + 'El RFC es requerido. '
     FROM CO_GastosActualizar 
     WHERE ISNULL(CO_GastosActualizar.RFCEmisor, '') = '' AND CO_GastosActualizar.UUIDImport = @UUIDImport
+
+	
 
 
 	UPDATE CO_GastosActualizar
@@ -206,11 +218,7 @@ BEGIN
     UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
-        ErrorDesc = CASE 
-						WHEN ErrorDesc LIKE '%La línea presupuesto no corresponde al contrato.%' 
-						THEN ErrorDesc
-						ELSE ISNULL(ErrorDesc, '') + 'La línea presupuesto no corresponde al contrato. '
-					END
+        ErrorDesc = ISNULL(ErrorDesc, '') + 'La línea presupuesto no corresponde al contrato. '
     FROM CO_GastosActualizar 
         INNER JOIN #Gastos gastos
             ON CO_GastosActualizar.Id = gastos.Id 
@@ -218,11 +226,14 @@ BEGIN
                AND UPPER(CO_GastosActualizar.UUID) = UPPER(gastos.UUID)
         INNER JOIN CO_LineapresupuestoMes
             ON CO_GastosActualizar.IdLineaPresupuesto = CO_LineapresupuestoMes.IdLineaPresupuestoMes
-		LEFT JOIN CO_Servicio
-			ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
-				AND CO_Servicio.IdContrato = @IdContrato
-    WHERE CO_GastosActualizar.UUIDImport = @UUIDImport
-	AND CO_Servicio.IdServicio IS NULL
+        INNER JOIN CO_PResupuesto
+            on CO_LineapresupuestoMes.IdPresupuesto = CO_PResupuesto.IdPresupuesto
+        INNER JOIN CO_ProgramaActividad
+            on CO_PResupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad
+        INNER JOIN CO_PeriodoContrato
+            on CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
+    WHERE CO_PeriodoContrato.IdContrato <> @IdContrato
+          AND CO_GastosActualizar.UUIDImport = @UUIDImport
 
     -- se utiliza el CTE para obtener solo el primer registro como estaba antes del top 1
     
