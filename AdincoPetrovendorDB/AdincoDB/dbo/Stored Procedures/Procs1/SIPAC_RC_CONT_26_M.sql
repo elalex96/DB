@@ -1,13 +1,5 @@
-﻿IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'SIPAC_RC_CONT_26_M'
-    )
-    DROP PROCEDURE SIPAC_RC_CONT_26_M
+﻿IF OBJECT_ID('[dbo].[SIPAC_RC_CONT_26_M]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].SIPAC_RC_CONT_26_M
 GO
 -- =============================================    
 -- Author: Yazmin Glez.    
@@ -127,7 +119,8 @@ BEGIN
         (
             UUID
         )
-        VALUES ('091A3242-EF0F-444A-A5C1-3D7D50247D3B'),
+        VALUES 
+		('091A3242-EF0F-444A-A5C1-3D7D50247D3B'),
         ('775E782A-9493-3D40-9B24-E1604A865A0F'),
         ('78BB3869-8091-B049-98B4-1238E15E7BDA'),
         ('A6344C73-4C5A-EA4A-B2F8-3378CDA24C17');
@@ -138,7 +131,8 @@ BEGIN
         (
             UUID
         )
-        VALUES ('9A159442-52BC-1E49-8190-D020953CE967');
+        VALUES 
+		('9A159442-52BC-1E49-8190-D020953CE967');
     END;
     IF (@Mes <> '20200101')
     BEGIN
@@ -146,7 +140,8 @@ BEGIN
         (
             UUID
         )
-        VALUES ('78CA2E37-22C0-408C-8E94-105C7388A704'),
+        VALUES 
+		('78CA2E37-22C0-408C-8E94-105C7388A704'),
         ('30EFEC90-471E-434A-87CF-EFFEEE7C48C1');
     END;
     IF (@Mes = '20200501')
@@ -155,7 +150,8 @@ BEGIN
         (
             UUID
         )
-        VALUES ('D515F4A9-244C-422E-A2B1-11B234039715'),
+        VALUES 
+		('D515F4A9-244C-422E-A2B1-11B234039715'),
         ('1091E714-CC8E-46B8-8421-37470C285BAC'),
         ('95AB6B55-C312-4CAF-9A9E-BD7E7A2124AB'),
         ('10FDC8FB-DEBB-4BD5-8C10-6B51E61B5FE6');
@@ -236,27 +232,30 @@ BEGIN
            Result.IdTransferencia
     FROM
     (
-        -- Cuando la moneda de la factura CP es igual al de la transferencia y la moneda de la PPD y CP es igual
-        SELECT FI_Factura.IdFactura AS IdFacturaCP,
+        -- Cuando la moneda de la factura CP es igual al de la transferencia, la moneda de la factura principal PPD y CP es igual
+		-- Ejemplo CP = USD, FactPrincipal (PPD) = USD y transferencia = USD
+		-- La transferencia es la mandatoria para convertir los montos y cual es la moneda que se muestra en el reporte
+        SELECT DISTINCT 
+			   FI_Factura.IdFactura AS IdFacturaCP,
                FI_Factura.UUID AS UUIDCP,
                FI_ComplementoDePago.FormaDePagoP AS FormaPagoCP,
                ISNULL(CO_TipoCambioDiario.TipoCambio, 0) AS TipoCambioCP,
-               PV_TipoMoneda.IdMoneda AS MonedaCP,
-               SUM(FI_CPDocRelacionado.ImpPagado) AS MontoCP,
+               FI_Transfer.IdMoneda AS MonedaCP,
+               FI_Transfer.MontoPagado AS MontoCP,
                FCPDR.IdMoneda AS MonedaPPD,
-               CAST((SUM(   CASE
-                                WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                                     AND FCPDR.IdMoneda = @DOLAR THEN
-                                    FI_CPDocRelacionado.ImpPagado
-                                WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0 THEN
-                                    0
-                                WHEN PV_TipoMoneda.IdMoneda = @PESO
-                                     AND FCPDR.IdMoneda = @PESO THEN
-                                    FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
-                                WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                                    FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
+               CAST((  CASE
+                            WHEN FI_Transfer.IdMoneda = @DOLAR
+							THEN
+                                FI_Transfer.MontoPagado
+                            WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0 THEN
+                                0
+                            WHEN FI_Transfer.IdMoneda = @PESO
+							THEN
+                                FI_Transfer.MontoPagado / CO_TipoCambioDiario.TipoCambio
+                            WHEN FI_Transfer.IdMoneda NOT IN ( @PESO, @DOLAR ) 
+							THEN
+                                FI_Transfer.MontoPagado * CO_TipoCambioDiario.TipoCambio
                             END
-                        )
                     ) AS DECIMAL(15, 2)) AS MontoDolares,
                FI_Transfer.IdTransferencia
         FROM #Facturas
@@ -278,7 +277,7 @@ BEGIN
                 ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
                    AND FI_Transfer.IdContrato = @Contrato
             LEFT JOIN dbo.CO_TipoCambioDiario WITH (NOLOCK)
-                ON CO_TipoCambioDiario.IdMoneda = PV_TipoMoneda.IdMoneda
+                ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
                    AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
                    AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
                    AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
@@ -286,35 +285,29 @@ BEGIN
               AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
               AND FI_Transfer.IdMoneda = PV_TipoMoneda.IdMoneda
               AND PV_TipoMoneda.IdMoneda = FCPDR.IdMoneda
-        GROUP BY FI_Factura.IdFactura,
-                 FI_Factura.UUID,
-                 FI_ComplementoDePago.FormaDePagoP,
-                 ISNULL(CO_TipoCambioDiario.TipoCambio, 0),
-                 PV_TipoMoneda.IdMoneda,
-                 FCPDR.IdMoneda,
-                 FI_Transfer.IdTransferencia
         UNION
-        --Cuando la moneda de la factura CP es diferente al de la transferencia y la moneda de la PPD y CP es igual
-        SELECT FI_Factura.IdFactura AS IdFacturaCP,
+        -- Cuando la moneda de la factura CP es diferente al de la transferencia, la moneda de la factura principal PPD y CP es igual
+		-- Ejemplo CP = USD, FactPrincipal (PPD) = USD y transferencia = MXN
+		-- La transferencia es la mandatoria para convertir los montos y cual es la moneda que se muestra en el reporte
+        SELECT DISTINCT 
+			   FI_Factura.IdFactura AS IdFacturaCP,
                FI_Factura.UUID AS UUIDCP,
                FI_ComplementoDePago.FormaDePagoP AS FormaPagoCP,
                ISNULL(CO_TipoCambioDiario.TipoCambio, 0) AS TipoCambioCP,
-               PV_TipoMoneda.IdMoneda AS MonedaCP,
-               SUM(FI_CPDocRelacionado.ImpPagado) AS MontoCP,
-               FCPDR.IdMoneda AS MonedaPPD,
-               CAST((SUM(   CASE
-                                WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                                     AND FCPDR.IdMoneda = @DOLAR THEN
-                                    FI_CPDocRelacionado.ImpPagado
-                                WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0 THEN
-                                    0
-                                WHEN PV_TipoMoneda.IdMoneda = @PESO
-                                     AND FCPDR.IdMoneda = @PESO THEN
-                                    FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
-                                WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                                    FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
-                            END
-                        )
+               FI_Transfer.IdMoneda AS MonedaTransfer,
+               FI_Transfer.MontoPagado AS MontoTransfer,
+               FI_Transfer.IdMoneda AS MonedaPPD,
+               CAST((  CASE
+							WHEN FI_Transfer.IdMoneda = @DOLAR
+								THEN FI_Transfer.MontoPagado
+							WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0 
+								THEN 0
+							WHEN FI_Transfer.IdMoneda = @PESO
+								THEN FI_Transfer.MontoPagado / CO_TipoCambioDiario.TipoCambio
+							WHEN FI_Transfer.IdMoneda NOT IN ( @PESO, @DOLAR ) 
+								THEN FI_Transfer.MontoPagado * CO_TipoCambioDiario.TipoCambio
+                        END
+                        
                     ) AS DECIMAL(15, 2)) AS MontoDolares,
                FI_Transfer.IdTransferencia
         FROM #Facturas
@@ -336,7 +329,7 @@ BEGIN
                 ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
                    AND FI_Transfer.IdContrato = @Contrato
             LEFT JOIN dbo.CO_TipoCambioDiario WITH (NOLOCK)
-                ON CO_TipoCambioDiario.IdMoneda = PV_TipoMoneda.IdMoneda
+                ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
                    AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
                    AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
                    AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
@@ -344,44 +337,31 @@ BEGIN
               AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
               AND FI_Transfer.IdMoneda <> PV_TipoMoneda.IdMoneda
               AND PV_TipoMoneda.IdMoneda = FCPDR.IdMoneda
-        GROUP BY FI_Factura.IdFactura,
-                 FI_Factura.UUID,
-                 FI_ComplementoDePago.FormaDePagoP,
-                 ISNULL(CO_TipoCambioDiario.TipoCambio, 0),
-                 PV_TipoMoneda.IdMoneda,
-                 FCPDR.IdMoneda,
-                 FI_Transfer.IdTransferencia
         UNION
-        --Cuando la moneda de la factura CP es diferente al de la transferencia y la moneda de la PPD y CP es diferente
-        SELECT FI_Factura.IdFactura AS IdFacturaCP,
+        -- Cuando la moneda de la factura principal PPD es igual al de la transferencia y la moneda del CP es diferente al de la factura principal PPD
+		-- Ejemplo CP = MXN, FactPrincipal (PPD) = USD y transferencia = USD
+		-- La transferencia es la mandatoria para convertir los montos y cual es la moneda que se muestra en el reporte
+        SELECT DISTINCT 
+			   FI_Factura.IdFactura AS IdFacturaCP,
                FI_Factura.UUID AS UUIDCP,
                FI_ComplementoDePago.FormaDePagoP AS FormaPagoCP,
                ISNULL(CO_TipoCambioDiario.TipoCambio, 0) AS TipoCambioCP,
-               PV_TipoMoneda.IdMoneda AS MonedaCP,
-               CAST((SUM(FI_CPDocRelacionado.ImpPagado)) AS DECIMAL(15, 2)) AS MontoCP,
-               CASE
-                   WHEN PV_TipoMoneda.IdMoneda = @PESO
-                        AND FCPDR.IdMoneda = @DOLAR THEN
-                       @PESO
-                   WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                        AND FCPDR.IdMoneda = @PESO THEN
-                       @DOLAR
-                   WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                       PV_TipoMoneda.IdMoneda
-               END AS MonedaPPD,
-               CAST((SUM(   CASE
-                                WHEN PV_TipoMoneda.IdMoneda = @PESO
-                                     AND FCPDR.IdMoneda = @DOLAR THEN
-                                    FI_CPDocRelacionado.ImpPagado
-                                WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0 THEN
-                                    0
-                                WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                                     AND FCPDR.IdMoneda = @PESO THEN
-                                    FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
-                                WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                                    FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio
+               FI_Transfer.IdMoneda AS MonedaCP,
+               CAST((FI_Transfer.MontoPagado) AS DECIMAL(15, 2)) AS MontoCP,
+               FI_Transfer.IdMoneda AS MonedaPPD,
+               CAST((  CASE
+                            WHEN FI_Transfer.IdMoneda = @DOLAR 
+							THEN
+                                FI_Transfer.MontoPagado
+                            WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0 THEN
+                                0
+                            WHEN FI_Transfer.IdMoneda = @PESO
+							THEN
+                                FI_Transfer.MontoPagado / CO_TipoCambioDiario.TipoCambio
+                            WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) 
+							THEN
+                                FI_Transfer.MontoPagado * CO_TipoCambioDiario.TipoCambio
                             END
-                        )
                     ) AS DECIMAL(15, 2)) AS MontoDolares,
                FI_Transfer.IdTransferencia
         FROM #Facturas
@@ -403,8 +383,7 @@ BEGIN
                 ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
                    AND FI_Transfer.IdContrato = @Contrato
             LEFT JOIN dbo.CO_TipoCambioDiario WITH (NOLOCK)
-                ON CO_TipoCambioDiario.IdMoneda = PV_TipoMoneda.IdMoneda
-                   AND CO_TipoCambioDiario.IdMoneda <> FCPDR.IdMoneda
+                ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
                    AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Transfer.FechaPago)
                    AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Transfer.FechaPago)
                    AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Transfer.FechaPago)
@@ -412,123 +391,66 @@ BEGIN
               AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
               AND FI_Transfer.IdMoneda <> PV_TipoMoneda.IdMoneda
               AND PV_TipoMoneda.IdMoneda <> FCPDR.IdMoneda
-        GROUP BY FI_Factura.IdFactura,
-                 FI_Factura.UUID,
-                 FI_ComplementoDePago.FormaDePagoP,
-                 ISNULL(CO_TipoCambioDiario.TipoCambio, 0),
-                 PV_TipoMoneda.IdMoneda,
-                 CASE
-                     WHEN PV_TipoMoneda.IdMoneda = @PESO
-                          AND FCPDR.IdMoneda = @DOLAR THEN
-                         @PESO
-                     WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                          AND FCPDR.IdMoneda = @PESO THEN
-                         @DOLAR
-                     WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                         PV_TipoMoneda.IdMoneda
-                 END,
-                 FI_Transfer.IdTransferencia
         UNION
-        --Se agrego para los casos donde el complemento es igual a la moneda de la transferencia (USD = USD)    
-        --y la factura ppd es igual a la moneada del documento relacionado (MXN = MXN)    
-        SELECT FI_Factura.IdFactura AS IdFacturaCP,
-               FI_Factura.UUID AS UUIDCP,
-               FI_ComplementoDePago.FormaDePagoP AS FormaPagoCP,
-               CASE
-                   WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                        AND FCPDR.IdMoneda = @PESO THEN
-                       1
-                   WHEN PV_TipoMoneda.IdMoneda = @PESO
-                        AND FCPDR.IdMoneda = @DOLAR THEN
-                       ISNULL(TCDD.TipoCambio, 0)
-                   WHEN FCPDR.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                       ISNULL(TCDD.TipoCambio, 0)
-               END,
-               PV_TipoMoneda.IdMoneda AS MonedaCP,
-               CAST((SUM(FI_Transfer.MontoPagado)) AS DECIMAL(15, 2)) AS MontoCP,
-               CASE
-                   WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                        AND FCPDR.IdMoneda = @PESO THEN
-                       FCPDR.IdMoneda
-                   WHEN PV_TipoMoneda.IdMoneda = @PESO
-                        AND FCPDR.IdMoneda = @DOLAR THEN
-                       FCPDR.IdMoneda
-                   WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                       FCPDR.IdMoneda
-               END AS MonedaPPD,
-               CAST((SUM(   CASE
-                                WHEN FI_Transfer.IdMoneda = @DOLAR THEN
-                                    FI_Transfer.MontoPagado
-                                WHEN ISNULL(TCDD.TipoCambio, 0) = 0 THEN
-                                    0
-                                WHEN FI_Transfer.IdMoneda = @PESO THEN
-                                    FI_Transfer.MontoPagado / TCDD.TipoCambio
-                                WHEN FI_Transfer.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                                    FI_Transfer.MontoPagado / TCDD.TipoCambio
-                            END
-                        )
-                    ) AS DECIMAL(15, 2)) AS MontoDolares,
-               FI_Transfer.IdTransferencia
-        FROM #Facturas
-            JOIN dbo.FI_Factura FCPDR WITH (NOLOCK)
-                ON #Facturas.IdFactura = FCPDR.IdFactura
-                   AND #Facturas.MetodoPago = 'PPD'
-            JOIN dbo.FI_CPDocRelacionado WITH (NOLOCK)
-                ON FCPDR.UUID = FI_CPDocRelacionado.IdDocumento
-            INNER JOIN dbo.FI_ComplementoDePago WITH (NOLOCK)
-                ON FI_CPDocRelacionado.IdComplementoDePago = FI_ComplementoDePago.IdComplementoDePago
-            INNER JOIN dbo.FI_TransferFactura WITH (NOLOCK)
-                ON FI_ComplementoDePago.IdFactura = FI_TransferFactura.IdFactura
-                   AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
-            INNER JOIN dbo.FI_Factura WITH (NOLOCK)
-                ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
-            INNER JOIN dbo.PV_TipoMoneda WITH (NOLOCK)
-                ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
-            INNER JOIN dbo.FI_Transfer WITH (NOLOCK)
-                ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
-                   AND FI_Transfer.IdContrato = @Contrato
-            LEFT JOIN dbo.CO_TipoCambioDiario TCDD WITH (NOLOCK)
-                ON TCDD.IdMoneda = FI_Transfer.IdMoneda
-                   AND DAY(TCDD.Fecha) = DAY(FI_Transfer.FechaPago)
-                   AND MONTH(TCDD.Fecha) = MONTH(FI_Transfer.FechaPago)
-                   AND YEAR(TCDD.Fecha) = YEAR(FI_Transfer.FechaPago)
-        WHERE #Facturas.MetodoPago = 'PPD'
-              AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
-              AND FI_Transfer.IdMoneda = PV_TipoMoneda.IdMoneda
-              AND PV_TipoMoneda.IdMoneda <> FCPDR.IdMoneda
-        GROUP BY FI_Factura.IdFactura,
-                 FI_Factura.UUID,
-                 FI_ComplementoDePago.FormaDePagoP,
-                 CASE
-                     WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                          AND FCPDR.IdMoneda = @PESO THEN
-                         1
-                     WHEN PV_TipoMoneda.IdMoneda = @PESO
-                          AND FCPDR.IdMoneda = @DOLAR THEN
-                         ISNULL(TCDD.TipoCambio, 0)
-                     WHEN FCPDR.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                         ISNULL(TCDD.TipoCambio, 0)
-                 END,
-                 PV_TipoMoneda.IdMoneda,
-                 CASE
-                     WHEN PV_TipoMoneda.IdMoneda = @DOLAR
-                          AND FCPDR.IdMoneda = @PESO THEN
-                         FCPDR.IdMoneda
-                     WHEN PV_TipoMoneda.IdMoneda = @PESO
-                          AND FCPDR.IdMoneda = @DOLAR THEN
-                         FCPDR.IdMoneda
-                     WHEN PV_TipoMoneda.IdMoneda NOT IN ( @PESO, @DOLAR ) THEN
-                         FCPDR.IdMoneda
-                 END,
-                 FI_Transfer.IdTransferencia
-    ) AS Result
-    GROUP BY Result.IdFacturaCP,
-             Result.UUIDCP,
-             Result.FormaPagoCP,
-             Result.TipoCambioCP,
-             Result.MonedaCP,
-             Result.MonedaPPD,
-             Result.IdTransferencia;
+        -- cuando el complemento es igual a la moneda de la transferencia    
+        -- y la factura principal su moneda es diferente a la del complemento  
+		-- Ejemplo CP = MXN, FactPrincipal (PPD) = USD y transferencia = MXN
+		-- La transferencia es la mandatoria para convertir los montos y cual es la moneda que se muestra en el reporte
+		SELECT DISTINCT
+		   FI_Factura.IdFactura AS IdFacturaCP,
+		   FI_Factura.UUID AS UUIDCP,
+		   FI_ComplementoDePago.FormaDePagoP AS FormaPagoCP,
+		   ISNULL(TCDD.TipoCambio, 0) AS TipoCambio,      
+		   FI_Transfer.IdMoneda AS MonedaCP,
+		   CAST(FI_Transfer.MontoPagado AS DECIMAL(20, 2)) AS MontoCP,
+		   FI_Transfer.IdMoneda AS MonedaPPD,
+		CAST(
+		   CASE
+			   WHEN FI_Transfer.IdMoneda = @DOLAR THEN 
+				   FI_Transfer.MontoPagado
+			   WHEN ISNULL(TCDD.TipoCambio, 0) = 0 THEN 
+				   0
+			   WHEN FI_Transfer.IdMoneda = @PESO THEN
+				   FI_Transfer.MontoPagado / TCDD.TipoCambio
+			   WHEN FI_Transfer.IdMoneda NOT IN (@PESO, @DOLAR) THEN
+				   FI_Transfer.MontoPagado * TCDD.TipoCambio
+		   END AS DECIMAL(15, 2)) AS MontoDolares,
+		   FI_Transfer.IdTransferencia
+		FROM #Facturas
+		JOIN dbo.FI_Factura FCPDR WITH (NOLOCK)
+			ON #Facturas.IdFactura = FCPDR.IdFactura
+			AND #Facturas.MetodoPago = 'PPD'
+		JOIN dbo.FI_CPDocRelacionado WITH (NOLOCK)
+			ON FCPDR.UUID = FI_CPDocRelacionado.IdDocumento
+		INNER JOIN dbo.FI_ComplementoDePago WITH (NOLOCK)
+			ON FI_CPDocRelacionado.IdComplementoDePago = FI_ComplementoDePago.IdComplementoDePago
+		INNER JOIN dbo.FI_TransferFactura WITH (NOLOCK)
+			ON FI_ComplementoDePago.IdFactura = FI_TransferFactura.IdFactura
+			   AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
+		INNER JOIN dbo.FI_Factura WITH (NOLOCK)
+			ON FI_ComplementoDePago.IdFactura = FI_Factura.IdFactura
+		INNER JOIN dbo.PV_TipoMoneda WITH (NOLOCK)
+			ON FI_ComplementoDePago.MonedaP = PV_TipoMoneda.TipoMonedaCorto
+		INNER JOIN dbo.FI_Transfer WITH (NOLOCK)
+			ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
+			AND FI_Transfer.IdContrato = @Contrato
+		LEFT JOIN dbo.CO_TipoCambioDiario TCDD WITH (NOLOCK)
+			ON TCDD.IdMoneda = FI_Transfer.IdMoneda
+			   AND DAY(TCDD.Fecha) = DAY(FI_Transfer.FechaPago)
+			   AND MONTH(TCDD.Fecha) = MONTH(FI_Transfer.FechaPago)
+			   AND YEAR(TCDD.Fecha) = YEAR(FI_Transfer.FechaPago)
+		WHERE #Facturas.MetodoPago = 'PPD'
+		  AND FI_TransferFactura.CvTipoDocFacturacion = @TipoComplementoPago
+		  AND FI_Transfer.IdMoneda = PV_TipoMoneda.IdMoneda
+		  AND PV_TipoMoneda.IdMoneda <> FCPDR.IdMoneda
+		) AS Result
+		GROUP BY Result.IdFacturaCP,
+				 Result.UUIDCP,
+				 Result.FormaPagoCP,
+				 Result.TipoCambioCP,
+				 Result.MonedaCP,
+				 Result.MonedaPPD,
+				 Result.IdTransferencia;
 
     /*PUE*/
     --    
