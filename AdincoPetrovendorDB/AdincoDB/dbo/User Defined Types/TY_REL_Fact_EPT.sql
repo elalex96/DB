@@ -1,5 +1,3 @@
-use adinco
-
 IF NOT EXISTS (SELECT * FROM sys.types WHERE name = 'Type_REL_Fact_EPT')
 BEGIN
     CREATE TYPE Type_REL_Fact_EPT AS TABLE
