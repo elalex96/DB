@@ -1,12 +1,7 @@
-﻿
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_FI_ConsultaEstudioPrecios'
-)
-    DROP PROCEDURE SP_FI_ConsultaEstudioPrecios
+﻿IF OBJECT_ID('[dbo].[SP_FI_ConsultaEstudioPrecios]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].SP_FI_ConsultaEstudioPrecios
 GO
+
 -- =============================================
 -- Author:		Manuel CD
 -- Create date: 12-10-17

@@ -7,12 +7,13 @@
         WHERE
             name = 'USP_SEL_CO_ObtenerBitacoraPresupuesto'
     )
-    DROP PROCEDURE USP_SEL_CO_ObtenerBitacoraPresupuesto
+    DROP PROCEDURE USP_SEL_CO_ObtenerBitacoraPresupuesto;
 GO
 CREATE PROCEDURE USP_SEL_CO_ObtenerBitacoraPresupuesto
     @UsuarioId INT,
     @ContratoId INT
 AS
+BEGIN
 SET NOCOUNT ON;
 SELECT CO_BitacoraPresupuesto.IdCarga,
        CO_Contrato.NumeroContrato + ' - ' + ISNULL(CO_AreaContractual.NombreAreaContractual, '') AS Contrato,
@@ -21,8 +22,9 @@ SELECT CO_BitacoraPresupuesto.IdCarga,
        CO_BitacoraPresupuesto.CreadoEl,
        AP_Usuario.Nombre AS CreadoPor,
        ISNULL(CO_BitacoraPresupuesto.DetalleInsercion, 'NA') AS DetalleInsercion,
-       'NA' AS Presupuesto,
-	   ISNULL(CO_TipoProgramaActividad.TipoPrograma, '') AS TipoPrograma
+      ISNULL(LTRIM(CO_BitacoraPresupuesto.IdPresupuesto), 'NA') AS Presupuesto,
+	   ISNULL(CO_TipoProgramaActividad.TipoPrograma, '') AS TipoPrograma,
+	   ISNULL(CO_BitacoraPresupuesto.Tipo, '')	AS Tipo
 FROM CO_BitacoraPresupuesto (NOLOCK)
     JOIN CO_Contrato (NOLOCK)
         ON CO_BitacoraPresupuesto.IdCOntrato = CO_Contrato.IdContrato
@@ -36,3 +38,5 @@ FROM CO_BitacoraPresupuesto (NOLOCK)
 		CO_TipoProgramaActividad (NOLOCK)
 		ON CO_BitacoraPresupuesto.IdTipoProgramaActividad = CO_TipoProgramaActividad.IdTipoProgramaActividad
 ORDER BY CO_BitacoraPresupuesto.IdCarga DESC
+
+END

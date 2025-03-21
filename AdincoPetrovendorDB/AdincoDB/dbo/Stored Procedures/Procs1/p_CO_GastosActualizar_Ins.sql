@@ -1,10 +1,5 @@
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'p_CO_GastosActualizar_Ins'
-)
-    DROP PROCEDURE p_CO_GastosActualizar_Ins
+IF OBJECT_ID('[dbo].[p_CO_GastosActualizar_Ins]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].p_CO_GastosActualizar_Ins
 GO
 CREATE proc [dbo].[p_CO_GastosActualizar_Ins]
     @Gastos CO_GastosActualizarType READONLY,
@@ -190,10 +185,8 @@ BEGIN
 			   AND ISNULL(CO_GastosActualizar.CuentaContable, '') <> ''
         LEFT JOIN CO_CatalogoCuentaSH
             ON rtrim(CO_CatalogoCuentaSH.Nivel3) = rtrim(CO_GastosActualizar.CuentaContable)
-		INNER JOIN CO_VersionCatalogoCuentasSH
-			ON CO_CatalogoCuentaSH.IdVersion = CO_VersionCatalogoCuentasSH.IdVersion
-				AND CO_VersionCatalogoCuentasSH.Activo = 1
-    WHERE CO_CatalogoCuentaSH.IdCatalogoCuentasSH IS NULL AND CO_VersionCatalogoCuentasSH.Activo = 1
+    WHERE CO_CatalogoCuentaSH.IdCatalogoCuentasSH IS NULL
+
 
 	UPDATE CO_GastosActualizar
     SET Error = 1,
@@ -213,7 +206,11 @@ BEGIN
     UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
-        ErrorDesc = ISNULL(ErrorDesc, '') + 'La línea presupuesto no corresponde al contrato. '
+        ErrorDesc = CASE 
+						WHEN ErrorDesc LIKE '%La línea presupuesto no corresponde al contrato.%' 
+						THEN ErrorDesc
+						ELSE ISNULL(ErrorDesc, '') + 'La línea presupuesto no corresponde al contrato. '
+					END
     FROM CO_GastosActualizar 
         INNER JOIN #Gastos gastos
             ON CO_GastosActualizar.Id = gastos.Id 
@@ -221,14 +218,11 @@ BEGIN
                AND UPPER(CO_GastosActualizar.UUID) = UPPER(gastos.UUID)
         INNER JOIN CO_LineapresupuestoMes
             ON CO_GastosActualizar.IdLineaPresupuesto = CO_LineapresupuestoMes.IdLineaPresupuestoMes
-        INNER JOIN CO_PResupuesto
-            on CO_LineapresupuestoMes.IdPresupuesto = CO_PResupuesto.IdPresupuesto
-        INNER JOIN CO_ProgramaActividad
-            on CO_PResupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad
-        INNER JOIN CO_PeriodoContrato
-            on CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
-    WHERE CO_PeriodoContrato.IdContrato <> @IdContrato
-          AND CO_GastosActualizar.UUIDImport = @UUIDImport
+		LEFT JOIN CO_Servicio
+			ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
+				AND CO_Servicio.IdContrato = @IdContrato
+    WHERE CO_GastosActualizar.UUIDImport = @UUIDImport
+	AND CO_Servicio.IdServicio IS NULL
 
     -- se utiliza el CTE para obtener solo el primer registro como estaba antes del top 1
     
@@ -259,7 +253,7 @@ BEGIN
        )
     UPDATE CO_Registro
     SET Poliza = ro.Poliza,
-        CostosAtribuiblesAdministracion = ro.GastoAdmon,
+        CapexOpexEdicion = ro.GastoAdmon,
         IdCatalogoCuentasSH = ro.IdCatalogoCuentasSH,
         IdPrograma = ro.IdPrograma
     FROM CO_Registro cr
