@@ -117,9 +117,21 @@ BEGIN
 	UPDATE CO_GastosActualizar
     SET Error = 1,
         Procesado = 1,
+        ErrorDesc = CONCAT(ISNULL(ErrorDesc, ''), ' Los CP no están permitidos.')
+    FROM CO_GastosActualizar
+	INNER JOIN FI_Factura
+		ON UPPER(CO_GastosActualizar.UUID) = UPPER(FI_Factura.UUID)
+    WHERE CO_GastosActualizar.UUIDImport = @UUIDImport AND FI_Factura.TipoComprobanteEstandarizado = 'P'
+
+
+	UPDATE CO_GastosActualizar
+    SET Error = 1,
+        Procesado = 1,
         ErrorDesc = ISNULL(ErrorDesc, '') + 'El RFC es requerido. '
     FROM CO_GastosActualizar 
     WHERE ISNULL(CO_GastosActualizar.RFCEmisor, '') = '' AND CO_GastosActualizar.UUIDImport = @UUIDImport
+
+	
 
 
 	UPDATE CO_GastosActualizar
