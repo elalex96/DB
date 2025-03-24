@@ -1,7 +1,7 @@
 IF OBJECT_ID('[dbo].[USP_SEL_REL_Fact_EPT]', 'P') IS NOT NULL
     DROP PROCEDURE [dbo].USP_SEL_REL_Fact_EPT
 GO
-CREATE PROCEDURE [dbo].USP_SEL_REL_Fact_EPT
+CREATE PROCEDURE [dbo].[USP_SEL_REL_Fact_EPT]
 (
     @IdUsuario INT,
     @IdContrato INT,
@@ -24,7 +24,9 @@ BEGIN
 	);
 	DECLARE 
 	@TipoPedimentoImportacion INT = 2,
-	@TipoComprobante INT = 3
+	@TipoComprobante INT = 3,
+	@IdEstudioPrecioTransfer INT = 0,
+	@IdSubcontratista INT = 0;
 
 	INSERT INTO #Data (Anio, Contratista, Contrato, IdEstudioPrecioTransfer, IdentificadorDelDocumento, Mes, NombreDelDocumento, Observaciones, FilaExcel)
 	SELECT 
@@ -38,6 +40,9 @@ BEGIN
 		ISNULL(Observaciones, ''),
 		FilaExcel
 	FROM @Data
+
+	SELECT TOP 1 @IdEstudioPrecioTransfer = IdEstudioPrecioTransfer FROM #Data 
+	SELECT TOP 1 @IdSubcontratista = IdSubcontratista FROM FI_EstudioPreciosTransfer WHERE IdEstudioPrecioTransfer = @IdEstudioPrecioTransfer
 
    -- Validación: Facturas que ya tienen un EPT asignado
    UPDATE datos
@@ -61,6 +66,16 @@ BEGIN
 		AND LTRIM(RTRIM(UPPER(datos.IdentificadorDelDocumento))) = LTRIM(RTRIM(UPPER(FI_Factura.UUID)))
    WHERE FI_Factura.IdFactura IS NULL
    AND TRY_CONVERT(UNIQUEIDENTIFIER, datos.IdentificadorDelDocumento) IS NOT NULL -- Que sea un UUID valido
+
+   
+   -- Validación: UUID no correponde a empresa relacionada
+   UPDATE datos
+   SET datos.Observaciones = ISNULL(datos.Observaciones, '') + ' El CFDI no corresponde a la empresa relacionada al estudio de Precios de Transferencia seleccionado. '
+   FROM #Data datos
+   JOIN FI_Factura
+		ON FI_Factura.IdContrato = @IdContrato
+		AND LTRIM(RTRIM(UPPER(datos.IdentificadorDelDocumento))) = LTRIM(RTRIM(UPPER(FI_Factura.UUID)))
+		AND FI_Factura.IdSubcontratista <> @IdSubcontratista
 
    -- Se establece cuáles registros deben actualizarse
    UPDATE datos 
@@ -181,6 +196,28 @@ BEGIN
 	WHERE ISNULL(datos.Observaciones, '') = '' 
 		AND ISNULL(FI_PedimentoComprobante.IdEstudioPrecioTransfer, 0) <> 0
 
+	   -- Validación: PE o PI no correponde a empresa relacionada
+	   UPDATE datos
+		SET datos.Observaciones = CONCAT(
+			ISNULL(datos.Observaciones, ''), 
+			CASE 
+				WHEN FI_PedimentoComprobante.CvTipoDocFacturacion = @TipoComprobante 
+				THEN ' El PE no corresponde a la empresa relacionada al estudio de Precios de Transferencia seleccionado. '
+				WHEN FI_PedimentoComprobante.CvTipoDocFacturacion = @TipoPedimentoImportacion
+				THEN ' El PI no corresponde a la empresa relacionada al estudio de Precios de Transferencia seleccionado. '
+				ELSE ''
+			END
+			) 
+				FROM #Data datos 
+		 JOIN FI_PedimentoComprobante
+			ON (
+				LTRIM(RTRIM(UPPER(FI_PedimentoComprobante.NumeroPedimento))) = LTRIM(RTRIM(UPPER(datos.IdentificadorDelDocumento)))
+				OR 
+				LTRIM(RTRIM(UPPER(FI_PedimentoComprobante.IdDocFacturacionSIPAC))) = LTRIM(RTRIM(UPPER(datos.IdentificadorDelDocumento)))
+			)
+			AND FI_PedimentoComprobante.IdContrato = @IdContrato
+				AND (FI_PedimentoComprobante.IdSubcontratistaExportador <> @IdSubcontratista OR FI_PedimentoComprobante.IdSubcontratistaImportador <> @IdSubcontratista)
+   
 	-- Validación: Identificadores no encontrados en FI_PedimentoComprobante
 	UPDATE datos
 	SET datos.Observaciones = CONCAT(
