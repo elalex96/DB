@@ -1,9 +1,19 @@
-﻿-- =============================================
--- Author:		Reyna Olvera
--- Create date: 
--- Description:
+﻿USE [Adinco]
+GO
+DROP PROCEDURE IF EXISTS sp_Obten_AP_Tableros
+/****** Object:  StoredProcedure [dbo].[sp_Obten_AP_Tableros]    Script Date: 20/03/2025 01:59:38 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_Obten_AP_Tableros]--3,10061
+-- Author:		Reyna Olvera
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 20/03/2025
+-- Description: Se agregan los campos de HeightPX y EsVersionCloud
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_Obten_AP_Tableros]
 	@idContrato INT,
 	@idUsuario INT
 AS
@@ -16,9 +26,9 @@ BEGIN
 		NombreMostrar,
 		Workbook,
 		Sheet,
-		--Tabs,
+		Tabs,
 		Site,
-		--DNS,
+		DNS,
 		U.Nombre,
 		UserTableau,
 		isnull(MuestraToolbar,0) as MuestraToolbar,
@@ -26,7 +36,8 @@ BEGIN
 		Activo,
 		HeightPX,
 		idRol,
-		Parametros
+		Parametros,
+		EsVersionCloud
 	FROM
 		EN_TableroContrato	TC
 	JOIN
