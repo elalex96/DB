@@ -1,9 +1,20 @@
-﻿-- =============================================
--- Author:		Reyna Olvera
--- Create date: 
--- Description:
+﻿USE [Adinco]
+GO
+DROP PROCEDURE IF EXISTS sp_Guarda_AP_Tableros
+/****** Object:  StoredProcedure [dbo].[sp_Guarda_AP_Tableros]    Script Date: 20/03/2025 02:01:31 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_Guarda_AP_Tableros]--3,10061
+-- Author:		Reyna Olvera
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 20/03/2025
+-- Description: Se agregan los campos de HeightPX y EsVersionCloud
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_Guarda_AP_Tableros]
 	@idContrato INT,
 	@idUsuario INT,
 	@IdTableroContrato	INT,
@@ -16,7 +27,10 @@ CREATE PROCEDURE [dbo].[sp_Guarda_AP_Tableros]--3,10061
 	@IdRol	INT,
 	@Parametros	VARCHAR(500),
 	@UserTableau VARCHAR(150),
-	@MuestraToolbar BIT
+	@MuestraToolbar BIT,
+	@DNS VARCHAR(500),
+	@Tabs VARCHAR(500),
+	@EsVersionCloud BIT
 AS
 BEGIN
 
@@ -26,14 +40,14 @@ BEGIN
 	
 	IF(@IdTableroContrato	=	0)
 	BEGIN
-		INSERT INTO EN_TableroContrato(IdContrato, Workbook,Sheet,Tabs,Site,DNS,CreadoPor,CreadoEn,Activo,HeightPX,IdRol,NombreMostrar,Parametros,UserTableau,MuestraToolbar )
+		INSERT INTO EN_TableroContrato(IdContrato, Workbook,Sheet,Tabs,Site,DNS,CreadoPor,CreadoEn,Activo,HeightPX,IdRol,NombreMostrar,Parametros,UserTableau,MuestraToolbar,EsVersionCloud )
 		VALUES						  
 		(	@idContrato,
 			@Workbook,
 			@Sheet,
-			'no',
+			@Tabs,
 			@Site,
-			'https://adincobi.mx/trusted/',
+			@DNS,
 			@idUsuario,
 			GETDATE(),
 			1,
@@ -48,7 +62,8 @@ BEGIN
 			@NombreMostrar,
 			@Parametros,
 			@UserTableau,
-			@MuestraToolbar );
+			@MuestraToolbar,
+			@EsVersionCloud);
 
 	END
 	ELSE
@@ -74,7 +89,10 @@ BEGIN
 				NombreMostrar	=	@NombreMostrar,
 				Parametros	=	@Parametros,
 				UserTableau	=	@UserTableau,
-				MuestraToolbar	=	@MuestraToolbar
+				MuestraToolbar	=	@MuestraToolbar,
+				DNS = @DNS,
+				Tabs = @Tabs,
+				EsVersionCloud = @EsVersionCloud
 		WHERE
 			IdTableroContrato	=	@IdTableroContrato
 			AND	IdContrato	=	@idContrato
