@@ -42,7 +42,7 @@ BEGIN
 	FROM @Data
 
 	SELECT TOP 1 @IdEstudioPrecioTransfer = IdEstudioPrecioTransfer FROM #Data 
-	SELECT TOP 1 @IdSubcontratista = IdSubcontratista FROM FI_EstudioPreciosTransfer WHERE IdEstudioPrecioTransfer = @IdEstudioPrecioTransfer
+	SELECT TOP 1 @IdSubcontratista = IdSubcontratista FROM FI_EstudioPreciosTransfer (NOLOCK) WHERE IdEstudioPrecioTransfer = @IdEstudioPrecioTransfer
 
    -- Validación: Facturas que ya tienen un EPT asignado
    UPDATE datos
