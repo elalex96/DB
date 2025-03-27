@@ -1,6 +1,3 @@
-﻿USE [Adinco]
-GO
-
 IF OBJECT_ID('[dbo].[p_OT_InsertarProgramaBitacoraSemana]', 'P') IS NOT NULL
     DROP PROC [dbo].[p_OT_InsertarProgramaBitacoraSemana]
 GO
