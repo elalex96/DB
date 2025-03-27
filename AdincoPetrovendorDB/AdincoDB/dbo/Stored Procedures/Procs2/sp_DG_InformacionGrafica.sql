@@ -1,4 +1,15 @@
-﻿-- =============================================  
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'sp_DG_InformacionGrafica'
+    )
+    DROP PROCEDURE sp_DG_InformacionGrafica;
+GO
+-- =============================================  
 -- Author:  Miguel Gomez  
 -- Create date:  2017  
 -- Description: Presupuestos  
@@ -61,11 +72,11 @@ AS
                 Titulo_xAxis      VARCHAR(5000),
                 Mes_Presupuestado VARCHAR(5000),
                 SerieName0        VARCHAR(5000),
-                SerieValues0      FLOAT,
+                SerieValues0      DECIMAL(20,6),
                 SerieName1        VARCHAR(5000),
-                SerieValues1      FLOAT,
+                SerieValues1      DECIMAL(20,6),
                 valueSuffix       VARCHAR(5000),
-                monto             FLOAT,
+                monto             DECIMAL(20,6),
                 AC_PRESUP_MES     DATE
             );
         CREATE TABLE #tmp2
@@ -100,7 +111,7 @@ AS
             );
         CREATE TABLE #VolumenGas
             (
-                Titulo         VARCHAR(5000),
+                Titulo      VARCHAR(5000),
                 Subtitulo      VARCHAR(5000),
                 Titulo_yAxis   VARCHAR(5000),
                 Titulo_xAxis   VARCHAR(5000),
@@ -199,7 +210,7 @@ AS
                 Fecha          VARCHAR(5000),
                 CantidadSeries INT,
                 valueSuffix    VARCHAR(5000),
-                SerieName0     VARCHAR(5000),
+            SerieName0     VARCHAR(5000),
                 SerieValues0   FLOAT,
                 SerieType0     VARCHAR(5000),
                 SerieColor0    VARCHAR(5000),
@@ -291,8 +302,9 @@ AS
                 Mes_Presupuestado VARCHAR(5000)
             );
 
-        DECLARE @ContratoCNH VARCHAR(5000);
-        DECLARE @idpresupuesto AS INT;
+        DECLARE @ContratoCNH VARCHAR(5000), 
+		@idpresupuesto AS INT,
+		@CO_PresupuestoNombre VARCHAR(300);
 
         /*  
      ====================================================================================  
@@ -301,7 +313,7 @@ AS
      */
 
         IF @IdGrafica = 1
-            BEGIN
+BEGIN
                 INSERT INTO #DatosGrafica
                     (
                         Titulo,
@@ -373,21 +385,21 @@ AS
             BEGIN
 
                 SELECT
-                    @idpresupuesto = CO_Presupuesto.idpresupuesto
+                    @idpresupuesto = CO_Presupuesto.idpresupuesto,
+					@CO_PresupuestoNombre = nombre
                 FROM
+					CO_PeriodoContrato (NOLOCK)
+				INNER JOIN
                     CO_ProgramaActividad (NOLOCK)
-                    INNER JOIN
-                        CO_PeriodoContrato (NOLOCK)
-                            ON CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
+					ON CO_PeriodoContrato.IdPeriodo	=	CO_ProgramaActividad.IdPeriodoContrato 
+						AND CO_PeriodoContrato.IdContrato	= @IdContrato
                     INNER JOIN
                         CO_Presupuesto (NOLOCK)
                             ON CO_ProgramaActividad.IdProgramaActividad = CO_Presupuesto.IdProgramaActividad
                                AND CO_Presupuesto.Actual = 1
-                    INNER JOIN
-                        CO_Contrato (NOLOCK)
-                            ON CO_PeriodoContrato.IdContrato = CO_Contrato.IdContrato
+							   
                 WHERE
-                    CO_Contrato.IdContrato = @IdContrato
+                    CO_PeriodoContrato.IdContrato = @IdContrato
                     AND CO_Presupuesto.Actual = 1;
 
 
@@ -407,11 +419,11 @@ AS
                         AC_PRESUP_MES
                     )
                             SELECT
-                                CASE @Language
+                              CASE @Language
                                     WHEN 0
-                                        THEN CO_Presupuesto.nombre
+                                        THEN @CO_PresupuestoNombre
                                     ELSE
-                                        CO_Presupuesto.nombre
+                                        @CO_PresupuestoNombre
                                 END                                                AS Titulo,
                                 CASE @Language
                                     WHEN 0
@@ -452,7 +464,7 @@ AS
                                     ELSE
                                         'Budget (USD)'
                                 END                                                AS 'SerieName0',
-                                CAST(SUM(dbo.CO_LineaPresupuestoMes.Monto) AS INT) AS 'SerieValues0',
+                                CAST(SUM(ISNULL(dbo.CO_LineaPresupuestoMes.Monto,0)) AS bigint) AS 'SerieValues0',
                                 CASE @Language
                                     WHEN 0
                                         THEN 'Registrado (USD)'
@@ -460,18 +472,18 @@ AS
                                         'Registered (USD)'
                                 END                                                AS 'SerieName1',
                                 SUM(   CASE
-                                           WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0
+                                           WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0	AND  ISNULL(CO_TipoCambioDiario.TipoCambio,0)<>0
                                                THEN ISNULL(CO_Registro.MontoRegistro, 0)
-                                                    / CO_TipoCambioDiario.TipoCambio
+                                                    /  ISNULL(CO_TipoCambioDiario.TipoCambio,0)
                                            ELSE
                                                0
                                        END
                                    )                                               AS 'SerieValues1',
                                 ' Dls'                                             AS 'valueSuffix',
                                 RAND(SUM(   CASE
-                                                WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0
+                                                WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0	AND  ISNULL(CO_TipoCambioDiario.TipoCambio,0)<>0
                                                     THEN ISNULL(CO_Registro.MontoRegistro, 0)
-                                                         / CO_TipoCambioDiario.TipoCambio
+                                                         / ISNULL(CO_TipoCambioDiario.TipoCambio,0)
                                                 ELSE
                                                     0
                                             END
@@ -480,55 +492,24 @@ AS
                                 dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES
                             FROM
                                 dbo.CO_LineaPresupuestoMes (NOLOCK)
-                                JOIN
-                                    co_presupuesto (NOLOCK)
-                                        ON CO_Presupuesto.idpresupuesto = CO_LineaPresupuestoMes.idpresupuesto
-                                           AND dbo.CO_LineaPresupuestoMes.IdPresupuesto = @idpresupuesto
-                                LEFT OUTER JOIN
-                                    CO_ActividadPetroleraCNH (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdActividadPetrolera = CO_ActividadPetroleraCNH.IdActividadPetrolera
-                                LEFT OUTER JOIN
-                                    CO_SubactividadPetrolera (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdSubactividadPetrolera = CO_SubactividadPetrolera.IdSubactividadPetrolera
-                                LEFT OUTER JOIN
-                                    CO_TareaPetrolera (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdTareaPetrolera = CO_TareaPetrolera.IdTareaPetrolera
-                                LEFT OUTER JOIN
-                                    CO_ActividadCIEP (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdActividad = CO_ActividadCIEP.IdActividad
-                                LEFT OUTER JOIN
-                                    CO_TipoServicio (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdTipoServicio = CO_TipoServicio.ID_TIPOSER
-                                LEFT OUTER JOIN
-                                    CO_SubactividadCIEP (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdSubactividad = CO_SubactividadCIEP.IdSubactividad
-                                LEFT OUTER JOIN
+                           
+								JOIN
                                     CO_Servicio (NOLOCK)
                                         ON dbo.CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
-                                LEFT OUTER JOIN
-                                    CO_Area (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdArea = CO_Area.IdArea
-                                LEFT OUTER JOIN
-                                    CO_Instalacion (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdInstalacion = CO_Instalacion.IdInstalacion
-                                LEFT OUTER JOIN
+										AND dbo.CO_LineaPresupuestoMes.IdPresupuesto = @idpresupuesto
+                                LEFT  JOIN
                                     CO_Registro (NOLOCK)
                                         ON dbo.CO_LineaPresupuestoMes.IdLineaPresupuestoMes = CO_Registro.IdPrograma
-                                LEFT OUTER JOIN
-                                    CO_ClasificacionAnexo4 (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdAnexo4 = CO_ClasificacionAnexo4.IdAnexo4
-                                LEFT OUTER JOIN
+                                LEFT  JOIN
                                     FI_Factura (NOLOCK)
-                                        ON FI_Factura.IdFactura = CO_Registro.IdFactura
+                                        ON CO_Registro.IdFactura	=	 FI_Factura.IdFactura
                                 LEFT OUTER JOIN
                                     CO_TipoCambioDiario (NOLOCK)
                                         ON CO_TipoCambioDiario.IdMoneda = FI_Factura.IdMoneda
                                            AND MONTH(CO_TipoCambioDiario.fecha) = MONTH(FI_Factura.fecha)
                                            AND YEAR(CO_TipoCambioDiario.fecha) = YEAR(FI_Factura.fecha)
                                            AND DAY(CO_TipoCambioDiario.fecha) = DAY(FI_Factura.fecha)
-                                LEFT OUTER JOIN
-                                    CO_RubroInterno (NOLOCK)
-                                        ON dbo.CO_LineaPresupuestoMes.IdRubroInterno = CO_RubroInterno.IdRubroInterno
+                             
                                 LEFT OUTER JOIN
                                     DG_Grafica (NOLOCK)
                                         ON @IdGrafica = DG_Grafica.Id_Grafica
@@ -536,7 +517,6 @@ AS
                                 (dbo.CO_LineaPresupuestoMes.IdPresupuesto = @idpresupuesto)
                             GROUP BY
                                 dbo.CO_LineaPresupuestoMes.AC_PRESUP_MES,
-                                CO_Presupuesto.nombre,
                                 DG_Grafica.Title,
                                 DG_Grafica.Subtitulo,
                                 DG_Grafica.Subtitle,
@@ -581,7 +561,7 @@ AS
                     t1
                 SET
                     SerieValues0 = ISNULL(t2.presupuesto, 0),
-                    t1.SerieValues1 = ISNULL(t2.gasto, 0)
+                  t1.SerieValues1 = ISNULL(t2.gasto, 0)
                 FROM
                     #tmp      t1
                     JOIN
@@ -615,11 +595,11 @@ AS
                                 2,
                                 valueSuffix,
                                 SerieName0,
-                                CAST(SerieValues0 AS INT) AS SerieValues0,
+                                CAST(SerieValues0 AS bigint) AS SerieValues0,
                                 'line',
                                 'blue',
                                 SerieName1,
-                                CAST(SerieValues1 AS INT) AS SerieValues1,
+                                CAST(SerieValues1 AS bigint) AS SerieValues1,
                                 'line',
                                 'green'
                             FROM
@@ -673,7 +653,7 @@ AS
                                              THEN G.Titulo_yAxis
                                          ELSE
                                              G.Title_yAxis
-                                     END                                         AS Titulo_yAxis,
+       END                                         AS Titulo_yAxis,
                                      CASE @Language
                                          WHEN 0
                                              THEN G.Titulo_xAxis
@@ -711,9 +691,10 @@ AS
                                      vmpp.MesReporte
                                  FROM
                                      DG_Grafica                              G (NOLOCK)
-                                     LEFT OUTER JOIN
-                                         PR_VolumenMensualProduccionPetroleo VMPP (NOLOCK)
-                                             ON @IdGrafica = G.Id_Grafica
+                                 LEFT OUTER JOIN
+										PR_VolumenMensualProduccionPetroleo VMPP (NOLOCK)
+											ON	G.Id_Grafica	=	@IdGrafica
+											AND	IdContrato = @IdContrato
                                  WHERE
                                      IdContrato = @IdContrato
                                  ORDER BY
@@ -728,7 +709,7 @@ AS
                      --||||||||||||||||||||||||||||||||||||||||||||  
                      -- Acumular  
                      --||||||||||||||||||||||||||||||||||||||||||||  
-                     INSERT INTO #ProduccionPetroleo
+     INSERT INTO #ProduccionPetroleo
                          (
                              MesReporte,
                              acumulado
@@ -819,7 +800,7 @@ AS
                              SerieName0,
                              SerieValues0,
                              SerieType0,
-                             SerieColor0,
+ SerieColor0,
                              SerieName1,
                              SerieValues1,
                              SerieType1,
@@ -884,7 +865,7 @@ AS
                                              'Methane C1'
                                      END                                                           AS SerieName0,
                                      VMPP.MetanoC1                                                 AS SerieValues0,
-                                     'line'                                                        AS SerieType0,
+                                     'line'                                               AS SerieType0,
                                      'blue'                                                        AS SerieColor0,
                                      CASE @Language
                                          WHEN 0
@@ -933,10 +914,11 @@ AS
                                      'blue'                                                        AS SerieColor5,
                                      vmpp.MesReporte
                                  FROM
-                                     DG_Grafica                              G (NOLOCK)
+                                     DG_Grafica           G (NOLOCK)
                                      LEFT OUTER JOIN
                                          PR_VolumenMensualProduccionPetroleo VMPP
-                                             ON @IdGrafica = G.Id_Grafica
+                                             ON	G.Id_Grafica	=	@IdGrafica
+											 AND  VMPP.IdContrato = @IdContrato
                                  WHERE
                                      IdContrato = @IdContrato
                                  ORDER BY
@@ -1141,6 +1123,7 @@ AS
                                      LEFT OUTER JOIN
                                          PR_VolumenMensualProduccionPetroleo VMPP
                                              ON @IdGrafica = G.Id_Grafica
+											 AND VMPP.IdContrato = @IdContrato
                                  WHERE
                                      IdContrato = @IdContrato;
 
@@ -1157,7 +1140,7 @@ AS
                                      SUM(   CASE
                                                 WHEN t1.MesReporte <= t2.MesReporte
                                                     THEN t1.serievalues1
-                                                ELSE
+      ELSE
                                                     0
                                             END
                                         ) AS acumulado
@@ -1253,7 +1236,7 @@ AS
                              SerieType1,
                              SerieColor1,
                              SerieName2,
-                             SerieValues2,
+                          SerieValues2,
                              SerieType2,
                              SerieColor2,
                              MesReporte
@@ -1323,6 +1306,7 @@ AS
                                      LEFT JOIN
                                          DG_Grafica G
                                              ON @IdGrafica = G.Id_Grafica
+											 AND  RTRIM(VMPP.RF01_01) = RTRIM(@ContratoCNH)
                                  WHERE
                                      RTRIM(VMPP.RF01_01) = RTRIM(@ContratoCNH);
 
@@ -1391,7 +1375,7 @@ AS
                                      Titulo_xAxis,
                                      Fecha,
                                      CantidadSeries,
-                                     valueSuffix,
+                      valueSuffix,
                                      SerieName0,
                                      SerieValues0,
                                      SerieType0,
@@ -1473,7 +1457,7 @@ AS
                                      END                                                AS Titulo_xAxis,
                                      CONCAT(
                                                RIGHT('00' + CAST(VMPP.RMPCT32_00 AS VARCHAR(2)), 2), ' ',
-                                               SUBSTRING(dbo.Fn_ObtenerNombreMes(@Language, VMPP.RMPCT32_00), 0, 4),
+                                          SUBSTRING(dbo.Fn_ObtenerNombreMes(@Language, VMPP.RMPCT32_00), 0, 4),
                                                ' ', SUBSTRING(CAST(RMPCT32_01 AS VARCHAR(4)), 3, 2)
                                            )                                            AS Fecha,
                                      2                                                  AS CantidadSeries,
@@ -1511,6 +1495,7 @@ AS
                                      LEFT JOIN
                                          DG_Grafica G
                                              ON @IdGrafica = G.Id_Grafica
+											 AND	 RTRIM(VMPP.RF01_01) = RTRIM(@ContratoCNH)
                                  WHERE
                                      RTRIM(VMPP.RF01_01) = RTRIM(@ContratoCNH);
 
@@ -1532,7 +1517,7 @@ AS
                                                     0
                                             END
                                         ) AS acumulado
-                                 FROM
+                          FROM
                                      #VolumenEntregaCondensado            t1
                                      CROSS JOIN #VolumenEntregaCondensado t2
                                  GROUP BY
@@ -1701,6 +1686,7 @@ AS
                                      LEFT JOIN
                                          DG_Grafica G
                                              ON @IdGrafica = G.Id_Grafica
+											 AND RTRIM(VMPP.RF01_01) = RTRIM(@ContratoCNH)
                                  WHERE
                                      RTRIM(VMPP.RF01_01) = RTRIM(@ContratoCNH);
                      --||||||||||||||||||||||||||||||||||||||||||||  
@@ -1764,7 +1750,7 @@ AS
                                  SELECT
                                      Titulo,
                                      Subtitulo,
-                                     Titulo_yAxis,
+                 Titulo_yAxis,
                                      Titulo_xAxis,
                                      Fecha,
                                      CantidadSeries,
@@ -1847,7 +1833,7 @@ AS
                                         THEN 'Real Price (USD)'
                                     ELSE
                                         'Real Precio (USD)'
-                                END                                  AS 'SerieName1',
+    END                                  AS 'SerieName1',
                                 isnull(SUM(PA.RealPetroleoUSDBl), 0) AS 'SerieValues1',
                                 ' USD Bl'                            AS 'valueSuffix'
                             FROM
@@ -1855,6 +1841,7 @@ AS
                                 LEFT OUTER JOIN
                                     DG_Grafica (NOLOCK)
                                         ON @IdGrafica = DG_Grafica.Id_Grafica
+										AND PA.IdContrato = @IdContrato
                             WHERE
                                 (PA.IdContrato = @IdContrato)
                             GROUP BY
@@ -1939,7 +1926,7 @@ AS
                                         THEN DG_Grafica.Subtitulo
                                     ELSE
                                         DG_Grafica.Subtitle
-                                END                              AS Subtitulo,
+                        END                              AS Subtitulo,
                                 CASE @Language
                                     WHEN 0
                                         THEN DG_Grafica.Titulo_yAxis
@@ -1973,6 +1960,7 @@ AS
                                 LEFT OUTER JOIN
                                     DG_Grafica (NOLOCK)
                                         ON @IdGrafica = DG_Grafica.Id_Grafica
+										AND PA.IdContrato = @IdContrato
                             WHERE
                                 (PA.IdContrato = @IdContrato)
                             GROUP BY
@@ -2091,7 +2079,7 @@ AS
                                 CASE @Language
                                     WHEN 0
                                         THEN 'CGI (USD)'
-                                    ELSE
+                             ELSE
                                         'CGI (USD)'
                                 END                                                                                     AS 'SerieName1',
                                 0                                                                                       AS 'SerieValues1',
@@ -2101,6 +2089,7 @@ AS
                                 LEFT OUTER JOIN
                                     DG_Grafica (NOLOCK)
                                         ON @IdGrafica = DG_Grafica.Id_Grafica
+										AND	COM.IdContrato = @IdContrato
                             WHERE
                                 (COM.IdContrato = @IdContrato)
                             GROUP BY
@@ -2150,24 +2139,25 @@ AS
                                       )                      as Mes_Presupuestado
                             FROM
                                 CO_Registro                 R (NOLOCK)
-                                join
+                                JOIN
                                     FI_Factura              F (NOLOCK)
-                                        on R.IdFactura = F.IdFactura
-                                           AND F.IdContrato = (@IdContrato)
-                                join
+								on	R.IdFactura = F.IdFactura
+									AND F.IdContrato = (@IdContrato)
+                                JOIN
                                     FI_TransferFactura      TF (NOLOCK)
                                         on F.IdFactura = TF.IdFactura
-                                join
+                                JOIN
                                     FI_Transfer             T (NOLOCK)
                                         on TF.IdTransfer = T.IdTransferencia
-                                left join
+										AND T.IdContrato = (@IdContrato)
+                               LEFT JOIN
                                     FI_CPDocRelacionado     DR (NOLOCK)
                                         on F.UUID = DR.IdDocumento
-                                left join
+                                LEFT JOIN
                                     FI_ComplementoDePago    CP (NOLOCK)
                                         on DR.IdComplementoDePago = CP.IdComplementoDePago
                                 LEFT JOIN
-                                    dbo.CO_TipoCambioDiario TCD WITH (NOLOCK)
+                                    dbo.CO_TipoCambioDiario TCD (NOLOCK)
                                         ON T.IdMoneda = TCD.IdMoneda
                                            AND DAY(T.FechaPago) = DAY(TCD.Fecha)
                                            AND MONTH(T.FechaPago) = MONTH(TCD.Fecha)
@@ -2229,7 +2219,7 @@ AS
                                 'blue',
                                 SerieName1,
                                 CAST(SerieValues1 AS INT) AS SerieValues1,
-                                'line',
+                      'line',
                                 'green'
                             FROM
                                 #tmpIngreso
@@ -2245,3 +2235,4 @@ AS
             Fecha;
 
     END;
+
