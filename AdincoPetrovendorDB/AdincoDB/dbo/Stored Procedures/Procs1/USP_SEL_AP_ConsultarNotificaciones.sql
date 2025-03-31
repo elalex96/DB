@@ -10,10 +10,6 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    BEGIN TRY
-        -- Iniciar transacción
-        BEGIN TRANSACTION;
-
         -- Usar una variable de tabla en lugar de una tabla temporal
         DECLARE @tmpNotificacionesIds TABLE (IdNotificacion INT);
 
@@ -81,13 +77,4 @@ BEGIN
 
         -- Si todo ha ido bien, establecer mensaje de error como NULL
         SET @MensajeError = '';
-
-    END TRY
-    BEGIN CATCH
-        -- Deshacer transacción si hay error
-        ROLLBACK TRANSACTION;
-
-        -- Capturar y devolver el mensaje de error
-        SET @MensajeError = 'Error en ' + ERROR_PROCEDURE() + ': ' + ERROR_MESSAGE();
-    END CATCH;
 END
