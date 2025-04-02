@@ -1,4 +1,15 @@
-﻿-- =============================================    
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_25_M'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_25_M;
+GO
+-- =============================================    
 -- Author:  Manuel Cruz    
 -- Create date: 2017-03-29    
 -- Description:      
@@ -270,7 +281,10 @@ BEGIN
            FechaFactura_RC25_14,
            ValMontFact_RC25_15,
            ValDolares_RC25_16,
-           ClasDocSoporte_RC25_17
+           ClasDocSoporte_RC25_17,
+		   'NA' AS RC25_18,
+		   'NA' AS RC25_19
     FROM #TEMPORAL_25_M_SP
     WHERE ConTransferencia = 1
 END;
+

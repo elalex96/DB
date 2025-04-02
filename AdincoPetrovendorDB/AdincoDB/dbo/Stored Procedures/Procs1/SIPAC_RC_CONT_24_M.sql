@@ -1,4 +1,15 @@
-﻿-- =============================================    
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_24_M'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_24_M;
+GO
+-- =============================================    
 -- Author:                            Yazmin Glez    
 -- Create date:  2017-11-29    
 -- Description:      
@@ -305,7 +316,7 @@ BEGIN
                                                                      (ISNULL(#TEMPORAL_24_M_SP.ValDolares_RC24_19, 0)
                                                                       / CO_TipoCambioDiario.TipoCambio
                                                                      ),
-                                                                     2
+              2
                                                                  ) AS DECIMAL(15, 2))
                                                    ELSE
                                                        0
@@ -347,7 +358,9 @@ BEGIN
            FechaFactura_RC24_17,
            ValMontFact_RC24_18,
            ValDolares_RC24_19,
-           ClasDocSoporte_RC24_20
+           ClasDocSoporte_RC24_20,
+		   'NA' AS RC24_21,
+		   'NA' AS RC24_22
     FROM #TEMPORAL_24_M_SP
     WHERE ConTransferencia = 1
 END;
