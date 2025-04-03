@@ -3997,6 +3997,15 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_UPD_SEPCNGastos.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_DEL_FI_EliminarRelacionEPT.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_RelacionadosEPT.sql" />
+    <Build Include="dbo\Tables\Tables1\AP_NotificacionTareaBitacora.sql" />
+    <Build Include="dbo\Tables\Tables1\AP_Notificacion.sql" />
+    <Build Include="dbo\Tables\Tables1\AP_NotificacionError.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_AP_InsertarNotificacionTareaBitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\UPS_UPD_AP_ActualizarFinNotificacionTareaBitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_AP_InsertarNotificacionError.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_UPD_AP_MarcarEnviadaNotificacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ConsultarNotificaciones.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_AP_Notificacion.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
