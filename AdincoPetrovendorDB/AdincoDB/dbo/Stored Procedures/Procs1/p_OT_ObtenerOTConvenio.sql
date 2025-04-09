@@ -36,74 +36,18 @@ SET NOCOUNT ON;
 									FROM CO_Contrato (NOLOCK)
 									WHERE IdContrato = @IdContrato);
 
-		CREATE TABLE #OT_SolicitudDelContrato
-		(
-			IdOTSolicitud       INT PRIMARY KEY,
-			IdSubContrato       int,
-			Folio               varchar(150),
-			FechaInicio DATETIME,
-			FechaFin DATETIME,
-			PlazoEjecucion	INT,
-			CreadoPor INT,
-			CreadoEl DATETIME,
-			ModificadoPor INT,
-			ModificadoEl	DATETIME,
-			IsActivo            bit,
-			isEliminado bit,
-			IdPresupuesto INT,
-			Objeto	varchar(1000),
-			IdOTEstatus         INT,
-			FechaFinExtendida	DATETIME,
-			IdOTEstatusAnt INT,
-			NombrePresupuesto varchar(300),
-			PuedeEstimar bit,
-			Excedida bit,
-			AFinanciero INT,
-			TotalOT FLOAT,
-			Moneda varchar(100),
-			Subcontratista varchar(300),
-			CentroCosto varchar(300),
-			SAPPR varchar(50)
-		);
-
-		INSERT INTO #OT_SolicitudDelContrato
-		EXEC p_OT_ConsultaOTSolicitud @pIdContratista=@IdContratista,
-									@pIdContrato=@IdContrato,
-									@pPendientes=0,
-									@pAprobadas=0,
-									@pRechazadas=0,
-									@pExcedidas=0,
-									@pRequiereConvenio=1,
-									@pTodas=0,
-									@pIdSubcontrato=0,
-									@pUsuarioId=@IdUsuario,
-									@Desde=@FECHA_DESDE,
-									@Hasta=@FECHA_HASTA;
-
-		SELECT 
-			OT.IdOTSolicitud,
-			OT.IdSubContrato,
-			OT.Folio,
-			OT.FechaInicio,
-			OT.FechaFin,
-			OT.PlazoEjecucion,
-			OT.CreadoPor,
-			OT.CreadoEl,
-			OT.ModificadoPor,
-			OT.ModificadoEl,
-			OT.IsActivo,
-			OT.isEliminado,
-			OT.IdPresupuesto,
-			OT.Objeto,
-			OT.IdOTEstatus,
-			OT.FechaFinExtendida,
-			OT.IdOTEstatusAnt,
-			OT.NombrePresupuesto,
-			con.IdOTConvenio,
-			OT.Moneda
-		FROM #OT_SolicitudDelContrato AS OT
-		INNER JOIN OT_Convenio con  (NOLOCK)
-				ON OT.IdOTSolicitud = con.IdOTSolicitud ;
+			exec p_OT_ConsultaOTSolicitud @pIdContratista=@IdContratista,
+												@pIdContrato=@IdContrato,
+												@pPendientes=0,
+												@pAprobadas=0,
+												@pRechazadas=0,
+												@pExcedidas=0,
+												@pRequiereConvenio=1,
+												@pTodas=0,
+												@pIdSubcontrato=0,
+												@pUsuarioId=@IdUsuario,
+												@Desde=@FECHA_DESDE,
+												@Hasta=@FECHA_HASTA;
 
 	END
 	ELSE

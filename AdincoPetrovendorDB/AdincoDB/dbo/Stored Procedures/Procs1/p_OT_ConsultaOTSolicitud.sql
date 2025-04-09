@@ -1,15 +1,17 @@
-﻿IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'p_OT_ConsultaOTSolicitud'
-    )
-    DROP PROCEDURE p_OT_ConsultaOTSolicitud;
+﻿USE [Adinco]
 GO
-CREATE PROCEDURE p_OT_ConsultaOTSolicitud
+DROP PROCEDURE IF EXISTS p_OT_ConsultaOTSolicitud
+/****** Object:  StoredProcedure [dbo].[p_OT_ConsultaOTSolicitud]    Script Date: 09/04/2025 12:03:07 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		Alexander Gomez
+-- Update date: 08-04-2025
+-- Description: Se agrega IdOTConvenio para el consumo desde procura
+-- =============================================
+ALTER PROCEDURE [dbo].[p_OT_ConsultaOTSolicitud]
     @pIdContratista    int,
     @pIdContrato       int,
     @pPendientes       bit,
@@ -25,13 +27,23 @@ CREATE PROCEDURE p_OT_ConsultaOTSolicitud
     @Hasta             datetime = null
 as
     BEGIN
+
+		IF OBJECT_ID(N'tempdb..#tmpEstimacion', N'U') IS NOT NULL   
+		DROP TABLE #tmpEstimacion; 
+		
         CREATE TABLE #tmpEstimacion (IdOTSolicitud INT)
+
+		IF OBJECT_ID(N'tempdb..#tmpProgramaCaptura', N'U') IS NOT NULL   
+		DROP TABLE #tmpProgramaCaptura;
         CREATE TABLE #tmpProgramaCaptura
             (
                 IdOTSolicitudMaterial INT,
                 SumaCaptura           DECIMAL(14, 5)
             )
-			
+		
+		IF OBJECT_ID(N'tempdb..#OT_SolicitudDelContrato', N'U') IS NOT NULL   
+		DROP TABLE #OT_SolicitudDelContrato;
+
 		CREATE TABLE #OT_SolicitudDelContrato
 			(
 				IdOTSolicitud       INT PRIMARY KEY,
@@ -124,7 +136,7 @@ as
 			JOIN
                     SC_Subcontrato         (NOLOCK)
                         on OT_Solicitud.IdSubcontrato	=	 SC_Subcontrato.IdSubContrato
-						AND SC_Subcontrato.IdContrato = 10038--@pIdContrato
+						AND SC_Subcontrato.IdContrato = @pIdContrato
 			JOIN
                     PV_Subcontratista (NOLOCK)
                         on PV_Subcontratista.IdSubcontratista = SC_Subcontrato.IdSubcontratista
@@ -331,7 +343,8 @@ as
                     Moneda                           = isnull(mon.TipoMonedaCorto, 'NO DEFINIDO'),
                     Subcontratista                   = #OT_SolicitudDelContrato.SubcontratistaRazonSocial,
                     CentroCosto                      = cc.CentroCosto,
-                    #OT_SolicitudDelContrato.SAPPR
+                    #OT_SolicitudDelContrato.SAPPR,
+					con.IdOTConvenio
                 FROM
                     #OT_SolicitudDelContrato (NOLOCK)
                     JOIN
@@ -354,6 +367,8 @@ as
                     LEFT JOIN
                         OT_BI_Tablero                 BIOT (NOLOCK)
                             ON est.IdOTSolicitud = BIOT.IdOTSolicitud
+					LEFT JOIN OT_Convenio con  (NOLOCK)
+						ON est.IdOTSolicitud = con.IdOTSolicitud
                 where
                     isnull(#OT_SolicitudDelContrato.isActivo, 0) = 1
                     and isnull(#OT_SolicitudDelContrato.isEliminado, 0) = 0
@@ -422,7 +437,8 @@ as
                     est.IdOTSolicitud,
                     cc.CentroCosto,
                     #OT_SolicitudDelContrato.SAPPR,
-                    ISNULL(BIOT.AvanceFinanciero, 0)
+                    ISNULL(BIOT.AvanceFinanciero, 0),
+					con.IdOTConvenio
                 Order by
                     IdOTSolicitud desc
 
