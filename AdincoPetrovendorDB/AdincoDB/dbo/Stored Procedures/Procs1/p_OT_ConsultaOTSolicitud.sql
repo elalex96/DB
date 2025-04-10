@@ -11,7 +11,7 @@ GO
 -- Update date: 08-04-2025
 -- Description: Se agrega IdOTConvenio para el consumo desde procura
 -- =============================================
-ALTER PROCEDURE [dbo].[p_OT_ConsultaOTSolicitud]
+CREATE PROCEDURE [dbo].[p_OT_ConsultaOTSolicitud]
     @pIdContratista    int,
     @pIdContrato       int,
     @pPendientes       bit,
