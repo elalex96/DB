@@ -11,7 +11,7 @@
 - [ ] En caso de aplicarse, ¿las interfaces mantienen una buena ortografía?
 - [ ] En caso de encontrar hallazgos en el Pull Request, ¿tiene su registro en SharePoint?
 - [ ] En caso de aplicarse, ¿se encuentra asignado el Milestone correspondiente en el Pull Request?
-- [ ] En caso de aplicarse, ¿se encuentran asignadas las etiquetas correspondientes en el Pull Request? (ej. Task Scheduler, Contiene Scripts)
+- [ ] En caso de aplicarse, ¿se encuentran asignadas las etiquetas correspondientes en el Pull Request? (ej. Task Scheduler, Contiene Scripts, Listo para pruebas)
 - [ ] ¿Se realizo la revisión por pares en la documentación?
 
 ## 2. Información Adicional
