@@ -71,8 +71,7 @@ BEGIN
                  N.CCO
         HAVING COUNT(DISTINCT NE.Id) < 3 -- Solo se intentará enviar hasta 3 veces un mismo correo
         ORDER BY N.Id;
-        
-
+ 
         -- Si todo ha ido bien, establecer mensaje de error como NULL
         SET @MensajeError = '';
 END
