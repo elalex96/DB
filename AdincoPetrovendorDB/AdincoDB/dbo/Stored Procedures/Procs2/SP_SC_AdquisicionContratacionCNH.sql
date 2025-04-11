@@ -1,10 +1,5 @@
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_SC_AdquisicionContratacionCNH'
-)
-    DROP PROCEDURE SP_SC_AdquisicionContratacionCNH
+IF OBJECT_ID('[dbo].[SP_SC_AdquisicionContratacionCNH]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].SP_SC_AdquisicionContratacionCNH
 GO
 CREATE PROCEDURE [dbo].[SP_SC_AdquisicionContratacionCNH] 
 @IdContrato INT, 
@@ -39,18 +34,18 @@ SET NOCOUNT ON
    CREATE TABLE #AX_Layout
    (
 	IdLayoutAX	INT,
-	Empresa	varchar (250),
-	NoOrden	varchar (250),
-	FechaRegistroCompra	VARCHAR(250),
-	NoPedidoADINCO	VARCHAR (250),
-	Estatus	VARCHAR(250),
-	FechaEntrega	VARCHAR(250)
+	Empresa	NVARCHAR (250),
+	NoOrden	NVARCHAR (250),
+	FechaRegistroCompra	NVARCHAR(1000),
+	NoPedidoADINCO	NVARCHAR (250),
+	Estatus	NVARCHAR(1000),
+	FechaEntrega	NVARCHAR(1000)
    )
    	 
     --- VALIDAR SI EL CONTRATO ES DE CARSO, EJECUTAR SP DE SP_SC_AdquisicionContratacionCNH_Carso         
     CREATE TABLE #TablaDEA    
     (   
-        NumeroContrato NVARCHAR(4000),   
+        NumeroContrato NVARCHAR(100),   
         RelacionOperadoraProveedor NVARCHAR(100),   
         Proveedor NVARCHAR(4000),   
         MecanismoContratacion NVARCHAR(200),   
@@ -68,10 +63,10 @@ SET NOCOUNT ON
         NombreContratista NVARCHAR(4000),   
         FechaEfectiva NVARCHAR(10)   
     );  
-	
+
 	CREATE TABLE #Tabla    
     (   
-        NumeroContrato NVARCHAR(4000),   
+        NumeroContrato NVARCHAR(1000),   
         RelacionOperadoraProveedor NVARCHAR(100),   
         Proveedor NVARCHAR(4000),   
         MecanismoContratacion NVARCHAR(200),   
@@ -85,10 +80,10 @@ SET NOCOUNT ON
         MontoMXN FLOAT,   
         TipoCambio NVARCHAR(4000),
         FechaTipoCambio NVARCHAR(4000),   
-        Comentarios VARCHAR(8000),   
+        Comentarios NVARCHAR(4000),   
         NombreContratista NVARCHAR(4000),   
         FechaEfectiva NVARCHAR(10)   
-    ); 
+    );
 
 	 CREATE TABLE #TablaWDEA_PurchasingDocumentsImportados   
     (   
@@ -117,6 +112,7 @@ SET NOCOUNT ON
 
 		SELECT
 			@Bloque	= CASE WHEN @IdContrato = 10047 THEN 'OP12' ELSE 'OP13' END
+
 
 		INSERT INTO #AX_Layout
 		(
@@ -174,9 +170,9 @@ SET NOCOUNT ON
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
+               LEFT(UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), ''), 4000) AS Proveedor,   
                'ADJUDICACIÓN DIRECTA' AS MecanismoContratacion,   
-               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Nombre Contrato C-P',   
+               LEFT(UPPER(ISNULL(TA_Operacion.Descripcion, '')), 4000) AS 'Nombre Contrato C-P',   
                UPPER(CONCAT(MM_Pedidos.IdPedido, ' CD')) AS 'No. Contrato',   
                CASE   
                    WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
@@ -196,7 +192,7 @@ SET NOCOUNT ON
                    ELSE   
                        CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Vigencia del contrato',   
-               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Objeto del contrato',   
+               LEFT(UPPER(ISNULL(TA_Operacion.Descripcion, '')), 4000) AS 'Objeto del contrato',   
                CASE   
                    WHEN FI_Factura.IdMoneda = @Peso THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
@@ -213,8 +209,8 @@ SET NOCOUNT ON
                END AS MontoMXN,   
                Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(TA_Operacion.FechaRegistro AS DATE)) AS TipoCambio,   
                CONVERT(VARCHAR, TA_Operacion.FechaRegistro, 105) AS FechaTipoCambio,   
-               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Comentarios',   
-               UPPER(CO_Contratista.RazonSocial) AS NombreContratista,   
+               LEFT(UPPER(ISNULL(TA_Operacion.Descripcion, '')), 4000) AS 'Comentarios',   
+               LEFT(UPPER(CO_Contratista.RazonSocial), 4000) AS NombreContratista,   
                '' AS FechaEfectiva   
         FROM Petrovendor.dbo.CO_Registro (NOLOCK)   
             INNER JOIN Petrovendor.dbo.FI_Factura (NOLOCK)   
@@ -279,19 +275,19 @@ SET NOCOUNT ON
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
+               LEFT(UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), ''), 4000) AS Proveedor,   
                CASE   
                    WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                    ELSE   
                        UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               LEFT(dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido), 1100) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
                #AX_Layout.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX        
                REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
                REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
                REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
-               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               LEFT(dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido), 1100) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
                CASE   
                    WHEN PV_TipoMoneda.IdMoneda = @Peso   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN  
@@ -323,7 +319,8 @@ SET NOCOUNT ON
                        ''   
                END AS TipoCambio,   
                REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS FechaTipoCambio,             --DWONG 20190712       
-               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Comentarios', NombreContratista = UPPER(CO_Contratista.RazonSocial),   
+               LEFT(dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido), 4000) AS 'Comentarios', 
+			   NombreContratista = LEFT(UPPER(CO_Contratista.RazonSocial), 4000),   
                FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                        --DWONG 20190712       
         FROM Petrovendor.dbo.MM_Pedido (NOLOCK)
 			INNER JOIN #AX_Layout
@@ -431,19 +428,19 @@ SET NOCOUNT ON
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
+               LEFT(UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), ''), 4000) AS Proveedor,   
                CASE   
                    WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                    ELSE   
                        UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               LEFT(dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido), 1100) AS 'Nombre Contrato C-P', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
                #AX_Layout.NoOrden AS 'No. Contrato',                                             --> NUMERO DE PEDIDO DE AX        
                REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS 'Fecha Inicio Contrato',     --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
                REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Fecha Termino Contrato',           --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
                REPLACE(#AX_Layout.FechaEntrega, '/', '-') AS 'Vigencia del contrato',                                            --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
-               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
+               LEFT(dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido), 1100) AS 'Objeto del contrato', ---> OBTENER EL NOMBRE DE LOS MATERIALES DE LA COMPARATIVA  QUE ESTAN EN EL PEDIDO ACTUAL       
                CASE   
                    WHEN PV_TipoMoneda.IdMoneda = @Peso   
                         AND dbo.fn_SC_AdquisicionFechaNormalizadaCarso(#AX_Layout.FechaRegistroCompra) IS NOT NULL THEN   
@@ -475,8 +472,8 @@ SET NOCOUNT ON
                        ''   
                END AS TipoCambio,   
                REPLACE(#AX_Layout.FechaRegistroCompra, '/', '-') AS FechaTipoCambio,             --DWONG 20190712       
-               dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido) AS 'Comentarios',   
-               NombreContratista = UPPER(CO_Contratista.RazonSocial),   
+               LEFT(dbo.fn_SC_AdquisicionMaterialesCarso(MM_Pedido.IdPedido), 4000) AS 'Comentarios',   
+               NombreContratista = LEFT(UPPER(CO_Contratista.RazonSocial), 4000),   
                FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                        --DWONG 20190712       
         FROM Petrovendor.dbo.MM_Pedido (NOLOCK)   
 			INNER JOIN #AX_Layout
@@ -585,19 +582,19 @@ SET NOCOUNT ON
 					ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
+               LEFT(UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), ''), 4000) AS Proveedor,   
                CASE   
                    WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                    ELSE   
                        UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               MM_SolicitudPedido.MotivoUrgencia AS 'Nombre Contrato C-P',   
+               LEFT(MM_SolicitudPedido.MotivoUrgencia, 1100) AS 'Nombre Contrato C-P',   
                UPPER(MM_Pedidos.IdPedido) AS 'No. Contrato',                                  --> NUMERO DE PEDIDO DE AX        
                CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS 'Fecha Inicio Contrato',  --> FECHA DE CREACIÓN DEL PEDIDO EN AX       
                CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS 'Fecha Termino Contrato', --> FECHA DE LA PRIMERA ACEPTACIÓN DE PEDIDO DE AX        
                CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS 'Vigencia del contrato',                                         --> DIFERENCIA PARA OBTENER LA VIGENCIA DEL CONTRATO       
-               MM_SolicitudPedido.MotivoUrgencia AS 'Objeto del contrato',   
+               LEFT(MM_SolicitudPedido.MotivoUrgencia, 1100) AS 'Objeto del contrato',   
                CASE   
                    WHEN PV_TipoMoneda.IdMoneda = @Peso          
                THEN   
@@ -621,8 +618,8 @@ SET NOCOUNT ON
                END AS MontoMXN,   
                Petrovendor.dbo.FN_ValorTipoCambioIterativo(CAST(TA_Operacion.FechaRegistro AS DATE)) AS TipoCambio,   
                CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) AS FechaTipoCambio,   
-               MM_SolicitudPedido.MotivoUrgencia AS 'Comentarios',   
-               NombreContratista = UPPER(CO_Contratista.RazonSocial),   
+               LEFT(MM_SolicitudPedido.MotivoUrgencia, 4000) AS 'Comentarios',   
+               NombreContratista = LEFT(UPPER(CO_Contratista.RazonSocial), 4000),   
                FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                     --DWONG 20190712       
         FROM Petrovendor.dbo.MM_Pedido  (NOLOCK)  
 			LEFT JOIN #AX_Layout
@@ -740,12 +737,12 @@ SET NOCOUNT ON
 		)
 		SELECT
 		MM_Pedido.IdPedido,
-		WDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT,			
+		LEFT(WDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT, 4000),			
 		WDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,
 		WDEA_PurchasingDocumentsImportados.CURRENCY,
 		SUM(WDEA_PurchasingDocumentsImportados.NET_PRICE) AS SUM_NET_PRICE,
 		WDEA_PurchasingDocumentsImportados.IDMONEDA,			
-		WDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT,
+		LEFT(WDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT, 4000),
 		CO_Contrato.NumeroContrato,
 		WDEA_PurchasingDocumentsImportados.MECANISMO_CONTRATACION
 		FROM Petrovendor.dbo.MM_Pedido (NOLOCK)			
@@ -810,18 +807,18 @@ SET NOCOUNT ON
 				WHEN DEA_ProveedorDescripcionSAP.IdProveedor IS NOT NULL THEN 'SI'
 				ELSE 'NO'
 			END AS RelacionOperadoraProveedor,
-			S_Proveedor.RazonSocial AS Proveedor,
+			LEFT(S_Proveedor.RazonSocial, 4000) AS Proveedor,
 			CASE WHEN #TablaWDEA_PurchasingDocumentsImportados.MECANISMO_CONTRATACION ='L' THEN 
 				'Licitación' --> CTE SE PONE COMO DEFAULT YA QUE LOS PEDIDOS DE LICITACIÓN SE AGREGAN COMO MERCADEO
 			ELSE 
-				MM_TipoPedido.TipoPedido 
+				LEFT(MM_TipoPedido.TipoPedido, 200) 
 			END AS MecanismoContratacion,			
-			MM_SolicitudPedido.MotivoUrgencia AS NombreContratoCP,
-			ISNULL(#TablaWDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT, MM_Pedidos.IdPedido) AS NoContratoCP,
+			LEFT(MM_SolicitudPedido.MotivoUrgencia, 4000) AS NombreContratoCP,
+			ISNULL(LEFT(#TablaWDEA_PurchasingDocumentsImportados.PURCHASING_DOCUMENT, 4000), MM_Pedidos.IdPedido) AS NoContratoCP,
 			MM_SolicitudPedido.FechaEntregaRequerida AS FechaInicio,
 			ISNULL(MM_SolicitudPedido.FechaEntregaFinRequerida, MM_SolicitudPedido.FechaEntregaRequerida) AS FechaFin,
 			ISNULL(MM_SolicitudPedido.FechaEntregaFinRequerida, MM_SolicitudPedido.FechaEntregaRequerida) AS FechaVigencia,
-			MM_SolicitudPedido.MotivoUrgencia AS ObjetoContrato,
+			LEFT(MM_SolicitudPedido.MotivoUrgencia, 4000) AS ObjetoContrato,
 			CASE
 				WHEN #TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO IS NOT NULL AND ISNULL(#TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,0) > 0 AND #TablaWDEA_PurchasingDocumentsImportados.CURRENCY = 'USD' THEN #TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE
 				WHEN #TablaWDEA_PurchasingDocumentsImportados.IdPedidoADINCO IS NOT NULL AND ISNULL(#TablaWDEA_PurchasingDocumentsImportados.NET_ORDER_VALUE,0) = 0 AND #TablaWDEA_PurchasingDocumentsImportados.CURRENCY = 'USD' THEN
@@ -858,8 +855,8 @@ SET NOCOUNT ON
 			END AS MontoMXN,
 			Petrovendor.dbo.FN_ValorTipoCambio(MM_SolicitudPedido.FechaEntregaRequerida) AS TipoCambio,
 			MM_SolicitudPedido.FechaEntregaRequerida AS FechaTipoCambio,
-			#TablaWDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT,
-			CO_Contratista.RazonSocial,
+			LEFT(#TablaWDEA_PurchasingDocumentsImportados.OUTLINE_AGREEMENT, 4000),
+			LEFT(CO_Contratista.RazonSocial, 4000 ),
 			CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103) AS FechaEfectiva 
 		FROM Petrovendor.dbo.MM_Pedido (NOLOCK)
 			INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)
@@ -941,14 +938,14 @@ SET NOCOUNT ON
 				WHEN DEA_ProveedorDescripcionSAP.IdProveedor IS NOT NULL THEN 'SI'
 				ELSE 'NO'
 			END AS RelacionOperadoraProveedor,
-			PV_Subcontratista.RazonSocial AS Proveedor,
+			LEFT(PV_Subcontratista.RazonSocial, 4000) AS Proveedor,
 			'Licitación' AS MecanismoContratacion,
-			SC_SubContrato.Objeto AS NombreContratoCP,
-			SC_SubContrato.NumeroSubContrato AS NoContratoCP,
+			LEFT(SC_SubContrato.Objeto, 4000) AS NombreContratoCP,
+			LEFT(SC_SubContrato.NumeroSubContrato, 4000) AS NoContratoCP,
 			ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl) AS FechaInicio,
 			ISNULL(ISNULL(SC_SubContrato.FechaFin, SC_SubContrato.FechaInicio), SC_SubContrato.CreadoEl) AS FechaFin,
 			ISNULL(ISNULL(SC_SubContrato.FechaFin, SC_SubContrato.FechaInicio), SC_SubContrato.CreadoEl) AS FechaVigencia,
-			SC_SubContrato.Objeto AS ObjetoContrato,
+			LEFT(SC_SubContrato.Objeto, 4000) AS ObjetoContrato,
 			CASE
 				WHEN SC_SubContrato.IdMoneda = @Peso THEN
 				Petrovendor.dbo.FN_PesosDolaresTipoCambio(SUM(SC_Materiales.Importe),ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl))
@@ -964,7 +961,7 @@ SET NOCOUNT ON
 			Petrovendor.dbo.FN_ValorTipoCambio(ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl)) AS TipoCambio,
 			ISNULL(SC_SubContrato.FechaInicio, SC_SubContrato.CreadoEl) AS FechaTipoCambio,
 			'ESTIMACION COMPLETA PARA OT',
-			CO_Contratista.RazonSocial,
+			LEFT(CO_Contratista.RazonSocial, 4000),
 			CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103) AS FechaEfectiva 
 		FROM Adinco.dbo.SC_SubContrato (NOLOCK)
 		INNER JOIN Adinco.dbo.CO_Contrato (NOLOCK)
@@ -1063,9 +1060,9 @@ SET NOCOUNT ON
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
+               LEFT(UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), ''), 4000) AS Proveedor,   
                'ADJUDICACIÓN DIRECTA' AS MecanismoContratacion,   
-               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Nombre Contrato C-P',   
+               LEFT(UPPER(ISNULL(TA_Operacion.Descripcion, '')), 1100) AS 'Nombre Contrato C-P',   
                UPPER(CONCAT(MM_Pedidos.IdPedido, ' CD')) AS 'No. Contrato',   
 				CASE   
                    WHEN CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105) IS NULL THEN   
@@ -1085,7 +1082,7 @@ SET NOCOUNT ON
                    ELSE   
                        CONVERT(VARCHAR(10), TA_Operacion.FechaRegistro, 105)   
                END AS 'Vigencia del contrato',   
-               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Objeto del contrato',   
+               LEFT(UPPER(ISNULL(TA_Operacion.Descripcion, '')), 1100) AS 'Objeto del contrato',   
                CASE   
                    WHEN FI_Factura.IdMoneda = @Peso THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
@@ -1102,8 +1099,8 @@ SET NOCOUNT ON
                END AS MontoMXN,
                Petrovendor.dbo.FN_ValorTipoCambio(CAST(FI_Factura.FechaTimbrado AS DATE)) AS TipoCambio, 
                CONVERT(VARCHAR, FI_Factura.FechaTimbrado, 103) AS FechaTipoCambio,   
-               UPPER(ISNULL(TA_Operacion.Descripcion, '')) AS 'Comentarios',   
-               UPPER(CO_Contratista.RazonSocial) AS NombreContratista,   
+               LEFT(UPPER(ISNULL(TA_Operacion.Descripcion, '')), 4000) AS 'Comentarios',   
+               LEFT(UPPER(CO_Contratista.RazonSocial), 4000) AS NombreContratista,   
                CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103) AS FechaEfectiva   
         FROM Petrovendor.dbo.CO_Registro (NOLOCK)   
             INNER JOIN Petrovendor.dbo.FI_Factura (NOLOCK)  
@@ -1170,19 +1167,19 @@ SET NOCOUNT ON
                    ELSE   
                        'NO'   
                END AS RelacionOperadoraProveedor,   
-               UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), '') AS Proveedor,   
+               LEFT(UPPER(S_Proveedor.RazonSocial) + ' ' + ISNULL(UPPER(S_Proveedor.RegimenCapital), ''), 4000) AS Proveedor,   
                CASE   
                    WHEN MM_TipoPedido.TipoPedido = 'Mercadeo' THEN   
                        'TRES COTIZACIONES'   
                 ELSE   
                        UPPER(MM_TipoPedido.TipoPedido)   
                END AS MecanismoContratacion,   
-               UPPER(MM_SolicitudPedido.MotivoUrgencia) AS 'Nombre Contrato C-P',   
+               LEFT(UPPER(MM_SolicitudPedido.MotivoUrgencia), 1100) AS 'Nombre Contrato C-P',   
                MM_Pedidos.IdPedido AS 'No. Contrato',   
                CONVERT(VARCHAR(10),isnull(MM_Pedido.FechaRecepcionServicio, MM_SolicitudPedido.FechaEntregaRequerida), 105) AS 'Fecha Inicio Contrato',   
                CONVERT(VARCHAR(10), isnull(MM_Pedido.FechaRecepcionServicio, MM_SolicitudPedido.FechaEntregaRequerida), 105) AS 'Fecha Termino Contrato',   
                CONVERT(VARCHAR(10),isnull(MM_Pedido.FechaRecepcionServicio, MM_SolicitudPedido.FechaEntregaRequerida), 105) AS 'Vigencia del contrato',   
-               UPPER(MM_SolicitudPedido.MotivoUrgencia) AS 'Objeto del contrato',   
+               LEFT(UPPER(MM_SolicitudPedido.MotivoUrgencia), 1100) AS 'Objeto del contrato',   
                CASE   
                    WHEN PV_TipoMoneda.IdMoneda = @Peso THEN   
                        Petrovendor.dbo.FN_PesosDolaresTipoCambio(   
@@ -1201,8 +1198,8 @@ SET NOCOUNT ON
                CAST(ISNULL(MM_SolicitudPedido.FechaEntregaRequerida, MM_PeticionOferta.FechaFinalizado) AS DATE)) AS TipoCambio,   
                CONVERT(VARCHAR, ISNULL(MM_SolicitudPedido.FechaEntregaRequerida, MM_PeticionOferta.FechaFinalizado), 103) AS FechaTipoCambio, --DWONG 20190712     
    
-               UPPER(MM_SolicitudPedido.MotivoUrgencia) AS 'Comentarios',   
-               NombreContratista = UPPER(CO_Contratista.RazonSocial),                                                      --DWONG 20190712     
+               LEFT(UPPER(MM_SolicitudPedido.MotivoUrgencia), 4000) AS 'Comentarios',   
+               NombreContratista = LEFT(UPPER(CO_Contratista.RazonSocial), 4000),                                                      --DWONG 20190712     
    
                FechaEfectiva = CONVERT(VARCHAR, CO_Contrato.FechaFirma, 103)                                                 --DWONG 20190712     
    
