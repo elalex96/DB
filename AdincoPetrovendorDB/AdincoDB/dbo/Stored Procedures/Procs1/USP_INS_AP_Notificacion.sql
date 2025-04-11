@@ -73,11 +73,11 @@ BEGIN
             SELECT @CCO = @CCO + ISNULL(CCO, '') + ';'
             FROM #tmpCCO;
         END
-        
-
+    
     BEGIN TRANSACTION;
 
     BEGIN TRY
+
         -- Verificar que los parámetros esenciales no estén vacíos
         IF ISNULL(@Para, '') <> '' AND ISNULL(CAST(@Mensaje AS VARCHAR(8000)), '') <> ''
         BEGIN
