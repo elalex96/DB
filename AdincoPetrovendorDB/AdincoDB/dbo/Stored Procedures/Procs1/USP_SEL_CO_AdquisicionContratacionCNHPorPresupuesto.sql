@@ -1,4 +1,8 @@
-﻿CREATE PROCEDURE [dbo].[USP_SEL_CO_AdquisicionContratacionCNHPorPresupuesto]  
+﻿IF OBJECT_ID('[dbo].[USP_SEL_CO_AdquisicionContratacionCNHPorPresupuesto]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].USP_SEL_CO_AdquisicionContratacionCNHPorPresupuesto
+GO
+  
+CREATE PROCEDURE [dbo].[USP_SEL_CO_AdquisicionContratacionCNHPorPresupuesto]  
     @IdContrato    INT,  
     @Fechainicio   DATE,  
     @FechaFin      DATE,  
