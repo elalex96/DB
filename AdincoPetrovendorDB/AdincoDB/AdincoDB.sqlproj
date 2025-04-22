@@ -4006,6 +4006,10 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_UPD_AP_MarcarEnviadaNotificacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ConsultarNotificaciones.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_INS_AP_Notificacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CP_VerificaAñoParametroRegalia.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CP_ParametroRegalia.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ConsultaAños.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_CP_RegistroParametroRegalia.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
