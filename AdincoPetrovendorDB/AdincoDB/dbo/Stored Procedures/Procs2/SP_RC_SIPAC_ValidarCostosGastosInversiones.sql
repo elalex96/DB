@@ -7,11 +7,8 @@
         WHERE
             name = 'SP_RC_SIPAC_ValidarCostosGastosInversiones'
     )
-
     DROP PROCEDURE SP_RC_SIPAC_ValidarCostosGastosInversiones;
 GO
-
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ==============================================  
 -- Author:      Marcos Garcia  
 -- Create:      20-11-2019  
@@ -146,7 +143,7 @@ BEGIN
         TipoOpercion_RC21_26 INT  
     );  
   
-    IF (@Plantilla = 'CGI_2022')  
+    IF (@Plantilla NOT IN ('CGI_2017','CGI_2018'))   -- para que agregue cuando sea la plantilla 2022 y 2025
     BEGIN  
         ALTER TABLE #TEMPORAL_21_M  
         ADD RegistroConAjuste_RC21_27 INT NULL,  
@@ -222,7 +219,9 @@ BEGIN
         FechaFactura_RC24_17 DATE,  
         ValMontFact_RC24_18 MONEY,  
         ValDolares_RC24_19 MONEY,  
-        ClasDocSoporte_RC24_20 INT  
+        ClasDocSoporte_RC24_20 INT  ,
+				RC24_21	VARCHAR(2000),
+		RC24_22 VARCHAR(2000)
     );  
   
     --________________________________________  
@@ -249,7 +248,9 @@ BEGIN
         FechaFactura_RC25_14 DATE,  
         ValMontFact_RC25_15 MONEY,  
         ValDolares_RC25_16 MONEY,  
-        ClasDocSoporte_RC25_17 INT  
+        ClasDocSoporte_RC25_17 INT ,
+		RC25_18 VARCHAR(2000),
+		RC25_19 VARCHAR(2000)
     );  
   
     --________________________________________  
@@ -272,9 +273,6 @@ BEGIN
         Beneficiario_RC26_11 VARCHAR(2000),  
         ClasDocSoporte_RC26_12 INT  
     );  
-  
-    --________________________________________  
-  
     --________________________________________  
     CREATE TABLE #DatosPresupuestos  
     (  
@@ -284,7 +282,6 @@ BEGIN
         FechaInicioPresupuesto DATE,  
         FechaFinPresupuesto DATE  
     );  
-  
     --________________________________________  
     CREATE TABLE #TEMPORAL_26_MContTemp  
     (  
@@ -310,9 +307,46 @@ BEGIN
   
     --________________________________________ Insercion en las Tablas Temporales ________________________________________--  
     --________________________________________  
-    IF (@Plantilla = 'CGI_2022')  
+    IF (@Plantilla IN ('CGI_2017','CGI_2018'))  
     BEGIN  
-        INSERT INTO #TEMPORAL_21_M  
+		INSERT INTO #TEMPORAL_21_M  
+        (  
+            IdContratista_RF_00,  
+            IdContrato_RI_00,  
+            NumeroContrato_RF01_01,  
+			NumeroIdentificacion_RC21_00,  
+            MesReporte_RC21_01,  
+            AnioReporte_RC21_02,  
+            NumeroConsecutivo_RC21_03,  
+            TipoDocumento_RC21_04,  
+            UUID_RC21_05,  
+            IUC_PI_RC21_06,  
+            IUC_PE_RC21_07,  
+            TipoComprobante_RC21_08,  
+            MetodoPago_RC21_09,  
+            Actividad_RC21_10,  
+            SubActividad_RC21_11,  
+            Tarea_RC21_12,  
+            CostAtribAdminGral_RC21_13,  
+            Campo_RC21_14,  
+            Yacimiento_RC21_15,  
+            Pozo_RC21_16,  
+            NumCuentContable_RC21_17,  
+            DescCuentaContable_RC21_18,  
+            NumPoliContable_RC21_19,  
+            ConcepOp_RC21_20,  
+            GastoOpInver_RC21_21,  
+            MontoAumentar_RC21_22,  
+            MontoDisminuir_RC21_23,  
+            ClavaMoneda_RC21_24,  
+            TipCamConvetUSD_RC21_25,  
+            TipoOpercion_RC21_26  
+        )  
+        EXEC dbo.SIPAC_RC_CONT_21_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
+    END  
+    ELSE  
+    BEGIN  
+		INSERT INTO #TEMPORAL_21_M  
         (  
             IdContratista_RF_00,  
             IdContrato_RI_00,  
@@ -346,43 +380,6 @@ BEGIN
             TipoOpercion_RC21_26,  
             RegistroConAjuste_RC21_27,  
             AsociadoIncrementoPMT_RC21_28  
-        )  
-        EXEC dbo.SIPAC_RC_CONT_21_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
-    END  
-    ELSE  
-    BEGIN  
-        INSERT INTO #TEMPORAL_21_M  
-        (  
-            IdContratista_RF_00,  
-            IdContrato_RI_00,  
-            NumeroContrato_RF01_01,  
-         NumeroIdentificacion_RC21_00,  
-            MesReporte_RC21_01,  
-            AnioReporte_RC21_02,  
-            NumeroConsecutivo_RC21_03,  
-            TipoDocumento_RC21_04,  
-            UUID_RC21_05,  
-            IUC_PI_RC21_06,  
-            IUC_PE_RC21_07,  
-            TipoComprobante_RC21_08,  
-            MetodoPago_RC21_09,  
-            Actividad_RC21_10,  
-            SubActividad_RC21_11,  
-            Tarea_RC21_12,  
-            CostAtribAdminGral_RC21_13,  
-            Campo_RC21_14,  
-            Yacimiento_RC21_15,  
-            Pozo_RC21_16,  
-            NumCuentContable_RC21_17,  
-            DescCuentaContable_RC21_18,  
-            NumPoliContable_RC21_19,  
-            ConcepOp_RC21_20,  
-            GastoOpInver_RC21_21,  
-            MontoAumentar_RC21_22,  
-            MontoDisminuir_RC21_23,  
-            ClavaMoneda_RC21_24,  
-            TipCamConvetUSD_RC21_25,  
-            TipoOpercion_RC21_26  
         )  
         EXEC dbo.SIPAC_RC_CONT_21_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
     END  
@@ -455,7 +452,9 @@ BEGIN
         FechaFactura_RC24_17,  
         ValMontFact_RC24_18,  
         ValDolares_RC24_19,  
-        ClasDocSoporte_RC24_20  
+        ClasDocSoporte_RC24_20  ,
+		RC24_21, 
+		RC24_22 
     )  
     EXECUTE dbo.SIPAC_RC_CONT_24_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
   
@@ -482,7 +481,9 @@ BEGIN
         FechaFactura_RC25_14,  
         ValMontFact_RC25_15,  
         ValDolares_RC25_16,  
-        ClasDocSoporte_RC25_17  
+        ClasDocSoporte_RC25_17,
+		RC25_18,
+		RC25_19
     )  
     EXECUTE dbo.SIPAC_RC_CONT_25_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
   
@@ -506,9 +507,6 @@ BEGIN
         ClasDocSoporte_RC26_12  
     )  
     EXECUTE dbo.SIPAC_RC_CONT_26_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
-  
-    --________________________________________  
-  
     --________________________________________  
     INSERT INTO #DatosPresupuestos  
     (  
@@ -635,7 +633,6 @@ BEGIN
              Pre.IdPresupuestoCNH,  
              Pre.InicioPresupuesto,  
              Pre.FinPresupuesto;  
-  
     --_______________________________________________  
     INSERT INTO #TEMPORAL_26_MContTemp  
     (  
@@ -659,12 +656,42 @@ BEGIN
               OR DP.IdPresupuestoCNH = ''  
               OR DP.IdPresupuestoCNH = 'FALTA ID'  
     );  
-  
     --_______________________________________________________________________________________________--  
   
-    IF (@Plantilla = 'CGI_2022')  
-    BEGIN  
+    IF (@Plantilla IN ('CGI_2017','CGI_2018'))  
+    BEGIN   
         SET @Reporte =  
+        (  
+            SELECT COUNT(Id_21_M)  
+            FROM #TEMPORAL_21_M  
+            WHERE TipoDocumento_RC21_04 IS NULL  
+                  AND UUID_RC21_05 IS NULL  
+                  AND IUC_PI_RC21_06 IS NULL  
+                  AND IUC_PE_RC21_07 IS NULL  
+                  AND TipoComprobante_RC21_08 IS NULL  
+                  AND MetodoPago_RC21_09 IS NULL  
+                  AND Actividad_RC21_10 IS NULL  
+                  AND SubActividad_RC21_11 IS NULL  
+                  AND Tarea_RC21_12 IS NULL  
+                  AND CostAtribAdminGral_RC21_13 IS NULL  
+                  AND Campo_RC21_14 IS NULL  
+                  AND Yacimiento_RC21_15 IS NULL  
+                  AND Pozo_RC21_16 IS NULL  
+                  AND NumCuentContable_RC21_17 IS NULL  
+                  AND DescCuentaContable_RC21_18 IS NULL  
+                  AND NumPoliContable_RC21_19 IS NULL  
+                  AND ConcepOp_RC21_20 IS NULL  
+                  AND GastoOpInver_RC21_21 IS NULL  
+                  AND MontoAumentar_RC21_22 = 0  
+                  AND MontoDisminuir_RC21_23 = 0  
+                  AND ClavaMoneda_RC21_24 IS NULL  
+                  AND TipCamConvetUSD_RC21_25 IS NULL  
+                  AND TipoOpercion_RC21_26 IS NULL  
+        );  
+    END  
+    ELSE  
+    BEGIN  
+		SET @Reporte =  
         (  
             SELECT COUNT(Id_21_M)  
             FROM #TEMPORAL_21_M  
@@ -695,39 +722,7 @@ BEGIN
                   AND AsociadoIncrementoPMT_RC21_28 IS NULL 
         );  
     END  
-    ELSE  
-    BEGIN  
-        SET @Reporte =  
-        (  
-            SELECT COUNT(Id_21_M)  
-            FROM #TEMPORAL_21_M  
-            WHERE TipoDocumento_RC21_04 IS NULL  
-                  AND UUID_RC21_05 IS NULL  
-                  AND IUC_PI_RC21_06 IS NULL  
-                  AND IUC_PE_RC21_07 IS NULL  
-                  AND TipoComprobante_RC21_08 IS NULL  
-                  AND MetodoPago_RC21_09 IS NULL  
-                  AND Actividad_RC21_10 IS NULL  
-                  AND SubActividad_RC21_11 IS NULL  
-                  AND Tarea_RC21_12 IS NULL  
-                  AND CostAtribAdminGral_RC21_13 IS NULL  
-                  AND Campo_RC21_14 IS NULL  
-                  AND Yacimiento_RC21_15 IS NULL  
-                  AND Pozo_RC21_16 IS NULL  
-                  AND NumCuentContable_RC21_17 IS NULL  
-                  AND DescCuentaContable_RC21_18 IS NULL  
-                  AND NumPoliContable_RC21_19 IS NULL  
-                  AND ConcepOp_RC21_20 IS NULL  
-                  AND GastoOpInver_RC21_21 IS NULL  
-                  AND MontoAumentar_RC21_22 = 0  
-                  AND MontoDisminuir_RC21_23 = 0  
-                  AND ClavaMoneda_RC21_24 IS NULL  
-                  AND TipCamConvetUSD_RC21_25 IS NULL  
-                  AND TipoOpercion_RC21_26 IS NULL  
-        );  
-    END  
-	
-	
+
     IF (@Reporte <> 0)  
     BEGIN  
         SELECT ' La plantilla se reportará en 0 ya que no se encontró ningún gasto en el mes seleccionado' AS Validacion,  
@@ -790,7 +785,7 @@ END;
                            + SUBSTRING(IdPresupuestoCNH, LEN(IdPresupuestoCNH) - 8, 9) + ' ] con fecha fin vigencia '  
                            + CONVERT(VARCHAR(2000), FechaFinPresupuesto) + ' está fuera del periodo.'  
                    END AS Validaciones
-            FROM #DatosPresupuestos  
+   FROM #DatosPresupuestos  
             WHERE DATEDIFF(MONTH, FechaFinPresupuesto, @Mes) >= 1  
 				  AND DATEDIFF(MONTH, FechaFinPresupuesto, @Mes) <= 6  
                   AND FechaFinPresupuesto IS NOT NULL  
@@ -907,7 +902,7 @@ END;
             FROM #TEMPORAL_22_M T22  
             WHERE T22.UUID_RC22_04 IS NULL
 			ORDER BY T22.Id_22_M ASC
-            ----------------------------  
+   ----------------------------  
 			INSERT INTO #TablaDeValidaciones (Validaciones)
             SELECT  CASE  
                        WHEN T23.UUID_RC23_02 IS NULL  
@@ -1031,8 +1026,6 @@ END;
 	WHERE T21.TipoDocumento_RC21_04 = 'PE'  
 			GROUP BY  T21.IUC_PE_RC21_07,T21.TipoDocumento_RC21_04
 	ORDER BY  T21.IUC_PE_RC21_07 ASC 
-
-
 		--------------------MONTO TRANSFERENCIAS USD-----------
 	INSERT INTO  #TEMPORAL_Montos_CFDI_Hoja26(MontoSUMEquivDolare_RC26_09,IdDocFacturacion )
 	SELECT  SUM(T26.MontoEquivDolare_RC26_09   )  ,  T26.IdDocFacturacion_RC26_03
@@ -1152,7 +1145,7 @@ END;
                          WHERE T22A.UUID_RC22_04 = T22.UUID_RC22_04  
                          FOR XML PATH('')  
                      ),  
-                     1,  
+             1,  
                      2,  
                      ''  
                           ) + ' ya que el UUID ' + T22.UUID_RC22_04 + ' se repite.'
@@ -1188,9 +1181,44 @@ END;
 		   WHERE ISNULL([Validaciones], '') <> '';		
     END;  
 	
-    IF (@Plantilla = 'CGI_2022')  
+    IF (@Plantilla IN ('CGI_2017','CGI_2018'))  
     BEGIN  
 		SELECT  IdContratista_RF_00,  
+            IdContrato_RI_00,  
+            NumeroContrato_RF01_01,  
+            NumeroIdentificacion_RC21_00,  
+            MesReporte_RC21_01,  
+            AnioReporte_RC21_02,  
+            NumeroConsecutivo_RC21_03,  
+            TipoDocumento_RC21_04,  
+            UUID_RC21_05,  
+            IUC_PI_RC21_06,  
+            IUC_PE_RC21_07,  
+            TipoComprobante_RC21_08,  
+            MetodoPago_RC21_09,  
+            Actividad_RC21_10,  
+            SubActividad_RC21_11,  
+            Tarea_RC21_12,  
+            CASE WHEN CostAtribAdminGral_RC21_13 IS NULL THEN NULL WHEN CostAtribAdminGral_RC21_13 = 1 THEN 1 ELSE 0 END AS CostAtribAdminGral_RC21_13,  
+            Campo_RC21_14,  
+            Yacimiento_RC21_15,  
+            Pozo_RC21_16,  
+            NumCuentContable_RC21_17,  
+            DescCuentaContable_RC21_18,  
+            NumPoliContable_RC21_19,  
+  ConcepOp_RC21_20,  
+            GastoOpInver_RC21_21,  
+            MontoAumentar_RC21_22,  
+            MontoDisminuir_RC21_23,  
+            ClavaMoneda_RC21_24,  
+            TipCamConvetUSD_RC21_25,  
+            TipoOpercion_RC21_26 
+			FROM #TEMPORAL_21_M
+			ORDER BY #TEMPORAL_21_M.Id_21_M ASC;
+	END
+	ELSE
+	BEGIN
+			SELECT  IdContratista_RF_00,  
             IdContrato_RI_00,  
             NumeroContrato_RF01_01,  
             NumeroIdentificacion_RC21_00,  
@@ -1225,41 +1253,7 @@ END;
 			FROM #TEMPORAL_21_M
 			ORDER BY #TEMPORAL_21_M.Id_21_M ASC;
 	END
-	ELSE
-	BEGIN
-			SELECT  IdContratista_RF_00,  
-            IdContrato_RI_00,  
-            NumeroContrato_RF01_01,  
-            NumeroIdentificacion_RC21_00,  
-            MesReporte_RC21_01,  
-            AnioReporte_RC21_02,  
-            NumeroConsecutivo_RC21_03,  
-            TipoDocumento_RC21_04,  
-            UUID_RC21_05,  
-            IUC_PI_RC21_06,  
-            IUC_PE_RC21_07,  
-            TipoComprobante_RC21_08,  
-            MetodoPago_RC21_09,  
-            Actividad_RC21_10,  
-            SubActividad_RC21_11,  
-            Tarea_RC21_12,  
-            CASE WHEN CostAtribAdminGral_RC21_13 IS NULL THEN NULL WHEN CostAtribAdminGral_RC21_13 = 1 THEN 1 ELSE 0 END AS CostAtribAdminGral_RC21_13,  
-            Campo_RC21_14,  
-            Yacimiento_RC21_15,  
-            Pozo_RC21_16,  
-            NumCuentContable_RC21_17,  
-            DescCuentaContable_RC21_18,  
-            NumPoliContable_RC21_19,  
-            ConcepOp_RC21_20,  
-            GastoOpInver_RC21_21,  
-            MontoAumentar_RC21_22,  
-            MontoDisminuir_RC21_23,  
-            ClavaMoneda_RC21_24,  
-            TipCamConvetUSD_RC21_25,  
-            TipoOpercion_RC21_26 
-			FROM #TEMPORAL_21_M
-			ORDER BY #TEMPORAL_21_M.Id_21_M ASC;
-	END
+
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
 			NumeroContrato_RF01_01,  
@@ -1318,8 +1312,18 @@ END;
 			FechaFactura_RC24_17,  
 			ValMontFact_RC24_18,  
 			ValDolares_RC24_19,  
-			ClasDocSoporte_RC24_20  FROM #TEMPORAL_24_M
+			ClasDocSoporte_RC24_20,  
+			CASE 
+				WHEN  @Plantilla = 'CGI_2025' THEN RC24_21
+				ELSE NULL
+			END AS RC24_21,
+			CASE 
+				WHEN  @Plantilla = 'CGI_2025' THEN RC24_22
+				ELSE NULL
+			END AS RC24_22
+			FROM #TEMPORAL_24_M
 			ORDER BY #TEMPORAL_24_M.Id_24_M ASC;
+
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
 			NumeroContrato_RF01_01,  
@@ -1340,8 +1344,18 @@ END;
 			FechaFactura_RC25_14,  
 			ValMontFact_RC25_15,  
 			ValDolares_RC25_16,  
-			ClasDocSoporte_RC25_17 FROM #TEMPORAL_25_M
+			ClasDocSoporte_RC25_17,
+			    CASE 
+				WHEN  @Plantilla = 'CGI_2025' THEN RC25_18
+				ELSE NULL
+			END AS RC25_18,
+			CASE 
+				WHEN  @Plantilla = 'CGI_2025' THEN RC25_19
+				ELSE NULL
+			END AS RC25_19
+			FROM #TEMPORAL_25_M
 			ORDER BY #TEMPORAL_25_M.Id_25_M ASC;
+
 	SELECT	IdContratista_RF_00,  
 			IdContrato_RI_00,  
 			MesReporte_RC26_00,  
@@ -1359,4 +1373,3 @@ END;
 			ClasDocSoporte_RC26_12 FROM #TEMPORAL_26_M
 			ORDER BY #TEMPORAL_26_M.Id_26_M ASC;
 END; 
-

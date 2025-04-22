@@ -7,9 +7,9 @@
         WHERE
             name = 'SIPAC_RC_CONT_21_M'
     )
-    DROP PROCEDURE SIPAC_RC_CONT_21_M
+    DROP PROCEDURE SIPAC_RC_CONT_21_M;
 GO
--- =============================================   
+---=============================================   
 -- Author: Manuel Cruz-Yazmin Glez.   
 -- Create date: 2017-11-24   
 -- Description: Reporte de CGI - Registro de costos. Plantilla antes RC_CONT_01_M actual RC_CONT_21_M   
@@ -74,7 +74,7 @@ AS
         /*SE EJECUTAN PRIMERO LOS SPS EXTERNOS, PARA QUE NO MARQUE DETALLE CON LAS TABLAS # QUE SE OCUPARÁN EN ESTE SP*/  
         EXEC [SIPAC_RC_CONT_22_M_IdDoc]  
             @Contrato,  
-            @Mes,  
+  @Mes,  
             @IdPresupuesto;  
   
         EXEC [SIPAC_RC_CONT_24_M_IdDoc]  
@@ -184,7 +184,7 @@ AS
                 MetodoPago      VARCHAR(50),  
                 TipoCambio      FLOAT,  
                 Fecha           DATE,  
-                IdMoneda        INT  
+IdMoneda        INT  
             )  
   
         CREATE TABLE #SumaDePagosDolaresBase  
@@ -297,7 +297,7 @@ AS
                 INSERT INTO #uuidNoReportar  
                     (  
                         UUID  
-                    )  
+                  )  
                 VALUES  
                     (  
                         'D515F4A9-244C-422E-A2B1-11B234039715'  
@@ -497,7 +497,7 @@ AS
                                          WHEN ISNULL(CO_TipoCambioDiario.TipoCambio, 0) = 0  
                                             THEN 0  
                                          WHEN PV_TipoMoneda.IdMoneda = @PESO  
-                                             THEN FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio 
+                                    THEN FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio 
 										WHEN PV_TipoMoneda.IdMoneda NOT IN (@PESO, @DOLAR)
 											THEN FI_CPDocRelacionado.ImpPagado / CO_TipoCambioDiario.TipoCambio 
                                      END  
@@ -936,7 +936,7 @@ AS
                         RC21_11,  
                         RC21_12,  
                         RC21_13,  
-                        RC21_14,  
+     RC21_14,  
                         RC21_15,  
                         RC21_16,  
                         RC21_17,  
@@ -992,7 +992,7 @@ AS
                                 0                                           AS [RC21_23],  
                                 NULL                                        AS [RC21_24],  
                                 NULL                                        AS [RC21_25],  
-                                NULL                                        AS [RC21_26],  
+                                NULL                                  AS [RC21_26],  
                                 0                                           AS [RC21_27],  
                NULL                                        AS [RC21_28]  
                             FROM  
@@ -1067,7 +1067,7 @@ AS
                                     WHEN len(P.IdPresupuestoCNH) > 10  
                                         THEN SUBSTRING(P.IdPresupuestoCNH, 22, 10)  
                                     ELSE  
-                                        P.IdPresupuestoCNH  
+                        P.IdPresupuestoCNH  
                                 END                                                    AS [RC21_00],  
                                 MONTH(CO_Registro.MesPresentacion)                     AS [RC21_01],  
                                 YEAR(CO_Registro.MesPresentacion)                      AS [RC21_02],  
@@ -1173,17 +1173,17 @@ AS
                                     ELSE  
                                         2  
                                 END                                                    AS [RC21_26],  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                         ISNULL(CO_Registro.RegistroConAjuste, 0)  -- 'CGI_2022' - 'CGI_2025' 
                                 END                                                    AS [RC21_27],  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)   
                                 END                                                    AS [RC21_28]  
                             FROM  
                                 dbo.CO_Registro WITH (NOLOCK)  
@@ -1239,7 +1239,7 @@ AS
                                     dbo.CO_CatalogoCuentaSH      CC WITH (NOLOCK)  
                                         ON CC.IdCatalogoCuentasSH = CO_Registro.IdCatalogoCuentasSH  
         LEFT JOIN  
-                                    dbo.PV_TipoMoneda            TM WITH (NOLOCK)  
+                   dbo.PV_TipoMoneda            TM WITH (NOLOCK)  
                                         ON F.IdMoneda = TM.IdMoneda  
                                 LEFT JOIN  
                                     dbo.CO_RelacionEmpresas      RE WITH (NOLOCK)  
@@ -1349,17 +1349,17 @@ AS
                                 SUBSTRING(CO_Registro.Comentarios, 0, 299),  
                                 TM.TipoMonedaCorto,  
                                 CAST(ISNULL(TTF.TCD, 0) AS DECIMAL(15, 4)),  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
+                                CASE
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.RegistroConAjuste, 0)  
                                 END,  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
+                                CASE 
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
                                 END  
                             --     
   
@@ -1482,17 +1482,17 @@ AS
                                     ELSE  
                                         2  
                                 END              AS [RC21_26],  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.RegistroConAjuste, 0)   
                                 END                                                      AS [RC21_27],  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)   
                                 END                                                      AS [RC21_28]  
                             FROM  
                                 dbo.CO_Registro WITH (NOLOCK)  
@@ -1555,7 +1555,7 @@ AS
                                         ON CPO.IdYacimiento = Y.IdYacimiento  
                                 LEFT JOIN  
                                     dbo.CO_CatalogoCuentaSH      CC WITH (NOLOCK)  
-                                        ON CC.IdCatalogoCuentasSH = CO_Registro.IdCatalogoCuentasSH  
+         ON CC.IdCatalogoCuentasSH = CO_Registro.IdCatalogoCuentasSH  
                                 LEFT JOIN  
                                     dbo.PV_TipoMoneda            TM WITH (NOLOCK)  
                                         ON F.IdMoneda = TM.IdMoneda  
@@ -1679,17 +1679,17 @@ AS
                                 SUBSTRING(CO_Registro.Comentarios, 0, 299),  
                                 TM.TipoMonedaCorto,  
                                 CAST(ISNULL(TTF.TipoCambioCP, 0) AS DECIMAL(15, 4)),  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                  ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.RegistroConAjuste, 0)  
                                 END,  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
                                 END  
                             --     
   
@@ -1697,7 +1697,7 @@ AS
   
                             --     
                             SELECT  
-                                CASE  
+CASE  
                                     WHEN ISNULL(C.IDSIPAC, '') <> ''  
                                         THEN LTRIM(RTRIM(C.IDSIPAC))  
                                     ELSE  
@@ -1803,17 +1803,17 @@ AS
                                     ELSE  
                                         2  
                                 END                                        AS [RC21_26],  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')
+                                        THEN 0
                                    ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.RegistroConAjuste, 0)  
 								END                                        AS [RC21_27],  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
+                                CASE 
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')    
+                                        THEN 0
                                     ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
                                 END                                        AS [RC21_28]  
                             FROM  
                                 dbo.FI_Transfer                     TR WITH (NOLOCK)  
@@ -1821,7 +1821,7 @@ AS
                                     dbo.FI_TransferFactura          TF WITH (NOLOCK)  
                                         ON TR.IdTransferencia = TF.IdTransfer  
                                 JOIN  
-                                    dbo.FI_PedimentoComprobante     PC WITH (NOLOCK)  
+                                    dbo.FI_PedimentoComprobante PC WITH (NOLOCK)  
                                         ON TF.IdPedimentoComprobante = PC.IdPedimentoComprobante  
                                            AND PC.IdContrato = TR.IdContrato  
                                 JOIN  
@@ -1875,7 +1875,7 @@ AS
                                         ON CPO.IdYacimiento = Y.IdYacimiento  
                                 LEFT JOIN  
                                     dbo.CO_CatalogoCuentaSH         CC WITH (NOLOCK)  
-                                        ON CC.IdCatalogoCuentasSH = CO_Registro.IdCatalogoCuentasSH  
+               ON CC.IdCatalogoCuentasSH = CO_Registro.IdCatalogoCuentasSH  
                                 LEFT JOIN  
                                     dbo.PV_TipoMoneda               TM WITH (NOLOCK)  
                                         ON PC.IdMoneda = TM.IdMoneda  
@@ -1933,7 +1933,7 @@ AS
                                         THEN 'NA'  
                                     WHEN CO_Registro.CvTipoDocFacturacion = @TipoPedimentoImportacion  
                                         THEN 'NA'  
-                                    WHEN CO_Registro.CvTipoDocFacturacion = @TipoComprobanteExtranjero  
+            WHEN CO_Registro.CvTipoDocFacturacion = @TipoComprobanteExtranjero  
                                         THEN PC.IdDocFacturacionSIPAC  
                                 END,  
                                 LTRIM(RTRIM(APCNH.id_Actividad)),  
@@ -1997,17 +1997,17 @@ AS
                                     ELSE  
                                         2  
                                 END,  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.RegistroConAjuste, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')  
+                                        THEN 0
 									ELSE  
-                                        0  
+                                        ISNULL(CO_Registro.RegistroConAjuste, 0)   
                                 END,  
-                                CASE @Plantilla  
-                                    WHEN 'CGI_2022'  
-                                        THEN ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)  
+                                CASE   
+                                    WHEN @Plantilla IN('CGI_2017','CGI_2018')  
+                                        THEN	0
                                     ELSE  
-                                        0  
+                                         ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)    
                                 END;  
             END;  
   
@@ -2083,7 +2083,7 @@ AS
                                 NULL                                               AS [RC21_18],  
                                 NULL                                               AS [RC21_19],  
                                 NULL                                               AS [RC21_20],  
-                                NULL                                               AS [RC21_21],  
+                                NULL                    AS [RC21_21],  
                                 0                                                  AS [RC21_22],  
                                 0                                                  AS [RC21_23],  
                                 NULL                                               AS [RC21_24],  
@@ -2114,7 +2114,7 @@ AS
                                                                    END;  
             END;  
   
-        IF (@Plantilla = 'CGI_2022')  
+        IF (@Plantilla IN('CGI_2017','CGI_2018') )  
             BEGIN  
                 SELECT  
                     RF_00,  
@@ -2124,47 +2124,7 @@ AS
                     RC21_01,  
                     RC21_02,  
                     ROW_NUMBER() OVER (ORDER BY  
-                                           RC21_11 ASC  
-                                      ) AS [RC21_03],  
-                    RC21_04,  
-                    RC21_05,  
-            RC21_06,  
-                    RC21_07,  
-                    RC21_08,  
-                    RC21_09,  
-                    RC21_10,  
-                    RC21_11,  
-                    RC21_12,  
-                    RC21_13,  
-                    RC21_14,  
-                    RC21_15,  
-                    RC21_16,  
-                    RC21_17,  
-                    RC21_18,  
-                    RC21_19,  
-                    RC21_20,  
-                    RC21_21,  
-                    RC21_22,  
-                    RC21_23,  
-                    RC21_24,  
-                    RC21_25,  
-                    RC21_26,  
-                    RC21_27,  
-                    RC21_28  
-            FROM  
-                    #ResultadosGastos;  
-            END  
-        ELSE  
-            BEGIN  
-                SELECT  
-                    RF_00,  
-                    RI_00,  
-                    RF01_01,  
-                    RC21_00,  
-                    RC21_01,  
-                    RC21_02,  
-                    ROW_NUMBER() OVER (ORDER BY  
-                                           RC21_11 ASC  
+            RC21_11 ASC  
                                       ) AS [RC21_03],  
                     RC21_04,  
                     RC21_05,  
@@ -2190,6 +2150,46 @@ AS
                     RC21_25,  
                     RC21_26  
                 FROM  
+                    #ResultadosGastos;
+            END  
+        ELSE  
+            BEGIN  -- 'CGI_2022','CGI_2025'
+            SELECT  
+                    RF_00,  
+                    RI_00,  
+                    RF01_01,  
+                    RC21_00,  
+                    RC21_01,  
+                    RC21_02,  
+                    ROW_NUMBER() OVER (ORDER BY  
+                                           RC21_11 ASC  
+                                      ) AS [RC21_03],  
+                    RC21_04,  
+                    RC21_05,  
+					RC21_06,  
+                    RC21_07,  
+                    RC21_08,  
+                    RC21_09,  
+                    RC21_10,  
+                    RC21_11,  
+                    RC21_12,  
+                    RC21_13,  
+                    RC21_14,  
+                    RC21_15,  
+                    RC21_16,  
+                    RC21_17,  
+                    RC21_18,  
+                    RC21_19,  
+                    RC21_20,  
+                    RC21_21,  
+                    RC21_22,  
+                    RC21_23,  
+                    RC21_24,  
+                    RC21_25,  
+                    RC21_26,  
+                    RC21_27,  
+                    RC21_28  
+            FROM  
                     #ResultadosGastos;  
             END  
     END;
