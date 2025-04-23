@@ -4010,6 +4010,11 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CP_ParametroRegalia.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ConsultaAños.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_INS_CP_RegistroParametroRegalia.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_AP_ContratosFlujoAprobacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ContratosFlujoAprobacionPorContratista.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_FlujoAprobacionPorId.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_AP_RegistroFlujoAprobacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_FlujoAprobacion.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

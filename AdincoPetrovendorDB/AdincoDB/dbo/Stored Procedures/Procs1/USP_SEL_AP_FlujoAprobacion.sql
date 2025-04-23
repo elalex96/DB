@@ -1,5 +1,4 @@
-﻿USE Adinco
-GO
+﻿
 IF EXISTS
     (
         SELECT
@@ -7,29 +6,32 @@ IF EXISTS
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_INS_AP_ContratosFlujoAprobacion'
+            name = 'USP_SEL_AP_FlujoAprobacion'
     )
-    DROP PROCEDURE USP_INS_AP_ContratosFlujoAprobacion;
+    DROP PROCEDURE USP_SEL_AP_FlujoAprobacion;
 GO
-CREATE PROCEDURE USP_INS_AP_ContratosFlujoAprobacion
+CREATE PROCEDURE USP_SEL_AP_FlujoAprobacion
     @IdUsuario INT,
-    @IdContrato INT,
-	@IdContratistaSeleccionado INT,
-	@FlujoAprobacionId INT,
-	@IdContratoFlujo INT,
-	@Asignado int
-	AS  
-BEGIN  
-    SET NOCOUNT ON;
-
-	IF( @Asignado = 1)
-	BEGIN
-		INSERT INTO AP_FlujoAprobacionContratos(FlujoAprobacionId,IdContrato,CreadoEl) VALUES (@FlujoAprobacionId,@IdContratoFlujo,GETDATE())
-	END
-	ELSE
-	BEGIN
-		DELETE  AP_FlujoAprobacionContratos WHERE IdContrato = @IdContratoFlujo AND FlujoAprobacionId = @FlujoAprobacionId;
-	END
-	
-	
+    @IdContrato INT
+AS
+BEGIN
+	SELECT FlujoAprobacionId,
+			CO_Contratista.RazonSocial AS RazonSocial,
+			AP_FlujoAprobacion.Descripcion,
+			AP_FlujoAprobacionTipos.Descripcion AS DescripcionTipo,
+			Activo,
+			AP_FlujoAprobacion.CreadoEl,
+			AP_Usuario.Nombre	AS	CreadoPor
+			FROM 
+				AP_FlujoAprobacion (NOLOCK)
+			JOIN
+				AP_FlujoAprobacionTipos (NOLOCK)
+				ON AP_FlujoAprobacion.TipoFlujoAprobacionId	=	AP_FlujoAprobacionTipos.TipoFlujoAprobacionId
+			JOIN
+				CO_Contratista (NOLOCK)
+				ON	
+				AP_FlujoAprobacion.IdContratista	=	CO_Contratista.IdContratista
+			JOIN
+				AP_Usuario (NOLOCK)
+				ON AP_FlujoAprobacion.CreadoPor = AP_Usuario.UsuarioID;
 END

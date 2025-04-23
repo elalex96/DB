@@ -1,42 +1,32 @@
-﻿USE Adinco
-GO
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_SEL_AP_ContratosFlujoAprobacionPorContratista'
+            name = 'USP_SEL_AP_FlujoAprobacionPorId'
     )
-    DROP PROCEDURE USP_SEL_AP_ContratosFlujoAprobacionPorContratista;
+    DROP PROCEDURE USP_SEL_AP_FlujoAprobacionPorId;
 GO
-CREATE PROCEDURE USP_SEL_AP_ContratosFlujoAprobacionPorContratista
+CREATE PROCEDURE USP_SEL_AP_FlujoAprobacionPorId
     @IdUsuario INT,
     @IdContrato INT,
-	@IdContratistaSeleccionado INT,
 	@FlujoAprobacionId INT
 	AS  
 BEGIN  
     SET NOCOUNT ON;
 	
-	SELECT 
-		 CASE 
-		 WHEN ISNULL(AP_FlujoAprobacionContratos.IdContrato,0) >0
-		 THEN 1
-		 ELSE ISNULL(AP_FlujoAprobacionContratos.IdContrato,0)
-		 END AS Asignado,
-		 CO_Contrato.IdContrato AS IdContratoFlujo,
-		 NumeroContrato,
-		 ISNULL(DescripcionContrato,'') AS DescripcionContrato
-		FROM 
-			CO_Contrato (NOLOCK)
-		LEFT JOIN
-			AP_FlujoAprobacionContratos	(NOLOCK)
-		ON 
-			CO_Contrato.IdContrato	=	AP_FlujoAprobacionContratos.IdContrato
-			AND	AP_FlujoAprobacionContratos.FlujoAprobacionId	=	@FlujoAprobacionId
-		WHERE 
-			IdContratista = @IdContratistaSeleccionado;
+	SELECT	FlujoAprobacionId,
+			IdContratista,
+			Descripcion,
+			TipoFlujoAprobacionId,
+			Activo,
+			CreadoEl,
+			CreadoPor
+	FROM
+		AP_FlujoAprobacion (NOLOCK)
+	WHERE
+		FlujoAprobacionId	=	@FlujoAprobacionId;
 
 END
