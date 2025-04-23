@@ -5,11 +5,11 @@
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_INS_AP_RegistroFlujoAprobacion'
+            name = 'USP_INS_UPD_DEL_AP_RegistroFlujoAprobacion'
     )
-    DROP PROCEDURE USP_INS_AP_RegistroFlujoAprobacion;
+    DROP PROCEDURE USP_INS_UPD_DEL_AP_RegistroFlujoAprobacion;
 GO
-CREATE PROCEDURE USP_INS_AP_RegistroFlujoAprobacion
+CREATE PROCEDURE USP_INS_UPD_DEL_AP_RegistroFlujoAprobacion
     @IdUsuario INT,
     @IdContrato INT,
 	@FlujoAprobacionId INT = 0,

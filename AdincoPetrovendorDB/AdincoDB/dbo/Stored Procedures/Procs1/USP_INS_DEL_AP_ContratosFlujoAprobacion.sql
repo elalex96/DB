@@ -5,11 +5,11 @@
         FROM
             dbo.sysobjects
         WHERE
-            name = 'USP_INS_AP_ContratosFlujoAprobacion'
+            name = 'USP_INS_DEL_AP_ContratosFlujoAprobacion'
     )
-    DROP PROCEDURE USP_INS_AP_ContratosFlujoAprobacion;
+    DROP PROCEDURE USP_INS_DEL_AP_ContratosFlujoAprobacion;
 GO
-CREATE PROCEDURE USP_INS_AP_ContratosFlujoAprobacion
+CREATE PROCEDURE USP_INS_DEL_AP_ContratosFlujoAprobacion
     @IdUsuario INT,
     @IdContrato INT,
 	@IdContratistaSeleccionado INT,
@@ -19,7 +19,7 @@ CREATE PROCEDURE USP_INS_AP_ContratosFlujoAprobacion
 	AS  
 BEGIN  
     SET NOCOUNT ON;
-
+	
 	IF( @Asignado = 1)
 	BEGIN
 		INSERT INTO AP_FlujoAprobacionContratos(FlujoAprobacionId,IdContrato,CreadoEl) VALUES (@FlujoAprobacionId,@IdContratoFlujo,GETDATE())
