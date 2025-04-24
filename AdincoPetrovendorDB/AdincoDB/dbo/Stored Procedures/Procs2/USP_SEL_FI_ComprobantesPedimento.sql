@@ -37,19 +37,19 @@ BEGIN
                WHEN ISNULL(PC.EsnotaCredito, 0) = 0 THEN
                    'No'
                ELSE
-                   'Sí'
+                   'SÃ­'
            END AS EsNotaCredito,
            '' AS MontoPagado,
            CASE
                WHEN NCR.IdNotaCredito IS NOT NULL THEN
-                   'Sí'
+                   'SÃ­'
                ELSE
                    'No'
            END AS RelacionadoConOtraNota
     FROM FI_PedimentoComprobante PC WITH (NOLOCK)
         INNER JOIN FI_PedimentoComprobanteDetalle PCD WITH (NOLOCK)
             ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
-        INNER JOIN Cat_TipoDocumento TD
+        INNER JOIN Cat_TipoDocumento TD WITH (NOLOCK)
             ON PC.CvTipoDocFacturacion = TD.IdTipoDocumento
         INNER JOIN PV_Subcontratista SE WITH (NOLOCK)
             ON PC.IdSubcontratistaExportador = SE.IdSubcontratista
@@ -98,11 +98,11 @@ BEGIN
                WHEN ISNULL(PC.EsnotaCredito, 0) = 0 THEN
                    'No'
                ELSE
-                   'Sí'
+                   'SÃ­'
            END,
            CASE
                WHEN NCR.IdNotaCredito IS NOT NULL THEN
-                   'Sí'
+                   'SÃ­'
                ELSE
                    'No'
            END
