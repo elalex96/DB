@@ -1,7 +1,3 @@
-USE [Adinco];
-GO
-
-
 IF OBJECT_ID('[dbo].[Cat_TipoDocumento]', 'U') IS NOT NULL
     DROP TABLE [dbo].[Cat_TipoDocumento];
 GO
@@ -18,11 +14,3 @@ CREATE TABLE [dbo].[Cat_TipoDocumento]
     ModificadoEn      DATETIME2 NULL
 );
 GO
-
-INSERT INTO [dbo].Cat_TipoDocumento 
-    (TipoDeDocumento, Descripcion, Activo, CreadoPor, CreadoEn)
-VALUES
-    ('Factura', 'Factura.', 1, 1, GETDATE()),
-    ('Pedimento', 'Pedimento de Importación.', 1, 1, GETDATE()),
-    ('Comprobante', 'Comprobante de Proveedor en el Extranjero.', 1, 1, GETDATE());
-
