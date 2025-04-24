@@ -41,4 +41,8 @@
     CONSTRAINT [FK_FI_PedimentoComprobante_PV_SubcontratistaImportador] FOREIGN KEY ([IdSubcontratistaImportador]) REFERENCES [dbo].[PV_Subcontratista] ([IdSubcontratista]),
     CONSTRAINT [FK_FI_PedimentoComprobante_PV_TipoMoneda] FOREIGN KEY ([IdMoneda]) REFERENCES [dbo].[PV_TipoMoneda] ([IdMoneda])
 );
-
+go
+ALTER TABLE FI_PedimentoComprobante
+ADD CONSTRAINT FK_Pedimento_CvTipoDocFacturacion_TipoDocumento
+    FOREIGN KEY (CvTipoDocFacturacion)
+    REFERENCES Cat_TipoDocumento(IdTipoDocumento);

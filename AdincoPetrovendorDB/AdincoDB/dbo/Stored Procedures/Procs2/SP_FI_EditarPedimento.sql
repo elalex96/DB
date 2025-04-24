@@ -1,19 +1,7 @@
-﻿IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'SP_FI_EditarPedimento'
-    )
-    DROP PROCEDURE SP_FI_EditarPedimento
+﻿IF OBJECT_ID('dbo.SP_FI_EditarPedimento', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.SP_FI_EditarPedimento;
 GO
--- =============================================
--- Author:      Marcos Garcia
--- Create date: 15-01-2020
--- Description: Editar Pedimento
--- =============================================
+
 CREATE PROCEDURE [dbo].[SP_FI_EditarPedimento]
     @IdPedimentoComprobante     INT,
     @IdContrato                 INT,
@@ -30,87 +18,85 @@ CREATE PROCEDURE [dbo].[SP_FI_EditarPedimento]
     @SubTotal                   MONEY,
     @IdUsuario                  INT,
     @CvTipoDoc                  INT,
-    @DocumentoPDF               IMAGE,
+    @DocumentoPDF               VARCHAR(100), -- texto como "Cargado" o vacío
     @IdFiscal                   VARCHAR(50),
     @RazonSocial                VARCHAR(5000),
     @ImporteInco                MONEY,
-    @CuentaBancaria             VARCHAR(500) = ''
+    @CuentaBancaria             VARCHAR(500) = '',
+    @EsNotaCredito              BIT
 AS
-    BEGIN
-        SET NOCOUNT ON;
-        DECLARE @IdSubcontratistaImportador INT;
-        DECLARE @Validacion INT;
-        SET @Validacion = (DATALENGTH(@DocumentoPDF));
-        /*PEDIMENTO*/
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @IdSubcontratistaImportador INT;
+    DECLARE @HayPDF BIT = CASE WHEN ISNULL(@DocumentoPDF, '') <> '' THEN 1 ELSE 0 END;
 
-        --Obtener proveedor importador
-        SELECT
-            @IdSubcontratistaImportador = CO_Contratista.IdProveedor
-        FROM
-            CO_Contrato (NOLOCK)
-            JOIN
-                CO_Contratista (NOLOCK)
-                    ON CO_Contrato.IdContratista = CO_Contratista.IdContratista
-        WHERE
-            CO_Contrato.IdContrato = @IdContrato;
+    BEGIN TRY
+        BEGIN TRAN;
+
+        -- Obtener proveedor importador
+        SELECT @IdSubcontratistaImportador = C.IdProveedor
+        FROM CO_Contrato CT WITH(NOLOCK)
+        JOIN CO_Contratista C WITH(NOLOCK) ON CT.IdContratista = C.IdContratista
+        WHERE CT.IdContrato = @IdContrato;
+
+
+        -- Actualizar cabecera
+        UPDATE dbo.FI_PedimentoComprobante
+        SET
+            NumeroPedimento = @NumeroPedimento,
+            ClavePedimento = @ClavePedimento,
+            FolioComprobante = @FolioComprobante,
+            FechaPago = @FechaPago,
+            Regimen = @Regimen,
+            IdSubcontratistaImportador = @IdSubcontratistaImportador,
+            AduanaES = @AduanaES,
+            IdSubcontratistaExportador = @IdSubcontratistaExportador,
+            IdMoneda = @IdMoneda,
+            AcuseElectronico = @AcuseElectronico,
+            CvTipoDocFacturacion = @CvTipoDoc,
+            ModificadoPor = @IdUsuario,
+            ModificadoEn = GETDATE(),
+            IdFiscalP = @IdFiscal,
+            RazonSocialP = @RazonSocial,
+            CuentaBancaria = @CuentaBancaria,
+            EsNotaCredito = @EsNotaCredito
+        WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
+
+        -- Actualizar detalle
+        UPDATE dbo.FI_PedimentoComprobanteDetalle
+        SET
+            DescripcionMercancia = @DescripcionMercancia,
+            PrecioUnitario = @SubTotal,
+            ModificadoPor = @IdUsuario,
+            ModificadoEn = GETDATE(),
+            ImporteTotal = @ImporteInco
+        WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
+
+        -- Actualizar documento si viene archivo nuevo
+        IF @HayPDF = 1
         BEGIN
-
-            UPDATE
-                dbo.FI_PedimentoComprobante
+            UPDATE dbo.FI_Documento
             SET
-                NumeroPedimento = @NumeroPedimento,
-                ClavePedimento = @ClavePedimento,
-                FolioComprobante = @FolioComprobante,
-                FechaPago = @FechaPago,
-                Regimen = @Regimen,
-                IdSubcontratistaImportador = @IdSubcontratistaImportador,
-                AduanaES = @AduanaES,
-                IdSubcontratistaExportador = @IdSubcontratistaExportador,
-                IdMoneda = @IdMoneda,
-                AcuseElectronico = @AcuseElectronico,
-                CvTipoDocFacturacion = @CvTipoDoc,
                 ModificadoPor = @IdUsuario,
-                ModificadoEn = GETDATE(),
-                IdFiscalP = @IdFiscal,
-                RazonSocialP = @RazonSocial,
-                CuentaBancaria = @CuentaBancaria
-            WHERE
-                IdPedimentoComprobante = @IdPedimentoComprobante;
-        END;
-        --
-        BEGIN
+                ModificadoEn = GETDATE()
+            WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
+        END
 
-            UPDATE
-                dbo.FI_PedimentoComprobanteDetalle
-            SET
-                DescripcionMercancia = @DescripcionMercancia,
-                PrecioUnitario = @SubTotal,
-                ModificadoPor = @IdUsuario,
-                ModificadoEn = GETDATE(),
-                ImporteTotal = @ImporteInco
-            WHERE
-                IdPedimentoComprobante = @IdPedimentoComprobante;
-        END;
-        BEGIN
-            IF (@Validacion <> 0)
-                BEGIN
-                    UPDATE
-                        dbo.FI_Documento
-                    SET
-                        ModificadoPor = @IdUsuario,
-                        ModificadoEn = GETDATE()
-                    WHERE
-                        IdPedimentoComprobante = @IdPedimentoComprobante;
-                END;
+        COMMIT;
+        SELECT 'true' AS msj, @IdPedimentoComprobante;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
 
-        END;
-        IF @@ERROR <> 0
-            SELECT
-                'false' AS msj;
-        ELSE
-            SELECT
-                'true' AS msj,
-                @IdPedimentoComprobante;
-    END;
+        DECLARE @msg NVARCHAR(MAX);
+        SET @msg = CONCAT(
+            'Error en SP [SP_FI_EditarPedimento]: ',
+            ERROR_MESSAGE()
+        );
 
-
+        -- Lanzar mensaje personalizado con nombre del SP
+        THROW 51000, @msg, 1;
+    END CATCH
+END;
+GO

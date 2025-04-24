@@ -4010,6 +4010,12 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CP_ParametroRegalia.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ConsultaAños.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_INS_CP_RegistroParametroRegalia.sql" />
+    <Build Include="dbo\Tables\Tables2\Cat_TipoDocumento.sql" />
+    <Build Include="dbo\Tables\Tables2\FI_NotaCredito_REL_Comprobante.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_DEL_FI_NotasCreditoRelacionadas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_FI_ComprobantesPedimento.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_SEL_FI_RelacionNotaCredito_Comprobantes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs2\USP_INS_FI_RelacionNotaCredito.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_INS_DEL_AP_ContratosFlujoAprobacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ContratosFlujoAprobacionPorContratista.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_FlujoAprobacionPorId.sql" />
