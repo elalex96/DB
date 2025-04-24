@@ -1,6 +1,3 @@
-USE [Adinco];
-GO
-
 IF OBJECT_ID('[dbo].[FI_NotaCredito_REL_Comprobantes]', 'U') IS NOT NULL
     DROP TABLE [dbo].[FI_NotaCredito_REL_Comprobantes];
 GO
