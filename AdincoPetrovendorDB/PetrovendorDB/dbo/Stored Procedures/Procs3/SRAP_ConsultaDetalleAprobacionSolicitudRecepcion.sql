@@ -26,6 +26,10 @@ GO
 -- Create date: 8/May/2024
 -- Description:	Se cambia la descripción de OBS a Aprobador SAS
 -- =============================================
+-- Author:		Daniel AC
+-- Create date: 29-04-2025
+-- Description:	Se retorna el domicilio id
+-- =============================================
 CREATE PROCEDURE [dbo].[SRAP_ConsultaDetalleAprobacionSolicitudRecepcion]  
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
@@ -151,6 +155,7 @@ AS
 	   /*TABLA 1 ENCABEZADO*/
 	   BEGIN       
 	    /*ENCABEZADO DEL PEDIDO*/	
+		
 		 SELECT     
 		 SAP.IdSolicitudAceptacionPedido,
 		 SAP.Comentario,
@@ -173,7 +178,8 @@ AS
 		 PG.IdTipoPedido,
 		 ISNULL(ISNULL(WPI.PURCHASING_DOCUMENT,PO.PO),'SIN PO RELACIONADO') AS NoPO,
 		 @TOTAL_SAS AS TOTAL_SAS,
-		 @MONEDA_SAS AS MONEDA_SAS
+		 @MONEDA_SAS AS MONEDA_SAS,
+		 SP.IdDomicilioEntrega
 		 FROM MM_SolicitudAceptacionPedido SAP
 		 JOIN TA_Operacion O 
 			ON SAP.IdSolicitudAceptacionPedido = O.IdDocumento
@@ -225,7 +231,9 @@ AS
 		 PG.IdTipoPedido,
 		 PV.RegimenCapital,
 		 WPI.PURCHASING_DOCUMENT,
-		 PO.PO
+		 PO.PO,
+		 SP.IdDomicilioEntrega
+
 	END
 	  
 	  /*TABLA 2 PRODUCTOS*/

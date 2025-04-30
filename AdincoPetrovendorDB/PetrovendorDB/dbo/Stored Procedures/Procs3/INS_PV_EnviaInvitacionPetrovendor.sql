@@ -15,6 +15,11 @@ GO
 ---- Create date: 21-11-2024
 ---- Description: Generar correo de invitación a proveedores o clientes a petrovendor
 ---- =============================================
+---- =============================================
+---- Author: Daniel AC
+---- Create date: 28-04-2025
+---- Description: Se retorna la lista de correos 
+---- =============================================
 SET QUOTED_IDENTIFIER ON
 GO
 CREATE PROC [dbo].[INS_PV_EnviaInvitacionPetrovendor]
@@ -31,7 +36,6 @@ DECLARE @HTMLCORREOSINV NVARCHAR(MAX),
 		@IDCORREO INT,
 		@ASUNTOCORREO varchar(1000),
 		@EmpresaEmisora varchar(max),
-		@IdNotificacion BIGINT,
 		@CorreoNotificaciones NVARCHAR(MAX),
 		@Dominio NVARCHAR(MAX);
 		
@@ -64,45 +68,9 @@ DECLARE @HTMLCORREOSINV NVARCHAR(MAX),
             = (REPLACE(@HTMLCORREOSINV, '##DOMINIO##', ISNULL(@Dominio,'')));
 
 
-        SET @IdNotificacion = ((SELECT MAX(IdNotificacion) 
-								FROM Adinco.dbo.S_Notificacion) + 1);
-
-		--Envio de notificacion
-        INSERT INTO Adinco.dbo.S_Notificacion
-        (
-            IdNotificacion,
-            Para,
-            Asunto,
-            Mensaje,
-            FechaProgramadaEnvio,
-            Enviada,
-            FechaEnvio,
-            CreadoPor,
-            CreadoEl,
-            ModificadoPor,
-            ModificadoEl,
-            De
-        )
-        VALUES
-        (@IdNotificacion, 
-		@CorreoInvitado, 
-		@ASUNTOCORREO,
-        @HTMLCORREOSINV, 
-		DATEADD(MINUTE, 1, GETDATE()), 0, NULL,
-		3, --> CTE USUARIO PETROVENDOR 
-		GETDATE(), 
-		NULL, 
-		NULL,
-        ISNULL(@CorreoNotificaciones,'')
-		);
-
-		--Guardado de bitácora
-		---
-		INSERT INTO dbo.TA_EnvioCorreo (IdEnvioAdinco, IdCorreo, IdIdentificacion, EnviadoPor, EnviadoEl)
-        VALUES
-        (   @IdNotificacion,                                                          -- IdEnvioAdinco - int
-            @IDCORREO,                                                                -- CORREO DE INVITACIÓN
-            'Invitación para unirse a Petrovendor. '+ISNULL(@Origen,'N/A'),
-            1, GETDATE());
+	SELECT 
+	Destinatario = @CorreoInvitado,
+    Asunto = @ASUNTOCORREO,
+    Mensaje = @HTMLCORREOSINV
 
 END
