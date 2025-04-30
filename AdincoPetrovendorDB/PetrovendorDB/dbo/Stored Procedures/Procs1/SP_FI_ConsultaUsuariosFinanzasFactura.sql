@@ -1,4 +1,7 @@
-﻿-- =============================================
+﻿USE Petrovendor 
+DROP PROC IF EXISTS SP_FI_ConsultaUsuariosFinanzasFactura
+GO
+-- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 09/01/2019
 -- Description:	Consultar los usuarios de finanzas de un proveedor poe factura
@@ -7,7 +10,11 @@
 -- Create date: 04/11/2022
 -- Description:	Se validan los usuarios activos
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura] --236
+-- Author:	Daniel AC 
+-- Create date: 29/04/2025
+-- Description:	Se agrupan resultados
+-- =============================================
+CREATE PROCEDURE [dbo].[SP_FI_ConsultaUsuariosFinanzasFactura] 
 	-- Add the parameters for the stored procedure here
 	@IdAprobacionPedido INT
 AS
@@ -25,7 +32,7 @@ BEGIN
 		US.IdTipoUsuario
 	FROM dbo.MM_Pedido AS P (NOLOCK)
 		 JOIN dbo.MM_AceptacionPedido AS AP (NOLOCK) ON
-				P.IdPedido = AP.IdPedido
+				AP.IdPedido = P.IdPedido 
 		 JOIN dbo.S_UsuarioProveedor AS USP (NOLOCK) ON
 				P.IdSubcontratista = USP.IdProveedor
 		 JOIN dbo.S_Usuario AS US (NOLOCK) ON
@@ -36,4 +43,9 @@ BEGIN
 		AND US.IdTipoUsuario = 6 --FINANZAS
 		AND ISNULL(US.Activo,0) = 1
 		AND ISNULL(US.IsEliminado,0) = 0
+	GROUP BY US.IdUsuario,
+	US.Nombre,
+	US.Correo,
+	PR.RazonSocial,
+	US.IdTipoUsuario
 END
