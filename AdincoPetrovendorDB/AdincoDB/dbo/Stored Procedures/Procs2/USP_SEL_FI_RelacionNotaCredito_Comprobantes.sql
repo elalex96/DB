@@ -23,16 +23,16 @@ BEGIN
             PCD.PrecioUnitario,
             ISNULL(PCD.ClaseBienServicio, '')    AS DescripcionMercancia,
             ISNULL(U.Unidad, '')                    AS Unidad
-        FROM FI_NotaCredito_REL_Comprobantes R
-        INNER JOIN FI_PedimentoComprobante PC 
+        FROM FI_NotaCredito_REL_Comprobantes R WITH (NOLOCK)
+        INNER JOIN FI_PedimentoComprobante PC WITH (NOLOCK)
             ON PC.IdPedimentoComprobante = R.IdComprobanteRelacionado
-        INNER JOIN FI_PedimentoComprobanteDetalle PCD 
+        INNER JOIN FI_PedimentoComprobanteDetalle PCD WITH (NOLOCK)
             ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
-        INNER JOIN Cat_TipoDocumento TD 
+        INNER JOIN Cat_TipoDocumento TD WITH (NOLOCK)
             ON PC.CvTipoDocFacturacion = TD.IdTipoDocumento
-        LEFT JOIN PV_Subcontratista S 
+        LEFT JOIN PV_Subcontratista S WITH (NOLOCK)
             ON PC.IdSubcontratistaExportador = S.IdSubcontratista
-        LEFT JOIN PV_MM_MaterialUnidad U 
+        LEFT JOIN PV_MM_MaterialUnidad U WITH (NOLOCK)
             ON PCD.IdUnidadMedida = U.IdUnidad 
         WHERE 
             R.IdNotaCredito = @IdNotaCredito 
@@ -65,16 +65,16 @@ BEGIN
             PCD.PrecioUnitario,
             PCD.ImporteTotal,
             PCD.DescripcionMercancia
-        FROM FI_NotaCredito_REL_Comprobantes R
-        INNER JOIN FI_PedimentoComprobante PC 
+        FROM FI_NotaCredito_REL_Comprobantes R WITH (NOLOCK)
+        INNER JOIN FI_PedimentoComprobante PC WITH (NOLOCK)
             ON PC.IdPedimentoComprobante = R.IdComprobanteRelacionado
-        INNER JOIN FI_PedimentoComprobanteDetalle PCD 
+        INNER JOIN FI_PedimentoComprobanteDetalle PCD WITH (NOLOCK)
             ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
-        INNER JOIN Cat_TipoDocumento TD 
+        INNER JOIN Cat_TipoDocumento TD WITH (NOLOCK)
             ON PC.CvTipoDocFacturacion = TD.IdTipoDocumento
-        LEFT JOIN PV_Subcontratista S 
+        LEFT JOIN PV_Subcontratista S WITH (NOLOCK)
             ON PC.IdSubcontratistaExportador = S.IdSubcontratista
-        LEFT JOIN PV_MM_MaterialUnidad U 
+        LEFT JOIN PV_MM_MaterialUnidad U WITH (NOLOCK)
             ON PCD.IdUnidadMedida = U.IdUnidad
         LEFT JOIN FI_ClavesPedimento CP WITH (NOLOCK)
             ON PC.ClavePedimento = CP.IdPedimento
