@@ -21,10 +21,10 @@ BEGIN
             PC.FolioComprobante,
             ISNULL(PC.FechaPago, '')                AS FechaPago,
             PCD.PrecioUnitario,
-            ISNULL(PCD.DescripcionMercancia, '')    AS DescripcionMercancia,
+            ISNULL(PCD.ClaseBienServicio, '')    AS DescripcionMercancia,
             ISNULL(U.Unidad, '')                    AS Unidad
         FROM FI_NotaCredito_REL_Comprobantes R WITH (NOLOCK)
-        INNER JOIN FI_PedimentoComprobante PC WITH (NOLOCK) 
+        INNER JOIN FI_PedimentoComprobante PC WITH (NOLOCK)
             ON PC.IdPedimentoComprobante = R.IdComprobanteRelacionado
         INNER JOIN FI_PedimentoComprobanteDetalle PCD WITH (NOLOCK)
             ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
@@ -46,7 +46,7 @@ BEGIN
             PC.FechaPago,
             S.RazonSocial,
             PCD.PrecioUnitario,
-            PCD.DescripcionMercancia,
+            PCD.ClaseBienServicio,
             U.Unidad
     END
 
@@ -74,7 +74,7 @@ BEGIN
             ON PC.CvTipoDocFacturacion = TD.IdTipoDocumento
         LEFT JOIN PV_Subcontratista S WITH (NOLOCK)
             ON PC.IdSubcontratistaExportador = S.IdSubcontratista
-        LEFT JOIN PV_MM_MaterialUnidad U WITH (NOLOCK) 
+        LEFT JOIN PV_MM_MaterialUnidad U WITH (NOLOCK)
             ON PCD.IdUnidadMedida = U.IdUnidad
         LEFT JOIN FI_ClavesPedimento CP WITH (NOLOCK)
             ON PC.ClavePedimento = CP.IdPedimento
