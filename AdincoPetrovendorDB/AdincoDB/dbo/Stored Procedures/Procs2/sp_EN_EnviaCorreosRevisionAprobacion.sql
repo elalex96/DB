@@ -1,10 +1,22 @@
-﻿
+﻿USE [Adinco]
+GO
+DROP PROCEDURE IF EXISTS sp_EN_EnviaCorreosRevisionAprobacion
+/****** Object:  StoredProcedure [dbo].[sp_EN_EnviaCorreosRevisionAprobacion]    Script Date: 16/05/2025 12:23:38 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- =============================================
 -- Author:		Reynha Olvera
 -- Create date:20180927
 -- Description:	Envia correos a receptores de alterna, modulo entregables
 -- =============================================
-CREATE PROCEDURE [dbo].[sp_EN_EnviaCorreosRevisionAprobacion] -- 10061,3, 46191,4,'','','HOLA','Nomeinstancia','20190227','reyna.olvera@adinco.mx','Reyna',13,2
+-- Author:		Alexander Gomez
+-- Create date:16052025
+-- Description:	retorno de envio de los correos a enviar
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_EN_EnviaCorreosRevisionAprobacion] 
     @idUsuario INT,
     @idContrato INT,
     @idInstanciaEntregable INT,
@@ -37,7 +49,7 @@ BEGIN
 	FROM CO_Contrato
 	WHERE IdContrato = @idContrato
 
-	SET @NombreInstancia=@NombreInstancia+'-'+@NumeroContrato
+	SET @NombreInstancia=@NombreInstancia + '-' + @NumeroContrato
 
     IF (@idTipoOperacion = 3)
     BEGIN
@@ -52,7 +64,6 @@ BEGIN
 
     IF (@TipoCorreo = 12) --Enviaa notificaciones 
     BEGIN
-		--select 'sp_EN_EnviaCorreosRevisionAprobacion. @TipoCorreo = 12'
 
         SELECT      @Correo	=	Correo.HTML,
                     @Asunto	=	Correo.Asunto,
@@ -64,15 +75,6 @@ BEGIN
 
          WHERE      Correo.IdCorreo = @TipoCorreo;
 
-		 --select		español				=	@español, 		 
-			--		NombreInstancia		=	@NombreInstancia,	
-			--		enlaceDetalle		=	@enlaceDetalle, 
-			--		EnlaceAprobado		=	@EnlaceAprobado, 
-			--		EnlaceRechazo		=	@EnlaceRechazo, 
-			--		FechaInstancia		=	@FechaInstancia, 
-			--		NombreInstancia		=	@NombreInstancia, 
-			--		NombreUsuario		=	@NombreUsuario, 
-			--		ingles				=	@ingles
 
         SET @Asunto = REPLACE(@Asunto, '##TIPO_APROBACION_E##', isnull(@español,''));
         SET @Asunto = REPLACE(@Asunto, '##COMENTARIOGENERAL##', isnull(@NombreInstancia,''));
@@ -128,33 +130,13 @@ BEGIN
         SET @Correo = REPLACE(@Correo, '##URL_TAREA##', @enlaceDetalle);
     END;
 
-    SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1;
-	
-
-	--select [sp_EN_EnviaCorreosRevisionAprobacion.Correo] = @Correo
-    INSERT INTO Adinco.dbo.S_Notificacion (IdNotificacion,
-                                           Para,
-                                           Asunto,
-                                           Mensaje,
-                                           FechaProgramadaEnvio,
-                                           Enviada,
-                                           FechaEnvio,
-                                           CreadoPor,
-                                           CreadoEl,
-                                           ModificadoPor,
-                                           ModificadoEl,
-                                           De)
-    VALUES (@IdNotificacion, 
-            @Para,
-			SUBSTRING( RTRIM(RTRIM(REPLACE(REPLACE(@Asunto, CHAR(10), ' '), CHAR(13), ' '))),0,500), 
-            @Correo, 
-            GETDATE(), 
-            0,
-            NULL, 
-            @idUsuario,
-            GETDATE(), 
-            @idUsuario, 
-            GETDATE(), 
-            @CuentaRegistro 
-        );
+	SELECT @Para AS Para,
+			SUBSTRING( RTRIM(RTRIM(REPLACE(REPLACE(@Asunto, CHAR(10), ' '), CHAR(13), ' '))),0,500) AS Asunto, 
+            @Correo AS Mensaje, 
+            GETDATE() AS FechaProgramadaEnvio, 
+            0 AS Enviada,
+            NULL AS FechaEnvio, 
+            @idUsuario AS CreadoPor,
+            GETDATE() AS CreadoEl, 
+            @CuentaRegistro AS De;
 END;
