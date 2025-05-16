@@ -1,4 +1,12 @@
-﻿CREATE PROCEDURE [dbo].[EN_CambioEstadoA]
+﻿USE [Adinco]
+GO
+DROP PROCEDURE IF EXISTS EN_CambioEstadoA
+/****** Object:  StoredProcedure [dbo].[EN_CambioEstadoA]    Script Date: 16/05/2025 12:21:28 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[EN_CambioEstadoA]
     @idUsuario INT, --10150
     @idContrato INT,
     @idInstanciaEntregable INT,
@@ -25,6 +33,10 @@ BEGIN
 -- Update date: 25/01/2022 
 -- Description: Se desactivan los registros del hisotrial entregables(url)
 -- =============================================
+-- Author:		Alexander Gomez
+-- Update date: 16/05/2024 
+-- Description: Modiciación para retornar los usuarios a los que se notificaran cambios
+-- =============================================
     SET NOCOUNT ON;
     DECLARE @idVersion INT,
             @contrato INT,
@@ -47,6 +59,22 @@ BEGIN
             @EsGrupo INT,
             @IsAdmin INT,
             @EstadoActual VARCHAR(MAX);
+
+	CREATE TABLE #LISTA_CORREOS_USUARIOS(
+		idUsuario INT,
+		idContrato INT,
+		idInstanciaEntregable INT,
+		idTipoOperacion INT,
+		EnlaceAprobado NVARCHAR(MAX),
+		EnlaceRechazo NVARCHAR(MAX),
+		NombreInstancia NVARCHAR(MAX), 
+		FechaInstancia NVARCHAR(MAX),
+		enlaceDetalle NVARCHAR(MAX),
+		Para NVARCHAR(MAX),
+		NombreUsuario NVARCHAR(MAX),
+		TipoCorreo INT,
+		Estatus INT
+	);
 
     SELECT TOP 1
            @idVersion = IdLineaTiempo
@@ -203,7 +231,6 @@ BEGIN
 
                     WHILE (@min <= @max)
                     BEGIN
-                        --select * from #tmp where id = @min
 
 
                         SELECT @EnlaceDetalle = EnlaceDetalle,
@@ -217,20 +244,36 @@ BEGIN
                         FROM #tmp
                         WHERE ID = @min;
 
-                        EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
-                                                                    @idContrato,
-                                                                    @idInstanciaEntregable,
-                                                                    @idTipoOperacion,
-                                                                    @EnlaceAprobado,
-                                                                    @EnlaceRechazo,
-                                                                    @NombreInstancia,
-                                                                    @FechaInstancia,
-                                                                    @EnlaceDetalle,
-                                                                    @Para,
-                                                                    @NombreUsuario,
-                                                                    12,
-                                                                    0;
-
+						INSERT INTO #LISTA_CORREOS_USUARIOS(
+							idUsuario ,
+							idContrato ,
+							idInstanciaEntregable ,
+							idTipoOperacion ,
+							EnlaceAprobado ,
+							EnlaceRechazo ,
+							NombreInstancia , 
+							FechaInstancia ,
+							enlaceDetalle ,
+							Para ,
+							NombreUsuario ,
+							TipoCorreo ,
+							Estatus 
+						)VALUES
+						(
+							@idUsuario,
+                            @idContrato,
+                            @idInstanciaEntregable,
+                            @idTipoOperacion,
+                            @EnlaceAprobado,
+                            @EnlaceRechazo,
+                            @NombreInstancia,
+                            @FechaInstancia,
+                            @EnlaceDetalle,
+                            @Para,
+                            @NombreUsuario,
+                            12,
+                            0
+						);
 
                         SELECT @min = @min + 1;
                     END;
@@ -285,19 +328,36 @@ BEGIN
 
                 END;
 
-                EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
-                                                            @idContrato,
-                                                            @idInstanciaEntregable,
-                                                            @idTipoOperacion,
-                                                            '',
-                                                            '',
-                                                            @NombreInstancia,
-  @FechaInstancia,
-                                                            @URLDetalle,
-                                                            @Para,
-                                                            @NombreUsuario,
-                                                 13,
-                                                            2;
+				INSERT INTO #LISTA_CORREOS_USUARIOS(
+							idUsuario ,
+							idContrato ,
+							idInstanciaEntregable ,
+							idTipoOperacion ,
+							EnlaceAprobado ,
+							EnlaceRechazo ,
+							NombreInstancia , 
+							FechaInstancia ,
+							enlaceDetalle ,
+							Para ,
+							NombreUsuario ,
+							TipoCorreo ,
+							Estatus 
+						)VALUES
+						(
+							@idUsuario,
+                            @idContrato,
+                            @idInstanciaEntregable,
+                            @idTipoOperacion,
+                            '',
+                            '',
+                            @NombreInstancia,
+							@FechaInstancia,
+                            @URLDetalle,
+                            @Para,
+							@NombreUsuario,
+							13,
+							2
+						);
 
                 EXEC EN_GuardaHistorialLineaTiempo @idVersion,
                                                    @idInstanciaEntregable,
@@ -413,20 +473,36 @@ BEGIN
 
                 END;
 
-
-                EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
-                                                            @idContrato,
-                                                            @idInstanciaEntregable,
-                                                            @idTipoOperacion,
-                                                            '',
-                                                            '',
-                                                            @NombreInstancia,
-                                                            @FechaInstancia,
-                                                            @URLDetalle,
-                                                            @Para,
-                                                            @NombreUsuario,
-                                                            13,
-                                                            3;
+				INSERT INTO #LISTA_CORREOS_USUARIOS(
+							idUsuario ,
+							idContrato ,
+							idInstanciaEntregable ,
+							idTipoOperacion ,
+							EnlaceAprobado ,
+							EnlaceRechazo ,
+							NombreInstancia , 
+							FechaInstancia ,
+							enlaceDetalle ,
+							Para ,
+							NombreUsuario ,
+							TipoCorreo ,
+							Estatus 
+						)VALUES
+						(
+							@idUsuario,
+                            @idContrato,
+                            @idInstanciaEntregable,
+                            @idTipoOperacion,
+                            '',
+                            '',
+                            @NombreInstancia,
+							@FechaInstancia,
+                            @URLDetalle,
+                            @Para,
+							@NombreUsuario,
+							13,
+							3
+						);
 
                 EXEC EN_GuardaHistorialLineaTiempo @idVersion,
                                                    @idInstanciaEntregable,
@@ -483,4 +559,21 @@ BEGIN
             END;
         END;
     END;
+
+	SELECT
+		idUsuario ,
+		idContrato ,
+		idInstanciaEntregable ,
+		idTipoOperacion ,
+		EnlaceAprobado ,
+		EnlaceRechazo ,
+		NombreInstancia , 
+		FechaInstancia ,
+		enlaceDetalle ,
+		Para ,
+		NombreUsuario ,
+		TipoCorreo ,
+		Estatus 
+	FROM #LISTA_CORREOS_USUARIOS
+
 END;
