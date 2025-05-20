@@ -1,29 +1,47 @@
-﻿-- =============================================
--- Author:		Marcos Garcia
--- Create date: 15-01-2020
--- Description:	Eliminar Pedimento o Comprobante
--- =============================================
+﻿IF OBJECT_ID('[dbo].[SP_FI_EliminarPedimentoComprobante]', 'P') IS NOT NULL
+    DROP PROCEDURE [dbo].[SP_FI_EliminarPedimentoComprobante];
+GO
+
 CREATE PROCEDURE [dbo].[SP_FI_EliminarPedimentoComprobante] 
---[dbo].[SP_FI_EliminarPedimentoComprobante] 1185,10113,3
--- Add the parameters for the stored procedure here
-@IdPedimentoCombrobante INT, 
-@IdUsuario              INT, 
-@IdContrato             INT
+    @IdPedimentoComprobante INT, 
+    @IdUsuario              INT, 
+    @IdContrato             INT
 AS
-     BEGIN
-         SET NOCOUNT ON;
-         --Eliminación en FI_PedimentoComprobanteDetalle
-         DELETE dbo.FI_PedimentoComprobanteDetalle
-         WHERE IdPedimentoComprobante = @IdPedimentoCombrobante;
-         --Eliminación del FI_Documento
-         DELETE dbo.FI_Documento
-         WHERE IdPedimentoComprobante = @IdPedimentoCombrobante;
-         --Eliminación en FI_PedimentoComprobante
-         DELETE dbo.FI_PedimentoComprobante
-         WHERE IdPedimentoComprobante = @IdPedimentoCombrobante;  
-         --Verificación de error 
-         IF @@ERROR <> 0
-             SELECT 1 AS eliminado;
-             ELSE
-         SELECT 0 AS eliminado;
-     END;
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+
+        DELETE FROM FI_NotaCredito_REL_Comprobantes
+        WHERE IdNotaCredito = @IdPedimentoComprobante;
+
+        DELETE FROM dbo.FI_PedimentoComprobanteDetalle
+        WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
+
+        DELETE FROM dbo.FI_Documento
+        WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
+
+        DELETE FROM dbo.FI_PedimentoComprobante
+        WHERE IdPedimentoComprobante = @IdPedimentoComprobante;
+
+        COMMIT TRANSACTION
+
+        SELECT 0 AS Eliminado;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        DECLARE @msg NVARCHAR(MAX);
+        SET @msg = CONCAT(
+            'Error en SP [SP_FI_EliminarPedimentoComprobante]: ',
+            ERROR_MESSAGE()
+        );
+
+        -- Lanzar mensaje personalizado con nombre del SP
+        THROW 51000, @msg, 1;
+    END CATCH
+END;
+GO
