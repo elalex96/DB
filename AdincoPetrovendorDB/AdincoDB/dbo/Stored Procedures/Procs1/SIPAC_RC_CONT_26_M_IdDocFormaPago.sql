@@ -1,4 +1,15 @@
-﻿-- =============================================
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_26_M_IdDocFormaPago'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_26_M_IdDocFormaPago;
+GO
+-- =============================================
 -- Author:                            Manuel Cruz
 -- Create date: 2017-04-11
 -- Description:  
@@ -323,7 +334,6 @@ AS
                         AND CO_Registro.IdEstado = 10004
                         AND ISNULL(CONVERT(INT, FI_Transfer.ProcesadoSIPAC), 0) = 0
                         AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
-                        AND ISNULL(FI_PedimentoComprobante.EsnotaCredito, 0) <> 1
                         AND CO_Presupuesto.IdPresupuesto = CASE
                                                                WHEN @IdPresupuesto = 0
                                                                    THEN CO_LineaPresupuestoMes.IdPresupuesto

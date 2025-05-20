@@ -1,4 +1,5 @@
-﻿IF EXISTS
+﻿
+IF EXISTS
     (
         SELECT
             1
@@ -219,9 +220,10 @@ BEGIN
         FechaFactura_RC24_17 DATE,  
         ValMontFact_RC24_18 MONEY,  
         ValDolares_RC24_19 MONEY,  
-        ClasDocSoporte_RC24_20 INT  ,
-				RC24_21	VARCHAR(2000),
-		RC24_22 VARCHAR(2000)
+        ClasDocSoporte_RC24_20 INT,
+		RC24_21	VARCHAR(2000),
+		RC24_22 VARCHAR(2000),
+		Nota VARCHAR(2000)
     );  
   
     --________________________________________  
@@ -250,7 +252,8 @@ BEGIN
         ValDolares_RC25_16 MONEY,  
         ClasDocSoporte_RC25_17 INT ,
 		RC25_18 VARCHAR(2000),
-		RC25_19 VARCHAR(2000)
+		RC25_19 VARCHAR(2000),
+		Nota VARCHAR(2000)
     );  
   
     --________________________________________  
@@ -454,7 +457,8 @@ BEGIN
         ValDolares_RC24_19,  
         ClasDocSoporte_RC24_20  ,
 		RC24_21, 
-		RC24_22 
+		RC24_22,
+		Nota
     )  
     EXECUTE dbo.SIPAC_RC_CONT_24_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
   
@@ -483,7 +487,8 @@ BEGIN
         ValDolares_RC25_16,  
         ClasDocSoporte_RC25_17,
 		RC25_18,
-		RC25_19
+		RC25_19,
+		Nota
     )  
     EXECUTE dbo.SIPAC_RC_CONT_25_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
   
@@ -1175,7 +1180,25 @@ END;
             FROM #TEMPORAL_26_MContTemp T26C  
                 JOIN #TEMPORAL_26_M T26  
                     ON T26C.TimbreHASH = T26.TimbreHASH_PDF_RC26_06
-          GROUP BY T26.TimbreHASH_PDF_RC26_06  
+          GROUP BY T26.TimbreHASH_PDF_RC26_06 
+		  --15_____________________________ Validacion de contrato, presupuesto y tarea en notas de credito PE y PI ______________________________________--  
+		
+            -------------RC_CONT_24_M------  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT 'Verificar en Hoja RC_CONT_24_M se encuentra el siguiente detalle en Renglón: '  
+                           + CONVERT(VARCHAR(2000), T24.Id_24_M) + '('+T24.Nota+').'  
+                    AS [Validaciones]
+            FROM #TEMPORAL_24_M T24  
+            WHERE T24.Nota <> ''  
+            ORDER BY T24.Id_24_M ASC  
+
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT 'Verificar en Hoja RC_CONT_25_M se encuentra el siguiente detalle en Renglón: '  
+                           + CONVERT(VARCHAR(2000), T25.Id_25_M) + '('+T25.Nota+').'  
+                    AS [Validaciones]
+            FROM #TEMPORAL_25_M T25  
+            WHERE T25.Nota <> ''  
+            ORDER BY T25.Id_25_M ASC 
 
 		   SELECT Validaciones FROM #TablaDeValidaciones
 		   WHERE ISNULL([Validaciones], '') <> '';		

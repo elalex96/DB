@@ -1,4 +1,16 @@
-﻿-- =============================================
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'sp_SIPAC_ListaArchivosReporteGastosExtranjero'
+    )
+    DROP PROCEDURE sp_SIPAC_ListaArchivosReporteGastosExtranjero;
+GO
+-- 
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 07-06-17
 -- Description:	
@@ -82,7 +94,6 @@ AS
                       AND R.IdEstado = 10004
                       AND ISNULL(CONVERT(INT, PC.ProcesadoSIPAC), 0) = 0
                       AND SER.NombreServicio NOT LIKE '%No elegibles%'
-                      AND ISNULL(PC.EsnotaCredito, 0) <> 1
                       AND P.IdPresupuesto = CASE
                                                 WHEN @IdPresupuesto = 0
                                                 THEN LPM.IdPresupuesto
