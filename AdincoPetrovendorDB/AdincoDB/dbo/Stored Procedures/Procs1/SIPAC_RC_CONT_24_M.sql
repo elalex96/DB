@@ -219,8 +219,8 @@ BEGIN
             ON FI_PedimentoComprobante.ClavePedimento = FI_ClavesPedimento.IdPedimento
         JOIN dbo.CO_Servicio WITH (NOLOCK)
             ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
-		LEFT JOIN FI_NotaCredito_REL_Comprobantes ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_NotaCredito_REL_Comprobantes.IdNotaCredito
-		LEFT JOIN FI_PedimentoComprobante RelacionadosNota ON FI_NotaCredito_REL_Comprobantes.IdComprobanteRelacionado = RelacionadosNota.IdPedimentoComprobante
+		LEFT JOIN FI_NotaCredito_REL_Comprobantes WITH (NOLOCK) ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_NotaCredito_REL_Comprobantes.IdNotaCredito
+		LEFT JOIN FI_PedimentoComprobante RelacionadosNota WITH (NOLOCK) ON FI_NotaCredito_REL_Comprobantes.IdComprobanteRelacionado = RelacionadosNota.IdPedimentoComprobante
     WHERE CO_Registro.CvTipoDocFacturacion = @TipoPedimentoImportacion
           AND CO_Contrato.IdContrato = @Contrato
           AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes

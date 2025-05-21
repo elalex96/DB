@@ -197,8 +197,8 @@ BEGIN
             ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
         JOIN dbo.CO_Servicio WITH (NOLOCK)
             ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
-		LEFT JOIN FI_NotaCredito_REL_Comprobantes ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_NotaCredito_REL_Comprobantes.IdNotaCredito
-		LEFT JOIN FI_PedimentoComprobante RelacionadosNota ON FI_NotaCredito_REL_Comprobantes.IdComprobanteRelacionado = RelacionadosNota.IdPedimentoComprobante
+		LEFT JOIN FI_NotaCredito_REL_Comprobantes WITH (NOLOCK) ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_NotaCredito_REL_Comprobantes.IdNotaCredito
+		LEFT JOIN FI_PedimentoComprobante RelacionadosNota WITH (NOLOCK) ON FI_NotaCredito_REL_Comprobantes.IdComprobanteRelacionado = RelacionadosNota.IdPedimentoComprobante
     WHERE CO_Registro.CvTipoDocFacturacion = @TipoComprobanteExtranjero
           AND CO_Contrato.IdContrato = @Contrato
           AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
@@ -362,7 +362,7 @@ BEGIN
 				END
 			,[RC21_12_Relacionado] = LTRIM(RTRIM(TP.id_Tarea))			
 		FROM #ComprobantesRelacionados		
-		JOIN FI_PedimentoComprobante
+		JOIN FI_PedimentoComprobante WITH (NOLOCK)
 			ON #ComprobantesRelacionados.IdRelacionado = FI_PedimentoComprobante.IdPedimentoComprobante
 		JOIN dbo.CO_Registro WITH (NOLOCK)
 			ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
