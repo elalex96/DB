@@ -1,8 +1,21 @@
-﻿---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+﻿USE [Petrovendor]
+GO
+DROP PROCEDURE IF EXISTS SP_MM_ActualizarEstatusSolicitudDescarga
+GO
+/****** Object:  StoredProcedure [dbo].[SP_MM_ActualizarEstatusSolicitudDescarga]    Script Date: 20/05/2025 10:21:23 a. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <21/02/2023>
 -- Description:	<Actualizar estatus de procesamiento del archivo>
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <20/05/2025>
+-- Description:	<Retorno de la info de envio de correo>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ActualizarEstatusSolicitudDescarga]
 	-- Add the parameters for the stored procedure here
@@ -73,38 +86,12 @@ BEGIN
 	WHERE IdSolicitud = @IdSolicitud
 		AND IdContrato = @IdContrato;
 
-	SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion (NOLOCK));
-
-	--NOTIFICACION DE PROCESAMIENTO
-	INSERT INTO Adinco.dbo.S_Notificacion
-   (
-            IdNotificacion,
-            Para,
-            Asunto,
-            Mensaje,
-            FechaProgramadaEnvio,
-            Enviada,
-            FechaEnvio,
-            CreadoEl,
-            De,
-			CreadoPor
-    )
-	VALUES
-	(
-		(@IdNotificacion + 1),
-		@CORREO_USUARIO,
-		@ASUNTO,
-		@HTML,
-		DATEADD(MINUTE, 1, GETDATE()), 
-		0,
-		GETDATE(),
-		GETDATE(),
-		(SELECT CuentaRegistro FROM S_CorreoServidor WHERE IdCorreoServidor = 1),
-		1
-	);
-
 	SELECT 
-		Procesado
+		Procesado,
+		@CORREO_USUARIO AS Para,
+		@ASUNTO AS Asunto,
+		@HTML AS HTML,
+		1 AS CreadoPor
 	FROM [MM_SolicitudesDescargaProcesos] (NOLOCK)
 	WHERE IdSolicitud = @IdSolicitud
 		AND IdContrato = @IdContrato;
