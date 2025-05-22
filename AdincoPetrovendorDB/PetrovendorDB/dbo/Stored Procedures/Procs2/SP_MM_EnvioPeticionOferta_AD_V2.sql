@@ -21,6 +21,10 @@ GO
 -- Create date: <19-07-2023>
 -- Description:	aplicacion de optimizaciones y estandares de desarrollo issue:https://github.com/Adinco/petrovendor/issues/2379
 -- =============================================
+-- =============================================
+-- Author: Daniel AC
+-- Create date: <28/04/2025>
+-- Description:	<Se retorna lista de correos>
 CREATE PROCEDURE [dbo].[SP_MM_EnvioPeticionOferta_AD_V2] --44,20022,2205,420,'PRUEBA','2020-02-20 00:00:00.000',2,1,'PRUEBA','',1,0
 	-- Add the parameters for the stored procedure here
 	@IdProveedorInvitado INT,
@@ -48,7 +52,6 @@ BEGIN
 	DECLARE @IDPETICIONOFERTA INT;
 	DECLARE @CONTAD INT = 1;
 	DECLARE @CONTTOTALADMIN INT;
-	DECLARE @IdNotificacion BIGINT;
 	DECLARE @CONT INT = 1;
 	DECLARE @CONTCORREOSINVITADOS INT = 1;
 	DECLARE @TOTALCORREOSINVITADOS INT;
@@ -60,6 +63,15 @@ BEGIN
 	DECLARE @ASUNTOPROVEEDORESINV NVARCHAR(MAX);
 	DECLARE @ASUNTOCORREOSINV NVARCHAR(MAX);
 	DECLARE @NOMBREPROVEEDORACTUAL NVARCHAR(100);
+
+	CREATE TABLE #ListaCorreos
+	(
+		IdRow INT IDENTITY(1,1) PRIMARY KEY,
+		Destinatario NVARCHAR(MAX),
+		Asunto NVARCHAR(MAX),
+		CuerpoCorreo NVARCHAR(MAX),
+		CreadoPor INT
+	);
 
 	SELECT @IdProveedorActual = IdProveedor
     FROM dbo.MM_SolicitudPedido (NOLOCK)
@@ -94,56 +106,10 @@ BEGIN
 										ON C.IdServidor = S.IdServidor
 								WHERE IdCorreo = 18) --> CTE NUMERO CORREO (TA_Correo)
 		
-		SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion (NOLOCK)) + 1);
 
-		INSERT INTO Adinco.dbo.S_Notificacion
-			(
-			IdNotificacion,
-			Para,
-			Asunto,
-			Mensaje,
-			FechaProgramadaEnvio,
-			Enviada,
-			FechaEnvio,
-			CreadoPor,
-			CreadoEl,
-			ModificadoPor,
-			ModificadoEl,
-			De
-			)
-			VALUES
-			(
-				@IdNotificacion,
-				@CorreoInvitado,
-				'Invitación Cotización Petrovendor ',
-				@HTMLCORREOSINV,
-				DATEADD(MINUTE,1,GETDATE()),
-				0,
-				NULL,
-				3,
-				GETDATE(),
-				NULL,
-				NULL,
-				ISNULL(@CorreoNotificaciones,'')
-			);
-
-			INSERT INTO dbo.TA_EnvioCorreo
-			(
-				IdEnvioAdinco,
-				IdCorreo,
-				IdIdentificacion,
-				EnviadoPor,
-				EnviadoEl
-			)
-			VALUES
-			(   @IdNotificacion, -- IdEnvioAdinco - int
-				18, -- CORREO DE PETICION OFERTA
-				CONCAT('0 - Codigo de Invitacion Peticion oferta #' , @IdSolicitudPedido),  -- IdIdentificacion - int
-				@CreadoPor,
-				GETDATE()
-			);
-
-
+			INSERT INTO #ListaCorreos(Asunto, Destinatario, CuerpoCorreo, CreadoPor)
+			VALUES('Invitación Cotización Petrovendor ',@CorreoInvitado,@HTMLCORREOSINV,@CreadoPor)
+		
 			--BITACORA DE CORREO
 			INSERT INTO dbo.TA_BitacoraCorreo
 			(
@@ -325,7 +291,6 @@ BEGIN
 		WHILE @CONTAD <= @CONTTOTALADMIN
 		BEGIN
 
-		    SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion (NOLOCK)) + 1);
 			SET @CORREOADMIN = (SELECT Correo FROM #CORREOSADMINS WHERE IdRow = @CONTAD);
 			SET @HTMLPROVEEDORESINV = (SELECT HTML FROM dbo.TA_Correo (NOLOCK) WHERE IdCorreo = 11);
 			--ARMADO DEL HTML
@@ -342,55 +307,9 @@ BEGIN
 			SET @HTMLPROVEEDORESINV = (REPLACE(@HTMLPROVEEDORESINV,'##SOLICITUD_PEDIDO##',CAST(@IdSolicitudPedido AS NVARCHAR(100))));
 			--CORREO
 			
-
-			INSERT INTO Adinco.dbo.S_Notificacion
-			(
-			IdNotificacion,
-			Para,
-			Asunto,
-			Mensaje,
-			FechaProgramadaEnvio,
-			Enviada,
-			FechaEnvio,
-			CreadoPor,
-			CreadoEl,
-			ModificadoPor,
-			ModificadoEl,
-			De
-			)
-			VALUES
-			(
-				@IdNotificacion,
-				@CORREOADMIN,
-				CONCAT('Petición Oferta No.',ISNULL(@IDPETICIONOFERTA,0)),
-				@HTMLPROVEEDORESINV,
-				DATEADD(MINUTE,1,GETDATE()),
-				0,
-				NULL,
-				3,
-				GETDATE(),
-				NULL,
-				NULL,
-				ISNULL(@CorreoNotificaciones,'')
-			);
-
-			INSERT INTO dbo.TA_EnvioCorreo
-			(
-				IdEnvioAdinco,
-				IdCorreo,
-				IdIdentificacion,
-				EnviadoPor,
-				EnviadoEl
-			)
-			VALUES
-			(   @IdNotificacion, -- IdEnvioAdinco - int
-				11, -- CORREO DE PETICION OFERTA
-				CONCAT('0 - Nueva cotización #' , @IDPETICIONOFERTA),  -- IdIdentificacion - int
-				@CreadoPor,
-				GETDATE()
-			);
-
-
+			INSERT INTO #ListaCorreos(Asunto, Destinatario, CuerpoCorreo, CreadoPor)
+			VALUES(CONCAT('Petición Oferta No.',ISNULL(@IDPETICIONOFERTA,0)),@CORREOADMIN,@HTMLPROVEEDORESINV,@CreadoPor)
+		
 			--BITACORA DE CORREO
 			INSERT INTO dbo.TA_BitacoraCorreo
 			(
@@ -514,5 +433,6 @@ BEGIN
 		@IDTIPOINVITACION AS TipoInvitacion,
 		@IDINVITACION AS IdInvitacion
 
-
+	SELECT Asunto, Destinatario, CuerpoCorreo, CreadoPor
+	FROM #ListaCorreos
 END
