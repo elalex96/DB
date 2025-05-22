@@ -1,4 +1,4 @@
-﻿IF EXISTS
+IF EXISTS
     (
         SELECT
             1
@@ -304,7 +304,7 @@ BEGIN
                 ) AS DECIMAL(15, 2))
     FROM #TEMPORAL_24_M_SP
         JOIN FI_TransferFactura WITH (NOLOCK)
-            ON #TEMPORAL_24_M_SP.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante AND #TEMPORAL_24_M_SP.Nota = '' AND RC24_21 <> 'NA'
+            ON #TEMPORAL_24_M_SP.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante 
         JOIN FI_Transfer WITH (NOLOCK)
             ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
         JOIN dbo.FI_CFDIMetodoPago WITH (NOLOCK)
