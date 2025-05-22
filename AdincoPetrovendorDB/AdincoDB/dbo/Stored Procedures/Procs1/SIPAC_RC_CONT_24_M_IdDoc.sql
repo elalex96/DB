@@ -1,4 +1,15 @@
-﻿-- =============================================
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_24_M_IdDoc'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_24_M_IdDoc;
+GO
+-- =============================================
 -- Author: Manuel Cruz
 -- Create date: 07-04-17
 -- Description:  
