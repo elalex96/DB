@@ -1,8 +1,15 @@
-﻿
+use adinco
+go
+drop proc if exists Mobile_sp_AprobacionesPorUsuarioContador
+go
 -- =============================================
 -- Author:		DANIEL AC
 -- Create date: 30-06-2022
 -- Description:	Se agrega el filtro de tipo de pedidos 2,4,6 
+-- =============================================
+-- Author:		David de la cruz
+-- Create date: 5/27/2025
+-- Description:	se agregan mejoras de desarrollo sql para optimización
 -- =============================================
 CREATE PROCEDURE [dbo].[Mobile_sp_AprobacionesPorUsuarioContador] --Mobile_sp_AprobacionesPorUsuarioContador 10109 10
 @IdUsuario INT
@@ -47,8 +54,8 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 		)
 		SELECT 
 			up.IdProveedor FROM 
-						Petrovendor.dbo.s_usuario u 
-						JOIN Petrovendor.dbo.S_UsuarioProveedor AS up
+						Petrovendor.dbo.s_usuario u (NOLOCK)
+						JOIN Petrovendor.dbo.S_UsuarioProveedor AS up (NOLOCK)
 						ON u.IdUsuario = up.IdUsuario  
 		WHERE u.IdUsuarioADINCO = @IdUsuario
 
@@ -107,18 +114,18 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 				NULL AS 'NoVersion',
 				TF.IdFlujoTarea AS TipoFlujo, 
 				NULL AS IdPedido
-				FROM Petrovendor.dbo.TA_Operacion AS O 
-				INNER JOIN Petrovendor.dbo.TA_TipoOperacion AS OT 
+				FROM Petrovendor.dbo.TA_Operacion AS O (NOLOCK)
+				INNER JOIN Petrovendor.dbo.TA_TipoOperacion AS OT (NOLOCK)
 					ON O.IdTipoOperacion = OT.IdTipoOperacion
-				INNER JOIN Petrovendor.dbo.TA_Estatus AS E 
+				INNER JOIN Petrovendor.dbo.TA_Estatus AS E (NOLOCK)
 					ON O.IdEstatusOperacion = E.IdEstatus 
-				INNER JOIN Petrovendor.dbo.TA_TareaOperacion AS TTO 
+				INNER JOIN Petrovendor.dbo.TA_TareaOperacion AS TTO (NOLOCK)
 					ON O.IdOperacion = TTO.IdOperacion 
-				INNER JOIN Petrovendor.dbo.TA_Tarea AS T 
+				INNER JOIN Petrovendor.dbo.TA_Tarea AS T (NOLOCK)
 					ON TTO.IdTarea = T.IdTarea 
-				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP 
+				INNER JOIN Petrovendor.dbo.MM_SolicitudPedido AS SP (NOLOCK)
 					ON O.IdDocumento = SP.IdSolicitudPedido 
-				INNER JOIN Petrovendor.dbo.TA_FlujoTarea AS TF 
+				INNER JOIN Petrovendor.dbo.TA_FlujoTarea AS TF (NOLOCK)
 					ON O.IdFlujoTarea = TF.IdFlujoTarea 
 				WHERE T.IdAprobador = @IdUsuarioP
 				AND O.IdTipoOperacion = 2  --> CTE APROBACIÓN DE SOLICITUD DE PEDIDO
@@ -160,11 +167,11 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 		)
 		SELECT O.IdOperacion,
 			   t.NoSecuencia
-		FROM Petrovendor.dbo.TA_Operacion O
-			LEFT JOIN Petrovendor.dbo.MM_Pedido p
+		FROM Petrovendor.dbo.TA_Operacion O (NOLOCK)
+			LEFT JOIN Petrovendor.dbo.MM_Pedido p (NOLOCK)
 				ON O.IdDocumento = p.IdSolicitudPedido 
 				   AND O.NoVersion = p.Version 
-			INNER JOIN Petrovendor.dbo.TA_Tarea t
+			INNER JOIN Petrovendor.dbo.TA_Tarea t (NOLOCK)
 				ON O.IdOperacion = t.IdOperacion 
 		WHERE O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
 			  AND ISNULL(O.IdEstatusEliminado, 0) <> 1 -->APROBACIÓN NO ESTE ELIMINADO
@@ -177,10 +184,10 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			IdOperacion
 		)
 		SELECT O.IdOperacion
-		FROM Petrovendor.dbo.TA_Operacion O
+		FROM Petrovendor.dbo.TA_Operacion O (NOLOCK)
 			INNER JOIN @FlujoSerial f
 				ON O.IdOperacion = f.IdOperacion 
-			INNER JOIN Petrovendor.dbo.TA_Tarea T
+			INNER JOIN Petrovendor.dbo.TA_Tarea T (NOLOCK)
 				ON O.IdOperacion = T.IdOperacion 
 				   AND T.NoSecuencia = (f.NoSecuencia - 1)
 		WHERE O.IdTipoOperacion = 9 --> CTE APROBACIÓN DE PEDIDO
@@ -211,26 +218,26 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			P.Version AS 'NoVersion',
 			P2.IdPedido,
 			P2.IdPedido
-		FROM Petrovendor.dbo.TA_Operacion AS O
-			JOIN Petrovendor.dbo.MM_Pedido AS P 
+		FROM Petrovendor.dbo.TA_Operacion AS O (NOLOCK)
+			JOIN Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
 				ON O.IdDocumento = P.IdSolicitudPedido
-			JOIN    Petrovendor.dbo.MM_Pedidos P2 
+			JOIN    Petrovendor.dbo.MM_Pedidos P2 (NOLOCK)
 				ON P.IdPedido = P2.IdIdentificador
 				AND P.IdProveedorCompras = P2.IdProveedorCliente 
 				AND P2.IdTipoPedido IN (2,4,6) --> CTES TIPOS DE PEDIDO 				
-			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP 
+			LEFT JOIN Petrovendor.dbo.MM_SolicitudPedido SP (NOLOCK)
 				ON P.IdSolicitudPedido = SP.IdSolicitudPedido 
-			LEFT JOIN Petrovendor.dbo.TA_Estatus AS E 
+			LEFT JOIN Petrovendor.dbo.TA_Estatus AS E (NOLOCK)
 				ON O.IdEstatusOperacion = E.IdEstatus
-			LEFT JOIN Petrovendor.dbo.TA_Tarea AS T 
+			LEFT JOIN Petrovendor.dbo.TA_Tarea AS T (NOLOCK)
 				ON O.IdOperacion = T.IdOperacion
-			LEFT JOIN Petrovendor.dbo.S_Usuario U 
-				ON T.IdAprobador = U.IdUsuario
-			LEFT JOIN Petrovendor.dbo.S_UsuarioProveedor UP 
+			LEFT JOIN Petrovendor.dbo.S_Usuario U (NOLOCK)
+				ON T.IdAprobador = U.IdUsuario 
+			LEFT JOIN Petrovendor.dbo.S_UsuarioProveedor UP (NOLOCK)
 				ON U.IdUsuario = UP.IdUsuario
 				AND SP.IdContrato = UP.IdContrato
 				AND O.IdProveedor = UP.IdProveedor
-			LEFT JOIN Petrovendor.dbo.S_Proveedor prov 
+			LEFT JOIN Petrovendor.dbo.S_Proveedor prov (NOLOCK)
 				ON P.IdSubcontratista = prov.IdProveedor
 		WHERE T.IdAprobador = @IdUsuarioP
 			  AND O.IdProveedor = @IdProveedorCursorPedido
@@ -294,28 +301,28 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 			0 as NoVersion,			
 			O.IdFlujoTarea as TipoFlujo,
 			PG.IdPedido as IdPedido
-	FROM Petrovendor..S_Usuario  UA    
-		LEFT JOIN Petrovendor..TA_Tarea TA
+	FROM Petrovendor..S_Usuario  UA (NOLOCK)   
+		LEFT JOIN Petrovendor..TA_Tarea TA (NOLOCK)
 				ON UA.IdUsuario = TA.IdAprobador 
-		LEFT JOIN Petrovendor..TA_Operacion O
+		LEFT JOIN Petrovendor..TA_Operacion O (NOLOCK)
 				ON TA.IdOperacion = O.IdOperacion
-		LEFT JOIN Petrovendor..TA_Vencimiento vigencia
+		LEFT JOIN Petrovendor..TA_Vencimiento vigencia (NOLOCK)
 				ON O.IdVigencia = vigencia.IdVencimiento 
-		LEFT JOIN Petrovendor..MM_Pedidos PG
+		LEFT JOIN Petrovendor..MM_Pedidos PG (NOLOCK)
 				ON O.IdDocumento = PG.IdIdentificador 
 			   AND O.IdProveedor = PG.IdProveedorCliente
 			   AND PG.IdTipoPedido = 1 --> CTE  TIPO DE PEDIDO COMPRA DIRECTA
-		LEFT JOIN Petrovendor..FI_Factura fac
+		LEFT JOIN Petrovendor..FI_Factura fac (NOLOCK)
 				ON O.IdDocumento = fac.IdFactura       
-		LEFT JOIN Petrovendor..CO_Registro reg
+		LEFT JOIN Petrovendor..CO_Registro reg (NOLOCK)
 				ON fac.IdFactura = reg.IdFactura 
-		LEFT JOIN Adinco.dbo.CO_Instalacion instalacion
+		LEFT JOIN Adinco.dbo.CO_Instalacion instalacion (NOLOCK)
 				ON reg.IdInstalacion = instalacion.IdInstalacion 
-		LEFT JOIN Petrovendor..S_UsuarioProveedor UP
+		LEFT JOIN Petrovendor..S_UsuarioProveedor UP (NOLOCK)
 				ON UA.IdUsuario = UP.IdUsuario 
-		LEFT JOIN Adinco.dbo.CO_Contrato AS C
+		LEFT JOIN Adinco.dbo.CO_Contrato AS C (NOLOCK)
 			ON fac.IdContrato = C.IdContrato    
-		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
+		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC (NOLOCK)
 			ON C.IdAreaContractual = AC.IdAreaContractual
 	WHERE O.IdEstatusOperacion = 1 --> CTE ESTATUS EN APROBACIÓN
 		AND O.IdTipoOperacion = 14 --> CTE APROBACIÓN DE COMPRA DIRECTA 
@@ -356,21 +363,21 @@ SET @IdUsuarioP = (SELECT IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuar
 ---------------- SE INSERTAN LOS IdOperacion de todos los contratos
 ------------------------------------------------------------------------------------
 			INSERT INTO #IdOperaciones (IdOperacion)SELECT
-					OP.IdOperacion as TipoFlujo
-				FROM Petrovendor..FI_AceptacionPedido_PedimentoComprobante AS APC
-					JOIN Petrovendor..TA_Operacion AS OP
+					OP.IdOperacion as TipoFlujo 
+				FROM Petrovendor..FI_AceptacionPedido_PedimentoComprobante AS APC (Nolock)
+					JOIN Petrovendor..TA_Operacion AS OP 
 						ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento 
 						AND OP.IdTipoOperacion = 19 --> CTE DE COMPROBANTES/PEDIMENTOS DIRECTOS
 						AND APC.IdProveedor = OP.IdProveedor 
-					JOIN Petrovendor..FI_PedimentoComprobante AS PC
+					JOIN Petrovendor..FI_PedimentoComprobante AS PC (Nolock)
 						ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante 
-					JOIN Petrovendor..S_Usuario AS US
+					JOIN Petrovendor..S_Usuario AS US (Nolock)
 						ON APC.CreadoPor = US.IdUsuario 
-					JOIN Adinco.dbo.PV_Subcontratista AS PVS
+					JOIN Adinco.dbo.PV_Subcontratista AS PVS (Nolock)
 						ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista 
-					JOIN Adinco.dbo.PV_TipoMoneda AS TM
+					JOIN Adinco.dbo.PV_TipoMoneda AS TM (Nolock)
 						ON PC.IdMoneda = TM.IdMoneda 
-					JOIN Petrovendor..TA_Estatus AS ET
+					JOIN Petrovendor..TA_Estatus AS ET (Nolock)
 						ON OP.IdEstatusOperacion = ET.IdEstatus
 					LEFT JOIN Petrovendor.dbo.TA_Tarea AS T ON OP.IdOperacion = T.IdOperacion 
 				WHERE 
@@ -404,8 +411,8 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 		BEGIN
 		 set @TIPOFLUJO = (SELECT  
          FT.IdTipoFlujo  
-        FROM Petrovendor..TA_Operacion AS OP  
-        JOIN Petrovendor..TA_FlujoTarea AS FT   
+        FROM Petrovendor..TA_Operacion AS OP (Nolock)
+        JOIN Petrovendor..TA_FlujoTarea AS FT  (Nolock)
          ON OP.IdFlujoTarea  =FT.IdFlujoTarea 
         WHERE OP.IdOperacion = @IdOperacionCursor); 
 		
@@ -413,7 +420,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 		BEGIN
 			SET @SIGAPROBADOR = (SELECT TOP 1  
 			TA.IdAprobador  
-			 FROM Petrovendor..TA_Tarea AS TA  
+			 FROM Petrovendor..TA_Tarea AS TA (Nolock)  
 			 WHERE TA.IdOperacion = @IdOperacionCursor  
 			  AND TA.IdEstatus <> 7  --> CTE DIFERENTE DE Cancelado por Reasignacion
 			  AND TA.Activo = 1  -->CTE ACTIVO
@@ -424,7 +431,7 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 		BEGIN 
 			SET @SIGAPROBADOR = (SELECT TOP 1  
 			  TA.IdAprobador  
-			 FROM Petrovendor..TA_Tarea AS TA  
+			 FROM Petrovendor..TA_Tarea AS TA (Nolock)
 			 WHERE TA.IdOperacion = @IdOperacionCursor  
 			  AND TA.IdEstatus <> 7  --> CTE DIFERENTE DE Cancelado por Reasignacion
 			  AND TA.Activo = 1   -->CTE ACTIVO
@@ -456,27 +463,29 @@ DECLARE @IdOperacionCursor AS nvarchar(400) --Sustituirá al IdOperacion en el c
 					PC.IdContrato as IdContrato,
 					APC.CreadoEl as FechaCreacion,
 					PC.IdPedimentoComprobante as IdDocumento,
-					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' |  Proveedor:', APC.IdProveedor) as ComentarioDocumento,
+					CONCAT('Exportador: ',PVS.RazonSocial,' | ','Folio Comprobante: ',PC.FolioComprobante,' | ','Fecha de Pago: ' ,PC.FechaPago ,' | ','Moneda: ',TM.TipoMonedaCorto collate Modern_Spanish_CI_AS,' | ', 'Número de Factura: ',PC.NumFacturaC,' |  Proveedor:'
+, APC.IdProveedor) as ComentarioDocumento,
 					CONCAT('Cargado Por: ', US.Nombre, 'Flujo tipo' ,@TIPOFLUJO) as ComentarioAprobacion,
 					0 as NoVersion,
 					OP.IdOperacion as TipoFlujo,
 					PC.IdPedimentoComprobante as IdPedido
-				FROM Petrovendor..FI_AceptacionPedido_PedimentoComprobante AS APC
-					JOIN Petrovendor..TA_Operacion AS OP
+				FROM Petrovendor..FI_AceptacionPedido_PedimentoComprobante AS APC (Nolock)
+					JOIN Petrovendor..TA_Operacion AS OP (Nolock)
 						ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento 
 						AND OP.IdTipoOperacion = 19
 						AND APC.IdProveedor = OP.IdProveedor 
-					JOIN Petrovendor..FI_PedimentoComprobante AS PC
+					JOIN Petrovendor..FI_PedimentoComprobante AS PC (Nolock)
 						ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante 
-					JOIN Petrovendor..S_Usuario AS US
+					JOIN Petrovendor..S_Usuario AS US (Nolock)
 						ON APC.CreadoPor = US.IdUsuario 
-					JOIN Adinco.dbo.PV_Subcontratista AS PVS
+					JOIN Adinco.dbo.PV_Subcontratista AS PVS (Nolock)
 						ON PC.IdSubcontratistaExportador = PVS.IdSubcontratista 
-					JOIN Adinco.dbo.PV_TipoMoneda AS TM
+					JOIN Adinco.dbo.PV_TipoMoneda AS TM (Nolock)
 						ON PC.IdMoneda = TM.IdMoneda 
-					JOIN Petrovendor..TA_Estatus AS ET
+					JOIN Petrovendor..TA_Estatus AS ET (Nolock)
 						ON OP.IdEstatusOperacion = ET.IdEstatus
-					LEFT JOIN Petrovendor.dbo.TA_Tarea AS T ON OP.IdOperacion = T.IdOperacion 
+					LEFT JOIN Petrovendor.dbo.TA_Tarea AS T (Nolock)
+						ON OP.IdOperacion = T.IdOperacion 
 				WHERE 
 					OP.IdOperacion = @IdOperacionCursor
 					AND 
@@ -524,14 +533,14 @@ SELECT
 		t.IdDocumento AS 'IdDocumento',
 		t.TipoFlujo
 		INTO #DATOSAPROBACIONES
-FROM #TM_Aprobacion AS t
-		left JOIN dbo.AM_StatusAprobacionM AS e
+FROM #TM_Aprobacion AS t (Nolock)
+		left JOIN dbo.AM_StatusAprobacionM AS e (Nolock)
 			ON t.IdStatusAprobacionM = e.IdStatusAprobacionM 
-		left JOIN Petrovendor..TA_TipoOperacion AS ta 
+		left JOIN Petrovendor..TA_TipoOperacion AS ta (Nolock)
 			ON t.IdTipoAprobacion = ta.IdTipoOperacion 
-		left JOIN dbo.CO_CONTRATO as c
+		left JOIN dbo.CO_CONTRATO as c (Nolock)
 			ON t.IdContrato = c.IdContrato
-		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC
+		LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC (Nolock)
 		ON C.IdAreaContractual = AC.IdAreaContractual	
 		GROUP BY 
 		t.IdContrato,
