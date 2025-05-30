@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
@@ -190,7 +189,8 @@ BEGIN
         UUID_RC23_02 VARCHAR(2000),  
         UUID_Relacionado_C23_03 VARCHAR(2000),  
         TipoRelacion_RC23_04 VARCHAR(2000),  
-        NumParcialidad_RC23_05 INT  
+        NumParcialidad_RC23_05 INT,
+		Nota VARCHAR(2000)
     );  
   
     --________________________________________  
@@ -425,7 +425,8 @@ BEGIN
         UUID_RC23_02,  
         UUID_Relacionado_C23_03,  
         TipoRelacion_RC23_04,  
-        NumParcialidad_RC23_05  
+        NumParcialidad_RC23_05,
+		Nota
     )  
     EXEC dbo.SIPAC_RC_CONT_23_M @Contrato, @Mes, @IdPresupuesto, @Plantilla;  
   
@@ -1181,6 +1182,18 @@ END;
                 JOIN #TEMPORAL_26_M T26  
                     ON T26C.TimbreHASH = T26.TimbreHASH_PDF_RC26_06
           GROUP BY T26.TimbreHASH_PDF_RC26_06 
+
+		  --15_____________________________ Validacion de contrato, presupuesto y tarea en notas de credito CFDI ______________________________________--
+
+		  -------------RC_CONT_23_M------  
+			INSERT INTO #TablaDeValidaciones (Validaciones)
+            SELECT 'Verificar en Hoja RC_CONT_23_M se encuentra el siguiente detalle en Renglón: '  
+                           + CONVERT(VARCHAR(2000), T23.Id_23_M) + '('+T23.Nota+').'  
+                    AS [Validaciones]
+            FROM #TEMPORAL_23_M T23  
+            WHERE T23.Nota <> ''  
+            ORDER BY T23.Id_23_M ASC  
+
 		  --15_____________________________ Validacion de contrato, presupuesto y tarea en notas de credito PE y PI ______________________________________--  
 		
             -------------RC_CONT_24_M------  

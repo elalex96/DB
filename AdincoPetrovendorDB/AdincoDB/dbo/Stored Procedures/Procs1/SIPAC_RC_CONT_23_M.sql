@@ -108,6 +108,19 @@ AS
   
         /**/  
   
+		;WITH CTE_DatosRelacionados AS (
+			SELECT
+				FRel.UUID AS UUIDRelacionado,
+				CRel.IdContrato AS IdContratoRelacionado,
+				LPRel.IdPresupuesto AS IdPresupuestoRelacionado,
+				LPRel.IdServicio AS IdServicioRelacionado
+			FROM FI_Factura FRel
+			JOIN CO_Registro CRRel ON CRRel.IdFactura = FRel.IdFactura
+			JOIN CO_LineaPresupuestoMes LPRel ON CRRel.IdPrograma = LPRel.IdLineaPresupuestoMes
+			JOIN CO_Presupuesto PRel ON LPRel.IdPresupuesto = PRel.IdPresupuesto
+			JOIN CO_AnioContractual ARRel ON PRel.IdAnioContractual = ARRel.IdAnioContractual
+			JOIN CO_Contrato CRel ON ARRel.IdContrato = CRel.IdContrato
+		)
         SELECT  
             CASE  
                 WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN  
@@ -122,13 +135,26 @@ AS
             FI_Factura.UUID                              AS [RC23_02],  
             FI_CFDIRelacionados.UUID                     AS [RC23_03],  
             FI_CFDIRelacionados.TipoRelacion             AS [RC23_04],  
-            ISNULL(FI_CFDIRelacionados.NoParcialidad, 0) AS [RC23_05]  
+            ISNULL(FI_CFDIRelacionados.NoParcialidad, 0) AS [RC23_05],
+			CASE
+				WHEN Rel.IdContratoRelacionado IS NULL THEN ''
+				WHEN Rel.IdContratoRelacionado = CO_Contrato.IdContrato
+				 AND Rel.IdPresupuestoRelacionado = CO_LineaPresupuestoMes.IdPresupuesto
+				 AND Rel.IdServicioRelacionado = CO_LineaPresupuestoMes.IdServicio
+				THEN ''
+				ELSE '| Se detectó una discrepancia entre los datos de la nota de crédito (Contrato: ' + LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)) +
+					 ', Presupuesto: ' + CAST(CO_LineaPresupuestoMes.IdPresupuesto AS VARCHAR(50)) +
+					 ', Tarea: ' + CAST(CO_LineaPresupuestoMes.IdServicio AS VARCHAR(50)) +
+					 ') y los del documento relacionado (Contrato: ' + CAST(Rel.IdContratoRelacionado AS VARCHAR(50)) +
+					 ', Presupuesto: ' + CAST(Rel.IdPresupuestoRelacionado AS VARCHAR(50)) +
+					 ', Tarea: ' + CAST(Rel.IdServicioRelacionado AS VARCHAR(50)) + ').'
+    END AS Nota
         FROM  
             dbo.FI_Transfer WITH (NOLOCK)  
             JOIN  
                 dbo.FI_TransferFactura WITH (NOLOCK)  
                     ON FI_Transfer.IdContrato = @Contrato 
-                       AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
+					   AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
             JOIN  
                 dbo.FI_Factura WITH (NOLOCK)  
                     ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura  
@@ -160,6 +186,8 @@ AS
                 dbo.CO_Servicio WITH (NOLOCK)  
                     ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio  
                        AND CO_Servicio.IdContrato = CO_Contrato.IdContrato  
+			LEFT JOIN CTE_DatosRelacionados Rel
+					ON Rel.UUIDRelacionado = FI_CFDIRelacionados.UUID
         WHERE  
             CO_Contrato.IdContrato = @Contrato  
             AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes  
@@ -208,7 +236,10 @@ AS
             CO_Contrato.NumeroContrato,  
             FI_Factura.UUID,  
             FI_CFDIRelacionados.UUID,  
-            FI_CFDIRelacionados.TipoRelacion  
+            FI_CFDIRelacionados.TipoRelacion,
+			Rel.IdContratoRelacionado,
+			Rel.IdPresupuestoRelacionado,
+			Rel.IdServicioRelacionado
         --  
         UNION  
         --  
@@ -237,13 +268,26 @@ AS
                        ELSE  
                            0  
                    END  
-               )                                        AS [RC23_05]  
+               )                                        AS [RC23_05],
+			CASE
+				WHEN Rel.IdContratoRelacionado IS NULL THEN ''
+				WHEN Rel.IdContratoRelacionado = CO_Contrato.IdContrato
+				 AND Rel.IdPresupuestoRelacionado = CO_LineaPresupuestoMes.IdPresupuesto
+				 AND Rel.IdServicioRelacionado = CO_LineaPresupuestoMes.IdServicio
+				THEN ''
+				ELSE '| Se detectó una discrepancia entre los datos del complemento de pago (Contrato: ' + LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario)) +
+					 ', Presupuesto: ' + CAST(CO_LineaPresupuestoMes.IdPresupuesto AS VARCHAR(50)) +
+					 ', Tarea: ' + CAST(CO_LineaPresupuestoMes.IdServicio AS VARCHAR(50)) +
+					 ') y los del documento relacionado (Contrato: ' + CAST(Rel.IdContratoRelacionado AS VARCHAR(50)) +
+					 ', Presupuesto: ' + CAST(Rel.IdPresupuestoRelacionado AS VARCHAR(50)) +
+					 ', Tarea: ' + CAST(Rel.IdServicioRelacionado AS VARCHAR(50)) + ').'
+			END AS Nota
         FROM  
             dbo.FI_Transfer WITH (NOLOCK)  
             JOIN  
                 dbo.FI_TransferFactura WITH (NOLOCK)  
-                    ON FI_Transfer.IdContrato = @Contrato 
-                       AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
+                    ON FI_Transfer.IdContrato = @Contrato
+					   AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
             JOIN  
                 dbo.FI_ComplementoDePago WITH (NOLOCK)  
                     ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura  
@@ -280,7 +324,8 @@ AS
             LEFT JOIN  
                 dbo.CO_Servicio WITH (NOLOCK)  
                     ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio  
-                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato  
+                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato 
+			LEFT JOIN CTE_DatosRelacionados Rel ON Rel.UUIDRelacionado = FCPDR.UUID
         WHERE  
             CO_Contrato.IdContrato = @Contrato  
             AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes  
