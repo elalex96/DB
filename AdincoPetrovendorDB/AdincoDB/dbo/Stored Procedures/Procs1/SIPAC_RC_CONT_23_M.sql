@@ -1,4 +1,15 @@
-﻿-- =============================================  
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_23_M'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_23_M;
+GO
+-- =============================================  
 -- Author:Yazmin Glez.  
 -- Create date:2017-11-28  
 -- Description:Reporte de CGI - Registro de CFDIs Relacionados_CONT_23_M  
@@ -27,7 +38,7 @@ CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_23_M]
     @IdPresupuesto INT          = 0,  
     @Plantilla     VARCHAR(150) = ''  
 AS  
-    BEGIN  
+BEGIN  
         SET NOCOUNT ON;  
 		
 		DECLARE @Aprobado INT = 10004,
@@ -39,6 +50,32 @@ AS
   
         /*Omitir facturas en la hoja 21*/  
   
+		IF OBJECT_ID('tempdb..#TEMPORAL_23_SP') IS NOT NULL
+		DROP TABLE #TEMPORAL_23_SP;
+
+		CREATE TABLE #TEMPORAL_23_SP (
+			RF_00 VARCHAR(100),
+			RI_00 VARCHAR(100),
+			RF01_01 VARCHAR(100),
+			RC23_00 INT,
+			RC23_01 INT,
+			RC23_02 VARCHAR(36),
+			RC23_03 VARCHAR(36),
+			RC23_04 VARCHAR(10),
+			RC23_05 INT,
+			Nota VARCHAR(4000),
+
+			-- Datos de la nota de credito (RC23_02)
+			Contrato_NC NVARCHAR(100),
+			Presupuesto_NC VARCHAR(1000),
+			Tarea_NC VARCHAR(1000),
+
+			-- Datos del documento relacionado (RC23_03)
+			Contrato_Relacionado NVARCHAR(100),
+			Presupuesto_Relacionado VARCHAR(1000),
+			Tarea_Relacionado VARCHAR(1000)
+		);
+
         CREATE TABLE #uuidNoReportar (UUID VARCHAR(2000));  
         IF (@Mes = '20190801')  
             BEGIN  
@@ -107,14 +144,19 @@ AS
             END;  
   
         /**/  
-  
-        SELECT  
+  		INSERT INTO #TEMPORAL_23_SP (
+			RF_00, RI_00, RF01_01, RC23_00, RC23_01,
+			RC23_02, RC23_03, RC23_04, RC23_05, 
+			Contrato_NC, Presupuesto_NC, Tarea_NC,
+			Contrato_Relacionado, Presupuesto_Relacionado, Tarea_Relacionado
+		)
+        SELECT 
             CASE  
                 WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN  
 					LTRIM(RTRIM(CO_Contrato.IDSIPAC))  
                 ELSE  
                     LTRIM(RTRIM(CO_Contratista.IDSIPAC))  
-            END                  AS [RF_00],  
+            END											 AS [RF_00],  
             LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))  AS [RI_00],  
             CO_Contrato.NumeroContrato                   AS [RF01_01],  
             MONTH(CO_Registro.MesPresentacion)           AS [RC23_00],  
@@ -122,13 +164,15 @@ AS
             FI_Factura.UUID                              AS [RC23_02],  
             FI_CFDIRelacionados.UUID                     AS [RC23_03],  
             FI_CFDIRelacionados.TipoRelacion             AS [RC23_04],  
-            ISNULL(FI_CFDIRelacionados.NoParcialidad, 0) AS [RC23_05]  
+            ISNULL(FI_CFDIRelacionados.NoParcialidad, 0) AS [RC23_05],
+			CO_Contrato.NumeroContrato, CO_Presupuesto.Nombre, TP.id_Tarea,
+			contratoRelacionado.NumeroContrato, presupuestoRelacionado.Nombre, tareaRelacionada.id_Tarea 
         FROM  
             dbo.FI_Transfer WITH (NOLOCK)  
             JOIN  
                 dbo.FI_TransferFactura WITH (NOLOCK)  
                     ON FI_Transfer.IdContrato = @Contrato 
-                       AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
+					   AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
             JOIN  
                 dbo.FI_Factura WITH (NOLOCK)  
                     ON FI_TransferFactura.IdFactura = FI_Factura.IdFactura  
@@ -159,7 +203,21 @@ AS
             LEFT JOIN  
                 dbo.CO_Servicio WITH (NOLOCK)  
                     ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio  
-                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato  
+                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato
+			LEFT JOIN dbo.CO_TareaPetrolera TP WITH (NOLOCK)
+				ON CO_LineaPresupuestoMes.IdTareaPetrolera = TP.IdTareaPetrolera
+			LEFT JOIN FI_Factura FacturaRelacionada	WITH (NOLOCK)
+				ON FI_CFDIRelacionados.UUID = FacturaRelacionada.UUID
+			LEFT JOIN CO_Registro registroRelacionado WITH (NOLOCK)
+				ON FacturaRelacionada.IdFactura = registroRelacionado.IdFactura
+			LEFT JOIN CO_LineaPresupuestoMes lineaRelacionado WITH (NOLOCK)
+				ON registroRelacionado.IdPrograma = lineaRelacionado.IdLineaPresupuestoMes
+			LEFT JOIN dbo.CO_TareaPetrolera tareaRelacionada WITH (NOLOCK)
+				ON lineaRelacionado.IdTareaPetrolera = tareaRelacionada.IdTareaPetrolera
+			LEFT JOIN CO_Presupuesto presupuestoRelacionado WITH (NOLOCK)
+				ON 	lineaRelacionado.IdPresupuesto = presupuestoRelacionado.IdPresupuesto
+			LEFT JOIN Co_Contrato contratoRelacionado
+				ON FacturaRelacionada.IdContrato = contratoRelacionado.IdContrato
         WHERE  
             CO_Contrato.IdContrato = @Contrato  
             AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes  
@@ -208,11 +266,13 @@ AS
             CO_Contrato.NumeroContrato,  
             FI_Factura.UUID,  
             FI_CFDIRelacionados.UUID,  
-            FI_CFDIRelacionados.TipoRelacion  
+            FI_CFDIRelacionados.TipoRelacion,
+			CO_Contrato.NumeroContrato, CO_Presupuesto.Nombre, TP.id_Tarea,
+			contratoRelacionado.NumeroContrato, presupuestoRelacionado.Nombre, tareaRelacionada.id_Tarea
         --  
         UNION  
         --  
-        SELECT  
+        SELECT
             CASE  
                 WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN  
                     LTRIM(RTRIM(CO_Contrato.IDSIPAC))  
@@ -237,13 +297,15 @@ AS
                        ELSE  
                            0  
                    END  
-               )                                        AS [RC23_05]  
+               )                                        AS [RC23_05],
+			CO_Contrato.NumeroContrato, CO_Presupuesto.Nombre, TP.id_Tarea,
+			contratoRelacionado.NumeroContrato, presupuestoRelacionado.Nombre, tareaRelacionada.id_Tarea 
         FROM  
             dbo.FI_Transfer WITH (NOLOCK)  
             JOIN  
                 dbo.FI_TransferFactura WITH (NOLOCK)  
-                    ON FI_Transfer.IdContrato = @Contrato 
-                       AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
+                    ON FI_Transfer.IdContrato = @Contrato
+					   AND FI_Transfer.IdTransferencia = FI_TransferFactura.IdTransfer  
             JOIN  
                 dbo.FI_ComplementoDePago WITH (NOLOCK)  
                     ON FI_TransferFactura.IdFactura = FI_ComplementoDePago.IdFactura  
@@ -280,7 +342,27 @@ AS
             LEFT JOIN  
                 dbo.CO_Servicio WITH (NOLOCK)  
                     ON CO_Servicio.IdServicio = CO_LineaPresupuestoMes.IdServicio  
-                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato  
+                       AND CO_Servicio.IdContrato = CO_Contrato.IdContrato
+			LEFT JOIN dbo.CO_TareaPetrolera TP WITH (NOLOCK)
+				ON CO_LineaPresupuestoMes.IdTareaPetrolera = TP.IdTareaPetrolera
+			LEFT JOIN dbo.FI_Factura F_Rel ON
+				(
+					(FCP.TipoComprobante <> 'P' AND F_Rel.UUID = FI_CPDocRelacionado.IdDocumento)
+					OR
+					(FCP.TipoComprobante = 'P' AND F_Rel.UUID = FCP.UUID)
+				)
+			LEFT JOIN FI_Factura FacturaRelacionada	WITH (NOLOCK)
+				ON F_Rel.UUID = FacturaRelacionada.UUID
+			LEFT JOIN CO_Registro registroRelacionado WITH (NOLOCK)
+				ON FacturaRelacionada.IdFactura = registroRelacionado.IdFactura
+			LEFT JOIN CO_LineaPresupuestoMes lineaRelacionado WITH (NOLOCK)
+				ON registroRelacionado.IdPrograma = lineaRelacionado.IdLineaPresupuestoMes
+			LEFT JOIN dbo.CO_TareaPetrolera tareaRelacionada WITH (NOLOCK)
+				ON lineaRelacionado.IdTareaPetrolera = tareaRelacionada.IdTareaPetrolera
+			LEFT JOIN CO_Presupuesto presupuestoRelacionado WITH (NOLOCK)
+				ON 	lineaRelacionado.IdPresupuesto = presupuestoRelacionado.IdPresupuesto
+			LEFT JOIN Co_Contrato contratoRelacionado
+				ON FacturaRelacionada.IdContrato = contratoRelacionado.IdContrato
         WHERE  
             CO_Contrato.IdContrato = @Contrato  
             AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes  
@@ -325,5 +407,44 @@ AS
                     FCP.UUID  
             END,  
             CO_Contrato.NumeroContrato,  
-            FCP.UUID;  
-    END;  
+            FCP.UUID,
+			CO_Contrato.NumeroContrato, CO_Presupuesto.Nombre, TP.id_Tarea,
+			contratoRelacionado.NumeroContrato, presupuestoRelacionado.Nombre, tareaRelacionada.id_Tarea
+			
+
+			UPDATE TMP
+			SET TMP.Nota = LEFT(
+				ISNULL(TMP.Nota, '') +
+				CASE 
+					WHEN 
+						(TMP.Contrato_NC IS NOT NULL AND TMP.Contrato_Relacionado IS NOT NULL AND TMP.Contrato_NC <> TMP.Contrato_Relacionado)
+						OR (TMP.Presupuesto_NC IS NOT NULL AND TMP.Presupuesto_Relacionado IS NOT NULL AND TMP.Presupuesto_NC <> TMP.Presupuesto_Relacionado)
+						OR (TMP.Tarea_NC IS NOT NULL AND TMP.Tarea_Relacionado IS NOT NULL AND TMP.Tarea_NC <> TMP.Tarea_Relacionado)
+					THEN 
+						' Se detectó una discrepancia entre los datos de la nota de crédito ' + 
+						'(Contrato: ' + ISNULL(TMP.Contrato_NC, '') +
+						', Presupuesto: ' + ISNULL(TMP.Presupuesto_NC, '') + 
+						', Tarea: ' + ISNULL(TMP.Tarea_NC, '') + 
+						') y los del documento relacionado ' + 
+						'(Contrato: ' + ISNULL(TMP.Contrato_Relacionado, '') + 
+						', Presupuesto: ' + ISNULL(TMP.Presupuesto_Relacionado, '') + 
+						', Tarea: ' + ISNULL(TMP.Tarea_Relacionado, '') + ').'
+					ELSE ''
+				END, 
+			4000)
+			FROM #TEMPORAL_23_SP TMP;
+
+			SELECT	RF_00,
+					RI_00,
+					RF01_01,
+					RC23_00,
+					RC23_01,
+					RC23_02,
+					RC23_03,
+					RC23_04,
+					RC23_05,
+					Nota
+			FROM #TEMPORAL_23_SP
+
+    END; 
+		
