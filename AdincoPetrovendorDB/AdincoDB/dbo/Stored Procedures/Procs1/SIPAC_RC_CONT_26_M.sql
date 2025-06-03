@@ -1,5 +1,13 @@
-﻿IF OBJECT_ID('[dbo].[SIPAC_RC_CONT_26_M]', 'P') IS NOT NULL
-    DROP PROCEDURE [dbo].SIPAC_RC_CONT_26_M
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_26_M'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_26_M;
 GO
 -- =============================================    
 -- Author: Yazmin Glez.    
@@ -883,7 +891,6 @@ BEGIN
           AND CO_Registro.IdEstado = @Aprobado
           AND ISNULL(CONVERT(INT, FI_Transfer.ProcesadoSIPAC), 0) = 0
           AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
-          AND ISNULL(FI_PedimentoComprobante.EsnotaCredito, 0) <> 1
           AND CO_Presupuesto.IdPresupuesto = CASE
                                                  WHEN @IdPresupuesto = 0 THEN
                                                      CO_LineaPresupuestoMes.IdPresupuesto

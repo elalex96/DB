@@ -1787,14 +1787,22 @@ CASE
 												THEN 1
 											END
 								END                                        AS [RC21_21],  
-                                SUM(   CASE  
+                                 CASE WHEN ISNULL(PC.EsNotaCredito, 0) = 0 THEN SUM(   CASE  
                                            WHEN ISNULL(MP.MontoRegistro, 0) <> 0  
                                                THEN MP.RC2122  
                                            ELSE  
                                                0  
                                        END  
-                                   )                                       AS [RC21_22],  
-                                0                                          AS [RC21_23],  
+                                   )                  
+								   ELSE 0 END AS [RC21_22],  
+                                 CASE WHEN ISNULL(PC.EsNotaCredito, 0) = 1 THEN SUM(   CASE  
+                                           WHEN ISNULL(MP.MontoRegistro, 0) <> 0  
+                                               THEN MP.RC2122  
+                                           ELSE  
+                                               0  
+                                       END  
+                                   )                  
+								   ELSE 0 END AS [RC21_23],  
                                 TM.TipoMonedaCorto                         AS [RC21_24],  
                                 CAST(ISNULL(MP.TCD, 0) AS DECIMAL(15, 4))   AS [RC21_25],  
                                 CASE  
@@ -1894,8 +1902,7 @@ CASE
                                                                             @TipoPedimentoImportacion, @TipoComprobanteExtranjero   
                                                                         )  
                                 AND ISNULL(CONVERT(INT, PC.ProcesadoSIPAC), 0) = 0  
-                                AND S.NombreServicio NOT LIKE '%No elegibles%'  
-                                AND ISNULL(PC.EsnotaCredito, 0) <> 1  
+                                AND S.NombreServicio NOT LIKE '%No elegibles%'
                                 AND P.IdPresupuesto = CASE  
                                                           WHEN @IdPresupuesto = 0  
                                                               THEN LPM.IdPresupuesto  
@@ -2008,7 +2015,8 @@ CASE
                                         THEN	0
                                     ELSE  
                                          ISNULL(CO_Registro.AsociadoIncrementoPMT, 0)    
-                                END;  
+                                END,
+								PC.EsnotaCredito;  
             END;  
   
         SELECT  
