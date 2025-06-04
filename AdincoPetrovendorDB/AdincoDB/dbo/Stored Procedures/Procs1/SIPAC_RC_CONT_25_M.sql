@@ -53,8 +53,23 @@ BEGIN
     DECLARE @Aprobado INT = 10004,
             @TipoComprobanteExtranjero INT = 3
 
+	 CREATE TABLE #ComprobantesRelacionados
+    (       
+		 Id_25_M INT,
+		 IdComprobante INT,
+		 IdRelacionado INT,
+         [RI_00]   VARCHAR(100),  
+		 [RC21_00] VARCHAR(100),  
+		 [RC21_12] VARCHAR(100),
+		 [RI_00_Relacionado]   VARCHAR(100),  
+		 [RC21_00_Relacionado] VARCHAR(100),  
+		 [RC21_12_Relacionado] VARCHAR(100)
+    );
+
     CREATE TABLE #TEMPORAL_25_M_SP
     (
+	    Id_25_M INT IDENTITY(11, 1),
+		IdComprobante INT,
         IdContratista_RF_00 VARCHAR(2000),
         IdContrato_RI_00 VARCHAR(2000),
         NumeroContrato_RF01_01 VARCHAR(2000),
@@ -76,9 +91,13 @@ BEGIN
         ValMontFact_RC25_15 MONEY,
         ValDolares_RC25_16 MONEY NULL,
         ClasDocSoporte_RC25_17 INT,
+		IdRelacionado INT,
+		RC25_18 VARCHAR(2000),
+		RC25_19 VARCHAR(2000),
         IdPedimentoComprobante INT,
         ConTransferencia BIT,
-        IdMoneda INT
+        IdMoneda INT,
+		Nota VARCHAR(2000)
     );
 
     CREATE TABLE #TransferenciasMaximas
@@ -93,6 +112,7 @@ BEGIN
 
     INSERT INTO #TEMPORAL_25_M_SP
     (
+	    IdComprobante,
         IdContratista_RF_00,
         IdContrato_RI_00,
         NumeroContrato_RF01_01,
@@ -112,11 +132,16 @@ BEGIN
         ValMontFact_RC25_15,
         ValDolares_RC25_16,
         ClasDocSoporte_RC25_17,
+		IdRelacionado,
+		RC25_18,
+		RC25_19,
         IdPedimentoComprobante,
         ConTransferencia,
-        IdMoneda
+        IdMoneda,
+		Nota
     )
-    SELECT CASE
+    SELECT FI_PedimentoComprobante.IdPedimentoComprobante,
+		  CASE
                WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
                    LTRIM(RTRIM(CO_Contrato.IDSIPAC))
                ELSE
@@ -140,9 +165,17 @@ BEGIN
            SUM(CAST(ROUND((CO_Registro.MontoRegistro), 2) AS DECIMAL(15, 2))) AS [RC25_15],
            SUM(CAST(ROUND((CO_Registro.MontoRegistro), 2) AS DECIMAL(15, 2))) AS [RC25_16],
            2 AS [RC25_17],
+		   RelacionadosNota.IdPedimentoComprobante AS IdRelacionado,
+		   CASE WHEN ISNULL(FI_PedimentoComprobante.EsNotaCredito, 0) = 0 THEN 'NA' ELSE 
+		   ISNULL(RelacionadosNota.IdDocFacturacionSIPAC, '')
+		   END AS RC25_18,
+		   CASE WHEN ISNULL(FI_PedimentoComprobante.EsNotaCredito, 0) = 0 THEN 'NA' ELSE
+		   ISNULL(RelacionadosNota.HashSHA256, '')
+		   END AS RC25_19,
            CO_Registro.IdPedimentoComprobante,
            0,
-           PV_TipoMoneda.IdMoneda
+           PV_TipoMoneda.IdMoneda,
+		   ''
     FROM dbo.CO_Registro WITH (NOLOCK)
         JOIN dbo.FI_PedimentoComprobante WITH (NOLOCK)
             ON CO_Registro.IdPedimentoComprobante = FI_PedimentoComprobante.IdPedimentoComprobante
@@ -164,20 +197,22 @@ BEGIN
             ON FI_PedimentoComprobante.IdMoneda = PV_TipoMoneda.IdMoneda
         JOIN dbo.CO_Servicio WITH (NOLOCK)
             ON CO_LineaPresupuestoMes.IdServicio = CO_Servicio.IdServicio
+		LEFT JOIN FI_NotaCredito_REL_Comprobantes WITH (NOLOCK) ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_NotaCredito_REL_Comprobantes.IdNotaCredito
+		LEFT JOIN FI_PedimentoComprobante RelacionadosNota WITH (NOLOCK) ON FI_NotaCredito_REL_Comprobantes.IdComprobanteRelacionado = RelacionadosNota.IdPedimentoComprobante
     WHERE CO_Registro.CvTipoDocFacturacion = @TipoComprobanteExtranjero
           AND CO_Contrato.IdContrato = @Contrato
           AND DATEFROMPARTS(YEAR(CO_Registro.MesPresentacion), MONTH(CO_Registro.MesPresentacion), 1) = @Mes
           AND CO_Registro.IdEstado = @Aprobado
           AND ISNULL(CONVERT(INT, FI_PedimentoComprobante.ProcesadoSIPAC), 0) = 0
           AND CO_Servicio.NombreServicio NOT LIKE '%No elegibles%'
-          AND ISNULL(FI_PedimentoComprobante.EsnotaCredito, 0) <> 1
           AND CO_Presupuesto.IdPresupuesto = CASE
                                                  WHEN @IdPresupuesto = 0 THEN
                                                      CO_LineaPresupuestoMes.IdPresupuesto
                                                  ELSE
                                                      @IdPresupuesto
                                              END
-    GROUP BY CASE
+    GROUP BY FI_PedimentoComprobante.IdPedimentoComprobante,
+			 CASE
                  WHEN ISNULL(CO_Contrato.IDSIPAC, '') <> '' THEN
                      LTRIM(RTRIM(CO_Contrato.IDSIPAC))
                  ELSE
@@ -198,7 +233,20 @@ BEGIN
              SUBSTRING(REPLACE(ISNULL(FI_PedimentoComprobante.NumFacturaC, 'NA'), ' ', ''), 0, 30),
              FI_PedimentoComprobante.FechaPago,
              CO_Registro.IdPedimentoComprobante,
-             PV_TipoMoneda.IdMoneda;
+             PV_TipoMoneda.IdMoneda,
+			 FI_PedimentoComprobante.EsNotaCredito,
+			 RelacionadosNota.IdPedimentoComprobante,
+			 ISNULL(RelacionadosNota.IdDocFacturacionSIPAC, ''),
+			 ISNULL(RelacionadosNota.HashSHA256, ''),
+			 RelacionadosNota.HashSHA256;
+
+	UPDATE #TEMPORAL_25_M_SP
+	SET Nota = '| Identificador del documento de facturación asociado (Columna RC25_18) debe tener el formato [PE/FA-mmaaaa-nnnnnn] o NA, y es requerido. '
+	WHERE RC25_18 = '' 
+
+	UPDATE #TEMPORAL_25_M_SP
+	SET Nota = Nota + '| Timbre Hash asociado (Columna RC25_19) debe ser una cadena alfanumérica con máximo 256 caracteres o NA, y es requerido. '
+	WHERE RC25_19 = '' 
 
     INSERT INTO #TransferenciasMaximas
     (
@@ -261,6 +309,95 @@ BEGIN
                AND MONTH(#TEMPORAL_25_M_SP.FechaPago_RC25_08) = MONTH(CO_TipoCambioDiario.Fecha)
                AND YEAR(#TEMPORAL_25_M_SP.FechaPago_RC25_08) = YEAR(CO_TipoCambioDiario.Fecha)
 
+	INSERT INTO #ComprobantesRelacionados (
+			Id_25_M,
+			IdComprobante,
+			IdRelacionado
+			,[RI_00]
+			,[RC21_00]
+			,[RC21_12]
+				)
+		SELECT #TEMPORAL_25_M_SP.Id_25_M,
+		#TEMPORAL_25_M_SP.IdComprobante ,
+		#TEMPORAL_25_M_SP.IdRelacionado
+			,LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))
+			,CASE 
+				WHEN len(CO_Presupuesto.IdPresupuestoCNH) > 10
+					THEN SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10)
+				ELSE CO_Presupuesto.IdPresupuestoCNH
+				END
+			,LTRIM(RTRIM(TP.id_Tarea))
+		FROM #TEMPORAL_25_M_SP
+		JOIN dbo.CO_Registro WITH (NOLOCK)
+			ON #TEMPORAL_25_M_SP.IdComprobante = CO_Registro.IdPedimentoComprobante
+				AND CO_Registro.IdEstado = @Aprobado
+		JOIN dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+			ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+		JOIN dbo.CO_Presupuesto WITH (NOLOCK)
+			ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
+		JOIN dbo.CO_AnioContractual WITH (NOLOCK)
+			ON CO_Presupuesto.IdAnioContractual = CO_AnioContractual.IdAnioContractual
+		JOIN dbo.CO_Contrato WITH (NOLOCK)
+			ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+				AND CO_Contrato.IdContrato = @Contrato
+		JOIN dbo.CO_TareaPetrolera TP WITH (NOLOCK)
+			ON CO_LineaPresupuestoMes.IdTareaPetrolera = TP.IdTareaPetrolera
+		GROUP BY #TEMPORAL_25_M_SP.Id_25_M,#TEMPORAL_25_M_SP.IdComprobante , #TEMPORAL_25_M_SP.IdRelacionado
+			,LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))
+			,CASE 
+				WHEN len(CO_Presupuesto.IdPresupuestoCNH) > 10
+					THEN SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10)
+				ELSE CO_Presupuesto.IdPresupuestoCNH
+				END
+			,LTRIM(RTRIM(TP.id_Tarea))
+
+			UPDATE #ComprobantesRelacionados
+
+			SET 
+			[RI_00_Relacionado] = LTRIM(RTRIM(CO_Contrato.IDRegFiducidiario))
+			,[RC21_00_Relacionado] = CASE 
+				WHEN len(CO_Presupuesto.IdPresupuestoCNH) > 10
+					THEN SUBSTRING(CO_Presupuesto.IdPresupuestoCNH, 22, 10)
+				ELSE CO_Presupuesto.IdPresupuestoCNH
+				END
+			,[RC21_12_Relacionado] = LTRIM(RTRIM(TP.id_Tarea))			
+		FROM #ComprobantesRelacionados		
+		JOIN FI_PedimentoComprobante WITH (NOLOCK)
+			ON #ComprobantesRelacionados.IdRelacionado = FI_PedimentoComprobante.IdPedimentoComprobante
+		JOIN dbo.CO_Registro WITH (NOLOCK)
+			ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
+				AND CO_Registro.IdEstado = @Aprobado
+		JOIN dbo.CO_LineaPresupuestoMes WITH (NOLOCK)
+			ON CO_Registro.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
+		JOIN dbo.CO_Presupuesto WITH (NOLOCK)
+			ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
+		JOIN dbo.CO_AnioContractual WITH (NOLOCK)
+			ON CO_Presupuesto.IdAnioContractual = CO_AnioContractual.IdAnioContractual
+		JOIN dbo.CO_Contrato WITH (NOLOCK)
+			ON CO_AnioContractual.IdContrato = CO_Contrato.IdContrato
+				AND CO_Contrato.IdContrato = @Contrato
+		JOIN dbo.CO_TareaPetrolera TP WITH (NOLOCK)
+			ON CO_LineaPresupuestoMes.IdTareaPetrolera = TP.IdTareaPetrolera
+
+			UPDATE #TEMPORAL_25_M_SP
+		SET #TEMPORAL_25_M_SP.Nota = #TEMPORAL_25_M_SP.Nota + 
+			'| Se detectó una discrepancia entre los datos de la nota de crédito ' + 
+			'(Contrato: ' + #ComprobantesRelacionados.RI_00 +
+			', Presupuesto: ' + #ComprobantesRelacionados.RC21_00 + 
+			', Tarea: ' + #ComprobantesRelacionados.RC21_12 + 
+			') y los del documento relacionado ' + 
+			'(Contrato: ' + #ComprobantesRelacionados.RI_00_Relacionado + 
+			', Presupuesto: ' + #ComprobantesRelacionados.RC21_00_Relacionado + 
+			', Tarea: ' + #ComprobantesRelacionados.RC21_12_Relacionado + ').'
+		FROM #TEMPORAL_25_M_SP
+			JOIN #ComprobantesRelacionados ON 
+			#TEMPORAL_25_M_SP.Id_25_M = #ComprobantesRelacionados.Id_25_M WHERE #ComprobantesRelacionados.[RI_00] <> #ComprobantesRelacionados.[RI_00_Relacionado] OR #ComprobantesRelacionados.[RC21_00] <> #ComprobantesRelacionados.[RC21_00_Relacionado] OR #ComprobantesRelacionados.[RC21_12] <> #ComprobantesRelacionados.[RC21_12_Relacionado]
+
+		UPDATE #TEMPORAL_25_M_SP
+			SET Nota = SUBSTRING(Nota, 3, LEN(Nota) - 2)
+		WHERE LEN(Nota) >= 2;
+
+
     SELECT IdContratista_RF_00,
            IdContrato_RI_00,
            NumeroContrato_RF01_01,
@@ -282,9 +419,11 @@ BEGIN
            ValMontFact_RC25_15,
            ValDolares_RC25_16,
            ClasDocSoporte_RC25_17,
-		   'NA' AS RC25_18,
-		   'NA' AS RC25_19
+		   RC25_18,
+		   RC25_19,
+		   Nota
     FROM #TEMPORAL_25_M_SP
     WHERE ConTransferencia = 1
+	ORDER BY Id_25_M ASC
 END;
 
