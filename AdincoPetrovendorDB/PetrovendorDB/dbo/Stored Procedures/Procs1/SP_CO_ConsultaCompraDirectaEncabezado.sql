@@ -1,5 +1,7 @@
-﻿
--- =============================================
+USE petrovendor
+GO
+drop proc if exists SP_CO_ConsultaCompraDirectaEncabezado
+go
 -- Author:   Daniel AC
 -- Create date: 26-09-2019
 -- Description: Agregue cambio de referecias al s3 en los documentos adjuntos y columnas referentes al Error SAT
@@ -11,6 +13,10 @@
 -- Author:   Alexander Gomez
 -- Create date: 06/11/2020
 -- Description: se agrego los dias de credito en la consulta
+-- =============================================
+-- Author:   David de la cruz
+-- Create date: 06/11/2020
+-- Description: Se valida que el presupuesto esté activo
 -- =============================================
 
 CREATE  PROCEDURE [dbo].[SP_CO_ConsultaCompraDirectaEncabezado] --0,13148,0,206171
@@ -80,8 +86,9 @@ AS
 						ISNULL(fiFactura.Emisor,'') AS RFC_Emisor,
 						ISNULL(fiFactura.Receptor,'') AS RFC_Receptor,
 						ISNULL(PG.CuentaBancaria,'') AS CuentaBancaria,
-						ISNULL(PG.DiasCredito,'') AS DiasCredito
-				  FROM	dbo.CO_Registro AS coRegistro
+						ISNULL(PG.DiasCredito,'') AS DiasCredito,
+						presupuesto.Activo
+						FROM	dbo.CO_Registro AS coRegistro
 						LEFT JOIN dbo.FI_Factura AS fiFactura
 								   ON fiFactura.IdFactura = coRegistro.IdFactura
 						LEFT JOIN dbo.CC_CentroCosto centroCosto
@@ -113,7 +120,6 @@ AS
 								   ON progActividad.IdPeriodoContrato = PC.IdPeriodo
 						LEFT JOIN Adinco.dbo.CO_Presupuesto presupuesto
 								   ON progActividad.IdProgramaActividad = presupuesto.IdProgramaActividad
-									  AND	presupuesto.Activo = 1
 									  AND	linea.IdPresupuesto = presupuesto.IdPresupuesto
 						-----------------------------------------------------------------------------------------------------
 						-----------------------------------------------------------------------------------------------------
@@ -140,6 +146,7 @@ AS
 						coRegistro.IdRegistro = @IdRegistro
 						AND coRegistro.IdLineaPresupuestoMes = @IdLineaPresupuesto
 						AND TAO.IdTipoOperacion = 14
+						AND presupuesto.Activo = 1
 						GROUP BY
 								 linea.IdPresupuesto, coRegistro.IdLineaPresupuestoMes, fiFactura.NombreXML, fiFactura.SubTotal ,
 								 linea.IdActvidadHidrocarburo, coRegistro.CuentaContable, coRegistro.CentroCostos, coRegistro.MontoRegistro ,
@@ -155,7 +162,7 @@ AS
 								fiFactura.Emisor,
 								fiFactura.Receptor,
 								PG.CuentaBancaria,
-								PG.DiasCredito
+								PG.DiasCredito,presupuesto.Activo
 				 ORDER BY coRegistro.IdRegistro DESC
 
 			END 
@@ -176,6 +183,3 @@ AS
 				 AND ISNULL(isEliminado,0)=0
 			END 
 	END 
-
-
-
