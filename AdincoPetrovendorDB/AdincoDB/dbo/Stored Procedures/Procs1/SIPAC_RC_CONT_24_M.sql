@@ -285,7 +285,7 @@ BEGIN
     SELECT FI_TransferFactura.IdPedimentoComprobante,
            FI_TransferFactura.IdTransfer,
            FI_TransferFactura.MontoPagado,
-           ISNULL(FI_CFDIMetodoPago.Clave, ''),
+           ISNULL(PV_MetodoPago.C_FormaPago, ''),
            FI_Transfer.FechaPago,
            ROW_NUMBER() OVER (PARTITION BY FI_TransferFactura.IdPedimentoComprobante
                               ORDER BY FI_TransferFactura.MontoPagado DESC
@@ -307,8 +307,8 @@ BEGIN
             ON #TEMPORAL_24_M_SP.IdPedimentoComprobante = FI_TransferFactura.IdPedimentoComprobante 
         JOIN FI_Transfer WITH (NOLOCK)
             ON FI_TransferFactura.IdTransfer = FI_Transfer.IdTransferencia
-        JOIN dbo.FI_CFDIMetodoPago WITH (NOLOCK)
-            ON FI_Transfer.IdMetodoPago = FI_CFDIMetodoPago.IdCFDIMetodoPago
+        JOIN dbo.PV_MetodoPago WITH (NOLOCK)
+            ON FI_Transfer.IdMetodoPago = PV_MetodoPago.idMetodoPago
         LEFT JOIN dbo.CO_TipoCambioDiario WITH (NOLOCK)
             ON CO_TipoCambioDiario.IdMoneda = FI_Transfer.IdMoneda
                AND DAY(FI_Transfer.FechaPago) = DAY(CO_TipoCambioDiario.Fecha)
@@ -317,7 +317,7 @@ BEGIN
     GROUP BY FI_TransferFactura.IdPedimentoComprobante,
              FI_TransferFactura.IdTransfer,
              FI_TransferFactura.MontoPagado,
-             ISNULL(FI_CFDIMetodoPago.Clave, ''),
+             ISNULL(PV_MetodoPago.C_FormaPago, ''),
              FI_Transfer.FechaPago
 
     INSERT INTO #TransferenciasMaximasSumas
