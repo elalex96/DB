@@ -4021,6 +4021,9 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_FlujoAprobacionPorId.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_INS_UPD_DEL_AP_RegistroFlujoAprobacion.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_FlujoAprobacion.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ObtenDatosCorreoErrorListaNegra.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_INS_AP_RevisionSituacionSATCN.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_INS_AP_EnvioCorreoSiNuevaSituacion.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
