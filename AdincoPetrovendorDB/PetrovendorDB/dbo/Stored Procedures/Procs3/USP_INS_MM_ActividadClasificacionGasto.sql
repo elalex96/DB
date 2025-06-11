@@ -1,12 +1,12 @@
-USE [Petrovendor]
+﻿USE [Petrovendor]
 GO
 IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
-    WHERE name = 'USP_INS_MM_ClienteProyecto'
+    WHERE name = 'USP_INS_MM_ActividadClasificacionGasto'
 )
-    DROP PROCEDURE USP_INS_MM_ClienteProyecto; 
+    DROP PROCEDURE USP_INS_MM_ActividadClasificacionGasto; 
 GO
 SET ANSI_NULLS ON
 GO
@@ -15,10 +15,9 @@ GO
 -- =============================================
 -- Author: Daniel AC
 -- Create date: 10-06-2025
--- Description: Agregar registro de MM_ClienteProyecto
+-- Description: Agregar/Editar registro de MM_ActividadClasificacionGasto
 -- =============================================
-CREATE PROCEDURE [dbo].[USP_INS_MM_ClienteProyecto] 
--- Add the parameters for the stored procedure here
+CREATE PROCEDURE [dbo].[USP_INS_MM_ActividadClasificacionGasto] 
 @IdContrato  INT,
 @IdUsuario  INT,
 @Id INT,
@@ -27,20 +26,20 @@ CREATE PROCEDURE [dbo].[USP_INS_MM_ClienteProyecto]
 
 AS
 BEGIN
-SET NOCOUNT ON
 
+SET NOCOUNT ON
 
 	IF @Id = 0
 	BEGIN 
 
-		INSERT INTO MM_ClienteProyecto(Nombre,Activo, CreadoEl, CreadoPor)
+		INSERT INTO MM_ActividadClasificacionGasto(Nombre,Activo, CreadoEl, CreadoPor)
 		VALUES(LTRIM(RTRIM(@Nombre)), @Activo,GETDATE(),@IdUsuario)
 
 	END 
 	ELSE 
 	BEGIN 
 
-		UPDATE MM_ClienteProyecto
+		UPDATE MM_ActividadClasificacionGasto
 		SET Nombre = LTRIM(RTRIM(@Nombre)),
 		Activo = @Activo,
 		ModificadoEl =  GETDATE(),
