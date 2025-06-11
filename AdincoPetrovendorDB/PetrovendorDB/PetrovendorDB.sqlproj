@@ -3006,8 +3006,6 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MM_ActividadClasificacionGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_INS_MM_ActividadClasificacionGasto2.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_INS_MM_ActividadClasificacionGasto.sql" />
-    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_ActividadClasificacionGasto.sql" />
-    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_ActividadClasificacionGasto2.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
