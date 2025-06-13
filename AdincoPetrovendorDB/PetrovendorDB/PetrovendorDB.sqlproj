@@ -9,8 +9,7 @@
     <ProjectGuid>{e1a33669-7b7b-437c-aabf-68d5a4e8fed3}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
-    <RootPath>
-    </RootPath>
+    <RootPath />
     <RootNamespace>PetrovendorDB</RootNamespace>
     <AssemblyName>PetrovendorDB</AssemblyName>
     <ModelCollation>3082,CI</ModelCollation>
@@ -50,7 +49,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
-    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
     <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
     <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
   </PropertyGroup>
@@ -2999,6 +2997,15 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_PV_ActulizarConfiguracionPorOperadora.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_PV_ConsultaConfiguracionesPorOperadora.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SEL_CO_ObtenControlPresupuestalContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MM_ClienteProyectos.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_MM_ClienteProyecto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_ValidarExistencia_MM_ClienteProyectosPorNombre.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_ValidarExistencia_MM_ActividadClasificacionGastoPorNombre.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_ValidarExistencia_MM_ActividadClasificacionGasto2PorNombre.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MM_ActividadClasificacionGasto2.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MM_ActividadClasificacionGasto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_MM_ActividadClasificacionGasto2.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_MM_ActividadClasificacionGasto.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
