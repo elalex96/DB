@@ -47,7 +47,8 @@ AS
             RC28_10 INT,
             RC28_11 VARCHAR(5000) ,
             RC28_12 DECIMAL(20, 2),
-            RC28_13 VARCHAR(500) );
+            RC28_13 VARCHAR(500),
+			IdPresupuesto INT);
 
 			CREATE TABLE #TempConsecutivos(
 			Identificador INT ,
@@ -99,7 +100,8 @@ INSERT INTO #TempResultado (
     RC28_10,
     RC28_11,
     RC28_12,
-    RC28_13
+    RC28_13,
+	IdPresupuesto
 )
                 --EPT ligadas a facturas PUE
                 SELECT
@@ -143,7 +145,8 @@ INSERT INTO #TempResultado (
 								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
 						END
                        )                                                       AS RC28_12,--Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
-                    ''                                                         AS RC28_13 --Metodología utilizada
+                    ''                                                         AS RC28_13, --Metodología utilizada
+					P.IdPresupuesto
                 FROM
                     dbo.FI_EstudioPreciosTransfer  EPT (NOLOCK)
                     JOIN
@@ -224,7 +227,8 @@ INSERT INTO #TempResultado (
                     P.CIEP,
                     CO_Rubro.NombreRubro,
                     CO_TareaPetrolera.TareaPetrolera,
-					otraMoneda.TipoCambio
+					otraMoneda.TipoCambio,
+					P.IdPresupuesto
                 --EPT ligado a Pedimentos de Importación o Complemento de Proveedor Extranjero
                 UNION
                 --
@@ -279,7 +283,8 @@ INSERT INTO #TempResultado (
 								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
 						END
                        )                              AS RC28_12,	-- Monto en pesos Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
-                    ''                                AS RC28_13    --Metodología utilizada
+                    ''                                AS RC28_13,    --Metodología utilizada
+					P.IdPresupuesto
                 FROM
                     dbo.FI_EstudioPreciosTransfer   EPT (NOLOCK)
                     JOIN
@@ -376,7 +381,8 @@ INSERT INTO #TempResultado (
                     P.CIEP,
                     CO_Rubro.NombreRubro,
                     CO_TareaPetrolera.TareaPetrolera,
-					otraMoneda.TipoCambio
+					otraMoneda.TipoCambio,
+					P.IdPresupuesto
                 --EPT ligado al Complemento de Pago de la factura PPD principal relacionado al gasto
                 UNION
                 --
@@ -424,7 +430,8 @@ INSERT INTO #TempResultado (
 								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
 						END
 					)														   AS RC28_12,   -- Monto en pesos Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
-                    ''                                                         AS RC28_13    -- Metodología utilizada
+                    ''                                                         AS RC28_13 ,   -- Metodología utilizada
+					P.IdPresupuesto
                 FROM
                     dbo.FI_EstudioPreciosTransfer  EPT (NOLOCK)
                     JOIN
@@ -518,7 +525,8 @@ INSERT INTO #TempResultado (
                     P.CIEP,
                     CO_Rubro.NombreRubro,
                     CO_TareaPetrolera.TareaPetrolera,
-					otraMoneda.TipoCambio;
+					otraMoneda.TipoCambio,
+					P.IdPresupuesto;
 INSERT INTO 
 #TempConsecutivos(
 			Identificador  ,
@@ -526,18 +534,17 @@ INSERT INTO
     SELECT 
         Identificador,
         ROW_NUMBER() OVER (
-            PARTITION BY RC28_07, RC28_02, RC28_04, RC28_05
+            PARTITION BY RC28_07, RC28_02, RC28_04, RC28_05,RC28_10, IdPresupuesto
             ORDER BY (SELECT NULL)
         ) AS Consecutivo
     FROM #TempResultado;
 
 UPDATE t
-SET RC28_07 = CONCAT(RC28_07,' - ',  c.Consecutivo)
+SET RC28_07 = CONCAT(RC28_07,' ',  c.Consecutivo)
 FROM #TempResultado t
 JOIN #TempConsecutivos c ON t.Identificador = c.Identificador
 WHERE  c.Consecutivo > 1; 
 	
-           
         SELECT DISTINCT
             ResultUnion.RF_00,
             ResultUnion.RI_00,
