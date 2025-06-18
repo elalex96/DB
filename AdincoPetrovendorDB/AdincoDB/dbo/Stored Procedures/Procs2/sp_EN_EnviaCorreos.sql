@@ -1,379 +1,354 @@
-﻿USE [Adinco]
+﻿USE Adinco
 GO
-DROP PROCEDURE IF EXISTS EN_CambioEstadoARevision
+DROP PROCEDURE IF EXISTS sp_EN_EnviaCorreos
 GO
--- =============================================  
--- Author:   Daniel AC  
--- Update date: 20/10/2020  
--- Description: Se agrego métodos para avance de entregable instancia EQUINOR
--- ============================================= 
--- Author:   Luis David De La Cruz
--- Update date: 20/10/2020  
--- Description: Se agrego métodos para avance de entregable instancia EQUINOR
--- ============================================= 
+-- =============================================
+-- Author:		Reynha Olvera
+-- Create date:20180927
+-- Description:	Envia correos a receptores de alterna, modulo entregables
+-- =============================================
 -- =============================================  
 -- Author:  Daniel AC
 -- Create date: 16/06/2025  
 -- Description: SE RETORNA TABLA PARA ENVIO DE CORREOS CON DOBLE AUTENTIFICACIÓN
--- ============================================= 
-CREATE PROCEDURE [dbo].[EN_CambioEstadoARevision] --10061,3,285713,16876,'',''
+-- =============================================  
+CREATE PROCEDURE [dbo].[sp_EN_EnviaCorreos]
     @idUsuario INT,
     @idContrato INT,
     @idInstanciaEntregable INT,
-    @idContratoEntregable INT,
-    @ComentarioUsuarioElaborador VARCHAR(500),
-    @URLRepositorio VARCHAR(1500)
+    @Estatus INT,
+    @ActividadSiguienteID INT, --DONDE YA CAMBIO EL ESTATUS
+    @ActividadIDActual INT -- ANTERIOR
 AS
 BEGIN
     SET NOCOUNT ON;
-    CREATE TABLE #URLResponsables
-    (
-        Id INT IDENTITY(1, 1),
-        Enviado BIT,
-        EnlaceDetalle VARCHAR(MAX),
-        EnlaceAprobado VARCHAR(MAX),
-        EnlaceRechazo VARCHAR(MAX),
-        NombreInstancia VARCHAR(MAX),
-        FechaInstancia VARCHAR(MAX),
-        correos VARCHAR(MAX),
-        NombreUsuario VARCHAR(MAX)
-    );
 
-	CREATE TABLE #CorreosUsuario (  
-		Para VARCHAR(500),  
-		Asunto VARCHAR(500),  
-		Mensaje NVARCHAR(MAX),  
-		De VARCHAR(200),
-		CreadoPor INT
+    SET LANGUAGE Spanish;
+
+    IF OBJECT_ID('tempdb..#CorreosUsuarios') IS NOT NULL
+        DROP TABLE #CorreosUsuarios;
+    CREATE TABLE #CorreosUsuarios (id INT PRIMARY KEY IDENTITY(1, 1),
+                                   CorreoReceptor NVARCHAR(MAX));
+
+    IF OBJECT_ID('tempdb..#TemporalDatosCorreo') IS NOT NULL
+        DROP TABLE #TemporalDatosCorreo;
+
+    CREATE TABLE #TemporalDatosCorreo (id INT,
+                                       NumeroContrato NVARCHAR(MAX),
+                                       CorreoReceptor NVARCHAR(MAX),
+                                       FechaName NVARCHAR(MAX),
+                                       Descripcion NVARCHAR(MAX));
+	CREATE TABLE #TemporalCorreosUsuario (  
+	Para VARCHAR(500),  
+	Asunto VARCHAR(500),  
+	Mensaje NVARCHAR(MAX),  
+	De VARCHAR(200),
+	CreadoPor INT
 	);  
 
-    DECLARE @ActividadSiguienteID INT,
-            @ActividadIDActual INT,
-            @IdLineaTiempo INT,
-            @idVersion INT,
-            @NombreInstancia VARCHAR(MAX),
-            @EnlaceDetalle VARCHAR(MAX),
-            @EnlaceAprobado VARCHAR(MAX),
-            @EnlaceRechazo VARCHAR(MAX),
-            @FechaInstancia VARCHAR(MAX),
-            @Para VARCHAR(1000),
-            @NombreUsuario VARCHAR(2500),
-            @ContieneURLRepositorio BIT,
-            @CountRevisores INT,
-            @IsUsuarioRev INT,
-            @IsUsuarioApro INT,
-            @IsUsuarioElab INT,
-            @IdUrl INT = 0,
-            @EsEntregableGrupo INT = 0,
-            @IdGrupo INT = 0,
-            @BitPasaAprobacion INT = 0;
+	DECLARE @correosReceptorAlerta NVARCHAR(MAX),
+            @Texto1                NVARCHAR(MAX),
+            @Texto2                NVARCHAR(MAX),
+            @textoFecha            NVARCHAR(MAX),
+            @NombreUsuarioRechazo  NVARCHAR(MAX),
+            @AsuntoCorreoEstatus   NVARCHAR(MAX),
+            @NombreContrato        NVARCHAR(MAX),
+            @correosElabora        NVARCHAR(MAX),
+			@NombreUsuarioElaboro VARCHAR(MAX),
+			@CorreoUsuarioElaboro VARCHAR(MAX),
+			@NombreUsuarioRealizaAccion VARCHAR(MAX),
+			@EstadoActual	INT,
+			@EstadoSiguiente	INT,
+			@IdUsuarioSiguiente INT,
+			@EsGrupoSiguiente INT,
+			@NombreUsuarioSiguiente VARCHAR(MAX),
+			@NombreDocumentoEntregable VARCHAR (MAX),
+			@FechaLimiteElaboracion VARCHAR(MAX),
+			@FechaLimiteRevision VARCHAR(MAX),
+			@FechaLimiteAprobacion VARCHAR(MAX),
+			@idVersion	INT;
 
-    SELECT @ActividadIDActual = ActividadID
-    FROM dbo.EN_InstanciasEntregable
-    WHERE idInstanciaEntregable = @idInstanciaEntregable;
+	SELECT	TOP	1	@idVersion	=	IdLineaTiempo
+    FROM	dbo.EN_HistorialAprobacionesLineaTiempo
+    WHERE	idInstanciaEntregable = @idInstanciaEntregable
+    ORDER	BY	CreadoEn	DESC;
 
-    SELECT @ActividadSiguienteID = SiguienteActividadID
-    FROM dbo.EN_Transicion
-    WHERE ActividadInicialID = @ActividadIDActual;
+    SELECT @correosReceptorAlerta = ReceptorAlerta
+      FROM dbo.EN_InstanciasEntregable IE
+      JOIN dbo.EN_ContratoEntregable CE
+        ON IE.IdContratoEntregable = CE.IdContratoEntregable
+     WHERE idInstanciaEntregable = @idInstanciaEntregable;
 
-    SELECT @CountRevisores = COUNT(1)
-    FROM dbo.EN_Actividad
-    WHERE IdContratoEntregable = @idContratoEntregable
-          AND EstadoID = 10001;
+    SELECT @NombreContrato = NumeroContrato
+      FROM dbo.CO_Contrato
+     WHERE IdContrato = @idContrato;
+	 
+	SELECT @NombreUsuarioRealizaAccion	=	Nombre	--QUIEN REALIZA LA ACCIÓN
+	 FROM	AP_Usuario	WHERE UsuarioID	=	@idUsuario
+	
+	SELECT @EstadoSiguiente	=	EstadoID FROM dbo.EN_Actividad 
+             WHERE ActividadID	=	@ActividadSiguienteID
+	 
+	SELECT @EstadoActual	=	EstadoID FROM dbo.EN_Actividad 
+             WHERE ActividadID	=	@ActividadIDActual
+
+	SELECT	@NombreDocumentoEntregable	=	E.DocumentoEntregable,
+			@FechaLimiteElaboracion	=	LTRIM(DAY(IE.FechasLimiteElaboracion)) + '-' + UPPER(DATENAME(MONTH, IE.FechasLimiteElaboracion)) + '-' + CONVERT(VARCHAR(4), YEAR(IE.FechasLimiteElaboracion)),
+			@FechaLimiteRevision	=	LTRIM(DAY(IE.FechasLimiteRevision)) + '-' +	UPPER(DATENAME(MONTH, IE.FechasLimiteRevision)) + '-' + CONVERT(VARCHAR(4), YEAR(IE.FechasLimiteRevision)),
+			@FechaLimiteAprobacion	=	LTRIM(DAY(IE.FechasLimiteAprobacion)) + '-' + UPPER(DATENAME(MONTH, IE.FechasLimiteAprobacion)) + '-' + CONVERT(VARCHAR(4), YEAR(IE.FechasLimiteAprobacion))
+	FROM	dbo.EN_InstanciasEntregable	IE
+	JOIN	dbo.EN_ContratoEntregable	CE
+		ON	IE.IdContratoEntregable	=	CE.IdContratoEntregable
+		AND IE.idInstanciaEntregable	=	@idInstanciaEntregable
+	JOIN	dbo.EN_Entregable	E
+		ON	CE.IdEntregable	=	E.IdEntregable
+
+	SELECT @NombreUsuarioElaboro	=	U.Nombre,
+		   @CorreoUsuarioElaboro	=	U.Usuario
+		FROM EN_HistorialAprobacionesLineaTiempo	HAL
+
+		JOIN	AP_Usuario	U
+			ON	HAL.CreadoPor	=	U.UsuarioID
+
+			WHERE idInstanciaEntregable	=	@idInstanciaEntregable	AND IdLineaTiempo	=	@idVersion	AND idTipoOperacion	=	2
+	
+	SELECT @IdUsuarioSiguiente =
+			CASE	ISNULL(EA.ActividadIDExcepcion,'')
+				WHEN ''
+				THEN A.idUsuario
+				ELSE EA.idUsuario
+			END,
+			@NombreUsuarioSiguiente	=
+			CASE	ISNULL(EA.ActividadIDExcepcion,'')
+				WHEN ''
+				THEN U.Nombre
+				ELSE UE.Nombre
+			END
+	FROM	EN_Actividad	A
+	JOIN	AP_Usuario	U
+		ON	A.ActividadID	=	@ActividadSiguienteID
+		AND A.idUsuario	=	U.USUARIOID
+	LEFT	JOIN	EN_ExcepcionesActividad	EA
+		ON	EA.ActividadIDExcepcion	=	@ActividadSiguienteID
+
+	LEFT	JOIN	AP_Usuario	UE
+		ON	EA.idUsuario	=	UE.UsuarioID
+	
+	IF((SELECT COUNT(1)	FROM	AP_Usuario	WHERE UsuarioID	=	@IdUsuarioSiguiente	AND IsGrupo	=	1) >=	1)
+	BEGIN
+		SELECT DISTINCT
+		@NombreUsuarioSiguiente	=
+		UG.Nombre + ' (Puede realizar la accion cualquiera de los siguientes usuarios: ' +
+		STUFF((
+			SELECT ', '  + U.Nombre
+			FROM AP_Usuario U
+			INNER JOIN EN_GruposUsuarios GUT  ON U.UsuarioID	=	GUT.IdUsuario 
+			WHERE GUT.IdGrupo	=	GU.IdGrupo
+			FOR XML PATH('')),
+			1, 2, '')+')'
+
+			FROM	EN_GruposUsuarios GU
+			JOIN AP_Usuario AS UG
+				ON	GU.IdGrupo	=	UG.UsuarioID
+			WHERE	GU.Activo	=	1
+			  AND	UG.IsActivo	=	1
+			  AND	GU.IdContrato	=	@IdContrato
+			  AND	GU.IdGrupo	=	@IdUsuarioSiguiente
+	END
 
 
-    IF (@CountRevisores = 1)
+    IF (((@correosReceptorAlerta IS NOT NULL)	OR   (@correosReceptorAlerta <> ''))	AND   @Estatus <> 10000)
     BEGIN
+        INSERT INTO #CorreosUsuarios (CorreoReceptor)
+        SELECT splitdata AS CorreoReceptor
+          FROM [dbo].[fnSplitString](@correosReceptorAlerta, ',');
 
-        SELECT @IsUsuarioElab = CASE
-                                    WHEN exa.ActividadIDExcepcion IS NOT NULL THEN
-                                        exa.idUsuario
-                                    ELSE
-                                        a.idUsuario
-                                END
-        FROM dbo.EN_Actividad a
-            LEFT JOIN dbo.EN_ExcepcionesActividad exa
-                ON a.ActividadID = exa.ActividadIDExcepcion
-                   AND exa.IdInstanciasEntregables = @idInstanciaEntregable
-        WHERE a.IdContratoEntregable = @idContratoEntregable
-              AND a.EstadoID = 10000;
-
-
-        SELECT @IsUsuarioRev = CASE
-                                   WHEN exa.ActividadIDExcepcion IS NOT NULL THEN
-                                       exa.idUsuario
-                                   ELSE
-                                       a.idUsuario
-                               END
-        FROM dbo.EN_Actividad a
-            LEFT JOIN dbo.EN_ExcepcionesActividad exa
-                ON a.ActividadID = exa.ActividadIDExcepcion
-                   AND exa.IdInstanciasEntregables = @idInstanciaEntregable
-        WHERE a.IdContratoEntregable = @idContratoEntregable
-              AND a.EstadoID = 10001;
-
-
-        SELECT @IsUsuarioApro = CASE
-                                    WHEN exa.ActividadIDExcepcion IS NOT NULL THEN
-                                        exa.idUsuario
-                                    ELSE
-                                        a.idUsuario
-                                END
-        FROM dbo.EN_Actividad a
-            LEFT JOIN dbo.EN_ExcepcionesActividad exa
-                ON a.ActividadID = exa.ActividadIDExcepcion
-                   AND exa.IdInstanciasEntregables = @idInstanciaEntregable
-        WHERE a.IdContratoEntregable = @idContratoEntregable
-              AND a.EstadoID = 10002;
-    END;
-
-    SELECT @EsEntregableGrupo = CASE ISNULL(exa.idUsuario, '')
-                                    WHEN '' THEN
-                                        ISNULL(U.IsGrupo, 0)
-                                    ELSE
-                                        ISNULL(UXA.IsGrupo, 0)
-                                END,
-           @IdGrupo = CASE
-                          WHEN exa.ActividadIDExcepcion IS NOT NULL THEN
-                              exa.idUsuario
-                          ELSE
-                              a.idUsuario
-                      END
-    FROM dbo.EN_Actividad a
-        JOIN EN_ContratoEntregable CE
-            ON a.IdContratoEntregable = CE.IdContratoEntregable
-               AND CE.IdContrato = @idContrato
-        JOIN AP_Usuario U
-            ON a.idUsuario = U.UsuarioID
-        LEFT JOIN dbo.EN_ExcepcionesActividad exa
-            ON a.ActividadID = exa.ActividadIDExcepcion
-               AND exa.IdInstanciasEntregables = @idInstanciaEntregable
-        LEFT JOIN AP_Usuario UXA
-            ON exa.idUsuario = UXA.UsuarioID
-    WHERE a.IdContratoEntregable = @idContratoEntregable
-          AND CE.IdContrato = @idContrato	--10112 --ÁREA 20 SHELL
-          AND a.EstadoID = 10000;
-
-
-    IF (@EsEntregableGrupo = 1)
-    BEGIN
-        IF ((SELECT COUNT(1)
-             FROM EN_GruposUsuarios
-             WHERE IdGrupo = @IdGrupo
-             AND IdUsuario = @idUsuario
-             AND IdContrato = @idContrato) > 0 and (@IsUsuarioRev = @IsUsuarioElab))
-        BEGIN
-            SET @BitPasaAprobacion = 1;
-        END;
-        ELSE
-        BEGIN
-            SET @BitPasaAprobacion = 0;
-        END;
-    END;
-
-
-    IF (
-           (
-               @IsUsuarioElab = @IsUsuarioRev
-               AND @IsUsuarioElab = @IsUsuarioApro
-           )
-           OR (@BitPasaAprobacion = 1)
-       )
-    BEGIN
-        --Finalizar el entregable
-        EXEC [sp_En_SubeHistoricoAprueba] @idUsuario,
-                                          @idContrato,
-                                          @idInstanciaEntregable,
-                                          @idContratoEntregable,
-                                          @ComentarioUsuarioElaborador,
-                                          @URLRepositorio;
-        /*EL ENTREGABLABLE FINALIZA ESTADO APROBACIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
-        EXEC dbo.SP_EN_GuardarAvanceEntregableSeguimiento @EntregableInstanciaId = @idInstanciaEntregable, -- int
-                                                          @ClaveAvance = 'COMPLETADO',                     -- float
-                                                          @UsuarioId = @idUsuario,                         -- int
-                                                          @ContratoId = @idContrato,                       -- int
-                                                          @Estado = 'APROBACION',                          -- varchar(max)
-                                                          @TipoGuardado = 'SISTEMA',                       -- varchar(max)
-                                                          @Comentario = '';                                -- varchar(max)
-
-    END;
-    ELSE
-    BEGIN
-        IF (@IsUsuarioElab = @IsUsuarioRev)
-        BEGIN
-            --select '[sp_En_DirectoAcprobacion]'
-            --hacer un clone del sp
-			INSERT INTO #CorreosUsuario (   
-									Para,
-                                    Asunto,
-                                    Mensaje,                                       
-                                    CreadoPor
-                                      )
-            EXEC [sp_En_DirectoAcprobacion] @idUsuario,
-                                            @idContrato,
-                                            @idInstanciaEntregable,
-                                            @idContratoEntregable,
-                                            @ComentarioUsuarioElaborador,
-                                            @URLRepositorio;
-
-       /*EL ENTREGABLABLE FINALIZA ESTADO REVISIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
-            EXEC dbo.SP_EN_GuardarAvanceEntregableSeguimiento @EntregableInstanciaId = @idInstanciaEntregable, -- int
-                                                              @ClaveAvance = 'COMPLETADO',                     -- float
-                                                              @UsuarioId = @idUsuario,                         -- int
-                                                              @ContratoId = @idContrato,                       -- int
-                                                              @Estado = 'REVISION',                            -- varchar(max)
-                                                              @TipoGuardado = 'SISTEMA',                       -- varchar(max)
-                                                              @Comentario = '';
-        END;
-        ELSE
+        IF (@Estatus = 10002) --Pasa a revision
         BEGIN
 
-            UPDATE EN_InstanciasEntregable
-            SET ActividadID = @ActividadSiguienteID,
-                FechaElaboro = GETDATE()
-            WHERE idInstanciaEntregable = @idInstanciaEntregable;
+            SET @AsuntoCorreoEstatus = 'Entregable enviado a revisión';
 
-            SELECT @IdLineaTiempo = ISNULL(MAX(IdLineaTiempo), 0)
-            FROM dbo.EN_HistorialAprobacionesLineaTiempo;
-
-            SET @idVersion = (@IdLineaTiempo + 1);
-
-            IF @ComentarioUsuarioElaborador = ''
-            BEGIN
-                SET @ComentarioUsuarioElaborador = 'Usuario elaborador a enviado a revisión el entregable';
-            END;
-
-            IF (@URLRepositorio = '' OR @URLRepositorio IS NULL)
-            BEGIN
-                SET @URLRepositorio = 'No se ingreso URL de repositorio';
-                SET @ContieneURLRepositorio = 0;
-            END;
-            ELSE
-            BEGIN
-                SET @ContieneURLRepositorio = 1;
-            END;
-
-            EXEC EN_GuardaHistorialLineaTiempo @idVersion,
-                                               @idInstanciaEntregable,
-                                               @idUsuario,
-                                               @idContrato,
-                                               @ComentarioUsuarioElaborador,
-                                               0,
-                                               2,
-                                               0,
-                                               @URLRepositorio,
-                                               @ContieneURLRepositorio;
-
-            EXEC EN_GuardaDocumentosPorVersion @idVersion,
-                                               @idInstanciaEntregable,
-                                               @idUsuario,
-                                               @idContrato;
-
-            INSERT INTO #URLResponsables
-            (
-                EnlaceDetalle,
-                EnlaceAprobado,
-                EnlaceRechazo,
-                NombreInstancia,
-                FechaInstancia,
-                correos,
-                NombreUsuario
-            )
-            SELECT EnlaceDetalle,
-                   EnlaceAprobado,
-                   EnlaceRechazo,
-                   NombreInstancia,
-                   FechaInstancia,
-                   correos,
-                   NombreUsuario
-            FROM dbo.EN_URLResponsablesEntregables
-            WHERE ActividadID = @ActividadSiguienteID
-                  AND idInstanciaEntregable = @idInstanciaEntregable;
+            SELECT @Texto1
+                = 'Le informamos que el usuario ' + @NombreUsuarioRealizaAccion +',ha elaborado y enviado a revisión el entregable: '
+                  + @NombreDocumentoEntregable +', con periodo: ' + @FechaLimiteAprobacion +',<BR/> del contrato: ' + @NombreContrato,
+				 @Texto2 = +	CASE @EstadoSiguiente
+                                   WHEN 10001 THEN 'Nombre del siguiente usuario revisor: ' + @NombreUsuarioSiguiente + '</BR>' 
+                                   WHEN 10002 THEN 'Nombre del siguiente usuario aprobador: ' +  @NombreUsuarioSiguiente + '</BR>'
+                                   ELSE ''
+							 END,
+                   @textoFecha = 'Fecha de envio a revisión: '
+             
+        END; 
 
 
 
-            WHILE
-            (SELECT COUNT(1) FROM #URLResponsables WHERE Enviado IS NULL) > 0
-            BEGIN
+        IF (@Estatus = 10004) --APROBACION de entregable
+        BEGIN
 
-                SET @IdUrl = @IdUrl + 1;
-
-                SELECT TOP 1
-                       @EnlaceDetalle = EnlaceDetalle,
-                       @EnlaceAprobado = EnlaceAprobado,
-                       @EnlaceRechazo = EnlaceRechazo,
-                       @NombreInstancia = NombreInstancia,
-                       @FechaInstancia = FechaInstancia,
-                 @Para = correos,
-                       @NombreUsuario = NombreUsuario
-                FROM #URLResponsables
-                WHERE Id = @IdUrl
-                      AND Enviado IS NULL
-                ORDER BY NombreUsuario DESC;
-
-				INSERT INTO #CorreosUsuario (   
-									Para,
-                                    Asunto,
-                                    Mensaje,                                       
-                                    CreadoPor
-                                      )
-                EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
-                                                            @idContrato,
-                                                            @idInstanciaEntregable,
-                                                            3,
-                                                            @EnlaceAprobado,
-                                                            @EnlaceRechazo,
-                                                            @NombreInstancia,
-                                                            @FechaInstancia,
-                                                            @EnlaceDetalle,
-                                                            @Para,
-                                                            @NombreUsuario,
-                                                            12,
-                                                            0;
-
-                UPDATE #URLResponsables
-                SET Enviado = 1
-                WHERE Id = @IdUrl
-                      AND Enviado IS NULL;
-            END;
-
-			INSERT INTO #CorreosUsuario (   
-									Para,
-                                    Asunto,
-                                    Mensaje,                                       
-                                    CreadoPor
-                                      )
-            EXEC [sp_EN_EnviaCorreos] @idUsuario,
-                                      @idContrato,
-                                      @idInstanciaEntregable,
-                                      10002,
-                                      @ActividadSiguienteID,
-                                      @ActividadIDActual;
-
-			INSERT INTO #CorreosUsuario (   
-									Para,
-                                    Asunto,
-                                    Mensaje,                                       
-                                    CreadoPor
-                                      )
-            EXEC [sp_EN_EnviaCorreos] @idUsuario,
-                                      @idContrato,
-                                      @idInstanciaEntregable,
-                                      10000,
-                                      @ActividadSiguienteID,
-                                      @ActividadIDActual; --Correo para el elaborador, cumplio su trabajo
-
-            /*EL ENTREGABLABLE FINALIZA ESTADO ELABORACIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
-            EXEC dbo.SP_EN_GuardarAvanceEntregableSeguimiento @EntregableInstanciaId = @idInstanciaEntregable, -- int
-                                                              @ClaveAvance = 'COMPLETADO',                     -- float
-                                                              @UsuarioId = @idUsuario,                         -- int
-                                                              @ContratoId = @idContrato,                       -- int
-                                                              @Estado = 'ELABORACION',                         -- varchar(max)
-                                                              @TipoGuardado = 'SISTEMA',                       -- varchar(max)
-                                                              @Comentario = '';
+            SELECT @Texto1
+                = 'Le informamos que el entregable: ' + @NombreDocumentoEntregable + ', con periodo: '
+                  + @FechaLimiteAprobacion+', <BR/>  del contrato: ' + @NombreContrato + ',ha sido ' + 
+				  CASE @EstadoActual
+					WHEN 10001 THEN 'revisado'
+					WHEN 10002 THEN 'aprobado' 
+				  END
+                  + ' por el usuario: ' + @NombreUsuarioRealizaAccion ,
+                   @Texto2
+                       = 'Nombre del usuario elaborador: ' + @NombreUsuarioElaboro
+                         + CASE @EstadoSiguiente
+                                WHEN 10001 THEN 'Nombre del siguiente usuario revisor: ' +
+								@NombreUsuarioSiguiente + '</BR>'
+                                WHEN 10002 THEN 'Nombre del siguiente usuario aprobador: ' + 
+								@NombreUsuarioSiguiente + '</BR>'
+                                ELSE '' END,
+                   @textoFecha = 'Fecha de aprobación del entregable: ',
+                   @AsuntoCorreoEstatus = CASE @EstadoActual
+                                               WHEN 10001 THEN 'Entregable revisado'
+                                               WHEN 10002 THEN 'Entregable aprobado' 
+										  END
+             
         END;
 
+
+
+        IF (@Estatus = 10005) --Pasa a corrección
+        BEGIN
+            SET @AsuntoCorreoEstatus = 'Entregable enviado a corrección';
+
+            SELECT @NombreUsuarioRechazo = Nombre
+              FROM dbo.AP_Usuario
+             WHERE UsuarioID = @idUsuario;
+
+            SELECT @Texto1
+                = 'Le informamos que el entregable: ' + @NombreDocumentoEntregable + ', con periodo: '
+                  + @FechaLimiteAprobacion + ',<BR/>  del contrato: '
+                  + @NombreContrato + ',ha sido rechazado y mandado a correción por el usuario: ' + @NombreUsuarioRechazo,
+                   @Texto2 = 'Nombre del usuario elaborador: ' + @NombreUsuarioElaboro,
+                   @textoFecha = 'Fecha de rechazo del entregable: '
+             
+
+        END;
+
+        INSERT INTO #TemporalDatosCorreo (id,
+                                          NumeroContrato,
+                                          CorreoReceptor,
+                                          FechaName,
+                                          Descripcion)
+        SELECT id,
+               NumeroContrato,
+               t.CorreoReceptor,
+               @textoFecha + '' + +LTRIM(DAY(GETDATE())) + '-' + UPPER(DATENAME(MONTH, GETDATE())) + '-'
+               + CONVERT(VARCHAR(4), YEAR(GETDATE())) AS FechaName,
+               'Correos Receptor Alerta Entregable' AS Descripcion
+          FROM #CorreosUsuarios t
+          JOIN CO_Contrato C
+            ON C.IdContrato = @idContrato
+         WHERE t.CorreoReceptor LIKE '%@%';
+
+        INSERT INTO #TemporalCorreosUsuario (   
+										Para,
+                                        Asunto,
+                                        Mensaje,                                       
+                                        CreadoPor
+                                      )
+
+        SELECT tc.CorreoReceptor,
+               @AsuntoCorreoEstatus,
+               REPLACE(
+                   REPLACE(
+                       REPLACE(
+                           REPLACE(
+                               REPLACE(
+                                   REPLACE(HTML, '##NOMBRE_USUARIO##', tc.CorreoReceptor),
+                                   '##CONTRATO##',
+                                   tc.NumeroContrato),
+                               '##MES##',
+        tc.FechaName),
+                           '#TEXTO1#',
+                           @Texto1),
+                       '#TEXTO2#',
+                       @Texto2),
+                   '#MES#',
+                   FechaName),            
+               @idUsuario             
+          FROM dbo.TA_Correo tac
+          JOIN #TemporalDatosCorreo tc
+            ON tc.Descripcion = tac.Descripcion
+         WHERE tac.Descripcion = 'Correos Receptor Alerta Entregable';
     END;
+
+    /*----------------------------------------------------------------------------------------------------------------------------------------------*/
+    /*																	Para revisión																*/
+    /*----------------------------------------------------------------------------------------------------------------------------------------------*/
+    ELSE IF (@Estatus = 10000) 
+    BEGIN
+        SET @AsuntoCorreoEstatus = 'Enviado a revisión exitosamente';
+        SELECT @Texto1
+            = 'Le informamos que el entregable: ' + @NombreDocumentoEntregable + ',<BR/> con periodo: '
+            + @FechaLimiteAprobacion + ',<BR/> del contrato: ' + @NombreContrato
+              + ', ha sido elaborado y enviado a revisión exitosamente, por el usuario ' +	@NombreUsuarioRealizaAccion,
+               @Texto2 = +	CASE @EstadoSiguiente
+                               WHEN 10001 THEN 'Nombre del siguiente usuario revisor: ' +
+									@NombreUsuarioSiguiente+ '</BR>'
+                               WHEN 10002 THEN 'Nombre del siguiente usuario aprobador: ' +
+									@NombreUsuarioSiguiente + '</BR>'
+                               ELSE '' END,
+               @textoFecha = 'Fecha de envio a revisión: ',
+               @correosElabora = @CorreoUsuarioElaboro
+   
+
+
+        INSERT INTO #TemporalDatosCorreo (id,
+                                          NumeroContrato,
+                                          CorreoReceptor,
+                                          FechaName,
+                                          Descripcion)
+        SELECT 1,
+               NumeroContrato,
+               @correosElabora,
+               @textoFecha + '' + +LTRIM(DAY(GETDATE())) + '-' + UPPER(DATENAME(MONTH, GETDATE())) + '-'
+               + CONVERT(VARCHAR(4), YEAR(GETDATE())) AS FechaName,
+               'Correos Receptor Alerta Entregable' AS Descripcion
+          FROM CO_Contrato C
+         WHERE C.IdContrato = @idContrato;
+
+         INSERT INTO #TemporalCorreosUsuario (   
+										Para,
+                                        Asunto,
+                                        Mensaje,                                       
+                                        CreadoPor
+                                      )
+        SELECT tc.CorreoReceptor,
+               @AsuntoCorreoEstatus,
+               REPLACE(
+                   REPLACE(
+                       REPLACE(
+                           REPLACE(
+                               REPLACE(
+                                   REPLACE(HTML, '##NOMBRE_USUARIO##',REPLACE(tc.CorreoReceptor , '''','' )), --***********************************Correo para usuario receptos se quitan apostrofes
+                                   '##CONTRATO##',
+                                   tc.NumeroContrato),
+                               '##MES##',
+                               tc.FechaName),
+                           '#TEXTO1#',
+                           @Texto1),
+                       '#TEXTO2#',
+                     @Texto2),
+                   '#MES#',
+                   FechaName),              
+               @idUsuario -- CreadoPor - int              
+          FROM dbo.TA_Correo tac
+          JOIN #TemporalDatosCorreo tc
+            ON tc.Descripcion = tac.Descripcion
+         WHERE tac.Descripcion = 'Correos Receptor Alerta Entregable';
+    END;
+		
+	-- SUSTITUIR EL AÑO POR EL AÑO ACTUAL
+	UPDATE #TemporalCorreosUsuario 
+	SET Mensaje = REPLACE(Mensaje,N'© 2018,',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),','))
+	
+	UPDATE #TemporalCorreosUsuario 
+	SET Mensaje = REPLACE(Mensaje,N'&copy; 2018,',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),','))
 
 	-- TABLA 1 RETONAR CORREOS 
 	SELECT 
@@ -381,5 +356,5 @@ BEGIN
     Asunto,
     Mensaje,                                       
     CreadoPor
-	FROM #CorreosUsuario
+	FROM #TemporalCorreosUsuario
 END;

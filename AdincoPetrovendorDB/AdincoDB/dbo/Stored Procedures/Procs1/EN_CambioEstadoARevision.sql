@@ -47,6 +47,14 @@ BEGIN
 		CreadoPor INT
 	);  
 
+    CREATE TABLE #TempCorreos (
+    Para NVARCHAR(500),
+    Asunto NVARCHAR(500),
+    Mensaje NVARCHAR(MAX),
+    De VARCHAR(200),
+    CreadoPor INT
+    )
+
     DECLARE @ActividadSiguienteID INT,
             @ActividadIDActual INT,
             @IdLineaTiempo INT,
@@ -336,13 +344,13 @@ BEGIN
                 WHERE Id = @IdUrl
                       AND Enviado IS NULL;
             END;
-
-			INSERT INTO #CorreosUsuario (   
+			
+            INSERT INTO #TempCorreos (   
 									Para,
                                     Asunto,
                                     Mensaje,                                       
                                     CreadoPor
-                                      )
+                                      )			
             EXEC [sp_EN_EnviaCorreos] @idUsuario,
                                       @idContrato,
                                       @idInstanciaEntregable,
@@ -350,7 +358,19 @@ BEGIN
                                       @ActividadSiguienteID,
                                       @ActividadIDActual;
 
-			INSERT INTO #CorreosUsuario (   
+            INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
+            SELECT Para, Asunto, Mensaje, CreadoPor
+            FROM #TempCorreos;
+
+            TRUNCATE TABLE #TempCorreos;
+
+
+			INSERT INTO #TempCorreos (   
 									Para,
                                     Asunto,
                                     Mensaje,                                       
@@ -362,6 +382,15 @@ BEGIN
                                       10000,
                                       @ActividadSiguienteID,
                                       @ActividadIDActual; --Correo para el elaborador, cumplio su trabajo
+
+            INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
+            SELECT Para, Asunto, Mensaje, CreadoPor
+            FROM #TempCorreos;
 
             /*EL ENTREGABLABLE FINALIZA ESTADO ELABORACIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
             EXEC dbo.SP_EN_GuardarAvanceEntregableSeguimiento @EntregableInstanciaId = @idInstanciaEntregable, -- int
