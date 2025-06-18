@@ -1,26 +1,24 @@
-﻿-- =============================================
--- Author:		Reyna Olvera
--- Create date: 10/10/2017
--- Description:	Para AppMovil extrae DocumentoAprobacion
--- =============================================
-CREATE PROCEDURE AM_ExtraeDocumento
-	-- Add the parameters for the stored procedure here
-	@idUser int,
-	@idEstatus int,
-	@idTipoAprobacion int
-AS
-BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_SEL_APP_GuiaDerechosArco'
+    )
+    DROP PROCEDURE USP_SEL_APP_GuiaDerechosArco;
+GO
+-- =============================================  
+-- Author: Reyna Olvera
+-- Create date:   20250618
+-- Description:  
+-- =============================================  
+CREATE PROCEDURE [dbo].[USP_SEL_APP_GuiaDerechosArco]
+AS 
+  BEGIN 
+      SET NOCOUNT ON; 
 
-  Select 
-TaOpe.idDocumento as 'Documento' from AM_Aprobacion APro
-inner join TA_tarea TaTar on Apro.IdTareaOrigen= TaTar.IdTarea
-inner join TA_TareaOperacion TaTarOpe on TaTar.IdTarea=TaTarOpe.idTarea
-inner join Ta_Operacion TaOpe on TaTarOpe.idoperacion=TaOpe.idOperacion
-where idUsuario =@idUser and Apro.IdStatusAprobacionM = @idEstatus and Apro.idtipoAprobacion=@idTipoAprobacion
+	SELECT  DerechosArco FROM APP_GuiaDerechosArco (NOLOCK) WHERE ACTIVO=1
 
-
-END
-
+  END; 
