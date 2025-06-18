@@ -2802,9 +2802,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\SP_RPT_MM_ConsultaSolicitudesPedido_MasterDetail.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\S_HistorialBibliotecaDocumentos" />
     <Build Include="dbo\Stored Procedures\Procs2\INS_AP_BitacoraArchivos" />
-    <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenControlPresupuestalContratoCIEP" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenInformacionContrato" />
-    <Build Include="dbo\Stored Procedures\Procs2\SEL_CO_ObtenControlPresupuestalContrato" />
     <Build Include="dbo\Stored Procedures\Procs2\SEL_MM_MostrarLocalidad" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosProveedor.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\SP_TA_UsuariosRolAprobacionFactura.sql" />
@@ -2996,6 +2994,11 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_TA_AprobacionesPendientesPedidoPorUsuario.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_UPD_TA_ReasignacionAprobacionesPedidoPendientesUsuario.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_S_InformacionAprobacionesPedido.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_PV_GuardarConfiguracionPorOperadora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SEL_CO_ObtenControlPresupuestalContratoCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_PV_ActulizarConfiguracionPorOperadora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_PV_ConsultaConfiguracionesPorOperadora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SEL_CO_ObtenControlPresupuestalContrato.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
