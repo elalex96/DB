@@ -1,10 +1,18 @@
-﻿-- =============================================
+﻿USE Adinco
+GO
+DROP PROCEDURE IF EXISTS sp_EN_EnviaCorreos
+GO
+-- =============================================
 -- Author:		Reynha Olvera
 -- Create date:20180927
 -- Description:	Envia correos a receptores de alterna, modulo entregables
 -- =============================================
-
-CREATE PROCEDURE [dbo].[sp_EN_EnviaCorreos] --10061,3, 44815,10004,10005,10050
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: 16/06/2025  
+-- Description: SE RETORNA TABLA PARA ENVIO DE CORREOS CON DOBLE AUTENTIFICACIÓN
+-- =============================================  
+CREATE PROCEDURE [dbo].[sp_EN_EnviaCorreos]
     @idUsuario INT,
     @idContrato INT,
     @idInstanciaEntregable INT,
@@ -30,6 +38,13 @@ BEGIN
                                        CorreoReceptor NVARCHAR(MAX),
                                        FechaName NVARCHAR(MAX),
                                        Descripcion NVARCHAR(MAX));
+	CREATE TABLE #TemporalCorreosUsuario (  
+	Para VARCHAR(500),  
+	Asunto VARCHAR(500),  
+	Mensaje NVARCHAR(MAX),  
+	De VARCHAR(200),
+	CreadoPor INT
+	);  
 
 	DECLARE @correosReceptorAlerta NVARCHAR(MAX),
             @Texto1                NVARCHAR(MAX),
@@ -230,22 +245,14 @@ BEGIN
             ON C.IdContrato = @idContrato
          WHERE t.CorreoReceptor LIKE '%@%';
 
-        INSERT INTO dbo.S_Notificacion (IdNotificacion,
-                                        Para,
+        INSERT INTO #TemporalCorreosUsuario (   
+										Para,
                                         Asunto,
-                                        Mensaje,
-                                        FechaProgramadaEnvio,
-                                        Enviada,
-                                        FechaEnvio,
-                                        CreadoPor,
-                                        CreadoEl,
-                                        ModificadoPor,
-                                        ModificadoEl,
-                                        De,
-                                        EN_MsjEnviado)
+                                        Mensaje,                                       
+                                        CreadoPor
+                                      )
 
-        SELECT (SELECT MAX(IdNotificacion) + tc.id FROM dbo.S_Notificacion),
-               tc.CorreoReceptor,
+        SELECT tc.CorreoReceptor,
                @AsuntoCorreoEstatus,
                REPLACE(
                    REPLACE(
@@ -262,16 +269,8 @@ BEGIN
                        '#TEXTO2#',
                        @Texto2),
                    '#MES#',
-                   FechaName),
-               GETDATE(), 
-               0,
-               NULL,
-               @idUsuario,
-               GETDATE(), 
-               @idUsuario,
-               GETDATE(),
-               'notificaciones@adinco.mx', 
-               0
+                   FechaName),            
+               @idUsuario             
           FROM dbo.TA_Correo tac
           JOIN #TemporalDatosCorreo tc
             ON tc.Descripcion = tac.Descripcion
@@ -313,21 +312,13 @@ BEGIN
           FROM CO_Contrato C
          WHERE C.IdContrato = @idContrato;
 
-        INSERT INTO dbo.S_Notificacion (IdNotificacion,
-                                        Para,
+         INSERT INTO #TemporalCorreosUsuario (   
+										Para,
                                         Asunto,
-                                        Mensaje,
-                                        FechaProgramadaEnvio,
-                                        Enviada,
-                                        FechaEnvio,
-                                        CreadoPor,
-                                        CreadoEl,
-                                        ModificadoPor,
-                                        ModificadoEl,
-                                        De,
-                                        EN_MsjEnviado)
-        SELECT (SELECT MAX(IdNotificacion) + tc.id FROM dbo.S_Notificacion),
-               tc.CorreoReceptor,
+                                        Mensaje,                                       
+                                        CreadoPor
+                                      )
+        SELECT tc.CorreoReceptor,
                @AsuntoCorreoEstatus,
                REPLACE(
                    REPLACE(
@@ -344,20 +335,26 @@ BEGIN
                        '#TEXTO2#',
                      @Texto2),
                    '#MES#',
-                   FechaName),
-               GETDATE(), -- FechaProgramadaEnvio - datetime
-               0, -- Enviada - bit
-               NULL, -- FechaEnvio - datetime
-               @idUsuario, -- CreadoPor - int
-               GETDATE(), -- CreadoEl - datetime
-               @idUsuario, -- ModificadoPor - int
-            GETDATE(), -- ModificadoEl - datetime
-               'notificaciones@adinco.mx', -- De - varchar(100)
-               0 -- EN_MsjEnviado - bit
+                   FechaName),              
+               @idUsuario -- CreadoPor - int              
           FROM dbo.TA_Correo tac
           JOIN #TemporalDatosCorreo tc
             ON tc.Descripcion = tac.Descripcion
          WHERE tac.Descripcion = 'Correos Receptor Alerta Entregable';
     END;
+		
+	-- SUSTITUIR EL AÑO POR EL AÑO ACTUAL
+	UPDATE #TemporalCorreosUsuario 
+	SET Mensaje = REPLACE(Mensaje,N'© 2018,',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),','))
+	
+	UPDATE #TemporalCorreosUsuario 
+	SET Mensaje = REPLACE(Mensaje,N'&copy; 2018,',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),','))
 
+	-- TABLA 1 RETONAR CORREOS 
+	SELECT 
+	Para,
+    Asunto,
+    Mensaje,                                       
+    CreadoPor
+	FROM #TemporalCorreosUsuario
 END;
