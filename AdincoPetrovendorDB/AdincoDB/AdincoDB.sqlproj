@@ -4024,6 +4024,8 @@
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_AP_ObtenDatosCorreoErrorListaNegra.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_INS_AP_RevisionSituacionSATCN.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_INS_AP_EnvioCorreoSiNuevaSituacion.sql" />
+    <Build Include="dbo\Tables\Tables1\APP_GuiaDerechosArco.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_APP_GuiaDerechosArco.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
