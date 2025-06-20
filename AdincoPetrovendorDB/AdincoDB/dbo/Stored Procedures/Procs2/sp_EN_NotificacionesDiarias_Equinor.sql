@@ -1,4 +1,13 @@
-﻿CREATE PROCEDURE dbo.sp_EN_NotificacionesDiarias_Equinor
+﻿USE [Adinco]
+GO
+DROP PROCEDURE IF EXISTS sp_EN_NotificacionesDiarias_Equinor
+GO
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: 19/06/2025  
+-- Description: SE RETORNA TABLA PARA ENVIO DE CORREOS CON DOBLE AUTENTIFICACIÓN
+-- ============================================= 
+CREATE PROCEDURE dbo.sp_EN_NotificacionesDiarias_Equinor
 AS
 BEGIN
 -- =============================================
@@ -385,41 +394,14 @@ DECLARE
 		Destinatario,
 		TipoCorreo,
 		Ruta
-
---SELECT * FROM #NotificacionesFinales
-
+	
 	SELECT
-		@MaxNotificacion = MAX(IdNotificacion)
-	FROM
-		S_Notificacion
-
-	INSERT INTO S_Notificacion
-	(
-		IdNotificacion,
-		Para,
-		Asunto,
-		Mensaje,
-		FechaProgramadaEnvio,
-		Enviada,
-		CreadoPor,
-		CreadoEl,
-		De,
-		EN_MsjEnviado
-	)
-	SELECT
-		ISNULL(@MaxNotificacion,0) + ID,	-- IdNotificacion
---		'barbara.arranaga@adinco.mx', 
-		REPLACE(Destinatario,',',';'),						-- Para
-		CASE WHEN N.NumCorreo = 1 THEN C.Asunto
+		Para = REPLACE(N.Destinatario,',',';'),						
+		Asunto = CASE WHEN N.NumCorreo = 1 THEN C.Asunto
 			ELSE C.Asunto + ' Continuación ' +  LTRIM(N.NumCorreo)
-		END	AS	Asunto,
-		REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.Tabla,'')),'##ENLACE_DETALLE##',N.Ruta),'##numcorreo##',LTRIM(N.NumCorreo)),
-		GETDATE(),
-		0,
-		1,
-		GETDATE(),
-		'notificaciones@adinco.mx',
-		0
+		END,
+		Mensaje = REPLACE(REPLACE(REPLACE(REPLACE(C.HTML,'##NOMBRE_USUARIO##', N.NombreDestinatario),'{tablaEntregables}', isnull(N.Tabla,'')),'##ENLACE_DETALLE##',N.Ruta),'##numcorreo##',LTRIM(N.NumCorreo)),
+		CreadoPor = 0
 	FROM
 		#NotificacionesFinales	N
 	JOIN
