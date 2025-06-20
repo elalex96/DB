@@ -33,7 +33,7 @@ BEGIN
     FROM dbo.AP_Calendario
     WHERE IdFecha = @HOY;
 
-	IF @NombreDia = 'Viernes'
+	IF @NombreDia = 'Lunes'
 	BEGIN
 		INSERT INTO #TemporalCorreosUsuario (   
 										Para,
