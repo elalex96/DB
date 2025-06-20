@@ -33,7 +33,7 @@ BEGIN
     FROM dbo.AP_Calendario
     WHERE IdFecha = @HOY;
 
-	IF @NombreDia = 'Lunes'
+	IF @NombreDia = 'Viernes'
 	BEGIN
 		INSERT INTO #TemporalCorreosUsuario (   
 										Para,
@@ -62,6 +62,9 @@ BEGIN
 		EXEC sp_EN_NotificacionesDiarias_Equinor
 	END
 
+	UPDATE #TemporalCorreosUsuario 
+	SET Mensaje = REPLACE(Mensaje,N'&copy; 2019, Todos los derechos reservados',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),', Todos los derechos reservados'))
+	
 	SELECT 
 	Para,
 	Asunto,
