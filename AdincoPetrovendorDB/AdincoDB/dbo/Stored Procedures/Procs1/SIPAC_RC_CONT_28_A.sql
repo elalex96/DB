@@ -29,7 +29,7 @@ AS
         -- Description: Se agrega información para las columnas nuevas apartir de la 28_06
         -- =============================================
         SET NOCOUNT ON;
-
+	
 		CREATE TABLE #TempResultado(
 			Identificador INT PRIMARY KEY IDENTITY(1,1),
 			RF_00 VARCHAR(500),
@@ -43,14 +43,14 @@ AS
             RC28_05 INT,
             RC28_07 VARCHAR(5000),
             RC28_08  DECIMAL(20, 2),
-            RC28_09 DECIMAL,
+            RC28_09 DECIMAL(20, 4),
             RC28_10 INT,
             RC28_11 VARCHAR(5000) ,
             RC28_12 DECIMAL(20, 2),
             RC28_13 VARCHAR(500),
 			IdPresupuesto INT);
 
-			CREATE TABLE #TempConsecutivos(
+		CREATE TABLE #TempConsecutivos(
 			Identificador INT ,
 			Consecutivo INT )
 
