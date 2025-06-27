@@ -1,4 +1,14 @@
-﻿
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'P_co_sap_importbitacoranotificacion'
+    )
+    DROP PROCEDURE P_co_sap_importbitacoranotificacion;
+GO
 --===========================================
 --Modificador: Neri del Angel
 --Fecha:       30 de Marzo del 20222
@@ -9,8 +19,7 @@
 --             *Se agrega creacion de tabla temporal #tmpVendorBlank al principio del PROC
 --===========================================
 -- p_CO_SAP_ImportBitacoraNotificacion 7099,0
-CREATE PROC [dbo].[P_co_sap_importbitacoranotificacion] @pId             INT,
-                                                        @pIdNotificacion INT out
+CREATE PROC [dbo].[P_co_sap_importbitacoranotificacion] @pId INT
 AS
   BEGIN
       CREATE TABLE #tmpvendorblank
@@ -41,7 +50,6 @@ AS
                      ON co_sap_correosrespuesta.idcontratista = c.idcontratista
 	  WHERE  ISNULL(co_sap_importbitacora.notificacionenviada, 0) = 0
 	  GROUP BY ISNULL(LTRIM(RTRIM(co_sap_correosrespuesta.correo)), '')
-
 	  
       SELECT TOP 1
              @asunto = Isnull(html.asunto, '')
@@ -65,6 +73,7 @@ AS
              INNER JOIN [co_sap_imapconfiguracion] imap (nolock)
                      ON imap.idcontratista = c.idcontratista
       WHERE  Isnull(b.notificacionenviada, 0) = 0
+
 
       -- Si la fecha de ultimo envío tiene menos de un día de diferencia, entonces salir del proceso
       IF ( Datediff(day, Isnull(@fechaUltimoEnvio, '20210101'), Getdate()) < 1 )
@@ -163,38 +172,12 @@ AS
 			  SET @mensaje = Replace(@mensaje, '{2}', '')
 		  END
 
-			SELECT @pIdNotificacion = Isnull(Max(idnotificacion), 0) + 1
-			FROM   s_notificacion
 
 			IF Isnull(@mensaje, '') <> ''
 			  BEGIN
-				  INSERT INTO s_notificacion
-							  (idnotificacion,
-							   para,
-							   asunto,
-							   mensaje,
-							   fechaprogramadaenvio,
-							   enviada,
-							   fechaenvio,
-							   creadopor,
-							   creadoel,
-							   modificadopor,
-							   modificadoel,
-							   de,
-							   en_msjenviado)
-				  SELECT @pIdNotificacion,
-						 @para,
-						 @asunto,
-						 Isnull(@mensaje, ''),
-						 Dateadd(hour, -3, Getdate()),
-						 0,
-						 NULL,
-						 1,
-						 Getdate(),
-						 NULL,
-						 NULL,
-						 @de,
-						 NULL
+
+			  SELECT @para AS Para, @asunto AS Asunto, @mensaje AS Mensaje
+				  
 			  END
 
 			--Marcar todo como enviado
@@ -206,3 +189,4 @@ AS
 			SET    fechaultimoenvio = Getdate()
 			WHERE  idcontratista = @idContratista
 	END 
+
