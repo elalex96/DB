@@ -1,4 +1,8 @@
-﻿-- =============================================  
+﻿USE [Adinco]
+GO
+DROP PROCEDURE IF EXISTS EN_CambioEstadoARevision
+GO
+-- =============================================  
 -- Author:   Daniel AC  
 -- Update date: 20/10/2020  
 -- Description: Se agrego métodos para avance de entregable instancia EQUINOR
@@ -6,6 +10,11 @@
 -- Author:   Luis David De La Cruz
 -- Update date: 20/10/2020  
 -- Description: Se agrego métodos para avance de entregable instancia EQUINOR
+-- ============================================= 
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: 16/06/2025  
+-- Description: SE RETORNA TABLA PARA ENVIO DE CORREOS CON DOBLE AUTENTIFICACIÓN
 -- ============================================= 
 CREATE PROCEDURE [dbo].[EN_CambioEstadoARevision] --10061,3,285713,16876,'',''
     @idUsuario INT,
@@ -29,6 +38,22 @@ BEGIN
         correos VARCHAR(MAX),
         NombreUsuario VARCHAR(MAX)
     );
+
+	CREATE TABLE #CorreosUsuario (  
+		Para VARCHAR(500),  
+		Asunto VARCHAR(500),  
+		Mensaje NVARCHAR(MAX),  
+		De VARCHAR(200),
+		CreadoPor INT
+	);  
+
+    CREATE TABLE #TempCorreos (
+    Para NVARCHAR(500),
+    Asunto NVARCHAR(500),
+    Mensaje NVARCHAR(MAX),
+    De VARCHAR(200),
+    CreadoPor INT
+    )
 
     DECLARE @ActividadSiguienteID INT,
             @ActividadIDActual INT,
@@ -163,7 +188,6 @@ BEGIN
            OR (@BitPasaAprobacion = 1)
        )
     BEGIN
-        --select '[sp_En_SubeHistoricoAprueba]'    
         --Finalizar el entregable
         EXEC [sp_En_SubeHistoricoAprueba] @idUsuario,
                                           @idContrato,
@@ -187,6 +211,12 @@ BEGIN
         BEGIN
             --select '[sp_En_DirectoAcprobacion]'
             --hacer un clone del sp
+			INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
             EXEC [sp_En_DirectoAcprobacion] @idUsuario,
                                             @idContrato,
                                             @idInstanciaEntregable,
@@ -194,7 +224,7 @@ BEGIN
                                             @ComentarioUsuarioElaborador,
                                             @URLRepositorio;
 
-   /*EL ENTREGABLABLE FINALIZA ESTADO REVISIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
+       /*EL ENTREGABLABLE FINALIZA ESTADO REVISIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
             EXEC dbo.SP_EN_GuardarAvanceEntregableSeguimiento @EntregableInstanciaId = @idInstanciaEntregable, -- int
                                                               @ClaveAvance = 'COMPLETADO',                     -- float
                                                               @UsuarioId = @idUsuario,                         -- int
@@ -205,7 +235,7 @@ BEGIN
         END;
         ELSE
         BEGIN
-            --select 'else'
+
             UPDATE EN_InstanciasEntregable
             SET ActividadID = @ActividadSiguienteID,
                 FechaElaboro = GETDATE()
@@ -289,6 +319,12 @@ BEGIN
                       AND Enviado IS NULL
                 ORDER BY NombreUsuario DESC;
 
+				INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
                 EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
                                                             @idContrato,
                                                             @idInstanciaEntregable,
@@ -308,7 +344,13 @@ BEGIN
                 WHERE Id = @IdUrl
                       AND Enviado IS NULL;
             END;
-
+			
+            INSERT INTO #TempCorreos (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )			
             EXEC [sp_EN_EnviaCorreos] @idUsuario,
                                       @idContrato,
                                       @idInstanciaEntregable,
@@ -316,12 +358,39 @@ BEGIN
                                       @ActividadSiguienteID,
                                       @ActividadIDActual;
 
+            INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
+            SELECT Para, Asunto, Mensaje, CreadoPor
+            FROM #TempCorreos;
+
+            TRUNCATE TABLE #TempCorreos;
+
+
+			INSERT INTO #TempCorreos (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
             EXEC [sp_EN_EnviaCorreos] @idUsuario,
                                       @idContrato,
                                       @idInstanciaEntregable,
                                       10000,
                                       @ActividadSiguienteID,
                                       @ActividadIDActual; --Correo para el elaborador, cumplio su trabajo
+
+            INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
+            SELECT Para, Asunto, Mensaje, CreadoPor
+            FROM #TempCorreos;
 
             /*EL ENTREGABLABLE FINALIZA ESTADO ELABORACIÓN, SE REGISTRA EL 100% DE AVANCE DEL SEGUIMIENTO DEL ENTREGABLE INSTANCIA*/
             EXEC dbo.SP_EN_GuardarAvanceEntregableSeguimiento @EntregableInstanciaId = @idInstanciaEntregable, -- int
@@ -334,4 +403,12 @@ BEGIN
         END;
 
     END;
+
+	-- TABLA 1 RETONAR CORREOS 
+	SELECT 
+	Para,
+    Asunto,
+    Mensaje,                                       
+    CreadoPor
+	FROM #CorreosUsuario
 END;
