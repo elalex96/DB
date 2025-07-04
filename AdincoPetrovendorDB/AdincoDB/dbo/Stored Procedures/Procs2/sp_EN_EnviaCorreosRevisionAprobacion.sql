@@ -16,6 +16,11 @@ GO
 -- Create date:16052025
 -- Description:	retorno de envio de los correos a enviar
 -- =============================================
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: 16/06/2025  
+-- Description: SE RETORNA CORREOS PARA ENVIO CON DOBLE AUTENTIFICACIÓN
+-- =============================================  
 CREATE PROCEDURE [dbo].[sp_EN_EnviaCorreosRevisionAprobacion] 
     @idUsuario INT,
     @idContrato INT,
@@ -90,7 +95,6 @@ BEGIN
         SET @Correo = REPLACE(@Correo, '##TIPO_OPERACION_E##', isnull(@español,''));
         SET @Correo = REPLACE(@Correo, '##TIPO_OPERACION_I##', isnull(@ingles,''));
 
-		--select [Correo] = @Correo
 
     END;
     IF (@TipoCorreo	=	13) --Avisos a Elaborador como va el flujo de aprobaciobnes
@@ -129,14 +133,14 @@ BEGIN
         SET @Correo = REPLACE(@Correo, '##COMENTARIOGENERAL##', @NombreInstancia);
         SET @Correo = REPLACE(@Correo, '##URL_TAREA##', @enlaceDetalle);
     END;
+	
+	-- SUSTITUIR EL AÑO POR EL AÑO ACTUAL	 
+	SET @Correo = REPLACE(@Correo,N'© 2018,',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),','))
+	SET @Correo = REPLACE(@Correo,N'&copy; 2018,',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),','))
 
 	SELECT @Para AS Para,
 			SUBSTRING( RTRIM(RTRIM(REPLACE(REPLACE(@Asunto, CHAR(10), ' '), CHAR(13), ' '))),0,500) AS Asunto, 
             @Correo AS Mensaje, 
-            GETDATE() AS FechaProgramadaEnvio, 
-            0 AS Enviada,
-            NULL AS FechaEnvio, 
-            @idUsuario AS CreadoPor,
-            GETDATE() AS CreadoEl, 
-            @CuentaRegistro AS De;
+            @idUsuario AS CreadoPor
+
 END;

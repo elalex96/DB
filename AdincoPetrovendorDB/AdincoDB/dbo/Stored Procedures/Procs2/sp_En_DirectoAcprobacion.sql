@@ -1,4 +1,13 @@
-﻿CREATE PROCEDURE sp_En_DirectoAcprobacion
+﻿USE Adinco
+GO
+DROP PROCEDURE IF EXISTS sp_En_DirectoAcprobacion
+GO
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: 16/06/2025  
+-- Description: SE RETORNA TABLA PARA ENVIO DE CORREOS CON DOBLE AUTENTIFICACIÓN
+-- =============================================  
+CREATE PROCEDURE sp_En_DirectoAcprobacion
 (
 	@idUsuario INT,
     @idContrato INT,
@@ -27,6 +36,14 @@ BEGIN
 			@FechaInstancia		VARCHAR(1500),
 			@EsEntregableGrupo INT = 0,
             @IdGrupo INT = 0
+
+	CREATE TABLE #CorreosUsuario (  
+		Para VARCHAR(500),  
+		Asunto VARCHAR(500),  
+		Mensaje NVARCHAR(MAX),  
+		De VARCHAR(200),
+		CreadoPor INT
+	);  
 
     SELECT @ActividadIDActual = ActividadID
     FROM dbo.EN_InstanciasEntregable
@@ -142,6 +159,12 @@ BEGIN
 
 IF @EsEntregableGrupo = 0
 BEGIN
+	INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
     EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
                                                 @idContrato,
                                                 @idInstanciaEntregable,
@@ -172,6 +195,12 @@ BEGIN
 	WHERE
 		GU.IdGrupo	=	@IdGrupo
 
+	INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
 	EXEC [sp_EN_EnviaCorreosRevisionAprobacion] @idUsuario,
                                 @idContrato,
                                 @idInstanciaEntregable,
@@ -188,6 +217,13 @@ BEGIN
 
 END
   
+ INSERT INTO #CorreosUsuario (   
+										Para,
+                                        Asunto,
+                                        Mensaje,                                       
+                                        CreadoPor
+                                      )
+
 EXEC [sp_EN_EnviaCorreos]	@idUsuario,
 							@idContrato,
 							@idInstanciaEntregable,
@@ -195,5 +231,12 @@ EXEC [sp_EN_EnviaCorreos]	@idUsuario,
 							@ActividadSiguienteID,
 							@ActividadIDActual;--Correo para el elaborador, cumplio su trabajo  
 
+-- TABLA 1 RETONAR CORREOS 
+	SELECT 
+	Para,
+    Asunto,
+    Mensaje,                                       
+    CreadoPor
+	FROM #CorreosUsuario
 
 END;

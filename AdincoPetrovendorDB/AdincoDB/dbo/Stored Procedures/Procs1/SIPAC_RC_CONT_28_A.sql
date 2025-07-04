@@ -1,10 +1,13 @@
 IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SIPAC_RC_CONT_28_A'
-)
-    DROP PROCEDURE SIPAC_RC_CONT_28_A
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SIPAC_RC_CONT_28_A'
+    )
+    DROP PROCEDURE SIPAC_RC_CONT_28_A;
 GO
 CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_28_A]
     @Contrato      INT,
@@ -26,6 +29,31 @@ AS
         -- Description: Se agrega información para las columnas nuevas apartir de la 28_06
         -- =============================================
         SET NOCOUNT ON;
+
+		CREATE TABLE #TempResultado(
+			Identificador INT PRIMARY KEY IDENTITY(1,1),
+			RF_00 VARCHAR(500),
+            RI_00  VARCHAR(500),
+            RC11_01  VARCHAR(500),
+            RF01_01 VARCHAR(500),
+            RC28_01 VARCHAR(500),
+            RC28_02 VARCHAR(500),
+            RC28_03 INT,
+            RC28_04 INT,
+            RC28_05 INT,
+            RC28_07 VARCHAR(5000),
+            RC28_08  DECIMAL(20, 2),
+            RC28_09 DECIMAL,
+            RC28_10 INT,
+            RC28_11 VARCHAR(5000) ,
+            RC28_12 DECIMAL(20, 2),
+            RC28_13 VARCHAR(500),
+			IdPresupuesto INT);
+
+			CREATE TABLE #TempConsecutivos(
+			Identificador INT ,
+			Consecutivo INT )
+
         DECLARE
             @Peso           INT = 1,
             @USD            INT = 2,
@@ -38,6 +66,8 @@ AS
 			@CvTipoDocFacturacionPedimento INT	= 2,
 			@CvTipoDocFacturacionComprobante INT	= 3,
 			@EstadoAprobado INT	= 10004;
+			
+
 
         SELECT
             @IdTipoContrato = CO_CONTRATO.IdTipoContrato,
@@ -53,25 +83,26 @@ AS
         WHERE
             CO_CONTRATO.IdContrato = @Contrato;
 
-        SELECT DISTINCT
-            ResultUnion.RF_00,
-            ResultUnion.RI_00,
-            ResultUnion.RC11_01,
-            ResultUnion.RF01_01,
-            ResultUnion.RC28_01,
-            ResultUnion.RC28_02,
-            ResultUnion.RC28_03,
-            ResultUnion.RC28_04,
-            ResultUnion.RC28_05,
-            ResultUnion.RC28_07,
-            ResultUnion.RC28_08,
-            ResultUnion.RC28_09,
-            ResultUnion.RC28_10,
-            ResultUnion.RC28_11,
-            ResultUnion.RC28_12,
-            ResultUnion.RC28_13
-        FROM
-            (
+
+INSERT INTO #TempResultado (
+    RF_00,
+    RI_00,
+    RC11_01,
+    RF01_01,
+    RC28_01,
+    RC28_02,
+    RC28_03,
+    RC28_04,
+    RC28_05,
+    RC28_07,
+    RC28_08,
+    RC28_09,
+    RC28_10,
+    RC28_11,
+    RC28_12,
+    RC28_13,
+	IdPresupuesto
+)
                 --EPT ligadas a facturas PUE
                 SELECT
                     @IDSIPAC													AS [RF_00],
@@ -114,7 +145,8 @@ AS
 								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
 						END
                        )                                                       AS RC28_12,--Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
-                    ''                                                         AS RC28_13 --Metodología utilizada
+                    ''                                                         AS RC28_13, --Metodología utilizada
+					P.IdPresupuesto
                 FROM
                     dbo.FI_EstudioPreciosTransfer  EPT (NOLOCK)
                     JOIN
@@ -195,7 +227,8 @@ AS
                     P.CIEP,
                     CO_Rubro.NombreRubro,
                     CO_TareaPetrolera.TareaPetrolera,
-					otraMoneda.TipoCambio
+					otraMoneda.TipoCambio,
+					P.IdPresupuesto
                 --EPT ligado a Pedimentos de Importación o Complemento de Proveedor Extranjero
                 UNION
                 --
@@ -250,7 +283,8 @@ AS
 								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
 						END
                        )                              AS RC28_12,	-- Monto en pesos Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
-                    ''                                AS RC28_13    --Metodología utilizada
+                    ''                                AS RC28_13,    --Metodología utilizada
+					P.IdPresupuesto
                 FROM
                     dbo.FI_EstudioPreciosTransfer   EPT (NOLOCK)
                     JOIN
@@ -301,7 +335,7 @@ AS
                     AND EPT.FechaCargaSIPAC = @Mes
                     AND R.CvTipoDocFacturacion IN (
                                                    @CvTipoDocFacturacionPedimento,   @CvTipoDocFacturacionComprobante
-                                                  )
+                                                 )
                     AND ISNULL(CONVERT(INT, EPT.ProcesadoSIPAC), 0) = 0		 
 					-- Validar la existencia en FI_TransferFactura
 					AND EXISTS (
@@ -347,7 +381,8 @@ AS
                     P.CIEP,
                     CO_Rubro.NombreRubro,
                     CO_TareaPetrolera.TareaPetrolera,
-					otraMoneda.TipoCambio
+					otraMoneda.TipoCambio,
+					P.IdPresupuesto
                 --EPT ligado al Complemento de Pago de la factura PPD principal relacionado al gasto
                 UNION
                 --
@@ -378,7 +413,7 @@ AS
 						END
 					)														   AS RC28_08,    --Importe en factura (CFDI o Invoice),USD
                     CO_TipoCambioDiario.TipoCambio                             AS RC28_09,   --Tipo de cambio (pesos por USD)
-                    CO_AnioContractual.Anio                                    AS RC28_10,   --Año del Estudio de Precios de Transferencia
+                    CO_AnioContractual.Anio                    AS RC28_10,   --Año del Estudio de Precios de Transferencia
                     CASE
                         WHEN P.CIEP = @EsCiep
                             THEN ISNULL(CO_Rubro.NombreRubro, '')
@@ -395,7 +430,8 @@ AS
 								CAST(R.MontoRegistro * ISNULL(otraMoneda.TipoCambio, 1) * ISNULL(CO_TipoCambioDiario.TipoCambio, 1) AS DECIMAL(20, 2)) -- Otras monedas a Pesos (MontoRegistro * TipoCambioMoneda * TipoCambioPesos)
 						END
 					)														   AS RC28_12,   -- Monto en pesos Colocar el importe en pesos (MXN) de la operacion analizada en el Estudio de Precios de Transferencia
-                    ''                                                         AS RC28_13    -- Metodología utilizada
+                    ''                                                         AS RC28_13 ,   -- Metodología utilizada
+					P.IdPresupuesto
                 FROM
                     dbo.FI_EstudioPreciosTransfer  EPT (NOLOCK)
                     JOIN
@@ -489,8 +525,45 @@ AS
                     P.CIEP,
                     CO_Rubro.NombreRubro,
                     CO_TareaPetrolera.TareaPetrolera,
-					otraMoneda.TipoCambio
-            ) AS ResultUnion
+					otraMoneda.TipoCambio,
+					P.IdPresupuesto;
+INSERT INTO 
+#TempConsecutivos(
+			Identificador  ,
+			Consecutivo  )
+    SELECT 
+        Identificador,
+        ROW_NUMBER() OVER (
+            PARTITION BY RC28_07, RC28_02, RC28_04, RC28_05,RC28_10, IdPresupuesto
+            ORDER BY (SELECT NULL)
+        ) AS Consecutivo
+    FROM #TempResultado;
+
+UPDATE t
+SET RC28_07 = CONCAT(RC28_07,' ',  c.Consecutivo)
+FROM #TempResultado t
+JOIN #TempConsecutivos c ON t.Identificador = c.Identificador
+WHERE  c.Consecutivo > 1; 
+	
+        SELECT DISTINCT
+            ResultUnion.RF_00,
+            ResultUnion.RI_00,
+            ResultUnion.RC11_01,
+            ResultUnion.RF01_01,
+            ResultUnion.RC28_01,
+            ResultUnion.RC28_02,
+            ResultUnion.RC28_03,
+            ResultUnion.RC28_04,
+            ResultUnion.RC28_05,
+            ResultUnion.RC28_07,
+            ResultUnion.RC28_08,
+            ResultUnion.RC28_09,
+            ResultUnion.RC28_10,
+            ResultUnion.RC28_11,
+            ResultUnion.RC28_12,
+            ResultUnion.RC28_13
+        FROM #TempResultado AS ResultUnion
         ORDER BY
             ResultUnion.RC28_03;
     END;
+

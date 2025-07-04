@@ -37,6 +37,11 @@ BEGIN
 -- Update date: 16/05/2024 
 -- Description: Modiciación para retornar los usuarios a los que se notificaran cambios
 -- =============================================
+-- =============================================  
+-- Author:  Daniel AC
+-- Create date: 16/06/2025  
+-- Description: SE RETORNA TABLA PARA ENVIO DE CORREOS CON DOBLE AUTENTIFICACIÓN
+-- ============================================= 
     SET NOCOUNT ON;
     DECLARE @idVersion INT,
             @contrato INT,
@@ -60,21 +65,13 @@ BEGIN
             @IsAdmin INT,
             @EstadoActual VARCHAR(MAX);
 
-	CREATE TABLE #LISTA_CORREOS_USUARIOS(
-		idUsuario INT,
-		idContrato INT,
-		idInstanciaEntregable INT,
-		idTipoOperacion INT,
-		EnlaceAprobado NVARCHAR(MAX),
-		EnlaceRechazo NVARCHAR(MAX),
-		NombreInstancia NVARCHAR(MAX), 
-		FechaInstancia NVARCHAR(MAX),
-		enlaceDetalle NVARCHAR(MAX),
-		Para NVARCHAR(MAX),
-		NombreUsuario NVARCHAR(MAX),
-		TipoCorreo INT,
-		Estatus INT
-	);
+	CREATE TABLE #CorreosUsuario (  
+		Para VARCHAR(500),  
+		Asunto VARCHAR(500),  
+		Mensaje NVARCHAR(MAX),  
+		De VARCHAR(200),
+		CreadoPor INT
+	); 
 
     SELECT TOP 1
            @idVersion = IdLineaTiempo
@@ -244,22 +241,13 @@ BEGIN
                         FROM #tmp
                         WHERE ID = @min;
 
-						INSERT INTO #LISTA_CORREOS_USUARIOS(
-							idUsuario ,
-							idContrato ,
-							idInstanciaEntregable ,
-							idTipoOperacion ,
-							EnlaceAprobado ,
-							EnlaceRechazo ,
-							NombreInstancia , 
-							FechaInstancia ,
-							enlaceDetalle ,
-							Para ,
-							NombreUsuario ,
-							TipoCorreo ,
-							Estatus 
-						)VALUES
-						(
+						INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
+						EXEC [sp_EN_EnviaCorreosRevisionAprobacion]
 							@idUsuario,
                             @idContrato,
                             @idInstanciaEntregable,
@@ -273,7 +261,6 @@ BEGIN
                             @NombreUsuario,
                             12,
                             0
-						);
 
                         SELECT @min = @min + 1;
                     END;
@@ -328,22 +315,13 @@ BEGIN
 
                 END;
 
-				INSERT INTO #LISTA_CORREOS_USUARIOS(
-							idUsuario ,
-							idContrato ,
-							idInstanciaEntregable ,
-							idTipoOperacion ,
-							EnlaceAprobado ,
-							EnlaceRechazo ,
-							NombreInstancia , 
-							FechaInstancia ,
-							enlaceDetalle ,
-							Para ,
-							NombreUsuario ,
-							TipoCorreo ,
-							Estatus 
-						)VALUES
-						(
+				INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
+			    EXEC [sp_EN_EnviaCorreosRevisionAprobacion]				
 							@idUsuario,
                             @idContrato,
                             @idInstanciaEntregable,
@@ -356,8 +334,7 @@ BEGIN
                             @Para,
 							@NombreUsuario,
 							13,
-							2
-						);
+							2						
 
                 EXEC EN_GuardaHistorialLineaTiempo @idVersion,
                                                    @idInstanciaEntregable,
@@ -370,6 +347,12 @@ BEGIN
                                                    'En este paso no se ingresa URL',
                                                    0;
 
+				INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
                 EXEC [sp_EN_EnviaCorreos] @idUsuario,
                                           @contrato,
                                           @idInstanciaEntregable,
@@ -473,22 +456,13 @@ BEGIN
 
                 END;
 
-				INSERT INTO #LISTA_CORREOS_USUARIOS(
-							idUsuario ,
-							idContrato ,
-							idInstanciaEntregable ,
-							idTipoOperacion ,
-							EnlaceAprobado ,
-							EnlaceRechazo ,
-							NombreInstancia , 
-							FechaInstancia ,
-							enlaceDetalle ,
-							Para ,
-							NombreUsuario ,
-							TipoCorreo ,
-							Estatus 
-						)VALUES
-						(
+				INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
+			    EXEC [sp_EN_EnviaCorreosRevisionAprobacion]
 							@idUsuario,
                             @idContrato,
                             @idInstanciaEntregable,
@@ -501,8 +475,7 @@ BEGIN
                             @Para,
 							@NombreUsuario,
 							13,
-							3
-						);
+							3						
 
                 EXEC EN_GuardaHistorialLineaTiempo @idVersion,
                                                    @idInstanciaEntregable,
@@ -514,13 +487,18 @@ BEGIN
                                                    0,
                                                    'En este paso no se ingresa URL',
                                                    0;
-
+	   INSERT INTO #CorreosUsuario (   
+									Para,
+                                    Asunto,
+                                    Mensaje,                                       
+                                    CreadoPor
+                                      )
        EXEC [sp_EN_EnviaCorreos] @idUsuario,
-                                          @contrato,
-                                          @idInstanciaEntregable,
-                                          10005,
-                                   @ActividadSiguienteID,
-                                          @ActividadIDActual;
+                                 @contrato,
+                                 @idInstanciaEntregable,
+                                 10005,
+                                 @ActividadSiguienteID,
+                                 @ActividadIDActual;
 
                 /*EL ENTREGABLABLE SE RECHAZO DESDE APROBACIÓN O REVISIÓN O SE REINICIA, SE REGISTRA EL 0% DE AVANCE DEL SEGUIMIENTO SE REGRESA A 0%*/
                 IF (@TipoOperacion = 5) --> 5 REINICIO --> TB --> (EN_TipoOperacion)
@@ -560,20 +538,12 @@ BEGIN
         END;
     END;
 
-	SELECT
-		idUsuario ,
-		idContrato ,
-		idInstanciaEntregable ,
-		idTipoOperacion ,
-		EnlaceAprobado ,
-		EnlaceRechazo ,
-		NombreInstancia , 
-		FechaInstancia ,
-		enlaceDetalle ,
-		Para ,
-		NombreUsuario ,
-		TipoCorreo ,
-		Estatus 
-	FROM #LISTA_CORREOS_USUARIOS
+	-- TABLA 1 -- CORREOS PARA RETORNAR 
+	SELECT 
+	Para,
+    Asunto,
+    Mensaje,                                       
+    CreadoPor
+	FROM #CorreosUsuario
 
 END;

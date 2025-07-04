@@ -1,7 +1,16 @@
-﻿-- =============================================  
+﻿USE Adinco
+GO
+DROP PROCEDURE IF EXISTS sp_enviaCorreosResponsablesAsignados
+GO
+-- =============================================  
 -- Author:   Reyna Olvera  
 -- Create date: 20191115  
 -- Description: ENVIA ALERTAS DEASIGNACIÓN DE USUARIO  
+-- =============================================  
+-- =============================================  
+-- Author:  Daniel 
+-- Create date: 16/06/2025  
+-- Description: SE RETORNA TABLA PARA ENVIO DE CORREOS CON DOBLE AUTENTIFICACIÓN
 -- =============================================  
 CREATE PROCEDURE [dbo].[sp_enviaCorreosResponsablesAsignados]   
 @IdContratoEntregable int,  
@@ -10,12 +19,12 @@ CREATE PROCEDURE [dbo].[sp_enviaCorreosResponsablesAsignados]
 AS  
 BEGIN  
   
-  CREATE TABLE #correos (  
-    Id int IDENTITY (1, 1),  
-    Para varchar(500),  
-    Asunto varchar(500),  
-    Mensaje text,  
-    De varchar(100)  
+  CREATE TABLE #CorreosUsuario (  
+    Id INT IDENTITY (1, 1),  
+    Para VARCHAR(500),  
+    Asunto VARCHAR(500),  
+    Mensaje NVARCHAR(MAX),  
+    De VARCHAR(200)  
   );  
     
   CREATE TABLE #Usuarios (  
@@ -64,7 +73,8 @@ select a.EstadoID,UAsignado.UsuarioID,UAsignado.IsGrupo,e.IdEntregable, ce.Fecha
    
   
   
-INSERT INTO #correos (Para,  
+INSERT INTO #CorreosUsuario (
+  Para,  
   Asunto,  
   Mensaje,  
   De)  
@@ -85,28 +95,28 @@ SELECT  UPR.Usuario,
              WHEN CONVERT(varchar, u.FechaLimiteEntrega, 103) IS NULL THEN 'Asignación pendiente de fecha programada'  
              ELSE CONVERT(varchar, u.FechaLimiteEntrega, 103)  
            END),  
-           'notificaciones@adinco.mx'-- De - varchar(100)    
-  FROM #Usuarios U  
- JOIN EN_GruposUsuarios GU   
-  ON U.UsuarioId = GU.IdGrupo  
- JOIN AP_Usuario UPR  
-  ON GU.IdUsuario = UPR.UsuarioID  
- JOIN AP_Usuario USESION  
-  ON USESION.UsuarioID = @idUsuario  
- JOIN EN_Entregable E  
-  ON U.IdEntregable = E.IdEntregable  
- JOIN CO_Contrato C  
-  ON C.IdContrato = @idContrato  
- JOIN CO_Contratista CI  
-  ON C.IdContratista = CI.IdContratista  
- JOIN TA_Correo COR  
-  ON COR.Asunto = 'Asignacion Usuarios Entregable'  
- LEFT JOIN AP_Rutas R  
-  ON CI.IdRuta = R.idRuta  
+           ''-- De - varchar(100)    
+		  FROM #Usuarios U  
+		 JOIN EN_GruposUsuarios GU   
+		  ON U.UsuarioId = GU.IdGrupo  
+		 JOIN AP_Usuario UPR  
+		  ON GU.IdUsuario = UPR.UsuarioID  
+		 JOIN AP_Usuario USESION  
+		  ON USESION.UsuarioID = @idUsuario  
+		 JOIN EN_Entregable E  
+		  ON U.IdEntregable = E.IdEntregable  
+		 JOIN CO_Contrato C  
+		  ON C.IdContrato = @idContrato  
+		 JOIN CO_Contratista CI  
+		  ON C.IdContratista = CI.IdContratista  
+		 JOIN TA_Correo COR  
+		  ON COR.Asunto = 'Asignacion Usuarios Entregable'  
+		 LEFT JOIN AP_Rutas R  
+		  ON CI.IdRuta = R.idRuta  
   
- UNION ALL  
+		 UNION ALL  
   
- SELECT UPR.Usuario,  
+		 SELECT UPR.Usuario,  
            COR.Descripcion,  
            REPLACE(  
            REPLACE(  
@@ -123,66 +133,50 @@ SELECT  UPR.Usuario,
              WHEN CONVERT(varchar, u.FechaLimiteEntrega, 103) IS NULL THEN 'Asignación pendiente de fecha programada'  
              ELSE CONVERT(varchar, u.FechaLimiteEntrega, 103)  
            END),  
-           'notificaciones@adinco.mx'-- De - varchar(100)  
-  FROM #Usuarios U  
- JOIN AP_Usuario UPR  
-  ON U.UsuarioId = UPR.UsuarioID  
-  AND ISNULL(U.Idgrupo,0) = 0  
- JOIN AP_Usuario USESION  
-  ON USESION.UsuarioID = @idUsuario  
- JOIN EN_Entregable E  
-  ON U.IdEntregable = E.IdEntregable  
- JOIN CO_Contrato C  
-  ON C.IdContrato = @idContrato  
- JOIN CO_Contratista CI  
-  ON C.IdContratista = CI.IdContratista  
- JOIN TA_Correo COR  
-  ON COR.Asunto = 'Asignacion Usuarios Entregable'  
- LEFT JOIN AP_Rutas R  
-  ON CI.IdRuta = R.idRuta  
+           ''-- De - varchar(100)  
+		  FROM #Usuarios U  
+		 JOIN AP_Usuario UPR  
+		  ON U.UsuarioId = UPR.UsuarioID  
+		  AND ISNULL(U.Idgrupo,0) = 0  
+		 JOIN AP_Usuario USESION  
+		  ON USESION.UsuarioID = @idUsuario  
+		 JOIN EN_Entregable E  
+		  ON U.IdEntregable = E.IdEntregable  
+		 JOIN CO_Contrato C  
+		  ON C.IdContrato = @idContrato  
+		 JOIN CO_Contratista CI  
+		  ON C.IdContratista = CI.IdContratista  
+		 JOIN TA_Correo COR  
+		  ON COR.Asunto = 'Asignacion Usuarios Entregable'  
+		 LEFT JOIN AP_Rutas R  
+		  ON CI.IdRuta = R.idRuta  
   
-  
-  
-  INSERT INTO S_Notificacion (IdNotificacion,  
-  Para,  
-  Asunto,  
-  Mensaje,  
-  FechaProgramadaEnvio,  
-  Enviada,  
-  FechaEnvio,  
-  CreadoPor,  
-  CreadoEl,  
-  De,  
-  EN_MsjEnviado)  
-    SELECT (SELECT  
-             MAX(IdNotificacion) + Id  
-           FROM dbo.S_Notificacion),  
-           para,  
-           asunto,  
-           mensaje,  
-           GETDATE(),                  -- FechaProgramadaEnvio - datetime  
-           0,                          -- Enviada - bit  
-           NULL,                       -- FechaEnvio - datetime  
-           @idUsuario,                 -- CreadoPor - int  
-           GETDATE(),                  -- CreadoEl - datetime  
-           de,  
-           0  
-    FROM #correos  
-    WHERE Para IS NOT NULL  
-    AND mensaje IS NOT NULL;  
-  
-  IF @@ERROR <> 0  
-  BEGIN  
-    SELECT CAST(@@ERROR AS nvarchar(8)) AS error;  
-  END  
-  ELSE  
-  BEGIN  
-    SELECT '' AS error;  
-  END  
-END  
-ELSE  
-BEGIN  
- SELECT '' AS error;  
-END  
+   -- TABLA 1
+	  IF @@ERROR <> 0  
+	  BEGIN  
+		SELECT CAST(@@ERROR AS nvarchar(8)) AS error;  
+	  END  
+	  ELSE  
+	  BEGIN  
+		SELECT '' AS error;  
+	  END  
+	END  
+	ELSE  
+	BEGIN  
+	 SELECT '' AS error;  
+	END  
+
+	-- SUSTITUIR EL AÑO POR EL AÑO ACTUAL
+	UPDATE #CorreosUsuario 
+	SET Mensaje = REPLACE(Mensaje,N'&copy; 2019,',CONCAT('&copy; ',FORMAT(GETDATE(),'yyyy'),','))
+	
+	-- TABLA 2
+	SELECT  Para,  
+			Asunto,  
+			Mensaje,         
+			CreadoPor = @idUsuario
+	FROM #CorreosUsuario  
+	WHERE Para IS NOT NULL  
+	AND mensaje IS NOT NULL;  
   
 END  
