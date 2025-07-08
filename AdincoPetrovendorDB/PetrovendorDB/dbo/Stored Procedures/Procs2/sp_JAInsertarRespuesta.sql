@@ -60,15 +60,6 @@ BEGIN
                                                 @PetrovendorProcura = @PetrovendorProcura, --Es petrovendor donde se insertando
 												@IdProveedorCreador =@IdProveedor, 
 												@IdContratoCreador  = @IdContrato;
-
-	--Se enviarán por eñ sdk fuera del sp
-	--EXEC dbo.SP_JA_EnviarCorreoComentarioRespuesta @IdSolicitudPedido = @IdSolped, -- int
-	--                                               @IdUsuario = @IdUsuario,         -- int
-	--                                               @IdProveedor = @IdProveedor,       -- int
-	--                                               @Respuesta = @Respuesta,         -- int
-	--                                               @IdComentarioBase =  @IdComentarioBase;  -- int
-	
- 
 	
     INSERT INTO dbo.JA_ComentarioRelacion
     (
