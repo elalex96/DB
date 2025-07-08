@@ -82,23 +82,6 @@ BEGIN
 
 	INSERT INTO #CorreosEnviarSDK(para, asunto,html)
 	VALUES(@CORREOUSUARIOPREGUNTA, CONCAT('Comentario(Respuesta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)),@HTMLCORREO)
-	
-	---se elimina la inserción a TA_Envio Correo ya que el historial se estará manejando desde el SDK
-	--INSERT INTO dbo.TA_EnvioCorreo
-	--(
-	--	IdEnvioAdinco,
-	--	IdCorreo,
-	--	IdIdentificacion,
-	--	EnviadoPor,
-	--	EnviadoEl
-	--)
-	--VALUES
-	--(   
-	--	@IdNotificacion, -- IdEnvioAdinco - int
-	--	@IdCorreo, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
-	--	CONCAT('0 - Nuevo Comentario(Respuesta) Solicitud de Pedido #' , @IdSolicitudPedido),  -- IdIdentificacion - int
-	--	0,
-	--	GETDATE()
-	--);
+
 	SELECT * FROM #CorreosEnviarSDK
 END
