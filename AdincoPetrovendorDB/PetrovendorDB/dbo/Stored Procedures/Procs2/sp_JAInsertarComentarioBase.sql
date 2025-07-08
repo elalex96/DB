@@ -66,13 +66,6 @@ BEGIN
                                                 @PetrovendorProcura = @PetrovendorProcura, --Es petrovendor donde se insertando?
 									            @IdProveedorCreador=@IdProveedor,
 												@IdContratoCreador  = @IdContrato;
-
-	--SE SACA FUERA DEL MÉTODO PRINCIPAL
-	--EXEC dbo.SP_JA_EnviarCorreoComentarioPregunta @IdSolPed,	-- int
-	--                                              @IdUsuario,   -- int
-	--                                              @IdProveedor, -- int
-	--                                              @Comentario,   -- nvarchar(max)
-	--											  @IdOferta = @IdOferta
 	
 
     SELECT base.IdComentarioBase,
