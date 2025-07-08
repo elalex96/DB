@@ -340,28 +340,7 @@ BEGIN
 				ISNULL(@CorreosOperadora,@CorreosAdinco),-- para
 				CONCAT('Comentario(Pregunta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)), --asunto
 				ISNULL(@HTMLCORREO,''))--html
-			
-			---se elimina la inserción a TA_Envio Correo ya que el historial se estará manejando desde el SDK
 
-			--if (exists(select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion) and isnull(@HTMLCORREO,'')<>'')
-			--begin
-
-			--	INSERT INTO dbo.TA_EnvioCorreo
-			--	(
-			--		IdEnvioAdinco,
-			--		IdCorreo,
-			--		IdIdentificacion,
-			--		EnviadoPor,
-			--		EnviadoEl
-			--	)
-			--	VALUES
-			--	(   
-			--		@IdCorreo, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
-			--		CONCAT('0 - Nuevo Comentario(Pregunta) Solicitud de Pedido #' , @IdSolicitudPedido),  -- IdIdentificacion - int
-			--		0,
-			--		GETDATE()
-			--	);
-			--end
 			SET @ContadorCorreo = @ContadorCorreo +1
 		END 
 		SELECT * FROM #CorreosEnviarSDK
