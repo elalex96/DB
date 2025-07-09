@@ -202,10 +202,3 @@ BEGIN
         INNER JOIN @TablaSolpeds solped  
             ON solped.IdSolicitudPedido = comp.IdSolicitudPedido  
 END
-    
-    
-  
-  
-
-
-

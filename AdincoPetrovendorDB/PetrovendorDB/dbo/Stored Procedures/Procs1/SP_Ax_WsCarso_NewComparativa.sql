@@ -113,13 +113,6 @@ BEGIN
             NombreUsuarioAprobador NVARCHAR(2000)
     )
 
-	DECLARE @TablaEnviarCorreo TABLE  
-	(  
-		Correo NVARCHAR(MAX),  
-		Asunto NVARCHAR(MAX),  
-		Html NVARCHAR(MAX)
-	)  
-
 	DECLARE @IdProveedorEmp INT,
         @IdUsuarioEmp INT,
         @IdContrato INT,
@@ -423,21 +416,6 @@ BEGIN
     )
     EXECUTE Petrovendor.dbo.SP_GenerarSolpedCarso
 
-	INSERT INTO @TablaEnviarCorreo(
-		Correo,  
-		Asunto,  
-		Html
-	)
-	SELECT 
-		NombreUsuarioAprobador,
-		DescripcionMaterialSplit,
-		MensajeAprobacion
-	FROM @TablaComparativa
-	WHERE IdDinamicsAx = 0
-	AND Item = 'CORREO'
-
-	DELETE FROM @TablaComparativa WHERE IdComparativa = 0 AND Item = 'CORREO'
-
     DECLARE 
             @MotivoError NVARCHAR(MAX),
             @IdBitacora INT
@@ -572,6 +550,6 @@ BEGIN
 
     END
 
-	SELECT * FROM @TablaEnviarCorreo
+	EXECUTE dbo.EnviarCorreoSolpedAprobadaCarso;
 
 END;
