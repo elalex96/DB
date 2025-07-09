@@ -1,7 +1,8 @@
-use petrovendor
-go
-drop proc if exists sp_JAInsertarComentarioBase
-go
+USE Petrovendor
+GO
+DROP PROC IF EXISTS sp_JAInsertarComentarioBase
+GO
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- =============================================
 -- Modified: DANIEL AC 
 -- Updated date: 02/01/2017 
@@ -14,6 +15,10 @@ go
 -- Modified: Luis David
 -- Updated date: 19/09/2023
 -- Description: Se agrega el idOferta para no duplicar correos
+-- =============================================
+-- Modified: Luis David
+-- Updated date: 07/07/25
+-- Description: Se sacan las notificaciones a s_notificación para enviarlas desde el sdk
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_JAInsertarComentarioBase]
 (
@@ -61,14 +66,6 @@ BEGIN
                                                 @PetrovendorProcura = @PetrovendorProcura, --Es petrovendor donde se insertando?
 									            @IdProveedorCreador=@IdProveedor,
 												@IdContratoCreador  = @IdContrato;
-
-	--ENVIO DE CORREOS
-	--select 'SP_JA_EnviarCorreoComentarioPregunta', @IdSolPed, @IdUsuario, @IdProveedor, @Comentario
-	EXEC dbo.SP_JA_EnviarCorreoComentarioPregunta @IdSolPed,	-- int
-	                                              @IdUsuario,   -- int
-	                                              @IdProveedor, -- int
-	                                              @Comentario,   -- nvarchar(max)
-												  @IdOferta = @IdOferta
 	
 
     SELECT base.IdComentarioBase,
