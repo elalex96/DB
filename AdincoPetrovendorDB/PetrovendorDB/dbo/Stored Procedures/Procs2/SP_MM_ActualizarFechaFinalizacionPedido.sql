@@ -1,5 +1,17 @@
-﻿-- DANIEL AC /25-03-2022 --> SE JUNTA ACTUALIZACIÓN DE FECHA DE LIMITE CONFIRMACIÓN, ACTUALZIACIÓN DE PARTIDAS Y ENVIO DE CORREO DE ACTUALIZACIÓN
-CREATE PROCEDURE [dbo].[SP_MM_ActualizarFechaFinalizacionPedido]
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_MM_ActualizarFechaFinalizacionPedido') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_TA_ActualizarEstatusTarea;
+END
+GO
+-- DANIEL AC /25-03-2022 --> SE JUNTA ACTUALIZACIÓN DE FECHA DE LIMITE CONFIRMACIÓN, ACTUALZIACIÓN DE PARTIDAS Y ENVIO DE CORREO DE ACTUALIZACIÓN
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 08/07/2025
+-- Description:	se retorna las notificaciones para enviarlas por medio del sdk
+-- =============================================
+ALTER PROCEDURE [dbo].[SP_MM_ActualizarFechaFinalizacionPedido]
     @IdPedido INT,
     @NuevaFechaLimite DATETIME,
     @IdUsuario INT,
@@ -26,7 +38,8 @@ BEGIN
 				Id INT IDENTITY(1,1),
 				NombreUsuario VARCHAR(MAX),		
 				CorreoUsuario VARCHAR(MAX),
-				UsuarioId INT
+				UsuarioId INT,
+				Mensaje VARCHAR(MAX)
 			)
 
 			DECLARE @PedidoDetalle AS TABLE(
@@ -256,65 +269,34 @@ BEGIN
 		
 							--GUARDAR ENVIO DEL CORREO A LOS USUARIOS DEL PROVEEDOR DEL PEDIDO
 							BEGIN 
+								--VERIFICACION DEL ENVIO DE CORREO HABILITADO POR USUARIO
+								IF ISNULL(@NotificarUsuario,0) > 0
+								BEGIN
+									
+									DELETE FROM @Usuarios WHERE Id = @RowId; 
+
+								END
+								ELSE 
+								BEGIN
+
+									UPDATE @Usuarios
+									SET Mensaje = @HTML_USER
+									WHERE Id = @RowId
+
+								END
+								
 						
-								SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1
-
-								INSERT INTO Adinco.dbo.S_Notificacion
-								(
-									IdNotificacion,
-									Para,
-									Asunto,
-									Mensaje,
-									FechaProgramadaEnvio,
-									Enviada,
-									FechaEnvio,
-									CreadoPor,
-									CreadoEl,
-									ModificadoPor,
-									ModificadoEl,
-									De
-								)
-								VALUES
-								(   @IdNotificacion,         -- IdNotificacion - bigint
-									@UsuarioCorreo,        -- Para - varchar(500)
-									@Asunto,        -- Asunto - varchar(250)
-									@HTML_USER,        -- Mensaje - text
-									GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
-									CASE WHEN ISNULL(@NotificarUsuario,0) > 0 THEN 1 ELSE 0 END,      -- Enviada - bit
-									CASE WHEN ISNULL(@NotificarUsuario,0) > 0 THEN GETDATE() ELSE NULL END, -- FechaEnvio - datetime
-									1,	-- CTE @IdUsuario,         -- CreadoPor - int
-									GETDATE(), -- CreadoEl - datetime
-									NULL,         -- ModificadoPor - int
-									NULL, -- ModificadoEl - datetime
-									@CuentaRegistro         -- De - varchar(100)
-								)
-
-								INSERT INTO dbo.TA_EnvioCorreo
-								(
-									IdEnvioAdinco,
-									IdCorreo,
-									IdIdentificacion,
-									EnviadoPor,
-									EnviadoEl
-								)
-								VALUES
-								(   @IdNotificacion, -- IdEnvioAdinco - int
-									60, --> CTE _CambioFechaPedido
-									CONCAT('0 - Cambio fecha de vigencia límite del pedido #',CAST(ISNULL(@NoPedidoGeneral,0) AS nvarchar(MAX)),						
-									' -->(SP: SP_MM_ActualizarFechaFinalizacionPedido'
-									,CASE WHEN ISNULL(@NotificarUsuario,0) > 0 THEN '*Correo no enviado por bloqueo de correo 60' ELSE '' END,')'),  -- IdIdentificacion - int
-									@IdUsuario,
-									GETDATE()
-								);
+								
 								END 
-
 
 					SET @RowId =@RowId +1
 				END 
 
-				 
-				 
-	SELECT 1 AS RESPONSE--retorno algo para saber que llegue hasta aqui
+	SELECT
+		CorreoUsuario,
+		Mensaje,
+		@Asunto AS Asunto
+	FROM @Usuarios
 
 	COMMIT TRAN
 	END TRY
