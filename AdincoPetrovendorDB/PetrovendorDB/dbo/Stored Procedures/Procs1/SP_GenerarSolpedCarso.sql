@@ -1,16 +1,9 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_GenerarSolpedCarso'
-)
-    DROP PROCEDURE SP_GenerarSolpedCarso;
-/****** Object:  StoredProcedure [dbo].[SP_GenerarSolpedCarso]    Script Date: 06/11/2023 06:36:43 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+IF OBJECT_ID('Petrovendor..SP_GenerarSolpedCarso') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_GenerarSolpedCarso;
+END
 GO
 /****** Object:  StoredProcedure [dbo].[SP_GenerarSolpedCarso]    Script Date: 15/09/2020 04:04:46 p. m. ******/
 -- =============================================
@@ -40,11 +33,16 @@ GO
 -- Create date: 28/11/2023
 -- Description:	SE CORRIGE LA ORTOGRAFÍA 
 -- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 08/07/2025
+-- Description:	se elimina el envio de correos para enviarlos por medio del sdk
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_GenerarSolpedCarso]
 AS
 BEGIN --EMPIEZA STORE    
 
-    BEGIN -- SECCION DE CREACION DE TABLAS    
+    BEGIN -- SECCION DE CREACION DE TABLAS  
 
         DECLARE @TablaRegistrosActualizar TABLE
         (
@@ -1690,18 +1688,12 @@ BEGIN --EMPIEZA STORE
               OR comp.IdSolicitudPedidoDetalle IS NULL
           ); -- filtrar en caso de que ya se haya creado    
 
-		  
-    --ENVIÓ DE LOS CORREOS DE LAS SOLPEDS CREADAS  
-
     UPDATE comp
     SET comp.EnvioCorreo = 1
     FROM @TablaAgrupacionSolpedCrearNuevas solped
         INNER JOIN dbo.AX_Comparativa comp
             ON solped.IdComparativa = comp.IdComparativa
     WHERE solped.IdSolicitudPedido IS NOT NULL;
-
-
-    EXEC dbo.EnviarCorreoSolpedAprobadaCarso;
 
     --Retorno los que tuvieron error
     SELECT IdDinamicsAx,
@@ -1750,4 +1742,7 @@ BEGIN --EMPIEZA STORE
            NombreUsuarioAprobador
     FROM @TablaComparativa
     WHERE EliminadoError = 1;
+
+	
+
 END; -- TERMINA STORE

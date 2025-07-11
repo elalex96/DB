@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_DOC_ActualizacionDocumentoProveedorOpe') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_DOC_ActualizacionDocumentoProveedorOpe;
+END
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <25/07/2020>
 -- Description:	<Actualizacion y creacion de aprobacion de documentos solicitados al proveedor>
@@ -7,6 +14,11 @@
 -- Author:		DANIEL AC
 -- Create date: 03/06/2022
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 08/07/2025
+-- Description:	se retorna las notificaciones para enviarlas por medio del sdk
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_DOC_ActualizacionDocumentoProveedorOpe]
 	-- Add the parameters for the stored procedure here
@@ -31,7 +43,8 @@ BEGIN
 		ID INT IDENTITY(1,1),
 		IdAprobador INT,
 		Nombre NVARCHAR(1000),
-		Correo NVARCHAR(1000)
+		Correo NVARCHAR(1000),
+		Mensaje NVARCHAR(MAX)
 	);
 
 	DECLARE @IDDOCUMENTOS3 INT;
@@ -236,77 +249,9 @@ BEGIN
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_PROVEEDOR##',@NOMBREPROVEEDOR));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
-				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-				
-				INSERT INTO Adinco.dbo.S_Notificacion
-				(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-				)
-				VALUES
-				(	@IDNOTIFICACION,         -- IdNotificacion - bigint
-				    @CORREOAPROBADOR,        -- Para - varchar(1000)
-				    'Documento Solicitado al Proveedor',        -- Asunto - varchar(500)
-				    @HTMLCORREO,        -- Mensaje - text
-				    DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-				    0,      -- Enviada - bit
-				    NULL, -- FechaEnvio - datetime
-				    3,         -- CreadoPor - int
-				    GETDATE(), -- CreadoEl - datetime
-				    NULL,         -- ModificadoPor - int
-				    NULL, -- ModificadoEl - datetime
-				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
-				    NULL       -- EN_MsjEnviado - bit
-				    );
-
-				INSERT INTO dbo.TA_EnvioCorreo
-				(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-				)
-				VALUES
-				(   @IdNotificacion, -- IdEnvioAdinco - int
-					102, -- CORREO DE PETICION OFERTA
-					CONCAT('0 - Notificacion Revision Documentos por Operadora #' , @IdAceptacionDocumento),  -- IdIdentificacion - int
-					@IdUsuario,
-					GETDATE()
-				);
-
-				INSERT INTO dbo.TA_BitacoraCorreo
-				(
-					IdDocumento,
-					Detalle,
-					Correo,
-					Enviado,
-					FechaEnvio,
-					IdUsuarioEnvio,
-					IdProveedorEnvio,
-					IdUsuarioReceptor
-				)
-				VALUES
-				(   @IdAceptacionDocumento,         -- IdDocumento - int
-					N'Notificacion Revision Documentos Solicitado al Proveedor',       -- Detalle - nvarchar(max)
-					@CORREOAPROBADOR,       -- Correo - nvarchar(350)
-					1,      -- Enviado - bit
-					GETDATE(), -- FechaEnvio - datetime
-					0,         -- IdUsuarioEnvio - int
-					0,         -- IdProveedorEnvio - int
-					0          -- IdUsuarioReceptor - int
-					);
+				UPDATE @APROBADORES
+				SET Mensaje = @HTMLCORREO
+				WHERE ID = @CONT;
 
 				SET @CONT = @CONT + 1;
 
@@ -413,77 +358,11 @@ BEGIN
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_PROVEEDOR##',@NOMBREPROVEEDOR));
 				SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
-				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-				
-				INSERT INTO Adinco.dbo.S_Notificacion
-				(
-					IdNotificacion,
-					Para,
-					Asunto,
-					Mensaje,
-					FechaProgramadaEnvio,
-					Enviada,
-					FechaEnvio,
-					CreadoPor,
-					CreadoEl,
-					ModificadoPor,
-					ModificadoEl,
-					De,
-					EN_MsjEnviado
-				)
-				VALUES
-				(	@IDNOTIFICACION,         -- IdNotificacion - bigint
-					@CORREOAPROBADOR,        -- Para - varchar(1000)
-					'Documento Solicitado al Proveedor',        -- Asunto - varchar(500)
-					@HTMLCORREO,        -- Mensaje - text
-					DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-					0,      -- Enviada - bit
-					NULL, -- FechaEnvio - datetime
-					3,         -- CreadoPor - int
-					GETDATE(), -- CreadoEl - datetime
-					NULL,         -- ModificadoPor - int
-					NULL, -- ModificadoEl - datetime
-					ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
-					NULL       -- EN_MsjEnviado - bit
-				);
+				UPDATE @APROBADORES
+				SET Mensaje = @HTMLCORREO
+				WHERE ID = 1;
 
-					INSERT INTO dbo.TA_EnvioCorreo
-					(
-						IdEnvioAdinco,
-						IdCorreo,
-						IdIdentificacion,
-						EnviadoPor,
-						EnviadoEl
-					)
-					VALUES
-					(   @IdNotificacion, -- IdEnvioAdinco - int
-						100, -- CORREO DE PETICION OFERTA
-						CONCAT('0 - Notificacion Revision Documentos por Operadora #' , @IdAceptacionDocumento),  -- IdIdentificacion - int
-						@IdUsuario,
-						GETDATE()
-					);
-
-					INSERT INTO dbo.TA_BitacoraCorreo
-					(
-						IdDocumento,
-						Detalle,
-						Correo,
-						Enviado,
-						FechaEnvio,
-						IdUsuarioEnvio,
-						IdProveedorEnvio,
-						IdUsuarioReceptor
-					)
-					VALUES
-					(   @IdAceptacionDocumento,         -- IdDocumento - int
-						N'Notificacion Revision Documentos Solicitado al Proveedor',       -- Detalle - nvarchar(max)
-						@CORREOAPROBADOR,       -- Correo - nvarchar(350)
-						1,      -- Enviado - bit
-						GETDATE(), -- FechaEnvio - datetime
-						0,         -- IdUsuarioEnvio - int
-						0,         -- IdProveedorEnvio - int
-						0          -- IdUsuarioReceptor - int
-					);
+				DELETE @APROBADORES WHERE ID > 1
 
 				END
 
@@ -521,77 +400,10 @@ BEGIN
 						SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_PROVEEDOR##',@NOMBREPROVEEDOR));
 						SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
-						SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-				
-						INSERT INTO Adinco.dbo.S_Notificacion
-						(
-							IdNotificacion,
-							Para,
-							Asunto,
-							Mensaje,
-							FechaProgramadaEnvio,
-							Enviada,
-							FechaEnvio,
-							CreadoPor,
-							CreadoEl,
-							ModificadoPor,
-							ModificadoEl,
-							De,
-							EN_MsjEnviado
-						)
-						VALUES
-						(	@IDNOTIFICACION,         -- IdNotificacion - bigint
-							@CORREOAPROBADOR,        -- Para - varchar(1000)
-							'Documento Solicitado al Proveedor',        -- Asunto - varchar(500)
-							@HTMLCORREO,        -- Mensaje - text
-							DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-							0,      -- Enviada - bit
-							NULL, -- FechaEnvio - datetime
-							3,         -- CreadoPor - int
-							GETDATE(), -- CreadoEl - datetime
-							NULL,         -- ModificadoPor - int
-							NULL, -- ModificadoEl - datetime
-							ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
-							NULL       -- EN_MsjEnviado - bit
-							);
+						UPDATE @APROBADORES
+						SET Mensaje = @HTMLCORREO
+						WHERE ID = @CONT;
 
-						INSERT INTO dbo.TA_EnvioCorreo
-						(
-							IdEnvioAdinco,
-							IdCorreo,
-							IdIdentificacion,
-							EnviadoPor,
-							EnviadoEl
-						)
-						VALUES
-						(   @IdNotificacion, -- IdEnvioAdinco - int
-							102, -- CORREO DE PETICION OFERTA
-							CONCAT('0 - Notificacion Revision Documentos por Operadora #' , @IdAceptacionDocumento),  -- IdIdentificacion - int
-							@IdUsuario,
-							GETDATE()
-						);
-
-						INSERT INTO dbo.TA_BitacoraCorreo
-						(
-							IdDocumento,
-							Detalle,
-							Correo,
-							Enviado,
-							FechaEnvio,
-							IdUsuarioEnvio,
-							IdProveedorEnvio,
-							IdUsuarioReceptor
-						)
-						VALUES
-						(   @IdAceptacionDocumento,         -- IdDocumento - int
-							N'Notificacion Revision Documentos Solicitado al Proveedor',       -- Detalle - nvarchar(max)
-							@CORREOAPROBADOR,       -- Correo - nvarchar(350)
-							1,      -- Enviado - bit
-							GETDATE(), -- FechaEnvio - datetime
-							0,         -- IdUsuarioEnvio - int
-							0,         -- IdProveedorEnvio - int
-							0          -- IdUsuarioReceptor - int
-							);
 
 						SET @CONT = @CONT + 1;
 
@@ -601,6 +413,14 @@ BEGIN
 
 		END
 
-		SELECT @IdOperacion;
+		SELECT 
+			@IDOPERACION AS IDOPERACION,
+			ID,
+			IdAprobador,
+			Nombre,
+			Correo, 
+			Mensaje,
+			'Documento Solicitado al Proveedor' AS Asunto
+		FROM @APROBADORES;
 
 END
