@@ -1,16 +1,9 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_Ax_WsCarso_NewComparativa'
-)
-    DROP PROCEDURE SP_Ax_WsCarso_NewComparativa;
-/****** Object:  StoredProcedure [dbo].[SP_Ax_WsCarso_NewComparativa]    Script Date: 06/11/2023 06:36:43 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+IF OBJECT_ID('Petrovendor..SP_Ax_WsCarso_NewComparativa') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_Ax_WsCarso_NewComparativa;
+END
 GO
 -- =============================================
 -- Author:		Daniel AC
@@ -25,6 +18,11 @@ GO
 -- Author:		Daniel AC
 -- Create date: 28/11/2023
 -- Description:	SE CORRIGE LA ORTOGRAFÍA 
+-- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 08/07/2025
+-- Description:	Retorno de los usuarios que requieren notificaciones de las comprarativas
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_Ax_WsCarso_NewComparativa]
     -- Add the parameters for the stored procedure here
@@ -70,49 +68,49 @@ BEGIN
     DECLARE @TablaComparativa TABLE
     (
         IdDinamicsAx INT,
-        LineaPresupuesto NVARCHAR(MAX),
-        Item NVARCHAR(MAX),
-        Cantidad FLOAT,
-        Unidad NVARCHAR(MAX),
-        LugarEntrega NVARCHAR(MAX),
-        Instalacion NVARCHAR(MAX),
-        FechaEntrega DATE,
-        TipoAdjudicacion INT,
-        JustificacionPedido NVARCHAR(MAX),
-        CentroCosto NVARCHAR(MAX),
-        Aprobadores NVARCHAR(MAX),
-        MensajeAprobacion NVARCHAR(MAX),
-        Moneda NVARCHAR(MAX),
-        IdComparativa NVARCHAR(MAX),
-        IdPosicion NVARCHAR(MAX),
-        DataAreaId NVARCHAR(MAX),
-        FechaRegistro DATETIME,
-        IdProveedor INT,
-        IdUsuario INT,
-        EditadoPor INT,
-        EditadoEl DATETIME,
-        Activo BIT,
-        IdContrato INT,
-        IdSolicitudPedido INT NULL,
-        IdSolicitudPedidoDetalle INT NULL,
-        IdMaterialSplit NVARCHAR(MAX),
-        DescripcionMaterialSplit NVARCHAR(MAX),
-        IdDomicilioPetrov INT,
-        IdPresupuestoPetrov INT,
-        IdPeriodoPetrov INT,
-        IdUnidadPetrov INT,
-        IdCentroCostoPetrov INT,
-        IdMaterialPetrov INT,
-        IdInstalacionPetrov INT,
-        IdLineaPresupuestoPetrov INT,
-        IdAreaContractual INT,
-        IdUsuarioPetrov INT,
-        ExisteSolpedDetalle INT,
-        EliminadoError BIT,
-        CharIndexUsuario INT,
-        IdUsuarioAprobador INT,
-        NombreUsuarioPetrov NVARCHAR(2000),
-        NombreUsuarioAprobador NVARCHAR(2000)
+            LineaPresupuesto NVARCHAR(MAX),
+            Item NVARCHAR(MAX),
+            Cantidad FLOAT,
+            Unidad NVARCHAR(MAX),
+            LugarEntrega NVARCHAR(MAX),
+            Instalacion NVARCHAR(MAX),
+            FechaEntrega DATE,
+            TipoAdjudicacion INT,
+            JustificacionPedido NVARCHAR(MAX),
+            CentroCosto NVARCHAR(MAX),
+            Aprobadores NVARCHAR(MAX),
+            MensajeAprobacion NVARCHAR(MAX),
+            Moneda NVARCHAR(MAX),
+            IdComparativa NVARCHAR(MAX),
+            IdPosicion NVARCHAR(MAX),
+            DataAreaId NVARCHAR(MAX),
+            FechaRegistro DATETIME,
+            IdProveedor INT,
+            IdUsuario INT,
+            EditadoPor INT,
+            EditadoEl DATETIME,
+            Activo BIT,
+            IdContrato INT,
+            IdSolicitudPedido INT NULL,
+            IdSolicitudPedidoDetalle INT NULL,
+            IdMaterialSplit NVARCHAR(MAX),
+            DescripcionMaterialSplit NVARCHAR(MAX),
+            IdDomicilioPetrov INT,
+            IdPresupuestoPetrov INT,
+            IdPeriodoPetrov INT,
+            IdUnidadPetrov INT,
+            IdCentroCostoPetrov INT,
+            IdMaterialPetrov INT,
+            IdInstalacionPetrov INT,
+            IdLineaPresupuestoPetrov INT,
+            IdAreaContractual INT,
+            IdUsuarioPetrov INT,
+            ExisteSolpedDetalle INT,
+            EliminadoError BIT,
+            CharIndexUsuario INT,
+            IdUsuarioAprobador INT,
+            NombreUsuarioPetrov NVARCHAR(2000),
+            NombreUsuarioAprobador NVARCHAR(2000)
     )
 
 	DECLARE @IdProveedorEmp INT,
@@ -372,51 +370,51 @@ BEGIN
     INSERT INTO @TablaComparativa
     (
         IdDinamicsAx,
-        LineaPresupuesto,
-        Item,
-        Cantidad,
-        Unidad,
-        LugarEntrega,
-        Instalacion,
-        FechaEntrega,
-        TipoAdjudicacion,
-        JustificacionPedido,
-        CentroCosto,
-        Aprobadores,
-        MensajeAprobacion,
-        Moneda,
-        IdComparativa,
-        IdPosicion,
-        DataAreaId,
-        FechaRegistro,
-        IdProveedor,
-        IdUsuario,
-        EditadoPor,
-        EditadoEl,
-        Activo,
-        IdContrato,
-        IdSolicitudPedido,
-        IdSolicitudPedidoDetalle,
-        IdMaterialSplit,
-        DescripcionMaterialSplit,
-        IdDomicilioPetrov,
-        IdPresupuestoPetrov,
-        IdPeriodoPetrov,
-        IdUnidadPetrov,
-        IdCentroCostoPetrov,
-        IdMaterialPetrov,
-        IdInstalacionPetrov,
-        IdLineaPresupuestoPetrov,
-        IdAreaContractual,
-        IdUsuarioPetrov,
-        ExisteSolpedDetalle,
-        EliminadoError,
-        CharIndexUsuario,
-        IdUsuarioAprobador,
-        NombreUsuarioPetrov,
-        NombreUsuarioAprobador
+           LineaPresupuesto,
+           Item,
+           Cantidad,
+           Unidad,
+           LugarEntrega,
+           Instalacion,
+           FechaEntrega,
+           TipoAdjudicacion,
+           JustificacionPedido,
+           CentroCosto,
+           Aprobadores,
+           MensajeAprobacion,
+           Moneda,
+           IdComparativa,
+           IdPosicion,
+           DataAreaId,
+           FechaRegistro,
+           IdProveedor,
+           IdUsuario,
+           EditadoPor,
+           EditadoEl,
+           Activo,
+           IdContrato,
+           IdSolicitudPedido,
+           IdSolicitudPedidoDetalle,
+           IdMaterialSplit,
+           DescripcionMaterialSplit,
+           IdDomicilioPetrov,
+           IdPresupuestoPetrov,
+           IdPeriodoPetrov,
+           IdUnidadPetrov,
+           IdCentroCostoPetrov,
+           IdMaterialPetrov,
+           IdInstalacionPetrov,
+           IdLineaPresupuestoPetrov,
+           IdAreaContractual,
+           IdUsuarioPetrov,
+           ExisteSolpedDetalle,
+           EliminadoError,
+           CharIndexUsuario,
+           IdUsuarioAprobador,
+           NombreUsuarioPetrov,
+           NombreUsuarioAprobador
     )
-    EXEC Petrovendor.dbo.SP_GenerarSolpedCarso
+    EXECUTE Petrovendor.dbo.SP_GenerarSolpedCarso
 
     DECLARE 
             @MotivoError NVARCHAR(MAX),
@@ -551,4 +549,7 @@ BEGIN
         END
 
     END
+
+	EXECUTE dbo.EnviarCorreoSolpedAprobadaCarso;
+
 END;

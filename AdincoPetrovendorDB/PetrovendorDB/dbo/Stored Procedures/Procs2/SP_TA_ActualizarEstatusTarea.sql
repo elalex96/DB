@@ -1,16 +1,9 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_TA_ActualizarEstatusTarea'
-)
-    DROP PROCEDURE SP_TA_ActualizarEstatusTarea;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+IF OBJECT_ID('Petrovendor..SP_TA_ActualizarEstatusTarea') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_TA_ActualizarEstatusTarea;
+END
 GO
 -- =============================================  
 -- Author:  Daniel A Cruz  
@@ -46,6 +39,10 @@ GO
 -- Create date: 16-08-2023
 -- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
 --**************************************************************
+-- Author:		Alexander Gomez
+-- Create date: 08/07/2025
+-- Description:	se retorna las notificaciones para enviarlas por medio del sdk
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_TA_ActualizarEstatusTarea]
 -- Add the parameters for the stored procedure here  
 @IdOperacion INT,
@@ -412,47 +409,17 @@ BEGIN
         SELECT @Html = REPLACE(@Html, '##ANIO_ACTUAL##', YEAR(GETDATE()))
         SELECT @Html = REPLACE(@Html, '##URL_TAREA##', @Url)
 
-        DECLARE @Max INT
+		SELECT @Para AS Para,
+				@Html AS Mensaje,
+				@Asunto AS Asunto,
+				@IdTipoOperacionAux AS TipoOperacion
 
-        SELECT @Max = MAX(IdNotificacion) + 1
-        FROM Adinco.dbo.S_Notificacion
-
-        INSERT INTO Adinco.dbo.S_Notificacion
-        (
-            IdNotificacion,
-            Para,
-            Asunto,
-            Mensaje,
-            FechaProgramadaEnvio,
-            Enviada,
-            CreadoPor,
-            CreadoEl,
-            De
-        )
-        VALUES
-        (   @Max,      -- IdNotificacion - bigint
-            @Para,     -- Para - varchar(1000)
-            @Asunto,   -- Asunto - varchar(250)
-            @Html,     -- Mensaje - text
-            GETDATE(), -- FechaProgramadaEnvio - datetime
-            0,         -- Enviada - bit
-            3,         -- CreadoPor - int
-            GETDATE(), -- CreadoEl - datetime
-            @De        -- De - varchar(100)
-        )
-
-        INSERT INTO dbo.TA_EnvioCorreo (IdEnvioAdinco, IdCorreo, IdIdentificacion, EnviadoPor, EnviadoEl)
-        SELECT @Max,
-               2,
-               'Fin de Aprobación de Compra Directa ' + LTRIM(@NumCompraDirecta),
-               @IdUsuario,
-               GETDATE()
     END
 	END
 	ELSE
     BEGIN
         SET @Mensaje = N'ERROR DOBLE APROBACION'
-SELECT @Mensaje AS MENSAJE
+		SELECT @Mensaje AS MENSAJE
     END
 
 END
