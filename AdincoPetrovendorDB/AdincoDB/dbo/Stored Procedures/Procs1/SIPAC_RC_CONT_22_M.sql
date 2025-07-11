@@ -41,7 +41,7 @@ GO
 -- Fecha Modificado: 13 de Abril del 2023  
 -- Description:      Se agrega que si el tipocambio de la tabla CO_TipoCambioDiario es nulo se muestre como 0 para identificar en el reporte que el tipo cambio no se encuentra agregado
 -- ============================================= 
-CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M]  
+CREATE PROCEDURE [dbo].[SIPAC_RC_CONT_22_M] 
     @Contrato      INT,  
     @Mes           DATE,  
     @IdPresupuesto INT          = 0,  
@@ -444,7 +444,7 @@ AS
             #MontosTotalTransferencia.NoParcialidad									AS [RC22_10],  
             #MontosTotalTransferencia.FormaPago										AS [RC22_11],  
             CAST(#Facturas.Fecha AS DATE)											AS [RC22_12],  
-            SUBSTRING(LTRIM(RTRIM((#Facturas.Emisor))), 0, 13)						AS [RC22_13],  
+            SUBSTRING(LTRIM(RTRIM((#Facturas.Emisor))), 1, 13)						AS [RC22_13],  
             SUBSTRING(LTRIM(RTRIM(ISNULL(#Facturas.LugarExpedicion, ''))), 0, 30)	AS [RC22_14],  
             LTRIM(RTRIM(#Facturas.Receptor))										AS [RC22_15],  
             PV_TipoMoneda.TipoMonedaCorto											AS [RC22_16],  
@@ -528,7 +528,7 @@ AS
             #MontosTotalTransferencia.NoParcialidad,  
             #MontosTotalTransferencia.FormaPago,  
             CAST(#Facturas.Fecha AS DATE),  
-            SUBSTRING(LTRIM(RTRIM((#Facturas.Emisor))), 0, 13),  
+            SUBSTRING(LTRIM(RTRIM((#Facturas.Emisor))), 1, 13),  
             SUBSTRING(LTRIM(RTRIM(ISNULL(#Facturas.LugarExpedicion, ''))), 0, 30),  
             LTRIM(RTRIM(#Facturas.Receptor)),  
             PV_TipoMoneda.TipoMonedaCorto
@@ -558,7 +558,7 @@ AS
             FI_ComplementoDePago.FormaDePagoP                               AS [RC22_11], --'03'  
   
             CAST(FCP.Fecha AS DATE)                                         AS [RC22_12],  
-            SUBSTRING(LTRIM(RTRIM((FCP.Emisor))), 0, 13)                    AS [RC22_13],  
+            SUBSTRING(LTRIM(RTRIM((FCP.Emisor))), 1, 13)                    AS [RC22_13],  
             SUBSTRING(LTRIM(RTRIM(ISNULL(FCP.LugarExpedicion, ''))), 0, 30) AS [RC22_14],  
             LTRIM(RTRIM(FCP.Receptor))                                      AS [RC22_15],  
             FI_ComplementoDePago.MonedaP                                    AS [RC22_16],  
@@ -645,7 +645,7 @@ AS
             FCP.UUID,  
             FI_ComplementoDePago.FormaDePagoP,  
             CAST(FCP.Fecha AS DATE),  
-            SUBSTRING(LTRIM(RTRIM((FCP.Emisor))), 0, 13),  
+            SUBSTRING(LTRIM(RTRIM((FCP.Emisor))), 1, 13),  
             SUBSTRING(LTRIM(RTRIM(ISNULL(FCP.LugarExpedicion, ''))), 0, 30),  
             LTRIM(RTRIM(FCP.Receptor)),  
             FI_ComplementoDePago.MonedaP;  
