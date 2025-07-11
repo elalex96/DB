@@ -1,9 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..Mobile_EnviarNotificacionAprobacionPedido') IS NOT NULL
+BEGIN
+DROP PROCEDURE Mobile_EnviarNotificacionAprobacionPedido;
+END
+GO
+-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 14-01-2022
 -- Description:	 Se agrega ENVIO de correo si existe aprobador siguiente y es flujo serial
 --**************************************************************
-
+-- Author:		Alexander Gomez
+-- Create date: 11/07/2025
+-- Description:	se agrega una consulta para retornar los datos de aprobaciones de solicitud de pedido para adinco app para enviarlas por sdk
+-- =============================================
 CREATE PROCEDURE [dbo].[Mobile_EnviarNotificacionAprobacionPedido] 
 -- Add the parameters for the stored procedure here
 @IdTareaActual INT,
@@ -142,6 +152,13 @@ AS
 		DECLARE @RequisitorId INT=0,
 		 @Requisitor VARCHAR(MAX)='',
 		 @RequisitorCorreo VARCHAR(MAX)=''
+
+		 CREATE TABLE #Notificacion
+		(
+			Para NVARCHAR(MAX),
+			Asunto NVARCHAR(MAX),
+			Mensaje NVARCHAR(MAX)
+		);
 			
 		/*Obtener informacion del aprobador actual*/
 		SELECT TOP 1 
@@ -368,51 +385,19 @@ AS
 						
 					SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1
 
-					INSERT INTO Adinco.dbo.S_Notificacion
+					INSERT INTO #Notificacion
 					(
-						IdNotificacion,
 						Para,
 						Asunto,
-						Mensaje,
-						FechaProgramadaEnvio,
-						Enviada,
-						FechaEnvio,
-						CreadoPor,
-						CreadoEl,
-						ModificadoPor,
-						ModificadoEl,
-						De
+						Mensaje
 					)
 					VALUES
-					(   @IdNotificacion,         -- IdNotificacion - bigint
+					(   
 						@CorreoAprobador,        -- Para - varchar(500)
 						@Asunto,        -- Asunto - varchar(250)
-						@HTML,        -- Mensaje - text
-						GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
-						0,      -- Enviada - bit
-						NULL, -- FechaEnvio - datetime
-						1,-- CTE @IdUsuario,         -- CreadoPor - int
-						GETDATE(), -- CreadoEl - datetime
-						NULL,         -- ModificadoPor - int
-						NULL, -- ModificadoEl - datetime
-						@CuentaRegistro         -- De - varchar(100)
+						@HTML
 					)
 
-					INSERT INTO dbo.TA_EnvioCorreo
-					(
-						IdEnvioAdinco,
-						IdCorreo,
-						IdIdentificacion,
-						EnviadoPor,
-						EnviadoEl
-					)
-					VALUES
-					(   @IdNotificacion, -- IdEnvioAdinco - int
-						19, -- CTE IdCorreo - int
-						CONCAT(CAST(ISNULL(@IdOperacion,0) AS NVARCHAR(MAX)),' - Aprobación de Pedido de Solicitud Pedido #',CAST(ISNULL(@SolicitudPedidoId,0) AS nvarchar(MAX)),' Versión #',CAST(ISNULL(@VersionAprobacion,0) AS nvarchar(MAX)),' -->(SP: Mobile_EnviarNotificacionAprobacionPedido, Origen: ',ISNULL(@Origen,'NA'),')'),  -- IdIdentificacion - int
-						@UsuarioActualId,
-						GETDATE()
-					);
 				END 
 				
 		END
@@ -578,57 +563,18 @@ AS
 						
 								SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1
 
-								INSERT INTO Adinco.dbo.S_Notificacion
+								INSERT INTO #Notificacion
 								(
-									IdNotificacion,
 									Para,
 									Asunto,
-									Mensaje,
-									FechaProgramadaEnvio,
-									Enviada,
-									FechaEnvio,
-									CreadoPor,
-									CreadoEl,
-									ModificadoPor,
-									ModificadoEl,
-									De
+									Mensaje
 								)
 								VALUES
-								(   @IdNotificacion,         -- IdNotificacion - bigint
-									@RowCorreoAprobador,        -- Para - varchar(500)
+								(   @RowCorreoAprobador,        -- Para - varchar(500)
 									@Asunto,        -- Asunto - varchar(250)
-									@HTML_APROBADOR,        -- Mensaje - text
-									GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
-									CASE WHEN ISNULL(@NotificarAprobador,0) > 0 THEN 1 ELSE 0 END,      -- Enviada - bit
-									CASE WHEN ISNULL(@NotificarAprobador,0) > 0 THEN GETDATE() ELSE NULL END, -- FechaEnvio - datetime
-									1,	-- CTE @IdUsuario,         -- CreadoPor - int
-									GETDATE(), -- CreadoEl - datetime
-									NULL,         -- ModificadoPor - int
-									NULL, -- ModificadoEl - datetime
-									@CuentaRegistro         -- De - varchar(100)
+									@HTML_APROBADOR
 								)
 
-								INSERT INTO dbo.TA_EnvioCorreo
-								(
-									IdEnvioAdinco,
-									IdCorreo,
-									IdIdentificacion,
-									EnviadoPor,
-									EnviadoEl
-								)
-								VALUES
-								(   @IdNotificacion, -- IdEnvioAdinco - int
-									48, -- CTE IdCorreo - int
-									CONCAT(CAST(ISNULL(@IdOperacion,0) AS NVARCHAR(MAX)),
-									'- Cambio de estatus pedido (Aprobador) de solicitud pedido #',
-									CAST(ISNULL(@SolicitudPedidoId,0) AS nvarchar(MAX)),
-									' versión #',CAST(ISNULL(@VersionAprobacion,0) AS nvarchar(MAX)),
-									' -->(SP: Mobile_EnviarNotificacionAprobacionPedido, Origen: ',ISNULL(@Origen,'NA')
-									,CASE WHEN ISNULL(@NotificarAprobador,0) > 0 THEN '*Correo no enviado por bloqueo de correo 48' ELSE '' END
-									,')'),  -- IdIdentificacion - int
-									@UsuarioActualId,
-									GETDATE()
-								);
 							END 
 							
 							SET @ContadorAprobador = @ContadorAprobador+1;
@@ -655,57 +601,19 @@ AS
 						
 							SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1
 
-							INSERT INTO Adinco.dbo.S_Notificacion
+							INSERT INTO #Notificacion
 							(
-								IdNotificacion,
 								Para,
 								Asunto,
-								Mensaje,
-								FechaProgramadaEnvio,
-								Enviada,
-								FechaEnvio,
-								CreadoPor,
-								CreadoEl,
-								ModificadoPor,
-								ModificadoEl,
-								De
+								Mensaje
 							)
 							VALUES
-							(   @IdNotificacion,         -- IdNotificacion - bigint
+							(   
 								@AsignadorCorreo,        -- Para - varchar(500)
 								@Asunto,        -- Asunto - varchar(250)
-								@HTML_ASIGNADOR,        -- Mensaje - text
-								GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
-								CASE WHEN ISNULL(@AsignadorActivo,0) = 0 THEN 1 ELSE 0 END,      -- Enviada - bit
-								CASE WHEN ISNULL(@AsignadorActivo,0) = 0 THEN GETDATE() ELSE NULL END, -- FechaEnvio - datetime
-								1,	-- CTE @IdUsuario,         -- CreadoPor - int
-								GETDATE(), -- CreadoEl - datetime
-								NULL,         -- ModificadoPor - int
-								NULL, -- ModificadoEl - datetime
-								@CuentaRegistro         -- De - varchar(100)
+								@HTML_ASIGNADOR
 							)
 
-							INSERT INTO dbo.TA_EnvioCorreo
-							(
-								IdEnvioAdinco,
-								IdCorreo,
-								IdIdentificacion,
-								EnviadoPor,
-								EnviadoEl
-							)
-							VALUES
-							(   @IdNotificacion, -- IdEnvioAdinco - int
-								48, -- CTE IdCorreo - int
-								CONCAT(CAST(ISNULL(@IdOperacion,0) AS NVARCHAR(MAX)),
-								' - Cambio estatus (Asignador) pedido de solicitud de pedido #',
-								CAST(ISNULL(@SolicitudPedidoId,0) AS nvarchar(MAX)),
-								' versión #',CAST(ISNULL(@VersionAprobacion,0) AS nvarchar(MAX)),
-								' -->(SP: Mobile_EnviarNotificacionAprobacionPedido, Origen: ',ISNULL(@Origen,'NA')
-								,CASE WHEN ISNULL(@AsignadorActivo,0) = 0 THEN '*Correo no enviado por usuario INACTIVO' ELSE '' END
-								,')'),  -- IdIdentificacion - int
-								@UsuarioActualId,
-								GETDATE()
-							);
 						END 
 					
 				END 
@@ -788,56 +696,19 @@ AS
 						
 							SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1
 
-							INSERT INTO Adinco.dbo.S_Notificacion
+							INSERT INTO #Notificacion
 							(
-								IdNotificacion,
 								Para,
 								Asunto,
-								Mensaje,
-								FechaProgramadaEnvio,
-								Enviada,
-								FechaEnvio,
-								CreadoPor,
-								CreadoEl,
-								ModificadoPor,
-								ModificadoEl,
-								De
+								Mensaje
 							)
 							VALUES
-							(   @IdNotificacion,         -- IdNotificacion - bigint
+							( 
 								@RowCorreoAprobador,        -- Para - varchar(500)
 								@Asunto,        -- Asunto - varchar(250)
-								@HTML_PROVEEDOR,        -- Mensaje - text
-								GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
-								0,      -- Enviada - bit
-								NULL, -- FechaEnvio - datetime
-								1,	-- CTE @IdUsuario,         -- CreadoPor - int
-								GETDATE(), -- CreadoEl - datetime
-								NULL,         -- ModificadoPor - int
-								NULL, -- ModificadoEl - datetime
-								@CuentaRegistro         -- De - varchar(100)
+								@HTML_PROVEEDOR
 							)
 
-							INSERT INTO dbo.TA_EnvioCorreo
-							(
-								IdEnvioAdinco,
-								IdCorreo,
-								IdIdentificacion,
-								EnviadoPor,
-								EnviadoEl
-							)
-							VALUES
-							(   @IdNotificacion, -- IdEnvioAdinco - int
-								15, -- CTE IdCorreo - int
-								CONCAT(CAST(ISNULL(@IdOperacion,0) AS NVARCHAR(MAX)),
-								' - Nuevo pedido #',
-								CAST(ISNULL(@PedidoId,0) AS nvarchar(MAX)),
-								' Pedido General #',CAST(ISNULL(@NoPedidoGeneral,0) AS nvarchar(MAX)),
-								' -->(SP: Mobile_EnviarNotificacionAprobacionPedido, Origen: ',ISNULL(@Origen,'NA')	
-								,')'),  -- IdIdentificacion - int
-								@UsuarioActualId,
-								GETDATE()
-							);
 						END 
 
 						SET @ContadorVendedores =@ContadorVendedores +1
@@ -897,56 +768,17 @@ AS
 						
 							SET @IdNotificacion = (SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1
 
-							INSERT INTO Adinco.dbo.S_Notificacion
+							INSERT INTO #Notificacion
 							(
-								IdNotificacion,
 								Para,
 								Asunto,
-								Mensaje,
-								FechaProgramadaEnvio,
-								Enviada,
-								FechaEnvio,
-								CreadoPor,
-								CreadoEl,
-								ModificadoPor,
-								ModificadoEl,
-								De
+								Mensaje
 							)
 							VALUES
-							(   @IdNotificacion,         -- IdNotificacion - bigint
+							(
 								ISNULL(@RequisitorCorreo,''),        -- Para - varchar(500)
 								@Asunto,        -- Asunto - varchar(250)
-								@HTML,        -- Mensaje - text
-								GETDATE(),--@FechaProgramada, -- FechaProgramadaEnvio - datetime
-								CASE WHEN ISNULL(@NotificarAprobador,0) > 0 THEN 1 ELSE 0 END,      -- Enviada - bit
-								CASE WHEN ISNULL(@NotificarAprobador,0) > 0 THEN GETDATE() ELSE NULL END, -- FechaEnvio - datetime
-								1,	-- CTE @IdUsuario,         -- CreadoPor - int
-								GETDATE(), -- CreadoEl - datetime
-								NULL,         -- ModificadoPor - int
-								NULL, -- ModificadoEl - datetime
-								@CuentaRegistro         -- De - varchar(100)
-							)
-
-							INSERT INTO dbo.TA_EnvioCorreo
-							(
-								IdEnvioAdinco,
-								IdCorreo,
-								IdIdentificacion,
-								EnviadoPor,
-								EnviadoEl
-							)
-							VALUES
-							(   @IdNotificacion, -- IdEnvioAdinco - int
-								20, -- CTE IdCorreo - int
-								CONCAT(CAST(ISNULL(@IdOperacion,0) AS NVARCHAR(MAX)),
-								' - Requisitor-Nuevo pedido #',
-								CAST(ISNULL(@PedidoId,0) AS nvarchar(MAX)),
-								' Pedido General #',CAST(ISNULL(@NoPedidoGeneral,0) AS nvarchar(MAX)),
-								' -->(SP: Mobile_EnviarNotificacionAprobacionPedido, Origen: ',ISNULL(@Origen,'NA'),
-								CASE WHEN ISNULL(@NotificarAprobador,0) > 0 THEN '*Correo no enviado por bloqueo de correo 20' ELSE '' END
-								,')'),  -- IdIdentificacion - int
-								@UsuarioActualId,
-								GETDATE()
+								@HTML
 							);
 						END 
 
@@ -954,6 +786,9 @@ AS
 			END 
 
 		END
+
+		SELECT * FROM #Notificacion
+
 	END TRY
 	BEGIN CATCH
 		/*===========*/
@@ -968,5 +803,9 @@ AS
 		)	
 		/*===========*/
 	END CATCH
+
+
+
+
  END;
 
