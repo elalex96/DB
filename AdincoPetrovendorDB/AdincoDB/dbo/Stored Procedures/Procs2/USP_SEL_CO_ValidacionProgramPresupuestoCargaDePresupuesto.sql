@@ -1,13 +1,16 @@
 ﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto'
-)
-    DROP PROCEDURE USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto;
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto'
+    )
+    DROP PROCEDURE USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto
 GO
+CREATE PROCEDURE [dbo].[USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto] 
 
-CREATE PROCEDURE USP_SEL_CO_ValidacionProgramPresupuestoCargaDePresupuesto 
     @UsuarioId INT,
     @ContratoId INT,
     @IdContratoSeleccionado INT,
@@ -64,7 +67,7 @@ WHERE LTRIM(RTRIM(UPPER(Presupuesto))) = LTRIM(RTRIM(UPPER(@Presupuesto)))
 
 SELECT @SeRepitePeriodo = COUNT(1)
 FROM #TablaTemporalValidaciones
-WHERE LTRIM(RTRIM(UPPER(Periodo))) = LTRIM(RTRIM(UPPER(@Periodo)))
+WHERE LTRIM(RTRIM(UPPER(Periodo))) = LTRIM(RTRIM(UPPER(@Periodo))) AND LTRIM(RTRIM(UPPER(Programa))) = LTRIM(RTRIM(UPPER(@Programa))) AND LTRIM(RTRIM(UPPER(Presupuesto))) = LTRIM(RTRIM(UPPER(@Presupuesto)))
 
 IF (@SeRepitePrograma > 0 AND @SeRepitePresupuesto = 0 AND @SeRepitePeriodo = 0)
     SET @Resultado = 'ALERTA_PROGRAMA';
