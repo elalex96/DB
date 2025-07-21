@@ -9,7 +9,6 @@
     )
     DROP PROCEDURE sp_OT_ConsultaSolicitud;
 GO
-
 CREATE PROCEDURE [dbo].[sp_OT_ConsultaSolicitud] @pIdOTSolicitud int
 AS
     BEGIN
@@ -43,7 +42,7 @@ AS
                                                                 1
                                                         end, 0
                                                     ) as bit),
-            Moneda                     = isnull([TipoMonedaCorto], 'NO DEFINIDO'),
+            Moneda                     = isnull([TipoMoneda], 'NO DEFINIDO'),
             sol.IdCentroCosto,
             CentroCosto                = CentroCosto,
             sol.CapturaManual,
@@ -75,7 +74,7 @@ AS
                     on sc.idPedido = ped.IdPedido
             LEFT JOIN
                 Petrovendor.dbo.[PV_TipoMoneda]           mon (NOLOCK)
-                    on ped.idMoneda = mon.IdMOneda
+                    on sc.idMoneda = mon.IdMOneda
             LEFT JOIN
                 OT_Configurador                           conf (NOLOCK)
                     on sc.IdContratista = conf.IdContratista
