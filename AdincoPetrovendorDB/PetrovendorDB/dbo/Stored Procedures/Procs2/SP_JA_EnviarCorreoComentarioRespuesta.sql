@@ -1,4 +1,8 @@
-﻿-- =============================================
+use petrovendor
+go
+drop proc if exists SP_JA_EnviarCorreoComentarioRespuesta
+go
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
 -- Description:	<Envio de correo de notificacion de respuesta en la oferta>
@@ -8,7 +12,10 @@
 -- Create date: 03/06/2022
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
-
+-- Author:		DAVID DE LA CRUZ
+-- Create date: 07/07/25
+-- Description:	SE OBTIENE UNICAMENTE LA INFORMACIÓN NECESARIA DEL SDK
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioRespuesta] 
 	-- Add the parameters for the stored procedure here
 		@IdSolicitudPedido INT,
@@ -21,7 +28,12 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+	DROP TABLE IF EXISTS #CorreosEnviarSDK
+	CREATE TABLE #CorreosEnviarSDK(
+		para varchar(500),
+		asunto varchar(500),
+		html varchar(max),
+	)
     -- Insert statements for procedure here
 	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @IDPETICIONOFERTA INT = (SELECT TOP 1 IdPeticionOferta FROM dbo.MM_PeticionOferta WHERE IdSubcontratista = @IdProveedor AND IdSolicitudPedido = @IdSolicitudPedido);
@@ -33,11 +45,10 @@ BEGIN
 	DECLARE @TIPOUSUARIORESPUESTA NVARCHAR(500) = (SELECT TUS.NombreTipoUsuario
 													FROM dbo.S_Usuario AS US
 														LEFT JOIN dbo.S_TipoUsuario AS TUS 
-															ON TUS.IdTipoUsuario = US.IdTipoUsuario
+															ON US.IdTipoUsuario = TUS.IdTipoUsuario
 													WHERE US.IdUsuario = @IdUsuario);
 	DECLARE @NOMBREPROVEEDOR NVARCHAR(500) = (SELECT RazonSocial FROM dbo.S_Proveedor WHERE IdProveedor = @IdProveedor);
 	DECLARE @HTMLCORREO NVARCHAR(MAX);
-	DECLARE @IdNotificacion INT;
 	DECLARE @IDUSUARIOADINCO INT = (SELECT IdUsuarioADINCO FROM dbo.S_Usuario WHERE IdUsuario = @IDUSUARIOPREGUNTA);
 	declare @IdCorreo  int
 	
@@ -68,60 +79,9 @@ BEGIN
 	BEGIN
 	    SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##URL_TAREA##',CONCAT('https://petrovendor.mx/01Proveedores/CO_CotizacionDetalle.aspx?oferta=' , CAST(@IDPETICIONOFERTA AS NVARCHAR(100)))));
 	END
-	
 
-	SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
+	INSERT INTO #CorreosEnviarSDK(para, asunto,html)
+	VALUES(@CORREOUSUARIOPREGUNTA, CONCAT('Comentario(Respuesta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)),@HTMLCORREO)
 
-	INSERT INTO Adinco.dbo.S_Notificacion
-	(
-		IdNotificacion,
-		Para,
-		Asunto,
-		Mensaje,
-		FechaProgramadaEnvio,
-		Enviada,
-		FechaEnvio,
-		CreadoPor,
-		CreadoEl,
-		ModificadoPor,
-		ModificadoEl,
-		De
-	)
-	VALUES
-	(
-		@IdNotificacion,
-		@CORREOUSUARIOPREGUNTA,
-		CONCAT('Comentario(Respuesta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)),
-		@HTMLCORREO,
-		DATEADD(MINUTE,1,GETDATE()),
-		0,
-		NULL,
-		3,
-		GETDATE(),
-		NULL,
-		NULL,
-		ISNULL(@CorreoNotificaciones,'')
-	);
-
-	INSERT INTO dbo.TA_EnvioCorreo
-	(
-		IdEnvioAdinco,
-		IdCorreo,
-		IdIdentificacion,
-		EnviadoPor,
-		EnviadoEl
-	)
-	VALUES
-	(   
-		@IdNotificacion, -- IdEnvioAdinco - int
-		@IdCorreo, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
-		CONCAT('0 - Nuevo Comentario(Respuesta) Solicitud de Pedido #' , @IdSolicitudPedido),  -- IdIdentificacion - int
-		0,
-		GETDATE()
-	);
-
+	SELECT * FROM #CorreosEnviarSDK
 END
-
-
-
-
