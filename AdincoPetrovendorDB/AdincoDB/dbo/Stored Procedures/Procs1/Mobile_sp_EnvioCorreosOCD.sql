@@ -1,4 +1,4 @@
-﻿USE [Adinco]
+USE [Adinco]
 GO
 IF OBJECT_ID('Petrovendor..Mobile_sp_EnvioCorreosOCD') IS NOT NULL
 BEGIN
@@ -123,15 +123,15 @@ BEGIN
 
 				--TABLA PARA EL ENVIO DE CORREOS
 				SELECT @CORREOUSUARIO AS Para,        -- Para - varchar(1000)
-					   'Aprobaci�n Serial de Orden de Compra Directa #' + CAST(@IDPEDIDO as nvarchar) AS Asunto,        -- Asunto - varchar(500)
+					   'Aprobación Serial de Orden de Compra Directa #' + CAST(@IDPEDIDO as nvarchar) AS Asunto,        -- Asunto - varchar(500)
 						@HTML as Mensaje        -- Mensaje - text
 
 				--TABLA PARA EL ENVIO DE LA PUSH NOTIFICATION
 				SELECT 
 					@IDUSUARIOADINCO,
-					'Nueva Aprobaci�n' AS TITULO,
+					'Nueva Aprobación' AS TITULO,
 					'Orden de Compra Directa #' + CAST(@IDPEDIDO AS NVARCHAR) AS SUBTITULO,
-					'Estimado(a) ' + @NOMBREUSUARIO + 'te informamos que tiene pendiente la aprobaci�n de la compra directa #'+ CAST(@IDPEDIDO AS NVARCHAR) AS MENSAJE,
+					'Estimado(a) ' + @NOMBREUSUARIO + 'te informamos que tiene pendiente la aprobación de la compra directa #'+ CAST(@IDPEDIDO AS NVARCHAR) AS MENSAJE,
 					GETDATE();
 				END
 
