@@ -1,16 +1,9 @@
 ﻿USE [Petrovendor]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PC_CambiarEstatusTareaPedimentoComprobante_CD'
-)
-    DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+IF OBJECT_ID('Petrovendor..SP_PC_CambiarEstatusTareaPedimentoComprobante_CD') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
+END
 GO
 -- =============================================
 -- Author:		<Alexander Gomez>
@@ -26,6 +19,10 @@ GO
 -- Author:		Alexander Gomez
 -- Create date: 16-08-2023
 -- Description:	se agrega la actualizacion del campo updateByApp para localizacion de actualizaciones desde la app
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <22/07/2025>
+-- Description:	<Retorno del correo de compra directa>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -159,78 +156,6 @@ BEGIN
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##COMPROBANTE##',CAST(@IdPedimentoComprobante AS NVARCHAR(10))));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##','https://procura.adinco.mx/04Tareas/AprobacionPedimentoComprobante_CD.aspx'));
-
-				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-
-				INSERT INTO Adinco.dbo.S_Notificacion
-				(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-				)
-				VALUES
-				(	@IDNOTIFICACION,         -- IdNotificacion - bigint
-				    @CORREOSIGAPROBADOR,        -- Para - varchar(1000)
-				    'Aprobación Pendiente de Pedimento/Comprobante Extranjero',        -- Asunto - varchar(500)
-				    @CORREOSIG,        -- Mensaje - text
-				    DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-				    0,      -- Enviada - bit
-				    NULL, -- FechaEnvio - datetime
-				    3,         -- CreadoPor - int
-				    GETDATE(), -- CreadoEl - datetime
-				    NULL,         -- ModificadoPor - int
-				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
-				    NULL       -- EN_MsjEnviado - bit
-				    );
-
-				INSERT INTO dbo.TA_EnvioCorreo
-				(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-				)
-				VALUES
-				(   @IdNotificacion, -- IdEnvioAdinco - int
-					107, -- CORREO DE PETICION OFERTA
-					CONCAT('0 - Notificacion para Aprobacion del Pedimento/Comprobante #' , @IdPedimentoComprobante),  -- IdIdentificacion - int
-					@IdUsuario,
-					GETDATE()
-				);
-
-				INSERT INTO dbo.TA_BitacoraCorreo
-				(
-					IdDocumento,
-					Detalle,
-					Correo,
-					Enviado,
-					FechaEnvio,
-					IdUsuarioEnvio,
-					IdProveedorEnvio,
-					IdUsuarioReceptor
-				)
-				VALUES
-				(   @IdPedimentoComprobante,         -- IdDocumento - int
-					N'Notificacion de Aprobacion para Pedimento/Comprobante',       -- Detalle - nvarchar(max)
-					@CORREOSIGAPROBADOR,       -- Correo - nvarchar(350)
-					1,      -- Enviado - bit
-					GETDATE(), -- FechaEnvio - datetime
-					0,         -- IdUsuarioEnvio - int
-					0,         -- IdProveedorEnvio - int
-					0          -- IdUsuarioReceptor - int
-					);
 
 			END
 
@@ -391,13 +316,19 @@ BEGIN
 	IF (SELECT TOP 1 IdEstatus FROM dbo.TA_Tarea WHERE IdOperacion = @IdOperacion AND IdAprobador = @IdUsuario) = @IdEstatus
 	BEGIN
 	    
-		SELECT 'SUCCESS'
+		SELECT 'SUCCESS' AS RESPONSE,
+				@CORREOSIGAPROBADOR AS Para,        -- Para - varchar(1000)
+				'Aprobación Pendiente de Pedimento/Comprobante Extranjero' AS Asunto,        -- Asunto - varchar(500)
+				@CORREOSIG AS Mensaje;
 
 	END
 	ELSE
 	BEGIN
 	    
-		SELECT 'ERROR LOGICO'
+		SELECT 'ERROR LOGICO' AS RESPONSE,
+		NULL AS Para,
+		NULL AS Asunto,
+		NULL AS Mensaje;
 
 	END
 
