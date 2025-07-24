@@ -1,4 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[EnviarCorreoSolpedAprobadaCarso]  
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..EnviarCorreoSolpedAprobadaCarso') IS NOT NULL
+BEGIN
+DROP PROCEDURE EnviarCorreoSolpedAprobadaCarso;
+END
+GO
+CREATE PROCEDURE [dbo].[EnviarCorreoSolpedAprobadaCarso]  
 AS  
 BEGIN  
     DECLARE @TablaCorreo TABLE  
@@ -183,52 +190,10 @@ BEGIN
 	INNER JOIN @TablaEnviarCorreo enviar ON enviar.IdSolicitudPedido  = sp.IdSolicitudPedido
 	INNER JOIN Adinco.dbo.CO_Contrato contrato ON contrato.IdContrato = sp.IdContrato
 
-
-    INSERT INTO Adinco.dbo.S_Notificacion  
-    (  
-        IdNotificacion,  
-        Para,  
-        Asunto,  
-        Mensaje,  
-        FechaProgramadaEnvio,  
-        Enviada,  
-        FechaEnvio,  
-        CreadoPor,  
-        CreadoEl,  
-        ModificadoPor,  
-        ModificadoEl,  
-        De  
-    )  
-    SELECT correo.IdNotificacion,  
-           Correo,  
+    SELECT Correo,  
            Asunto,  
-           Html,  
-           GETDATE(),  
-           0,  
-           NULL,  
-           3,  
-           GETDATE(),  
-           NULL,  
-           NULL,  
-           @De  
-    FROM @TablaEnviarCorreo correo  
-
-    INSERT INTO dbo.TA_EnvioCorreo  
-    (  
-        IdEnvioAdinco,  
-        IdCorreo,  
-        IdIdentificacion,  
-        EnviadoPor,  
-        EnviadoEl  
-    )  
-    SELECT c.IdNotificacion,  
-           26,  
-           sp.IdIdentificador,  
-           c.IdUsuario,  
-           GETDATE()  
-    FROM @TablaSolpeds sp  
-        INNER JOIN @TablaEnviarCorreo c  
-            ON c.IdSolicitudPedido = sp.IdSolicitudPedido  
+           Html
+    FROM @TablaEnviarCorreo  
 
     -- ya que se envio setear la bandera en 0  
     UPDATE comp  
@@ -237,10 +202,3 @@ BEGIN
         INNER JOIN @TablaSolpeds solped  
             ON solped.IdSolicitudPedido = comp.IdSolicitudPedido  
 END
-    
-    
-  
-  
-
-
-

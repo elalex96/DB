@@ -1,22 +1,5 @@
-USE [Petrovendor]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_JA_EnviarCorreoComentarioPregunta'
-)
-    DROP PROCEDURE SP_JA_EnviarCorreoComentarioPregunta;
-	/****** Object:  StoredProcedure [dbo].[SP_JA_EnviarCorreoComentarioPregunta]    Script Date: 20/09/2023 01:36:09 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[SP_JA_EnviarCorreoComentarioPregunta]    Script Date: 23/10/2023 03:36:08 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
+drop proc if exists SP_JA_EnviarCorreoComentarioPregunta
+go
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
@@ -36,6 +19,10 @@ GO
 -- Create date: 23/10/2023
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor, se agrega que se notifique a los usuario de compras y que no se envie a los usuarios con configuración de alerta desactivada
 -- =============================================
+-- Author:		DAVID DE LA CRUZ
+-- Create date: 07/07/25
+-- Description:	SE OBTIENE UNICAMENTE LA INFORMACIÓN NECESARIA DEL SDK
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta]  
 	-- Add the parameters for the stored procedure here
 	@IdSolicitudPedido INT,
@@ -54,21 +41,24 @@ BEGIN
 	@COMENTARIOPREGUNTA NVARCHAR(100),
 	@HTMLCORREO NVARCHAR(MAX),
 	@CORREOUSUARIOPROVEEDOR NVARCHAR(100),
-	@IdNotificacion INT,
 	@URL NVARCHAR(MAX),
 	@IdCorreo INT = (SELECT IdCorreo FROM dbo.TA_Correo WHERE Asunto = 'Comentario(Pregunta) Referente a Requisicion'),
-	@CorreoNotificaciones NVARCHAR(MAX),
 	@CorreosAdinco NVARCHAR(MAX),
 	@CorreosOperadora NVARCHAR(MAX) = NULL,
 	@CorreoAgrupadoEnviar INT = 0,
 	@IdPeticionOfertaRow INT, @TipoProveedorRow VARCHAR(MAX), @ContadorCorreo INT = 0
 
-	
+	DROP TABLE IF EXISTS #CorreosEnviarSDK
 	DROP TABLE IF EXISTS #CorreoEnviarPorProveedor
 	CREATE TABLE #CorreoEnviarPorProveedor(
 	Id INT IDENTITY(1,1),
 	IdPeticionOferta INT,
 	TipoProveedor VARCHAR(MAX)
+	)
+	CREATE TABLE #CorreosEnviarSDK(
+		para varchar(500),
+		asunto varchar(500),
+		html varchar(max),
 	)
 	
 	DROP TABLE IF EXISTS #CorreoConcat
@@ -330,16 +320,12 @@ BEGIN
 				insert into BitacoraErrores values (0,'No se encontró la plantilla del correo', 'Error en el sp SP_JA_EnviarCorreoComentarioPregunta', @IdUsuario, @IdProveedor, GETDATE())
 				select @HTMLCORREO = ''
 			end
-
-			SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-									FROM TA_Correo AS C  (NOLOCK)
-										INNER JOIN TA_CorreoServidor AS S  (NOLOCK)
-											ON C.IdServidor = S.IdServidor
-									WHERE IdCorreo = @IdCorreo) --> CTE NUMERO CORREO (TA_Correo)
 		
 			SET @URL = (SELECT TOP 1 URL FROM #DATOSCORREO 
 						WHERE IdPeticionOferta = @IdPeticionOfertaRow
 						AND Para = @TipoProveedorRow);
+
+			
 			SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##NOMBRE_USUARIO##','USUARIO A ELIMINAR'));
 			SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##USUARIO##',@USUARIOPREGUNTA));
 			SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##TIPOUSUARIO##',@TIPOUSUARIOPREGUNTA));
@@ -349,61 +335,13 @@ BEGIN
 			SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##ANIO_ACTUAL##',CAST(YEAR(GETDATE()) AS NVARCHAR(100))));
 			SET @HTMLCORREO = (REPLACE(@HTMLCORREO,'##URL_TAREA##',@URL));
 
-			SET @IdNotificacion = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-		
-			INSERT INTO Adinco.dbo.S_Notificacion
-			(
-				IdNotificacion,
-				Para,
-				Asunto,
-				Mensaje,
-				FechaProgramadaEnvio,
-				Enviada,
-				FechaEnvio,
-				CreadoPor,
-				CreadoEl,
-				ModificadoPor,
-				ModificadoEl,
-				De,
-				CCO
-			)
-			VALUES
-			(
-				@IdNotificacion,
-				ISNULL(@CorreosOperadora,@CorreosAdinco),-- Si no hay correos destinatarios se envían a los usuarios adinco
-				CONCAT('Comentario(Pregunta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)),
-				ISNULL(@HTMLCORREO,''),
-				DATEADD(MINUTE,1,GETDATE()),
-				0,
-				NULL,
-				3,
-				GETDATE(),
-				NULL,
-				NULL,
-				ISNULL(@CorreoNotificaciones,''),
-				@CorreosAdinco
-			);
-			if (exists(select * from Adinco.dbo.S_Notificacion where IdNotificacion = @IdNotificacion) and isnull(@HTMLCORREO,'')<>'')
-			begin
+				INSERT INTO #CorreosEnviarSDK(para, asunto,html)
+				VALUES(
+				ISNULL(@CorreosOperadora,@CorreosAdinco),-- para
+				CONCAT('Comentario(Pregunta) Referente a la Requisicion No.',ISNULL(@IdSolicitudPedido,0)), --asunto
+				ISNULL(@HTMLCORREO,''))--html
 
-				INSERT INTO dbo.TA_EnvioCorreo
-				(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-				)
-				VALUES
-				(   
-					@IdNotificacion, -- IdEnvioAdinco - int
-					@IdCorreo, -- CORREO DE COMENTARIO/PREGUNTA PETICION OFERTA
-					CONCAT('0 - Nuevo Comentario(Pregunta) Solicitud de Pedido #' , @IdSolicitudPedido),  -- IdIdentificacion - int
-					0,
-					GETDATE()
-				);
-			end
 			SET @ContadorCorreo = @ContadorCorreo +1
 		END 
-
+		SELECT * FROM #CorreosEnviarSDK
 end

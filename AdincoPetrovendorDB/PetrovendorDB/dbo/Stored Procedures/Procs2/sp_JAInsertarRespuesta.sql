@@ -1,4 +1,8 @@
-﻿-- =============================================
+use Petrovendor
+go
+drop proc if exists sp_JAInsertarRespuesta
+go
+-- =============================================
  -- Modified: DANIEL AC 
 -- Updated date: 02/01/2017 
 -- Description: Agregue campos IdProveedorCreador,IdContratoCreador 
@@ -6,6 +10,10 @@
  -- Modified: Alexander Gomez 
 -- Updated date: 29/04/2020
 -- Description: se agrega el envio de notificacion por correo
+-- =============================================
+ -- Modified: Luis David
+-- Updated date: 07/07/25
+-- Description: Se excluye la ejecución del sp ya que se enviará mediante sdk
 -- =============================================
 CREATE PROCEDURE [dbo].[sp_JAInsertarRespuesta]
 (
@@ -52,15 +60,6 @@ BEGIN
                                                 @PetrovendorProcura = @PetrovendorProcura, --Es petrovendor donde se insertando
 												@IdProveedorCreador =@IdProveedor, 
 												@IdContratoCreador  = @IdContrato;
-
-	--ENVIO DE CORREOS DE RESPUESTA
-	EXEC dbo.SP_JA_EnviarCorreoComentarioRespuesta @IdSolicitudPedido = @IdSolped, -- int
-	                                               @IdUsuario = @IdUsuario,         -- int
-	                                               @IdProveedor = @IdProveedor,       -- int
-	                                               @Respuesta = @Respuesta,         -- int
-	                                               @IdComentarioBase =  @IdComentarioBase;  -- int
-	
- 
 	
     INSERT INTO dbo.JA_ComentarioRelacion
     (
