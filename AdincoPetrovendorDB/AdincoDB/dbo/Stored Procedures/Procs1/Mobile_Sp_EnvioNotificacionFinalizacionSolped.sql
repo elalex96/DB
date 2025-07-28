@@ -1,18 +1,9 @@
-﻿USE [Adinco]
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Mobile_Sp_EnvioNotificacionFinalizacionSolped'
-)
-    DROP PROCEDURE Mobile_Sp_EnvioNotificacionFinalizacionSolped;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- =============================================
+use adinco
+go
+drop proc if exists Mobile_Sp_EnvioNotificacionFinalizacionSolped
+go
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- ===========================s==================
 -- Author:		Luis David
 -- Create date: 18/10/2023
 -- Description:	sdk/222 - Se controla el envío de notificaciones cuando se rechaza la operación
@@ -33,6 +24,12 @@ CREATE PROC [dbo].[Mobile_Sp_EnvioNotificacionFinalizacionSolped]
 AS
 BEGIN
 SET NOCOUNT ON;
+CREATE TABLE #USUARIOSCORREO
+(
+	para varchar(500),
+	asunto varchar(500),
+	html varchar(max),
+)
 CREATE TABLE #USUARIOSCOMPRAS
 (
 	Id int primary key identity (1,1),
@@ -60,7 +57,6 @@ DECLARE
 @NombreAreaContractual NVARCHAR(MAX), 
 @NumeroContrato NVARCHAR(MAX),
 @Contrato NVARCHAR(MAX),
-@IDNOTIFICACION INT = 0,
 @IdCorreoSolicitudOferta INT= (SELECT top 1 IdCorreo 
 								from Petrovendor..TA_Correo (nolock) 
 								where Descripcion ='Correo notificación Solicitud Oferta'),
@@ -247,28 +243,8 @@ DECLARE
 			SET @DestinatariosxCC ='soporte@adinco.mx'
 			SET @SinDestinatariosxCC ='(Sin destinatarios)'
 		 END 
-
-		  SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion)
-									FROM Adinco.dbo.S_Notificacion)
-
-		 INSERT INTO Adinco.dbo.S_Notificacion
-			(
-				IdNotificacion,
-				Para,
-				Asunto,
-				Mensaje,
-				FechaProgramadaEnvio,
-				Enviada,
-				FechaEnvio,
-				CreadoPor,
-				CreadoEl,
-				ModificadoPor,
-				ModificadoEl,
-				De,
-				EN_MsjEnviado
-			)
+			insert #USUARIOSCORREO(para,asunto,html)
 			select 
-			(@IDNOTIFICACION + 1),
 			@DestinatariosxCC,
 			CONCAT('Solicitud Oferta ',@IdSolicitudPedido,' Aprobada')+@SinDestinatariosxCC,
 			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(@htmlOferta,
@@ -277,34 +253,10 @@ DECLARE
 			'##CONTRATO## ',@Contrato),
 			'##CENTROSCOSTOS##',Ucc.CentroCostos),
 			'##ANIO_ACTUAL##',@AnioActual),
-			'##URL_TAREA##',CONCAT(@DominioProcura,'01Proveedores/DetallePeticionOfertav2.aspx?solped=',@SolpedEncriptada)),
-			DATEADD(MINUTE,1,GETDATE()),
-			0,      -- Enviada - bit
-			NULL, -- FechaEnvio - datetime
-			1,         -- CreadoPor - int --> CTE USUARIO ADMINISTRADOR
-			GETDATE(), -- CreadoEl - datetime
-			NULL,         -- ModificadoPor - int
-			NULL, -- ModificadoEl - datetime
-			@CorreoRemitente,        -- De - varchar(100)
-			NULL       -- EN_MsjEnviado - bit
+			'##URL_TAREA##',CONCAT(@DominioProcura,'01Proveedores/DetallePeticionOfertav2.aspx?solped=',@SolpedEncriptada))
 			from #USUARIOSCOMPRASxCentroCosto Ucc
 			WHERE Ucc.Id = @ConteoCC
-			
-			INSERT INTO Petrovendor..TA_EnvioCorreo
-			(
-				IdEnvioAdinco,
-				IdCorreo,
-				IdIdentificacion,
-				EnviadoPor,
-				EnviadoEl
-			)
-			VALUES
-			(   (@IDNOTIFICACION + 1), -- IdEnvioAdinco - int
-				@IdCorreoSolicitudOferta, -- IdCorreo - int
-				CONCAT(@IdOperacion,' - Nueva Solicitud de oferta ',@IdSolicitudPedido,' Envió desde AppMovil'),  -- IdIdentificacion - int
-				1, --> USUARIO ADMINISTRADOR
-				GETDATE()
-			);
+		
 
 			SET @ConteoCC = @ConteoCC+ 1
 		END 
@@ -312,9 +264,6 @@ DECLARE
 		IF @TotalCC = 0 
 		-- NOTIFICAR A SOPORTE 
 		BEGIN
-			
-			SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion)
-									FROM Adinco.dbo.S_Notificacion)
 			SET @SinDestinatariosxCC = (SELECT TOP 1 CC.CentroCosto
 					FROM Petrovendor..MM_SolicitudPedidoDetalle SPD (NOLOCK)
 					INNER JOIN Petrovendor..MM_SolicitudPedidoDetalleLineaPresupuesto SPLP   (NOLOCK)
@@ -324,25 +273,10 @@ DECLARE
 					WHERE SPD.IdSolicitudPedido= @IdSolicitudPedido
 					GROUP BY CC.CentroCosto
 					ORDER BY  CC.CentroCosto ASC)
+				
 
-			 INSERT INTO Adinco.dbo.S_Notificacion
-				(
-					IdNotificacion,
-					Para,
-					Asunto,
-					Mensaje,
-					FechaProgramadaEnvio,
-					Enviada,
-					FechaEnvio,
-					CreadoPor,
-					CreadoEl,
-					ModificadoPor,
-					ModificadoEl,
-					De,
-					EN_MsjEnviado
-				)
-				VALUES( 
-				(@IDNOTIFICACION + 1),
+				insert #USUARIOSCORREO(para,asunto,html)
+				select 
 				'soporte.adinco.mx',
 				CONCAT('Solicitud Oferta ',@IdSolicitudPedido,' Aprobada')+'(Sin destinarios)',
 				REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(@htmlOferta,
@@ -351,59 +285,15 @@ DECLARE
 				'##CONTRATO## ',@Contrato),
 				'##CENTROSCOSTOS##',ISNULL(@SinDestinatariosxCC,'N/A')),
 				'##ANIO_ACTUAL##',@AnioActual),
-				'##URL_TAREA##',CONCAT(@DominioProcura,'01Proveedores/DetallePeticionOfertav2.aspx?solped=',@SolpedEncriptada)),
-				DATEADD(MINUTE,1,GETDATE()),
-				0,      -- Enviada - bit
-				NULL, -- FechaEnvio - datetime
-				1,         -- CreadoPor - int --> CTE USUARIO ADMINISTRADOR
-				GETDATE(), -- CreadoEl - datetime
-				NULL,         -- ModificadoPor - int
-				NULL, -- ModificadoEl - datetime
-				@CorreoRemitente,        -- De - varchar(100)
-				NULL       -- EN_MsjEnviado - bit
-				)
-
-				INSERT INTO Petrovendor..TA_EnvioCorreo
-				(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-				)
-				VALUES
-				(   (@IDNOTIFICACION + 1), -- IdEnvioAdinco - int
-					@IdCorreoSolicitudOferta, -- IdCorreo - int
-				    CONCAT(@IdOperacion,' - Nueva Solicitud de oferta ',@IdSolicitudPedido,' Envió desde AppMovil'),  -- IdIdentificacion - int
-					1, --> USUARIO ADMINISTRADOR
-					GETDATE()
-				);
+				'##URL_TAREA##',CONCAT(@DominioProcura,'01Proveedores/DetallePeticionOfertav2.aspx?solped=',@SolpedEncriptada))
 			END 
 	END
 
 	IF @IdEstatusOperacion != 1
 	BEGIN
 	--ENVIO NOTIFICACION USUARIO REQUISITOR / APLICA PARA OPERACIÓN APROBADA Y RECHAZADA
-	   SET @IDNOTIFICACION = (SELECT MAX(IdNotificacion)
-							FROM Adinco.dbo.S_Notificacion (NOLOCK));
-			INSERT INTO Adinco.dbo.S_Notificacion
-			(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-			)
+			insert #USUARIOSCORREO(para,asunto,html)
 			SELECT 
-			ROW_NUMBER() OVER(ORDER BY NoSecuencia ASC) + @IDNOTIFICACION,
 			U.Correo,
 			CONCAT('Fin Aprobación ',TTO.NombreOperacion,' ',@IdSolicitudPedido),
 			REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
@@ -415,17 +305,9 @@ DECLARE
 			'##STATUS##',TAE.Name),
 			'##AREA_CONTRACTUAL##',@NombreAreaContractual),
 			'##NUMERO_OPERACION##',@IdSolicitudPedido),
-			'##URL_TAREA##',CONCAT('https://procura.adinco.mx/04Tareas/detalle.aspx?num_operacion=',dbo.fnCustomPass(8,'C'),@IdOperacion,dbo.fnCustomPass(8,'C'),'&num_user=',dbo.fnCustomPass(8,'C'),U.IdUsuario,dbo.fnCustomPass(8,'C'),'&tp_user=',dbo.fnCustomPass(8,'C'),'2',dbo.fnCustomPass(8,'C'))),
-			'##ANIO_ACTUAL##',@AnioActual),
-			DATEADD(MINUTE,1,GETDATE()),
-			0,      -- Enviada - bit
-			NULL, -- FechaEnvio - datetime
-			1,         -- CreadoPor - int
-			GETDATE(), -- CreadoEl - datetime
-			NULL,         -- ModificadoPor - int
-			NULL, -- ModificadoEl - datetime
-			@CorreoRemitente,        -- De - varchar(100)
-			NULL       -- EN_MsjEnviado - bit
+			'##URL_TAREA##',CONCAT('https://procura.adinco.mx/04Tareas/detalle.aspx?num_operacion=',dbo.fnCustomPass(8,'C'),@IdOperacion,dbo.fnCustomPass(8,'C'),'&num_user=',dbo.fnCustomPass(8,'C'),U.IdUsuario,dbo.fnCustomPass(8,'C'),'&tp_user=',dbo.fnCustomPass(8
+,'C'),'2',dbo.fnCustomPass(8,'C'))),
+			'##ANIO_ACTUAL##',@AnioActual)
 	FROM Petrovendor..TA_Tarea AS T (NOLOCK) 
             LEFT JOIN Petrovendor..TA_Operacion AS TOO (NOLOCK)
                 ON T.IdOperacion = TOO.IdOperacion
@@ -443,5 +325,5 @@ DECLARE
         ORDER BY NoSecuencia ASC
 
 	END
+	SELECT * FROM #USUARIOSCORREO
 END
-GO

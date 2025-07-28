@@ -1,5 +1,15 @@
-﻿-- p_OT_ObtenerControlFinanciero 1
-Create Proc [dbo].[p_OT_ObtenerControlFinanciero]
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'p_OT_ObtenerControlFinanciero'
+    )
+    DROP PROCEDURE p_OT_ObtenerControlFinanciero
+GO
+CREATE PROC [dbo].[p_OT_ObtenerControlFinanciero]
 @pIdOTSolicitud int
 as
 
@@ -17,7 +27,7 @@ as
 	select 		
 		IdOTEstimacion = est.IdOTEstimacion,
 		est.FolioEstimacion,
-		Concepto = scm.IdMaestro,
+		Concepto = scm.Concepto,
 		DescripcionMat = scm.Descripcion,
 		Unidad = u.Unidad,
 		CantidadOT = CAST(scm.Cantidad AS decimal(15,5)),	
@@ -215,8 +225,30 @@ as
 	select @importeOT = Sum(importe)
 	from #tmpControlFinancieroMat
 
-	select *
-	from #tmpControlFinancieroMat
+	SELECT *
+	FROM (
+		SELECT *,
+			CAST(Concepto AS VARCHAR) AS ConceptoStr
+		FROM #tmpControlFinancieroMat
+	) AS T
+	CROSS APPLY (
+		SELECT
+			CASE 
+				WHEN CHARINDEX('-', T.ConceptoStr) > 0 AND 
+					 ISNUMERIC(LEFT(T.ConceptoStr, CHARINDEX('-', T.ConceptoStr) - 1)) = 1
+				THEN TRY_CAST(LEFT(T.ConceptoStr, CHARINDEX('-', T.ConceptoStr) - 1) AS INT)
+				ELSE NULL
+			END AS Parte1,
+			CASE 
+				WHEN CHARINDEX('-', T.ConceptoStr) > 0 AND 
+					 ISNUMERIC(SUBSTRING(T.ConceptoStr, CHARINDEX('-', T.ConceptoStr) + 1, LEN(T.ConceptoStr))) = 1
+				THEN TRY_CAST(SUBSTRING(T.ConceptoStr, CHARINDEX('-', T.ConceptoStr) + 1, LEN(T.ConceptoStr)) AS INT)
+				ELSE NULL
+			END AS Parte2
+	) AS X
+	ORDER BY Parte1, Parte2
+
+
 
 	Create Table #tmpAcumulados
 	(
