@@ -9,7 +9,7 @@
     )
     DROP PROCEDURE USP_INS_CO_GuardadoDeCargaDePresupuesto
 GO
-CREATE PROCEDURE USP_INS_CO_GuardadoDeCargaDePresupuesto
+CREATE PROCEDURE [dbo].[USP_INS_CO_GuardadoDeCargaDePresupuesto]
     @UsuarioId INT,
     @ContratoId INT,
     @IdArchivoAWS INT
@@ -1174,10 +1174,29 @@ FROM
 WHERE
     monto > 0) > 0)
 BEGIN
-		INSERT INTO CO_PERIODOCONTRATO (IdContrato,NombrePeriodo,Inicio,Fin,CreadoPor,CreadoEl,Activo)
-		SELECT @IdContratoSeleccionado, @NombrePeriodo,@Inicio,@Fin,@UsuarioId,GETDATE(),1;
+		IF (
+			SELECT COUNT(1) 
+			FROM CO_PERIODOCONTRATO 
+			WHERE IdContrato = @IdContratoSeleccionado 
+				AND LTRIM(RTRIM(UPPER(NombrePeriodo))) = LTRIM(RTRIM(UPPER(@NombrePeriodo)))
+		) > 0
+		BEGIN 
+			SELECT TOP 1 
+				@IdPeriodoContrato = IdPeriodo 
+			FROM CO_PERIODOCONTRATO 
+			WHERE IdContrato = @IdContratoSeleccionado 
+				AND LTRIM(RTRIM(UPPER(NombrePeriodo))) = LTRIM(RTRIM(UPPER(@NombrePeriodo)))
+		END 
+		ELSE 
+		BEGIN
+			INSERT INTO CO_PERIODOCONTRATO (
+				IdContrato, NombrePeriodo, Inicio, Fin, CreadoPor, CreadoEl, Activo
+			)
+			SELECT 
+				@IdContratoSeleccionado, @NombrePeriodo, @Inicio, @Fin, @UsuarioId, GETDATE(), 1;
 
-		SELECT @IdPeriodoContrato = SCOPE_IDENTITY()
+			SELECT @IdPeriodoContrato = SCOPE_IDENTITY()
+		END		
 
 		INSERT INTO CO_ProgramaActividad(IdPeriodoContrato,IdTipoProgramaActividad,NombrePrograma,CreadoPor,CreadoEl,Activo)
 		SELECT @IdPeriodoContrato,@IdTipoProgramaActividad, @NombreProgramaActividad,@UsuarioId, GETDATE(),1;
