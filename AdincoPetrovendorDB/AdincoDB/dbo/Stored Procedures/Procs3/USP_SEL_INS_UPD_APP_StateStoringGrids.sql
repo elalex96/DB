@@ -19,7 +19,7 @@ BEGIN
     BEGIN
         IF EXISTS (
             SELECT 1 
-            FROM APP_StateStoringGrids
+            FROM APP_StateStoringGrids (NOLOCK)
             WHERE UsuarioId = @UsuarioId 
               AND ContratoId = @ContratoId 
               AND Grid = @Grid
@@ -44,7 +44,7 @@ BEGIN
     ELSE IF @Accion = 'Select'
     BEGIN
         SELECT TOP 1 Body, FechaDel, FechaAl
-        FROM APP_StateStoringGrids
+        FROM APP_StateStoringGrids (NOLOCK)
         WHERE UsuarioId = @UsuarioId
           AND ContratoId = @ContratoId
           AND Grid = @Grid;
