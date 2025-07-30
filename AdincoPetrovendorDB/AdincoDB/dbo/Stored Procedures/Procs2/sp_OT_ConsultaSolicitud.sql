@@ -9,7 +9,8 @@
     )
     DROP PROCEDURE sp_OT_ConsultaSolicitud;
 GO
-CREATE PROCEDURE [dbo].[sp_OT_ConsultaSolicitud] @pIdOTSolicitud int
+CREATE PROCEDURE [dbo].[sp_OT_ConsultaSolicitud] 
+	@pIdOTSolicitud int
 AS
     BEGIN
         SELECT
@@ -35,31 +36,31 @@ AS
             PSC.IdSubcontratista,
             sc.IdContratista,
             FechaFinExtendida,
-            ProgarmaInicialPorOperador = cast(isnull(   case
-                                                            when sol.ProgIniPorProveedor = 1
-                                                                then 0
-                                                            else
+            ProgarmaInicialPorOperador = CAST(ISNULL(   CASE
+                                                            WHEN sol.ProgIniPorProveedor = 1
+                                                                THEN 0
+                                                            ELSE
                                                                 1
-                                                        end, 0
-                                                    ) as bit),
-            Moneda                     = isnull([TipoMoneda], 'NO DEFINIDO'),
+                                                        END, 0
+                                                    ) AS BIT),
+            Moneda                     = ISNULL([TipoMoneda], 'NO DEFINIDO'),
             sol.IdCentroCosto,
             CentroCosto                = CentroCosto,
             sol.CapturaManual,
-            SAPPR                      = isnull(sol.SAPPR, ''),
+            SAPPR                      = ISNULL(sol.SAPPR, ''),
             sol.IdTerminos,
             t.Documento,
-            PermitirAprobarProv        = isnull(conf.PermitirAprobarSubcontratista, 0),
-            Decimales                  = isnull(conf.Decimales, 0)
+            PermitirAprobarProv        = ISNULL(conf.PermitirAprobarSubcontratista, 0),
+            Decimales                  = ISNULL(conf.Decimales, 0)
         FROM
             OT_Solicitud                                  sol (NOLOCK)
             JOIN
                 SC_SubContrato                            sc (NOLOCK)
-                    on sc.idSubContrato = sol.IdSubContrato
+                    on sol.IdSubContrato	=	sc.idSubContrato
                        AND sol.IdOTSolicitud = @pIdOTSolicitud
             JOIN
                 Petrovendor..CC_CentroCosto               cc (NOLOCK)
-                    on cc.IdCentroCosto = sol.IdCentroCosto
+                    on	 sol.IdCentroCosto	=	cc.IdCentroCosto
             JOIN
                 CO_Contratista                            c (NOLOCK)
                     on sc.IdContratista = c.idContratista
@@ -86,3 +87,4 @@ AS
             sol.IdOTSolicitud = @pIdOTSolicitud;
 
     END
+
