@@ -1,58 +1,99 @@
-﻿
- -- sp_SC_ObtenerPresupuestos 2,10,0
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'sp_SC_ObtenerPresupuestos'
+)
+    DROP PROCEDURE sp_SC_ObtenerPresupuestos;
+GO
 CREATE Proc [dbo].[sp_SC_ObtenerPresupuestos]
-@pIdContratista int,
-@pIdSubContrato int,
-@pSoloSeleccionados bit=0
+    @pIdContratista int,
+    @pIdSubContrato int,
+    @pSoloSeleccionados bit = 0
 As
-	
-	CREATE TABLE #tmpResult(IdSubContratoPresupuesto INT, IdPresupuesto INT, NombrePresupuesto NVARCHAR(MAX), Comentario NVARCHAR(MAX), FechaAprobacionPEP DATE)
+BEGIN
+CREATE TABLE #tmpResult
+(
+    IdSubContratoPresupuesto INT,
+    IdPresupuesto INT,
+    NombrePresupuesto NVARCHAR(MAX),
+    Comentario NVARCHAR(MAX),
+    FechaAprobacionPEP DATE
+)
 
-	INSERT INTO #tmpResult(IdSubContratoPresupuesto, IdPresupuesto, NombrePresupuesto, Comentario, FechaAprobacionPEP)
-	SELECT 
-			SC_Presupuesto.IdSubContratoPresupuesto,
-			CO_Presupuesto.IdPresupuesto,
-			NombrePresupuesto = CO_Presupuesto.Nombre,
-			CO_Presupuesto.Comentario,
-			CO_Presupuesto.FechaAprobacionPEP
-	FROM CO_Presupuesto (NOLOCK)	
-	inner join CO_ProgramaActividad (NOLOCK) on CO_Presupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad 
-	inner join CO_PeriodoContrato (NOLOCK) on CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo 
-	inner join CO_Contrato (NOLOCK) on CO_PeriodoContrato.IdContrato = CO_Contrato.IdContrato 
-	left join SC_Presupuesto (NOLOCK) on CO_Presupuesto.IdPresupuesto = SC_Presupuesto.IdPresupuesto   
-								and SC_Presupuesto.IdSubContrato = @pIdSubContrato
-	where CO_Contrato.IdContratista = @pIdContratista and
-	CO_Presupuesto.Activo = 1 and
-	(
-		(@pSoloSeleccionados = 1 and SC_Presupuesto.IdSubContratoPresupuesto is not null)
-		OR
-		(@pSoloSeleccionados = 0 )
-	)
-	Order by SC_Presupuesto.IdSubContratoPresupuesto desc,CO_Presupuesto.Nombre
+INSERT INTO #tmpResult
+(
+    IdSubContratoPresupuesto,
+    IdPresupuesto,
+    NombrePresupuesto,
+    Comentario,
+    FechaAprobacionPEP
+)
+SELECT SC_Presupuesto.IdSubContratoPresupuesto,
+       CO_Presupuesto.IdPresupuesto,
+       NombrePresupuesto = CO_Presupuesto.Nombre,
+       CO_Presupuesto.Comentario,
+       CO_Presupuesto.FechaAprobacionPEP
+FROM CO_Presupuesto (NOLOCK)
+    INNER JOIN CO_ProgramaActividad (NOLOCK)
+        ON CO_Presupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad
+		AND CO_Presupuesto.Activo = 1    
+    INNER JOIN CO_PeriodoContrato (NOLOCK)
+        ON CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
+    INNER JOIN CO_Contrato (NOLOCK)
+        ON CO_PeriodoContrato.IdContrato = CO_Contrato.IdContrato
+		AND CO_Contrato.IdContratista = @pIdContratista
+    LEFT JOIN SC_Presupuesto (NOLOCK)
+        ON CO_Presupuesto.IdPresupuesto = SC_Presupuesto.IdPresupuesto
+           AND SC_Presupuesto.IdSubContrato = @pIdSubContrato
+WHERE 
+	CO_Contrato.IdContratista = @pIdContratista
+      AND CO_Presupuesto.Activo = 1
+      AND (
+              (
+                  @pSoloSeleccionados = 1
+                  AND SC_Presupuesto.IdSubContratoPresupuesto IS NOT NULL
+              )
+              OR (@pSoloSeleccionados = 0)
+          )
+ORDER BY SC_Presupuesto.IdSubContratoPresupuesto DESC,
+         CO_Presupuesto.Nombre
 
-	if not exists(
-		select 1
-		from #tmpResult
-	)
-	begin 
+IF NOT EXISTS (select 1 from #tmpResult)
+BEGIN
 
-		insert into #tmpResult#tmpResult(IdSubContratoPresupuesto, IdPresupuesto, NombrePresupuesto, Comentario, FechaAprobacionPEP)
-		select 
-			IdSubContratoPresupuesto = 0,
-			CO_Presupuesto.IdPresupuesto,
-			NombrePresupuesto = CO_Presupuesto.Nombre,
-			CO_Presupuesto.Comentario,
-			CO_Presupuesto.FechaAprobacionPEP	
-		from CO_Presupuesto (NOLOCK)	
-		inner join CO_ProgramaActividad (NOLOCK) on CO_Presupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad 
-		inner join CO_PeriodoContrato (NOLOCK) on CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo 
-		inner join CO_Contrato on CO_PeriodoContrato.IdContrato = CO_Contrato.IdContrato 
-		where CO_Contrato.IdContratista = @pIdContratista and
-		CO_Presupuesto.Activo = 1 
-		Order by CO_Presupuesto.Nombre
-		
-	end
+   INSERT INTO #tmpResult
+    (
+        IdSubContratoPresupuesto,
+        IdPresupuesto,
+        NombrePresupuesto,
+        Comentario,
+        FechaAprobacionPEP
+    )
+    SELECT IdSubContratoPresupuesto = 0,
+           CO_Presupuesto.IdPresupuesto,
+           NombrePresupuesto = CO_Presupuesto.Nombre,
+           CO_Presupuesto.Comentario,
+           CO_Presupuesto.FechaAprobacionPEP
+    FROM CO_Presupuesto		(NOLOCK)
+        INNER JOIN CO_ProgramaActividad	(NOLOCK)
+            ON CO_Presupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad
+			AND CO_Presupuesto.Activo = 1
+        INNER JOIN CO_PeriodoContrato	(NOLOCK)
+            ON CO_ProgramaActividad.IdPeriodoContrato = CO_PeriodoContrato.IdPeriodo
+        INNER JOIN CO_Contrato	(NOLOCK)
+            ON CO_PeriodoContrato.IdContrato = CO_Contrato.IdContrato
+    WHERE 
+		 CO_Contrato.IdContratista = @pIdContratista
+          AND CO_Presupuesto.Activo = 1
+    ORDER BY
+		CO_Presupuesto.Nombre
 
-	select * from #tmpResult
+END
+
+SELECT *
+FROM #tmpResult
+
+END;
 
 
