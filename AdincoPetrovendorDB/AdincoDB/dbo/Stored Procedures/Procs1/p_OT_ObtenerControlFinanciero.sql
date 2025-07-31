@@ -114,7 +114,81 @@ CREATE TABLE #tmpAcumulados
     afMenE20 decimal(15, 5) null,
     afMenSE20 decimal(15, 5) null,
     afAcumE20 decimal(15, 5) null
-)
+);
+
+CREATE TABLE #tmpEstimaciones (IdOTEstimacion INT, FolioEstimacion VARCHAR(500), Concepto VARCHAR(8000),DescripcionMat VARCHAR(MAX), Unidad VARCHAR(1000), CantidadOT  DECIMAL(15, 5), CantidadEstimacion DECIMAL(15, 5), PrecioUnitario DECIMAL(15, 5), Consecutivo VARCHAR(500), TotalEstimacion DECIMAL(15, 5), TotalOT DECIMAL(15, 5))
+
+CREATE TABLE #tmpI(FolioEstimacion VARCHAR(500),i INT IDENTITY(1, 1),Consecutivo VARCHAR(500));
+
+CREATE TABLE #tmpControlFinancieroMat (
+    Concepto VARCHAR(8000),
+    DescripcionMat VARCHAR(MAX),
+    Unidad VARCHAR(1000),
+    CantidadOT DECIMAL(15, 5),
+    nEstimaciones INT,
+    PrecioUnitario DECIMAL(15, 5),
+    Importe DECIMAL(15, 6),
+    
+    nE1 VARCHAR(8000),    cantE1 DECIMAL(15,5),    impE1 DECIMAL(15,6),
+    cantSE1 DECIMAL(15,5), impSE1 DECIMAL(15,6),
+    
+    nE2 VARCHAR(8000),    cantE2 DECIMAL(15,5),    impE2 DECIMAL(15,6),
+    cantSE2 DECIMAL(15,5), impSE2 DECIMAL(15,6),
+
+    nE3 VARCHAR(8000),    cantE3 DECIMAL(15,5),    impE3 DECIMAL(15,6),
+    cantSE3 DECIMAL(15,5), impSE3 DECIMAL(15,6),
+
+    nE4 VARCHAR(8000),    cantE4 DECIMAL(15,5),    impE4 DECIMAL(15,6),
+    cantSE4 DECIMAL(15,5), impSE4 DECIMAL(15,6),
+
+    nE5 VARCHAR(8000),    cantE5 DECIMAL(15,5),    impE5 DECIMAL(15,6),
+    cantSE5 DECIMAL(15,5), impSE5 DECIMAL(15,6),
+
+    nE6 VARCHAR(8000),    cantE6 DECIMAL(15,5),    impE6 DECIMAL(15,6),
+    cantSE6 DECIMAL(15,5), impSE6 DECIMAL(15,6),
+
+    nE7 VARCHAR(8000),    cantE7 DECIMAL(15,5),    impE7 DECIMAL(15,6),
+    cantSE7 DECIMAL(15,5), impSE7 DECIMAL(15,6),
+
+    nE8 VARCHAR(8000),    cantE8 DECIMAL(15,5),    impE8 DECIMAL(15,6),
+    cantSE8 DECIMAL(15,5), impSE8 DECIMAL(15,6),
+
+    nE9 VARCHAR(50),    cantE9 DECIMAL(15,5),    impE9 DECIMAL(15,6),
+    cantSE9 DECIMAL(15,5), impSE9 DECIMAL(15,6),
+
+    nE10 VARCHAR(8000),   cantE10 DECIMAL(15,5),   impE10 DECIMAL(15,6),
+    cantSE10 DECIMAL(15,5), impSE10 DECIMAL(15,6),
+
+    nE11 VARCHAR(8000),   cantE11 DECIMAL(15,5),   impE11 DECIMAL(15,6),
+    cantSE11 DECIMAL(15,5), impSE11 DECIMAL(15,6),
+
+    nE12 VARCHAR(8000),   cantE12 DECIMAL(15,5),   impE12 DECIMAL(15,6),
+    cantSE12 DECIMAL(15,5), impSE12 DECIMAL(15,6),
+
+    nE13 VARCHAR(8000),   cantE13 DECIMAL(15,5),   impE13 DECIMAL(15,6),
+    cantSE13 DECIMAL(15,5), impSE13 DECIMAL(15,6),
+
+    nE14 VARCHAR(8000),   cantE14 DECIMAL(15,5),   impE14 DECIMAL(15,6),
+    cantSE14 DECIMAL(15,5), impSE14 DECIMAL(15,6),
+
+    nE15 VARCHAR(8000),   cantE15 DECIMAL(15,5),   impE15 DECIMAL(15,6),
+    cantSE15 DECIMAL(15,5), impSE15 DECIMAL(15,6),
+
+    nE16 VARCHAR(8000),   cantE16 DECIMAL(15,5),   impE16 DECIMAL(15,6),
+    cantSE16 DECIMAL(15,5), impSE16 DECIMAL(15,6),
+
+    nE17 VARCHAR(8000),   cantE17 DECIMAL(15,5),   impE17 DECIMAL(15,6),
+    cantSE17 DECIMAL(15,5), impSE17 DECIMAL(15,6),
+
+    nE18 VARCHAR(8000),   cantE18 DECIMAL(15,5),   impE18 DECIMAL(15,6),
+    cantSE18 DECIMAL(15,5), impSE18 DECIMAL(15,6),
+
+    nE19 VARCHAR(8000),   cantE19 DECIMAL(15,5),   impE19 DECIMAL(15,6),
+    cantSE19 DECIMAL(15,5), impSE19 DECIMAL(15,6),
+
+    nE20 VARCHAR(8000),   cantE20 DECIMAL(15,5),   impE20 DECIMAL(15,6),
+    cantSE20 DECIMAL(15,5), impSE20 DECIMAL(15,6)
+);
 
 DECLARE @noEstimaciones INT,
         @e1 VARCHAR(20),
@@ -162,6 +236,7 @@ DECLARE @noEstimaciones INT,
         @consecutivoAux INT,
         @importeOT DECIMAL(15, 5)
 
+INSERT INTO #tmpEstimaciones (IdOTEstimacion, FolioEstimacion , Concepto ,DescripcionMat, Unidad, CantidadOT, CantidadEstimacion, PrecioUnitario, Consecutivo, TotalEstimacion, TotalOT)
 SELECT IdOTEstimacion = est.IdOTEstimacion,
        est.FolioEstimacion,
        Concepto = scm.Concepto,
@@ -178,7 +253,6 @@ SELECT IdOTEstimacion = est.IdOTEstimacion,
            FROM SC_Materiales ST1	(NOLOCK)
            WHERE ST1.IdSCMaterial = otm.IdSCMaterial
        )
-INTO #tmpEstimaciones
 FROM 
 	OT_Solicitud ot (NOLOCK)
     INNER JOIN 
@@ -202,13 +276,13 @@ SELECT @noEstimaciones =
 FROM 
 	#tmpEstimaciones
 
+INSERT INTO #tmpI(FolioEstimacion,Consecutivo)
 SELECT FolioEstimacion,
-       i = IDENTITY(INT, 1, 1),
+      
        consecutivo = MAX(consecutivo)
-INTO #tmpI
 FROM #tmpEstimaciones
 WHERE FolioEstimacion IS NOT NULL
-GROUP BY FolioEstimacion
+GROUP BY FolioEstimacion;
 
 WHILE @i <= 20
 BEGIN
@@ -303,6 +377,29 @@ BEGIN
     SET @folioAux = null
 END
 
+INSERT INTO #tmpControlFinancieroMat (
+    Concepto, DescripcionMat, Unidad, CantidadOT, nEstimaciones, PrecioUnitario, Importe,
+    nE1, cantE1, impE1, cantSE1, impSE1,
+    nE2, cantE2, impE2, cantSE2, impSE2,
+    nE3, cantE3, impE3, cantSE3, impSE3,
+    nE4, cantE4, impE4, cantSE4, impSE4,
+    nE5, cantE5, impE5, cantSE5, impSE5,
+    nE6, cantE6, impE6, cantSE6, impSE6,
+    nE7, cantE7, impE7, cantSE7, impSE7,
+    nE8, cantE8, impE8, cantSE8, impSE8,
+    nE9, cantE9, impE9, cantSE9, impSE9,
+    nE10, cantE10, impE10, cantSE10, impSE10,
+    nE11, cantE11, impE11, cantSE11, impSE11,
+    nE12, cantE12, impE12, cantSE12, impSE12,
+    nE13, cantE13, impE13, cantSE13, impSE13,
+    nE14, cantE14, impE14, cantSE14, impSE14,
+    nE15, cantE15, impE15, cantSE15, impSE15,
+    nE16, cantE16, impE16, cantSE16, impSE16,
+    nE17, cantE17, impE17, cantSE17, impSE17,
+    nE18, cantE18, impE18, cantSE18, impSE18,
+    nE19, cantE19, impE19, cantSE19, impSE19,
+    nE20, cantE20, impE20, cantSE20, impSE20
+)
 SELECT Concepto,
        DescripcionMat,
        Unidad,
@@ -930,16 +1027,17 @@ SELECT Concepto,
                                       )
                      ) * PrecioUnitario
                     )
-into #tmpControlFinancieroMat
 FROM #tmpEstimaciones
 group by COncepto,
          DescripcionMat,
          Unidad,
          CantidadOT,
-         PrecioUnitario
+         PrecioUnitario;
+
 
 SELECT @importeOT = SUM(importe)
-FROM #tmpControlFinancieroMat
+FROM #tmpControlFinancieroMat;
+
 
 SELECT *
 FROM
@@ -1055,6 +1153,7 @@ SET impE3 =
     ) * 100 + afAcumE2
                )
 FROM #tmpAcumulados t1
+
 
 /*************EST4**************************/
 UPDATE #tmpAcumulados
