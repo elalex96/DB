@@ -20,20 +20,17 @@ BEGIN
 		CREATE TABLE #ContratistaPreferencias (
 			Id INT NULL
 			,Valor VARCHAR(5000) NULL
-			,EstaRegistrado BIT NULL
-			,ContratistaPreferenciaId INT NULL
+			,EstaRegistrado BIT DEFAULT 0
+			,ContratistaPreferenciaId INT DEFAULT 0,
+			Procesado BIT DEFAULT 0
 			);
 
 		INSERT INTO #ContratistaPreferencias (
 			Id
 			,Valor
-			,EstaRegistrado
-			,ContratistaPreferenciaId
 			)
 		SELECT Id
 			,Valor
-			,0
-			,0
 		FROM @Preferencias
 
 		UPDATE #ContratistaPreferencias
@@ -43,37 +40,28 @@ BEGIN
 		JOIN CON_ContratistaPreferencias ON #ContratistaPreferencias.Id = CON_ContratistaPreferencias.PreferenciaId
 			AND @IdContratista = CON_ContratistaPreferencias.ContratistaId
 
-		DECLARE cur CURSOR
-		FOR
-		SELECT ContratistaPreferenciaId
-			,Valor
-		FROM #ContratistaPreferencias
-		WHERE EstaRegistrado = 1;
-
-		OPEN cur;
-
-		FETCH NEXT
-		FROM cur
-		INTO @Id
-			,@Valor;
-
-		WHILE @@FETCH_STATUS = 0
+		
+		WHILE EXISTS (
+			SELECT 1
+			FROM #ContratistaPreferencias
+			WHERE EstaRegistrado = 1 AND Procesado = 0
+		)
 		BEGIN
-			EXEC USP_UPD_CON_ActualizaPreferenciasContratistaRelacionadas @IdUsuario = @IdUsuario
-				,@IdContrato = @IdContrato
-				,@IdContratista = @IdContratista
-				,@Id = @Id
-				,@Valor = @Valor;
+			SELECT TOP 1 @Id = ContratistaPreferenciaId, @Valor = Valor
+			FROM #ContratistaPreferencias
+			WHERE EstaRegistrado = 1 AND Procesado = 0;
 
-			FETCH NEXT
-			FROM cur
-			INTO @Id
-				,@Valor;
+			EXEC USP_UPD_CON_ActualizaPreferenciasContratistaRelacionadas 
+				@IdUsuario = @IdUsuario,
+				@IdContrato = @IdContrato,
+				@IdContratista = @IdContratista,
+				@Id = @Id,
+				@Valor = @Valor;
+
+			UPDATE #ContratistaPreferencias
+			SET Procesado = 1
+			WHERE ContratistaPreferenciaId = @Id;
 		END
-
-		CLOSE cur;
-
-		DEALLOCATE cur;
 
 		INSERT INTO CON_ContratistaPreferencias (
 			ContratistaId
