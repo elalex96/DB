@@ -4036,6 +4036,12 @@
     <Build Include="dbo\User Defined Types\CO_Type_IdSubcontratistas.sql" />
     <Build Include="dbo\Tables\Tables2\APP_StateStoringGrids.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_INS_UPD_APP_StateStoringGrids.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_ContratistaPreferencias.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CON_ObtenPreferenciasContratistaRelacionadas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_DEL_CON_EliminarPreferenciaContratista.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_INS_CON_RegistrarPreferenciasContratista.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CON_ObtenPreferenciasContratistaFaltantes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_UPD_CON_ActualizaPreferenciasContratistaRelacionadas.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
