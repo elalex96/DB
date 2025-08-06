@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-IF OBJECT_ID('Petrovendor..Mobile_sp_EnvioCorreosOCD') IS NOT NULL
+IF OBJECT_ID('Mobile_sp_EnvioCorreosOCD') IS NOT NULL
 BEGIN
 DROP PROCEDURE Mobile_sp_EnvioCorreosOCD;
 END
@@ -13,6 +13,10 @@ GO
 -- Author:		<Alexander Gomez>
 -- Create date: <22/07/2025>
 -- Description:	<Retorno del correo de compra directa>
+-- =============================================
+-- Author:		Daniel Ac
+-- Create date: <06/08/2025>
+-- Description:	<Retorno el titulo y subtitilo esperado desde la app movil>
 -- =============================================
 CREATE PROCEDURE [dbo].[Mobile_sp_EnvioCorreosOCD]
 	-- Add the parameters for the stored procedure here
@@ -129,8 +133,8 @@ BEGIN
 				--TABLA PARA EL ENVIO DE LA PUSH NOTIFICATION
 				SELECT 
 					@IDUSUARIOADINCO,
-					'Nueva Aprobación' AS TITULO,
-					'Orden de Compra Directa #' + CAST(@IDPEDIDO AS NVARCHAR) AS SUBTITULO,
+					'Aprobación #'+ CAST(@IdOperacion AS nvarchar)+' de Compra Directa' AS TITULO,
+					'Nueva tarea de Compra Directa asignada' AS SUBTITULO,
 					'Estimado(a) ' + @NOMBREUSUARIO + 'te informamos que tiene pendiente la aprobación de la compra directa #'+ CAST(@IDPEDIDO AS NVARCHAR) AS MENSAJE,
 					GETDATE();
 				END
