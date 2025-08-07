@@ -1,16 +1,9 @@
 ﻿USE [Adinco]
 GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'Mobile_sp_CambioEstatusAprobacion'
-)
-    DROP PROCEDURE Mobile_sp_CambioEstatusAprobacion;
-GO
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+IF OBJECT_ID('Adinco..Mobile_sp_CambioEstatusAprobacion') IS NOT NULL
+BEGIN
+DROP PROCEDURE Mobile_sp_CambioEstatusAprobacion;
+END
 GO
 -- =============================================
 -- Author:		Luis David
@@ -25,7 +18,11 @@ GO
 -- Create date: 27-09-2023
 -- Description:	se agrega una consulta para retornar los datos de aprobaciones de solicitud de pedido para adinco app
 -- =============================================
-ALTER PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] 
+-- Author:		<Alexander Gomez>
+-- Create date: <22/07/2025>
+-- Description:	<Retorno del correo de compra directa>
+-- =============================================
+CREATE PROCEDURE [dbo].[Mobile_sp_CambioEstatusAprobacion] 
 @IdAprobacion INT ,	--APP
 @IdContrato Int ,		--APP
 @IdStatus INT ,			--APP
@@ -236,56 +233,6 @@ DECLARE @IdFirma nvarchar(max),
 			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_TAREA##',@URL_TAREA));
 			SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
-			SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-
-			INSERT INTO Adinco.dbo.S_Notificacion
-				(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-				)
-				VALUES
-				(	@IDNOTIFICACION,         -- IdNotificacion - bigint
-				    @CORREOSIGAPROBADOR,        -- Para - varchar(1000)
-				    @ASUNTO,        -- Asunto - varchar(500)
-				    @CORREOSIG,        -- Mensaje - text
-				    DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-				    0,      -- Enviada - bit
-				    NULL, -- FechaEnvio - datetime
-				    3,         -- CreadoPor - int
-				    GETDATE(), -- CreadoEl - datetime
-				    NULL,         -- ModificadoPor - int
-				    NULL, -- ModificadoEl - datetime
-				    @CORREO_ENVIO_NOTIF,        -- De - varchar(100)
-				    NULL       -- EN_MsjEnviado - bit
-				    );
-
-					INSERT INTO Petrovendor.dbo.TA_EnvioCorreo
-				(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-				)
-				VALUES
-				(   @IdNotificacion, -- IdEnvioAdinco - int
-					107, -- CORREO DE PETICION OFERTA
-					CONCAT(@IdNotificacion,' - Aprobación de Requisición #', @NUMERO_OPERACION),  -- IdIdentificacion - int
-					@IdUsuario,
-					GETDATE()
-				);
-
 		END
 
 		SELECT
@@ -309,9 +256,16 @@ DECLARE @IdFirma nvarchar(max),
 			Name ,
 			IdUsuarioADINCO ,
 			AsignadorId ,
-			NombreAreaContractual 
+			NombreAreaContractual
 		FROM #APROBADORES_SOLPED
 		ORDER BY NoSecuencia ASC
+
+		--CORREO DEL SIGUIENTE APROBADOR
+		SELECT 
+			@CORREOSIGAPROBADOR AS Para,        -- Para - varchar(1000)
+			@ASUNTO AS Asunto,        -- Asunto - varchar(500)
+			@CORREOSIG AS Mensaje,        -- Mensaje - text
+			@CORREO_ENVIO_NOTIF AS De;
 
 		end
 		else
@@ -623,7 +577,11 @@ DECLARE @IdFirma nvarchar(max),
 			JOIN Petrovendor.dbo.FI_AceptacionPedido_PedimentoComprobante AS APC (NOLOCK) ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
 			WHERE PTA.IdTarea = @IdAprobacion;
 
-			CREATE TABLE #RESULTADOAPROBACIONPC (RESPUESTA NVARCHAR(200));
+			CREATE TABLE #RESULTADOAPROBACIONPC (RESPUESTA NVARCHAR(200),
+													PARA NVARCHAR(200),
+													ASUNTO NVARCHAR(200),
+													HTML NVARCHAR(MAX)
+													);
 
 			INSERT INTO #RESULTADOAPROBACIONPC
 			EXEC Petrovendor.dbo.SP_PC_CambiarEstatusTareaPedimentoComprobante_CD @IdAprobador,
@@ -668,6 +626,13 @@ DECLARE @IdFirma nvarchar(max),
 					ON TOO.IdEstatusOperacion = TAE.IdEstatus
 			WHERE TOO.IdOperacion = @IdOperacion
 			ORDER BY NoSecuencia ASC
+
+			SELECT
+				RESPUESTA,
+				PARA,
+				ASUNTO,
+				HTML
+			FROM #RESULTADOAPROBACIONPC
 			
 			
 			exec Adinco..Mobile_sp_RegistroBitacora_Aprobacio @IdTarea = @IdAprobacion,

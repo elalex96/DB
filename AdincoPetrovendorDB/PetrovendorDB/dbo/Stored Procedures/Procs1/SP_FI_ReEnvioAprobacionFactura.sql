@@ -1,4 +1,14 @@
-﻿/****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 29/09/2020 13:23:44 ******/
+﻿USE [Petrovendor]
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_FI_ReEnvioAprobacionFactura'
+)
+    DROP PROCEDURE SP_FI_ReEnvioAprobacionFactura;
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_ReEnvioAprobacionFactura]    Script Date: 29/09/2020 13:23:44 ******/
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <28/09/2020>
@@ -13,6 +23,11 @@
 -- Create date: 03/06/2022
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
 -- =============================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 21/07/2025
+-- Description:	Se retorna lista de correos para envio mediante SDK
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ReEnvioAprobacionFactura]
 	-- Add the parameters for the stored procedure here
 	@IdUsuario INT,
@@ -24,6 +39,13 @@ BEGIN
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
 
+	CREATE TABLE #TemporalCorreosUsuario (  
+		Para VARCHAR(500),  
+		Asunto VARCHAR(500),  
+		Mensaje NVARCHAR(MAX),  
+		De VARCHAR(200),
+		CreadoPor INT
+	);  
     -- Insert statements for procedure here
 	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @DESCRIPCION_HISTORIAL NVARCHAR(MAX);
@@ -40,6 +62,7 @@ BEGIN
 	DECLARE @ID_TIPO_FLUJO INT;
 	DECLARE @PLANTILLA_CORREO NVARCHAR(MAX);
 	DECLARE @PLANTILLA_ASUNTO NVARCHAR(MAX);
+	DECLARE @DominioProcura NVARCHAR(500) = (SELECT URL FROM TA_Dominios WHERE IdDominio = 2) --> CTE DOMINIO PROCURA
 	DECLARE @NOMBRE_CONTRATO NVARCHAR(MAX) = (SELECT TOP 1 C.NumeroContrato + ' - ' + AC.NombreAreaContractual AS NombreContrato
 													FROM dbo.MM_AceptacionPedido AP
 													LEFT JOIN dbo.MM_Pedido P ON AP.IdPedido = P.IdPedido 
@@ -177,7 +200,7 @@ BEGIN
 			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'#CONTRATO#', ISNULL(@NOMBRE_CONTRATO,''));
 			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##ANIO_ACTUAL##', YEAR(GETDATE()));
 			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##TIPO_OPERACION##', 'Aprobación de Factura');
-			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##URL_TAREA##', 'https://procura.adinco.mx/02Proveedores/RecepcionVentanillaDetalle.aspx?aceptacion=' + CAST(@IdAceptacionPedido AS NVARCHAR));
+			SET @PLANTILLA_CORREO = REPLACE(@PLANTILLA_CORREO,'##URL_TAREA##', ISNULL(@DominioProcura,'')+'02Proveedores/RecepcionVentanillaDetalle.aspx?aceptacion=' + CAST(@IdAceptacionPedido AS NVARCHAR));
 
 			SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
 
@@ -186,54 +209,21 @@ BEGIN
 																			AND IdCorreo = 37
 																			AND IsEliminado = 0)
 			BEGIN
-				INSERT INTO Adinco.dbo.S_Notificacion
-			(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-			)
+
+			INSERT INTO #TemporalCorreosUsuario (   
+			Para,
+            Asunto,
+            Mensaje,                                       
+            CreadoPor
+            ) 	
 			VALUES
-			(	@IDNOTIFICACION,         -- IdNotificacion - bigint
+			(	
 				@CORREO_APROBADOR,        -- Para - varchar(1000)
 				@PLANTILLA_ASUNTO,        -- Asunto - varchar(500)
 				@PLANTILLA_CORREO,        -- Mensaje - text
-				DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-				0,      -- Enviada - bit
-				NULL, -- FechaEnvio - datetime
-				3,         -- CreadoPor - int
-				GETDATE(), -- CreadoEl - datetime
-				NULL,         -- ModificadoPor - int
-				NULL, -- ModificadoEl - datetime
-				ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
-				NULL       -- EN_MsjEnviado - bit
+				@IdUsuario
 			);
-
-			INSERT INTO dbo.TA_EnvioCorreo
-			(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-			)
-			VALUES
-			(   @IdNotificacion, -- IdEnvioAdinco - int
-					37, -- CORREO DE PETICION OFERTA
-					CONCAT(@ID_OPERACION,' - Aprobación Factura de Aceptación Pedido #' , @IdAceptacionPedido),  -- IdIdentificacion - int
-					@IdUsuario,
-					GETDATE()
-			);
-
+			
 			INSERT INTO dbo.TA_BitacoraCorreo
 			(
 					IdDocumento,
@@ -269,5 +259,11 @@ BEGIN
 	FROM dbo.TA_Operacion AS OP
 	WHERE OP.IdOperacion = @ID_OPERACION;
 	
+	SELECT 
+	Para,
+	Asunto,
+	Mensaje,
+	CreadoPor
+	FROM #TemporalCorreosUsuario
 	 
 END

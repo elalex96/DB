@@ -6,9 +6,9 @@ jobs:
   build:
     runs-on: self-hosted
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Reporta GitHub
-      uses: LouisBrunner/checks-action@v1.1.1
+      uses: LouisBrunner/checks-action@v2.0.0
       if: always()
       with:
         token: ${{ secrets.GITHUB_TOKEN }}

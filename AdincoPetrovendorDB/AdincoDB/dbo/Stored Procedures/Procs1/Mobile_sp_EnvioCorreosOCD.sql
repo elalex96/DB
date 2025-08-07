@@ -1,9 +1,20 @@
-﻿-- =============================================
+USE [Adinco]
+GO
+IF OBJECT_ID('Petrovendor..Mobile_sp_EnvioCorreosOCD') IS NOT NULL
+BEGIN
+DROP PROCEDURE Mobile_sp_EnvioCorreosOCD;
+END
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <09/02/2020>
 -- Description:	<Consultar de correos para la aprobacion de compra directa desde la app>
 -- =============================================
-CREATE PROCEDURE [dbo].[Mobile_sp_EnvioCorreosOCD]-- 51368,10394,64243
+-- Author:		<Alexander Gomez>
+-- Create date: <22/07/2025>
+-- Description:	<Retorno del correo de compra directa>
+-- =============================================
+CREATE PROCEDURE [dbo].[Mobile_sp_EnvioCorreosOCD]
 	-- Add the parameters for the stored procedure here
 	@IdOperacion int,
 	@IdUsuario int,
@@ -46,11 +57,11 @@ BEGIN
 		@IDTIPOFLUJO = FT.IdTipoFlujo,
 		@IDPEDIDO = PS.IdPedido,
 		@IDESTATUS = TA.IdEstatusOperacion
-	FROM Petrovendor.dbo.TA_Tarea AS T
-		JOIN Petrovendor.dbo.S_Usuario AS US ON T.IdAprobador = US.IdUsuario
-		JOIN Petrovendor.dbo.TA_Operacion AS TA ON TA.IdOperacion = T.IdOperacion AND TA.IdTipoOperacion = 14--COMPRA DIRECTA
-		JOIN Petrovendor.dbo.TA_FlujoTarea AS FT ON FT.IdFlujoTarea = TA.IdFlujoTarea
-		JOIN Petrovendor.dbo.MM_Pedidos AS PS ON PS.IdIdentificador = TA.IdDocumento AND PS.IdTipoPedido = 1--COMPRA DIRECTA
+	FROM Petrovendor.dbo.TA_Tarea AS T (NOLOCK)
+		JOIN Petrovendor.dbo.S_Usuario AS US (NOLOCK) ON T.IdAprobador = US.IdUsuario
+		JOIN Petrovendor.dbo.TA_Operacion AS TA (NOLOCK) ON TA.IdOperacion = T.IdOperacion AND TA.IdTipoOperacion = 14--COMPRA DIRECTA
+		JOIN Petrovendor.dbo.TA_FlujoTarea AS FT (NOLOCK) ON FT.IdFlujoTarea = TA.IdFlujoTarea
+		JOIN Petrovendor.dbo.MM_Pedidos AS PS (NOLOCK) ON PS.IdIdentificador = TA.IdDocumento AND PS.IdTipoPedido = 1--COMPRA DIRECTA
 	WHERE T.IdOperacion = @IdOperacion AND 
 			T.IdTarea = @IdTarea;
 
@@ -76,14 +87,14 @@ BEGIN
 				@AREACONTRACTUAL = CO.NumeroContrato + ' - ' + AC.NombreAreaContractual,
 				@IDDOCUMENTO = TA.IdDocumento,
 				@IDASIGNADOR = TA.IdAsignador
-			FROM Petrovendor.dbo.TA_Tarea AS T
-				LEFT JOIN Petrovendor.dbo.S_Usuario AS US ON T.IdAprobador = US.IdUsuario
-				LEFT JOIN Petrovendor.dbo.TA_Operacion AS TA ON TA.IdOperacion = T.IdOperacion AND TA.IdTipoOperacion = 14--COMPRA DIRECTA
-				LEFT JOIN Petrovendor.dbo.TA_FlujoTarea AS FT ON FT.IdFlujoTarea = TA.IdFlujoTarea
-				LEFT JOIN Petrovendor.dbo.MM_Pedidos AS PS ON PS.IdIdentificador = TA.IdDocumento AND PS.IdTipoPedido = 1--COMPRA DIRECTA
-				LEFT JOIN Petrovendor.dbo.FI_Factura AS FI ON FI.IdFactura = TA.IdDocumento
-				LEFT JOIN Adinco.dbo.CO_Contrato AS CO ON CO.IdContrato = FI.IdContrato
-				LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC ON AC.IdAreaContractual = CO.IdAreaContractual
+			FROM Petrovendor.dbo.TA_Tarea AS T (NOLOCK)
+				LEFT JOIN Petrovendor.dbo.S_Usuario AS US (NOLOCK) ON T.IdAprobador = US.IdUsuario
+				LEFT JOIN Petrovendor.dbo.TA_Operacion AS TA (NOLOCK) ON TA.IdOperacion = T.IdOperacion AND TA.IdTipoOperacion = 14--COMPRA DIRECTA
+				LEFT JOIN Petrovendor.dbo.TA_FlujoTarea AS FT (NOLOCK) ON FT.IdFlujoTarea = TA.IdFlujoTarea
+				LEFT JOIN Petrovendor.dbo.MM_Pedidos AS PS (NOLOCK) ON PS.IdIdentificador = TA.IdDocumento AND PS.IdTipoPedido = 1--COMPRA DIRECTA
+				LEFT JOIN Petrovendor.dbo.FI_Factura AS FI (NOLOCK) ON FI.IdFactura = TA.IdDocumento
+				LEFT JOIN Adinco.dbo.CO_Contrato AS CO (NOLOCK) ON CO.IdContrato = FI.IdContrato
+				LEFT JOIN Adinco.dbo.CO_AreaContractual AS AC (NOLOCK) ON AC.IdAreaContractual = CO.IdAreaContractual
 			WHERE T.IdOperacion = @IdOperacion AND 
 					T.NoSecuencia = (@NOSECUENCIA + 1) AND 
 					T.Activo = 1 AND 
@@ -100,97 +111,29 @@ BEGIN
 
 			SET @HTML = (REPLACE(@HTML,'##NUMERO_OPERACION##',CAST(@IDPEDIDO AS nvarchar)));
 			SET @HTML = (REPLACE(@HTML,'##TIPO_OPERACION##','Orden de Compra Directa'));
-			SET @HTML = (REPLACE(@HTML,'##NOMBRE_USUARIO##',@NOMBREUSUARIO));
-			SET @HTML = (REPLACE(@HTML,'##DESCRIPCION_TAREA##',@DESCRIPCION));
-			SET @HTML = (REPLACE(@HTML,'##AREA_CONTRACTUAL##',@AREACONTRACTUAL));
+			SET @HTML = (REPLACE(@HTML,'##NOMBRE_USUARIO##',ISNULL(@NOMBREUSUARIO,'')));
+			SET @HTML = (REPLACE(@HTML,'##DESCRIPCION_TAREA##',ISNULL(@DESCRIPCION,'')));
+			SET @HTML = (REPLACE(@HTML,'##AREA_CONTRACTUAL##',ISNULL(@AREACONTRACTUAL,'')));
 
-			SET @HTML = (REPLACE(@HTML,'##URL_TAREA_ACEPTAR##',@URLACEPTAR));
-			SET @HTML = (REPLACE(@HTML,'##URL_TAREA_RECHAZAR##',@URLRECHAZAR));
-			SET @HTML = (REPLACE(@HTML,'##URL_TAREA##',@URLDETALLE));
+			SET @HTML = (REPLACE(@HTML,'##URL_TAREA_ACEPTAR##',ISNULL(@URLACEPTAR,'')));
+			SET @HTML = (REPLACE(@HTML,'##URL_TAREA_RECHAZAR##',ISNULL(@URLRECHAZAR,'')));
+			SET @HTML = (REPLACE(@HTML,'##URL_TAREA##',ISNULL(@URLDETALLE,'')));
 
 			SET @HTML = (REPLACE(@HTML,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 
-			SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
+				--TABLA PARA EL ENVIO DE CORREOS
+				SELECT @CORREOUSUARIO AS Para,        -- Para - varchar(1000)
+					   'Aprobación Serial de Orden de Compra Directa #' + CAST(@IDPEDIDO as nvarchar) AS Asunto,        -- Asunto - varchar(500)
+						@HTML as Mensaje        -- Mensaje - text
 
-			INSERT INTO Adinco.dbo.S_Notificacion
-			(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-			)
-			VALUES
-			(	@IDNOTIFICACION,         -- IdNotificacion - bigint
-				@CORREOUSUARIO,        -- Para - varchar(1000)
-				    'Aprobación Serial de Orden de Compra Directa #' + CAST(@IDDOCUMENTO as nvarchar),        -- Asunto - varchar(500)
-				    @HTML,        -- Mensaje - text
-				    DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-				    0,      -- Enviada - bit
-				    NULL, -- FechaEnvio - datetime
-				    3,         -- CreadoPor - int
-				    GETDATE(), -- CreadoEl - datetime
-				    NULL,         -- ModificadoPor - int
-				    NULL, -- ModificadoEl - datetime
-				    'procura@adinco.mx',        -- De - varchar(100)
-				    NULL       -- EN_MsjEnviado - bit
-			);
-
-			INSERT INTO Petrovendor.dbo.TA_EnvioCorreo
-			(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-			)
-			VALUES
-			(   @IdNotificacion, -- IdEnvioAdinco - int
-				1, -- CORREO DE PETICION OFERTA
-				CONCAT('0 - Notificacion para Aprobacion de Orden de Compra Directa #' , @IDDOCUMENTO),  -- IdIdentificacion - int
-				@IdUsuario,
-				GETDATE()
-			);
-
-			INSERT INTO Petrovendor.dbo.TA_BitacoraCorreo
-			(
-					IdDocumento,
-					Detalle,
-					Correo,
-					Enviado,
-					FechaEnvio,
-					IdUsuarioEnvio,
-					IdProveedorEnvio,
-					IdUsuarioReceptor
-			)
-			VALUES
-			(   @IDDOCUMENTO,         -- IdDocumento - int
-				N'Notificacion de Aprobacion para Pedimento/Comprobante',       -- Detalle - nvarchar(max)
-				@CORREOUSUARIO,       -- Correo - nvarchar(350)
-				1,      -- Enviado - bit
-				GETDATE(), -- FechaEnvio - datetime
-				0,         -- IdUsuarioEnvio - int
-				0,         -- IdProveedorEnvio - int
-				0          -- IdUsuarioReceptor - int
-			);
-			END
-
-
-			--TABLA PARA EL ENVIO DE LA PUSH NOTIFICATION
-			SELECT 
-				@IDUSUARIOADINCO,
-				'Nueva Aprobación' AS TITULO,
-				'Orden de Compra Directa #' + CAST(@IDPEDIDO AS NVARCHAR) AS SUBTITULO,
-				'Estimado(a) ' + @NOMBREUSUARIO + 'te informamos que tiene pendiente la aprobación de la compra directa #'+ CAST(@IDPEDIDO AS NVARCHAR) AS MENSAJE,
-				GETDATE()
+				--TABLA PARA EL ENVIO DE LA PUSH NOTIFICATION
+				SELECT 
+					@IDUSUARIOADINCO,
+					'Nueva Aprobación' AS TITULO,
+					'Orden de Compra Directa #' + CAST(@IDPEDIDO AS NVARCHAR) AS SUBTITULO,
+					'Estimado(a) ' + @NOMBREUSUARIO + 'te informamos que tiene pendiente la aprobación de la compra directa #'+ CAST(@IDPEDIDO AS NVARCHAR) AS MENSAJE,
+					GETDATE();
+				END
 
 		END
 		ELSE
