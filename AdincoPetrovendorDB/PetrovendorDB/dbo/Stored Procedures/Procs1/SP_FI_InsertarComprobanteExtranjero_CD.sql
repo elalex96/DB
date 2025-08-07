@@ -429,8 +429,6 @@ BEGIN
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##',ISNULL(@DominioProcura,'')+'04Tareas/AprobacionPedimentoComprobante_CD.aspx'));
 
-				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-
 				INSERT INTO #TemporalCorreosUsuario (   
 					Para,
 					Asunto,

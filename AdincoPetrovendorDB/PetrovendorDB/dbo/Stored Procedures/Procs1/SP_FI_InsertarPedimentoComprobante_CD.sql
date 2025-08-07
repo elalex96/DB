@@ -154,7 +154,7 @@ BEGIN
 	 [CreadoEn],
 	 [ImporteTotal]
 	)
-					 VALUES
+	VALUES
 	(@idped,
 	 @DescripcionMercancia,
 	 @SubTotal,
