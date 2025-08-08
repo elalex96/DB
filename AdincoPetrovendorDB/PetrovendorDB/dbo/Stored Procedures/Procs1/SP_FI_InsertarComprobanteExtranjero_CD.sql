@@ -1,4 +1,4 @@
-﻿USE [Petrovendor]
+﻿ USE [Petrovendor]
 GO
 IF OBJECT_ID('SP_FI_InsertarComprobanteExtranjero_CD') IS NOT NULL
 BEGIN
