@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('SP_FI_InsertarPedimentoComprobante_CD') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_FI_InsertarPedimentoComprobante_CD;
+END
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <27/08/2020>
 -- Description:	<Creacion del flujo de aprobacion para los pedimentos/comprobantes >
@@ -7,6 +14,10 @@
 -- Author:		DANIEL AC
 -- Create date: 03/06/2022
 -- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 06/08/2025
+-- Description:	Se obtiene RETORNA CORREOS DE PEDIMENTOS
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_InsertarPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -46,6 +57,15 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
+	CREATE TABLE #TemporalCorreosUsuario (  
+		Para VARCHAR(500),  
+		Asunto VARCHAR(500),  
+		Mensaje NVARCHAR(MAX),  
+		De VARCHAR(200),
+		CreadoPor INT,
+		UsuarioAdincoId INT
+	);  
+
 	DECLARE @CorreoNotificaciones NVARCHAR(MAX);
 	DECLARE @idped INT;
     DECLARE @IdSubcontratistaImportador INT;
@@ -59,11 +79,14 @@ BEGIN
 	DECLARE @CONTTOTAL INT;
 	DECLARE @CONT INT;
 	DECLARE @IDAPROBPARALELO INT;
-	DECLARE @APROBADORESTABLE TABLE(ID INT IDENTITY(1,1),IdAprobador INT, Nombre NVARCHAR(1000), Correo NVARCHAR(MAX));
-	    
+	DECLARE @UsuarioAdincoId INT;
+	DECLARE @APROBADORESTABLE TABLE(ID INT IDENTITY(1,1),IdAprobador INT, Nombre NVARCHAR(1000), Correo NVARCHAR(MAX), UsuarioAdincoId INT);
+	DECLARE @DominioProcura NVARCHAR(500) = (SELECT URL FROM TA_Dominios WHERE IdDominio = 2) --> CTE DOMINIO PROCURA
+
 	SELECT @IdSubcontratistaImportador = CC.IdProveedor
     FROM Adinco.dbo.CO_Contrato C
-        JOIN Adinco.dbo.CO_Contratista CC ON C.IdContratista = CC.IdContratista
+        JOIN Adinco.dbo.CO_Contratista CC 
+		ON C.IdContratista = CC.IdContratista
     WHERE C.IdContrato = @IdContrato;
 
 	INSERT INTO [dbo].[FI_PedimentoComprobante]
@@ -131,7 +154,7 @@ BEGIN
 	 [CreadoEn],
 	 [ImporteTotal]
 	)
-					 VALUES
+	VALUES
 	(@idped,
 	 @DescripcionMercancia,
 	 @SubTotal,
@@ -326,64 +349,32 @@ BEGIN
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
 				SET @CORREOSIGAPROBADOR = (SELECT Correo FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
+				SET @UsuarioAdincoId = (SELECT IdUsuarioADINCO FROM dbo.S_Usuario WHERE IdUsuario = @IDSIGAPROBADOR);
 				SET @CORREOSIG = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 107);
 
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_USUARIO##',@NOMBRESIGAPROBADOR));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_CLIENTE##',@NOMBRESUBCONTRATISTA));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##COMPROBANTE##',CAST(@idped AS NVARCHAR(10))));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));
-				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##','https://procura.adinco.mx/04Tareas/AprobacionPedimentoComprobante_CD.aspx'));
-
-				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-
-				INSERT INTO Adinco.dbo.S_Notificacion
-				(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-				)
+				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##', ISNULL(@DominioProcura,'')+'04Tareas/AprobacionPedimentoComprobante_CD.aspx'));
+												
+				INSERT INTO #TemporalCorreosUsuario (   
+					Para,
+					Asunto,
+					Mensaje,                                       
+					CreadoPor,
+					UsuarioAdincoId
+				) 	
 				VALUES
-				(	@IDNOTIFICACION,         -- IdNotificacion - bigint
+				(	
 				    @CORREOSIGAPROBADOR,        -- Para - varchar(1000)
 				    'Aprobación Pendiente de Pedimento/Comprobante Extranjero',        -- Asunto - varchar(500)
-				    @CORREOSIG,        -- Mensaje - text
-				    DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-				    0,      -- Enviada - bit
-				    NULL, -- FechaEnvio - datetime
+				    @CORREOSIG,        -- Mensaje - text				   
 				    3,         -- CreadoPor - int
-				    GETDATE(), -- CreadoEl - datetime
-				    NULL,         -- ModificadoPor - int
-				    NULL, -- ModificadoEl - datetime
-				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
-				    NULL       -- EN_MsjEnviado - bit
+					@UsuarioAdincoId
 				    );
 
-				INSERT INTO dbo.TA_EnvioCorreo
-				(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-				)
-				VALUES
-				(   @IdNotificacion, -- IdEnvioAdinco - int
-					107, -- CORREO DE PETICION OFERTA
-					CONCAT('0 - Notificacion para Aprobacion del Pedimento/Comprobante #' , @idped),  -- IdIdentificacion - int
-					@IdUsuario,
-					GETDATE()
-				);
-
+				
 				INSERT INTO dbo.TA_BitacoraCorreo
 				(
 					IdDocumento,
@@ -418,12 +409,14 @@ BEGIN
 			(
 			    IdAprobador,
 			    Nombre,
-			    Correo
+			    Correo,
+				UsuarioAdincoId
 			)
 			SELECT
 				T.IdAprobador,
 				US.Nombre,
-				US.Correo
+				US.Correo,
+				US.IdUsuarioADINCO
 			FROM dbo.TA_Tarea AS T
 			JOIN dbo.S_Usuario AS US
 				ON T.IdAprobador = US.IdUsuario
@@ -448,63 +441,30 @@ BEGIN
 			    
 				SET @NOMBRESIGAPROBADOR = (SELECT Nombre FROM @APROBADORESTABLE WHERE ID = @CONT);
 				SET @CORREOSIGAPROBADOR = (SELECT Correo FROM @APROBADORESTABLE WHERE ID = @CONT);
+				SET @UsuarioAdincoId = (SELECT UsuarioAdincoId FROM @APROBADORESTABLE WHERE ID = @CONT);
 				SET @CORREOSIG = (SELECT HTML FROM dbo.TA_Correo WHERE IdCorreo = 107);
 
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_USUARIO##',@NOMBRESIGAPROBADOR));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_CLIENTE##',@NOMBRESUBCONTRATISTA));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##COMPROBANTE##',CAST(@idped AS NVARCHAR(10))));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));
-				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##','https://procura.adinco.mx/04Tareas/AprobacionPedimentoComprobante_CD.aspx'));
-
-				SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);
-
-				INSERT INTO Adinco.dbo.S_Notificacion
-				(
-				    IdNotificacion,
-				    Para,
-				    Asunto,
-				    Mensaje,
-				    FechaProgramadaEnvio,
-				    Enviada,
-				    FechaEnvio,
-				    CreadoPor,
-				    CreadoEl,
-				    ModificadoPor,
-				    ModificadoEl,
-				    De,
-				    EN_MsjEnviado
-				)
+				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##', ISNULL(@DominioProcura,'')+'04Tareas/AprobacionPedimentoComprobante_CD.aspx'));
+				
+				INSERT INTO #TemporalCorreosUsuario (   
+					Para,
+					Asunto,
+					Mensaje,                                       
+					CreadoPor,
+					UsuarioAdincoId
+				) 	
 				VALUES
-				(	@IDNOTIFICACION,         -- IdNotificacion - bigint
+				(	
 				    @CORREOSIGAPROBADOR,        -- Para - varchar(1000)
 				    'Aprobación Pendiente de Pedimento/Comprobante Extranjero',        -- Asunto - varchar(500)
-				    @CORREOSIG,        -- Mensaje - text
-				    DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime
-				    0,      -- Enviada - bit
-				    NULL, -- FechaEnvio - datetime
-				    3,         -- CreadoPor - int
-				    GETDATE(), -- CreadoEl - datetime
-				    NULL,         -- ModificadoPor - int
-				    NULL, -- ModificadoEl - datetime
-				    ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)
-				    NULL       -- EN_MsjEnviado - bit
+				    @CORREOSIG,        -- Mensaje - text				   
+				    3,        -- CreadoPor - int
+					@UsuarioAdincoId
 				    );
-
-				INSERT INTO dbo.TA_EnvioCorreo
-				(
-					IdEnvioAdinco,
-					IdCorreo,
-					IdIdentificacion,
-					EnviadoPor,
-					EnviadoEl
-				)
-				VALUES
-				(   @IdNotificacion, -- IdEnvioAdinco - int
-					107, -- CORREO DE PETICION OFERTA
-					CONCAT('0 - Notificacion para Aprobacion del Pedimento/Comprobante #' , @idped),  -- IdIdentificacion - int
-					@IdUsuario,
-					GETDATE()
-				);
 
 				INSERT INTO dbo.TA_BitacoraCorreo
 				(
@@ -536,6 +496,14 @@ BEGIN
 		END
 
 
-	SELECT @IdOperacion AS IdOperacion, @idped AS IdPedimento
+	SELECT @IdOperacion AS IdOperacion,
+	@idped AS IdPedimento
 
+	SELECT 
+	Para,
+	Asunto,
+	Mensaje,
+	CreadoPor,
+	UsuarioAdincoId
+	FROM #TemporalCorreosUsuario 
 END

@@ -1,6 +1,6 @@
 USE [Adinco]
 GO
-IF OBJECT_ID('Petrovendor..Mobile_sp_EnvioCorreosOCD') IS NOT NULL
+IF OBJECT_ID('Mobile_sp_EnvioCorreosOCD') IS NOT NULL
 BEGIN
 DROP PROCEDURE Mobile_sp_EnvioCorreosOCD;
 END
@@ -14,6 +14,10 @@ GO
 -- Create date: <22/07/2025>
 -- Description:	<Retorno del correo de compra directa>
 -- =============================================
+-- Author:		Daniel Ac
+-- Create date: <06/08/2025>
+-- Description:	<Retorno el titulo y subtitilo esperado desde la app movil>
+-- =============================================
 CREATE PROCEDURE [dbo].[Mobile_sp_EnvioCorreosOCD]
 	-- Add the parameters for the stored procedure here
 	@IdOperacion int,
@@ -26,6 +30,7 @@ BEGIN
 	SET NOCOUNT ON;
 	DECLARE @IDUSUARIOADINCO INT = @IdUsuario;
 	SET @IdUsuario = (SELECT top 1 IdUsuario FROM Petrovendor.dbo.S_Usuario WHERE IdUsuarioADINCO = @IdUsuario)
+	DECLARE @DominioProcura NVARCHAR(500) = (SELECT URL FROM Petrovendor..TA_Dominios WHERE IdDominio = 2) --> CTE DOMINIO PROCURA
 
     -- Insert statements for procedure here
 	DECLARE @HTML NVARCHAR(MAX);
@@ -105,9 +110,9 @@ BEGIN
 			IF ISNULL(@IDAPROBADOR,0) > 0
 			BEGIN
 				
-			SET @URLACEPTAR = 'https://procura.adinco.mx/04Tareas/AprobacionCompraDirecta.aspx?num_operacion=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IdOperacion AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&response=2&num_tarea=&num_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDAPROBADOR AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&compra = ' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDDOCUMENTO AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&creado=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDASIGNADOR AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8);
-			SET @URLRECHAZAR = 'https://procura.adinco.mx/04Tareas/AprobacionCompraDirecta.aspx?num_operacion=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IdOperacion AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&response=3&num_tarea=&num_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDAPROBADOR AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&compra = ' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDDOCUMENTO AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&creado=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDASIGNADOR AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8);
-			SET @URLDETALLE = 'https://procura.adinco.mx/02Proveedores/DetalleCompraDirecta.aspx?num_operacion=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IdOperacion AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&compra = ' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDDOCUMENTO AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&creado=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDASIGNADOR AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&num_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDAPROBADOR AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&origin=t&tp_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(1 AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8);
+			SET @URLACEPTAR = ISNULL(@DominioProcura,'')+'04Tareas/AprobacionCompraDirecta.aspx?num_operacion=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IdOperacion AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&response=2&num_tarea=&num_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDAPROBADOR AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&compra = ' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDDOCUMENTO AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&creado=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDASIGNADOR AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8);
+			SET @URLRECHAZAR = ISNULL(@DominioProcura,'')+'04Tareas/AprobacionCompraDirecta.aspx?num_operacion=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IdOperacion AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&response=3&num_tarea=&num_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDAPROBADOR AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&compra = ' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDDOCUMENTO AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&creado=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDASIGNADOR AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8);
+			SET @URLDETALLE = ISNULL(@DominioProcura,'')+'02Proveedores/DetalleCompraDirecta.aspx?num_operacion=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IdOperacion AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&compra = ' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDDOCUMENTO AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&creado=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDASIGNADOR AS nvarchar) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&num_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(@IDAPROBADOR AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8) + '&origin=t&tp_user=' + LEFT(CONVERT(VARCHAR(36),NEWID()),8) + CAST(1 AS NVARCHAR) + RIGHT(CONVERT(VARCHAR(36),NEWID()),8);
 
 			SET @HTML = (REPLACE(@HTML,'##NUMERO_OPERACION##',CAST(@IDPEDIDO AS nvarchar)));
 			SET @HTML = (REPLACE(@HTML,'##TIPO_OPERACION##','Orden de Compra Directa'));
@@ -129,8 +134,8 @@ BEGIN
 				--TABLA PARA EL ENVIO DE LA PUSH NOTIFICATION
 				SELECT 
 					@IDUSUARIOADINCO,
-					'Nueva Aprobación' AS TITULO,
-					'Orden de Compra Directa #' + CAST(@IDPEDIDO AS NVARCHAR) AS SUBTITULO,
+					'Aprobación #'+ CAST(@IdOperacion AS nvarchar)+' de Compra Directa' AS TITULO,
+					'Nueva tarea de Compra Directa asignada' AS SUBTITULO,
 					'Estimado(a) ' + @NOMBREUSUARIO + 'te informamos que tiene pendiente la aprobación de la compra directa #'+ CAST(@IDPEDIDO AS NVARCHAR) AS MENSAJE,
 					GETDATE();
 				END
