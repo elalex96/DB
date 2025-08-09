@@ -21,7 +21,10 @@ AS
             CO_BitacoraCargaRegistroMarkupDetalle.IdRegistroExcel,
             CO_BitacoraCargaRegistroMarkupDetalle.PorcentajeExcel,
             CO_BitacoraCargaRegistroMarkupDetalle.TipoCambioExcel,
-            CO_BitacoraCargaRegistroMarkupDetalle.Detalle,
+            CASE WHEN
+			LEN(CO_BitacoraCargaRegistroMarkupDetalle.Detalle) > 0
+			THEN CO_BitacoraCargaRegistroMarkupDetalle.Detalle
+			ELSE '¡Gasto disponible para agregar markup!' END as Detalle,
             CO_BitacoraCargaRegistroMarkupDetalle.Correcto,
             CO_BitacoraCargaRegistroMarkup.GastosNoEncontrados,
             CO_BitacoraCargaRegistroMarkup.ContieneMarkup,
