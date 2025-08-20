@@ -118,6 +118,9 @@ BEGIN
         PRIMARY KEY (IdFactura)
     );
 
+	CREATE NONCLUSTERED INDEX IX_Facturas_UUID ON #Facturas(UUID);
+	CREATE NONCLUSTERED INDEX IX_Facturas_IdFactura ON #Facturas(IdFactura);
+
     INSERT INTO #CartasProcura
     (
         IdFactura,
