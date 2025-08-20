@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -680,7 +679,7 @@ BEGIN
            F.FechaRecepcion,
            F.Año,
            F.Mes,
-           F.NombreReceptor AS Receptor,
+           F.NombreReceptor,
            F.TieneArchivo,
            F.IVA,
            F.IdContrato,
