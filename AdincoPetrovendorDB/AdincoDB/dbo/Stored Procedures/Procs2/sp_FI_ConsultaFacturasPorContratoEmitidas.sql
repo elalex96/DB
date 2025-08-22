@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
 (
     SELECT 1
     FROM dbo.sysobjects
@@ -76,6 +75,9 @@ BEGIN
         Receptor VARCHAR(8000),
         PRIMARY KEY (IdFactura)
     );
+
+	CREATE NONCLUSTERED INDEX IX_Facturas_UUID ON #Facturas(UUID);
+	CREATE NONCLUSTERED INDEX IX_Facturas_IdFactura ON #Facturas(IdFactura);
    
         INSERT INTO #Facturas
         (
@@ -247,7 +249,7 @@ BEGIN
            F.FechaRecepcion,
            YEAR(F.Fecha) AS Año,
            CONCAT(RIGHT('00' + CAST(MONTH(F.Fecha) AS VARCHAR(2)), 2), ' ', DATENAME(MONTH, F.Fecha)) AS Mes,
-           F.NombreReceptor AS Receptor,
+           F.NombreReceptor,
            F.TieneArchivo,
            F.IVA,
            F.IdContrato,
