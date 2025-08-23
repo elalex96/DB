@@ -28,8 +28,8 @@ AS
                 Descripcion               VARCHAR(300),
                 RazonSocial               VARCHAR(300),
                 RFC                       VARCHAR(100),
-                SubTotal                  FLOAT,
-                SubTotalOriginal          FLOAT,
+                SubTotal                  MONEY,
+                SubTotalOriginal          MONEY,
                 PCN                       FLOAT,
                 IdFactura                 INT,
                 IdAceptacionPedidoDetalle INT
@@ -40,7 +40,7 @@ AS
                 UUID                  VARCHAR(500),
                 RFC                   VARCHAR(50),
                 EncontradoPetrovendor INT,
-                SubTotal              money,
+                SubTotal              MONEY,
                 IdSubcontratista      INT,
                 IdContrato            INT,
                 IdMoneda              INT,
@@ -52,7 +52,7 @@ AS
                 Descripcion VARCHAR(300),
                 RazonSocial VARCHAR(300),
                 RFC         VARCHAR(100),
-                SubTotal    FLOAT,
+                SubTotal    MONEY,
                 PCN         FLOAT,
                 IdFactura   INT
             );

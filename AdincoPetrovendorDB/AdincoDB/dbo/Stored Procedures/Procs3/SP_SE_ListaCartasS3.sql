@@ -36,7 +36,6 @@ AS
     BEGIN
         SET NOCOUNT ON;
 
-
         CREATE TABLE #Presupuestos (IdPresupuesto INT);
         CREATE TABLE #RFC (RFC VARCHAR(25));
         /*Cartas de Petrovendor*/
@@ -335,16 +334,11 @@ IF (1 = @EsPresupuestoSeleccionadoJaguarPanteraExploracion)
 							on AP.IdAceptacionPedido = ACCN.IdAceptacionPedido
                                    AND ACCN.IdEstatus = @EstatusAprobado
                         JOIN
-                            Petrovendor.dbo.MPY_MM_AceptacionPedidoDetalle APD
-                                on AP.IdAceptacionPedido = APD.IdAceptacionPedido
-                        JOIN
                             Petrovendor.dbo.S_Documento_S3                 AS DOC (NOLOCK)
                                 ON DOC.IdDocumento = ACCN.IdDocumento
                         JOIN
                             Adinco.dbo.CO_SAPVendor                        AS VEN (NOLOCK)
                                 ON AP.IdSubContratista COLLATE DATABASE_DEFAULT = VEN.VendorIDSAP
-                        
-                    
                     WHERE
                         AP.IdContrato = @IdContrato
                         AND (

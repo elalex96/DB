@@ -10,7 +10,7 @@
     DROP PROCEDURE SP_SE_A5_MPY;
 GO
 
-CREATE PROCEDURE [dbo].[SP_SE_A5_MPY] 
+CREATE PROCEDURE [dbo].[SP_SE_A5_MPY] --10039,10109,10205,'20210101','20211201',10209,'Exploración'
     @IdContrato    INT,
     @IdUsuario     INT,
     @IdPresupuesto INT,
@@ -29,7 +29,7 @@ AS
                 UUID                  VARCHAR(500),
                 RFC                   VARCHAR(50),
                 EncontradoPetrovendor INT,
-				SubTotal              money,
+				SubTotal              MONEY,
                 IdSubcontratista      INT,
                 IdContrato            INT,
                 IdMoneda              INT,
@@ -41,8 +41,8 @@ AS
                 Descripcion               VARCHAR(50),
                 RazonSocial               VARCHAR(300),
                 RFC                       VARCHAR(100),
-                SubTotal                  FLOAT,
-                SubTotalOriginal          FLOAT,
+                SubTotal                  MONEY,
+                SubTotalOriginal          MONEY,
                 PCN                       FLOAT,
                 IdFactura                 INT,
                 IdAceptacionPedidoDetalle INT
@@ -207,7 +207,7 @@ AS
                     P.idpresupuesto = @IdPresupuesto
                     AND C.IdContratista IN (
                                                  @Jaguar, @Pantera
-                                           );
+                                           )
        IF (@EsPresupuestoJaguarPantera > 0)
             BEGIN
               INSERT INTO #RFC

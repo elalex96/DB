@@ -50,7 +50,7 @@ AS
                 UUID                  VARCHAR(500),
                 RFC                   VARCHAR(50),
                 EncontradoPetrovendor INT,
-				SubTotal              money,
+				SubTotal              MONEY,
                 IdSubcontratista      INT,
                 IdContrato            INT,
                 IdMoneda              INT,

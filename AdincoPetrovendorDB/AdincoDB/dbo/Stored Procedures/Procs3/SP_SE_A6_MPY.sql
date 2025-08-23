@@ -29,7 +29,7 @@ AS
                 UUID                  VARCHAR(500),
                 RFC                   VARCHAR(50),
                 EncontradoPetrovendor INT,
-				SubTotal              money,
+				SubTotal              MONEY,
                 IdSubcontratista      INT,
                 IdContrato            INT,
                 IdMoneda              INT,
@@ -38,7 +38,7 @@ AS
         CREATE TABLE #DATOS
             (
                 Descripcion VARCHAR(50),
-                SubTotal    FLOAT,
+                SubTotal    MONEY,
                 IdFactura   INT
             )
 		
