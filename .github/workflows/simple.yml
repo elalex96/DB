@@ -5,6 +5,9 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: self-hosted
+    permissions:
+      checks: write
+      contents: read
     steps:
     - uses: actions/checkout@v4
     - name: Reporta GitHub
