@@ -311,7 +311,7 @@ AS
                             petrovendor.dbo.MPY_MM_AceptacionPedido        AP  (NOLOCK)
                                 On AF.IdAceptacionPedido = AP.IdAceptacionPedido
                         JOIN
-                            Petrovendor.dbo.MPY_MM_AceptacionCartaPCN      ACP
+                            Petrovendor.dbo.MPY_MM_AceptacionCartaPCN      ACP (NOLOCK)
                                 on AP.IdAceptacionPedido = ACP.IdAceptacionPedido
                                    AND ACP.IdEstatus = @EstatusAprobado
                         JOIN
