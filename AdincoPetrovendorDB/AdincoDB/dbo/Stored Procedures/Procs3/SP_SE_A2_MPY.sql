@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
@@ -8,8 +7,10 @@ IF EXISTS
         WHERE
             name = 'SP_SE_A2_MPY'
     )
-    DROP PROCEDURE SP_SE_A2_MPY
+    DROP PROCEDURE SP_SE_A2_MPY;
 GO
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 CREATE PROCEDURE [dbo].[SP_SE_A2_MPY]
     @IdContrato    INT,
     @IdUsuario     INT,
@@ -27,7 +28,12 @@ AS
                 IdFactura             INT,
                 UUID                  VARCHAR(500),
                 RFC                   VARCHAR(50),
-                EncontradoPetrovendor INT
+                EncontradoPetrovendor INT,
+				SubTotal              MONEY,
+                IdSubcontratista      INT,
+                IdContrato            INT,
+                IdMoneda              INT,
+                Fecha                 datetime
             );
         CREATE TABLE #DATOS
             (
@@ -36,18 +42,34 @@ AS
                 Descripcion               VARCHAR(300),
                 RazonSocial               VARCHAR(300),
                 RFC                       VARCHAR(100),
-                SubTotal                  FLOAT,
-                SubTotalOriginal          FLOAT,
+                SubTotal                  MONEY,
+                SubTotalOriginal          MONEY,
                 PCN                       FLOAT,
                 IdFactura                 INT,
                 IdAceptacionPedidoDetalle INT
             );
-
+		CREATE TABLE #FINAL
+            (
+                Codigo      VARCHAR(50),
+                Descripcion VARCHAR(300),
+                RazonSocial VARCHAR(300),
+                RFC         VARCHAR(100),
+                SubTotal    FLOAT,
+                PCN         FLOAT,
+                IdFactura   INT
+            );
+			
         DECLARE
             @Bienes                    INT = 2,
             @TipoComprobanteExtranjero INT = 3,
             @Peso                      INT = 1,
-            @Dolar                     INT = 2;
+            @Dolar                     INT = 2,
+			@EsPresupuestoJaguarPantera                        INT = 0,
+            @EsPresupuestoGuardadosJaguarPanteraExploracion    INT = 0,
+            @EsPresupuestoSeleccionadoJaguarPanteraExploracion INT = 0,
+			@EstatusAprobado INT = 2,
+			@Jaguar INT = 10005,	
+			@Pantera INT = 10006;
 
         /*Se valida si el presupuesto viene en 0 para obtener todos los presupuestos del perido.*/
         IF (@IdPresupuesto = 0)
@@ -63,21 +85,22 @@ AS
                                 INNER JOIN
                                     CO_PeriodoContrato CPC (NOLOCK)
                                         ON CPA.IdPeriodoContrato = CPC.IdPeriodo
+										 AND CPC.IdPeriodo = @IdPeriodo
                                 INNER JOIN
                                     CO_Presupuesto     CP (NOLOCK)
                                         ON CPA.IdProgramaActividad = CP.IdProgramaActividad
                             WHERE
                                 CPC.IdPeriodo = @IdPeriodo
-                                AND CP.Activo = 1
-                IF 1 =
-                    (
-                        SELECT
-                            COUNT(1)
+                                AND CP.Activo = 1;
+
+						SELECT
+                            @EsPresupuestoGuardadosJaguarPanteraExploracion = COUNT(1)
                         FROM
                             #Presupuestos              T
                             JOIN
                                 dbo.CO_Presupuesto     P (NOLOCK)
                                     ON T.IdPresupuesto = P.IdPresupuesto
+									 AND P.nombre LIKE '%exploración%'
                             JOIN
                                 dbo.CO_AnioContractual AC (NOLOCK)
                                     ON P.IdAnioContractual = AC.IdAnioContractual
@@ -87,9 +110,9 @@ AS
                         WHERE
                             P.nombre LIKE '%exploración%'
                             AND C.IdContratista IN (
-                                                       10005, 10006
+                                                       @Jaguar, @Pantera
                                                    )
-                    )
+                  IF (1 = @EsPresupuestoGuardadosJaguarPanteraExploracion)
                     BEGIN
                         DELETE FROM #Presupuestos;
                         INSERT INTO #Presupuestos
@@ -103,6 +126,7 @@ AS
                                         JOIN
                                             dbo.CO_AnioContractual AC (NOLOCK)
                                                 ON P.IdAnioContractual = AC.IdAnioContractual
+												 AND AC.IdContrato  = @IdContrato
                                         JOIN
                                             dbo.CO_Contrato        C (NOLOCK)
                                                 ON AC.IdContrato = C.IdContrato
@@ -110,21 +134,22 @@ AS
                                         C.IdContrato = @IdContrato
                                         AND P.nombre LIKE '%exploración%'
                                         AND C.IdContratista IN (
-                                                                   10005, 10006
+                                                                   @Jaguar, @Pantera
                                                                );
                     END;
             END
         ELSE
             BEGIN
-                IF 1 =
-                    (
-                        SELECT
-                            COUNT(1)
+
+			SELECT
+                    @EsPresupuestoSeleccionadoJaguarPanteraExploracion = COUNT(1)
                         FROM
                             dbo.CO_Presupuesto         P (NOLOCK)
                             JOIN
                                 dbo.CO_AnioContractual AC (NOLOCK)
                                     ON P.IdAnioContractual = AC.IdAnioContractual
+									AND   P.IdPresupuesto = @IdPresupuesto
+									AND P.Nombre LIKE '%exploración%'
                             JOIN
                                 dbo.CO_Contrato        C (NOLOCK)
                                     ON AC.IdContrato = C.IdContrato
@@ -132,9 +157,9 @@ AS
                             P.IdPresupuesto = @IdPresupuesto
                             AND P.Nombre LIKE '%exploración%'
                             AND C.IdContratista IN (
-                                                       10005, 10006
+                                                       @Jaguar, @Pantera
                                                    )
-                    )
+                  IF (1 = @EsPresupuestoSeleccionadoJaguarPanteraExploracion)
                     BEGIN
                         INSERT INTO #Presupuestos
                             (
@@ -147,6 +172,8 @@ AS
                                         JOIN
                                             dbo.CO_AnioContractual AC (NOLOCK)
                                                 ON P.IdAnioContractual = AC.IdAnioContractual
+												 AND P.Nombre LIKE '%exploración%'
+												 AND	AC.IdContrato  = @IdContrato
                                         JOIN
                                             dbo.CO_Contrato        C (NOLOCK)
                                                 ON AC.IdContrato = C.IdContrato
@@ -154,7 +181,7 @@ AS
                                         C.IdContrato = @IdContrato
                                         AND P.Nombre LIKE '%exploración%'
                                         AND C.IdContratista IN (
-                                                                   10005, 10006
+                                                                   @Jaguar, @Pantera
                                                                );
                     END;
                 ELSE
@@ -168,43 +195,48 @@ AS
                     END;
             END
         /*RFC*/
-        INSERT INTO #RFC
+       INSERT INTO #RFC
             (
                 RFC
             )
-                    SELECT
-                        'FMP140930MW3'
-                    UNION
-                    SELECT
-                        'SAT970701NN3';
-        IF 1 =
+        VALUES
             (
-                SELECT
-                    COUNT(1)
+                'FMP140930MW3'
+            ),
+            (
+                'SAT970701NN3'
+            );
+			
+
+			 SELECT
+                   @EsPresupuestoJaguarPantera = COUNT(1)
                 FROM
                     dbo.CO_Presupuesto         P (NOLOCK)
                     JOIN
                         dbo.CO_AnioContractual AC (NOLOCK)
                             ON P.IdAnioContractual = AC.IdAnioContractual
+							 AND P.idpresupuesto = @IdPresupuesto
                     JOIN
                         dbo.CO_Contrato        C (NOLOCK)
                             ON AC.IdContrato = C.IdContrato
                 WHERE
                     P.idpresupuesto = @IdPresupuesto
                     AND C.IdContratista IN (
-                                               10005, 10006
-                                           )
-            )
+                                               @Jaguar, @Pantera
+                                           );
+            IF (@EsPresupuestoJaguarPantera > 0)
             BEGIN
-                INSERT INTO #RFC
+                  INSERT INTO #RFC
                     (
                         RFC
                     )
-                            SELECT
-                                'FMO930803PB1'
-                            UNION
-                            SELECT
-                                'GMS971110BTA';
+                VALUES
+                    (
+                        'FMO930803PB1'
+                    ),
+                    (
+                        'GMS971110BTA'
+                    );
             END;
         /*Facturas de Adinco*/
 
@@ -213,36 +245,38 @@ AS
                 IdFactura,
                 UUID,
                 RFC,
-                EncontradoPetrovendor
+                EncontradoPetrovendor,
+				SubTotal,
+                IdSubcontratista,
+                IdContrato,
+                IdMoneda,
+                Fecha
             )
                     SELECT DISTINCT
                         F.IdFactura,
                         F.UUID,
                         S.RFC,
-                        0
-                    FROM
+                        0,
+						F.SubTotal,
+                        F.IdSubcontratista,
+                        F.IdContrato,
+                        F.IdMoneda,
+                        F.Fecha
+                      FROM
+                         #Presupuestos                       PP
+					  JOIN
+                            Adinco.dbo.CO_LineaPresupuestoMes   L (NOLOCK)
+						ON	 PP.IdPresupuesto	=	L.IdPresupuesto
+					JOIN
                         Adinco.dbo.CO_Registro                  R (NOLOCK)
-                        JOIN
+						 ON L.IdLineaPresupuestoMes = R.IdPrograma
+                     JOIN
                             Adinco.dbo.FI_Factura               F (NOLOCK)
-                                ON F.IdFactura = R.IdFactura
+                                ON	R.IdFactura	=	F.IdFactura
+								 AND F.IdContrato = @IdContrato
                         JOIN
                             Adinco.dbo.PV_Subcontratista        S (NOLOCK)
-                                ON S.IdSubcontratista = F.IdSubcontratista
-                        JOIN
-                            Adinco.dbo.CO_LineaPresupuestoMes   L (NOLOCK)
-                                ON L.IdLineaPresupuestoMes = R.IdPrograma
-                        JOIN
-                            #Presupuestos                       PP
-                                ON L.IdPresupuesto = PP.IdPresupuesto
-                        JOIN
-                            Adinco.dbo.CO_Presupuesto           P (NOLOCK)
-                                ON P.IdPresupuesto = PP.IdPresupuesto
-                        JOIN
-                            Adinco.dbo.CO_ProgramaActividad     PA (NOLOCK)
-                                ON PA.IdProgramaActividad = P.IdProgramaActividad
-                        JOIN
-                            Adinco.dbo.CO_TipoProgramaActividad TPA (NOLOCK)
-                                ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad
+                                ON F.IdSubcontratista	=	S.IdSubcontratista
                         JOIN
                             Adinco.dbo.CO_TipoCambioDiario      TCD (NOLOCK)
                                 ON F.IdMoneda <> TCD.IdMoneda
@@ -299,26 +333,27 @@ AS
                     FROM
                         #FacturasAdinco                                    FA
                         JOIN
-                            Petrovendor.dbo.FI_Factura                     FP
+                            Petrovendor.dbo.FI_Factura                     FP	 (NOLOCK)
                                 on FA.UUID = FP.uuid collate SQL_Latin1_General_CP1_CI_AS
                         JOIN
-                            Petrovendor.dbo.MPY_MM_Aceptacionfactura       AF
+                            Petrovendor.dbo.MPY_MM_Aceptacionfactura       AF	 (NOLOCK)
                                 on FP.IdFactura = AF.IdFactura
                         JOIN
-                            petrovendor.dbo.MPY_MM_AceptacionPedido        AP
+                            petrovendor.dbo.MPY_MM_AceptacionPedido        AP	 (NOLOCK)
                                 On AF.IdAceptacionPedido = AP.IdAceptacionPedido
                         JOIN
-                            Petrovendor.dbo.MPY_MM_AceptacionCartaPCN      ACP
+                            Petrovendor.dbo.MPY_MM_AceptacionCartaPCN      ACP	 (NOLOCK)
                                 on AP.IdAceptacionPedido = ACP.IdAceptacionPedido
+                                   AND ACP.IdEstatus = @EstatusAprobado
                         JOIN
-                            Petrovendor.dbo.MPY_MM_AceptacionPedidoDetalle APD
+                            Petrovendor.dbo.MPY_MM_AceptacionPedidoDetalle APD	 (NOLOCK)
                                 on AP.IdAceptacionPedido = APD.IdAceptacionPedido
                                    AND APD.ClasificacionCN = @Bienes --BIENES
                         LEFT JOIN
-                            Petrovendor.dbo.MPY_MM_PCN_ValoresPesos        PV
+                            Petrovendor.dbo.MPY_MM_PCN_ValoresPesos        PV	 (NOLOCK)
                                 ON APD.IdAceptacionPedidoDetalle = PV.IdAceptacionPedidoDetalle
                         LEFT JOIN
-                            Petrovendor.dbo.MM_BS_Actividad                AS BSA
+                            Petrovendor.dbo.MM_BS_Actividad                AS BSA	 (NOLOCK)
                                 ON BSA.IdActividad = PV.IdCatalogoHidrocarburos
                         LEFT JOIN
                             Petrovendor.dbo.S_Proveedor                    AS PR (NOLOCK)
@@ -361,30 +396,27 @@ AS
                         S.RazonSocial                     AS RazonSocial,
                         S.RFC                             AS RFC,
                         CASE
-                            WHEN F.IdMoneda = @Peso
+                            WHEN FA.IdMoneda = @Peso
                                 THEN CAST(R.MontoRegistro AS DECIMAL(20, 2))
                             ELSE
-                                CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro, F.Fecha) AS DECIMAL(20, 2))
+                                CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro, FA.Fecha) AS DECIMAL(20, 2))
                         END                               AS SubTotal,
-                        F.SubTotal                        AS SubTotalOriginal,
+                        FA.SubTotal                        AS SubTotalOriginal,
                         R.PCN                             AS PCN,
-                        F.IdFactura,
+                        FA.IdFactura,
                         R.IdAceptacionPedidoDetalle
                     FROM
-                        dbo.CO_Registro                  R (NOLOCK)
+					     #FacturasAdinco                  FA
                         JOIN
-                            #FacturasAdinco              FA
-                                ON R.IdFactura = FA.IdFactura
+                            dbo.CO_Registro              R (NOLOCK)
+                                ON FA.IdFactura = R.IdFactura
                                    AND FA.EncontradoPetrovendor = 0
                                    AND R.IdGastoRubro = @Bienes --BIENES
-                        JOIN
-                            dbo.FI_Factura               F (NOLOCK)
-                                ON R.IdFactura = F.IdFactura
-                                   AND FA.IdFactura = F.IdFactura
-                                   AND F.IdContrato = @IdContrato
+								   AND FA.IdContrato = @IdContrato
+                     
                         JOIN
                             dbo.PV_Subcontratista        S (NOLOCK)
-                                ON F.IdSubcontratista = S.IdSubcontratista
+                                ON FA.IdSubcontratista = S.IdSubcontratista
                                    AND S.TipoPersonaFiscalID = 2
                         JOIN
                             dbo.CO_LineaPresupuestoMes   L (NOLOCK)
@@ -392,15 +424,6 @@ AS
                         JOIN
                             #Presupuestos                PP
                                 ON L.IdPresupuesto = PP.IdPresupuesto
-                        JOIN
-                            dbo.CO_Presupuesto           P (NOLOCK)
-                                ON PP.IdPresupuesto = P.IdPresupuesto
-                        JOIN
-                            dbo.CO_ProgramaActividad     PA (NOLOCK)
-                                ON P.IdProgramaActividad = PA.IdProgramaActividad
-                        JOIN
-                            dbo.CO_TipoProgramaActividad TPA (NOLOCK)
-                                ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad
                         LEFT JOIN
                             dbo.MM_BS_Actividad          A (NOLOCK)
                                 ON R.IdCBSISH = A.IdActividad
@@ -412,9 +435,9 @@ AS
                                              FROM
                                                  #RFC
                                          )
-                        AND F.IdContrato = @IdContrato
+                        AND FA.IdContrato = @IdContrato
                         AND ISNULL(R.PCN, 0) >= 0
-                        AND F.IdMoneda IN (
+                        AND FA.IdMoneda IN (
                                               @Peso, @Dolar
                                           )
                         AND FA.IdFactura IN (
@@ -435,30 +458,27 @@ AS
                         S.RazonSocial                     AS RazonSocial,
                         S.RFC                             AS RFC,
                         CASE
-                            WHEN f.IdMoneda <> 1
-                                then CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro, f.Fecha) AS DECIMAL(20, 2))
+                            WHEN fA.IdMoneda <> 1
+                                then CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro, fA.Fecha) AS DECIMAL(20, 2))
                             ELSE
                                 ISNULL(R.MontoRegistro, 0)
                         END                               AS SubTotal,
-                        F.SubTotal                        AS SubTotalOriginal,
+                        FA.SubTotal                        AS SubTotalOriginal,
                         R.PCN                             AS PCN,
-                        F.IdFactura,
+                        FA.IdFactura,
                         R.IdAceptacionPedidoDetalle
                     FROM
-                        dbo.CO_Registro                  R (NOLOCK)
+					 #FacturasAdinco                  FA
                         JOIN
-                            #FacturasAdinco              FA
-                                ON R.IdFactura = FA.IdFactura
-                                   AND R.IdGastoRubro = @Bienes --BIENES
+                            dbo.CO_Registro              R (NOLOCK)
+                                ON FA.IdFactura = R.IdFactura
                                    AND FA.EncontradoPetrovendor = 0
-                        JOIN
-                            dbo.FI_Factura               F (NOLOCK)
-                                ON R.IdFactura = F.IdFactura
-                                   AND FA.IdFactura = F.IdFactura
-                                   AND F.IdContrato = @IdContrato
+                                   AND R.IdGastoRubro = @Bienes --BIENES
+                                    AND FA.IdContrato = @IdContrato
+                        
                         JOIN
                             dbo.PV_Subcontratista        S (NOLOCK)
-                                ON F.IdSubcontratista = S.IdSubcontratista
+                                ON FA.IdSubcontratista = S.IdSubcontratista
                                    AND S.TipoPersonaFiscalID = 1
                         JOIN
                             dbo.CO_LineaPresupuestoMes   L (NOLOCK)
@@ -466,15 +486,6 @@ AS
                         JOIN
                             #Presupuestos                PP (NOLOCK)
                                 ON L.IdPresupuesto = PP.IdPresupuesto
-                        JOIN
-                            dbo.CO_Presupuesto           P (NOLOCK)
-                                ON PP.IdPresupuesto = P.IdPresupuesto
-                        JOIN
-                            dbo.CO_ProgramaActividad     PA (NOLOCK)
-                                ON P.IdProgramaActividad = PA.IdProgramaActividad
-                        JOIN
-                            dbo.CO_TipoProgramaActividad TPA (NOLOCK)
-                                ON TPA.IdTipoProgramaActividad = PA.IdTipoProgramaActividad
                         LEFT JOIN
                             dbo.MM_BS_Actividad          A (NOLOCK)
                                 ON R.IdCBSISH = A.IdActividad
@@ -486,9 +497,9 @@ AS
                                              FROM
                                                  #RFC
                                          )
-                        AND F.IdContrato = @IdContrato
+                        AND FA.IdContrato = @IdContrato
                         AND ISNULL(R.PCN, 0) >= 0
-                        AND F.IdMoneda IN (
+                        AND FA.IdMoneda IN (
                                               @Peso, @Dolar
                                           )
                         AND FA.IdFactura IN (
@@ -499,15 +510,13 @@ AS
                                                 WHERE
                                                     EncontradoPetrovendor = 0
                                             )
-
-
-UNION
+                    UNION
                     SELECT
-						R.IdRegistro,
-                        ISNULL(A.Codigo, 'SinClasificar') AS Codigo,
-                        ISNULL(A.Nombre, 'SinClasificar') AS Descripcion,
-                        PV_Subcontratista.RazonSocial                   AS RazonSocial,
-                        PV_Subcontratista.RFC                           AS RFC,
+                        R.IdRegistro,
+                        ISNULL(A.Codigo, 'SinClasificar')             AS Codigo,
+                        ISNULL(A.Nombre, 'SinClasificar')             AS Descripcion,
+                        PV_Subcontratista.RazonSocial                 AS RazonSocial,
+                        PV_Subcontratista.RFC                         AS RFC,
                         CASE
                             WHEN FI_PedimentoComprobante.IdMoneda = @Peso
                                 THEN CAST(R.MontoRegistro AS DECIMAL(20, 2))
@@ -516,46 +525,36 @@ UNION
                                                                           R.MontoRegistro,
                                                                           FI_PedimentoComprobante.FechaPago
                                                                       ) AS DECIMAL(20, 2))
-                        END                                             AS SubTotal,
-                        FI_PedimentoComprobanteDetalle.PrecioUnitario   AS SubTotalOriginal,
-                        R.PCN                                 AS PCN,
+                        END                                           AS SubTotal,
+                        FI_PedimentoComprobanteDetalle.PrecioUnitario AS SubTotalOriginal,
+                        R.PCN                                         AS PCN,
                         FI_PedimentoComprobante.IdPedimentoComprobante,
                         R.IdAceptacionPedidoDetalle
                     FROM
-                        FI_PedimentoComprobante  (NOLOCK)
+                        FI_PedimentoComprobante (NOLOCK)
                         INNER JOIN
-                            FI_PedimentoComprobanteDetalle  (NOLOCK)
+                            FI_PedimentoComprobanteDetalle (NOLOCK)
                                 ON FI_PedimentoComprobante.IdPedimentoComprobante = FI_PedimentoComprobanteDetalle.IdPedimentoComprobante
                                    AND FI_PedimentoComprobante.IdContrato = @IdContrato
                                    AND CAST(FI_PedimentoComprobante.FechaPago AS DATE) >= @FInicio
                                    AND CAST(FI_PedimentoComprobante.FechaPago AS DATE) <= EOMONTH(@FFin)
                         INNER JOIN
-                            PV_Subcontratista  (NOLOCK)
+                            PV_Subcontratista (NOLOCK)
                                 ON FI_PedimentoComprobante.IdSubcontratistaExportador = PV_Subcontratista.IdSubcontratista
                         INNER JOIN
-                            CO_Registro  R(NOLOCK)
+                            CO_Registro                   R (NOLOCK)
                                 ON FI_PedimentoComprobante.IdPedimentoComprobante = R.IdPedimentoComprobante
                                    AND R.CvTipoDocFacturacion = @TipoComprobanteExtranjero
                                    AND R.IdGastoRubro = @Bienes
                                    AND ISNULL(R.PCN, 0) >= 0
                         INNER JOIN
-                            CO_LineaPresupuestoMes  (NOLOCK)
+                            CO_LineaPresupuestoMes (NOLOCK)
                                 ON R.IdPrograma = CO_LineaPresupuestoMes.IdLineaPresupuestoMes
                         INNER JOIN
                             #Presupuestos
                                 ON CO_LineaPresupuestoMes.IdPresupuesto = #Presupuestos.IdPresupuesto
-                        INNER JOIN
-                            CO_Presupuesto  (NOLOCK)
-                                ON CO_LineaPresupuestoMes.IdPresupuesto = CO_Presupuesto.IdPresupuesto
-                                   AND CO_LineaPresupuestoMes.IdPresupuesto = #Presupuestos.IdPresupuesto
-                        INNER JOIN
-                            dbo.CO_ProgramaActividad  (NOLOCK)
-                                ON CO_Presupuesto.IdProgramaActividad = CO_ProgramaActividad.IdProgramaActividad
-                        INNER JOIN
-                            dbo.CO_TipoProgramaActividad  (NOLOCK)
-                                ON CO_ProgramaActividad.IdTipoProgramaActividad = CO_TipoProgramaActividad.IdTipoProgramaActividad
                         LEFT JOIN
-                            dbo.MM_BS_Actividad AS A (NOLOCK)
+                            dbo.MM_BS_Actividad           AS A (NOLOCK)
                                 ON R.IdCBSISH = A.IdActividad
                     WHERE
                         (
@@ -566,10 +565,20 @@ UNION
                         AND ISNULL(R.PCN, 0) >= 0
                     ORDER BY
                         ISNULL(A.Nombre, 'SinClasificar');
-				
+
 
         /****************************/
         /*SELECT FINAL*/
+		  INSERT INTO #FINAL
+            (
+                Codigo,
+                Descripcion,
+                RazonSocial,
+                RFC,
+                SubTotal,
+                PCN,
+                IdFactura
+            )
         SELECT
             Codigo,
             Descripcion,
@@ -578,8 +587,6 @@ UNION
             SUM(SubTotal)       AS SubTotal,
             SUM(SubTotal * PCN) AS PCN,
             IdFactura
-        INTO
-            #FINAL
         FROM
             #DATOS
         GROUP BY
@@ -633,3 +640,4 @@ UNION
             Descripcion,
             IdFactura
     END
+
