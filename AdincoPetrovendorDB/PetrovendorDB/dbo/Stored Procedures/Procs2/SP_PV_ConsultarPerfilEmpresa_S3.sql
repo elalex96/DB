@@ -1,8 +1,19 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('SP_PV_ConsultarPerfilEmpresa_S3') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PV_ConsultarPerfilEmpresa_S3;
+END
+GO
+/****** Object:  StoredProcedure [dbo].[SP_FI_ActualizacionComprobante_CD]    Script Date: 07/08/2025 03:39:05 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author: DANIEL AC
 -- Create date: 18/08/2017
--- Description:	CONSULTAR PERFIL DETALLE S3
+-- Description:	CONSULTAR PERFIL DETALLE S3 - 28-08-2025 SE AGREGA CONTROL DE NULLS
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PV_ConsultarPerfilEmpresa_S3] 
 	-- Add the parameters for the stored procedure here
@@ -39,16 +50,17 @@ BEGIN
 				@OrganigramaBucket		=	D.Bucket
 	FROM		PV_PerfilEmpresa		AS	PE
 	INNER JOIN	dbo.S_Documento_S3		D 
-	ON			D.IdDocumento			=	PE.IdDocumentoOrganigrama
+	ON			PE.IdDocumentoOrganigrama = D.IdDocumento				
 	WHERE		PE.IdProveedor			=	@IdProveedor  
 	AND			D.Activo				=	1
 
     SELECT @DocumentoCurriculum=D.Identificador, @CurriculumCarpeta= D.Carpeta,@CurriculumMime=D.Mime, @CurriculumExtension=D.Extension, @CurriculumBucket= D.Bucket
 	FROM PV_PerfilEmpresa AS PE
-	INNER JOIN dbo.S_Documento_S3 AS D ON D.IdDocumento = PE.IdDocumentoCurriculum
+	INNER JOIN dbo.S_Documento_S3 AS D
+		ON PE.IdDocumentoCurriculum = D.IdDocumento
 	WHERE PE.IdProveedor = @IdProveedor AND D.Activo=1
 	 
-	SET @NombreEmpresa = (SELECT P.RazonSocial+' '+P.RegimenCapital
+	SET @NombreEmpresa = (SELECT CONCAT(P.RazonSocial,ISNULL(' '+P.RegimenCapital,''))
 						   FROM S_Proveedor AS P
 						   WHERE P.IdProveedor = @IdProveedor)
 
@@ -66,8 +78,8 @@ BEGIN
 			ISNULL([AniosExperiencia],0),--2
 			ISNULL(@DocumentoOrganigrama,''),--3
 			ISNULL(@DocumentoCurriculum,''),--4
-			'Organigrama '+ @NombreEmpresa+'.pdf' AS Organigrama,--5
-			'Curriculum '+ @NombreEmpresa+'.pdf' AS Curriculum,--6
+			'Organigrama '+ ISNULL(@NombreEmpresa,'')+'.pdf' AS Organigrama,--5
+			'Curriculum '+ ISNULL(@NombreEmpresa,'')+'.pdf' AS Curriculum,--6
 			ISNULL(@OrganigramaCarpeta,''),--7
 			ISNULL(@OrganigramaExtension,''),--8
 			ISNULL(@OrganigramaMime,''),--9
@@ -101,7 +113,7 @@ BEGIN
 			ISNULL(@CurriculumBucket,''),--13
 			ISNULL(@OrganigramaBucket,'')--14
 			FROM PV_PerfilEmpresa AS PE
-			INNER JOIN S_Proveedor AS P ON P.IdProveedor = PE.IdProveedor
+			INNER JOIN S_Proveedor AS P ON PE.IdProveedor = P.IdProveedor 
 			WHERE PE.IdProveedor = @IdProveedor 
 
 		END 
