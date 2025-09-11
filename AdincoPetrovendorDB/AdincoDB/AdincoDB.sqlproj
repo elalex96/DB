@@ -4054,6 +4054,8 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_DEL_ADM_Preferencias.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_ADM_Preferencias.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_ADM_Preferencias.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_FI_Transferencia_NoLigada_Eliminar.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferContrato_NoLigadas.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />

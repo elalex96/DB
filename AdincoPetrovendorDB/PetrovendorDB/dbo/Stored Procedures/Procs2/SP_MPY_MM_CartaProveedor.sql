@@ -7,13 +7,7 @@ IF EXISTS
     WHERE name = 'SP_MPY_MM_CartaProveedor'
 )
     DROP PROCEDURE SP_MPY_MM_CartaProveedor;
-
-/****** Object:  StoredProcedure [dbo].[SP_PO_ConsultarProveedoresCotizacion]    Script Date: 20/09/2023 01:36:09 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-/****** Object:  StoredProcedure [dbo].[SP_MPY_MM_CartaProveedor]    Script Date: 21/09/2023 09:33:47 p. m. ******/
+/****** Object:  StoredProcedure [dbo].[SP_MPY_MM_CartaProveedor]    Script Date: 26/08/2025 09:03:55 a. m. ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -63,6 +57,11 @@ GO
 -- Author:  Alexander Gomez  
 -- Create date: 07/07/2025
 -- Description: Se actualiza texto en parrafo 3 https://github.com/Adinco/petrovendor/issues/3020
+-- =============================================  
+-- =============================================  
+-- Author:  Alexander Gomez  
+-- Create date: 6/08/2025
+-- Description: Se actualiza texto en parrafo 3 https://github.com/Adinco/petrovendor/issues/3060
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_MPY_MM_CartaProveedor]   
  -- Add the parameters for the stored procedure here  
@@ -220,8 +219,8 @@ BEGIN
         +' veraz y verificable.' AS PrimerInical,  
         '1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en la forma que establezcan las disposiciones jurídicas aplicables.' AS PrimerParafo,  
         '2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos 5 años contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Operador (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
-        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidrocarburos, en particular lo previsto en los artículos 120, fracción II y 121, fracción III. ' AS TercerParrafo,  
-        'Lo anterior, de conformidad con lo dispuesto en el artículo 74, párrafo quinto de la Ley de Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
+        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley del sector Hidrocarburos, en particular lo previsto en los artículos 120, fracción II y 121, fracción III. ' AS TercerParrafo,  
+        'Lo anterior, de conformidad con lo dispuesto en el artículo 74, párrafo quinto de la Ley del sector Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
         'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
         + CONCAT (  
         domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
@@ -334,8 +333,8 @@ BEGIN
         +' veraz y verificable.' AS PrimerInical,  
         '1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en la forma que establezcan las disposiciones jurídicas aplicables.' AS PrimerParafo,  
         '2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos 5 años contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Operador (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
-        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidrocarburos, en particular lo previsto en los artículos 120, fracción II y 121, fracción III. ' AS TercerParrafo,  
-        'Lo anterior, de conformidad con lo dispuesto en el artículo 74, párrafo quinto de la Ley de Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
+        '3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley del sector Hidrocarburos, en particular lo previsto en los artículos 120, fracción II y 121, fracción III. ' AS TercerParrafo,  
+        'Lo anterior, de conformidad con lo dispuesto en el artículo 74, párrafo quinto de la Ley del se sector Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
         'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
         + CONCAT (  
         domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
@@ -534,8 +533,8 @@ BEGIN
 			END AS PrimerInical,  
 			'1. Los datos asentados en la presente carta pueden ser verificados por la Secretaría de Economía, por lo que, en caso de requerirlo, mi representada debe poner a disposición de la referida autoridad el soporte documental de lo declarado, en la forma que establezcan las disposiciones jurídicas aplicables.' AS PrimerParafo,  
 			'2. Que está obligada a conservar el soporte documental de la información declarada en esta carta, por lo menos 5 años contados a partir del mes de abril del año siguiente a aquél en que la entregue, y en caso de que se notifique al Operador (Asignatario, Contratista o Permisionario) que se va a verificar la información que haya reportado de contenido nacional, deberá conservar el soporte documental hasta que concluya la verificación; y que cuando se promueva algún recurso o juicio relacionado con la entrega de información o de su verificación, el plazo para conservar la información de contenido nacional, se computará a partir de la fecha en la que quede firme la resolución que le ponga fin al juicio o recurso, por lo que mi representada estará al tanto con el cliente al que dirige esta Carta.' AS SegundoParrafo,  
-			'3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley de Hidrocarburos, en particular lo previsto en los artículos 120, fracción II y 121, fracción III. ' AS TercerParrafo,  
-			'Lo anterior, de conformidad con lo dispuesto en el artículo 74, párrafo quinto de la Ley de Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
+			'3. Las sanciones a que se puede hacer acreedora, por incumplir o entorpecer la obligación de informar el contenido nacional, conforme a las disposiciones jurídicas aplicables, incluido lo dispuesto en Título Cuarto, Capítulo I de la Ley del sector Hidrocarburos, en particular lo previsto en los artículos 120, fracción II y 121, fracción III. ' AS TercerParrafo,  
+			'Lo anterior, de conformidad con lo dispuesto en el artículo 74, párrafo quinto de la Ley del sector Hidrocarburos, los puntos 15, párrafos segundo y tercero del Acuerdo por el que se establecen las disposiciones para que los Asignatarios, Contratistas y Permisionarios proporcionen información sobre contenido nacional en las actividades que realicen en la Industria de Hidrocarburos (el Acuerdo) y demás disposiciones jurídicas aplicables.' AS CuartoParrafo,  
 			'Finalmente, se señala como domicilio para oír y recibir notificaciones relacionadas con lo dispuesto en el Acuerdo y demás disposiciones jurídicas aplicables, el ubicado en '  
 			+ CONCAT (  
 			domicilio.TipoViabilidad, ' ', domicilio.Calle, CASE WHEN domicilio.NoExterior = '' THEN  
