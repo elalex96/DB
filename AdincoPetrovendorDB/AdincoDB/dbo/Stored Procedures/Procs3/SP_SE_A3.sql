@@ -1,4 +1,7 @@
-﻿-- =============================================
+﻿IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_SE_A3]') AND type IN (N'P'))
+    DROP PROCEDURE [dbo].[SP_SE_A3];
+GO
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
