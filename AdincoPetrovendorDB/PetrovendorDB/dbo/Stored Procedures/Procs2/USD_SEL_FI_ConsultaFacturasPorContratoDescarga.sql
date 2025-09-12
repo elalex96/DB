@@ -1,16 +1,18 @@
-﻿USE [Petrovendor]
-GO
-/****** Object:  StoredProcedure [dbo].[USD_SEL_FI_ConsultaFacturasPorContratoDescarga]    Script Date: 12/09/2025 01:50:58 p. m. ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
+﻿USE PETROVENDOR
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'USD_SEL_FI_ConsultaFacturasPorContratoDescarga'
+)
+    DROP PROCEDURE USD_SEL_FI_ConsultaFacturasPorContratoDescarga
 GO
 -- =============================================  
 -- Author: Daniel AC 
 -- Create date: 05-09-2025  
 -- Description: Lista las facturas de un contrato  
 -- =============================================  
-ALTER PROCEDURE [dbo].[USD_SEL_FI_ConsultaFacturasPorContratoDescarga]
+CREATE PROCEDURE [dbo].[USD_SEL_FI_ConsultaFacturasPorContratoDescarga]
     @IdContrato INT,
     @IdUsuario INT,
     @FechaInicio DATETIME,
