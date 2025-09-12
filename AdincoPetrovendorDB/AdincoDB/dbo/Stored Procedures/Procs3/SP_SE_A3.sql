@@ -5,16 +5,13 @@
 -- =============================================
 -- Modificado Por:	Neri del Angel
 -- Create date:		01 de Abril del 2022
--- Description:	    Se agrega F.Fecha factura 
---					faltante en group by, 
---					se ajusta caso al final 
---					de la consulta de si 
+-- Description:	    Se agrega F.Fecha factura faltante en group by, 
+--					se ajusta caso al final de la consulta de si 
 --					subtotal = 0 se regrese 0
 -- =============================================
 -- Modificado Por:	Neri del Angel
 -- Create date:		04 de Abril del 2022
--- Description:		Se agrega filtrado de todos
---					los presupuestos del periodo
+-- Description:		Se agrega filtrado de todos los presupuestos del periodo
 --					seleccionado
 -- =============================================
 -- Modificado Por:	Reyna 
@@ -38,17 +35,6 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-	DECLARE @RazonSocial VARCHAR(100) = '',
-			@Peso INT = 1,
-			@Dolar INT = 2,
-			@Nacional INT = 1,
-			@Extranjera INT = 2,
-			@Jaguar INT = 10005,
-			@Pantera INT = 10006,
-			@Servicios INT = 3,
-            @Aprobado                  INT = 10004,
-            @TipoComprobanteExtranjero INT = 3
-
 	CREATE TABLE #Presupuestos (IdPresupuesto INT);
 	CREATE TABLE #RFC (RFC VARCHAR(25));
 	CREATE TABLE #DATOS
@@ -69,6 +55,18 @@ BEGIN
 				MontoRegistro FLOAT
             )
 
+	DECLARE @RazonSocial VARCHAR(100) = '',
+			@Peso INT = 1,
+			@Dolar INT = 2,
+			@Nacional INT = 1,
+			@Extranjera INT = 2,
+			@Jaguar INT = 10005,
+			@Pantera INT = 10006,
+			@Servicios INT = 3,
+            @Aprobado                  INT = 10004,
+            @TipoComprobanteExtranjero INT = 3
+
+
     SELECT @RazonSocial = CA.RazonSocial
     FROM CO_CONTRATO C (NOLOCK)
         JOIN CO_CONTRATISTA CA (NOLOCK)
@@ -77,7 +75,8 @@ BEGIN
     WHERE C.IdContrato = @IdContrato
 
 
-    IF (@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.')
+    IF ((@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.') 
+    OR (@RazonSocial = 'El Dorado'))
     BEGIN
         EXEC [SP_SE_A3_MPY] @IdContrato,
                             @IdUsuario,
@@ -113,7 +112,7 @@ BEGIN
                     JOIN dbo.CO_AnioContractual AC (NOLOCK)
                         ON P.IdAnioContractual = AC.IdAnioContractual
                     JOIN dbo.CO_Contrato C (NOLOCK)
-                        ON AC.IdContrato = C.IdContrato
+         ON AC.IdContrato = C.IdContrato
                 WHERE P.nombre LIKE '%exploración%'
                       AND C.IdContratista IN ( @Jaguar, @Pantera )
             )
@@ -217,7 +216,7 @@ BEGIN
                    ISNULL(R.PCN, 0) AS PCN,
                    CASE
                        WHEN F.IdMoneda = 1 THEN
-                           SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0)), 2) AS DECIMAL(20, 2)))
+                    SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0)), 2) AS DECIMAL(20, 2)))
                        ELSE
                            CAST([dbo].[FN_DolaresPesosTipoCambio](
                                                                      SUM(CAST(ROUND(
@@ -288,7 +287,7 @@ BEGIN
                 Descripcion,
                 RazonSocial,
                 RFC,
-                SubTotal,
+            SubTotal,
                 SubTotalOriginal,
                 PCN,
                 IdFactura,
@@ -524,5 +523,3 @@ BEGIN
         END;
     END;
 END;
-
-

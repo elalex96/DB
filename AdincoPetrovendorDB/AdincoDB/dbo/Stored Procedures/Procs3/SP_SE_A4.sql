@@ -5,8 +5,7 @@
 -- =============================================
 -- Modificado Por:	Neri del Angel
 -- Create date:		04 de Abril del 2022
--- Description:		Se agrega filtrado de todos
---					los presupuestos del periodo
+-- Description:		Se agrega filtrado de todos	los presupuestos del periodo
 --					seleccionado
 -- ============================================
 -- Modificado Por:	Reyna 
@@ -14,7 +13,6 @@
 -- Description:		se Actualiza el stored procedure para mostrar el nuevo catalogo 
 --					de mano de obra y para tomar en cuenta gastos con PCN >=0 (issue 1890 adinco)
 -- ============================================
-
 CREATE PROCEDURE [dbo].[SP_SE_A4]--10038,10109,0,'20210101','20211201',10195,'Exploración'
     @IdContrato INT,
     @IdUsuario INT,
@@ -28,6 +26,7 @@ BEGIN
     SET NOCOUNT ON;
 	   /* SE AGREGA LA LLAMADA DEL NUEVO STORED PROCEDURE PARA MURPHY, DONDE MANDA A LLAMAR DATOS DE PROCURA/PETROVENDOR*/
 		DECLARE @RazonSocial VARCHAR(100)='';
+
 		SELECT @RazonSocial = CA.RazonSocial
 		 FROM CO_CONTRATO	C
 		 JOIN
@@ -36,7 +35,8 @@ BEGIN
 			AND C.IdContrato	=	@IdContrato
 			WHERE C.IdContrato	=	@IdContrato
 		
-		 IF(@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.')
+		 IF ((@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.') 
+			OR (@RazonSocial = 'El Dorado'))
 		 BEGIN
 			 EXEC [SP_SE_A4_MPY]@IdContrato,@IdUsuario,@IdPresupuesto,@FInicio,@FFin,@IdPeriodo,@Etapa;
 		 END
@@ -45,7 +45,6 @@ BEGIN
 			CREATE TABLE #Presupuestos (IdPresupuesto INT);
 			CREATE TABLE #RFC (RFC VARCHAR(25));
 			CREATE TABLE #Sueldos(SueldosSalarios DECIMAL(20, 2), SueldosSalariosNacional DECIMAL(20, 2), Catalogo VARCHAR(25), CatalogoId INT);
-
 
 			DECLARE @CatalogoOtrosId int=0;
 			SELECT  @CatalogoOtrosId = ID FROM CO_CAT_ManoDeObra
@@ -223,4 +222,3 @@ BEGIN
 			SELECT SueldosSalarios,SueldosSalariosNacional, Catalogo FROM #SUELDOS;
 			END
 END;
-
