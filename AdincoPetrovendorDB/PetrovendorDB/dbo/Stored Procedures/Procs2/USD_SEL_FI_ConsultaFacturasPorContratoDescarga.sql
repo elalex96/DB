@@ -1,18 +1,16 @@
-﻿USE PETROVENDOR
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'USD_SEL_FI_ConsultaFacturasPorContratoDescarga'
-)
-    DROP PROCEDURE USD_SEL_FI_ConsultaFacturasPorContratoDescarga
+﻿USE [Petrovendor]
+GO
+/****** Object:  StoredProcedure [dbo].[USD_SEL_FI_ConsultaFacturasPorContratoDescarga]    Script Date: 12/09/2025 01:50:58 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================  
 -- Author: Daniel AC 
 -- Create date: 05-09-2025  
 -- Description: Lista las facturas de un contrato  
 -- =============================================  
-CREATE PROCEDURE [dbo].[USD_SEL_FI_ConsultaFacturasPorContratoDescarga]
+ALTER PROCEDURE [dbo].[USD_SEL_FI_ConsultaFacturasPorContratoDescarga]
     @IdContrato INT,
     @IdUsuario INT,
     @FechaInicio DATETIME,
@@ -43,7 +41,8 @@ BEGIN
 		IdOperacion			int,
 		Contrato			varchar(100),
 		OrigenAceptacion	varchar(100),
-		RutaCarpeta			varchar(1000)
+		RutaCarpeta			varchar(1000),
+		RFC_RECEPTOR		varchar(1000)
 	)	
 	CREATE NONCLUSTERED INDEX ix_tempAceptacionesPedidoIdPedido  ON #AceptacionesPedido (IdPedido);
 	CREATE NONCLUSTERED INDEX ix_tempAceptacionesPedidoIdSolicitudPedido  ON #AceptacionesPedido (IdSolicitudPedido);
@@ -55,13 +54,15 @@ BEGIN
 	)
 	CREATE NONCLUSTERED INDEX ix_tempProveedorPLANT  ON #PLANT (PLANT);
 
+	IF @IdContrato IN (10053,10039) --> CTES PARA CONTRATOS DE MURPHY CUENCA SALINA Y EL DORADO
+	BEGIN
 	INSERT INTO #PLANT(PLANT)
-	SELECT TOP 1
-			P.Planta
+	SELECT P.Planta
 	FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)
 	JOIN Adinco.dbo.CO_SAPContratista_Planta AS P (NOLOCK)
 		ON C.IdContratista = P.IdContratista
-	WHERE C.IdContrato = @IdContrato;
+	WHERE C.IdContrato IN  (10053,10039);  --> CTES PARA CONTRATOS DE MURPHY CUENCA SALINA Y EL DORADO
+	END 
 
 	SET @PLANT = (SELECT TOP 1 PLANT FROM #PLANT);
 
@@ -96,7 +97,8 @@ BEGIN
 			IdSubcontratista			INT,
 			IdProveedorCompras			INT,
 			IdMoneda					INT,
-			PedirCarta					BIT
+			PedirCarta					BIT,
+			RFC_RECEPTOR				varchar(1000)
 
 		)
 		CREATE NONCLUSTERED INDEX ix_tempAceptacionesFacturaIdAceptacionFactura  ON #AceptacionesFactura (IdAceptacionFactura);
@@ -142,7 +144,8 @@ BEGIN
 			IdSolicitudPedido,
 			IdOperacion,
 			Contrato,
-			OrigenAceptacion)
+			OrigenAceptacion,
+			RFC_RECEPTOR)
 			SELECT 
 				AF.IdAceptacionPedido,
 				F.IdFactura,
@@ -157,13 +160,14 @@ BEGIN
 			  CONCAT('Reference Num:', AP.ReferenceNumber),
 			  NULL,
 			  Contrato = AC.NombreAreaContractual,
-			  'MPY_MM_AceptacionPedido'
+			  'MPY_MM_AceptacionPedido',
+			  F.Receptor
 			FROM #PLANT PL (NOLOCK)
 			JOIN Adinco.dbo.CO_SAPPO AS PO (NOLOCK)
 				ON PL.PLANT = PO.Plant
 			JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK)
 				ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
-				AND AP.IdContrato = @IdContrato
+			    -- AND AP.IdContrato = @IdContrato
 			JOIN MPY_MM_AceptacionFactura AS AF (NOLOCK)
 				ON AP.IdAceptacionPedido  = AF.IdAceptacionPedido
 			JOIN TA_Estatus AS E (NOLOCK)
@@ -224,7 +228,8 @@ BEGIN
 					RC.PedirCarta,
 					c.IdContrato,
 					AC.NombreAreaContractual,	
-					PO.SAPPONumber
+					PO.SAPPONumber,
+					F.Receptor
 					ORDER BY AF.IdAceptacionPedido DESC;       
   
 	END 
@@ -248,7 +253,8 @@ BEGIN
 			IdSolicitudPedido,
 			IdSubcontratista,
 			IdProveedorCompras,
-			IdMoneda
+			IdMoneda,
+			RFC_RECEPTOR
 		)
 
 		SELECT
@@ -265,7 +271,8 @@ BEGIN
 		PE.IdSolicitudPedido,
 		PE.IdSubcontratista,
 		PE.IdProveedorCompras,
-		PE.IdMoneda	
+		PE.IdMoneda,
+		F.Receptor
 		FROM MM_Pedido AS PE (NOLOCK)			
 		JOIN MM_AceptacionPedido AS AP (NOLOCK)
 		  ON PE.IdContrato = @IdContrato
@@ -299,7 +306,8 @@ BEGIN
 		PE.IdSolicitudPedido,
 		PE.IdSubcontratista,
 		PE.IdProveedorCompras,
-		PE.IdMoneda
+		PE.IdMoneda,
+		F.Receptor
 
 		-- OBTENER CONTRATOS AGRUPADOS
 		INSERT INTO #Contratos(IdContrato)
@@ -364,7 +372,8 @@ BEGIN
 			IdSolicitudPedido,			
 			IdOperacion,
 			Contrato,
-			OrigenAceptacion)
+			OrigenAceptacion,
+			RFC_RECEPTOR)
 		  SELECT 
 			AF.IdAceptacionPedido,
 			FI.IdFactura,
@@ -379,7 +388,8 @@ BEGIN
 			AF.IdSolicitudPedido,			
 			AF.IdOperacion,
 			Contrato =  C.NombreContrato,
-			'MM_AceptacionPedido'
+			'MM_AceptacionPedido',
+			AF.RFC_RECEPTOR
 		   FROM #AceptacionesFactura AF	      
 		  JOIN MM_Pedidos AS PG (NOLOCK)
 			ON AF.IdPedido = PG.IdIdentificador
@@ -415,22 +425,44 @@ BEGIN
 				   FI.Serie,
 				   FI.FechaTimbrado,
 				   c.IdContrato,
+				   AF.RFC_RECEPTOR,
 				   C.NombreContrato			 		   
 		  ORDER BY AF.IdAceptacionPedido DESC;
 		  			
 
 	END
 
-	UPDATE #AceptacionesPedido
-	SET RutaCarpeta = CONCAT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(RTRIM(LTRIM(Contrato))), '/', ''), ':', ''), '*', ''), '"', ''), '<', ''), '>', ''), '|', ''), '\', ''),'/',ISNULL(CAST(YEAR(FechaTimbrado) AS nvarchar(1000)),'SIN_ANIO'),'/',REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(RTRIM(LTRIM(Proveedor))), '/', ''), ':', ''), '*', ''), '"', ''), '<', ''), '>', ''), '|', ''), '\', ''))
+	IF @IdContrato IN  (10053,10039)   --> CTES PARA CONTRATOS DE MURPHY CUENCA SALINA Y EL DORADO
+	BEGIN
 
-	-- TABLA 1
-	SELECT 
-	Contrato = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(RTRIM(LTRIM(AC.NombreAreaContractual))), '/', ''), ':', ''), '*', ''), '"', ''), '<', ''), '>', ''), '|', ''), '\', '')  
-	FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)		
-	JOIN Adinco..CO_AreaContractual AC
-		ON C.IdAreaContractual = AC.IdAreaContractual
-	WHERE C.IdContrato = @IdContrato
+		UPDATE #AceptacionesPedido
+		SET RutaCarpeta = CONCAT(
+		'FACTURASxRECEPTOR'
+		,'/'
+		,RFC_RECEPTOR
+		,'/'
+		,ISNULL(CAST(YEAR(FechaTimbrado) AS nvarchar(1000)),'SIN_ANIO')
+		,'/'
+		,REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(RTRIM(LTRIM(Proveedor))), '/', ''), ':', ''), '*', ''), '"', ''), '<', ''), '>', ''), '|', ''), '\', ''))
+		
+		--- TABLA 1
+		SELECT 
+		Contrato = 'FACTURASxRECEPTOR'
+	END
+	ELSE 
+	BEGIN 
+		UPDATE #AceptacionesPedido
+		SET RutaCarpeta = CONCAT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(RTRIM(LTRIM(Contrato))), '/', ''), ':', ''), '*', ''), '"', ''), '<', ''), '>', ''), '|', ''), '\', ''),'/',ISNULL(CAST(YEAR(FechaTimbrado) AS nvarchar(1000)),'SIN_ANIO'),'/',REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(RTRIM(LTRIM(Proveedor))), '/', ''), ':', ''), '*', ''), '"', ''), '<', ''), '>', ''), '|', ''), '\', ''))
+		
+		-- TABLA 1
+		SELECT 
+		Contrato = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(UPPER(RTRIM(LTRIM(AC.NombreAreaContractual))), '/', ''), ':', ''), '*', ''), '"', ''), '<', ''), '>', ''), '|', ''), '\', '')  
+		FROM Adinco.dbo.CO_Contrato AS C (NOLOCK)		
+		JOIN Adinco..CO_AreaContractual AC
+			ON C.IdAreaContractual = AC.IdAreaContractual
+		WHERE C.IdContrato = @IdContrato
+	END 
+	
 
 	-- TABLA 2
 	SELECT
@@ -440,14 +472,16 @@ BEGIN
 	AP.IdFactura,   
 	UPPER(AP.UUID) AS UUID,
 	AP.RutaCarpeta,
-	AP.OrigenAceptacion
-  FROM #AceptacionesPedido AP  
-  GROUP BY AP.IdAceptacionPedido,
+	AP.OrigenAceptacion,
+    AP.RFC_RECEPTOR
+	FROM #AceptacionesPedido AP  
+	GROUP BY AP.IdAceptacionPedido,
 		   AP.IdFactura,         
 		   AP.UUID,
 		   AP.RutaCarpeta,
 		   AP.FechaTimbrado,
-		   AP.OrigenAceptacion
+		   AP.OrigenAceptacion,
+		   AP.RFC_RECEPTOR
   ORDER BY AP.FechaTimbrado DESC;
 
 
