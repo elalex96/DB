@@ -169,7 +169,6 @@ BEGIN
 				ON PL.PLANT = PO.Plant
 			JOIN dbo.MPY_MM_AceptacionPedido AS AP (NOLOCK)
 				ON PO.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS = AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS
-			    -- AND AP.IdContrato = @IdContrato
 			JOIN MPY_MM_AceptacionFactura AS AF (NOLOCK)
 				ON AP.IdAceptacionPedido  = AF.IdAceptacionPedido
 			JOIN TA_Estatus AS E (NOLOCK)
