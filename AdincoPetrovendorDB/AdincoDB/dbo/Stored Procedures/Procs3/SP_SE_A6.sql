@@ -1,12 +1,14 @@
-﻿-- =============================================
+﻿IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_SE_A6]') AND type IN (N'P'))
+    DROP PROCEDURE [dbo].[SP_SE_A6];
+GO
+-- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
 -- Description:	
 -- =============================================
 -- Modificado Por:	Neri del Angel
 -- Create date:		04 de Abril del 2022
--- Description:		Se agrega filtrado de todos
---					los presupuestos del periodo
+-- Description:		Se agrega filtrado de todos los presupuestos del periodo
 --					seleccionado
 -- ============================================
 -- Modificado Por:	Reyna 
@@ -30,6 +32,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 	DECLARE @RazonSocial VARCHAR(100)='';
+
 	SELECT @RazonSocial = CA.RazonSocial
 		FROM CO_CONTRATO	C
 		JOIN
@@ -38,7 +41,8 @@ BEGIN
 		AND C.IdContrato	=	@IdContrato
 		WHERE C.IdContrato	=	@IdContrato;
 		
-		 IF(@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.')
+		 IF ((@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.') 
+			OR (@RazonSocial = 'El Dorado'))
 		 BEGIN
 			EXEC [SP_SE_A6_MPY]@IdContrato,@IdUsuario,@IdPresupuesto,@FInicio,@FFin,@IdPeriodo,@Etapa;
 		 END
@@ -195,5 +199,3 @@ BEGIN
 			GROUP BY R.Comentarios;
 	END
 END;
-
-
