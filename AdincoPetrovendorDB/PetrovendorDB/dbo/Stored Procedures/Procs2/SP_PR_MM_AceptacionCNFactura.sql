@@ -1,4 +1,11 @@
-﻿-- =============================================      
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_PR_MM_AceptacionCNFactura') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PR_MM_AceptacionCNFactura;
+END
+GO
+-- =============================================      
 -- Author:  <Jose Roman>      
 -- Create date: <04-09-2018>      
 -- Description: <Se permite capturar una Factura si no se solicita una carta de CN>      
@@ -21,11 +28,18 @@
 -- Author:           Daniel AC    
 -- Create date: 11-05-2020    
 -- Description: Se agrega condición para que las facturas de Murphy que todavia no tiene documentos cargados se muestren en Pendientes de Carga (TAB)
+-- ============================================= 
 -- =============================================    
+-- Author:           Alexaner Gomez   
+-- Create date: 12/09/2025  
+-- Description: se agrega filtro por fecha de carga de la aceptación de la factura
+-- ============================================= 
 CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionCNFactura] --44,4    
     -- Add the parameters for the stored procedure here    
     @IdProveedor INT,  
-    @Estatus INT  
+    @Estatus INT,
+	@FechaInicio datetime,
+	@FechaFin datetime 
 AS  
 BEGIN  
     -- SET NOCOUNT ON added to prevent extra result sets from    
@@ -63,7 +77,8 @@ BEGIN
         span NVARCHAR(100) NULL,  
         UUID NVARCHAR(MAX),
 		Contrato NVARCHAR(300),
-		IdSolicitudPedido VARCHAR(300) NULL
+		IdSolicitudPedido VARCHAR(300) NULL,
+		FechaCargaFactura NVARCHAR(50) NULL
     );  
   
     IF @Estatus = 0  
@@ -96,7 +111,13 @@ BEGIN
                END,  
                '' AS UUID  ,
 			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
-			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido),
+			   CASE  
+                   WHEN AF.CreadoEl IS NULL THEN  
+                       'Sin cargar'  
+                   ELSE  
+                       CONVERT(VARCHAR(50), AF.CreadoEl, 103)  
+               END AS FechaCargaFactura
         FROM dbo.MM_Pedido P  (NOLOCK)
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
@@ -144,7 +165,8 @@ BEGIN
                   OR rel.PedirCarta = 0  
               )  
               AND ISNULL(APC.IdEstatusEliminado, 0) <> 1 --> SI LA CARTA CONTENIDO ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA  
-     AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1   
+     AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1  
+	 AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -157,7 +179,8 @@ BEGIN
                  E.IdEstatus,
 				 CO.NumeroContrato,
 				 A.NombreAreaContractual,
-				 SP.IdSolicitudPedido
+				 SP.IdSolicitudPedido,
+				 AF.CreadoEl
         ORDER BY AP.IdAceptacionPedido DESC;  
   
   
@@ -184,7 +207,13 @@ BEGIN
                'label label-default',  
                '' AS UUID ,
 			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
-			   PSES.SAPPONumber
+			   PSES.SAPPONumber,
+			   CASE  
+                   WHEN AF.CreadoEl IS NULL THEN  
+                       'Sin cargar'  
+                   ELSE  
+                       CONVERT(VARCHAR(50), AF.CreadoEl, 103)  
+               END AS FechaCargaFactura
         FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
             LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
@@ -217,7 +246,8 @@ BEGIN
               AND APC.IdEstatus = 2 --> CTE CARTA APROBADA  
               AND APC.FechaEvaluacion IS NOT NULL  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA CARTA CONTENIDO ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA    
-        GROUP BY AP.IdAceptacionPedido,  
+			  AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+		GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
                  PV.RegimenCapital,  
@@ -229,7 +259,8 @@ BEGIN
                  AP.ReferenceNumber  ,
 				 C.NumeroContrato,
 				 A.NombreAreaContractual,
-				 PSES.SAPPONumber
+				 PSES.SAPPONumber,
+				 AF.CreadoEl
         ORDER BY AP.IdAceptacionPedido DESC;  
 
     END;  
@@ -264,7 +295,13 @@ BEGIN
                END,  
                '' AS UUID  ,
 			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
-			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido),
+			   CASE  
+                   WHEN AF.CreadoEl IS NULL THEN  
+                       'Sin cargar'  
+                   ELSE  
+                       CONVERT(VARCHAR(50), AF.CreadoEl, 103)  
+               END AS FechaCargaFactura
         FROM dbo.MM_Pedido P  (NOLOCK)
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
@@ -298,7 +335,7 @@ BEGIN
 			LEFT JOIN Adinco..CO_AreaContractual A
 				ON CO.IdAreaContractual = A.IdAreaContractual
         WHERE P.IdSubcontratista = @IdProveedor  
-              AND  
+             AND  
               (  
                   APC.IdEstatus = 2  
                   OR rel.PedirCarta = 0  
@@ -313,6 +350,7 @@ BEGIN
               )  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA ACEPTACION DE FACTURA ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA EN FILTRO, SE MUESTRA EN TODAS CON ESTATUS/INACTIVO    
      AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1  
+	 AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -328,7 +366,8 @@ BEGIN
                  E.IdEstatus  ,
 				 CO.NumeroContrato,
 				 A.NombreAreaContractual,
-				 SP.IdSolicitudPedido
+				 SP.IdSolicitudPedido,
+				 AF.CreadoEl
         ORDER BY AP.IdAceptacionPedido DESC;  
   
         INSERT INTO #AceptacionesPedido  
@@ -363,7 +402,13 @@ BEGIN
     END,  
                '' AS UUID ,
 			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
-			   PSES.SAPPONumber
+			   PSES.SAPPONumber,
+			   CASE  
+                   WHEN AF.CreadoEl IS NULL THEN  
+                       'Sin cargar'  
+                   ELSE  
+                       CONVERT(VARCHAR(50), AF.CreadoEl, 103)  
+               END AS FechaCargaFactura
         FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
             LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
@@ -396,7 +441,7 @@ BEGIN
               AND AF.IdEstatus = @Estatus  
               AND APC.IdEstatus = 2  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA ACEPTACION DE FACTURA ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA EN FILTRO, SE MUESTRA EN TODAS CON ESTATUS/INACTIVO    
-  
+				AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -414,7 +459,8 @@ BEGIN
                  AP.ReferenceNumber  ,
 				 C.NumeroContrato, 
 				 A.NombreAreaContractual,
-				 PSES.SAPPONumber
+				 PSES.SAPPONumber,
+				 AF.CreadoEl
         ORDER BY AP.IdAceptacionPedido DESC  
   
     END;  
@@ -451,7 +497,13 @@ BEGIN
                END,  
                F.UUID,
 			   CONCAT(CO.NumeroContrato,' - ', A.NombreAreaContractual),
-			   CONVERT(VARCHAR, SP.IdSolicitudPedido)
+			   CONVERT(VARCHAR, SP.IdSolicitudPedido),
+			   CASE  
+                   WHEN AF.CreadoEl IS NULL THEN  
+                       'Sin cargar'  
+                   ELSE  
+                       CONVERT(VARCHAR(50), AF.CreadoEl, 103)  
+               END AS FechaCargaFactura
         FROM dbo.MM_Pedido P  (NOLOCK)
             INNER JOIN dbo.MM_Pedidos AS PG  (NOLOCK)
                 ON P.IdPedido = PG.IdIdentificador  
@@ -505,6 +557,7 @@ BEGIN
                   OR rel.PedirCarta = 0  
               )  
      AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1  
+	 AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -521,7 +574,8 @@ BEGIN
                  F.UUID,
 				 CO.NumeroContrato,
 				 A.NombreAreaContractual,
-				 SP.IdSolicitudPedido
+				 SP.IdSolicitudPedido,
+				 AF.CreadoEl
         ORDER BY AP.IdAceptacionPedido DESC;  
   
         INSERT INTO #AceptacionesPedido  
@@ -556,7 +610,13 @@ BEGIN
                END,  
                F.UUID  ,
 			   CONCAT(C.NumeroContrato,' - ', A.NombreAreaContractual),
-			   PSES.SAPPONumber
+			   PSES.SAPPONumber,
+			   CASE  
+                   WHEN AF.CreadoEl IS NULL THEN  
+                       'Sin cargar'  
+                   ELSE  
+                       CONVERT(VARCHAR(50), AF.CreadoEl, 103)  
+               END AS FechaCargaFactura
         FROM dbo.MPY_MM_AceptacionPedido AS AP  (NOLOCK)
             LEFT JOIN dbo.MPY_MM_AceptacionCartaPCN AS APC  (NOLOCK)
                 ON APC.IdAceptacionPedido = AP.IdAceptacionPedido  
@@ -591,7 +651,8 @@ BEGIN
               AND APC.IdEstatus = 2  
               AND APC.FechaEvaluacion IS NOT NULL  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA ACEPTACION DE FACTURA ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA EN FILTRO, SE MUESTRA EN TODAS CON ESTATUS/INACTIVO    
-        GROUP BY AP.IdAceptacionPedido,  
+				AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+		GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
                  PV.RegimenCapital,  
@@ -608,7 +669,8 @@ BEGIN
                  F.UUID ,
 				 C.NumeroContrato,
 				 A.NombreAreaContractual,
-				 PSES.SAPPONumber
+				 PSES.SAPPONumber,
+				 AF.CreadoEl
         ORDER BY AP.IdAceptacionPedido DESC;  
   
   
@@ -633,7 +695,8 @@ BEGIN
            span,  
            UUID  ,
 		   Contrato,
-		   IdSolicitudPedido
+		   IdSolicitudPedido,
+		   FechaCargaFactura
     FROM #AceptacionesPedido  
  GROUP BY IdAceptacionPedido,  
              IdPedido,  
@@ -647,7 +710,8 @@ BEGIN
              span,  
              UUID  ,
 			 Contrato,
-			 IdSolicitudPedido
+			 IdSolicitudPedido,
+			 FechaCargaFactura
     ORDER BY IdAceptacionPedido DESC;  
   
 END; 
