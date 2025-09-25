@@ -1,14 +1,6 @@
-﻿IF EXISTS
-    (
-        SELECT
-            1
-        FROM
-            dbo.sysobjects
-        WHERE
-            name = 'SP_SE_A2'
-    )
-    DROP PROCEDURE SP_SE_A2
-GO 
+﻿IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_SE_A2]') AND type IN (N'P'))
+    DROP PROCEDURE [dbo].[SP_SE_A2];
+GO
 
 -- =============================================
 -- Author:		Manuel Cruz
@@ -17,15 +9,12 @@ GO
 -- =============================================
 -- Modificado Por:	Neri del Angel
 -- Create date:		01 de Abril del 2022
--- Description:	    Se agrega join faltante, 
---					se ajusta caso al final 
---					de la consulta de si 
---					subtotal = 0 se regrese 0
+-- Description:	    Se agrega join faltante, se ajusta caso al final 
+--					de la consulta de si subtotal = 0 se regrese 0
 -- =============================================
 -- Modificado Por:	Neri del Angel
 -- Create date:		04 de Abril del 2022
--- Description:		Se agrega filtrado de todos
---					los presupuestos del periodo
+-- Description:		Se agrega filtrado de todos	los presupuestos del periodo
 --					seleccionado
 -- =============================================
 -- Modificado Por:	Reyna 
@@ -48,17 +37,6 @@ CREATE PROCEDURE [dbo].[SP_SE_A2]
 AS
 BEGIN
     SET NOCOUNT ON;
-    DECLARE @RazonSocial VARCHAR(100) = '',
-			@Peso INT = 1,
-			@Dolar INT = 2,
-			@Nacional INT = 1,
-			@Extranjera INT = 2,
-			@Jaguar INT = 10005,
-			@Pantera INT = 10006,
-			@Bienes INT = 2,
-            @Aprobado                  INT = 10004,
-            @TipoComprobanteExtranjero INT = 3
-
 	CREATE TABLE #Presupuestos (IdPresupuesto INT);
     CREATE TABLE #RFC (RFC VARCHAR(25));
 	CREATE TABLE #DATOS
@@ -79,6 +57,17 @@ BEGIN
 				MontoRegistro FLOAT
             )
 
+    DECLARE @RazonSocial VARCHAR(100) = '',
+			@Peso INT = 1,
+			@Dolar INT = 2,
+			@Nacional INT = 1,
+			@Extranjera INT = 2,
+			@Jaguar INT = 10005,
+			@Pantera INT = 10006,
+			@Bienes INT = 2,
+            @Aprobado                  INT = 10004,
+            @TipoComprobanteExtranjero INT = 3
+
     SELECT @RazonSocial = CA.RazonSocial
     FROM CO_CONTRATO C (NOLOCK)
         JOIN CO_CONTRATISTA CA (NOLOCK)
@@ -87,7 +76,8 @@ BEGIN
     WHERE C.IdContrato = @IdContrato
 
 
-    IF (@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.')
+    IF ((@RazonSocial = 'Murphy Sur, S. de R.L. de C.V.') 
+    OR (@RazonSocial = 'El Dorado'))
     BEGIN
         EXEC [SP_SE_A2_MPY] @IdContrato,
                             @IdUsuario,
@@ -380,7 +370,7 @@ BEGIN
                     ON CO_TipoProgramaActividad.IdTipoProgramaActividad = CO_ProgramaActividad.IdTipoProgramaActividad
                 JOIN dbo.CO_TipoCambioDiario (NOLOCK)
                     ON FI_Factura.IdMoneda <> CO_TipoCambioDiario.IdMoneda
-                       AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Factura.Fecha)
+                  AND DAY(CO_TipoCambioDiario.Fecha) = DAY(FI_Factura.Fecha)
                        AND MONTH(CO_TipoCambioDiario.Fecha) = MONTH(FI_Factura.Fecha)
                        AND YEAR(CO_TipoCambioDiario.Fecha) = YEAR(FI_Factura.Fecha)
                 LEFT JOIN dbo.MM_BS_Actividad (NOLOCK)
@@ -529,5 +519,3 @@ BEGIN
         END;
     END;
 END;
-
-
