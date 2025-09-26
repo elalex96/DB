@@ -1,4 +1,6 @@
-﻿
+﻿DROP PROCEDURE IF EXISTS dbo.sp_AP_CrearUsuario;
+GO
+
 -- =============================================
 -- Author:		
 -- Create date: 
@@ -16,7 +18,7 @@ CREATE PROCEDURE [dbo].[sp_AP_CrearUsuario]
     @pUsuario VARCHAR(100),
     @pContraseña VARCHAR(30),
     @pNombre VARCHAR(250),
-    @pFoto IMAGE,
+    @pFoto IMAGE = NULL,
     @pCreadoPor INT,
     @pPerfilIds VARCHAR(100),
     @pRuta INT,
@@ -80,7 +82,7 @@ BEGIN
         NULL,
         NULL,
         0,
-        '8116754103',
+        '',
         3,
         @pRuta,
         @pass,
