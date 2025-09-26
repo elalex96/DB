@@ -1,27 +1,28 @@
-﻿
+﻿IF OBJECT_ID('dbo.fn_AP_ValidarUsuario', 'FN') IS NOT NULL
+    DROP FUNCTION dbo.fn_AP_ValidarUsuario;
+GO
 CREATE FUNCTION [dbo].[fn_AP_ValidarUsuario]
 (
-	@pUsuarioID	int,
-	@pUsuario	varchar(30),
-	@pContrasenia	varchar(30),
-	@pNombre	varchar(250)
+    @pUsuarioID     INT,
+    @pUsuario       VARCHAR(30),
+    @pContrasenia   VARCHAR(30),
+    @pNombre        VARCHAR(250)
 )
-RETURNS varchar(250)
+RETURNS VARCHAR(250)
 AS
 BEGIN
-	 declare @result varchar(250)
+    DECLARE @result VARCHAR(250);
 
-	 if exists(
-		select 1 
-		from ap_usuario
-		where rtrim(Usuario) = rtrim(@pUsuario) and
-		UsuarioID <> @pUsuarioID
-	 )
-	 begin
-		set @result = 'El nombre de usuario ' + @pUsuario + ' ya está asignado'
-	 end
+    IF EXISTS (
+        SELECT 1
+        FROM ap_usuario
+        WHERE RTRIM(Usuario) = RTRIM(@pUsuario)
+          AND UsuarioID <> @pUsuarioID
+    )
+    BEGIN
+        SET @result = 'El correo [' + @pUsuario + '] ya está asignado';
+    END
 
-
-	 return @result
-
+    RETURN @result;
 END
+GO
