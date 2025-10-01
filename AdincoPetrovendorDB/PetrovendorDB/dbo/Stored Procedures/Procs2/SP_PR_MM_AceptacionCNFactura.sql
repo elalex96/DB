@@ -14,7 +14,7 @@ GO
 -- Create date: <04-12-2018>      
 -- Description: <agregado los registros de adecuaciones para murphy>      
 -- =============================================      
--- =============================================    
+-- =============================================   
 -- Author:           Daniel AC    
 -- Create date: 26-09-2019    
 -- Description: Agregue columna de UUID para el filtro de todas las facturas    
@@ -34,7 +34,11 @@ GO
 -- Create date: 12/09/2025  
 -- Description: se agrega filtro por fecha de carga de la aceptación de la factura
 -- ============================================= 
-CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionCNFactura] --44,4    
+-- Author:           Alexaner Gomez   
+-- Create date: 29/09/2025  
+-- Description: se agrega filtro por fecha de carga de la aceptación de pedido
+-- ============================================= 
+CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionCNFactura] 
     -- Add the parameters for the stored procedure here    
     @IdProveedor INT,  
     @Estatus INT,
@@ -166,7 +170,7 @@ BEGIN
               )  
               AND ISNULL(APC.IdEstatusEliminado, 0) <> 1 --> SI LA CARTA CONTENIDO ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA  
      AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1  
-	 AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+	 AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -246,7 +250,7 @@ BEGIN
               AND APC.IdEstatus = 2 --> CTE CARTA APROBADA  
               AND APC.FechaEvaluacion IS NOT NULL  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA CARTA CONTENIDO ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA    
-			  AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+			  AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 		GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -350,7 +354,7 @@ BEGIN
               )  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA ACEPTACION DE FACTURA ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA EN FILTRO, SE MUESTRA EN TODAS CON ESTATUS/INACTIVO    
      AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1  
-	 AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+	 AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -441,7 +445,7 @@ BEGIN
               AND AF.IdEstatus = @Estatus  
               AND APC.IdEstatus = 2  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA ACEPTACION DE FACTURA ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA EN FILTRO, SE MUESTRA EN TODAS CON ESTATUS/INACTIVO    
-				AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+				AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -557,7 +561,7 @@ BEGIN
                   OR rel.PedirCarta = 0  
               )  
      AND ISNULL(AP.IdNacionalidadProveedor,@IdNacionalidad) = 1  
-	 AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+	 AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
         GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
@@ -651,7 +655,7 @@ BEGIN
               AND APC.IdEstatus = 2  
               AND APC.FechaEvaluacion IS NOT NULL  
               AND ISNULL(AF.IdEstatusEliminado, 0) <> 1 --> SI LA ACEPTACION DE FACTURA ESTA ELIMINADA NO SE DEBE MOSTRAR ESTA SOLICITUD DE FACTURA EN FILTRO, SE MUESTRA EN TODAS CON ESTATUS/INACTIVO    
-				AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+				AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 		GROUP BY AP.IdAceptacionPedido,  
                  AP.IdPedido,  
                  PV.RazonSocial,  
