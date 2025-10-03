@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_CO_ActualizarDetallePeticionMaterial_MV1_5') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_CO_ActualizarDetallePeticionMaterial_MV1_5;
+END
+GO
+-- =============================================
 -- Author:           Daniel AC
 -- Create date: 13-08-2019
 -- Description: Agregue validación que si es un Proveedor de CARSO no agregar Marca, Modelo, No Parte a Descripción material  cotizado
@@ -7,6 +14,10 @@
 -- Author:	Daniel AC
 -- Create date: <25/08/2022>
 -- Description:	Optimización de sp
+-- =============================================
+-- Author:	Alexander Gomez
+-- Create date: <03/10/2025>
+-- Description:	validación para no cotizar
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]
     -- Add the parameters for the stored procedure here
@@ -19,7 +30,7 @@ CREATE PROCEDURE [dbo].[SP_CO_ActualizarDetallePeticionMaterial_MV1_5]
     @IdPeticionOferta INT, 
     @FechaVigencia DATETIME ,
     @IdProveedorActual INT, 
-    @NoCotizar BIT,
+    @NoCotizar BIT = NULL,
     @IdEdicionCotizacion INT,
     @IdEstatusEdicionCotizacion INT ,
     @IdUnidadVendedor INT,
@@ -36,6 +47,11 @@ AS
         SET NOCOUNT ON ;
 
         --SET @IdMaterialVendedor = null;
+        --SI TIENE @@NoCotizar ES PORQUE FUE NO COTIZADO
+		IF ISNULL(@NoCotizar,0) = 0
+		BEGIN
+			SET @NoCotizar = 0;
+		END
 
 		--SI TIENE @IdEdicionCotizacion ES PORQUE FUE EDITADO
 		IF @IdEdicionCotizacion <> 0
