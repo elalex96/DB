@@ -1,13 +1,27 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_FI_ConsultarComplementosPago') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_FI_ConsultarComplementosPago;
+END
+GO
+-- =============================================
 -- Author:		<Alexander GOmez>
 -- Create date: <07/01/2020>
 -- Description:	<Consulta de los complementos de pago>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_FI_ConsultarComplementosPago] --420,3,1
+-- =============================================    
+-- Author:           Alexaner Gomez   
+-- Create date: 12/09/2025  
+-- Description: se agrega filtro por fecha de carga de la factura
+-- ============================================= 
+CREATE PROCEDURE [dbo].[SP_FI_ConsultarComplementosPago]
 	-- Add the parameters for the stored procedure here
 	@IdProveedor INT,
 	@IdContrato INT,
-	@Estatus INT
+	@Estatus INT,
+	@FechaInicio datetime,
+	@FechaFin datetime 
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -52,6 +66,7 @@ BEGIN
 		AND TA.IdEstatusOperacion = 2
 		AND F.IdContrato = @IdContrato
 		AND PO.IdProveedor = @IdProveedor
+		AND F.Fecha BETWEEN @FechaInicio AND @FechaFin
 	GROUP BY CP.IdComplementoDePago,
              AF.IdAceptacionFactura,
              AF.IdAceptacionPedido,
