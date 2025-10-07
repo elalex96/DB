@@ -1,7 +1,15 @@
-use Petrovendor
+USE [Petrovendor]
 GO
-DROP PROC IF EXISTS SP_PR_MM_ListaFacturasAprobacion
+IF OBJECT_ID('Petrovendor..SP_PR_MM_ListaFacturasAprobacion') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PR_MM_ListaFacturasAprobacion;
+END
 GO
+--/****** Object:  StoredProcedure [dbo].[SP_PR_MM_ListaFacturasAprobacion]    Script Date: 26/06/2023 02:34:39 p. m. ******/
+--SET ANSI_NULLS ON
+--GO
+--SET QUOTED_IDENTIFIER ON
+--GO
 -- =============================================
 -- Author:		Daniel AC
 -- Create date: 14-02-2023
@@ -30,10 +38,9 @@ GO
 -- Create date: 26-06-2023
 -- Description:	Se agrega columnas uuid, folio factura y fecha de timbrado
 -- =============================================
--- =============================================
--- Author:		Luis David
--- Create date: 04-08-2023
--- Description:	Se agrega filtros de fecha general para evitar timeout por exceso de datos
+-- Author:		Alexander Gomez
+-- Create date: 29-09-2025
+-- Description:	Se agrega filtro por aceptacion de factura
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ListaFacturasAprobacion] 
 @IdProveedor int,
@@ -47,6 +54,8 @@ AS
 BEGIN
   SET NOCOUNT ON;
 	DECLARE @PLANT	nvarchar(10);
+
+	SET @FechaFin = DATEADD(day, 1, @FechaFin);
 	
 	CREATE TABLE #Estatus(
 		IdEstatus INT
@@ -273,18 +282,18 @@ BEGIN
 				ON AP.IdSubContratista COLLATE SQL_Latin1_General_CP1_CI_AS = SV.VendorIDSAP COLLATE SQL_Latin1_General_CP1_CI_AS
 			LEFT JOIN Adinco.dbo.CO_SAPPRESES AS PSES (NOLOCK)
 				ON AP.IdPedido COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPPONumber COLLATE SQL_Latin1_General_CP1_CI_AS
-				AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS = PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS 
+				AND AP.ReferenceNumber COLLATE SQL_Latin1_General_CP1_CI_AS=PSES.SAPSESNumber COLLATE SQL_Latin1_General_CP1_CI_AS 
 			LEFT JOIN Adinco.dbo.CO_SAPSES AS SES (NOLOCK)
-				ON PSES.SAPPONumber = SES.PO_SAPNumer 
-				AND  PSES.SAPSESNumber = SES.SESReferenceNumber
-				AND PSES.SESN = SES.SESNumber         
+				ON PSES.SAPPONumber=SES.PO_SAPNumer 
+				AND  PSES.SAPSESNumber=SES.SESReferenceNumber
+				AND PSES.SESN=SES.SESNumber         
 			LEFT JOIN dbo.RelacionCartaCNPedido AS RC (NOLOCK)
-				ON AP.IdAceptacionPedido = RC.IdAceptacionPedido 
+				ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 
 			LEFT JOIN S_Proveedor AS PR (NOLOCK)
-				ON AP.IdSubContratista = PR.RFC
+				ON AP.IdSubContratista=PR.RFC
 				AND PR.Activo = 1  -->CTE		
 			WHERE AF.IdEstatus IN (SELECT IdEstatus FROM #Estatus)
-			AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+			AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 			AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
@@ -370,7 +379,8 @@ BEGIN
 			ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 	 
 		WHERE O.IdEstatusOperacion IN (SELECT IdEstatus FROM #Estatus)
 		AND ISNULL(O.IdFlujoTarea, 0) <> 0
-		AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+		AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
+			AND AF.CreadoEl <=@FechaFin
 		GROUP BY  
 		AF.IdAceptacionFactura,
 		O.IdOperacion,
@@ -587,7 +597,7 @@ BEGIN
   ORDER BY FechaRegistro DESC;
 
 END
-ELSE -- FechaInicio y Fin No es Null
+ELSE
 BEGIN
 	
 	IF EXISTS (SELECT COUNT(1) FROM #PLANT)  
@@ -673,7 +683,7 @@ BEGIN
 				ON AP.IdSubContratista=PR.RFC
 				AND PR.Activo = 1  -->CTE
 			WHERE AF.IdEstatus IN (SELECT IdEstatus FROM #Estatus)
-			AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+			AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 			AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
@@ -750,7 +760,7 @@ BEGIN
 		  AND  ISNULL(AP.IdEliminado, 0) <> 1 -->CTE
 		JOIN MM_AceptacionFactura AF (NOLOCK)	
 			ON AP.IdAceptacionPedido = AF.IdAceptacionPedido
-			AND AF.CreadoEl BETWEEN @FechaInicio AND @FechaFin
+			
 		JOIN dbo.TA_Operacion O (NOLOCK)
 		  ON AF.IdAceptacionFactura  = O.IdDocumento
 		  AND O.IdTipoOperacion = 10 --> CTE APROBACIÓN DE FACTURA
@@ -760,6 +770,7 @@ BEGIN
 			ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 	 
 		WHERE O.IdEstatusOperacion IN (SELECT IdEstatus FROM #Estatus)
 		AND ISNULL(O.IdFlujoTarea, 0) <> 0
+		AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
 		GROUP BY  
 		AF.IdAceptacionFactura,
 		O.IdOperacion,
