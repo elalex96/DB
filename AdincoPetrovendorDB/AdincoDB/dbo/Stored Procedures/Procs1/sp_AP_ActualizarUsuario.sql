@@ -1,4 +1,6 @@
-﻿-- =============================================
+﻿DROP PROCEDURE IF EXISTS dbo.sp_AP_ActualizarUsuario;
+GO
+-- =============================================
 -- Autor:				Neri Garcia del Angel
 -- Fecha de Edición:	20 de Febrero del 2023
 -- Descripción:			Se ajusta para que obtenga el dominio del correo (Campo Usuario)
@@ -9,7 +11,7 @@ CREATE PROC [dbo].[sp_AP_ActualizarUsuario]
     @pUsuario VARCHAR(100),
     @pContraseña VARCHAR(30),
     @pNombre VARCHAR(250),
-    @pFoto IMAGE,
+    @pFoto IMAGE = NULL,
     @pModificadoPor INT,
     @pPerfilIds VARCHAR(250),
     @pIsActivo BIT,
