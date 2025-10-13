@@ -4057,6 +4057,12 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_FI_Transferencia_NoLigada_Eliminar.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferContrato_NoLigadas.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferContrato_Ligadas.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AP_Usuarios_Admin.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_Usuario_PorCorreo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_Usuario_PorId.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_AP_Usuario.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_FI_Usuario_Perfiles.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_VAL_AP_UsuarioCorreo.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USD_SEL_FI_MPY_ConsultaFacturasPorContratoDescarga.sql" />
   </ItemGroup>
   <ItemGroup>
