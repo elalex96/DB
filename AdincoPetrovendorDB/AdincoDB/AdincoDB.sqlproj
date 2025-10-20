@@ -4067,6 +4067,9 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferDetalle_PedimentoExp.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferDetalle_PedimentoImp.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USD_SEL_FI_MPY_ConsultaFacturasPorContratoDescarga.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferDetalle_Facturas_Masivo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferDetalle_PedimentoExp_Masivo.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferDetalle_PedimentoImp_Masivo.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
