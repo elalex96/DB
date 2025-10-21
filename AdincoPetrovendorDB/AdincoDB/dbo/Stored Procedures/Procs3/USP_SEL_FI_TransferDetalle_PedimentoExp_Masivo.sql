@@ -1,6 +1,5 @@
-use Adinco
 -- =============================================
--- SP MASIVO para Pedimentos de Exportación
+-- SP MASIVO para Pedimentos de ExportaciÃ³n
 -- =============================================
 IF OBJECT_ID('[dbo].[USP_SEL_FI_TransferDetalle_PedimentoExp_Masivo]', 'P') IS NOT NULL
     DROP PROCEDURE [dbo].[USP_SEL_FI_TransferDetalle_PedimentoExp_Masivo]
@@ -22,7 +21,7 @@ BEGIN
     FROM dbo.fnSplitString(@IdsTransferencias, ',')
     WHERE splitdata <> '';
 
-    -- Retornar pedimentos de exportación de todas las transferencias
+    -- Retornar pedimentos de exportaciÃ³n de todas las transferencias
     SELECT 
         FI_Transfer.IdTransferencia,
         FI_PedimentoComprobante.IdPedimentoComprobante AS IdComprobante,
