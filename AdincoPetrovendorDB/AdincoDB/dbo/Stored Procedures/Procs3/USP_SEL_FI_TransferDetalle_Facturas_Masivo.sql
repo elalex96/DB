@@ -1,4 +1,3 @@
-use Adinco
 -- =============================================
 -- SP MASIVO SIMPLIFICADO para Facturas
 -- =============================================
@@ -22,7 +21,7 @@ BEGIN
     FROM dbo.fnSplitString(@IdsTransferencias, ',')
     WHERE splitdata <> '';
 
-    -- Simplemente ejecutar la misma lógica que el SP original pero para múltiples transferencias
+    -- Simplemente ejecutar la misma lÃ³gica que el SP original pero para mÃºltiples transferencias
     -- Usamos UNION ALL para combinar los resultados de todas las transferencias
     
     SELECT 
@@ -131,11 +130,11 @@ BEGIN
 
     UNION ALL
 
-    -- Facturas NO CARGADAS en ADINCO (las que están en CPDocRelacionado pero no en FI_Factura)
+    -- Facturas NO CARGADAS en ADINCO (las que estÃ¡n en CPDocRelacionado pero no en FI_Factura)
     SELECT 
         tf.IdTransfer AS IdTransferencia,
         0 AS IdFactura,
-        '¡NO CARGADO EN ADINCO!' AS TipoComprobante,
+        'Â¡NO CARGADO EN ADINCO!' AS TipoComprobante,
         NULL AS Serie,
         NULL AS Folio,
         NULL AS Fecha,
