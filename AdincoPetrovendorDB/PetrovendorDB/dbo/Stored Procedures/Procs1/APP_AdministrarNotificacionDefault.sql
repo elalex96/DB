@@ -1,7 +1,22 @@
-﻿-- =============================================
+﻿use Petrovendor
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'APP_AdministrarNotificacionDefault'
+)
+    DROP PROCEDURE APP_AdministrarNotificacionDefault;   
+	
+GO
+-- =============================================
 -- Author:	Daniel AC
 -- Create date: <30/08/2022>
--- Description:	<Administrar las notificaciones registradas para pagina default petrovendor >
+-- Description:	<Administrar las notificaciones registradas para pagina default petrovendor>
+-- =============================================
+-- =============================================
+-- Author: Daniel AC
+-- Create date: 22-10-2025 
+-- Description: Se cambia tabla para guardar cambios en la bitácora de cambios
 -- =============================================
 CREATE PROCEDURE dbo.APP_AdministrarNotificacionDefault
 @TipoConsulta NVARCHAR(50),
@@ -64,14 +79,15 @@ BEGIN
 					FOR JSON AUTO);
 
 
-	INSERT INTO dbo.BitacoraErrores (HResult, Mensaje, StackTrace, IdUsuario, IdProveedor, FechaRegistro)
+	INSERT INTO dbo.AP_Bitacora (Fecha, Tipo, Mensaje, Detalle, UsuarioId, ContratoId)
 	VALUES
-	(   -1,    -- HResult - int
-		'EDICIÓN-APP_NotificacionesDefault',    -- Mensaje - nvarchar(max)
-		CONCAT('{"ANTES": ',ISNULL(@Antes,'-'), ', "DESPUES":', ISNULL(@Despues,'-'),'}'), -- StackTrace - nvarchar(max)
-		0,  -- IdUsuario - int
-		0, 
-		GETDATE())
+	(   GETDATE(),    
+		'Bitácora APP_NotificacionesDefault',  
+		'Edición',
+		CONCAT('{"Antes": ',ISNULL(@Antes,'-'), ', "Después":', ISNULL(@Despues,'-'),'}'), -- StackTrace - nvarchar(max)
+		0,  
+		0
+		)
  END 
 
 
@@ -86,14 +102,15 @@ BEGIN
 	DELETE FROM APP_NotificacionesDefault
 	WHERE Id=@Id
 
-	 INSERT INTO dbo.BitacoraErrores (HResult, Mensaje, StackTrace, IdUsuario, IdProveedor, FechaRegistro)
+	INSERT INTO dbo.AP_Bitacora (Fecha, Tipo, Mensaje, Detalle, UsuarioId, ContratoId)
 	VALUES
-	(   -1,    -- HResult - int
-		'ELIMINACIÓN-APP_NotificacionesDefault',    -- Mensaje - nvarchar(max)
-		CONCAT('{"REGISTRO": ',ISNULL(@Antes,'-'),'}'), -- StackTrace - nvarchar(max)
-		0,  -- IdUsuario - int
-		0, 
-		GETDATE())
+	(   GETDATE(),   
+	   'Bitácora APP_NotificacionesDefault',  
+	   'Eliminación',    
+		CONCAT('{"Registro": ',ISNULL(@Antes,'-'),'}'), 
+		0,  
+		0 
+		)
 
  END 
 
@@ -108,9 +125,9 @@ BEGIN
 		ON UP.idContrato = C.IdContrato
 	JOIN Adinco..CO_AreaContractual AC
 		ON C.IdAreaContractual=AC.IdAreaContractual	
-	WHERE UP.idContrato is not null
+	WHERE UP.idContrato IS NOT NULL
 	GROUP by C.idContrato, AC.NombreAreaContractual, C.NumeroContrato
-	ORDER BY AC.NombreAreaContractual DESC
+	ORDER BY C.IdContrato DESC
 
  END 
 END;
