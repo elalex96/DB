@@ -3,7 +3,7 @@
 	[Fecha] [datetime] NULL,
 	[Tipo] [varchar](1000) NULL,
 	[Mensaje] [varchar](1000) NULL,
-	[Detalle] [varchar](1000) NULL,
+	[Detalle] NVARCHAR (MAX) NULL,
 	[UsuarioId] [int] NULL,
 	[ContratoId] [int] NULL,
  CONSTRAINT [PK_AP_Bitacora] PRIMARY KEY CLUSTERED 
