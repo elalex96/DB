@@ -3008,6 +3008,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_INS_MM_ActividadClasificacionGasto.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USD_SEL_FI_ObtenerFacturaPdfXmlFacturaPorId.sql" />
     <Build Include="dbo\Stored Procedures\Procs2\USD_SEL_FI_ConsultaFacturasPorContratoDescarga.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MM_CalculoPlantillaSE.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
