@@ -1,10 +1,9 @@
-﻿IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'SP_PR_MM_ListaAprobacionCN_S3'
-)
-    DROP PROCEDURE SP_PR_MM_ListaAprobacionCN_S3;
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_PR_MM_ListaAprobacionCN_S3') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PR_MM_ListaAprobacionCN_S3;
+END
 GO
 -- =============================================
 -- Author:		DANIEL AC
@@ -35,11 +34,18 @@ GO
 -- Create date: 03-05-2022
 -- Description:	se corrige la consulta de murphy para consultar por contrato 
 -- =============================================
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 22-10-2025
+-- Description:	se agregan filtros por fechas de aceptacion de carta cn
+-- =============================================
 CREATE PROCEDURE [dbo].[SP_PR_MM_ListaAprobacionCN_S3] 
 	-- Add the parameters for the stored procedure here
 @IdProveedor INT,
 @Estado INT,
-@IdContrato NVARCHAR(MAX)
+@IdContrato NVARCHAR(MAX),
+@FechaInicio datetime = NULL,
+@FechaFin datetime = NULL
 AS
      BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -120,6 +126,7 @@ AS
 		LEFT JOIN DEA_Relacion_PR_PO AS RPO	 (NOLOCK)
 			ON P.IdPedido = RPO.IdPedido
 		WHERE ISNULL(AC.IdEstatusEliminado,0) <>1   --> QUE NO ESTEN ELIMINADOS
+		AND AC.CreadoEl BETWEEN @FechaInicio AND @FechaFin
 		ORDER BY  Ac.IdAceptacionPedido DESC;
 
 		INSERT INTO #AceptacionesPedido
@@ -172,6 +179,7 @@ AS
 		AND AC.IdAceptacionCartaPCN IS NOT NULL
 		AND AC.IdEstatus = @Estado
 		AND ISNULL(AC.IdEstatusEliminado,0) <> 1  --> QUE NO ESTEN ELIMINADOS
+		AND AC.CreadoEl BETWEEN @FechaInicio AND @FechaFin
 		GROUP BY CONCAT(
                  'PO Number:',
                  AP.IdPedido COLLATE Modern_Spanish_CI_AS,
@@ -251,6 +259,7 @@ AS
 			ON P.IdPedido = RPO.IdPedido
 		WHERE  P.IdProveedorCompras = @IdProveedor
 		AND ISNULL(AC.IdEstatusEliminado,0) <> 1  --> QUE NO ESTEN ELIMINADOS
+		AND AC.CreadoEl BETWEEN @FechaInicio AND @FechaFin
 		ORDER BY  Ac.IdAceptacionPedido DESC;
 
 		INSERT INTO #AceptacionesPedido
@@ -300,6 +309,7 @@ AS
 		AND PSES.IdEstatus = @IdEstatusAceptado  
 		AND AC.IdAceptacionCartaPCN IS NOT NULL
 		AND ISNULL(AC.IdEstatusEliminado,0) <> 1  --> QUE NO ESTEN ELIMINADOS
+		AND AC.CreadoEl BETWEEN @FechaInicio AND @FechaFin
 		GROUP BY CONCAT(
                  'PO Number:',
                  AP.IdPedido COLLATE Modern_Spanish_CI_AS,
