@@ -1,12 +1,22 @@
-﻿-- =============================================  
+﻿USE Petrovendor
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_ConsultaPedimentoComprobanteDetalle_CD'
+)
+    DROP PROCEDURE SP_PC_ConsultaPedimentoComprobanteDetalle_CD;
+GO
+-- =============================================  
 -- Author:  <Alexander Gomez>  
 -- Create date: <04/09/2020>  
 -- Description: <Consulta a detalle de un Pedimento/Comprobante de Procura>  
 -- =============================================  
 -- =============================================  
 -- Author:  <Daniel AC>  
--- Create date: <18/11/2020>  
--- Description: <Se agrego columna de contrato >  
+-- Create date: <28/10/2025>  
+-- Description: <Se agrego columna de contrato y detalle del presupuesto >  
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD]-- 1152,420,0  
   
@@ -19,7 +29,7 @@ BEGIN
  -- SET NOCOUNT ON added to prevent extra result sets from  
  -- interfering with SELECT statements.  
  SET NOCOUNT ON;  
-  
+ SET LANGUAGE Spanish
     -- Insert statements for procedure here  
  DECLARE @APROBADOR BIT = 0;  
  DECLARE @SIGAPROBADOR INT;  
@@ -32,7 +42,7 @@ BEGIN
          JOIN dbo.TA_Operacion AS OP  
           ON  APC.IdAceptacionPedidoPedimentoComprobante =OP.IdDocumento 
           AND APC.IdProveedor =OP.IdProveedor
-		  AND OP.IdTipoOperacion = 19            
+		  AND OP.IdTipoOperacion = 19  --> CTE APROBACIÓN COMPROBANTE EXTRANJERO           
         WHERE APC.IdPedimentoComprobante = @IdPedimentoComprobante);  
    
  --CONSULTA DEL TIPO DE FLUJO DE TAREAS  
@@ -93,7 +103,7 @@ BEGIN
   END;  
        
  END;  
-   
+
  SELECT  
   PC.IdPedimentoComprobante,  
   PC.NumeroPedimento,  
@@ -125,7 +135,23 @@ BEGIN
   PC.TipoOrigen,  
   CC.CentroCosto,  
   CO.Numero + ' - ' + CO.Descripcion AS CuentaContable,
-  CONCAT(C.NumeroContrato,' - ', AC.NombreAreaContractual) AS Contrato
+  CONCAT(C.NumeroContrato,' - ', AC.NombreAreaContractual) AS Contrato,
+  ISNULL ( PCC.NombrePeriodo, 'No Disponible' ) AS Periodo ,
+  ISNULL (( presupuesto.Nombre + ' [' + presupuesto.IdPresupuestoCNH + ']' ), 'No Disponible' ) AS Presupuesto ,
+  ISNULL (
+		( RIGHT('00' + CAST(MONTH ( linea.AC_PRESUP_MES ) AS VARCHAR (2)), 2) + ' '
+			+ DATENAME ( MONTH, linea.AC_PRESUP_MES ) + ' '
+			+ CAST(YEAR ( linea.AC_PRESUP_MES ) AS VARCHAR (50)) + ' - '
+			+ CASE
+				WHEN P.CIEP = 1
+				THEN TSC.NombreTipoServicio
+				ELSE ACTP.DescripcionActividadPetrolera
+			END + '('
+			+ CASE
+				WHEN P.CIEP = 1
+				THEN SACI.NombreSubactividad
+				ELSE SACP.SubactividadPetrolera
+			END + ')' ), 'No Disponible' ) AS Mes_Presupuestado 
  FROM dbo.FI_PedimentoComprobante AS PC  
   JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD  
    ON  PC.IdPedimentoComprobante  =PCD.IdPedimentoComprobante
@@ -134,7 +160,7 @@ BEGIN
   JOIN dbo.TA_Operacion AS OP  
    ON APC.IdAceptacionPedidoPedimentoComprobante=OP.IdDocumento   
    AND OP.IdProveedor = APC.IdProveedor  
-   AND OP.IdTipoOperacion = 19    
+   AND OP.IdTipoOperacion = 19   --> CTE APROBACIÓN PEDIMENTOS
   JOIN dbo.TA_Estatus AS ES  
    ON OP.IdEstatusOperacion=ES.IdEstatus   
   JOIN dbo.S_Usuario AS US  
@@ -159,6 +185,29 @@ BEGIN
     ON PC.IdCentroCosto=CC.IdCentroCosto 
   LEFT JOIN dbo.DG_CuentaContable AS CO  
     ON PC.IdCuentaContable  =CO.Id 
+   LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes linea
+		ON PC.IdLineaPresupuesto = linea.IdLineaPresupuestoMes
+   LEFT JOIN Adinco.dbo.CO_Presupuesto P 
+			ON  PC.IdPresupuesto = P.idPresupuesto
+   LEFT JOIN Adinco.dbo.CO_ProgramaActividad PA 
+			ON  P.idProgramaActividad  = PA.IdProgramaActividad 
+   LEFT JOIN Adinco.dbo.CO_PeriodoContrato PCC 
+			ON PC.IdPeriodo  = PCC.IdPeriodo 
+   LEFT JOIN Adinco.dbo.CO_ProgramaActividad progActividad
+			ON PCC.IdPeriodo = progActividad.IdPeriodoContrato
+   LEFT JOIN Adinco.dbo.CO_Presupuesto presupuesto
+			ON progActividad.IdProgramaActividad = presupuesto.IdProgramaActividad
+				AND	linea.IdPresupuesto = presupuesto.IdPresupuesto
+	LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS ACTP
+			ON linea.IdActividadPetrolera = ACTP.IdActividadPetrolera
+	LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera AS SACP
+			ON linea.IdSubactividadPetrolera = SACP.IdSubactividadPetrolera
+	LEFT OUTER JOIN Adinco.dbo.CO_ActividadCIEP AS ACI
+			ON linea.IdActividad = ACI.IdActividad
+	LEFT OUTER JOIN Adinco.dbo.CO_TipoServicio AS TSC
+			ON linea.IdTipoServicio = TSC.ID_TIPOSER
+	LEFT OUTER JOIN Adinco.dbo.CO_SubactividadCIEP AS SACI
+			ON linea.IdSubactividad = SACI.IdSubactividad
  WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante  
  GROUP BY TM.TipoMoneda,  
 			 TM.TipoMonedaCorto,  
@@ -194,7 +243,16 @@ BEGIN
 			CO.Numero,  
 			C.NumeroContrato,
 			AC.NombreAreaContractual,
-			CO.Descripcion;  
+			CO.Descripcion,
+			PCC.NombrePeriodo,
+			presupuesto.Nombre,
+			presupuesto.IdPresupuestoCNH,
+			linea.AC_PRESUP_MES,
+			P.CIEP,
+			TSC.NombreTipoServicio,
+			ACTP.DescripcionActividadPetrolera,
+			SACI.NombreSubactividad,
+			SACP.SubactividadPetrolera  
   
   
 END  

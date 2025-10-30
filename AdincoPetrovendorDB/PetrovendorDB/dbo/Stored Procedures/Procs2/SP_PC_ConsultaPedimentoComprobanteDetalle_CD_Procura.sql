@@ -1,7 +1,22 @@
-﻿-- =============================================
+﻿USE Petrovendor
+GO
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_PC_ConsultaPedimentoComprobanteDetalle_CD_Procura'
+)
+    DROP PROCEDURE SP_PC_ConsultaPedimentoComprobanteDetalle_CD_Procura;
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <04/09/2020>
 -- Description:	<Consulta a detalle de un Pedimento/Comprobante de Procura>
+-- =============================================
+-- =============================================
+-- Author:		Daniel AC
+-- Create date: <29/10/2025>
+-- Description:	<Se agrega el lenguaje para que retorne el mes en español>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD_Procura] --1152,420,0
 
@@ -14,7 +29,7 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-
+	 SET LANGUAGE Spanish
     -- Insert statements for procedure here
 	
 	SELECT
@@ -66,45 +81,45 @@ BEGIN
 								END + ')' ), 'No Disponible' ) AS Mes_Presupuestado 
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
-			ON PCD.IdPedimentoComprobante = PC.IdPedimentoComprobante
+			ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
 		JOIN dbo.FI_AceptacionPedido_PedimentoComprobante AS APC
-			ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante
+			ON PC.IdPedimentoComprobante = APC.IdPedimentoComprobante 
 		JOIN dbo.TA_Operacion AS OP
-			ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
-			AND OP.IdTipoOperacion = 19
-			AND OP.IdProveedor = APC.IdProveedor
+			ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento 
+			AND OP.IdTipoOperacion = 19 --> CTE PEDIMENTOS
+			AND  APC.IdProveedor = OP.IdProveedor
 		JOIN dbo.TA_Estatus AS ES
-			ON ES.IdEstatus = OP.IdEstatusOperacion
+			ON OP.IdEstatusOperacion = ES.IdEstatus 
 		JOIN dbo.S_Usuario AS US
-			ON US.IdUsuario = PC.CreadoPor
+			ON PC.CreadoPor = US.IdUsuario  
 		LEFT JOIN dbo.S_Usuario AS USM
-			ON USM.IdUsuario = PC.ModificadoPor
+			ON PC.ModificadoPor = USM.IdUsuario 
 		LEFT JOIN Adinco.dbo.PV_TipoMoneda AS TM
-			ON TM.IdMoneda = PC.IdMoneda
+			ON PC.IdMoneda = TM.IdMoneda 
 		LEFT JOIN Adinco.dbo.PV_MM_MaterialUnidad AS UN
-			ON UN.IdUnidad = PCD.IdUnidadMedida
+			ON PCD.IdUnidadMedida = UN.IdUnidad 
 		LEFT JOIN Adinco.dbo.PV_Subcontratista AS SC
-			ON SC.IdSubcontratista = PC.IdSubcontratistaExportador
+			ON PC.IdSubcontratistaExportador = SC.IdSubcontratista 
 		LEFT JOIN Adinco.dbo.PV_Subcontratista AS SI
-			ON SI.IdSubcontratista = PC.IdSubcontratistaImportador
+			ON PC.IdSubcontratistaImportador = SI.IdSubcontratista 
 		LEFT JOIN Adinco.dbo.FI_ClavesPedimento AS CP 
 			ON PC.ClavePedimento = CP.IdPedimento
 		LEFT JOIN dbo.FI_Documento AS DOP
-			ON DOP.IdPedimentoComprobante = PC.IdPedimentoComprobante
+			ON PC.IdPedimentoComprobante = DOP.IdPedimentoComprobante 
 		LEFT JOIN dbo.CC_CentroCosto AS CC
-				ON CC.IdCentroCosto = PC.IdCentroCosto
+				ON PC.IdCentroCosto = CC.IdCentroCosto 
 		LEFT JOIN dbo.DG_CuentaContable AS CO
-				ON CO.Id = PC.IdCuentaContable
+				ON  PC.IdCuentaContable = CO.Id 
 		LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes linea
-				ON linea.IdLineaPresupuestoMes = PC.IdLineaPresupuesto
+				ON  PC.IdLineaPresupuesto = linea.IdLineaPresupuestoMes 
 		LEFT JOIN Adinco.dbo.CO_Presupuesto P 
-				ON P.idPresupuesto = PC.IdPresupuesto
+				ON PC.IdPresupuesto = P.idPresupuesto 
 		LEFT JOIN Adinco.dbo.CO_ProgramaActividad PA 
-				ON PA.IdProgramaActividad = P.idProgramaActividad 
+				ON  P.idProgramaActividad  = PA.IdProgramaActividad
 		LEFT JOIN Adinco.dbo.CO_PeriodoContrato PCC 
-				ON PCC.IdPeriodo = PA.idPeriodoContrato 
+				ON PA.idPeriodoContrato  = PCC.IdPeriodo 
 		LEFT JOIN Adinco.dbo.CO_ProgramaActividad progActividad
-				ON progActividad.IdPeriodoContrato = PCC.IdPeriodo
+				ON  PCC.IdPeriodo = progActividad.IdPeriodoContrato
 		LEFT JOIN Adinco.dbo.CO_Presupuesto presupuesto
 				ON progActividad.IdProgramaActividad = presupuesto.IdProgramaActividad
 					AND	presupuesto.Activo = 1
