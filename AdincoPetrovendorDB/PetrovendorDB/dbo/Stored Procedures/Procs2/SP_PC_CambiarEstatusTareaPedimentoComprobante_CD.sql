@@ -278,8 +278,8 @@ BEGIN
 				)
 				SELECT
 					@IdPedimentoComprobante_ADINCO,
-					'-',
-					'-',
+					ISNULL(PCD.DescripcionMercancia,'-'),
+					ISNULL(PCD.ClaseBienServicio,'-'),
 					CASE
 						WHEN PC.TipoOrigen = 'PC_CD' THEN SUM(PCD.PrecioUnitario) --PEDIMENTO DE IMPORTACION COMPRA DIRECTA
 						WHEN PC.TipoOrigen = 'CE_CD' THEN SUM(PCD.PrecioUnitario) --COMPROBANTE EXTRANJERO COMPRA DIRECTA
@@ -305,7 +305,9 @@ BEGIN
 				GROUP BY PC.IdPedimentoComprobante,
 						US.IdUsuarioADINCO,
 						PC.TipoOrigen,
-						PCD.IdUnidadMedida;
+						PCD.IdUnidadMedida,
+						PCD.DescripcionMercancia,
+						PCD.ClaseBienServicio;
 				
 				/*AGREGAR DOCUMENTO PEDIMENTO*/
 				INSERT INTO Adinco.dbo.FI_Documento
