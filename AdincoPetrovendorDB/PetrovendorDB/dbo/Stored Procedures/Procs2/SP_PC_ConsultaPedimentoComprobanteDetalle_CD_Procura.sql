@@ -78,7 +78,7 @@ BEGIN
 									WHEN P.CIEP = 1
 									THEN SACI.NombreSubactividad
 									ELSE SACP.SubactividadPetrolera
-								END + ')' ), 'No Disponible' ) AS Mes_Presupuestado 
+								END + ')' + ' (#LP: ' + CAST(ISNULL(linea.IdLineaPresupuestoMes,0) AS NVARCHAR(MAX))+')' ), 'No Disponible' ) AS Mes_Presupuestado 
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
 			ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
