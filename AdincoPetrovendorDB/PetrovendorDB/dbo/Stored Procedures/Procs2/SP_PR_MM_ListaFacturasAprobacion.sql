@@ -293,7 +293,7 @@ BEGIN
 				ON AP.IdSubContratista=PR.RFC
 				AND PR.Activo = 1  -->CTE		
 			WHERE AF.IdEstatus IN (SELECT IdEstatus FROM #Estatus)
-			AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
+			AND AF.CreadoEl >= @FechaInicio AND AF.CreadoEl <= @FechaFin
 			AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
@@ -379,8 +379,7 @@ BEGIN
 			ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 	 
 		WHERE O.IdEstatusOperacion IN (SELECT IdEstatus FROM #Estatus)
 		AND ISNULL(O.IdFlujoTarea, 0) <> 0
-		AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
-			AND AF.CreadoEl <=@FechaFin
+		AND AF.CreadoEl >= @FechaInicio AND AF.CreadoEl <= @FechaFin
 		GROUP BY  
 		AF.IdAceptacionFactura,
 		O.IdOperacion,
@@ -520,7 +519,7 @@ BEGIN
 				   FI.Folio,
 				   FI.Serie,
 				   c.IdContrato,
-				   C.NombreContrato			 		   
+				   C.NombreContrato			 					   
 		  ORDER BY AF.IdAceptacionPedido DESC;
 
 		  -- OBTENER TOTALES
@@ -683,7 +682,7 @@ BEGIN
 				ON AP.IdSubContratista=PR.RFC
 				AND PR.Activo = 1  -->CTE
 			WHERE AF.IdEstatus IN (SELECT IdEstatus FROM #Estatus)
-			AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
+			AND AF.CreadoEl >= @FechaInicio AND AF.CreadoEl < @FechaFin
 			AND ISNULL(AF.IdEstatusEliminado, 0) <> 1  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
 			AND AF.IdEstatusXML != 4  -->CTE
@@ -770,7 +769,7 @@ BEGIN
 			ON AP.IdAceptacionPedido=RC.IdAceptacionPedido 	 
 		WHERE O.IdEstatusOperacion IN (SELECT IdEstatus FROM #Estatus)
 		AND ISNULL(O.IdFlujoTarea, 0) <> 0
-		AND AP.Creado BETWEEN @FechaInicio AND @FechaFin
+		AND AF.CreadoEl >= @FechaInicio AND AF.CreadoEl < @FechaFin
 		GROUP BY  
 		AF.IdAceptacionFactura,
 		O.IdOperacion,
@@ -910,7 +909,7 @@ BEGIN
 				   FI.Serie,
 				   FI.FechaTimbrado,
 				   c.IdContrato,
-				   C.NombreContrato			 		   
+				   C.NombreContrato			 					   
 		  ORDER BY AF.IdAceptacionPedido DESC;
 
 		  -- OBTENER TOTALES
