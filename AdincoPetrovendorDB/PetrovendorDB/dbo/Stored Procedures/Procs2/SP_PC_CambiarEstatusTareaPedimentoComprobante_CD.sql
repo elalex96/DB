@@ -1,6 +1,6 @@
 ﻿USE [Petrovendor]
 GO
-IF OBJECT_ID('Petrovendor..SP_PC_CambiarEstatusTareaPedimentoComprobante_CD') IS NOT NULL
+IF OBJECT_ID('SP_PC_CambiarEstatusTareaPedimentoComprobante_CD') IS NOT NULL
 BEGIN
 DROP PROCEDURE SP_PC_CambiarEstatusTareaPedimentoComprobante_CD;
 END
@@ -23,6 +23,10 @@ GO
 -- Author:		<Alexander Gomez>
 -- Create date: <22/07/2025>
 -- Description:	<Retorno del correo de compra directa>
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: <29/10/2025>
+-- Description:	<Se valida si se tiene la preferencia FlujoComprobantePedimentoLineasPaseAdinco para enviar gastos en Adinco >
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -55,6 +59,10 @@ BEGIN
 	DECLARE @NOMBRESUBCONTRATISTA NVARCHAR(100);
 	DECLARE @TIPOFLUJO INT;
 	DECLARE @IDSIGAPROBADOR INT;
+	DECLARE @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO INT;
+	DECLARE @DominioProcura NVARCHAR(500) = (SELECT URL FROM Petrovendor..TA_Dominios WHERE IdDominio = 2) --> CTE DOMINIO PROCURA
+	DECLARE @ID_CONTRATO INT
+
 	SET @NOMBRESUBCONTRATISTA = (SELECT TOP 1
 														PVS.RazonSocial
 													FROM dbo.FI_PedimentoComprobante AS PC (NOLOCK)
@@ -76,6 +84,18 @@ BEGIN
 										AND Activo = 1
 										AND NoSecuencia = @SIGNSECUENCIA);
 
+	SET @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO = (SELECT COUNT(PC.Id)
+															FROM AP_PreferenciaContrato PC
+															JOIN FI_PedimentoComprobante P
+																ON PC.ContratoId = P.IdContrato
+															JOIN AP_Preferencias PR
+																ON PC.PreferenciaId = PR.Id
+																AND PR.Nombre ='FlujoComprobantePedimentoLineasPaseAdinco'
+															WHERE P.IdPedimentoComprobante =@IdPedimentoComprobante )
+
+	SET @ID_CONTRATO  = (SELECT P.IdContrato
+						FROM FI_PedimentoComprobante P																
+						WHERE P.IdPedimentoComprobante =@IdPedimentoComprobante )
 	IF @TIPOFLUJO = 1
 	BEGIN
 	    
@@ -155,7 +175,7 @@ BEGIN
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_CLIENTE##',@NOMBRESUBCONTRATISTA));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##COMPROBANTE##',CAST(@IdPedimentoComprobante AS NVARCHAR(10))));
 				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));
-				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##','https://procura.adinco.mx/04Tareas/AprobacionPedimentoComprobante_CD.aspx'));
+				SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##',CONCAT(@DominioProcura,'04Tareas/AprobacionPedimentoComprobante_CD.aspx')));
 
 			END
 
@@ -207,7 +227,12 @@ BEGIN
 					 [IdFiscalP],
 					 [RazonSocialP],
 					 CuentaBancaria,
-					 IdPedimentoComprobantePetrovendor
+					 IdPedimentoComprobantePetrovendor,
+					 IdOrigen,
+					 Activo,
+					 FechaIntercambio,
+					 EsnotaCredito,
+					 NumFacturaC
 				)
 				SELECT
 					PC.IdContrato,
@@ -227,13 +252,18 @@ BEGIN
 					PC.IdFiscalP,
 					PC.RazonSocialP,
 					PC.CuentaBancaria,
-					PC.IdPedimentoComprobante
+					PC.IdPedimentoComprobante,
+					1,                         ---IdOrigen -->Petrovendor 
+					1,
+					GETDATE(),
+					PC.EsnotaCredito,
+					PC.NumFacturaC
 				FROM Petrovendor.dbo.FI_PedimentoComprobante AS PC (NOLOCK)
-				LEFT JOIN dbo.S_Usuario AS US (NOLOCK) ON US.IdUsuario = PC.CreadoPor
+				LEFT JOIN dbo.S_Usuario AS US (NOLOCK) 
+					ON PC.CreadoPor = US.IdUsuario 
 				WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante;
 
 				SET @IdPedimentoComprobante_ADINCO = SCOPE_IDENTITY();
-
 				INSERT INTO Adinco.dbo.FI_PedimentoComprobanteDetalle
 				(
 					 [IdPedimentoComprobante],
@@ -243,12 +273,13 @@ BEGIN
 					 [CreadoPor],
 					 [CreadoEn],
 					 [ImporteTotal],
-					 [Cantidad]
+					 [Cantidad],
+					 [IdUnidadMedida]
 				)
 				SELECT
 					@IdPedimentoComprobante_ADINCO,
-					'-',
-					'-',
+					ISNULL(PCD.DescripcionMercancia,'-'),
+					ISNULL(PCD.ClaseBienServicio,'-'),
 					CASE
 						WHEN PC.TipoOrigen = 'PC_CD' THEN SUM(PCD.PrecioUnitario) --PEDIMENTO DE IMPORTACION COMPRA DIRECTA
 						WHEN PC.TipoOrigen = 'CE_CD' THEN SUM(PCD.PrecioUnitario) --COMPROBANTE EXTRANJERO COMPRA DIRECTA
@@ -263,7 +294,8 @@ BEGIN
 						WHEN PC.TipoOrigen = 'PC_M' THEN SUM(PCD.ImporteTotal) --PEDIMENTO/COMPROBANTE MERCADEO
 						ELSE SUM(PCD.ImporteTotal)
 					END,
-					1
+					1, --> CTE CANTIDAD 
+					PCD.IdUnidadMedida
 				FROM Petrovendor.dbo.FI_PedimentoComprobanteDetalle AS PCD (NOLOCK)
 				JOIN Petrovendor.dbo.S_Usuario AS US (NOLOCK)
 					ON PCD.CreadoPor = US.IdUsuario 
@@ -272,8 +304,12 @@ BEGIN
 				WHERE PCD.IdPedimentoComprobante = @IdPedimentoComprobante
 				GROUP BY PC.IdPedimentoComprobante,
 						US.IdUsuarioADINCO,
-						PC.TipoOrigen;
-
+						PC.TipoOrigen,
+						PCD.IdUnidadMedida,
+						PCD.DescripcionMercancia,
+						PCD.ClaseBienServicio;
+				
+				/*AGREGAR DOCUMENTO PEDIMENTO*/
 				INSERT INTO Adinco.dbo.FI_Documento
 				(
 					 [IdTipoDocumento],
@@ -293,9 +329,10 @@ BEGIN
 					FID.IsEliminado,
 					FID.DocumentoByte
 				FROM Petrovendor.dbo.FI_Documento AS FID (NOLOCK)
-				LEFT JOIN dbo.S_Usuario AS US (NOLOCK) ON US.IdUsuario = FID.IdUsuario
+				LEFT JOIN dbo.S_Usuario AS US (NOLOCK)
+					ON FID.IdUsuario = US.IdUsuario 
 				WHERE FID.IdPedimentoComprobante = @IdPedimentoComprobante;
-
+								
 				INSERT INTO dbo.FI_RelacionAdincoPedimentoComprobante
 				(
 					IdPedimentoComprobantePetrovendor,
@@ -308,8 +345,144 @@ BEGIN
 					GETDATE() -- CreadoEl - datetime
 					)
 
+				-- VERIFICAR SI TIENE LA PREFERENCIA ENVIAR INFORMACIÓN DE GASTO PARA ADINCO
+				IF @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO > 0 
+				BEGIN 
+					
+						INSERT INTO dbo.CO_Registro
+						(
+							IdPrograma,
+							IdFactura,
+							MontoRegistro,
+							InicioEjecucion,
+							FinEjecucion,
+							Comentarios,
+							MesPresentacion,
+							IdEstado,
+							IdUsuarioCreadoPor,
+							FecMovto,
+							IdInstalacion,
+							CreadoPor,
+							IdPedimentoComprobante,
+							CvTipoDocFacturacion,
+							CentroCostos,
+							IdLineaPresupuestoMes,
+							CostosAtribuiblesAdministracion,
+							IdGastoRubro,
+							PCN,
+							IdCBSISH,
+							IdAceptacionPedidoDetalle
+						)
+						SELECT 
+							PC.IdLineaPresupuesto,
+							NULL,
+							pcd.PrecioUnitario,
+							pc.FechaPago,
+							pc.FechaPago,
+							PCD.DescripcionMercancia,
+							DATEADD(MONTH, DATEDIFF(MONTH, 0, pc.CreadoEn), 0),
+							10004, --> CTE IdEstado
+							@IdUsuario,
+							GETDATE(),
+							NULL,
+							@IdUsuario,
+							@IdPedimentoComprobante,
+							3,--> CvTipoDocFacturacion CTE 
+							NULL,
+							PC.IdLineaPresupuesto,
+							0,
+							NULL,
+							NULL,
+							NULL,
+							pcd.IdAceptacionPedidoDetalle
+						FROM dbo.FI_PedimentoComprobante PC
+						JOIN dbo.FI_PedimentoComprobanteDetalle PCD 
+							ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
+						WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante
+
+
+					--SE COPIA A CO_REGISTRO DE ADINCO
+					INSERT INTO Adinco.dbo.CO_Registro
+					(
+						IdPrograma,
+						IdFactura,
+						MontoRegistro,
+						InicioEjecucion,
+						FinEjecucion,
+						Comentarios,
+						MesPresentacion,
+						IdEstado,
+						IdUsuarioCreadoPor,
+						IdUsuarioModPor,
+						FecMovto,
+						IdInstalacion,
+						CreadoPor,
+						Fila,
+						IdPedimentoComprobante,
+						CvTipoDocFacturacion,
+						IdCatalogoCuentasSH,
+						Poliza,
+						CostosAtribuiblesAdministracion,
+						IdGastoRubro,
+						PCN,
+						IdCBSISH,
+						IdAceptacionPedidoDetalle
+					)
+					SELECT 
+						r.IdPrograma,
+						r.IdFactura,
+						r.MontoRegistro,
+						r.InicioEjecucion,
+						r.FinEjecucion,
+						r.Comentarios,
+						r.MesPresentacion,
+						r.IdEstado,
+						ISNULL(u.IdUsuarioADINCO, u.IdUsuario),
+						ISNULL(u.IdUsuarioADINCO, u.IdUsuario),
+						r.FecMovto,
+						r.IdInstalacion,
+						ISNULL(u.IdUsuarioADINCO, u.IdUsuario),
+						r.Fila,
+						@IdPedimentoComprobante_ADINCO,
+						r.CvTipoDocFacturacion,
+						r.IdCatalogoCuentasSH,
+						r.Poliza,
+						r.CostosAtribuiblesAdministracion,
+						r.IdGastoRubro,
+						r.PCN,
+						r.IdCBSISH,
+						r.IdAceptacionPedidoDetalle
+					FROM dbo.CO_Registro r
+					LEFT JOIN dbo.S_Usuario u 
+						ON  r.CreadoPor = u.IdUsuario 
+					WHERE r.IdPedimentoComprobante = @IdPedimentoComprobante
+
+					--SE AGREGA LA RELACION DE COMPROBANTE PETROVENDOR/ADINCO
+						INSERT INTO dbo.FI_RelacionComprobanteAdinco
+						(
+							IdComprobantePetrovendor,
+							IdComprobanteAdinco,
+							FechaEnvio
+						)
+						VALUES
+						(   @IdPedimentoComprobante,        -- IdComprobantePetrovendor - int
+							@IdPedimentoComprobante_ADINCO,        -- IdComprobanteAdinco - int
+							GETDATE() -- FechaEnvio - datetime
+						)
+
+						EXEC dbo.SP_WA_InserRegistroPaseAdinco  @IdPedimentoComprobante,       -- int
+		                                    3,       -- int
+		                                    @IdPedimentoComprobante_ADINCO, -- int
+		                                    @IdUsuario,         -- int
+		                                    @IdProveedor,       -- int
+		                                    @ID_CONTRATO,        -- int
+		                                    'PASE DE PEDIMENTO EXTRANJERO DIRECTO  - ENVIO POR SP_PC_CambiarEstatusTareaPedimentoComprobante_CD',       -- nvarchar(max)
+		                                    '',            -- nvarchar(50)
+		                                    0;           -- bit
+				END 
 			END
 
+			
 		END
 	END
 
