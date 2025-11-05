@@ -3011,6 +3011,7 @@
     <Build Include="dbo\Stored Procedures\Procs2\USD_SEL_FI_ConsultaFacturasPorContratoDescarga.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_MM_CalculoPlantillaSE.sql" />
     <Build Include="dbo\Stored Procedures\Procs4\USP_SEL_PC_ValidarCamposPresupuestalesParaPaseAdincoPedimentoComplemento.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\SP_FI_ActualizarPedimento_CD.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dbo\Scripts\Script_PCM_RevisionPresupuestal_27_Jul_2020_1.sql" />
