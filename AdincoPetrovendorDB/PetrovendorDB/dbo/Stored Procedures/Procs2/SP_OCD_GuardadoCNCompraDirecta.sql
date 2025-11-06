@@ -1,7 +1,18 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_OCD_GuardadoCNCompraDirecta') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_OCD_GuardadoCNCompraDirecta;
+END
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <17/04/2020>
 -- Description:	<Guardado del detalle de cn de compra directa>
+-- =============================================
+-- Author:		<Alexander Gomez>
+-- Create date: <05/1/2025>
+-- Description:	<Se contempla la actualización del rubor y pcn para el registro del gasto>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_OCD_GuardadoCNCompraDirecta]
 	-- Add the parameters for the stored procedure here
@@ -58,6 +69,14 @@ BEGIN
 
 	IF @@ROWCOUNT = @TOTALINSERTADOS
 	BEGIN
+
+		--SE ACTUALIZA CO_Registro
+		UPDATE dbo.CO_Registro 
+		SET dbo.CO_Registro.IdGastoRubro = dbo.CN_CompraDirecta.ClasificacionSH,
+			dbo.CO_Registro.PCN = dbo.CN_CompraDirecta.PCN
+		FROM dbo.CO_Registro
+		INNER JOIN dbo.CN_CompraDirecta ON dbo.CO_Registro .IdFactura = dbo.CN_CompraDirecta.IdFactura
+		WHERE dbo.CO_Registro.IdFactura = @IdFactura;
 	    
 		SELECT 'true' AS REGISTROSGUARDADOS
 
