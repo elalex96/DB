@@ -33,7 +33,11 @@ CREATE TABLE #FilasRegistros(
 		IdContrato INT,
 		ContieneMarkupAnterior BIT,
 		ContieneMarkupAnteriorEnCero BIT,
-		GastoEncontrado BIT);
+		GastoEncontrado BIT,
+		ActualizarMarkup BIT,
+		ActualizarTipoCambio BIT,
+		Correcto BIT
+		);
 
 	DECLARE @IdCarga INT = 0, @GastosNoEncontrados INT = 0, @ContieneMarkup INT = 0, @PorActualizar INT  = 0, @AlertasImportacion VARCHAR(MAX);
 
@@ -82,15 +86,16 @@ CREATE TABLE #FilasRegistros(
 				CONCAT('[El IdRegistro (',LTRIM(IdRegistroExcel),') no es un número entero], ')
 			END
 			END),
-			(CASE 
-			WHEN LEN(PorcentajeExcel) =  0
-			THEN '[El Porcentaje es obligatorío], '
-			ELSE 
+			(
 			CASE 
-			WHEN ISNUMERIC(PorcentajeExcel) =  0
+			WHEN 
+				LEN(PorcentajeExcel) > 0
 			THEN
-				CONCAT('[El Porcentaje (',LTRIM(PorcentajeExcel),') no es un número], ')
-			END
+				CASE
+				WHEN ISNUMERIC(PorcentajeExcel) =  0
+				THEN
+					CONCAT('[El Porcentaje (',LTRIM(PorcentajeExcel),') no es un número], ')
+				END
 			END
 			)
 		),
@@ -128,6 +133,27 @@ CREATE TABLE #FilasRegistros(
 		FR.IdRegistro =	CO_RegistroMarkup.GastoId
 		AND FR.IdRegistro > 0;
 
+	UPDATE
+	#FilasRegistros	
+	SET ActualizarMarkup = 
+	CASE 
+			WHEN ISNULL(Porcentaje,0) > 0
+			THEN 
+				1
+			ELSE 
+				0
+		END,
+	 ActualizarTipoCambio = 
+	CASE 
+			WHEN ISNULL(TipoCambio,0) > 0
+			THEN 
+				1
+			ELSE 
+				0
+		END
+	WHERE ContieneMarkupAnterior = 1 AND ContieneMarkupAnteriorEnCero = 0;
+
+
 	UPDATE 
 		FR
 		SET FR.IdContrato = FI_Factura.IdContrato
@@ -149,7 +175,8 @@ CREATE TABLE #FilasRegistros(
 	UPDATE 
 		FR
 	SET FR.Observacion	=	CONCAT(FR.Observacion,' [No existe un Gasto con IdRegistro (',LTRIM(IdRegistroExcel),') asignado]'),
-	FR.GastoEncontrado = 0
+	FR.GastoEncontrado = 0,
+	FR.Correcto = 0
 	FROM
 		#FilasRegistros FR
 	WHERE 
@@ -160,43 +187,72 @@ CREATE TABLE #FilasRegistros(
 	UPDATE 
 		FR
 	SET FR.Observacion	=	CONCAT(FR.Observacion,' [El Gasto con IdRegistro (',LTRIM(IdRegistroExcel),') no se encuentra en el contrato seleccionado]'),
-	FR.GastoEncontrado = 0
+	FR.GastoEncontrado = 0,
+	FR.Correcto = 0
 	FROM
 		#FilasRegistros FR
 	WHERE 
 		FR.IdContrato <> @IdContratoSeleccionado;
 
+
+/* SE COLOCAN COMO INCORRECTOS CUANDO NO CONTIENE NI MARKUP NI TIPO DE CAMBIO,DEBEN TENER ALMENOS 1 */
+	UPDATE #FilasRegistros
+	SET  Observacion	=	CONCAT(Observacion,' [El Gasto con IdRegistro (',LTRIM(IdRegistroExcel),') se encuentra vacio de datos, no contiene porcentaje, ni tipo de cambio  por asignar]'),
+	Correcto = 0
+	WHERE Porcentaje = 0 AND ISNULL(TipoCambio,0) = 0; 
+
+/* SE COLOCAN COMO CORRECTOS CUANDO PASAN LAS VALIDACIONES PRINCIPALES, DEBIDO A QUE YA SE PUEDE ACTUALIZAR MARKUPS */
+	UPDATE #FilasRegistros
+	SET  Correcto = 1 
+	WHERE LEN(Observacion) = 0; 
+
+/*VALIDACIONES DE GASTOS CON MARKUPS YA EXISTENTES (POR ACTUALIZAR)*/
 	UPDATE 
 		FR
-	SET FR.Observacion	=	CONCAT(FR.Observacion,' [El Gasto con IdRegistro (',LTRIM(IdRegistroExcel),') ya contiene un Markup registrado]')
+	SET 
+	FR.Observacion	=	
+	CASE
+	WHEN 
+		ActualizarMarkup = 1 and ActualizarTipoCambio = 0
+	THEN
+		CONCAT(FR.Observacion,' [El Gasto con IdRegistro (',LTRIM(IdRegistroExcel),') ya contiene un Markup registrado y será actualizado el markup]')
+	WHEN
+		ActualizarMarkup = 0 and ActualizarTipoCambio = 1
+	THEN
+		CONCAT(FR.Observacion,' [El Gasto con IdRegistro (',LTRIM(IdRegistroExcel),') ya contiene un Markup registrado y será actualizado el tipo de cambio]')
+
+	ELSE
+		CONCAT(FR.Observacion,' [El Gasto con IdRegistro (',LTRIM(IdRegistroExcel),') ya contiene un Markup registrado y será actualizado el markup y tipo de cambio]')
+	END
 	FROM
 		#FilasRegistros FR
 	WHERE 
-		FR.ContieneMarkupAnterior = 1 AND FR.ContieneMarkupAnteriorEnCero = 0;
+		FR.ContieneMarkupAnterior = 1 
+		AND FR.ContieneMarkupAnteriorEnCero = 0 
+		AND FR.GastoEncontrado = 1 
+		AND  (FR.ActualizarMarkup = 1 OR FR.ActualizarTipoCambio = 1);
 
-
+	/*REGISTRO EN BITACORA ENCABEZADO*/
 	INSERT INTO CO_BitacoraCargaRegistroMarkup(IdContrato,CreadoEl,CreadoPor,MarkupRegistrado,Mensaje,IdArchivoAWS)
 	VALUES (@IdContratoSeleccionado,GETDATE(),@IdUsuario,0,@Mensaje,@IdArchivo);
 	SELECT @IdCarga	=	SCOPE_IDENTITY() ;
 
+	/*BANDERAS POR MSTRAR EN PANTALLA*/
 	SELECT @GastosNoEncontrados = COUNT(1) FROM
 	 #FilasRegistros WHERE GastoEncontrado = 0; -- NO ENCONTRADOS 
 
 	SELECT @ContieneMarkup = COUNT(1) FROM
-	 #FilasRegistros WHERE ContieneMarkupAnterior = 1 AND ContieneMarkupAnteriorEnCero = 0; -- OMITIDOS POR QUE CONTIENEN MARKUP
+	 #FilasRegistros WHERE ContieneMarkupAnterior = 1 AND ContieneMarkupAnteriorEnCero = 0 AND GastoEncontrado = 1 ; -- OMITIDOS POR QUE CONTIENEN MARKUP
 
 	 SELECT @PorActualizar = COUNT(1) FROM
-	 #FilasRegistros	WHERE LEN(Observacion) = 0; --Por actualizar
+	 #FilasRegistros	WHERE Correcto = 1 -- LEN(Observacion) = 0; --Por actualizar
+
 
 	IF(@IdCarga > 0)
 	BEGIN
+	/*REGISTRO DE BITACORA DE TODO EL EXCEL LEIDO*/
 	INSERT INTO CO_BitacoraCargaRegistroMarkupDetalle(IdCarga,FilaExcel,IdRegistroExcel,PorcentajeExcel,TipoCambioExcel ,IdRegistro,Porcentaje,TipoCambio,Detalle,Correcto)
-	SELECT @IdCarga, FilaExcel,IdRegistroExcel,PorcentajeExcel,TipoCambioExcel,IdRegistro,Porcentaje,TipoCambio, Observacion, CASE 
-																				WHEN 
-																					LEN(Observacion)>0
-																				THEN 0
-																				ELSE 1
-																				END
+	SELECT @IdCarga, FilaExcel,IdRegistroExcel,PorcentajeExcel,TipoCambioExcel,IdRegistro,Porcentaje,TipoCambio, Observacion, Correcto
 	FROM
 		#FilasRegistros
 
@@ -205,7 +261,7 @@ CREATE TABLE #FilasRegistros(
                                 @AlertasImportacion,
 			CONCAT(' (FILA: ',FilaExcel,' - ', Detalle,') '))
 		FROM CO_BitacoraCargaRegistroMarkupDetalle
-		WHERE IdCarga =  @IdCarga AND Correcto = 0;
+		WHERE IdCarga =  @IdCarga AND LEN(Detalle) > 0
 		
 
 		UPDATE CO_BitacoraCargaRegistroMarkup
@@ -230,7 +286,7 @@ CREATE TABLE #FilasRegistros(
 		@ContieneMarkup AS ContieneMarkup, 
 		@PorActualizar AS PorActualizar
 	FROM 
-		CO_BitacoraCargaRegistroMarkupDetalle (NOLOCK)
+		CO_BitacoraCargaRegistroMarkupDetalle
 	where IdCarga	=	@IdCarga ;
 
 END;
