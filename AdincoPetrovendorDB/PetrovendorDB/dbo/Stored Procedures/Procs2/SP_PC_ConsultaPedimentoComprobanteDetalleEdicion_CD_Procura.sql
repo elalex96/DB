@@ -1,12 +1,19 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('SP_PC_ConsultaPedimentoComprobanteDetalleEdicion_CD_Procura') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PC_ConsultaPedimentoComprobanteDetalleEdicion_CD_Procura;
+END
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <04/09/2020>
--- Description:	<Consulta a detalle de un Pedimento/Comprobante de Procura>
+-- Description:	<Consulta a detalle de un Pedimento/Comprobante de Procura,se agrega a la consulta los dias de credito>
 -- =============================================
 -- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <04/11/2020>
--- Description:	<se agrega a la consulta los dias de credito>
+-- Author:		<Daniel AC>
+-- Create date: <04/11/2025>
+-- Description:	<Se agrega retorno de detalle presupuestal>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalleEdicion_CD_Procura] --1161,420,0
 
@@ -50,28 +57,31 @@ BEGIN
 		PC.IdFiscalP,
 		PC.IdCentroCosto,
 		PC.IdCuentaContable,
-		PC.DiasCredito
+		PC.DiasCredito,
+		PC.IdPeriodo,
+		PC.IdPresupuesto,
+		PC.IdLineaPresupuesto
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
-			ON PCD.IdPedimentoComprobante = PC.IdPedimentoComprobante
+			ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
 		JOIN dbo.FI_AceptacionPedido_PedimentoComprobante AS APC
-			ON APC.IdPedimentoComprobante = PC.IdPedimentoComprobante
+			ON  PC.IdPedimentoComprobante = APC.IdPedimentoComprobante
 		JOIN dbo.TA_Operacion AS OP
-			ON OP.IdDocumento = APC.IdAceptacionPedidoPedimentoComprobante
+			ON APC.IdAceptacionPedidoPedimentoComprobante = OP.IdDocumento 
 			AND OP.IdTipoOperacion = 19
 			AND OP.IdProveedor = APC.IdProveedor
 		JOIN dbo.S_Usuario AS US
-			ON US.IdUsuario = PC.CreadoPor
+			ON PC.CreadoPor = US.IdUsuario 
 		LEFT JOIN Adinco.dbo.PV_TipoMoneda AS TM
-			ON TM.IdMoneda = PC.IdMoneda
+			ON PC.IdMoneda = TM.IdMoneda 
 		LEFT JOIN Adinco.dbo.PV_MM_MaterialUnidad AS UN
-			ON UN.IdUnidad = PCD.IdUnidadMedida
+			ON PCD.IdUnidadMedida = UN.IdUnidad 
 		LEFT JOIN Adinco.dbo.PV_Subcontratista AS SC
-			ON SC.IdSubcontratista = PC.IdSubcontratistaExportador
+			ON PC.IdSubcontratistaExportador =SC.IdSubcontratista 
 		LEFT JOIN Adinco.dbo.PV_Subcontratista AS SI
-			ON SI.IdSubcontratista = PC.IdSubcontratistaImportador
+			ON PC.IdSubcontratistaImportador = SI.IdSubcontratista 
 		LEFT JOIN Adinco.dbo.FI_ClavesPedimento AS CP 
-			ON PC.ClavePedimento = CP.IdPedimento
+			ON CP.IdPedimento = PC.ClavePedimento 
 	WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante
 
 
