@@ -17,7 +17,7 @@ BEGIN
 
     IF EXISTS
     (
-        SELECT *
+        SELECT TOP 1 *
         FROM AP_Usuario (NOLOCK)
         WHERE Usuario LIKE '%@pemex%'
               AND UsuarioID = @UsuarioId
@@ -25,7 +25,7 @@ BEGIN
     BEGIN
         IF (@DiaActual >= DATEFROMPARTS(YEAR(@DiaActual), MONTH(@DiaActual), 6))
         BEGIN
-            SELECT DISTINCT
+            SELECT TOP 1
                 @MesPresentacionDisponible = UltimoDiaMes --'YA SE PUEDEN VER LOS GASTOS DEL MES ANTERIOR'
             FROM AP_Calendario (NOLOCK)
             WHERE PrimerDiaMes = DATEFROMPARTS(
@@ -37,7 +37,7 @@ BEGIN
         END
         ELSE
         BEGIN
-            SELECT DISTINCT
+            SELECT TOP 1
                 @MesPresentacionDisponible = UltimoDiaMes --'SOLO SE PUEDEN VER LOS GASTOS DEL DOS MESES ANTES';
             FROM AP_Calendario (NOLOCK)
             WHERE PrimerDiaMes = DATEFROMPARTS(
