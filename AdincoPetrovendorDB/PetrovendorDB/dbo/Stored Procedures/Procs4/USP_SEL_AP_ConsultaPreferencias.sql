@@ -8,5 +8,5 @@ create proc USP_SEL_AP_ConsultaPreferencias
 @IdProveedor int = 0
 as
 begin
-	select * from AP_Preferencias
+	select Id,Nombre,Descripcion,EsDeUsuario,EsDeProveedor,EsDeContrato,RequiereValor,Activo,CreadoEl,CreadoPor,ModificadoPor,ModificadoEl from AP_Preferencias
 end
