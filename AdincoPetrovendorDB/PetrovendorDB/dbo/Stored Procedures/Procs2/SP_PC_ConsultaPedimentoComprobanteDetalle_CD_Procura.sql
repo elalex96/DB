@@ -78,7 +78,9 @@ BEGIN
 									WHEN P.CIEP = 1
 									THEN ISNULL(SACI.NombreSubactividad,'')
 									ELSE ISNULL(SACP.SubactividadPetrolera,'')
-								END + ')' + ' (#LP: ' + CAST(ISNULL(linea.IdLineaPresupuestoMes,0) AS NVARCHAR(MAX))+')' ), 'No Disponible' ) AS Mes_Presupuestado 
+								END + ')' + ' (#LP: ' + CAST(ISNULL(linea.IdLineaPresupuestoMes,0) AS NVARCHAR(MAX))+')' ), 'No Disponible' ) AS Mes_Presupuestado,
+		ISNULL(INS.NombreInstalacion, 'No Disponible' )  AS NombreInstalacion,
+		ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
 			ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
@@ -119,7 +121,11 @@ BEGIN
 		LEFT JOIN Adinco.dbo.CO_PeriodoContrato PCC 
 				ON PA.idPeriodoContrato  = PCC.IdPeriodo 		
 		LEFT JOIN Adinco.dbo.CO_Presupuesto presupuesto
-				ON  PC.IdPresupuesto = presupuesto.IdPresupuesto 
+				ON  PC.IdPresupuesto = presupuesto.IdPresupuesto
+		LEFT JOIN Adinco..CO_Instalacion INS
+				ON PC.IdInstalacion = INS.IdInstalacion
+		LEFT JOIN  Adinco..CO_CatalogoCuentaSH CSH
+				ON PC.IdCuentaSectorHidrocarburos = CSH.IdCatalogoCuentasSH
 		LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS ACTP
 				ON linea.IdActividadPetrolera = ACTP.IdActividadPetrolera
 		LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera AS SACP

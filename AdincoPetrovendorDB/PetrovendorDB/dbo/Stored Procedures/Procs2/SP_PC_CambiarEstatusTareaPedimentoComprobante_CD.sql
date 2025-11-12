@@ -25,7 +25,7 @@ GO
 -- Description:	<Retorno del correo de compra directa>
 -- =============================================
 -- Author:		DANIEL AC
--- Create date: <29/10/2025>
+-- Create date: <11/11/2025>
 -- Description:	<Se habilita enviar gastos y cn en Adinco una vez aprobado el comprobante/pedimento >
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
@@ -360,7 +360,8 @@ BEGIN
 							IdGastoRubro,
 							PCN,
 							IdCBSISH,
-							IdAceptacionPedidoDetalle
+							IdAceptacionPedidoDetalle,
+							IdCatalogoCuentasSH
 						)
 						SELECT 
 							PC.IdLineaPresupuesto,
@@ -373,7 +374,7 @@ BEGIN
 							10004, --> CTE IdEstado
 							@IdUsuario,
 							GETDATE(),
-							NULL,
+							PC.IdInstalacion,
 							@IdUsuario,
 							@IdPedimentoComprobante,
 							PC.CvTipoDocFacturacion,--> CvTipoDocFacturacion CTE  (2- Pedimento/ 3 Comprobante)
@@ -383,7 +384,8 @@ BEGIN
 							CCN.ClasificacionSH,
 							SUBSTRING(CAST(ISNULL(CCN.PCN,0) AS NVARCHAR(50)), 1, 5),
 							CCN.IdActividadBS,
-							PCD.IdAceptacionPedidoDetalle
+							PCD.IdAceptacionPedidoDetalle,
+							PC.IdCuentaSectorHidrocarburos
 						FROM dbo.FI_PedimentoComprobante PC						
 						LEFT JOIN CN_CompraDirecta CCN
 							ON PC.IdPedimentoComprobante = CCN.IdPedimentoComprobante
@@ -417,7 +419,7 @@ BEGIN
 						IdGastoRubro,
 						PCN,
 						IdCBSISH,
-						IdAceptacionPedidoDetalle
+						IdAceptacionPedidoDetalle						
 					)
 					SELECT 
 						r.IdPrograma,

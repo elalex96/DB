@@ -51,7 +51,9 @@ CREATE PROCEDURE [dbo].[SP_FI_InsertarPedimentoComprobante_CD]
 	@DiasCredito				INT,
 	@Periodo					INT = NULL,
 	@Presupuesto				INT = NULL,
-	@IdLineaPresupuesto			INT = NULL
+	@IdLineaPresupuesto			INT = NULL,
+	@IdInstalacion				INT = NULL,
+	@IdCuentaSectorHidrocarburos INT = NULL
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -114,7 +116,9 @@ BEGIN
 	 DiasCredito,
 	 IdPeriodo,
 	 IdPresupuesto,
-	 IdLineaPresupuesto
+	 IdLineaPresupuesto,
+	 IdInstalacion,
+	 IdCuentaSectorHidrocarburos
 	)
 	VALUES
 	(@IdContrato,
@@ -141,7 +145,9 @@ BEGIN
 	 @DiasCredito,
 	 @Periodo,
 	 @Presupuesto,
-	 @IdLineaPresupuesto
+	 @IdLineaPresupuesto,
+	 @IdInstalacion,
+	 @IdCuentaSectorHidrocarburos
 	);
 
 	 SET @idped = SCOPE_IDENTITY();

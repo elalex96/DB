@@ -151,7 +151,9 @@ BEGIN
 				WHEN P.CIEP = 1
 				THEN ISNULL(SACI.NombreSubactividad,'')
 				ELSE ISNULL(SACP.SubactividadPetrolera,'')
-			END + ')' ), 'No Disponible' ) AS Mes_Presupuestado 
+			END + ')' ), 'No Disponible' ) AS Mes_Presupuestado,
+	ISNULL(INS.NombreInstalacion, 'No Disponible' )  AS NombreInstalacion,
+	ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos
  FROM dbo.FI_PedimentoComprobante AS PC  
   JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD  
    ON  PC.IdPedimentoComprobante  =PCD.IdPedimentoComprobante
@@ -182,7 +184,11 @@ BEGIN
   LEFT JOIN Adinco.dbo.FI_ClavesPedimento AS CP   
    ON PC.ClavePedimento = CP.IdPedimento  
   LEFT JOIN dbo.CC_CentroCosto AS CC  
-    ON PC.IdCentroCosto=CC.IdCentroCosto 
+    ON PC.IdCentroCosto = CC.IdCentroCosto 
+  LEFT JOIN Adinco..CO_Instalacion INS
+	ON PC.IdInstalacion = INS.IdInstalacion
+  LEFT JOIN  Adinco..CO_CatalogoCuentaSH CSH
+	ON PC.IdCuentaSectorHidrocarburos = CSH.IdCatalogoCuentasSH
   LEFT JOIN dbo.DG_CuentaContable AS CO  
     ON PC.IdCuentaContable  =CO.Id 
    LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes linea
@@ -249,7 +255,10 @@ BEGIN
 			TSC.NombreTipoServicio,
 			ACTP.DescripcionActividadPetrolera,
 			SACI.NombreSubactividad,
-			SACP.SubactividadPetrolera  
+			SACP.SubactividadPetrolera ,
+			INS.NombreInstalacion,
+		    CSH.Nivel3,
+			CSH.Descripcion
   
   
 END  
