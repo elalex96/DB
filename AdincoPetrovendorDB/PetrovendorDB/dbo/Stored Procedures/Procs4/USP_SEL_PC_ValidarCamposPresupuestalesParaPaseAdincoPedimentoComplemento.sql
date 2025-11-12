@@ -10,7 +10,7 @@ IF EXISTS
 GO
 -- =============================================  
 -- Author:  <Daniel AC>  
--- Create date: <28/10/2025>  
+-- Create date: <11/11/2025>  
 -- Description: <Se agrega validación para ver si el comprobante/pedimento tiene el detalle presupuesto para evitar que envie nulls a ADINCO >  
 -- =============================================  
 CREATE PROCEDURE [dbo].[USP_SEL_PC_ValidarCamposPresupuestalesParaPaseAdincoPedimentoComplemento]
@@ -27,38 +27,40 @@ BEGIN
  SET LANGUAGE Spanish
     -- Insert statements for procedure here  
 
- DECLARE @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO INT;
+ DECLARE @ID_DOCUMENTO_FI INT;
  DECLARE @VALIDACION_PRESUPUESTO NVARCHAR(MAX);
  DECLARE @Tipocomprobante NVARCHAR(100) = ''
+ 
 
- SET @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO = (SELECT COUNT(PC.Id)
-															FROM AP_PreferenciaContrato PC
-															JOIN FI_PedimentoComprobante P
-																ON PC.ContratoId = P.IdContrato
-															JOIN AP_Preferencias PR
-																ON PC.PreferenciaId = PR.Id
-																AND PR.Nombre ='FlujoComprobantePedimentoLineasPaseAdinco'
-															WHERE P.IdPedimentoComprobante =@IdPedimentoComprobante )
-
-   IF @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO > 0 
-   BEGIN 
-		SET @VALIDACION_PRESUPUESTO =  (SELECT CONCAT(CASE WHEN ISNULL(IdPeriodo,0) = 0 THEN  'No contiene un periodo, ' ELSE '' END,
-										CASE WHEN ISNULL(IdPresupuesto,0) = 0 THEN  'No contiene un presupuesto, ' ELSE '' END,
-										CASE WHEN ISNULL(IdLineaPresupuesto,0) = 0 THEN  'No contiene una linea de presupuesto' ELSE '' END) 
-										FROM FI_PedimentoComprobante
-										WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
-
-		IF LEN(ISNULL(@VALIDACION_PRESUPUESTO,''))>0 
-		BEGIN
-
-			SET @Tipocomprobante = (SELECT CASE WHEN TipoOrigen = 'PC_CD'  THEN 'Pedimento' 
-									WHEN  TipoOrigen = 'CE_CD' THEN 'Comprobante' END
+	SET @VALIDACION_PRESUPUESTO =  (SELECT CONCAT(CASE WHEN ISNULL(IdPeriodo,0) = 0 THEN  'No contiene un periodo, ' ELSE '' END,
+									CASE WHEN ISNULL(IdPresupuesto,0) = 0 THEN  'No contiene un presupuesto, ' ELSE '' END,
+									CASE WHEN ISNULL(IdLineaPresupuesto,0) = 0 THEN  'No contiene una linea de presupuesto' ELSE '' END) 
 									FROM FI_PedimentoComprobante
 									WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
-			SET @VALIDACION_PRESUPUESTO = CONCAT('No es posible realizar la aprobación', ', el ', ISNULL(@Tipocomprobante,'Comprobante'), ': ',@VALIDACION_PRESUPUESTO)
-		END 
 
-   END 
+	SET @ID_DOCUMENTO_FI = (SELECT TOP 1 IdDocumento FROM dbo.FI_Documento (NOLOCK) WHERE IdPedimentoComprobante = @IdPedimentoComprobante);
+
+	IF LEN(ISNULL(@VALIDACION_PRESUPUESTO,''))>0 
+	BEGIN
+
+		SET @Tipocomprobante = (SELECT CASE WHEN TipoOrigen = 'PC_CD'  THEN 'Pedimento' 
+								WHEN  TipoOrigen = 'CE_CD' THEN 'Comprobante' END
+								FROM FI_PedimentoComprobante
+								WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
+		SET @VALIDACION_PRESUPUESTO = CONCAT('No es posible realizar la aprobación', ', el ', ISNULL(@Tipocomprobante,'Comprobante'), ': ',@VALIDACION_PRESUPUESTO)
+
+		IF ISNULL(@ID_DOCUMENTO_FI,0) = 0
+		BEGIN 
+			SET @VALIDACION_PRESUPUESTO = CONCAT(@VALIDACION_PRESUPUESTO, ', No existe un documento PDF')
+		END
+	END 
+	ELSE 
+	BEGIN 
+		IF ISNULL(@ID_DOCUMENTO_FI,0) = 0
+		BEGIN 
+				SET @VALIDACION_PRESUPUESTO = CONCAT('No es posible realizar la aprobación', ', el ', ISNULL(@Tipocomprobante,'Comprobante'), ': No existe un documento PDF')
+		END 
+	END 
     
   SELECT ISNULL(@VALIDACION_PRESUPUESTO,'') as Validacion
 END  
