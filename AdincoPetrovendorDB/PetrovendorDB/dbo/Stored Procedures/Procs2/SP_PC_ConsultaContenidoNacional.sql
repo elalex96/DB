@@ -1,4 +1,4 @@
-﻿USE Petrovendor
+USE Petrovendor
 GO
 IF EXISTS
 (
@@ -30,7 +30,7 @@ BEGIN
     -- Insert statements for procedure here
 	SELECT
 		CNCD.IdCDCN,
-		ISNULL('(' + BS.Codigo + ')' + BS.Nombre ,'') AS ActividadBS,
+		ISNULL('(' + BS.Codigo + ')' + BS.Nombre ,'NO CONTENIDO') AS ActividadBS,
 		SUBSTRING(CNCD.DescripcionBienesServicios,1,200) AS DescripcionBienesServicios,
 		ROUND(CNCD.PCN,4) AS PCN,
 		ROUND(CNCD.ValorFactura,4) AS ValorFactura, 
