@@ -25,8 +25,8 @@ GO
 -- Description:	<Retorno del correo de compra directa>
 -- =============================================
 -- Author:		DANIEL AC
--- Create date: <29/10/2025>
--- Description:	<Se valida si se tiene la preferencia FlujoComprobantePedimentoLineasPaseAdinco para enviar gastos en Adinco >
+-- Create date: <11/11/2025>
+-- Description:	<Se habilita enviar gastos y cn en Adinco una vez aprobado el comprobante/pedimento >
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_CambiarEstatusTareaPedimentoComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -59,7 +59,6 @@ BEGIN
 	DECLARE @NOMBRESUBCONTRATISTA NVARCHAR(100);
 	DECLARE @TIPOFLUJO INT;
 	DECLARE @IDSIGAPROBADOR INT;
-	DECLARE @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO INT;
 	DECLARE @DominioProcura NVARCHAR(500) = (SELECT URL FROM Petrovendor..TA_Dominios WHERE IdDominio = 2) --> CTE DOMINIO PROCURA
 	DECLARE @ID_CONTRATO INT
 
@@ -84,14 +83,6 @@ BEGIN
 										AND Activo = 1
 										AND NoSecuencia = @SIGNSECUENCIA);
 
-	SET @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO = (SELECT COUNT(PC.Id)
-															FROM AP_PreferenciaContrato PC
-															JOIN FI_PedimentoComprobante P
-																ON PC.ContratoId = P.IdContrato
-															JOIN AP_Preferencias PR
-																ON PC.PreferenciaId = PR.Id
-																AND PR.Nombre ='FlujoComprobantePedimentoLineasPaseAdinco'
-															WHERE P.IdPedimentoComprobante =@IdPedimentoComprobante )
 
 	SET @ID_CONTRATO  = (SELECT P.IdContrato
 						FROM FI_PedimentoComprobante P																
@@ -345,9 +336,7 @@ BEGIN
 					GETDATE() -- CreadoEl - datetime
 					)
 
-				-- VERIFICAR SI TIENE LA PREFERENCIA ENVIAR INFORMACIÓN DE GASTO PARA ADINCO
-				IF @APLICAFLUJOCOMPROBANTEPEDIMENTOLINEASPASEADINCO > 0 
-				BEGIN 
+
 					
 						INSERT INTO dbo.CO_Registro
 						(
@@ -371,35 +360,38 @@ BEGIN
 							IdGastoRubro,
 							PCN,
 							IdCBSISH,
-							IdAceptacionPedidoDetalle
+							IdAceptacionPedidoDetalle,
+							IdCatalogoCuentasSH
 						)
 						SELECT 
 							PC.IdLineaPresupuesto,
 							NULL,
-							pcd.PrecioUnitario,
+							ISNULL(CCN.ValorFactura,PCD.PrecioUnitario) AS MontoRegistro,
 							pc.FechaPago,
 							pc.FechaPago,
-							PCD.DescripcionMercancia,
+							ISNULL(CCN.DescripcionBienesServicios,PCD.DescripcionMercancia) AS Comentarios,
 							DATEADD(MONTH, DATEDIFF(MONTH, 0, pc.CreadoEn), 0),
 							10004, --> CTE IdEstado
 							@IdUsuario,
 							GETDATE(),
-							NULL,
+							PC.IdInstalacion,
 							@IdUsuario,
 							@IdPedimentoComprobante,
-							3,--> CvTipoDocFacturacion CTE 
+							PC.CvTipoDocFacturacion,--> CvTipoDocFacturacion CTE  (2- Pedimento/ 3 Comprobante)
 							NULL,
 							PC.IdLineaPresupuesto,
 							0,
-							NULL,
-							NULL,
-							NULL,
-							pcd.IdAceptacionPedidoDetalle
-						FROM dbo.FI_PedimentoComprobante PC
-						JOIN dbo.FI_PedimentoComprobanteDetalle PCD 
-							ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
+							CCN.ClasificacionSH,
+							SUBSTRING(CAST(ISNULL(CCN.PCN,0) AS NVARCHAR(50)), 1, 5),
+							CCN.IdActividadBS,
+							PCD.IdAceptacionPedidoDetalle,
+							PC.IdCuentaSectorHidrocarburos
+						FROM dbo.FI_PedimentoComprobante PC						
+						LEFT JOIN CN_CompraDirecta CCN
+							ON PC.IdPedimentoComprobante = CCN.IdPedimentoComprobante
+						LEFT JOIN FI_PedimentoComprobanteDetalle PCD
+							ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante
 						WHERE PC.IdPedimentoComprobante = @IdPedimentoComprobante
-
 
 					--SE COPIA A CO_REGISTRO DE ADINCO
 					INSERT INTO Adinco.dbo.CO_Registro
@@ -416,17 +408,18 @@ BEGIN
 						IdUsuarioModPor,
 						FecMovto,
 						IdInstalacion,
+						IdCatalogoCuentasSH,
 						CreadoPor,
 						Fila,
 						IdPedimentoComprobante,
 						CvTipoDocFacturacion,
-						IdCatalogoCuentasSH,
 						Poliza,
+						IsEditable,
 						CostosAtribuiblesAdministracion,
 						IdGastoRubro,
 						PCN,
 						IdCBSISH,
-						IdAceptacionPedidoDetalle
+						IdAceptacionPedidoDetalle						
 					)
 					SELECT 
 						r.IdPrograma,
@@ -441,12 +434,13 @@ BEGIN
 						ISNULL(u.IdUsuarioADINCO, u.IdUsuario),
 						r.FecMovto,
 						r.IdInstalacion,
+						r.IdCatalogoCuentasSH,
 						ISNULL(u.IdUsuarioADINCO, u.IdUsuario),
 						r.Fila,
 						@IdPedimentoComprobante_ADINCO,
 						r.CvTipoDocFacturacion,
-						r.IdCatalogoCuentasSH,
 						r.Poliza,
+						1, --> Es editable
 						r.CostosAtribuiblesAdministracion,
 						r.IdGastoRubro,
 						r.PCN,
@@ -480,8 +474,7 @@ BEGIN
 		                                    '',            -- nvarchar(50)
 		                                    0;           -- bit
 				END 
-			END
-
+	
 			
 		END
 	END

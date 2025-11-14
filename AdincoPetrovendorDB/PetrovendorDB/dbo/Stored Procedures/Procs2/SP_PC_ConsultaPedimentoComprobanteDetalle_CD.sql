@@ -15,10 +15,10 @@ GO
 -- =============================================  
 -- =============================================  
 -- Author:  <Daniel AC>  
--- Create date: <28/10/2025>  
--- Description: <Se agrego columna de contrato y detalle del presupuesto >  
+-- Create date: <11/11/2025>  
+-- Description: <Se agrego columna de contrato y detalle del presupuesto, se agrega validación de nulls >  
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD]-- 1152,420,0  
+CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD]   
   
  -- Add the parameters for the stored procedure here  
  @IdPedimentoComprobante INT,  
@@ -108,7 +108,7 @@ BEGIN
   PC.IdPedimentoComprobante,  
   PC.NumeroPedimento,  
   PC.FolioComprobante,  
-  CP.Clave + '(' + CP.Descripcion + ')' AS ClavePedimento,  
+  CP.Clave + '(' + ISNULL(CP.Descripcion,'') + ')' AS ClavePedimento,  
   PC.Regimen,  
   PC.AduanaES,  
   PC.AcuseElectronico,  
@@ -117,13 +117,13 @@ BEGIN
   PC.FechaPago,  
   PC.CuentaBancaria,  
   PC.NumFacturaC,  
-  CONCAT(TM.TipoMoneda, ' (',TM.TipoMonedaCorto,')') AS Moneda,  
+  CONCAT(TM.TipoMoneda, ' (',ISNULL(TM.TipoMonedaCorto,''),')') AS Moneda,  
   PCD.PrecioUnitario AS SubTotal,  
   US.Nombre AS CargadoPor,  
   PC.CreadoEn,  
   UN.Unidad,  
-  CONCAT(SC.RazonSocial, ' (',SC.RFC,')') AS Exportador,  
-  CONCAT(SI.RazonSocial, ' (',SI.RFC,')') AS Importador,  
+  CONCAT(SC.RazonSocial, ' (',ISNULL(SC.RFC,''),')') AS Exportador,  
+  CONCAT(SI.RazonSocial, ' (',ISNULL(SI.RFC,''),')') AS Importador,  
   ES.Nombre AS Estatus,  
   USM.Nombre AS ModificadoPor,  
   PC.ModificadoEn,  
@@ -134,24 +134,26 @@ BEGIN
   ISNULL(@IDOPERACION,0) AS IdOperacion,  
   PC.TipoOrigen,  
   CC.CentroCosto,  
-  CO.Numero + ' - ' + CO.Descripcion AS CuentaContable,
+  ISNULL(CO.Numero,'') + ' - ' + ISNULL(CO.Descripcion,'') AS CuentaContable,
   CONCAT(C.NumeroContrato,' - ', AC.NombreAreaContractual) AS Contrato,
   ISNULL ( PCC.NombrePeriodo, 'No Disponible' ) AS Periodo ,
-  ISNULL (( presupuesto.Nombre + ' [' + presupuesto.IdPresupuestoCNH + ']' ), 'No Disponible' ) AS Presupuesto ,
+  ISNULL (( ISNULL(P.Nombre,'') + ' [' + ISNULL(P.IdPresupuestoCNH,'') + ']' ), 'No Disponible' ) AS Presupuesto ,
   ISNULL (
 		( RIGHT('00' + CAST(MONTH ( linea.AC_PRESUP_MES ) AS VARCHAR (2)), 2) + ' '
 			+ DATENAME ( MONTH, linea.AC_PRESUP_MES ) + ' '
 			+ CAST(YEAR ( linea.AC_PRESUP_MES ) AS VARCHAR (50)) + ' - '
 			+ CASE
 				WHEN P.CIEP = 1
-				THEN TSC.NombreTipoServicio
-				ELSE ACTP.DescripcionActividadPetrolera
+				THEN ISNULL(TSC.NombreTipoServicio,'')
+				ELSE ISNULL(ACTP.DescripcionActividadPetrolera,'')
 			END + '('
 			+ CASE
 				WHEN P.CIEP = 1
-				THEN SACI.NombreSubactividad
-				ELSE SACP.SubactividadPetrolera
-			END + ')' ), 'No Disponible' ) AS Mes_Presupuestado 
+				THEN ISNULL(SACI.NombreSubactividad,'')
+				ELSE ISNULL(SACP.SubactividadPetrolera,'')
+			END + ')' ), 'No Disponible' ) AS Mes_Presupuestado,
+	ISNULL(INS.NombreInstalacion, 'No Disponible' )  AS NombreInstalacion,
+	ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos
  FROM dbo.FI_PedimentoComprobante AS PC  
   JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD  
    ON  PC.IdPedimentoComprobante  =PCD.IdPedimentoComprobante
@@ -182,7 +184,11 @@ BEGIN
   LEFT JOIN Adinco.dbo.FI_ClavesPedimento AS CP   
    ON PC.ClavePedimento = CP.IdPedimento  
   LEFT JOIN dbo.CC_CentroCosto AS CC  
-    ON PC.IdCentroCosto=CC.IdCentroCosto 
+    ON PC.IdCentroCosto = CC.IdCentroCosto 
+  LEFT JOIN Adinco..CO_Instalacion INS
+	ON PC.IdInstalacion = INS.IdInstalacion
+  LEFT JOIN  Adinco..CO_CatalogoCuentaSH CSH
+	ON PC.IdCuentaSectorHidrocarburos = CSH.IdCatalogoCuentasSH
   LEFT JOIN dbo.DG_CuentaContable AS CO  
     ON PC.IdCuentaContable  =CO.Id 
    LEFT JOIN Adinco.dbo.CO_LineaPresupuestoMes linea
@@ -194,10 +200,7 @@ BEGIN
    LEFT JOIN Adinco.dbo.CO_PeriodoContrato PCC 
 			ON PC.IdPeriodo  = PCC.IdPeriodo 
    LEFT JOIN Adinco.dbo.CO_ProgramaActividad progActividad
-			ON PCC.IdPeriodo = progActividad.IdPeriodoContrato
-   LEFT JOIN Adinco.dbo.CO_Presupuesto presupuesto
-			ON progActividad.IdProgramaActividad = presupuesto.IdProgramaActividad
-				AND	linea.IdPresupuesto = presupuesto.IdPresupuesto
+			ON PCC.IdPeriodo = progActividad.IdPeriodoContrato   
 	LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS ACTP
 			ON linea.IdActividadPetrolera = ACTP.IdActividadPetrolera
 	LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera AS SACP
@@ -245,14 +248,17 @@ BEGIN
 			AC.NombreAreaContractual,
 			CO.Descripcion,
 			PCC.NombrePeriodo,
-			presupuesto.Nombre,
-			presupuesto.IdPresupuestoCNH,
+			P.Nombre,
+			P.IdPresupuestoCNH,
 			linea.AC_PRESUP_MES,
 			P.CIEP,
 			TSC.NombreTipoServicio,
 			ACTP.DescripcionActividadPetrolera,
 			SACI.NombreSubactividad,
-			SACP.SubactividadPetrolera  
+			SACP.SubactividadPetrolera ,
+			INS.NombreInstalacion,
+		    CSH.Nivel3,
+			CSH.Descripcion
   
   
 END  
