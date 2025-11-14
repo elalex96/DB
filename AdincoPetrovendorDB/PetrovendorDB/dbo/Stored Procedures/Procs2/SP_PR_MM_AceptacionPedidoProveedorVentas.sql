@@ -1,4 +1,10 @@
-﻿
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_PR_MM_AceptacionPedidoProveedorVentas') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PR_MM_AceptacionPedidoProveedorVentas;
+END
+GO
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------  
 -- =============================================  
 -- Author:  Daniel Cruz  
@@ -11,11 +17,17 @@
 -- Update date: 31-05-2018  
 -- Description: Se agrega consumo de sp que trae las cartas solicitadas para aprobadores extranjeros
 -- =============================================  
-
-CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentas] --670,4  
+-- Author:  Alexander Gomez 
+-- Update date: 13-11-2025  
+-- Description: se agrega filtro de fechas y todos los registros
+-- =============================================  
+CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentas]   
  -- Add the parameters for the stored procedure here  
 	@IdProveedor	INT,  
-	@Estatus		INT  
+	@Estatus		INT,
+	@FechaInicio	DATETIME = NULL,
+	@FechaFin		DATETIME = NULL,
+	@Todos			BIT = 0
 AS  
      BEGIN  
  -- SET NOCOUNT ON added to prevent extra result sets from  
@@ -89,6 +101,7 @@ AS
 	   AND AC.IdAceptacionCartaPCN IS NULL   
 	   AND ISNULL(A.IdNacionalidadProveedor,0) <> 2--> NACIONALIDAD EXTRANJERA  
 	   AND ISNULL(A.IdEstatusEliminado,0) <> 1  --> OCULTAR SOLICITUDES DE CARTA DE CONTENIDO NACIONAL DONDE ACEPTACIOND E PEDIDO ESTE ELIMINADO LOGICAMENTE ESTATUS DE ELIMINACION LOGICA =1  
+	   AND (@Todos = 1 OR (A.Creado BETWEEN @FechaInicio AND @FechaFin))
 	   GROUP BY   
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
@@ -147,6 +160,7 @@ AS
 	  WHERE A.IdSubContratista = @SAPVENDOR  
 	  AND AC.IdAceptacionCartaPCN IS NULL  
 	  AND PSES.IdEstatus = 2  --> CTE 
+	  AND (@Todos = 1 OR (A.Creado BETWEEN @FechaInicio AND @FechaFin))
 	   GROUP BY   
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
@@ -216,6 +230,7 @@ AS
 	   ) 
 	   AND AC.IdEstatus =@Estatus 
 	   AND ISNULL(A.IdNacionalidadProveedor,0) <> 2 --> CTE NACIONALIDAD EXTRANJERA  
+	   AND (@Todos = 1 OR (AC.CreadoEl BETWEEN @FechaInicio AND @FechaFin))
 	   GROUP BY     
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
@@ -281,6 +296,7 @@ AS
 				ORDER BY A_PCN.CreadoEl DESC)        
 	   ) AND AC.IdEstatus =@Estatus AND ISNULL(A.IdNacionalidadProveedor,0) <> 2 --> NACIONALIDAD EXTRANJERA  
 	   AND PSES.IdEstatus = 2  --> CTE
+	   AND (@Todos = 1 OR (AC.CreadoEl BETWEEN @FechaInicio AND @FechaFin))
 	   GROUP BY     
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
@@ -351,6 +367,7 @@ AS
 	   )   
 	   AND ISNULL(A.IdEstatusEliminado,0)<>1 --> OCULTAR CARTAS DE CONTENIDO NACIONAL DONDE EL ESTATUS DE ELIMINACION LOGICA =1 DE ACEPTACIÓN DE PEDIDO   
 	   AND ISNULL(A.IdNacionalidadProveedor,0) <> 2 --> NACIONALIDAD EXTRANJERA     
+	   AND (@Todos = 1 OR (A.Creado BETWEEN @FechaInicio AND @FechaFin))
 	   GROUP BY     
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
@@ -418,6 +435,7 @@ AS
 	   AND ISNULL(A.IdEstatusEliminado,0)<>1 --> OCULTAR CARTAS DE CONTENIDO NACIONAL DONDE EL ESTATUS DE ELIMINACION LOGICA =1 DE ACEPTACIÓN DE PEDIDO   
 	   AND ISNULL(A.IdNacionalidadProveedor,0) <> 2 --> NACIONALIDAD EXTRANJERA   
 	   AND PSES.IdEstatus = 2   --> CTE    
+	   AND (@Todos = 1 OR (A.Creado BETWEEN @FechaInicio AND @FechaFin))
 	   GROUP BY     
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
@@ -457,7 +475,4 @@ AS
     FROM #AceptacionesPedido  
     ORDER BY Creado DESC;  
 
-  END;  
-  
-  
-
+  END; 
