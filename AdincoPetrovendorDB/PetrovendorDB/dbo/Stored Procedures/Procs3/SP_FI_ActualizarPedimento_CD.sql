@@ -12,8 +12,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 -- =============================================
 -- Author:		DANIEL AC
--- Create date: 03/11/2025
--- Description:	Se guardan datos para editar un pedimento
+-- Create date: 12/11/2025
+-- Description:	Se guardan datos para editar un pedimento y actualización de datos presupuestales
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ActualizarPedimento_CD]
 	-- Add the parameters for the stored procedure here
@@ -43,7 +43,9 @@ CREATE PROCEDURE [dbo].[SP_FI_ActualizarPedimento_CD]
 	@Presupuesto				INT = NULL,
 	@IdLineaPresupuesto			INT = NULL,
 	@IdContrato					INT,
-	@IdProveedor			    INT
+	@IdProveedor			    INT,
+	@IdInstalacion				INT = NULL,
+	@IdCuentaSectorHidrocarburos INT = NULL
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -106,6 +108,8 @@ BEGIN
 	 IdPeriodo = ISNULL(@Periodo,IdPeriodo),
 	 IdPresupuesto = ISNULL(@Presupuesto, IdPresupuesto),
 	 IdLineaPresupuesto = ISNULL(@IdLineaPresupuesto, IdLineaPresupuesto),
+	 IdInstalacion = @IdInstalacion,
+	 IdCuentaSectorHidrocarburos = @IdCuentaSectorHidrocarburos,
 	 ModificadoPor = @IdUsuario,
 	 ModificadoEn = GETDATE()
 	WHERE IdPedimentoComprobante = @IdPedimentoComprobante

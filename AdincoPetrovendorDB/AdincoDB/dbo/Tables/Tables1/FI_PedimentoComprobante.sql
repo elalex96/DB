@@ -33,6 +33,8 @@
     [EsnotaCredito]                     BIT            NULL,
     [CuentaBancaria]                    NVARCHAR (500) NULL,
     [ProcesadoHash]                     BIT            DEFAULT ((0)) NULL,
+    IdInstalacion                       INT NULL,
+    IdCuentaSectorHidrocarburos         INT NULL,
     CONSTRAINT [PK_FI_PedimentoComprobante] PRIMARY KEY CLUSTERED ([IdPedimentoComprobante] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
     CONSTRAINT [FK_FI_PedimentoComprobante_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
     CONSTRAINT [FK_FI_PedimentoComprobante_FI_ClavesPedimento] FOREIGN KEY ([ClavePedimento]) REFERENCES [dbo].[FI_ClavesPedimento] ([IdPedimento]),

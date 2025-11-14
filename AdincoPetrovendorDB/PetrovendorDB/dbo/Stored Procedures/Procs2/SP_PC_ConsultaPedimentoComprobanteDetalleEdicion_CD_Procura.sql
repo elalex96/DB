@@ -12,7 +12,7 @@ GO
 -- =============================================
 -- =============================================
 -- Author:		<Daniel AC>
--- Create date: <04/11/2025>
+-- Create date: <12/11/2025>
 -- Description:	<Se agrega retorno de detalle presupuestal>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalleEdicion_CD_Procura] --1161,420,0
@@ -60,7 +60,9 @@ BEGIN
 		PC.DiasCredito,
 		PC.IdPeriodo,
 		PC.IdPresupuesto,
-		PC.IdLineaPresupuesto
+		PC.IdLineaPresupuesto,
+		PC.IdInstalacion,
+		PC.IdCuentaSectorHidrocarburos
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
 			ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 

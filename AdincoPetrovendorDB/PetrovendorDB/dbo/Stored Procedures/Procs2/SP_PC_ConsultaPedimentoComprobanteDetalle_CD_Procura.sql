@@ -15,10 +15,10 @@ GO
 -- =============================================
 -- =============================================
 -- Author:		Daniel AC
--- Create date: <29/10/2025>
--- Description:	<Se agrega el lenguaje para que retorne el mes en español>
+-- Create date: <12/11/2025>
+-- Description:	<Se agrega el lenguaje para que retorne el mes en español, se agrega isnulls a campos>
 -- =============================================
-CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD_Procura] --1152,420,0
+CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD_Procura] 
 
 	-- Add the parameters for the stored procedure here
 	@IdPedimentoComprobante INT,
@@ -64,21 +64,23 @@ BEGIN
 		CO.Numero + ' - ' + CO.Descripcion AS CuentaContable,
 		ISNULL(PC.DiasCredito,0) AS DiasCredito,
 		ISNULL ( PCC.NombrePeriodo, 'No Disponible' ) AS Periodo ,
-						ISNULL (( presupuesto.Nombre + ' [' + presupuesto.IdPresupuestoCNH + ']' ), 'No Disponible' ) AS Presupuesto ,
+						ISNULL (( ISNULL(presupuesto.Nombre,'') + ' [' + ISNULL(presupuesto.IdPresupuestoCNH,'') + ']' ), 'No Disponible' ) AS Presupuesto ,
 						ISNULL (
 							( RIGHT('00' + CAST(MONTH ( linea.AC_PRESUP_MES ) AS VARCHAR (2)), 2) + ' '
 							  + DATENAME ( MONTH, linea.AC_PRESUP_MES ) + ' '
 							  + CAST(YEAR ( linea.AC_PRESUP_MES ) AS VARCHAR (50)) + ' - '
 							  + CASE
 									WHEN P.CIEP = 1
-									THEN TSC.NombreTipoServicio
-									ELSE ACTP.DescripcionActividadPetrolera
+									THEN ISNULL(TSC.NombreTipoServicio,'')
+									ELSE ISNULL(ACTP.DescripcionActividadPetrolera,'')
 								END + '('
 							  + CASE
 									WHEN P.CIEP = 1
-									THEN SACI.NombreSubactividad
-									ELSE SACP.SubactividadPetrolera
-								END + ')' + ' (#LP: ' + CAST(ISNULL(linea.IdLineaPresupuestoMes,0) AS NVARCHAR(MAX))+')' ), 'No Disponible' ) AS Mes_Presupuestado 
+									THEN ISNULL(SACI.NombreSubactividad,'')
+									ELSE ISNULL(SACP.SubactividadPetrolera,'')
+								END + ')' + ' (#LP: ' + CAST(ISNULL(linea.IdLineaPresupuestoMes,0) AS NVARCHAR(MAX))+')' ), 'No Disponible' ) AS Mes_Presupuestado,
+		ISNULL(INS.NombreInstalacion, 'No Disponible' )  AS NombreInstalacion,
+		ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
 			ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
@@ -117,13 +119,13 @@ BEGIN
 		LEFT JOIN Adinco.dbo.CO_ProgramaActividad PA 
 				ON  P.idProgramaActividad  = PA.IdProgramaActividad
 		LEFT JOIN Adinco.dbo.CO_PeriodoContrato PCC 
-				ON PA.idPeriodoContrato  = PCC.IdPeriodo 
-		LEFT JOIN Adinco.dbo.CO_ProgramaActividad progActividad
-				ON  PCC.IdPeriodo = progActividad.IdPeriodoContrato
+				ON PA.idPeriodoContrato  = PCC.IdPeriodo 		
 		LEFT JOIN Adinco.dbo.CO_Presupuesto presupuesto
-				ON progActividad.IdProgramaActividad = presupuesto.IdProgramaActividad
-					AND	presupuesto.Activo = 1
-					AND	linea.IdPresupuesto = presupuesto.IdPresupuesto
+				ON  PC.IdPresupuesto = presupuesto.IdPresupuesto
+		LEFT JOIN Adinco..CO_Instalacion INS
+				ON PC.IdInstalacion = INS.IdInstalacion
+		LEFT JOIN  Adinco..CO_CatalogoCuentaSH CSH
+				ON PC.IdCuentaSectorHidrocarburos = CSH.IdCatalogoCuentasSH
 		LEFT OUTER JOIN Adinco.dbo.CO_ActividadPetroleraCNH AS ACTP
 				ON linea.IdActividadPetrolera = ACTP.IdActividadPetrolera
 		LEFT OUTER JOIN Adinco.dbo.CO_SubactividadPetrolera AS SACP
