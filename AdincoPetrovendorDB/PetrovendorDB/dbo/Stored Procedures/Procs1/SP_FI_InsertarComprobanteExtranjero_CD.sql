@@ -17,12 +17,8 @@ GO
 -- =============================================
 -- =============================================
 -- Author:		DANIEL AC
--- Create date: 03/06/2022
--- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
--- =============================================
--- Author:		DANIEL AC
--- Create date: 06/08/2025
--- Description:	Se obtiene RETORNA CORREOS DE PEDIMENTOS
+-- Create date: 19/11/2025
+-- Description:	Se agrega parametros de instalación y catalogo sector hidrocarburos
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_InsertarComprobanteExtranjero_CD]
 	-- Add the parameters for the stored procedure here
@@ -51,7 +47,9 @@ CREATE PROCEDURE [dbo].[SP_FI_InsertarComprobanteExtranjero_CD]
 	@Periodo					INT = NULL,
 	@Presupuesto				INT = NULL,
 	@IdLineaPresupuesto			INT = NULL,
-	@Bucket						varchar(500) = null
+	@Bucket						varchar(500) = null,
+	@IdInstalacion				INT = NULL,
+	@IdCuentaSectorHidrocarburos  INT  = NULL
 AS
 BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
@@ -103,7 +101,9 @@ BEGIN
 	 DiasCredito,
 	 IdPeriodo,
 	 IdPresupuesto,
-	 IdLineaPresupuesto
+	 IdLineaPresupuesto,
+	 IdInstalacion,
+	 IdCuentaSectorHidrocarburos
 	)
 	VALUES
 	(@IdContrato,
@@ -122,7 +122,9 @@ BEGIN
 	 @DiasCredito,
 	 @Periodo,
 	 @Presupuesto,
-	 @IdLineaPresupuesto
+	 @IdLineaPresupuesto,
+	 @IdInstalacion,
+	 @IdCuentaSectorHidrocarburos
 	);
 
 	 SET @idped = SCOPE_IDENTITY();
@@ -146,7 +148,6 @@ BEGIN
 
 	IF @Extension = '.pdf'
 	BEGIN
-	    
 		INSERT INTO dbo.FI_Documento
 		(
 		    Documento,
@@ -162,7 +163,7 @@ BEGIN
 		)
 		VALUES
 		(   NULL,       -- Documento - nvarchar(max)
-		    4,         -- IdTipoDocumento - int
+		    5,         -- IdTipoDocumento - int Comprobante Extranjero
 		    NULL,         -- IdFactura - int
 		    @idped,         -- IdPedimentoComprobante - int
 		    NULL,       -- IdDocFacturacionSIPAC - nvarchar(50)
@@ -172,7 +173,6 @@ BEGIN
 		    NULL,      -- IsEliminado - bit
 		    @Archivo       -- DocumentoByte - image
 		    )
-
 	END
 
 	  INSERT INTO dbo.S_Documento_S3

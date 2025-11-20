@@ -15,18 +15,10 @@ GO
 -- Create date: <08/10/2020>
 -- Description:	<Actualizacion del comprobante extranjero>
 -- =============================================
--- Author:		<Alexander Gomez>
--- Create date: <04/11/2020>
--- Description:	<se agregaN dias de credito a la actualizacion>
--- =============================================
 -- =============================================
 -- Author:		DANIEL AC
--- Create date: 03/06/2022
--- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
--- =============================================
--- Author:		DANIEL AC
--- Create date: 06/08/2025
--- Description:	Se obtiene RETORNA CORREOS DE PEDIMENTOS
+-- Create date: 19/11/2025
+-- Description:	Se agrega parametros de instalación y catalogo sector hidrocarburos
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_FI_ActualizacionComprobante_CD]
 	-- Add the parameters for the stored procedure here
@@ -46,7 +38,12 @@ CREATE PROCEDURE [dbo].[SP_FI_ActualizacionComprobante_CD]
 	@IdFlujoAprobacion			INT,
 	@IdCentroCosto				INT,
 	@IdCuentaContable			INT,
-	@DiasCredito				INT
+	@DiasCredito				INT,
+	@IdInstalacion				INT = NULL,
+	@IdCuentaSectorHidrocarburos INT  = NULL,
+    @IdPeriodo					INT = NULL,
+	@IdPresupuesto			    INT  = NULL,
+	@IdLineaPresupuesto			INT  = NULL
 
 AS
 BEGIN
@@ -99,7 +96,12 @@ BEGIN
 		IdCuentaContable = @IdCuentaContable,
 		ModificadoPor = @IdUsuario,
 		ModificadoEn = GETDATE(),
-		DiasCredito = @DiasCredito
+		DiasCredito = @DiasCredito,
+		IdInstalacion = @IdInstalacion,
+		IdCuentaSectorHidrocarburos = @IdCuentaSectorHidrocarburos,
+		IdPresupuesto = @IdPresupuesto,
+		IdLineaPresupuesto =  @IdLineaPresupuesto,
+		IdPeriodo = @IdPeriodo
 	WHERE IdPedimentoComprobante = @IdComprobante;
 
 	UPDATE dbo.FI_PedimentoComprobanteDetalle

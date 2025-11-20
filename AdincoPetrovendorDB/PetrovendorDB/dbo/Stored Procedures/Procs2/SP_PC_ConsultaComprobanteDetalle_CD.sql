@@ -1,9 +1,21 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('SP_PC_ConsultaComprobanteDetalle_CD') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_PC_ConsultaComprobanteDetalle_CD;
+END
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <08/10/2020>
 -- Description:	<COnsulta del detalle del comprobante para su edicion>
 -- =============================================
-CREATE PROCEDURE SP_PC_ConsultaComprobanteDetalle_CD --1179,420,0
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 19/11/2025
+-- Description:	Se retorna parametros de instalación y catalogo sector hidrocarburos 
+-- =============================================
+CREATE PROCEDURE SP_PC_ConsultaComprobanteDetalle_CD 
 	-- Add the parameters for the stored procedure here
 	@IdComprobante INT,
 	@IdProveedor INT,
@@ -29,7 +41,12 @@ BEGIN
 		PCD.IdUnidadMedida,
 		PCD.ClaseBienServicio,
 		PCD.PrecioUnitario,
-		TA.IdFlujoTarea
+		TA.IdFlujoTarea,
+		PC.IdLineaPresupuesto,
+		PC.IdPeriodo,
+		PC.IdPresupuesto,
+		PC.IdInstalacion,
+		PC.IdCuentaSectorHidrocarburos
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
 			ON PCD.IdPedimentoComprobante = PC.IdPedimentoComprobante
