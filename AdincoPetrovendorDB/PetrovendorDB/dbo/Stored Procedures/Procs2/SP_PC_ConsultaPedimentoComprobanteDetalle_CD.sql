@@ -15,8 +15,8 @@ GO
 -- =============================================  
 -- =============================================  
 -- Author:  <Daniel AC>  
--- Create date: <11/11/2025>  
--- Description: <Se agrego columna de contrato y detalle del presupuesto, se agrega validación de nulls >  
+-- Create date: <24/11/2025>  
+-- Description: <Se agrego columna de contrato y detalle del presupuesto, se agrega validación de nulls, asi retorna id archivo CN >  
 -- =============================================  
 CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD]   
   
@@ -34,7 +34,7 @@ BEGIN
  DECLARE @APROBADOR BIT = 0;  
  DECLARE @SIGAPROBADOR INT;  
  DECLARE @NOSECUENCIA INT;  
-
+ DECLARE @ID_DOCUMENTO_CN INT = 0;  
  --CONSULTA DE LA OPERACION  
  DECLARE @IDOPERACION INT = (SELECT  
          OP.IdOperacion  
@@ -52,7 +52,11 @@ BEGIN
         JOIN dbo.TA_FlujoTarea AS FT   
          ON OP.IdFlujoTarea  =FT.IdFlujoTarea 
         WHERE OP.IdOperacion = @IDOPERACION);  
-  
+
+ SET @ID_DOCUMENTO_CN = (SELECT IdAchivoCNCD
+						FROM dbo.CN_ArchivoCartaCompraDirecta
+						WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
+
  IF @TIPOFLUJO = 1--SERIAL  
  BEGIN  
     
@@ -153,7 +157,8 @@ BEGIN
 				ELSE ISNULL(SACP.SubactividadPetrolera,'')
 			END + ')' ), 'No Disponible' ) AS Mes_Presupuestado,
 	ISNULL(INS.NombreInstalacion, 'No Disponible' )  AS NombreInstalacion,
-	ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos
+	ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos,
+	ISNULL(@ID_DOCUMENTO_CN,0) AS ArchivoCNId
  FROM dbo.FI_PedimentoComprobante AS PC  
   JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD  
    ON  PC.IdPedimentoComprobante  =PCD.IdPedimentoComprobante
