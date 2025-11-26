@@ -15,8 +15,8 @@ GO
 -- =============================================
 -- =============================================
 -- Author:		Daniel AC
--- Create date: <12/11/2025>
--- Description:	<Se agrega el lenguaje para que retorne el mes en español, se agrega isnulls a campos>
+-- Create date: <24/11/2025>
+-- Description:	<Se agrega el lenguaje para que retorne el mes en español, se agrega isnulls a campos y se retorna id adjunto cn>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_ConsultaPedimentoComprobanteDetalle_CD_Procura] 
 
@@ -29,7 +29,11 @@ BEGIN
 	-- SET NOCOUNT ON added to prevent extra result sets from
 	-- interfering with SELECT statements.
 	SET NOCOUNT ON;
-	 SET LANGUAGE Spanish
+	SET LANGUAGE Spanish
+	DECLARE @ID_DOCUMENTO_CN INT = 0;  
+	SET @ID_DOCUMENTO_CN = (SELECT IdAchivoCNCD
+						FROM dbo.CN_ArchivoCartaCompraDirecta
+						WHERE IdPedimentoComprobante = @IdPedimentoComprobante)
     -- Insert statements for procedure here
 	
 	SELECT
@@ -80,7 +84,8 @@ BEGIN
 									ELSE ISNULL(SACP.SubactividadPetrolera,'')
 								END + ')' + ' (#LP: ' + CAST(ISNULL(linea.IdLineaPresupuestoMes,0) AS NVARCHAR(MAX))+')' ), 'No Disponible' ) AS Mes_Presupuestado,
 		ISNULL(INS.NombreInstalacion, 'No Disponible' )  AS NombreInstalacion,
-		ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos
+		ISNULL( (CSH.Nivel3+' - '+  CSH.Descripcion),'No Disponible') as NombreCuentaSectorHidrocarburos,
+		ISNULL(@ID_DOCUMENTO_CN,0) AS ArchivoCNId 
 	FROM dbo.FI_PedimentoComprobante AS PC
 		JOIN dbo.FI_PedimentoComprobanteDetalle AS PCD
 			ON PC.IdPedimentoComprobante = PCD.IdPedimentoComprobante 
