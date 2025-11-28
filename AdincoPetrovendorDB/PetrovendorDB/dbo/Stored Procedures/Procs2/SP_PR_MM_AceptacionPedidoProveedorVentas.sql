@@ -21,7 +21,7 @@ GO
 -- Update date: 13-11-2025  
 -- Description: se agrega filtro de fechas y todos los registros
 -- =============================================  
-CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentas]   
+CREATE PROCEDURE [dbo].[SP_PR_MM_AceptacionPedidoProveedorVentas] --552,1,'01-09-2025','01-11-2025',0
  -- Add the parameters for the stored procedure here  
 	@IdProveedor	INT,  
 	@Estatus		INT,
@@ -34,6 +34,9 @@ AS
  -- interfering with SELECT statements.  
     SET NOCOUNT ON;  
   
+	IF @FechaFin IS NOT NULL
+		SET @FechaFin = DATEADD(ms, -3, DATEADD(dd, 1, DATEDIFF(dd, 0, @FechaFin)));
+
     -- Insert statements for procedure here  
 	DECLARE @SAPVENDOR NVARCHAR(50) = (SELECT TOP 1 VendorIDSAP   
 										FROM		Adinco.dbo.CO_SAPVendor SV  
@@ -188,7 +191,7 @@ AS
 	   A.IdAceptacionPedido,  
 	   CAST(PG.IdPedido AS NVARCHAR(50)) AS Pedido,  
 	   A.IdPedido,  
-	   A.Creado,  
+	   AC.CreadoEl,  
 	   A.NombreUsuarioEntrega,  
 	   CONCAT(ISNULL(PV.RazonSocial,''),' ', ISNULL(PV.RegimenCapital,'')) AS Cliente,  
 	   PG.IdPedido AS IdPedidoGeneral,  
@@ -234,7 +237,7 @@ AS
 	   GROUP BY     
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
-	   A.Creado,  
+	   AC.CreadoEl,  
 	   A.NombreUsuarioEntrega,  
 	   PV.RazonSocial,  
 	   PV.RegimenCapital,  
@@ -250,7 +253,7 @@ AS
 	   A.IdAceptacionPedido,  
 	   CONCAT('PO Number:', A.IdPedido COLLATE Modern_Spanish_CI_AS,' ','- SES Number: ', SES.SESNumber COLLATE Modern_Spanish_CI_AS ,' - Proforma Number:', CAST(PSES.IdPRESES AS NVARCHAR(100)) COLLATE Modern_Spanish_CI_AS) AS Pedido,  
 	   00 AS IdPedido,  
-	   A.Creado,  
+	   AC.CreadoEl,  
 		CONCAT('Reference Num:', A.ReferenceNumber)  AS NombreUsuarioEntrega,  
 	   CC.RazonSocial AS Cliente,  
 	   00 AS IdPedidoGeneral,  
@@ -300,7 +303,7 @@ AS
 	   GROUP BY     
 	   A.IdAceptacionPedido,  
 	   A.IdPedido,  
-	   A.Creado,  
+	   AC.CreadoEl,  
 	   A.NombreUsuarioEntrega,  
 	   PV.RazonSocial,  
 	   PV.RegimenCapital,  
