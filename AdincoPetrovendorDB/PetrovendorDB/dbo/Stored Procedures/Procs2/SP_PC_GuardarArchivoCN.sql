@@ -50,12 +50,12 @@ BEGIN
     IF EXISTS (
         SELECT 1 FROM dbo.CN_ArchivoCartaCompraDirecta
         WHERE Carpeta = 'CARTACONTENIDONACIONALCOMPRADIRECTA/'
-        AND IdPedimentoComprobante = 3104
+        AND IdPedimentoComprobante = @IdPedimentoComprobante
     )
     BEGIN
         DELETE FROM dbo.CN_ArchivoCartaCompraDirecta
         WHERE Carpeta = 'CARTACONTENIDONACIONALCOMPRADIRECTA/'
-        AND IdPedimentoComprobante = 3104;
+        AND IdPedimentoComprobante = @IdPedimentoComprobante;
     END
 
     ----------------------------------------------------------
