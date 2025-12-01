@@ -1,4 +1,8 @@
-﻿-- =============================================
+USE Petrovendor
+GO
+DROP PROC IF EXISTS SP_PC_GuardarArchivoCN
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <20/04/2020>
 -- Description:	<guardado de los archivos de s3 de carta cn de PEDIMENTOS/COMPROBANTES>
@@ -6,6 +10,10 @@
 -- Author:		<Alexander Gomez>
 -- Create date: <20/04/2020>
 -- Description:	<guardado de los archivos de s3 de carta cn de PEDIMENTOS/COMPROBANTES>
+-- =============================================
+-- Author:		<David de la cruz>
+-- Create date: <28/11/2025>
+-- Description:	<Se eliminan los documentos de comprobante para edición de comprobante CN>
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_GuardarArchivoCN]
 	-- Add the parameters for the stored procedure here
@@ -20,11 +28,40 @@ CREATE PROCEDURE [dbo].[SP_PC_GuardarArchivoCN]
 	@Bucket varchar(500) = null
 AS
 BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-	SET NOCOUNT ON;
+    SET NOCOUNT ON;
 
-		INSERT INTO dbo.S_Documento_S3
+    ----------------------------------------------------------
+    -- VALIDACIÓN 1: ELIMINAR SI YA EXISTE EN S_Documento_S3
+    ----------------------------------------------------------
+    IF EXISTS (
+        SELECT 1 FROM dbo.S_Documento_S3
+        WHERE Carpeta = 'CARTACONTENIDONACIONALCOMPRADIRECTA/'
+        AND IdDocumentoTabla = @IdPedimentoComprobante
+    )
+    BEGIN
+        DELETE FROM dbo.S_Documento_S3
+        WHERE Carpeta = 'CARTACONTENIDONACIONALCOMPRADIRECTA/'
+        AND IdDocumentoTabla = @IdPedimentoComprobante;
+    END
+
+    ----------------------------------------------------------
+    -- VALIDACIÓN 2: ELIMINAR SI YA EXISTE EN CN_ArchivoCartaCompraDirecta
+    ----------------------------------------------------------
+    IF EXISTS (
+        SELECT 1 FROM dbo.CN_ArchivoCartaCompraDirecta
+        WHERE Carpeta = 'CARTACONTENIDONACIONALCOMPRADIRECTA/'
+        AND IdPedimentoComprobante = @IdPedimentoComprobante
+    )
+    BEGIN
+        DELETE FROM dbo.CN_ArchivoCartaCompraDirecta
+        WHERE Carpeta = 'CARTACONTENIDONACIONALCOMPRADIRECTA/'
+        AND IdPedimentoComprobante = @IdPedimentoComprobante;
+    END
+
+    ----------------------------------------------------------
+    -- INSERT EN S_Documento_S3
+    ----------------------------------------------------------
+    INSERT INTO dbo.S_Documento_S3
 	(
 	    IdTipoDocumento,
 	    IdUsuario,
@@ -48,29 +85,33 @@ BEGIN
 	    Bucket
 	)
 	VALUES
-	(   53,         -- IdTipoDocumento - int Pedimento/Comprobante - Compra Directa
-	    @IdUsuario,         -- IdUsuario - int
-	    1003,         -- IdTipoValidacionDocumento - int
-	    @IdProveedor,         -- IdProveedor - int
-	    1,      -- Activo - bit
-	    NULL,       -- Documento - nvarchar(max)
-	    @IdUsuario,         -- CreadoPor - int
-	    GETDATE(), -- CreadoEl - datetime
-	    NULL,         -- ModificadoPor - int
-	    NULL, -- ModificadoEl - datetime
-	    NULL,       -- Descripcion - nvarchar(max)
-		@Carpeta,       -- Carpeta - nvarchar(max)
-	    @Identificador,       -- Identificador - nvarchar(max)
-	    @Mime,       -- Mime - nvarchar(max)
-	    @Extension,       -- Extension - nvarchar(max)
-	    @nombreArchivo,       -- NombreDocumento - nvarchar(max)
-	    NULL,       -- Duplicado - nvarchar(40)
-	    NULL,       -- SizeDocumento - float
-	    @IdPedimentoComprobante,         -- IdDocumentoTabla - int
-	    @Bucket        -- Bucket - nvarchar(200)
-	    );
+	(   
+	    53,
+	    @IdUsuario,
+	    1003,
+	    @IdProveedor,
+	    1,
+	    NULL,
+	    @IdUsuario,
+	    GETDATE(),
+	    NULL,
+	    NULL,
+	    NULL,
+	    @Carpeta,
+	    @Identificador,
+	    @Mime,
+	    @Extension,
+	    @nombreArchivo,
+	    NULL,
+	    NULL,
+	    @IdPedimentoComprobante,
+	    @Bucket
+	);
 
-	 INSERT INTO dbo.CN_ArchivoCartaCompraDirecta
+    ----------------------------------------------------------
+    -- INSERT EN CN_ArchivoCartaCompraDirecta
+    ----------------------------------------------------------
+    INSERT INTO dbo.CN_ArchivoCartaCompraDirecta
 	(
 	    nombreArchivo,
 	    Carpeta,
@@ -86,21 +127,20 @@ BEGIN
 	)
 	VALUES
 	(   
-	    @nombreArchivo,         -- nombreArchivo - int
-	    @Carpeta,       -- Carpeta - nvarchar(max)
-	    @Mime,       -- Mime - nvarchar(max)
-	    @Extension,       -- Extension - nvarchar(max)
-	    @Identificador,       -- Identificador - nvarchar(max)
-	    @IdUsuario,         -- CreadoPor - int
-	    GETDATE(), -- CreadoEl - datetime
-	    @IdProveedor,          -- IdProveedor - int
+	    @nombreArchivo,
+	    @Carpeta,
+	    @Mime,
+	    @Extension,
+	    @Identificador,
+	    @IdUsuario,
+	    GETDATE(),
+	    @IdProveedor,
 		1,
 		@IdPedimentoComprobante,
 		@Bucket
-	  );
+	);
 
-	  SELECT SCOPE_IDENTITY() AS id
-	
-	
+    SELECT SCOPE_IDENTITY() AS id
 
 END
+GO
