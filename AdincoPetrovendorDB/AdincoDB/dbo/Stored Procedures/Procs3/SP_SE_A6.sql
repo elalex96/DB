@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
@@ -253,18 +252,6 @@ AS
                                         'GMS971110BTA';
                     END;
                 /*Consulta final*/
-              /*   SELECT
-                   ROW_NUMBER() OVER (ORDER BY
-                                           R.Comentarios
-                                      ) AS NoGasto,
-                    R.Comentarios       AS Descripcion,
-                    SUM(   CASE
-                               WHEN F.IdMoneda = 1
-                                   THEN CAST(ROUND((ISNULL(R.MontoRegistro, 0)), 2) AS DECIMAL(20, 2))
-                               ELSE
-                                   CAST([dbo].[FN_DolaresPesosTipoCambio](R.MontoRegistro, F.Fecha) AS DECIMAL(20, 2))
-                           END
-                       )                AS SubTotal*/
                        
                 INSERT INTO #Montos
                     (

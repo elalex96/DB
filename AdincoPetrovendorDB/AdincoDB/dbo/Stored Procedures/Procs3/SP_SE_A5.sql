@@ -1,5 +1,4 @@
-﻿
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
@@ -70,11 +69,6 @@ AS
                 IdAceptacionPedidoDetalle       INT NULL,
                 IdFacturaIdPedimentoComprobante INT NULL
             );
-
-        --drop table #Presupuestos;
-        --drop table #RFC;
-        --drop table #Montos;
-        --drop table #Datos;
 
         DECLARE
             @RazonSocial                                       VARCHAR(100) = '',
