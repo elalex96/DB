@@ -82,9 +82,9 @@ AS
         SELECT
             @RazonSocial = CA.RazonSocial
         FROM
-            CO_CONTRATO        C
+            CO_CONTRATO        C (NOLOCK)
             JOIN
-                CO_CONTRATISTA CA
+                CO_CONTRATISTA CA (NOLOCK)
                     ON C.IdContratista = CA.IdContratista
                        AND C.IdContrato = @IdContrato
         WHERE
