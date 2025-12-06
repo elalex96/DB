@@ -1,5 +1,13 @@
-﻿IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_SE_A3]') AND type IN (N'P'))
-    DROP PROCEDURE [dbo].[SP_SE_A3];
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_SE_A3'
+    )
+    DROP PROCEDURE SP_SE_A3;
 GO
 -- =============================================
 -- Author:		Manuel Cruz
@@ -67,7 +75,8 @@ BEGIN
 			@Pantera INT = 10006,
 			@Servicios INT = 3,
             @Aprobado                  INT = 10004,
-            @TipoComprobanteExtranjero INT = 3
+            @TipoComprobanteExtranjero INT = 3,
+            @TipoPedimento INT = 2;
 
 
     SELECT @RazonSocial = CA.RazonSocial
@@ -219,7 +228,7 @@ BEGIN
                    ISNULL(R.PCN, 0) AS PCN,
                    CASE
                        WHEN F.IdMoneda = 1 THEN
-                    SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0)), 2) AS DECIMAL(20, 2)))
+              SUM(CAST(ROUND((ISNULL((ISNULL(R.PCN, 0) * R.MontoRegistro), 0)), 2) AS DECIMAL(20, 2)))
                        ELSE
                            CAST([dbo].[FN_DolaresPesosTipoCambio](
                                                                      SUM(CAST(ROUND(
@@ -290,7 +299,7 @@ BEGIN
                 Descripcion,
                 RazonSocial,
                 RFC,
-            SubTotal,
+  SubTotal,
                 SubTotalOriginal,
                 PCN,
                 IdFactura,
@@ -419,7 +428,7 @@ BEGIN
 			    ON FI_PedimentoComprobante.IdSubcontratistaExportador = PV_Subcontratista.IdSubcontratista
 			INNER JOIN CO_Registro WITH (NOLOCK)
 				ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
-				AND CO_Registro.CvTipoDocFacturacion = @TipoComprobanteExtranjero
+				AND CO_Registro.CvTipoDocFacturacion IN (@TipoComprobanteExtranjero, @TipoPedimento)
 				AND CO_Registro.IdGastoRubro IN (@Servicios, NULL)
 			    AND CO_Registro.IdEstado = @Aprobado	
 			INNER JOIN CO_LineaPresupuestoMes WITH (NOLOCK)
@@ -443,6 +452,11 @@ BEGIN
 
 			
 			-- CONVERSION A DLS
+               UPDATE #DATOS
+			SET SubtotalDls = MontoRegistro 
+			FROM #DATOS
+            WHERE #DATOS.IdMoneda = @Dolar;
+
 			UPDATE #DATOS
 			SET SubtotalDls = MontoRegistro / TipoCambio  
 			FROM #DATOS
@@ -460,7 +474,7 @@ BEGIN
 				ON CAST(#DATOS.FechaFactura AS date) = CAST(CO_TipoCambioDiario.Fecha AS date)
 				AND CO_TipoCambioDiario.IdMoneda = @Peso
 				AND #DATOS.IdMoneda <> @Peso
-			WHERE #DATOS.IdMoneda <> @Peso
+			WHERE #DATOS.IdMoneda <> @Peso;
 
 
 

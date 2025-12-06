@@ -1,7 +1,14 @@
-﻿IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_SE_A2]') AND type IN (N'P'))
-    DROP PROCEDURE [dbo].[SP_SE_A2];
+﻿IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'SP_SE_A2'
+    )
+    DROP PROCEDURE SP_SE_A2;
 GO
-
 -- =============================================
 -- Author:		Manuel Cruz
 -- Create date: 2018-10-02
@@ -66,7 +73,8 @@ BEGIN
 			@Pantera INT = 10006,
 			@Bienes INT = 2,
             @Aprobado                  INT = 10004,
-            @TipoComprobanteExtranjero INT = 3
+            @TipoComprobanteExtranjero INT = 3,
+            @TipoPedimento INT = 2;
 
     SELECT @RazonSocial = CA.RazonSocial
     FROM CO_CONTRATO C (NOLOCK)
@@ -413,7 +421,7 @@ BEGIN
 			    ON FI_PedimentoComprobante.IdSubcontratistaExportador = PV_Subcontratista.IdSubcontratista
 			INNER JOIN CO_Registro WITH (NOLOCK)
 				ON FI_PedimentoComprobante.IdPedimentoComprobante = CO_Registro.IdPedimentoComprobante
-				AND CO_Registro.CvTipoDocFacturacion = @TipoComprobanteExtranjero
+				AND CO_Registro.CvTipoDocFacturacion IN( @TipoComprobanteExtranjero,@TipoPedimento)
 				AND CO_Registro.IdGastoRubro = @Bienes
 			    AND CO_Registro.IdEstado = @Aprobado	
 			INNER JOIN CO_LineaPresupuestoMes WITH (NOLOCK)
@@ -437,6 +445,12 @@ BEGIN
 
 			
 			-- CONVERSION A DLS
+
+            UPDATE #DATOS
+			SET SubtotalDls = MontoRegistro 
+			FROM #DATOS
+            WHERE #DATOS.IdMoneda = @Dolar;
+
 			UPDATE #DATOS
 			SET SubtotalDls = MontoRegistro / TipoCambio  
 			FROM #DATOS
