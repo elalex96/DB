@@ -45,7 +45,7 @@ AS
 													   END AS EstatusOferta ,
 					ISNULL ( SP.IdTipoProceso, 0 ) AS IdTipoProceso ,
 					ISNULL ( TP.TipoPedido, 'Sin clasificación' ) AS NombreTipo,
-					((SELECT	STUFF ((SELECT CAST(',' AS VARCHAR(MAX)) + ISNULL(UA.Nombre,'') + ISNULL('('+TU.NombreTipoUsuario+')','')+ '|'  + CONVERT ( NVARCHAR(MAX), SPCA.IdAsignadoA)
+					((SELECT	STUFF ((SELECT CAST(',' AS VARCHAR(MAX)) + ISNULL(UA.Nombre,'') + ISNULL('('+TU.NombreTipoUsuario+')','')
 					FROM dbo.MM_SolicitudPedidoComprador SPCA 
 						JOIN dbo.S_Usuario (NOLOCK) UA 
 							ON SPCA.IdAsignadoA=UA.IdUsuario
