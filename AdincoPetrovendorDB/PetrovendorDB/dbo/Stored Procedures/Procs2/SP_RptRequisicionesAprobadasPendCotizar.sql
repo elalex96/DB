@@ -1,4 +1,11 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+IF OBJECT_ID('Petrovendor..SP_RptRequisicionesAprobadasPendCotizar') IS NOT NULL
+BEGIN
+DROP PROCEDURE SP_RptRequisicionesAprobadasPendCotizar;
+END
+GO
+-- =============================================
 -- Author:	Pedro Acuña
 -- Create date: 16-07-2018
 -- Description:	SP que obtiene Las requisiciones aprobadas y  pendientes por enviar a cotizar (pendientes por mercadear)
@@ -7,10 +14,17 @@
 -- Create date: 30-05-2019
 -- Description:	Se CONCATENA el Nombre del Presupuesto e IdPresupuestoCNH en la linea de Motivo de Urgencia
 -- =============================================
+-- Author:	Alexander Gomez
+-- Create date: 09-12-2025
+-- Description:	Se agrega la columna de asignado
+-- =============================================
 
-CREATE PROCEDURE [dbo].[SP_RptRequisicionesAprobadasPendCotizar] @IdProveedor INT, @IdContrato INT
+CREATE PROCEDURE [dbo].[SP_RptRequisicionesAprobadasPendCotizar] 
+
+@IdProveedor INT, @IdContrato INT
 AS
 	BEGIN
+			
 		SELECT 
 			SP.IdSolicitudPedido,
 			CONCAT('Referente al Presupuesto: ',CP.Nombre COLLATE Modern_Spanish_CI_AS,' [', CP.IdPresupuestoCNH COLLATE Modern_Spanish_CI_AS, '] | Con Justificacion: ',SP.MotivoUrgencia) AS MotivoUrgencia,
@@ -30,7 +44,17 @@ AS
 														   'Pendiente de Enviar'
 													   END AS EstatusOferta ,
 					ISNULL ( SP.IdTipoProceso, 0 ) AS IdTipoProceso ,
-					ISNULL ( TP.TipoPedido, 'Sin clasificación' ) AS NombreTipo
+					ISNULL ( TP.TipoPedido, 'Sin clasificación' ) AS NombreTipo,
+					((SELECT	STUFF ((SELECT CAST(',' AS VARCHAR(MAX)) + ISNULL(UA.Nombre,'') + ISNULL('('+TU.NombreTipoUsuario+')','')+ '|'  + CONVERT ( NVARCHAR(MAX), SPCA.IdAsignadoA)
+					FROM dbo.MM_SolicitudPedidoComprador SPCA 
+						JOIN dbo.S_Usuario (NOLOCK) UA 
+							ON SPCA.IdAsignadoA=UA.IdUsuario
+						LEFT JOIN dbo.S_TipoUsuario (NOLOCK) TU 
+							ON UA.IdTipoUsuario=TU.IdTipoUsuario 			
+					WHERE 		
+						SPCA.IdSolicitudPedido = SP.IdSolicitudPedido	
+						AND SPCA.Activo=1
+					FOR XML PATH ( '' )), 1, 1, '' ))) AS Asignado
 		FROM		dbo.MM_SolicitudPedido AS SP
 		LEFT JOIN Adinco.dbo.CO_Presupuesto AS CP ON CP.IdPresupuesto = SP.IdPresupuesto
 		INNER JOIN	dbo.MM_TipoSolicitudPedido AS TSP
