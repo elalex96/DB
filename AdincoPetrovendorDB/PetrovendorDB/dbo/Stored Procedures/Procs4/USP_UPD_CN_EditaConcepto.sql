@@ -18,6 +18,7 @@ BEGIN
 	DescripcionBienesServicios = @DescripcionBienesServicios,
 	ValorFactura = @ValorFactura,
 	PCN = @PCN,
+	ClasificacionSH = @ClasificacionSH,
 	ModificadoPor = @IdUsuario,
 	ModificadoEl = GETDATE()
 	WHERE IdCDCN = @IdCDCN
