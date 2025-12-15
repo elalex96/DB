@@ -1,8 +1,22 @@
-﻿--=========================================
+﻿USE Petrovendor 
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'MM_EnvioNotificacion_CambioSolicitante'
+)
+    DROP PROCEDURE MM_EnvioNotificacion_CambioSolicitante
+GO
+--=========================================
 -- CREADO: LUIS DAVID
 -- FECHA: 28/09/2021
 -- DESCRIPCIÓN: SP PARA ENVIAR NOTIFICACIÓN AL CAMBIO DE SOLICITANTE 
 --=========================================
+-- =============================================
+-- Author:		DANIEL AC
+-- Create date: 15/12/2025
+-- Description:	Se retorna correos y se envia correo por el sdk
+-- =============================================
 CREATE PROCEDURE [dbo].[MM_EnvioNotificacion_CambioSolicitante]
 @IdProveedor INT,
 @IdUsuario INT ,
@@ -20,10 +34,9 @@ BEGIN
 	@EstatusSolicitanteId INT,
 	@NoSecuenciaUsuarioSolicitante INT,
 	@EstatusIdAprobacionActual INT,
-	@listaPendientesHTML varchar(max) = '',
-	@paraval varchar(max),
-	@mensajeval varchar(max),
+	@listaPendientesHTML varchar(max) = '',	
 	@pIdNotificacion int ,
+	@DominioProcura NVARCHAR(500) = (SELECT URL FROM TA_Dominios WHERE IdDominio = 2), --> CTE DOMINIO PROCURA,
 	@Mensaje1 varchar(max)= 'Has sido designado como solicitante de la requisición No. ##NumeroRequisicion##',
 	@Mensaje2 varchar(max)= 'Has sido designado como solicitante de la requisición No. ##NumeroRequisicion## y tienes una o varias aceptaciones de servicio pendientes de aprobación.',
 	@SolicitanteNuevo NVARCHAR(MAX) = (SELECT TOP 1
@@ -35,7 +48,7 @@ BEGIN
 													FROM S_Usuario AS US
 													WHERE IdUsuario = @IdUsuario),
 	@HTML varchar(max) = 
- '<p></p>
+'<p></p>
 <table class="full" border="0" width="100%" cellspacing="0" cellpadding="0" align="center">
 <tbody>
 <tr>
@@ -61,7 +74,7 @@ BEGIN
 <table class="inner" style="border-collapse: collapse;" border="0" align="left">
 <tbody>
 <tr>
-<td class="inner" valign="middle" height="45"><a><img class="logo" style="padding-left: 2em;" src="https://procura.adinco.mx/assets/LogoADINCO.png" width="75" height="75" /></a></td>
+<td class="inner" valign="middle" height="45"><a><img class="logo" style="padding-left: 2em;" src="##DOMINIO##assets/LogoADINCO.png" width="75" height="75" /></a></td>
 </tr>
 </tbody>
 </table>
@@ -174,6 +187,18 @@ BEGIN
 		descripcion varchar(300)
 	)
 	DROP TABLE IF EXISTS #ENCABEZADOS
+
+	CREATE TABLE #TemporalCorreosUsuario (  
+	Para VARCHAR(500),  
+	Asunto VARCHAR(500),  
+	Mensaje NVARCHAR(MAX),  
+	De VARCHAR(200),
+	CreadoPor INT
+	);  
+
+	SET @HTML = (replace(@HTML,'##DOMINIO##',@DominioProcura))
+
+
 	    /*ENCABEZADO PEDIDO PEDIDO*/	
 		 SELECT ROW_NUMBER() OVER(
 		 ORDER BY P.IdSolicitudPedido) AS RowNum,
@@ -303,7 +328,7 @@ BEGIN
 		BEGIN
 			WHILE @contador <= @cantidadAprobacionPendientesUsuario
 			BEGIN
-				SET @listaPendientesHTML = ISNULL(@listaPendientesHTML,'')+ (SELECT  CONCAT('<p> <a href="http://localhost:58936/02Proveedores/SolicitudAceptacionPedido.aspx?solicitud=',IdSolicitudAceptacionPedido,'&pedido=',IdPedido,'"> No. Solicitud de Aprobación: #',IdSolicitudAceptacionPedido,'</a> </p>') 
+				SET @listaPendientesHTML = ISNULL(@listaPendientesHTML,'')+ (SELECT  CONCAT('<p> <a href="',@DominioProcura,'02Proveedores/SolicitudAceptacionPedido.aspx?solicitud=',IdSolicitudAceptacionPedido,'&pedido=',IdPedido,'"> No. Solicitud de Aprobación: #',IdSolicitudAceptacionPedido,'</a> </p>') 
 				FROM #ENCABEZADOSAPROBACIONUSUARIO 
 				WHERE RowNum = @contador)
 				SET @contador = (@contador + 1);
@@ -312,51 +337,54 @@ BEGIN
 			SET @HTML = (replace(@HTML,'##Mensaje##',@Mensaje2))
 			SET @HTML = (replace(@HTML,'##NumeroRequisicion##',@IdSolicitudPedido))
 			SET @HTML = (replace(@HTML,'##Detalle##',@listaPendientesHTML))
-			-- INSERTA EN LA TABLA DE NOTIFICACIONES
-			----------------------------------------
-			-- INSERTA EN LA TABLA DE NOTIFICACIONES
-			----------------------------------------
-			select @pIdNotificacion = isnull(max(IdNotificacion),0) + 1
-			from Adinco..S_Notificacion
-
-			select  
-					@paraval = Para,
-					@mensajeval = Mensaje
-			from Adinco..S_Notificacion where IdNotificacion = @pIdNotificacion -1
-			--ISNULL(@paraval,'') <> ISNULL(@para,'') and 
-			IF Isnull(@mensajeval,'') <> isnull(@HTML,'')
-			BEGIN
-				insert into Adinco..S_Notificacion(
-				IdNotificacion,Para,Asunto,Mensaje,FechaProgramadaEnvio,Enviada,FechaEnvio,
-				CreadoPor,CreadoEl,ModificadoPor,ModificadoEl,De,EN_MsjEnviado)
-				select @pIdNotificacion ,@para,'Requisición asignada',isnull(@HTML,''),getdate(),0,null,
-				1,getdate(),null,null,'notificaciones@adinco.mx',null
-			END
+						  
+  
+			INSERT INTO #TemporalCorreosUsuario (   
+			Para,
+			Asunto,
+			Mensaje,                                       
+			CreadoPor
+			) 
+			VALUES(
+			@para,
+			'Requisición asignada',
+			isnull(@HTML,''),
+			3--CTE USUARIO GENERAL 
+			)
+			
 		END
 		ELSE 
 		BEGIN
-			set @listaPendientesHTML = (SELECT CONCAT('<a href="https://procura.adinco.mx/01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=',@IdSolicitudPedido,'&origin=s&tp_user=2" class="button">Ver solicitud Pedido.</a>'))
+			set @listaPendientesHTML = (SELECT CONCAT('<a href="',@DominioProcura,'01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=',@IdSolicitudPedido,'&origin=s&tp_user=2" class="button">Ver solicitud Pedido.</a>'))
 			SET @HTML = (replace(@HTML,'##NombreUsuario##',@SolicitanteNuevo))
 			SET @HTML = (replace(@HTML,'##Mensaje##',@Mensaje1))
 			SET @HTML = (replace(@HTML,'##NumeroRequisicion##',@IdSolicitudPedido))
 			SET @HTML = (replace(@HTML,'##Detalle##',@listaPendientesHTML))
 			-- INSERTA EN LA TABLA DE NOTIFICACIONES
 			----------------------------------------
-			select @pIdNotificacion = isnull(max(IdNotificacion),0) + 1
-			from Adinco..S_Notificacion
 			
-			select  
-					@paraval = Para,
-					@mensajeval = Mensaje
-			from Adinco..S_Notificacion where IdNotificacion = @pIdNotificacion -1
-
-			IF Isnull(@mensajeval,'') <> isnull(@HTML,'')
-			BEGIN
-				insert into Adinco..S_Notificacion(
-				IdNotificacion,Para,Asunto,Mensaje,FechaProgramadaEnvio,Enviada,FechaEnvio,
-				CreadoPor,CreadoEl,ModificadoPor,ModificadoEl,De,EN_MsjEnviado)
-				select @pIdNotificacion ,@para,'Requisición asignada',isnull(@HTML,''),getdate(),0,null,
-				1,getdate(),null,null,'notificaciones@adinco.mx',null
-			END
+			INSERT INTO #TemporalCorreosUsuario (   
+			Para,
+			Asunto,
+			Mensaje,                                       
+			CreadoPor
+			) 
+			VALUES(
+				@para,
+				'Requisición asignada',
+				isnull(@HTML,''),
+				3--CTE USUARIO GENERAL 
+				)
+			
 		END
+
+		
+	SELECT 
+	Para,
+	Asunto,
+	Mensaje,
+	CreadoPor
+	FROM #TemporalCorreosUsuario
+
+
 END
