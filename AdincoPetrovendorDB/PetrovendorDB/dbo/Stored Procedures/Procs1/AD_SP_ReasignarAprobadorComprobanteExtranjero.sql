@@ -1,12 +1,21 @@
-﻿-- =============================================  
+﻿USE Petrovendor 
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'AD_SP_ReasignarAprobadorComprobanteExtranjero'
+)
+    DROP PROCEDURE AD_SP_ReasignarAprobadorComprobanteExtranjero
+GO
+-- =============================================  
 -- Author:  Daniel AC
 -- Create date: 07-04-2017  
 -- Description:  SP que reasigna una tarea a otra aprobador de un comprobante extranjero  
 -- =============================================  
 -- =============================================
 -- Author:		DANIEL AC
--- Create date: 03/06/2022
--- Description:	Se obtiene correo de notificaciones directamente desde la tabla TA_CorreoServidor
+-- Create date: 15/12/2025
+-- Description:	Se elimina correo de notificaciones directamente desde la tabla TA_CorreoServidor y se envia correo por el sdk
 -- =============================================
 CREATE PROCEDURE [dbo].[AD_SP_ReasignarAprobadorComprobanteExtranjero]   
  -- Add the parameters for the stored procedure here  
@@ -24,8 +33,8 @@ BEGIN
   DECLARE @EstatusId int   
   DECLARE @IdTareaNueva int    
   DECLARE @Descripcion nvarchar(max)   
-  DECLARE @IdAprobador INT 
-  DECLARE @CorreoNotificaciones NVARCHAR(MAX);
+  DECLARE @IdAprobador INT;
+  DECLARE @DominioProcura NVARCHAR(500) = (SELECT URL FROM TA_Dominios WHERE IdDominio = 2) --> CTE DOMINIO PROCURA
 
    DECLARE   
    @CONTTOTAL    INT,  
@@ -41,16 +50,16 @@ BEGIN
    @IDNOTIFICACION   NVARCHAR(MAX);  
    DECLARE @APROBADORESTABLE  TABLE(ID INT IDENTITY(1,1),IdAprobador INT, Nombre NVARCHAR(1000), Correo NVARCHAR(MAX));  
 
-  SET NOCOUNT ON;  
+    CREATE TABLE #TemporalCorreosUsuario (  
+	Para VARCHAR(500),  
+	Asunto VARCHAR(500),  
+	Mensaje NVARCHAR(MAX),  
+	De VARCHAR(200),
+	CreadoPor INT
+	);  
+
   --- Obtener el IdTarea de la Tarea del Usuario Actual----  
 
-  SET @CorreoNotificaciones = (SELECT  TOP 1  CuentaRegistro
-								FROM TA_Correo AS C
-									INNER JOIN TA_CorreoServidor AS S
-										ON C.IdServidor = S.IdServidor
-								WHERE IdCorreo = 107) --> CTE NUMERO CORREO (TA_Correo)
-
-  
     SELECT @IdAprobador =T.IdAprobador,
 	@EstatusId=T.IdEstatus
     FROM TA_Tarea AS T 
@@ -140,57 +149,22 @@ BEGIN
     SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_CLIENTE##',@NOMBRESUBCONTRATISTA));  
     SET @CORREOSIG = (REPLACE(@CORREOSIG,'##COMPROBANTE##',CAST(@IdComprobante AS NVARCHAR(10))));  
     SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));  
-    SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##','https://procura.adinco.mx/04Tareas/AprobacionPedimentoComprobante_CD.aspx'));  
+    SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##',CONCAT(@DominioProcura,'04Tareas/AprobacionPedimentoComprobante_CD.aspx')));  
   
-    SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);  
   
-    INSERT INTO Adinco.dbo.S_Notificacion  
-    (  
-        IdNotificacion,  
-        Para,  
-        Asunto,  
-        Mensaje,  
-        FechaProgramadaEnvio,  
-        Enviada,  
-        FechaEnvio,  
-        CreadoPor,  
-        CreadoEl,  
-        ModificadoPor,  
-        ModificadoEl,  
-        De,  
-        EN_MsjEnviado  
-    )  
+   INSERT INTO #TemporalCorreosUsuario (   
+	Para,
+    Asunto,
+    Mensaje,                                       
+    CreadoPor
+    ) 
     VALUES  
-    ( @IDNOTIFICACION,         -- IdNotificacion - bigint  
+    (
         @CORREOSIGAPROBADOR,        -- Para - varchar(1000)  
         'Aprobación Pendiente de Pedimento/Comprobante Extranjero',        -- Asunto - varchar(500)  
         @CORREOSIG,        -- Mensaje - text  
-        DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime  
-        0,      -- Enviada - bit  
-        NULL, -- FechaEnvio - datetime  
-        3,         -- CreadoPor - int  
-        GETDATE(), -- CreadoEl - datetime  
-        NULL,         -- ModificadoPor - int  
-        NULL, -- ModificadoEl - datetime  
-        ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)  
-        NULL       -- EN_MsjEnviado - bit  
+        3        -- CreadoPor - int  --> CTE USUARIO GRAL        
         );  
-  
-    INSERT INTO dbo.TA_EnvioCorreo  
-    (  
-     IdEnvioAdinco,  
-     IdCorreo,  
-     IdIdentificacion,  
-     EnviadoPor,  
-     EnviadoEl  
-    )  
-    VALUES  
-    (   @IdNotificacion, -- IdEnvioAdinco - int  
-     107, -- CORREO DE PETICION OFERTA  
-     CONCAT('0 - Notificacion para Aprobacion del Pedimento/Comprobante #' , @IdComprobante),  -- IdIdentificacion - int  
-     0,  
-     GETDATE()  
-    );  
   
     INSERT INTO dbo.TA_BitacoraCorreo  
     (  
@@ -204,7 +178,7 @@ BEGIN
      IdUsuarioReceptor  
     )  
     VALUES  
-    (   @IdComprobante,         -- IdDocumento - int  
+    (@IdComprobante,         -- IdDocumento - int  
      N'Notificacion de Aprobacion para Pedimento/Comprobante',       -- Detalle - nvarchar(max)  
      @CORREOSIGAPROBADOR,       -- Correo - nvarchar(350)  
      1,      -- Enviado - bit  
@@ -214,8 +188,7 @@ BEGIN
      0          -- IdUsuarioReceptor - int  
      );  
   
-   END  
-  
+   END   
 
    
   END  
@@ -265,41 +238,21 @@ BEGIN
     SET @CORREOSIG = (REPLACE(@CORREOSIG,'##NOMBRE_CLIENTE##',@NOMBRESUBCONTRATISTA));  
     SET @CORREOSIG = (REPLACE(@CORREOSIG,'##COMPROBANTE##',CAST(@IdComprobante AS NVARCHAR(10))));  
     SET @CORREOSIG = (REPLACE(@CORREOSIG,'##ANIO_ACTUAL##',YEAR(GETDATE())));  
-    SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##','https://procura.adinco.mx/04Tareas/AprobacionPedimentoComprobante_CD.aspx'));  
-  
-    SET @IDNOTIFICACION = ((SELECT MAX(IdNotificacion) FROM Adinco.dbo.S_Notificacion) + 1);  
-  
-    INSERT INTO Adinco.dbo.S_Notificacion  
-    (  
-        IdNotificacion,  
-        Para,  
-        Asunto,  
-        Mensaje,  
-        FechaProgramadaEnvio,  
-        Enviada,  
-        FechaEnvio,  
-        CreadoPor,  
-        CreadoEl,  
-        ModificadoPor,  
-        ModificadoEl,  
-        De,  
-        EN_MsjEnviado  
-    )  
+    SET @CORREOSIG = (REPLACE(@CORREOSIG,'##URL_PEDIDO##',CONCAT(@DominioProcura,'04Tareas/AprobacionPedimentoComprobante_CD.aspx')));  
+    
+   INSERT INTO #TemporalCorreosUsuario (   
+	Para,
+    Asunto,
+    Mensaje,                                       
+    CreadoPor
+    ) 
     VALUES  
-    ( @IDNOTIFICACION,         -- IdNotificacion - bigint  
-        @CORREOSIGAPROBADOR,        -- Para - varchar(1000)  
-        'Aprobación Pendiente de Pedimento/Comprobante Extranjero',        -- Asunto - varchar(500)  
-        @CORREOSIG,        -- Mensaje - text  
-        DATEADD(MINUTE,1,GETDATE()), -- FechaProgramadaEnvio - datetime  
-        0,      -- Enviada - bit  
-        NULL, -- FechaEnvio - datetime  
-        3,         -- CreadoPor - int  
-        GETDATE(), -- CreadoEl - datetime  
-        NULL,         -- ModificadoPor - int  
-        NULL, -- ModificadoEl - datetime  
-        ISNULL(@CorreoNotificaciones,''),        -- De - varchar(100)  
-        NULL       -- EN_MsjEnviado - bit  
-        );  
+    ( 
+	@CORREOSIGAPROBADOR,        -- Para - varchar(1000)  
+	'Aprobación Pendiente de Pedimento/Comprobante Extranjero',        -- Asunto - varchar(500)  
+    @CORREOSIG,        -- Mensaje - text       
+    3         -- CreadoPor - int  CTE CORREO DE USUARIO DEFAULT       
+    );  
   
     INSERT INTO dbo.TA_EnvioCorreo  
     (  
@@ -350,6 +303,13 @@ BEGIN
 
   
     SELECT 'SUCCESS'
+
+	SELECT 
+	Para,
+	Asunto,
+	Mensaje,
+	CreadoPor
+	FROM #TemporalCorreosUsuario
 	       
  END  
   
