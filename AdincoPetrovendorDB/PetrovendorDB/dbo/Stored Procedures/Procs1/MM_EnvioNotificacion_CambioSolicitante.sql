@@ -47,6 +47,7 @@ BEGIN
 														US.Correo
 													FROM S_Usuario AS US
 													WHERE IdUsuario = @IdUsuario),
+	@EstiloBoton  varchar(max) = 'style="font-size: 12px;font-family: Helvetica, Arial, sans-serif;color: #ffffff;line-height: 10px;text-decoration: none;color: #ffffff;text-decoration: none;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;padding: 10px 10px;display: inline-block;letter-spacing: 1px;text-align: center;font-weight: bold;text-transform: uppercase;width: 20em;background: #2DB360"',
 	@HTML varchar(max) = 
 '<p></p>
 <table class="full" border="0" width="100%" cellspacing="0" cellpadding="0" align="center">
@@ -74,7 +75,7 @@ BEGIN
 <table class="inner" style="border-collapse: collapse;" border="0" align="left">
 <tbody>
 <tr>
-<td class="inner" valign="middle" height="45"><a><img class="logo" style="padding-left: 2em;" src="##DOMINIO##assets/LogoADINCO.png" width="75" height="75" /></a></td>
+<td class="inner" valign="middle" height="45"><a><img class="logo" style="padding-left: 2em;" src="https://procura.adinco.mx/assets/LogoADINCO.png" width="75" height="75" /></a></td>
 </tr>
 </tbody>
 </table>
@@ -154,7 +155,7 @@ BEGIN
 <tbody>
 <tr>
 <td style="color: #ffffff;">|</td>
-<td style="font: 10px Helvetica,Arial, sans-serif; color: #ffffff;" align="center">&copy; 2023, Todos los derechos reservados</td>
+<td style="font: 10px Helvetica,Arial, sans-serif; color: #ffffff;" align="center">&copy; ##ANIO##, Todos los derechos reservados</td>
 <td style="color: #ffffff;">|</td>
 </tr>
 <tr>
@@ -337,8 +338,8 @@ BEGIN
 			SET @HTML = (replace(@HTML,'##Mensaje##',@Mensaje2))
 			SET @HTML = (replace(@HTML,'##NumeroRequisicion##',@IdSolicitudPedido))
 			SET @HTML = (replace(@HTML,'##Detalle##',@listaPendientesHTML))
-						  
-  
+			SET @HTML = (replace(@HTML,'##ANIO##',YEAR(GETDATE())))
+						
 			INSERT INTO #TemporalCorreosUsuario (   
 			Para,
 			Asunto,
@@ -355,11 +356,13 @@ BEGIN
 		END
 		ELSE 
 		BEGIN
-			set @listaPendientesHTML = (SELECT CONCAT('<a href="',@DominioProcura,'01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=',@IdSolicitudPedido,'&origin=s&tp_user=2" class="button">Ver solicitud Pedido.</a>'))
+			set @listaPendientesHTML = (SELECT CONCAT('<a ',@EstiloBoton,' href="',@DominioProcura,'01Proveedores/SP_DetalleSolicitudPedido.aspx?solped=',@IdSolicitudPedido,'&origin=s&tp_user=2" class="button">Ver solicitud Pedido</a>'))
 			SET @HTML = (replace(@HTML,'##NombreUsuario##',@SolicitanteNuevo))
 			SET @HTML = (replace(@HTML,'##Mensaje##',@Mensaje1))
 			SET @HTML = (replace(@HTML,'##NumeroRequisicion##',@IdSolicitudPedido))
 			SET @HTML = (replace(@HTML,'##Detalle##',@listaPendientesHTML))
+			SET @HTML = (replace(@HTML,'##ANIO##',YEAR(GETDATE())))
+
 			-- INSERTA EN LA TABLA DE NOTIFICACIONES
 			----------------------------------------
 			
