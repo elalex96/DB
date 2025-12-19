@@ -253,23 +253,7 @@ BEGIN
     @CORREOSIG,        -- Mensaje - text       
     3         -- CreadoPor - int  CTE CORREO DE USUARIO DEFAULT       
     );  
-  
-    INSERT INTO dbo.TA_EnvioCorreo  
-    (  
-     IdEnvioAdinco,  
-     IdCorreo,  
-     IdIdentificacion,  
-     EnviadoPor,  
-     EnviadoEl  
-    )  
-    VALUES  
-    (   @IdNotificacion, -- IdEnvioAdinco - int  
-     107, -- CORREO DE PETICION OFERTA  
-     CONCAT('0 - Notificacion para Aprobacion del Pedimento/Comprobante #' , @IdComprobante),  -- IdIdentificacion - int  
-     0,  
-     GETDATE()  
-    );  
-  
+   
     INSERT INTO dbo.TA_BitacoraCorreo  
     (  
      IdDocumento,  
