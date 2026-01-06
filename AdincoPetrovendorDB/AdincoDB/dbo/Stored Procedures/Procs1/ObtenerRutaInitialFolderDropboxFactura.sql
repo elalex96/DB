@@ -22,19 +22,19 @@ BEGIN
     SELECT 
         @FechaFactura = FechaTimbrado,
         @ReceptorRFC = Receptor
-    FROM FI_Factura 
+    FROM FI_Factura  (NOLOCK)
     WHERE IdFactura = @IdFactura;
 
     SET @AnioMes = CONVERT(CHAR(7), @FechaFactura, 120);
 
     IF EXISTS (
         SELECT 1
-        FROM APP_RelacionRutaDropboxFactura
+        FROM APP_RelacionRutaDropboxFactura  (NOLOCK)
         WHERE IdFactura = @IdFactura
     )
     BEGIN
         SELECT *
-        FROM APP_RelacionRutaDropboxFactura
+        FROM APP_RelacionRutaDropboxFactura  (NOLOCK)
         WHERE IdFactura = @IdFactura;
     END
     ELSE IF @ReceptorRFC IN ('PAM140722DK6', 'LOP141217TXA')
