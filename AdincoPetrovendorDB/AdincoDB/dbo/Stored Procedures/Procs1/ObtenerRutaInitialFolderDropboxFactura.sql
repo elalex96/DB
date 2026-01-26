@@ -37,13 +37,8 @@ BEGIN
         FROM APP_RelacionRutaDropboxFactura  (NOLOCK)
         WHERE IdFactura = @IdFactura;
     END
-    ELSE IF @ReceptorRFC IN ('PAM140722DK6', 'LOP141217TXA')
-    BEGIN
-        SELECT 0 as Id,REPLACE(@Ruta, '##ANIO_MES##', @AnioMes) AS Ruta,@IdFactura AS IdFactura;
-    END
     ELSE
     BEGIN
-        SELECT 
-            NULL AS RutaDropbox;
+       SELECT 0 as Id,REPLACE(@Ruta, '##ANIO_MES##', @AnioMes) AS Ruta,@IdFactura AS IdFactura;
     END
 END
