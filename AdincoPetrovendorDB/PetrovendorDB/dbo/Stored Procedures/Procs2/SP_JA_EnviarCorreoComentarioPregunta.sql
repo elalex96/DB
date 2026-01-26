@@ -1,5 +1,7 @@
-drop proc if exists SP_JA_EnviarCorreoComentarioPregunta
-go
+USE [Petrovendor]
+GO
+DROP PROC IF EXISTS SP_JA_EnviarCorreoComentarioPregunta
+GO
 -- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <10/04/2020>
@@ -22,6 +24,10 @@ go
 -- Author:		DAVID DE LA CRUZ
 -- Create date: 07/07/25
 -- Description:	SE OBTIENE UNICAMENTE LA INFORMACIÓN NECESARIA DEL SDK
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 26/01/26
+-- Description:	Se amplia el destinatario para evitar errores
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_JA_EnviarCorreoComentarioPregunta]  
 	-- Add the parameters for the stored procedure here
@@ -55,9 +61,11 @@ BEGIN
 	IdPeticionOferta INT,
 	TipoProveedor VARCHAR(MAX)
 	)
+
+    -- CORRECCION 1: Aumentar tamaño a MAX para evitar truncamiento al concatenar múltiples correos
 	CREATE TABLE #CorreosEnviarSDK(
-		para varchar(500),
-		asunto varchar(500),
+		para varchar(MAX), 
+		asunto varchar(MAX),
 		html varchar(max),
 	)
 	
@@ -68,19 +76,20 @@ BEGIN
 	)
 
 	DROP TABLE IF EXISTS #DATOSCORREO
+    -- CORRECCION 2: Aumentar tamaños a MAX o 500 para evitar truncamiento por nombres largos
 	CREATE TABLE #DATOSCORREO(
 		IdRow INT IDENTITY(1,1) PRIMARY KEY,
 		IdUsuario int,
-		NombreProveedor NVARCHAR(100),
-		NombreUsuario NVARCHAR(100),
-		Correo NVARCHAR(100),
+		NombreProveedor NVARCHAR(MAX),
+		NombreUsuario NVARCHAR(MAX),
+		Correo NVARCHAR(MAX),
 		IsCorreoAdinco BIT,
-		TipoUsuario NVARCHAR(100),
+		TipoUsuario NVARCHAR(MAX),
 		IdPeticionOferta INT,
 		IdSolicitudPedido INT,
 		URL NVARCHAR(MAX),
 		IdUsuarioAdinco INT,
-		Para NVARCHAR(100)
+		Para NVARCHAR(MAX)
 	);
 
 	--NOMBRE DE LA OPERADORA DE LA PREGUNTA
@@ -151,7 +160,7 @@ BEGIN
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4) --> CTE 3 ADMIN, 4 VENTAS Y 5 COMPRAS
 			AND PO.IdSubcontratista <> @IdProveedor
 			AND	US.Activo = 1
-			AND ISNULL(TANN.IsEliminado,-1) <> 0   -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion, EN LA TABLA SI ESTA 1 QUIERE DECIR QUE ESTA ACTIVO, SI ESTA EN 0 QUIERE DECIR QUE ESTA ELIMINADA  LA NOTIFICACION
+			AND ISNULL(TANN.IsEliminado,-1) <> 0   -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion, EN LA TABLA SI ESTA 1 QUIERE DECIR QUE ESTA ACTIVO, SI ESTA EN 0 QUIERE DECIR QU[...]
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
@@ -194,7 +203,7 @@ BEGIN
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 4 OR US.IdTipoUsuario = 5)  --> CTE 3 ADMIN, 4 VENTAS Y 5 COMPRAS
 			and	US.Activo = 1
-			AND ISNULL(TANN.IsEliminado,-1) <> 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion, EN LA TABLA SI ESTA 1 QUIERE DECIR QUE ESTA ACTIVO, SI ESTA EN 0 QUIERE DECIR QUE ESTA ELIMINADA  LA NOTIFICACION
+			AND ISNULL(TANN.IsEliminado,-1) <> 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion, EN LA TABLA SI ESTA 1 QUIERE DECIR QUE ESTA ACTIVO, SI ESTA EN 0 QUIERE DECIR QUE [...]
 			AND PO.IdPeticionOferta = @IdOferta
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
@@ -252,7 +261,7 @@ BEGIN
 		WHERE PO.IdSolicitudPedido = @IdSolicitudPedido
 			AND (US.IdTipoUsuario = 3 OR US.IdTipoUsuario = 5) --> CTE 3 ADMIN Y 5 VENTAS
 			and	US.Activo = 1
-			AND ISNULL(TANN.IsEliminado,-1) <> 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion, EN LA TABLA SI ESTA 1 QUIERE DECIR QUE ESTA ACTIVO, SI ESTA EN 0 QUIERE DECIR QUE ESTA ELIMINADA  LA NOTIFICACION
+			AND ISNULL(TANN.IsEliminado,-1) <> 0 -- SE VALIDA SI EL USUARIO NO TIENE BLOQUEADO EL CORREO EN TA_NoNotificacion, EN LA TABLA SI ESTA 1 QUIERE DECIR QUE ESTA ACTIVO, SI ESTA EN 0 QUIERE DECIR QUE [...]
 		GROUP BY PR.RazonSocial,
 				 US.Nombre,
 				 US.Correo,
