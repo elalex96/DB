@@ -81,27 +81,23 @@ BEGIN
 			SELECT @TipoFlujo=IdTipoFlujo 
 			FROM  TA_FlujoTarea 
 			WHERE IdFlujoTarea=@IdFlujoAprobacion
+						
+			--SE TIENE QUE ACTUALIZAR EL NO DE SECUENCIA DE LOS APROBADORES ACTIVOS TANTO SERIAL/PARALELO
+			INSERT INTO #Aprobadores
+			(IdTarea,
+			NewNoSecuencia)			 			
+			SELECT IdTarea, 
+			ROW_NUMBER() OVER(ORDER BY NoSecuencia ASC) AS  NewNoSecuencia
+			FROM dbo.TA_Tarea 
+			WHERE IdOperacion =@IdOperacion ---> 
+			AND Activo=1  --> ESTEN ACTIVOS 
+			ORDER BY NoSecuencia ASC
 
-			IF @TipoFlujo = 1 -->	APROBACIÓN SERIAL 
-			BEGIN 
-				--SE TIENE QUE ACTUALIZAR EL NO DE SECUENCIA DE LOS APROBADORES ACTIVOS 
-				INSERT INTO #Aprobadores
-				(IdTarea,
-				NewNoSecuencia)			 			
-				SELECT IdTarea, 
-				ROW_NUMBER() OVER(ORDER BY NoSecuencia ASC) AS  NewNoSecuencia
-				FROM dbo.TA_Tarea 
-				WHERE IdOperacion =@IdOperacion ---> 
-				AND Activo=1  --> ESTEN ACTIVOS 
-				ORDER BY NoSecuencia ASC
-
-				UPDATE T
-				SET T.NoSecuencia=A.NewNoSecuencia
-				FROM dbo.TA_Tarea T
-				JOIN #Aprobadores A 
-				ON T.IdTarea = A.IdTarea
-					
-			 END 
+			UPDATE T
+			SET T.NoSecuencia=A.NewNoSecuencia
+			FROM dbo.TA_Tarea T
+			JOIN #Aprobadores A 
+			ON T.IdTarea = A.IdTarea	
 
 			 --ACTUALIZAR APROBADORES QUE YA HABIAN APROBADO EL COMPROBANTE DE COMPRA (REINICIO)
 
