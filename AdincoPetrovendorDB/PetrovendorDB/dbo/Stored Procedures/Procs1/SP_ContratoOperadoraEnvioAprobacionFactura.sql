@@ -1,7 +1,16 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+DROP PROC IF EXISTS [SP_ContratoOperadoraEnvioAprobacionFactura]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		<Abel Rivera>
 -- Create date: <08/10/19>
--- Description:	<Consulta el nombre del contrato de la operadora de la aceptación>
+-- Description:	<Consulta el nombre del contrato de la operadora de la aceptación de pedido>
+-- Daniel AC se agrega validación de datos nulls 28/01/2026
 -- =============================================
 CREATE PROCEDURE SP_ContratoOperadoraEnvioAprobacionFactura
 @IdAceptacionPedido INT
@@ -13,11 +22,14 @@ BEGIN
 
 		SELECT
 		C.IdContrato AS IdContratoOperadora,
-		C.NumeroContrato + ' - ' + AC.NombreAreaContractual AS NombreContrato
-		FROM dbo.MM_AceptacionPedido AP
-		LEFT JOIN dbo.MM_Pedido P ON P.IdPedido = AP.IdPedido
-		LEFT JOIN Adinco.dbo.CO_Contrato C ON C.IdContrato = P.IdContrato
-		LEFT JOIN Adinco.dbo.CO_AreaContractual AC ON AC.IdAreaContractual = C.IdAreaContractual
+		CONCAT(ISNULL(C.NumeroContrato,''), ' - ',ISNULL(AC.NombreAreaContractual,'')) AS NombreContrato
+		FROM MM_AceptacionPedido AP (NOLOCK)
+		JOIN MM_Pedido P (NOLOCK)
+			ON AP.IdPedido =  P.IdPedido 
+		LEFT JOIN Adinco..CO_Contrato C  (NOLOCK)
+			ON P.IdContrato = C.IdContrato 
+		LEFT JOIN Adinco..CO_AreaContractual AC (NOLOCK)
+			ON C.IdAreaContractual = AC.IdAreaContractual 
 		WHERE AP.IdAceptacionPedido = @IdAceptacionPedido
 
 END
