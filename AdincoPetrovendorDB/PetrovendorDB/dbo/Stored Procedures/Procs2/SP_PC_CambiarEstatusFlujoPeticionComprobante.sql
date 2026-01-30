@@ -1,8 +1,15 @@
-﻿
+﻿USE [Petrovendor]
+GO
+DROP PROC IF EXISTS SP_PC_CambiarEstatusFlujoPeticionComprobante
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:		Daniel A Cruz
--- Create date: 01/08/2022
--- Description:	 Actualiza el Estatus de de la operacion, SE REMUEVE RELACION DE TAREA_OPERACION 
+-- Create date: 30/01/2026
+-- Description:	 Actualiza el Estatus de de la operacion, se debe tomar solo en cuenta tareas activas 
 -- =============================================
 -- Author:		Alexander Gomez
 -- Create date: 16/05/2022
@@ -48,6 +55,7 @@ BEGIN
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
 						WHERE TAO.IdOperacion = @IdOperacion 
+						AND  T.Activo=1
 						AND T.IdEstatus <> 7 -->CTE Cancelado por Reasignacion (TA_Estatus)
 						)
 
@@ -62,6 +70,7 @@ BEGIN
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
 						WHERE TAO.IdOperacion = @IdOperacion  
+						AND  T.Activo=1
 						AND T.IdEstatus = 1 -->CTE En Aprobación (TA_Estatus)
 						)
 	
@@ -73,7 +82,8 @@ BEGIN
 							ON T.IdAprobador = US.IdUsuario 
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
-						WHERE TAO.IdOperacion = @IdOperacion  
+						WHERE TAO.IdOperacion = @IdOperacion 
+						AND  T.Activo=1
 						AND T.IdEstatus = 2 -->CTE Aprobada (TA_Estatus)
 						)
 
@@ -87,6 +97,7 @@ BEGIN
 							AND US.Activo = 1
 							AND ISNULL(US.IsEliminado,0) = 0
 						WHERE TAO.IdOperacion = @IdOperacion  
+						AND  T.Activo=1
 						AND T.IdEstatus = 3-->CTE Rechazada (TA_Estatus)
 						)
 
