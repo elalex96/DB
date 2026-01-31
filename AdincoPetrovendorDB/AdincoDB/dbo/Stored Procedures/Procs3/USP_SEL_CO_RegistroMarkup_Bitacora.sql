@@ -1,5 +1,3 @@
-use adinco
-go
 IF EXISTS (
 		SELECT 1
 		FROM dbo.sysobjects

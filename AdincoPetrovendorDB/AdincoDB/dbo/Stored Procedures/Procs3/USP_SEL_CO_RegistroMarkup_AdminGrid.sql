@@ -1,6 +1,4 @@
-﻿use adinco
-go
-IF EXISTS (
+﻿IF EXISTS (
 		SELECT 1
 		FROM dbo.sysobjects
 		WHERE name = 'USP_SEL_CO_RegistroMarkup_AdminGrid'
