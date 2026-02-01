@@ -57,89 +57,89 @@ BEGIN
     FROM dbo.CO_RegistroMarkup M WITH(NOLOCK)
     
     INNER JOIN dbo.CO_Registro R WITH(NOLOCK)
-        ON R.IdRegistro = M.GastoId
+        ON M.GastoId = R.IdRegistro 
     
     INNER JOIN dbo.CO_LineaPresupuestoMes LPM WITH(NOLOCK)
-        ON LPM.IdLineaPresupuestoMes = R.IdPrograma
+        ON R.IdPrograma = LPM.IdLineaPresupuestoMes 
     
     INNER JOIN dbo.CO_Presupuesto P WITH(NOLOCK)
-        ON P.IdPresupuesto = LPM.IdPresupuesto
+        ON LPM.IdPresupuesto = P.IdPresupuesto 
     
     INNER JOIN dbo.CO_EstadoRegistro_V2 E WITH(NOLOCK)
-        ON E.IdClvEstado = M.IdEstadoPemex
+        ON M.IdEstadoPemex = E.IdClvEstado 
        AND E.IdContrato = @IdContrato
        AND E.Activo = 1
 
     LEFT JOIN dbo.CO_Servicio S WITH(NOLOCK)
-        ON S.IdServicio = LPM.IdServicio
+        ON LPM.IdServicio = S.IdServicio 
        AND S.IdContrato = @IdContrato
 
     LEFT JOIN dbo.CO_Instalacion IR WITH(NOLOCK)
-        ON IR.IdInstalacion = R.IdInstalacion
+        ON R.IdInstalacion = IR.IdInstalacion 
 
     LEFT JOIN dbo.CO_GastosRubro rubro WITH(NOLOCK)
-        ON rubro.IdGastoRubro = R.IdGastoRubro
+        ON R.IdGastoRubro = rubro.IdGastoRubro
 
     LEFT JOIN dbo.CO_CAT_ManoDeObra catmo WITH(NOLOCK)
-        ON catmo.Id = R.IdCatManoObra
+        ON R.IdCatManoObra = catmo.Id 
 
     -- Factura (solo si es tipo 1)
     LEFT JOIN dbo.FI_Factura F WITH(NOLOCK)
-        ON F.IdFactura = R.IdFactura
+        ON R.IdFactura = F.IdFactura 
        AND F.IdContrato = @IdContrato
        AND R.CvTipoDocFacturacion = 1
 
     -- Pedimento/Comprobante (solo si es tipo 2 o 3)
     LEFT JOIN dbo.FI_PedimentoComprobante PC WITH(NOLOCK)
-        ON PC.IdPedimentoComprobante = R.IdPedimentoComprobante
+        ON R.IdPedimentoComprobante = PC.IdPedimentoComprobante
        AND R.CvTipoDocFacturacion IN (2, 3)
 
     LEFT JOIN dbo.PV_Subcontratista SF WITH(NOLOCK)
-        ON SF.IdSubcontratista = F.IdSubcontratista
+        ON F.IdSubcontratista = SF.IdSubcontratista 
 
     LEFT JOIN dbo.PV_Subcontratista SPC WITH(NOLOCK)
-        ON SPC.IdSubcontratista = PC.IdSubcontratistaExportador
+        ON PC.IdSubcontratistaExportador = SPC.IdSubcontratista 
 
     LEFT JOIN dbo.PV_TipoMoneda TMF WITH(NOLOCK)
-        ON TMF.IdMoneda = F.IdMoneda
+        ON F.IdMoneda = TMF.IdMoneda 
 
     LEFT JOIN dbo.PV_TipoMoneda TMPC WITH(NOLOCK)
-        ON TMPC.IdMoneda = PC.IdMoneda
+        ON PC.IdMoneda = TMPC.IdMoneda 
 
     -- Tipos de cambio (solo si existen las facturas/pedimentos)
     LEFT JOIN dbo.CO_TipoCambioDiario TCDF WITH(NOLOCK)
-        ON TCDF.IdMoneda = F.IdMoneda
-       AND TCDF.Fecha = CAST(F.Fecha AS DATE)
+        ON F.IdMoneda = TCDF.IdMoneda 
+       AND CAST(F.Fecha AS DATE) = TCDF.Fecha 
        AND F.IdFactura IS NOT NULL
 
     LEFT JOIN dbo.CO_TipoCambioDiario TCDPC WITH(NOLOCK)
-        ON TCDPC.IdMoneda = PC.IdMoneda
-       AND TCDPC.Fecha = CAST(PC.FechaPago AS DATE)
+        ON PC.IdMoneda = TCDPC.IdMoneda 
+       AND CAST(PC.FechaPago AS DATE) = TCDPC.Fecha 
        AND PC.IdPedimentoComprobante IS NOT NULL
 
     LEFT JOIN dbo.CO_TipoServicio TS WITH(NOLOCK)
-        ON TS.IdTipoServicio = LPM.IdTipoServicio
+        ON LPM.IdTipoServicio = TS.IdTipoServicio 
        AND P.CIEP = 1
 
     LEFT JOIN dbo.CO_ActividadCIEP ACIEP WITH(NOLOCK)
-        ON ACIEP.IdActividad = LPM.IdActividad
+        ON LPM.IdActividad = ACIEP.IdActividad 
        AND P.CIEP = 1
 
     LEFT JOIN dbo.CO_RubroInterno RI WITH(NOLOCK)
-        ON RI.IdRubroInterno = LPM.IdRubroInterno
+        ON LPM.IdRubroInterno = RI.IdRubroInterno 
        AND P.CIEP = 1
 
     -- CNH (solo si P.CIEP <> 1)
     LEFT JOIN dbo.CO_ActividadPetroleraCNH ACNH WITH(NOLOCK)
-        ON ACNH.IdActividadPetrolera = LPM.IdActividadPetrolera
+        ON LPM.IdActividadPetrolera = ACNH.IdActividadPetrolera 
        AND P.CIEP <> 1
 
     LEFT JOIN dbo.CO_SubactividadPetrolera SAP WITH(NOLOCK)
-        ON SAP.IdSubactividadPetrolera = LPM.IdSubactividadPetrolera
+        ON LPM.IdSubactividadPetrolera = SAP.IdSubactividadPetrolera 
        AND P.CIEP <> 1
 
     LEFT JOIN dbo.CO_TareaPetrolera TP WITH(NOLOCK)
-        ON TP.IdTareaPetrolera = LPM.IdTareaPetrolera
+        ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera 
        AND P.CIEP <> 1
 
     WHERE M.IdEstadoPemex IS NOT NULL

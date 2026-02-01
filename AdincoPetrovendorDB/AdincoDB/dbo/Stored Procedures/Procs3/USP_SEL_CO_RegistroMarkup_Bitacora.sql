@@ -30,18 +30,18 @@ BEGIN
     FROM dbo.CO_RegistroMarkup_Bitacora B WITH (NOLOCK)
 
 	INNER JOIN dbo.CO_Registro R WITH(NOLOCK)
-        ON R.IdRegistro = B.GastoId
+        ON B.GastoId = R.IdRegistro
 
     LEFT JOIN dbo.AP_Usuario U WITH (NOLOCK)
-        ON U.UsuarioID = B.UsuarioId
+        ON B.UsuarioId = U.UsuarioID
 
     LEFT JOIN dbo.CO_EstadoRegistro_V2 EO WITH (NOLOCK)
-        ON EO.IdContrato = B.IdContrato
-       AND EO.IdClvEstado  = B.IdEstadoOrigen
+        ON B.IdContrato = EO.IdContrato 
+       AND B.IdEstadoOrigen = EO.IdClvEstado  
 
     LEFT JOIN dbo.CO_EstadoRegistro_V2 ED WITH (NOLOCK)
-        ON ED.IdContrato = B.IdContrato
-       AND ED.IdClvEstado  = B.IdEstadoDestino
+        ON B.IdContrato = ED.IdContrato 
+       AND B.IdEstadoDestino = ED.IdClvEstado 
 
     WHERE B.IdContrato = @IdContrato
     ORDER BY B.FechaMovimiento DESC, B.BitacoraId DESC;
