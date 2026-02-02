@@ -4072,6 +4072,11 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_FI_TransferDetalle_PedimentoImp_Masivo.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_GastosAmatitlan2020.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_BitacoraEstadosGasto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenEstadosRelacionados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_CO_RegistraEstadosUsuarios.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenEstadosFaltantesPorRelacionar.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_DEL_CO_EliminarRelacionEstados.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_IdClvEstados.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
