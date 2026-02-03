@@ -4077,6 +4077,11 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_RegistroMarkup_AdminGrid.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_RegistroMarkup_Bitacora.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_RegistroMarkup_CambiarEstado.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenEstadosRelacionados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_CO_RegistraEstadosUsuarios.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenEstadosFaltantesPorRelacionar.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_DEL_CO_EliminarRelacionEstados.sql" />
+    <Build Include="dbo\User Defined Types\CO_Type_IdClvEstados.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
