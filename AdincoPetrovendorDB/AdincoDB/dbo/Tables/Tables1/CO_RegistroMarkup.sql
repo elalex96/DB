@@ -19,6 +19,7 @@
     CONSTRAINT [FK_CO_RegistroMarkup_APP_Usuarios_Crear] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_RegistroMarkup_APP_Usuarios_Modifica] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
     CONSTRAINT [FK_CO_RegistroMarkup_CO_Contrato] FOREIGN KEY ([ContratoId]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
-    CONSTRAINT [FK_CO_RegistroMarkup_CO_Registro] FOREIGN KEY ([GastoId]) REFERENCES [dbo].[CO_Registro] ([IdRegistro])
+    CONSTRAINT [FK_CO_RegistroMarkup_CO_Registro] FOREIGN KEY ([GastoId]) REFERENCES [dbo].[CO_Registro] ([IdRegistro]),
+    CONSTRAINT FK_CO_RegistroMarkup_CO_EstadoRegistro_V2 FOREIGN KEY (IdEstadoPemex, ContratoId) REFERENCES dbo.CO_EstadoRegistro_V2 (IdClvEstado, IdContrato)
 );
 
