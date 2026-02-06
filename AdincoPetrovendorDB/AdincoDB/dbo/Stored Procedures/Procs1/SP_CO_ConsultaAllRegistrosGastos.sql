@@ -27,7 +27,7 @@ GO
 -- Description: Se agrega NOLOCK, se eliminan comentarios y se mueven las creaciones 
 -- de la tabla al inicio de procedure, se eliminan algunos Left y Joins innecesarios
 -- =============================================
-ALTER PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos] --10038,10,null,null,'	1800000076,1D60000180,01-0016	,FFF2FD08-F9CB-41CC-A0F4-17B62EB5D878	,FFF2FD08-F9CB-41CC-A0F4-17B62EB5D878 , D526DD6A-65DB-47B8-BAD9-F9EE35FE43DD'
+CREATE PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos] --10038,10,null,null,'	1800000076,1D60000180,01-0016	,FFF2FD08-F9CB-41CC-A0F4-17B62EB5D878	,FFF2FD08-F9CB-41CC-A0F4-17B62EB5D878 , D526DD6A-65DB-47B8-BAD9-F9EE35FE43DD'
     @IdContrato INT,
     @IdUsuario  INT,
     @UUIDFolios VARCHAR(MAX)
