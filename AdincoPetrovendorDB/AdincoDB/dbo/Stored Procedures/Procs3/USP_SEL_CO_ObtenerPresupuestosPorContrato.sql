@@ -1,4 +1,9 @@
-CREATE OR ALTER PROCEDURE dbo.USP_SEL_CO_ObtenerPresupuestosPorContrato
+IF OBJECT_ID('dbo.USP_SEL_CO_ObtenerPresupuestosPorContrato', 'P') IS NOT NULL
+BEGIN
+    DROP PROCEDURE dbo.USP_SEL_CO_ObtenerPresupuestosPorContrato;
+END
+GO
+CREATE PROCEDURE dbo.USP_SEL_CO_ObtenerPresupuestosPorContrato
 (
     @IdContrato INT,
     @IdUsuario  INT
