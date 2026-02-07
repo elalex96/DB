@@ -4082,6 +4082,10 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenEstadosFaltantesPorRelacionar.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_DEL_CO_EliminarRelacionEstados.sql" />
     <Build Include="dbo\User Defined Types\CO_Type_IdClvEstados.sql" />
+    <Build Include="dbo\Tables\Tables2\CO_Registro_Bitacora.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_HistorialBitacoraPresupuesto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenerPresupuestosPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_RegistroGasto_LineaPresupuesto.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
