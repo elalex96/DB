@@ -66,12 +66,11 @@ BEGIN
         FROM CO_Registro r
         INNER JOIN @GastosTemp gt ON r.IdRegistro = gt.IdRegistro
         INNER JOIN FI_Factura f ON r.IdFactura = f.IdFactura
-        WHERE f.IdContrato = @IdContrato
-          AND ISNULL(r.IdPrograma, 0) <> @IdLineaPresupuesto;
+        WHERE f.IdContrato = @IdContrato;
 
         IF @@ROWCOUNT = 0
         BEGIN
-            RAISERROR('No se actualizaron gastos. Verifique IDs, contrato o que la línea sea diferente.', 16, 1);
+            RAISERROR('No se actualizaron gastos. Verifique IDs o contrato.', 16, 1);
             ROLLBACK TRANSACTION;
             RETURN;
         END
