@@ -4086,6 +4086,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_HistorialBitacoraPresupuesto.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenerPresupuestosPorContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_RegistroGasto_LineaPresupuesto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ContratistaPorContrato.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
