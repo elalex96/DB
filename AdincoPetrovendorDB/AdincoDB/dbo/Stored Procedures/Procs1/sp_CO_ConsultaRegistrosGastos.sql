@@ -83,6 +83,19 @@ BEGIN
         AsociadoIncrementoPMT    BIT NULL
     );
 
+	/* =========================================================================
+    - #TCMensual se crea SIEMPRE, para evitar error de compilación cuando NO es CIEP.
+    - Si NO es CIEP, la tabla queda vacía (no afecta porque los JOIN tienen ON @EsCIEP = 1).
+    ========================================================================= */
+    CREATE TABLE #TCMensual
+    (
+        AnioTC INT NOT NULL,
+        MesTC  INT NOT NULL,
+        TipoCambio DECIMAL(18,6) NULL,
+        ObtenidoSDK BIT NULL,
+        CONSTRAINT PK_TCMensual PRIMARY KEY (AnioTC, MesTC)
+    );
+
     DECLARE
         @Contrato                     INT,
         @NombreAreaContractual        VARCHAR(100) = '',
@@ -95,9 +108,9 @@ BEGIN
         @Contrato = PC.IdContrato
     FROM dbo.CO_Presupuesto P (NOLOCK)
     JOIN dbo.CO_ProgramaActividad PA (NOLOCK)
-        ON PA.IdProgramaActividad = P.IdProgramaActividad
+        ON P.IdProgramaActividad = PA.IdProgramaActividad 
     JOIN dbo.CO_PeriodoContrato PC (NOLOCK)
-        ON PC.IdPeriodo = PA.IdPeriodoContrato
+        ON PA.IdPeriodoContrato = PC.IdPeriodo
     WHERE ((P.IdPresupuesto = @IdPresupuesto) OR @IdPresupuesto = -1);
 
     SELECT TOP 1
@@ -123,19 +136,6 @@ BEGIN
     BEGIN
         SET @EsCIEP = 1;
     END
-
-    /* =========================================================================
-       - #TCMensual se crea SIEMPRE, para evitar error de compilación cuando NO es CIEP.
-       - Si NO es CIEP, la tabla queda vacía (no afecta porque los JOIN tienen ON @EsCIEP = 1).
-       ========================================================================= */
-    CREATE TABLE #TCMensual
-    (
-        AnioTC INT NOT NULL,
-        MesTC  INT NOT NULL,
-        TipoCambio DECIMAL(18,6) NULL,
-        ObtenidoSDK BIT NULL,
-        CONSTRAINT PK_TCMensual PRIMARY KEY (AnioTC, MesTC)
-    );
 
     /* =========================================================================
        - Solo si es CIEP, armamos la lista de meses requeridos (mes del documento y mes anterior)
@@ -193,8 +193,8 @@ BEGIN
         FROM #TCMensualReq RQ
         LEFT JOIN dbo.CO_TipoCambioMensual TCM WITH (NOLOCK)
             ON TCM.IdMoneda = 1
-           AND TCM.Anio = RQ.AnioTC
-           AND TCM.IdMes = RQ.MesTC
+           AND RQ.AnioTC = TCM.Anio 
+           AND RQ.MesTC = TCM.IdMes  
            AND ISNULL(TCM.Activo, 1) = 1;
 
         DECLARE @Prev DATE = DATEADD(MONTH, -1, CAST(GETDATE() AS DATE));
