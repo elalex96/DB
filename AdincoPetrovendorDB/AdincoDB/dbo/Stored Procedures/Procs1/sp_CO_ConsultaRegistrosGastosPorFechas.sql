@@ -16,7 +16,13 @@ BEGIN
             @FechaFin DATETIME,
             @DiaActual DATE = GETDATE(),
             @NombreAreaContractual VARCHAR(100) = '',
-            @NombreEstadoInicialAmatitlan VARCHAR(100) = 'Revisión';
+            @NombreEstadoInicialAmatitlan VARCHAR(100) = 'Revisión',
+			@TipoFactura TINYINT = 1,
+			@TipoPedimento  TINYINT = 2,
+			@TipoComprobante TINYINT = 3,
+			@Aprobada TINYINT = 2,
+			@Dolar TINYINT = 2,
+			@Peso TINYINT = 1
 
     SET NOCOUNT ON;
     SET LANGUAGE spanish;
@@ -136,7 +142,7 @@ BEGIN
     INNER JOIN Petrovendor.dbo.MM_Pedido AS P (NOLOCK)
         ON P.IdPedido = AP.IdPedido
        AND P.IdContrato = @IdContrato
-       AND AC.IdEstatus = 2
+       AND AC.IdEstatus = @Aprobada
        AND ISNULL(AC.IdEstatusEliminado, 0) <> 1
     LEFT JOIN Petrovendor.dbo.MM_AceptacionFactura as AF (NOLOCK)
         ON AF.IdAceptacionPedido = AP.IdAceptacionPedido
@@ -144,7 +150,7 @@ BEGIN
         ON FP.IdFactura = AF.IdFactura
     LEFT JOIN Adinco.dbo.FI_Factura as FA (NOLOCK)
         ON FP.UUID = FA.UUID COLLATE DATABASE_DEFAULT
-    WHERE AC.IdEstatus = 2
+    WHERE AC.IdEstatus = @Aprobada
       AND ISNULL(AC.IdEstatusEliminado, 0) <> 1
       AND P.IdContrato = @IdContrato
       AND FP.UUID IS NOT NULL
@@ -198,8 +204,8 @@ BEGIN
             (
                 SELECT DISTINCT
                     CASE
-                        WHEN R.CvTipoDocFacturacion = 1 THEN CAST(F.Fecha AS DATE)
-                        WHEN R.CvTipoDocFacturacion IN (2,3) THEN CAST(PC.FechaPago AS DATE)
+                        WHEN R.CvTipoDocFacturacion = @TipoFactura THEN CAST(F.Fecha AS DATE)
+                        WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN CAST(PC.FechaPago AS DATE)
                         ELSE NULL
                     END AS FechaDoc
                 FROM dbo.CO_PeriodoContrato PEC (NOLOCK)
@@ -220,8 +226,8 @@ BEGIN
                   AND R.IdRegistro IS NOT NULL
                   AND (R.MesPresentacion BETWEEN CAST(@FechaInicio AS DATE) AND CAST(@FechaFin AS DATE))
                   AND (
-                        (R.CvTipoDocFacturacion = 1 AND F.Fecha IS NOT NULL)
-                     OR (R.CvTipoDocFacturacion IN (2,3) AND PC.FechaPago IS NOT NULL)
+                        (R.CvTipoDocFacturacion = @TipoFactura AND F.Fecha IS NOT NULL)
+                     OR (R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) AND PC.FechaPago IS NOT NULL)
                   )
             )
             INSERT INTO #TCMensualReq (AnioTC, MesTC)
@@ -243,7 +249,7 @@ BEGIN
                 ISNULL(TCM.ObtenidoSDK, 0) AS ObtenidoSDK
             FROM #TCMensualReq RQ
             LEFT JOIN dbo.CO_TipoCambioMensual TCM WITH (NOLOCK)
-                ON TCM.IdMoneda = 1
+                ON TCM.IdMoneda = @Peso
                AND RQ.AnioTC = TCM.Anio
                AND RQ.MesTC  = TCM.IdMes
                AND ISNULL(TCM.Activo, 1) = 1;
@@ -268,7 +274,7 @@ BEGIN
                     T.ObtenidoSDK = ISNULL(M.ObtenidoSDK, 0)
                 FROM #TCMensual T
                 LEFT JOIN dbo.CO_TipoCambioMensual M WITH (NOLOCK)
-                    ON M.IdMoneda = 1
+                    ON M.IdMoneda = @Peso
                    AND M.Anio     = T.AnioTC
                    AND M.IdMes    = T.MesTC
                    AND ISNULL(M.Activo, 1) = 1
@@ -327,32 +333,32 @@ BEGIN
             LPM.AC_FEC_INI AS FechaInicio,
             LPM.AC_FEC_FIN AS FechaFin,
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN 'CF'
-                WHEN R.CvTipoDocFacturacion = 2 THEN 'PI'
-                WHEN R.CvTipoDocFacturacion = 3 THEN 'PE'
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN 'CF'
+                WHEN R.CvTipoDocFacturacion = @TipoPedimento THEN 'PI'
+                WHEN R.CvTipoDocFacturacion = @TipoComprobante THEN 'PE'
             END AS TipoDocumento,
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN LTRIM(RTRIM(F.Serie + ' ' + F.Folio))
-                WHEN R.CvTipoDocFacturacion = 2 THEN PC.NumeroPedimento
-                WHEN R.CvTipoDocFacturacion = 3 THEN PC.FolioComprobante
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN LTRIM(RTRIM(F.Serie + ' ' + F.Folio))
+                WHEN R.CvTipoDocFacturacion = @TipoPedimento THEN PC.NumeroPedimento
+                WHEN R.CvTipoDocFacturacion = @TipoComprobante THEN PC.FolioComprobante
             END AS Numero,
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN F.Fecha
-                WHEN R.CvTipoDocFacturacion IN (2,3) THEN PC.FechaPago
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN F.Fecha
+                WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN PC.FechaPago
             END AS FechaDocumento,
 
             /* ==========================
                MontoUSD
                ========================== */
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN
                     SUM(
                         CASE
                             WHEN ISNULL(R.MontoRegistro,0) <> 0 THEN
                                 ISNULL(R.MontoRegistro,0) / NULLIF(
                                     CASE
-                                        WHEN TMF.IdMoneda = 2 THEN 1
-                                        WHEN @EsCIEP = 1 AND TMF.IdMoneda = 1 THEN
+                                        WHEN TMF.IdMoneda = @Dolar THEN 1
+                                        WHEN @EsCIEP = 1 AND TMF.IdMoneda = @Peso THEN
                                             COALESCE(NULLIF(TCM_DOC.TipoCambio,0), NULLIF(TCM_PREV.TipoCambio,0))
                                         ELSE
                                             TCDF.TipoCambio
@@ -361,14 +367,14 @@ BEGIN
                             ELSE 0
                         END
                     )
-                WHEN R.CvTipoDocFacturacion IN (2,3) THEN
+                WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN
                     SUM(
                         CASE
                             WHEN ISNULL(R.MontoRegistro,0) <> 0 THEN
                                 ISNULL(R.MontoRegistro,0) / NULLIF(
                                     CASE
-                                        WHEN TMPC.IdMoneda = 2 THEN 1
-                                        WHEN @EsCIEP = 1 AND TMPC.IdMoneda = 1 THEN
+                                        WHEN TMPC.IdMoneda = @Dolar THEN 1
+                                        WHEN @EsCIEP = 1 AND TMPC.IdMoneda = @Peso THEN
                                             COALESCE(NULLIF(TCM_DOC.TipoCambio,0), NULLIF(TCM_PREV.TipoCambio,0))
                                         ELSE
                                             TCDPC.TipoCambio
@@ -383,21 +389,21 @@ BEGIN
                TipoCambioUsado
                ========================== */
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN
                     CAST(
                         CASE
-                            WHEN TMF.IdMoneda = 2 THEN 1
-                            WHEN @EsCIEP = 1 AND TMF.IdMoneda = 1 THEN
+                            WHEN TMF.IdMoneda = @Dolar THEN 1
+                            WHEN @EsCIEP = 1 AND TMF.IdMoneda = @Peso THEN
                                 COALESCE(NULLIF(TCM_DOC.TipoCambio,0), NULLIF(TCM_PREV.TipoCambio,0))
                             ELSE
                                 TCDF.TipoCambio
                         END AS DECIMAL(18,6)
                     )
-                WHEN R.CvTipoDocFacturacion IN (2,3) THEN
+                WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN
                     CAST(
                         CASE
-                            WHEN TMPC.IdMoneda = 2 THEN 1
-                            WHEN @EsCIEP = 1 AND TMPC.IdMoneda = 1 THEN
+                            WHEN TMPC.IdMoneda = @Dolar THEN 1
+                            WHEN @EsCIEP = 1 AND TMPC.IdMoneda = @Peso THEN
                                 COALESCE(NULLIF(TCM_DOC.TipoCambio,0), NULLIF(TCM_PREV.TipoCambio,0))
                             ELSE
                                 TCDPC.TipoCambio
@@ -410,17 +416,17 @@ BEGIN
                ========================== */
             ISNULL(
                 CASE
-                    WHEN R.CvTipoDocFacturacion = 1 THEN
+                    WHEN R.CvTipoDocFacturacion = @TipoFactura THEN
                         CASE
-                            WHEN @EsCIEP = 1 AND TMF.IdMoneda = 1
+                            WHEN @EsCIEP = 1 AND TMF.IdMoneda = @Peso
                                  AND (TCM_DOC.TipoCambio IS NULL OR TCM_DOC.TipoCambio = 0)
                                  AND (TCM_PREV.TipoCambio IS NOT NULL AND TCM_PREV.TipoCambio <> 0)
                                 THEN 1
                             ELSE 0
                         END
-                    WHEN R.CvTipoDocFacturacion IN (2,3) THEN
+                    WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN
                         CASE
-                            WHEN @EsCIEP = 1 AND TMPC.IdMoneda = 1
+                            WHEN @EsCIEP = 1 AND TMPC.IdMoneda = @Peso
                                  AND (TCM_DOC.TipoCambio IS NULL OR TCM_DOC.TipoCambio = 0)
                                  AND (TCM_PREV.TipoCambio IS NOT NULL AND TCM_PREV.TipoCambio <> 0)
                                 THEN 1
@@ -431,8 +437,8 @@ BEGIN
             ,0) AS UsaTCMesAnterior,
 
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN SF.RazonSocial
-                WHEN R.CvTipoDocFacturacion IN (2,3) THEN SPC.RazonSocial
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN SF.RazonSocial
+                WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN SPC.RazonSocial
             END AS Subcontratista,
             IR.NombreInstalacion AS InstalacionRegistro,
             R.InicioEjecucion,
@@ -440,8 +446,8 @@ BEGIN
             U.Nombre AS CreadoPor,
             R.MontoRegistro,
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN TMF.TipoMonedaCorto
-                WHEN R.CvTipoDocFacturacion IN (2,3) THEN TMPC.TipoMonedaCorto
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN TMF.TipoMonedaCorto
+                WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN TMPC.TipoMonedaCorto
             END AS Moneda,
             R.MesPresentacion AS MesPresentacion,
             YEAR(R.MesPresentacion) AS Anio,
@@ -459,8 +465,8 @@ BEGIN
             R.Comentarios,
             CA.ClasificacionAnexo4 AS Anexo4,
             CASE
-                WHEN R.CvTipoDocFacturacion = 1 THEN F.IdFactura
-                WHEN R.CvTipoDocFacturacion IN (2,3) THEN PC.IdPedimentoComprobante
+                WHEN R.CvTipoDocFacturacion = @TipoFactura THEN F.IdFactura
+                WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN PC.IdPedimentoComprobante
             END AS Identificador,
             LPM.IdLineaPresupuestoMes AS LineaPresupuesto,
             P.Nombre AS Presupuesto,
@@ -469,8 +475,8 @@ BEGIN
             R.PCN,
             CASE WHEN R.CostosAtribuiblesAdministracion = 1 THEN 'SI' ELSE 'NO' END AS CAA,
             CASE
-                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion = 1 THEN 'NO'
-                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion IN (2,3) THEN 'NA'
+                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion = @TipoFactura THEN 'NO'
+                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN 'NA'
                 ELSE 'SI'
             END AS CCN,
             UM.Nombre AS ModificadoPor
@@ -501,8 +507,8 @@ BEGIN
         OUTER APPLY (
             SELECT
                 CASE
-                    WHEN R.CvTipoDocFacturacion = 1 THEN CAST(F.Fecha AS DATE)
-                    WHEN R.CvTipoDocFacturacion IN (2,3) THEN CAST(PC.FechaPago AS DATE)
+                    WHEN R.CvTipoDocFacturacion = @TipoFactura THEN CAST(F.Fecha AS DATE)
+                    WHEN R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN CAST(PC.FechaPago AS DATE)
                     ELSE NULL
                 END AS FechaDoc
         ) FD
@@ -625,8 +631,8 @@ BEGIN
             R.PCN,
             CASE WHEN R.CostosAtribuiblesAdministracion = 1 THEN 'SI' ELSE 'NO' END,
             CASE
-                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion = 1 THEN 'NO'
-                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion IN (2,3) THEN 'NA'
+                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion = @TipoFactura THEN 'NO'
+                WHEN WA.IdDocAwsDocAdinco IS NULL AND R.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN 'NA'
                 ELSE 'SI'
             END,
             UM.Nombre
