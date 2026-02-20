@@ -108,21 +108,21 @@ BEGIN
     FROM dbo.CO_Registro r WITH (NOLOCK)
     LEFT JOIN dbo.CO_LineaPresupuestoMes lpm WITH (NOLOCK)
         ON r.IdPrograma = lpm.IdLineaPresupuestoMes
-    LEFT JOIN dbo.CO_Servicio s WITH (NOLOCK)
+    INNER JOIN dbo.CO_Servicio s WITH (NOLOCK)
         ON lpm.IdServicio = s.IdServicio
-    LEFT JOIN dbo.CO_Instalacion i WITH (NOLOCK)
+    INNER JOIN dbo.CO_Instalacion i WITH (NOLOCK)
         ON lpm.IdInstalacion = i.IdInstalacion
-    LEFT JOIN dbo.CO_TipoServicio ts WITH (NOLOCK)
+    INNER JOIN dbo.CO_TipoServicio ts WITH (NOLOCK)
         ON lpm.IdTipoServicio = ts.IdTipoServicio
-    LEFT JOIN dbo.CO_ActividadCIEP act WITH (NOLOCK)
+    INNER JOIN dbo.CO_ActividadCIEP act WITH (NOLOCK)
         ON lpm.IdActividad = act.IdActividad
-    LEFT JOIN dbo.CO_SubactividadCIEP sub WITH (NOLOCK)
+    INNER JOIN dbo.CO_SubactividadCIEP sub WITH (NOLOCK)
         ON lpm.IdSubactividad = sub.IdSubactividad
-    LEFT JOIN dbo.CO_Area a WITH (NOLOCK)
+    INNER JOIN dbo.CO_Area a WITH (NOLOCK)
         ON lpm.IdArea = a.IdArea
-    LEFT JOIN dbo.CO_ClasificacionAnexo4 an4 WITH (NOLOCK)
+    INNER JOIN dbo.CO_ClasificacionAnexo4 an4 WITH (NOLOCK)
         ON lpm.IdAnexo4 = an4.IdAnexo4
-    LEFT JOIN dbo.CO_Presupuesto p WITH (NOLOCK)
+    INNER JOIN dbo.CO_Presupuesto p WITH (NOLOCK)
         ON lpm.IdPresupuesto = p.IdPresupuesto
 
     -- Factura
