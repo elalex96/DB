@@ -4087,6 +4087,7 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenerPresupuestosPorContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_RegistroGasto_LineaPresupuesto.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ContratistaPorContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_RegistroGastoCIEP.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
