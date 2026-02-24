@@ -1,4 +1,13 @@
-﻿-- =============================================
+﻿USE [Petrovendor]
+GO
+DROP PROC IF EXISTS SP_MM_ConsultarPedidoXVersion
+go
+/****** Object:  StoredProcedure [dbo].[SP_MM_ConsultarPedidoXVersion]    Script Date: 23/02/2026 05:31:06 p. m. ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
 -- Author:		Daniel A Cruz
 -- Create date: 04-01-17
 -- Description:	 Consultar Aprobadores recibiendo el IdOperador
@@ -15,6 +24,10 @@
 -- Author:		Marcos Garcia
 -- Create date: 24-04-2019
 -- Description:	Se concateno RazonRocial,NumeroContrato,NombreAreaContractual y MotivoUrgencia en IdPedidoGeneral
+-- =============================================
+-- Author:		Alexander Gomez
+-- Create date: 23-02-2026
+-- Description:	 Se agrega el filtro por version de pedido
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_MM_ConsultarPedidoXVersion]
 	-- Add the parameters for the stored procedure here
@@ -41,34 +54,34 @@ AS
 						', con Justificación ',
 						REPLACE(REPLACE(REPLACE(SP.MotivoUrgencia,CHAR(10),''),CHAR(13),''),CHAR(9),''),'.'),'
 						','')
-					AS IdPedidoGeneral 
-	FROM MM_Pedido AS P
-		INNER JOIN	S_Proveedor AS PR
+					AS IdPedidoGeneral
+	FROM MM_Pedido AS P (NOLOCK)
+		INNER JOIN	S_Proveedor AS PR (NOLOCK)
 			ON PR.IdProveedor = P.IdSubcontratista
-		INNER JOIN	S_UsuarioProveedor AS UP
+		INNER JOIN	S_UsuarioProveedor AS UP (NOLOCK)
 			ON UP.IdProveedor = PR.IdProveedor
-		INNER JOIN	S_Usuario AS U
+		INNER JOIN	S_Usuario AS U (NOLOCK)
 			ON U.IdUsuario = UP.IdUsuario
-		INNER JOIN	MM_HorasVigenciaPedido AS H
+		INNER JOIN	MM_HorasVigenciaPedido AS H (NOLOCK)
 			ON H.IdPedido = P.IdPedido
-		INNER JOIN	MM_Pedidos AS PG
+		INNER JOIN	MM_Pedidos AS PG (NOLOCK)
 			ON P.IdPedido = PG.IdIdentificador
 			   AND	PG.IdProveedorCliente = P.IdProveedorCompras
-		LEFT JOIN dbo.S_Proveedor AS PC 
+		LEFT JOIN dbo.S_Proveedor AS PC (NOLOCK)
 			ON PC.IdProveedor = P.IdProveedorCompras
-		LEFT JOIN dbo.MM_SolicitudPedido AS SP
+		LEFT JOIN dbo.MM_SolicitudPedido AS SP (NOLOCK)
 			ON SP.IdSolicitudPedido = P.IdSolicitudPedido
-		LEFT JOIN Adinco.dbo.CO_Contrato AS CCO
+		LEFT JOIN Adinco.dbo.CO_Contrato AS CCO (NOLOCK)
 			ON CCO.IdContrato = P.IdContrato
-		LEFT JOIN adinco.dbo.CO_AreaContractual AS CAC
+		LEFT JOIN adinco.dbo.CO_AreaContractual AS CAC (NOLOCK)
 			ON CAC.IdAreaContractual = CCO.IdAreaContractual
 		WHERE
-					P.IdSolicitudPedido = @IdSolicitudPedido
-					AND P.Version = 1
-					AND
-						(	U.IdTipoUsuario = 4
-							OR		U.IdTipoUsuario = 3 )
-					AND U.Activo = 1
-
+			P.IdSolicitudPedido = @IdSolicitudPedido
+			AND P.Version = @Version
+			AND
+				(	U.IdTipoUsuario = 4
+				OR	U.IdTipoUsuario = 3 )
+			AND U.Activo = 1
 		ORDER BY	P.IdPedido
-	END
+
+END
