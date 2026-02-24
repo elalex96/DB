@@ -54,8 +54,7 @@ AS
 						', con Justificación ',
 						REPLACE(REPLACE(REPLACE(SP.MotivoUrgencia,CHAR(10),''),CHAR(13),''),CHAR(9),''),'.'),'
 						','')
-					AS IdPedidoGeneral ,
-					UP.idContrato
+					AS IdPedidoGeneral
 	FROM MM_Pedido AS P (NOLOCK)
 		INNER JOIN	S_Proveedor AS PR (NOLOCK)
 			ON PR.IdProveedor = P.IdSubcontratista
