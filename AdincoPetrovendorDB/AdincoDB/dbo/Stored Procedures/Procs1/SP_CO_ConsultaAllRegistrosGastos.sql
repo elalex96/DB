@@ -7,7 +7,7 @@
         WHERE
             name = 'SP_CO_ConsultaAllRegistrosGastos'
     )
-    DROP PROCEDURE SP_CO_ConsultaAllRegistrosGastos
+    DROP PROCEDURE SP_CO_ConsultaAllRegistrosGastos;
 GO
 -- =============================================
 -- Author:		Marcos Neri
@@ -30,7 +30,8 @@ GO
 CREATE PROCEDURE [dbo].[SP_CO_ConsultaAllRegistrosGastos] --10038,10,null,null,'	1800000076,1D60000180,01-0016	,FFF2FD08-F9CB-41CC-A0F4-17B62EB5D878	,FFF2FD08-F9CB-41CC-A0F4-17B62EB5D878 , D526DD6A-65DB-47B8-BAD9-F9EE35FE43DD'
     @IdContrato INT,
     @IdUsuario  INT,
-    @UUIDFolios VARCHAR(MAX)
+    @UUIDFolios VARCHAR(MAX),
+    @IdContratoSeleccionado INT
 AS
     BEGIN
       
@@ -169,7 +170,7 @@ AS
                                 JOIN
                                     FI_FACTURA	(NOLOCK)
                                         ON U.UUIDFolios = FI_FACTURA.UUID COLLATE DATABASE_DEFAULT
-                                           AND FI_FACTURA.IdContrato = @IdContrato;
+                                           AND FI_FACTURA.IdContrato = @IdContratoSeleccionado;
 
                 DELETE UF
                 FROM
@@ -204,7 +205,7 @@ AS
                                 JOIN
                                     FI_PedimentoComprobante	(NOLOCK)
                                         ON U.UUIDFolios = FI_PedimentoComprobante.NumeroPedimento COLLATE DATABASE_DEFAULT
-                                           AND FI_PedimentoComprobante.IdContrato = @IdContrato
+                                           AND FI_PedimentoComprobante.IdContrato = @IdContratoSeleccionado
                             UNION ALL
                             SELECT DISTINCT
                                 FI_PedimentoComprobante.IdPedimentoComprobante,
@@ -219,7 +220,7 @@ AS
                                 JOIN
                                     FI_PedimentoComprobante	(NOLOCK)
                                         ON U.UUIDFolios = FI_PedimentoComprobante.FolioComprobante COLLATE DATABASE_DEFAULT
-                                           AND FI_PedimentoComprobante.IdContrato = @IdContrato;
+                                           AND FI_PedimentoComprobante.IdContrato = @IdContratoSeleccionado;
 
             END
 
@@ -285,7 +286,7 @@ AS
                                 THEN TF.NumeroPedimento
                             WHEN CO_Registro.CvTipoDocFacturacion = 3
                                 THEN TF.FolioComprobante
-                        END                                                                 AS Numero,
+                        END                                AS Numero,
                         TF.FechaDocumento                                                   AS FechaDocumento,
                         SUM(   CASE
                                    WHEN ISNULL(CO_Registro.MontoRegistro, 0) <> 0
@@ -545,7 +546,7 @@ AS
                         JOIN
                             Petrovendor.dbo.MM_Pedido             AS P (NOLOCK)
                                 ON P.IdPedido = AP.IdPedido
-                                   AND P.IdContrato = @IdContrato;
+                                   AND P.IdContrato = @IdContratoSeleccionado;
 
         UPDATE
             D
@@ -604,4 +605,3 @@ AS
         ORDER BY
             MesPresentacion DESC;
     END;
-

@@ -60,6 +60,14 @@ AS
                     NumeroRepetidas INT           NULL,
                     Activo          BIT           NULL
                 )
+                
+            CREATE TABLE #TablaTemporalValidacionInstalacionesCIEP
+                (
+                    NombreInstalacion     VARCHAR(1000) NULL,
+                    IdInstalacion         INT           NULL,
+                    NumeroRepetidas INT           NULL,
+                    Activo          BIT           NULL
+                )
 
             CREATE TABLE #TablaTemporalValidacionClasificacionCIEP
                 (
@@ -87,6 +95,7 @@ AS
                     Servicios       VARCHAR(1000),
                     Clasificacion   VARCHAR(1000),
                     Unidad          VARCHAR(1000),
+                    Instalacion          VARCHAR(1000),
                     MES1            FLOAT,
                     MES2            FLOAT,
                     MES3            FLOAT,
@@ -122,6 +131,7 @@ AS
                 @DetalleAnalisisCuentaOperativa     VARCHAR(8000),
                 @DetalleAnalisisActividad           VARCHAR(8000),
                 @DetalleAnalisisRubro               VARCHAR(8000),
+                @DetalleAnalisisInstalacion         VARCHAR(8000),
                 @DetalleAnalisisClasificacion       VARCHAR(8000),
                 @DetalleAnalisisDatosGenerales      VARCHAR(8000),
                 @IdCarga                            INT         = 0,
@@ -131,6 +141,7 @@ AS
                 @NumeroAlertasActividad             INT         = 0,
                 @NumeroAlertasServicio              INT         = 0,
                 @NumeroAlertasRubro                 INT         = 0,
+                @NumeroAlertasInstalacion           INT         = 0,
                 @NumeroAlertasClasificacion         INT         = 0,
                 @Mensaje                            VARCHAR(50) = '',
                 @NumeroAlertasCuentaOperativaVacios INT         = 0,
@@ -191,6 +202,7 @@ AS
                     Servicios,
                     Clasificacion,
                     Unidad,
+                    Instalacion,
                     MES1,
                     MES2,
                     MES3,
@@ -225,6 +237,7 @@ AS
                             Servicios,
                             Clasificacion,
                             Unidad,
+                            Instalacion,
                             MES1,
                             MES2,
                             MES3,
@@ -261,6 +274,7 @@ AS
                     Servicios,
                     Clasificacion,
                     Unidad,
+                    Instalacion,
                     MES1,
                     MES2,
                     MES3,
@@ -296,6 +310,7 @@ AS
                             Servicios,
                             Clasificacion,
                             Unidad,
+                            Instalacion,
                             MES1,
                             MES2,
                             MES3,
@@ -396,6 +411,20 @@ AS
                         GROUP BY
                             Clasificacion;
 
+             INSERT INTO #TablaTemporalValidacionInstalacionesCIEP
+                (
+                    NombreInstalacion,
+                    NumeroRepetidas
+                )
+                        SELECT
+                            Instalacion,
+                            COUNT(1)
+                        FROM
+                            #TablaTemporalBitacoraPresupuestoDetalleCIEP
+                            WHERE Instalacion <> ''
+                        GROUP BY
+                            Instalacion;
+
             UPDATE
                 #TablaTemporalValidacionTipoServicio
             SET
@@ -407,7 +436,7 @@ AS
                     CO_TipoServicio
                         ON UPPER(LTRIM(RTRIM(ISNULL(#TablaTemporalValidacionTipoServicio.NombreTipoServicio, '')))) = UPPER(LTRIM(RTRIM(ISNULL(
                                                                                                                                                   CO_TipoServicio.NombreTipoServicio,
-                                                                                                                                                  ''
+                                                                                                                                        ''
                                                                                                                                               )
                                                                                                                                        )
                                                                                                                                  )
@@ -492,7 +521,29 @@ AS
             WHERE
                 #TablaTemporalValidacionClasificacionCIEP.NombreClasificacion <> '';
 
-			/*=========================*/
+            
+            UPDATE
+                #TablaTemporalValidacionInstalacionesCIEP
+            SET
+                #TablaTemporalValidacionInstalacionesCIEP.IdInstalacion = CO_Instalacion.IdInstalacion,
+                #TablaTemporalValidacionInstalacionesCIEP.Activo = CO_Instalacion.Activo
+            from
+                #TablaTemporalValidacionInstalacionesCIEP
+                JOIN
+                    CO_Instalacion
+                        ON UPPER(LTRIM(RTRIM(ISNULL(#TablaTemporalValidacionInstalacionesCIEP.NombreInstalacion, '')))) = UPPER(LTRIM(RTRIM(ISNULL(
+                                                                                                                                                  CO_Instalacion.NombreInstalacion,
+                                                                                                                                        ''
+                                                                                                                                              )
+                                                                                                                                       )
+                                                                                                                                 )
+                                                                                                                           )
+                AND CO_Instalacion.IdAreaContractual = @IdAreaContractual
+            WHERE
+                #TablaTemporalValidacionInstalacionesCIEP.NombreInstalacion <> '';
+
+
+            /*=========================*/
             /*Verificacion de IdExcel*/
             /*=========================*/
             SELECT
@@ -518,7 +569,7 @@ AS
                                       ISNULL(IdExcel, '') = ''
                                   ORDER BY
                                       IdExcel ASC
-                                  FOR XML PATH('')
+          FOR XML PATH('')
                               ), 1, 2, ''
                                );
                     INSERT INTO #TablaTemporalValidacionDetalles
@@ -543,9 +594,9 @@ AS
                             'IdExcel',
                             CASE
                                 WHEN @NumeroAlertasIdExcelVacios > 1
-                                    THEN 1
+                                  THEN	1
                                 ELSE
-                                    0
+                                   0
                             END,
                             @NumeroAlertasIdExcelVacios
                         )
@@ -554,8 +605,8 @@ AS
 
                 END
 
-			/*=========================*/
-            /*Verificacion de CO_TipoServicio*/
+            /*=========================*/
+            /*Verificacion de Cuenta operativa - Tipo Servicio*/
             /*=========================*/
             SELECT
                 @NumeroAlertasCuentaOperativaVacios = COUNT(1)
@@ -603,16 +654,16 @@ AS
                             END,
                             'CuentaOperativa',
                             'Cuenta Operativa',
-                            CASE
+                             CASE
                                 WHEN @NumeroAlertasCuentaOperativaVacios > 1
-                                    THEN 1
+                                  THEN	1
                                 ELSE
-                                    0
+                                   0
                             END,
                             @NumeroAlertasCuentaOperativaVacios
                         )
 
-                    SET @DetalleAnalisisDatosGenerales = '';
+          SET @DetalleAnalisisDatosGenerales = '';
 
                 END
 
@@ -700,11 +751,11 @@ AS
                             END,
                             'Servicios',
                             'Servicio',
-                            CASE
+                             CASE
                                 WHEN @NumeroAlertasServicioVacios > 1
-                                    THEN 1
+                                  THEN	1
                                 ELSE
-                                    0
+                  0
                             END,
                             @NumeroAlertasServicioVacios
                         )
@@ -797,11 +848,11 @@ AS
                             END,
                             'Actividades',
                             'Actividad',
-                            CASE
+                             CASE
                                 WHEN @NumeroAlertasActividadVacios > 1
-                                    THEN 1
+                                  THEN	1
                                 ELSE
-                                    0
+                                   0
                             END,
                             @NumeroAlertasActividadVacios
                         )
@@ -874,11 +925,11 @@ AS
                             END,
                             'Rubros',
                             'Rubro',
-                            CASE
+                             CASE
                                 WHEN @NumeroAlertasRubroVacios > 1
-                                    THEN 1
+                                  THEN	1
                                 ELSE
-                                    0
+                                   0
                             END,
                             @NumeroAlertasRubroVacios
                         )
@@ -971,11 +1022,11 @@ AS
                             END,
                             'Clasificaciones',
                             'Clasificacion',
-                            CASE
+                             CASE
                                 WHEN @NumeroAlertasClasificacionVacios > 1
-                                    THEN 1
+                                  THEN	1
                                 ELSE
-                                    0
+                                   0
                             END,
                             @NumeroAlertasClasificacionVacios
                         )
@@ -997,6 +1048,46 @@ AS
                         WHERE
                             IdClasificacion IS NULL
                             AND NombreClasificacion <> ''
+
+             /*=========================*/
+            /*Verificacion de CO_Instalación 
+            Solo se valida si no esta activa o si no existe
+            */
+            /*=========================*/
+
+                 INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_INSTALACION',
+                            LTRIM(RTRIM(CONCAT(
+                                                  NombreInstalacion, ' (', CONVERT(VARCHAR(10), NumeroRepetidas),
+                                                  ') [NO ACTIVO]'
+                                              )
+                                       )
+                                 )
+                        FROM
+                            #TablaTemporalValidacionInstalacionesCIEP
+                        WHERE
+                            Activo = 0
+                            AND IdInstalacion IS NOT NULL
+                            AND NombreInstalacion <> ''
+
+            INSERT INTO #TablaTemporalValidacionDetalles
+                (
+                    Tipo,
+                    Descripcion
+                )
+                        SELECT
+                            'ALERTA_INSTALACION',
+                            LTRIM(RTRIM(CONCAT(NombreInstalacion, ' (', CONVERT(VARCHAR(10), NumeroRepetidas), ') ')))
+                        FROM
+                            #TablaTemporalValidacionInstalacionesCIEP
+                        WHERE
+                            IdInstalacion IS NULL
+                            AND NombreInstalacion <> ''
 
             /*===========================*/
             /*Verificacion de Monto = 0*/
@@ -1069,7 +1160,7 @@ AS
                                                     FROM
                                                         #TablaTemporalBitacoraPresupuestoDetalleCIEP
                                                     WHERE
-                                                        ISNULL(MONTO, 0) = 0
+        ISNULL(MONTO, 0) = 0
                                                     ORDER BY
                                                         IdExcel ASC
                                                     FOR XML PATH('')
@@ -1154,6 +1245,13 @@ AS
             WHERE
                 Tipo = 'ALERTA_CLASIFICACION';
 
+             SELECT
+                @NumeroAlertasInstalacion = COUNT(1)
+            FROM
+                #TablaTemporalValidacionDetalles
+            WHERE
+                Tipo = 'ALERTA_INSTALACION';
+
             IF (
                    @NumeroAlertasDatosGenerales = 0
                    AND @NumeroAlertasCuentaOperativa = 0
@@ -1161,6 +1259,7 @@ AS
                    AND @NumeroAlertasServicio = 0
                    AND @NumeroAlertasRubro = 0
                    AND @NumeroAlertasClasificacion = 0
+                   AND @NumeroAlertasInstalacion = 0
                )
                 SELECT
                     @Mensaje = 'VALIDACION_EXITOSA';
@@ -1172,6 +1271,7 @@ AS
                    AND @NumeroAlertasServicio > 0
                    AND @NumeroAlertasRubro > 0
                    AND @NumeroAlertasClasificacion > 0
+                   AND @NumeroAlertasInstalacion > 0
                )
                 SELECT
                     @Mensaje = 'ALERTA_TODAS_ALERTAS'
@@ -1228,6 +1328,13 @@ AS
                     WHERE
                         Tipo = 'ALERTA_CLASIFICACION';
 
+                      SELECT
+                        Descripcion
+                    FROM
+                        #TablaTemporalValidacionDetalles -- 7
+                    WHERE
+                        Tipo = 'ALERTA_INSTALACION';
+
                     IF (@NumeroAlertasServicio > 0)
                         BEGIN
                             SELECT
@@ -1264,7 +1371,7 @@ AS
                     IF (@NumeroAlertasCuentaOperativa > 0)
                         BEGIN
                             SELECT
-                                @DetalleAnalisisCuentaOperativa = STUFF(
+                              @DetalleAnalisisCuentaOperativa = STUFF(
                                                                       (
                                                                           SELECT
                                                                               ', ' + Descripcion
@@ -1322,7 +1429,7 @@ AS
                                                           + ' nuevas actividades ( ' + @DetalleAnalisisActividad
                                                           + ' )	|'
                                                  ELSE
-                                                     'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasActividad)
+                                        'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasActividad)
                                                      + ' nueva actividad ( ' + @DetalleAnalisisActividad + ' )	|'
                                              END
                                             )
@@ -1386,12 +1493,48 @@ AS
                                             (CASE
                                                  WHEN @NumeroAlertasClasificacion > 1
                                                      THEN 'Existen '
-                                                          + CONVERT(VARCHAR(10), @NumeroAlertasClasificacion)
+                                                  + CONVERT(VARCHAR(10), @NumeroAlertasClasificacion)
                                                           + ' nuevas clasificaciones ( '
                                                           + @DetalleAnalisisClasificacion + ' )	|'
                                                  ELSE
                                                      'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasClasificacion)
                                                      + ' nueva clasificación ( ' + @DetalleAnalisisClasificacion
+                                                     + ' )	|'
+                                             END
+                                            )
+                                        );
+                            SET @DetalleAnalisis = REPLACE(@DetalleAnalisis, '&amp;', '&');
+
+                        END
+
+                    IF(@NumeroAlertasInstalacion > 0)
+                    BEGIN
+                            SELECT
+                                @DetalleAnalisisInstalacion = STUFF(
+                                                                    (
+                                                                        SELECT
+                                                                            ', ' + Descripcion
+                                                                        FROM
+                                                                            #TablaTemporalValidacionDetalles
+                                                                        WHERE
+                                                                            Tipo = 'ALERTA_INSTALACION'
+                                                                        FOR XML PATH('')
+                                                                    ), 1, 2, ''
+                                                                     );
+
+                            SELECT
+                                @DetalleAnalisis
+                                = CONCAT(
+                                            @DetalleAnalisis,
+                                            (CASE
+                                                 WHEN @NumeroAlertasInstalacion > 1
+                                                     THEN 'Existen '
+                                                  + CONVERT(VARCHAR(10), @NumeroAlertasInstalacion)
+                                                          + ' nuevas instalaciones ( '
+                                                          + @DetalleAnalisisInstalacion + ' )	|'
+                                                 ELSE
+                                                     'Existe ' + CONVERT(VARCHAR(10), @NumeroAlertasInstalacion)
+                                                     + ' nueva instalación ( ' + @DetalleAnalisisInstalacion
                                                      + ' )	|'
                                              END
                                             )

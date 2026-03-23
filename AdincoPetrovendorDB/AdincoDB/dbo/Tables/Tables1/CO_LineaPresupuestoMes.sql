@@ -78,4 +78,21 @@ CREATE NONCLUSTERED INDEX [idxPresupuestoActividadSubactividadTarea]
 GO
 CREATE NONCLUSTERED INDEX [idxPresupuestoActividadSubactividadTareaServicio]
     ON [dbo].[CO_LineaPresupuestoMes]([IdPresupuesto] ASC, [IdActividadPetrolera] ASC, [IdSubactividadPetrolera] ASC, [IdTareaPetrolera] ASC, [IdServicio] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+GO
+CREATE INDEX IX_CO_LineaPresupuestoMes_IdPresupuesto
+    ON dbo.CO_LineaPresupuestoMes (IdPresupuesto, IdLineaPresupuestoMes)
+    INCLUDE
+    (
+        IdServicio,
+        IdInstalacion,
+        IdTipoServicio,
+        IdActividad,
+        IdArea,
+        IdAnexo4,
+        IdActividadPetrolera,
+        IdSubactividadPetrolera,
+        IdRubroInterno,
+        IdTareaPetrolera
+    );
+
 

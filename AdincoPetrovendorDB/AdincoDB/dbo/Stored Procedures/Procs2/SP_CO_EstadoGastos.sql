@@ -1,242 +1,290 @@
-﻿-- =============================================
--- Author:		Manuel CD
--- Create date: 27-09-17
--- Description:	
--- =============================================
-CREATE PROCEDURE [dbo].[SP_CO_EstadoGastos] 
-	-- Add the parameters for the stored procedure here
-@IdPresupuesto INT,
-@IdUsuario     INT,
-@IdContrato    INT
+﻿IF EXISTS
+(
+    SELECT 1
+    FROM dbo.sysobjects
+    WHERE name = 'SP_CO_EstadoGastos'
+)
+    DROP PROCEDURE dbo.SP_CO_EstadoGastos;
+GO
+
+CREATE PROCEDURE [dbo].[SP_CO_EstadoGastos]
+    @IdPresupuesto INT,
+    @IdUsuario     INT,
+    @IdContrato    INT
 AS
-         BEGIN
-	-- SET NOCOUNT ON added to prevent extra result sets from
-	-- interfering with SELECT statements.
-             SET NOCOUNT ON;
+BEGIN
+    SET NOCOUNT ON;
+    SET LANGUAGE spanish;
 
-    -- Insert statements for procedure here
+    DECLARE @TipoFactura     TINYINT = 1,
+            @TipoPedimento   TINYINT = 2,
+            @TipoComprobante TINYINT = 3,
+            @Dolar           TINYINT = 2,
+            @Peso            TINYINT = 1;
 
-    --     SELECT R.IdRegistro,
-    --            R.IdFactura,
-    --            R.MontoRegistro,
-    --            CONVERT(CHAR(10),R.MesPresentacion,103) AS MesPresentacion,
-    --            CONVERT(CHAR(10),R.InicioEjecucion,103) AS InicioEjecucion,
-    --            CONVERT(CHAR(10),R.FinEjecucion,103) AS FinEjecucion,
-    --            R.Comentarios,
-    --            R.Poliza,
-    --            ER.NombreEstado AS Estado,
-    --            I.NombreInstalacion,
-			 --UC.Nombre AS CreadoPor,
-			 --UM.Nombre AS ModificadoPor
-    --     FROM CO_Registro AS R
-    --          INNER JOIN CO_LineaPresupuestoMes AS LPM ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-    --          INNER JOIN CO_EstadoRegistro_V2 AS ER ON R.IdEstado = ER.IdClvEstado
-    --          INNER JOIN CO_Instalacion AS I ON R.IdInstalacion = I.IdInstalacion
-		  --  INNER JOIN AP_Usuario UC ON R.IdUsuarioCreadoPor = UC.UsuarioID
-		  --  INNER JOIN AP_Usuario UM ON R.IdUsuarioModPor = UM.UsuarioID
-		  --  INNER JOIN CO_EstadoRegistroUsuario ERU ON ER.IdClvEstado = ERU.IdClvEstado
-	   --WHERE LPM.IdPresupuesto = @IdPresupuesto
-	   --AND ERU.IdUsuario = @IdUsuario
-	   --AND ER.IdContrato = @IdContrato
-	   --ORDER BY R.IdRegistro DESC
+    ;WITH Datos AS
+    (
+        SELECT
+            r.IdRegistro,
+            r.IdFactura,
 
-             SET NOCOUNT ON;
-		   
-/**/
+            s.NombreServicio        AS Servicio,
+            i.NombreInstalacion     AS InstalacionPresupuestada,
+            lpm.AC_FEC_INI          AS FechaInicio,
+            lpm.AC_FEC_FIN          AS FechaFin,
 
-             SELECT R.IdRegistro,
-                    R.IdFactura,
-                    S.NombreServicio AS Servicio,
-                    I.NombreInstalacion AS InstalacionPresupuestada,
-                    LPM.AC_FEC_INI AS FechaInicio,
-                    LPM.AC_FEC_FIN AS FechaFin,
-                    ER.NombreEstado AS Estado,
-                    CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                        THEN 'CF'
-                        WHEN R.CvTipoDocFacturacion = 2
-                        THEN 'PI'
-                        WHEN R.CvTipoDocFacturacion = 3
-                        THEN 'PE'
-                    END AS TipoDocumento,
-                    CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                        THEN LTRIM(RTRIM(F.Serie+' '+F.Folio))
-                        WHEN R.CvTipoDocFacturacion = 2
-                        THEN PC.NumeroPedimento
-                        WHEN R.CvTipoDocFacturacion = 3
-                        THEN PC.FolioComprobante
-                    END AS Numero,
-                    CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                        THEN F.Fecha
-                        WHEN R.CvTipoDocFacturacion IN(2, 3)
-                        THEN PC.FechaPago
-                    END AS FechaDocumento,
-                    CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                        THEN SUM(CASE
-                                     WHEN ISNULL(R.MontoRegistro, 0) <> 0
-                                     THEN ISNULL(R.MontoRegistro, 0) / TCDF.TipoCambio
-                                     ELSE 0
-                                 END)
-                        WHEN R.CvTipoDocFacturacion IN(2, 3)
-                        THEN SUM(CASE
-                                     WHEN ISNULL(R.MontoRegistro, 0) <> 0
-                                     THEN ISNULL(R.MontoRegistro, 0) / TCDPC.TipoCambio
-                                     ELSE 0
-                                 END)
-                    END AS MontoUSD,
-                    CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                        THEN SF.RazonSocial
-                        WHEN R.CvTipoDocFacturacion IN(2, 3)
-                        THEN SPC.RazonSocial
-                    END AS Subcontratista,
-                    IR.NombreInstalacion AS InstalacionRegistro,
-                    R.InicioEjecucion,
-                    R.FinEjecucion,
-                    U.Nombre AS CreadoPor,
-                    R.MontoRegistro,
-                    CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                        THEN TMF.TipoMonedaCorto
-                        WHEN R.CvTipoDocFacturacion IN(2, 3)
-                        THEN TMPC.TipoMonedaCorto
-                    END AS Moneda,
-                    R.MesPresentacion AS MesPresentacion,
-                    --dbo.CO_TipoServicio.NombreTipoServicio AS TipoDeServicio,-- dbo.CO_ActividadCIEP.NombreActividad AS Actividad,-- dbo.CO_SubactividadCIEP.NombreSubactividad AS SubActividad,
-                    CASE
-                        WHEN P.ciep = 1
-                        THEN TS.NombreTipoServicio
-                        ELSE ACNH.DescripcionActividadPetrolera
-                    END AS TipoDeServicio,
-                    CASE
-                        WHEN P.ciep = 1
-                        THEN ACIEP.NombreActividad
-                        ELSE SAP.SubactividadPetrolera
-                    END AS Actividad,
-                    CASE
-                        WHEN P.ciep = 1
-                        THEN RI.NombreRubro
-                        ELSE TP.TareaPetrolera
-                    END AS SubActividad,
-                    ER2.NombreEstado AS EstadoValidacion,
-                    A.NombreArea AS Area,
-                    R.Comentarios,
-                    CA.ClasificacionAnexo4 AS Anexo4,
-                    CASE
-                        WHEN R.CvTipoDocFacturacion = 1
-                        THEN F.IdFactura
-                        WHEN R.CvTipoDocFacturacion IN(2, 3)
-                        THEN PC.IdPedimentoComprobante
-                    END AS Identificador,
-                    LPM.IdLineaPresupuestoMes AS LineaPresupuesto,
-                    P.Nombre AS Presupuesto,
-                    IR.NombreInstalacion,
-                    UC.Nombre AS CreadoPor,
-                    UM.Nombre AS ModificadoPor,
-                    R.Poliza
-             FROM dbo.CO_LineaPresupuestoMes LPM
-                  LEFT JOIN dbo.CO_Servicio S ON LPM.IdServicio = S.IdServicio
-                  LEFT JOIN dbo.CO_Instalacion I ON LPM.IdInstalacion = I.IdInstalacion
-                  LEFT JOIN dbo.CO_Registro R ON R.IdPrograma = LPM.IdLineaPresupuestoMes
-                  LEFT JOIN dbo.FI_Factura F ON F.IdFactura = R.IdFactura
-                  LEFT JOIN dbo.FI_pedimentocomprobante PC ON PC.IdPedimentoComprobante = R.IdPedimentoComprobante
-                  LEFT JOIN dbo.PV_Subcontratista SF ON F.IdSubcontratista = SF.IdSubcontratista
-                  LEFT JOIN dbo.PV_Subcontratista SPC ON SPC.IdSubcontratista = PC.IdSubcontratistaExportador
-                  LEFT JOIN dbo.CO_Instalacion IR ON R.IdInstalacion = IR.IdInstalacion
-                  LEFT JOIN dbo.AP_Usuario U ON R.IdUsuarioCreadoPor = U.UsuarioID
-                  LEFT JOIN dbo.CO_TipoServicio TS ON LPM.IdTipoServicio = TS.IdTipoServicio
-                  LEFT JOIN dbo.CO_ActividadCIEP ACIEP ON LPM.IdActividad = ACIEP.IdActividad
-                  LEFT JOIN dbo.CO_SubactividadCIEP SCIEP ON LPM.IdSubactividad = SCIEP.IdSubactividad
-                  LEFT JOIN dbo.CO_EstadoRegistro ER ON R.IdEstado = ER.IdEstadoRegistro
-                  LEFT JOIN dbo.CO_Area A ON A.IdArea = LPM.IdArea
-                  LEFT JOIN dbo.PV_TipoMoneda TMF ON TMF.IdMoneda = F.IdMoneda
-                  LEFT JOIN dbo.CO_TipoCambioDiario TCDF ON TCDF.IdMoneda = TMF.IdMoneda
-                                                            AND DAY(TCDF.Fecha) = DAY(F.Fecha)
-                                                            AND MONTH(TCDF.Fecha) = MONTH(F.Fecha)
-                                                            AND YEAR(TCDF.Fecha) = YEAR(F.Fecha)
-                  LEFT JOIN dbo.PV_TipoMoneda TMPC ON TMPC.IdMoneda = PC.IdMoneda
-                  LEFT JOIN dbo.CO_TipoCambioDiario TCDPC ON TCDPC.IdMoneda = TMPC.IdMoneda
-                                                             AND DAY(TCDPC.Fecha) = DAY(PC.FechaPago)
-                                                             AND MONTH(TCDPC.Fecha) = MONTH(PC.FechaPago)
-                                                             AND YEAR(TCDPC.Fecha) = YEAR(PC.FechaPago)
-                  LEFT JOIN dbo.CO_ClasificacionAnexo4 CA ON LPM.IdAnexo4 = CA.IdAnexo4
-                  LEFT JOIN dbo.CO_Presupuesto P ON LPM.IdPresupuesto = P.IdPresupuesto
-                  LEFT JOIN dbo.CO_ActividadPetroleraCNH ACNH ON LPM.IdActividadPetrolera = ACNH.IdActividadPetrolera
-                  LEFT JOIN dbo.CO_SubactividadPetrolera SAP ON LPM.IdSubactividadPetrolera = SAP.IdSubactividadPetrolera
-                  LEFT JOIN dbo.CO_RubroInterno RI ON LPM.IdRubroInterno = RI.IdRubroInterno
-                  LEFT JOIN dbo.CO_TareaPetrolera TP ON LPM.IdTareaPetrolera = TP.IdTareaPetrolera
-                  LEFT JOIN CO_EstadoRegistro_V2 AS ER2 ON R.IdEstado = ER2.IdClvEstado
-                  JOIN AP_Usuario UC ON R.IdUsuarioCreadoPor = UC.UsuarioID
-                  LEFT JOIN AP_Usuario UM ON R.IdUsuarioModPor = UM.UsuarioID
-                  LEFT JOIN CO_EstadoRegistroUsuario ERU ON ER2.IdClvEstado = ERU.IdClvEstado
-             WHERE --R.IdPrograma = 9
-             (P.IdPresupuesto = @IdPresupuesto)
-         
-/*AND ((R.IdEstado = 10004
-               AND @IdPresupuesto = 10000)
-              OR (R.IdEstado IN(10000, 10001, 10002, 10003, 10004, 10005, 10006)
-         AND @IdPresupuesto <> 10000))
-              AND (R.IdRegistro IS NOT NULL)*/
+            er.NombreEstado         AS Estado,
 
-             AND ER2.IdContrato = @IdContrato
-             GROUP BY R.idfactura,
-                      PC.NumeroPedimento,
-                      S.NombreServicio,
-                      I.NombreInstalacion,
-                      LPM.AC_FEC_INI,
-                      LPM.AC_FEC_FIN,
-                      F.Fecha,
-                      LTRIM(RTRIM(F.Serie+' '+F.Folio)),
-                      SF.RazonSocial,
-                      IR.NombreInstalacion,
-                      R.InicioEjecucion,
-                      R.FinEjecucion,
-                      F.Fecha,
-                      U.Nombre,
-                      R.MontoRegistro,
-                      TMF.TipoMonedaCorto,
-                      R.MesPresentacion,
-                      CASE
-                          WHEN P.ciep = 1
-                          THEN TS.NombreTipoServicio
-                          ELSE ACNH.DescripcionActividadPetrolera
-                      END,
-                      CASE
-                          WHEN P.ciep = 1
-                          THEN ACIEP.NombreActividad
-                          ELSE SAP.SubactividadPetrolera
-                      END,
-                      CASE
-                          WHEN P.ciep = 1
-                          THEN RI.NombreRubro
-                          ELSE TP.TareaPetrolera
-                      END,
-                      R.IdRegistro,
-                      ER.NombreEstado,
-                      A.NombreArea,
-                      R.Comentarios,
-                      CA.ClasificacionAnexo4,
-                      F.IdFactura,
-                      PC.IdPedimentoComprobante,
-                      IR.CUIP,
-                      IR.WelIID,
-                      LPM.IdLineaPresupuestoMes,
-                      IR.IdInstalacion,
-                      P.Nombre,
-                      R.CvTipoDocFacturacion,
-                      PC.FechaPago,
-                      PC.IdMoneda,
-                      R.IdRegistro,
-                      PC.FolioComprobante,
-                      SPC.RazonSocial,
-                      TMPC.TipoMonedaCorto,
-                      ER2.NombreEstado,
-                      I.NombreInstalacion,
-                      R.Poliza,
-                      UC.Nombre,
-                      UM.Nombre
-             ORDER BY R.MesPresentacion DESC;
-         END;
+            CASE
+                WHEN r.CvTipoDocFacturacion = @TipoFactura     THEN 'CF'
+                WHEN r.CvTipoDocFacturacion = @TipoPedimento   THEN 'PI'
+                WHEN r.CvTipoDocFacturacion = @TipoComprobante THEN 'PE'
+            END AS TipoDocumento,
+
+            CASE
+                WHEN r.CvTipoDocFacturacion = @TipoFactura
+                    THEN LTRIM(RTRIM(ISNULL(f.Serie, '') + ' ' + ISNULL(f.Folio, '')))
+                WHEN r.CvTipoDocFacturacion = @TipoPedimento
+                    THEN pc.NumeroPedimento
+                WHEN r.CvTipoDocFacturacion = @TipoComprobante
+                    THEN pc.FolioComprobante
+            END AS Numero,
+
+            CASE
+                WHEN r.CvTipoDocFacturacion = @TipoFactura
+                    THEN f.Fecha
+                WHEN r.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante)
+                    THEN pc.FechaPago
+            END AS FechaDocumento,
+
+            CASE
+                WHEN r.CvTipoDocFacturacion = @TipoFactura
+                    THEN sf.RazonSocial
+                WHEN r.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante)
+                    THEN spc.RazonSocial
+                ELSE NULL
+            END AS Subcontratista,
+
+            ir.NombreInstalacion AS InstalacionRegistro,
+            r.InicioEjecucion,
+            r.FinEjecucion,
+
+            uc.Nombre AS CreadoPor,
+
+            CAST(r.MontoRegistro AS DECIMAL(18,6)) AS MontoRegistro,
+
+            CASE
+                WHEN r.CvTipoDocFacturacion = @TipoFactura THEN mf.TipoMonedaCorto
+                WHEN r.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN mpc.TipoMonedaCorto
+                ELSE NULL
+            END AS Moneda,
+
+            r.MesPresentacion AS MesPresentacion,
+
+            CASE
+                WHEN p.ciep = 1 THEN ts.NombreTipoServicio
+                ELSE acnh.DescripcionActividadPetrolera
+            END AS TipoDeServicio,
+
+            CASE
+                WHEN p.ciep = 1 THEN aciep.NombreActividad
+                ELSE sap.SubactividadPetrolera
+            END AS Actividad,
+
+            CASE
+                WHEN p.ciep = 1 THEN ri.NombreRubro
+                ELSE tp.TareaPetrolera
+            END AS SubActividad,
+
+            er2.NombreEstado AS EstadoValidacion,
+            a.NombreArea     AS Area,
+
+            r.Comentarios,
+            ca.ClasificacionAnexo4 AS Anexo4,
+
+            CASE
+                WHEN r.CvTipoDocFacturacion = @TipoFactura
+                    THEN f.IdFactura
+                WHEN r.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante)
+                    THEN pc.IdPedimentoComprobante
+                ELSE NULL
+            END AS Identificador,
+
+            lpm.IdLineaPresupuestoMes AS LineaPresupuesto,
+            p.Nombre                  AS Presupuesto,
+
+            ir.NombreInstalacion      AS NombreInstalacion,
+
+            um.Nombre                 AS ModificadoPor,
+
+            r.Poliza,
+
+            CASE
+                WHEN r.CvTipoDocFacturacion = @TipoFactura THEN mf.IdMoneda
+                WHEN r.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN mpc.IdMoneda
+                ELSE NULL
+            END AS IdMonedaDoc,
+
+            CONVERT(DATE,
+                CASE
+                    WHEN r.CvTipoDocFacturacion = @TipoFactura THEN f.Fecha
+                    WHEN r.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante) THEN pc.FechaPago
+                    ELSE NULL
+                END
+            ) AS FechaDocDate
+        FROM dbo.CO_LineaPresupuestoMes lpm WITH (NOLOCK)
+
+        INNER JOIN dbo.CO_Presupuesto p WITH (NOLOCK)
+            ON lpm.IdPresupuesto = p.IdPresupuesto
+            AND lpm.IdPresupuesto = @IdPresupuesto
+
+        INNER JOIN dbo.CO_Registro r WITH (NOLOCK)
+            ON lpm.IdLineaPresupuestoMes = r.IdPrograma
+
+        INNER JOIN dbo.CO_EstadoRegistro_V2 er2 WITH (NOLOCK)
+            ON r.IdEstado = er2.IdClvEstado
+           AND er2.IdContrato = @IdContrato
+
+        LEFT JOIN dbo.CO_Servicio s WITH (NOLOCK)
+            ON lpm.IdServicio = s.IdServicio
+
+        LEFT JOIN dbo.CO_Instalacion i WITH (NOLOCK)
+            ON lpm.IdInstalacion = i.IdInstalacion
+
+        LEFT JOIN dbo.FI_Factura f WITH (NOLOCK)
+            ON r.IdFactura = f.IdFactura
+           AND r.CvTipoDocFacturacion = @TipoFactura
+
+        LEFT JOIN dbo.FI_pedimentocomprobante pc WITH (NOLOCK)
+            ON r.IdPedimentoComprobante = pc.IdPedimentoComprobante
+           AND r.CvTipoDocFacturacion IN (@TipoPedimento, @TipoComprobante)
+
+        LEFT JOIN dbo.PV_Subcontratista sf WITH (NOLOCK)
+            ON f.IdSubcontratista = sf.IdSubcontratista
+
+        LEFT JOIN dbo.PV_Subcontratista spc WITH (NOLOCK)
+            ON pc.IdSubcontratistaExportador = spc.IdSubcontratista
+
+        LEFT JOIN dbo.CO_Instalacion ir WITH (NOLOCK)
+            ON r.IdInstalacion = ir.IdInstalacion
+
+        INNER JOIN dbo.AP_Usuario uc WITH (NOLOCK)
+            ON r.IdUsuarioCreadoPor = uc.UsuarioID
+
+        LEFT JOIN dbo.AP_Usuario um WITH (NOLOCK)
+            ON r.IdUsuarioModPor = um.UsuarioID
+
+        LEFT JOIN dbo.CO_TipoServicio ts WITH (NOLOCK)
+            ON lpm.IdTipoServicio = ts.IdTipoServicio
+
+        LEFT JOIN dbo.CO_ActividadCIEP aciep WITH (NOLOCK)
+            ON lpm.IdActividad = aciep.IdActividad
+
+        LEFT JOIN dbo.CO_EstadoRegistro er WITH (NOLOCK)
+            ON r.IdEstado = er.IdEstadoRegistro
+
+        LEFT JOIN dbo.CO_Area a WITH (NOLOCK)
+            ON lpm.IdArea = a.IdArea
+
+        LEFT JOIN dbo.PV_TipoMoneda mf WITH (NOLOCK)
+            ON f.IdMoneda = mf.IdMoneda
+
+        LEFT JOIN dbo.PV_TipoMoneda mpc WITH (NOLOCK)
+            ON pc.IdMoneda = mpc.IdMoneda
+
+        LEFT JOIN dbo.CO_ClasificacionAnexo4 ca WITH (NOLOCK)
+            ON lpm.IdAnexo4 = ca.IdAnexo4
+
+        LEFT JOIN dbo.CO_ActividadPetroleraCNH acnh WITH (NOLOCK)
+            ON lpm.IdActividadPetrolera = acnh.IdActividadPetrolera
+
+        LEFT JOIN dbo.CO_SubactividadPetrolera sap WITH (NOLOCK)
+            ON lpm.IdSubactividadPetrolera = sap.IdSubactividadPetrolera
+
+        LEFT JOIN dbo.CO_RubroInterno ri WITH (NOLOCK)
+            ON lpm.IdRubroInterno = ri.IdRubroInterno
+
+        LEFT JOIN dbo.CO_TareaPetrolera tp WITH (NOLOCK)
+            ON lpm.IdTareaPetrolera = tp.IdTareaPetrolera
+
+        WHERE lpm.IdPresupuesto = @IdPresupuesto
+          AND r.IdRegistro IS NOT NULL
+    )
+    SELECT
+        d.IdRegistro,
+        d.IdFactura,
+        d.Servicio,
+        d.InstalacionPresupuestada,
+        d.FechaInicio,
+        d.FechaFin,
+        d.Estado,
+        d.TipoDocumento,
+        d.Numero,
+        d.FechaDocumento,
+
+        MontoUSD =
+            CASE
+                WHEN ISNULL(d.MontoRegistro, 0) = 0 THEN 0
+                WHEN d.IdMonedaDoc = @Dolar THEN d.MontoRegistro
+                WHEN d.IdMonedaDoc <> @Peso THEN 0
+                ELSE
+                    d.MontoRegistro / NULLIF(
+                        COALESCE(tcmCur.TipoCambio, tcmPrev.TipoCambio),
+                        0
+                    )
+            END,
+
+        d.Subcontratista,
+        d.InstalacionRegistro,
+        d.InicioEjecucion,
+        d.FinEjecucion,
+        d.CreadoPor,
+        d.MontoRegistro,
+        d.Moneda,
+        d.MesPresentacion,
+        d.TipoDeServicio,
+        d.Actividad,
+        d.SubActividad,
+        d.EstadoValidacion,
+        d.Area,
+        d.Comentarios,
+        d.Anexo4,
+        d.Identificador,
+        d.LineaPresupuesto,
+        d.Presupuesto,
+        d.NombreInstalacion,
+        d.ModificadoPor,
+        d.Poliza,
+
+        TipoCambioUsado =
+            CASE
+                WHEN d.IdMonedaDoc = @Dolar THEN CAST(1 AS DECIMAL(18,6))
+                WHEN d.IdMonedaDoc = @Peso  THEN CAST(COALESCE(tcmCur.TipoCambio, tcmPrev.TipoCambio) AS DECIMAL(18,6))
+                ELSE NULL
+            END,
+
+        UsaTCMesAnterior =
+            CASE
+                WHEN d.IdMonedaDoc = @Dolar THEN CAST(0 AS BIT)
+                WHEN d.IdMonedaDoc = @Peso
+                     AND tcmCur.TipoCambio IS NULL
+                     AND tcmPrev.TipoCambio IS NOT NULL
+                    THEN CAST(1 AS BIT)
+                ELSE CAST(0 AS BIT)
+            END
+    FROM Datos d
+    LEFT JOIN dbo.CO_TipoCambioMensual tcmCur WITH (NOLOCK)
+        ON d.IdMonedaDoc = @Peso
+       AND tcmCur.IdMoneda = @Peso
+       AND tcmCur.Anio     = YEAR(d.FechaDocDate)
+       AND tcmCur.IdMes    = MONTH(d.FechaDocDate)
+
+    LEFT JOIN dbo.CO_TipoCambioMensual tcmPrev WITH (NOLOCK)
+        ON d.IdMonedaDoc = @Peso
+       AND tcmPrev.IdMoneda = @Peso
+       AND tcmPrev.Anio     = YEAR(DATEADD(MONTH, -1, DATEFROMPARTS(YEAR(d.FechaDocDate), MONTH(d.FechaDocDate), 1)))
+       AND tcmPrev.IdMes    = MONTH(DATEADD(MONTH, -1, DATEFROMPARTS(YEAR(d.FechaDocDate), MONTH(d.FechaDocDate), 1)))
+
+    ORDER BY d.MesPresentacion DESC, d.IdRegistro DESC;
+END
+GO

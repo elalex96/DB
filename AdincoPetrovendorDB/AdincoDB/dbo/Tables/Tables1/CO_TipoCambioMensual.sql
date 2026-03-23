@@ -11,4 +11,8 @@
     [ObtenidoSDK]         BIT             NULL,
     [TipoCambioBanxico]   DECIMAL (12, 4) NULL
 );
+GO
+CREATE INDEX IX_CO_TipoCambioMensual_Moneda_Anio_Mes
+    ON dbo.CO_TipoCambioMensual (IdMoneda, Anio, IdMes)
+    INCLUDE (TipoCambio);
 

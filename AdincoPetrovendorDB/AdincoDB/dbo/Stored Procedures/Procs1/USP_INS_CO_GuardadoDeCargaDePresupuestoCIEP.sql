@@ -1,6 +1,4 @@
-﻿USE [Adinco]
-GO
-IF EXISTS
+﻿IF EXISTS
     (
         SELECT
             1
@@ -9,19 +7,20 @@ IF EXISTS
         WHERE
             name = 'USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP'
     )
-    DROP PROCEDURE USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP
+    DROP PROCEDURE USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP;
 GO
+
 CREATE PROCEDURE [dbo].[USP_INS_CO_GuardadoDeCargaDePresupuestoCIEP] 
     @UsuarioId INT,
     @ContratoId INT,
     @IdArchivoAWS INT
 AS
 BEGIN
+
 DECLARE @ErrorMessage VARCHAR(4000);
     BEGIN TRY
         BEGIN TRAN
         SET NOCOUNT ON;
-
 
 CREATE TABLE #Meses
     (
@@ -49,6 +48,8 @@ CREATE TABLE #LineasPresupuestoMesInformacion
 		Servicio VARCHAR(1000),
 		IdRubro	INT,
 		Rubro  VARCHAR(1000),
+		IdInstalacion	INT	 NULL,
+		Instalacion  VARCHAR(1000),
 		FecMovto DATE,
         Monto     FLOAT        NULL
     );
@@ -117,6 +118,7 @@ INSERT INTO #LineasPresupuestoMesInformacion
 		Clasificacion,
 		Servicio,
 		Rubro,
+		Instalacion,
 		FecMovto ,
         Monto
     )
@@ -133,6 +135,7 @@ INSERT INTO #LineasPresupuestoMesInformacion
 				Clasificacion,
 				Servicios,
 				Rubro,
+				Instalacion,
 				getdate(),
 				CASE #Meses.Numero
 				WHEN 1 THEN MES1
@@ -227,6 +230,20 @@ FROM
         CO_Clasificacion
             ON UPPER(LTRIM(RTRIM(ISNULL(#LineasPresupuestoMesInformacion.Clasificacion, '')))) = UPPER(LTRIM(RTRIM(ISNULL(CO_Clasificacion.NombreClasificacion, ''))))
 
+UPDATE
+    #LineasPresupuestoMesInformacion
+SET
+    #LineasPresupuestoMesInformacion.IdInstalacion = CO_Instalacion.IdInstalacion
+FROM
+    #LineasPresupuestoMesInformacion
+    JOIN
+        CO_Instalacion
+            ON UPPER(LTRIM(RTRIM(ISNULL(#LineasPresupuestoMesInformacion.Instalacion, '')))) 
+			 = UPPER(LTRIM(RTRIM(ISNULL(CO_Instalacion.NombreInstalacion, ''))))
+			AND  ISNULL(CO_Instalacion.Activo, 0) = 1
+			AND CO_Instalacion.IdAreaContractual = @IdAreaContractual;
+
+
 IF((SELECT
     COUNT(1)
 FROM
@@ -290,7 +307,8 @@ BEGIN
 								Monto,
 								IdUsuario,
 								FecMovto,
-								IdExcel)
+								IdExcel,
+								IdInstalacion)
 						SELECT  @IdPresupuesto, 
 						IdTipoServicio,
 						IdActividad,
@@ -306,7 +324,8 @@ BEGIN
 						Monto,
 						@UsuarioId, 
 						GETDATE(),
-						IdExcel
+						IdExcel,
+						IdInstalacion
 						FROM
 							#LineasPresupuestoMesInformacion
 						WHERE

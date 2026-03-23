@@ -1,15 +1,21 @@
-IF OBJECT_ID('dbo.USP_UPD_CO_RegistroGasto_LineaPresupuesto', 'P') IS NOT NULL
-BEGIN
-    DROP PROCEDURE dbo.USP_UPD_CO_RegistroGasto_LineaPresupuesto;
-END
+iF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_UPD_CO_RegistroGasto_LineaPresupuesto'
+    )
+    DROP PROCEDURE USP_UPD_CO_RegistroGasto_LineaPresupuesto;
 GO
-
 CREATE PROCEDURE [dbo].[USP_UPD_CO_RegistroGasto_LineaPresupuesto]
     @GastosCsv         NVARCHAR(MAX),
     @IdLineaPresupuesto INT,         
     @Justificacion     NVARCHAR(500),
     @IdUsuario         INT,
-    @IdContrato        INT
+    @IdContrato        INT,
+   @IdContratoSeleccionado INT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -66,7 +72,7 @@ BEGIN
         FROM CO_Registro r
         INNER JOIN @GastosTemp gt ON r.IdRegistro = gt.IdRegistro
         INNER JOIN FI_Factura f ON r.IdFactura = f.IdFactura
-        WHERE f.IdContrato = @IdContrato;
+        WHERE f.IdContrato = @IdContratoSeleccionado;
 
         IF @@ROWCOUNT = 0
         BEGIN
@@ -106,6 +112,3 @@ BEGIN
         RAISERROR(@ErrorMessage, @ErrorSeverity, @ErrorState);
     END CATCH
 END
-GO
-
-

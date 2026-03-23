@@ -1,9 +1,17 @@
-use adinco
-
-DROP PROCEDURE IF EXISTS dbo.USP_SEL_AP_Usuarios_Admin;
+IF EXISTS
+    (
+        SELECT
+            1
+        FROM
+            dbo.sysobjects
+        WHERE
+            name = 'USP_SEL_AP_Usuarios_Admin'
+    )
+    DROP PROCEDURE USP_SEL_AP_Usuarios_Admin;
 GO
 CREATE PROC [dbo].[USP_SEL_AP_Usuarios_Admin]
-    @pIdUsuario INT
+    @pIdUsuario INT,
+    @IdContrato INT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -16,13 +24,15 @@ BEGIN
         l.Usuario,
         l.Nombre,
         l.IsActivo,
-        l.fchRegistro
-    FROM dbo.AP_Usuario AS l WITH (NOLOCK)
-    WHERE ISNULL(l.IsGrupo, 0) = 0
+        l.fchRegistro,
+        L.UltimoAcceso
+    FROM 
+        AP_Usuario AS l WITH (NOLOCK)
+    WHERE 
+        ISNULL(l.IsGrupo, 0) = 0
     ORDER BY 
         l.IsActivo DESC,
         l.UsuarioID;
 
 
 END
-GO

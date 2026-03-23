@@ -4088,6 +4088,21 @@
     <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_CO_RegistroGasto_LineaPresupuesto.sql" />
     <Build Include="dbo\Stored Procedures\Procs1\USP_SEL_CO_ContratistaPorContrato.sql" />
     <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_RegistroGastoCIEP.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenBitacoraSecuenciaEstados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_CO_RegistraSecuenciaEstados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenSecuenciaEstados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenEstadosDeContrato.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_DEL_CO_EliminarSecuenciaEstados.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AP_ObtenTipoReportes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AP_ObtenResponsablesReportes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_INS_AP_RegistraResponsableReporte.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_DEL_AP_DesactivaResponsableReporte.sql" />
+    <Build Include="dbo\Tables\Tables2\AP_TipoReportesSistema.sql" />
+    <Build Include="dbo\Tables\Tables2\AP_ResponsablesReportes.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_AP_PerfilesAsignadosAUsuariosAdmin.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ObtenEstadoRegistroPorGasto.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_UPD_AP_UsuarioUltimoAcceso.sql" />
+    <Build Include="dbo\Stored Procedures\Procs3\USP_SEL_CO_ConsultaGastosAceptadosMensualCIEPPeriodos.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="AdincoDB.refactorlog" />
