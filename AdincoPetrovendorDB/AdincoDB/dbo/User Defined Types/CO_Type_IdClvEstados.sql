@@ -1,4 +1,4 @@
-﻿CREATE TYPE CO_Type_IdClvEstados  AS TABLE
+CREATE TYPE CO_Type_IdClvEstados  AS TABLE
 (
 IdClvEstado  INT
 );

@@ -28,8 +28,8 @@ AS
 			)
 		SELECT DISTINCT
 			GETDATE()
-			,'Eliminación'
-			,'Eliminación de Estado de aprobación de gasto en la página 2/Administrador/AdministracionEstadosGastos.aspx'
+			,'EliminaciÃ³n'
+			,'EliminaciÃ³n de Estado de aprobaciÃ³n de gasto en la pÃ¡gina 2/Administrador/AdministracionEstadosGastos.aspx'
 			,'IdEstadoRegistroUsuario: ['+CAST(@IdEstadoRegistroUsuario AS VARCHAR(20))+
 			'],IdClvEstado:  ['+CAST(CO_EstadoRegistroUsuario.IdClvEstado AS VARCHAR(20))+
 			'],Estado:  ['+CAST(CO_EstadoRegistro_V2.NombreEstado AS VARCHAR(20))+

@@ -1,7 +1,15 @@
-﻿-- =============================================
+USE Petrovendor
+GO
+DROP PROC IF EXISTS SP_PC_FlujosAprobacionPedimentoComprobante
+GO
+-- =============================================
 -- Author:		<Alexander Gomez>
 -- Create date: <08/09/2020>
 -- Description:	<Consulta del flujo de aprobacion de pedimento/comprobante compra directa>
+-- =============================================
+-- Author:		Luis David
+-- Create date: 25/MAR-26
+-- Description:	Se agregan estándares SQL
 -- =============================================
 CREATE PROCEDURE [dbo].[SP_PC_FlujosAprobacionPedimentoComprobante]
 	-- Add the parameters for the stored procedure here
@@ -16,9 +24,8 @@ BEGIN
 	SELECT
 		FT.IdFlujoTarea,
 		FT.Nombre
-	FROM dbo.TA_FlujoTarea AS FT
+	FROM dbo.TA_FlujoTarea AS FT (NOLOCK)
 	WHERE FT.IdProveedor = @IdProveedor
 		AND FT.IdTipoOperacion = 19
 		AND FT.Activo = 1;
-
 END

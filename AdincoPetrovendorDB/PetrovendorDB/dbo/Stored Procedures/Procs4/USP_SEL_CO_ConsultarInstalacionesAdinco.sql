@@ -1,17 +1,14 @@
-﻿USE Adinco
-GO
-IF EXISTS
-(
-    SELECT 1
-    FROM dbo.sysobjects
-    WHERE name = 'USP_SEL_CO_ConsultarInstalacionesAdinco'
-)
-    DROP PROCEDURE USP_SEL_CO_ConsultarInstalacionesAdinco;
-GO
+use petrovendor
+drop proc if exists USP_SEL_CO_ConsultarInstalacionesAdinco
+go
 -- =============================================  
 -- Author:  <Daniel AC>  
 -- Create date: <11/11/2025>  
 -- Description: <Consulta las instalaciones de ADINCO desde Petrovendor>  
+-- =============================================  
+-- Author:  Luis David
+-- Create date: 20/MAR/26
+-- Description: Se agregan nolock a tablas estáticas
 -- =============================================  
 CREATE PROCEDURE [dbo].[USP_SEL_CO_ConsultarInstalacionesAdinco]
  @IdContrato INT,  
@@ -23,9 +20,9 @@ BEGIN
     -- Insert statements for procedure here  
 
 	SELECT instalacion.IdInstalacion, instalacion.NombreInstalacion
-	FROM CO_Instalacion instalacion 
-	INNER JOIN CO_Contrato contrato
+	FROM CO_Instalacion instalacion (NOLOCK)
+	INNER JOIN CO_Contrato AS contrato (NOLOCK)
 	ON instalacion.IdAreaContractual  = contrato.IdAreaContractual
 	WHERE contrato.IdContrato = @IdContrato
 	AND instalacion.ACTIVO = 1
-END  
+END 

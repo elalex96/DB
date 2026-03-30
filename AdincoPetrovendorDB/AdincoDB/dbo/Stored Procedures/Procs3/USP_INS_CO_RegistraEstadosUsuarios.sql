@@ -41,8 +41,8 @@ BEGIN
 			)
 	SELECT
 			GETDATE()
-			,'CreaciÛn'
-			,'Registro de estado de aprobaciÛn de gasto a usuario en la p·gina 2/Administrador/AdministracionEstadosGastos.aspx'
+			,'Creaci√≥n'
+			,'Registro de estado de aprobaci√≥n de gasto a usuario en la p√°gina 2/Administrador/AdministracionEstadosGastos.aspx'
 			,'IdUsuario:  ['+CAST(@IdUsuarioSeleccion AS VARCHAR(20))+'], IdContrato: [' + CAST(@IdContratoSeleccion AS VARCHAR(20)) + 
 			'], IdClvEstado: [' + CONVERT(VARCHAR(19), ClvEstados.IdClvEstado, 120) + 
 			'],Estado:  ['+CAST(CO_EstadoRegistro_V2.NombreEstado AS VARCHAR(20))+
