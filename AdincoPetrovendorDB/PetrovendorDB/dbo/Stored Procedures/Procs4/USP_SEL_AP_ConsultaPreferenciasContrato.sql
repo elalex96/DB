@@ -9,6 +9,18 @@ create proc USP_SEL_AP_ConsultaPreferenciasContrato
 @IdPreferencia int 
 as
 begin
-	select Pc.Id, PC.ContratoId, PC.PreferenciaId,PC.Valor,PC.Activo,PC.CreadoEl,PC.CreadoPor,PC.ModificadoPor,PC.ModificadoEl from  AP_PreferenciaContrato as PC
+	select
+		PC.Id,
+		PC.ContratoId,
+		PC.PreferenciaId,
+		PC.Valor,
+		PC.Activo,
+		PC.CreadoEl,
+		US.Nombre  AS CreadoPor,
+		USM.Nombre AS ModificadoPor,
+		PC.ModificadoEl
+	from AP_PreferenciaContrato AS PC WITH (NOLOCK)
+	join S_Usuario AS US  WITH (NOLOCK) ON PC.CreadoPor    = US.IdUsuario
+	join S_Usuario AS USM WITH (NOLOCK) ON PC.ModificadoPor = USM.IdUsuario
 	where PC.PreferenciaId = @IdPreferencia
 end
