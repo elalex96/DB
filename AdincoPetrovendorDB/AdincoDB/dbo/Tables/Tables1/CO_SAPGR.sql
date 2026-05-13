@@ -1,0 +1,27 @@
+﻿CREATE TABLE [dbo].[CO_SAPGR] (
+    [IdContrato]         INT           NOT NULL,
+    [PO_SAPNumber]       VARCHAR (50)  NOT NULL,
+    [POLineNumber]       VARCHAR (50)  NOT NULL,
+    [Quantity]           FLOAT (53)    NULL,
+    [UnitPrice]          FLOAT (53)    NULL,
+    [Moneda]             VARCHAR (50)  NULL,
+    [Importe]            FLOAT (53)    NULL,
+    [AccountAssignment]  VARCHAR (1)   NULL,
+    [CostObject]         VARCHAR (50)  NULL,
+    [MaterialGroup]      VARCHAR (50)  NULL,
+    [MaterialGroupDesc2] VARCHAR (50)  NULL,
+    [MaterialNumber]     VARCHAR (50)  NULL,
+    [MaterialDescShort]  VARCHAR (150) NULL,
+    [CreadoEl]           DATETIME      NULL,
+    [CreadoPor]          INT           NULL,
+    [UOM]                VARCHAR (50)  NULL,
+    [MatDocN]            VARCHAR (15)  NULL,
+    [MatDocItem]         VARCHAR (15)  NULL,
+    [DocumentDate]       VARCHAR (15)  NOT NULL,
+    [DocPostingDate]     VARCHAR (15)  NULL,
+    [Plant]              VARCHAR (15)  NULL,
+    [GRReferenceNumber]  VARCHAR (20)  NULL,
+    CONSTRAINT [FK_CO_MapeoInterfazMaterialGR_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_CO_MapeoInterfazMaterialGR_CO_Contrato] FOREIGN KEY ([IdContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato])
+);
+

@@ -1,0 +1,32 @@
+﻿CREATE TABLE [dbo].[MM_AceptacionFactura] (
+    [IdAceptacionFactura] INT      IDENTITY (1, 1) NOT NULL,
+    [IdFactura]           INT      NULL,
+    [IdEstatus]           INT      NOT NULL,
+    [IdAceptacionPedido]  INT      NULL,
+    [CreadoPor]           INT      NULL,
+    [ModificadoPor]       INT      NULL,
+    [ModificadoEl]        DATETIME NULL,
+    [IdEstatusXML]        INT      NULL,
+    [IdEstatusPDF]        INT      NULL,
+    [IdUsuarioEvaluador]  INT      NULL,
+    [FechaEvaluacionXML]  DATETIME NULL,
+    [FechaEvaluacionPDF]  DATETIME NULL,
+    [FechaCargaPDF]       DATETIME NULL,
+    [FechaCargaXML]       DATETIME NULL,
+    [CreadoEl]            DATETIME NULL,
+    [IdEstatusEliminado]  INT      NULL,
+    [IdEliminado]         INT      NULL,
+    CONSTRAINT [PK_MM_AceptacionFactura] PRIMARY KEY CLUSTERED ([IdAceptacionFactura] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_MM_AceptacionFactura_MM_AceptacionPedido] FOREIGN KEY ([IdEstatus]) REFERENCES [dbo].[S_TipoValidacionDoc] ([IdTipoValidacionDoc]),
+    CONSTRAINT [FK_MM_AceptacionFactura_MM_AceptacionPedido1] FOREIGN KEY ([IdAceptacionPedido]) REFERENCES [dbo].[MM_AceptacionPedido] ([IdAceptacionPedido]),
+    CONSTRAINT [FK_MM_AceptacionFactura_S_TipoValidacionDoc] FOREIGN KEY ([IdEstatusPDF]) REFERENCES [dbo].[S_TipoValidacionDoc] ([IdTipoValidacionDoc]),
+    CONSTRAINT [FK_MM_AceptacionFactura_S_TipoValidacionDoc1] FOREIGN KEY ([IdEstatusXML]) REFERENCES [dbo].[S_TipoValidacionDoc] ([IdTipoValidacionDoc]),
+    CONSTRAINT [FK_MM_AceptacionFactura_S_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[S_Usuario] ([IdUsuario])
+);
+
+
+GO
+CREATE NONCLUSTERED INDEX [AceptacionFactura]
+    ON [dbo].[MM_AceptacionFactura]([IdAceptacionPedido] ASC)
+    INCLUDE([IdAceptacionFactura], [IdFactura], [IdEstatusEliminado]) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON);
+

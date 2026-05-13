@@ -1,0 +1,9 @@
+﻿CREATE TABLE [dbo].[AP_NotificacionError](
+	[Id] [int] IDENTITY (1, 1) NOT NULL,
+	[NotificacionId] [int] NOT NULL,
+	[Error] [varchar](5000) NOT NULL,
+	[FechaRegistro] [datetime] NOT NULL,
+ CONSTRAINT [PK_AP_NotificacionError] PRIMARY KEY CLUSTERED ([Id] ASC)
+ WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = ON, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, FILLFACTOR = 80) ON [PRIMARY]
+) ON [PRIMARY]
+GO

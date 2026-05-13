@@ -1,0 +1,1 @@
+﻿CREATE PROCEDURE [dbo].[sp_CO_PeriodoContrato_Lista]ASSET NOCOUNT ONbeginSELECT [IdPeriodo], 	[IdContrato], 	[NombrePeriodo], 	[Inicio], 	[Fin]FROM CO_PeriodoContratoend

@@ -1,0 +1,25 @@
+﻿CREATE TABLE [dbo].[PC_PTI] (
+    [SOCIEDAD]         NVARCHAR (255) NULL,
+    [ESTADO]           NVARCHAR (255) NULL,
+    [TIPO DOCUMENTO]   NVARCHAR (255) NULL,
+    [NOMBRE CLIENTE]   NVARCHAR (255) NULL,
+    [UUID]             NVARCHAR (255) NULL,
+    [EJERCICIO]        NVARCHAR (255) NULL,
+    [SERIE]            NVARCHAR (255) NULL,
+    [FACTURA]          NVARCHAR (255) NULL,
+    [EMISOR]           NVARCHAR (255) NULL,
+    [RECEPTOR]         NVARCHAR (255) NULL,
+    [FECHA FACTURA]    NVARCHAR (50)  NULL,
+    [TIPO COMP#]       NVARCHAR (255) NULL,
+    [SUBTOTAL]         MONEY          NULL,
+    [IMPUESTOS]        MONEY          NULL,
+    [TOTAL]            MONEY          NULL,
+    [FECHA EXPEDICIÓN] NVARCHAR (50)  NULL,
+    [MONEDA]           NVARCHAR (255) NULL,
+    [TASA]             FLOAT (53)     NULL,
+    [CLAVE CLIENTE]    NVARCHAR (255) NULL,
+    [FOLIO]            NVARCHAR (255) NULL,
+    [FECHA TIMBRADO]   NVARCHAR (50)  NULL,
+    [METODO PAGO]      NVARCHAR (255) NULL
+);
+

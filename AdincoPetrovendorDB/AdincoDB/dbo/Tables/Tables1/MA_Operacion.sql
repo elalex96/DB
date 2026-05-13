@@ -1,0 +1,27 @@
+﻿CREATE TABLE [dbo].[MA_Operacion] (
+    [IdOperacion]         INT            IDENTITY (1, 1) NOT NULL,
+    [IdDocumento]         INT            NULL,
+    [IdLineaTiempo]       INT            NULL,
+    [IdApp]               INT            NULL,
+    [IdEstatusOperacion]  INT            NULL,
+    [IdContrato]          INT            NULL,
+    [IdSubcontratista]    INT            NULL,
+    [IdUsuarioRegistro]   INT            NULL,
+    [FechaRegistro]       DATETIME       NULL,
+    [NombreInstancia]     NVARCHAR (MAX) NULL,
+    [ComentarioGral]      NVARCHAR (MAX) NULL,
+    [FechaModificacion]   DATETIME       NULL,
+    [FechaFinalizacion]   DATETIME       NULL,
+    [IsFechaFinalizacion] BIT            NULL,
+    [IdPrioridad]         INT            NULL,
+    [IdVigencia]          INT            NULL,
+    [IsActivo]            INT            NULL,
+    [IsEliminado]         INT            NULL,
+    [IdFirma]             NVARCHAR (35)  NULL,
+    [ModificadoPor]       INT            NULL,
+    [IdTipoDocumento]     INT            NULL,
+    [IdTipoAprobacion]    INT            NULL,
+    [IdTipoOperacion]     INT            NULL,
+    PRIMARY KEY CLUSTERED ([IdOperacion] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

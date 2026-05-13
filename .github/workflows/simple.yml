@@ -1,0 +1,19 @@
+name: Simple
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    permissions:
+      checks: write
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - name: Reporta GitHub
+      uses: LouisBrunner/checks-action@v2.0.0
+      if: always()
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        name: Reporte
+        conclusion: ${{ job.status }}

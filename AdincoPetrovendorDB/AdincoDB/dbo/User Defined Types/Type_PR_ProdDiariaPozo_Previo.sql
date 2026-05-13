@@ -1,0 +1,22 @@
+﻿CREATE TYPE [dbo].[Type_PR_ProdDiariaPozo_Previo] AS TABLE (
+    [Fecha]             DATETIME       NULL,
+    [Estacion]          INT            NULL,
+    [Pozo]              INT            NULL,
+    [Nominal]           VARCHAR (100)  NULL,
+    [Fuente]            VARCHAR (100)  NULL,
+    [Operando]          BIT            NULL,
+    [Est_64Plg]         FLOAT (53)     NULL,
+    [Cabeza]            FLOAT (53)     NULL,
+    [Linea]             FLOAT (53)     NULL,
+    [GastoGas]          FLOAT (53)     NULL,
+    [ProdAceiteNeto]    FLOAT (53)     NULL,
+    [ProdPetroleoBruto] FLOAT (53)     NULL,
+    [Agua]              FLOAT (53)     NULL,
+    [Comentarios]       VARCHAR (250)  NULL,
+    [IdUnidad]          INT            NULL,
+    [IdSistema]         INT            NULL,
+    [EPM]               FLOAT (53)     NULL,
+    [NombreEstacion]    VARCHAR (200)  NULL,
+    [ProgramaInmediato] VARCHAR (5000) NULL,
+    [Seguimiento]       VARCHAR (5000) NULL);
+

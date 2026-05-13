@@ -1,0 +1,8 @@
+﻿################################################################################
+# Este archivo .gitignore ha sido creado automáticamente por Microsoft(R) Visual Studio.
+################################################################################
+
+/AdincoPetrovendorDB/AdincoDB/dbo/Stored Procedures/Procs1
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/

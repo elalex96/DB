@@ -1,0 +1,36 @@
+﻿CREATE VIEW [dbo].[ReporteProcesoDEA_PEDIDO_Estatus] AS
+
+	SELECT
+		IdSolicitudPedido AS No_Solicitud_Pedido,
+		Folio,
+		Descripcion,
+		CentroCosto AS Centro_Costo,
+		Requisitor,
+		FechaRegistro AS Fecha_Registro,
+		Responsable1aAprobacion AS Responsable_1a_Aprobacion,
+		Fecha1aAprobacion AS Fecha_1a_Aprobacion,
+		DiasEspera1aAprobacion AS Dias_Espera_1a_Aprobacion,
+		Estatus1aAprobacion AS Estatus_1a_Aprobacion,
+		Responsable1aReasignacion AS Responsable_1a_Reasignacion,
+		FechaAprobacion1aReasignacion AS Fecha_Aprobacion_1a_Reasignacion,
+		DiasEspera1aReasignacion AS Dias_Espera_1a_Reasignacion,
+		EstatusAprobacion1aReasignacionn AS Estatus_Aprobacion_1a_Reasignacion,
+		Responsable2aAprobacion AS Responsable_2a_Aprobacion,
+		Fecha2aAprobacion AS Fecha_2a_Aprobacion,
+		DiasEspera2aAprobacion AS Dias_Espera_2a_Aprobacion,
+		Estatus2aAprobacion AS Estatus_2a_Aprobacion,
+		Responsable2aReasignacion AS Responsable_2a_Reasignacion,
+		FechaAprobacion2aReasignacion AS Fecha_Aprobacion_2a_Reasignacion,
+		DiasEspera2aReasignacion AS Dias_Espera_2a_Reasignacion,
+		EstatusAprobacion2aReasignacion AS Estatus_Aprobacion_2a_Reasignacion,
+		DiasEnAprobacionGeneral AS Dias_En_Aprobacion_General,
+		UsuarioCargaPR AS Usuario_Carga_PR,
+		FechaCargaPR AS Fecha_Carga_PR,
+		DiasCargaPR AS Dias_Carga_PR,
+		NumeroPR AS Numero_PR,
+		DiasTotal AS Dias_Total,
+		EstatusFinal AS Estatus_Final,
+		Contrato,
+		AreaContractual
+	FROM dbo.DEA_ProcesoSolicitudPedido_Estatus
+	WHERE IdSolicitudPedido <> ''

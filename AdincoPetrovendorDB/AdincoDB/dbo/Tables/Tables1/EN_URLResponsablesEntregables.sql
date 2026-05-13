@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[EN_URLResponsablesEntregables] (
+    [idResponsableEntregable] INT            IDENTITY (10000, 1) NOT NULL,
+    [idContratoEntregable]    INT            NOT NULL,
+    [idInstanciaEntregable]   INT            NOT NULL,
+    [FechaFinalizacion]       DATETIME       NOT NULL,
+    [tipoOperacion]           INT            NOT NULL,
+    [correos]                 NVARCHAR (MAX) NOT NULL,
+    [idUsuarioTarea]          INT            NOT NULL,
+    [NombreUsuario]           NVARCHAR (MAX) NULL,
+    [ActividadID]             INT            NULL,
+    [EnlaceDetalle]           NVARCHAR (MAX) NULL,
+    [EnlaceAprobado]          NVARCHAR (MAX) NULL,
+    [EnlaceRechazo]           NVARCHAR (MAX) NULL,
+    [NombreInstancia]         NVARCHAR (MAX) NULL,
+    [FechaInstancia]          NVARCHAR (MAX) NULL,
+    [CreadoPor]               INT            NULL,
+    [CreadoEn]                DATETIME       NULL,
+    [ModificadoPor]           INT            NULL,
+    [ModificadoEn]            DATETIME       NULL,
+    [Activo]                  BIT            NULL,
+    CONSTRAINT [PK_EN_URLResponsablesEntregables] PRIMARY KEY CLUSTERED ([idResponsableEntregable] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON),
+    CONSTRAINT [FK_EN_URLResponsablesEntregables_AP_Usuario] FOREIGN KEY ([CreadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_EN_URLResponsablesEntregables_AP_Usuario2] FOREIGN KEY ([ModificadoPor]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_EN_URLResponsablesEntregables_AP_UsuarioTarea] FOREIGN KEY ([idUsuarioTarea]) REFERENCES [dbo].[AP_Usuario] ([UsuarioID]),
+    CONSTRAINT [FK_EN_URLResponsablesEntregables_EN_ContratoEntregable] FOREIGN KEY ([idContratoEntregable]) REFERENCES [dbo].[EN_ContratoEntregable] ([IdContratoEntregable]),
+    CONSTRAINT [FK_EN_URLResponsablesEntregables_EN_instanciasEntregable] FOREIGN KEY ([idInstanciaEntregable]) REFERENCES [dbo].[EN_InstanciasEntregable] ([idInstanciaEntregable])
+);
+

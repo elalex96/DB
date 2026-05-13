@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[AX_Pagos] (
+    [IdPago]              INT            IDENTITY (1, 1) NOT NULL,
+    [FormaPago]           VARCHAR (MAX)  NULL,
+    [CuentaOrigen]        VARCHAR (MAX)  NULL,
+    [BancoOrigen]         VARCHAR (MAX)  NULL,
+    [TitularOrigen]       VARCHAR (MAX)  NULL,
+    [CuentaDestino]       VARCHAR (MAX)  NULL,
+    [BancoDestino]        VARCHAR (50)   NULL,
+    [TitularDestino]      NVARCHAR (MAX) NULL,
+    [ReferenciaPago]      VARCHAR (50)   NULL,
+    [FechaPago]           VARCHAR (MAX)  NULL,
+    [MontoPagado]         MONEY          NULL,
+    [Interes]             MONEY          NULL,
+    [Moneda]              VARCHAR (MAX)  NULL,
+    [Concepto]            VARCHAR (MAX)  NULL,
+    [NoPolizaContable]    VARCHAR (MAX)  NULL,
+    [UUIDFacturaPagada]   VARCHAR (MAX)  NULL,
+    [MontoPagadoFactura]  MONEY          NULL,
+    [ComplementoPagoUUID] VARCHAR (MAX)  NULL,
+    [RECID]               VARCHAR (MAX)  NULL,
+    [IdTransferencia]     INT            NULL,
+    [RFC]                 VARCHAR (MAX)  NULL,
+    [Editado]             BIT            NULL,
+    CONSTRAINT [PK_AX_Pagos] PRIMARY KEY CLUSTERED ([IdPago] ASC) WITH (FILLFACTOR = 80, STATISTICS_NORECOMPUTE = ON)
+);
+

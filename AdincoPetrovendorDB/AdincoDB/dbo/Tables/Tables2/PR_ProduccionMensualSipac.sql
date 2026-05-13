@@ -1,0 +1,26 @@
+﻿CREATE TABLE [dbo].[PR_ProduccionMensualSipac] (
+    [idProduccionMensualSipac] INT        IDENTITY (1000, 1) NOT NULL,
+    [idFecha]                  DATE       NULL,
+    [idHidrocarburo]           INT        NULL,
+    [PuntoEntregaID]           INT        NULL,
+    [VolumenProgramado]        FLOAT (53) NULL,
+    [GradosAPI]                FLOAT (53) NULL,
+    [idUnidadMedida]           INT        NULL,
+    [idContrato]               INT        NULL,
+    [CreadoPor]                INT        NULL,
+    [CreadoEl]                 DATETIME   NULL,
+    [ModificadoPor]            INT        NULL,
+    [ModificadoEl]             DATETIME   NULL,
+    [Activo]                   BIT        NULL,
+    [VolumenVendido]           FLOAT (53) NULL,
+    [Temperatura]              FLOAT (53) NULL,
+    [VolumenContratista]       FLOAT (53) NULL,
+    [VolumenEstado]            FLOAT (53) NULL,
+    FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
+    FOREIGN KEY ([idContrato]) REFERENCES [dbo].[CO_Contrato] ([IdContrato]),
+    FOREIGN KEY ([idHidrocarburo]) REFERENCES [dbo].[CO_ClasificacionProductoNominacion] ([ProductoNominacionID]),
+    FOREIGN KEY ([idUnidadMedida]) REFERENCES [dbo].[CO_UnidadMedida] ([idUnidadMedida]),
+    FOREIGN KEY ([idUnidadMedida]) REFERENCES [dbo].[CO_UnidadMedida] ([idUnidadMedida]),
+    FOREIGN KEY ([PuntoEntregaID]) REFERENCES [dbo].[CO_PuntosdeEntrega] ([PuntoEntregaID])
+);
+

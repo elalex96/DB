@@ -1,0 +1,4 @@
+﻿CREATE TABLE [dbo].[PCM_RFC] (
+    [RFC] NVARCHAR (MAX) NULL
+);
+

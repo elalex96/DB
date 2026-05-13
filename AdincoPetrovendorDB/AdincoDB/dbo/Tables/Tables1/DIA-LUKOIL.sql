@@ -1,0 +1,4 @@
+﻿CREATE TABLE [dbo].[DIA-LUKOIL] (
+    [Column1] NVARCHAR (255) NULL
+);
+

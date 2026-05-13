@@ -1,0 +1,7 @@
+﻿CREATE PROCEDURE dbo.sp_VU_ExisteUUIDAdinco
+(@UUID NVARCHAR(MAX))
+AS
+BEGIN
+    EXEC Adinco.dbo.sp_VU_ExisteUUID @UUID = @UUID
+    
+END
